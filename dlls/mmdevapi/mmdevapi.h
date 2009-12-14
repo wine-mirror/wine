@@ -17,3 +17,4 @@
  */
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
+extern void MMDevEnum_Free(void);

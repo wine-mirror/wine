@@ -26,6 +26,8 @@
 #include "dshow.h"
 #include "dsound.h"
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 /* Some of the QueryInterface tests are really just to check if I got the IID's right :) */
 
 /* IMMDeviceCollection appears to have no QueryInterface method and instead forwards to mme */
@@ -82,11 +84,12 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     if (dev) IUnknown_Release(dev);
 }
 
+/* Only do parameter tests here, the actual MMDevice testing should be a separate test */
 START_TEST(mmdevenum)
 {
     HRESULT hr;
     IUnknown *unk = NULL;
-    IMMDeviceEnumerator *mme;
+    IMMDeviceEnumerator *mme, *mme2;
     ULONG ref;
     IMMDeviceCollection *col;
 
@@ -110,6 +113,18 @@ START_TEST(mmdevenum)
     ok( (LONG_PTR)mme == (LONG_PTR)unk, "Pointers are unequal %p/%p\n", unk, mme);
     IUnknown_Release(unk);
 
+    /* Proving that it is static.. */
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme2);
+    IUnknown_Release(mme2);
+    ok(mme == mme2, "Pointers are not equal!\n");
+
+    hr = IUnknown_QueryInterface(mme, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "Null pointer on QueryInterface returned %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(mme, &GUID_NULL, (void**)&unk);
+    ok(!unk, "Unk not reset to null after invalid QI\n");
+    ok(hr == E_NOINTERFACE, "Invalid hr %08x returned on IID_NULL\n", hr);
+
     col = (void*)(LONG_PTR)0x12345678;
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(mme, 0xffff, DEVICE_STATEMASK_ALL, &col);
     ok(hr == E_INVALIDARG, "Setting invalid data flow returned 0x%08x\n", hr);
@@ -122,7 +137,7 @@ START_TEST(mmdevenum)
     ok(hr == E_POINTER, "Invalid pointer returned: 0x%08x\n", hr);
 
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(mme, eAll, DEVICE_STATEMASK_ALL, &col);
-    ok(hr == S_OK, "Valid EnumAudioEndpoints returned 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Valid EnumAudioEndpoints returned 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ok(!!col, "Returned null pointer\n");
