@@ -2779,7 +2779,7 @@ static void test_MsiGetProductInfo(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(sz == 4, "Expected 4, got %d\n", sz);
 
-    /* lpValueBuf is NULL, pcchValueBuf is too small */
+    /* lpValueBuf is non-NULL, pcchValueBuf is too small */
     sz = 2;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
@@ -2787,7 +2787,7 @@ static void test_MsiGetProductInfo(void)
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(sz == 4, "Expected 4, got %d\n", sz);
 
-    /* lpValueBuf is NULL, pcchValueBuf is exactly 4 */
+    /* lpValueBuf is non-NULL, pcchValueBuf is exactly 4 */
     sz = 4;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
