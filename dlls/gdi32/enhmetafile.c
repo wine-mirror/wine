@@ -466,8 +466,12 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
 HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 {
     ENHMETAHEADER *emh = HeapAlloc( GetProcessHeap(), 0, bufsize );
+    HENHMETAFILE hmf;
     memmove(emh, buf, bufsize);
-    return EMF_Create_HENHMETAFILE( emh, FALSE );
+    hmf = EMF_Create_HENHMETAFILE( emh, FALSE );
+    if (!hmf)
+        HeapFree( GetProcessHeap(), 0, emh );
+    return hmf;
 }
 
 /*****************************************************************************
@@ -2509,6 +2513,8 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
         emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
+	if (!hmfDst)
+		HeapFree( GetProcessHeap(), 0, emrDst );
     } else {
         HANDLE hFile;
         DWORD w;
@@ -2549,6 +2555,8 @@ HENHMETAFILE WINAPI CopyEnhMetaFileW(
         emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
+	if (!hmfDst)
+		HeapFree( GetProcessHeap(), 0, emrDst );
     } else {
         HANDLE hFile;
         DWORD w;
