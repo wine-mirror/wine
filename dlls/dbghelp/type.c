@@ -878,13 +878,13 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
                                PCSTR Name, PSYMBOL_INFO Symbol)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
-    struct module*      module;
+    struct module_pair  pair;
     struct symt*        type;
 
     if (!pcs) return FALSE;
-    module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module) return FALSE;
-    type = symt_find_type_by_name(module, SymTagNull, Name);
+    pair.requested = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
+    type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
     Symbol->TypeIndex = (DWORD)type;
 
