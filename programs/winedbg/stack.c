@@ -124,7 +124,7 @@ BOOL stack_set_frame(int newframe)
     ADDRESS64   addr;
     if (!stack_set_frame_internal(newframe)) return FALSE;
     addr.Mode = AddrModeFlat;
-    addr.Offset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
+    addr.Offset = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
     source_list_from_addr(&addr, 0);
     return TRUE;
 }

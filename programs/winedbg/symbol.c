@@ -648,7 +648,7 @@ BOOL symbol_get_line(const char* filename, const char* name,
  * <name>=<value> (local|pmt <where>)   in detailed form
  * Note <value> can be an error message in case of error
  */
-void symbol_print_local(const SYMBOL_INFO* sym, ULONG_PTR base, BOOL detailed)
+void symbol_print_local(const SYMBOL_INFO* sym, DWORD_PTR base, BOOL detailed)
 {
     struct dbg_lvalue   lvalue;
     char                buffer[64];
@@ -682,7 +682,7 @@ static BOOL CALLBACK info_locals_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
     types_print_type(&type, FALSE);
 
     dbg_printf(" ");
-    symbol_print_local(sym, (ULONG_PTR)ctx, TRUE);
+    symbol_print_local(sym, (DWORD_PTR)ctx, TRUE);
     dbg_printf("\n");
 
     return TRUE;
