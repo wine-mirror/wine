@@ -94,6 +94,7 @@ static void *libcrypto_handle;
 static SSL_METHOD *method;
 static SSL_CTX *ctx;
 static int hostname_idx;
+static int error_idx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
@@ -364,7 +365,7 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
 
                 if (err)
                 {
-                    set_last_error( err );
+                    pSSL_set_ex_data( ssl, error_idx, (void *)err );
                     ret = FALSE;
                 }
             }
@@ -470,6 +471,14 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     }
     hostname_idx = pSSL_get_ex_new_index( 0, (void *)"hostname index", NULL, NULL, NULL );
     if (hostname_idx == -1)
+    {
+        ERR("SSL_get_ex_new_index failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        LeaveCriticalSection( &init_ssl_cs );
+        return FALSE;
+    }
+    error_idx = pSSL_get_ex_new_index( 0, (void *)"error index", NULL, NULL, NULL );
+    if (error_idx == -1)
     {
         ERR("SSL_get_ex_new_index failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
         set_last_error( ERROR_OUTOFMEMORY );
@@ -610,8 +619,6 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
 BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 {
 #ifdef SONAME_LIBSSL
-    long res;
-
     if (!(conn->ssl_conn = pSSL_new( ctx )))
     {
         ERR("SSL_new failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
@@ -632,14 +639,13 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
     }
     if (pSSL_connect( conn->ssl_conn ) <= 0)
     {
-        ERR("SSL_connect failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
-        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        DWORD err;
+
+        err = (DWORD)pSSL_get_ex_data( conn->ssl_conn, error_idx );
+        if (!err) err = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
+        ERR("couldn't verify server certificate (%d)\n", err);
+        set_last_error( err );
         goto fail;
-    }
-    if ((res = pSSL_get_verify_result( conn->ssl_conn )) != X509_V_OK)
-    {
-        /* FIXME: we should set an error and return, but we only print an error at the moment */
-        ERR("couldn't verify server certificate (%ld)\n", res);
     }
     TRACE("established SSL connection\n");
     conn->secure = TRUE;
