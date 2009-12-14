@@ -361,5 +361,7 @@ cpp_quote("#endif")
   void full_pointer_test([in, ptr] int *a, [in, ptr] int *b);
   void full_pointer_null_test([in, ptr] int *a, [in, ptr] int *b);
 
+  void authinfo_test(unsigned int protseq, int secure);
+
   void stop(void);
 }
