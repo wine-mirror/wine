@@ -2326,7 +2326,6 @@ static UINT TABLE_drop(struct tagMSIVIEW *view)
 
     list_remove(&tv->table->entry);
     free_table(tv->table);
-    TABLE_delete(view);
 
 done:
     msiobj_release(&rec->hdr);
