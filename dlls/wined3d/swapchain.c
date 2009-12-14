@@ -809,8 +809,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
             hr = WINED3DERR_NOTAVAILABLE;
             goto err;
         }
-
-        swapchain->context[0]->render_offscreen = swapchain->render_to_fbo;
     }
     else
     {

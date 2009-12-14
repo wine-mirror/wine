@@ -1348,6 +1348,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     ret->gl_info = &This->adapter->gl_info;
     ret->surface = (IWineD3DSurface *) target;
     ret->current_rt = (IWineD3DSurface *)target;
+    ret->render_offscreen = surface_is_offscreen((IWineD3DSurface *) target);
     ret->tid = GetCurrentThreadId();
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
         /* Create the dirty constants array and initialize them to dirty */
@@ -1893,7 +1894,7 @@ static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWin
         context = findThreadContextForSwapChain(swapchain, tid);
 
         old_render_offscreen = context->render_offscreen;
-        context->render_offscreen = ((IWineD3DSwapChainImpl *)swapchain)->render_to_fbo;
+        context->render_offscreen = surface_is_offscreen(target);
         /* The context != This->activeContext will catch a NOP context change. This can occur
          * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
          * rendering. No context change is needed in that case
