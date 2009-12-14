@@ -206,7 +206,7 @@ static DWORD HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
 static INT HTTP_GetCustomHeaderIndex(http_request_t *req, LPCWSTR lpszField, INT index, BOOL Request);
 static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
-static BOOL HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
+static DWORD HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
 static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(http_request_t *req, LPCWSTR field);
@@ -283,12 +283,12 @@ static DWORD set_content_length( http_request_t *lpwhr )
     DWORD size;
 
     size = sizeof(lpwhr->dwContentLength);
-    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
-                             &lpwhr->dwContentLength, &size, NULL))
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
+                            &lpwhr->dwContentLength, &size, NULL) != ERROR_SUCCESS)
         lpwhr->dwContentLength = ~0u;
 
     size = sizeof(encoding);
-    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &size, NULL) &&
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &size, NULL) == ERROR_SUCCESS &&
         !strcmpiW(encoding, szChunked))
     {
         lpwhr->dwContentLength = ~0u;
@@ -1307,7 +1307,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
     DWORD size;
 
     size = sizeof(new_location);
-    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL))
+    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL) == ERROR_SUCCESS)
     {
         if (!(url = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR) ))) return NULL;
         strcpyW( url, new_location );
@@ -1507,16 +1507,15 @@ static BOOL HTTP_KeepAlive(http_request_t *lpwhr)
 
     /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
      * the connection is keep-alive by default */
-    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
-                             &dwBufferSize, NULL) &&
-        !strcmpiW(szVersion, g_szHttp1_1))
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion, &dwBufferSize, NULL) == ERROR_SUCCESS
+        && !strcmpiW(szVersion, g_szHttp1_1))
     {
         keepalive = TRUE;
     }
 
     dwBufferSize = sizeof(szConnectionResponse);
-    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
-        HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL))
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS
+        || HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS)
     {
         keepalive = !strcmpiW(szConnectionResponse, szKeepAlive);
     }
@@ -2651,11 +2650,10 @@ static const LPCWSTR header_lookup[] = {
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
-static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
-	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+static DWORD HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
+        LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
-    BOOL bSuccess = FALSE;
     BOOL request_only = dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS;
     INT requested_index = lpdwIndex ? *lpdwIndex : 0;
     DWORD level = (dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK);
@@ -2665,14 +2663,14 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
     switch (level)
     {
     case HTTP_QUERY_CUSTOM:
-        if (!lpBuffer) return FALSE;
+        if (!lpBuffer) return ERROR_INVALID_PARAMETER;
         index = HTTP_GetCustomHeaderIndex(lpwhr, lpBuffer, requested_index, request_only);
         break;
     case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
             LPWSTR headers;
             DWORD len = 0;
-            BOOL ret = FALSE;
+            DWORD res = ERROR_INVALID_PARAMETER;
 
             if (request_only)
                 headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
@@ -2685,8 +2683,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
             if (len + sizeof(WCHAR) > *lpdwBufferLength)
             {
                 len += sizeof(WCHAR);
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                ret = FALSE;
+                res = ERROR_INSUFFICIENT_BUFFER;
             }
             else if (lpBuffer)
             {
@@ -2698,13 +2695,13 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
                     memcpy(lpBuffer, szCrLf, sizeof(szCrLf));
                 }
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len / sizeof(WCHAR)));
-                ret = TRUE;
+                res = ERROR_SUCCESS;
             }
             *lpdwBufferLength = len;
 
             if (request_only)
                 HeapFree(GetProcessHeap(), 0, headers);
-            return ret;
+            return res;
         }
     case HTTP_QUERY_RAW_HEADERS:
         {
@@ -2719,8 +2716,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
             {
                 HTTP_FreeTokens(ppszRawHeaderLines);
                 *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                return FALSE;
+                return ERROR_INSUFFICIENT_BUFFER;
             }
             if (pszString)
             {
@@ -2736,7 +2732,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
             *lpdwBufferLength = size * sizeof(WCHAR);
             HTTP_FreeTokens(ppszRawHeaderLines);
 
-            return TRUE;
+            return ERROR_SUCCESS;
         }
     case HTTP_QUERY_STATUS_TEXT:
         if (lpwhr->lpszStatusText)
@@ -2745,8 +2741,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                return FALSE;
+                return ERROR_INSUFFICIENT_BUFFER;
             }
             if (lpBuffer)
             {
@@ -2754,7 +2749,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
             }
             *lpdwBufferLength = len * sizeof(WCHAR);
-            return TRUE;
+            return ERROR_SUCCESS;
         }
         break;
     case HTTP_QUERY_VERSION:
@@ -2764,8 +2759,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                return FALSE;
+                return ERROR_INSUFFICIENT_BUFFER;
             }
             if (lpBuffer)
             {
@@ -2773,7 +2767,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
             }
             *lpdwBufferLength = len * sizeof(WCHAR);
-            return TRUE;
+            return ERROR_SUCCESS;
         }
         break;
     case HTTP_QUERY_CONTENT_ENCODING:
@@ -2796,8 +2790,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
         ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
          (~lphttpHdr->wFlags & HDR_ISREQUEST)))
     {
-        INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-        return bSuccess;
+        return ERROR_HTTP_HEADER_NOT_FOUND;
     }
 
     if (lpdwIndex && level != HTTP_QUERY_STATUS_CODE) (*lpdwIndex)++;
@@ -2807,8 +2800,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
     {
         *(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);
         TRACE(" returning number: %d\n", *(int *)lpBuffer);
-        bSuccess = TRUE;
-    }
+     }
     else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME && lpBuffer)
     {
         time_t tmpTime;
@@ -2827,8 +2819,7 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
         STHook->wMonth = tmpTM.tm_mon + 1;
         STHook->wSecond = tmpTM.tm_sec;
         STHook->wYear = tmpTM.tm_year;
-        bSuccess = TRUE;
-	
+
         TRACE(" returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
               STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
               STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
@@ -2840,18 +2831,16 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
         if (len > *lpdwBufferLength)
         {
             *lpdwBufferLength = len;
-            INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            return bSuccess;
+            return ERROR_INSUFFICIENT_BUFFER;
         }
         if (lpBuffer)
         {
             memcpy(lpBuffer, lphttpHdr->lpszValue, len);
-            TRACE(" returning string: %s\n", debugstr_w(lpBuffer));
+            TRACE("! returning string: %s\n", debugstr_w(lpBuffer));
         }
         *lpdwBufferLength = len - sizeof(WCHAR);
-        bSuccess = TRUE;
     }
-    return bSuccess;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -2865,10 +2854,10 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
  *
  */
 BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
-	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+        LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
-    BOOL bSuccess = FALSE;
     http_request_t *lpwhr;
+    DWORD res;
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -2983,21 +2972,23 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	goto lend;
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+        goto lend;
     }
 
     if (lpBuffer == NULL)
         *lpdwBufferLength = 0;
-    bSuccess = HTTP_HttpQueryInfoW( lpwhr, dwInfoLevel,
-	                            lpBuffer, lpdwBufferLength, lpdwIndex);
+    res = HTTP_HttpQueryInfoW( lpwhr, dwInfoLevel,
+                               lpBuffer, lpdwBufferLength, lpdwIndex);
 
 lend:
     if( lpwhr )
          WININET_Release( &lpwhr->hdr );
 
-    TRACE("%d <--\n", bSuccess);
-    return bSuccess;
+    TRACE("%u <--\n", res);
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -3550,8 +3541,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
             if (!set_content_length( lpwhr )) HTTP_FinishedReading(lpwhr);
 
             dwBufferSize = sizeof(dwStatusCode);
-            if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
-                                     &dwStatusCode,&dwBufferSize,NULL))
+            if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
+                                    &dwStatusCode,&dwBufferSize,NULL) != ERROR_SUCCESS)
                 dwStatusCode = 0;
 
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && responseLen)
@@ -3559,7 +3550,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                 WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
                 dwBufferSize=sizeof(szNewLocation);
                 if ((dwStatusCode==HTTP_STATUS_REDIRECT || dwStatusCode==HTTP_STATUS_MOVED) &&
-                    HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
+                    HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL) == ERROR_SUCCESS)
                 {
                     if (strcmpW(lpwhr->lpszVerb, szGET) && strcmpW(lpwhr->lpszVerb, szHEAD))
                     {
@@ -3590,7 +3581,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                 {
                     LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr, hostW);
                     DWORD dwIndex = 0;
-                    while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_WWW_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex))
+                    while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_WWW_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex) == ERROR_SUCCESS)
                     {
                         if (HTTP_DoAuthorization(lpwhr, szAuthValue,
                                                  &lpwhr->pAuthInfo,
@@ -3606,7 +3597,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                 if (dwStatusCode == HTTP_STATUS_PROXY_AUTH_REQ)
                 {
                     DWORD dwIndex = 0;
-                    while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_PROXY_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex))
+                    while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_PROXY_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex) == ERROR_SUCCESS)
                     {
                         if (HTTP_DoAuthorization(lpwhr, szAuthValue,
                                                  &lpwhr->pProxyAuthInfo,
@@ -3724,12 +3715,12 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PT
     if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
         DWORD dwCode,dwCodeLength = sizeof(DWORD);
-        if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) &&
-            (dwCode == 302 || dwCode == 301 || dwCode == 303))
+        if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) == ERROR_SUCCESS
+            && (dwCode == 302 || dwCode == 301 || dwCode == 303))
         {
             WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
-            if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL))
+            if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL) == ERROR_SUCCESS)
             {
                 if (strcmpW(lpwhr->lpszVerb, szGET) && strcmpW(lpwhr->lpszVerb, szHEAD))
                 {
