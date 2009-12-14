@@ -2084,7 +2084,7 @@ static HRESULT InstallerImpl_ProductInfo(WORD wFlags,
     UINT ret;
     HRESULT hr;
     DWORD size;
-    LPWSTR str;
+    LPWSTR str = NULL;
     VARIANTARG varg0, varg1;
 
     if (!(wFlags & DISPATCH_PROPERTYGET))
@@ -2118,8 +2118,6 @@ static HRESULT InstallerImpl_ProductInfo(WORD wFlags,
     }
 
     ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), str, &size);
-    msi_free(str);
-
     if (ret != ERROR_SUCCESS)
     {
         hr = DISP_E_EXCEPTION;
@@ -2130,6 +2128,7 @@ static HRESULT InstallerImpl_ProductInfo(WORD wFlags,
     hr = S_OK;
 
 done:
+    msi_free(str);
     VariantClear(&varg0);
     VariantClear(&varg1);
     return hr;
