@@ -1697,6 +1697,9 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
         TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppv);
         *ppv = VIEWOBJ2(This);
+    }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
+        TRACE("(%p)->(IID_IViewObjectEx, %p)\n", This, ppv);
+        *ppv = VIEWOBJEX(This);
     }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
         TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppv);
         *ppv = OLEWIN(This);

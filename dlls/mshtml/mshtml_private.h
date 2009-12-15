@@ -314,7 +314,7 @@ struct HTMLDocument {
     const IOleDocumentVtbl                *lpOleDocumentVtbl;
     const IOleDocumentViewVtbl            *lpOleDocumentViewVtbl;
     const IOleInPlaceActiveObjectVtbl     *lpOleInPlaceActiveObjectVtbl;
-    const IViewObject2Vtbl                *lpViewObject2Vtbl;
+    const IViewObjectExVtbl               *lpViewObjectExVtbl;
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
@@ -564,8 +564,9 @@ struct HTMLDocumentNode {
 #define DOCVIEW(x)       ((IOleDocumentView*)             &(x)->lpOleDocumentViewVtbl)
 #define OLEWIN(x)        ((IOleWindow*)                   &(x)->lpOleInPlaceActiveObjectVtbl)
 #define ACTOBJ(x)        ((IOleInPlaceActiveObject*)      &(x)->lpOleInPlaceActiveObjectVtbl)
-#define VIEWOBJ(x)       ((IViewObject*)                  &(x)->lpViewObject2Vtbl)
-#define VIEWOBJ2(x)      ((IViewObject2*)                 &(x)->lpViewObject2Vtbl)
+#define VIEWOBJ(x)       ((IViewObject*)                  &(x)->lpViewObjectExVtbl)
+#define VIEWOBJ2(x)      ((IViewObject2*)                 &(x)->lpViewObjectExVtbl)
+#define VIEWOBJEX(x)      ((IViewObjectEx*)               &(x)->lpViewObjectExVtbl)
 #define INPLACEOBJ(x)    ((IOleInPlaceObject*)            &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define INPLACEWIN(x)    ((IOleInPlaceObjectWindowless*)  &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
