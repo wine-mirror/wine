@@ -81,19 +81,6 @@ static inline void free_buffer( void *static_buffer, void *buffer )
     if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-/* find an existing winproc for a given 16-bit function and type */
-/* FIXME: probably should do something more clever than a linear search */
-static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
-{
-    unsigned int i;
-
-    for (i = BUILTIN_WINPROCS; i < winproc_used; i++)
-    {
-        if (winproc_array[i].proc16 == func) return &winproc_array[i];
-    }
-    return NULL;
-}
-
 /* find an existing winproc for a given function and type */
 /* FIXME: probably should do something more clever than a linear search */
 static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
@@ -259,14 +246,183 @@ done:
     return proc->proc16;
 }
 
-#else  /* __i386__ */
-
-static inline WINDOWPROC *handle16_to_proc( WNDPROC16 handle )
+/* find an existing winproc for a given 16-bit function and type */
+/* FIXME: probably should do something more clever than a linear search */
+static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
 {
-    return handle_to_proc( (WNDPROC)handle );
+    unsigned int i;
+
+    for (i = BUILTIN_WINPROCS; i < winproc_used; i++)
+    {
+        if (winproc_array[i].proc16 == func) return &winproc_array[i];
+    }
+    return NULL;
 }
 
-static inline WNDPROC16 alloc_win16_thunk( WINDOWPROC *proc )
+/* call a 16-bit window procedure */
+static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
+                                   LRESULT *result, void *arg )
+{
+    WNDPROC16 func = arg;
+    WINDOWPROC *proc = handle16_to_proc( func );
+    CONTEXT86 context;
+    size_t size = 0;
+    struct
+    {
+        WORD params[5];
+        union
+        {
+            CREATESTRUCT16 cs16;
+            DRAWITEMSTRUCT16 dis16;
+            COMPAREITEMSTRUCT16 cis16;
+        } u;
+    } args;
+
+    USER_CheckNotLock();
+
+    if (proc) func = proc->proc16;
+
+    /* Window procedures want ax = hInstance, ds = es = ss */
+
+    memset(&context, 0, sizeof(context));
+    context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
+    context.SegFs = wine_get_fs();
+    context.SegGs = wine_get_gs();
+    if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
+    context.SegCs = SELECTOROF(func);
+    context.Eip   = OFFSETOF(func);
+    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
+
+    if (lParam)
+    {
+        /* Some programs (eg. the "Undocumented Windows" examples, JWP) only
+           work if structures passed in lParam are placed in the stack/data
+           segment. Programmers easily make the mistake of converting lParam
+           to a near rather than a far pointer, since Windows apparently
+           allows this. We copy the structures to the 16 bit stack; this is
+           ugly but makes these programs work. */
+        switch (msg)
+        {
+          case WM_CREATE:
+          case WM_NCCREATE:
+            size = sizeof(CREATESTRUCT16); break;
+          case WM_DRAWITEM:
+            size = sizeof(DRAWITEMSTRUCT16); break;
+          case WM_COMPAREITEM:
+            size = sizeof(COMPAREITEMSTRUCT16); break;
+        }
+        if (size)
+        {
+            memcpy( &args.u, MapSL(lParam), size );
+            lParam = PtrToUlong(NtCurrentTeb()->WOW32Reserved) - size;
+        }
+    }
+
+    args.params[4] = hwnd;
+    args.params[3] = msg;
+    args.params[2] = wParam;
+    args.params[1] = HIWORD(lParam);
+    args.params[0] = LOWORD(lParam);
+    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args.params) + size, &args, (DWORD *)&context );
+    *result = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
+    return *result;
+}
+
+/**********************************************************************
+ *	     WINPROC_AllocProc16
+ */
+WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return NULL;
+
+    /* check if the function is already a win proc */
+    if (!(proc = handle16_to_proc( func )))
+    {
+        EnterCriticalSection( &winproc_cs );
+
+        /* then check if we already have a winproc for that function */
+        if (!(proc = find_winproc16( func )))
+        {
+            if (winproc_used < MAX_WINPROCS)
+            {
+                proc = &winproc_array[winproc_used++];
+                proc->proc16 = func;
+                TRACE( "allocated %p for %p/16-bit (%d/%d used)\n",
+                       proc_to_handle(proc), func, winproc_used, MAX_WINPROCS );
+            }
+            else FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
+        }
+        else TRACE( "reusing %p for %p/16-bit\n", proc_to_handle(proc), func );
+
+        LeaveCriticalSection( &winproc_cs );
+    }
+    return proc_to_handle( proc );
+}
+
+/**********************************************************************
+ *	     WINPROC_GetProc16
+ *
+ * Get a window procedure pointer that can be passed to the Windows program.
+ */
+WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
+{
+    WINDOWPROC *ptr;
+
+    if (unicode) ptr = alloc_winproc( NULL, proc );
+    else ptr = alloc_winproc( proc, NULL );
+
+    if (!ptr) return 0;
+    return alloc_win16_thunk( ptr );
+}
+
+static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result, void *arg );
+static LRESULT call_window_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result, void *arg );
+
+/**********************************************************************
+ *		CallWindowProc (USER.122)
+ */
+LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
+                                 WPARAM16 wParam, LPARAM lParam )
+{
+    WINDOWPROC *proc;
+    LRESULT result;
+
+    if (!func) return 0;
+
+    if (!(proc = handle16_to_proc( func )))
+        call_window_proc16( hwnd, msg, wParam, lParam, &result, func );
+    else if (proc->procA)
+        WINPROC_CallProc16To32A( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
+    else if (proc->procW)
+        WINPROC_CallProc16To32A( call_window_proc_AtoW, hwnd, msg, wParam, lParam, &result, proc->procW );
+    else
+        call_window_proc16( hwnd, msg, wParam, lParam, &result, func );
+
+    return result;
+}
+
+/**********************************************************************
+ *	     __wine_call_wndproc   (USER.1010)
+ */
+LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
+                                    WINDOWPROC *proc )
+{
+    LRESULT result;
+
+    if (proc->procA)
+        WINPROC_CallProc16To32A( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
+    else
+        WINPROC_CallProc16To32A( call_window_proc_AtoW, hwnd, msg, wParam, lParam, &result, proc->procW );
+    return result;
+}
+
+
+#else  /* __i386__ */
+
+static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
+                                   LRESULT *result, void *arg )
 {
     return 0;
 }
@@ -496,72 +652,6 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     return ret;
 }
 
-/* call a 16-bit window procedure */
-static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
-                                   LRESULT *result, void *arg )
-{
-    WNDPROC16 proc = arg;
-    CONTEXT86 context;
-    size_t size = 0;
-    struct
-    {
-        WORD params[5];
-        union
-        {
-            CREATESTRUCT16 cs16;
-            DRAWITEMSTRUCT16 dis16;
-            COMPAREITEMSTRUCT16 cis16;
-        } u;
-    } args;
-
-    USER_CheckNotLock();
-
-    /* Window procedures want ax = hInstance, ds = es = ss */
-
-    memset(&context, 0, sizeof(context));
-    context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
-    if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
-    context.SegCs = SELECTOROF(proc);
-    context.Eip   = OFFSETOF(proc);
-    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
-
-    if (lParam)
-    {
-        /* Some programs (eg. the "Undocumented Windows" examples, JWP) only
-           work if structures passed in lParam are placed in the stack/data
-           segment. Programmers easily make the mistake of converting lParam
-           to a near rather than a far pointer, since Windows apparently
-           allows this. We copy the structures to the 16 bit stack; this is
-           ugly but makes these programs work. */
-        switch (msg)
-        {
-          case WM_CREATE:
-          case WM_NCCREATE:
-            size = sizeof(CREATESTRUCT16); break;
-          case WM_DRAWITEM:
-            size = sizeof(DRAWITEMSTRUCT16); break;
-          case WM_COMPAREITEM:
-            size = sizeof(COMPAREITEMSTRUCT16); break;
-        }
-        if (size)
-        {
-            memcpy( &args.u, MapSL(lParam), size );
-            lParam = PtrToUlong(NtCurrentTeb()->WOW32Reserved) - size;
-        }
-    }
-
-    args.params[4] = hwnd;
-    args.params[3] = msg;
-    args.params[2] = wParam;
-    args.params[1] = HIWORD(lParam);
-    args.params[0] = LOWORD(lParam);
-    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args.params) + size, &args, (DWORD *)&context );
-    *result = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
-    return *result;
-}
-
 /* call a 16-bit dialog procedure */
 static LRESULT call_dialog_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
                                    LRESULT *result, void *arg )
@@ -595,23 +685,6 @@ static LRESULT call_window_proc_AtoW( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
 
 
 /**********************************************************************
- *	     WINPROC_GetProc16
- *
- * Get a window procedure pointer that can be passed to the Windows program.
- */
-WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
-{
-    WINDOWPROC *ptr;
-
-    if (unicode) ptr = alloc_winproc( NULL, proc );
-    else ptr = alloc_winproc( proc, NULL );
-
-    if (!ptr) return 0;
-    return alloc_win16_thunk( ptr );
-}
-
-
-/**********************************************************************
  *	     WINPROC_GetProc
  *
  * Get a window procedure pointer that can be passed to the Windows program.
@@ -631,46 +704,6 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
         if (ptr->procA) return ptr->procA;
         return proc;
     }
-}
-
-
-/**********************************************************************
- *	     WINPROC_AllocProc16
- *
- * Allocate a window procedure for a window or class.
- *
- * Note that allocated winprocs are never freed; the idea is that even if an app creates a
- * lot of windows, it will usually only have a limited number of window procedures, so the
- * array won't grow too large, and this way we avoid the need to track allocations per window.
- */
-WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
-{
-    WINDOWPROC *proc;
-
-    if (!func) return NULL;
-
-    /* check if the function is already a win proc */
-    if (!(proc = handle16_to_proc( func )))
-    {
-        EnterCriticalSection( &winproc_cs );
-
-        /* then check if we already have a winproc for that function */
-        if (!(proc = find_winproc16( func )))
-        {
-            if (winproc_used < MAX_WINPROCS)
-            {
-                proc = &winproc_array[winproc_used++];
-                proc->proc16 = func;
-                TRACE( "allocated %p for %p/16-bit (%d/%d used)\n",
-                       proc_to_handle(proc), func, winproc_used, MAX_WINPROCS );
-            }
-            else FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
-        }
-        else TRACE( "reusing %p for %p/16-bit\n", proc_to_handle(proc), func );
-
-        LeaveCriticalSection( &winproc_cs );
-    }
-    return proc_to_handle( proc );
 }
 
 
@@ -1600,22 +1633,6 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
 
 
 /**********************************************************************
- *	     __wine_call_wndproc   (USER.1010)
- */
-LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
-                                    WINDOWPROC *proc )
-{
-    LRESULT result;
-
-    if (proc->procA)
-        WINPROC_CallProc16To32A( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
-    else
-        WINPROC_CallProc16To32A( call_window_proc_AtoW, hwnd, msg, wParam, lParam, &result, proc->procW );
-    return result;
-}
-
-
-/**********************************************************************
  *	     WINPROC_CallProc32ATo16
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
@@ -2183,6 +2200,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     WND *wndPtr;
+    WNDPROC func;
     WINDOWPROC *proc;
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
@@ -2192,6 +2210,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         WIN_ReleasePtr( wndPtr );
         return FALSE;
     }
+    func = wndPtr->winproc;
     proc = handle_to_proc( wndPtr->winproc );
     WIN_ReleasePtr( wndPtr );
 
@@ -2207,7 +2226,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         else if (proc->procA)
             WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procA );
         else
-            WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, result, proc->proc16 );
+            WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, result, func );
     }
     else
     {
@@ -2216,34 +2235,10 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         else if (proc->procW)
             WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW, mapping );
         else
-            WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wParam, lParam, result, proc->proc16 );
+            call_window_proc_Ato16( hwnd, msg, wParam, lParam, result, func );
     }
     thread_info->recursion_count--;
     return TRUE;
-}
-
-
-/**********************************************************************
- *		CallWindowProc (USER.122)
- */
-LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
-                                 WPARAM16 wParam, LPARAM lParam )
-{
-    WINDOWPROC *proc;
-    LRESULT result;
-
-    if (!func) return 0;
-
-    if (!(proc = handle16_to_proc( func )))
-        call_window_proc16( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc->procA)
-        WINPROC_CallProc16To32A( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
-    else if (proc->procW)
-        WINPROC_CallProc16To32A( call_window_proc_AtoW, hwnd, msg, wParam, lParam, &result, proc->procW );
-    else
-        call_window_proc16( hwnd, msg, wParam, lParam, &result, proc->proc16 );
-
-    return result;
 }
 
 
@@ -2291,7 +2286,7 @@ LRESULT WINAPI CallWindowProcA(
         WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, &result,
                               proc->procW, WMCHAR_MAP_CALLWINDOWPROC );
     else
-        WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
+        call_window_proc_Ato16( hwnd, msg, wParam, lParam, &result, func );
     return result;
 }
 
@@ -2316,7 +2311,7 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
     else if (proc->procA)
         WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
     else
-        WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
+        WINPROC_CallProcWtoA( call_window_proc_Ato16, hwnd, msg, wParam, lParam, &result, func );
     return result;
 }
 
@@ -2344,7 +2339,7 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     }
     else
     {
-        ret = WINPROC_CallProc32ATo16( call_dialog_proc16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
+        ret = call_dialog_proc_Ato16( hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
     }
     return ret;
@@ -2373,7 +2368,7 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     }
     else
     {
-        ret = WINPROC_CallProcWtoA( call_dialog_proc_Ato16, hwnd, msg, wParam, lParam, &result, proc->proc16 );
+        ret = WINPROC_CallProcWtoA( call_dialog_proc_Ato16, hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
     }
     return ret;
