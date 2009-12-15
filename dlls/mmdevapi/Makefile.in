@@ -6,6 +6,7 @@ MODULE    = mmdevapi.dll
 IMPORTS   = ole32 user32 advapi32 kernel32 ntdll
 
 C_SRCS = \
+	devenum.c \
 	main.c \
 	regsvr.c
 
