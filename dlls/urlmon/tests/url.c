@@ -2184,9 +2184,10 @@ static BOOL test_RegisterBindStatusCallback(void)
     return ret;
 }
 
-#define BINDTEST_EMULATE     1
-#define BINDTEST_TOOBJECT    2
-#define BINDTEST_FILEDWLAPI  4
+#define BINDTEST_EMULATE       0x0001
+#define BINDTEST_TOOBJECT      0x0002
+#define BINDTEST_FILEDWLAPI    0x0004
+#define BINDTEST_HTTPRESPONSE  0x0008
 
 static void init_bind_test(int protocol, DWORD flags, DWORD t)
 {
@@ -2201,9 +2202,13 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     bind_to_object = (flags & BINDTEST_TOOBJECT) != 0;
     tymed = t;
     filedwl_api = (flags & BINDTEST_FILEDWLAPI) != 0;
+    if(flags & BINDTEST_HTTPRESPONSE)
+        urls[HTTP_TEST] = SHORT_RESPONSE_URL;
+    else
+        urls[HTTP_TEST] = WINE_ABOUT_URL;
 }
 
-static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
+static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 {
     IMoniker *mon;
     HRESULT hres;
@@ -2214,7 +2219,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     IUnknown *unk = (IUnknown*)0x00ff00ff;
     IBinding *bind;
 
-    init_bind_test(protocol, emul ? BINDTEST_EMULATE : 0, t);
+    init_bind_test(protocol, flags, t);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&bsc, NULL, &bctx);
@@ -2571,7 +2576,7 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(Obj_OnStopBinding);
     }
 
-    if(test_protocol != HTTP_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL || !(bindf & BINDF_ASYNCHRONOUS)) {
+    if(test_protocol != HTTP_TEST || emul || !(bindf & BINDF_ASYNCHRONOUS)) {
         ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
         ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
     }else {
@@ -2842,7 +2847,7 @@ START_TEST(url)
         test_BindToStorage_fail();
 
         trace("synchronous http test (COM not initialised)...\n");
-        test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(HTTP_TEST, 0, TYMED_ISTREAM);
 
         CoInitialize(NULL);
 
@@ -2850,13 +2855,13 @@ START_TEST(url)
         test_StdURLMoniker();
 
         trace("synchronous http test...\n");
-        test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(HTTP_TEST, 0, TYMED_ISTREAM);
 
         trace("synchronous http test (to object)...\n");
         test_BindToObject(HTTP_TEST, FALSE);
 
         trace("synchronous file test...\n");
-        test_BindToStorage(FILE_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(FILE_TEST, 0, TYMED_ISTREAM);
 
         trace("synchronous file test (to object)...\n");
         test_BindToObject(FILE_TEST, FALSE);
@@ -2864,81 +2869,80 @@ START_TEST(url)
         bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
         trace("http test...\n");
-        test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(HTTP_TEST, 0, TYMED_ISTREAM);
 
         trace("http test (to file)...\n");
-        test_BindToStorage(HTTP_TEST, FALSE, TYMED_FILE);
+        test_BindToStorage(HTTP_TEST, 0, TYMED_FILE);
 
         trace("http test (to object)...\n");
         test_BindToObject(HTTP_TEST, FALSE);
 
         trace("http test (short response)...\n");
         http_is_first = TRUE;
-        urls[HTTP_TEST] = SHORT_RESPONSE_URL;
-        test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(HTTP_TEST, BINDTEST_HTTPRESPONSE, TYMED_ISTREAM);
 
         trace("http test (short response, to object)...\n");
         test_BindToObject(HTTP_TEST, FALSE);
 
         trace("emulated http test...\n");
-        test_BindToStorage(HTTP_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("emulated http test (to object)...\n");
         test_BindToObject(HTTP_TEST, TRUE);
 
         trace("emulated http test (to file)...\n");
-        test_BindToStorage(HTTP_TEST, TRUE, TYMED_FILE);
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("asynchronous https test...\n");
-        test_BindToStorage(HTTPS_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);
 
         trace("emulated https test...\n");
-        test_BindToStorage(HTTPS_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(HTTPS_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("about test...\n");
-        test_BindToStorage(ABOUT_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(ABOUT_TEST, 0, TYMED_ISTREAM);
 
         trace("about test (to file)...\n");
-        test_BindToStorage(ABOUT_TEST, FALSE, TYMED_FILE);
+        test_BindToStorage(ABOUT_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("about test (to object)...\n");
         test_BindToObject(ABOUT_TEST, FALSE);
 
         trace("emulated about test...\n");
-        test_BindToStorage(ABOUT_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(ABOUT_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("emulated about test (to file)...\n");
-        test_BindToStorage(ABOUT_TEST, TRUE, TYMED_FILE);
+        test_BindToStorage(ABOUT_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("emulated about test (to object)...\n");
         test_BindToObject(ABOUT_TEST, TRUE);
 
         trace("file test...\n");
-        test_BindToStorage(FILE_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(FILE_TEST, 0, TYMED_ISTREAM);
 
         trace("file test (to file)...\n");
-        test_BindToStorage(FILE_TEST, FALSE, TYMED_FILE);
+        test_BindToStorage(FILE_TEST, 0, TYMED_FILE);
 
         trace("file test (to object)...\n");
         test_BindToObject(FILE_TEST, FALSE);
 
         trace("emulated file test...\n");
-        test_BindToStorage(FILE_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(FILE_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("emulated file test (to file)...\n");
-        test_BindToStorage(FILE_TEST, TRUE, TYMED_FILE);
+        test_BindToStorage(FILE_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("emulated file test (to object)...\n");
         test_BindToObject(FILE_TEST, TRUE);
 
         trace("emulated its test...\n");
-        test_BindToStorage(ITS_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(ITS_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("emulated its test (to file)...\n");
-        test_BindToStorage(ITS_TEST, TRUE, TYMED_FILE);
+        test_BindToStorage(ITS_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("emulated mk test...\n");
-        test_BindToStorage(MK_TEST, TRUE, TYMED_ISTREAM);
+        test_BindToStorage(MK_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("test URLDownloadToFile for file protocol...\n");
         test_URLDownloadToFile(FILE_TEST, FALSE);
@@ -2952,7 +2956,7 @@ START_TEST(url)
         bindf |= BINDF_NOWRITECACHE;
 
         trace("ftp test...\n");
-        test_BindToStorage(FTP_TEST, FALSE, TYMED_ISTREAM);
+        test_BindToStorage(FTP_TEST, 0, TYMED_ISTREAM);
 
         trace("test failures...\n");
         test_BindToStorage_fail();
