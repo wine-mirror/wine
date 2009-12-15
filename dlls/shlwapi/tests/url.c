@@ -552,6 +552,17 @@ static void test_UrlGetPart(void)
 
   test_url_part(http_url, URL_PART_HOSTNAME, 0, "www.wine hq.org");
   test_url_part(http_url, URL_PART_PASSWORD, 0, "pass 123");
+
+  dwSize = sizeof(szPart);
+  res = UrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  ok(res==S_FALSE, "returned %08x\n", res);
+
+  dwSize = sizeof(szPart);
+  szPart[0] = 'x'; szPart[1] = '\0';
+  res = UrlGetPartA("file:some text", szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  ok(res==S_FALSE, "returned %08x\n", res);
+  ok(szPart[0] == '\0', "szPart[0] = %c\n", szPart[0]);
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
 }
 
 /* ########################### */
