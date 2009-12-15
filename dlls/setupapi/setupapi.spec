@@ -74,7 +74,7 @@
 @ stdcall CM_Get_Device_IDA(ptr ptr long long)
 @ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stub CM_Get_Device_ID_ExA
-@ stub CM_Get_Device_ID_ExW
+@ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_ID_ListA(str ptr long long)
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
 @ stub CM_Get_Device_ID_List_ExA

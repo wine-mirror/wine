@@ -79,6 +79,16 @@ CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 }
 
 /***********************************************************************
+ *             CM_Get_Device_ID_ExW  (SETUPAPI.@)
+ */
+DWORD WINAPI CM_Get_Device_ID_ExW(
+    DEVINST dnDevInst, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags, HMACHINE hMachine)
+{
+    FIXME("0x%08x %p 0x%08x 0x%08x %p\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
  *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Device_ID_ListA(
