@@ -41,7 +41,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "user_private.h"
 #include "win.h"
@@ -1833,8 +1832,7 @@ static char *strdupA(LPCSTR str)
 /***********************************************************************
  *           ComboWndProc_common
  */
-static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
-                                    WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
       LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongPtrW( hwnd, 0 );
 
@@ -2222,80 +2220,6 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 }
 
 /***********************************************************************
- *           ComboWndProc_wrapper16
- */
-static LRESULT ComboWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    static const UINT msg16_offset = CB_GETEDITSEL16 - CB_GETEDITSEL;
-
-    switch (msg)
-    {
-    case CB_INSERTSTRING16:
-    case CB_SELECTSTRING16:
-    case CB_FINDSTRING16:
-    case CB_FINDSTRINGEXACT16:
-        wParam = (INT)(INT16)wParam;
-        /* fall through */
-    case CB_ADDSTRING16:
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & CBS_HASSTRINGS) lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case CB_SETITEMHEIGHT16:
-    case CB_GETITEMHEIGHT16:
-    case CB_SETCURSEL16:
-    case CB_GETLBTEXTLEN16:
-    case CB_GETITEMDATA16:
-    case CB_SETITEMDATA16:
-        wParam = (INT)(INT16)wParam;	/* signed integer */
-        msg -= msg16_offset;
-        break;
-    case CB_GETDROPPEDCONTROLRECT16:
-        lParam = (LPARAM)MapSL(lParam);
-        if (lParam)
-        {
-            RECT r;
-            RECT16 *r16 = (RECT16 *)lParam;
-            ComboWndProc_common( hwnd, CB_GETDROPPEDCONTROLRECT, wParam, (LPARAM)&r, FALSE );
-            r16->left   = r.left;
-            r16->top    = r.top;
-            r16->right  = r.right;
-            r16->bottom = r.bottom;
-        }
-        return CB_OKAY;
-    case CB_DIR16:
-        if (wParam & DDL_DRIVES) wParam |= DDL_EXCLUSIVE;
-        lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case CB_GETLBTEXT16:
-        wParam = (INT)(INT16)wParam;
-        lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case CB_GETEDITSEL16:
-        wParam = lParam = 0;   /* just in case */
-        msg -= msg16_offset;
-        break;
-    case CB_LIMITTEXT16:
-    case CB_SETEDITSEL16:
-    case CB_DELETESTRING16:
-    case CB_RESETCONTENT16:
-    case CB_GETDROPPEDSTATE16:
-    case CB_SHOWDROPDOWN16:
-    case CB_GETCOUNT16:
-    case CB_GETCURSEL16:
-    case CB_SETEXTENDEDUI16:
-    case CB_GETEXTENDEDUI16:
-        msg -= msg16_offset;
-        break;
-    default:
-        return ComboWndProc_common( hwnd, msg, wParam, lParam, unicode );
-    }
-    return ComboWndProc_common( hwnd, msg, wParam, lParam, FALSE );
-}
-
-
-/***********************************************************************
  *           ComboWndProcA
  *
  * This is just a wrapper for the real ComboWndProc which locks/unlocks
@@ -2304,7 +2228,7 @@ static LRESULT ComboWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARA
 static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow(hwnd)) return 0;
-    return ComboWndProc_wrapper16( hwnd, message, wParam, lParam, FALSE );
+    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, FALSE );
 }
 
 /***********************************************************************
@@ -2313,7 +2237,7 @@ static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPA
 static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow(hwnd)) return 0;
-    return ComboWndProc_wrapper16( hwnd, message, wParam, lParam, TRUE );
+    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 /*************************************************************************
