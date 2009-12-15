@@ -3322,12 +3322,11 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
     SERVER_START_REQ( get_process_idle_event )
     {
         req->handle = wine_server_obj_handle( hProcess );
-        if (!(ret = wine_server_call_err( req )))
-            handles[1] = wine_server_ptr_handle( reply->event );
+        wine_server_call_err( req );
+        handles[1] = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
-    if (ret) return WAIT_FAILED;  /* error */
-    if (!handles[1]) return 0;  /* no event to wait on */
+    if (!handles[1]) return WAIT_FAILED;  /* no event to wait on */
 
     start_time = GetTickCount();
     elapsed = 0;
