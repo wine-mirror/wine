@@ -1338,6 +1338,7 @@ static void test_Get_Release_DC(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
+    GdipDeleteRegion(clip);
     GdipDeletePath(path);
     GdipDeleteBrush((GpBrush*)brush);
     GdipDeleteRegion(region);
