@@ -466,6 +466,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     IMAGEHLP_DEFERRED_SYMBOL_LOAD64*    idsl64;
     IMAGEHLP_DEFERRED_SYMBOL_LOAD       idsl;
 
+    if (!pcs) return FALSE;
     switch (action)
     {
     case CBA_DEBUG_INFO:
