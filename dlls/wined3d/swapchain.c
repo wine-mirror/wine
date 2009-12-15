@@ -739,6 +739,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->presentParms = *present_parameters;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+            && present_parameters->BackBufferCount
             && (present_parameters->BackBufferWidth != client_rect.right
             || present_parameters->BackBufferHeight != client_rect.bottom))
     {

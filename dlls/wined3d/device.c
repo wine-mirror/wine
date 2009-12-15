@@ -6527,8 +6527,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         RECT client_rect;
         GetClientRect(swapchain->win_handle, &client_rect);
 
-        if(swapchain->presentParms.BackBufferWidth != client_rect.right ||
-           swapchain->presentParms.BackBufferHeight != client_rect.bottom)
+        if(!swapchain->presentParms.BackBufferCount)
+        {
+            TRACE("Single buffered rendering\n");
+            swapchain->render_to_fbo = FALSE;
+        }
+        else if(swapchain->presentParms.BackBufferWidth  != client_rect.right  ||
+                swapchain->presentParms.BackBufferHeight != client_rect.bottom )
         {
             TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u\n",
                     swapchain->presentParms.BackBufferWidth,
