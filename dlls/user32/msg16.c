@@ -23,11 +23,14 @@
 #include "winerror.h"
 #include "win.h"
 #include "user_private.h"
+#include "controls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 DWORD USER16_AlertableWait = 0;
+
+static struct wow_handlers32 wow_handlers32;
 
 static LRESULT cwp_hook_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                   LRESULT *result, void *arg )
@@ -583,4 +586,35 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
         return TranslateMDISysAccel( WIN_Handle32(hwndClient), &msg32 );
     }
     return 0;
+}
+
+
+/***********************************************************************
+ *           button_proc16
+ */
+static LRESULT button_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    static const UINT msg16_offset = BM_GETCHECK16 - BM_GETCHECK;
+
+    switch (msg)
+    {
+    case BM_GETCHECK16:
+    case BM_SETCHECK16:
+    case BM_GETSTATE16:
+    case BM_SETSTATE16:
+    case BM_SETSTYLE16:
+        return wow_handlers32.button_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+    default:
+        return wow_handlers32.button_proc( hwnd, msg, wParam, lParam, unicode );
+    }
+}
+
+void register_wow_handlers(void)
+{
+    static const struct wow_handlers16 handlers16 =
+    {
+        button_proc16,
+    };
+
+    UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
 }

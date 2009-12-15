@@ -2378,3 +2378,21 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     }
     return ret;
 }
+
+
+/**********************************************************************
+ *		UserRegisterWowHandlers (USER32.@)
+ *
+ * NOTE: no attempt has been made to be compatible here,
+ * the Windows function is most likely completely different.
+ */
+void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wow_handlers32 *orig )
+{
+    orig->button_proc = ButtonWndProc_common;
+    wow_handlers = *new;
+}
+
+struct wow_handlers16 wow_handlers =
+{
+    ButtonWndProc_common,
+};

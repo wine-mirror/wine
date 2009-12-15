@@ -57,6 +57,26 @@ extern const struct builtin_class_descr MESSAGE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
 
+/* Wow handlers */
+
+struct wow_handlers16
+{
+    LRESULT (*button_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+};
+
+struct wow_handlers32
+{
+    LRESULT (*button_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+};
+
+extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;
+
+extern LRESULT ButtonWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
+
+extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
+extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
+                                            struct wow_handlers32 *orig );
+
 extern WNDPROC EDIT_winproc_handle DECLSPEC_HIDDEN;
 
 /* Class functions */

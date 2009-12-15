@@ -1387,6 +1387,7 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE16 inst, WORD ds,
     if (USER_HeapSel) return TRUE;  /* already called */
 
     USER_HeapSel = ds;
+    register_wow_handlers();
     return TRUE;
 }
 

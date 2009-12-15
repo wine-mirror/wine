@@ -738,7 +738,7 @@
 # @ stub UserLpkPSMTextOut
 # @ stub UserLpkTabbedTextOut
 @ stdcall UserRealizePalette(long)
-@ stub UserRegisterWowHandlers
+@ stdcall UserRegisterWowHandlers(ptr ptr)
 # @ stub UserSetDeviceHoldState
 @ stdcall UserSignalProc(long long long long)
 # @ stub VRipOutput
