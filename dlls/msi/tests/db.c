@@ -1761,6 +1761,30 @@ static void test_where(void)
     ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
     MsiCloseHandle( rec );
 
+    rec = 0;
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` < 'Cabinet'";
+    r = do_query(hdb, query, &rec);
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %d\n", r );
+    MsiCloseHandle( rec );
+
+    rec = 0;
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` > 'Cabinet'";
+    r = do_query(hdb, query, &rec);
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %d\n", r );
+    MsiCloseHandle( rec );
+
+    rec = 0;
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` <> 'Cabinet'";
+    r = do_query(hdb, query, &rec);
+    todo_wine ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
+    MsiCloseHandle( rec );
+
+    rec = 0;
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` = 'Cabinet'";
+    r = do_query(hdb, query, &rec);
+    ok( r == ERROR_NO_MORE_ITEMS, "query failed: %d\n", r );
+    MsiCloseHandle( rec );
+
     rec = MsiCreateRecord(1);
     MsiRecordSetString(rec, 1, "");
 
