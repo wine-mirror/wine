@@ -39,7 +39,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "user_private.h"
 #include "controls.h"
@@ -2588,8 +2587,7 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 /***********************************************************************
  *           ListBoxWndProc_common
  */
-static LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg,
-                                      WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
     LPHEADCOMBO lphc = 0;
@@ -3183,122 +3181,11 @@ static LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg,
 }
 
 /***********************************************************************
- *           ListBoxWndProc_wrapper16
- */
-static LRESULT ListBoxWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    static const UINT msg16_offset = LB_ADDSTRING16 - LB_ADDSTRING;
-    LRESULT ret;
-
-    switch (msg)
-    {
-    case LB_RESETCONTENT16:
-    case LB_DELETESTRING16:
-    case LB_GETITEMDATA16:
-    case LB_SETITEMDATA16:
-    case LB_GETCOUNT16:
-    case LB_GETTEXTLEN16:
-    case LB_GETCURSEL16:
-    case LB_GETTOPINDEX16:
-    case LB_GETITEMHEIGHT16:
-    case LB_SETCARETINDEX16:
-    case LB_GETCARETINDEX16:
-    case LB_SETTOPINDEX16:
-    case LB_SETCOLUMNWIDTH16:
-    case LB_GETSELCOUNT16:
-    case LB_SELITEMRANGE16:
-    case LB_SELITEMRANGEEX16:
-    case LB_GETHORIZONTALEXTENT16:
-    case LB_SETHORIZONTALEXTENT16:
-    case LB_GETANCHORINDEX16:
-    case LB_CARETON16:
-    case LB_CARETOFF16:
-        msg -= msg16_offset;
-        break;
-    case LB_GETSEL16:
-    case LB_SETSEL16:
-    case LB_SETCURSEL16:
-    case LB_SETANCHORINDEX16:
-        wParam = (INT)(INT16)wParam;
-        msg -= msg16_offset;
-        break;
-    case LB_INSERTSTRING16:
-    case LB_FINDSTRING16:
-    case LB_FINDSTRINGEXACT16:
-    case LB_SELECTSTRING16:
-        wParam = (INT)(INT16)wParam;
-        /* fall through */
-    case LB_ADDSTRING16:
-    case LB_ADDFILE16:
-    {
-        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-        if ((style & LBS_HASSTRINGS) || !(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)))
-            lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    }
-    case LB_GETTEXT16:
-        lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case LB_SETITEMHEIGHT16:
-        lParam = LOWORD(lParam);
-        msg -= msg16_offset;
-        break;
-    case LB_GETITEMRECT16:
-        {
-            RECT rect;
-            RECT16 *r16 = MapSL(lParam);
-            ret = ListBoxWndProc_common( hwnd, LB_GETITEMRECT, (INT16)wParam, (LPARAM)&rect, FALSE );
-            r16->left   = rect.left;
-            r16->top    = rect.top;
-            r16->right  = rect.right;
-            r16->bottom = rect.bottom;
-            return ret;
-        }
-    case LB_GETSELITEMS16:
-    {
-        INT16 *array16 = MapSL( lParam );
-        INT i, count = (INT16)wParam, *array;
-        if (!(array = HeapAlloc( GetProcessHeap(), 0, wParam * sizeof(*array) ))) return LB_ERRSPACE;
-        ret = ListBoxWndProc_common( hwnd, LB_GETSELITEMS, count, (LPARAM)array, FALSE );
-        for (i = 0; i < ret; i++) array16[i] = array[i];
-        HeapFree( GetProcessHeap(), 0, array );
-        return ret;
-    }
-    case LB_DIR16:
-        /* according to Win16 docs, DDL_DRIVES should make DDL_EXCLUSIVE
-         * be set automatically (this is different in Win32) */
-        if (wParam & DDL_DRIVES) wParam |= DDL_EXCLUSIVE;
-        lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case LB_SETTABSTOPS16:
-    {
-        INT i, count, *tabs = NULL;
-        INT16 *tabs16 = MapSL( lParam );
-
-        if ((count = (INT16)wParam) > 0)
-        {
-            if (!(tabs = HeapAlloc( GetProcessHeap(), 0, wParam * sizeof(*tabs) ))) return LB_ERRSPACE;
-            for (i = 0; i < count; i++) tabs[i] = tabs16[i] << 1; /* FIXME */
-        }
-        ret = ListBoxWndProc_common( hwnd, LB_SETTABSTOPS, count, (LPARAM)tabs, FALSE );
-        HeapFree( GetProcessHeap(), 0, tabs );
-        return ret;
-    }
-    default:
-        return ListBoxWndProc_common( hwnd, msg, wParam, lParam, unicode );
-    }
-    return ListBoxWndProc_common( hwnd, msg, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
  *           ListBoxWndProcA
  */
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    return ListBoxWndProc_wrapper16( hwnd, msg, wParam, lParam, FALSE );
+    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, FALSE );
 }
 
 /***********************************************************************
@@ -3306,5 +3193,5 @@ static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    return ListBoxWndProc_wrapper16( hwnd, msg, wParam, lParam, TRUE );
+    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, TRUE );
 }
