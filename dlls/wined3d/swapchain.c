@@ -809,6 +809,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
             hr = WINED3DERR_NOTAVAILABLE;
             goto err;
         }
+        context_release(swapchain->context[0]);
     }
     else
     {
@@ -841,29 +842,8 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
             IWineD3DSurface_SetContainer(swapchain->backBuffer[i], (IWineD3DBase *)swapchain);
             ((IWineD3DSurfaceImpl *)swapchain->backBuffer[i])->Flags |= SFLAG_SWAPCHAIN;
-
-            if (surface_type == SURFACE_OPENGL)
-            {
-                ENTER_GL();
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-                LEAVE_GL();
-            }
         }
     }
-    else
-    {
-        /* Single buffering - draw to front buffer */
-        if (surface_type == SURFACE_OPENGL)
-        {
-            ENTER_GL();
-            glDrawBuffer(GL_FRONT);
-            checkGLcall("glDrawBuffer(GL_FRONT)");
-            LEAVE_GL();
-        }
-    }
-
-    if (swapchain->context[0]) context_release(swapchain->context[0]);
 
     /* Swapchains share the depth/stencil buffer, so only create a single depthstencil surface. */
     if (present_parameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL)
