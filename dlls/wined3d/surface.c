@@ -1425,16 +1425,15 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     GLint skipBytes = 0;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
     IWineD3DDeviceImpl *myDevice = This->resource.device;
-    IWineD3DSwapChainImpl *swapchain;
     struct wined3d_context *context;
 
     /* Activate the correct context for the render target */
     context = context_acquire(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
     ENTER_GL();
 
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+    if (!surface_is_offscreen((IWineD3DSurface *)This))
+    {
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)This->container);
         TRACE("Unlocking %#x buffer.\n", buffer);
         context_set_draw_buffer(context, buffer);
     }
