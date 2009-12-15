@@ -114,8 +114,10 @@ NTSTATUS WINAPI RtlpNtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJEC
 NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS ret;
-    DWORD len = attr->ObjectName->Length;
+    DWORD len;
 
+    if (!attr) return STATUS_ACCESS_VIOLATION;
+    len = attr->ObjectName->Length;
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
 

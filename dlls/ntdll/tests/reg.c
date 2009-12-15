@@ -336,9 +336,6 @@ static void test_NtOpenKey(void)
     OBJECT_ATTRIBUTES attr;
     ACCESS_MASK am = KEY_READ;
 
-    if (0)
-    {
-    /* Crashes Wine */
     /* All NULL */
     status = pNtOpenKey(NULL, 0, NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
@@ -347,7 +344,6 @@ static void test_NtOpenKey(void)
     status = pNtOpenKey(&key, 0, NULL);
     ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
         "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08x\n", status);
-    }
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
 
