@@ -26,9 +26,9 @@
 
 #define admitted_error 0.0001f
 
-#define relative_error(exp, out) ((exp == out) ? 0.0f : (fabs(out - exp) / fabs(exp)))
+#define relative_error(exp, out) ((exp == 0.0f) ? fabs(exp - out) : (fabs(1 - out/ exp) ))
 
-#define expect_color(expectedcolor,gotcolor) ok((fabs(expectedcolor.r-gotcolor.r)<admitted_error)&&(fabs(expectedcolor.g-gotcolor.g)<admitted_error)&&(fabs(expectedcolor.b-gotcolor.b)<admitted_error)&&(fabs(expectedcolor.a-gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
+#define expect_color(expectedcolor,gotcolor) ok((relative_error(expectedcolor.r, gotcolor.r)<admitted_error)&&(relative_error(expectedcolor.g, gotcolor.g)<admitted_error)&&(relative_error(expectedcolor.b, gotcolor.b)<admitted_error)&&(relative_error(expectedcolor.a, gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
 
 static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
 {
@@ -38,7 +38,7 @@ static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
     {
         for (j = 0; j < 4; ++j)
         {
-            if (fabs(U(*m1).m[i][j] - U(*m2).m[i][j]) > admitted_error)
+            if (relative_error(U(*m1).m[i][j], U(*m2).m[i][j]) > admitted_error)
                 return FALSE;
         }
     }
@@ -63,26 +63,26 @@ do { \
 } while(0)
 
 #define compare_rotation(exp, got) \
-    ok(fabs(exp.w - got.w) < admitted_error && \
-       fabs(exp.x - got.x) < admitted_error && \
-       fabs(exp.y - got.y) < admitted_error && \
-       fabs(exp.z - got.z) < admitted_error, \
+    ok(relative_error(exp.w, got.w) < admitted_error && \
+       relative_error(exp.x, got.x) < admitted_error && \
+       relative_error(exp.y, got.y) < admitted_error && \
+       relative_error(exp.z, got.z) < admitted_error, \
        "Expected rotation = (%f, %f, %f, %f), \
         got rotation = (%f, %f, %f, %f)\n", \
         exp.w, exp.x, exp.y, exp.z, got.w, got.x, got.y, got.z)
 
 #define compare_scale(exp, got) \
-    ok(fabs(exp.x - got.x) < admitted_error && \
-       fabs(exp.y - got.y) < admitted_error && \
-       fabs(exp.z - got.z) < admitted_error, \
+    ok(relative_error(exp.x, got.x) < admitted_error && \
+       relative_error(exp.y, got.y) < admitted_error && \
+       relative_error(exp.z, got.z) < admitted_error, \
        "Expected scale = (%f, %f, %f), \
         got scale = (%f, %f, %f)\n", \
         exp.x, exp.y, exp.z, got.x, got.y, got.z)
 
 #define compare_translation(exp, got) \
-    ok(fabs(exp.x - got.x) < admitted_error && \
-       fabs(exp.y - got.y) < admitted_error && \
-       fabs(exp.z - got.z) < admitted_error, \
+    ok(relative_error(exp.x, got.x) < admitted_error && \
+       relative_error(exp.y, got.y) < admitted_error && \
+       relative_error(exp.z, got.z) < admitted_error, \
        "Expected translation = (%f, %f, %f), \
         got translation = (%f, %f, %f)\n", \
         exp.x, exp.y, exp.z, got.x, got.y, got.z)
@@ -110,13 +110,14 @@ do { \
             exp[i].a, exp[i].b, exp[i].c, exp[i].d, \
             i); \
     }
-#define expect_plane(expectedplane,gotplane) ok((fabs(expectedplane.a-gotplane.a)<admitted_error)&&(fabs(expectedplane.b-gotplane.b)<admitted_error)&&(fabs(expectedplane.c-gotplane.c)<admitted_error)&&(fabs(expectedplane.d-gotplane.d)<admitted_error),"Expected Plane= (%f, %f, %f, %f)\n , Got Plane= (%f, %f, %f, %f)\n", expectedplane.a, expectedplane.b, expectedplane.c, expectedplane.d, gotplane.a, gotplane.b, gotplane.c, gotplane.d);
 
-#define expect_vec(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
+#define expect_plane(expectedplane,gotplane) ok((relative_error(expectedplane.a, gotplane.a)<admitted_error)&&(relative_error(expectedplane.b, gotplane.b)<admitted_error)&&(relative_error(expectedplane.c, gotplane.c)<admitted_error)&&(relative_error(expectedplane.d, gotplane.d)<admitted_error),"Expected Plane= (%f, %f, %f, %f)\n , Got Plane= (%f, %f, %f, %f)\n", expectedplane.a, expectedplane.b, expectedplane.c, expectedplane.d, gotplane.a, gotplane.b, gotplane.c, gotplane.d);
 
-#define expect_vec3(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error),"Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
+#define expect_vec(expectedvec,gotvec) ok((relative_error(expectedvec.x, gotvec.x)<admitted_error)&&(relative_error(expectedvec.y, gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
-#define expect_vec4(expectedvec,gotvec) ok((fabs(expectedvec.x-gotvec.x)<admitted_error)&&(fabs(expectedvec.y-gotvec.y)<admitted_error)&&(fabs(expectedvec.z-gotvec.z)<admitted_error)&&(fabs(expectedvec.w-gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
+#define expect_vec3(expectedvec,gotvec) ok((relative_error(expectedvec.x, gotvec.x)<admitted_error)&&(relative_error(expectedvec.y, gotvec.y)<admitted_error)&&(relative_error(expectedvec.z, gotvec.z)<admitted_error),"Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
+
+#define expect_vec4(expectedvec,gotvec) ok((relative_error(expectedvec.x, gotvec.x)<admitted_error)&&(relative_error(expectedvec.y, gotvec.y)<admitted_error)&&(relative_error(expectedvec.z, gotvec.z)<admitted_error)&&(relative_error(expectedvec.w, gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
 
 
 static void D3DXColorTest(void)
@@ -226,7 +227,7 @@ static void D3DXFresnelTest(void)
 
     expected = 0.089187;
     got = D3DXFresnelTerm(0.5f,1.5);
-    ok( fabs(got - expected) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 }
 
 static void D3DXMatrixTest(void)
@@ -287,7 +288,7 @@ static void D3DXMatrixTest(void)
 /*____________D3DXMatrixfDeterminant_____________*/
     expectedfloat = -147888.0f;
     gotfloat = D3DXMatrixDeterminant(&mat);
-    ok(fabs( gotfloat - expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, gotfloat);
+    ok(relative_error(gotfloat, expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, gotfloat);
 
 /*____________D3DXMatrixInverse______________*/
     U(expectedmat).m[0][0] = 16067.0f/73944.0f; U(expectedmat).m[0][1] = -10165.0f/147888.0f; U(expectedmat).m[0][2] = -2729.0f/147888.0f; U(expectedmat).m[0][3] = -1631.0f/49296.0f;
@@ -297,7 +298,7 @@ static void D3DXMatrixTest(void)
     expectedfloat = -147888.0f;
     D3DXMatrixInverse(&gotmat,&determinant,&mat);
     expect_mat(&expectedmat, &gotmat);
-    ok(fabs( determinant - expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, determinant);
+    ok(relative_error( determinant, expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, determinant);
     funcpointer = D3DXMatrixInverse(&gotmat,NULL,&mat2);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
@@ -666,14 +667,14 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionDot______________________*/
     expected = 55.0f;
     got = D3DXQuaternionDot(&q,&r);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXQuaternionDot(NULL,&r);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     expected=0.0f;
     got = D3DXQuaternionDot(NULL,NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXQuaternionExp______________________________*/
     expectedquat.x = -0.216382f; expectedquat.y = -0.432764f; expectedquat.z = -0.8655270f; expectedquat.w = -0.129449f;
@@ -723,20 +724,20 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionLength__________________________*/
    expected = 11.0f;
    got = D3DXQuaternionLength(&q);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXQuaternionLength(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXQuaternionLengthSq________________________*/
     expected = 121.0f;
     got = D3DXQuaternionLengthSq(&q);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXQuaternionLengthSq(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXQuaternionLn______________________________*/
     expectedquat.x = 1.0f; expectedquat.y = 2.0f; expectedquat.z = 4.0f; expectedquat.w = 0.0f;
@@ -936,7 +937,7 @@ static void D3DXQuaternionTest(void)
     expected = 2.197869f;
     D3DXQuaternionToAxisAngle(&Nq,&axis,&angle);
     expect_vec3(expectedvec,axis);
-    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    ok(relative_error(angle,  expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
     /* Test if |w|>1.0f */
     expectedvec.x = 1.0f; expectedvec.y = 2.0f; expectedvec.z = 4.0f;
     expected = 0.0f;
@@ -947,7 +948,7 @@ static void D3DXQuaternionTest(void)
     expected = 3.141593f;
     D3DXQuaternionToAxisAngle(&nul,&axis,&angle);
     expect_vec3(expectedvec,axis);
-    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    ok(relative_error(angle, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
 }
 
 static void D3DXVector2Test(void)
@@ -995,26 +996,26 @@ static void D3DXVector2Test(void)
 /*_______________D3DXVec2CCW__________________________*/
    expected = 55.0f;
    got = D3DXVec2CCW(&u,&v);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec2CCW(NULL,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     expected=0.0f;
     got = D3DXVec2CCW(NULL,NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec2Dot__________________________*/
     expected = 15.0f;
     got = D3DXVec2Dot(&u,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got,  expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec2Dot(NULL,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     expected=0.0f;
     got = D3DXVec2Dot(NULL,NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec2Hermite__________________________*/
     expectedvec.x = 2604.625f; expectedvec.y = -4533.0f;
@@ -1024,20 +1025,20 @@ static void D3DXVector2Test(void)
 /*_______________D3DXVec2Length__________________________*/
    expected = 5.0f;
    got = D3DXVec2Length(&u);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec2Length(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec2LengthSq________________________*/
    expected = 25.0f;
    got = D3DXVec2LengthSq(&u);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec2LengthSq(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec2Lerp__________________________*/
    expectedvec.x = 68.0f; expectedvec.y = -28.5f;
@@ -1186,14 +1187,14 @@ static void D3DXVector3Test(void)
 /*_______________D3DXVec3Dot__________________________*/
     expected = -8.0f;
     got = D3DXVec3Dot(&u,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec3Dot(NULL,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     expected=0.0f;
     got = D3DXVec3Dot(NULL,NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec3Hermite__________________________*/
     expectedvec.x = -6045.75f; expectedvec.y = -6650.0f; expectedvec.z = 1358.875f;
@@ -1203,20 +1204,20 @@ static void D3DXVector3Test(void)
 /*_______________D3DXVec3Length__________________________*/
    expected = 11.0f;
    got = D3DXVec3Length(&u);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec3Length(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec3LengthSq________________________*/
     expected = 121.0f;
     got = D3DXVec3LengthSq(&u);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec3LengthSq(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec3Lerp__________________________*/
     expectedvec.x = 54.5f; expectedvec.y = 64.5f, expectedvec.z = 41.0f ;
@@ -1355,14 +1356,14 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Dot__________________________*/
     expected = 55.0f;
     got = D3DXVec4Dot(&u,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec4Dot(NULL,&v);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     expected=0.0f;
     got = D3DXVec4Dot(NULL,NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec4Hermite_________________________*/
     expectedvec.x = 1224.625f; expectedvec.y = 3461.625f; expectedvec.z = -4758.875f; expectedvec.w = -5781.5f;
@@ -1372,20 +1373,20 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Length__________________________*/
    expected = 11.0f;
    got = D3DXVec4Length(&u);
-   ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec4Length(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec4LengthSq________________________*/
     expected = 121.0f;
     got = D3DXVec4LengthSq(&u);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
     /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec4LengthSq(NULL);
-    ok(fabs( got - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
 
 /*_______________D3DXVec4Lerp__________________________*/
     expectedvec.x = 27.0f; expectedvec.y = -11.0f; expectedvec.z = 62.5;  expectedvec.w = 29.5;
