@@ -3210,13 +3210,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     GLenum drawBuffer = GL_BACK;
     GLenum texture_target;
     BOOL noBackBufferBackup;
+    BOOL src_offscreen;
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     context = context_acquire(myDevice, SrcSurface, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
 
-    noBackBufferBackup = !swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
+    src_offscreen = surface_is_offscreen(SrcSurface);
+    noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
     if (!noBackBufferBackup && !Src->texture_name)
     {
         /* Get it a description */
@@ -3232,7 +3234,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* Got more than one aux buffer? Use the 2nd aux buffer */
         drawBuffer = GL_AUX1;
     }
-    else if ((swapchain || myDevice->offscreenBuffer == GL_BACK) && context->aux_buffers >= 1)
+    else if ((!src_offscreen || myDevice->offscreenBuffer == GL_BACK) && context->aux_buffers >= 1)
     {
         /* Only one aux buffer, but it isn't used (Onscreen rendering, or non-aux orm)? Use it! */
         drawBuffer = GL_AUX0;
@@ -3258,7 +3260,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         Src->Flags &= ~SFLAG_INTEXTURE;
     }
 
-    if(surface_is_offscreen(SrcSurface)) {
+    if (src_offscreen)
+    {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
