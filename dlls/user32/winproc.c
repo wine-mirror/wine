@@ -2390,6 +2390,7 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
 {
     orig->button_proc  = ButtonWndProc_common;
     orig->combo_proc   = ComboWndProc_common;
+    orig->edit_proc    = EditWndProc_common;
     orig->listbox_proc = ListBoxWndProc_common;
 
     wow_handlers = *new;
@@ -2399,5 +2400,6 @@ struct wow_handlers16 wow_handlers =
 {
     ButtonWndProc_common,
     ComboWndProc_common,
+    EditWndProc_common,
     ListBoxWndProc_common,
 };

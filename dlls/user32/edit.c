@@ -249,90 +249,6 @@ static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
 }
 
 
-/**********************************************************************
- * Support for word break proc thunks
- */
-
-#define MAX_THUNKS 32
-
-#include <pshpack1.h>
-static struct word_break_thunk
-{
-    BYTE                popl_eax;       /* popl  %eax (return address) */
-    BYTE                pushl_proc16;   /* pushl proc16 */
-    EDITWORDBREAKPROC16 proc16;
-    BYTE                pushl_eax;      /* pushl %eax */
-    BYTE                jmp;            /* ljmp call_word_break_proc16 */
-    DWORD               callback;
-} *word_break_thunks;
-#include <poppack.h>
-
-/**********************************************************************
- *           call_word_break_proc16
- */
-static INT16 CALLBACK call_word_break_proc16( SEGPTR proc16, LPSTR text, INT index, INT count, INT action )
-{
-    SEGPTR segptr;
-    WORD args[5];
-    DWORD result;
-
-    segptr = MapLS( text );
-    args[4] = SELECTOROF(segptr);
-    args[3] = OFFSETOF(segptr);
-    args[2] = index;
-    args[1] = count;
-    args[0] = action;
-    WOWCallback16Ex( proc16, WCB16_PASCAL, sizeof(args), args, &result );
-    UnMapLS( segptr );
-    return LOWORD(result);
-}
-
-/******************************************************************
- *		add_word_break_thunk
- */
-static struct word_break_thunk *add_word_break_thunk( EDITWORDBREAKPROC16 proc16 )
-{
-    struct word_break_thunk *thunk;
-
-    if (!word_break_thunks)
-    {
-        word_break_thunks = VirtualAlloc( NULL, MAX_THUNKS * sizeof(*thunk),
-                                          MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-        if (!word_break_thunks) return NULL;
-
-        for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
-        {
-            thunk->popl_eax     = 0x58;   /* popl  %eax */
-            thunk->pushl_proc16 = 0x68;   /* pushl proc16 */
-            thunk->pushl_eax    = 0x50;   /* pushl %eax */
-            thunk->jmp          = 0xe9;   /* jmp call_word_break_proc16 */
-            thunk->callback     = (char *)call_word_break_proc16 - (char *)(&thunk->callback + 1);
-        }
-    }
-    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
-        if (thunk->proc16 == proc16) return thunk;
-
-    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
-    {
-        if (thunk->proc16) continue;
-        thunk->proc16 = proc16;
-        return thunk;
-    }
-    FIXME("Out of word break thunks\n");
-    return NULL;
-}
-
-/******************************************************************
- *		get_word_break_thunk
- */
-static EDITWORDBREAKPROC16 get_word_break_thunk( EDITWORDBREAKPROCA proc )
-{
-    struct word_break_thunk *thunk = (struct word_break_thunk *)proc;
-    if (word_break_thunks && thunk >= word_break_thunks && thunk < &word_break_thunks[MAX_THUNKS])
-        return thunk->proc16;
-    return NULL;
-}
-
 /*********************************************************************
  *
  *	EDIT_WordBreakProc
@@ -1174,66 +1090,6 @@ static inline void text_buffer_changed(EDITSTATE *es)
     es->text_length = (UINT)-1;
 }
 
-#define GWW_HANDLE16 sizeof(EDITSTATE*)
-
-/*********************************************************************
- *	EDIT_LockBuffer16
- */
-static void EDIT_LockBuffer16(EDITSTATE *es)
-{
-    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-    HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
-    HANDLE16 oldDS;
-    HLOCAL hloc32;
-    UINT size;
-
-    if (!hloc16) return;
-    if (!(hloc32 = es->hloc32A)) return;
-
-    oldDS = stack16->ds;
-    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-    size = LocalSize16(hloc16);
-    if (LocalReAlloc( hloc32, size, LMEM_MOVEABLE ))
-    {
-        char *text = MapSL( LocalLock16( hloc16 ));
-        char *dest = LocalLock( hloc32 );
-        memcpy( dest, text, size );
-        LocalUnlock( hloc32 );
-        LocalUnlock16( hloc16 );
-    }
-    stack16->ds = oldDS;
-
-}
-
-/*********************************************************************
- *	EDIT_UnlockBuffer16
- *
- */
-static void EDIT_UnlockBuffer16(EDITSTATE *es)
-{
-    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-    HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
-    HANDLE16 oldDS;
-    HLOCAL hloc32;
-    UINT size;
-
-    if (!hloc16) return;
-    if (!(hloc32 = es->hloc32A)) return;
-    size = LocalSize( hloc32 );
-
-    oldDS = stack16->ds;
-    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-    if (LocalReAlloc16( hloc16, size, LMEM_MOVEABLE ))
-    {
-        char *text = LocalLock( hloc32 );
-        char *dest = MapSL( LocalLock16( hloc16 ));
-        memcpy( dest, text, size );
-        LocalUnlock( hloc32 );
-        LocalUnlock16( hloc16 );
-    }
-    stack16->ds = oldDS;
-}
-
 /*********************************************************************
  *
  *	EDIT_LockBuffer
@@ -1255,8 +1111,6 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 	if (!es->text) {
 
 	    if(!es->hloc32W) return;
-
-            EDIT_LockBuffer16(es);
 
             if(es->hloc32A)
             {
@@ -1345,7 +1199,6 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 
 		LocalUnlock(es->hloc32W);
 		es->text = NULL;
-                EDIT_UnlockBuffer16(es);
 	    }
 	    else {
 		ERR("no buffer ... please report\n");
@@ -2454,73 +2307,6 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 
 /*********************************************************************
  *
- *	EM_GETHANDLE16
- *
- *	Hopefully this won't fire back at us.
- *	We always start with a buffer in 32 bit linear memory.
- *	However, with this message a 16 bit application requests
- *	a handle of 16 bit local heap memory, where it expects to find
- *	the text.
- *	It's a pitty that from this moment on we have to use this
- *	local heap, because applications may rely on the handle
- *	in the future.
- *
- *	In this function we'll try to switch to local heap.
- */
-static HLOCAL16 EDIT_EM_GetHandle16( HWND hwnd )
-{
-	CHAR *textA;
-	UINT alloc_size;
-        HLOCAL hloc;
-	STACK16FRAME* stack16;
-	HANDLE16 oldDS;
-        HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
-
-	if (hloc16) return hloc16;
-
-        if (!(hloc = (HLOCAL)SendMessageA( hwnd, EM_GETHANDLE, 0, 0 ))) return 0;
-        alloc_size = LocalSize( hloc );
-
-	stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-	oldDS = stack16->ds;
-	stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-
-	if (!LocalHeapSize16()) {
-
-		if (!LocalInit16(stack16->ds, 0, GlobalSize16(stack16->ds))) {
-			ERR("could not initialize local heap\n");
-			goto done;
-		}
-		TRACE("local heap initialized\n");
-	}
-
-	TRACE("Allocating 16-bit ANSI alias buffer\n");
-	if (!(hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
-		ERR("could not allocate new 16 bit buffer\n");
-		goto done;
-	}
-
-	if (!(textA = MapSL(LocalLock16( hloc16)))) {
-		ERR("could not lock new 16 bit buffer\n");
-		LocalFree16(hloc16);
-                hloc16 = 0;
-		goto done;
-	}
-        memcpy( textA, LocalLock( hloc ), alloc_size );
-        LocalUnlock( hloc );
-	LocalUnlock16( hloc16 );
-        SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
-
-	TRACE("Returning %04X, LocalSize() = %d\n", hloc16, alloc_size);
-
-done:
-	stack16->ds = oldDS;
-	return hloc16;
-}
-
-
-/*********************************************************************
- *
  *	EM_GETLINE
  *
  */
@@ -2862,46 +2648,6 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 	EDIT_EM_ScrollCaret(es);
 	/* force scroll info update */
 	EDIT_UpdateScrollInfo(es);
-}
-
-
-/*********************************************************************
- *
- *	EM_SETHANDLE16
- *
- *	FIXME:	ES_LOWERCASE, ES_UPPERCASE, ES_OEMCONVERT, ES_NUMBER ???
- *
- */
-static void EDIT_EM_SetHandle16( HWND hwnd, HLOCAL16 hloc16 )
-{
-	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-	HINSTANCE16 hInstance = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-	HANDLE16 oldDS = stack16->ds;
-	HLOCAL hloc32;
-	INT count;
-	CHAR *text;
-
-	if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) return;
-
-	if (!hloc16) {
-		WARN("called with NULL handle\n");
-		return;
-	}
-
-	stack16->ds = hInstance;
-	count = LocalSize16(hloc16);
-	text = MapSL(LocalLock16(hloc16));
-	if ((hloc32 = LocalAlloc(LMEM_MOVEABLE, count)))
-	{
-            memcpy( LocalLock(hloc32), text, count );
-            LocalUnlock(hloc32);
-            LocalUnlock16(hloc16);
-            SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
-	}
-	stack16->ds = oldDS;
-
-        if (hloc32) SendMessageA( hwnd, EM_SETHANDLE, (WPARAM)hloc32, 0 );
-        else ERR("Could not allocate new buffer\n");
 }
 
 
@@ -4651,7 +4397,6 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
 static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
 	LINEDEF *pc, *pp;
-        HLOCAL16 hloc16 = GetWindowWord( es->hwndSelf, GWW_HANDLE16 );
 
 	if (es->hloc32W) {
 		LocalFree(es->hloc32W);
@@ -4659,17 +4404,6 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 	if (es->hloc32A) {
 		LocalFree(es->hloc32A);
 	}
-	if (hloc16) {
-		STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
-		HANDLE16 oldDS = stack16->ds;
-
-		stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-		while (LocalUnlock16(hloc16)) ;
-		LocalFree16(hloc16);
-		stack16->ds = oldDS;
-                SetWindowWord( es->hwndSelf, GWW_HANDLE16, 0 );
-	}
-
 	pc = es->first_line_def;
 	while (pc)
 	{
@@ -4701,8 +4435,7 @@ static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
  *	The messages are in the order of the actual integer values
  *	(which can be found in include/windows.h)
  */
-static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
-                                   WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
 	EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW( hwnd, 0 );
 	LRESULT result = 0;
@@ -5243,139 +4976,12 @@ static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
 
 
 /*********************************************************************
- *	EditWndProc_wrapper16
- */
-static LRESULT EditWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    static const UINT msg16_offset = EM_GETSEL16 - EM_GETSEL;
-    LRESULT result;
-
-    switch (msg)
-    {
-    case EM_SCROLL16:
-    case EM_SCROLLCARET16:
-    case EM_GETMODIFY16:
-    case EM_SETMODIFY16:
-    case EM_GETLINECOUNT16:
-    case EM_GETTHUMB16:
-    case EM_LINELENGTH16:
-    case EM_LIMITTEXT16:
-    case EM_CANUNDO16:
-    case EM_UNDO16:
-    case EM_FMTLINES16:
-    case EM_LINEFROMCHAR16:
-    case EM_SETPASSWORDCHAR16:
-    case EM_EMPTYUNDOBUFFER16:
-    case EM_SETREADONLY16:
-    case EM_GETPASSWORDCHAR16:
-	/* these messages missing from specs */
-    case WM_USER+15:
-    case WM_USER+16:
-    case WM_USER+19:
-    case WM_USER+26:
-        msg -= msg16_offset;
-        break;
-    case EM_GETSEL16:
-        wParam = 0;
-        lParam = 0;
-        msg -= msg16_offset;
-        break;
-    case EM_REPLACESEL16:
-    case EM_GETLINE16:
-        lParam = (LPARAM)MapSL(lParam);
-        msg -= msg16_offset;
-        break;
-    case EM_LINESCROLL16:
-        wParam = (INT)(SHORT)HIWORD(lParam);
-        lParam = (INT)(SHORT)LOWORD(lParam);
-        msg -= msg16_offset;
-        break;
-    case EM_LINEINDEX16:
-        if ((INT16)wParam == -1) wParam = (WPARAM)-1;
-        msg -= msg16_offset;
-        break;
-    case EM_SETSEL16:
-        if ((short)LOWORD(lParam) == -1)
-        {
-            wParam = -1;
-            lParam = 0;
-        }
-        else
-        {
-            wParam = LOWORD(lParam);
-            lParam = HIWORD(lParam);
-        }
-        msg -= msg16_offset;
-        break;
-    case EM_GETRECT16:
-        if (lParam)
-        {
-            RECT rect;
-            RECT16 *r16 = MapSL(lParam);
-            EditWndProc_common( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
-            r16->left   = rect.left;
-            r16->top    = rect.top;
-            r16->right  = rect.right;
-            r16->bottom = rect.bottom;
-        }
-        return 0;
-    case EM_SETRECT16:
-    case EM_SETRECTNP16:
-        if (lParam)
-        {
-            RECT rect;
-            RECT16 *r16 = MapSL(lParam);
-            rect.left   = r16->left;
-            rect.top    = r16->top;
-            rect.right  = r16->right;
-            rect.bottom = r16->bottom;
-            EditWndProc_common( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
-        }
-        return 0;
-    case EM_SETHANDLE16:
-        EDIT_EM_SetHandle16( hwnd, (HLOCAL16)wParam );
-        break;
-    case EM_GETHANDLE16:
-        result = EDIT_EM_GetHandle16( hwnd );
-        break;
-    case EM_SETTABSTOPS16:
-    {
-        INT16 *tabs16 = MapSL(lParam);
-        INT i, count = wParam, *tabs = NULL;
-        if (count > 0)
-        {
-            if (!(tabs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*tabs) ))) return 0;
-            for (i = 0; i < count; i++) tabs[i] = tabs16[i];
-        }
-        result = EditWndProc_common( hwnd, msg - msg16_offset, count, (LPARAM)tabs, FALSE );
-        HeapFree( GetProcessHeap(), 0, tabs );
-        return result;
-    }
-    case EM_GETFIRSTVISIBLELINE16:
-        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) return 0;
-        msg -= msg16_offset;
-        break;
-    case EM_SETWORDBREAKPROC16:
-    {
-        struct word_break_thunk *thunk = add_word_break_thunk( (EDITWORDBREAKPROC16)lParam );
-        return EditWndProc_common( hwnd, EM_SETWORDBREAKPROC, wParam, (LPARAM)thunk, FALSE );
-    }
-    case EM_GETWORDBREAKPROC16:
-        result = EditWndProc_common( hwnd, EM_GETWORDBREAKPROC, wParam, lParam, FALSE );
-        return (LRESULT)get_word_break_thunk( (EDITWORDBREAKPROCA)result );
-    default:
-        return EditWndProc_common( hwnd, msg, wParam, lParam, unicode );
-    }
-    return EditWndProc_common( hwnd, msg, wParam, lParam, FALSE );
-}
-
-/*********************************************************************
  *
  *	EditWndProc   (USER32.@)
  */
 LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    return EditWndProc_wrapper16(hWnd, uMsg, wParam, lParam, FALSE);
+    return wow_handlers.edit_proc(hWnd, uMsg, wParam, lParam, FALSE);
 }
 
 /*********************************************************************
@@ -5384,7 +4990,7 @@ LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    return EditWndProc_wrapper16(hWnd, uMsg, wParam, lParam, TRUE);
+    return wow_handlers.edit_proc(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
 /*********************************************************************

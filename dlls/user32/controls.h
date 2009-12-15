@@ -63,6 +63,7 @@ struct wow_handlers16
 {
     LRESULT (*button_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*combo_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    LRESULT (*edit_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
 };
 
@@ -70,6 +71,7 @@ struct wow_handlers32
 {
     LRESULT (*button_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*combo_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    LRESULT (*edit_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
 };
 
@@ -77,6 +79,7 @@ extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;
 
 extern LRESULT ButtonWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT ComboWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
+extern LRESULT EditWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT ListBoxWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;

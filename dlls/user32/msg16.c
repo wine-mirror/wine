@@ -88,6 +88,91 @@ static LRESULT defdlg_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
 }
 
 
+/**********************************************************************
+ * Support for Edit word break proc thunks
+ */
+
+#define MAX_THUNKS 32
+
+#include <pshpack1.h>
+static struct word_break_thunk
+{
+    BYTE                popl_eax;       /* popl  %eax (return address) */
+    BYTE                pushl_proc16;   /* pushl proc16 */
+    EDITWORDBREAKPROC16 proc16;
+    BYTE                pushl_eax;      /* pushl %eax */
+    BYTE                jmp;            /* ljmp call_word_break_proc16 */
+    DWORD               callback;
+} *word_break_thunks;
+#include <poppack.h>
+
+/**********************************************************************
+ *           call_word_break_proc16
+ */
+static INT16 CALLBACK call_word_break_proc16( SEGPTR proc16, LPSTR text, INT index, INT count, INT action )
+{
+    SEGPTR segptr;
+    WORD args[5];
+    DWORD result;
+
+    segptr = MapLS( text );
+    args[4] = SELECTOROF(segptr);
+    args[3] = OFFSETOF(segptr);
+    args[2] = index;
+    args[1] = count;
+    args[0] = action;
+    WOWCallback16Ex( proc16, WCB16_PASCAL, sizeof(args), args, &result );
+    UnMapLS( segptr );
+    return LOWORD(result);
+}
+
+/******************************************************************
+ *		add_word_break_thunk
+ */
+static struct word_break_thunk *add_word_break_thunk( EDITWORDBREAKPROC16 proc16 )
+{
+    struct word_break_thunk *thunk;
+
+    if (!word_break_thunks)
+    {
+        word_break_thunks = VirtualAlloc( NULL, MAX_THUNKS * sizeof(*thunk),
+                                          MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        if (!word_break_thunks) return NULL;
+
+        for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_proc16 = 0x68;   /* pushl proc16 */
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp call_word_break_proc16 */
+            thunk->callback     = (char *)call_word_break_proc16 - (char *)(&thunk->callback + 1);
+        }
+    }
+    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+        if (thunk->proc16 == proc16) return thunk;
+
+    for (thunk = word_break_thunks; thunk < &word_break_thunks[MAX_THUNKS]; thunk++)
+    {
+        if (thunk->proc16) continue;
+        thunk->proc16 = proc16;
+        return thunk;
+    }
+    FIXME("Out of word break thunks\n");
+    return NULL;
+}
+
+/******************************************************************
+ *		get_word_break_thunk
+ */
+static EDITWORDBREAKPROC16 get_word_break_thunk( EDITWORDBREAKPROCA proc )
+{
+    struct word_break_thunk *thunk = (struct word_break_thunk *)proc;
+    if (word_break_thunks && thunk >= word_break_thunks && thunk < &word_break_thunks[MAX_THUNKS])
+        return thunk->proc16;
+    return NULL;
+}
+
+
 /***********************************************************************
  *		SendMessage  (USER.111)
  */
@@ -684,6 +769,284 @@ static LRESULT combo_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, 
 }
 
 
+#define GWW_HANDLE16 sizeof(void*)
+
+static void edit_lock_buffer( HWND hwnd )
+{
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
+    HANDLE16 oldDS;
+    HLOCAL hloc32;
+    UINT size;
+
+    if (!hloc16) return;
+    if (!(hloc32 = (HLOCAL)wow_handlers32.edit_proc( hwnd, EM_GETHANDLE, 0, 0, FALSE ))) return;
+
+    oldDS = stack16->ds;
+    stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    size = LocalSize16(hloc16);
+    if (LocalReAlloc( hloc32, size, LMEM_MOVEABLE ))
+    {
+        char *text = MapSL( LocalLock16( hloc16 ));
+        char *dest = LocalLock( hloc32 );
+        memcpy( dest, text, size );
+        LocalUnlock( hloc32 );
+        LocalUnlock16( hloc16 );
+    }
+    stack16->ds = oldDS;
+
+}
+
+static void edit_unlock_buffer( HWND hwnd )
+{
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
+    HANDLE16 oldDS;
+    HLOCAL hloc32;
+    UINT size;
+
+    if (!hloc16) return;
+    if (!(hloc32 = (HLOCAL)wow_handlers32.edit_proc( hwnd, EM_GETHANDLE, 0, 0, FALSE ))) return;
+    size = LocalSize( hloc32 );
+
+    oldDS = stack16->ds;
+    stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    if (LocalReAlloc16( hloc16, size, LMEM_MOVEABLE ))
+    {
+        char *text = LocalLock( hloc32 );
+        char *dest = MapSL( LocalLock16( hloc16 ));
+        memcpy( dest, text, size );
+        LocalUnlock( hloc32 );
+        LocalUnlock16( hloc16 );
+    }
+    stack16->ds = oldDS;
+}
+
+static HLOCAL16 edit_get_handle( HWND hwnd )
+{
+    CHAR *textA;
+    UINT alloc_size;
+    HLOCAL hloc;
+    STACK16FRAME* stack16;
+    HANDLE16 oldDS;
+    HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
+
+    if (hloc16) return hloc16;
+
+    if (!(hloc = (HLOCAL)wow_handlers32.edit_proc( hwnd, EM_GETHANDLE, 0, 0, FALSE ))) return 0;
+    alloc_size = LocalSize( hloc );
+
+    stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    oldDS = stack16->ds;
+    stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+
+    if (!LocalHeapSize16())
+    {
+        if (!LocalInit16(stack16->ds, 0, GlobalSize16(stack16->ds)))
+        {
+            ERR("could not initialize local heap\n");
+            goto done;
+        }
+    }
+
+    if (!(hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size)))
+    {
+        ERR("could not allocate new 16 bit buffer\n");
+        goto done;
+    }
+
+    if (!(textA = MapSL(LocalLock16( hloc16))))
+    {
+        ERR("could not lock new 16 bit buffer\n");
+        LocalFree16(hloc16);
+        hloc16 = 0;
+        goto done;
+    }
+    memcpy( textA, LocalLock( hloc ), alloc_size );
+    LocalUnlock( hloc );
+    LocalUnlock16( hloc16 );
+    SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
+
+done:
+    stack16->ds = oldDS;
+    return hloc16;
+}
+
+static void edit_set_handle( HWND hwnd, HLOCAL16 hloc16 )
+{
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+    HINSTANCE16 hInstance = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    HANDLE16 oldDS = stack16->ds;
+    HLOCAL hloc32;
+    INT count;
+    CHAR *text;
+
+    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) return;
+    if (!hloc16) return;
+
+    stack16->ds = hInstance;
+    count = LocalSize16(hloc16);
+    text = MapSL(LocalLock16(hloc16));
+    if ((hloc32 = LocalAlloc(LMEM_MOVEABLE, count)))
+    {
+        memcpy( LocalLock(hloc32), text, count );
+        LocalUnlock(hloc32);
+        LocalUnlock16(hloc16);
+        SetWindowWord( hwnd, GWW_HANDLE16, hloc16 );
+    }
+    stack16->ds = oldDS;
+
+    if (hloc32) wow_handlers32.edit_proc( hwnd, EM_SETHANDLE, (WPARAM)hloc32, 0, FALSE );
+}
+
+static void edit_destroy_handle( HWND hwnd )
+{
+    HLOCAL16 hloc16 = GetWindowWord( hwnd, GWW_HANDLE16 );
+    if (hloc16)
+    {
+        STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
+        HANDLE16 oldDS = stack16->ds;
+
+        stack16->ds = GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+        while (LocalUnlock16(hloc16)) ;
+        LocalFree16(hloc16);
+        stack16->ds = oldDS;
+        SetWindowWord( hwnd, GWW_HANDLE16, 0 );
+    }
+}
+
+/*********************************************************************
+ *	edit_proc16
+ */
+static LRESULT edit_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    static const UINT msg16_offset = EM_GETSEL16 - EM_GETSEL;
+    LRESULT result = 0;
+
+    edit_lock_buffer( hwnd );
+    switch (msg)
+    {
+    case EM_SCROLL16:
+    case EM_SCROLLCARET16:
+    case EM_GETMODIFY16:
+    case EM_SETMODIFY16:
+    case EM_GETLINECOUNT16:
+    case EM_GETTHUMB16:
+    case EM_LINELENGTH16:
+    case EM_LIMITTEXT16:
+    case EM_CANUNDO16:
+    case EM_UNDO16:
+    case EM_FMTLINES16:
+    case EM_LINEFROMCHAR16:
+    case EM_SETPASSWORDCHAR16:
+    case EM_EMPTYUNDOBUFFER16:
+    case EM_SETREADONLY16:
+    case EM_GETPASSWORDCHAR16:
+	/* these messages missing from specs */
+    case WM_USER+15:
+    case WM_USER+16:
+    case WM_USER+19:
+    case WM_USER+26:
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+        break;
+    case EM_GETSEL16:
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, 0, 0, FALSE );
+        break;
+    case EM_REPLACESEL16:
+    case EM_GETLINE16:
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, (LPARAM)MapSL(lParam), FALSE );
+        break;
+    case EM_LINESCROLL16:
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, (INT)(SHORT)HIWORD(lParam),
+                                           (INT)(SHORT)LOWORD(lParam), FALSE );
+        break;
+    case EM_LINEINDEX16:
+        if ((INT16)wParam == -1) wParam = (WPARAM)-1;
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+        break;
+    case EM_SETSEL16:
+        if ((short)LOWORD(lParam) == -1)
+        {
+            wParam = -1;
+            lParam = 0;
+        }
+        else
+        {
+            wParam = LOWORD(lParam);
+            lParam = HIWORD(lParam);
+        }
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+        break;
+    case EM_GETRECT16:
+        if (lParam)
+        {
+            RECT rect;
+            RECT16 *r16 = MapSL(lParam);
+            wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
+            r16->left   = rect.left;
+            r16->top    = rect.top;
+            r16->right  = rect.right;
+            r16->bottom = rect.bottom;
+        }
+        break;
+    case EM_SETRECT16:
+    case EM_SETRECTNP16:
+        if (lParam)
+        {
+            RECT rect;
+            RECT16 *r16 = MapSL(lParam);
+            rect.left   = r16->left;
+            rect.top    = r16->top;
+            rect.right  = r16->right;
+            rect.bottom = r16->bottom;
+            wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, (LPARAM)&rect, FALSE );
+        }
+        break;
+    case EM_SETHANDLE16:
+        edit_set_handle( hwnd, (HLOCAL16)wParam );
+        break;
+    case EM_GETHANDLE16:
+        result = edit_get_handle( hwnd );
+        break;
+    case EM_SETTABSTOPS16:
+    {
+        INT16 *tabs16 = MapSL(lParam);
+        INT i, count = wParam, *tabs = NULL;
+        if (count > 0)
+        {
+            if (!(tabs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*tabs) ))) return 0;
+            for (i = 0; i < count; i++) tabs[i] = tabs16[i];
+        }
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, count, (LPARAM)tabs, FALSE );
+        HeapFree( GetProcessHeap(), 0, tabs );
+        break;
+    }
+    case EM_GETFIRSTVISIBLELINE16:
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & ES_MULTILINE)) break;
+        result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
+        break;
+    case EM_SETWORDBREAKPROC16:
+    {
+        struct word_break_thunk *thunk = add_word_break_thunk( (EDITWORDBREAKPROC16)lParam );
+        result = wow_handlers32.edit_proc( hwnd, EM_SETWORDBREAKPROC, wParam, (LPARAM)thunk, FALSE );
+        break;
+    }
+    case EM_GETWORDBREAKPROC16:
+        result = wow_handlers32.edit_proc( hwnd, EM_GETWORDBREAKPROC, wParam, lParam, FALSE );
+        result = (LRESULT)get_word_break_thunk( (EDITWORDBREAKPROCA)result );
+        break;
+    case WM_NCDESTROY:
+        edit_destroy_handle( hwnd );
+        return wow_handlers32.edit_proc( hwnd, msg, wParam, lParam, unicode );  /* no unlock on destroy */
+    default:
+        result = wow_handlers32.edit_proc( hwnd, msg, wParam, lParam, unicode );
+        break;
+    }
+    edit_unlock_buffer( hwnd );
+    return result;
+}
+
+
 /***********************************************************************
  *           listbox_proc16
  */
@@ -802,6 +1165,7 @@ void register_wow_handlers(void)
     {
         button_proc16,
         combo_proc16,
+        edit_proc16,
         listbox_proc16,
     };
 
