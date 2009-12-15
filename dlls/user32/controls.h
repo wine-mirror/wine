@@ -66,6 +66,7 @@ struct wow_handlers16
     LRESULT (*edit_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
 };
 
 struct wow_handlers32
@@ -75,6 +76,7 @@ struct wow_handlers32
     LRESULT (*edit_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
 };
 
 extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;
@@ -84,6 +86,7 @@ extern LRESULT ComboWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN
 extern LRESULT EditWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT ListBoxWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
+extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,

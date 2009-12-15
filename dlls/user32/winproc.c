@@ -2393,6 +2393,7 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
     orig->edit_proc      = EditWndProc_common;
     orig->listbox_proc   = ListBoxWndProc_common;
     orig->scrollbar_proc = ScrollBarWndProc_common;
+    orig->static_proc    = StaticWndProc_common;
 
     wow_handlers = *new;
 }
@@ -2404,4 +2405,5 @@ struct wow_handlers16 wow_handlers =
     EditWndProc_common,
     ListBoxWndProc_common,
     ScrollBarWndProc_common,
+    StaticWndProc_common,
 };

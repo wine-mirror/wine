@@ -1191,6 +1191,24 @@ static LRESULT scrollbar_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 }
 
 
+/***********************************************************************
+ *           static_proc16
+ */
+static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    switch (msg)
+    {
+    case STM_SETICON16:
+        wParam = (WPARAM)HICON_32( (HICON16)wParam );
+        return wow_handlers32.static_proc( hwnd, STM_SETICON, wParam, lParam, FALSE );
+    case STM_GETICON16:
+        return HICON_16( wow_handlers32.static_proc( hwnd, STM_GETICON, wParam, lParam, FALSE ));
+    default:
+        return wow_handlers32.static_proc( hwnd, msg, wParam, lParam, unicode );
+    }
+}
+
+
 void register_wow_handlers(void)
 {
     static const struct wow_handlers16 handlers16 =
@@ -1200,6 +1218,7 @@ void register_wow_handlers(void)
         edit_proc16,
         listbox_proc16,
         scrollbar_proc16,
+        static_proc16,
     };
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );

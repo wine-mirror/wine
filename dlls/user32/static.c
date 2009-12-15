@@ -47,7 +47,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
 #include "controls.h"
 #include "user_private.h"
 #include "wine/debug.h"
@@ -400,8 +399,7 @@ static BOOL hasTextStyle( DWORD style )
 /***********************************************************************
  *           StaticWndProc_common
  */
-static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
-                                     LPARAM lParam, BOOL unicode )
+LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LRESULT lResult = 0;
     LONG full_style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -607,29 +605,12 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 }
 
 /***********************************************************************
- *           StaticWndProc_wrapper16
- */
-static LRESULT StaticWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    switch (msg)
-    {
-    case STM_SETICON16:
-        wParam = (WPARAM)HICON_32( (HICON16)wParam );
-        return StaticWndProc_common( hwnd, STM_SETICON, wParam, lParam, FALSE );
-    case STM_GETICON16:
-        return HICON_16( StaticWndProc_common( hwnd, STM_GETICON, wParam, lParam, FALSE ));
-    default:
-        return StaticWndProc_common( hwnd, msg, wParam, lParam, unicode );
-    }
-}
-
-/***********************************************************************
  *           StaticWndProcA
  */
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return StaticWndProc_wrapper16(hWnd, uMsg, wParam, lParam, FALSE);
+    return wow_handlers.static_proc(hWnd, uMsg, wParam, lParam, FALSE);
 }
 
 /***********************************************************************
@@ -638,7 +619,7 @@ static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow( hWnd )) return 0;
-    return StaticWndProc_wrapper16(hWnd, uMsg, wParam, lParam, TRUE);
+    return wow_handlers.static_proc(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
 static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
