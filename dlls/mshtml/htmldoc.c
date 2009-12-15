@@ -1748,6 +1748,9 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IMarshal, riid)) {
         TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppv);
         *ppv = NULL;
+    }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
+        TRACE("(%p)->(IID_IObjectWithSite %p)\n", This, ppv);
+        *ppv = OBJSITE(This);
     }else {
         return FALSE;
     }

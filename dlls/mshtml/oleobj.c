@@ -732,6 +732,54 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+/**********************************************************
+ * IObjectWithSite implementation
+ */
+
+#define OBJSITE_THIS(iface) DEFINE_THIS(HTMLDocument, ObjectWithSite, iface)
+
+static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppvObject)
+{
+    HTMLDocument *This = OBJSITE_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+}
+
+static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
+{
+    HTMLDocument *This = OBJSITE_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
+{
+    HTMLDocument *This = OBJSITE_THIS(iface);
+    return IHTMLDocument2_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
+{
+    HTMLDocument *This = OBJSITE_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pUnkSite);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite* iface, REFIID riid, PVOID *ppvSite)
+{
+    HTMLDocument *This = OBJSITE_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppvSite);
+    return E_NOTIMPL;
+}
+
+#undef OBJSITE_THIS
+
+static const IObjectWithSiteVtbl ObjectWithSiteVtbl = {
+    ObjectWithSite_QueryInterface,
+    ObjectWithSite_AddRef,
+    ObjectWithSite_Release,
+    ObjectWithSite_SetSite,
+    ObjectWithSite_GetSite
+};
+
 void HTMLDocument_LockContainer(HTMLDocumentObj *This, BOOL fLock)
 {
     IOleContainer *container;
@@ -753,4 +801,5 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->lpOleObjectVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
     This->lpOleControlVtbl = &OleControlVtbl;
+    This->lpObjectWithSiteVtbl = &ObjectWithSiteVtbl;
 }

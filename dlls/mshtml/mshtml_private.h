@@ -323,6 +323,7 @@ struct HTMLDocument {
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
     const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
+    const IObjectWithSiteVtbl             *lpObjectWithSiteVtbl;
 
     IUnknown *unk_impl;
     IDispatchEx *dispex;
@@ -577,6 +578,7 @@ struct HTMLDocumentNode {
 #define PERSTRINIT(x)    ((IPersistStreamInit*)           &(x)->lpPersistStreamInitVtbl)
 #define PERSISTHIST(x)   ((IPersistHistory*)              &(x)->lpPersistHistoryVtbl)
 #define CUSTOMDOC(x)     ((ICustomDoc*)                   &(x)->lpCustomDocVtbl)
+#define OBJSITE(x)       ((IObjectWithSite*)              &(x)->lpObjectWithSiteVtbl)
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
