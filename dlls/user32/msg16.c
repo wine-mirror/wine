@@ -1038,6 +1038,11 @@ static LRESULT edit_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
     case WM_NCDESTROY:
         edit_destroy_handle( hwnd );
         return wow_handlers32.edit_proc( hwnd, msg, wParam, lParam, unicode );  /* no unlock on destroy */
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+        if (LOWORD(wParam) == EM_GETTHUMB16 || LOWORD(wParam) == EM_LINESCROLL16) wParam -= msg16_offset;
+        result = wow_handlers32.edit_proc( hwnd, msg, wParam, lParam, unicode );
+        break;
     default:
         result = wow_handlers32.edit_proc( hwnd, msg, wParam, lParam, unicode );
         break;

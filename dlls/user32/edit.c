@@ -51,11 +51,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
-#include "wownt32.h"
 #include "win.h"
 #include "imm.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "controls.h"
 #include "user_private.h"
@@ -3918,7 +3915,6 @@ static LRESULT EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos)
 	 *	although it's also a regular control message.
 	 */
 	case EM_GETTHUMB: /* this one is used by NT notepad */
-	case EM_GETTHUMB16:
 	{
 		LRESULT ret;
 		if(GetWindowLongW( es->hwndSelf, GWL_STYLE ) & WS_HSCROLL)
@@ -3932,7 +3928,7 @@ static LRESULT EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos)
 		TRACE("EM_GETTHUMB: returning %ld\n", ret);
 		return ret;
 	}
-	case EM_LINESCROLL16:
+	case EM_LINESCROLL:
 		TRACE("EM_LINESCROLL16\n");
 		dx = pos;
 		break;
@@ -4042,7 +4038,6 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 	 *	although it's also a regular control message.
 	 */
 	case EM_GETTHUMB: /* this one is used by NT notepad */
-	case EM_GETTHUMB16:
 	{
 		LRESULT ret;
 		if(GetWindowLongW( es->hwndSelf, GWL_STYLE ) & WS_VSCROLL)
@@ -4056,8 +4051,8 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 		TRACE("EM_GETTHUMB: returning %ld\n", ret);
 		return ret;
 	}
-	case EM_LINESCROLL16:
-		TRACE("EM_LINESCROLL16 %d\n", pos);
+	case EM_LINESCROLL:
+		TRACE("EM_LINESCROLL %d\n", pos);
 		dy = pos;
 		break;
 
@@ -4083,8 +4078,8 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
  */
 static LRESULT EDIT_EM_GetThumb(EDITSTATE *es)
 {
-	return MAKELONG(EDIT_WM_VScroll(es, EM_GETTHUMB16, 0),
-		EDIT_WM_HScroll(es, EM_GETTHUMB16, 0));
+	return MAKELONG(EDIT_WM_VScroll(es, EM_GETTHUMB, 0),
+                        EDIT_WM_HScroll(es, EM_GETTHUMB, 0));
 }
 
 
