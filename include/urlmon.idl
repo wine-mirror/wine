@@ -1758,6 +1758,7 @@ cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IIntern
 cpp_quote("HRESULT WINAPI CoInternetParseUrl(LPCWSTR,PARSEACTION,DWORD,LPWSTR,DWORD,DWORD*,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetQueryInfo(LPCWSTR,QUERYOPTION,DWORD,LPVOID,DWORD,DWORD*,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetSetFeatureEnabled(INTERNETFEATURELIST,DWORD,BOOL);")
+cpp_quote("HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR,LPWSTR*,PSUACTION,DWORD);")
 cpp_quote("HRESULT WINAPI CreateFormatEnumerator(UINT,FORMATETC*,IEnumFORMATETC**);")
 cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);")
 cpp_quote("HRESULT WINAPI FaultInIEFeature(HWND,uCLSSPEC*,QUERYCONTEXT*,DWORD);")

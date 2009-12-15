@@ -1234,6 +1234,64 @@ HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider* pSP, IInternetZoneM
  */
 HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUACTION psuAction, DWORD dwReserved)
 {
-    FIXME("(%p,%p,%u,%u): stub\n", pwzUrl, ppwzSecUrl, psuAction, dwReserved);
-    return E_NOTIMPL;
+    WCHAR url[INTERNET_MAX_URL_LENGTH], domain[INTERNET_MAX_URL_LENGTH];
+    DWORD len;
+    HRESULT hres;
+
+    TRACE("(%p,%p,%u,%u)\n", pwzUrl, ppwzSecUrl, psuAction, dwReserved);
+
+    hres = CoInternetParseUrl(pwzUrl, PARSE_SECURITY_URL, 0, url, INTERNET_MAX_URL_LENGTH, &len, 0);
+    if(hres==S_OK) {
+        if(psuAction == PSU_DEFAULT)
+            hres = CoInternetParseUrl(url, PARSE_SECURITY_DOMAIN, 0, domain,
+                    INTERNET_MAX_URL_LENGTH, &len, 0);
+
+        if(psuAction==PSU_SECURITY_URL_ONLY || hres!=S_OK) {
+            len = lstrlenW(url)+1;
+            *ppwzSecUrl = CoTaskMemAlloc(len*sizeof(WCHAR));
+            if(!*ppwzSecUrl)
+                return E_OUTOFMEMORY;
+
+            memcpy(*ppwzSecUrl, url, len*sizeof(WCHAR));
+            return S_OK;
+        }
+
+        len++;
+        *ppwzSecUrl = CoTaskMemAlloc(len*sizeof(WCHAR));
+        if(!*ppwzSecUrl)
+            return E_OUTOFMEMORY;
+
+        memcpy(*ppwzSecUrl, domain, len*sizeof(WCHAR));
+        return S_OK;
+    }
+
+    if(psuAction == PSU_DEFAULT) {
+        hres = CoInternetParseUrl(pwzUrl, PARSE_ROOTDOCUMENT, 0, url, 0, &len, 0);
+        if(hres == S_FALSE) {
+            hres = CoInternetParseUrl(pwzUrl, PARSE_SCHEMA, 0, domain,
+                    INTERNET_MAX_URL_LENGTH, &len, 0);
+            if(hres == S_OK) {
+                domain[len] = ':';
+                hres = CoInternetParseUrl(pwzUrl, PARSE_DOMAIN, 0, domain+len+1,
+                        INTERNET_MAX_URL_LENGTH-len-1, &len, 0);
+                if(hres == S_OK) {
+                    len = lstrlenW(domain)+1;
+                    *ppwzSecUrl = CoTaskMemAlloc(len*sizeof(WCHAR));
+                    if(!*ppwzSecUrl)
+                        return E_OUTOFMEMORY;
+
+                    memcpy(*ppwzSecUrl, domain, len*sizeof(WCHAR));
+                    return S_OK;
+                }
+            }
+        }
+    }
+
+    len = lstrlenW(pwzUrl)+1;
+    *ppwzSecUrl = CoTaskMemAlloc(len*sizeof(WCHAR));
+    if(!*ppwzSecUrl)
+        return E_OUTOFMEMORY;
+
+    memcpy(*ppwzSecUrl, pwzUrl, len*sizeof(WCHAR));
+    return S_OK;
 }
