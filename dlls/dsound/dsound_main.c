@@ -497,7 +497,6 @@ typedef  HRESULT (*FnCreateInstance)(REFIID riid, LPVOID *ppobj);
  
 typedef struct {
     const IClassFactoryVtbl *lpVtbl;
-    LONG ref;
     REFCLSID rclsid;
     FnCreateInstance pfnCreateInstance;
 } IClassFactoryImpl;
@@ -522,19 +521,13 @@ DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
 
 static ULONG WINAPI DSCF_AddRef(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref - 1);
-    return ref;
+    return 2;
 }
 
 static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref + 1);
     /* static class, won't be freed */
-    return ref;
+    return 1;
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
@@ -573,13 +566,13 @@ static const IClassFactoryVtbl DSCF_Vtbl = {
 };
 
 static IClassFactoryImpl DSOUND_CF[] = {
-    { &DSCF_Vtbl, 1, &CLSID_DirectSound, (FnCreateInstance)DSOUND_Create },
-    { &DSCF_Vtbl, 1, &CLSID_DirectSound8, (FnCreateInstance)DSOUND_Create8 },
-    { &DSCF_Vtbl, 1, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
-    { &DSCF_Vtbl, 1, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
-    { &DSCF_Vtbl, 1, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
-    { &DSCF_Vtbl, 1, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
-    { NULL, 0, NULL, NULL }
+    { &DSCF_Vtbl, &CLSID_DirectSound, (FnCreateInstance)DSOUND_Create },
+    { &DSCF_Vtbl, &CLSID_DirectSound8, (FnCreateInstance)DSOUND_Create8 },
+    { &DSCF_Vtbl, &CLSID_DirectSoundCapture, (FnCreateInstance)DSOUND_CaptureCreate },
+    { &DSCF_Vtbl, &CLSID_DirectSoundCapture8, (FnCreateInstance)DSOUND_CaptureCreate8 },
+    { &DSCF_Vtbl, &CLSID_DirectSoundFullDuplex, (FnCreateInstance)DSOUND_FullDuplexCreate },
+    { &DSCF_Vtbl, &CLSID_DirectSoundPrivate, (FnCreateInstance)IKsPrivatePropertySetImpl_Create },
+    { NULL, NULL, NULL }
 };
 
 /*******************************************************************************
