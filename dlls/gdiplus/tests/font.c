@@ -193,6 +193,7 @@ todo_wine
 {
     stat = GdipCreateFontFamilyFromName (MSSansSerif, NULL, &family);
     expect (FontFamilyNotFound, stat);
+    if(stat == Ok) GdipDeleteFontFamily(family);
 }
 
     stat = GdipCreateFontFamilyFromName (arial, NULL, &family);
