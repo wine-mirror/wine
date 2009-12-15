@@ -100,6 +100,7 @@ DEFINE_EXPECT(GetBindInfoEx);
 DEFINE_EXPECT(OnStartBinding);
 DEFINE_EXPECT(OnProgress_FINDINGRESOURCE);
 DEFINE_EXPECT(OnProgress_CONNECTING);
+DEFINE_EXPECT(OnProgress_REDIRECTING);
 DEFINE_EXPECT(OnProgress_SENDINGREQUEST);
 DEFINE_EXPECT(OnProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(OnProgress_BEGINDOWNLOADDATA);
@@ -181,6 +182,7 @@ static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
 static BOOL have_IHttpNegotiate2, use_bscex;
+static BOOL test_redirect;
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -380,12 +382,20 @@ static DWORD WINAPI thread_proc(PVOID arg)
         SET_EXPECT(OnProgress_SENDINGREQUEST);
     hres = IInternetProtocolSink_ReportProgress(protocol_sink,
             BINDSTATUS_SENDINGREQUEST, NULL);
-    ok(hres == S_OK, "ReportProxgress failed: %08x\n", hres);
+    ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
     WaitForSingleObject(complete_event, INFINITE);
     if(bind_to_object)
         CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
     else
         CHECK_CALLED(OnProgress_SENDINGREQUEST);
+
+    if(test_redirect) {
+        SET_EXPECT(OnProgress_REDIRECTING);
+        hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_REDIRECTING, WINE_ABOUT_URL);
+        ok(hres == S_OK, "ReportProgress(BINDSTATUS_REFIRECTING) failed: %08x\n", hres);
+        WaitForSingleObject(complete_event, INFINITE);
+        CHECK_CALLED(OnProgress_REDIRECTING);
+    }
 
     test_switch_fail();
 
@@ -773,7 +783,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
 
-        if(test_protocol == HTTPS_TEST) {
+        if(test_protocol == HTTPS_TEST || test_redirect) {
             hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
             ok(hres == S_OK, "ReportProgress(BINDSTATUS_ACCEPTRANGES) failed: %08x\n", hres);
         }
@@ -1274,6 +1284,12 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT(OnProgress_CONNECTING);
         if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
             SetEvent(complete_event);
+        break;
+    case BINDSTATUS_REDIRECTING:
+        CHECK_EXPECT(OnProgress_REDIRECTING);
+        ok(!lstrcmpW(szStatusText, WINE_ABOUT_URL), "unexpected status text %s\n",
+           wine_dbgstr_w(szStatusText));
+        SetEvent(complete_event);
         break;
     case BINDSTATUS_SENDINGREQUEST:
         if(iface == &objbsc)
@@ -2188,6 +2204,7 @@ static BOOL test_RegisterBindStatusCallback(void)
 #define BINDTEST_TOOBJECT      0x0002
 #define BINDTEST_FILEDWLAPI    0x0004
 #define BINDTEST_HTTPRESPONSE  0x0008
+#define BINDTEST_REDIRECT      0x0010
 
 static void init_bind_test(int protocol, DWORD flags, DWORD t)
 {
@@ -2206,6 +2223,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
         urls[HTTP_TEST] = SHORT_RESPONSE_URL;
     else
         urls[HTTP_TEST] = WINE_ABOUT_URL;
+    test_redirect = (flags & BINDTEST_REDIRECT) != 0;
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
@@ -2892,6 +2910,9 @@ START_TEST(url)
 
         trace("emulated http test (to file)...\n");
         test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE, TYMED_FILE);
+
+        trace("emulated http test (redirect)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_REDIRECT, TYMED_ISTREAM);
 
         trace("asynchronous https test...\n");
         test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);

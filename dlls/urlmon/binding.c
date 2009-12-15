@@ -967,6 +967,9 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     case BINDSTATUS_CONNECTING:
         on_progress(This, 0, 0, BINDSTATUS_CONNECTING, szStatusText);
         break;
+    case BINDSTATUS_REDIRECTING:
+        on_progress(This, 0, 0, BINDSTATUS_REDIRECTING, szStatusText);
+        break;
     case BINDSTATUS_BEGINDOWNLOADDATA:
         fill_stgmed_buffer(This->stgmed_buf);
         break;
