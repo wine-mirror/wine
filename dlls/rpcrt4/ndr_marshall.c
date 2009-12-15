@@ -551,7 +551,8 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     }
     break;
   default:
-    FIXME("unknown conformance type %x\n", pFormat[0] & 0xf0);
+    FIXME("unknown conformance type %x, expect crash.\n", pFormat[0] & 0xf0);
+    goto finish_conf;
   }
 
   switch (pFormat[1]) {
