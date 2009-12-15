@@ -1067,6 +1067,12 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
 
         heap_free(This->nschannel->content_type);
         This->nschannel->content_type = heap_strdupWtoA(status_text);
+        break;
+    case BINDSTATUS_REDIRECTING:
+        TRACE("redirect to %s\n", debugstr_w(status_text));
+
+        /* FIXME: We should find a better way to handle this */
+        nsIWineURI_SetWineURL(This->nschannel->uri, status_text);
     }
 
     return S_OK;
