@@ -1337,11 +1337,6 @@ s_authinfo_test(unsigned int protseq, int secure)
 
     if (secure || protseq == RPC_PROTSEQ_LRPC)
     {
-        status = RpcImpersonateClient(NULL);
-        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
-        status = RpcRevertToSelf();
-        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
-
         status = RpcBindingInqAuthClientA(binding, &privs, &principal, &level, &authnsvc, NULL);
         ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
         ok(privs != (RPC_AUTHZ_HANDLE)0xdeadbeef, "privs unchanged\n");
@@ -1365,6 +1360,17 @@ s_authinfo_test(unsigned int protseq, int secure)
         }
         ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "level unchanged\n");
         ok(authnsvc == RPC_C_AUTHN_WINNT, "authnsvc unchanged\n");
+
+        status = RpcImpersonateClient(NULL);
+        if (status == RPC_S_CANNOT_SUPPORT)
+        {
+            win_skip("RpcImpersonateClient not supported\n");
+            return;
+        }
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        status = RpcRevertToSelf();
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+
     }
     else
     {
