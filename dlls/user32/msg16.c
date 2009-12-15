@@ -1159,6 +1159,38 @@ static LRESULT listbox_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 
+/***********************************************************************
+ *           scrollbar_proc16
+ */
+static LRESULT scrollbar_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    static const UINT msg16_offset = SBM_SETPOS16 - SBM_SETPOS;
+
+    switch (msg)
+    {
+    case SBM_SETPOS16:
+    case SBM_GETPOS16:
+    case SBM_ENABLE_ARROWS16:
+        msg -= msg16_offset;
+        break;
+    case SBM_SETRANGE16:
+        msg = wParam ? SBM_SETRANGEREDRAW : SBM_SETRANGE;
+        wParam = LOWORD(lParam);
+        lParam = HIWORD(lParam);
+        break;
+    case SBM_GETRANGE16:
+    {
+        INT min, max;
+        wow_handlers32.scrollbar_proc( hwnd, SBM_GETRANGE, (WPARAM)&min, (LPARAM)&max, FALSE );
+        return MAKELRESULT(min, max);
+    }
+    default:
+        return wow_handlers32.scrollbar_proc( hwnd, msg, wParam, lParam, unicode );
+    }
+    return wow_handlers32.scrollbar_proc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+
 void register_wow_handlers(void)
 {
     static const struct wow_handlers16 handlers16 =
@@ -1167,6 +1199,7 @@ void register_wow_handlers(void)
         combo_proc16,
         edit_proc16,
         listbox_proc16,
+        scrollbar_proc16,
     };
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );

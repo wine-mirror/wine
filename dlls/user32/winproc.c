@@ -2388,10 +2388,11 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
  */
 void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wow_handlers32 *orig )
 {
-    orig->button_proc  = ButtonWndProc_common;
-    orig->combo_proc   = ComboWndProc_common;
-    orig->edit_proc    = EditWndProc_common;
-    orig->listbox_proc = ListBoxWndProc_common;
+    orig->button_proc    = ButtonWndProc_common;
+    orig->combo_proc     = ComboWndProc_common;
+    orig->edit_proc      = EditWndProc_common;
+    orig->listbox_proc   = ListBoxWndProc_common;
+    orig->scrollbar_proc = ScrollBarWndProc_common;
 
     wow_handlers = *new;
 }
@@ -2402,4 +2403,5 @@ struct wow_handlers16 wow_handlers =
     ComboWndProc_common,
     EditWndProc_common,
     ListBoxWndProc_common,
+    ScrollBarWndProc_common,
 };

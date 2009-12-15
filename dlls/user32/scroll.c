@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winuser16.h"
 #include "controls.h"
 #include "win.h"
 #include "wine/debug.h"
@@ -1401,9 +1400,9 @@ static BOOL SCROLL_SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal)
 
 
 /***********************************************************************
- *           ScrollBarWndProc
+ *           ScrollBarWndProc_common
  */
-static LRESULT ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     if (!IsWindow( hwnd )) return 0;
 
@@ -1576,42 +1575,11 @@ static LRESULT ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 
 /***********************************************************************
- *           ScrollBarWndProc_wrapper16
- */
-static LRESULT ScrollBarWndProc_wrapper16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    static const UINT msg16_offset = SBM_SETPOS16 - SBM_SETPOS;
-
-    switch (msg)
-    {
-    case SBM_SETPOS16:
-    case SBM_GETPOS16:
-    case SBM_ENABLE_ARROWS16:
-        msg -= msg16_offset;
-        break;
-    case SBM_SETRANGE16:
-        msg = wParam ? SBM_SETRANGEREDRAW : SBM_SETRANGE;
-        wParam = LOWORD(lParam);
-        lParam = HIWORD(lParam);
-        break;
-    case SBM_GETRANGE16:
-    {
-        INT min, max;
-        ScrollBarWndProc( hwnd, SBM_GETRANGE, (WPARAM)&min, (LPARAM)&max, FALSE );
-        return MAKELRESULT(min, max);
-    }
-    default:
-        return ScrollBarWndProc( hwnd, msg, wParam, lParam, unicode );
-    }
-    return ScrollBarWndProc( hwnd, msg, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
  *           ScrollBarWndProcA
  */
 static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    return ScrollBarWndProc_wrapper16( hwnd, message, wParam, lParam, FALSE );
+    return wow_handlers.scrollbar_proc( hwnd, message, wParam, lParam, FALSE );
 }
 
 
@@ -1620,7 +1588,7 @@ static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT message, WPARAM wParam,
  */
 static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    return ScrollBarWndProc_wrapper16( hwnd, message, wParam, lParam, TRUE );
+    return wow_handlers.scrollbar_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 
