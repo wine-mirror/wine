@@ -63,6 +63,7 @@ static void test_constructor_destructor(void)
     stat = GdipCreateCustomLineCap(path, NULL, LineCapFlat, 10.0, &custom);
     todo_wine expect(NotImplemented, stat);
     todo_wine ok(custom == NULL, "Expected a failure on creation\n");
+    if(stat == Ok) GdipDeleteCustomLineCap(custom);
 
     GdipDeletePath(path2);
     GdipDeletePath(path);
