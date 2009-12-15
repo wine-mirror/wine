@@ -1624,6 +1624,37 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+static void surface_release_client_storage(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    struct wined3d_context *context;
+
+    context = context_acquire(This->resource.device, NULL, CTXUSAGE_RESOURCELOAD);
+
+    ENTER_GL();
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+    if(This->texture_name)
+    {
+        surface_bind_and_dirtify(This, FALSE);
+        glTexImage2D(This->texture_target, This->texture_level,
+                     GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    }
+    if(This->texture_name_srgb)
+    {
+        surface_bind_and_dirtify(This, TRUE);
+        glTexImage2D(This->texture_target, This->texture_level,
+                     GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    }
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+
+    LEAVE_GL();
+    context_release(context);
+
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+    surface_force_reload(iface);
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -1650,11 +1681,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
 
     /* Create a DIB section if there isn't a hdc yet */
     if(!This->hDC) {
+        if(This->Flags & SFLAG_CLIENT) {
+            IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+            surface_release_client_storage(iface);
+        }
         hr = IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
         if(FAILED(hr)) return WINED3DERR_INVALIDCALL;
-        if(This->Flags & SFLAG_CLIENT) {
-            surface_internal_preload(iface, SRGB_RGB);
-        }
 
         /* Use the dib section from now on if we are not using a PBO */
         if(!(This->Flags & SFLAG_PBO))
@@ -2911,11 +2943,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
 
         /* For client textures opengl has to be notified */
         if(This->Flags & SFLAG_CLIENT) {
-            DWORD oldFlags = This->Flags;
-            This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-            if(oldFlags & SFLAG_ALLOCATED) surface_internal_preload(iface, SRGB_RGB);
-            if(oldFlags & SFLAG_SRGBALLOCATED) surface_internal_preload(iface, SRGB_SRGB);
-            /* And hope that the app behaves correctly and did not free the old surface memory before setting a new pointer */
+            surface_release_client_storage(iface);
         }
 
         /* Now free the old memory if any */
@@ -2928,11 +2956,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         This->Flags &= ~SFLAG_USERPTR;
 
         if(This->Flags & SFLAG_CLIENT) {
-            DWORD oldFlags = This->Flags;
-            This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-            /* This respecifies an empty texture and opengl knows that the old memory is gone */
-            if(oldFlags & SFLAG_ALLOCATED) surface_internal_preload(iface, SRGB_RGB);
-            if(oldFlags & SFLAG_SRGBALLOCATED) surface_internal_preload(iface, SRGB_SRGB);
+            surface_release_client_storage(iface);
         }
     }
     return WINED3D_OK;
