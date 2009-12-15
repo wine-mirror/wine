@@ -2061,7 +2061,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
     if (!surface_is_offscreen(rt))
     {
         ENTER_GL();
-        glDrawBuffer(surface_get_gl_buffer(rt, (IWineD3DSwapChain *)((IWineD3DSurfaceImpl *)rt)->container));
+        glDrawBuffer(surface_get_gl_buffer(rt));
         checkGLcall("glDrawBuffers()");
         LEAVE_GL();
     }

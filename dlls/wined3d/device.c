@@ -5304,9 +5304,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct wined3d_context *context;
-    IWineD3DSwapChain *swapchain;
 
-    swapchain = get_swapchain(surface);
     if (!surface_is_offscreen(surface))
     {
         TRACE("Surface %p is onscreen\n", surface);
@@ -5314,7 +5312,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-        context_set_draw_buffer(context, surface_get_gl_buffer(surface, swapchain));
+        context_set_draw_buffer(context, surface_get_gl_buffer(surface));
     }
     else
     {
@@ -5712,8 +5710,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
     gl_info = context->gl_info;
 
-    if (!surface_is_offscreen(src_surface)) {
-        GLenum buffer = surface_get_gl_buffer(src_surface, src_swapchain);
+    if (!surface_is_offscreen(src_surface))
+    {
+        GLenum buffer = surface_get_gl_buffer(src_surface);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
         /* Make sure the drawable is up to date. In the offscreen case
@@ -5750,8 +5749,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     LEAVE_GL();
 
     /* Attach dst surface to dst fbo */
-    if (!surface_is_offscreen(dst_surface)) {
-        GLenum buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
+    if (!surface_is_offscreen(dst_surface))
+    {
+        GLenum buffer = surface_get_gl_buffer(dst_surface);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
         /* Make sure the drawable is up to date. In the offscreen case

@@ -661,20 +661,31 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     checkGLcall("set_compatible_renderbuffer");
 }
 
-GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain) {
+GLenum surface_get_gl_buffer(IWineD3DSurface *iface)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSwapChainImpl *swapchain_impl = (IWineD3DSwapChainImpl *)swapchain;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->container;
 
-    TRACE("(%p) : swapchain %p\n", This, swapchain);
+    TRACE("iface %p.\n", iface);
 
-    if (swapchain_impl->backBuffer && swapchain_impl->backBuffer[0] == iface) {
-        if(swapchain_impl->render_to_fbo) {
+    if (!(This->Flags & SFLAG_SWAPCHAIN))
+    {
+        ERR("Surface %p is not on a swapchain.\n", iface);
+        return GL_NONE;
+    }
+
+    if (swapchain->backBuffer && swapchain->backBuffer[0] == iface)
+    {
+        if (swapchain->render_to_fbo)
+        {
             TRACE("Returning GL_COLOR_ATTACHMENT0\n");
             return GL_COLOR_ATTACHMENT0;
         }
         TRACE("Returning GL_BACK\n");
         return GL_BACK;
-    } else if (swapchain_impl->frontBuffer == iface) {
+    }
+    else if (swapchain->frontBuffer == iface)
+    {
         TRACE("Returning GL_FRONT\n");
         return GL_FRONT;
     }
@@ -975,7 +986,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     else
     {
         /* Onscreen surfaces are always part of a swapchain */
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *) This->container);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
         TRACE("Locking %#x buffer\n", buffer);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
@@ -1198,7 +1209,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      */
     if (!surface_is_offscreen((IWineD3DSurface *)This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)This->container);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
         TRACE("Locking %#x buffer\n", buffer);
 
         ENTER_GL();
@@ -1433,7 +1444,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 
     if (!surface_is_offscreen((IWineD3DSurface *)This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)This->container);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
         TRACE("Unlocking %#x buffer.\n", buffer);
         context_set_draw_buffer(context, buffer);
     }
@@ -3100,8 +3111,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
  * with single pixel copy calls
  */
 static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
-        IWineD3DSwapChainImpl *swapchain, const WINED3DRECT *srect, const WINED3DRECT *drect,
-        BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
+        const WINED3DRECT *srect, const WINED3DRECT *drect, BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
     float xrel, yrel;
@@ -3121,9 +3131,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
-    } else {
-        GLenum buffer = surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain);
-        glReadBuffer(buffer);
+    }
+    else
+    {
+        glReadBuffer(surface_get_gl_buffer(SrcSurface));
     }
     checkGLcall("glReadBuffer");
 
@@ -3263,8 +3274,10 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
-    } else {
-        glReadBuffer(surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain));
+    }
+    else
+    {
+        glReadBuffer(surface_get_gl_buffer(SrcSurface));
     }
 
     /* TODO: Only back up the part that will be overwritten */
@@ -3697,7 +3710,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
                                     rect.y2 - rect.y1 > Src->currentDesc.Height) {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
-            fb_copy_to_texture_direct(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown, Filter);
+            fb_copy_to_texture_direct(This, SrcSurface, &srect, &rect, upsideDown, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
             fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown, Filter);
