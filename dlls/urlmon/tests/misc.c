@@ -270,6 +270,8 @@ static const WCHAR wszHttp[] = {'h','t','t','p',0};
 static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
 static const WCHAR wszEmpty[] = {0};
 
+static const WCHAR wszWineHQ[] = {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
+
 struct parse_test {
     LPCWSTR url;
     HRESULT secur_hres;
@@ -277,15 +279,17 @@ struct parse_test {
     HRESULT path_hres;
     LPCWSTR path;
     LPCWSTR schema;
+    LPCWSTR domain;
+    HRESULT domain_hres;
 };
 
 static const struct parse_test parse_tests[] = {
-    {url1, S_OK,   url1,  E_INVALIDARG, NULL, wszRes},
-    {url2, E_FAIL, url2,  E_INVALIDARG, NULL, wszEmpty},
-    {url3, E_FAIL, url3,  S_OK, path3,        wszFile},
-    {url4, E_FAIL, url4e, S_OK, path4,        wszFile},
-    {url5, E_FAIL, url5,  E_INVALIDARG, NULL, wszHttp},
-    {url6, S_OK,   url6,  E_INVALIDARG, NULL, wszAbout}
+    {url1, S_OK,   url1,  E_INVALIDARG, NULL, wszRes, NULL, E_FAIL},
+    {url2, E_FAIL, url2,  E_INVALIDARG, NULL, wszEmpty, NULL, E_FAIL},
+    {url3, E_FAIL, url3,  S_OK, path3,        wszFile, wszEmpty, S_OK},
+    {url4, E_FAIL, url4e, S_OK, path4,        wszFile, wszEmpty, S_OK},
+    {url5, E_FAIL, url5,  E_INVALIDARG, NULL, wszHttp, wszWineHQ, S_OK},
+    {url6, S_OK,   url6,  E_INVALIDARG, NULL, wszAbout, NULL, E_FAIL}
 };
 
 static void test_CoInternetParseUrl(void)
@@ -331,6 +335,13 @@ static void test_CoInternetParseUrl(void)
         ok(hres == S_OK, "[%d] schema failed: %08x\n", i, hres);
         ok(size == lstrlenW(parse_tests[i].schema), "[%d] wrong size\n", i);
         ok(!lstrcmpW(parse_tests[i].schema, buf), "[%d] wrong schema\n", i);
+
+        memset(buf, 0xf0, sizeof(buf));
+        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(WCHAR), &size, 0);
+        ok(hres == parse_tests[i].domain_hres, "[%d] domain failed: %08x\n", i, hres);
+        if(parse_tests[i].domain)
+            ok(!lstrcmpW(parse_tests[i].domain, buf), "[%d] wrong domain, received %s\n", i, wine_dbgstr_w(buf));
     }
 }
 

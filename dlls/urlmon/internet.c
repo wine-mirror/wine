@@ -170,6 +170,36 @@ static HRESULT parse_security_domain(LPCWSTR url, DWORD flags, LPWSTR result,
     return E_FAIL;
 }
 
+static HRESULT parse_domain(LPCWSTR url, DWORD flags, LPWSTR result,
+        DWORD size, DWORD *rsize)
+{
+    IInternetProtocolInfo *protocol_info;
+    HRESULT hres;
+
+    TRACE("(%s %08x %p %d %p)\n", debugstr_w(url), flags, result, size, rsize);
+
+    protocol_info = get_protocol_info(url);
+
+    if(protocol_info) {
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_DOMAIN,
+                flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    hres = UrlGetPartW(url, result, &size, URL_PART_HOSTNAME, flags);
+    if(rsize)
+        *rsize = size;
+
+    if(hres == E_POINTER)
+        return S_FALSE;
+
+    if(FAILED(hres))
+        return E_FAIL;
+    return S_OK;
+}
+
 /**************************************************************************
  *          CoInternetParseUrl    (URLMON.@)
  */
@@ -192,6 +222,8 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
         return parse_schema(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_SECURITY_DOMAIN:
         return parse_security_domain(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
+    case PARSE_DOMAIN:
+        return parse_domain(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     default:
         FIXME("not supported action %d\n", ParseAction);
     }
