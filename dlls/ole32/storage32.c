@@ -2268,6 +2268,63 @@ static HRESULT StorageImpl_BaseReadDirEntry(StorageBaseImpl *base,
   return StorageImpl_ReadDirEntry(This, index, data);
 }
 
+static BlockChainStream **StorageImpl_GetFreeBlockChainCacheEntry(StorageImpl* This)
+{
+  int i;
+
+  for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
+  {
+    if (!This->blockChainCache[i])
+    {
+      return &This->blockChainCache[i];
+    }
+  }
+
+  i = This->blockChainToEvict;
+
+  BlockChainStream_Destroy(This->blockChainCache[i]);
+  This->blockChainCache[i] = NULL;
+
+  This->blockChainToEvict++;
+  if (This->blockChainToEvict == BLOCKCHAIN_CACHE_SIZE)
+    This->blockChainToEvict = 0;
+
+  return &This->blockChainCache[i];
+}
+
+static BlockChainStream **StorageImpl_GetCachedBlockChainStream(StorageImpl *This,
+    DirRef index)
+{
+  int i, free_index=-1;
+
+  for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
+  {
+    if (!This->blockChainCache[i])
+    {
+      if (free_index == -1) free_index = i;
+    }
+    else if (This->blockChainCache[i]->ownerDirEntry == index)
+    {
+      return &This->blockChainCache[i];
+    }
+  }
+
+  if (free_index == -1)
+  {
+    free_index = This->blockChainToEvict;
+
+    BlockChainStream_Destroy(This->blockChainCache[free_index]);
+    This->blockChainCache[free_index] = NULL;
+
+    This->blockChainToEvict++;
+    if (This->blockChainToEvict == BLOCKCHAIN_CACHE_SIZE)
+      This->blockChainToEvict = 0;
+  }
+
+  This->blockChainCache[free_index] = BlockChainStream_Construct(This, NULL, index);
+  return &This->blockChainCache[free_index];
+}
+
 static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   ULARGE_INTEGER offset, ULONG size, void *buffer, ULONG *bytesRead)
 {
@@ -2309,14 +2366,12 @@ static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   }
   else
   {
-    BlockChainStream *stream;
+    BlockChainStream *stream = NULL;
 
-    stream = BlockChainStream_Construct(This, NULL, index);
+    stream = *StorageImpl_GetCachedBlockChainStream(This, index);
     if (!stream) return E_OUTOFMEMORY;
 
     hr = BlockChainStream_ReadAt(stream, offset, bytesToRead, buffer, bytesRead);
-
-    BlockChainStream_Destroy(stream);
 
     return hr;
   }
@@ -2329,7 +2384,7 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
   DirEntry data;
   HRESULT hr;
   SmallBlockChainStream *smallblock=NULL;
-  BlockChainStream *bigblock=NULL;
+  BlockChainStream **pbigblock=NULL, *bigblock=NULL;
 
   hr = StorageImpl_ReadDirEntry(This, index, &data);
   if (FAILED(hr)) return hr;
@@ -2351,7 +2406,8 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
     }
     else
     {
-      bigblock = BlockChainStream_Construct(This, NULL, index);
+      pbigblock = StorageImpl_GetCachedBlockChainStream(This, index);
+      bigblock = *pbigblock;
       if (!bigblock) return E_OUTOFMEMORY;
     }
   }
@@ -2362,7 +2418,8 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
   }
   else
   {
-    bigblock = BlockChainStream_Construct(This, NULL, index);
+    pbigblock = StorageImpl_GetCachedBlockChainStream(This, index);
+    bigblock = *pbigblock;
     if (!bigblock) return E_OUTOFMEMORY;
   }
 
@@ -2375,15 +2432,15 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
       SmallBlockChainStream_Destroy(smallblock);
       return E_FAIL;
     }
+
+    pbigblock = StorageImpl_GetFreeBlockChainCacheEntry(This);
+    *pbigblock = bigblock;
   }
   else if (bigblock && newsize.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
   {
-    smallblock = Storage32Impl_BigBlocksToSmallBlocks(This, &bigblock);
+    smallblock = Storage32Impl_BigBlocksToSmallBlocks(This, pbigblock);
     if (!smallblock)
-    {
-      BlockChainStream_Destroy(bigblock);
       return E_FAIL;
-    }
   }
 
   /* Set the size of the block chain. */
@@ -2395,7 +2452,6 @@ static HRESULT StorageImpl_StreamSetSize(StorageBaseImpl *base, DirRef index,
   else
   {
     BlockChainStream_SetSize(bigblock, newsize);
-    BlockChainStream_Destroy(bigblock);
   }
 
   /* Set the size in the directory entry. */
@@ -2450,12 +2506,10 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
   {
     BlockChainStream *stream;
 
-    stream = BlockChainStream_Construct(This, NULL, index);
+    stream = *StorageImpl_GetCachedBlockChainStream(This, index);
     if (!stream) return E_OUTOFMEMORY;
 
     hr = BlockChainStream_WriteAt(stream, offset, size, buffer, bytesWritten);
-
-    BlockChainStream_Destroy(stream);
 
     return hr;
   }
@@ -2741,6 +2795,7 @@ static void StorageImpl_Invalidate(StorageBaseImpl* iface)
 static void StorageImpl_Destroy(StorageBaseImpl* iface)
 {
   StorageImpl *This = (StorageImpl*) iface;
+  int i;
   TRACE("(%p)\n", This);
 
   StorageImpl_Invalidate(iface);
@@ -2750,6 +2805,9 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
   BlockChainStream_Destroy(This->smallBlockDepotChain);
+
+  for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
+    BlockChainStream_Destroy(This->blockChainCache[i]);
 
   if (This->bigBlockFile)
     BIGBLOCKFILE_Destructor(This->bigBlockFile);

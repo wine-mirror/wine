@@ -325,6 +325,9 @@ static inline HRESULT StorageBaseImpl_StreamSetSize(StorageBaseImpl *This,
 void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm);
 void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm);
 
+/* Number of BlockChainStream objects to cache in a StorageImpl */
+#define BLOCKCHAIN_CACHE_SIZE 4
+
 /****************************************************************************
  * Storage32Impl definitions.
  *
@@ -366,6 +369,10 @@ struct StorageImpl
   BlockChainStream* rootBlockChain;
   BlockChainStream* smallBlockDepotChain;
   BlockChainStream* smallBlockRootChain;
+
+  /* Cache of block chain streams objects for directory entries */
+  BlockChainStream* blockChainCache[BLOCKCHAIN_CACHE_SIZE];
+  UINT blockChainToEvict;
 
   /*
    * Pointer to the big block file abstraction
