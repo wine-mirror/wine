@@ -15085,4 +15085,45 @@ interface IHTMLEditServices : IUnknown
         [in] SELECTION_TYPE eType);
 }
 
+/*****************************************************************************
+ *    IElementBehaviorSite interface
+ */
+[
+    odl,
+    uuid(3050F427-98B5-11CF-BB82-00AA00BDCE0B)
+]
+interface IElementBehaviorSite : IUnknown {
+    HRESULT GetElement([out, retval] IHTMLElement **ppElement);
+    HRESULT RegisterNotification([in] long lEvent);
+}
+
+/*****************************************************************************
+ *    IElementBehavior interface
+ */
+[
+    odl,
+    uuid(3050F425-98B5-11CF-BB82-00AA00BDCE0B)
+]
+interface IElementBehavior : IUnknown {
+    HRESULT Init([in] IElementBehaviorSite *pBehaviorSite);
+    HRESULT Notify([in] long lEvent,  [in, out] VARIANT *pVar);
+    HRESULT Detach();
+}
+
+/*****************************************************************************
+ *    IElementBehaviorFactory interface
+ */
+[
+    odl,
+    uuid(3050f429-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IElementBehaviorFactory : IUnknown
+{
+    HRESULT FindBehavior(
+        [in] BSTR bstrBehavior,
+        [in] BSTR bstrBehaviorUrl,
+        [in] IElementBehaviorSite *pSite,
+        [out] IElementBehavior **ppBehavior);
+}
+
 } /* library MSHTML */
