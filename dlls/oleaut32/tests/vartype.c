@@ -5460,6 +5460,8 @@ static void test_BstrCopy(void)
     bstr = Get(V_BSTR(&vt2));
     ok (bstr->dwLen == 3, "Expected 3, got %d\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
+    VariantClear(&vt2);
+    VariantClear(&vt1);
   }
 }
 
