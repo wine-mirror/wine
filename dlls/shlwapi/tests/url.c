@@ -519,6 +519,9 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
 
 static void test_UrlGetPart(void)
 {
+  const char* file_url = "file://h o s t/c:/windows/file";
+  const char* http_url = "http://user:pass 123@www.wine hq.org";
+
   CHAR szPart[INTERNET_MAX_URL_LENGTH];
   DWORD dwSize;
   HRESULT res;
@@ -544,6 +547,11 @@ static void test_UrlGetPart(void)
   test_url_part(TEST_URL_3, URL_PART_PASSWORD, 0, "bar");
   test_url_part(TEST_URL_3, URL_PART_SCHEME, 0, "http");
   test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "?query=x&return=y");
+
+  test_url_part(file_url, URL_PART_HOSTNAME, 0, "h o s t");
+
+  test_url_part(http_url, URL_PART_HOSTNAME, 0, "www.wine hq.org");
+  test_url_part(http_url, URL_PART_PASSWORD, 0, "pass 123");
 }
 
 /* ########################### */

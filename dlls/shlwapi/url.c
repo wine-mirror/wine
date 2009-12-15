@@ -1856,7 +1856,8 @@ static LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
                  (*start == '_') ||
                  (*start == '+') ||
                  (*start == '-') ||
-                 (*start == '.')) {
+                 (*start == '.') ||
+                 (*start == ' ')) {
 		start++;
 		(*size)++;
             } else if (*start == '%') {
@@ -1886,7 +1887,8 @@ static LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
 	while (cont) {
 	    if (isalnumW(*start) ||
                 (*start == '-') ||
-                (*start == '.') ) {
+                (*start == '.') ||
+                (*start == ' ') ) {
 		start++;
 		(*size)++;
 	    }
