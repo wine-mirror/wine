@@ -387,7 +387,9 @@ static void test_VarFormat(void)
 
   /* 'out' is not cleared */
   out = (BSTR)0x1;
-  pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
+  hres = pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
+  ok(hres == S_OK, "got %08x\n", hres);
+  SysFreeString(out);
   out = NULL;
 
   /* VT_NULL */
