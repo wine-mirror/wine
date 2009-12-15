@@ -1172,7 +1172,6 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
 static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
-    IWineD3DSwapChainImpl *swapchain;
     struct wined3d_context *context;
     int bpp;
     GLenum format, internal, type;
@@ -1197,18 +1196,18 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (!surface_is_offscreen((IWineD3DSurface *)This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)This->container);
         TRACE("Locking %#x buffer\n", buffer);
 
         ENTER_GL();
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
         LEAVE_GL();
-
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-    } else {
+    }
+    else
+    {
         /* Locking the primary render target which is not on a swapchain(=offscreen render target).
          * Read from the back buffer
          */
