@@ -777,7 +777,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 
             sym = symt_find_nearest(module, ste->addr);
             if (sym)
-                symt_get_info(&sym->symt, TI_GET_ADDRESS, &addr);
+                symt_get_info(module, &sym->symt, TI_GET_ADDRESS, &addr);
             if (sym && ste->addr == addr)
             {
                 ULONG64 size = 0;
@@ -791,8 +791,8 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                  * Also, we check that we don't have two symbols, one local, the other
                  * global, which is legal.
                  */
-                symt_get_info(&sym->symt, TI_GET_LENGTH,   &size);
-                symt_get_info(&sym->symt, TI_GET_DATAKIND, &kind);
+                symt_get_info(module, &sym->symt, TI_GET_LENGTH,   &size);
+                symt_get_info(module, &sym->symt, TI_GET_DATAKIND, &kind);
                 if (size && kind == (ste->is_global ? DataIsGlobal : DataIsFileStatic))
                     FIXME("Duplicate in %s: %s<%08lx> %s<%s-%s>\n",
                           debugstr_w(module->module.ModuleName),
