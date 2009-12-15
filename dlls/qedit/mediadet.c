@@ -310,7 +310,11 @@ static HRESULT GetFilterInfo(IMoniker *pMoniker, GUID *pclsid, VARIANT *pvar)
         hr = IPropertyBag_Read(pPropBagCat, wszClsidName, pvar, NULL);
 
     if (SUCCEEDED(hr))
+    {
         hr = CLSIDFromString(V_UNION(pvar, bstrVal), pclsid);
+        VariantClear(pvar);
+        V_VT(pvar) = VT_BSTR;
+    }
 
     if (SUCCEEDED(hr))
         hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
@@ -387,10 +391,14 @@ static HRESULT GetSplitter(MediaDetImpl *This)
     hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IBaseFilter, (void **) &splitter);
     if (FAILED(hr))
+    {
+        VariantClear(&var);
         return hr;
+    }
 
     hr = IGraphBuilder_AddFilter(This->graph, splitter,
                                  V_UNION(&var, bstrVal));
+    VariantClear(&var);
     if (FAILED(hr))
     {
         IBaseFilter_Release(splitter);
