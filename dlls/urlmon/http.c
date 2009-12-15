@@ -232,7 +232,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
 static HRESULT HttpProtocol_start_downloading(Protocol *prot)
 {
     HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
-    LPWSTR content_type = 0, content_length = 0;
+    LPWSTR content_type, content_length, ranges;
     DWORD len = sizeof(DWORD);
     DWORD status_code;
     BOOL res;
@@ -263,8 +263,11 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
         WARN("HttpQueryInfo failed: %d\n", GetLastError());
     }
 
-    if(This->https)
+    ranges = query_http_info(This, HTTP_QUERY_ACCEPT_RANGES);
+    if(ranges) {
         IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
+        heap_free(ranges);
+    }
 
     content_type = query_http_info(This, HTTP_QUERY_CONTENT_TYPE);
     if(content_type) {
