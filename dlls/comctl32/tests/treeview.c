@@ -999,7 +999,10 @@ static void test_get_linecolor(void)
 
     /* newly created control has default color */
     clr = (COLORREF)SendMessage(hTree, TVM_GETLINECOLOR, 0, 0);
-    expect(CLR_DEFAULT, clr);
+    if (clr == 0)
+        win_skip("TVM_GETLINECOLOR is not supported on comctl32 < 5.80\n");
+    else
+        expect(CLR_DEFAULT, clr);
 
     DestroyWindow(hTree);
 }
@@ -1013,7 +1016,10 @@ static void test_get_insertmarkcolor(void)
 
     /* newly created control has default color */
     clr = (COLORREF)SendMessage(hTree, TVM_GETINSERTMARKCOLOR, 0, 0);
-    expect(CLR_DEFAULT, clr);
+    if (clr == 0)
+        win_skip("TVM_GETINSERTMARKCOLOR is not supported on comctl32 < 5.80\n");
+    else
+        expect(CLR_DEFAULT, clr);
 
     DestroyWindow(hTree);
 }
