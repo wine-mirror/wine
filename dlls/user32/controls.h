@@ -67,6 +67,8 @@ struct wow_handlers16
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    LRESULT (*call_window_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
+    LRESULT (*call_dialog_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
 };
 
 struct wow_handlers32
@@ -77,6 +79,7 @@ struct wow_handlers32
     LRESULT (*listbox_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    WNDPROC (*alloc_winproc)(WNDPROC,WNDPROC);
 };
 
 extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;

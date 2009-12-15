@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
+#include <assert.h>
+#include <stdarg.h>
+#include <string.h>
+
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winerror.h"
@@ -86,6 +93,241 @@ static LRESULT defdlg_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
     *result = DefDlgProcA( hwnd, msg, wp, lp );
     return *result;
 }
+
+static LRESULT call_window_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                          LRESULT *result, void *arg )
+{
+    WNDPROC proc = arg;
+    *result = CallWindowProcA( proc, hwnd, msg, wp, lp );
+    return *result;
+}
+
+
+/**********************************************************************
+ * Support for window procedure thunks
+ */
+
+#include "pshpack1.h"
+typedef struct
+{
+    BYTE        popl_eax;        /* popl  %eax (return address) */
+    BYTE        pushl_func;      /* pushl $proc */
+    WNDPROC     proc;
+    BYTE        pushl_eax;       /* pushl %eax */
+    BYTE        ljmp;            /* ljmp relay*/
+    DWORD       relay_offset;    /* __wine_call_wndproc */
+    WORD        relay_sel;
+} WINPROC_THUNK;
+#include "poppack.h"
+
+#define WINPROC_HANDLE (~0u >> 16)
+#define MAX_WINPROCS32 4096
+#define MAX_WINPROCS16 1024
+
+static WNDPROC16 winproc16_array[MAX_WINPROCS16];
+static unsigned int winproc16_used;
+
+static WINPROC_THUNK *thunk_array;
+static UINT thunk_selector;
+
+/* return the window proc index for a given handle, or -1 for an invalid handle
+ * indices 0 .. MAX_WINPROCS32-1 are for 32-bit procs,
+ * indices MAX_WINPROCS32 .. MAX_WINPROCS32+MAX_WINPROCS16-1 for 16-bit procs */
+static int winproc_to_index( WNDPROC16 handle )
+{
+    unsigned int index;
+
+    if (HIWORD(handle) == thunk_selector)
+    {
+        index = LOWORD(handle) / sizeof(WINPROC_THUNK);
+        /* check alignment */
+        if (index * sizeof(WINPROC_THUNK) != LOWORD(handle)) return -1;
+        /* check array limits */
+        if (index >= MAX_WINPROCS32) return -1;
+    }
+    else
+    {
+        index = LOWORD(handle);
+        if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return -1;
+        /* check array limits */
+        if (index >= winproc16_used + MAX_WINPROCS32) return -1;
+    }
+    return index;
+}
+
+/* allocate a 16-bit thunk for an existing window proc */
+static WNDPROC16 alloc_win16_thunk( WNDPROC handle )
+{
+    static FARPROC16 relay;
+    WINPROC_THUNK *thunk;
+    UINT index = LOWORD( handle );
+
+    if (index >= MAX_WINPROCS32) return (WNDPROC16)handle;  /* already a 16-bit proc */
+
+    if (!thunk_array)  /* allocate the array and its selector */
+    {
+        LDT_ENTRY entry;
+
+        assert( MAX_WINPROCS16 * sizeof(WINPROC_THUNK) <= 0x10000 );
+
+        if (!(thunk_selector = wine_ldt_alloc_entries(1))) return NULL;
+        if (!(thunk_array = VirtualAlloc( NULL, MAX_WINPROCS16 * sizeof(WINPROC_THUNK), MEM_COMMIT,
+                                          PAGE_EXECUTE_READWRITE ))) return NULL;
+        wine_ldt_set_base( &entry, thunk_array );
+        wine_ldt_set_limit( &entry, MAX_WINPROCS16 * sizeof(WINPROC_THUNK) - 1 );
+        wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        wine_ldt_set_entry( thunk_selector, &entry );
+        relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
+    }
+
+    thunk = &thunk_array[index];
+    thunk->popl_eax     = 0x58;   /* popl  %eax */
+    thunk->pushl_func   = 0x68;   /* pushl $proc */
+    thunk->proc         = handle;
+    thunk->pushl_eax    = 0x50;   /* pushl %eax */
+    thunk->ljmp         = 0xea;   /* ljmp   relay*/
+    thunk->relay_offset = OFFSETOF(relay);
+    thunk->relay_sel    = SELECTOROF(relay);
+    return (WNDPROC16)MAKESEGPTR( thunk_selector, index * sizeof(WINPROC_THUNK) );
+}
+
+/**********************************************************************
+ *	     WINPROC_AllocProc16
+ */
+WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
+{
+    int index;
+    WNDPROC ret;
+
+    if (!func) return NULL;
+
+    /* check if the function is already a win proc */
+    if ((index = winproc_to_index( func )) != -1)
+        return (WNDPROC)(ULONG_PTR)(index | (WINPROC_HANDLE << 16));
+
+    /* then check if we already have a winproc for that function */
+    for (index = 0; index < winproc16_used; index++)
+        if (winproc16_array[index] == func) goto done;
+
+    if (winproc16_used >= MAX_WINPROCS16)
+    {
+        FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
+        return NULL;
+    }
+    winproc16_array[winproc16_used++] = func;
+
+done:
+    ret = (WNDPROC)(ULONG_PTR)((index + MAX_WINPROCS32) | (WINPROC_HANDLE << 16));
+    TRACE( "returning %p for %p/16-bit (%d/%d used)\n",
+           ret, func, winproc16_used, MAX_WINPROCS16 );
+    return ret;
+}
+
+/**********************************************************************
+ *	     WINPROC_GetProc16
+ *
+ * Get a window procedure pointer that can be passed to the Windows program.
+ */
+WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
+{
+    WNDPROC winproc;
+
+    if (unicode) winproc = wow_handlers32.alloc_winproc( NULL, proc );
+    else winproc = wow_handlers32.alloc_winproc( proc, NULL );
+
+    if ((ULONG_PTR)winproc >> 16 != WINPROC_HANDLE) return (WNDPROC16)winproc;
+    return alloc_win16_thunk( winproc );
+}
+
+/* call a 16-bit window procedure */
+static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
+                                   LRESULT *result, void *arg )
+{
+    WNDPROC16 func = arg;
+    int index = winproc_to_index( func );
+    CONTEXT86 context;
+    size_t size = 0;
+    struct
+    {
+        WORD params[5];
+        union
+        {
+            CREATESTRUCT16 cs16;
+            DRAWITEMSTRUCT16 dis16;
+            COMPAREITEMSTRUCT16 cis16;
+        } u;
+    } args;
+
+    USER_CheckNotLock();
+
+    if (index >= MAX_WINPROCS32) func = winproc16_array[index - MAX_WINPROCS32];
+
+    /* Window procedures want ax = hInstance, ds = es = ss */
+
+    memset(&context, 0, sizeof(context));
+    context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
+    context.SegFs = wine_get_fs();
+    context.SegGs = wine_get_gs();
+    if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
+    context.SegCs = SELECTOROF(func);
+    context.Eip   = OFFSETOF(func);
+    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
+
+    if (lParam)
+    {
+        /* Some programs (eg. the "Undocumented Windows" examples, JWP) only
+           work if structures passed in lParam are placed in the stack/data
+           segment. Programmers easily make the mistake of converting lParam
+           to a near rather than a far pointer, since Windows apparently
+           allows this. We copy the structures to the 16 bit stack; this is
+           ugly but makes these programs work. */
+        switch (msg)
+        {
+          case WM_CREATE:
+          case WM_NCCREATE:
+            size = sizeof(CREATESTRUCT16); break;
+          case WM_DRAWITEM:
+            size = sizeof(DRAWITEMSTRUCT16); break;
+          case WM_COMPAREITEM:
+            size = sizeof(COMPAREITEMSTRUCT16); break;
+        }
+        if (size)
+        {
+            memcpy( &args.u, MapSL(lParam), size );
+            lParam = PtrToUlong(NtCurrentTeb()->WOW32Reserved) - size;
+        }
+    }
+
+    args.params[4] = hwnd;
+    args.params[3] = msg;
+    args.params[2] = wParam;
+    args.params[1] = HIWORD(lParam);
+    args.params[0] = LOWORD(lParam);
+    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args.params) + size, &args, (DWORD *)&context );
+    *result = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
+    return *result;
+}
+
+static LRESULT call_dialog_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
+                                   LRESULT *result, void *arg )
+{
+    LRESULT ret = call_window_proc16( hwnd, msg, wp, lp, result, arg );
+    *result = GetWindowLongPtrW( WIN_Handle32(hwnd), DWLP_MSGRESULT );
+    return LOWORD(ret);
+}
+
+static LRESULT call_window_proc_Ato16( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                       LRESULT *result, void *arg )
+{
+    return WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wp, lp, result, arg );
+}
+
+static LRESULT call_dialog_proc_Ato16( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                       LRESULT *result, void *arg )
+{
+    return WINPROC_CallProc32ATo16( call_dialog_proc16, hwnd, msg, wp, lp, result, arg );
+}
+
 
 
 /**********************************************************************
@@ -225,6 +467,37 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 msg, WPARAM16 wparam, LPAR
     if (!tid) return FALSE;
     return WINPROC_CallProc16To32A( post_thread_message_callback, 0, msg, wparam, lparam,
                                     &unused, (void *)tid );
+}
+
+
+/**********************************************************************
+ *		CallWindowProc (USER.122)
+ */
+LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
+                                 WPARAM16 wParam, LPARAM lParam )
+{
+    int index = winproc_to_index( func );
+    LRESULT result;
+
+    if (!func) return 0;
+
+    if (index == -1 || index >= MAX_WINPROCS32)
+        call_window_proc16( hwnd, msg, wParam, lParam, &result, func );
+    else
+        WINPROC_CallProc16To32A( call_window_proc_callback, hwnd, msg, wParam, lParam, &result,
+                                 thunk_array[index].proc );
+    return result;
+}
+
+
+/**********************************************************************
+ *	     __wine_call_wndproc   (USER.1010)
+ */
+LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam, WNDPROC proc )
+{
+    LRESULT result;
+    WINPROC_CallProc16To32A( call_window_proc_callback, hwnd, msg, wParam, lParam, &result, proc );
+    return result;
 }
 
 
@@ -1224,6 +1497,8 @@ void register_wow_handlers(void)
         listbox_proc16,
         scrollbar_proc16,
         static_proc16,
+        call_window_proc_Ato16,
+        call_dialog_proc_Ato16
     };
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
