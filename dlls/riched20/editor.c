@@ -2648,6 +2648,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->hwndParent = NULL;
   ed->texthost = texthost;
   ed->bEmulateVersion10 = bEmulateVersion10;
+  ed->styleFlags = 0;
   ITextHost_TxGetPropertyBits(texthost,
                               (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
                                TXTBIT_READONLY|TXTBIT_USEPASSWORD|
