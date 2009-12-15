@@ -294,6 +294,7 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
 	return 0;
 
     if (*old!=NULL) {
+      BSTR old_copy = *old;
       DWORD newbytelen = len*sizeof(WCHAR);
       DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
       *old = (BSTR)(ptr+1);
@@ -302,7 +303,7 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
        * when 'in' is NULL!
        * Some Microsoft program needs it.
        */
-      if (str) memmove(*old, str, newbytelen);
+      if (str && old_copy!=str) memmove(*old, str, newbytelen);
       (*old)[len] = 0;
     } else {
       /*

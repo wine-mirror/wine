@@ -5440,6 +5440,20 @@ static void test_SysReAllocStringLen(void)
       }
     }
   }
+
+  /* Some Windows applications use the same pointer for pbstr and psz */
+  str = SysAllocStringLen(szTest, 4);
+  ok(str != NULL, "Expected non-NULL\n");
+  if(str)
+  {
+      int changed;
+
+      changed = SysReAllocStringLen(&str, str, 1000000);
+      ok(SysStringLen(str)==1000000, "Incorrect string length\n");
+      ok(!memcmp(szTest, str, 4*sizeof(WCHAR)), "Incorrect string returned\n");
+
+      SysFreeString(str);
+  }
 }
 
 static void test_BstrCopy(void)
