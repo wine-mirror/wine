@@ -794,19 +794,10 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
 static void msg_queue_remove_queue(struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    struct process *process = entry->thread->process;
 
     remove_queue( obj, entry );
     if (queue->fd && list_empty( &obj->wait_queue ))  /* last on the queue is gone */
         set_fd_events( queue->fd, 0 );
-
-    assert( entry->thread->queue == queue );
-
-    /* if waiting on the main process queue, reset the idle event */
-    if (process->queue == queue)
-    {
-        if (process->idle_event) reset_event( process->idle_event );
-    }
 }
 
 static void msg_queue_dump( struct object *obj, int verbose )

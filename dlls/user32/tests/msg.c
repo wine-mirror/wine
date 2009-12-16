@@ -12040,7 +12040,7 @@ static const struct
          { 0,            0,            FALSE },
 /* 10 */ { 0,            0,            TRUE  },
          { 0,            0,            FALSE },
-         { 0,            WAIT_TIMEOUT, TRUE  },
+         { 0,            WAIT_TIMEOUT, FALSE },
 };
 
 static void do_wait_idle_child( int arg )
