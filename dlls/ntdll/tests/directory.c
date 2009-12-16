@@ -175,7 +175,7 @@ static void test_NtQueryDirectoryFile(void)
         ok(0,"RtlDosPathNametoNtPathName_U failed\n");
         goto done;
     }
-    InitializeObjectAttributes(&attr, &ntdirname, 0, 0, NULL);
+    InitializeObjectAttributes(&attr, &ntdirname, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenFile( &dirh, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
                          FILE_OPEN,
                          FILE_SYNCHRONOUS_IO_NONALERT|FILE_OPEN_FOR_BACKUP_INTENT|FILE_DIRECTORY_FILE);
