@@ -353,11 +353,13 @@ UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables )
         if( r != ERROR_SUCCESS )
         {
             WARN("can't create table: %s\n", debugstr_w(tables));
+            msi_free(table);
             r = ERROR_BAD_QUERY_SYNTAX;
             goto end;
         }
 
-        r = table->view->ops->get_dimensions( table->view, NULL, &table->columns );
+        r = table->view->ops->get_dimensions( table->view, NULL,
+                                              &table->columns );
         if( r != ERROR_SUCCESS )
         {
             ERR("can't get table dimensions\n");
