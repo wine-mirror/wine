@@ -2854,6 +2854,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
                 if (FAILED(rc))
                     return rc;
                 rc = VarBstrCmp(V_BSTR(bstrv), V_BSTR(&rv), lcid, flags);
+                VariantClear(&rv);
             } else if (V_BSTR(bstrv) && *V_BSTR(bstrv)) {
             /* Non NULL nor empty BSTR */
                 /* If the BSTR is not a number the BSTR is greater */
@@ -2869,8 +2870,8 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
                     /* Numeric comparison, will be handled below.
                        VARCMP_NULL used only to break out. */
                     rc = VARCMP_NULL;
-            VariantClear(&lv);
-            VariantClear(&rv);
+                VariantClear(&lv);
+                VariantClear(&rv);
             } else
                 /* Empty or NULL BSTR */
                 rc = VARCMP_GT;
