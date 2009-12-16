@@ -670,9 +670,12 @@ static void test_verifyRevocation(void)
     revPara.pftTimeToUse = &time;
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
+     broken(GetLastError() == CRYPT_E_REVOKED), /* W2K SP3/SP4 */
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
+     broken(GetLastError() == CRYPT_E_REVOKED), /* W2K SP3/SP4 */
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
     ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
     CertCloseStore(revPara.hCrlStore, 0);
