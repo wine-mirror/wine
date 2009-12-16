@@ -2493,6 +2493,42 @@ static LRESULT listbox_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 
 /***********************************************************************
+ *           mdiclient_proc16
+ */
+static LRESULT mdiclient_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    if (msg == WM_CREATE)
+    {
+        LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
+        WND *win;
+        BOOL is_win32;
+
+        if (!(win = WIN_GetPtr( hwnd ))) return 0;
+        is_win32 = (win == WND_OTHER_PROCESS || win == WND_DESKTOP || (win->flags & WIN_ISWIN32));
+        WIN_ReleasePtr( win );
+
+	/* Translation layer doesn't know what's in the cs->lpCreateParams
+	 * so we have to keep track of what environment we're in. */
+	if (!is_win32)
+	{
+            void *orig = cs->lpCreateParams;
+            LRESULT ret;
+            CLIENTCREATESTRUCT ccs;
+            CLIENTCREATESTRUCT16 *ccs16 = MapSL( PtrToUlong( orig ));
+
+            ccs.hWindowMenu  = HMENU_32(ccs16->hWindowMenu);
+            ccs.idFirstChild = ccs16->idFirstChild;
+            cs->lpCreateParams = &ccs;
+            ret = wow_handlers32.mdiclient_proc( hwnd, msg, wParam, lParam, unicode );
+            cs->lpCreateParams = orig;
+            return ret;
+	}
+    }
+    return wow_handlers32.mdiclient_proc( hwnd, msg, wParam, lParam, unicode );
+}
+
+
+/***********************************************************************
  *           scrollbar_proc16
  */
 static LRESULT scrollbar_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
@@ -2550,6 +2586,7 @@ void register_wow_handlers(void)
         combo_proc16,
         edit_proc16,
         listbox_proc16,
+        mdiclient_proc16,
         scrollbar_proc16,
         static_proc16,
         call_window_proc_Ato16,

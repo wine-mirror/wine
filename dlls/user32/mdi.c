@@ -93,7 +93,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wownt32.h"
-#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "controls.h"
@@ -1045,8 +1044,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, BOOL repaint, LPCWSTR
 /**********************************************************************
  *		MDIClientWndProc_common
  */
-static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
-                                        WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     MDICLIENTINFO *ci;
 
@@ -1070,26 +1068,11 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
       {
           /* Since we are using only cs->lpCreateParams, we can safely
            * cast to LPCREATESTRUCTA here */
-          LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
-          WND *wndPtr = WIN_GetPtr( hwnd );
+        LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
+        LPCLIENTCREATESTRUCT ccs = cs->lpCreateParams;
 
-	/* Translation layer doesn't know what's in the cs->lpCreateParams
-	 * so we have to keep track of what environment we're in. */
-
-	if( wndPtr->flags & WIN_ISWIN32 )
-	{
-	    LPCLIENTCREATESTRUCT ccs = cs->lpCreateParams;
-	    ci->hWindowMenu	= ccs->hWindowMenu;
-	    ci->idFirstChild	= ccs->idFirstChild;
-	}
-        else
-	{
-	    LPCLIENTCREATESTRUCT16 ccs = MapSL(PtrToUlong(cs->lpCreateParams));
-	    ci->hWindowMenu	= HMENU_32(ccs->hWindowMenu);
-	    ci->idFirstChild	= ccs->idFirstChild;
-	}
-        WIN_ReleasePtr( wndPtr );
-
+        ci->hWindowMenu		= ccs->hWindowMenu;
+        ci->idFirstChild	= ccs->idFirstChild;
         ci->hwndChildMaximized  = 0;
         ci->child = NULL;
 	ci->nActiveChildren	= 0;
@@ -1294,7 +1277,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow(hwnd)) return 0;
-    return MDIClientWndProc_common( hwnd, message, wParam, lParam, FALSE );
+    return wow_handlers.mdiclient_proc( hwnd, message, wParam, lParam, FALSE );
 }
 
 /***********************************************************************
@@ -1303,7 +1286,7 @@ static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam,
 static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     if (!IsWindow(hwnd)) return 0;
-    return MDIClientWndProc_common( hwnd, message, wParam, lParam, TRUE );
+    return wow_handlers.mdiclient_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 /***********************************************************************

@@ -1044,6 +1044,7 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
     orig->combo_proc     = ComboWndProc_common;
     orig->edit_proc      = EditWndProc_common;
     orig->listbox_proc   = ListBoxWndProc_common;
+    orig->mdiclient_proc = MDIClientWndProc_common;
     orig->scrollbar_proc = ScrollBarWndProc_common;
     orig->static_proc    = StaticWndProc_common;
     orig->alloc_winproc  = WINPROC_AllocProc;
@@ -1057,6 +1058,7 @@ struct wow_handlers16 wow_handlers =
     ComboWndProc_common,
     EditWndProc_common,
     ListBoxWndProc_common,
+    MDIClientWndProc_common,
     ScrollBarWndProc_common,
     StaticWndProc_common,
     NULL,  /* call_window_proc */
