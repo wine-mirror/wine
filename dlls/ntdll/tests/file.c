@@ -229,6 +229,8 @@ static void create_file_test(void)
                             FILE_OVERWRITE_IF, 0, NULL, 0 );
     ok( status == STATUS_OBJECT_NAME_COLLISION || status == STATUS_ACCESS_DENIED,
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+
+    pRtlFreeUnicodeString( &nameW );
 }
 
 static void open_file_test(void)
