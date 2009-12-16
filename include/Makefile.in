@@ -32,6 +32,7 @@ PUBLIC_IDL_H_SRCS = \
 	downloadmgr.idl \
 	dxgi.idl \
 	dxgitype.idl \
+	endpointvolume.idl \
 	exdisp.idl \
 	fusion.idl \
 	hlink.idl \
