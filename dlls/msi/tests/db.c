@@ -922,6 +922,8 @@ static void test_viewmodify(void)
     r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
     ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
 
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
     r = MsiViewClose(hview);
     ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
     r = MsiCloseHandle(hview);
