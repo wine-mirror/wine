@@ -3338,7 +3338,7 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
         switch (ret)
         {
         case WAIT_OBJECT_0:
-            return WAIT_FAILED;
+            return 0;
         case WAIT_OBJECT_0+2:
             process_sent_messages();
             break;

@@ -298,12 +298,6 @@ void free_msg_queue( struct thread *thread )
     {
         release_object( process->queue );
         process->queue = NULL;
-        if (process->idle_event)
-        {
-            set_event( process->idle_event );
-            release_object( process->idle_event );
-            process->idle_event = NULL;
-        }
     }
     release_object( thread->queue );
     thread->queue = NULL;
