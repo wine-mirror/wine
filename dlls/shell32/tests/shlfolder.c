@@ -586,6 +586,7 @@ static void test_GetDisplayName(void)
         ok (!lstrcmpiW(wszTestFile, wszTestFile2), "GetDisplayNameOf returns incorrect path!\n");
     }
     
+    ILFree(pidlTestFile);
     IShellFolder_Release(psfDesktop);
     IShellFolder_Release(psfPersonal);
 }
