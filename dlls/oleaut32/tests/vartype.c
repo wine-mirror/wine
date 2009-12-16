@@ -3484,6 +3484,7 @@ static void test_VarDateChangeTypeEx(void)
           (!lstrcmpW(V_BSTR(&vDst), sz25570) || !lstrcmpW(V_BSTR(&vDst), sz25570_2)),
           "hres=0x%X, type=%d (should be VT_BSTR), *bstr=%s\n", 
           hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
+  VariantClear(&vDst);
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
   if (HAVE_OLEAUT32_LOCALES)
@@ -3492,6 +3493,7 @@ static void test_VarDateChangeTypeEx(void)
     ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !lstrcmpW(V_BSTR(&vDst), sz25570Nls), 
             "hres=0x%X, type=%d (should be VT_BSTR), *bstr=%s\n", 
             hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
+    VariantClear(&vDst);
   }
 }
 
@@ -4780,7 +4782,8 @@ static void test_VarBoolCopy(void)
   ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && \
      V_BSTR(&vDst) && !memcmp(V_BSTR(&vDst), str, sizeof(str)), \
      "hres=0x%X, type=%d (should be VT_BSTR), *bstr='%c'\n", \
-     hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?')
+     hres, V_VT(&vDst), V_BSTR(&vDst) ? *V_BSTR(&vDst) : '?'); \
+  VariantClear(&vDst)
 
 static void test_VarBoolChangeTypeEx(void)
 {
