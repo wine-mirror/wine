@@ -23,7 +23,6 @@
 
 #include "object.h"
 
-struct msg_queue;
 struct atom_table;
 struct handle_table;
 struct startup_info;
@@ -75,7 +74,6 @@ struct process
     enum startup_state   startup_state;   /* startup state */
     struct startup_info *startup_info;    /* startup info while init is in progress */
     struct event        *idle_event;      /* event for input idle */
-    struct msg_queue    *queue;           /* main message queue */
     obj_handle_t         winstation;      /* main handle to process window station */
     obj_handle_t         desktop;         /* handle to desktop to use for new threads */
     struct token        *token;           /* security token associated with this process */

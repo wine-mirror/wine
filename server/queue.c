@@ -280,8 +280,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
 
         thread->queue = queue;
-        if (!thread->process->queue)
-            thread->process->queue = (struct msg_queue *)grab_object( queue );
     }
     release_object( input );
     return queue;
@@ -290,15 +288,8 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
 /* free the message queue of a thread at thread exit */
 void free_msg_queue( struct thread *thread )
 {
-    struct process *process = thread->process;
-
     remove_thread_hooks( thread );
     if (!thread->queue) return;
-    if (process->queue == thread->queue)  /* is it the process main queue? */
-    {
-        release_object( process->queue );
-        process->queue = NULL;
-    }
     release_object( thread->queue );
     thread->queue = NULL;
 }
@@ -780,11 +771,8 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    /* if waiting on the main process queue, set the idle event */
-    if (process->queue == queue)
-    {
-        if (process->idle_event) set_event( process->idle_event );
-    }
+    if (process->idle_event) set_event( process->idle_event );
+
     if (queue->fd && list_empty( &obj->wait_queue ))  /* first on the queue */
         set_fd_events( queue->fd, POLLIN );
     add_queue( obj, entry );

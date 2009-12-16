@@ -12041,13 +12041,26 @@ static const struct
 /* 10 */ { 0,            0,            TRUE  },
          { 0,            0,            FALSE },
          { 0,            WAIT_TIMEOUT, FALSE },
+         { 0,            0,            FALSE },
 };
+
+static DWORD CALLBACK do_wait_idle_child_thread( void *arg )
+{
+    MSG msg;
+
+    PeekMessage( &msg, 0, 0, 0, PM_NOREMOVE );
+    Sleep( 200 );
+    MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
+    return 0;
+}
 
 static void do_wait_idle_child( int arg )
 {
     WNDCLASS cls;
     MSG msg;
     HWND hwnd = 0;
+    HANDLE thread;
+    DWORD id;
     HANDLE start_event = OpenEventA( EVENT_ALL_ACCESS, FALSE, "test_WaitForInputIdle_start" );
     HANDLE end_event = OpenEventA( EVENT_ALL_ACCESS, FALSE, "test_WaitForInputIdle_end" );
 
@@ -12145,6 +12158,14 @@ static void do_wait_idle_child( int arg )
         Sleep( 200 );
         MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
         SetEvent( start_event );
+        break;
+    case 13:
+        SetEvent( start_event );
+        PeekMessage( &msg, 0, 0, 0, PM_NOREMOVE );
+        Sleep( 200 );
+        thread = CreateThread( NULL, 0, do_wait_idle_child_thread, NULL, 0, &id );
+        WaitForSingleObject( thread, 10000 );
+        CloseHandle( thread );
         break;
     }
     WaitForSingleObject( end_event, 2000 );

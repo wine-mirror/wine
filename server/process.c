@@ -328,7 +328,6 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->startup_state   = STARTUP_IN_PROGRESS;
     process->startup_info    = NULL;
     process->idle_event      = NULL;
-    process->queue           = NULL;
     process->peb             = 0;
     process->ldt_copy        = 0;
     process->winstation      = 0;
@@ -423,7 +422,6 @@ static void process_destroy( struct object *obj )
     if (process->msg_fd) release_object( process->msg_fd );
     list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
-    if (process->queue) release_object( process->queue );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
 }
