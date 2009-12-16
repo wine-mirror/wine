@@ -493,10 +493,10 @@ done:
 
 static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types, LPWSTR *labels, DWORD num_labels, DWORD num_columns)
 {
-    UINT r;
+    UINT r = ERROR_OUTOFMEMORY;
     DWORD size;
     MSIQUERY *view;
-    LPWSTR create_sql;
+    LPWSTR create_sql = NULL;
     LPWSTR prelude, columns_sql, postlude;
 
     prelude = msi_build_createsql_prelude(labels[0]);
@@ -504,31 +504,30 @@ static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types,
     postlude = msi_build_createsql_postlude(labels + 1, num_labels - 1); /* skip over table name */
 
     if (!prelude || !columns_sql || !postlude)
-        return ERROR_OUTOFMEMORY;
+        goto done;
 
     size = lstrlenW(prelude) + lstrlenW(columns_sql) + lstrlenW(postlude) + 1;
     create_sql = msi_alloc(size * sizeof(WCHAR));
     if (!create_sql)
-        return ERROR_OUTOFMEMORY;
+        goto done;
 
     lstrcpyW(create_sql, prelude);
     lstrcatW(create_sql, columns_sql);
     lstrcatW(create_sql, postlude);
 
-    msi_free(prelude);
-    msi_free(columns_sql);
-    msi_free(postlude);
-
     r = MSI_DatabaseOpenViewW( db, create_sql, &view );
-    msi_free(create_sql);
-
     if (r != ERROR_SUCCESS)
-        return r;
+        goto done;
 
     r = MSI_ViewExecute(view, NULL);
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
 
+done:
+    msi_free(prelude);
+    msi_free(columns_sql);
+    msi_free(postlude);
+    msi_free(create_sql);
     return r;
 }
 
