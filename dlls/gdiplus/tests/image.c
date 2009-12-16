@@ -1055,7 +1055,9 @@ static void test_palette(void)
     palette->Count = 257;
 
     stat = GdipSetImagePalette((GpImage*)bitmap, palette);
-    expect(InvalidParameter, stat);
+    ok(stat == InvalidParameter ||
+       broken(stat == Ok), /* Old gdiplus behavior */
+       "Expected %.8x, got %.8x\n", InvalidParameter, stat);
 
     GdipDisposeImage((GpImage*)bitmap);
 }
