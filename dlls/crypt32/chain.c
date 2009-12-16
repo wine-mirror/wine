@@ -619,7 +619,7 @@ static BOOL rfc822_name_matches(LPCWSTR constraint, LPCWSTR name,
         *trustErrorStatus |= CERT_TRUST_INVALID_NAME_CONSTRAINTS;
     else if (!name)
         ; /* no match */
-    else if ((at = strchrW(constraint, '@')))
+    else if (strchrW(constraint, '@'))
         match = !lstrcmpiW(constraint, name);
     else
     {
