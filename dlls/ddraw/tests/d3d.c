@@ -3077,6 +3077,101 @@ static void SetRenderTargetTest(void)
     IDirectDrawSurface7_Release(newrt);
 }
 
+static UINT expect_message;
+
+static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (expect_message && message == expect_message) expect_message = 0;
+
+    return DefWindowProcA(hwnd, message, wparam, lparam);
+}
+
+static void test_wndproc(void)
+{
+    IDirectDraw7 *ddraw7;
+    WNDCLASSA wc = {0};
+    LONG_PTR proc;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    wc.lpfnWndProc = test_proc;
+    wc.lpszClassName = "d3d7_test_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    window = CreateWindowA("d3d7_test_wndproc_wc", "d3d7_test",
+            WS_MAXIMIZE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    expect_message = WM_SETFOCUS;
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    todo_wine ok(!expect_message, "Expected message %#x, but didn't receive it.\n", expect_message);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    todo_wine ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    ref = IDirectDraw7_Release(ddraw7);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        goto done;
+    }
+
+    proc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
+    todo_wine ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    ref = IDirectDraw7_Release(ddraw7);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)DefWindowProcA, proc);
+
+done:
+    expect_message = 0;
+    DestroyWindow(window);
+    UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -3111,4 +3206,6 @@ START_TEST(d3d)
         TextureLoadTest();
         D3D1_releaseObjects();
     }
+
+    test_wndproc();
 }
