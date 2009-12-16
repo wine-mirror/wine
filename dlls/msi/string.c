@@ -55,7 +55,6 @@ struct string_table
     UINT freeslot;
     UINT codepage;
     UINT sortcount;
-    BOOL valid_index;
     msistring *strings; /* an array of strings */
     UINT *sorted;       /* index */
 };
