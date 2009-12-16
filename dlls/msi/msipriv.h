@@ -80,6 +80,7 @@ typedef struct tagMSIDATABASE
     LPCWSTR mode;
     struct list tables;
     struct list transforms;
+    struct list streams;
 } MSIDATABASE;
 
 typedef struct tagMSIVIEW MSIVIEW;

@@ -88,6 +88,11 @@ typedef struct tagMSITRANSFORM {
     IStorage *stg;
 } MSITRANSFORM;
 
+typedef struct tagMSISTREAM {
+    struct list entry;
+    IStream *stm;
+} MSISTREAM;
+
 static const WCHAR szStringData[] = {
     '_','S','t','r','i','n','g','D','a','t','a',0 };
 static const WCHAR szStringPool[] = {
@@ -332,6 +337,66 @@ end:
     return ret;
 }
 
+static UINT find_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
+{
+    MSISTREAM *stream;
+
+    LIST_FOR_EACH_ENTRY( stream, &db->streams, MSISTREAM, entry )
+    {
+        HRESULT r;
+        STATSTG stat;
+
+        r = IStream_Stat( stream->stm, &stat, 0 );
+        if( FAILED( r ) )
+        {
+            WARN("failed to stat stream r = %08x!\n", r);
+            continue;
+        }
+
+        if( !lstrcmpW( name, stat.pwcsName ) )
+        {
+            TRACE("found %s\n", debugstr_w(name));
+            *stm = stream->stm;
+            CoTaskMemFree( stat.pwcsName );
+            return ERROR_SUCCESS;
+        }
+
+        CoTaskMemFree( stat.pwcsName );
+    }
+
+    return ERROR_FUNCTION_FAILED;
+}
+
+static UINT clone_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
+{
+    IStream *stream;
+
+    if (find_open_stream( db, name, &stream ) == ERROR_SUCCESS)
+    {
+        HRESULT r;
+        LARGE_INTEGER pos;
+
+        r = IStream_Clone( stream, stm );
+        if( FAILED( r ) )
+        {
+            WARN("failed to clone stream r = %08x!\n", r);
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        pos.QuadPart = 0;
+        r = IStream_Seek( *stm, pos, STREAM_SEEK_SET, NULL );
+        if( FAILED( r ) )
+        {
+            IStream_Release( *stm );
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return ERROR_SUCCESS;
+    }
+
+    return ERROR_FUNCTION_FAILED;
+}
+
 static UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 {
     LPWSTR encname;
@@ -340,6 +405,12 @@ static UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
     encname = encode_streamname(FALSE, stname);
 
     TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
+
+    if (clone_open_stream( db, encname, stm ) == ERROR_SUCCESS)
+    {
+        msi_free( encname );
+        return ERROR_SUCCESS;
+    }
 
     r = IStorage_OpenStream(db->storage, encname, NULL, 
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm);
@@ -359,7 +430,20 @@ static UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 
     msi_free( encname );
 
-    return SUCCEEDED(r) ? ERROR_SUCCESS : ERROR_FUNCTION_FAILED;
+    if( SUCCEEDED(r) )
+    {
+        MSISTREAM *stream;
+
+        stream = msi_alloc( sizeof(MSISTREAM) );
+        if( !stream )
+            return ERROR_NOT_ENOUGH_MEMORY;
+
+        stream->stm = *stm;
+        IStream_AddRef( *stm );
+        list_add_tail( &db->streams, &stream->entry );
+    }
+
+    return ERROR_SUCCESS;
 }
 
 UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
@@ -3039,5 +3123,17 @@ void msi_free_transforms( MSIDATABASE *db )
         list_remove( &t->entry );
         IStorage_Release( t->stg );
         msi_free( t );
+    }
+}
+
+void msi_free_streams( MSIDATABASE *db )
+{
+    while( !list_empty( &db->streams ) )
+    {
+        MSISTREAM *s = LIST_ENTRY( list_head( &db->streams ),
+                                   MSISTREAM, entry );
+        list_remove( &s->entry );
+        IStream_Release( s->stm );
+        msi_free( s );
     }
 }

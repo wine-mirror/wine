@@ -198,6 +198,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         db->deletefile = strdupW( szDBPath );
     list_init( &db->tables );
     list_init( &db->transforms );
+    list_init( &db->streams );
 
     db->strings = msi_load_string_table( stg, &db->bytes_per_strref );
     if( !db->strings )
