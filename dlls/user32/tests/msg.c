@@ -12031,7 +12031,7 @@ static const struct
 /* 0 */  { WAIT_TIMEOUT, WAIT_TIMEOUT, FALSE },
          { WAIT_TIMEOUT, 0,            FALSE },
          { WAIT_TIMEOUT, 0,            FALSE },
-         { WAIT_TIMEOUT, WAIT_TIMEOUT, TRUE  },
+         { WAIT_TIMEOUT, WAIT_TIMEOUT, FALSE },
          { WAIT_TIMEOUT, WAIT_TIMEOUT, FALSE },
 /* 5 */  { WAIT_TIMEOUT, 0,            FALSE },
          { WAIT_TIMEOUT, 0,            FALSE },
