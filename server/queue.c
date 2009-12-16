@@ -1814,6 +1814,8 @@ DECL_HANDLER(get_message)
         reply->wparam = timer->id;
         reply->lparam = timer->lparam;
         reply->time   = get_tick_count();
+        if (!(req->flags & PM_NOYIELD) && current->process->idle_event)
+            set_event( current->process->idle_event );
         return;
     }
 

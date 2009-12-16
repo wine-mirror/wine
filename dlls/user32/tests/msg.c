@@ -12038,7 +12038,7 @@ static const struct
          { WAIT_TIMEOUT, WAIT_TIMEOUT, FALSE },
          { 0,            0,            FALSE },
          { 0,            0,            FALSE },
-/* 10 */ { 0,            0,            TRUE  },
+/* 10 */ { 0,            0,            FALSE },
          { 0,            0,            FALSE },
          { 0,            WAIT_TIMEOUT, FALSE },
          { 0,            0,            FALSE },
