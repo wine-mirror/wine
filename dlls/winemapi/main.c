@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "mapidefs.h"
 #include "mapi.h"
 #include "wine/debug.h"
 
@@ -36,4 +37,75 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("(%p,%d,%p)\n", hinstDLL, fdwReason, fImpLoad);
     return TRUE;
+}
+
+ULONG WINAPI MAPIAddress(LHANDLE session, ULONG_PTR uiparam, LPSTR caption,
+    ULONG editfields, LPSTR labels, ULONG nRecips, lpMapiRecipDesc lpRecips,
+    FLAGS flags, ULONG reserved, LPULONG newRecips, lpMapiRecipDesc * lppNewRecips)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIDeleteMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
+    FLAGS flags, ULONG reserved)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIDetails(LHANDLE session, ULONG_PTR uiparam, lpMapiRecipDesc recip,
+    FLAGS flags, ULONG reserved)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIFindNext(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_type,
+    LPSTR seed_msg_id, FLAGS flags, ULONG reserved, LPSTR msg_id)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPILogon(ULONG_PTR uiparam, LPSTR profile, LPSTR password,
+    FLAGS flags, ULONG reserved, LPLHANDLE session)
+{
+    TRACE("(0x%08lx %s %p 0x%08x 0x%08x %p)\n", uiparam,
+          debugstr_a(profile), password, flags, reserved, session);
+
+    if (session)
+        *session = 1;
+
+    return SUCCESS_SUCCESS;
+}
+
+ULONG WINAPI MAPILogoff(LHANDLE session, ULONG_PTR uiparam, FLAGS flags,
+    ULONG reserved)
+{
+    TRACE("(0x%08lx 0x%08lx 0x%08x 0x%08x)\n", session,
+          uiparam, flags, reserved);
+
+    return SUCCESS_SUCCESS;
+}
+
+ULONG WINAPI MAPIReadMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
+    FLAGS flags, ULONG reserved, lpMapiMessage msg)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
+    FLAGS flags, ULONG reserved, lpMapiRecipDesc *recip)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
+ULONG WINAPI MAPISaveMail(LHANDLE session, ULONG_PTR uiparam, lpMapiMessage msg,
+    FLAGS flags, ULONG reserved, LPSTR msg_id)
+{
+    FIXME("(stub)");
+    return MAPI_E_NOT_SUPPORTED;
 }

@@ -6,7 +6,8 @@ MODULE    = winemapi.dll
 IMPORTS   = shlwapi shell32 kernel32
 
 C_SRCS = \
-	main.c
+	main.c \
+	sendmail.c
 
 @MAKE_DLL_RULES@
 
