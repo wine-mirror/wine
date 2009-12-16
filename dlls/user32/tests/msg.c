@@ -161,7 +161,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* Win9x: SWP_NOSENDCHANGING */
     { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
@@ -268,7 +268,7 @@ static const struct message WmSWP_ResizeNoZOrder[] = {
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, /*SWP_NOZORDER|*/SWP_NOACTIVATE, 0,
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, /*SWP_NOZORDER|*/SWP_NOACTIVATE, 0,
       SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOCLIENTSIZE },
     { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|defwinproc|optional },
@@ -631,9 +631,10 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_SIZE, sent|optional }, /* XP doesn't send it */
     { WM_MOVE, sent|optional }, /* XP doesn't send it */
-    { WM_NCACTIVATE, sent|wparam, 0 },
-    { WM_ACTIVATE, sent|wparam, 0 },
-    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { WM_NCACTIVATE, sent|wparam|optional, 0 },
+    { WM_ACTIVATE, sent|wparam|optional, 0 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_NOTIFY, sent|wparam|optional|defwinproc, 1 },
@@ -1776,7 +1777,8 @@ static BOOL ignore_message( UINT message )
             message == WM_GETOBJECT ||
             message == WM_TIMECHANGE ||
             message == WM_DISPLAYCHANGE ||
-            message == WM_DEVICECHANGE);
+            message == WM_DEVICECHANGE ||
+            message == WM_DWMNCRENDERINGCHANGED);
 }
 
 
@@ -5384,6 +5386,7 @@ static void test_button_messages(void)
 	UpdateWindow(hwnd);
 	SetFocus(0);
 	flush_events();
+	SetFocus(0);
 	flush_sequence();
 
         log_all_parent_messages++;
@@ -9324,17 +9327,21 @@ static void test_PeekMessage(void)
         skip( "queuing key events not supported\n" );
         goto done;
     }
-    ok(qstatus == MAKELONG(QS_KEY, QS_KEY),
+    ok(qstatus == MAKELONG(QS_KEY, QS_KEY) ||
+       /* keybd_event seems to trigger a sent message on NT4 */
+       qstatus == MAKELONG(QS_KEY|QS_SENDMESSAGE, QS_KEY|QS_SENDMESSAGE),
        "wrong qstatus %08x\n", qstatus);
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
     qstatus = GetQueueStatus(qs_all_input);
-    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY) ||
+       qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY|QS_SENDMESSAGE),
        "wrong qstatus %08x\n", qstatus);
 
     InvalidateRect(info.hwnd, NULL, FALSE);
     qstatus = GetQueueStatus(qs_all_input);
-    ok(qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
+    ok(qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY) ||
+       qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY|QS_SENDMESSAGE),
        "wrong qstatus %08x\n", qstatus);
 
     trace("signalling to send message\n");
@@ -9896,7 +9903,7 @@ static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
             /* Timer proc messages are not dispatched to the window proc,
              * and therefore not logged.
              */
-            if (msg.message == WM_TIMER || msg.message == WM_SYSTIMER)
+            if ((msg.message == WM_TIMER || msg.message == WM_SYSTIMER) && msg.hwnd)
             {
                 struct recvd_message s_msg;
 
@@ -10291,8 +10298,8 @@ static const struct message WmRestore_5[] = {
 };
 static const struct message WmHide_1[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE, 0, SWP_NOACTIVATE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE, 0, SWP_NOACTIVATE },
     { HCBT_ACTIVATE, hook|optional },
     { HCBT_SETFOCUS, hook|optional }, /* win2000 sends it */
     { 0 }
@@ -10840,6 +10847,7 @@ static const struct message SetActiveWindowSeq4[] =
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
