@@ -2650,6 +2650,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(GetRootSecurityId);
             SET_EXPECT(QueryInterface_IWindowForBindingUI);
+            SET_EXPECT(OnProgress_CONNECTING);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
@@ -2693,6 +2694,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
                 CHECK_CALLED(GetRootSecurityId);
             }
             CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
+            CLEAR_CALLED(OnProgress_CONNECTING);
         }
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
@@ -2942,7 +2944,7 @@ START_TEST(url)
         test_BindToStorage(ABOUT_TEST, 0, TYMED_ISTREAM);
 
         trace("about test (to file)...\n");
-        test_BindToStorage(ABOUT_TEST, BINDTEST_EMULATE, TYMED_FILE);
+        test_BindToStorage(ABOUT_TEST, 0, TYMED_FILE);
 
         trace("about test (to object)...\n");
         test_BindToObject(ABOUT_TEST, 0);
