@@ -1,0 +1,11 @@
+@ stub MAPIAddress
+@ stub MAPIDeleteMail
+@ stub MAPIDetails
+@ stub MAPIFindNext
+@ stub MAPILogon
+@ stub MAPILogoff
+@ stub MAPIReadMail
+@ stub MAPIResolveName
+@ stub MAPISaveMail
+@ stub MAPISendDocuments
+@ stub MAPISendMail

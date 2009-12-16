@@ -17169,6 +17169,14 @@ dlls/winejoystick.drv/Makefile: dlls/winejoystick.drv/Makefile.in dlls/Makedll.r
 ac_config_files="$ac_config_files dlls/winejoystick.drv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/winemapi/Makefile"
+test "x$enable_winemapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	winemapi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winemapi/Makefile: dlls/winemapi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/winemapi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winemp3.acm/Makefile"
 test "x$enable_winemp3_acm" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	winemp3.acm"
@@ -19276,6 +19284,7 @@ do
     "dlls/wineesd.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineesd.drv/Makefile" ;;
     "dlls/winejack.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winejack.drv/Makefile" ;;
     "dlls/winejoystick.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winejoystick.drv/Makefile" ;;
+    "dlls/winemapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winemapi/Makefile" ;;
     "dlls/winemp3.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winemp3.acm/Makefile" ;;
     "dlls/winenas.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winenas.drv/Makefile" ;;
     "dlls/wineoss.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineoss.drv/Makefile" ;;
