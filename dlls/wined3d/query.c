@@ -347,7 +347,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
 
     if (!query->context)
     {
-        ERR("Query not started, returning TRUE.\n");
+        TRACE("Query not started, returning TRUE.\n");
         *data = TRUE;
 
         return S_OK;
