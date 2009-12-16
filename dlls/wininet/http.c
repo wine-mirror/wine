@@ -1952,6 +1952,7 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
 
 #ifdef HAVE_ZLIB
     z_stream *zstream = &req->gzip_stream->zstream;
+    DWORD buf_avail;
     int zres;
 
     while(read < size && !req->gzip_stream->end_of_data) {
@@ -1960,14 +1961,16 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
                 break;
         }
 
+        buf_avail = req->dwContentLength == ~0 ? req->read_size : min(req->read_size, req->dwContentLength-req->dwContentRead);
+
         zstream->next_in = req->read_buf+req->read_pos;
-        zstream->avail_in = req->read_size;
+        zstream->avail_in = buf_avail;
         zstream->next_out = buf+read;
         zstream->avail_out = size-read;
         zres = inflate(zstream, Z_FULL_FLUSH);
         read = size - zstream->avail_out;
-        req->dwContentRead += req->read_size-zstream->avail_in;
-        remove_data(req, req->read_size-zstream->avail_in);
+        req->dwContentRead += buf_avail-zstream->avail_in;
+        remove_data(req, buf_avail-zstream->avail_in);
         if(zres == Z_STREAM_END) {
             TRACE("end of data\n");
             req->gzip_stream->end_of_data = TRUE;
