@@ -12038,9 +12038,9 @@ static const struct
          { WAIT_TIMEOUT, WAIT_TIMEOUT, FALSE },
          { 0,            0,            FALSE },
          { 0,            0,            FALSE },
-/* 10 */ { 0,            0,            FALSE },
+/* 10 */ { 0,            0,            TRUE  },
          { 0,            0,            FALSE },
-         { 0,            WAIT_FAILED,  FALSE },
+         { 0,            WAIT_TIMEOUT, TRUE  },
 };
 
 static void do_wait_idle_child( int arg )
@@ -12112,7 +12112,7 @@ static void do_wait_idle_child( int arg )
         Sleep( 200 );
         hwnd = CreateWindowExA(0, "TestClass", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 10, 10, 0, 0, 0, NULL);
         SetTimer( hwnd, 3, 1, NULL );
-        Sleep( 1000 );
+        Sleep( 200 );
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE|PM_NOYIELD )) DispatchMessage( &msg );
         break;
     case 8:
@@ -12207,6 +12207,8 @@ static void test_WaitForInputIdle( char *argv0 )
 
     for (i = 0; i < sizeof(wait_idle_expect)/sizeof(wait_idle_expect[0]); i++)
     {
+        ResetEvent( start_event );
+        ResetEvent( end_event );
         sprintf( path, "%s msg %u", argv0, i );
         ret = CreateProcessA( NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &pi );
         ok( ret, "CreateProcess '%s' failed err %u.\n", path, GetLastError() );
