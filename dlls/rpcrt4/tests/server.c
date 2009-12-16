@@ -1346,7 +1346,7 @@ s_authinfo_test(unsigned int protseq, int secure)
             todo_wine
             ok(principal != NULL, "NULL principal\n");
         }
-        if (protseq == RPC_PROTSEQ_LRPC && principal)
+        if (protseq == RPC_PROTSEQ_LRPC && principal && pGetUserNameExA)
         {
             int len;
             char *spn;
@@ -1398,6 +1398,9 @@ set_auth_info(RPC_BINDING_HANDLE handle)
 {
     RPC_STATUS status;
     RPC_SECURITY_QOS qos;
+
+    if (!pGetUserNameExA)
+        return;
 
     qos.Version = 1;
     qos.Capabilities = RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH;
@@ -1573,6 +1576,8 @@ START_TEST(server)
     domain_and_user = HeapAlloc(GetProcessHeap(), 0, size);
     ok(pGetUserNameExA(NameSamCompatible, domain_and_user, &size), "GetUserNameExA\n");
   }
+  else
+    win_skip("GetUserNameExA is needed for some authentication tests\n");
 
   argc = winetest_get_mainargs(&argv);
   progname = argv[0];
