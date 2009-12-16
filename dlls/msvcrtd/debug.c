@@ -47,7 +47,7 @@ void * CDECL MSVCRTD_operator_new_dbg(MSVCRT_size_t nSize, int nBlockUse,
 {
     void *retval = NULL;
 
-    TRACE("(%lu, %d, '%s', %d) returning %p\n", nSize, nBlockUse, szFileName, nLine, retval);
+    TRACE("(%lu, %d, '%s', %d)\n", nSize, nBlockUse, szFileName, nLine);
 
     switch(_BLOCK_TYPE(nBlockUse))
     {
