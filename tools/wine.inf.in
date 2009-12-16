@@ -528,6 +528,9 @@ HKLM,%MciExtStr%,"wvx",,"MPEGVideo"
 
 [Misc]
 HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,9000
+HKLM,Software\Clients\Mail,,2,"Native Mail Client"
+HKLM,Software\Clients\Mail\Native Mail Client,,2,"Native Mail Client"
+HKLM,Software\Clients\Mail\Native Mail Client,"DLLPath",2,"%11%\winemapi.dll"
 HKLM,Software\Microsoft\Advanced INF Setup,,,""
 HKLM,Software\Microsoft\Rpc\SecurityService,1,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,10,2,"secur32.dll"
