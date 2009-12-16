@@ -402,7 +402,7 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     HRESULT res;
     DWORD size;
 
-    TRACE( "(0x%08x 0x%08lx %p 0x%08x 0x%08x)\n", session, uiparam,
+    TRACE( "(0x%08lx 0x%08lx %p 0x%08x 0x%08x)\n", session, uiparam,
            message, flags, reserved );
 
     /* Check to see if we have a Simple MAPI provider loaded */
