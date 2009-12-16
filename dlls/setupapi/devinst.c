@@ -3836,7 +3836,7 @@ static BOOL SETUPDI_DeleteDrvKey(struct DeviceInfo *devInfo)
 }
 
 /***********************************************************************
- *		SetupDiOpenDevRegKey (SETUPAPI.@)
+ *		SetupDiDeleteDevRegKey (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiDeleteDevRegKey(
        HDEVINFO DeviceInfoSet,
