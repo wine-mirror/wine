@@ -529,6 +529,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     LogPal = GdipAlloc(sizeof(LOGPALETTE));
     ok(LogPal != NULL, "unable to allocate LOGPALETTE\n");
     LogPal->palVersion = 0x300;
+    LogPal->palNumEntries = 1;
     hpal = CreatePalette(LogPal);
     ok(hpal != NULL, "CreatePalette failed\n");
     GdipFree(LogPal);
