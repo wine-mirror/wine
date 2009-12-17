@@ -37,6 +37,7 @@ enum builtin_winprocs
     WINPROC_COMBO,
     WINPROC_EDIT,
     WINPROC_LISTBOX,
+    WINPROC_SCROLLBAR,
     NB_BUILTIN_WINPROCS
 };
 

@@ -57,13 +57,16 @@ LRESULT WINAPI EditWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 static LRESULT WINAPI EditWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 static WINDOWPROC winproc_array[MAX_WINPROCS] =
 {
-    { ButtonWndProcA, ButtonWndProcW },  /* WINPROC_BUTTON */
-    { ComboWndProcA, ComboWndProcW },    /* WINPROC_COMBO */
-    { EditWndProcA, EditWndProcW },      /* WINPROC_EDIT */
-    { ListBoxWndProcA, ListBoxWndProcW },/* WINPROC_LISTBOX */
+    { ButtonWndProcA, ButtonWndProcW },        /* WINPROC_BUTTON */
+    { ComboWndProcA, ComboWndProcW },          /* WINPROC_COMBO */
+    { EditWndProcA, EditWndProcW },            /* WINPROC_EDIT */
+    { ListBoxWndProcA, ListBoxWndProcW },      /* WINPROC_LISTBOX */
+    { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
 };
 
 static UINT builtin_used = NB_BUILTIN_WINPROCS;
@@ -1087,6 +1090,16 @@ static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARA
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, TRUE );
+}
+
+static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.scrollbar_proc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.scrollbar_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
 

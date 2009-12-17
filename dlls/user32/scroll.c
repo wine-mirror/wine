@@ -114,8 +114,6 @@ static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
 				    INT thumbSize, INT thumbPos,
 				    UINT flags, BOOL vertical,
 				    BOOL top_selected, BOOL bottom_selected );
-static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 
 /*********************************************************************
@@ -126,8 +124,8 @@ const struct builtin_class_descr SCROLL_builtin_class =
 {
     scrollbarW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    ScrollBarWndProcA,      /* procA */
-    ScrollBarWndProcW,      /* procW */
+    NULL,                   /* procA */
+    BUILTIN_WINPROC(WINPROC_SCROLLBAR), /* procW */
     sizeof(SCROLLBAR_INFO), /* extra */
     IDC_ARROW,              /* cursor */
     0                       /* brush */
@@ -1571,24 +1569,6 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             return DefWindowProcA( hwnd, message, wParam, lParam );
     }
     return 0;
-}
-
-
-/***********************************************************************
- *           ScrollBarWndProcA
- */
-static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    return wow_handlers.scrollbar_proc( hwnd, message, wParam, lParam, FALSE );
-}
-
-
-/***********************************************************************
- *           ScrollBarWndProcW
- */
-static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    return wow_handlers.scrollbar_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 
