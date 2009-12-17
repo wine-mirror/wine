@@ -190,6 +190,15 @@ BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 }
 
 
+/*******************************************************************
+ *		AnyPopup (USER.52)
+ */
+BOOL16 WINAPI AnyPopup16(void)
+{
+    return AnyPopup();
+}
+
+
 /***********************************************************************
  *		SetCursor (USER.69)
  */
@@ -507,6 +516,27 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR name )
 INT16 WINAPI GetClipboardFormatName16( UINT16 id, LPSTR buffer, INT16 maxlen )
 {
     return GetClipboardFormatNameA( id, buffer, maxlen );
+}
+
+
+/**********************************************************************
+ *	    LoadMenu    (USER.150)
+ */
+HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
+{
+    HRSRC16 hRsrc;
+    HGLOBAL16 handle;
+    HMENU16 hMenu;
+
+    if (HIWORD(name) && name[0] == '#') name = ULongToPtr(atoi( name + 1 ));
+    if (!name) return 0;
+
+    instance = GetExePtr( instance );
+    if (!(hRsrc = FindResource16( instance, name, (LPSTR)RT_MENU ))) return 0;
+    if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
+    hMenu = LoadMenuIndirect16(LockResource16(handle));
+    FreeResource16( handle );
+    return hMenu;
 }
 
 
@@ -866,6 +896,80 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
     }
     stack16->ds = oldDS;
     return ret;
+}
+
+
+/***********************************************************************
+ *           LookupMenuHandle   (USER.217)
+ */
+HMENU16 WINAPI LookupMenuHandle16( HMENU16 hmenu, INT16 id )
+{
+    FIXME( "%04x %04x: stub\n", hmenu, id );
+    return hmenu;
+}
+
+
+static LPCSTR parse_menu_resource( LPCSTR res, HMENU hMenu )
+{
+    WORD flags, id = 0;
+    LPCSTR str;
+    BOOL end_flag;
+
+    do
+    {
+        flags = GET_WORD(res);
+        end_flag = flags & MF_END;
+        /* Remove MF_END because it has the same value as MF_HILITE */
+        flags &= ~MF_END;
+        res += sizeof(WORD);
+        if (!(flags & MF_POPUP))
+        {
+            id = GET_WORD(res);
+            res += sizeof(WORD);
+        }
+        str = res;
+        res += strlen(str) + 1;
+        if (flags & MF_POPUP)
+        {
+            HMENU hSubMenu = CreatePopupMenu();
+            if (!hSubMenu) return NULL;
+            if (!(res = parse_menu_resource( res, hSubMenu ))) return NULL;
+            AppendMenuA( hMenu, flags, (UINT_PTR)hSubMenu, str );
+        }
+        else  /* Not a popup */
+        {
+            AppendMenuA( hMenu, flags, id, *str ? str : NULL );
+        }
+    } while (!end_flag);
+    return res;
+}
+
+/**********************************************************************
+ *	    LoadMenuIndirect    (USER.220)
+ */
+HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
+{
+    HMENU hMenu;
+    WORD version, offset;
+    LPCSTR p = template;
+
+    TRACE("(%p)\n", template );
+    version = GET_WORD(p);
+    p += sizeof(WORD);
+    if (version)
+    {
+        WARN("version must be 0 for Win16\n" );
+        return 0;
+    }
+    offset = GET_WORD(p);
+    p += sizeof(WORD) + offset;
+    if (!(hMenu = CreateMenu())) return 0;
+    if (!parse_menu_resource( p, hMenu ))
+    {
+        DestroyMenu( hMenu );
+        return 0;
+    }
+    return HMENU_16(hMenu);
 }
 
 

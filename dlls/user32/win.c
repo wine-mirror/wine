@@ -3082,15 +3082,6 @@ BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func, LPARAM lParam )
 
 
 /*******************************************************************
- *		AnyPopup (USER.52)
- */
-BOOL16 WINAPI AnyPopup16(void)
-{
-    return AnyPopup();
-}
-
-
-/*******************************************************************
  *		AnyPopup (USER32.@)
  */
 BOOL WINAPI AnyPopup(void)
