@@ -1282,14 +1282,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, HINSTANCE 
         }
         else
         {
-            LPCSTR menuName = (LPCSTR)GetClassLongPtrA( hwnd, GCLP_MENUNAME );
+            LPCWSTR menuName = (LPCWSTR)GetClassLongPtrW( hwnd, GCLP_MENUNAME );
             if (menuName)
             {
-                if (!cs->hInstance || HIWORD(cs->hInstance))
-                    cs->hMenu = LoadMenuA(cs->hInstance,menuName);
-                else
-                    cs->hMenu = HMENU_32(LoadMenu16(HINSTANCE_16(cs->hInstance),menuName));
-
+                cs->hMenu = LoadMenuW( cs->hInstance, menuName );
                 if (cs->hMenu) MENU_SetMenu( hwnd, cs->hMenu );
             }
         }
@@ -1488,6 +1484,15 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
     /* map to module handle */
     if (instance) instance = GetExePtr( instance );
+
+    /* load the menu */
+    if (!menu && (style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+    {
+        WNDCLASSA class;
+
+        if (GetClassInfoA( HINSTANCE_32(instance), className, &class ))
+            cs.hMenu = HMENU_32( LoadMenu16( instance, class.lpszMenuName ));
+    }
 
     if (!IS_INTRESOURCE(className))
     {
