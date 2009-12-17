@@ -44,7 +44,6 @@ typedef struct tagWINDOWPROC
     WNDPROC        procW;    /* Unicode window proc */
 } WINDOWPROC;
 
-#define WINPROC_HANDLE (~0u >> 16)
 #define MAX_WINPROCS  4096
 #define BUILTIN_WINPROCS 9  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
 #define MAX_WINPROC_RECURSION  64
@@ -52,8 +51,15 @@ typedef struct tagWINDOWPROC
 
 WNDPROC EDIT_winproc_handle = 0;
 
-static WINDOWPROC winproc_array[MAX_WINPROCS];
-static UINT builtin_used;
+static LRESULT WINAPI ButtonWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ButtonWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
+static WINDOWPROC winproc_array[MAX_WINPROCS] =
+{
+    { ButtonWndProcA, ButtonWndProcW },  /* WINPROC_BUTTON */
+};
+
+static UINT builtin_used = NB_BUILTIN_WINPROCS;
 static UINT winproc_used = BUILTIN_WINPROCS;
 
 static CRITICAL_SECTION winproc_cs;
@@ -1029,6 +1035,21 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     else
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
     return ret;
+}
+
+
+/***********************************************************************
+ * Window procedures for builtin classes
+ */
+
+static LRESULT WINAPI ButtonWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.button_proc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+static LRESULT WINAPI ButtonWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.button_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
 

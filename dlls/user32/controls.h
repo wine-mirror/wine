@@ -31,6 +31,15 @@
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
+enum builtin_winprocs
+{
+    WINPROC_BUTTON = 0,
+    NB_BUILTIN_WINPROCS
+};
+
+#define WINPROC_HANDLE (~0u >> 16)
+#define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
+
 /* Built-in class descriptor */
 struct builtin_class_descr
 {

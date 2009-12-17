@@ -113,8 +113,6 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void UB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void OB_Paint( HWND hwnd, HDC hDC, UINT action );
 static void BUTTON_CheckAutoRadioButton( HWND hwnd );
-static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 #define MAX_BTN_TYPE  12
 
@@ -164,8 +162,8 @@ const struct builtin_class_descr BUTTON_builtin_class =
 {
     buttonW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    ButtonWndProcA,      /* procA */
-    ButtonWndProcW,      /* procW */
+    NULL,                /* procA */
+    BUILTIN_WINPROC(WINPROC_BUTTON),  /* procW */
     NB_EXTRA_BYTES,      /* extra */
     IDC_ARROW,           /* cursor */
     0                    /* brush */
@@ -237,6 +235,8 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     UINT btn_type = get_button_type( style );
     LONG state;
     HANDLE oldHbitmap;
+
+    if (!IsWindow( hWnd )) return 0;
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
@@ -544,26 +544,6 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     }
     return 0;
 }
-
-/***********************************************************************
- *           ButtonWndProcW
- */
-static LRESULT WINAPI ButtonWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow( hWnd )) return 0;
-    return wow_handlers.button_proc( hWnd, uMsg, wParam, lParam, TRUE );
-}
-
-
-/***********************************************************************
- *           ButtonWndProcA
- */
-static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow( hWnd )) return 0;
-    return wow_handlers.button_proc( hWnd, uMsg, wParam, lParam, FALSE );
-}
-
 
 /**********************************************************************
  * Convert button styles to flags used by DrawText.
