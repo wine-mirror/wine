@@ -6293,45 +6293,65 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
 HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
+    struct wined3d_context *context;
     HRESULT hr;
     IWineD3DSurfaceImpl *target;
 
     /* Recreate the primary swapchain's context */
     swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
-    if(swapchain->backBuffer) {
-        target = (IWineD3DSurfaceImpl *) swapchain->backBuffer[0];
-    } else {
-        target = (IWineD3DSurfaceImpl *) swapchain->frontBuffer;
+    if (!swapchain->context)
+    {
+        ERR("Failed to allocate memory for swapchain context array.\n");
+        return E_OUTOFMEMORY;
     }
-    swapchain->context[0] = context_create(This, target, swapchain->win_handle, FALSE, &swapchain->presentParms);
+
+    target = (IWineD3DSurfaceImpl *)(swapchain->backBuffer ? swapchain->backBuffer[0] : swapchain->frontBuffer);
+    context = context_create(This, target, swapchain->win_handle, FALSE, &swapchain->presentParms);
+    if (!context)
+    {
+        WARN("Failed to create context.\n");
+        HeapFree(GetProcessHeap(), 0, swapchain->context);
+        return E_FAIL;
+    }
+
+    swapchain->context[0] = context;
     swapchain->num_contexts = 1;
-
     create_dummy_textures(This);
-
-    context_release(swapchain->context[0]);
+    context_release(context);
 
     hr = This->shader_backend->shader_alloc_private(iface);
-    if(FAILED(hr)) {
-        ERR("Failed to recreate shader private data\n");
-        goto err_out;
+    if (FAILED(hr))
+    {
+        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        goto err;
     }
+
     hr = This->frag_pipe->alloc_private(iface);
-    if(FAILED(hr)) {
-        TRACE("Fragment pipeline private data couldn't be allocated\n");
-        goto err_out;
+    if (FAILED(hr))
+    {
+        ERR("Failed to allocate fragment pipe private data, hr %#x.\n", hr);
+        This->shader_backend->shader_free_private(iface);
+        goto err;
     }
+
     hr = This->blitter->alloc_private(iface);
-    if(FAILED(hr)) {
-        TRACE("Blitter private data couldn't be allocated\n");
-        goto err_out;
+    if (FAILED(hr))
+    {
+        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
+        This->frag_pipe->free_private(iface);
+        This->shader_backend->shader_free_private(iface);
+        goto err;
     }
 
     return WINED3D_OK;
 
-err_out:
-    This->blitter->free_private(iface);
-    This->frag_pipe->free_private(iface);
-    This->shader_backend->shader_free_private(iface);
+err:
+    context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    destroy_dummy_textures(This, context->gl_info);
+    context_release(context);
+    context_destroy(This, context);
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    swapchain->num_contexts = 0;
     return hr;
 }
 
