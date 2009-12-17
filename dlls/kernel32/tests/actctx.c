@@ -869,7 +869,7 @@ static void test_basic_info(HANDLE handle)
     SIZE_T size;
     BOOL b;
 
-    b = pQueryActCtxW(0, handle, NULL,
+    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
                           ActivationContextBasicInformation, &basic,
                           sizeof(basic), &size);
 
@@ -878,7 +878,8 @@ static void test_basic_info(HANDLE handle)
     ok (basic.dwFlags == 0, "unexpected flags %x\n",basic.dwFlags);
     ok (basic.hActCtx == handle, "unexpected handle\n");
 
-    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, handle, NULL,
+    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX |
+                      QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
                           ActivationContextBasicInformation, &basic,
                           sizeof(basic), &size);
     if (handle)
