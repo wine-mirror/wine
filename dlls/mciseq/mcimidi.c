@@ -412,7 +412,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 		    } else {
                         len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
                         wmm->lpstrCopyright = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-                        len = MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrCopyright, len );
+                        MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrCopyright, len );
 		    }
 		    break;
 		case 0x03:
@@ -421,7 +421,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 		    } else {
                         len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
                         wmm->lpstrName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-                        len = MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrName, len );
+                        MultiByteToWideChar( CP_ACP, 0, buf, -1, wmm->lpstrName, len );
 		    }
 		    break;
 		}
