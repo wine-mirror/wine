@@ -666,9 +666,6 @@ SecurePackage *SECUR32_findPackageA(PCSTR packageName)
 
 static void SECUR32_freeProviders(void)
 {
-    SecurePackage *package;
-    SecureProvider *provider;
-
     TRACE("\n");
     EnterCriticalSection(&cs);
 
@@ -676,10 +673,13 @@ static void SECUR32_freeProviders(void)
 
     if (packageTable)
     {
-        LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)
+        SecurePackage *package, *package_next;
+        LIST_FOR_EACH_ENTRY_SAFE(package, package_next, &packageTable->table,
+                                 SecurePackage, entry)
         {
             HeapFree(GetProcessHeap(), 0, package->infoW.Name);
             HeapFree(GetProcessHeap(), 0, package->infoW.Comment);
+            HeapFree(GetProcessHeap(), 0, package);
         }
 
         HeapFree(GetProcessHeap(), 0, packageTable);
@@ -688,11 +688,14 @@ static void SECUR32_freeProviders(void)
 
     if (providerTable)
     {
-        LIST_FOR_EACH_ENTRY(provider, &providerTable->table, SecureProvider, entry)
+        SecureProvider *provider, *provider_next;
+        LIST_FOR_EACH_ENTRY_SAFE(provider, provider_next, &providerTable->table,
+                                 SecureProvider, entry)
         {
             HeapFree(GetProcessHeap(), 0, provider->moduleName);
             if (provider->lib)
                 FreeLibrary(provider->lib);
+            HeapFree(GetProcessHeap(), 0, provider);
         }
 
         HeapFree(GetProcessHeap(), 0, providerTable);
