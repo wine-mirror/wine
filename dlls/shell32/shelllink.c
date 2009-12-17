@@ -2213,7 +2213,10 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 
     /* any other quote marks are invalid */
     if (strchrW(pszFile, '"'))
+    {
+        HeapFree(GetProcessHeap(), 0, unquoted);
         return S_FALSE;
+    }
 
     HeapFree(GetProcessHeap(), 0, This->sPath);
     This->sPath = NULL;
@@ -2241,7 +2244,10 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
         This->sPath = HeapAlloc( GetProcessHeap(), 0,
                              (lstrlenW( buffer )+1) * sizeof (WCHAR) );
         if (!This->sPath)
+        {
+            HeapFree(GetProcessHeap(), 0, unquoted);
             return E_OUTOFMEMORY;
+        }
 
         lstrcpyW(This->sPath, buffer);
     }
