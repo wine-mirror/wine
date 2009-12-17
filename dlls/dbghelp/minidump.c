@@ -230,7 +230,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                     ReadProcessMemory(dc->hProcess, except->ExceptionPointers,
                                       &ep, sizeof(ep), NULL);
                     ReadProcessMemory(dc->hProcess, ep.ContextRecord,
-                                      &ctx, sizeof(ctx), NULL);
+                                      &lctx, sizeof(lctx), NULL);
                     pctx = &lctx;
                 }
                 else pctx = except->ExceptionPointers->ContextRecord;
