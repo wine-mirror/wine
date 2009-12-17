@@ -5008,6 +5008,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         FIXME("Not removing environment variable on uninstall!\n");
 
     size = 0;
+    type = REG_SZ;
     res = RegQueryValueExW(env, name, NULL, &type, NULL, &size);
     if ((res != ERROR_SUCCESS && res != ERROR_FILE_NOT_FOUND) ||
         (res == ERROR_SUCCESS && type != REG_SZ && type != REG_EXPAND_SZ))
