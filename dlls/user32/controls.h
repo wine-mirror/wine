@@ -35,6 +35,7 @@ enum builtin_winprocs
 {
     WINPROC_BUTTON = 0,
     WINPROC_COMBO,
+    WINPROC_EDIT,
     NB_BUILTIN_WINPROCS
 };
 

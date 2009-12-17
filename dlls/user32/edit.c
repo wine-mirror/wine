@@ -4971,24 +4971,6 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 
 /*********************************************************************
- *
- *	EditWndProc   (USER32.@)
- */
-LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    return wow_handlers.edit_proc(hWnd, uMsg, wParam, lParam, FALSE);
-}
-
-/*********************************************************************
- *
- *	EditWndProcW
- */
-static LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    return wow_handlers.edit_proc(hWnd, uMsg, wParam, lParam, TRUE);
-}
-
-/*********************************************************************
  * edit class descriptor
  */
 static const WCHAR editW[] = {'E','d','i','t',0};
@@ -4996,8 +4978,8 @@ const struct builtin_class_descr EDIT_builtin_class =
 {
     editW,                /* name */
     CS_DBLCLKS | CS_PARENTDC,   /* style */
-    EditWndProcA,         /* procA */
-    EditWndProcW,         /* procW */
+    NULL,                 /* procA */
+    BUILTIN_WINPROC(WINPROC_EDIT), /* procW */
 #ifdef __i386__
     sizeof(EDITSTATE *) + sizeof(HLOCAL16), /* extra */
 #else
