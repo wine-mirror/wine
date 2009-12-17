@@ -1655,9 +1655,11 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
             TRUE /* Lockable */, FALSE /* Discard */, surfImpl->mipmap_level, &surfImpl->WineD3DSurface, Usage, Pool,
             MultiSampleType, MultiSampleQuality, This->ImplType, Parent, &ddraw_null_wined3d_parent_ops);
     IUnknown_Release(Parent);
-
-    if(hr != D3D_OK)
+    if (FAILED(hr))
+    {
+        surfImpl->WineD3DSurface = wineD3DSurface;
         return hr;
+    }
 
     IWineD3DSurface_SetClipper(surfImpl->WineD3DSurface, clipper);
 
