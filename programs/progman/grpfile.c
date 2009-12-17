@@ -22,7 +22,6 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include "windows.h"
-#include "wine/winuser16.h"
 #include "progman.h"
 #include "mmsystem.h"
 
@@ -242,7 +241,7 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
   LPCSTR iconinfo_ptr, iconANDbits_ptr, iconXORbits_ptr;
   INT    x, y, nIconIndex, iconANDsize, iconXORsize;
   INT    nHotKey, nCmdShow;
-  CURSORICONINFO iconinfo;
+  UINT width, height, planes, bpp;
 
   x               = GET_SHORT(program_ptr, 0);
   y               = GET_SHORT(program_ptr, 2);
@@ -261,13 +260,10 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
       iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
       iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 14);
       iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes   = GET_USHORT(iconinfo_ptr, 8);
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+      width           = GET_USHORT(iconinfo_ptr, 4);
+      height          = GET_USHORT(iconinfo_ptr, 6);
+      planes          = GET_USHORT(iconinfo_ptr, 10);
+      bpp             = GET_USHORT(iconinfo_ptr, 11);
       break;
     case 0x000c:
       iconANDsize     = GET_USHORT(program_ptr,  8);
@@ -275,21 +271,16 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
       iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
       iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 14);
       iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes = GET_USHORT(iconinfo_ptr, 8) * 8;
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+      width           = GET_USHORT(iconinfo_ptr, 4);
+      height          = GET_USHORT(iconinfo_ptr, 6);
+      planes          = GET_USHORT(iconinfo_ptr, 10);
+      bpp             = GET_USHORT(iconinfo_ptr, 11);
     }
 
   if (iconANDbits_ptr + iconANDsize > buffer + size ||
       iconXORbits_ptr + iconXORsize > buffer + size) return(0);
 
-  hIcon = CreateIcon( Globals.hInstance, iconinfo.nWidth, iconinfo.nHeight,
-                      iconinfo.bPlanes, iconinfo.bBitsPerPixel,
-                      iconANDbits_ptr, iconXORbits_ptr );
+  hIcon = CreateIcon( Globals.hInstance, width, height, planes, bpp, iconANDbits_ptr, iconXORbits_ptr );
 
   lpszName        = buffer + GET_USHORT(program_ptr, 18);
   lpszCmdLine     = buffer + GET_USHORT(program_ptr, 20);
@@ -419,12 +410,19 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
  *           GRPFILE_CalculateSizes
  */
 
-static VOID GRPFILE_CalculateSizes(PROGRAM *program,
-				   INT *Progs, INT *Icons)
+static VOID GRPFILE_CalculateSizes(PROGRAM *program, INT *Progs, INT *Icons,
+                                   UINT *sizeAnd, UINT *sizeXor)
 {
-  CURSORICONINFO *iconinfo = LocalLock(program->hIcon);
-  INT sizeXor = iconinfo->nHeight * iconinfo->nWidthBytes;
-  INT sizeAnd = iconinfo->nHeight * ((iconinfo->nWidth + 15) / 16 * 2);
+  ICONINFO info;
+  BITMAP bmp;
+
+  GetIconInfo( program->hIcon, &info );
+  GetObjectW( info.hbmMask, sizeof(bmp), &bmp );
+  *sizeAnd = bmp.bmHeight * ((bmp.bmWidth + 15) / 16 * 2);
+  GetObjectW( info.hbmColor, sizeof(bmp), &bmp );
+  *sizeXor = bmp.bmHeight * bmp.bmWidthBytes;
+  DeleteObject( info.hbmMask );
+  DeleteObject( info.hbmColor );
 
   *Progs += 24;
   *Progs += lstrlen(LocalLock(program->hName)) + 1;
@@ -432,8 +430,8 @@ static VOID GRPFILE_CalculateSizes(PROGRAM *program,
   *Progs += lstrlen(LocalLock(program->hIconFile)) + 1;
 
   *Icons += 12; /* IconInfo */
-  *Icons += sizeAnd;
-  *Icons += sizeXor;
+  *Icons += *sizeAnd;
+  *Icons += *sizeXor;
 }
 
 /***********************************************************************/
@@ -513,6 +511,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   HLOCAL hProgram;
   INT    NumProg, Title, Progs, Icons, Extension;
   INT    CurrProg, CurrIcon, nCmdShow, ptr, seqnum;
+  DWORD  sizeAnd, sizeXor;
   BOOL   need_extension;
   LPCSTR lpszTitle = LocalLock(group->hName);
 
@@ -532,7 +531,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       LPCSTR lpszWorkDir = LocalLock(program->hWorkDir);
 
       NumProg++;
-      GRPFILE_CalculateSizes(program, &Icons, &Extension);
+      GRPFILE_CalculateSizes(program, &Icons, &Extension, &sizeAnd, &sizeXor);
 
       /* Set a flag if an extension is needed */
       if (lpszWorkDir[0] || program->nHotKey ||
@@ -585,7 +584,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2))
 	      return FALSE;
 
-      GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
+      GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon, &sizeAnd, &sizeXor);
       hProgram = program->hNext;
     }
 
@@ -601,13 +600,13 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   while(hProgram)
     {
       PROGRAM *program = LocalLock(hProgram);
-      CURSORICONINFO *iconinfo = LocalLock(program->hIcon);
       LPCSTR Name     = LocalLock(program->hName);
       LPCSTR CmdLine  = LocalLock(program->hCmdLine);
       LPCSTR IconFile = LocalLock(program->hIconFile);
-      INT sizeXor = iconinfo->nHeight * iconinfo->nWidthBytes;
-      INT sizeAnd = iconinfo->nHeight * ((iconinfo->nWidth + 15) / 16 * 2);
+      INT next_prog = CurrProg;
+      INT next_icon = CurrIcon;
 
+      GRPFILE_CalculateSizes(program, &next_prog, &next_icon, &sizeAnd, &sizeXor);
       PUT_SHORT(buffer,  0, program->x);
       PUT_SHORT(buffer,  2, program->y);
       PUT_SHORT(buffer,  4, program->nIconIndex);
@@ -630,7 +629,8 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
 	return FALSE;
 
-      GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
+      CurrProg = next_prog;
+      CurrIcon = next_icon;
       hProgram = program->hNext;
     }
 
