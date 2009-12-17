@@ -27,9 +27,6 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
-#include "wownt32.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
@@ -884,7 +881,7 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  */
 static void WIN_FixCoordinates( CREATESTRUCTW *cs, INT *sw)
 {
-#define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == CW_USEDEFAULT16)
+#define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == (SHORT)0x8000)
     POINT pos[2];
 
     if (cs->dwExStyle & WS_EX_MDICHILD)
@@ -1072,7 +1069,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, UINT flags )
+HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, UINT flags )
 {
     INT cx, cy, style, sw = SW_SHOW;
     LRESULT result;
@@ -1436,83 +1433,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE 
 failed:
     WIN_DestroyWindow( hwnd );
     return 0;
-}
-
-
-/***********************************************************************
- *		CreateWindow (USER.41)
- */
-HWND16 WINAPI CreateWindow16( LPCSTR className, LPCSTR windowName,
-                              DWORD style, INT16 x, INT16 y, INT16 width,
-                              INT16 height, HWND16 parent, HMENU16 menu,
-                              HINSTANCE16 instance, LPVOID data )
-{
-    return CreateWindowEx16( 0, className, windowName, style,
-                             x, y, width, height, parent, menu, instance, data );
-}
-
-
-/***********************************************************************
- *		CreateWindowEx (USER.452)
- */
-HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
-                                LPCSTR windowName, DWORD style, INT16 x,
-                                INT16 y, INT16 width, INT16 height,
-                                HWND16 parent, HMENU16 menu,
-                                HINSTANCE16 instance, LPVOID data )
-{
-    CREATESTRUCTA cs;
-    char buffer[256];
-
-    /* Fix the coordinates */
-
-    cs.x  = (x == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)x;
-    cs.y  = (y == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)y;
-    cs.cx = (width == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)width;
-    cs.cy = (height == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)height;
-
-    /* Create the window */
-
-    cs.lpCreateParams = data;
-    cs.hInstance      = HINSTANCE_32(instance);
-    cs.hMenu          = HMENU_32(menu);
-    cs.hwndParent     = WIN_Handle32( parent );
-    cs.style          = style;
-    cs.lpszName       = windowName;
-    cs.lpszClass      = className;
-    cs.dwExStyle      = exStyle;
-
-    /* map to module handle */
-    if (instance) instance = GetExePtr( instance );
-
-    /* load the menu */
-    if (!menu && (style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-    {
-        WNDCLASSA class;
-
-        if (GetClassInfoA( HINSTANCE_32(instance), className, &class ))
-            cs.hMenu = HMENU_32( LoadMenu16( instance, class.lpszMenuName ));
-    }
-
-    if (!IS_INTRESOURCE(className))
-    {
-        WCHAR bufferW[256];
-
-        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
-            return 0;
-        return HWND_16( WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), 0 ));
-    }
-    else
-    {
-        if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) ))
-        {
-            ERR( "bad atom %x\n", LOWORD(className));
-            return 0;
-        }
-        cs.lpszClass = buffer;
-        return HWND_16( WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, (LPCWSTR)className,
-                                            HINSTANCE_32(instance), 0 ));
-    }
 }
 
 

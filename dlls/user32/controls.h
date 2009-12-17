@@ -98,6 +98,7 @@ struct wow_handlers32
     LRESULT (*mdiclient_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
+    HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
     WNDPROC (*alloc_winproc)(WNDPROC,WNDPROC);
 };
 

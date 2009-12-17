@@ -305,6 +305,19 @@ BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 }
 
 
+/***********************************************************************
+ *		CreateWindow (USER.41)
+ */
+HWND16 WINAPI CreateWindow16( LPCSTR className, LPCSTR windowName,
+                              DWORD style, INT16 x, INT16 y, INT16 width,
+                              INT16 height, HWND16 parent, HMENU16 menu,
+                              HINSTANCE16 instance, LPVOID data )
+{
+    return CreateWindowEx16( 0, className, windowName, style,
+                             x, y, width, height, parent, menu, instance, data );
+}
+
+
 /**************************************************************************
  *              ShowWindow   (USER.42)
  */

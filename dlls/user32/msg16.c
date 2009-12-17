@@ -2003,6 +2003,73 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 
 
 /***********************************************************************
+ *		CreateWindowEx (USER.452)
+ */
+HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
+                                LPCSTR windowName, DWORD style, INT16 x,
+                                INT16 y, INT16 width, INT16 height,
+                                HWND16 parent, HMENU16 menu,
+                                HINSTANCE16 instance, LPVOID data )
+{
+    CREATESTRUCTA cs;
+    char buffer[256];
+    HWND hwnd;
+
+    /* Fix the coordinates */
+
+    cs.x  = (x == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)x;
+    cs.y  = (y == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)y;
+    cs.cx = (width == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)width;
+    cs.cy = (height == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)height;
+
+    /* Create the window */
+
+    cs.lpCreateParams = data;
+    cs.hInstance      = HINSTANCE_32(instance);
+    cs.hMenu          = HMENU_32(menu);
+    cs.hwndParent     = WIN_Handle32( parent );
+    cs.style          = style;
+    cs.lpszName       = windowName;
+    cs.lpszClass      = className;
+    cs.dwExStyle      = exStyle;
+
+    /* map to module handle */
+    if (instance) instance = GetExePtr( instance );
+
+    /* load the menu */
+    if (!menu && (style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+    {
+        WNDCLASSA class;
+
+        if (GetClassInfoA( HINSTANCE_32(instance), className, &class ))
+            cs.hMenu = HMENU_32( LoadMenu16( instance, class.lpszMenuName ));
+    }
+
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR bufferW[256];
+
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
+            return 0;
+        hwnd = wow_handlers32.create_window( (CREATESTRUCTW *)&cs, bufferW,
+                                             HINSTANCE_32(instance), 0 );
+    }
+    else
+    {
+        if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) ))
+        {
+            ERR( "bad atom %x\n", LOWORD(className));
+            return 0;
+        }
+        cs.lpszClass = buffer;
+        hwnd = wow_handlers32.create_window( (CREATESTRUCTW *)&cs, (LPCWSTR)className,
+                                             HINSTANCE_32(instance), 0 );
+    }
+    return HWND_16( hwnd );
+}
+
+
+/***********************************************************************
  *           button_proc16
  */
 static LRESULT button_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
