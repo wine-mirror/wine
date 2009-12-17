@@ -109,8 +109,6 @@ extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
                                             struct wow_handlers32 *orig );
 
-extern WNDPROC EDIT_winproc_handle DECLSPEC_HIDDEN;
-
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
 struct tagWND;

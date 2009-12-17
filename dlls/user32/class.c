@@ -391,18 +391,17 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
  * Register a builtin control class.
  * This allows having both ASCII and Unicode winprocs for the same class.
  */
-static WNDPROC register_builtin( const struct builtin_class_descr *descr )
+static void register_builtin( const struct builtin_class_descr *descr )
 {
     CLASS *classPtr;
 
     if (!(classPtr = CLASS_RegisterClass( descr->name, user32_module, FALSE,
-                                          descr->style, 0, descr->extra ))) return 0;
+                                          descr->style, 0, descr->extra ))) return;
 
     classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
     classPtr->winproc       = WINPROC_AllocProc( descr->procA, descr->procW );
     release_class_ptr( classPtr );
-    return classPtr->winproc;
 }
 
 
@@ -416,7 +415,7 @@ void CLASS_RegisterBuiltinClasses(void)
     register_builtin( &COMBO_builtin_class );
     register_builtin( &COMBOLBOX_builtin_class );
     register_builtin( &DIALOG_builtin_class );
-    EDIT_winproc_handle = register_builtin( &EDIT_builtin_class );
+    register_builtin( &EDIT_builtin_class );
     register_builtin( &ICONTITLE_builtin_class );
     register_builtin( &LISTBOX_builtin_class );
     register_builtin( &MDICLIENT_builtin_class );
