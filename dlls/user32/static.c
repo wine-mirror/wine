@@ -60,8 +60,6 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintBitmapfn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintEnhMetafn( HWND hwnd, HDC hdc, DWORD style );
 static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style );
-static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 static COLORREF color_3dshadow, color_3ddkshadow, color_3dhighlight;
 
@@ -104,8 +102,8 @@ const struct builtin_class_descr STATIC_builtin_class =
 {
     staticW,             /* name */
     CS_DBLCLKS | CS_PARENTDC, /* style  */
-    StaticWndProcA,      /* procA */
-    StaticWndProcW,      /* procW */
+    NULL,                /* procA */
+    BUILTIN_WINPROC(WINPROC_STATIC), /* procW */
     STATIC_EXTRA_BYTES,  /* extra */
     IDC_ARROW,           /* cursor */
     0                    /* brush */
@@ -405,6 +403,8 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     LONG full_style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG style = full_style & SS_TYPEMASK;
 
+    if (!IsWindow( hwnd )) return 0;
+
     switch (uMsg)
     {
     case WM_CREATE:
@@ -602,24 +602,6 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                          DefWindowProcA(hwnd, uMsg, wParam, lParam);
     }
     return lResult;
-}
-
-/***********************************************************************
- *           StaticWndProcA
- */
-static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow( hWnd )) return 0;
-    return wow_handlers.static_proc(hWnd, uMsg, wParam, lParam, FALSE);
-}
-
-/***********************************************************************
- *           StaticWndProcW
- */
-static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow( hWnd )) return 0;
-    return wow_handlers.static_proc(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
 static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
