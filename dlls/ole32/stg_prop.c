@@ -1406,6 +1406,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                          idOffset->propid, &prop, This->codePage);
                     }
                 }
+                PropVariantClear(&prop);
             }
         }
     }
