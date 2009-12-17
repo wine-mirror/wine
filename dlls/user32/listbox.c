@@ -128,9 +128,6 @@ typedef enum
 
 static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 
-static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
 static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect );
 
 /*********************************************************************
@@ -141,8 +138,8 @@ const struct builtin_class_descr LISTBOX_builtin_class =
 {
     listboxW,             /* name */
     CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
-    ListBoxWndProcA,      /* procA */
-    ListBoxWndProcW,      /* procW */
+    NULL,                 /* procA */
+    BUILTIN_WINPROC(WINPROC_LISTBOX), /* procW */
     sizeof(LB_DESCR *),   /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */
@@ -157,8 +154,8 @@ const struct builtin_class_descr COMBOLBOX_builtin_class =
 {
     combolboxW,           /* name */
     CS_DBLCLKS | CS_SAVEBITS,  /* style */
-    ListBoxWndProcA,      /* procA */
-    ListBoxWndProcW,      /* procW */
+    NULL,                 /* procA */
+    BUILTIN_WINPROC(WINPROC_LISTBOX), /* procW */
     sizeof(LB_DESCR *),   /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */
@@ -3178,20 +3175,4 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
                      DefWindowProcA( hwnd, msg, wParam, lParam );
-}
-
-/***********************************************************************
- *           ListBoxWndProcA
- */
-static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
- *           ListBoxWndProcW
- */
-static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, TRUE );
 }

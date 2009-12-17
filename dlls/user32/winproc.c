@@ -55,12 +55,15 @@ static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 LRESULT WINAPI EditWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI EditWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 static WINDOWPROC winproc_array[MAX_WINPROCS] =
 {
     { ButtonWndProcA, ButtonWndProcW },  /* WINPROC_BUTTON */
     { ComboWndProcA, ComboWndProcW },    /* WINPROC_COMBO */
     { EditWndProcA, EditWndProcW },      /* WINPROC_EDIT */
+    { ListBoxWndProcA, ListBoxWndProcW },/* WINPROC_LISTBOX */
 };
 
 static UINT builtin_used = NB_BUILTIN_WINPROCS;
@@ -1074,6 +1077,16 @@ LRESULT WINAPI EditWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 static LRESULT WINAPI EditWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return wow_handlers.edit_proc( hwnd, msg, wParam, lParam, TRUE );
+}
+
+static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
 
