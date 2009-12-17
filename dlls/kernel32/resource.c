@@ -810,7 +810,7 @@ static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR N
     if (existing)
     {
         if (!overwrite_existing)
-            return TRUE;
+            return FALSE;
         list_remove( &existing->entry );
         HeapFree( GetProcessHeap(), 0, existing );
     }
@@ -1076,7 +1076,10 @@ static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
 
                 resdata = allocate_resource_data( Lang, data->CodePage, p, data->Size, FALSE );
                 if (resdata)
-                    update_add_resource( updates, Type, Name, resdata, FALSE );
+                {
+                    if (!update_add_resource( updates, Type, Name, resdata, FALSE ))
+                        HeapFree( GetProcessHeap(), 0, resdata );
+                }
             }
             res_free_str( Name );
         }
