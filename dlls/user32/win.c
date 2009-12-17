@@ -882,7 +882,7 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  * Fix the coordinates - Helper for WIN_CreateWindowEx.
  * returns default show mode in sw.
  */
-static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
+static void WIN_FixCoordinates( CREATESTRUCTW *cs, INT *sw)
 {
 #define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == CW_USEDEFAULT16)
     POINT pos[2];
@@ -1072,7 +1072,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, HINSTANCE module, UINT flags )
+static HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, UINT flags )
 {
     INT cx, cy, style, sw = SW_SHOW;
     LRESULT result;
@@ -1080,12 +1080,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, HINSTANCE 
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
     BOOL unicode = (flags & WIN_ISUNICODE) != 0;
-    MDICREATESTRUCTA mdi_cs;
-    CBT_CREATEWNDA cbtc;
-    CREATESTRUCTA cbcs;
+    MDICREATESTRUCTW mdi_cs;
+    CBT_CREATEWNDW cbtc;
+    CREATESTRUCTW cbcs;
 
     TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
-          unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
+          unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
           debugstr_w(className),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
@@ -1500,7 +1500,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return HWND_16( WIN_CreateWindowEx( &cs, bufferW, HINSTANCE_32(instance), 0 ));
+        return HWND_16( WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), 0 ));
     }
     else
     {
@@ -1510,7 +1510,8 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
             return 0;
         }
         cs.lpszClass = buffer;
-        return HWND_16( WIN_CreateWindowEx( &cs, (LPCWSTR)className, HINSTANCE_32(instance), 0 ));
+        return HWND_16( WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, (LPCWSTR)className,
+                                            HINSTANCE_32(instance), 0 ));
     }
 }
 
@@ -1544,9 +1545,11 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
         WCHAR bufferW[256];
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return WIN_CreateWindowEx( &cs, bufferW, instance, WIN_ISWIN32 );
+        return WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, bufferW, instance, WIN_ISWIN32 );
     }
-    return WIN_CreateWindowEx( &cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
+    /* Note: we rely on the fact that CREATESTRUCTA and */
+    /* CREATESTRUCTW have the same layout. */
+    return WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
 }
 
 
@@ -1574,9 +1577,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    /* Note: we rely on the fact that CREATESTRUCTA and */
-    /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
+    return WIN_CreateWindowEx( &cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
 }
 
 
