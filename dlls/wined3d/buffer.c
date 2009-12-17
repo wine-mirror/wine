@@ -742,12 +742,8 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         {
             FIXME("Too many declaration changes, stopping converting\n");
 
-            ENTER_GL();
-            GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
-            checkGLcall("glDeleteBuffersARB");
-            LEAVE_GL();
-            This->buffer_object = 0;
-            HeapFree(GetProcessHeap(), 0, This->conversion_shift);
+            IWineD3DBuffer_UnLoad(iface);
+            This->flags &= ~WINED3D_BUFFER_CREATEBO;
 
             /* The stream source state handler might have read the memory of the vertex buffer already
              * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
