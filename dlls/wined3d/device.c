@@ -640,7 +640,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
     if (!object)
     {
         ERR("Failed to allocate surface memory.\n");
-        *ppSurface = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -650,7 +649,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppSurface = NULL;
         return hr;
     }
 
