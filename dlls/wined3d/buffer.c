@@ -95,6 +95,7 @@ static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
 static void buffer_create_buffer_object(struct wined3d_buffer *This)
 {
     GLenum error, gl_usage;
+    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
 
     TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p Usage(%s)\n",
             This, debug_d3dusage(This->resource.usage));
@@ -149,6 +150,13 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
     {
         TRACE("Gl usage = GL_DYNAMIC_DRAW_ARB\n");
         gl_usage = GL_DYNAMIC_DRAW_ARB;
+
+        if(gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+        {
+            GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
+            checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE)");
+            This->flags |= WINED3D_BUFFER_FLUSH;
+        }
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
@@ -1061,6 +1069,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
 static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    ULONG i;
 
     TRACE("(%p)\n", This);
 
@@ -1094,6 +1103,18 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
         context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+
+        if(This->flags & WINED3D_BUFFER_FLUSH)
+        {
+            for(i = 0; i < This->modified_areas; i++)
+            {
+                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(This->buffer_type_hint,
+                                                         This->maps[i].offset,
+                                                         This->maps[i].size));
+                checkGLcall("glFlushMappedBufferRangeAPPLE");
+            }
+        }
+
         GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
         LEAVE_GL();
         context_release(context);
@@ -1175,7 +1196,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format_desc->format), buffer->resource.allocatedMemory, buffer);
 
-    dynamic_buffer_ok = FALSE; /* TODO: GL_APPLE_map_buffer_range, GL_ARB_map_buffer_range */
+    /* TODO: GL_ARB_map_buffer_range */
+    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE];
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
      * drawStridedFast (half-life 2 and others).

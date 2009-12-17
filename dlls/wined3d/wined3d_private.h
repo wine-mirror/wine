@@ -2368,6 +2368,7 @@ struct wined3d_map_range
 #define WINED3D_BUFFER_HASDESC      0x02    /* A vertex description has been found */
 #define WINED3D_BUFFER_CREATEBO     0x04    /* Attempt to create a buffer object next PreLoad */
 #define WINED3D_BUFFER_DOUBLEBUFFER 0x08    /* Use a vbo and local allocated memory */
+#define WINED3D_BUFFER_FLUSH        0x10    /* Manual unmap flushing */
 
 struct wined3d_buffer
 {
