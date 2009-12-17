@@ -1368,6 +1368,17 @@ static void create_dummy_textures(IWineD3DDeviceImpl *This)
     LEAVE_GL();
 }
 
+/* Context activation is done by the caller. */
+static void destroy_dummy_textures(IWineD3DDeviceImpl *device, const struct wined3d_gl_info *gl_info)
+{
+    ENTER_GL();
+    glDeleteTextures(gl_info->limits.textures, device->dummyTextureName);
+    checkGLcall("glDeleteTextures(gl_info->limits.textures, device->dummyTextureName)");
+    LEAVE_GL();
+
+    memset(device->dummyTextureName, 0, gl_info->limits.textures * sizeof(*device->dummyTextureName));
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *pPresentationParameters)
 {
@@ -6240,7 +6251,6 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    UINT i;
     IWineD3DBaseShaderImpl *shader;
 
     context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
@@ -6267,16 +6277,7 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
     This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
     This->shader_backend->shader_free_private(iface);
-
-    ENTER_GL();
-    for (i = 0; i < This->adapter->gl_info.limits.textures; ++i)
-    {
-        /* Textures are recreated below */
-        glDeleteTextures(1, &This->dummyTextureName[i]);
-        checkGLcall("glDeleteTextures(1, &This->dummyTextureName[i])");
-        This->dummyTextureName[i] = 0;
-    }
-    LEAVE_GL();
+    destroy_dummy_textures(This, gl_info);
 
     context_release(context);
 
