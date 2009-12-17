@@ -650,8 +650,6 @@ extern void msiobj_unlock(MSIOBJECTHDR *);
 extern void msi_free_handle_table(void);
 
 extern void free_cached_tables( MSIDATABASE *db );
-extern void msi_free_streams( MSIDATABASE *db );
-extern void msi_free_transforms( MSIDATABASE *db );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
 
 
@@ -721,11 +719,12 @@ extern MSIRECORD *MSI_CloneRecord( MSIRECORD * );
 extern BOOL MSI_RecordsAreEqual( MSIRECORD *, MSIRECORD * );
 
 /* stream internals */
-extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
 extern void enum_stream_names( IStorage *stg );
+extern LPWSTR encode_streamname(BOOL bTable, LPCWSTR in);
 extern BOOL decode_streamname(LPCWSTR in, LPWSTR out);
 
 /* database internals */
+extern UINT db_get_raw_stream( MSIDATABASE *, LPCWSTR, IStream ** );
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
