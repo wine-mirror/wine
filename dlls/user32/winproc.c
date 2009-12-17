@@ -45,7 +45,6 @@ typedef struct tagWINDOWPROC
 } WINDOWPROC;
 
 #define MAX_WINPROCS  4096
-#define BUILTIN_WINPROCS 9  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
 #define MAX_WINPROC_RECURSION  64
 #define WINPROC_PROC16  ((WINDOWPROC *)1)  /* placeholder for 16-bit window procs */
 
@@ -68,6 +67,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
 {
     { ButtonWndProcA, ButtonWndProcW },        /* WINPROC_BUTTON */
     { ComboWndProcA, ComboWndProcW },          /* WINPROC_COMBO */
+    { DefWindowProcA, DefWindowProcW },        /* WINPROC_DEFWND */
     { DefDlgProcA, DefDlgProcW },              /* WINPROC_DIALOG */
     { EditWndProcA, EditWndProcW },            /* WINPROC_EDIT */
     { ListBoxWndProcA, ListBoxWndProcW },      /* WINPROC_LISTBOX */
@@ -76,8 +76,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
 };
 
-static UINT builtin_used = NB_BUILTIN_WINPROCS;
-static UINT winproc_used = BUILTIN_WINPROCS;
+static UINT winproc_used = NB_BUILTIN_WINPROCS;
 
 static CRITICAL_SECTION winproc_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -105,14 +104,14 @@ static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
 {
     unsigned int i;
 
-    for (i = 0; i < builtin_used; i++)
+    for (i = 0; i < NB_BUILTIN_WINPROCS; i++)
     {
         /* match either proc, some apps confuse A and W */
         if (funcA && winproc_array[i].procA != funcA && winproc_array[i].procW != funcA) continue;
         if (funcW && winproc_array[i].procA != funcW && winproc_array[i].procW != funcW) continue;
         return &winproc_array[i];
     }
-    for (i = BUILTIN_WINPROCS; i < winproc_used; i++)
+    for (i = NB_BUILTIN_WINPROCS; i < winproc_used; i++)
     {
         if (funcA && winproc_array[i].procA != funcA) continue;
         if (funcW && winproc_array[i].procW != funcW) continue;
@@ -153,16 +152,7 @@ static inline WINDOWPROC *alloc_winproc( WNDPROC funcA, WNDPROC funcW )
     /* check if we already have a winproc for that function */
     if (!(proc = find_winproc( funcA, funcW )))
     {
-        if (funcA && funcW)
-        {
-            assert( builtin_used < BUILTIN_WINPROCS );
-            proc = &winproc_array[builtin_used++];
-            proc->procA = funcA;
-            proc->procW = funcW;
-            TRACE( "allocated %p for builtin %p/%p (%d/%d used)\n",
-                   proc_to_handle(proc), funcA, funcW, builtin_used, BUILTIN_WINPROCS );
-        }
-        else if (winproc_used < MAX_WINPROCS)
+        if (winproc_used < MAX_WINPROCS)
         {
             proc = &winproc_array[winproc_used++];
             proc->procA = funcA;
