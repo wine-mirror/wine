@@ -27,11 +27,7 @@
 #include <stdio.h>
 
 #include <wine/test.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
-#include <winerror.h>
-#include <winnls.h>
+#include <windows.h>
 #include <usp10.h>
 
 static void test_ScriptShape(HDC hdc)
@@ -1177,7 +1173,7 @@ static void test_digit_substitution(void)
         LGRPID_ARMENIAN
     };
     HMODULE hKernel32;
-    static BOOL (WINAPI * pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROC,LGRPID,DWORD,LONG_PTR);
+    static BOOL (WINAPI * pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROCA,LGRPID,DWORD,LONG_PTR);
 
     hKernel32 = GetModuleHandleA("kernel32.dll");
     pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
