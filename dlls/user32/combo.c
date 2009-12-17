@@ -86,9 +86,6 @@ static UINT	CBitHeight, CBitWidth;
 #define COMBO_EDITBUTTONSPACE()  0
 #define EDIT_CONTROL_PADDING()   1
 
-static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
 /*********************************************************************
  * combo class descriptor
  */
@@ -97,8 +94,8 @@ const struct builtin_class_descr COMBO_builtin_class =
 {
     comboboxW,            /* name */
     CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, /* style  */
-    ComboWndProcA,        /* procA */
-    ComboWndProcW,        /* procW */
+    NULL,                 /* procA */
+    BUILTIN_WINPROC(WINPROC_COMBO), /* procW */
     sizeof(HEADCOMBO *),  /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */
@@ -1839,6 +1836,8 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
       TRACE("[%p]: msg %s wp %08lx lp %08lx\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
+      if (!IsWindow(hwnd)) return 0;
+
       if( lphc || message == WM_NCCREATE )
       switch(message)
       {
@@ -2217,27 +2216,6 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
       }
       return unicode ? DefWindowProcW(hwnd, message, wParam, lParam) :
                        DefWindowProcA(hwnd, message, wParam, lParam);
-}
-
-/***********************************************************************
- *           ComboWndProcA
- *
- * This is just a wrapper for the real ComboWndProc which locks/unlocks
- * window structs.
- */
-static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
- *           ComboWndProcW
- */
-static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 /*************************************************************************

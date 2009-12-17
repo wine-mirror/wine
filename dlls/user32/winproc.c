@@ -53,10 +53,13 @@ WNDPROC EDIT_winproc_handle = 0;
 
 static LRESULT WINAPI ButtonWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ButtonWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 static WINDOWPROC winproc_array[MAX_WINPROCS] =
 {
     { ButtonWndProcA, ButtonWndProcW },  /* WINPROC_BUTTON */
+    { ComboWndProcA, ComboWndProcW },    /* WINPROC_COMBO */
 };
 
 static UINT builtin_used = NB_BUILTIN_WINPROCS;
@@ -1050,6 +1053,16 @@ static LRESULT WINAPI ButtonWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 static LRESULT WINAPI ButtonWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return wow_handlers.button_proc( hwnd, msg, wParam, lParam, TRUE );
+}
+
+static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, FALSE );
+}
+
+static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.combo_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 
