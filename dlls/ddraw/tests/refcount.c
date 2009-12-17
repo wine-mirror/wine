@@ -268,7 +268,7 @@ static void test_iface_refcnt(void)
     ok(ref == 2, "IDirectDraw7 reference count is %ld\n", ref);
 
     /* Can't get older d3d interfaces. WHY????? */
-    hr = IDirectDraw7_QueryInterface(DDraw4, &IID_IDirect3D3, (void **) &D3D3);
+    hr = IDirectDraw7_QueryInterface(DDraw7, &IID_IDirect3D3, (void **) &D3D3);
     todo_wine ok(hr == E_NOINTERFACE, "IDirectDraw7_QueryInterface returned %08x\n", hr);
     if(hr == DD_OK && D3D3) IDirect3D3_Release(D3D3);
 
