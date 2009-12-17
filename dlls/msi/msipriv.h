@@ -650,6 +650,7 @@ extern void msiobj_unlock(MSIOBJECTHDR *);
 extern void msi_free_handle_table(void);
 
 extern void free_cached_tables( MSIDATABASE *db );
+extern void msi_free_streams( MSIDATABASE *db );
 extern void msi_free_transforms( MSIDATABASE *db );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
 

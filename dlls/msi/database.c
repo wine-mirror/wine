@@ -57,6 +57,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
 
     msi_free(db->path);
     free_cached_tables( db );
+    msi_free_streams( db );
     msi_free_transforms( db );
     msi_destroy_stringtable( db->strings );
     IStorage_Release( db->storage );
