@@ -779,6 +779,16 @@ static UINT msi_load_admin_properties(MSIPACKAGE *package)
     return r;
 }
 
+static void adjust_allusers_property( MSIPACKAGE *package )
+{
+    /* FIXME: this should depend on the user's privileges */
+    if (msi_get_property_int( package, szAllUsers, 0 ) == 2)
+    {
+        TRACE("resetting ALLUSERS property from 2 to 1\n");
+        MSI_SetPropertyW( package, szAllUsers, szOne );
+    }
+}
+
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 {
     static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
@@ -818,6 +828,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         if (package->WordCount & msidbSumInfoSourceTypeAdminImage)
             msi_load_admin_properties( package );
+
+        adjust_allusers_property( package );
     }
 
     return package;
