@@ -16,6 +16,7 @@ C_SRCS = \
 RC_SRCS = \
 	De.rc \
 	En.rc \
+	Lt.rc \
 	version.rc
 
 @MAKE_DLL_RULES@
