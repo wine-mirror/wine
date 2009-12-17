@@ -221,8 +221,6 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIChannel_Release(This->channel);
         if(This->http_channel)
             nsIHttpChannel_Release(This->http_channel);
-        if(This->http_channel_internal)
-            nsIHttpChannel_Release(This->http_channel_internal);
         if(This->owner)
             nsISupports_Release(This->owner);
         if(This->post_data_stream)
@@ -1293,10 +1291,8 @@ static nsresult NSAPI nsHttpChannelInternal_GetDocumentURI(nsIHttpChannelInterna
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_GetDocumentURI(This->http_channel_internal, aDocumentURI);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1304,10 +1300,8 @@ static nsresult NSAPI nsHttpChannelInternal_SetDocumentURI(nsIHttpChannelInterna
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_SetDocumentURI(This->http_channel_internal, aDocumentURI);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1315,10 +1309,8 @@ static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInte
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_GetRequestVersion(This->http_channel_internal, major, minor);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1326,10 +1318,8 @@ static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInt
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_GetResponseVersion(This->http_channel_internal, major, minor);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1337,10 +1327,8 @@ static nsresult NSAPI nsHttpChannelInternal_SetCookie(nsIHttpChannelInternal *if
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_SetCookie(This->http_channel_internal, aCookieHeader);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1348,10 +1336,8 @@ static nsresult NSAPI nsHttpChannelInternal_SetupFallbackChannel(nsIHttpChannelI
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_SetupFallbackChannel(This->http_channel_internal, aFallbackKey);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1359,10 +1345,8 @@ static nsresult NSAPI nsHttpChannelInternal_GetForceAllowThirdPartyCookie(nsIHtt
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_GetForceAllowThirdPartyCookie(This->http_channel_internal, aForceThirdPartyCookie);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1370,10 +1354,8 @@ static nsresult NSAPI nsHttpChannelInternal_SetForceAllowThirdPartyCookie(nsIHtt
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
 
-    TRACE("(%p)->()\n", This);
+    FIXME("(%p)->()\n", This);
 
-    if(This->http_channel_internal)
-        return nsIHttpChannelInternal_SetForceAllowThirdPartyCookie(This->http_channel_internal, aForceThirdPartyCookie);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2726,10 +2708,8 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     nsIWineURI_GetWineURL(wine_uri, &url);
     ret->url_scheme = url && SUCCEEDED(ParseURLW(url, &parsed_url)) ? parsed_url.nScheme : URL_SCHEME_UNKNOWN;
 
-    if(channel) {
+    if(channel)
         nsIChannel_QueryInterface(channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
-        nsIChannel_QueryInterface(channel, &IID_nsIHttpChannelInternal, (void**)&ret->http_channel_internal);
-    }
 
     *_retval = NSCHANNEL(ret);
     return NS_OK;

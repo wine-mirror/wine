@@ -435,7 +435,6 @@ typedef struct {
 
     nsIChannel *channel;
     nsIHttpChannel *http_channel;
-    nsIHttpChannelInternal *http_channel_internal;
     nsIWineURI *uri;
     nsIInputStream *post_data_stream;
     nsILoadGroup *load_group;
