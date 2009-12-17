@@ -1350,12 +1350,12 @@ static LONG entryNameCmp(
 {
   LONG diff      = lstrlenW(name1) - lstrlenW(name2);
 
-  if (diff == 0)
+  while (diff == 0 && *name1 != 0)
   {
     /*
      * We compare the string themselves only when they are of the same length
      */
-    diff = lstrcmpiW( name1, name2);
+    diff = toupperW(*name1++) - toupperW(*name2++);
   }
 
   return diff;
