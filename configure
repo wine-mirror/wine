@@ -15345,6 +15345,14 @@ dlls/mapi32/tests/Makefile: dlls/mapi32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/mapi32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/mapistub/Makefile"
+test "x$enable_mapistub" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	mapistub"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mapistub/Makefile: dlls/mapistub/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/mapistub/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mciavi32/Makefile"
 test "x$enable_mciavi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mciavi32"
@@ -19056,6 +19064,7 @@ do
     "dlls/lzexpand.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lzexpand.dll16/Makefile" ;;
     "dlls/mapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/Makefile" ;;
     "dlls/mapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/tests/Makefile" ;;
+    "dlls/mapistub/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapistub/Makefile" ;;
     "dlls/mciavi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciavi32/Makefile" ;;
     "dlls/mcicda/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mcicda/Makefile" ;;
     "dlls/mciqtz32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciqtz32/Makefile" ;;
