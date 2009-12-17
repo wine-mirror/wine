@@ -57,6 +57,8 @@ LRESULT WINAPI EditWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 static LRESULT WINAPI EditWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI StaticWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
@@ -69,6 +71,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { DefDlgProcA, DefDlgProcW },              /* WINPROC_DIALOG */
     { EditWndProcA, EditWndProcW },            /* WINPROC_EDIT */
     { ListBoxWndProcA, ListBoxWndProcW },      /* WINPROC_LISTBOX */
+    { MDIClientWndProcA, MDIClientWndProcW },  /* WINPROC_MDICLIENT */
     { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
     { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
 };
@@ -1094,6 +1097,16 @@ static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARA
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return wow_handlers.listbox_proc( hwnd, msg, wParam, lParam, TRUE );
+}
+
+static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.mdiclient_proc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return wow_handlers.mdiclient_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
 static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )

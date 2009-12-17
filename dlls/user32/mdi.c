@@ -150,8 +150,6 @@ static LONG MDI_ChildActivate( HWND, HWND );
 static LRESULT MDI_RefreshMenu(MDICLIENTINFO *);
 
 static HWND MDI_MoreWindowsDialog(HWND);
-static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
 
 /* -------- Miscellaneous service functions ----------
  *
@@ -188,8 +186,8 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
 {
     mdiclientW,             /* name */
     0,                      /* style */
-    MDIClientWndProcA,      /* procA */
-    MDIClientWndProcW,      /* procW */
+    NULL,                  /* procA */
+    BUILTIN_WINPROC(WINPROC_MDICLIENT), /* procW */
     sizeof(MDICLIENTINFO),  /* extra */
     IDC_ARROW,              /* cursor */
     (HBRUSH)(COLOR_APPWORKSPACE+1)    /* brush */
@@ -1269,24 +1267,6 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     }
     return unicode ? DefWindowProcW( hwnd, message, wParam, lParam ) :
                      DefWindowProcA( hwnd, message, wParam, lParam );
-}
-
-/***********************************************************************
- *		MDIClientWndProcA
- */
-static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return wow_handlers.mdiclient_proc( hwnd, message, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
- *		MDIClientWndProcW
- */
-static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return wow_handlers.mdiclient_proc( hwnd, message, wParam, lParam, TRUE );
 }
 
 /***********************************************************************
