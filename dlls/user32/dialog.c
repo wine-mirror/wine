@@ -97,8 +97,8 @@ const struct builtin_class_descr DIALOG_builtin_class =
 {
     (LPCWSTR)DIALOG_CLASS_ATOM, /* name */
     CS_SAVEBITS | CS_DBLCLKS, /* style  */
-    DefDlgProcA,        /* procA */
-    DefDlgProcW,        /* procW */
+    NULL,               /* procA */
+    BUILTIN_WINPROC(WINPROC_DIALOG), /* procW */
     DLGWINDOWEXTRA,     /* extra */
     IDC_ARROW,          /* cursor */
     0                   /* brush */

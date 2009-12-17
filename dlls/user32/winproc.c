@@ -66,6 +66,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
 {
     { ButtonWndProcA, ButtonWndProcW },        /* WINPROC_BUTTON */
     { ComboWndProcA, ComboWndProcW },          /* WINPROC_COMBO */
+    { DefDlgProcA, DefDlgProcW },              /* WINPROC_DIALOG */
     { EditWndProcA, EditWndProcW },            /* WINPROC_EDIT */
     { ListBoxWndProcA, ListBoxWndProcW },      /* WINPROC_LISTBOX */
     { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
