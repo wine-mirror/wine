@@ -85,13 +85,13 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
      */
     if(This->resource.usage & WINED3DUSAGE_DYNAMIC)
     {
-        TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
-        gl_usage = GL_DYNAMIC_DRAW_ARB;
+        TRACE("Gl usage = GL_STREAM_DRAW_ARB\n");
+        gl_usage = GL_STREAM_DRAW_ARB;
     }
     else
     {
-        TRACE("Gl usage = GL_STREAM_DRAW\n");
-        gl_usage = GL_STREAM_DRAW_ARB;
+        TRACE("Gl usage = GL_DYNAMIC_DRAW_ARB\n");
+        gl_usage = GL_DYNAMIC_DRAW_ARB;
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
