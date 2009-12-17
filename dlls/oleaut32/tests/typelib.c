@@ -735,8 +735,10 @@ static void test_inheritance(void)
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 6, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
+if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
@@ -861,8 +863,10 @@ if(use_midl_tlb) {
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 3, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
+if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, -1, &href);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
@@ -897,8 +901,10 @@ if(use_midl_tlb) {
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 10, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
+if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
@@ -942,8 +948,10 @@ if(use_midl_tlb) {
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
+if(use_midl_tlb) {
     /* Should have one method */
     hr = ITypeInfo_GetFuncDesc(pTI, 1, &pFD);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
