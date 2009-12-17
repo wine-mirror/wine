@@ -187,10 +187,6 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     struct tagCLASS *class = NULL;
     int extra_bytes = 0;
 
-    /* if 16-bit instance, map to module handle */
-    if (instance && !HIWORD(instance))
-        instance = HINSTANCE_32(GetExePtr(HINSTANCE_16(instance)));
-
     SERVER_START_REQ( create_window )
     {
         req->parent   = wine_server_user_handle( parent );
@@ -1076,7 +1072,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags )
+static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, HINSTANCE module, UINT flags )
 {
     INT cx, cy, style, sw = SW_SHOW;
     LRESULT result;
@@ -1206,7 +1202,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner, className, cs->hInstance, unicode )))
+    if (!(wndPtr = create_window_handle( parent, owner, className, module, unicode )))
         return 0;
     hwnd = wndPtr->obj.handle;
 
@@ -1490,13 +1486,16 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
+    /* map to module handle */
+    if (instance) instance = GetExePtr( instance );
+
     if (!IS_INTRESOURCE(className))
     {
         WCHAR bufferW[256];
 
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return HWND_16( WIN_CreateWindowEx( &cs, bufferW, 0 ));
+        return HWND_16( WIN_CreateWindowEx( &cs, bufferW, HINSTANCE_32(instance), 0 ));
     }
     else
     {
@@ -1506,7 +1505,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
             return 0;
         }
         cs.lpszClass = buffer;
-        return HWND_16( WIN_CreateWindowEx( &cs, (LPCWSTR)className, 0 ));
+        return HWND_16( WIN_CreateWindowEx( &cs, (LPCWSTR)className, HINSTANCE_32(instance), 0 ));
     }
 }
 
@@ -1540,9 +1539,9 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
         WCHAR bufferW[256];
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return WIN_CreateWindowEx( &cs, bufferW, WIN_ISWIN32 );
+        return WIN_CreateWindowEx( &cs, bufferW, instance, WIN_ISWIN32 );
     }
-    return WIN_CreateWindowEx( &cs, (LPCWSTR)className, WIN_ISWIN32 );
+    return WIN_CreateWindowEx( &cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
 }
 
 
@@ -1572,7 +1571,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, className, WIN_ISWIN32 | WIN_ISUNICODE );
+    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
 }
 
 
