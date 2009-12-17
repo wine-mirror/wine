@@ -313,9 +313,15 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
 
     if (shortpath[0] == '\\' && shortpath[1] == '\\')
     {
-        ERR("UNC pathname %s\n", debugstr_w(shortpath));
-        lstrcpynW( longpath, shortpath, longlen );
-        return strlenW(longpath);
+        FIXME("UNC pathname %s\n", debugstr_w(shortpath));
+
+        tmplen = strlenW(shortpath);
+        if (tmplen < longlen)
+        {
+            if (longpath != shortpath) strcpyW( longpath, shortpath );
+            return tmplen;
+        }
+        return tmplen + 1;
     }
 
     unixabsolute = (shortpath[0] == '/');
