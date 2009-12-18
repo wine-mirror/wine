@@ -554,6 +554,8 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     BOOL bm_is_selected;
     BITMAPINFO *pbmi;
 
+    TRACE("(%p,%p)\n", bitmap, lockeddata);
+
     if(!bitmap || !lockeddata)
         return InvalidParameter;
 
