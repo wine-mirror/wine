@@ -429,7 +429,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     UINT abs_height;
     GpRect act_rect; /* actual rect to be used */
 
-    TRACE("%p %p %d %d %p\n", bitmap, rect, flags, format, lockeddata);
+    TRACE("%p %p %d 0x%x %p\n", bitmap, rect, flags, format, lockeddata);
 
     if(!lockeddata || !bitmap)
         return InvalidParameter;
@@ -623,7 +623,7 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     Rect area;
     GpStatus stat;
 
-    TRACE("(%f,%f,%f,%f,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
+    TRACE("(%f,%f,%f,%f,0x%x,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
 
     if (!srcBitmap || !dstBitmap || srcBitmap->image.type != ImageTypeBitmap ||
         x < 0 || y < 0 ||
@@ -681,7 +681,7 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
 GpStatus WINGDIPAPI GdipCloneBitmapAreaI(INT x, INT y, INT width, INT height,
     PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
 {
-    TRACE("(%i,%i,%i,%i,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
+    TRACE("(%i,%i,%i,%i,0x%x,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
 
     return GdipCloneBitmapArea(x, y, width, height, format, srcBitmap, dstBitmap);
 }
@@ -1211,7 +1211,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     REAL xres, yres;
     GpStatus stat;
 
-    TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
+    TRACE("%d %d %d 0x%x %p %p\n", width, height, stride, format, scan0, bitmap);
 
     if (!bitmap) return InvalidParameter;
 
