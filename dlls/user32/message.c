@@ -3589,7 +3589,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
     UINT_PTR ret;
     WNDPROC winproc = 0;
 
-    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, NULL );
+    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
     SERVER_START_REQ( set_win_timer )
     {
@@ -3620,7 +3620,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
     UINT_PTR ret;
     WNDPROC winproc = 0;
 
-    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, NULL );
+    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
     SERVER_START_REQ( set_win_timer )
     {

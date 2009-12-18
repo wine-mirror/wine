@@ -104,21 +104,20 @@ static inline void free_buffer( void *static_buffer, void *buffer )
 
 /* find an existing winproc for a given function and type */
 /* FIXME: probably should do something more clever than a linear search */
-static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
+static inline WINDOWPROC *find_winproc( WNDPROC func, BOOL unicode )
 {
     unsigned int i;
 
     for (i = 0; i < NB_BUILTIN_AW_WINPROCS; i++)
     {
         /* match either proc, some apps confuse A and W */
-        if (funcA && winproc_array[i].procA != funcA && winproc_array[i].procW != funcA) continue;
-        if (funcW && winproc_array[i].procA != funcW && winproc_array[i].procW != funcW) continue;
+        if (winproc_array[i].procA != func && winproc_array[i].procW != func) continue;
         return &winproc_array[i];
     }
     for (i = NB_BUILTIN_AW_WINPROCS; i < winproc_used; i++)
     {
-        if (funcA && winproc_array[i].procA != funcA) continue;
-        if (funcW && winproc_array[i].procW != funcW) continue;
+        if (!unicode && winproc_array[i].procA != func) continue;
+        if (unicode && winproc_array[i].procW != func) continue;
         return &winproc_array[i];
     }
     return NULL;
@@ -142,32 +141,31 @@ static inline WNDPROC proc_to_handle( WINDOWPROC *proc )
 }
 
 /* allocate and initialize a new winproc */
-static inline WINDOWPROC *alloc_winproc( WNDPROC funcA, WNDPROC funcW )
+static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
 {
     WINDOWPROC *proc;
 
     /* check if the function is already a win proc */
-    if (funcA && (proc = handle_to_proc( funcA ))) return proc;
-    if (funcW && (proc = handle_to_proc( funcW ))) return proc;
-    if (!funcA && !funcW) return NULL;
+    if (!func) return NULL;
+    if ((proc = handle_to_proc( func ))) return proc;
 
     EnterCriticalSection( &winproc_cs );
 
     /* check if we already have a winproc for that function */
-    if (!(proc = find_winproc( funcA, funcW )))
+    if (!(proc = find_winproc( func, unicode )))
     {
         if (winproc_used < MAX_WINPROCS)
         {
             proc = &winproc_array[winproc_used++];
-            proc->procA = funcA;
-            proc->procW = funcW;
+            if (unicode) proc->procW = func;
+            else proc->procA = func;
             TRACE( "allocated %p for %c %p (%d/%d used)\n",
-                   proc_to_handle(proc), funcA ? 'A' : 'W', funcA ? funcA : funcW,
+                   proc_to_handle(proc), unicode ? 'W' : 'A', func,
                    winproc_used, MAX_WINPROCS );
         }
-        else FIXME( "too many winprocs, cannot allocate one for %p/%p\n", funcA, funcW );
+        else FIXME( "too many winprocs, cannot allocate one for %p\n", func );
     }
-    else TRACE( "reusing %p for %p/%p\n", proc_to_handle(proc), funcA, funcW );
+    else TRACE( "reusing %p for %p\n", proc_to_handle(proc), func );
 
     LeaveCriticalSection( &winproc_cs );
     return proc;
@@ -304,12 +302,12 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
  * lot of windows, it will usually only have a limited number of window procedures, so the
  * array won't grow too large, and this way we avoid the need to track allocations per window.
  */
-WNDPROC WINPROC_AllocProc( WNDPROC funcA, WNDPROC funcW )
+WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     WINDOWPROC *proc;
 
-    if (!(proc = alloc_winproc( funcA, funcW ))) return NULL;
-    if (proc == WINPROC_PROC16) return funcA ? funcA : funcW;
+    if (!(proc = alloc_winproc( func, unicode ))) return NULL;
+    if (proc == WINPROC_PROC16) return func;
     return proc_to_handle( proc );
 }
 

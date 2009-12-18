@@ -231,10 +231,7 @@ done:
  */
 WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
 {
-    WNDPROC winproc;
-
-    if (unicode) winproc = wow_handlers32.alloc_winproc( NULL, proc );
-    else winproc = wow_handlers32.alloc_winproc( proc, NULL );
+    WNDPROC winproc = wow_handlers32.alloc_winproc( proc, unicode );
 
     if ((ULONG_PTR)winproc >> 16 != WINPROC_HANDLE) return (WNDPROC16)winproc;
     return alloc_win16_thunk( winproc );

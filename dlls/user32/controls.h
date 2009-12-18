@@ -110,7 +110,7 @@ struct wow_handlers32
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
-    WNDPROC (*alloc_winproc)(WNDPROC,WNDPROC);
+    WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
 };
 
 extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;

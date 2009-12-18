@@ -551,7 +551,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, NULL );
+    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;
@@ -589,7 +589,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winproc       = WINPROC_AllocProc( NULL, wc->lpfnWndProc );
+    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, TRUE );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;
@@ -903,8 +903,7 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         break;
     case GCLP_WNDPROC:
         retval = (ULONG_PTR)WINPROC_GetProc( class->winproc, unicode );
-        class->winproc = WINPROC_AllocProc( unicode ? NULL : (WNDPROC)newval,
-                                            unicode ? (WNDPROC)newval : NULL );
+        class->winproc = WINPROC_AllocProc( (WNDPROC)newval, unicode );
         break;
     case GCLP_HBRBACKGROUND:
         retval = (ULONG_PTR)class->hbrBackground;
