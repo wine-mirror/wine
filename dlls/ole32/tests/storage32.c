@@ -877,6 +877,9 @@ static void test_streamenum(void)
     ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
     ok(count == 1, "count wrong\n");
 
+    if (r == S_OK)
+        CoTaskMemFree(stat.pwcsName);
+
     r = IEnumSTATSTG_Release(ee);
 
     /* second enum... destroy the stream before reading */
@@ -1939,6 +1942,7 @@ static void test_fmtusertypestg(void)
                     found = TRUE;
                 else
                     ok(0, "found unexpected stream or storage\n");
+                CoTaskMemFree(statstg.pwcsName);
             }
             ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
             IEnumSTATSTG_Release(stat);
@@ -1962,6 +1966,7 @@ static void test_fmtusertypestg(void)
                     found = TRUE;
                 else
                     ok(0, "found unexpected stream or storage\n");
+                CoTaskMemFree(statstg.pwcsName);
             }
             ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
             IEnumSTATSTG_Release(stat);
