@@ -249,9 +249,17 @@ struct color_key{
     ARGB high;
 };
 
+struct color_matrix{
+    BOOL enabled;
+    ColorMatrixFlags flags;
+    ColorMatrix colormatrix;
+    ColorMatrix graymatrix;
+};
+
 struct GpImageAttributes{
     WrapMode wrap;
     struct color_key colorkeys[ColorAdjustTypeCount];
+    struct color_matrix colormatrices[ColorAdjustTypeCount];
 };
 
 struct GpFont{

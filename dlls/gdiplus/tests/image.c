@@ -1125,7 +1125,7 @@ static void test_colormatrix(void)
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, NULL, NULL, ColorMatrixFlagsDefault);
@@ -1133,11 +1133,11 @@ static void test_colormatrix(void)
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, NULL, ColorMatrixFlagsSkipGrays);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, NULL, ColorMatrixFlagsAltGray);
@@ -1145,29 +1145,29 @@ static void test_colormatrix(void)
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsAltGray);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, &graymatrix, 3);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeCount,
         TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeAny,
         TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         FALSE, NULL, NULL, ColorMatrixFlagsDefault);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     /* Drawing a bitmap transforms the colors */
     colormatrix = double_red;
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap1);
     expect(Ok, stat);
