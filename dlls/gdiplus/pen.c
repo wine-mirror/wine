@@ -101,6 +101,8 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
     GdipCloneCustomLineCap(pen->customend, &(*clonepen)->customend);
     GdipCloneBrush(pen->brush, &(*clonepen)->brush);
 
+    TRACE("<-- %p\n", *clonepen);
+
     return Ok;
 }
 
@@ -153,6 +155,8 @@ GpStatus WINGDIPAPI GdipCreatePen2(GpBrush *brush, REAL width, GpUnit unit,
     gp_pen->brush = clone_brush;
 
     *pen = gp_pen;
+
+    TRACE("<-- %p\n", *pen);
 
     return Ok;
 }
