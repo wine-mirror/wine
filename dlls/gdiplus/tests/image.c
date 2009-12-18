@@ -1092,6 +1092,109 @@ static void test_palette(void)
     GdipDisposeImage((GpImage*)bitmap);
 }
 
+static void test_colormatrix(void)
+{
+    GpStatus stat;
+    ColorMatrix colormatrix, graymatrix;
+    GpImageAttributes *imageattr;
+    const ColorMatrix identity = {{
+        {1.0,0.0,0.0,0.0,0.0},
+        {0.0,1.0,0.0,0.0,0.0},
+        {0.0,0.0,1.0,0.0,0.0},
+        {0.0,0.0,0.0,1.0,0.0},
+        {0.0,0.0,0.0,0.0,1.0}}};
+    const ColorMatrix double_red = {{
+        {2.0,0.0,0.0,0.0,0.0},
+        {0.0,1.0,0.0,0.0,0.0},
+        {0.0,0.0,1.0,0.0,0.0},
+        {0.0,0.0,0.0,1.0,0.0},
+        {0.0,0.0,0.0,0.0,1.0}}};
+    GpBitmap *bitmap1, *bitmap2;
+    GpGraphics *graphics;
+    ARGB color;
+
+    colormatrix = identity;
+    graymatrix = identity;
+
+    stat = GdipSetImageAttributesColorMatrix(NULL, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateImageAttributes(&imageattr);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, NULL, NULL, ColorMatrixFlagsDefault);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, NULL, ColorMatrixFlagsSkipGrays);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, NULL, ColorMatrixFlagsAltGray);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsAltGray);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, &graymatrix, 3);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeCount,
+        TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeAny,
+        TRUE, &colormatrix, &graymatrix, ColorMatrixFlagsDefault);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        FALSE, NULL, NULL, ColorMatrixFlagsDefault);
+    todo_wine expect(Ok, stat);
+
+    /* Drawing a bitmap transforms the colors */
+    colormatrix = double_red;
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap2);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0xff40ffff);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap2, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipDrawImageRectRectI(graphics, (GpImage*)bitmap1, 0,0,1,1, 0,0,1,1,
+        UnitPixel, imageattr, NULL, NULL);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff80ffff, color);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap1);
+    GdipDisposeImage((GpImage*)bitmap2);
+    GdipDisposeImageAttributes(imageattr);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1120,6 +1223,7 @@ START_TEST(image)
     test_createhbitmap();
     test_getsetpixel();
     test_palette();
+    test_colormatrix();
 
     GdiplusShutdown(gdiplusToken);
 }
