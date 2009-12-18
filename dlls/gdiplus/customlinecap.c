@@ -57,6 +57,8 @@ GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
            * sizeof(PointF));
     memcpy((*to)->pathdata.Types, from->pathdata.Types, from->pathdata.Count);
 
+    TRACE("<-- %p\n", *to);
+
     return Ok;
 }
 
@@ -104,6 +106,8 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
     (*customCap)->cap = baseCap;
     (*customCap)->join = LineJoinMiter;
     (*customCap)->scale = 1.0;
+
+    TRACE("<-- %p\n", *customCap);
 
     return Ok;
 }
