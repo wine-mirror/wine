@@ -167,7 +167,7 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
         list_add_tail( &db->streams, &stream->entry );
     }
 
-    return ERROR_SUCCESS;
+    return SUCCEEDED(r) ? ERROR_SUCCESS : ERROR_FUNCTION_FAILED;
 }
 
 UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
