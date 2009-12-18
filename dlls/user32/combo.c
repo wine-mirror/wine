@@ -94,8 +94,7 @@ const struct builtin_class_descr COMBO_builtin_class =
 {
     comboboxW,            /* name */
     CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, /* style  */
-    NULL,                 /* procA */
-    BUILTIN_WINPROC(WINPROC_COMBO), /* procW */
+    WINPROC_COMBO,        /* proc */
     sizeof(HEADCOMBO *),  /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */

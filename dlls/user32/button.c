@@ -162,8 +162,7 @@ const struct builtin_class_descr BUTTON_builtin_class =
 {
     buttonW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    NULL,                /* procA */
-    BUILTIN_WINPROC(WINPROC_BUTTON),  /* procW */
+    WINPROC_BUTTON,      /* proc */
     NB_EXTRA_BYTES,      /* extra */
     IDC_ARROW,           /* cursor */
     0                    /* brush */

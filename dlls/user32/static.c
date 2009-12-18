@@ -102,8 +102,7 @@ const struct builtin_class_descr STATIC_builtin_class =
 {
     staticW,             /* name */
     CS_DBLCLKS | CS_PARENTDC, /* style  */
-    NULL,                /* procA */
-    BUILTIN_WINPROC(WINPROC_STATIC), /* procW */
+    WINPROC_STATIC,      /* proc */
     STATIC_EXTRA_BYTES,  /* extra */
     IDC_ARROW,           /* cursor */
     0                    /* brush */

@@ -4978,8 +4978,7 @@ const struct builtin_class_descr EDIT_builtin_class =
 {
     editW,                /* name */
     CS_DBLCLKS | CS_PARENTDC,   /* style */
-    NULL,                 /* procA */
-    BUILTIN_WINPROC(WINPROC_EDIT), /* procW */
+    WINPROC_EDIT,         /* proc */
 #ifdef __i386__
     sizeof(EDITSTATE *) + sizeof(HLOCAL16), /* extra */
 #else

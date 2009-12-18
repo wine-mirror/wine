@@ -124,8 +124,7 @@ const struct builtin_class_descr SCROLL_builtin_class =
 {
     scrollbarW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    NULL,                   /* procA */
-    BUILTIN_WINPROC(WINPROC_SCROLLBAR), /* procW */
+    WINPROC_SCROLLBAR,      /* proc */
     sizeof(SCROLLBAR_INFO), /* extra */
     IDC_ARROW,              /* cursor */
     0                       /* brush */

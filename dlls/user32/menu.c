@@ -194,8 +194,7 @@ const struct builtin_class_descr MENU_builtin_class =
 {
     (LPCWSTR)POPUPMENU_CLASS_ATOM,  /* name */
     CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,  /* style */
-    NULL,                          /* procA (winproc is Unicode only) */
-    BUILTIN_WINPROC(WINPROC_MENU), /* procW */
+    WINPROC_MENU,                  /* proc */
     sizeof(HMENU),                 /* extra */
     IDC_ARROW,                     /* cursor */
     (HBRUSH)(COLOR_MENU+1)         /* brush */

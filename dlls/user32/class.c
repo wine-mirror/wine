@@ -400,7 +400,7 @@ static void register_builtin( const struct builtin_class_descr *descr )
 
     classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
-    classPtr->winproc       = WINPROC_AllocProc( descr->procA, descr->procW );
+    classPtr->winproc       = BUILTIN_WINPROC( descr->proc );
     release_class_ptr( classPtr );
 }
 

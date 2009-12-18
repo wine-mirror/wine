@@ -96,8 +96,7 @@ const struct builtin_class_descr MESSAGE_builtin_class =
 {
     messageW,             /* name */
     0,                    /* style */
-    NULL,                 /* procA (winproc is Unicode only) */
-    BUILTIN_WINPROC(WINPROC_MESSAGE), /* procW */
+    WINPROC_MESSAGE,      /* proc */
     0,                    /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */

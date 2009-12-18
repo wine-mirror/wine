@@ -60,8 +60,7 @@ struct builtin_class_descr
 {
     LPCWSTR   name;    /* class name */
     UINT      style;   /* class style */
-    WNDPROC   procA;   /* ASCII window procedure */
-    WNDPROC   procW;   /* Unicode window procedure */
+    enum builtin_winprocs proc;
     INT       extra;   /* window extra bytes */
     ULONG_PTR cursor;  /* cursor id */
     HBRUSH    brush;   /* brush or system color */

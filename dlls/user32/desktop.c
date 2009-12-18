@@ -46,8 +46,7 @@ const struct builtin_class_descr DESKTOP_builtin_class =
 {
     (LPCWSTR)DESKTOP_CLASS_ATOM, /* name */
     CS_DBLCLKS,           /* style */
-    NULL,                 /* procA (winproc is Unicode only) */
-    BUILTIN_WINPROC(WINPROC_DESKTOP), /* procW */
+    WINPROC_DESKTOP,      /* proc */
     0,                    /* extra */
     IDC_ARROW,            /* cursor */
     (HBRUSH)(COLOR_BACKGROUND+1)    /* brush */
