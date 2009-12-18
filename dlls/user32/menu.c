@@ -183,8 +183,6 @@ static HMENU top_popup_hmenu;
   /* Flag set by EndMenu() to force an exit from menu tracking */
 static BOOL fEndMenu = FALSE;
 
-static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
-
 DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
 
 static BOOL SetMenuItemInfo_common( MENUITEM *, const MENUITEMINFOW *, BOOL);
@@ -197,7 +195,7 @@ const struct builtin_class_descr MENU_builtin_class =
     (LPCWSTR)POPUPMENU_CLASS_ATOM,  /* name */
     CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,  /* style */
     NULL,                          /* procA (winproc is Unicode only) */
-    PopupMenuWndProc,              /* procW */
+    BUILTIN_WINPROC(WINPROC_MENU), /* procW */
     sizeof(HMENU),                 /* extra */
     IDC_ARROW,                     /* cursor */
     (HBRUSH)(COLOR_MENU+1)         /* brush */
@@ -3442,7 +3440,7 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
  *
  * NOTE: Windows has totally different (and undocumented) popup wndproc.
  */
-static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     TRACE("hwnd=%p msg=0x%04x wp=0x%04lx lp=0x%08lx\n", hwnd, message, wParam, lParam);
 
