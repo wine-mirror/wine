@@ -340,12 +340,15 @@ static void test_CoInternetParseUrl(void)
         ok(size == lstrlenW(parse_tests[i].schema), "[%d] wrong size\n", i);
         ok(!lstrcmpW(parse_tests[i].schema, buf), "[%d] wrong schema\n", i);
 
-        memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(WCHAR), &size, 0);
-        ok(hres == parse_tests[i].domain_hres, "[%d] domain failed: %08x\n", i, hres);
-        if(parse_tests[i].domain)
-            ok(!lstrcmpW(parse_tests[i].domain, buf), "[%d] wrong domain, received %s\n", i, wine_dbgstr_w(buf));
+        if(memcmp(parse_tests[i].url, wszRes, 3*sizeof(WCHAR))
+                && memcmp(parse_tests[i].url, wszAbout, 5*sizeof(WCHAR))) {
+            memset(buf, 0xf0, sizeof(buf));
+            hres = CoInternetParseUrl(parse_tests[i].url, PARSE_DOMAIN, 0, buf,
+                    sizeof(buf)/sizeof(WCHAR), &size, 0);
+            ok(hres == parse_tests[i].domain_hres, "[%d] domain failed: %08x\n", i, hres);
+            if(parse_tests[i].domain)
+                ok(!lstrcmpW(parse_tests[i].domain, buf), "[%d] wrong domain, received %s\n", i, wine_dbgstr_w(buf));
+        }
 
         memset(buf, 0xf0, sizeof(buf));
         hres = CoInternetParseUrl(parse_tests[i].url, PARSE_ROOTDOCUMENT, 0, buf,
