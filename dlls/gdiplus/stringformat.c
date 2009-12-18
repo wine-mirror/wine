@@ -55,6 +55,8 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
     (*format)->firsttab = 0.0;
     (*format)->tabs = NULL;
 
+    TRACE("<-- %p\n", *format);
+
     return Ok;
 }
 
