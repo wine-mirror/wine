@@ -77,6 +77,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { NULL, DesktopWndProc },                  /* WINPROC_DESKTOP */
     { NULL, IconTitleWndProc },                /* WINPROC_ICONTITLE */
     { NULL, PopupMenuWndProc },                /* WINPROC_MENU */
+    { NULL, MessageWndProc },                  /* WINPROC_MESSAGE */
 };
 
 static UINT winproc_used = NB_BUILTIN_WINPROCS;

@@ -91,13 +91,13 @@ struct send_message_info
 
 /* Message class descriptor */
 static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
-static LRESULT WINAPI message_winproc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+
 const struct builtin_class_descr MESSAGE_builtin_class =
 {
     messageW,             /* name */
     0,                    /* style */
     NULL,                 /* procA (winproc is Unicode only) */
-    message_winproc,      /* procW */
+    BUILTIN_WINPROC(WINPROC_MESSAGE), /* procW */
     0,                    /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */
@@ -333,11 +333,11 @@ static inline BOOL get_pending_wmchar( MSG *msg, UINT first, UINT last, BOOL rem
 
 
 /***********************************************************************
- *           message_winproc
+ *           MessageWndProc
  *
  * Window procedure for "Message" windows (HWND_MESSAGE parent).
  */
-static LRESULT WINAPI message_winproc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI MessageWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     if (message == WM_NCCREATE) return TRUE;
     return 0;  /* all other messages are ignored */
