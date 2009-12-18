@@ -33,6 +33,7 @@
 
 enum builtin_winprocs
 {
+    /* dual A/W procs */
     WINPROC_BUTTON = 0,
     WINPROC_COMBO,
     WINPROC_DEFWND,
@@ -42,7 +43,10 @@ enum builtin_winprocs
     WINPROC_MDICLIENT,
     WINPROC_SCROLLBAR,
     WINPROC_STATIC,
-    NB_BUILTIN_WINPROCS
+    /* unicode-only procs */
+    WINPROC_DESKTOP,
+    NB_BUILTIN_WINPROCS,
+    NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
 };
 
 #define WINPROC_HANDLE (~0u >> 16)
@@ -73,6 +77,8 @@ extern const struct builtin_class_descr MENU_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr MESSAGE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
+
+extern LRESULT WINAPI DesktopWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 
 /* Wow handlers */
 

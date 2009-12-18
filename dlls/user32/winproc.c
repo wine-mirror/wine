@@ -74,6 +74,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { MDIClientWndProcA, MDIClientWndProcW },  /* WINPROC_MDICLIENT */
     { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
     { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
+    { NULL, DesktopWndProc },                  /* WINPROC_DESKTOP */
 };
 
 static UINT winproc_used = NB_BUILTIN_WINPROCS;
@@ -104,14 +105,14 @@ static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
 {
     unsigned int i;
 
-    for (i = 0; i < NB_BUILTIN_WINPROCS; i++)
+    for (i = 0; i < NB_BUILTIN_AW_WINPROCS; i++)
     {
         /* match either proc, some apps confuse A and W */
         if (funcA && winproc_array[i].procA != funcA && winproc_array[i].procW != funcA) continue;
         if (funcW && winproc_array[i].procA != funcW && winproc_array[i].procW != funcW) continue;
         return &winproc_array[i];
     }
-    for (i = NB_BUILTIN_WINPROCS; i < winproc_used; i++)
+    for (i = NB_BUILTIN_AW_WINPROCS; i < winproc_used; i++)
     {
         if (funcA && winproc_array[i].procA != funcA) continue;
         if (funcW && winproc_array[i].procW != funcW) continue;
