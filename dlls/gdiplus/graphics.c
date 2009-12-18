@@ -1162,6 +1162,8 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     list_init(&(*graphics)->containers);
     (*graphics)->contid = 0;
 
+    TRACE("<-- %p\n", *graphics);
+
     return Ok;
 }
 
@@ -1270,6 +1272,8 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if(delete)
         DeleteMetaFile(hwmf);
+
+    TRACE("<-- %p\n", *metafile);
 
     return Ok;
 

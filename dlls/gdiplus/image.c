@@ -1282,6 +1282,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         }
     }
 
+    TRACE("<-- %p\n", *bitmap);
+
     return Ok;
 }
 
@@ -1975,6 +1977,8 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid
     (*image)->palette_count = 0;
     (*image)->palette_size = 0;
     (*image)->palette_entries = NULL;
+
+    TRACE("<-- %p\n", *image);
 
     return Ok;
 }
