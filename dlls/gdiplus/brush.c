@@ -311,8 +311,8 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
 {
     COLORREF col = ARGB2COLORREF(startcolor);
 
-    TRACE("(%p, %p, %x, %x, %d, %p)\n", startpoint, endpoint,
-          startcolor, endcolor, wrap, line);
+    TRACE("(%s, %s, %x, %x, %d, %p)\n", debugstr_pointf(startpoint),
+          debugstr_pointf(endpoint), startcolor, endcolor, wrap, line);
 
     if(!line || !startpoint || !endpoint || wrap == WrapModeClamp)
         return InvalidParameter;
@@ -1448,7 +1448,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
     GpPointF *point)
 {
-    TRACE("(%p, %p)\n", grad, point);
+    TRACE("(%p, %s)\n", grad, debugstr_pointf(point));
 
     if(!grad || !point)
         return InvalidParameter;

@@ -1876,6 +1876,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     if(!graphics || !image || !points || count != 3)
          return InvalidParameter;
 
+    TRACE("%s %s %s\n", debugstr_pointf(&points[0]), debugstr_pointf(&points[1]),
+        debugstr_pointf(&points[2]));
+
     memcpy(ptf, points, 3 * sizeof(GpPointF));
     transform_and_round_points(graphics, pti, ptf, 3);
 

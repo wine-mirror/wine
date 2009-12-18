@@ -80,6 +80,8 @@ static inline REAL deg2rad(REAL degrees)
 
 extern const char *debugstr_rectf(CONST RectF* rc);
 
+extern const char *debugstr_pointf(CONST PointF* pt);
+
 extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride);
 
