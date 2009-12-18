@@ -393,6 +393,8 @@ GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
 {
     static int calls;
 
+    TRACE("(%p)\n", pen);
+
     if(!pen)
         return InvalidParameter;
 
@@ -405,6 +407,8 @@ GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
 GpStatus WINGDIPAPI GdipScalePenTransform(GpPen *pen, REAL sx, REAL sy, GpMatrixOrder order)
 {
     static int calls;
+
+    TRACE("(%p,%0.2f,%0.2f,%u)\n", pen, sx, sy, order);
 
     if(!pen)
         return InvalidParameter;
