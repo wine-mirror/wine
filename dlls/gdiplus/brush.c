@@ -1160,6 +1160,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
 {
     static int calls;
 
+    TRACE("(%p,%p,%p)\n", grad, argb, count);
+
     if(!grad || !argb || !count || (*count < grad->pathdata.Count))
         return InvalidParameter;
 
@@ -1415,6 +1417,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST RE
 {
     static int calls;
 
+    TRACE("(%p,%p,%p,%i)\n", brush, blend, pos, count);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -1507,6 +1511,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient *grad,
 {
     static int calls;
 
+    TRACE("(%p,%0.2f,%0.2f)\n", grad, focus, scale);
+
     if(!grad || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0)
         return InvalidParameter;
 
@@ -1520,6 +1526,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
     *grad, ARGB *argb, INT *count)
 {
     static int calls;
+
+    TRACE("(%p,%p,%p)\n", grad, argb, count);
 
     if(!grad || !argb || !count || (*count <= 0) ||
         (*count > grad->pathdata.Count))
@@ -1734,6 +1742,8 @@ GpStatus WINGDIPAPI GdipResetLineTransform(GpLineGradient *brush)
 {
     static int calls;
 
+    TRACE("(%p)\n", brush);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -1745,6 +1755,8 @@ GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
 {
     static int calls;
 
+    TRACE("(%p,%p)\n", brush,  matrix);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -1755,6 +1767,8 @@ GpStatus WINGDIPAPI GdipScaleLineTransform(GpLineGradient *brush, REAL sx, REAL 
     GpMatrixOrder order)
 {
     static int calls;
+
+    TRACE("(%p,%0.2f,%0.2f,%u)\n", brush, sx, sy, order);
 
     if(!(calls++))
         FIXME("not implemented\n");
@@ -1822,6 +1836,8 @@ GpStatus WINGDIPAPI GdipRotateLineTransform(GpLineGradient* brush,
     REAL angle, GpMatrixOrder order)
 {
     static int calls;
+
+    TRACE("(%p,%0.2f,%u)\n", brush, angle, order);
 
     if(!brush)
         return InvalidParameter;
