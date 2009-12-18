@@ -30,14 +30,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 GpStatus WINGDIPAPI GdipCloneImageAttributes(GDIPCONST GpImageAttributes *imageattr,
     GpImageAttributes **cloneImageattr)
 {
+    GpStatus stat;
+
     TRACE("(%p, %p)\n", imageattr, cloneImageattr);
 
     if(!imageattr || !cloneImageattr)
         return InvalidParameter;
 
-    **cloneImageattr = *imageattr;
+    stat = GdipCreateImageAttributes(cloneImageattr);
 
-    return Ok;
+    if (stat == Ok)
+        **cloneImageattr = *imageattr;
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes **imageattr)
