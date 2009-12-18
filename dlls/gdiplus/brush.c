@@ -174,6 +174,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             return NotImplemented;
     }
 
+    TRACE("<-- %p\n", *clone);
     return Ok;
 }
 
@@ -290,6 +291,7 @@ GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, AR
         (*brush)->forecol = forecol;
         (*brush)->backcol = backcol;
         (*brush)->hatchstyle = hatchstyle;
+        TRACE("<-- %p\n", *brush);
     }
     else
     {
@@ -369,6 +371,8 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     (*line)->pblendcolor = NULL;
     (*line)->pblendpos = NULL;
     (*line)->pblendcount = 0;
+
+    TRACE("<-- %p\n", *line);
 
     return Ok;
 }
@@ -544,6 +548,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     (*grad)->focus.X = 0.0;
     (*grad)->focus.Y = 0.0;
 
+    TRACE("<-- %p\n", *grad);
+
     return Ok;
 }
 
@@ -634,6 +640,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     (*grad)->focus.X = 0.0;
     (*grad)->focus.Y = 0.0;
 
+    TRACE("<-- %p\n", *grad);
+
     return Ok;
 }
 
@@ -659,6 +667,8 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     (*sf)->brush.bt = BrushTypeSolidColor;
     (*sf)->color = color;
     (*sf)->bmp = ARGB2BMP(color);
+
+    TRACE("<-- %p\n", *sf);
 
     return Ok;
 }
@@ -853,6 +863,8 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 
     GdipFree(dibits);
     GdipFree(buff);
+
+    TRACE("<-- %p\n", *texture);
 
     return Ok;
 }
