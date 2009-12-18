@@ -2271,6 +2271,175 @@ static void test_shader_constant_apply(IDirect3DDevice9 *device)
     IDirect3DStateBlock9_Release(stateblock);
 }
 
+static void test_vdecl_apply(IDirect3DDevice9 *device)
+{
+    static const D3DVERTEXELEMENT9 decl1[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END(),
+    };
+
+    static const D3DVERTEXELEMENT9 decl2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        {0, 16, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END(),
+    };
+
+    IDirect3DVertexDeclaration9 *declaration, *declaration1, *declaration2;
+    IDirect3DStateBlock9 *stateblock;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl1, &declaration1);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl2, &declaration2);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration1);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "EndStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration1, "Expected vertex declaration %p, received %p.\n",
+            declaration1, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == NULL, "Expected vertex declaration %p, received %p.\n",
+            NULL, declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    IDirect3DStateBlock9_Release(stateblock);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration1);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_VERTEXSTATE, &stateblock);
+    ok(SUCCEEDED(hr), "CreateStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration1, "Expected vertex declaration %p, received %p.\n",
+            declaration1, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == NULL, "Expected vertex declaration %p, received %p.\n",
+            NULL, declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Expected vertex declaration %p, received %p.\n",
+            declaration2, declaration);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    IDirect3DVertexDeclaration9_Release(declaration1);
+    IDirect3DVertexDeclaration9_Release(declaration2);
+    IDirect3DStateBlock9_Release(stateblock);
+}
+
 START_TEST(stateblock)
 {
     IDirect3DDevice9 *device_ptr = NULL;
@@ -2291,6 +2460,7 @@ START_TEST(stateblock)
     test_begin_end_state_block(device_ptr);
     test_state_management(device_ptr, &device_pparams);
     test_shader_constant_apply(device_ptr);
+    test_vdecl_apply(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
