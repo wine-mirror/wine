@@ -47,13 +47,13 @@ GpStatus WINGDIPAPI GdipCloneImageAttributes(GDIPCONST GpImageAttributes *imagea
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes **imageattr)
 {
-    TRACE("(%p)\n", imageattr);
-
     if(!imageattr)
         return InvalidParameter;
 
     *imageattr = GdipAlloc(sizeof(GpImageAttributes));
     if(!*imageattr)    return OutOfMemory;
+
+    TRACE("<-- %p\n", *imageattr);
 
     return Ok;
 }
