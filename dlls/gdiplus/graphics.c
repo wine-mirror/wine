@@ -1201,6 +1201,8 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
 {
     static int calls;
 
+    TRACE("(%p,%i,%p)\n", hemf, delete, metafile);
+
     if(!hemf || !metafile)
         return InvalidParameter;
 
@@ -3064,6 +3066,8 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
 {
     static int calls;
 
+    TRACE("(%p,%u)\n", graphics, intention);
+
     if(!graphics)
         return InvalidParameter;
 
@@ -3161,13 +3165,13 @@ GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics *graphics,
 
 GpStatus WINGDIPAPI GdipGetNearestColor(GpGraphics *graphics, ARGB* argb)
 {
+    FIXME("(%p, %p): stub\n", graphics, argb);
+
     if(!graphics || !argb)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
-
-    FIXME("(%p, %p): stub\n", graphics, argb);
 
     return NotImplemented;
 }
@@ -3455,11 +3459,11 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
         INT regionCount, GpRegion** regions)
 {
-    if (!(graphics && string && font && layoutRect && stringFormat && regions))
-        return InvalidParameter;
-
     FIXME("stub: %p %s %d %p %p %p %d %p\n", graphics, debugstr_w(string),
             length, font, layoutRect, stringFormat, regionCount, regions);
+
+    if (!(graphics && string && font && layoutRect && stringFormat && regions))
+        return InvalidParameter;
 
     return NotImplemented;
 }
@@ -4012,6 +4016,8 @@ GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metaf
     UINT limitDpi)
 {
     static int calls;
+
+    TRACE("(%p,%u)\n", metafile, limitDpi);
 
     if(!(calls++))
         FIXME("not implemented\n");
