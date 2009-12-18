@@ -1192,6 +1192,14 @@ static HRESULT copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST
             if (flFrom->dwNumFiles != 1 && !IsAttribDir(fileDest->attributes))
                 return ERROR_CANCELLED;
 
+            /* Free all but the first entry. */
+            for (i = 1; i < flTo->dwNumFiles; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, flTo->feFiles[i].szDirectory);
+                HeapFree(GetProcessHeap(), 0, flTo->feFiles[i].szFilename);
+                HeapFree(GetProcessHeap(), 0, flTo->feFiles[i].szFullPath);
+            }
+
             flTo->dwNumFiles = 1;
         }
         else if (IsAttribDir(fileDest->attributes))
