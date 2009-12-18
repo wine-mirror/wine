@@ -30,25 +30,31 @@
 #define expect(expected, got) ok((UINT)(got) == (UINT)(expected), "Expected %.8x, got %.8x\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
 
-static void expect_rawformat(REFGUID expected, GpImage *img, int line, BOOL todo)
+static void expect_guid(REFGUID expected, REFGUID got, int line, BOOL todo)
 {
-    GUID raw;
     WCHAR bufferW[39];
     char buffer[39];
     char buffer2[39];
+
+    StringFromGUID2(got, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+    WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
+    StringFromGUID2(expected, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+    WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer2, sizeof(buffer2), NULL, NULL);
+    if(todo)
+        todo_wine ok_(__FILE__, line)(IsEqualGUID(expected, got), "Expected %s, got %s\n", buffer2, buffer);
+    else
+        ok_(__FILE__, line)(IsEqualGUID(expected, got), "Expected %s, got %s\n", buffer2, buffer);
+}
+
+static void expect_rawformat(REFGUID expected, GpImage *img, int line, BOOL todo)
+{
+    GUID raw;
     GpStatus stat;
 
     stat = GdipGetImageRawFormat(img, &raw);
     ok_(__FILE__, line)(stat == Ok, "GdipGetImageRawFormat failed with %d\n", stat);
     if(stat != Ok) return;
-    StringFromGUID2(&raw, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
-    WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
-    StringFromGUID2(expected, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
-    WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer2, sizeof(buffer2), NULL, NULL);
-    if(todo)
-        todo_wine ok_(__FILE__, line)(IsEqualGUID(&raw, expected), "Expected format %s, got %s\n", buffer2, buffer);
-    else
-        ok_(__FILE__, line)(IsEqualGUID(&raw, expected), "Expected format %s, got %s\n", buffer2, buffer);
+    expect_guid(expected, &raw, line, todo);
 }
 
 static void test_bufferrawformat(void* buff, int size, REFGUID expected, int line, BOOL todo)
@@ -177,6 +183,9 @@ static void test_GdipImageGetFrameDimensionsCount(void)
     GpStatus stat;
     const REAL WIDTH = 10.0, HEIGHT = 20.0;
     UINT w;
+    GUID dimension = {0};
+    UINT count;
+    ARGB color;
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB,NULL, &bm);
@@ -194,6 +203,26 @@ static void test_GdipImageGetFrameDimensionsCount(void)
     stat = GdipImageGetFrameDimensionsCount((GpImage*)bm,&w);
     expect(Ok, stat);
     expect(1, w);
+
+    stat = GdipImageGetFrameDimensionsList((GpImage*)bm, &dimension, 1);
+    expect(Ok, stat);
+    expect_guid(&FrameDimensionPage, &dimension, __LINE__, TRUE);
+
+    count = 12345;
+    stat = GdipImageGetFrameCount((GpImage*)bm, &dimension, &count);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(1, count);
+
+    GdipBitmapSetPixel(bm, 0, 0, 0xffffffff);
+
+    stat = GdipImageSelectActiveFrame((GpImage*)bm, &dimension, 0);
+    expect(Ok, stat);
+
+    /* SelectActiveFrame has no effect on image data of memory bitmaps */
+    color = 0xdeadbeef;
+    GdipBitmapGetPixel(bm, 0, 0, &color);
+    expect(0xffffffff, color);
+
     GdipDisposeImage((GpImage*)bm);
 }
 
