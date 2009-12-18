@@ -945,6 +945,9 @@ GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,
 {
     static int calls;
 
+    TRACE("(%p,%p,%p,%u,%s,%p)\n", ref, metafile, succ, emfType,
+        debugstr_w(description), out_metafile);
+
     if(!ref || !metafile || !out_metafile)
         return InvalidParameter;
 
@@ -1429,8 +1432,15 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 
 GpStatus WINGDIPAPI GdipFindFirstImageItem(GpImage *image, ImageItemData* item)
 {
+    static int calls;
+
+    TRACE("(%p,%p)\n", image, item);
+
     if(!image || !item)
         return InvalidParameter;
+
+    if (!(calls++))
+        FIXME("not implemented\n");
 
     return NotImplemented;
 }
@@ -1729,6 +1739,8 @@ GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
 {
     static int calls;
 
+    TRACE("(%p,%p,%p)\n", image, size, num);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -1752,6 +1764,8 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT* count)
 {
     static int calls;
+
+    TRACE("(%p,%s,%p)\n", image, debugstr_guid(dimensionID), count);
 
     if(!image || !dimensionID || !count)
         return InvalidParameter;
@@ -2142,6 +2156,8 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
 {
     static int calls;
 
+    TRACE("(%p,%u)\n", image, propId);
+
     if(!image)
         return InvalidParameter;
 
@@ -2154,6 +2170,8 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
 GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage *image, GDIPCONST PropertyItem* item)
 {
     static int calls;
+
+    TRACE("(%p,%p)\n", image, item);
 
     if(!(calls++))
         FIXME("not implemented\n");
@@ -2847,6 +2865,8 @@ GpStatus WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect,
     const VOID *params, const UINT size)
 {
     static int calls;
+
+    TRACE("(%p,%p,%u)\n", effect, params, size);
 
     if(!(calls++))
         FIXME("not implemented\n");
