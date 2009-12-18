@@ -75,6 +75,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
     { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
     { NULL, DesktopWndProc },                  /* WINPROC_DESKTOP */
+    { NULL, IconTitleWndProc },                /* WINPROC_ICONTITLE */
 };
 
 static UINT winproc_used = NB_BUILTIN_WINPROCS;

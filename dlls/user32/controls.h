@@ -45,6 +45,7 @@ enum builtin_winprocs
     WINPROC_STATIC,
     /* unicode-only procs */
     WINPROC_DESKTOP,
+    WINPROC_ICONTITLE,
     NB_BUILTIN_WINPROCS,
     NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
 };
@@ -79,6 +80,7 @@ extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
 
 extern LRESULT WINAPI DesktopWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
+extern LRESULT WINAPI IconTitleWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 
 /* Wow handlers */
 
