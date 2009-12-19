@@ -2020,14 +2020,18 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
                     - (xBand + REBAR_PRE_GRIPPER - infoPtr->ihitoffset);
 
     if (movement < 0) {
-        int cxLeft = REBAR_ShrinkBandsRTL(infoPtr, iRowBegin, iHitBand, -movement, TRUE);
+        INT cxLeft = REBAR_ShrinkBandsRTL(infoPtr, iRowBegin, iHitBand, -movement, TRUE);
         hitBand->cxEffective += -movement - cxLeft;
         hitBand->cx = hitBand->cxEffective;
     } else if (movement > 0) {
-        int cxLeft = REBAR_ShrinkBandsLTR(infoPtr, iHitBand, iRowEnd, movement, TRUE);
-        REBAR_BAND *lpPrev = REBAR_GetBand(infoPtr, prev_visible(infoPtr, iHitBand));
-        lpPrev->cxEffective += movement - cxLeft;
-        lpPrev->cx = lpPrev->cxEffective;
+        INT prev;
+
+        if ((prev = prev_visible(infoPtr, iHitBand)) >= 0) {
+            INT cxLeft = REBAR_ShrinkBandsLTR(infoPtr, iHitBand, iRowEnd, movement, TRUE);
+            REBAR_BAND *lpPrev = REBAR_GetBand(infoPtr, prev_visible(infoPtr, iHitBand));
+            lpPrev->cxEffective += movement - cxLeft;
+            lpPrev->cx = lpPrev->cxEffective;
+        }
     }
 
     REBAR_SetRowRectsX(infoPtr, iRowBegin, iRowEnd);
@@ -3004,13 +3008,14 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, LPARAM lParam)
     /* if we are currently dragging a band */
     if (infoPtr->iGrabbedBand >= 0)
     {
-        REBAR_BAND *band1, *band2;
+        REBAR_BAND *band1 = NULL, *band2;
         int yPtMove = (infoPtr->dwStyle & CCS_VERT ? ptMove.x : ptMove.y);
 
         if (GetCapture() != infoPtr->hwndSelf)
             ERR("We are dragging but haven't got capture?!?\n");
 
-        band1 = REBAR_GetBand(infoPtr, infoPtr->iGrabbedBand - 1);
+        if (infoPtr->iGrabbedBand > 0)
+            band1 = REBAR_GetBand(infoPtr, infoPtr->iGrabbedBand - 1);
         band2 = REBAR_GetBand(infoPtr, infoPtr->iGrabbedBand);
 
         /* if mouse did not move much, exit */
