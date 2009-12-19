@@ -105,6 +105,7 @@ typedef enum {
     IHTMLElement4_tid,
     IHTMLElementCollection_tid,
     IHTMLEventObj_tid,
+    IHTMLFiltersCollection_tid,
     IHTMLFormElement_tid,
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,

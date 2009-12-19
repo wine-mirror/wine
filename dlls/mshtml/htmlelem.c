@@ -34,6 +34,22 @@
 #include "mshtml_private.h"
 #include "htmlevent.h"
 
+typedef struct
+{
+    DispatchEx dispex;
+    const IHTMLFiltersCollectionVtbl *lpHTMLFiltersCollectionVtbl;
+
+    LONG ref;
+} HTMLFiltersCollection;
+
+#define HTMLFILTERSCOLLECTION(x)     ((IHTMLFiltersCollection*)  &(x)->lpHTMLFiltersCollectionVtbl)
+
+#define HTMLFILTERSCOLLECTION_THIS(iface) \
+    DEFINE_THIS(HTMLFiltersCollection, HTMLFiltersCollection, iface)
+
+IHTMLFiltersCollection *HTMLFiltersCollection_Create(void);
+
+
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
@@ -1193,8 +1209,14 @@ static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface,
                                               IHTMLFiltersCollection **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    *p = HTMLFiltersCollection_Create();
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_put_ondragstart(IHTMLElement *iface, VARIANT v)
@@ -1663,4 +1685,186 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     nsAString_Finish(&class_name_str);
 
     return ret;
+}
+
+/* interaface IHTMLFiltersCollection */
+static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollection *iface, REFIID riid, void **ppv)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppv );
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLFILTERSCOLLECTION(This);
+    }else if(IsEqualGUID(&IID_IHTMLFiltersCollection, riid)) {
+        TRACE("(%p)->(IID_IHTMLFiltersCollection %p)\n", This, ppv);
+        *ppv = HTMLFILTERSCOLLECTION(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLFiltersCollection_AddRef(IHTMLFiltersCollection *iface)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLFiltersCollection_Release(IHTMLFiltersCollection *iface)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+    {
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_GetTypeInfoCount(IHTMLFiltersCollection *iface, UINT *pctinfo)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->dispex), pctinfo);
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_GetTypeInfo(IHTMLFiltersCollection *iface,
+                                    UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_GetIDsOfNames(IHTMLFiltersCollection *iface,
+                                    REFIID riid, LPOLESTR *rgszNames, UINT cNames,
+                                    LCID lcid, DISPID *rgDispId)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_Invoke(IHTMLFiltersCollection *iface, DISPID dispIdMember, REFIID riid,
+                                    LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+                                    EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_get_length(IHTMLFiltersCollection *iface, LONG *p)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+
+    FIXME("(%p)->(%p) Always returning 0\n", This, p);
+
+	if(!p)
+		return E_POINTER;
+
+    if(p)
+        *p = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_get__newEnum(IHTMLFiltersCollection *iface, IUnknown **p)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLFiltersCollection_item(IHTMLFiltersCollection *iface, VARIANT *pvarIndex, VARIANT *pvarResult)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+    FIXME("(%p)->(%p, %p)\n", This, pvarIndex, pvarResult);
+    return E_NOTIMPL;
+}
+
+static const IHTMLFiltersCollectionVtbl HTMLFiltersCollectionVtbl = {
+    HTMLFiltersCollection_QueryInterface,
+    HTMLFiltersCollection_AddRef,
+    HTMLFiltersCollection_Release,
+    HTMLFiltersCollection_GetTypeInfoCount,
+    HTMLFiltersCollection_GetTypeInfo,
+    HTMLFiltersCollection_GetIDsOfNames,
+    HTMLFiltersCollection_Invoke,
+    HTMLFiltersCollection_get_length,
+    HTMLFiltersCollection_get__newEnum,
+    HTMLFiltersCollection_item
+};
+
+static HRESULT HTMLFiltersCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    WCHAR *ptr;
+    int idx = 0;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = MSHTML_DISPID_CUSTOM_MIN + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT HTMLFiltersCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);
+
+    TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = NULL;
+
+    FIXME("always returning NULL\n");
+
+    return S_OK;
+}
+
+static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
+    NULL,
+    HTMLFiltersCollection_get_dispid,
+    HTMLFiltersCollection_invoke
+};
+
+static const tid_t HTMLFiltersCollection_iface_tids[] = {
+    IHTMLFiltersCollection_tid,
+    0
+};
+static dispex_static_data_t HTMLFiltersCollection_dispex = {
+    &HTMLFiltersCollection_dispex_vtbl,
+    IHTMLFiltersCollection_tid,
+    NULL,
+    HTMLFiltersCollection_iface_tids
+};
+
+IHTMLFiltersCollection *HTMLFiltersCollection_Create()
+{
+    HTMLFiltersCollection *ret = heap_alloc(sizeof(HTMLFiltersCollection));
+
+    ret->lpHTMLFiltersCollectionVtbl = &HTMLFiltersCollectionVtbl;
+    ret->ref = 1;
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLFILTERSCOLLECTION(ret),  &HTMLFiltersCollection_dispex);
+
+    return HTMLFILTERSCOLLECTION(ret);
 }

@@ -2122,6 +2122,37 @@ static void _test_elem_set_tabindex(unsigned line, IUnknown *unk, short index)
     _test_elem_tabindex(line, unk, index);
 }
 
+#define test_elem_filters(u) _test_elem_filters(__LINE__,u)
+static void _test_elem_filters(unsigned line, IUnknown *unk)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    HRESULT hres;
+    IHTMLFiltersCollection *filters;
+
+    hres = IHTMLElement_get_filters(elem, &filters);
+    ok_(__FILE__,line) (hres == S_OK, "get_filters failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        LONG len;
+        IDispatchEx *dispex;
+
+        hres = IHTMLFiltersCollection_get_length(filters, &len);
+        ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
+        ok_(__FILE__,line) (len == 0, "expect 0 got %d\n", len);
+
+        hres = IHTMLFiltersCollection_QueryInterface(filters, &IID_IDispatchEx, (void**)&dispex);
+        ok(hres == S_OK || broken(hres == E_NOINTERFACE), "Could not get IDispatchEx interface: %08x\n", hres);
+        if(SUCCEEDED(hres)) {
+            test_disp((IUnknown*)filters, &IID_IHTMLFiltersCollection, "[object]");
+            IDispatchEx_Release(dispex);
+        }
+
+        IHTMLFiltersCollection_Release(filters);
+    }
+
+    IHTMLElement_Release(elem);
+}
+
 #define test_elem_set_class(u,c) _test_elem_set_class(__LINE__,u,c)
 static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class)
 {
@@ -5018,6 +5049,9 @@ static void test_defaults(IHTMLDocument2 *doc)
 
     IHTMLStyleSheetsCollection_Release(stylesheetcol);
 
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFiltersCollection, (void**)&body);
+    ok(hres == E_NOINTERFACE, "got interface IHTMLFiltersCollection\n");
+
     test_default_selection(doc);
     test_doc_title(doc, "");
 }
@@ -5380,6 +5414,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_set_class((IUnknown*)elem, NULL);
         test_elem_tabindex((IUnknown*)elem, 0);
         test_elem_set_tabindex((IUnknown*)elem, 1);
+        test_elem_filters((IUnknown*)elem);
 
         node = test_node_get_parent((IUnknown*)elem);
         ok(node != NULL, "node == NULL\n");
