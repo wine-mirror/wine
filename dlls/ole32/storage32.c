@@ -258,23 +258,12 @@ struct IEnumSTATSTGImpl
   StorageBaseImpl* parentStorage;         /* Reference to the parent storage */
   DirRef         storageDirEntry;     /* Directory entry of the storage to enumerate */
 
-  /*
-   * The current implementation of the IEnumSTATSTGImpl class uses a stack
-   * to walk the directory entries to get the content of a storage. This stack
-   * is implemented by the following 3 data members
-   */
-  ULONG          stackSize;
-  ULONG          stackMaxSize;
-  DirRef*        stackToVisit;
-
-#define ENUMSTATSGT_SIZE_INCREMENT 10
+  WCHAR	         name[DIRENTRY_NAME_MAX_LEN]; /* The most recent name visited */
 };
 
 
 static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(StorageBaseImpl* This, DirRef storageDirEntry);
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
-static void IEnumSTATSTGImpl_PushSearchNode(IEnumSTATSTGImpl* This, DirRef nodeToPush);
-static DirRef IEnumSTATSTGImpl_PopSearchNode(IEnumSTATSTGImpl* This, BOOL remove);
 
 /************************************************************************
 ** Block Functions
@@ -4446,7 +4435,6 @@ static HRESULT WINAPI StorageInternalImpl_Revert(
 static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
 {
   IStorage_Release((IStorage*)This->parentStorage);
-  HeapFree(GetProcessHeap(), 0, This->stackToVisit);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -4497,6 +4485,51 @@ static ULONG   WINAPI IEnumSTATSTGImpl_Release(
   return newRef;
 }
 
+static HRESULT IEnumSTATSTGImpl_GetNextRef(
+  IEnumSTATSTGImpl* This,
+  DirRef *ref)
+{
+  DirRef result = DIRENTRY_NULL;
+  DirRef searchNode;
+  DirEntry entry;
+  HRESULT hr;
+  WCHAR result_name[DIRENTRY_NAME_MAX_LEN];
+
+  hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
+    This->parentStorage->storageDirEntry, &entry);
+  searchNode = entry.dirRootEntry;
+
+  while (SUCCEEDED(hr) && searchNode != DIRENTRY_NULL)
+  {
+    hr = StorageBaseImpl_ReadDirEntry(This->parentStorage, searchNode, &entry);
+
+    if (SUCCEEDED(hr))
+    {
+      LONG diff = entryNameCmp( entry.name, This->name);
+
+      if (diff <= 0)
+      {
+        searchNode = entry.rightChild;
+      }
+      else
+      {
+        result = searchNode;
+        memcpy(result_name, entry.name, sizeof(result_name));
+        searchNode = entry.leftChild;
+      }
+    }
+  }
+
+  if (SUCCEEDED(hr))
+  {
+    *ref = result;
+    if (result != DIRENTRY_NULL)
+      memcpy(This->name, result_name, sizeof(result_name));
+  }
+
+  return hr;
+}
+
 static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   IEnumSTATSTG* iface,
   ULONG             celt,
@@ -4509,6 +4542,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   STATSTG*    currentReturnStruct = rgelt;
   ULONG       objectFetched       = 0;
   DirRef      currentSearchNode;
+  HRESULT     hr=S_OK;
 
   if ( (rgelt==0) || ( (celt!=1) && (pceltFetched==0) ) )
     return E_INVALIDARG;
@@ -4529,18 +4563,12 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
    */
   *pceltFetched = 0;
 
-  /*
-   * Start with the node at the top of the stack.
-   */
-  currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-
-  while ( ( *pceltFetched < celt) &&
-          ( currentSearchNode!=DIRENTRY_NULL) )
+  while ( *pceltFetched < celt )
   {
-    /*
-     * Remove the top node from the stack
-     */
-    IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
+    hr = IEnumSTATSTGImpl_GetNextRef(This, &currentSearchNode);
+
+    if (FAILED(hr) || currentSearchNode == DIRENTRY_NULL)
+      break;
 
     /*
      * Read the entry from the storage.
@@ -4562,22 +4590,12 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
      */
     (*pceltFetched)++;
     currentReturnStruct++;
-
-    /*
-     * Push the next search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentEntry.rightChild);
-
-    /*
-     * continue the iteration.
-     */
-    currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
   }
 
-  if (*pceltFetched == celt)
-    return S_OK;
+  if (SUCCEEDED(hr) && *pceltFetched != celt)
+    hr = S_FALSE;
 
-  return S_FALSE;
+  return hr;
 }
 
 
@@ -4587,53 +4605,27 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  DirEntry    currentEntry;
   ULONG       objectFetched       = 0;
   DirRef      currentSearchNode;
+  HRESULT     hr=S_OK;
 
   if (This->parentStorage->reverted)
     return STG_E_REVERTED;
 
-  /*
-   * Start with the node at the top of the stack.
-   */
-  currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
-
-  while ( (objectFetched < celt) &&
-          (currentSearchNode!=DIRENTRY_NULL) )
+  while ( (objectFetched < celt) )
   {
-    /*
-     * Remove the top node from the stack
-     */
-    IEnumSTATSTGImpl_PopSearchNode(This, TRUE);
+    hr = IEnumSTATSTGImpl_GetNextRef(This, &currentSearchNode);
 
-    /*
-     * Read the entry from the storage.
-     */
-    StorageBaseImpl_ReadDirEntry(This->parentStorage,
-      currentSearchNode,
-      &currentEntry);
+    if (FAILED(hr) || currentSearchNode == DIRENTRY_NULL)
+      break;
 
-    /*
-     * Step to the next item in the iteration
-     */
     objectFetched++;
-
-    /*
-     * Push the next search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, currentEntry.rightChild);
-
-    /*
-     * continue the iteration.
-     */
-    currentSearchNode = IEnumSTATSTGImpl_PopSearchNode(This, FALSE);
   }
 
-  if (objectFetched == celt)
-    return S_OK;
+  if (SUCCEEDED(hr) && objectFetched != celt)
+    return S_FALSE;
 
-  return S_FALSE;
+  return hr;
 }
 
 static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
@@ -4641,36 +4633,12 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
-  DirEntry  storageEntry;
-  HRESULT   hr;
-
   if (This->parentStorage->reverted)
     return STG_E_REVERTED;
 
-  /*
-   * Re-initialize the search stack to an empty stack
-   */
-  This->stackSize = 0;
+  This->name[0] = 0;
 
-  /*
-   * Read the storage entry from the top-level storage.
-   */
-  hr = StorageBaseImpl_ReadDirEntry(
-                    This->parentStorage,
-                    This->storageDirEntry,
-                    &storageEntry);
-
-  if (SUCCEEDED(hr))
-  {
-    assert(storageEntry.sizeOfNameString!=0);
-
-    /*
-     * Push the search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, storageEntry.dirRootEntry);
-  }
-
-  return hr;
+  return S_OK;
 }
 
 static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
@@ -4698,15 +4666,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
    * The new clone enumeration must point to the same current node as
    * the ole one.
    */
-  newClone->stackSize    = This->stackSize    ;
-  newClone->stackMaxSize = This->stackMaxSize ;
-  newClone->stackToVisit =
-    HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG) * newClone->stackMaxSize);
-
-  memcpy(
-    newClone->stackToVisit,
-    This->stackToVisit,
-    sizeof(DirRef) * newClone->stackSize);
+  memcpy(newClone->name, This->name, sizeof(newClone->name));
 
   *ppenum = (IEnumSTATSTG*)newClone;
 
@@ -4717,72 +4677,6 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTGImpl_AddRef(*ppenum);
 
   return S_OK;
-}
-
-static void IEnumSTATSTGImpl_PushSearchNode(
-  IEnumSTATSTGImpl* This,
-  DirRef            nodeToPush)
-{
-  DirEntry  storageEntry;
-  HRESULT   hr;
-
-  /*
-   * First, make sure we're not trying to push an unexisting node.
-   */
-  if (nodeToPush==DIRENTRY_NULL)
-    return;
-
-  /*
-   * First push the node to the stack
-   */
-  if (This->stackSize == This->stackMaxSize)
-  {
-    This->stackMaxSize += ENUMSTATSGT_SIZE_INCREMENT;
-
-    This->stackToVisit = HeapReAlloc(
-                           GetProcessHeap(),
-                           0,
-                           This->stackToVisit,
-                           sizeof(DirRef) * This->stackMaxSize);
-  }
-
-  This->stackToVisit[This->stackSize] = nodeToPush;
-  This->stackSize++;
-
-  /*
-   * Read the storage entry from the top-level storage.
-   */
-  hr = StorageBaseImpl_ReadDirEntry(
-                    This->parentStorage,
-                    nodeToPush,
-                    &storageEntry);
-
-  if (SUCCEEDED(hr))
-  {
-    assert(storageEntry.sizeOfNameString!=0);
-
-    /*
-     * Push the previous search node in the search stack.
-     */
-    IEnumSTATSTGImpl_PushSearchNode(This, storageEntry.leftChild);
-  }
-}
-
-static DirRef IEnumSTATSTGImpl_PopSearchNode(
-  IEnumSTATSTGImpl* This,
-  BOOL            remove)
-{
-  DirRef topNode;
-
-  if (This->stackSize == 0)
-    return DIRENTRY_NULL;
-
-  topNode = This->stackToVisit[This->stackSize-1];
-
-  if (remove)
-    This->stackSize--;
-
-  return topNode;
 }
 
 /*
@@ -4827,14 +4721,6 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     IStorage_AddRef((IStorage*)newEnumeration->parentStorage);
 
     newEnumeration->storageDirEntry   = storageDirEntry;
-
-    /*
-     * Initialize the search stack
-     */
-    newEnumeration->stackSize    = 0;
-    newEnumeration->stackMaxSize = ENUMSTATSGT_SIZE_INCREMENT;
-    newEnumeration->stackToVisit =
-      HeapAlloc(GetProcessHeap(), 0, sizeof(DirRef)*ENUMSTATSGT_SIZE_INCREMENT);
 
     /*
      * Make sure the current node of the iterator is the first one.

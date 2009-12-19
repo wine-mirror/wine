@@ -891,12 +891,10 @@ static void test_streamenum(void)
     r = IStorage_DestroyElement(stg, stmname);
     ok(r==S_OK, "IStorage->DestroyElement failed\n");
 
-    todo_wine {
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
     ok(r==S_FALSE, "IEnumSTATSTG->Next failed\n");
     ok(count == 0, "count wrong\n");
-    }
 
     /* reset and try again */
     r = IEnumSTATSTG_Reset(ee);
@@ -918,8 +916,8 @@ static void test_streamenum(void)
 
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
-    todo_wine ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
-    todo_wine ok(count == 1, "count wrong\n");
+    ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
+    ok(count == 1, "count wrong\n");
 
     if (r == S_OK)
     {
@@ -934,8 +932,8 @@ static void test_streamenum(void)
 
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
-    todo_wine ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
-    todo_wine ok(count == 1, "count wrong\n");
+    ok(r==S_OK, "IEnumSTATSTG->Next failed\n");
+    ok(count == 1, "count wrong\n");
 
     if (r == S_OK)
     {
@@ -976,7 +974,7 @@ static void test_streamenum(void)
 
     if (r == S_OK)
     {
-        todo_wine ok(lstrcmpiW(stat.pwcsName, stmname3) == 0, "expected ABCDEFGHIJ, got %s\n", wine_dbgstr_w(stat.pwcsName));
+        ok(lstrcmpiW(stat.pwcsName, stmname3) == 0, "expected ABCDEFGHIJ, got %s\n", wine_dbgstr_w(stat.pwcsName));
         CoTaskMemFree(stat.pwcsName);
     }
 
