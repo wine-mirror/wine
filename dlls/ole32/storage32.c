@@ -4513,6 +4513,9 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   if ( (rgelt==0) || ( (celt!=1) && (pceltFetched==0) ) )
     return E_INVALIDARG;
 
+  if (This->parentStorage->reverted)
+    return STG_E_REVERTED;
+
   /*
    * To avoid the special case, get another pointer to a ULONG value if
    * the caller didn't supply one.
@@ -4588,6 +4591,9 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
   ULONG       objectFetched       = 0;
   DirRef      currentSearchNode;
 
+  if (This->parentStorage->reverted)
+    return STG_E_REVERTED;
+
   /*
    * Start with the node at the top of the stack.
    */
@@ -4638,6 +4644,9 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   DirEntry  storageEntry;
   HRESULT   hr;
 
+  if (This->parentStorage->reverted)
+    return STG_E_REVERTED;
+
   /*
    * Re-initialize the search stack to an empty stack
    */
@@ -4671,6 +4680,9 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
 
   IEnumSTATSTGImpl* newClone;
+
+  if (This->parentStorage->reverted)
+    return STG_E_REVERTED;
 
   /*
    * Perform a sanity check on the parameters.

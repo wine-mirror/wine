@@ -2694,10 +2694,8 @@ static void test_substorage_enum(void)
     r = IStorage_DestroyElement(stg, stgname);
     ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
 
-if (0) { /* crashes on wine */
     r = IEnumSTATSTG_Reset(ee);
     ok(r==STG_E_REVERTED, "IEnumSTATSTG->Reset failed, hr=%08x\n", r);
-}
 
     IEnumSTATSTG_Release(ee);
 
