@@ -301,7 +301,7 @@ send_file_wininet (const char *name)
         report (R_WARNING,
                 "File too big (%.1f MB > 1.5 MB); submitting partial report.",
                 filesize/1024.0/1024);
-        filesize = (DWORD) 1.5*1024*1024;
+        filesize = 1.5*1024*1024;
     }
 
     report (R_STATUS, "Opening HTTP connection to " SERVER_NAME);
