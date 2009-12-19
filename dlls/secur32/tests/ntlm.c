@@ -775,6 +775,8 @@ static void testInitializeSecurityContextFlags(void)
 tISCFend:
     cleanupBuffers(&client);
     pFreeCredentialsHandle(client.cred);
+    HeapFree(GetProcessHeap(), 0, client.cred);
+    HeapFree(GetProcessHeap(), 0, client.ctxt);
 
 }
 
@@ -911,6 +913,11 @@ tAuthend:
     sec_status = pFreeCredentialsHandle(client.cred);
     ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(client) returned %s\n",
             getSecError(sec_status));
+
+    HeapFree(GetProcessHeap(), 0, client.cred);
+    HeapFree(GetProcessHeap(), 0, client.ctxt);
+    HeapFree(GetProcessHeap(), 0, server.cred);
+    HeapFree(GetProcessHeap(), 0, server.ctxt);
 }
 
 static void testSignSeal(void)
@@ -1186,6 +1193,8 @@ end:
     HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, server.cred);
+    HeapFree(GetProcessHeap(), 0, server.ctxt);
 }
 
 static void testAcquireCredentialsHandle(void)
@@ -1317,6 +1326,8 @@ static void test_cred_multiple_use(void)
     ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
     ret = pFreeCredentialsHandle(&cred);
     ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
+
+    HeapFree(GetProcessHeap(), 0, buffers[0].pvBuffer);
 }
 
 static void test_null_auth_data(void)
@@ -1358,6 +1369,8 @@ static void test_null_auth_data(void)
                                          ISC_REQ_CONNECTION, 0, SECURITY_NETWORK_DREP,
                                          NULL, 0, &ctx, &buffer_desc, &attr, &ttl);
     ok(status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed %s\n", getSecError(status));
+
+    HeapFree(GetProcessHeap(), 0, buffers[0].pvBuffer);
 }
 
 START_TEST(ntlm)
