@@ -2475,7 +2475,8 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
     if (FAILED(hr))
       return hr;
 
-    data.size = newSize;
+    hr = StorageImpl_ReadDirEntry(This, index, &data);
+    if (FAILED(hr)) return hr;
   }
 
   if (data.size.QuadPart < LIMIT_TO_USE_SMALL_BLOCK)
