@@ -899,7 +899,7 @@ REBAR_CalcVertBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
 	}
 
 	/* set initial child window rectangle if there is a child */
-	if (lpBand->hwndChild != NULL) {
+	if (lpBand->hwndChild) {
             int cxBand = rcBand.right - rcBand.left;
             xoff = (cxBand - lpBand->cyChild) / 2;
 	    SetRect (&lpBand->rcChild,
@@ -2133,10 +2133,9 @@ REBAR_GetBandInfoT(const REBAR_INFO *infoPtr, UINT uIndex, LPREBARBANDINFOW lprb
 {
     REBAR_BAND *lpBand;
 
-    if (lprbbi == NULL)
+    if (!lprbbi || lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
-	return FALSE;
+
     if (uIndex >= infoPtr->uNumBands)
 	return FALSE;
 
@@ -2223,10 +2222,7 @@ REBAR_GetBarHeight (const REBAR_INFO *infoPtr)
 static LRESULT
 REBAR_GetBarInfo (const REBAR_INFO *infoPtr, LPREBARINFO lpInfo)
 {
-    if (lpInfo == NULL)
-	return FALSE;
-
-    if (lpInfo->cbSize < sizeof (REBARINFO))
+    if (!lpInfo || lpInfo->cbSize < sizeof (REBARINFO))
 	return FALSE;
 
     TRACE("getting bar info!\n");
@@ -2388,9 +2384,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, INT iIndex, LPREBARBANDINFOW lprbbi, BOOL
 {
     REBAR_BAND *lpBand;
 
-    if (lprbbi == NULL)
-	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
+    if (!lprbbi || lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
 
     /* trace the index as signed to see the -1 */
@@ -2605,10 +2599,9 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, INT iBand, LPREBARBANDINFOW lprbbi, BOOL
     REBAR_BAND *lpBand;
     UINT uChanged;
 
-    if (lprbbi == NULL)
+    if (!lprbbi || lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
 	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFOA_V3_SIZE)
-	return FALSE;
+
     if (iBand >= infoPtr->uNumBands)
 	return FALSE;
 
@@ -2654,10 +2647,7 @@ REBAR_SetBarInfo (REBAR_INFO *infoPtr, LPREBARINFO lpInfo)
     REBAR_BAND *lpBand;
     UINT i;
 
-    if (lpInfo == NULL)
-	return FALSE;
-
-    if (lpInfo->cbSize < sizeof (REBARINFO))
+    if (!lpInfo || lpInfo->cbSize < sizeof (REBARINFO))
 	return FALSE;
 
     TRACE("setting bar info!\n");
@@ -2798,8 +2788,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, INT iBand, BOOL show)
 static LRESULT
 REBAR_SizeToRect (REBAR_INFO *infoPtr, const RECT *lpRect)
 {
-    if (lpRect == NULL)
-       return FALSE;
+    if (!lpRect) return FALSE;
 
     TRACE("[%s]\n", wine_dbgstr_rect(lpRect));
     REBAR_SizeToHeight(infoPtr, get_rect_cy(infoPtr, lpRect));
@@ -3122,7 +3111,7 @@ REBAR_NCCreate (HWND hwnd, LPCREATESTRUCTW cs)
     NONCLIENTMETRICSW ncm;
     HFONT tfont;
 
-    if (infoPtr != NULL) {
+    if (infoPtr) {
 	ERR("Strange info structure pointer *not* NULL\n");
 	return FALSE;
     }
@@ -3489,11 +3478,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case RB_GETBANDINFO_OLD:
 	case RB_GETBANDINFOA:
-	    return REBAR_GetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, FALSE);
-
 	case RB_GETBANDINFOW:
-	    return REBAR_GetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, TRUE);
-
+	    return REBAR_GetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam,
+	                                                uMsg == RB_GETBANDINFOW);
 	case RB_GETBARHEIGHT:
 	    return REBAR_GetBarHeight (infoPtr);
 
@@ -3537,11 +3524,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_IdToIndex (infoPtr, wParam);
 
 	case RB_INSERTBANDA:
-	    return REBAR_InsertBandT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, FALSE);
-
 	case RB_INSERTBANDW:
-	    return REBAR_InsertBandT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, TRUE);
-
+	    return REBAR_InsertBandT(infoPtr, wParam, (LPREBARBANDINFOW)lParam,
+	                                               uMsg == RB_INSERTBANDW);
 	case RB_MAXIMIZEBAND:
 	    return REBAR_MaximizeBand (infoPtr, wParam, lParam);
 
@@ -3555,11 +3540,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_PushChevron (infoPtr, wParam, lParam);
 
 	case RB_SETBANDINFOA:
-	    return REBAR_SetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, FALSE);
-
 	case RB_SETBANDINFOW:
-	    return REBAR_SetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam, TRUE);
-
+	    return REBAR_SetBandInfoT(infoPtr, wParam, (LPREBARBANDINFOW)lParam,
+	                                                uMsg == RB_SETBANDINFOW);
 	case RB_SETBARINFO:
 	    return REBAR_SetBarInfo (infoPtr, (LPREBARINFO)lParam);
 
