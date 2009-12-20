@@ -4976,24 +4976,32 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DD
     return This->softwareVertexProcessing;
 }
 
-
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface, UINT iSwapChain, WINED3DRASTER_STATUS* pRasterStatus) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSwapChain *swapChain;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface,
+        UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status)
+{
+    IWineD3DSwapChain *swapchain;
     HRESULT hr;
 
-    TRACE("(%p) :  SwapChain %d returning %p\n", This, iSwapChain, pRasterStatus);
+    TRACE("iface %p, swapchain_idx %u, raster_status %p.\n",
+            iface, swapchain_idx, raster_status);
 
-    hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
-    if(hr == WINED3D_OK){
-        hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
-        IWineD3DSwapChain_Release(swapChain);
-    }else{
-        FIXME("(%p) IWineD3DSwapChain_GetRasterStatus returned in error\n", This);
+    hr = IWineD3DDeviceImpl_GetSwapChain(iface, swapchain_idx, &swapchain);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get swapchain %u, hr %#x.\n", swapchain_idx, hr);
+        return hr;
     }
-    return hr;
-}
 
+    hr = IWineD3DSwapChain_GetRasterStatus(swapchain, raster_status);
+    IWineD3DSwapChain_Release(swapchain);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get raster status, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return WINED3D_OK;
+}
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, float nSegments) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
