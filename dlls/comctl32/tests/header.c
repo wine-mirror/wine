@@ -1756,7 +1756,7 @@ static void test_hdm_orderarray(void)
 if (0)
 {
     /* null pointer, crashes native */
-    ret = SendMessage(hwnd, HDM_SETORDERARRAY, 3, (LPARAM)NULL);
+    ret = SendMessage(hwnd, HDM_SETORDERARRAY, 3, 0);
     expect(FALSE, ret);
 }
     /* count out of limits */

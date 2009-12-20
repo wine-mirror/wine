@@ -1945,7 +1945,7 @@ static void test_multiselect(void)
     expect(items,item_count);
 
     /* try with NULL pointer */
-    r = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)NULL);
+    r = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, 0);
     expect(FALSE, r);
 
     /* select all, check notifications */
@@ -2979,7 +2979,7 @@ static void test_hittest(void)
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
 
-    himl2 = (HIMAGELIST)SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)NULL);
+    himl2 = (HIMAGELIST)SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, 0);
     ok(himl2 == himl, "should return handle\n");
 
     r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl);

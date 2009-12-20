@@ -924,7 +924,7 @@ static void test_itemedit(void)
     fill_tree(hTree);
 
     /* try with null item */
-    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)NULL);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, 0);
     ok(!IsWindow(edit), "Expected valid handle\n");
 
     /* trigger edit */
@@ -934,14 +934,14 @@ static void test_itemedit(void)
     r = SendMessage(hTree, TVM_GETITEMSTATE, (WPARAM)hRoot, TVIS_SELECTED);
     expect(0, r);
     /* try to cancel with wrong edit handle */
-    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)NULL);
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), 0);
     expect(0, r);
     ok(IsWindow(edit), "Expected edit control to be valid\n");
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
     ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
     /* try to cancel without creating edit */
-    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)NULL);
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), 0);
     expect(0, r);
 
     /* try to cancel with wrong (not null) handle */
