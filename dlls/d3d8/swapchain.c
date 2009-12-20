@@ -102,7 +102,7 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8
     return hrc;
 }
 
-const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
+static const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
 {
     IDirect3DSwapChain8Impl_QueryInterface,
     IDirect3DSwapChain8Impl_AddRef,
@@ -110,3 +110,59 @@ const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
     IDirect3DSwapChain8Impl_Present,
     IDirect3DSwapChain8Impl_GetBackBuffer
 };
+
+HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,
+        D3DPRESENT_PARAMETERS *present_parameters)
+{
+    WINED3DPRESENT_PARAMETERS wined3d_parameters;
+    HRESULT hr;
+
+    swapchain->ref = 1;
+    swapchain->lpVtbl = &Direct3DSwapChain8_Vtbl;
+
+    wined3d_parameters.BackBufferWidth = present_parameters->BackBufferWidth;
+    wined3d_parameters.BackBufferHeight = present_parameters->BackBufferHeight;
+    wined3d_parameters.BackBufferFormat = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
+    wined3d_parameters.BackBufferCount = max(1, present_parameters->BackBufferCount);
+    wined3d_parameters.MultiSampleType = present_parameters->MultiSampleType;
+    wined3d_parameters.MultiSampleQuality = 0; /* d3d9 only */
+    wined3d_parameters.SwapEffect = present_parameters->SwapEffect;
+    wined3d_parameters.hDeviceWindow = present_parameters->hDeviceWindow;
+    wined3d_parameters.Windowed = present_parameters->Windowed;
+    wined3d_parameters.EnableAutoDepthStencil = present_parameters->EnableAutoDepthStencil;
+    wined3d_parameters.AutoDepthStencilFormat = wined3dformat_from_d3dformat(present_parameters->AutoDepthStencilFormat);
+    wined3d_parameters.Flags = present_parameters->Flags;
+    wined3d_parameters.FullScreen_RefreshRateInHz = present_parameters->FullScreen_RefreshRateInHz;
+    wined3d_parameters.PresentationInterval = present_parameters->FullScreen_PresentationInterval;
+    wined3d_parameters.AutoRestoreDisplayMode = TRUE;
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_CreateSwapChain(device->WineD3DDevice, &wined3d_parameters,
+            &swapchain->wineD3DSwapChain, (IUnknown *)swapchain, SURFACE_OPENGL);
+    wined3d_mutex_unlock();
+
+    present_parameters->BackBufferWidth = wined3d_parameters.BackBufferWidth;
+    present_parameters->BackBufferHeight = wined3d_parameters.BackBufferHeight;
+    present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(wined3d_parameters.BackBufferFormat);
+    present_parameters->BackBufferCount = wined3d_parameters.BackBufferCount;
+    present_parameters->MultiSampleType = wined3d_parameters.MultiSampleType;
+    present_parameters->SwapEffect = wined3d_parameters.SwapEffect;
+    present_parameters->hDeviceWindow = wined3d_parameters.hDeviceWindow;
+    present_parameters->Windowed = wined3d_parameters.Windowed;
+    present_parameters->EnableAutoDepthStencil = wined3d_parameters.EnableAutoDepthStencil;
+    present_parameters->AutoDepthStencilFormat = d3dformat_from_wined3dformat(wined3d_parameters.AutoDepthStencilFormat);
+    present_parameters->Flags = wined3d_parameters.Flags;
+    present_parameters->FullScreen_RefreshRateInHz = wined3d_parameters.FullScreen_RefreshRateInHz;
+    present_parameters->FullScreen_PresentationInterval = wined3d_parameters.PresentationInterval;
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
+        return hr;
+    }
+
+    swapchain->parentDevice = (IDirect3DDevice8 *)device;
+    IDirect3DDevice8_AddRef(swapchain->parentDevice);
+
+    return D3D_OK;
+}

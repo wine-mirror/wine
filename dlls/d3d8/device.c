@@ -495,76 +495,35 @@ static BOOL WINAPI IDirect3DDevice8Impl_ShowCursor(LPDIRECT3DDEVICE8 iface, BOOL
     return ret;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain8** pSwapChain) {
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(IDirect3DDevice8 *iface,
+        D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain8 **swapchain)
+{
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IDirect3DSwapChain8Impl* object;
-    HRESULT hrc = D3D_OK;
-    WINED3DPRESENT_PARAMETERS localParameters;
+    IDirect3DSwapChain8Impl *object;
+    HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
-            iface, pPresentationParameters, pSwapChain);
-
-    /* Fix the back buffer count */
-    if(pPresentationParameters->BackBufferCount == 0) {
-        pPresentationParameters->BackBufferCount = 1;
-    }
+            iface, present_parameters, swapchain);
 
     object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
-    if (NULL == object) {
-        FIXME("Allocation of memory failed\n");
-        *pSwapChain = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
+    if (!object)
+    {
+        ERR("Failed to allocate swapchain memory.\n");
+        return E_OUTOFMEMORY;
     }
-    object->ref = 1;
-    object->lpVtbl = &Direct3DSwapChain8_Vtbl;
 
-    /* Allocate an associated WineD3DDevice object */
-    localParameters.BackBufferWidth                             = pPresentationParameters->BackBufferWidth;
-    localParameters.BackBufferHeight                            = pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat                            = wined3dformat_from_d3dformat(pPresentationParameters->BackBufferFormat);
-    localParameters.BackBufferCount                             = pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                             = pPresentationParameters->MultiSampleType;
-    localParameters.MultiSampleQuality                          = 0; /* d3d9 only */
-    localParameters.SwapEffect                                  = pPresentationParameters->SwapEffect;
-    localParameters.hDeviceWindow                               = pPresentationParameters->hDeviceWindow;
-    localParameters.Windowed                                    = pPresentationParameters->Windowed;
-    localParameters.EnableAutoDepthStencil                      = pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat                      = wined3dformat_from_d3dformat(pPresentationParameters->AutoDepthStencilFormat);
-    localParameters.Flags                                       = pPresentationParameters->Flags;
-    localParameters.FullScreen_RefreshRateInHz                  = pPresentationParameters->FullScreen_RefreshRateInHz;
-    localParameters.PresentationInterval                        = pPresentationParameters->FullScreen_PresentationInterval;
-    localParameters.AutoRestoreDisplayMode                      = TRUE;
-
-    wined3d_mutex_lock();
-    hrc = IWineD3DDevice_CreateSwapChain(This->WineD3DDevice, &localParameters,
-            &object->wineD3DSwapChain, (IUnknown *)object, SURFACE_OPENGL);
-    wined3d_mutex_unlock();
-
-    pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;
-    pPresentationParameters->BackBufferHeight                   = localParameters.BackBufferHeight;
-    pPresentationParameters->BackBufferFormat                   = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
-    pPresentationParameters->BackBufferCount                    = localParameters.BackBufferCount;
-    pPresentationParameters->MultiSampleType                    = localParameters.MultiSampleType;
-    pPresentationParameters->SwapEffect                         = localParameters.SwapEffect;
-    pPresentationParameters->hDeviceWindow                      = localParameters.hDeviceWindow;
-    pPresentationParameters->Windowed                           = localParameters.Windowed;
-    pPresentationParameters->EnableAutoDepthStencil             = localParameters.EnableAutoDepthStencil;
-    pPresentationParameters->AutoDepthStencilFormat             = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
-    pPresentationParameters->Flags                              = localParameters.Flags;
-    pPresentationParameters->FullScreen_RefreshRateInHz         = localParameters.FullScreen_RefreshRateInHz;
-    pPresentationParameters->FullScreen_PresentationInterval    = localParameters.PresentationInterval;
-
-    if (hrc != D3D_OK) {
-        FIXME("(%p) call to IWineD3DDevice_CreateSwapChain failed\n", This);
-        HeapFree(GetProcessHeap(), 0 , object);
-        *pSwapChain = NULL;
-    }else{
-        IUnknown_AddRef(iface);
-        object->parentDevice = iface;
-        *pSwapChain = (IDirect3DSwapChain8 *)object;
+    hr = swapchain_init(object, This, present_parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
-    TRACE("(%p) returning %p\n", This, *pSwapChain);
-    return hrc;
+
+    TRACE("Created swapchain %p.\n", object);
+    *swapchain = (IDirect3DSwapChain8 *)object;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {

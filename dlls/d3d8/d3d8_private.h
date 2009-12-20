@@ -227,11 +227,6 @@ HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, 
 /* ------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl DECLSPEC_HIDDEN;
-
-/*****************************************************************************
  * IDirect3DSwapChain8 implementation structure
  */
 struct IDirect3DSwapChain8Impl
@@ -246,6 +241,9 @@ struct IDirect3DSwapChain8Impl
     /* Parent reference */
     LPDIRECT3DDEVICE8              parentDevice;
 };
+
+HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,
+        D3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 
 /* ----------------- */
 /* IDirect3DSurface8 */
