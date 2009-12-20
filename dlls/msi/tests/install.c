@@ -6988,7 +6988,31 @@ static void test_allusers_prop(void)
 
     /* ALLUSERS property set to 2, conditioned on ALLUSERS = 1 */
     r = MsiInstallProductA(msifile, "FULL=1");
-    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    if (r == ERROR_SUCCESS)
+    {
+        /* Win9x/WinMe */
+        win_skip("Win9x and WinMe act differently with respect to ALLUSERS\n");
+
+        ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\one.txt", TRUE), "File installed\n");
+        ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+        r = MsiInstallProductA(msifile, "REMOVE=ALL");
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+        delete_test_files();
+    }
+    else
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 }
 
 static char session_manager[] = "System\\CurrentControlSet\\Control\\Session Manager";
