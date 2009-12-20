@@ -5159,7 +5159,7 @@ static const WCHAR WC_EDITW[] = { 'E','d','i','t',0 };
 #define WC_EDIT                   WINELIB_NAME_AW(WC_EDIT)
 
 /**************************************************************************
- * List box control
+ * Listbox control
  */
 
 #define WC_LISTBOXA               "ListBox"
@@ -5173,7 +5173,7 @@ static const WCHAR WC_LISTBOXW[] = { 'L','i','s','t','B','o','x',0 };
 #define WC_LISTBOX                WINELIB_NAME_AW(WC_LISTBOX)
 
 /**************************************************************************
- * Scroll bar control
+ * Scrollbar control
  */
 
 #define WC_SCROLLBARA             "ScrollBar"
