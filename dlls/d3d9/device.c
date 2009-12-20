@@ -452,6 +452,37 @@ static BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9EX ifac
     return ret;
 }
 
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_CreateAdditionalSwapChain(IDirect3DDevice9Ex *iface,
+        D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain9 **swapchain)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DSwapChain9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, present_parameters %p, swapchain %p.\n",
+            iface, present_parameters, swapchain);
+
+    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate swapchain memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = swapchain_init(object, This, present_parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created swapchain %p.\n", object);
+    *swapchain = (IDirect3DSwapChain9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data) {
     BOOL *resources_ok = data;
     D3DRESOURCETYPE type;
