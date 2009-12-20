@@ -91,7 +91,6 @@ static const struct {
     {trueW,        kTRUE},
     {tryW,         kTRY},
     {typeofW,      kTYPEOF},
-    {undefinedW,   kUNDEFINED},
     {varW,         kVAR},
     {voidW,        kVOID},
     {whileW,       kWHILE},

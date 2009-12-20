@@ -38,7 +38,6 @@ typedef struct _statement_list_t {
 
 static literal_t *new_string_literal(parser_ctx_t*,const WCHAR*);
 static literal_t *new_null_literal(parser_ctx_t*);
-static literal_t *new_undefined_literal(parser_ctx_t*);
 static literal_t *new_boolean_literal(parser_ctx_t*,VARIANT_BOOL);
 
 typedef struct _property_list_t {
@@ -171,7 +170,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 /* keywords */
 %token kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kIF kFINALLY kFOR kIN
-%token kINSTANCEOF kNEW kNULL kUNDEFINED kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
+%token kINSTANCEOF kNEW kNULL kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
 %token tANDAND tOROR tINC tDEC tHTMLCOMMENT kDIVEQ
 
 %token <srcptr> kFUNCTION '}'
@@ -800,7 +799,6 @@ Identifier_opt
 /* ECMA-262 3rd Edition    7.8 */
 Literal
         : kNULL                 { $$ = new_null_literal(ctx); }
-        | kUNDEFINED            { $$ = new_undefined_literal(ctx); }
         | BooleanLiteral        { $$ = $1; }
         | tNumericLiteral       { $$ = $1; }
         | tStringLiteral        { $$ = new_string_literal(ctx, $1); }
@@ -852,15 +850,6 @@ static literal_t *new_null_literal(parser_ctx_t *ctx)
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
     ret->type = LT_NULL;
-
-    return ret;
-}
-
-static literal_t *new_undefined_literal(parser_ctx_t *ctx)
-{
-    literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
-
-    ret->type = LT_UNDEFINED;
 
     return ret;
 }

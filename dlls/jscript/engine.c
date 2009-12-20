@@ -350,9 +350,6 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
 static HRESULT literal_to_var(script_ctx_t *ctx, literal_t *literal, VARIANT *v)
 {
     switch(literal->type) {
-    case LT_UNDEFINED:
-        V_VT(v) = VT_EMPTY;
-        break;
     case LT_NULL:
         V_VT(v) = VT_NULL;
         break;

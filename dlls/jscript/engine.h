@@ -131,7 +131,6 @@ typedef enum {
     LT_DOUBLE,
     LT_STRING,
     LT_BOOL,
-    LT_UNDEFINED,
     LT_NULL,
     LT_REGEXP
 }literal_type_t;

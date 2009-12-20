@@ -1013,4 +1013,10 @@ ok(typeof(doesnotexist) === "undefined", "typeof(doesnotexist) = " + typeof(does
 (function() { newValue = 1; })();
 ok(newValue === 1, "newValue = " + newValue);
 
+obj = {undefined: 3};
+
+/* Keep this test in the end of file */
+undefined = 6;
+ok(undefined === 6, "undefined = " + undefined);
+
 reportSuccess();

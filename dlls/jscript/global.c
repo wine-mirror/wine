@@ -1176,6 +1176,11 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
+    V_VT(&var) = VT_EMPTY;
+    hres = jsdisp_propput_name(ctx->global, undefinedW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    if(FAILED(hres))
+        return hres;
+
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(math);
     hres = jsdisp_propput_name(ctx->global, MathW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
