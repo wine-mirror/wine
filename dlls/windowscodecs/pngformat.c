@@ -235,7 +235,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     This->info_ptr = ppng_create_info_struct(This->png_ptr);
     if (!This->info_ptr)
     {
-        ppng_destroy_read_struct(&This->png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+        ppng_destroy_read_struct(&This->png_ptr, NULL, NULL);
         This->png_ptr = NULL;
         return E_FAIL;
     }
@@ -243,7 +243,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     This->end_info = ppng_create_info_struct(This->png_ptr);
     if (!This->info_ptr)
     {
-        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, (png_infopp)NULL);
+        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
         This->png_ptr = NULL;
         return E_FAIL;
     }
@@ -1107,7 +1107,7 @@ static HRESULT WINAPI PngEncoder_Initialize(IWICBitmapEncoder *iface,
     This->info_ptr = ppng_create_info_struct(This->png_ptr);
     if (!This->info_ptr)
     {
-        ppng_destroy_write_struct(&This->png_ptr, (png_infopp)NULL);
+        ppng_destroy_write_struct(&This->png_ptr, NULL);
         This->png_ptr = NULL;
         return E_FAIL;
     }
