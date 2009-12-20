@@ -1464,7 +1464,7 @@ static void enumerate_stores(HWND hwnd, CRYPTUI_ENUM_DATA *pEnumData)
 static void free_store_info(HWND tree)
 {
     HTREEITEM next = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_CHILD,
-     (LPARAM)NULL);
+     0);
 
     while (next)
     {
@@ -1552,7 +1552,7 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         {
             HWND tree = GetDlgItem(hwnd, IDC_STORE_LIST);
             HTREEITEM selection = (HTREEITEM)SendMessageW(tree,
-             TVM_GETNEXTITEM, TVGN_CARET, (LPARAM)NULL);
+             TVM_GETNEXTITEM, TVGN_CARET, 0);
 
             selectInfo = (struct SelectStoreInfo *)GetWindowLongPtrW(hwnd,
              DWLP_USER);
@@ -4113,8 +4113,7 @@ static void show_dialog_for_selected_cert(HWND hwnd)
 
     memset(&item, 0, sizeof(item));
     item.mask = TVIF_HANDLE | TVIF_PARAM;
-    item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_CARET,
-     (LPARAM)NULL);
+    item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_CARET, 0);
     SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
     data = get_hierarchy_data_from_tree_item(tree, item.hItem);
     selection = lparam_to_index(data, item.lParam);
@@ -4216,7 +4215,7 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         memset(&item, 0, sizeof(item));
         item.mask = TVIF_HANDLE | TVIF_PARAM;
         item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_ROOT,
-         (LPARAM)NULL);
+         0);
         data = get_hierarchy_data_from_tree_item(tree, item.hItem);
         /* Delete the contents of the tree */
         SendMessageW(tree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
