@@ -2179,7 +2179,7 @@ static void test_dialogmode(void)
     len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
     ok(11 == len, "expected 11, got %d\n", len);
 
-    r = SendMessage(hwEdit, WM_GETDLGCODE, (WPARAM)NULL, (LPARAM)NULL);
+    r = SendMessage(hwEdit, WM_GETDLGCODE, 0, 0);
     ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
@@ -2187,7 +2187,7 @@ static void test_dialogmode(void)
     len = SendMessage(hwEdit, WM_GETTEXTLENGTH, 0, 0);
     ok(13 == len, "expected 13, got %d\n", len);
 
-    r = SendMessage(hwEdit, WM_GETDLGCODE, (WPARAM)NULL, (LPARAM)&msg);
+    r = SendMessage(hwEdit, WM_GETDLGCODE, 0, (LPARAM)&msg);
     ok(0x8d == r, "expected 0x8d, got 0x%x\n", r);
     r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0x1c0001);
     ok(1 == r, "expected 1, got %d\n", r);
