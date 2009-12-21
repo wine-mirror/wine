@@ -251,7 +251,9 @@ static void test__lcreat( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file\n" );
+    find = FindFirstFileA( filename, &search_results );
+    ok( INVALID_HANDLE_VALUE != find, "should be able to find file\n" );
+    FindClose( find );
 
     ret = DeleteFileA(filename);
     ok( ret != 0, "DeleteFile failed (%d)\n", GetLastError());
@@ -263,7 +265,9 @@ static void test__lcreat( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file\n" );
+    find = FindFirstFileA( filename, &search_results );
+    ok( INVALID_HANDLE_VALUE != find, "should be able to find file\n" );
+    FindClose( find );
 
     ok( 0 == DeleteFileA( filename ), "shouldn't be able to delete a readonly file\n" );
 
@@ -282,7 +286,9 @@ static void test__lcreat( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file\n" );
+    find = FindFirstFileA( filename, &search_results );
+    ok( INVALID_HANDLE_VALUE != find, "should STILL be able to find file\n" );
+    FindClose( find );
 
     ret = DeleteFileA( filename );
     ok( ret, "DeleteFile failed (%d)\n", GetLastError(  ) );
@@ -298,7 +304,9 @@ static void test__lcreat( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file\n" );
+    find = FindFirstFileA( filename, &search_results );
+    ok( INVALID_HANDLE_VALUE != find, "should STILL be able to find file\n" );
+    FindClose( find );
 
     ret = DeleteFileA( filename );
     ok( ret, "DeleteFile failed (%d)\n", GetLastError(  ) );
