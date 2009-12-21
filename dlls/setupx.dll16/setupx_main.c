@@ -70,8 +70,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-#define HINSTANCE_32(h16) ((HINSTANCE)(ULONG_PTR)(h16))
-
 /***********************************************************************
  *		SURegOpenKey (SETUPX.47)
  */
@@ -126,7 +124,7 @@ DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
  */
 RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lpszCmdLine, INT16 nCmdShow)
 {
-    InstallHinfSectionA( HWND_32(hwnd), HINSTANCE_32(hinst), lpszCmdLine, nCmdShow );
+    InstallHinfSectionA( HWND_32(hwnd), 0, lpszCmdLine, nCmdShow );
     return OK;
 }
 
