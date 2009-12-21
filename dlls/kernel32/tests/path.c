@@ -1323,6 +1323,12 @@ static void test_GetWindowsDirectory(void)
 
 static void test_NeedCurrentDirectoryForExePathA(void)
 {
+    if (!pNeedCurrentDirectoryForExePathA)
+    {
+        win_skip("NeedCurrentDirectoryForExePathA is not available\n");
+        return;
+    }
+
     /* Crashes in Windows */
     if (0)
         ok(pNeedCurrentDirectoryForExePathA(NULL), "returned FALSE for NULL\n");
@@ -1343,6 +1349,12 @@ static void test_NeedCurrentDirectoryForExePathW(void)
     const WCHAR thispath[] = {'.', 0};
     const WCHAR fullpath[] = {'c', ':', '\\', 0};
     const WCHAR cmdname[] = {'c', 'm', 'd', '.', 'e', 'x', 'e', 0};
+
+    if (!pNeedCurrentDirectoryForExePathW)
+    {
+        win_skip("NeedCurrentDirectoryForExePathW is not available\n");
+        return;
+    }
 
     /* Crashes in Windows */
     if (0)
@@ -1444,19 +1456,23 @@ static void test_drive_letter_case(void)
 #undef is_upper_case_letter
 }
 
+static void init_pointers(void)
+{
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+
+#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hKernel32, #f))
+    MAKEFUNC(GetLongPathNameA);
+    MAKEFUNC(GetLongPathNameW);
+    MAKEFUNC(NeedCurrentDirectoryForExePathA);
+    MAKEFUNC(NeedCurrentDirectoryForExePathW);
+#undef MAKEFUNC
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
-    pGetLongPathNameA = (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
-                                               "GetLongPathNameA" );
-    pGetLongPathNameW = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll") ,
-                                               "GetLongPathNameW" );
-    pNeedCurrentDirectoryForExePathA =
-        (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
-                               "NeedCurrentDirectoryForExePathA" );
-    pNeedCurrentDirectoryForExePathW =
-        (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
-                               "NeedCurrentDirectoryForExePathW" );
+
+    init_pointers();
 
     /* Report only once */
     if (!pGetLongPathNameA)
@@ -1474,13 +1490,7 @@ START_TEST(path)
     test_GetShortPathNameW();
     test_GetSystemDirectory();
     test_GetWindowsDirectory();
-    if (pNeedCurrentDirectoryForExePathA)
-    {
-        test_NeedCurrentDirectoryForExePathA();
-    }
-    if (pNeedCurrentDirectoryForExePathW)
-    {
-        test_NeedCurrentDirectoryForExePathW();
-    }
+    test_NeedCurrentDirectoryForExePathA();
+    test_NeedCurrentDirectoryForExePathW();
     test_drive_letter_case();
 }
