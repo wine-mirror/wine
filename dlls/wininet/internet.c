@@ -949,6 +949,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 {
     appinfo_t *hIC;
     HINTERNET rc = NULL;
+    DWORD res = ERROR_SUCCESS;
 
     TRACE("(%p, %s, %i, %s, %s, %i, %i, %lx)\n", hInternet, debugstr_w(lpszServerName),
 	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
@@ -956,16 +957,14 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 
     if (!lpszServerName)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
 
-    /* Clear any error information */
-    INTERNET_SetLastError(0);
     hIC = (appinfo_t*)WININET_GetObject( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
     {
-        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        res = ERROR_INVALID_HANDLE;
         goto lend;
     }
 
@@ -974,11 +973,13 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
         case INTERNET_SERVICE_FTP:
             rc = FTP_Connect(hIC, lpszServerName, nServerPort,
             lpszUserName, lpszPassword, dwFlags, dwContext, 0);
+            if(!rc)
+                res = INTERNET_GetLastError();
             break;
 
         case INTERNET_SERVICE_HTTP:
-	    rc = HTTP_Connect(hIC, lpszServerName, nServerPort,
-            lpszUserName, lpszPassword, dwFlags, dwContext, 0);
+	    res = HTTP_Connect(hIC, lpszServerName, nServerPort,
+                    lpszUserName, lpszPassword, dwFlags, dwContext, 0, &rc);
             break;
 
         case INTERNET_SERVICE_GOPHER:
@@ -990,6 +991,7 @@ lend:
         WININET_Release( &hIC->hdr );
 
     TRACE("returning %p\n", rc);
+    SetLastError(res);
     return rc;
 }
 
@@ -2835,6 +2837,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
     WCHAR password[1024], path[2048], extra[1024];
     HINTERNET client = NULL, client1 = NULL;
+    DWORD res;
     
     TRACE("(%p, %s, %s, %08x, %08x, %08lx)\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
@@ -2882,10 +2885,12 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
         if (urlComponents.nScheme == INTERNET_SCHEME_HTTPS) dwFlags |= INTERNET_FLAG_SECURE;
 
         /* FIXME: should use pointers, not handles, as handles are not thread-safe */
-	client = HTTP_Connect(hIC, hostName, urlComponents.nPort,
-			      userName, password, dwFlags, dwContext, INET_OPENURL);
-	if(client == NULL)
+	res = HTTP_Connect(hIC, hostName, urlComponents.nPort,
+                           userName, password, dwFlags, dwContext, INET_OPENURL, &client);
+        if(res != ERROR_SUCCESS) {
+            INTERNET_SetLastError(res);
 	    break;
+        }
 
 	if (urlComponents.dwExtraInfoLength) {
 		WCHAR *path_extra;

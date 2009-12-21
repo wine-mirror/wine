@@ -397,10 +397,10 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags);
 
-HINTERNET HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
-	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
-	DWORD dwInternalFlags);
+DWORD HTTP_Connect(appinfo_t*,LPCWSTR,
+        INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
+        LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
+        DWORD dwInternalFlags, HINTERNET*);
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct sockaddr *psa, socklen_t *sa_len);
