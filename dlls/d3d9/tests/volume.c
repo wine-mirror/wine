@@ -121,6 +121,29 @@ cleanup:
     if (volume_ptr) IDirect3DVolume9_Release(volume_ptr);
 }
 
+static void test_volume_resource(IDirect3DDevice9 *device)
+{
+    IDirect3DVolumeTexture9 *texture;
+    IDirect3DResource9 *resource;
+    IDirect3DVolume9 *volume;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 128, 128, 128, 1, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, 0);
+    ok(SUCCEEDED(hr), "CreateVolumeTexture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DVolumeTexture9_GetVolumeLevel(texture, 0, &volume);
+    ok(SUCCEEDED(hr), "GetVolumeLevel failed, hr %#x.\n", hr);
+
+    IDirect3DVolumeTexture9_Release(texture);
+
+    hr = IDirect3DVolume9_QueryInterface(volume, &IID_IDirect3DResource9, (void **)&resource);
+    ok(hr == E_NOINTERFACE, "QueryInterface returned %#x, expected %#x.\n", hr, E_NOINTERFACE);
+
+    IDirect3DVolume9_Release(volume);
+}
+
+
 START_TEST(volume)
 {
     HMODULE d3d9_handle;
@@ -146,6 +169,7 @@ START_TEST(volume)
     }
 
     test_volume_get_container(device_ptr);
+    test_volume_resource(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
