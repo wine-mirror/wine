@@ -37,11 +37,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
         UINT count, UINT idx_size, const void *idx_data, UINT start_idx)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
     if (idx_size)
     {
-        TRACE("(%p) : glElements(%x, %d, ...)\n", This, primitive_type, count);
+        TRACE("(%p) : glElements(%x, %d, ...)\n", iface, primitive_type, count);
 
         glDrawElements(primitive_type, count,
                 idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
@@ -50,7 +48,7 @@ static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
     }
     else
     {
-        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, primitive_type, start_idx, count);
+        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", iface, primitive_type, start_idx, count);
 
         glDrawArrays(primitive_type, start_idx, count);
         checkGLcall("glDrawArrays");

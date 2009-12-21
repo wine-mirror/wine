@@ -187,9 +187,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSU
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    TRACE("(%p)->(%x)\n", This, Flags);
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, Flags);
 
     switch (Flags)
     {
@@ -397,9 +397,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD Flags, IWineD3DSurface *Ref) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    IWineD3DSurfaceImpl *RefImpl = (IWineD3DSurfaceImpl *) Ref;
 
-    FIXME("(%p)->(%08x,%p) Stub!\n", This, Flags, RefImpl);
+    FIXME("iface %p, flags %#x, ref %p stub!\n", iface, Flags, Ref);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {

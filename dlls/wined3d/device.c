@@ -4169,14 +4169,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface)
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
-                                          CONST RECT* pSourceRect, CONST RECT* pDestRect,
-                                          HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+        const RECT *pSourceRect, const RECT *pDestRect,
+        HWND hDestWindowOverride, const RGNDATA *pDirtyRegion)
+{
     IWineD3DSwapChain *swapChain = NULL;
     int i;
     int swapchains = IWineD3DDeviceImpl_GetNumberOfSwapChains(iface);
 
-    TRACE("(%p) Presenting the frame\n", This);
+    TRACE("iface %p.\n", iface);
 
     for(i = 0 ; i < swapchains ; i ++) {
 
@@ -4631,15 +4631,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
     return WINED3D_OK;
 }
 
-static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface, IWineD3DVolume *pSourceVolume, IWineD3DVolume *pDestinationVolume) {
-    /* This is a helper function for UpdateTexture, there is no public UpdateVolume method in d3d. Since it's
-     * not callable by the app directly no parameter validation checks are needed here.
-     */
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+/* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */
+static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface,
+        IWineD3DVolume *pSourceVolume, IWineD3DVolume *pDestinationVolume)
+{
     WINED3DLOCKED_BOX src;
     WINED3DLOCKED_BOX dst;
     HRESULT hr;
-    TRACE("(%p)->(%p, %p)\n", This, pSourceVolume, pDestinationVolume);
+
+    TRACE("iface %p, src_volume %p, dst_volume %p.\n",
+            iface, pSourceVolume, pDestinationVolume);
 
     /* TODO: Implement direct loading into the gl volume instead of using memcpy and
      * dirtification to improve loading performance.
@@ -5003,25 +5004,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, float nSegments) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, float nSegments)
+{
     static BOOL warned;
     if(nSegments != 0.0f) {
         if (!warned)
         {
-            FIXME("(%p) : stub nSegments(%f)\n", This, nSegments);
+            FIXME("iface %p, nSegments %.8e stub!\n", iface, nSegments);
             warned = TRUE;
         }
     }
     return WINED3D_OK;
 }
 
-static float    WINAPI  IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static float WINAPI IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface)
+{
     static BOOL warned;
     if (!warned)
     {
-        FIXME("(%p) : stub returning(%f)\n", This, 0.0f);
+        FIXME("iface %p stub!\n", iface);
         warned = TRUE;
     }
     return 0.0f;
@@ -5281,10 +5282,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UI
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawTriPatch(IWineD3DDevice *iface, UINT Handle, CONST float* pNumSegs, CONST WINED3DTRIPATCH_INFO* pTriPatchInfo) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) Handle(%d) noSegs(%p) tripatch(%p)\n", This, Handle, pNumSegs, pTriPatchInfo);
-    FIXME("(%p) : Stub\n", This);
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawTriPatch(IWineD3DDevice *iface,
+        UINT handle, const float *segment_count, const WINED3DTRIPATCH_INFO *patch_info)
+{
+    FIXME("iface %p, handle %#x, segment_count %p, patch_info %p stub!\n",
+            iface, handle, segment_count, patch_info);
+
     return WINED3D_OK;
 }
 
@@ -5488,11 +5491,13 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
     }
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST WINED3DRECT* pRect, WINED3DCOLOR color) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
+        IWineD3DSurface *pSurface, const WINED3DRECT *pRect, WINED3DCOLOR color)
+{
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
     WINEDDBLTFX BltFx;
-    TRACE("(%p) Colour fill Surface: %p rect: %p color: 0x%08x\n", This, pSurface, pRect, color);
+
+    TRACE("iface %p, surface %p, rect %p, color 0x%08x.\n", iface, pSurface, pRect, color);
 
     if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
@@ -5585,14 +5590,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface, IWineD3DSurface *Front, IWineD3DSurface *Back) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface,
+        IWineD3DSurface *Front, IWineD3DSurface *Back)
+{
     IWineD3DSurfaceImpl *FrontImpl = (IWineD3DSurfaceImpl *) Front;
     IWineD3DSurfaceImpl *BackImpl = (IWineD3DSurfaceImpl *) Back;
     IWineD3DSwapChainImpl *Swapchain;
     HRESULT hr;
 
-    TRACE("(%p)->(%p,%p)\n", This, FrontImpl, BackImpl);
+    TRACE("iface %p, front %p, back %p.\n", iface, Front, Back);
 
     hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &Swapchain);
     if(hr != WINED3D_OK) {
@@ -6149,9 +6155,9 @@ static HRESULT WINAPI evict_managed_resource(IWineD3DResource *resource, void *d
     return S_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice* iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    TRACE("(%p)\n", This);
+static HRESULT WINAPI IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice *iface)
+{
+    TRACE("iface %p.\n", iface);
 
     IWineD3DDevice_EnumResources(iface, evict_managed_resource, NULL);
     return WINED3D_OK;
@@ -6593,12 +6599,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL bEnableDialogs) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /** FIXME: always true at the moment **/
-    if(!bEnableDialogs) {
-        FIXME("(%p) Dialogs cannot be disabled yet\n", This);
-    }
+static HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL enable_dialogs)
+{
+    TRACE("iface %p, enable_dialogs %#x.\n", iface, enable_dialogs);
+
+    if (!enable_dialogs) FIXME("Dialogs cannot be disabled yet.\n");
+
     return WINED3D_OK;
 }
 

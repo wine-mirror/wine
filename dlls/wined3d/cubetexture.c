@@ -297,16 +297,16 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
     return hr;
 }
 
-static UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *iface){
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    TRACE("(%p)\n", This);
+static UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
 
     return GL_TEXTURE_CUBE_MAP_ARB;
 }
 
-static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface) {
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    TRACE("(%p)\n", This);
+static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
 
     return FALSE;
 }

@@ -2167,9 +2167,10 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterCount (IWineD3D *iface) {
     return This->adapter_count;
 }
 
-static HRESULT  WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void* pInitializeFunction) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
+static HRESULT WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void *init_function)
+{
+    FIXME("iface %p, init_function %p stub!\n", iface, init_function);
+
     return WINED3D_OK;
 }
 
@@ -2309,9 +2310,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter, WINED3DDISPLAYMODE* pMode) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
+static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter, WINED3DDISPLAYMODE *pMode)
+{
+    TRACE("iface %p, adapter_idx %u, display_mode %p.\n", iface, Adapter, pMode);
 
     if (NULL == pMode ||
         Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -2628,19 +2629,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-                                            WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
-
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+        WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed)
+{
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
     UINT nmodes;
 
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
-          This,
-          Adapter,
-          DeviceType, debug_d3ddevicetype(DeviceType),
-          DisplayFormat, debug_d3dformat(DisplayFormat),
-          BackBufferFormat, debug_d3dformat(BackBufferFormat),
-          Windowed);
+    TRACE("iface %p, adapter_idx %u, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
+            iface, Adapter, debug_d3ddevicetype(DeviceType), debug_d3dformat(DisplayFormat),
+            debug_d3dformat(BackBufferFormat), Windowed);
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
         WARN_(d3d_caps)("Adapter >= IWineD3D_GetAdapterCount(iface), returning WINED3DERR_INVALIDCALL\n");
@@ -3742,16 +3738,13 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     }
 }
 
-static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-                                                          WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, WINED3DFORMAT src_format, WINED3DFORMAT dst_format)
+{
+    FIXME("iface %p, adapter_idx %u, device_type %s, src_format %s, dst_format %s stub!\n",
+            iface, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
+            debug_d3dformat(dst_format));
 
-    FIXME_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), SrcFmt:(%u,%s), TgtFmt:(%u,%s))\n",
-          This,
-          Adapter,
-          DeviceType, debug_d3ddevicetype(DeviceType),
-          SourceFormat, debug_d3dformat(SourceFormat),
-          TargetFormat, debug_d3dformat(TargetFormat));
     return WINED3D_OK;
 }
 

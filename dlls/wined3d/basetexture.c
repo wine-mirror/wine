@@ -206,10 +206,8 @@ WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture
 
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface)
 {
-  IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  /* TODO: implement filters using GL_SGI_generate_mipmaps http://oss.sgi.com/projects/ogl-sample/registry/SGIS/generate_mipmap.txt */
-  FIXME("(%p) : stub\n", This);
-  return ;
+    /* TODO: Implement filters using GL_SGI_generate_mipmaps. */
+    FIXME("iface %p stub!\n", iface);
 }
 
 BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty)

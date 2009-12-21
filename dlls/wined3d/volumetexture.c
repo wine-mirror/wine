@@ -224,22 +224,25 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *ifa
 }
 
 /* Context activation is done by the caller. */
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb)
+{
     BOOL dummy;
-    TRACE("(%p) : relay to BaseTexture\n", This);
+
+    TRACE("iface %p, srgb %#x.\n", iface, srgb);
+
     return basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &dummy);
 }
 
-static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p)\n", This);
+static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
+
     return GL_TEXTURE_3D;
 }
 
-static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p)\n", This);
+static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
 
     return FALSE;
 }

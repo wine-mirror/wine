@@ -89,12 +89,15 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
 /* *******************************************
    IWineD3DQuery IWineD3DQuery parts follow
    ******************************************* */
-static HRESULT  WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown** parent){
-    IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
+static HRESULT WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown **parent)
+{
+    TRACE("iface %p, parent %p.\n", iface, parent);
 
-    *parent= (IUnknown*) parent;
+    *parent = (IUnknown *)parent;
     IUnknown_AddRef(*parent);
-    TRACE("(%p) : returning %p\n", This, *parent);
+
+    TRACE("Returning %p.\n", *parent);
+
     return WINED3D_OK;
 }
 
