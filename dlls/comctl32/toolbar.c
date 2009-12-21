@@ -3156,8 +3156,6 @@ TOOLBAR_Customize (TOOLBAR_INFO *infoPtr)
 {
     CUSTDLG_INFO custInfo;
     LRESULT ret;
-    LPCVOID template;
-    HRSRC hRes;
     NMHDR nmhdr;
 
     custInfo.tbInfo = infoPtr;
@@ -3166,17 +3164,8 @@ TOOLBAR_Customize (TOOLBAR_INFO *infoPtr)
     /* send TBN_BEGINADJUST notification */
     TOOLBAR_SendNotify (&nmhdr, infoPtr, TBN_BEGINADJUST);
 
-    if (!(hRes = FindResourceW (COMCTL32_hModule,
-                                MAKEINTRESOURCEW(IDD_TBCUSTOMIZE),
-                                (LPWSTR)RT_DIALOG)))
-	return FALSE;
-
-    if(!(template = LoadResource (COMCTL32_hModule, hRes)))
-	return FALSE;
-
-    ret = DialogBoxIndirectParamW ((HINSTANCE)GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_HINSTANCE),
-                                   template, infoPtr->hwndSelf, TOOLBAR_CustomizeDialogProc,
-                                   (LPARAM)&custInfo);
+    ret = DialogBoxParamW (COMCTL32_hModule, MAKEINTRESOURCEW(IDD_TBCUSTOMIZE),
+                           infoPtr->hwndSelf, TOOLBAR_CustomizeDialogProc, (LPARAM)&custInfo);
 
     /* send TBN_ENDADJUST notification */
     TOOLBAR_SendNotify (&nmhdr, infoPtr, TBN_ENDADJUST);
