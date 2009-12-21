@@ -447,33 +447,6 @@ static INT CURSORICON_DelSharedIcon( HICON hIcon )
 }
 
 /**********************************************************************
- *	    CURSORICON_FreeModuleIcons
- */
-void CURSORICON_FreeModuleIcons( HMODULE16 hMod16 )
-{
-    ICONCACHE **ptr = &IconAnchor;
-    HMODULE hModule = HMODULE_32(GetExePtr( hMod16 ));
-
-    EnterCriticalSection( &IconCrst );
-
-    while ( *ptr )
-    {
-        if ( (*ptr)->hModule == hModule )
-        {
-            ICONCACHE *freePtr = *ptr;
-            *ptr = freePtr->next;
-
-            GlobalFree16(HICON_16(freePtr->hIcon));
-            HeapFree( GetProcessHeap(), 0, freePtr );
-            continue;
-        }
-        ptr = &(*ptr)->next;
-    }
-
-    LeaveCriticalSection( &IconCrst );
-}
-
-/**********************************************************************
  *              get_icon_size
  */
 BOOL get_icon_size( HICON handle, SIZE *size )

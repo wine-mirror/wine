@@ -303,6 +303,19 @@ static int release_shared_icon( HICON16 icon )
     return -1;
 }
 
+static void free_module_icons( HINSTANCE16 inst )
+{
+    struct cache_entry *cache, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( cache, next, &icon_cache, struct cache_entry, entry )
+    {
+        if (cache->inst != inst) continue;
+        list_remove( &cache->entry );
+        GlobalFree16( cache->icon );
+        HeapFree( GetProcessHeap(), 0, cache );
+    }
+}
+
 
 /**********************************************************************
  *		InitApp (USER.5)
@@ -1516,7 +1529,7 @@ void WINAPI SignalProc16( HANDLE16 hModule, UINT16 code,
     {
         /* HOOK_FreeModuleHooks( hModule ); */
         CLASS_FreeModuleClasses( hModule );
-        CURSORICON_FreeModuleIcons( hModule );
+        free_module_icons( GetExePtr(hModule) );
     }
 }
 
