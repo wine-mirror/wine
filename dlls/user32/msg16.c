@@ -2039,9 +2039,13 @@ static LRESULT combo_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, 
         wParam = (INT)(INT16)wParam;
         /* fall through */
     case CB_ADDSTRING16:
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & CBS_HASSTRINGS) lParam = (LPARAM)MapSL(lParam);
+    {
+        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
+        if ((style & CBS_HASSTRINGS) || !(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)))
+           lParam = (LPARAM)MapSL(lParam);
         msg -= msg16_offset;
         break;
+    }
     case CB_SETITEMHEIGHT16:
     case CB_GETITEMHEIGHT16:
     case CB_SETCURSEL16:
