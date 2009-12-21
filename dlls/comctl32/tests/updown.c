@@ -481,8 +481,7 @@ static void test_updown_buddy(void)
     if (pSetWindowSubclass)
     {
         /* updown uses subclass helpers for buddy on >5.8x systems */
-        todo_wine
-            ok(GetPropA(buddy, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
+        ok(GetPropA(buddy, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
     }
 
     DestroyWindow(updown);

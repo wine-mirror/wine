@@ -100,9 +100,9 @@ typedef struct
 #define UPDOWN_GetInfoPtr(hwnd) ((UPDOWN_INFO *)GetWindowLongPtrW (hwnd,0))
 #define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
 
-static const WCHAR BUDDY_UPDOWN_HWND[] = { 'b', 'u', 'd', 'd', 'y', 'U', 'p', 'D', 'o', 'w', 'n', 'H', 'W', 'N', 'D', 0 };
-static const WCHAR BUDDY_SUPERCLASS_WNDPROC[] = { 'b', 'u', 'd', 'd', 'y', 'S', 'u', 'p', 'p', 'e', 'r', 
-						  'C', 'l', 'a', 's', 's', 'W', 'n', 'd', 'P', 'r', 'o', 'c', 0 };
+/* id used for SetWindowSubclass */
+#define BUDDY_SUBCLASSID   1
+
 static void UPDOWN_DoAction (UPDOWN_INFO *infoPtr, int delta, int action);
 
 /***********************************************************************
@@ -518,14 +518,13 @@ static LRESULT UPDOWN_MouseWheel(UPDOWN_INFO *infoPtr, WPARAM wParam)
  *                           control.
  */
 static LRESULT CALLBACK
-UPDOWN_Buddy_SubclassProc(HWND  hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+UPDOWN_Buddy_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+                          UINT_PTR uId, DWORD_PTR ref_data)
 {
-    WNDPROC superClassWndProc = (WNDPROC)GetPropW(hwnd, BUDDY_SUPERCLASS_WNDPROC);
-    HWND upDownHwnd = GetPropW(hwnd, BUDDY_UPDOWN_HWND);
-    UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr(upDownHwnd);
+    UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr((HWND)ref_data);
 
-    TRACE("hwnd=%p, wndProc=%p, uMsg=%04x, wParam=%08lx, lParam=%08lx\n",
-          hwnd, superClassWndProc, uMsg, wParam, lParam);
+    TRACE("hwnd=%p, uMsg=%04x, wParam=%08lx, lParam=%08lx\n",
+          hwnd, uMsg, wParam, lParam);
 
     switch(uMsg)
     {
@@ -542,7 +541,7 @@ UPDOWN_Buddy_SubclassProc(HWND  hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
     }
 
-    return CallWindowProcW( superClassWndProc, hwnd, uMsg, wParam, lParam);
+    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -559,7 +558,6 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
 {
     RECT  budRect;  /* new coord for the buddy */
     int   x, width;  /* new x position and width for the up-down */
-    WNDPROC baseWndProc;
     WCHAR buddyClass[40];
     HWND ret;
 
@@ -567,20 +565,15 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
 
     ret = infoPtr->Buddy;
 
-    /* there is already a body assigned */
-    if (infoPtr->Buddy)  RemovePropW(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
-
-    if(!IsWindow(bud))
-        bud = 0;
+    /* there is already a buddy assigned */
+    if (infoPtr->Buddy) RemoveWindowSubclass(infoPtr->Buddy, UPDOWN_Buddy_SubclassProc,
+                                             BUDDY_SUBCLASSID);
+    if (!IsWindow(bud)) bud = NULL;
 
     /* Store buddy window handle */
     infoPtr->Buddy = bud;
 
     if(bud) {
-
-        /* keep upDown ctrl hwnd in a buddy property */
-        SetPropW( bud, BUDDY_UPDOWN_HWND, infoPtr->Self);
-
         /* Store buddy window class type */
         infoPtr->BuddyType = BUDDY_TYPE_UNKNOWN;
         if (GetClassNameW(bud, buddyClass, COUNT_OF(buddyClass))) {
@@ -590,15 +583,9 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
                 infoPtr->BuddyType = BUDDY_TYPE_LISTBOX;
         }
 
-        if (infoPtr->dwStyle & UDS_ARROWKEYS) {
-            /* Note that I don't clear the BUDDY_SUPERCLASS_WNDPROC property
-               when we reset the upDown ctrl buddy to another buddy because it is not
-               good to break the window proc chain. */
-            if (!GetPropW(bud, BUDDY_SUPERCLASS_WNDPROC)) {
-                baseWndProc = (WNDPROC)SetWindowLongPtrW(bud, GWLP_WNDPROC, (LPARAM)UPDOWN_Buddy_SubclassProc);
-                SetPropW(bud, BUDDY_SUPERCLASS_WNDPROC, baseWndProc);
-            }
-        }
+        if (infoPtr->dwStyle & UDS_ARROWKEYS)
+            SetWindowSubclass(bud, UPDOWN_Buddy_SubclassProc, BUDDY_SUBCLASSID,
+                              (DWORD_PTR)infoPtr->Self);
 
         /* Get the rect of the buddy relative to its parent */
         GetWindowRect(infoPtr->Buddy, &budRect);
@@ -892,8 +879,9 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	case WM_DESTROY:
 	    Free (infoPtr->AccelVect);
 
-	    if(infoPtr->Buddy) RemovePropW(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
-
+	    if (infoPtr->Buddy)
+	       RemoveWindowSubclass(infoPtr->Buddy, UPDOWN_Buddy_SubclassProc,
+	                            BUDDY_SUBCLASSID);
 	    Free (infoPtr);
 	    SetWindowLongPtrW (hwnd, 0, 0);
             theme = GetWindowTheme (hwnd);
