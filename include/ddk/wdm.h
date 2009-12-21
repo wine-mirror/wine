@@ -59,6 +59,11 @@ typedef struct _KEVENT {
   DISPATCHER_HEADER  Header;
 } KEVENT, *PKEVENT, *RESTRICTED_POINTER PRKEVENT;
 
+typedef struct _KSEMAPHORE {
+  DISPATCHER_HEADER  Header;
+  LONG Limit;
+} KSEMAPHORE, *PKSEMAPHORE, *PRKSEMAPHORE;
+
 typedef struct _KDPC {
   CSHORT  Type;
   UCHAR  Number;

@@ -551,7 +551,7 @@
 @ stub KeInitializeMutant
 @ stdcall KeInitializeMutex(ptr long)
 @ stub KeInitializeQueue
-@ stub KeInitializeSemaphore
+@ stdcall KeInitializeSemaphore(ptr long long)
 @ stdcall KeInitializeSpinLock(ptr)
 @ stdcall KeInitializeTimer(ptr)
 @ stdcall KeInitializeTimerEx(ptr long)
