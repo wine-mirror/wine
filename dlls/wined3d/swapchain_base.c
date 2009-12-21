@@ -27,23 +27,23 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DSwapChain IUnknown parts follow: */
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj)
+HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, void **object)
 {
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DSwapChain)){
-        IWineD3DSwapChain_AddRef(iface);
-        if(ppobj == NULL){
-            ERR("Query interface called but now data allocated\n");
-            return E_NOINTERFACE;
-        }
-        *ppobj = This;
-        return WINED3D_OK;
-        }
-        *ppobj = NULL;
-        return E_NOINTERFACE;
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DSwapChain)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
 }
 
 ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
