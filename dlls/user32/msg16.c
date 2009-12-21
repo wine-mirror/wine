@@ -163,7 +163,8 @@ static WNDPROC16 alloc_win16_thunk( WNDPROC handle )
     WINPROC_THUNK *thunk;
     UINT index = LOWORD( handle );
 
-    if (index >= MAX_WINPROCS32) return (WNDPROC16)handle;  /* already a 16-bit proc */
+    if (index >= MAX_WINPROCS32)  /* already a 16-bit proc */
+        return winproc16_array[index - MAX_WINPROCS32];
 
     if (!thunk_array)  /* allocate the array and its selector */
     {
