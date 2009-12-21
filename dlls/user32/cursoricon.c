@@ -1557,8 +1557,12 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
  */
 HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 {
-    TRACE_(icon)("%04x %04x\n", hInstance, hIcon );
-    return HICON_16(CURSORICON_Copy(hInstance, HICON_32(hIcon)));
+    CURSORICONINFO *info = GlobalLock16( hIcon );
+    void *and_bits = info + 1;
+    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
+    GlobalUnlock16( hIcon );
+    return ret;
 }
 
 
@@ -1577,9 +1581,14 @@ HICON WINAPI CopyIcon( HICON hIcon )
  */
 HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 {
-    TRACE_(cursor)("%04x %04x\n", hInstance, hCursor );
-    return HICON_16(CURSORICON_Copy(hInstance, HCURSOR_32(hCursor)));
+    CURSORICONINFO *info = GlobalLock16( hCursor );
+    void *and_bits = info + 1;
+    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
+    GlobalUnlock16( hCursor );
+    return ret;
 }
+
 
 /**********************************************************************
  *		DestroyIcon32 (USER.610)
