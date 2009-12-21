@@ -3980,7 +3980,7 @@ TOOLBAR_ReplaceBitmap (TOOLBAR_INFO *infoPtr, const TBREPLACEBITMAP *lpReplace)
         FIXME("changing standard bitmaps not implemented\n");
         return FALSE;
     }
-    else if (lpReplace->hInstOld != 0)
+    else if (lpReplace->hInstOld != 0 && lpReplace->hInstOld != lpReplace->hInstNew)
         FIXME("resources not in the current module not implemented\n");
 
     TRACE("To be replaced hInstOld %p nIDOld %lx\n", lpReplace->hInstOld, lpReplace->nIDOld);
