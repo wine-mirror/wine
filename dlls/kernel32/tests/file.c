@@ -202,6 +202,8 @@ static void test__hwrite( void )
 
     ret = DeleteFileA( filename );
     ok( ret != 0, "DeleteFile failed (%d)\n", GetLastError(  ) );
+
+    LocalFree( contents );
 }
 
 
@@ -563,6 +565,8 @@ static void test__lwrite( void )
 
     ret = DeleteFileA( filename );
     ok( ret, "DeleteFile failed (%d)\n", GetLastError(  ) );
+
+    LocalFree( contents );
 }
 
 static void test_CopyFileA(void)
