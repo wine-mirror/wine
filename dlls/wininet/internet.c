@@ -2282,11 +2282,11 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
       {
         if (!lpwhh)
         {
-            INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
             return FALSE;
         }
         WININET_Release(lpwhh);
-        INTERNET_SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
+        SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
         return FALSE;
       }
     case INTERNET_OPTION_HTTP_VERSION:
@@ -2373,37 +2373,37 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 	 break;
     case INTERNET_OPTION_HTTP_DECODING:
         FIXME("INTERNET_OPTION_HTTP_DECODING; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     case INTERNET_OPTION_COOKIES_3RD_PARTY:
         FIXME("INTERNET_OPTION_COOKIES_3RD_PARTY; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     case INTERNET_OPTION_SEND_UTF8_SERVERNAME_TO_PROXY:
         FIXME("INTERNET_OPTION_SEND_UTF8_SERVERNAME_TO_PROXY; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     case INTERNET_OPTION_CODEPAGE_PATH:
         FIXME("INTERNET_OPTION_CODEPAGE_PATH; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     case INTERNET_OPTION_CODEPAGE_EXTRA:
         FIXME("INTERNET_OPTION_CODEPAGE_EXTRA; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     case INTERNET_OPTION_IDN:
         FIXME("INTERNET_OPTION_IDN; STUB\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     default:
         FIXME("Option %d STUB\n",dwOption);
-        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     }
@@ -2510,7 +2510,7 @@ BOOL WINAPI InternetSetOptionExW(HINTERNET hInternet, DWORD dwOption,
     FIXME("Flags %08x ignored\n", dwFlags);
     if( dwFlags & ~ISO_VALID_FLAGS )
     {
-        INTERNET_SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     return InternetSetOptionW( hInternet, dwOption, lpBuffer, dwBufferLength );
