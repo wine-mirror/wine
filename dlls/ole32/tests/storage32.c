@@ -999,7 +999,9 @@ static void test_streamenum(void)
     /* the storage is left open until the enumerator is freed */
     r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE |
                             STGM_READWRITE |STGM_TRANSACTED, NULL, 0, &stg);
-    ok(r==STG_E_SHAREVIOLATION, "StgCreateDocfile failed, res=%x\n", r);
+    ok(r==STG_E_SHAREVIOLATION ||
+       r==STG_E_LOCKVIOLATION, /* XP-SP2/W2K3-SP1 and below */
+       "StgCreateDocfile failed, res=%x\n", r);
 
     r = IEnumSTATSTG_Release(ee);
     ok (r == 0, "enum not released\n");
