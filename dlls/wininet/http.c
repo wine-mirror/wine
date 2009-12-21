@@ -3770,7 +3770,7 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
 
     if (lpBuffersOut)
     {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
