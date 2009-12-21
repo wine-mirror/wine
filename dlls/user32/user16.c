@@ -132,6 +132,29 @@ static void logfont_32_to_16( const LOGFONTA* font32, LPLOGFONT16 font16 )
     lstrcpynA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
+static int get_bitmap_width_bytes( int width, int bpp )
+{
+    switch(bpp)
+    {
+    case 1:
+        return 2 * ((width+15) / 16);
+    case 4:
+        return 2 * ((width+3) / 4);
+    case 24:
+        width *= 3;
+        /* fall through */
+    case 8:
+        return width + (width & 1);
+    case 16:
+    case 15:
+        return width * 2;
+    case 32:
+        return width * 4;
+    default:
+        WARN("Unknown depth %d, please report.\n", bpp );
+    }
+    return -1;
+}
 
 /***********************************************************************
  * Helper for wsprintf16
@@ -1463,6 +1486,18 @@ BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
 }
 
 
+/**********************************************************************
+ *              LoadCursorIconHandler (USER.336)
+ *
+ * Supposed to load resources of Windows 2.x applications.
+ */
+HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    FIXME("(%04x,%04x,%04x): old 2.x resources are not supported!\n", hResource, hModule, hRsrc);
+    return 0;
+}
+
+
 /***********************************************************************
  *		GetMouseEventProc (USER.337)
  */
@@ -1534,6 +1569,46 @@ BOOL16 WINAPI DCHook16( HDC16 hdc, WORD code, DWORD data, LPARAM lParam )
 {
     FIXME( "hDC = %x, %i: stub\n", hdc, code );
     return FALSE;
+}
+
+
+/**********************************************************************
+ *		LookupIconIdFromDirectoryEx (USER.364)
+ *
+ * FIXME: exact parameter sizes
+ */
+INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE dir, BOOL16 bIcon,
+                                            INT16 width, INT16 height, UINT16 cFlag )
+{
+    return LookupIconIdFromDirectoryEx( dir, bIcon, width, height, cFlag );
+}
+
+
+/***********************************************************************
+ *		CopyIcon (USER.368)
+ */
+HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
+{
+    CURSORICONINFO *info = GlobalLock16( hIcon );
+    void *and_bits = info + 1;
+    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
+    GlobalUnlock16( hIcon );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		CopyCursor (USER.369)
+ */
+HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
+{
+    CURSORICONINFO *info = GlobalLock16( hCursor );
+    void *and_bits = info + 1;
+    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
+    GlobalUnlock16( hCursor );
+    return ret;
 }
 
 
@@ -1684,6 +1759,58 @@ HCURSOR16 WINAPI CreateCursor16(HINSTANCE16 hInstance,
   info.bBitsPerPixel = 1;
 
   return CreateCursorIconIndirect16(hInstance, &info, lpANDbits, lpXORbits);
+}
+
+
+/***********************************************************************
+ *		CreateIcon (USER.407)
+ */
+HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
+                             INT16 nHeight, BYTE bPlanes, BYTE bBitsPixel,
+                             LPCVOID lpANDbits, LPCVOID lpXORbits )
+{
+    static const WORD ICON_HOTSPOT = 0x4242;
+    CURSORICONINFO info;
+
+    info.ptHotSpot.x = ICON_HOTSPOT;
+    info.ptHotSpot.y = ICON_HOTSPOT;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = bPlanes;
+    info.bBitsPerPixel = bBitsPixel;
+
+    return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
+}
+
+
+/***********************************************************************
+ *		CreateCursorIconIndirect (USER.408)
+ */
+HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
+                                           CURSORICONINFO *info,
+                                           LPCVOID lpANDbits,
+                                           LPCVOID lpXORbits )
+{
+    HGLOBAL16 handle;
+    char *ptr;
+    int sizeAnd, sizeXor;
+
+    hInstance = GetExePtr( hInstance );  /* Make it a module handle */
+    if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
+    info->nWidthBytes = get_bitmap_width_bytes(info->nWidth,info->bBitsPerPixel);
+    sizeXor = info->nHeight * info->nWidthBytes;
+    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
+                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
+        return 0;
+    FarSetOwner16( handle, hInstance );
+    ptr = GlobalLock16( handle );
+    memcpy( ptr, info, sizeof(*info) );
+    memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
+    memcpy( ptr + sizeof(CURSORICONINFO) + sizeAnd, lpXORbits, sizeXor );
+    GlobalUnlock16( handle );
+    return handle;
 }
 
 
@@ -2036,6 +2163,37 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style, BOOL16 menu, DWO
 }
 
 
+/**********************************************************************
+ *              GetIconID (USER.455)
+ */
+WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
+{
+    BYTE *dir = GlobalLock16(hResource);
+
+    switch (resType)
+    {
+    case RT_CURSOR:
+        return LookupIconIdFromDirectoryEx16( dir, FALSE, GetSystemMetrics(SM_CXCURSOR),
+                                              GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME );
+    case RT_ICON:
+        return LookupIconIdFromDirectoryEx16( dir, TRUE, GetSystemMetrics(SM_CXICON),
+                                              GetSystemMetrics(SM_CYICON), 0 );
+    }
+    return 0;
+}
+
+
+/**********************************************************************
+ *              LoadIconHandler (USER.456)
+ */
+HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
+{
+    LPBYTE bits = LockResource16( hResource );
+    return HICON_16(CreateIconFromResourceEx( bits, 0, TRUE,
+                                              bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR));
+}
+
+
 /***********************************************************************
  *		DestroyIcon (USER.457)
  */
@@ -2051,6 +2209,26 @@ BOOL16 WINAPI DestroyCursor16(HCURSOR16 hCursor)
 {
   return DestroyIcon32(hCursor, 0);
 }
+
+
+/***********************************************************************
+ *		DumpIcon (USER.459)
+ */
+DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
+                       SEGPTR *lpXorBits, SEGPTR *lpAndBits )
+{
+    CURSORICONINFO *info = MapSL( pInfo );
+    int sizeAnd, sizeXor;
+
+    if (!info) return 0;
+    sizeXor = info->nHeight * info->nWidthBytes;
+    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
+    if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
+    if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;
+    return MAKELONG( sizeXor, sizeXor );
+}
+
 
 /*******************************************************************
  *			DRAG_QueryUpdate16

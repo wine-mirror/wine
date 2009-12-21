@@ -1427,30 +1427,6 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
 
 
 /***********************************************************************
- *		CreateIcon (USER.407)
- */
-HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
-                             INT16 nHeight, BYTE bPlanes, BYTE bBitsPixel,
-                             LPCVOID lpANDbits, LPCVOID lpXORbits )
-{
-    CURSORICONINFO info;
-
-    TRACE_(icon)("%dx%dx%d, xor=%p, and=%p\n",
-                  nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
-
-    info.ptHotSpot.x = ICON_HOTSPOT;
-    info.ptHotSpot.y = ICON_HOTSPOT;
-    info.nWidth = nWidth;
-    info.nHeight = nHeight;
-    info.nWidthBytes = 0;
-    info.bPlanes = bPlanes;
-    info.bBitsPerPixel = bBitsPixel;
-
-    return CreateCursorIconIndirect16( hInstance, &info, lpANDbits, lpXORbits );
-}
-
-
-/***********************************************************************
  *		CreateIcon (USER32.@)
  *
  *  Creates an icon based on the specified bitmaps. The bitmaps must be
@@ -1500,50 +1476,6 @@ HICON WINAPI CreateIcon(
 
 
 /***********************************************************************
- *		CreateCursorIconIndirect (USER.408)
- */
-HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
-                                           CURSORICONINFO *info,
-                                           LPCVOID lpANDbits,
-                                           LPCVOID lpXORbits )
-{
-    HGLOBAL16 handle;
-    char *ptr;
-    int sizeAnd, sizeXor;
-
-    hInstance = GetExePtr( hInstance );  /* Make it a module handle */
-    if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
-    info->nWidthBytes = get_bitmap_width_bytes(info->nWidth,info->bBitsPerPixel);
-    sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
-                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
-        return 0;
-    FarSetOwner16( handle, hInstance );
-    ptr = GlobalLock16( handle );
-    memcpy( ptr, info, sizeof(*info) );
-    memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
-    memcpy( ptr + sizeof(CURSORICONINFO) + sizeAnd, lpXORbits, sizeXor );
-    GlobalUnlock16( handle );
-    return handle;
-}
-
-
-/***********************************************************************
- *		CopyIcon (USER.368)
- */
-HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
-{
-    CURSORICONINFO *info = GlobalLock16( hIcon );
-    void *and_bits = info + 1;
-    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
-    GlobalUnlock16( hIcon );
-    return ret;
-}
-
-
-/***********************************************************************
  *		CopyIcon (USER32.@)
  */
 HICON WINAPI CopyIcon( HICON hIcon )
@@ -1562,20 +1494,6 @@ HICON WINAPI CopyIcon( HICON hIcon )
     GlobalUnlock16( hOld );
     GlobalUnlock16( hNew );
     return HICON_32(hNew);
-}
-
-
-/***********************************************************************
- *		CopyCursor (USER.369)
- */
-HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
-{
-    CURSORICONINFO *info = GlobalLock16( hCursor );
-    void *and_bits = info + 1;
-    void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
-    GlobalUnlock16( hCursor );
-    return ret;
 }
 
 
@@ -1790,25 +1708,6 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 }
 
 /***********************************************************************
- *		DumpIcon (USER.459)
- */
-DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
-                       SEGPTR *lpXorBits, SEGPTR *lpAndBits )
-{
-    CURSORICONINFO *info = MapSL( pInfo );
-    int sizeAnd, sizeXor;
-
-    if (!info) return 0;
-    sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-    if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
-    if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
-    if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;
-    return MAKELONG( sizeXor, sizeXor );
-}
-
-
-/***********************************************************************
  *		SetCursor (USER32.@)
  *
  * Set the cursor shape.
@@ -1914,17 +1813,6 @@ BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
 
 
 /**********************************************************************
- *		LookupIconIdFromDirectoryEx (USER.364)
- *
- * FIXME: exact parameter sizes
- */
-INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE dir, BOOL16 bIcon,
-                                            INT16 width, INT16 height, UINT16 cFlag )
-{
-    return LookupIconIdFromDirectoryEx( dir, bIcon, width, height, cFlag );
-}
-
-/**********************************************************************
  *		LookupIconIdFromDirectoryEx (USER32.@)
  */
 INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
@@ -1965,55 +1853,6 @@ INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
     return LookupIconIdFromDirectoryEx( dir, bIcon,
            bIcon ? GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXCURSOR),
            bIcon ? GetSystemMetrics(SM_CYICON) : GetSystemMetrics(SM_CYCURSOR), bIcon ? 0 : LR_MONOCHROME );
-}
-
-/**********************************************************************
- *              GetIconID (USER.455)
- */
-WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
-{
-    LPBYTE lpDir = GlobalLock16(hResource);
-
-    TRACE_(cursor)("hRes=%04x, entries=%i\n",
-                    hResource, lpDir ? ((CURSORICONDIR*)lpDir)->idCount : 0);
-
-    switch(resType)
-    {
-        case RT_CURSOR:
-             return (WORD)LookupIconIdFromDirectoryEx16( lpDir, FALSE,
-                          GetSystemMetrics(SM_CXCURSOR), GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME );
-        case RT_ICON:
-             return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
-                          GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), 0 );
-        default:
-             WARN_(cursor)("invalid res type %d\n", resType );
-    }
-    return 0;
-}
-
-/**********************************************************************
- *              LoadCursorIconHandler (USER.336)
- *
- * Supposed to load resources of Windows 2.x applications.
- */
-HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    FIXME_(cursor)("(%04x,%04x,%04x): old 2.x resources are not supported!\n",
-          hResource, hModule, hRsrc);
-    return 0;
-}
-
-/**********************************************************************
- *              LoadIconHandler (USER.456)
- */
-HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
-{
-    LPBYTE bits = LockResource16( hResource );
-
-    TRACE_(cursor)("hRes=%04x\n",hResource);
-
-    return HICON_16(CreateIconFromResourceEx( bits, 0, TRUE,
-                      bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR));
 }
 
 /***********************************************************************
