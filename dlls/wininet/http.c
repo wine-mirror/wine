@@ -4000,8 +4000,7 @@ lend:
         WININET_Release( &lpwhr->hdr );
 
     TRACE("<---\n");
-    if(res != ERROR_SUCCESS)
-        SetLastError(res);
+    SetLastError(res);
     return res == ERROR_SUCCESS;
 }
 
@@ -4089,8 +4088,7 @@ lend:
     if( lpwhr )
         WININET_Release( &lpwhr->hdr );
 
-    if(res != ERROR_SUCCESS)
-        SetLastError(res);
+    SetLastError(res);
     return res == ERROR_SUCCESS;
 }
 

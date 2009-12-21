@@ -971,8 +971,7 @@ static void HttpSendRequestEx_test(void)
     HINTERNET hRequest;
 
     INTERNET_BUFFERS BufferIn;
-    DWORD dwBytesWritten;
-    DWORD dwBytesRead;
+    DWORD dwBytesWritten, dwBytesRead, error;
     CHAR szBuffer[256];
     int i;
     BOOL ret;
@@ -1008,8 +1007,11 @@ static void HttpSendRequestEx_test(void)
     BufferIn.dwOffsetLow = 0;
     BufferIn.dwOffsetHigh = 0;
 
+    SetLastError(0xdeadbeef);
     ret = HttpSendRequestEx(hRequest, &BufferIn, NULL, 0 ,0);
-    ok(ret, "HttpSendRequestEx Failed with error %u\n", GetLastError());
+    error = GetLastError();
+    ok(ret, "HttpSendRequestEx Failed with error %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     for (i = 3; szPostData[i]; i++)
         ok(InternetWriteFile(hRequest, &szPostData[i], 1, &dwBytesWritten),
@@ -1752,7 +1754,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
 static void test_basic_request(int port, const char *verb, const char *url)
 {
     HINTERNET hi, hc, hr;
-    DWORD r, count;
+    DWORD r, count, error;
     char buffer[0x100];
 
     hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -1764,8 +1766,11 @@ static void test_basic_request(int port, const char *verb, const char *url)
     hr = HttpOpenRequest(hc, verb, url, NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
+    SetLastError(0xdeadbeef);
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    error = GetLastError();
     ok(r, "HttpSendRequest failed\n");
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
