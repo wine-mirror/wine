@@ -61,6 +61,8 @@
 
 static HWND parent_wnd, g_edit;
 
+static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
+
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static const struct message add_updown_with_edit_seq[] = {
@@ -436,7 +438,9 @@ static void test_updown_pos32(void)
 
 static void test_updown_buddy(void)
 {
-    HWND updown, buddyReturn;
+    HWND updown, buddyReturn, buddy;
+    WNDPROC proc;
+    DWORD style;
 
     updown = create_updown_control(UDS_ALIGNRIGHT, g_edit);
 
@@ -455,6 +459,35 @@ static void test_updown_buddy(void)
     ok_sequence(sequences, EDIT_SEQ_INDEX, add_updown_with_edit_seq, "test updown buddy_edit", FALSE);
 
     DestroyWindow(updown);
+
+    buddy = create_edit_control();
+    proc  = (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC);
+
+    updown= create_updown_control(UDS_ALIGNRIGHT, buddy);
+    ok(proc == (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC), "No subclassing expected\n");
+
+    style = GetWindowLongA(updown, GWL_STYLE);
+    SetWindowLongA(updown, GWL_STYLE, style | UDS_ARROWKEYS);
+    style = GetWindowLongA(updown, GWL_STYLE);
+    ok(style & UDS_ARROWKEYS, "Expected UDS_ARROWKEYS\n");
+    /* no subclass if UDS_ARROWKEYS set after creation */
+    ok(proc == (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC), "No subclassing expected\n");
+
+    DestroyWindow(updown);
+
+    updown= create_updown_control(UDS_ALIGNRIGHT | UDS_ARROWKEYS, buddy);
+    ok(proc != (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC), "Subclassing expected\n");
+
+    if (pSetWindowSubclass)
+    {
+        /* updown uses subclass helpers for buddy on >5.8x systems */
+        todo_wine
+            ok(GetPropA(buddy, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
+    }
+
+    DestroyWindow(updown);
+
+    DestroyWindow(buddy);
 }
 
 static void test_updown_base(void)
@@ -687,6 +720,10 @@ static void test_UDS_SETBUDDYINT(void)
 
 START_TEST(updown)
 {
+    HMODULE mod = GetModuleHandleA("comctl32.dll");
+
+    pSetWindowSubclass = (void*)GetProcAddress(mod, (LPSTR)410);
+
     InitCommonControls();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
