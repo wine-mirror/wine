@@ -1536,8 +1536,11 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     if (index == -1 || index >= MAX_WINPROCS32)
         call_window_proc16( hwnd, msg, wParam, lParam, &result, func );
     else
-        WINPROC_CallProc16To32A( call_window_proc_callback, hwnd, msg, wParam, lParam, &result,
-                                 thunk_array[index].proc );
+    {
+        WNDPROC proc = (WNDPROC)func;
+        if (thunk_array && thunk_array[index].proc) proc = thunk_array[index].proc;
+        WINPROC_CallProc16To32A( call_window_proc_callback, hwnd, msg, wParam, lParam, &result, proc );
+    }
     return result;
 }
 
