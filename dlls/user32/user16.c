@@ -33,6 +33,7 @@
 #include "user_private.h"
 #include "win.h"
 #include "controls.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(user);
@@ -244,6 +245,62 @@ static INT parse_format( LPCSTR format, WPRINTF_FORMAT *res )
         break;
     }
     return (INT)(p - format) + 1;
+}
+
+
+/**********************************************************************
+ * Management of the 16-bit cursor/icon cache
+ */
+
+struct cache_entry
+{
+    struct list entry;
+    HINSTANCE16 inst;
+    HRSRC16     rsrc;
+    HRSRC16     group;
+    HICON16     icon;
+    INT         count;
+};
+
+static struct list icon_cache = LIST_INIT( icon_cache );
+
+static void add_shared_icon( HINSTANCE16 inst, HRSRC16 rsrc, HRSRC16 group, HICON16 icon )
+{
+    struct cache_entry *cache = HeapAlloc( GetProcessHeap(), 0, sizeof(*cache) );
+
+    if (!cache) return;
+    cache->inst  = inst;
+    cache->rsrc  = rsrc;
+    cache->group = group;
+    cache->icon  = icon;
+    cache->count = 1;
+    list_add_tail( &icon_cache, &cache->entry );
+}
+
+static HICON16 find_shared_icon( HINSTANCE16 inst, HRSRC16 rsrc )
+{
+    struct cache_entry *cache;
+
+    LIST_FOR_EACH_ENTRY( cache, &icon_cache, struct cache_entry, entry )
+    {
+        if (cache->inst != inst || cache->rsrc != rsrc) continue;
+        cache->count++;
+        return cache->icon;
+    }
+    return 0;
+}
+
+static int release_shared_icon( HICON16 icon )
+{
+    struct cache_entry *cache;
+
+    LIST_FOR_EACH_ENTRY( cache, &icon_cache, struct cache_entry, entry )
+    {
+        if (cache->icon != icon) continue;
+        if (!cache->count) return 0;
+        return --cache->count;
+    }
+    return -1;
 }
 
 
@@ -755,7 +812,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
  */
 HCURSOR16 WINAPI LoadCursor16(HINSTANCE16 hInstance, LPCSTR name)
 {
-  return HCURSOR_16(LoadCursorA(HINSTANCE_32(hInstance), name));
+    return LoadImage16( hInstance, name, IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE );
 }
 
 
@@ -764,7 +821,7 @@ HCURSOR16 WINAPI LoadCursor16(HINSTANCE16 hInstance, LPCSTR name)
  */
 HICON16 WINAPI LoadIcon16(HINSTANCE16 hInstance, LPCSTR name)
 {
-  return HICON_16(LoadIconA(HINSTANCE_32(hInstance), name));
+    return LoadImage16( hInstance, name, IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE );
 }
 
 /**********************************************************************
@@ -1685,11 +1742,67 @@ DWORD WINAPI GetMenuContextHelpId16( HMENU16 hMenu )
  *		LoadImage (USER.389)
  *
  */
-HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type,
-			    INT16 desiredx, INT16 desiredy, UINT16 loadflags)
+HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 cx, INT16 cy, UINT16 flags)
 {
-  return HANDLE_16(LoadImageA(HINSTANCE_32(hinst), name, type, desiredx,
-			      desiredy, loadflags));
+    if (!hinst || (flags & LR_LOADFROMFILE))
+        return HICON_16( LoadImageA( 0, name, type, cx, cy, flags ));
+
+    hinst = GetExePtr( hinst );
+
+    if (flags & LR_DEFAULTSIZE)
+    {
+        if (type == IMAGE_ICON)
+        {
+            if (!cx) cx = GetSystemMetrics(SM_CXICON);
+            if (!cy) cy = GetSystemMetrics(SM_CYICON);
+        }
+        else if (type == IMAGE_CURSOR)
+        {
+            if (!cx) cx = GetSystemMetrics(SM_CXCURSOR);
+            if (!cy) cy = GetSystemMetrics(SM_CYCURSOR);
+        }
+    }
+
+    switch (type)
+    {
+    case IMAGE_BITMAP:
+        return HBITMAP_16( LoadImageA( HINSTANCE_32(hinst), name, type, cx, cy, flags ));
+
+    case IMAGE_ICON:
+    case IMAGE_CURSOR:
+    {
+        HANDLE16 handle;
+        HICON16 hIcon = 0;
+        HRSRC16 hRsrc, hGroupRsrc;
+        BYTE *dir, *bits;
+        INT id = 0;
+
+        if (!(hRsrc = FindResource16( hinst, name,
+                                      (LPCSTR)(type == IMAGE_ICON ? RT_GROUP_ICON : RT_GROUP_CURSOR ))))
+            return 0;
+        hGroupRsrc = hRsrc;
+
+        if (!(handle = LoadResource16( hinst, hRsrc ))) return 0;
+        if ((dir = LockResource16( handle ))) id = LookupIconIdFromDirectory( dir, type == IMAGE_ICON );
+        FreeResource16( handle );
+        if (!id) return 0;
+
+        if (!(hRsrc = FindResource16( hinst, MAKEINTRESOURCEA(id),
+                                      (LPCSTR)(type == IMAGE_ICON ? RT_ICON : RT_CURSOR) ))) return 0;
+
+        if ((flags & LR_SHARED) && (hIcon = find_shared_icon( hinst, hRsrc ) ) != 0) return hIcon;
+
+        if (!(handle = LoadResource16( hinst, hRsrc ))) return 0;
+        bits = LockResource16( handle );
+        hIcon = CreateIconFromResourceEx16( bits, 0, type == IMAGE_ICON, 0x00030000, cx, cy, flags );
+        FreeResource16( handle );
+
+        if (hIcon && (flags & LR_SHARED)) add_shared_icon( hinst, hRsrc, hGroupRsrc, hIcon );
+        return hIcon;
+    }
+    default:
+        return 0;
+    }
 }
 
 /******************************************************************************
@@ -2199,7 +2312,15 @@ HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
  */
 BOOL16 WINAPI DestroyIcon16(HICON16 hIcon)
 {
-  return DestroyIcon32(hIcon, 0);
+    int count;
+
+    TRACE("%04x\n", hIcon );
+
+    count = release_shared_icon( hIcon );
+    if (count != -1) return !count;
+    /* assume non-shared */
+    GlobalFree16( hIcon );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2207,7 +2328,7 @@ BOOL16 WINAPI DestroyIcon16(HICON16 hIcon)
  */
 BOOL16 WINAPI DestroyCursor16(HCURSOR16 hCursor)
 {
-  return DestroyIcon32(hCursor, 0);
+    return DestroyIcon16( hCursor );
 }
 
 
