@@ -2218,24 +2218,24 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         }
         else
         {
-            HDC hdc, hdc_mem;
-            HBITMAP hbmp_old, hbmp_mem_old, hbmp_mono;
+            HDC hdc_mem, hdc_mem2;
+            HBITMAP hbmp_mem_old, hbmp_mem2_old, hbmp_mono;
 
-            hdc = GetDC( 0 );
-            hdc_mem = CreateCompatibleDC( hdc );
+            hdc_mem = CreateCompatibleDC( 0 );
+            hdc_mem2 = CreateCompatibleDC( 0 );
 
             hbmp_mono = CreateBitmap( bmpAnd.bmWidth, bmpAnd.bmHeight, 1, 1, NULL );
 
-            hbmp_old = SelectObject( hdc, iconinfo->hbmMask );
-            hbmp_mem_old = SelectObject( hdc_mem, hbmp_mono );
+            hbmp_mem_old = SelectObject( hdc_mem, iconinfo->hbmMask );
+            hbmp_mem2_old = SelectObject( hdc_mem2, hbmp_mono );
 
-            BitBlt( hdc_mem, 0, 0, bmpAnd.bmWidth, bmpAnd.bmHeight, hdc, 0, 0, SRCCOPY );
+            BitBlt( hdc_mem2, 0, 0, bmpAnd.bmWidth, bmpAnd.bmHeight, hdc_mem, 0, 0, SRCCOPY );
 
-            SelectObject( hdc, hbmp_old );
             SelectObject( hdc_mem, hbmp_mem_old );
+            SelectObject( hdc_mem2, hbmp_mem2_old );
 
             DeleteDC( hdc_mem );
-            ReleaseDC( 0, hdc );
+            DeleteDC( hdc_mem2 );
 
             GetBitmapBits( hbmp_mono, sizeAnd, info + 1 );
             DeleteObject( hbmp_mono );
