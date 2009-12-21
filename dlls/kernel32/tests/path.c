@@ -57,6 +57,9 @@ static DWORD (WINAPI *pGetLongPathNameW)(LPWSTR,LPWSTR,DWORD);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathA)(LPCSTR);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
 
+static DWORD (WINAPI *pSearchPathA)(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
+static DWORD (WINAPI *pSearchPathW)(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
+
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
   DWORD shortlen;
@@ -1456,6 +1459,76 @@ static void test_drive_letter_case(void)
 #undef is_upper_case_letter
 }
 
+static void test_SearchPathA(void)
+{
+    CHAR pathA[MAX_PATH], fileA[] = "", buffA[MAX_PATH];
+    CHAR *ptrA = NULL;
+    DWORD ret;
+
+    if (!pSearchPathA)
+    {
+        win_skip("SearchPathA isn't available\n");
+        return;
+    }
+
+    GetWindowsDirectoryA(pathA, sizeof(pathA)/sizeof(CHAR));
+
+    /* NULL filename */
+    SetLastError(0xdeadbeef);
+    ret = pSearchPathA(pathA, NULL, NULL, sizeof(buffA)/sizeof(CHAR), buffA, &ptrA);
+    ok(ret == 0, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+
+    /* empty filename */
+    SetLastError(0xdeadbeef);
+    ret = pSearchPathA(pathA, fileA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, &ptrA);
+    ok(ret == 0, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* win9x */,
+      "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+}
+
+static void test_SearchPathW(void)
+{
+    WCHAR pathW[MAX_PATH], fileW[] = { 0 }, buffW[MAX_PATH];
+    WCHAR *ptrW = NULL;
+    DWORD ret;
+
+    if (!pSearchPathW)
+    {
+        win_skip("SearchPathW isn't available\n");
+        return;
+    }
+
+    /* SearchPathW is a stub on win9x and doesn't return sane error,
+       so quess if it's implemented indirectly */
+    SetLastError(0xdeadbeef);
+    GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SearchPathW not implemented\n");
+        return;
+    }
+
+if (0)
+{
+    /* NULL filename, crashes on nt4 */
+    SetLastError(0xdeadbeef);
+    ret = pSearchPathW(pathW, NULL, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+}
+
+    /* empty filename */
+    SetLastError(0xdeadbeef);
+    ret = pSearchPathW(pathW, fileW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+}
+
 static void init_pointers(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -1465,6 +1538,8 @@ static void init_pointers(void)
     MAKEFUNC(GetLongPathNameW);
     MAKEFUNC(NeedCurrentDirectoryForExePathA);
     MAKEFUNC(NeedCurrentDirectoryForExePathW);
+    MAKEFUNC(SearchPathA);
+    MAKEFUNC(SearchPathW);
 #undef MAKEFUNC
 }
 
@@ -1493,4 +1568,6 @@ START_TEST(path)
     test_NeedCurrentDirectoryForExePathA();
     test_NeedCurrentDirectoryForExePathW();
     test_drive_letter_case();
+    test_SearchPathA();
+    test_SearchPathW();
 }

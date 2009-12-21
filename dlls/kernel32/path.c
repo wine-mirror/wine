@@ -758,6 +758,12 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
 {
     DWORD ret = 0;
 
+    if (!name || !name[0])
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
     /* If the name contains an explicit path, ignore the path */
 
     if (contains_pathW(name))
@@ -827,11 +833,17 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
 DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
                           DWORD buflen, LPSTR buffer, LPSTR *lastpart )
 {
-    WCHAR *pathW = NULL, *nameW = NULL, *extW = NULL;
+    WCHAR *pathW = NULL, *nameW, *extW = NULL;
     WCHAR bufferW[MAX_PATH];
     DWORD ret;
 
-    if (!name || !(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
+    if (!name)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
     if (path && !(pathW = FILE_name_AtoW( path, TRUE ))) return 0;
     
     if (ext && !(extW = FILE_name_AtoW( ext, TRUE )))
