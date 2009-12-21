@@ -1257,29 +1257,6 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     return hIcon;
 }
 
-/***********************************************************************
- *           CURSORICON_Copy
- *
- * Make a copy of a cursor or icon.
- */
-static HICON CURSORICON_Copy( HINSTANCE16 hInst16, HICON hIcon )
-{
-    char *ptrOld, *ptrNew;
-    int size;
-    HICON16 hOld = HICON_16(hIcon);
-    HICON16 hNew;
-
-    if (!(ptrOld = GlobalLock16( hOld ))) return 0;
-    if (hInst16 && !(hInst16 = GetExePtr( hInst16 ))) return 0;
-    size = GlobalSize16( hOld );
-    hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
-    FarSetOwner16( hNew, hInst16 );
-    ptrNew = GlobalLock16( hNew );
-    memcpy( ptrNew, ptrOld, size );
-    GlobalUnlock16( hOld );
-    GlobalUnlock16( hNew );
-    return HICON_32(hNew);
-}
 
 /*************************************************************************
  * CURSORICON_ExtCopy
@@ -1329,7 +1306,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
         */
         if(pIconCache == NULL)
         {
-            hNew = CURSORICON_Copy(0, hIcon);
+            hNew = CopyIcon( hIcon );
             if(nFlags & LR_COPYFROMRESOURCE)
             {
                 TRACE_(icon)("LR_COPYFROMRESOURCE: Failed to load from cache\n");
@@ -1418,7 +1395,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
             FreeResource(hMem);
         }
     }
-    else hNew = CURSORICON_Copy(0, hIcon);
+    else hNew = CopyIcon( hIcon );
     return hNew;
 }
 
@@ -1571,8 +1548,20 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
  */
 HICON WINAPI CopyIcon( HICON hIcon )
 {
-    TRACE_(icon)("%p\n", hIcon );
-    return CURSORICON_Copy( 0, hIcon );
+    char *ptrOld, *ptrNew;
+    int size;
+    HICON16 hOld = HICON_16(hIcon);
+    HICON16 hNew;
+
+    if (!(ptrOld = GlobalLock16( hOld ))) return 0;
+    size = GlobalSize16( hOld );
+    hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
+    FarSetOwner16( hNew, 0 );
+    ptrNew = GlobalLock16( hNew );
+    memcpy( ptrNew, ptrOld, size );
+    GlobalUnlock16( hOld );
+    GlobalUnlock16( hNew );
+    return HICON_32(hNew);
 }
 
 
