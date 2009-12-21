@@ -50,9 +50,11 @@ static BOOL use_gecko_script(LPCWSTR url)
 {
     static const WCHAR fileW[] = {'f','i','l','e',':'};
     static const WCHAR aboutW[] = {'a','b','o','u','t',':'};
+    static const WCHAR resW[] = {'r','e','s',':'};
 
     return strncmpiW(fileW, url, sizeof(fileW)/sizeof(WCHAR))
-        && strncmpiW(aboutW, url, sizeof(aboutW)/sizeof(WCHAR));
+        && strncmpiW(aboutW, url, sizeof(aboutW)/sizeof(WCHAR))
+        && strncmpiW(resW, url, sizeof(resW)/sizeof(WCHAR));
 }
 
 void set_current_mon(HTMLWindow *This, IMoniker *mon)
