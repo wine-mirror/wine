@@ -1431,20 +1431,21 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
                                  INT nWidth, INT nHeight,
                                  LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    CURSORICONINFO info;
+    ICONINFO info;
+    HCURSOR hCursor;
 
     TRACE_(cursor)("%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
 
-    info.ptHotSpot.x = xHotSpot;
-    info.ptHotSpot.y = yHotSpot;
-    info.nWidth = nWidth;
-    info.nHeight = nHeight;
-    info.nWidthBytes = 0;
-    info.bPlanes = 1;
-    info.bBitsPerPixel = 1;
-
-    return HICON_32(CreateCursorIconIndirect16(0, &info, lpANDbits, lpXORbits));
+    info.fIcon = FALSE;
+    info.xHotspot = xHotSpot;
+    info.yHotspot = yHotSpot;
+    info.hbmMask = CreateBitmap( nWidth, nHeight, 1, 1, lpANDbits );
+    info.hbmColor = CreateBitmap( nWidth, nHeight, 1, 1, lpXORbits );
+    hCursor = CreateIconIndirect( &info );
+    DeleteObject( info.hbmMask );
+    DeleteObject( info.hbmColor );
+    return hCursor;
 }
 
 
