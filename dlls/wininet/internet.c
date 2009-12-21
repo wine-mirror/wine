@@ -3141,7 +3141,7 @@ static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
  * RETURNS
  *
  */
-BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
+DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 {
     BOOL bSuccess;
     LPWORKREQUEST lpNewRequest;
@@ -3150,7 +3150,7 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 
     lpNewRequest = HeapAlloc(GetProcessHeap(), 0, sizeof(WORKREQUEST));
     if (!lpNewRequest)
-        return FALSE;
+        return ERROR_OUTOFMEMORY;
 
     *lpNewRequest = *lpWorkRequest;
 
@@ -3158,10 +3158,10 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
     if (!bSuccess)
     {
         HeapFree(GetProcessHeap(), 0, lpNewRequest);
-        INTERNET_SetLastError(ERROR_INTERNET_ASYNC_THREAD_FAILED);
+        return ERROR_INTERNET_ASYNC_THREAD_FAILED;
     }
 
-    return bSuccess;
+    return ERROR_SUCCESS;
 }
 
 

@@ -407,7 +407,7 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 
 void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError(void);
-BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
+DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer(void);
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 

@@ -217,6 +217,13 @@ static BOOL FTP_FtpGetFileW(ftp_session_t*, LPCWSTR lpszRemoteFile, LPCWSTR lpsz
         BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
         DWORD_PTR dwContext);
 
+/* A temporary helper until we get rid of INTERNET_GetLastError calls */
+static BOOL res_to_le(DWORD res)
+{
+    if(res != ERROR_SUCCESS)
+        INTERNET_SetLastError(res);
+    return res == ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *           FtpPutFileA (WININET.@)
@@ -319,7 +326,7 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -489,7 +496,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         req = &workRequest.u.FtpSetCurrentDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -639,7 +646,7 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         req = &workRequest.u.FtpCreateDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -1000,7 +1007,7 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
 	req->lpszDirectory = lpszCurrentDirectory;
 	req->lpdwDirectory = lpdwCurrentDirectory;
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -1658,7 +1665,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
 	req->dwFlags = dwInternetFlags;
 	req->dwContext = dwContext;
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -1847,7 +1854,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
         req = &workRequest.u.FtpDeleteFileW;
         req->lpszFilename = heap_strdupW(lpszFileName);
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -1992,7 +1999,7 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
         req = &workRequest.u.FtpRemoveDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
@@ -2143,7 +2150,7 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
         req->lpszSrcFile = heap_strdupW(lpszSrc);
         req->lpszDestFile = heap_strdupW(lpszDest);
 
-	r = INTERNET_AsyncCall(&workRequest);
+	r = res_to_le(INTERNET_AsyncCall(&workRequest));
     }
     else
     {
