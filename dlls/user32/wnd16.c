@@ -21,6 +21,7 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "win.h"
+#include "controls.h"
 #include "user_private.h"
 #include "wine/server.h"
 
@@ -1785,6 +1786,65 @@ BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
     rcTo32.right    = lprcTo->right;
     rcTo32.bottom   = lprcTo->bottom;
     return DrawAnimatedRects( WIN_Handle32(hwnd), idAni, &rcFrom32, &rcTo32 );
+}
+
+
+/***********************************************************************
+ *		CreateWindowEx (USER.452)
+ */
+HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
+                                LPCSTR windowName, DWORD style, INT16 x,
+                                INT16 y, INT16 width, INT16 height,
+                                HWND16 parent, HMENU16 menu,
+                                HINSTANCE16 instance, LPVOID data )
+{
+    CREATESTRUCTA cs;
+    char buffer[256];
+    HWND hwnd;
+
+    /* Fix the coordinates */
+
+    cs.x  = (x == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)x;
+    cs.y  = (y == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)y;
+    cs.cx = (width == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)width;
+    cs.cy = (height == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)height;
+
+    /* Create the window */
+
+    cs.lpCreateParams = data;
+    cs.hInstance      = HINSTANCE_32(instance);
+    cs.hMenu          = HMENU_32(menu);
+    cs.hwndParent     = WIN_Handle32( parent );
+    cs.style          = style;
+    cs.lpszName       = windowName;
+    cs.lpszClass      = className;
+    cs.dwExStyle      = exStyle;
+
+    /* load the menu */
+    if (!menu && (style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+    {
+        WNDCLASSA class;
+        HINSTANCE16 module = GetExePtr( instance );
+
+        if (GetClassInfoA( HINSTANCE_32(module), className, &class ))
+            cs.hMenu = HMENU_32( LoadMenu16( module, class.lpszMenuName ));
+    }
+
+    if (!IS_INTRESOURCE(className))
+    {
+        WCHAR bufferW[256];
+
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
+            return 0;
+        hwnd = create_window16( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), 0 );
+    }
+    else
+    {
+        if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) )) return 0;
+        cs.lpszClass = buffer;
+        hwnd = create_window16( (CREATESTRUCTW *)&cs, (LPCWSTR)className, HINSTANCE_32(instance), 0 );
+    }
+    return HWND_16( hwnd );
 }
 
 

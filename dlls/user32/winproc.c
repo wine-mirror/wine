@@ -1152,6 +1152,7 @@ struct wow_handlers16 wow_handlers =
     MDIClientWndProc_common,
     ScrollBarWndProc_common,
     StaticWndProc_common,
+    WIN_CreateWindowEx,
     NULL,  /* call_window_proc */
     NULL   /* call_dialog_proc */
 };

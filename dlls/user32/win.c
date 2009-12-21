@@ -1465,11 +1465,11 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
         WCHAR bufferW[256];
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, bufferW, instance, WIN_ISWIN32 );
+        return wow_handlers.create_window( (CREATESTRUCTW *)&cs, bufferW, instance, WIN_ISWIN32 );
     }
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTW *)&cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
+    return wow_handlers.create_window( (CREATESTRUCTW *)&cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
 }
 
 
@@ -1497,7 +1497,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
+    return wow_handlers.create_window( &cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
 }
 
 
