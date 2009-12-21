@@ -293,7 +293,10 @@ START_TEST(subclass)
     pDefSubclassProc = (void*)GetProcAddress(hdll, (LPSTR)413);
     
     if(!pSetWindowSubclass || !pRemoveWindowSubclass || !pDefSubclassProc)
+    {
+        win_skip("SetWindowSubclass and friends are not available\n");
         return;
+    }
 
     if(!RegisterWindowClasses()) assert(0);
 
