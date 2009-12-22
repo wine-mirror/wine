@@ -55,7 +55,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 #define USUD_LOCALHEAP         0x0004
 #define USUD_FIRSTCLASS        0x0005
 
-WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);
+#define CID_RESOURCE  0x0001
+#define CID_WIN32     0x0004
+#define CID_NONSHARED 0x0008
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 
@@ -2852,6 +2854,42 @@ DWORD WINAPI FormatMessage16(
 #endif /* __i386__ */
 }
 #undef ADD_TO_T
+
+
+/**********************************************************************
+ *		DestroyIcon32 (USER.610)
+ *
+ * This routine is actually exported from Win95 USER under the name
+ * DestroyIcon32 ...  The behaviour implemented here should mimic
+ * the Win95 one exactly, especially the return values, which
+ * depend on the setting of various flags.
+ */
+WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
+{
+    WORD retv;
+
+    /* Check whether destroying active cursor */
+
+    if (GetCursor16() == handle)
+    {
+        WARN("Destroying active cursor!\n" );
+        return FALSE;
+    }
+
+    /* Try shared cursor/icon first */
+
+    if (!(flags & CID_NONSHARED))
+    {
+        INT count = release_shared_icon( handle );
+        if (count != -1)
+            return (flags & CID_WIN32) ? TRUE : (count == 0);
+    }
+
+    /* Now assume non-shared cursor/icon */
+
+    retv = GlobalFree16( handle );
+    return (flags & CID_RESOURCE)? retv : TRUE;
+}
 
 
 /***********************************************************************

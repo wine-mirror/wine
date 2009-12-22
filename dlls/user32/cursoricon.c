@@ -84,10 +84,6 @@ typedef struct
 
 #include "poppack.h"
 
-#define CID_RESOURCE  0x0001
-#define CID_WIN32     0x0004
-#define CID_NONSHARED 0x0008
-
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
 static HDC screen_dc;
@@ -1470,52 +1466,16 @@ HICON WINAPI CopyIcon( HICON hIcon )
 }
 
 
-/**********************************************************************
- *		DestroyIcon32 (USER.610)
- *
- * This routine is actually exported from Win95 USER under the name
- * DestroyIcon32 ...  The behaviour implemented here should mimic
- * the Win95 one exactly, especially the return values, which
- * depend on the setting of various flags.
- */
-WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
-{
-    WORD retv;
-
-    TRACE_(icon)("(%04x, %04x)\n", handle, flags );
-
-    /* Check whether destroying active cursor */
-
-    if ( get_user_thread_info()->cursor == HICON_32(handle) )
-    {
-        WARN_(cursor)("Destroying active cursor!\n" );
-        return FALSE;
-    }
-
-    /* Try shared cursor/icon first */
-
-    if ( !(flags & CID_NONSHARED) )
-    {
-        INT count = CURSORICON_DelSharedIcon(HICON_32(handle));
-
-        if ( count != -1 )
-            return (flags & CID_WIN32)? TRUE : (count == 0);
-
-        /* FIXME: OEM cursors/icons should be recognized */
-    }
-
-    /* Now assume non-shared cursor/icon */
-
-    retv = GlobalFree16( handle );
-    return (flags & CID_RESOURCE)? retv : TRUE;
-}
-
 /***********************************************************************
  *		DestroyIcon (USER32.@)
  */
 BOOL WINAPI DestroyIcon( HICON hIcon )
 {
-    return DestroyIcon32(HICON_16(hIcon), CID_WIN32);
+    TRACE_(icon)("%p\n", hIcon );
+
+    if (CURSORICON_DelSharedIcon( hIcon ) == -1)
+        GlobalFree16( HICON_16(hIcon) );
+    return TRUE;
 }
 
 
@@ -1524,7 +1484,12 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
  */
 BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
-    return DestroyIcon32(HCURSOR_16(hCursor), CID_WIN32);
+    if (get_user_thread_info()->cursor == hCursor)
+    {
+        WARN_(cursor)("Destroying active cursor!\n" );
+        return FALSE;
+    }
+    return DestroyIcon( hCursor );
 }
 
 /***********************************************************************
