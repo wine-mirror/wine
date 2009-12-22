@@ -126,6 +126,7 @@ extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDE
 
 /* 16-bit support */
 extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT) DECLSPEC_HIDDEN;
+extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
                                             struct wow_handlers32 *orig );
@@ -138,7 +139,6 @@ extern void CLASS_RegisterBuiltinClasses(void) DECLSPEC_HIDDEN;
 extern WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 extern struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 extern struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
-extern void CLASS_FreeModuleClasses( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 
 /* defwnd proc */
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;

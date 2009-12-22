@@ -23,6 +23,7 @@
 #include "win.h"
 #include "controls.h"
 #include "user_private.h"
+#include "wine/list.h"
 #include "wine/server.h"
 
 /* size of buffer needed to store an atom string */
@@ -33,6 +34,15 @@
 #define HANDLE_32(h16)		((HANDLE)(ULONG_PTR)(h16))
 
 static HWND16 hwndSysModal;
+
+struct class_entry
+{
+    struct list entry;
+    ATOM        atom;
+    HINSTANCE16 inst;
+};
+
+static struct list class_list = LIST_INIT( class_list );
 
 struct wnd_enum_info
 {
@@ -60,6 +70,19 @@ static inline HWND full_insert_after_hwnd( HWND16 hwnd )
     HWND ret = WIN_Handle32( hwnd );
     if (ret == (HWND)0xffff) ret = HWND_TOPMOST;
     return ret;
+}
+
+void free_module_classes( HINSTANCE16 inst )
+{
+    struct class_entry *class, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( class, next, &class_list, struct class_entry, entry )
+    {
+        if (class->inst != inst) continue;
+        list_remove( &class->entry );
+        UnregisterClassA( (LPCSTR)MAKEINTATOM(class->atom), HINSTANCE_32(class->inst) );
+        HeapFree( GetProcessHeap(), 0, class );
+    }
 }
 
 /**************************************************************************
@@ -1532,22 +1555,34 @@ BOOL16 WINAPI SetWindowPlacement16( HWND16 hwnd, const WINDOWPLACEMENT16 *wp16 )
  */
 ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 {
+    struct class_entry *class;
     WNDCLASSEXA wc32;
+    HINSTANCE16 inst;
+    ATOM atom;
+
+    inst = GetExePtr( wc->hInstance );
+    if (!inst) inst = GetModuleHandle16( NULL );
 
     wc32.cbSize        = sizeof(wc32);
     wc32.style         = wc->style;
     wc32.lpfnWndProc   = WINPROC_AllocProc16( wc->lpfnWndProc );
     wc32.cbClsExtra    = wc->cbClsExtra;
     wc32.cbWndExtra    = wc->cbWndExtra;
-    wc32.hInstance     = HINSTANCE_32(GetExePtr(wc->hInstance));
-    if (!wc32.hInstance) wc32.hInstance = HINSTANCE_32(GetModuleHandle16(NULL));
+    wc32.hInstance     = HINSTANCE_32(inst);
     wc32.hIcon         = HICON_32(wc->hIcon);
     wc32.hCursor       = HCURSOR_32(wc->hCursor);
     wc32.hbrBackground = HBRUSH_32(wc->hbrBackground);
     wc32.lpszMenuName  = MapSL(wc->lpszMenuName);
     wc32.lpszClassName = MapSL(wc->lpszClassName);
     wc32.hIconSm       = HICON_32(wc->hIconSm);
-    return RegisterClassExA( &wc32 );
+    atom = RegisterClassExA( &wc32 );
+    if ((class = HeapAlloc( GetProcessHeap(), 0, sizeof(*class) )))
+    {
+        class->atom = atom;
+        class->inst = inst;
+        list_add_tail( &class_list, &class->entry );
+    }
+    return atom;
 }
 
 
@@ -1617,8 +1652,24 @@ INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *list, INT16 count )
  */
 BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
 {
+    ATOM atom;
+
     if (hInstance == GetModuleHandle16("user")) hInstance = 0;
-    return UnregisterClassA( className, HINSTANCE_32(GetExePtr( hInstance )) );
+    else hInstance = GetExePtr( hInstance );
+
+    if ((atom = GlobalFindAtomA( className )))
+    {
+        struct class_entry *class;
+        LIST_FOR_EACH_ENTRY( class, &class_list, struct class_entry, entry )
+        {
+            if (class->inst != hInstance) continue;
+            if (class->atom != atom) continue;
+            list_remove( &class->entry );
+            HeapFree( GetProcessHeap(), 0, class );
+            break;
+        }
+    }
+    return UnregisterClassA( className, HINSTANCE_32(hInstance) );
 }
 
 

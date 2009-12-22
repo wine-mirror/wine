@@ -1527,9 +1527,10 @@ void WINAPI SignalProc16( HANDLE16 hModule, UINT16 code,
 {
     if (code == USIG16_DLL_UNLOAD)
     {
+        hModule = GetExePtr(hModule);
         /* HOOK_FreeModuleHooks( hModule ); */
-        CLASS_FreeModuleClasses( hModule );
-        free_module_icons( GetExePtr(hModule) );
+        free_module_classes( hModule );
+        free_module_icons( hModule );
     }
 }
 
