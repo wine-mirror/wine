@@ -674,7 +674,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     dlgInfo->yBaseUnit   = yBaseUnit;
     dlgInfo->idResult    = IDOK;
     dlgInfo->flags       = flags;
-    dlgInfo->hDialogHeap = 0;
 
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
 

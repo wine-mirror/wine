@@ -231,7 +231,6 @@ typedef struct tagDIALOGINFO
     UINT      yBaseUnit;
     INT       idResult;    /* EndDialog() result / default pushbutton ID */
     UINT      flags;       /* EndDialog() called for this dialog */
-    HGLOBAL16 hDialogHeap;
 } DIALOGINFO;
 
 #define DF_END  0x0001

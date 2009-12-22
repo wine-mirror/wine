@@ -151,22 +151,6 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
         SEGPTR segptr;
 
         template = DIALOG_GetControl16( template, &info );
-        if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
-            !(GetWindowLongW( hwnd, GWL_STYLE ) & DS_LOCALEDIT))
-        {
-            if (!dlgInfo->hDialogHeap)
-            {
-                dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
-                if (!dlgInfo->hDialogHeap)
-                {
-                    ERR("Insufficient memory to create heap for edit control\n" );
-                    continue;
-                }
-                LocalInit16(dlgInfo->hDialogHeap, 0, 0xffff);
-            }
-            instance = dlgInfo->hDialogHeap;
-        }
-
         segptr = MapLS( info.data );
         hwndCtrl = WIN_Handle32( CreateWindowEx16( WS_EX_NOPARENTNOTIFY,
                                                    info.className, info.windowName,
