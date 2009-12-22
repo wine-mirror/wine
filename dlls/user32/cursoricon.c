@@ -1451,11 +1451,12 @@ HICON WINAPI CopyIcon( HICON hIcon )
 {
     CURSORICONINFO *ptrOld, *ptrNew;
     int size;
-    HICON16 hOld = HICON_16(hIcon);
     HICON hNew;
 
     if (!(ptrOld = wow_handlers.get_icon_ptr( hIcon ))) return 0;
-    size = GlobalSize16( hOld );
+    size = sizeof(CURSORICONINFO);
+    size += ptrOld->nHeight * get_bitmap_width_bytes( ptrOld->nWidth, 1 );  /* and bitmap */
+    size += ptrOld->nHeight * ptrOld->nWidthBytes;  /* xor bitmap */
     hNew = wow_handlers.alloc_icon_handle( size );
     ptrNew = wow_handlers.get_icon_ptr( hNew );
     memcpy( ptrNew, ptrOld, size );
