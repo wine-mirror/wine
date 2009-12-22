@@ -1797,7 +1797,6 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
  */
 LONG WINAPI DispatchMessage16( const MSG16* msg )
 {
-    WND * wndPtr;
     WNDPROC16 winproc;
     LONG retval;
     HWND hwnd = WIN_Handle32( msg->hwnd );
@@ -1810,20 +1809,11 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
                                      msg->message, msg->wParam, GetTickCount() );
     }
 
-    if (!(wndPtr = WIN_GetPtr( hwnd )))
+    if (!(winproc = (WNDPROC16)GetWindowLong16( msg->hwnd, GWLP_WNDPROC )))
     {
-        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
-    {
-        if (IsWindow( hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    winproc = WINPROC_GetProc16( wndPtr->winproc, wndPtr->flags & WIN_ISUNICODE );
-    WIN_ReleasePtr( wndPtr );
-
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
     retval = CallWindowProc16( winproc, msg->hwnd, msg->message, msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg->message, retval, msg->wParam, msg->lParam );
