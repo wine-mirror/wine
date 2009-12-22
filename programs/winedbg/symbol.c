@@ -85,7 +85,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         if (!memory_get_register(sym->Register, &pval, buffer, sz))
             return FALSE;
         lvalue->cookie = DLV_TARGET;
-        lvalue->addr.Offset = (ULONG)((ULONG64)*pval + sym->Address);
+        lvalue->addr.Offset = (ULONG64)*pval + sym->Address;
     }
     else if (sym->Flags & SYMFLAG_VALUEPRESENT)
     {
