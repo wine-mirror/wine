@@ -259,15 +259,11 @@ extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 #define SPY_DISPATCHMESSAGE       0x0101
 #define SPY_SENDMESSAGE16         0x0102
 #define SPY_SENDMESSAGE           0x0103
-#define SPY_DEFWNDPROC16          0x0104
-#define SPY_DEFWNDPROC            0x0105
+#define SPY_DEFWNDPROC            0x0104
 
 #define SPY_RESULT_OK16           0x0000
 #define SPY_RESULT_OK             0x0001
-#define SPY_RESULT_INVALIDHWND16  0x0002
-#define SPY_RESULT_INVALIDHWND    0x0003
-#define SPY_RESULT_DEFWND16       0x0004
-#define SPY_RESULT_DEFWND         0x0005
+#define SPY_RESULT_DEFWND         0x0002
 
 extern const char *SPY_GetClassLongOffsetName( INT offset ) DECLSPEC_HIDDEN;
 extern const char *SPY_GetMsgName( UINT msg, HWND hWnd ) DECLSPEC_HIDDEN;

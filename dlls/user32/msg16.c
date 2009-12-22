@@ -614,9 +614,6 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
     LRESULT ret = 0;
     HWND hwnd32 = WIN_Handle32( hwnd );
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-                 hwnd32, SPY_GetMsgName(msg, hwnd32), wParam, lParam);
-
     switch(msg)
     {
     case WM_NCCREATE:
@@ -937,9 +934,6 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
                                  WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg )
 {
     LRESULT ret = 0;
-
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
-                hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)
     {
@@ -1625,8 +1619,6 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPAR
     LRESULT result;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
-
     switch(msg)
     {
     case WM_NCCREATE:
@@ -1646,10 +1638,8 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPAR
             cs32.dwExStyle      = cs16->dwExStyle;
             cs32.lpszName       = MapSL(cs16->lpszName);
             cs32.lpszClass      = MapSL(cs16->lpszClass);
-            result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)&cs32 );
+            return DefWindowProcA( hwnd, msg, wParam, (LPARAM)&cs32 );
         }
-        break;
-
     case WM_NCCALCSIZE:
         {
             RECT16 *rect16 = MapSL(lParam);
@@ -1666,9 +1656,8 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPAR
             rect16->top    = rect32.top;
             rect16->right  = rect32.right;
             rect16->bottom = rect32.bottom;
+            return result;
         }
-        break;
-
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
@@ -1692,21 +1681,14 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPAR
             pos16->cx              = pos32.cx;
             pos16->cy              = pos32.cy;
             pos16->flags           = pos32.flags;
+            return result;
         }
-        break;
-
     case WM_GETTEXT:
     case WM_SETTEXT:
-        result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)MapSL(lParam) );
-        break;
-
+        return DefWindowProcA( hwnd, msg, wParam, (LPARAM)MapSL(lParam) );
     default:
-        result = DefWindowProcA( hwnd, msg, wParam, lParam );
-        break;
+        return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
-
-    SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result, wParam, lParam );
-    return result;
 }
 
 
