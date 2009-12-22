@@ -1260,6 +1260,30 @@ HWND16 WINAPI GetOpenClipboardWindow16(void)
 }
 
 
+/*******************************************************************
+ *		MapWindowPoints (USER.258)
+ */
+void WINAPI MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo, LPPOINT16 lppt, UINT16 count )
+{
+    POINT buffer[8], *ppt = buffer;
+    UINT i;
+
+    if (count > 8) ppt = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*ppt) );
+    for (i = 0; i < count; i++)
+    {
+        ppt[i].x = lppt[i].x;
+        ppt[i].y = lppt[i].y;
+    }
+    MapWindowPoints( WIN_Handle32(hwndFrom), WIN_Handle32(hwndTo), ppt, count );
+    for (i = 0; i < count; i++)
+    {
+        lppt[i].x = ppt[i].x;
+        lppt[i].y = ppt[i].y;
+    }
+    if (ppt != buffer) HeapFree( GetProcessHeap(), 0, ppt );
+}
+
+
 /**************************************************************************
  *              BeginDeferWindowPos   (USER.259)
  */
