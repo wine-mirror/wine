@@ -32,7 +32,6 @@
 
 RECT height_change_notify_rect;
 static HWND hMainWnd;
-static HWND hRebar;
 
 
 #define check_rect(name, val, exp) ok(val.top == exp.top && val.bottom == exp.bottom && \
@@ -66,14 +65,17 @@ static BOOL is_font_installed(const char *name)
     return ret;
 }
 
-static void rebuild_rebar(HWND *hRebar)
+static HWND create_rebar_control(void)
 {
-    if (*hRebar)
-        DestroyWindow(*hRebar);
+    HWND hwnd;
 
-    *hRebar = CreateWindow(REBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
+    hwnd = CreateWindow(REBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
         hMainWnd, (HMENU)17, GetModuleHandle(NULL), NULL);
-    SendMessageA(*hRebar, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
+    ok(hwnd != NULL, "Failed to create Rebar\n");
+
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
+
+    return hwnd;
 }
 
 static HWND build_toolbar(int nr, HWND hParent)
@@ -117,7 +119,7 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
             {
                 NMHDR *lpnm = (NMHDR *)lParam;
                 if (lpnm->code == RBN_HEIGHTCHANGE)
-                    GetClientRect(hRebar, &height_change_notify_rect);
+                    GetClientRect(lpnm->hwndFrom, &height_change_notify_rect);
             }
             break;
     }
@@ -344,14 +346,14 @@ static void add_band_w(HWND hRebar, LPCSTR lpszText, int cxMinChild, int cx, int
     SendMessage(hRebar, RB_INSERTBAND, -1, (LPARAM)&rbi);
 }
 
-static void layout_test(void)
+static void test_layout(void)
 {
-    HWND hRebar = NULL;
+    HWND hRebar;
     REBARBANDINFO rbi;
     HIMAGELIST himl;
     REBARINFO ri;
 
-    rebuild_rebar(&hRebar);
+    hRebar = create_rebar_control();
     check_sizes();
     rbi.cbSize = REBARBANDINFOA_V6_SIZE;
     rbi.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD;
@@ -409,7 +411,9 @@ static void layout_test(void)
     SendMessageA(hRebar, RB_DELETEBAND, 1, 0);
     check_sizes();
 
-    rebuild_rebar(&hRebar);
+    DestroyWindow(hRebar);
+
+    hRebar = create_rebar_control();
     add_band_w(hRebar, "ABC",     70,  40, 100);
     add_band_w(hRebar, NULL,      40,  70, 100);
     add_band_w(hRebar, NULL,     170, 240, 100);
@@ -448,8 +452,10 @@ static void layout_test(void)
     SendMessage(hRebar, RB_SETBANDINFO, 1, (LPARAM)&rbi);
     check_sizes();
 
+    DestroyWindow(hRebar);
+
     /* VARHEIGHT resizing test on a horizontal rebar */
-    rebuild_rebar(&hRebar);
+    hRebar = create_rebar_control();
     SetWindowLong(hRebar, GWL_STYLE, GetWindowLong(hRebar, GWL_STYLE) | RBS_AUTOSIZE);
     check_sizes();
     rbi.fMask = RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE;
@@ -474,8 +480,10 @@ static void layout_test(void)
     SendMessageA(hRebar, RB_INSERTBAND, -1, (LPARAM)&rbi);
     check_sizes();
 
+    DestroyWindow(hRebar);
+
     /* VARHEIGHT resizing on a vertical rebar */
-    rebuild_rebar(&hRebar);
+    hRebar = create_rebar_control();
     SetWindowLong(hRebar, GWL_STYLE, GetWindowLong(hRebar, GWL_STYLE) | CCS_VERT | RBS_AUTOSIZE);
     check_sizes();
     rbi.fMask = RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE;
@@ -685,7 +693,7 @@ static int resize_numtests = 0;
 
 #endif
 
-static void resize_test(void)
+static void test_resize(void)
 {
     DWORD dwStyles[] = {CCS_TOP, CCS_TOP | CCS_NODIVIDER, CCS_BOTTOM, CCS_BOTTOM | CCS_NODIVIDER, CCS_VERT, CCS_RIGHT,
         CCS_NOPARENTALIGN, CCS_NOPARENTALIGN | CCS_NODIVIDER, CCS_NORESIZE, CCS_NOMOVEY, CCS_NOMOVEY | CCS_VERT,
@@ -697,6 +705,8 @@ static void resize_test(void)
 
     for (i = 0; i < styles_count; i++)
     {
+        HWND hRebar;
+
         comment("style %08x", dwStyles[i]);
         SetRect(&height_change_notify_rect, -1, -1, -1, -1);
         hRebar = CreateWindow(REBARCLASSNAME, "A", dwStyles[i] | WS_CHILD | WS_VISIBLE, 10, 5, 500, 15, hMainWnd, NULL, GetModuleHandle(NULL), 0);
@@ -736,7 +746,7 @@ static void resize_test(void)
     }
 }
 
-static void expect_band_content(UINT uBand, INT fStyle, COLORREF clrFore,
+static void expect_band_content(HWND hRebar, UINT uBand, INT fStyle, COLORREF clrFore,
     COLORREF clrBack, LPCSTR lpText, int iImage, HWND hwndChild,
     INT cxMinChild, INT cyMinChild, INT cx, HBITMAP hbmBack, INT wID,
     INT cyChild, INT cyMaxChild, INT cyIntegral, INT cxIdeal, LPARAM lParam,
@@ -774,13 +784,14 @@ static void expect_band_content(UINT uBand, INT fStyle, COLORREF clrFore,
         "expected %d for %d\n", cxHeader, rb.cxHeader );
 }
 
-static void bandinfo_test(void)
+static void test_bandinfo(void)
 {
     REBARBANDINFOA rb;
     CHAR szABC[] = "ABC";
     CHAR szABCD[] = "ABCD";
+    HWND hRebar;
 
-    rebuild_rebar(&hRebar);
+    hRebar = create_rebar_control();
     rb.cbSize = REBARBANDINFOA_V6_SIZE;
     rb.fMask = 0;
     if (!SendMessageA(hRebar, RB_INSERTBANDA, 0, (LPARAM)&rb))
@@ -789,7 +800,7 @@ static void bandinfo_test(void)
         DestroyWindow(hRebar);
         return;
     }
-    expect_band_content(0, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 0, 0, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 0, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 0, 0, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 0, -1);
 
     rb.fMask = RBBIM_CHILDSIZE;
     rb.cxMinChild = 15;
@@ -798,61 +809,75 @@ static void bandinfo_test(void)
     rb.cyMaxChild = 20;
     rb.cyIntegral = 10;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 0, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 0, -1);
 
     rb.fMask = RBBIM_TEXT;
     rb.lpText = szABC;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 35, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 35, -1);
 
     rb.cbSize = REBARBANDINFOA_V6_SIZE;
     rb.fMask = 0;
     ok(SendMessageA(hRebar, RB_INSERTBANDA, 1, (LPARAM)&rb), "RB_INSERTBAND failed\n");
-    expect_band_content(1, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 0, 0, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 9, -1);
-    expect_band_content(0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 40, -1);
+    expect_band_content(hRebar, 1, 0, 0, GetSysColor(COLOR_3DFACE), "", -1, NULL, 0, 0, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 9, -1);
+    expect_band_content(hRebar, 0, 0, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 40, -1);
 
     rb.fMask = RBBIM_HEADERSIZE;
     rb.cxHeader = 50;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 50, -1);
+    expect_band_content(hRebar, 0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 50, -1);
 
     rb.cxHeader = 5;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 5, -1);
+    expect_band_content(hRebar, 0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 5, -1);
 
     rb.fMask = RBBIM_TEXT;
     rb.lpText = szABCD;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABCD", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 5, -1);
+    expect_band_content(hRebar, 0, 0x40000000, 0, GetSysColor(COLOR_3DFACE), "ABCD", -1, NULL, 15, 20, 0, NULL, 0, 0xdddddddd, 0xdddddddd, 0xdddddddd, 0, 0, 5, -1);
     rb.fMask = RBBIM_STYLE | RBBIM_TEXT;
     rb.fStyle = RBBS_VARIABLEHEIGHT;
     rb.lpText = szABC;
     ok(SendMessageA(hRebar, RB_SETBANDINFOA, 0, (LPARAM)&rb), "RB_SETBANDINFO failed\n");
-    expect_band_content(0, RBBS_VARIABLEHEIGHT, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 20, 0x7fffffff, 0, 0, 0, 40, 5);
+    expect_band_content(hRebar, 0, RBBS_VARIABLEHEIGHT, 0, GetSysColor(COLOR_3DFACE), "ABC", -1, NULL, 15, 20, 0, NULL, 0, 20, 0x7fffffff, 0, 0, 0, 40, 5);
 
     DestroyWindow(hRebar);
 }
 
-START_TEST(rebar)
+static void test_colors(void)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
-    INITCOMMONCONTROLSEX iccex;
-    WNDCLASSA wc;
-    MSG msg;
-    RECT rc;
+    COLORSCHEME scheme;
+    COLORREF clr;
+    BOOL ret;
+    HWND hRebar;
 
-    /* LoadLibrary is needed. This file has no references to functions in comctl32 */
-    hComctl32 = LoadLibraryA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (!pInitCommonControlsEx)
+    hRebar = create_rebar_control();
+
+    /* test default colors */
+    clr = SendMessage(hRebar, RB_GETTEXTCOLOR, 0, 0);
+    compare(clr, CLR_NONE, "%x");
+    clr = SendMessage(hRebar, RB_GETBKCOLOR, 0, 0);
+    compare(clr, CLR_NONE, "%x");
+
+    scheme.dwSize = sizeof(scheme);
+    scheme.clrBtnHighlight = 0;
+    scheme.clrBtnShadow = 0;
+    ret = SendMessage(hRebar, RB_GETCOLORSCHEME, 0, (LPARAM)&scheme);
+    if (ret)
     {
-        skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return;
+        compare(scheme.clrBtnHighlight, CLR_DEFAULT, "%x");
+        compare(scheme.clrBtnShadow, CLR_DEFAULT, "%x");
     }
-    iccex.dwSize = sizeof(iccex);
-    iccex.dwICC = ICC_COOL_CLASSES;
-    pInitCommonControlsEx(&iccex);
+    else
+        skip("RB_GETCOLORSCHEME not supported\n");
+
+    DestroyWindow(hRebar);
+}
+
+
+static BOOL register_parent_wnd_class(void)
+{
+    WNDCLASSA wc;
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -864,23 +889,59 @@ START_TEST(rebar)
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "MyTestWnd";
     wc.lpfnWndProc = MyWndProc;
-    RegisterClassA(&wc);
-    hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
+
+    return RegisterClassA(&wc);
+}
+
+static HWND create_parent_window(void)
+{
+    HWND hwnd;
+
+    if (!register_parent_wnd_class()) return NULL;
+
+    hwnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
       226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
       NULL, NULL, GetModuleHandleA(NULL), 0);
-    GetClientRect(hMainWnd, &rc);
-    ShowWindow(hMainWnd, SW_SHOW);
 
-    bandinfo_test();
+    ShowWindow(hwnd, SW_SHOW);
+    return hwnd;
+}
 
-    if(is_font_installed("System") && is_font_installed("Tahoma"))
+START_TEST(rebar)
+{
+    HMODULE hComctl32;
+    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+    INITCOMMONCONTROLSEX iccex;
+    MSG msg;
+
+    /* LoadLibrary is needed. This file has no references to functions in comctl32 */
+    hComctl32 = LoadLibraryA("comctl32.dll");
+    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
+    if (!pInitCommonControlsEx)
     {
-        layout_test();
-        resize_test();
-    } else
-        skip("Missing System or Tahoma font\n");
+        win_skip("InitCommonControlsEx() is missing. Skipping the tests\n");
+        return;
+    }
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC = ICC_COOL_CLASSES;
+    pInitCommonControlsEx(&iccex);
 
+    hMainWnd = create_parent_window();
+
+    test_bandinfo();
+    test_colors();
+
+    if(!is_font_installed("System") || !is_font_installed("Tahoma"))
+    {
+        skip("Missing System or Tahoma font\n");
+        goto out;
+    }
+
+    test_layout();
+    test_resize();
+
+out:
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
         TranslateMessage(&msg);
