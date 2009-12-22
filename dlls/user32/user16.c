@@ -40,9 +40,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 
 /* handle to handle 16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
+#define HGDIOBJ_16(h32)		(LOWORD(h32))
 
 /* handle16 to handle conversions */
 #define HANDLE_32(h16)		((HANDLE)(ULONG_PTR)(h16))
+#define HGDIOBJ_32(h16)		((HGDIOBJ)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 #define IS_MENU_STRING_ITEM(flags) \
@@ -340,6 +342,52 @@ static void free_module_icons( HINSTANCE16 inst )
     }
 }
 
+/**********************************************************************
+ * Management of the 16-bit clipboard formats
+ */
+
+struct clipboard_format
+{
+    struct list entry;
+    UINT        format;
+    HANDLE16    data;
+};
+
+static struct list clipboard_formats = LIST_INIT( clipboard_formats );
+
+static void set_clipboard_format( UINT format, HANDLE16 data )
+{
+    struct clipboard_format *fmt;
+
+    /* replace it if it exists already */
+    LIST_FOR_EACH_ENTRY( fmt, &clipboard_formats, struct clipboard_format, entry )
+    {
+        if (fmt->format != format) continue;
+        GlobalFree16( fmt->data );
+        fmt->data = data;
+        return;
+    }
+
+    if ((fmt = HeapAlloc( GetProcessHeap(), 0, sizeof(*fmt) )))
+    {
+        fmt->format = format;
+        fmt->data = data;
+        list_add_tail( &clipboard_formats, &fmt->entry );
+    }
+}
+
+static void free_clipboard_formats(void)
+{
+    struct list *head;
+
+    while ((head = list_head( &clipboard_formats )))
+    {
+        struct clipboard_format *fmt = LIST_ENTRY( head, struct clipboard_format, entry );
+        list_remove( &fmt->entry );
+        GlobalFree16( fmt->data );
+        HeapFree( GetProcessHeap(), 0, fmt );
+    }
+}
 
 /**********************************************************************
  *		InitApp (USER.5)
@@ -679,7 +727,9 @@ void WINAPI MessageBeep16( UINT16 i )
  */
 BOOL16 WINAPI CloseClipboard16(void)
 {
-    return CloseClipboard();
+    BOOL ret = CloseClipboard();
+    if (ret) free_clipboard_formats();
+    return ret;
 }
 
 
@@ -688,7 +738,145 @@ BOOL16 WINAPI CloseClipboard16(void)
  */
 BOOL16 WINAPI EmptyClipboard16(void)
 {
-    return EmptyClipboard();
+    BOOL ret = EmptyClipboard();
+    if (ret) free_clipboard_formats();
+    return ret;
+}
+
+
+/**************************************************************************
+ *		SetClipboardData (USER.141)
+ */
+HANDLE16 WINAPI SetClipboardData16( UINT16 format, HANDLE16 data16 )
+{
+    HANDLE data32 = 0;
+
+    switch (format)
+    {
+    case CF_BITMAP:
+    case CF_PALETTE:
+        data32 = HGDIOBJ_32( data16 );
+        break;
+
+    case CF_METAFILEPICT:
+    {
+        METAHEADER *header;
+        METAFILEPICT *pict32;
+        METAFILEPICT16 *pict16 = GlobalLock16( data16 );
+
+        if (pict16)
+        {
+            if (!(data32 = GlobalAlloc( GMEM_MOVEABLE, sizeof(*pict32) ))) return 0;
+            pict32 = GlobalLock( data32 );
+            pict32->mm = pict16->mm;
+            pict32->xExt = pict16->xExt;
+            pict32->yExt = pict16->yExt;
+            header = GlobalLock16( pict16->hMF );
+            pict32->hMF = SetMetaFileBitsEx( header->mtSize * 2, (BYTE *)header );
+            GlobalUnlock16( pict16->hMF );
+            GlobalUnlock( data32 );
+        }
+        set_clipboard_format( format, data16 );
+        break;
+    }
+
+    case CF_ENHMETAFILE:
+        FIXME( "enhmetafile not supported in 16-bit\n" );
+        return 0;
+
+    default:
+        if (format >= CF_GDIOBJFIRST && format <= CF_GDIOBJLAST)
+            data32 = HGDIOBJ_32( data16 );
+        else if (format >= CF_PRIVATEFIRST && format <= CF_PRIVATELAST)
+            data32 = HANDLE_32( data16 );
+        else
+        {
+            UINT size = GlobalSize16( data16 );
+            void *ptr32, *ptr16 = GlobalLock16( data16 );
+            if (ptr16)
+            {
+                if (!(data32 = GlobalAlloc( GMEM_MOVEABLE, size ))) return 0;
+                ptr32 = GlobalLock( data32 );
+                memcpy( ptr32, ptr16, size );
+                GlobalUnlock( data32 );
+            }
+            set_clipboard_format( format, data16 );
+        }
+        break;
+    }
+
+    if (!SetClipboardData( format, data32 )) return 0;
+    return data16;
+}
+
+
+/**************************************************************************
+ *		GetClipboardData (USER.142)
+ */
+HANDLE16 WINAPI GetClipboardData16( UINT16 format )
+{
+    HANDLE data32 = GetClipboardData( format );
+    HANDLE16 data16 = 0;
+    UINT size;
+    void *ptr;
+
+    if (!data32) return 0;
+
+    switch (format)
+    {
+    case CF_BITMAP:
+    case CF_PALETTE:
+        data16 = HGDIOBJ_16( data32 );
+        break;
+
+    case CF_METAFILEPICT:
+    {
+        METAFILEPICT16 *pict16;
+        METAFILEPICT *pict32 = GlobalLock( data32 );
+
+        if (pict32)
+        {
+            if (!(data16 = GlobalAlloc16( GMEM_MOVEABLE, sizeof(*pict16) ))) return 0;
+            pict16 = GlobalLock16( data16 );
+            pict16->mm   = pict32->mm;
+            pict16->xExt = pict32->xExt;
+            pict16->yExt = pict32->yExt;
+            size = GetMetaFileBitsEx( pict32->hMF, 0, NULL );
+            pict16->hMF = GlobalAlloc16( GMEM_MOVEABLE, size );
+            ptr = GlobalLock16( pict16->hMF );
+            GetMetaFileBitsEx( pict32->hMF, size, ptr );
+            GlobalUnlock16( pict16->hMF );
+            GlobalUnlock16( data16 );
+            set_clipboard_format( format, data16 );
+        }
+        break;
+    }
+
+    case CF_ENHMETAFILE:
+        FIXME( "enhmetafile not supported in 16-bit\n" );
+        return 0;
+
+    default:
+        if (format >= CF_GDIOBJFIRST && format <= CF_GDIOBJLAST)
+            data16 = HGDIOBJ_16( data32 );
+        else if (format >= CF_PRIVATEFIRST && format <= CF_PRIVATELAST)
+            data16 = HANDLE_16( data32 );
+        else
+        {
+            void *ptr16, *ptr32 = GlobalLock( data32 );
+            if (ptr32)
+            {
+                size = GlobalSize( data32 );
+                if (!(data16 = GlobalAlloc16( GMEM_MOVEABLE, size ))) return 0;
+                ptr16 = GlobalLock16( data16 );
+                memcpy( ptr16, ptr32, size );
+                GlobalUnlock16( data16 );
+                set_clipboard_format( format, data16 );
+            }
+        }
+        break;
+    }
+    return data16;
 }
 
 
