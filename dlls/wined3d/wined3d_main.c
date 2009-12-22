@@ -33,7 +33,7 @@ struct wined3d_wndproc
 {
     HWND window;
     WNDPROC proc;
-    IWineD3DSwapChainImpl *swapchain;
+    IWineD3DDeviceImpl *device;
 };
 
 struct wined3d_wndproc_table
@@ -389,8 +389,8 @@ static struct wined3d_wndproc *wined3d_find_wndproc(HWND window)
 
 static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
-    IWineD3DSwapChainImpl *swapchain;
     struct wined3d_wndproc *entry;
+    IWineD3DDeviceImpl *device;
     WNDPROC proc;
 
     wined3d_mutex_lock();
@@ -403,14 +403,14 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
         return DefWindowProcW(window, message, wparam, lparam);
     }
 
-    swapchain = entry->swapchain;
+    device = entry->device;
     proc = entry->proc;
     wined3d_mutex_unlock();
 
-    return swapchain_process_message(swapchain, window, message, wparam, lparam, proc);
+    return device_process_message(device, window, message, wparam, lparam, proc);
 }
 
-BOOL wined3d_register_window(HWND window, IWineD3DSwapChainImpl *swapchain)
+BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
 {
     struct wined3d_wndproc *entry;
 
@@ -438,7 +438,7 @@ BOOL wined3d_register_window(HWND window, IWineD3DSwapChainImpl *swapchain)
     entry = &wndproc_table.entries[wndproc_table.count++];
     entry->window = window;
     entry->proc = (WNDPROC)SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)wined3d_wndproc);
-    entry->swapchain = swapchain;
+    entry->device = device;
 
     wined3d_mutex_unlock();
 

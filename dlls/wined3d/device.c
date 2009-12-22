@@ -1395,7 +1395,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
 
-    /* TODO: Test if OpenGL is compiled in and loaded */
+    This-> focus_window = This->createParms.hFocusWindow;
+    if (!This->focus_window) This->focus_window = pPresentationParameters->hDeviceWindow;
+    if (!wined3d_register_window(This->focus_window, This))
+    {
+        ERR("Failed to register window %p.\n", This->focus_window);
+        return E_FAIL;
+    }
 
     TRACE("(%p) : Creating stateblock\n", This);
     /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
@@ -1584,6 +1590,7 @@ err_out:
     if (This->shader_priv) {
         This->shader_backend->shader_free_private(iface);
     }
+    wined3d_unregister_window(This->focus_window);
     return hr;
 }
 
@@ -1773,6 +1780,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->draw_buffers = NULL;
 
     This->d3d_initialized = FALSE;
+
+    wined3d_unregister_window(This->focus_window);
+
     return WINED3D_OK;
 }
 
@@ -7050,4 +7060,23 @@ void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, 
      * surface the context belongs to. */
     *width = surface->currentDesc.Width;
     *height = surface->currentDesc.Height;
+}
+
+LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window,
+        UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
+{
+    if (device->filter_messages)
+    {
+        TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
+                window, message, wparam, lparam);
+        return DefWindowProcW(window, message, wparam, lparam);
+    }
+
+    if (message == WM_DESTROY)
+    {
+        TRACE("unregister window %p.\n", window);
+        wined3d_unregister_window(window);
+    }
+
+    return CallWindowProcW(proc, window, message, wparam, lparam);
 }

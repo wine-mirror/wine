@@ -91,8 +91,6 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)This->device, 0, &mode);
     }
 
-    wined3d_unregister_window(This->win_handle);
-
     HeapFree(GetProcessHeap(), 0, This->context);
     HeapFree(GetProcessHeap(), 0, This);
 }
@@ -600,14 +598,14 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
     TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
             device->style, device->exStyle, style, exstyle);
 
-    filter_messages = swapchain->filter_messages;
-    swapchain->filter_messages = TRUE;
+    filter_messages = device->filter_messages;
+    device->filter_messages = TRUE;
 
     SetWindowLongW(window, GWL_STYLE, style);
     SetWindowLongW(window, GWL_EXSTYLE, exstyle);
     SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-    swapchain->filter_messages = filter_messages;
+    device->filter_messages = filter_messages;
 }
 
 void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
@@ -625,8 +623,8 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
     style = GetWindowLongW(window, GWL_STYLE);
     exstyle = GetWindowLongW(window, GWL_EXSTYLE);
 
-    filter_messages = swapchain->filter_messages;
-    swapchain->filter_messages = TRUE;
+    filter_messages = device->filter_messages;
+    device->filter_messages = TRUE;
 
     /* Only restore the style if the application didn't modify it during the
      * fullscreen phase. Some applications change it before calling Reset()
@@ -639,7 +637,7 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
     }
     SetWindowPos(window, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 
-    swapchain->filter_messages = filter_messages;
+    device->filter_messages = filter_messages;
 
     /* Delete the old values. */
     device->style = 0;
@@ -688,12 +686,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     }
 
     window = present_parameters->hDeviceWindow ? present_parameters->hDeviceWindow : device->createParms.hFocusWindow;
-
-    if (!wined3d_register_window(window, swapchain))
-    {
-        ERR("Failed to register window %p.\n", window);
-        return E_FAIL;
-    }
 
     swapchain->device = device;
     swapchain->parent = parent;
@@ -905,8 +897,6 @@ err:
 
     if (swapchain->frontBuffer) IWineD3DSurface_Release(swapchain->frontBuffer);
 
-    wined3d_unregister_window(window);
-
     return hr;
 }
 
@@ -950,23 +940,4 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
      * (Actually: The window size, but the surface is created in window size) */
     *width = surface->currentDesc.Width;
     *height = surface->currentDesc.Height;
-}
-
-LRESULT swapchain_process_message(IWineD3DSwapChainImpl *swapchain, HWND window,
-        UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
-{
-    if (swapchain->filter_messages)
-    {
-        TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
-                window, message, wparam, lparam);
-        return DefWindowProcW(window, message, wparam, lparam);
-    }
-
-    if (message == WM_DESTROY)
-    {
-        TRACE("unregister window %p.\n", window);
-        wined3d_unregister_window(window);
-    }
-
-    return CallWindowProcW(proc, window, message, wparam, lparam);
 }
