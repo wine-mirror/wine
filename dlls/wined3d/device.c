@@ -1456,6 +1456,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         }
     }
 
+    SetFocus(This->focus_window);
+
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
     hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,

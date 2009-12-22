@@ -603,7 +603,7 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
 
     SetWindowLongW(window, GWL_STYLE, style);
     SetWindowLongW(window, GWL_EXSTYLE, exstyle);
-    SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+    SetWindowPos(window, HWND_TOP, 0, 0, w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
     device->filter_messages = filter_messages;
 }
