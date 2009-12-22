@@ -282,6 +282,8 @@ struct GpStringFormat{
     INT tabcount;
     REAL firsttab;
     REAL *tabs;
+    CharacterRange *character_ranges;
+    INT range_count;
 };
 
 struct GpFontCollection{
