@@ -369,8 +369,8 @@
 @ stdcall SetupDiOpenClassRegKeyExA(ptr long long str ptr)
 @ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr)
 @ stdcall SetupDiOpenDevRegKey(ptr ptr long long long long)
-@ stub SetupDiOpenDeviceInfoA
-@ stub SetupDiOpenDeviceInfoW
+@ stdcall SetupDiOpenDeviceInfoA(ptr str ptr long ptr)
+@ stdcall SetupDiOpenDeviceInfoW(ptr wstr ptr long ptr)
 @ stdcall SetupDiOpenDeviceInterfaceA(ptr str long ptr)
 @ stub SetupDiOpenDeviceInterfaceRegKey
 @ stdcall SetupDiOpenDeviceInterfaceW(ptr wstr long ptr)
