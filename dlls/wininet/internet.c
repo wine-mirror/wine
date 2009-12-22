@@ -3132,8 +3132,13 @@ static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
     HeapFree(GetProcessHeap(), 0, lpRequest);
 
     workRequest.asyncproc(&workRequest);
-
     WININET_Release( workRequest.hdr );
+
+    if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
+    {
+        HeapFree(GetProcessHeap(), 0, TlsGetValue(g_dwTlsErrIndex));
+        TlsSetValue(g_dwTlsErrIndex, NULL);
+    }
     return TRUE;
 }
 
