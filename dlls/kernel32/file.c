@@ -1593,6 +1593,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
                               NULL, 0);
         if (status == STATUS_SUCCESS)
             status = wine_nt_to_unix_file_name(&nt_backup_name, &unix_backup_name, FILE_OPEN_IF, FALSE);
+        RtlFreeUnicodeString(&nt_backup_name);
         if (status != STATUS_SUCCESS)
         {
             error = RtlNtStatusToDosError(status);
