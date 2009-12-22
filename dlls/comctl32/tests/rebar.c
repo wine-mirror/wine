@@ -764,8 +764,8 @@ static void expect_band_content(HWND hRebar, UINT uBand, INT fStyle, COLORREF cl
     rb.cch = MAX_PATH;
     ok(SendMessageA(hRebar, RB_GETBANDINFOA, uBand, (LPARAM)&rb), "RB_GETBANDINFO failed\n");
     expect_eq(rb.fStyle, fStyle, int, "%x");
-    todo_wine expect_eq(rb.clrFore, clrFore, COLORREF, "%x");
-    todo_wine expect_eq(rb.clrBack, clrBack, unsigned, "%x");
+    expect_eq(rb.clrFore, clrFore, COLORREF, "%x");
+    expect_eq(rb.clrBack, clrBack, COLORREF, "%x");
     expect_eq(strcmp(rb.lpText, lpText), 0, int, "%d");
     expect_eq(rb.iImage, iImage, int, "%x");
     expect_eq(rb.hwndChild, hwndChild, HWND, "%p");
@@ -850,6 +850,7 @@ static void test_colors(void)
     COLORREF clr;
     BOOL ret;
     HWND hRebar;
+    REBARBANDINFOA bi;
 
     hRebar = create_rebar_control();
 
@@ -870,6 +871,22 @@ static void test_colors(void)
     }
     else
         skip("RB_GETCOLORSCHEME not supported\n");
+
+    /* check default band colors */
+    add_band_w(hRebar, "", 0, 10, 10);
+    bi.cbSize = REBARBANDINFOA_V6_SIZE;
+    bi.fMask = RBBIM_COLORS;
+    bi.clrFore = bi.clrBack = 0xc0ffe;
+    ret = SendMessage(hRebar, RB_GETBANDINFO, 0, (LPARAM)&bi);
+    ok(ret, "RB_GETBANDINFO failed\n");
+    compare(bi.clrFore, RGB(0, 0, 0), "%x");
+    compare(bi.clrBack, GetSysColor(COLOR_3DFACE), "%x");
+
+    SendMessage(hRebar, RB_SETTEXTCOLOR, 0, RGB(255, 0, 0));
+    bi.clrFore = bi.clrBack = 0xc0ffe;
+    ret = SendMessage(hRebar, RB_GETBANDINFO, 0, (LPARAM)&bi);
+    ok(ret, "RB_GETBANDINFO failed\n");
+    compare(bi.clrFore, RGB(0, 0, 0), "%x");
 
     DestroyWindow(hRebar);
 }
