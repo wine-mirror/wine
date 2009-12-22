@@ -110,11 +110,8 @@ static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface
   IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
   TRACE("(%p,%p)\n", iface, ppInstance);
 
-  if (NULL == ppInstance) {
-    return E_INVALIDARG;
-  }
   if (FALSE == This->init) {
-    return E_INVALIDARG; /* should be E_CO_UNINITIALIZED */
+    return CO_E_NOTINITIALIZED;
   }
   if (NULL == This->pRootContainer) {
     hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &This->pRootContainer);

@@ -107,12 +107,10 @@ static void test_GetRootContainer(void)
 
     /* Test calling IDxDiagProvider::GetRootContainer before initialization. */
     hr = IDxDiagProvider_GetRootContainer(pddp, NULL);
-    todo_wine
     ok(hr == CO_E_NOTINITIALIZED,
        "Expected IDxDiagProvider::GetRootContainer to return CO_E_NOTINITIALIZED, got %x\n", hr);
 
     hr = IDxDiagProvider_GetRootContainer(pddp, &pddc);
-    todo_wine
     ok(hr == CO_E_NOTINITIALIZED,
        "Expected IDxDiagProvider::GetRootContainer to return CO_E_NOTINITIALIZED, got %x\n", hr);
 
