@@ -46,7 +46,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/winbase16.h"
 #include "user_private.h"
 #include "win.h"
 
@@ -479,7 +478,7 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
         return 0;
     }
 
-    if (USER_Driver->pSetClipboardData(wFormat, 0, hData, cbinfo.flags & CB_OWNER))
+    if (USER_Driver->pSetClipboardData(wFormat, hData, cbinfo.flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
@@ -549,7 +548,7 @@ HANDLE WINAPI GetClipboardData(UINT wFormat)
         return 0;
     }
 
-    if (!USER_Driver->pGetClipboardData(wFormat, NULL, &hData)) hData = 0;
+    hData = USER_Driver->pGetClipboardData( wFormat );
 
     TRACE("returning %p\n", hData);
     return hData;
