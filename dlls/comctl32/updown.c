@@ -310,7 +310,7 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
 static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 {
     WCHAR fmt[3] = { '%', 'd', '\0' };
-    WCHAR txt[20];
+    WCHAR txt[20], txt_old[20] = { 0 };
     int len;
 
     if (!((infoPtr->Flags & FLAG_BUDDYINT) && IsWindow(infoPtr->Buddy)))
@@ -344,6 +344,10 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
         }
         *dst = 0;
     }
+
+    /* if nothing changed exit earlier */
+    GetWindowTextW(infoPtr->Buddy, txt_old, sizeof(txt_old)/sizeof(WCHAR));
+    if (lstrcmpiW(txt_old, txt) == 0) return 0;
 
     return SetWindowTextW(infoPtr->Buddy, txt);
 }

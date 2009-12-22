@@ -59,6 +59,9 @@
 #define EDIT_SEQ_INDEX      1
 #define UPDOWN_SEQ_INDEX    2
 
+#define UPDOWN_ID           0
+#define BUDDY_ID            1
+
 static HWND parent_wnd, g_edit;
 
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
@@ -156,6 +159,11 @@ static const struct message test_updown_unicode_seq[] = {
     { 0 }
 };
 
+static const struct message test_updown_pos_nochange_seq[] = {
+    { WM_GETTEXT, sent|id, 0, 0, BUDDY_ID },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -233,6 +241,7 @@ static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam,
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.id     = BUDDY_ID;
     add_message(sequences, EDIT_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
@@ -274,6 +283,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.id     = UPDOWN_ID;
     add_message(sequences, UPDOWN_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
@@ -360,6 +370,19 @@ static void test_updown_pos(void)
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos_seq , "test updown pos", FALSE);
 
     DestroyWindow(updown);
+
+    /* there's no attempt to update buddy Edit if text didn't change */
+    SetWindowTextA(g_edit, "50");
+    updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT, g_edit);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    r = SendMessage(updown, UDM_SETPOS, 0, 50);
+    expect(50,r);
+    ok_sequence(sequences, EDIT_SEQ_INDEX, test_updown_pos_nochange_seq,
+                "test updown pos, no change", FALSE);
+
+    DestroyWindow(updown);
 }
 
 static void test_updown_pos32(void)
@@ -432,6 +455,19 @@ static void test_updown_pos32(void)
     expect(1,high);
 
     ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos32_seq, "test updown pos32", FALSE);
+
+    DestroyWindow(updown);
+
+    /* there's no attempt to update buddy Edit if text didn't change */
+    SetWindowTextA(g_edit, "50");
+    updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT, g_edit);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    r = SendMessage(updown, UDM_SETPOS32, 0, 50);
+    expect(50,r);
+    ok_sequence(sequences, EDIT_SEQ_INDEX, test_updown_pos_nochange_seq,
+                "test updown pos, no change", FALSE);
 
     DestroyWindow(updown);
 }
