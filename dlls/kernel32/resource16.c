@@ -1105,15 +1105,13 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 }
 
 
-typedef WORD (WINAPI *pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
-
 /**********************************************************************
  *          FreeResource     (KERNEL.63)
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
-    pDestroyIcon32Proc proc;
-    HMODULE user;
+    FARPROC16 proc;
+    HMODULE16 user;
     NE_MODULE *pModule = NE_GetPtr( FarGetOwner16( handle ) );
 
     TRACE("(%04x)\n", handle );
@@ -1149,9 +1147,17 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
     /* If this failed, call USER.DestroyIcon32; this will check
        whether it is a shared cursor/icon; if not it will call
        GlobalFree16() */
-    user = GetModuleHandleA( "user32.dll" );
-    if (user && (proc = (pDestroyIcon32Proc)GetProcAddress( user, "DestroyIcon32" )))
-        return proc( handle, 1 /*CID_RESOURCE*/ );
+    user = GetModuleHandle16( "user" );
+    if (user && (proc = GetProcAddress16( user, "DestroyIcon32" )))
+    {
+        WORD args[2];
+        DWORD result;
+
+        args[1] = handle;
+        args[0] = 1;  /* CID_RESOURCE */
+        WOWCallback16Ex( (SEGPTR)proc, WCB16_PASCAL, sizeof(args), args, &result );
+        return LOWORD(result);
+    }
     else
         return GlobalFree16( handle );
 }
