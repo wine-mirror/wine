@@ -34,7 +34,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "controls.h"
 #include "win.h"
@@ -566,7 +565,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     size.cx = rect.right - rect.left;
     size.cy = rect.bottom - rect.top;
 
-    if (template.x == CW_USEDEFAULT16)
+    if (template.x == (SHORT)0x8000 /*CW_USEDEFAULT16*/)
     {
         pos.x = pos.y = CW_USEDEFAULT;
     }

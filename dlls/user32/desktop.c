@@ -31,7 +31,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "controls.h"
-#include "wine/winuser16.h"
 
 static HBRUSH hbrushPattern;
 static HBITMAP hbitmapWallPaper;
