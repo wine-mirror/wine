@@ -116,6 +116,8 @@ struct wow_handlers32
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
+    struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
+    INT     (*dialog_box_loop)(HWND,HWND);
 };
 
 extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;
@@ -129,6 +131,7 @@ extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HI
 extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 
 /* 16-bit support */
+extern struct wow_handlers32 wow_handlers32 DECLSPEC_HIDDEN;
 extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT) DECLSPEC_HIDDEN;
 extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;

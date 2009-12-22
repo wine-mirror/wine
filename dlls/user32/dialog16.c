@@ -177,7 +177,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
                                      const DLG_TEMPLATE *dlgTemplate, HINSTANCE16 hInst )
 {
-    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd, TRUE );
+    DIALOGINFO *dlgInfo = wow_handlers32.get_dialog_info( hwnd, TRUE );
     DLG_CONTROL_INFO info;
     HWND hwndCtrl, hwndDefButton = 0;
     INT items = dlgTemplate->nbItems;
@@ -441,7 +441,7 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
         if (modal && (flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
         return 0;
     }
-    dlgInfo = DIALOG_get_info( hwnd, TRUE );
+    dlgInfo = wow_handlers32.get_dialog_info( hwnd, TRUE );
     dlgInfo->hwndFocus   = 0;
     dlgInfo->hUserFont   = hUserFont;
     dlgInfo->hMenu       = HMENU_32( hMenu );
@@ -745,7 +745,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
     {
         HWND owner = WIN_Handle32(owner16);
         hwnd = DIALOG_CreateIndirect16( hInst, data, owner, dlgProc, param, TRUE );
-        if (hwnd) ret = DIALOG_DoDialogBox( hwnd, owner );
+        if (hwnd) ret = wow_handlers32.dialog_box_loop( hwnd, owner );
         GlobalUnlock16( hmem );
     }
     FreeResource16( hmem );
@@ -765,7 +765,7 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
     if (!(ptr = GlobalLock16( dlgTemplate ))) return -1;
     hwnd = DIALOG_CreateIndirect16( hInst, ptr, owner, dlgProc, param, TRUE );
     GlobalUnlock16( dlgTemplate );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
+    if (hwnd) return wow_handlers32.dialog_box_loop( hwnd, owner );
     return -1;
 }
 

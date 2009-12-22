@@ -848,7 +848,8 @@ LONG WINAPI GetWindowLong16( HWND16 hwnd16, INT16 offset )
                 return 0;
             }
         }
-        else if (offset == DWLP_DLGPROC) is_winproc = (DIALOG_get_info( hwnd, FALSE ) != NULL);
+        else if (offset == DWLP_DLGPROC)
+            is_winproc = (wow_handlers32.get_dialog_info( hwnd, FALSE ) != NULL);
     }
     retvalue = GetWindowLongA( hwnd, offset );
     if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc16( (WNDPROC)retvalue, FALSE );
@@ -864,7 +865,8 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd16, INT16 offset, LONG newval )
     HWND hwnd = WIN_Handle32( hwnd16 );
     BOOL is_winproc = (offset == GWLP_WNDPROC);
 
-    if (offset == DWLP_DLGPROC) is_winproc = (DIALOG_get_info( hwnd, FALSE ) != NULL);
+    if (offset == DWLP_DLGPROC)
+        is_winproc = (wow_handlers32.get_dialog_info( hwnd, FALSE ) != NULL);
 
     if (is_winproc)
     {

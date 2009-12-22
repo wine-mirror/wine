@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 DWORD USER16_AlertableWait = 0;
 
-static struct wow_handlers32 wow_handlers32;
+struct wow_handlers32 wow_handlers32;
 
 static LRESULT cwp_hook_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                   LRESULT *result, void *arg )
