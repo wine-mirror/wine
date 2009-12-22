@@ -133,6 +133,24 @@ void* fetch_buffer(struct process* pcs, unsigned size)
     return pcs->buffer;
 }
 
+const char* wine_dbgstr_addr(const ADDRESS64* addr)
+{
+    if (!addr) return "(null)";
+    switch (addr->Mode)
+    {
+    case AddrModeFlat:
+        return wine_dbg_sprintf("flat<%s>", wine_dbgstr_longlong(addr->Offset));
+    case AddrMode1616:
+        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
+    case AddrMode1632:
+        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, (DWORD)addr->Offset);
+    case AddrModeReal:
+        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
+    default:
+        return "unknown";
+    }
+}
+
 /******************************************************************
  *		SymSetSearchPathW (DBGHELP.@)
  *

@@ -38,24 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 
-static const char* wine_dbgstr_addr(const ADDRESS64* addr)
-{
-    if (!addr) return "(null)";
-    switch (addr->Mode)
-    {
-    case AddrModeFlat:
-        return wine_dbg_sprintf("flat<%s>", wine_dbgstr_longlong(addr->Offset));
-    case AddrMode1616:
-        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
-    case AddrMode1632:
-        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, (DWORD)addr->Offset);
-    case AddrModeReal:
-        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
-    default:
-        return "unknown";
-    }
-}
-
 static DWORD64 WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS64* addr)
 {
     LDT_ENTRY	le;

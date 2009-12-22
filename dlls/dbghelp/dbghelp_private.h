@@ -425,6 +425,7 @@ extern HANDLE hMsvcrt;
 extern BOOL         validate_addr64(DWORD64 addr);
 extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
 extern void*        fetch_buffer(struct process* pcs, unsigned size);
+extern const char*  wine_dbgstr_addr(const ADDRESS64* addr);
 
 /* crc32.c */
 extern DWORD calc_crc32(int fd);
