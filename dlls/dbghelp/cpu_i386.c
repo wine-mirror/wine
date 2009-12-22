@@ -29,6 +29,64 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+#define STEP_FLAG 0x00000100 /* single step flag */
+#define V86_FLAG  0x00020000
+
+#define IS_VM86_MODE(ctx) (ctx->EFlags & V86_FLAG)
+
+#ifdef __i386__
+static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD sel)
+{
+    LDT_ENTRY	le;
+
+    if (IS_VM86_MODE(ctx)) return AddrModeReal;
+    /* null or system selector */
+    if (!(sel & 4) || ((sel >> 3) < 17)) return AddrModeFlat;
+    if (hThread && GetThreadSelectorEntry(hThread, sel, &le))
+        return le.HighWord.Bits.Default_Big ? AddrMode1632 : AddrMode1616;
+    /* selector doesn't exist */
+    return -1;
+}
+
+static unsigned i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
+                                unsigned seg, unsigned long offset)
+{
+    addr->Mode    = AddrModeFlat;
+    addr->Segment = seg;
+    addr->Offset  = offset;
+    if (seg)
+    {
+        switch (addr->Mode = get_selector_type(hThread, ctx, seg))
+        {
+        case AddrModeReal:
+        case AddrMode1616:
+            addr->Offset &= 0xffff;
+            break;
+        case AddrModeFlat:
+        case AddrMode1632:
+            break;
+        default:
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+#endif
+
+static unsigned i386_get_addr(HANDLE hThread, const CONTEXT* ctx,
+                              enum cpu_addr ca, ADDRESS64* addr)
+{
+#ifdef __i386__
+    switch (ca)
+    {
+    case cpu_addr_pc:    return i386_build_addr(hThread, ctx, addr, ctx->SegCs, ctx->Eip);
+    case cpu_addr_stack: return i386_build_addr(hThread, ctx, addr, ctx->SegSs, ctx->Esp);
+    case cpu_addr_frame: return i386_build_addr(hThread, ctx, addr, ctx->SegSs, ctx->Ebp);
+    }
+#endif
+    return FALSE;
+}
+
 enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 
 /* indexes in Reserved array */
@@ -344,5 +402,7 @@ done_err:
 
 struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
+    4,
+    i386_get_addr,
     i386_stack_walk,
 };

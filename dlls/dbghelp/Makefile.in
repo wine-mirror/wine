@@ -11,6 +11,7 @@ DELAYIMPORTS = version
 C_SRCS = \
 	coff.c \
 	cpu_i386.c \
+	cpu_ppc.c \
 	cpu_x86_64.c \
 	crc32.c \
 	dbghelp.c \

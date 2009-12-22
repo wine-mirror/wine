@@ -29,6 +29,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+static unsigned x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx,
+                                enum cpu_addr ca, ADDRESS64* addr)
+{
+    addr->Mode = AddrModeFlat;
+    switch (ca)
+    {
+#ifdef __x86_64__
+    case cpu_addr_pc:    addr->Segment = ctx->SegCs; addr->Offset = ctx->Rip; return TRUE;
+    case cpu_addr_stack: addr->Segment = ctx->SegSs; addr->Offset = ctx->Rsp; return TRUE;
+    case cpu_addr_frame: addr->Segment = ctx->SegSs; addr->Offset = ctx->Rbp; return TRUE;
+#endif
+    default: addr->Mode = -1;
+        return FALSE;
+    }
+}
+
 enum st_mode {stm_start, stm_64bit, stm_done};
 
 /* indexes in Reserved array */
@@ -111,5 +127,7 @@ done_err:
 
 struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
+    8,
+    x86_64_get_addr,
     x86_64_stack_walk,
 };

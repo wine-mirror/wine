@@ -115,58 +115,25 @@ static void fetch_thread_stack(struct dump_context* dc, const void* teb_addr,
                                const CONTEXT* ctx, MINIDUMP_MEMORY_DESCRIPTOR* mmd)
 {
     NT_TIB      tib;
+    ADDRESS64   addr;
 
-    if (ReadProcessMemory(dc->hProcess, teb_addr, &tib, sizeof(tib), NULL))
+    if (ReadProcessMemory(dc->hProcess, teb_addr, &tib, sizeof(tib), NULL) &&
+        dbghelp_current_cpu &&
+        dbghelp_current_cpu->get_addr(NULL /* FIXME */, ctx, cpu_addr_stack, &addr) && addr.Mode == AddrModeFlat)
     {
-#ifdef __i386__
-        /* limiting the stack dumping to the size actually used */
-        if (ctx->Esp){
-
-            /* make sure ESP is within the established range of the stack.  It could have
+        if (addr.Offset)
+        {
+            addr.Offset -= dbghelp_current_cpu->word_size;
+            /* make sure stack pointer is within the established range of the stack.  It could have
                been clobbered by whatever caused the original exception. */
-            if (ctx->Esp - 4 < (ULONG_PTR)tib.StackLimit || ctx->Esp - 4 > (ULONG_PTR)tib.StackBase)
+            if (addr.Offset < (ULONG_PTR)tib.StackLimit || addr.Offset > (ULONG_PTR)tib.StackBase)
                 mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
 
             else
-                mmd->StartOfMemoryRange = (ctx->Esp - 4);
+                mmd->StartOfMemoryRange = addr.Offset;
         }
-
         else
             mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-
-#elif defined(__powerpc__)
-        if (ctx->Iar){
-
-            /* make sure IAR is within the established range of the stack.  It could have
-               been clobbered by whatever caused the original exception. */
-            if (ctx->Iar - 4 < (ULONG_PTR)tib.StackLimit || ctx->Iar - 4 > (ULONG_PTR)tib.StackBase)
-                mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-
-            else
-                mmd->StartOfMemoryRange = (ctx->Iar - 4);
-        }
-
-        else
-            mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-
-#elif defined(__x86_64__)
-        if (ctx->Rsp){
-
-            /* make sure RSP is within the established range of the stack.  It could have
-               been clobbered by whatever caused the original exception. */
-            if (ctx->Rsp - 8 < (ULONG_PTR)tib.StackLimit || ctx->Rsp - 8 > (ULONG_PTR)tib.StackBase)
-                mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-
-            else
-                mmd->StartOfMemoryRange = (ctx->Rsp - 8);
-        }
-
-        else
-            mmd->StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
-
-#else
-#error unsupported CPU
-#endif
         mmd->Memory.DataSize = (ULONG_PTR)tib.StackBase - mmd->StartOfMemoryRange;
     }
 }

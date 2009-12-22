@@ -443,9 +443,16 @@ struct cpu_stack_walk
     } u;
 };
 
+enum cpu_addr {cpu_addr_pc, cpu_addr_stack, cpu_addr_frame};
 struct cpu
 {
     DWORD       machine;
+    DWORD       word_size;
+    /* address manipulation */
+    unsigned    (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
+                            enum cpu_addr, ADDRESS64* addr);
+
+    /* stack manipulation */
     BOOL        (*stack_walk)(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame);
 };
 
