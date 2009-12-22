@@ -1500,8 +1500,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         WNDPROC16 winproc;
 
         /* first the WH_CALLWNDPROC hook */
-        if (HOOK_IsHooked( WH_CALLWNDPROC ))
-            WINPROC_CallProc16To32A( cwp_hook_callback, hwnd16, msg, wparam, lparam, &result, NULL );
+        WINPROC_CallProc16To32A( cwp_hook_callback, hwnd16, msg, wparam, lparam, &result, NULL );
 
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWLP_WNDPROC ))) return 0;
 
