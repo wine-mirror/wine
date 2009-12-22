@@ -38,25 +38,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 
-static const char* wine_dbgstr_addr(const ADDRESS* addr)
+static const char* wine_dbgstr_addr(const ADDRESS64* addr)
 {
     if (!addr) return "(null)";
     switch (addr->Mode)
     {
     case AddrModeFlat:
-        return wine_dbg_sprintf("flat<%08x>", addr->Offset);
+        return wine_dbg_sprintf("flat<%s>", wine_dbgstr_longlong(addr->Offset));
     case AddrMode1616:
-        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
     case AddrMode1632:
-        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, (DWORD)addr->Offset);
     case AddrModeReal:
-        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, (DWORD)addr->Offset);
     default:
         return "unknown";
     }
 }
 
-static DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr)
+static DWORD64 WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS64* addr)
 {
     LDT_ENTRY	le;
 
@@ -80,8 +80,8 @@ static DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* add
         FIXME("Unsupported (yet) mode (%x)\n", addr->Mode);
         return 0;
     }
-    FIXME("Failed to linearize address %04x:%08x (mode %x)\n",
-          addr->Segment, addr->Offset, addr->Mode);
+    FIXME("Failed to linearize address %04x:%s (mode %x)\n",
+          addr->Segment, wine_dbgstr_longlong(addr->Offset), addr->Mode);
     return 0;
 }
 
@@ -150,7 +150,7 @@ static inline void addr_64to32(const ADDRESS64* addr64, ADDRESS* addr32)
     addr32->Mode = addr64->Mode;
 }
 
-static inline BOOL sw_read_mem(struct stack_walk_callback* cb, DWORD addr, void* ptr, DWORD sz)
+static inline BOOL sw_read_mem(struct stack_walk_callback* cb, DWORD64 addr, void* ptr, DWORD sz)
 {
     if (cb->is32)
         return cb->u.s32.f_read_mem(cb->hProcess, addr, ptr, sz, NULL);
@@ -158,17 +158,18 @@ static inline BOOL sw_read_mem(struct stack_walk_callback* cb, DWORD addr, void*
         return cb->u.s64.f_read_mem(cb->hProcess, addr, ptr, sz, NULL);
 }
 
-static inline DWORD sw_xlat_addr(struct stack_walk_callback* cb, ADDRESS* addr)
+static inline DWORD64 sw_xlat_addr(struct stack_walk_callback* cb, ADDRESS64* addr)
 {
     if (addr->Mode == AddrModeFlat) return addr->Offset;
-    if (cb->is32) return cb->u.s32.f_xlat_adr(cb->hProcess, cb->hThread, addr);
-    if (cb->u.s64.f_xlat_adr)
+    if (cb->is32)
     {
-        ADDRESS64       addr64;
+        ADDRESS         addr32;
 
-        addr_32to64(addr, &addr64);
-        return cb->u.s64.f_xlat_adr(cb->hProcess, cb->hThread, &addr64);
+        addr_64to32(addr, &addr32);
+        return cb->u.s32.f_xlat_adr(cb->hProcess, cb->hThread, &addr32);
     }
+    else if (cb->u.s64.f_xlat_adr)
+        return cb->u.s64.f_xlat_adr(cb->hProcess, cb->hThread, addr);
     return addr_to_linear(cb->hProcess, cb->hThread, addr);
 }
 
@@ -188,26 +189,27 @@ static inline DWORD sw_modl_bas(struct stack_walk_callback* cb, DWORD addr)
         return cb->u.s64.f_modl_bas(cb->hProcess, addr);
 }
 
-static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
+static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME64 frame)
 {
     STACK32FRAME        frame32;
     STACK16FRAME        frame16;
     char                ch;
-    ADDRESS             tmp;
+    ADDRESS64           tmp;
     DWORD               p;
     WORD                val;
     BOOL                do_switch;
+    unsigned int        i;
 
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08x nSwitch=%08x\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%p nSwitch=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
-          wine_dbgstr_addr(&frame->AddrStack), 
+          wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
-          curr_switch, next_switch);
+          (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch);
 
     if (curr_mode == stm_start)
     {
@@ -231,16 +233,17 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                                      sizeof(info), NULL) == STATUS_SUCCESS)
         {
             curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
-            if (!sw_read_mem(cb, curr_switch, &next_switch, sizeof(next_switch)))
+            if (!sw_read_mem(cb, curr_switch, &p, sizeof(p)))
             {
                 WARN("Can't read TEB:WOW32Reserved\n");
                 goto done_err;
             }
+            next_switch = p;
             if (curr_mode == stm_16bit)
             {
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", next_switch);
+                    WARN("Bad stack frame %p\n", (void*)(DWORD_PTR)next_switch);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame32.frame16;
@@ -300,7 +303,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
             {
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", next_switch);
+                    WARN("Bad stack frame %p\n", (void*)(DWORD_PTR)next_switch);
                     goto done_err;
                 }
 
@@ -377,7 +380,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                 next_switch = curr_switch;
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08x\n", next_switch);
+                    WARN("Bad stack frame %p\n", (void*)(DWORD_PTR)next_switch);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame32.frame16;
@@ -415,8 +418,6 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
 
     if (curr_mode == stm_16bit)
     {
-        unsigned int     i;
-
         p = sw_xlat_addr(cb, &frame->AddrFrame);
         if (!sw_read_mem(cb, p + sizeof(WORD), &val, sizeof(WORD)))
             goto done_err;
@@ -461,11 +462,15 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
         if (!sw_read_mem(cb, frame->AddrFrame.Offset + sizeof(DWORD),
                          &frame->AddrReturn.Offset, sizeof(DWORD)))
         {
-            WARN("Cannot read new frame offset %08x\n", frame->AddrFrame.Offset + (int)sizeof(DWORD));
+            WARN("Cannot read new frame offset %p\n",
+                 (void*)(DWORD_PTR)(frame->AddrFrame.Offset + (int)sizeof(DWORD)));
             goto done_err;
         }
-        sw_read_mem(cb, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
-                    frame->Params, sizeof(frame->Params));
+        for (i = 0; i < sizeof(frame->Params) / sizeof(frame->Params[0]); i++)
+        {
+            sw_read_mem(cb, frame->AddrFrame.Offset + 2 * sizeof(DWORD), &p, sizeof(p));
+            frame->Params[i] = p;
+        }
     }
 
     frame->Far = TRUE;
@@ -476,13 +481,13 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
     else
         frame->FuncTableEntry = NULL;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08x nSwitch=%08x FuncTable=%p\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%p nSwitch=%p FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack), 
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
-          curr_switch, next_switch, frame->FuncTableEntry);
+          (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch, frame->FuncTableEntry);
 
     return TRUE;
 done_err:
@@ -494,11 +499,80 @@ done_err:
  *		StackWalk (DBGHELP.@)
  */
 BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                      LPSTACKFRAME frame, PVOID ctx,
+                      LPSTACKFRAME frame32, PVOID ctx,
                       PREAD_PROCESS_MEMORY_ROUTINE f_read_mem,
                       PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
                       PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
                       PTRANSLATE_ADDRESS_ROUTINE f_xlat_adr)
+{
+    struct stack_walk_callback  swcb;
+    STACKFRAME64                frame64;
+    BOOL                        ret;
+
+    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
+          MachineType, hProcess, hThread, frame32, ctx,
+          f_read_mem, FunctionTableAccessRoutine,
+          GetModuleBaseRoutine, f_xlat_adr);
+
+    if (MachineType != IMAGE_FILE_MACHINE_I386)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    addr_32to64(&frame32->AddrPC,     &frame64.AddrPC);
+    addr_32to64(&frame32->AddrReturn, &frame64.AddrReturn);
+    addr_32to64(&frame32->AddrFrame,  &frame64.AddrFrame);
+    addr_32to64(&frame32->AddrStack,  &frame64.AddrStack);
+    addr_32to64(&frame32->AddrBStore, &frame64.AddrBStore);
+    frame64.FuncTableEntry = frame32->FuncTableEntry; /* FIXME */
+    frame64.Far = frame32->Far;
+    frame64.Virtual = frame32->Virtual;
+    frame64.Reserved[0] = frame32->Reserved[0];
+    frame64.Reserved[1] = frame32->Reserved[1];
+    frame64.Reserved[2] = frame32->Reserved[2];
+    /* we don't handle KdHelp */
+
+    swcb.hProcess = hProcess;
+    swcb.hThread = hThread;
+    swcb.is32 = TRUE;
+    /* sigh... MS isn't even consistent in the func prototypes */
+    swcb.u.s32.f_read_mem = (f_read_mem) ? f_read_mem : read_mem;
+    swcb.u.s32.f_xlat_adr = f_xlat_adr;
+    swcb.u.s32.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess;
+    swcb.u.s32.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase;
+
+    ret = stack_walk(&swcb, &frame64);
+
+    addr_64to32(&frame64.AddrPC,     &frame32->AddrPC);
+    addr_64to32(&frame64.AddrReturn, &frame32->AddrReturn);
+    addr_64to32(&frame64.AddrFrame,  &frame32->AddrFrame);
+    addr_64to32(&frame64.AddrStack,  &frame32->AddrStack);
+    addr_64to32(&frame64.AddrBStore, &frame32->AddrBStore);
+    frame32->FuncTableEntry = frame64.FuncTableEntry; /* FIXME */
+    frame32->Params[0] = frame64.Params[0];
+    frame32->Params[1] = frame64.Params[1];
+    frame32->Params[2] = frame64.Params[2];
+    frame32->Params[3] = frame64.Params[3];
+    frame32->Far = frame64.Far;
+    frame32->Virtual = frame64.Virtual;
+    frame32->Reserved[0] = frame64.Reserved[0];
+    frame32->Reserved[1] = frame64.Reserved[1];
+    frame32->Reserved[2] = frame64.Reserved[2];
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *		StackWalk64 (DBGHELP.@)
+ */
+BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+                        LPSTACKFRAME64 frame, PVOID ctx,
+                        PREAD_PROCESS_MEMORY_ROUTINE64 f_read_mem,
+                        PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
+                        PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,
+                        PTRANSLATE_ADDRESS_ROUTINE64 f_xlat_adr)
 {
     struct stack_walk_callback  swcb;
 
@@ -515,93 +589,27 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 
     swcb.hProcess = hProcess;
     swcb.hThread = hThread;
-    swcb.is32 = TRUE;
-    /* sigh... MS isn't even consistent in the func prototypes */
-    swcb.u.s32.f_read_mem = (f_read_mem) ? f_read_mem : read_mem;
-    swcb.u.s32.f_xlat_adr = (f_xlat_adr) ? f_xlat_adr : addr_to_linear;
-    swcb.u.s32.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess;
-    swcb.u.s32.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase;
-
-    return stack_walk(&swcb, frame);
-}
-
-
-/***********************************************************************
- *		StackWalk64 (DBGHELP.@)
- */
-BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                        LPSTACKFRAME64 frame64, PVOID ctx,
-                        PREAD_PROCESS_MEMORY_ROUTINE64 f_read_mem,
-                        PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
-                        PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,
-                        PTRANSLATE_ADDRESS_ROUTINE64 f_xlat_adr)
-{
-    struct stack_walk_callback  swcb;
-    STACKFRAME                  frame32;
-    BOOL                        ret;
-
-    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
-          MachineType, hProcess, hThread, frame64, ctx,
-          f_read_mem, FunctionTableAccessRoutine,
-          GetModuleBaseRoutine, f_xlat_adr);
-
-    if (MachineType != IMAGE_FILE_MACHINE_I386)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    addr_64to32(&frame64->AddrPC,     &frame32.AddrPC);
-    addr_64to32(&frame64->AddrReturn, &frame32.AddrReturn);
-    addr_64to32(&frame64->AddrFrame,  &frame32.AddrFrame);
-    addr_64to32(&frame64->AddrStack,  &frame32.AddrStack);
-    addr_64to32(&frame64->AddrBStore, &frame32.AddrBStore);
-    frame32.FuncTableEntry = frame64->FuncTableEntry; /* FIXME */
-    frame32.Far = frame64->Far;
-    frame32.Virtual = frame64->Virtual;
-    frame32.Reserved[0] = (ULONG)frame64->Reserved[0];
-    frame32.Reserved[1] = (ULONG)frame64->Reserved[1];
-    frame32.Reserved[2] = (ULONG)frame64->Reserved[2];
-    /* we don't handle KdHelp */
-
-    swcb.hProcess = hProcess;
-    swcb.hThread = hThread;
     swcb.is32 = FALSE;
     /* sigh... MS isn't even consistent in the func prototypes */
     swcb.u.s64.f_read_mem = (f_read_mem) ? f_read_mem : read_mem64;
-    swcb.u.s64.f_xlat_adr = f_xlat_adr;
+    swcb.u.s64.f_xlat_adr = (f_xlat_adr) ? f_xlat_adr : addr_to_linear;
     swcb.u.s64.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess64;
     swcb.u.s64.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase64;
 
-    ret = stack_walk(&swcb, &frame32);
+    if (!stack_walk(&swcb, frame)) return FALSE;
 
-    addr_32to64(&frame32.AddrPC,     &frame64->AddrPC);
-    addr_32to64(&frame32.AddrReturn, &frame64->AddrReturn);
-    addr_32to64(&frame32.AddrFrame,  &frame64->AddrFrame);
-    addr_32to64(&frame32.AddrStack,  &frame64->AddrStack);
-    addr_32to64(&frame32.AddrBStore, &frame64->AddrBStore);
-    frame64->FuncTableEntry = frame32.FuncTableEntry; /* FIXME */
-    frame64->Params[0] = frame32.Params[0];
-    frame64->Params[1] = frame32.Params[1];
-    frame64->Params[2] = frame32.Params[2];
-    frame64->Params[3] = frame32.Params[3];
-    frame64->Far = frame32.Far;
-    frame64->Virtual = frame32.Virtual;
-    frame64->Reserved[0] = frame32.Reserved[0];
-    frame64->Reserved[1] = frame32.Reserved[1];
-    frame64->Reserved[2] = frame32.Reserved[2];
     /* we don't handle KdHelp */
-    frame64->KdHelp.Thread = 0xC000FADE;
-    frame64->KdHelp.ThCallbackStack = 0x10;
-    frame64->KdHelp.ThCallbackBStore = 0;
-    frame64->KdHelp.NextCallback = 0;
-    frame64->KdHelp.FramePointer = 0;
-    frame64->KdHelp.KiCallUserMode = 0xD000DAFE;
-    frame64->KdHelp.KeUserCallbackDispatcher = 0xE000F000;
-    frame64->KdHelp.SystemRangeStart = 0xC0000000;
-    frame64->KdHelp.Reserved[0] /* KiUserExceptionDispatcher */ = 0xE0005000;
+    frame->KdHelp.Thread = 0xC000FADE;
+    frame->KdHelp.ThCallbackStack = 0x10;
+    frame->KdHelp.ThCallbackBStore = 0;
+    frame->KdHelp.NextCallback = 0;
+    frame->KdHelp.FramePointer = 0;
+    frame->KdHelp.KiCallUserMode = 0xD000DAFE;
+    frame->KdHelp.KeUserCallbackDispatcher = 0xE000F000;
+    frame->KdHelp.SystemRangeStart = 0xC0000000;
+    frame->KdHelp.Reserved[0] /* KiUserExceptionDispatcher */ = 0xE0005000;
 
-    return ret;
+    return TRUE;
 }
 
 /******************************************************************
