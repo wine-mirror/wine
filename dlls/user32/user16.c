@@ -251,7 +251,7 @@ static INT parse_format( LPCSTR format, WPRINTF_FORMAT *res )
 
 
 /**********************************************************************
- * Management of the 16-bit cursor/icon cache
+ * Management of the 16-bit cursors and icons
  */
 
 struct cache_entry
@@ -265,6 +265,28 @@ struct cache_entry
 };
 
 static struct list icon_cache = LIST_INIT( icon_cache );
+
+static HICON16 alloc_icon_handle( unsigned int size )
+{
+    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
+    FarSetOwner16( handle, 0 );
+    return handle;
+}
+
+static CURSORICONINFO *get_icon_ptr( HICON16 handle )
+{
+    return GlobalLock16( handle );
+}
+
+static void release_icon_ptr( HICON16 handle, CURSORICONINFO *ptr )
+{
+    GlobalUnlock16( handle );
+}
+
+static int free_icon_handle( HICON16 handle )
+{
+    return GlobalFree16( handle );
+}
 
 static void add_shared_icon( HINSTANCE16 inst, HRSRC16 rsrc, HRSRC16 group, HICON16 icon )
 {
@@ -313,7 +335,7 @@ static void free_module_icons( HINSTANCE16 inst )
     {
         if (cache->inst != inst) continue;
         list_remove( &cache->entry );
-        GlobalFree16( cache->icon );
+        free_icon_handle( cache->icon );
         HeapFree( GetProcessHeap(), 0, cache );
     }
 }
@@ -1662,11 +1684,11 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE dir, BOOL16 bIcon,
  */
 HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 {
-    CURSORICONINFO *info = GlobalLock16( hIcon );
+    CURSORICONINFO *info = get_icon_ptr( hIcon );
     void *and_bits = info + 1;
     void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
     HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
-    GlobalUnlock16( hIcon );
+    release_icon_ptr( hIcon, info );
     return ret;
 }
 
@@ -1676,11 +1698,11 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
  */
 HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 {
-    CURSORICONINFO *info = GlobalLock16( hCursor );
+    CURSORICONINFO *info = get_icon_ptr( hCursor );
     void *and_bits = info + 1;
     void *xor_bits = (BYTE *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
     HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
-    GlobalUnlock16( hCursor );
+    release_icon_ptr( hCursor, info );
     return ret;
 }
 
@@ -1921,8 +1943,8 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
                                            LPCVOID lpANDbits,
                                            LPCVOID lpXORbits )
 {
-    HGLOBAL16 handle;
-    char *ptr;
+    HICON16 handle;
+    CURSORICONINFO *ptr;
     int sizeAnd, sizeXor;
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
@@ -1930,15 +1952,14 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
     info->nWidthBytes = get_bitmap_width_bytes(info->nWidth,info->bBitsPerPixel);
     sizeXor = info->nHeight * info->nWidthBytes;
     sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
-                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
+    if (!(handle = alloc_icon_handle( sizeof(CURSORICONINFO) + sizeXor + sizeAnd )))
         return 0;
     FarSetOwner16( handle, hInstance );
-    ptr = GlobalLock16( handle );
+    ptr = get_icon_ptr( handle );
     memcpy( ptr, info, sizeof(*info) );
-    memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
-    memcpy( ptr + sizeof(CURSORICONINFO) + sizeAnd, lpXORbits, sizeXor );
-    GlobalUnlock16( handle );
+    memcpy( ptr + 1, lpANDbits, sizeAnd );
+    memcpy( (char *)(ptr + 1) + sizeAnd, lpXORbits, sizeXor );
+    release_icon_ptr( handle, ptr );
     return handle;
 }
 
@@ -2335,7 +2356,7 @@ BOOL16 WINAPI DestroyIcon16(HICON16 hIcon)
     count = release_shared_icon( hIcon );
     if (count != -1) return !count;
     /* assume non-shared */
-    GlobalFree16( hIcon );
+    free_icon_handle( hIcon );
     return TRUE;
 }
 
@@ -2887,7 +2908,7 @@ WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
 
     /* Now assume non-shared cursor/icon */
 
-    retv = GlobalFree16( handle );
+    retv = free_icon_handle( handle );
     return (flags & CID_RESOURCE)? retv : TRUE;
 }
 
