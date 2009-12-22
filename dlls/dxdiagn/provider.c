@@ -48,6 +48,8 @@ static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, 
 {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
 
+    if (!ppobj) return E_INVALIDARG;
+
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagProvider)) {
         IUnknown_AddRef(iface);
@@ -56,6 +58,7 @@ static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, 
     }
 
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

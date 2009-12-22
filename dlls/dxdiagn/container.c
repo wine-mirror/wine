@@ -33,6 +33,8 @@ HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFII
 {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
 
+    if (!ppobj) return E_INVALIDARG;
+
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagContainer)) {
         IUnknown_AddRef(iface);
@@ -41,6 +43,7 @@ HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFII
     }
 
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 
