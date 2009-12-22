@@ -139,12 +139,12 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
   IDxDiagProviderImpl* provider;
 
   TRACE("(%p, %s, %p)\n", punkOuter, debugstr_guid(riid), ppobj);
-  
+
+  *ppobj = NULL;
+  if (punkOuter) return CLASS_E_NOAGGREGATION;
+
   provider = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagProviderImpl));
-  if (NULL == provider) {
-    *ppobj = NULL;
-    return E_OUTOFMEMORY;
-  }
+  if (NULL == provider) return E_OUTOFMEMORY;
   provider->lpVtbl = &DxDiagProvider_Vtbl;
   provider->ref = 0; /* will be inited with QueryInterface */
   return IDxDiagProviderImpl_QueryInterface ((PDXDIAGPROVIDER)provider, riid, ppobj);
