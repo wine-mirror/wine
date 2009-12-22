@@ -186,7 +186,7 @@ unsigned stack_fetch_frames(void)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    while (StackWalk64(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
+    while (StackWalk64(be_cpu->machine, dbg_curr_process->handle,
                        dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
                        SymFunctionTableAccess64, SymGetModuleBase64, NULL))
     {

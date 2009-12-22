@@ -175,6 +175,7 @@ static int be_ppc_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 
 struct backend_cpu be_ppc =
 {
+    IMAGE_FILE_MACHINE_POWERPC,
     be_cpu_linearize,
     be_cpu_build_addr,
     be_ppc_get_addr,
