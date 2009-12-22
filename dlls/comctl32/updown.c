@@ -868,13 +868,13 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
             SetWindowLongW (hwnd, GWL_STYLE, infoPtr->dwStyle & ~WS_BORDER);
 	    if (!(infoPtr->dwStyle & UDS_HORZ))
 	        SetWindowPos (hwnd, NULL, 0, 0, DEFAULT_WIDTH, pcs->cy,
-	                      SWP_NOOWNERZORDER | SWP_NOMOVE);
+	                      SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOMOVE);
 
             /* Do we pick the buddy win ourselves? */
 	    if (infoPtr->dwStyle & UDS_AUTOBUDDY)
 		UPDOWN_SetBuddy (infoPtr, GetWindow (hwnd, GW_HWNDPREV));
 
-            OpenThemeData (hwnd, themeClass);
+	    OpenThemeData (hwnd, themeClass);
 
 	    TRACE("UpDown Ctrl creation, hwnd=%p\n", hwnd);
 	    }
