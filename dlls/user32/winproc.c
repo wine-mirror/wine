@@ -1121,6 +1121,28 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     return wow_handlers.static_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
+static HICON alloc_icon_handle( unsigned int size )
+{
+    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
+    FarSetOwner16( handle, 0 );
+    return HICON_32( handle );
+}
+
+static struct tagCURSORICONINFO *get_icon_ptr( HICON handle )
+{
+    return GlobalLock16( HICON_16(handle) );
+}
+
+static void release_icon_ptr( HICON handle, struct tagCURSORICONINFO *ptr )
+{
+    GlobalUnlock16( HICON_16(handle) );
+}
+
+static int free_icon_handle( HICON handle )
+{
+    return GlobalFree16( HICON_16(handle) );
+}
+
 
 /**********************************************************************
  *		UserRegisterWowHandlers (USER32.@)
@@ -1154,5 +1176,9 @@ struct wow_handlers16 wow_handlers =
     StaticWndProc_common,
     WIN_CreateWindowEx,
     NULL,  /* call_window_proc */
-    NULL   /* call_dialog_proc */
+    NULL,  /* call_dialog_proc */
+    alloc_icon_handle,
+    get_icon_ptr,
+    release_icon_ptr,
+    free_icon_handle
 };

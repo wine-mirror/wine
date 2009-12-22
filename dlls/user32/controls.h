@@ -99,6 +99,10 @@ struct wow_handlers16
     HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
     LRESULT (*call_window_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
     LRESULT (*call_dialog_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
+    HICON   (*alloc_icon_handle)(UINT);
+    struct tagCURSORICONINFO *(*get_icon_ptr)(HICON);
+    void    (*release_icon_ptr)(HICON,struct tagCURSORICONINFO*);
+    int     (*free_icon_handle)(HICON);
 };
 
 struct wow_handlers32
