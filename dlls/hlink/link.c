@@ -245,6 +245,10 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
     TRACE("(%p)->(%i %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
             debugstr_w(pwzLocation));
 
+    if(grfHLSETF > (HLINKSETF_TARGET | HLINKSETF_LOCATION) &&
+            grfHLSETF < -(HLINKSETF_TARGET | HLINKSETF_LOCATION))
+        return grfHLSETF;
+
     if (grfHLSETF & HLINKSETF_TARGET)
     {
         heap_free(This->Target);
@@ -281,7 +285,20 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
 {
     HlinkImpl  *This = (HlinkImpl*)iface;
 
-    FIXME("(%p) -> (%i %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
+    TRACE("(%p) -> (%i %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
+
+    /* note: undocumented behavior with dwWhichRef == -1 */
+    if(dwWhichRef != -1 && dwWhichRef & ~(HLINKGETREF_DEFAULT | HLINKGETREF_ABSOLUTE | HLINKGETREF_RELATIVE))
+    {
+        if(ppwzTarget)
+            *ppwzTarget = NULL;
+        if(ppwzLocation)
+            *ppwzLocation = NULL;
+        return E_INVALIDARG;
+    }
+
+    if(dwWhichRef != HLINKGETREF_DEFAULT)
+        FIXME("unhandled flags: 0x%x\n", dwWhichRef);
 
     if (ppwzTarget)
     {
@@ -300,8 +317,6 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
                 IBindCtx_Release(pbc);
                 IMoniker_Release(mon);
             }
-            else
-                FIXME("Unhandled case, no set Target and no moniker\n");
         }
     }
     if (ppwzLocation)
