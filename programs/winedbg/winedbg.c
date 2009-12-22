@@ -610,11 +610,11 @@ void dbg_start_interactive(HANDLE hFile)
 struct backend_cpu* be_cpu;
 #ifdef __i386__
 extern struct backend_cpu be_i386;
-#elif __powerpc__
+#elif defined(__powerpc__)
 extern struct backend_cpu be_ppc;
-#elif __ALPHA__
+#elif defined(__ALPHA__)
 extern struct backend_cpu be_alpha;
-#elif __x86_64__
+#elif defined(__x86_64__)
 extern struct backend_cpu be_x86_64;
 #else
 # error CPU unknown
