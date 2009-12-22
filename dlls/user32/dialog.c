@@ -109,7 +109,7 @@ const struct builtin_class_descr DIALOG_builtin_class =
  * Helper function for modal dialogs to enable again the
  * owner of the dialog box.
  */
-void DIALOG_EnableOwner( HWND hOwner )
+static void DIALOG_EnableOwner( HWND hOwner )
 {
     /* Owner must be a top-level window */
     if (hOwner)
@@ -125,7 +125,7 @@ void DIALOG_EnableOwner( HWND hOwner )
  * Helper function for modal dialogs to disable the
  * owner of the dialog box. Returns TRUE if owner was enabled.
  */
-BOOL DIALOG_DisableOwner( HWND hOwner )
+static BOOL DIALOG_DisableOwner( HWND hOwner )
 {
     /* Owner must be a top-level window */
     if (hOwner)

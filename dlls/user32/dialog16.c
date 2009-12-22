@@ -66,6 +66,44 @@ typedef struct
 
 
 /***********************************************************************
+ *           DIALOG_EnableOwner
+ *
+ * Helper function for modal dialogs to enable again the
+ * owner of the dialog box.
+ */
+static void DIALOG_EnableOwner( HWND hOwner )
+{
+    /* Owner must be a top-level window */
+    if (hOwner)
+        hOwner = GetAncestor( hOwner, GA_ROOT );
+    if (!hOwner) return;
+    EnableWindow( hOwner, TRUE );
+}
+
+
+/***********************************************************************
+ *           DIALOG_DisableOwner
+ *
+ * Helper function for modal dialogs to disable the
+ * owner of the dialog box. Returns TRUE if owner was enabled.
+ */
+static BOOL DIALOG_DisableOwner( HWND hOwner )
+{
+    /* Owner must be a top-level window */
+    if (hOwner)
+        hOwner = GetAncestor( hOwner, GA_ROOT );
+    if (!hOwner) return FALSE;
+    if (IsWindowEnabled( hOwner ))
+    {
+        EnableWindow( hOwner, FALSE );
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+
+/***********************************************************************
  *           DIALOG_GetControl16
  *
  * Return the class and text of the control pointed to by ptr,

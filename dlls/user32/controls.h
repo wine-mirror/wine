@@ -240,8 +240,6 @@ typedef struct tagDIALOGINFO
 #define DF_OWNERENABLED 0x0002
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
-extern void DIALOG_EnableOwner( HWND hOwner ) DECLSPEC_HIDDEN;
-extern BOOL DIALOG_DisableOwner( HWND hOwner ) DECLSPEC_HIDDEN;
 extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_CONTROLS_H */
