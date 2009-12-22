@@ -28,7 +28,7 @@
 #include "winuser.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "controls.h"
 #include "user_private.h"
 #include "wine/debug.h"
 

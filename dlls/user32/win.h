@@ -79,7 +79,7 @@ typedef struct tagWND
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern WND *WIN_GetPtr( HWND hwnd ) DECLSPEC_HIDDEN;
-extern HWND WIN_Handle32( HWND16 hwnd16 ) DECLSPEC_HIDDEN;
+extern HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentThread( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_SetOwner( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
@@ -97,12 +97,6 @@ extern HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags
 /* user lock */
 extern void USER_Lock(void) DECLSPEC_HIDDEN;
 extern void USER_Unlock(void) DECLSPEC_HIDDEN;
-
-static inline HWND WIN_GetFullHandle( HWND hwnd )
-{
-    if (!HIWORD(hwnd) && hwnd) hwnd = WIN_Handle32( LOWORD(hwnd) );
-    return hwnd;
-}
 
 /* to release pointers retrieved by WIN_GetPtr */
 static inline void WIN_ReleasePtr( WND *ptr )

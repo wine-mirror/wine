@@ -1168,6 +1168,7 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
     orig->scrollbar_proc  = ScrollBarWndProc_common;
     orig->static_proc     = StaticWndProc_common;
     orig->create_window   = WIN_CreateWindowEx;
+    orig->get_win_handle  = WIN_GetFullHandle;
     orig->alloc_winproc   = WINPROC_AllocProc;
     orig->get_dialog_info = DIALOG_get_info;
     orig->dialog_box_loop = DIALOG_DoDialogBox;

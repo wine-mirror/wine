@@ -63,7 +63,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winuser16.h"
-#include "win.h"
+#include "controls.h"
 #include "user_private.h"
 
 #include "wine/debug.h"

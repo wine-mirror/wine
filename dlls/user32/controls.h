@@ -115,6 +115,7 @@ struct wow_handlers32
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
+    HWND    (*get_win_handle)(HWND);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
     struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
     INT     (*dialog_box_loop)(HWND,HWND);
@@ -137,6 +138,11 @@ extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
                                             struct wow_handlers32 *orig );
+static inline HWND WIN_Handle32( HWND16 hwnd16 )
+{
+    return wow_handlers32.get_win_handle( (HWND)(ULONG_PTR)hwnd16 );
+}
+
 
 /* Class functions */
 struct tagCLASS;  /* opaque structure */

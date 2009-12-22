@@ -524,18 +524,18 @@ HWND WIN_IsCurrentThread( HWND hwnd )
 
 
 /***********************************************************************
- *           WIN_Handle32
+ *           WIN_GetFullHandle
  *
- * Convert a 16-bit window handle to a full 32-bit handle.
+ * Convert a possibly truncated window handle to a full 32-bit handle.
  */
-HWND WIN_Handle32( HWND16 hwnd16 )
+HWND WIN_GetFullHandle( HWND hwnd )
 {
     WND *ptr;
-    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;
 
-    if (hwnd16 <= 1 || hwnd16 == 0xffff) return hwnd;
+    if (!hwnd || (ULONG_PTR)hwnd >> 16) return hwnd;
+    if (LOWORD(hwnd) <= 1 || LOWORD(hwnd) == 0xffff) return hwnd;
     /* do sign extension for -2 and -3 */
-    if (hwnd16 >= (HWND16)-3) return (HWND)(LONG_PTR)(INT16)hwnd16;
+    if (LOWORD(hwnd) >= (WORD)-3) return (HWND)(LONG_PTR)(INT16)LOWORD(hwnd);
 
     if (!(ptr = WIN_GetPtr( hwnd ))) return hwnd;
 
