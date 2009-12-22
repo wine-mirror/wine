@@ -587,6 +587,24 @@ static HANDLE16 convert_handle_32_to_16(UINT_PTR src, unsigned int flags)
     return dst;
 }
 
+static int find_sub_menu( HMENU *hmenu, HMENU16 target )
+{
+    int i, pos, count = GetMenuItemCount( *hmenu );
+
+    for (i = 0; i < count; i++)
+    {
+        HMENU sub = GetSubMenu( *hmenu, i );
+        if (!sub) continue;
+        if (HMENU_16(sub) == target) return i;
+        if ((pos = find_sub_menu( &sub, target )) != -1)
+        {
+            *hmenu = sub;
+            return pos;
+        }
+    }
+    return -1;
+}
+
 /**********************************************************************
  *	     WINPROC_CallProc16To32A
  */
@@ -825,8 +843,8 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
         if((LOWORD(lParam) & MF_POPUP) && (LOWORD(lParam) != 0xFFFF))
         {
             HMENU hmenu = HMENU_32(HIWORD(lParam));
-            UINT pos = MENU_FindSubMenu( &hmenu, HMENU_32(wParam) );
-            if (pos == 0xffff) pos = 0;  /* NO_SELECTED_ITEM */
+            int pos = find_sub_menu( &hmenu, wParam );
+            if (pos == -1) pos = 0;
             wParam = pos;
         }
         ret = callback( hwnd32, msg, MAKEWPARAM( wParam, LOWORD(lParam) ),
