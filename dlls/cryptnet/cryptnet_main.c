@@ -1798,7 +1798,6 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
  PCERT_REVOCATION_PARA pRevPara, PCERT_REVOCATION_STATUS pRevStatus)
 {
     DWORD error = 0, i;
-    BOOL ret;
     FILETIME now;
     LPFILETIME pTime = NULL;
 
@@ -1837,8 +1836,7 @@ BOOL WINAPI CertDllVerifyRevocation(DWORD dwEncodingType, DWORD dwRevType,
     {
         SetLastError(error);
         pRevStatus->dwError = error;
-        ret = FALSE;
     }
-    TRACE("returning %d (%08x)\n", ret, error);
-    return ret;
+    TRACE("returning %d (%08x)\n", !error, error);
+    return !error;
 }
