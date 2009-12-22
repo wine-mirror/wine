@@ -27,7 +27,7 @@
 @ stub CM_Dup_Range_List
 @ stub CM_Enable_DevNode
 @ stub CM_Enable_DevNode_Ex
-@ stub CM_Enumerate_Classes
+@ stdcall CM_Enumerate_Classes(long ptr long) setupapi.CM_Enumerate_Classes
 @ stub CM_Enumerate_Classes_Ex
 @ stub CM_Enumerate_EnumeratorsA
 @ stub CM_Enumerate_EnumeratorsW
@@ -63,9 +63,9 @@
 @ stdcall CM_Get_Device_IDA(ptr ptr long long) setupapi.CM_Get_Device_IDA
 @ stdcall CM_Get_Device_IDW(ptr ptr long long) setupapi.CM_Get_Device_IDW
 @ stub CM_Get_Device_ID_ExA
-@ stub CM_Get_Device_ID_ExW
+@ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr) setupapi.CM_Get_Device_ID_ExW
 @ stdcall CM_Get_Device_ID_ListA(ptr ptr long long) setupapi.CM_Get_Device_ID_ListA
-@ stub CM_Get_Device_ID_ListW
+@ stdcall CM_Get_Device_ID_ListW(wstr ptr long long) setupapi.CM_Get_Device_ID_ListW
 @ stub CM_Get_Device_ID_List_ExA
 @ stub CM_Get_Device_ID_List_ExW
 @ stub CM_Get_Device_ID_List_SizeA
@@ -84,8 +84,8 @@
 @ stub CM_Get_Device_Interface_List_ExW
 @ stub CM_Get_Device_Interface_List_SizeA
 @ stub CM_Get_Device_Interface_List_SizeW
-@ stub CM_Get_Device_Interface_List_Size_ExA
-@ stub CM_Get_Device_Interface_List_Size_ExW
+@ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr) setupapi.CM_Get_Device_Interface_List_Size_ExA
+@ stdcall CM_Get_Device_Interface_List_Size_ExW(ptr ptr wstr long ptr) setupapi.CM_Get_Device_Interface_List_Size_ExW
 @ stub CM_Get_First_Log_Conf
 @ stub CM_Get_First_Log_Conf_Ex
 @ stub CM_Get_Global_State
