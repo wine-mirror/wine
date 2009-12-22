@@ -1754,7 +1754,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
 static void test_basic_request(int port, const char *verb, const char *url)
 {
     HINTERNET hi, hc, hr;
-    DWORD r, count, error;
+    DWORD r, count;
     char buffer[0x100];
 
     hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -1766,11 +1766,8 @@ static void test_basic_request(int port, const char *verb, const char *url)
     hr = HttpOpenRequest(hc, verb, url, NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
-    SetLastError(0xdeadbeef);
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    error = GetLastError();
     ok(r, "HttpSendRequest failed\n");
-    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
@@ -1778,6 +1775,32 @@ static void test_basic_request(int port, const char *verb, const char *url)
     ok(r, "InternetReadFile failed\n");
     ok(count == sizeof page1 - 1, "count was wrong\n");
     ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+}
+
+static void test_last_error(int port)
+{
+    HINTERNET hi, hc, hr;
+    DWORD error;
+    BOOL r;
+
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(hi != NULL, "open failed\n");
+
+    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "connect failed\n");
+
+    hr = HttpOpenRequest(hc, NULL, "/test1", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    error = GetLastError();
+    ok(r, "HttpSendRequest failed\n");
+    ok(error == ERROR_SUCCESS || broken(error != ERROR_SUCCESS), "expected ERROR_SUCCESS, got %u\n", error);
 
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);
@@ -2427,6 +2450,7 @@ static void test_http_connection(void)
     test_response_without_headers(si.port);
     test_HttpQueryInfo(si.port);
     test_HttpSendRequestW(si.port);
+    test_last_error(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
