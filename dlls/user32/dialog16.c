@@ -292,35 +292,24 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
     RECT rect;
     POINT pos;
     SIZE size;
-    WND * wndPtr;
     DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
     BOOL ownerEnabled = TRUE;
     DWORD exStyle = 0;
     DWORD units = GetDialogBaseUnits();
+    HMENU16 hMenu = 0;
+    HFONT hUserFont = 0;
+    UINT flags = 0;
+    UINT xBaseUnit = LOWORD(units);
+    UINT yBaseUnit = HIWORD(units);
 
       /* Parse dialog template */
 
     dlgTemplate = DIALOG_ParseTemplate16( dlgTemplate, &template );
 
-      /* Initialise dialog extra data */
-
-    if (!(dlgInfo = HeapAlloc( GetProcessHeap(), 0, sizeof(*dlgInfo) ))) return 0;
-    dlgInfo->hwndFocus   = 0;
-    dlgInfo->hUserFont   = 0;
-    dlgInfo->hMenu       = 0;
-    dlgInfo->xBaseUnit   = LOWORD(units);
-    dlgInfo->yBaseUnit   = HIWORD(units);
-    dlgInfo->idResult    = 0;
-    dlgInfo->flags       = 0;
-    dlgInfo->hDialogHeap = 0;
-
       /* Load menu */
 
-    if (template.menuName)
-    {
-        dlgInfo->hMenu = HMENU_32(LoadMenu16( hInst, template.menuName ));
-    }
+    if (template.menuName) hMenu = LoadMenu16( hInst, template.menuName );
 
       /* Create custom font if needed */
 
@@ -332,32 +321,32 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
         int pixels;
         dc = GetDC(0);
         pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
-        dlgInfo->hUserFont = CreateFontA( -pixels, 0, 0, 0, FW_DONTCARE,
-                                          FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
-                                          PROOF_QUALITY, FF_DONTCARE, template.faceName );
-        if (dlgInfo->hUserFont)
+        hUserFont = CreateFontA( -pixels, 0, 0, 0, FW_DONTCARE,
+                                 FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
+                                 PROOF_QUALITY, FF_DONTCARE, template.faceName );
+        if (hUserFont)
         {
             SIZE charSize;
-            HFONT hOldFont = SelectObject( dc, dlgInfo->hUserFont );
+            HFONT hOldFont = SelectObject( dc, hUserFont );
             charSize.cx = GdiGetCharDimensions( dc, NULL, &charSize.cy );
             if (charSize.cx)
             {
-                dlgInfo->xBaseUnit = charSize.cx;
-                dlgInfo->yBaseUnit = charSize.cy;
+                xBaseUnit = charSize.cx;
+                yBaseUnit = charSize.cy;
             }
             SelectObject( dc, hOldFont );
         }
         ReleaseDC(0, dc);
-        TRACE("units = %d,%d\n", dlgInfo->xBaseUnit, dlgInfo->yBaseUnit );
+        TRACE("units = %d,%d\n", xBaseUnit, yBaseUnit );
     }
 
     /* Create dialog main window */
 
     rect.left = rect.top = 0;
-    rect.right = MulDiv(template.cx, dlgInfo->xBaseUnit, 4);
-    rect.bottom =  MulDiv(template.cy, dlgInfo->yBaseUnit, 8);
+    rect.right = MulDiv(template.cx, xBaseUnit, 4);
+    rect.bottom =  MulDiv(template.cy, yBaseUnit, 8);
     if (template.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx( &rect, template.style, (dlgInfo->hMenu != 0), exStyle );
+    AdjustWindowRectEx( &rect, template.style, (hMenu != 0), exStyle );
     pos.x = rect.left;
     pos.y = rect.top;
     size.cx = rect.right - rect.left;
@@ -388,8 +377,8 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
         }
         else
         {
-            pos.x += MulDiv(template.x, dlgInfo->xBaseUnit, 4);
-            pos.y += MulDiv(template.y, dlgInfo->yBaseUnit, 8);
+            pos.x += MulDiv(template.x, xBaseUnit, 4);
+            pos.y += MulDiv(template.y, yBaseUnit, 8);
             if (!(template.style & (WS_CHILD|DS_ABSALIGN))) ClientToScreen( owner, &pos );
         }
         if ( !(template.style & WS_CHILD) )
@@ -416,31 +405,33 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
     if (modal)
     {
         ownerEnabled = DIALOG_DisableOwner( owner );
-        if (ownerEnabled) dlgInfo->flags |= DF_OWNERENABLED;
+        if (ownerEnabled) flags |= DF_OWNERENABLED;
     }
 
     hwnd = WIN_Handle32( CreateWindowEx16(exStyle, template.className,
                                           template.caption, template.style & ~WS_VISIBLE,
                                           pos.x, pos.y, size.cx, size.cy,
-                                          HWND_16(owner), HMENU_16(dlgInfo->hMenu),
-                                          hInst, NULL ));
+                                          HWND_16(owner), hMenu, hInst, NULL ));
     if (!hwnd)
     {
-        if (dlgInfo->hUserFont) DeleteObject( dlgInfo->hUserFont );
-        if (dlgInfo->hMenu) DestroyMenu( dlgInfo->hMenu );
-        if (modal && (dlgInfo->flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
-        HeapFree( GetProcessHeap(), 0, dlgInfo );
+        if (hUserFont) DeleteObject( hUserFont );
+        if (hMenu) DestroyMenu16( hMenu );
+        if (modal && (flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
         return 0;
     }
-    wndPtr = WIN_GetPtr( hwnd );
-    wndPtr->flags |= WIN_ISDIALOG;
-    wndPtr->dlgInfo = dlgInfo;
-    WIN_ReleasePtr( wndPtr );
+    dlgInfo = DIALOG_get_info( hwnd, TRUE );
+    dlgInfo->hwndFocus   = 0;
+    dlgInfo->hUserFont   = hUserFont;
+    dlgInfo->hMenu       = HMENU_32( hMenu );
+    dlgInfo->xBaseUnit   = xBaseUnit;
+    dlgInfo->yBaseUnit   = yBaseUnit;
+    dlgInfo->idResult    = IDOK;
+    dlgInfo->flags       = flags;
 
     SetWindowLong16( HWND_16(hwnd), DWLP_DLGPROC, (LONG)dlgProc );
 
-    if (dlgInfo->hUserFont)
-        SendMessageA( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+    if (hUserFont)
+        SendMessageA( hwnd, WM_SETFONT, (WPARAM)hUserFont, 0 );
 
     /* Create controls */
 
