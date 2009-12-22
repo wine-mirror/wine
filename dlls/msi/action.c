@@ -5090,14 +5090,8 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             lstrcatW(newval, value);
         }
     }
-
-    if (newval)
-    {
-        TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(newval));
-        res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
-    }
-    else
-        res = ERROR_SUCCESS;
+    TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(newval));
+    res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
 
 done:
     if (env) RegCloseKey(env);
