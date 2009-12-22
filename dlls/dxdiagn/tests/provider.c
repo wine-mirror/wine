@@ -61,7 +61,6 @@ static void test_Initialize(void)
     params.bAllowWHQLChecks = FALSE;
     params.pReserved = NULL;
     hr = IDxDiagProvider_Initialize(pddp, &params);
-    todo_wine
     ok(hr == E_INVALIDARG,
        "Expected IDxDiagProvider::Initialize to return E_INVALIDARG, got %x\n", hr);
 

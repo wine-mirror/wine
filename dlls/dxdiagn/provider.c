@@ -96,7 +96,8 @@ static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDI
     if (NULL == pParams) {
       return E_POINTER;
     }
-    if (pParams->dwSize != sizeof(DXDIAG_INIT_PARAMS)) {
+    if (pParams->dwSize != sizeof(DXDIAG_INIT_PARAMS) ||
+        pParams->dwDxDiagHeaderVersion != DXDIAG_DX9_SDK_VERSION) {
       return E_INVALIDARG;
     }
 
