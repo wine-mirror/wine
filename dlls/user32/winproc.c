@@ -1123,24 +1123,32 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 static HICON alloc_icon_handle( unsigned int size )
 {
-    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
-    FarSetOwner16( handle, 0 );
-    return HICON_32( handle );
+    struct user_object *obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) + size );
+    if (!obj) return 0;
+    return alloc_user_handle( obj, USER_ICON );
 }
 
 static struct tagCURSORICONINFO *get_icon_ptr( HICON handle )
 {
-    return GlobalLock16( HICON_16(handle) );
+    struct user_object *obj = get_user_handle_ptr( handle, USER_ICON );
+    if (obj == OBJ_OTHER_PROCESS)
+    {
+        WARN( "cursor handle %p from other process\n", handle );
+        obj = NULL;
+    }
+    return obj ? (struct tagCURSORICONINFO *)(obj + 1) : NULL;
 }
 
 static void release_icon_ptr( HICON handle, struct tagCURSORICONINFO *ptr )
 {
-    GlobalUnlock16( HICON_16(handle) );
+    release_user_handle_ptr( (struct user_object *)ptr - 1 );
 }
 
 static int free_icon_handle( HICON handle )
 {
-    return GlobalFree16( HICON_16(handle) );
+    struct user_object *obj = free_user_handle( handle, USER_ICON );
+    HeapFree( GetProcessHeap(), 0, obj );
+    return !obj;
 }
 
 
