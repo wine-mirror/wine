@@ -10,6 +10,7 @@ DELAYIMPORTS = version
 
 C_SRCS = \
 	coff.c \
+	cpu_i386.c \
 	crc32.c \
 	dbghelp.c \
 	dwarf.c \

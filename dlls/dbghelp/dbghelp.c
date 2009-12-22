@@ -151,6 +151,28 @@ const char* wine_dbgstr_addr(const ADDRESS64* addr)
     }
 }
 
+extern struct cpu       cpu_i386;
+
+static struct cpu*      dbghelp_cpus[] = {&cpu_i386, NULL};
+struct cpu*             dbghelp_current_cpu =
+#if defined(__i386__)
+    &cpu_i386
+#else
+#error define support for you CPU
+#endif
+    ;
+
+struct cpu* cpu_find(DWORD machine)
+{
+    struct cpu** cpu;
+
+    for (cpu = dbghelp_cpus ; *cpu; cpu++)
+    {
+        if (cpu[0]->machine == machine) return cpu[0];
+    }
+    return NULL;
+}
+
 /******************************************************************
  *		SymSetSearchPathW (DBGHELP.@)
  *

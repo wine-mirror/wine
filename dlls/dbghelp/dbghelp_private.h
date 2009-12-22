@@ -419,6 +419,38 @@ struct pdb_lookup
     } u;
 };
 
+struct cpu_stack_walk
+{
+    HANDLE                      hProcess;
+    HANDLE                      hThread;
+    BOOL                        is32;
+    union
+    {
+        struct
+        {
+            PREAD_PROCESS_MEMORY_ROUTINE        f_read_mem;
+            PTRANSLATE_ADDRESS_ROUTINE          f_xlat_adr;
+            PFUNCTION_TABLE_ACCESS_ROUTINE      f_tabl_acs;
+            PGET_MODULE_BASE_ROUTINE            f_modl_bas;
+        } s32;
+        struct
+        {
+            PREAD_PROCESS_MEMORY_ROUTINE64      f_read_mem;
+            PTRANSLATE_ADDRESS_ROUTINE64        f_xlat_adr;
+            PFUNCTION_TABLE_ACCESS_ROUTINE64    f_tabl_acs;
+            PGET_MODULE_BASE_ROUTINE64          f_modl_bas;
+        } s64;
+    } u;
+};
+
+struct cpu
+{
+    DWORD       machine;
+    BOOL        (*stack_walk)(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame);
+};
+
+extern struct cpu*      dbghelp_current_cpu;
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
@@ -426,6 +458,7 @@ extern BOOL         validate_addr64(DWORD64 addr);
 extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
 extern void*        fetch_buffer(struct process* pcs, unsigned size);
 extern const char*  wine_dbgstr_addr(const ADDRESS64* addr);
+extern struct cpu*  cpu_find(DWORD);
 
 /* crc32.c */
 extern DWORD calc_crc32(int fd);
@@ -532,6 +565,12 @@ extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offse
 				 const unsigned char* str, unsigned int str_size,
                                  const unsigned char* line, unsigned int line_size,
                                  const unsigned char* loclist, unsigned int loclist_size);
+
+/* stack.c */
+extern BOOL         sw_read_mem(struct cpu_stack_walk* csw, DWORD64 addr, void* ptr, DWORD sz);
+extern DWORD64      sw_xlat_addr(struct cpu_stack_walk* csw, ADDRESS64* addr);
+extern void*        sw_table_access(struct cpu_stack_walk* csw, DWORD64 addr);
+extern DWORD64      sw_module_base(struct cpu_stack_walk* csw, DWORD64 addr);
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
