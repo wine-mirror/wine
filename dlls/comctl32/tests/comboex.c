@@ -27,6 +27,8 @@ static HWND hComboExParentWnd;
 static HINSTANCE hMainHinst;
 static const char ComboExTestClass[] = "ComboExTestClass";
 
+static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
+
 #define MAX_CHARS 100
 static char *textBuffer = NULL;
 
@@ -356,6 +358,8 @@ static int init(void)
     iccex.dwICC  = ICC_USEREX_CLASSES;
     pInitCommonControlsEx(&iccex);
 
+    pSetWindowSubclass = (void*)GetProcAddress(hComctl32, (LPSTR)410);
+
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -390,6 +394,26 @@ static void cleanup(void)
     UnregisterClassA(ComboExTestClass, GetModuleHandleA(NULL));
 }
 
+static void test_comboboxex_subclass(void)
+{
+    HWND hComboEx, hCombo, hEdit;
+
+    hComboEx = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
+
+    hCombo = (HWND)SendMessage(hComboEx, CBEM_GETCOMBOCONTROL, 0, 0);
+    ok(hCombo != NULL, "Failed to get internal combo\n");
+    hEdit = (HWND)SendMessage(hComboEx, CBEM_GETEDITCONTROL, 0, 0);
+    ok(hEdit != NULL, "Failed to get internal edit\n");
+
+    if (pSetWindowSubclass)
+    {
+        ok(GetPropA(hCombo, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
+        ok(GetPropA(hEdit, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
+    }
+
+    DestroyWindow(hComboEx);
+}
+
 START_TEST(comboex)
 {
     if (!init())
@@ -398,6 +422,7 @@ START_TEST(comboex)
     test_comboboxex();
     test_WM_LBUTTONDOWN();
     test_CB_GETLBTEXT();
+    test_comboboxex_subclass();
 
     cleanup();
 }
