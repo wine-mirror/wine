@@ -88,7 +88,7 @@ static void dump_long_import(const void *base, const IMAGE_SECTION_HEADER *ish, 
     for (i = 0; i < num_sect; i++)
     {
         if (globals.do_dumpheader)
-            dump_section(&ish[i]);
+            dump_section(&ish[i], NULL);
 
         if (globals.do_dump_rawdata)
         {

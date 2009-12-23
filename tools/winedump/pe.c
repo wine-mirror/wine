@@ -371,10 +371,14 @@ static	void	dump_pe_header(void)
     dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader, PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 }
 
-void dump_section(const IMAGE_SECTION_HEADER *sectHead)
+void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
 {
-	printf("  %-8.8s   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
-               sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress);
+        if (strtable && sectHead->Name[0] == '/') /* long section name */
+            printf("  %.8s (%s)", sectHead->Name, strtable + atoi((const char*)sectHead->Name + 1));
+        else
+	    printf("  %-8.8s", sectHead->Name);
+	printf("   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
+               sectHead->Misc.VirtualSize, sectHead->VirtualAddress);
 	printf("    raw data offs:   0x%08x  raw data size: 0x%08x\n",
 	       sectHead->PointerToRawData, sectHead->SizeOfRawData);
 	printf("    relocation offs: 0x%08x  relocations:   0x%08x\n",
@@ -448,11 +452,21 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
 {
     const IMAGE_SECTION_HEADER*	sectHead = addr;
     unsigned			i;
+    const char*                 strtable;
+
+    if (PE_nt_headers->FileHeader.PointerToSymbolTable && PE_nt_headers->FileHeader.NumberOfSymbols)
+    {
+        /* FIXME: no way to get strtable size */
+        strtable = (const char*)base +
+            PE_nt_headers->FileHeader.PointerToSymbolTable +
+            PE_nt_headers->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
+    }
+    else strtable = NULL;
 
     printf("Section Table\n");
     for (i = 0; i < num_sect; i++, sectHead++)
     {
-        dump_section(sectHead);
+        dump_section(sectHead, strtable);
 
         if (globals.do_dump_rawdata)
         {
