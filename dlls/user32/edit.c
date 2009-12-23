@@ -1649,7 +1649,7 @@ static LRESULT EDIT_EM_Scroll(EDITSTATE *es, INT action)
 	    if(dy)
 		EDIT_EM_LineScroll(es, 0, dy);
 	}
-	return MAKELONG((INT16)dy, (BOOL16)TRUE);
+	return MAKELONG(dy, TRUE);
 }
 
 
@@ -4980,7 +4980,7 @@ const struct builtin_class_descr EDIT_builtin_class =
     CS_DBLCLKS | CS_PARENTDC,   /* style */
     WINPROC_EDIT,         /* proc */
 #ifdef __i386__
-    sizeof(EDITSTATE *) + sizeof(HLOCAL16), /* extra */
+    sizeof(EDITSTATE *) + sizeof(WORD), /* extra */
 #else
     sizeof(EDITSTATE *),  /* extra */
 #endif

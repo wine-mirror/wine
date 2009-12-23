@@ -28,9 +28,6 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "wine/windef16.h"
-
-extern WORD USER_HeapSel DECLSPEC_HIDDEN;
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
@@ -205,7 +202,6 @@ static inline BOOL is_broadcast( HWND hwnd )
 }
 
 extern HMODULE user32_module DECLSPEC_HIDDEN;
-extern DWORD USER16_AlertableWait DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_55AABrush DECLSPEC_HIDDEN;
 
 struct dce;
@@ -231,11 +227,7 @@ extern BOOL USER_SetWindowPos( WINDOWPOS * winpos ) DECLSPEC_HIDDEN;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
-typedef LRESULT (*winproc_callback16_t)( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
-                                         LRESULT *result, void *arg );
 
-extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode ) DECLSPEC_HIDDEN;
-extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func ) DECLSPEC_HIDDEN;
 extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode ) DECLSPEC_HIDDEN;
 extern WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode ) DECLSPEC_HIDDEN;
 extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
@@ -243,10 +235,6 @@ extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
 extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg,
                                      WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg,
                                      enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
-extern LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
-                                        WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg ) DECLSPEC_HIDDEN;
-extern LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
-                                        WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg ) DECLSPEC_HIDDEN;
 
 extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
@@ -269,16 +257,6 @@ extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPA
 extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
                              LRESULT lReturn, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern int SPY_Init(void) DECLSPEC_HIDDEN;
-
-/* HANDLE16 <-> HANDLE conversions */
-#define HCURSOR_16(h32)    (LOWORD(h32))
-#define HICON_16(h32)      (LOWORD(h32))
-#define HINSTANCE_16(h32)  (LOWORD(h32))
-
-#define HCURSOR_32(h16)    ((HCURSOR)(ULONG_PTR)(h16))
-#define HICON_32(h16)      ((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
-#define HMODULE_32(h16)    ((HMODULE)(ULONG_PTR)(h16))
 
 #include "pshpack1.h"
 

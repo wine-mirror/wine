@@ -19,7 +19,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 
 WIN16_FILES = \
 	krnl386.exe16 \
-	user.exe16 \
 	wprocs.dll16
 
 @MAKE_RULES@
@@ -32,9 +31,6 @@ all: $(BUILDSUBDIRS) @WIN16_FILES@
 
 krnl386.exe16:
 	echo "kernel32.dll" >$@
-
-user.exe16:
-	echo "user32.dll" >$@
 
 wprocs.dll16:
 	echo "winedos.dll" >$@

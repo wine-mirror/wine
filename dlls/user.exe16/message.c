@@ -28,10 +28,8 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winerror.h"
-#include "win.h"
 #include "dde.h"
 #include "user_private.h"
-#include "controls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);

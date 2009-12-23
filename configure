@@ -16881,6 +16881,14 @@ dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/urlmon/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/user.exe16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	user.exe16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/user.exe16/Makefile: dlls/user.exe16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/user.exe16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/user32/Makefile"
 test "x$enable_user32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	user32"
@@ -19264,6 +19272,7 @@ do
     "dlls/url/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
     "dlls/urlmon/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/Makefile" ;;
     "dlls/urlmon/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/tests/Makefile" ;;
+    "dlls/user.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user.exe16/Makefile" ;;
     "dlls/user32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/Makefile" ;;
     "dlls/user32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/tests/Makefile" ;;
     "dlls/userenv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/userenv/Makefile" ;;

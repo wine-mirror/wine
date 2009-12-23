@@ -26,7 +26,6 @@
 #include <winbase.h>
 #include <wingdi.h>
 #include <winuser.h>
-#include <wine/windef16.h>
 
 #include "user_private.h"
 

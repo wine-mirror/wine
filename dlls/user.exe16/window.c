@@ -20,8 +20,6 @@
 
 #include "wine/winuser16.h"
 #include "wownt32.h"
-#include "win.h"
-#include "controls.h"
 #include "user_private.h"
 #include "wine/list.h"
 #include "wine/server.h"
@@ -1599,10 +1597,12 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
  */
 BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASSEX16 *wc )
 {
+    static HMODULE user32_module;
     WNDCLASSEXA wc32;
     HINSTANCE hInstance;
     BOOL ret;
 
+    if (!user32_module) user32_module = GetModuleHandleA( "user32.dll" );
     if (hInst16 == GetModuleHandle16("user")) hInstance = user32_module;
     else hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
 

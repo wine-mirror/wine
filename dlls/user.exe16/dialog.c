@@ -27,8 +27,6 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
-#include "controls.h"
-#include "win.h"
 #include "user_private.h"
 #include "wine/debug.h"
 
@@ -64,6 +62,7 @@ typedef struct
     LPCSTR     faceName;
 } DLG_TEMPLATE;
 
+#define DIALOG_CLASS_ATOM MAKEINTATOM(32770)
 
 /***********************************************************************
  *           DIALOG_EnableOwner

@@ -29,6 +29,7 @@
 #include "controls.h"
 #include "user_private.h"
 #include "win.h"
+#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

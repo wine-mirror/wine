@@ -22,7 +22,6 @@
 #define __WINE_CONTROLS_H
 
 #include "winuser.h"
-#include "wine/winbase16.h"
 
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
@@ -87,6 +86,7 @@ extern LRESULT WINAPI MessageWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 
 /* Wow handlers */
 
+/* the structures must match the corresponding ones in user.exe */
 struct wow_handlers16
 {
     LRESULT (*button_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
@@ -132,19 +132,6 @@ extern LRESULT ListBoxWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDD
 extern LRESULT MDIClientWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-
-/* 16-bit support */
-extern struct wow_handlers32 wow_handlers32 DECLSPEC_HIDDEN;
-extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL) DECLSPEC_HIDDEN;
-extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
-extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
-extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,
-                                            struct wow_handlers32 *orig );
-static inline HWND WIN_Handle32( HWND16 hwnd16 )
-{
-    return wow_handlers32.get_win_handle( (HWND)(ULONG_PTR)hwnd16 );
-}
-
 
 /* Class functions */
 struct tagCLASS;  /* opaque structure */
@@ -235,7 +222,7 @@ typedef struct
 
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL ) DECLSPEC_HIDDEN;
 
-/* Dialog info structure */
+/* Dialog info structure (note: shared with user.exe) */
 typedef struct tagDIALOGINFO
 {
     HWND      hwndFocus;   /* Current control with focus */

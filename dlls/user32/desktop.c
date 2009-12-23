@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winnls.h"
 #include "controls.h"
 
 static HBRUSH hbrushPattern;

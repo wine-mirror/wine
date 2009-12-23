@@ -31,8 +31,6 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "user_private.h"
-#include "win.h"
-#include "controls.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -2927,7 +2925,6 @@ DWORD WINAPI FormatMessage16(
     WORD   nSize,
     LPDWORD args )       /* [in] NOTE: va_list *args */
 {
-#ifdef __i386__
 /* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR       target,t;
     DWORD       talloced;
@@ -3098,9 +3095,6 @@ DWORD WINAPI FormatMessage16(
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         strlen(allocstring):
         strlen(lpBuffer);
-#else
-        return 0;
-#endif /* __i386__ */
 }
 #undef ADD_TO_T
 

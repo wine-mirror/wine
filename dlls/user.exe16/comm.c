@@ -63,7 +63,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winuser16.h"
-#include "controls.h"
 #include "user_private.h"
 
 #include "wine/debug.h"
@@ -448,7 +447,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 	int port;
 	HANDLE handle;
 
-    	TRACE("%s, %d, %d\n", device, cbInQueue, cbOutQueue);
+	TRACE("%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 
 	if (strlen(device) < 4)
 	   return IE_BADID;
@@ -535,7 +534,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid=%d\n", cid);
+	TRACE("cid=%d\n", cid);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no cid=%d found!\n", cid);
 		return -1;
@@ -590,7 +589,7 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid=%d\n", cid);
+	TRACE("cid=%d\n", cid);
 	if (!(ptr = GetDeviceStruct(cid))) {
 		FIXME("no cid=%d found!\n", cid);
 		return -1;
@@ -607,7 +606,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 {
 	struct  DosDeviceStruct *ptr;
 
-    	TRACE("cid=%d, function=%d\n", cid, nFunction);
+	TRACE("cid=%d, function=%d\n", cid, nFunction);
 
 	switch(nFunction) {
 	case GETMAXCOM:
@@ -669,7 +668,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 	DWORD queue;
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid=%d, queue=%d\n", cid, fnQueue);
+	TRACE("cid=%d, queue=%d\n", cid, fnQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no cid=%d found!\n", cid);
 		return -1;
@@ -727,7 +726,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
 
-    		TRACE("cid %d, error %d, stat %d in %d out %d, stol %x\n",
+		TRACE("cid %d, error %d, stat %d in %d out %d, stol %x\n",
 			     cid, ptr->commerror, lpStat->status, lpStat->cbInQue,
 			     lpStat->cbOutQue, *stol);
 	}
@@ -749,7 +748,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 	struct DosDeviceStruct *ptr;
         unsigned char *stol;
 
-    	TRACE("cid %d,mask %d\n",cid,fuEvtMask);
+	TRACE("cid %d,mask %d\n",cid,fuEvtMask);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
             return 0;
@@ -778,7 +777,7 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 	struct DosDeviceStruct *ptr;
 	WORD events;
 
-    	TRACE("cid %d, mask %d\n", cid, fnEvtClear);
+	TRACE("cid %d, mask %d\n", cid, fnEvtClear);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 	    return 0;
@@ -802,7 +801,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	struct DosDeviceStruct *ptr;
 	DCB dcb;
 
-    	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
+	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",lpdcb->Id);
 		return -1;
@@ -838,7 +837,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		dcb.BaudRate = 115200;
         else
 		dcb.BaudRate = lpdcb->BaudRate;
- 	}
+	}
 
         dcb.ByteSize=lpdcb->ByteSize;
         dcb.StopBits=lpdcb->StopBits;
@@ -876,7 +875,7 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	struct DosDeviceStruct *ptr;
 	DCB dcb;
 
-    	TRACE("cid %d, ptr %p\n", cid, lpdcb);
+	TRACE("cid %d, ptr %p\n", cid, lpdcb);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
@@ -903,7 +902,7 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid %d, data %d\n", cid, chTransmit);
+	TRACE("cid %d, data %d\n", cid, chTransmit);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
@@ -946,7 +945,7 @@ INT16 WINAPI UngetCommChar16(INT16 cid,CHAR chUnget)
 {
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid %d (char %d)\n", cid, chUnget);
+	TRACE("cid %d (char %d)\n", cid, chUnget);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
@@ -979,7 +978,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 	struct DosDeviceStruct *ptr;
 	LPSTR orgBuf = lpvBuf;
 
-    	TRACE("cid %d, ptr %p, length %d\n", cid, lpvBuf, cbRead);
+	TRACE("cid %d, ptr %p, length %d\n", cid, lpvBuf, cbRead);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
@@ -1000,7 +999,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 
 		length = 1;
 	} else
-	 	length = 0;
+		length = 0;
 
 	/* read from receive buffer */
 	while (length < cbRead) {
@@ -1031,7 +1030,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 	int status, length;
 	struct DosDeviceStruct *ptr;
 
-    	TRACE("cid %d, ptr %p, length %d\n",
+	TRACE("cid %d, ptr %p, length %d\n",
 		cid, lpvBuf, cbWrite);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);

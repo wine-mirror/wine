@@ -1,0 +1,24 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = user.exe16
+IMPORTS   = user32 gdi32 kernel32 ntdll
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,user32.dll,--heap,65520
+EXTRARCFLAGS  = -O res16
+
+C_SRCS = \
+	bidi.c \
+	comm.c \
+	dialog.c \
+	hook.c \
+	message.c \
+	network.c \
+	user.c \
+	window.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
