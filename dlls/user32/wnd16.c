@@ -1892,13 +1892,13 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        hwnd = create_window16( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), 0 );
+        hwnd = create_window16( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), FALSE );
     }
     else
     {
         if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) )) return 0;
         cs.lpszClass = buffer;
-        hwnd = create_window16( (CREATESTRUCTW *)&cs, (LPCWSTR)className, HINSTANCE_32(instance), 0 );
+        hwnd = create_window16( (CREATESTRUCTW *)&cs, (LPCWSTR)className, HINSTANCE_32(instance), FALSE );
     }
     return HWND_16( hwnd );
 }

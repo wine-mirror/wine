@@ -71,7 +71,6 @@ typedef struct tagWND
 #define WIN_NCACTIVATED           0x0004 /* last WM_NCACTIVATE was positive */
 #define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
 #define WIN_ISDIALOG              0x0010 /* Window is a dialog */
-#define WIN_ISWIN32               0x0020 /* Understands Win32 messages */
 #define WIN_ISUNICODE             0x0040 /* Window is Unicode */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0080 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 
@@ -87,7 +86,7 @@ extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPE
 extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient ) DECLSPEC_HIDDEN;
 extern LRESULT WIN_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void WIN_DestroyThreadWindows( HWND hwnd ) DECLSPEC_HIDDEN;
-extern HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, UINT flags ) DECLSPEC_HIDDEN;
+extern HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode ) DECLSPEC_HIDDEN;
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL ) DECLSPEC_HIDDEN;
 extern HWND *WIN_ListChildren( HWND hwnd ) DECLSPEC_HIDDEN;
 extern LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL unicode ) DECLSPEC_HIDDEN;

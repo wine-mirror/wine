@@ -1069,14 +1069,13 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, UINT flags )
+HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
     INT cx, cy, style, sw = SW_SHOW;
     LRESULT result;
     RECT rect;
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
-    BOOL unicode = (flags & WIN_ISUNICODE) != 0;
     MDICREATESTRUCTW mdi_cs;
     CBT_CREATEWNDW cbtc;
     CREATESTRUCTW cbcs;
@@ -1217,7 +1216,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;
     wndPtr->hSysMenu       = 0;
-    wndPtr->flags         |= (flags & WIN_ISWIN32);
 
     wndPtr->min_pos.x = wndPtr->min_pos.y = -1;
     wndPtr->max_pos.x = wndPtr->max_pos.y = -1;
@@ -1465,11 +1463,11 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
         WCHAR bufferW[256];
         if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
             return 0;
-        return wow_handlers.create_window( (CREATESTRUCTW *)&cs, bufferW, instance, WIN_ISWIN32 );
+        return wow_handlers.create_window( (CREATESTRUCTW *)&cs, bufferW, instance, FALSE );
     }
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return wow_handlers.create_window( (CREATESTRUCTW *)&cs, (LPCWSTR)className, instance, WIN_ISWIN32 );
+    return wow_handlers.create_window( (CREATESTRUCTW *)&cs, (LPCWSTR)className, instance, FALSE );
 }
 
 
@@ -1497,7 +1495,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return wow_handlers.create_window( &cs, className, instance, WIN_ISWIN32 | WIN_ISUNICODE );
+    return wow_handlers.create_window( &cs, className, instance, TRUE );
 }
 
 

@@ -96,7 +96,7 @@ struct wow_handlers16
     LRESULT (*mdiclient_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
-    HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
+    HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL);
     LRESULT (*call_window_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
     LRESULT (*call_dialog_proc)(HWND,UINT,WPARAM,LPARAM,LRESULT*,void*);
     HICON   (*alloc_icon_handle)(UINT);
@@ -114,7 +114,7 @@ struct wow_handlers32
     LRESULT (*mdiclient_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*scrollbar_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
     LRESULT (*static_proc)(HWND,UINT,WPARAM,LPARAM,BOOL);
-    HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT);
+    HWND    (*create_window)(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL);
     HWND    (*get_win_handle)(HWND);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
     struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
@@ -133,7 +133,7 @@ extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDE
 
 /* 16-bit support */
 extern struct wow_handlers32 wow_handlers32 DECLSPEC_HIDDEN;
-extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,UINT) DECLSPEC_HIDDEN;
+extern HWND create_window16(CREATESTRUCTW*,LPCWSTR,HINSTANCE,BOOL) DECLSPEC_HIDDEN;
 extern void free_module_classes(HINSTANCE16) DECLSPEC_HIDDEN;
 extern void register_wow_handlers(void) DECLSPEC_HIDDEN;
 extern void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new,

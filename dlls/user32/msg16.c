@@ -2571,13 +2571,13 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 /***********************************************************************
  *           create_window16
  */
-HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, UINT flags )
+HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, BOOL unicode )
 {
     /* map to module handle */
     if (instance && !((ULONG_PTR)instance >> 16))
         instance = HINSTANCE_32( GetExePtr( HINSTANCE_16(instance) ));
 
-    return wow_handlers32.create_window( cs, className, instance, flags );
+    return wow_handlers32.create_window( cs, className, instance, unicode );
 }
 
 
