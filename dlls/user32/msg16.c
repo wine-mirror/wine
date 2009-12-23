@@ -35,6 +35,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
+WINE_DECLARE_DEBUG_CHANNEL(message);
 
 DWORD USER16_AlertableWait = 0;
 
@@ -1498,9 +1499,10 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
 
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWLP_WNDPROC ))) return 0;
 
-        SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wparam, lparam );
+        TRACE_(message)("(0x%04x) [%04x] wp=%04x lp=%08lx\n", hwnd16, msg, wparam, lparam );
         result = CallWindowProc16( winproc, hwnd16, msg, wparam, lparam );
-        SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, result, wparam, lparam );
+        TRACE_(message)("(0x%04x) [%04x] wp=%04x lp=%08lx returned %08lx\n",
+                        hwnd16, msg, wparam, lparam, result );
     }
     else  /* map to 32-bit unicode for inter-thread/process message */
     {
@@ -1779,8 +1781,7 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 LONG WINAPI DispatchMessage16( const MSG16* msg )
 {
     WNDPROC16 winproc;
-    LONG retval;
-    HWND hwnd = WIN_Handle32( msg->hwnd );
+    LRESULT retval;
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
@@ -1795,10 +1796,10 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
+    TRACE_(message)("(0x%04x) [%04x] wp=%04x lp=%08lx\n", msg->hwnd, msg->message, msg->wParam, msg->lParam );
     retval = CallWindowProc16( winproc, msg->hwnd, msg->message, msg->wParam, msg->lParam );
-    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg->message, retval, msg->wParam, msg->lParam );
-
+    TRACE_(message)("(0x%04x) [%04x] wp=%04x lp=%08lx returned %08lx\n",
+                    msg->hwnd, msg->message, msg->wParam, msg->lParam, retval );
     return retval;
 }
 

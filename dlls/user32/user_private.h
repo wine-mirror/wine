@@ -255,13 +255,10 @@ extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /* message spy definitions */
 
-#define SPY_DISPATCHMESSAGE16     0x0100
-#define SPY_DISPATCHMESSAGE       0x0101
-#define SPY_SENDMESSAGE16         0x0102
-#define SPY_SENDMESSAGE           0x0103
-#define SPY_DEFWNDPROC            0x0104
+#define SPY_DISPATCHMESSAGE       0x0100
+#define SPY_SENDMESSAGE           0x0101
+#define SPY_DEFWNDPROC            0x0102
 
-#define SPY_RESULT_OK16           0x0000
 #define SPY_RESULT_OK             0x0001
 #define SPY_RESULT_DEFWND         0x0002
 
