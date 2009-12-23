@@ -1149,7 +1149,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	 */
 	ShowWindow (infoPtr->hwndEdit, SW_SHOW);
 	InvalidateRect (infoPtr->hwndCombo, 0, TRUE);
-	InvalidateRect (infoPtr->hwndEdit, 0, TRUE);
+	if (infoPtr->hwndEdit) InvalidateRect (infoPtr->hwndEdit, 0, TRUE);
 	cursel = SendMessageW (infoPtr->hwndCombo, CB_GETCURSEL, 0, 0);
 	if (cursel == -1) {
             cmp_func_t cmptext = get_cmp_func(infoPtr);
@@ -1164,8 +1164,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	    if ((cursel == n) || ((INT_PTR)item == CB_ERR)) {
 		TRACE("failed to find match??? item=%p cursel=%d\n",
 		      item, cursel);
-		if (infoPtr->hwndEdit)
-		    SetFocus(infoPtr->hwndEdit);
+		if (infoPtr->hwndEdit) SetFocus(infoPtr->hwndEdit);
 		return 0;
 	    }
 	}
@@ -1174,8 +1173,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	    if ((INT_PTR)item == CB_ERR) {
 		TRACE("failed to find match??? item=%p cursel=%d\n",
 		      item, cursel);
-		if (infoPtr->hwndEdit)
-		    SetFocus(infoPtr->hwndEdit);
+		if (infoPtr->hwndEdit) SetFocus(infoPtr->hwndEdit);
 		return 0;
 	    }
 	}
@@ -1271,8 +1269,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	 * after passing the command to the parent of the ComboEx.
 	 */
 	lret = SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
-	if (infoPtr->hwndEdit)
-	    SetFocus(infoPtr->hwndEdit);
+	if (infoPtr->hwndEdit) SetFocus(infoPtr->hwndEdit);
 	return lret;
     }
     return 0;
@@ -1374,8 +1371,7 @@ static LRESULT COMBOEX_DrawItem (const COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT con
 		GetWindowRect (infoPtr->hwndSelf, &exrc);
 		GetWindowRect (infoPtr->hwndCombo, &cbrc);
 		edrc.left=edrc.top=edrc.right=edrc.bottom=-1;
-		if (infoPtr->hwndEdit)
-		    GetWindowRect (infoPtr->hwndEdit, &edrc);
+		if (infoPtr->hwndEdit) GetWindowRect (infoPtr->hwndEdit, &edrc);
                 TRACE("window rects ex=(%s), cb=(%s), ed=(%s)\n",
                       wine_dbgstr_rect(&exrc), wine_dbgstr_rect(&cbrc),
                       wine_dbgstr_rect(&edrc));
