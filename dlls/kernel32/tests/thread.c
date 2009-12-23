@@ -54,26 +54,13 @@
 # endif
 #endif
 
-typedef BOOL (WINAPI *GetThreadPriorityBoost_t)(HANDLE,PBOOL);
-static GetThreadPriorityBoost_t pGetThreadPriorityBoost=NULL;
-
-typedef HANDLE (WINAPI *OpenThread_t)(DWORD,BOOL,DWORD);
-static OpenThread_t pOpenThread=NULL;
-
-typedef BOOL (WINAPI *QueueUserWorkItem_t)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
-static QueueUserWorkItem_t pQueueUserWorkItem=NULL;
-
-typedef DWORD (WINAPI *SetThreadIdealProcessor_t)(HANDLE,DWORD);
-static SetThreadIdealProcessor_t pSetThreadIdealProcessor=NULL;
-
-typedef BOOL (WINAPI *SetThreadPriorityBoost_t)(HANDLE,BOOL);
-static SetThreadPriorityBoost_t pSetThreadPriorityBoost=NULL;
-
-typedef BOOL (WINAPI *RegisterWaitForSingleObject_t)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
-static RegisterWaitForSingleObject_t pRegisterWaitForSingleObject=NULL;
-
-typedef BOOL (WINAPI *UnregisterWait_t)(HANDLE);
-static UnregisterWait_t pUnregisterWait=NULL;
+static BOOL (WINAPI *pGetThreadPriorityBoost)(HANDLE,PBOOL);
+static HANDLE (WINAPI *pOpenThread)(DWORD,BOOL,DWORD);
+static BOOL (WINAPI *pQueueUserWorkItem)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
+static DWORD (WINAPI *pSetThreadIdealProcessor)(HANDLE,DWORD);
+static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
+static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
+static BOOL (WINAPI *pUnregisterWait)(HANDLE);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -1214,13 +1201,13 @@ START_TEST(thread)
 */
    lib=GetModuleHandleA("kernel32.dll");
    ok(lib!=NULL,"Couldn't get a handle for kernel32.dll\n");
-   pGetThreadPriorityBoost=(GetThreadPriorityBoost_t)GetProcAddress(lib,"GetThreadPriorityBoost");
-   pOpenThread=(OpenThread_t)GetProcAddress(lib,"OpenThread");
-   pQueueUserWorkItem=(QueueUserWorkItem_t)GetProcAddress(lib,"QueueUserWorkItem");
-   pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");
-   pSetThreadPriorityBoost=(SetThreadPriorityBoost_t)GetProcAddress(lib,"SetThreadPriorityBoost");
-   pRegisterWaitForSingleObject=(RegisterWaitForSingleObject_t)GetProcAddress(lib,"RegisterWaitForSingleObject");
-   pUnregisterWait=(UnregisterWait_t)GetProcAddress(lib,"UnregisterWait");
+   pGetThreadPriorityBoost=(void *)GetProcAddress(lib,"GetThreadPriorityBoost");
+   pOpenThread=(void *)GetProcAddress(lib,"OpenThread");
+   pQueueUserWorkItem=(void *)GetProcAddress(lib,"QueueUserWorkItem");
+   pSetThreadIdealProcessor=(void *)GetProcAddress(lib,"SetThreadIdealProcessor");
+   pSetThreadPriorityBoost=(void *)GetProcAddress(lib,"SetThreadPriorityBoost");
+   pRegisterWaitForSingleObject=(void *)GetProcAddress(lib,"RegisterWaitForSingleObject");
+   pUnregisterWait=(void *)GetProcAddress(lib,"UnregisterWait");
 
    if (argc >= 3)
    {
