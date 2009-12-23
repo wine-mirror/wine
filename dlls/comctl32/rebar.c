@@ -1377,7 +1377,8 @@ REBAR_Layout(REBAR_INFO *infoPtr)
 
         xMin += lpBand->cxMinBand;
     }
-    REBAR_LayoutRow(infoPtr, rowstart, infoPtr->uNumBands, adjcx, &row, &yPos);
+    if (rowstart < infoPtr->uNumBands)
+        REBAR_LayoutRow(infoPtr, rowstart, infoPtr->uNumBands, adjcx, &row, &yPos);
 
     if (!(infoPtr->dwStyle & RBS_VARHEIGHT))
         yPos = REBAR_SetBandsHeight(infoPtr, first_visible(infoPtr), infoPtr->uNumBands, 0);
