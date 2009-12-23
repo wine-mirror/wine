@@ -4388,6 +4388,8 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
     TRACE("(%p,%s,%d,%p,%d,%p)\n",hPrinter,debugstr_w(pEnvironment),
 	  Level,pDriverInfo,cbBuf, pcbNeeded);
 
+    if (cbBuf > 0)
+        ZeroMemory(pDriverInfo, cbBuf);
 
     if (!(name = get_opened_printer_name(hPrinter))) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -4465,8 +4467,11 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
     LPBYTE buf = NULL;
 
     if (cbBuf)
+    {
+        ZeroMemory(pDriverInfo, cbBuf);
         buf = HeapAlloc(GetProcessHeap(), 0, cbBuf);
-    
+    }
+
     pwstrEnvW = asciitounicode(&pEnvW, pEnvironment);
     ret = GetPrinterDriverW(hPrinter, pwstrEnvW, Level, buf,
 				    cbBuf, pcbNeeded);

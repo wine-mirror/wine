@@ -2414,6 +2414,14 @@ static void test_GetPrinterDriver(void)
 
             /* XP allocates memory for both ANSI and unicode names */
             ok(filled >= calculated,"calculated %d != filled %d\n", calculated, filled);
+
+            /* Obscure test - demonstrate that Windows zero fills the buffer, even on failure */
+            if (di_2->pDataFile)
+            {
+                ret = GetPrinterDriver(hprn, NULL, level, buf, needed - 2, &filled);
+                ok(!ret, "level %d: GetPrinterDriver succeeded with less buffer than it should\n", level);
+                ok(di_2->pDataFile == NULL, "Even on failure, GetPrinterDriver clears the buffer to zeros\n");
+            }
         }
 
         HeapFree(GetProcessHeap(), 0, buf);
