@@ -544,7 +544,7 @@ static BOOL COMBOEX_GetItemW (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     INT_PTR index = cit->iItem;
     CBE_ITEMDATA *item;
 
-    TRACE("(...)\n");
+    TRACE("\n");
 
     /* if item number requested does not exist then return failure */
     if ((index >= infoPtr->nb_items) || (index < -1)) return FALSE;
@@ -564,7 +564,7 @@ static BOOL COMBOEX_GetItemA (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
 {
     COMBOBOXEXITEMW tmpcit;
 
-    TRACE("(...)\n");
+    TRACE("\n");
 
     tmpcit.mask = cit->mask;
     tmpcit.iItem = cit->iItem;
@@ -747,7 +747,7 @@ static HIMAGELIST COMBOEX_SetImageList (COMBOEX_INFO *infoPtr, HIMAGELIST himl)
 {
     HIMAGELIST himlTemp = infoPtr->himl;
 
-    TRACE("(...)\n");
+    TRACE("\n");
 
     infoPtr->himl = himl;
 
@@ -967,7 +967,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     static const WCHAR NIL[] = { 0 };
     COMBOEX_INFO *infoPtr;
     LOGFONTW mylogfont;
-    RECT wnrc1, clrc1, cmbwrc;
+    RECT win_rect;
     INT i;
 
     /* allocate memory for info structure */
@@ -992,11 +992,13 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
 
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
-    /* create combo box */
-    GetWindowRect(hwnd, &wnrc1);
-    GetClientRect(hwnd, &clrc1);
-    TRACE("EX window=(%s), client=(%s)\n",
-          wine_dbgstr_rect(&wnrc1), wine_dbgstr_rect(&clrc1));
+    if (TRACE_ON(comboex)) {
+	RECT client, rect;
+	GetWindowRect(hwnd, &rect);
+	GetClientRect(hwnd, &client);
+	TRACE("EX window=(%s), client=(%s)\n",
+		wine_dbgstr_rect(&rect), wine_dbgstr_rect(&client));
+    }
 
     /* Native version of ComboEx creates the ComboBox with DROPDOWNLIST */
     /* specified. It then creates it's own version of the EDIT control  */
@@ -1071,20 +1073,24 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
 
     /* Above is fairly certain, below is much less certain. */
 
-    GetWindowRect(hwnd, &wnrc1);
-    GetClientRect(hwnd, &clrc1);
-    GetWindowRect(infoPtr->hwndCombo, &cmbwrc);
-    TRACE("EX window=(%s) client=(%s) CB wnd=(%s)\n",
-          wine_dbgstr_rect(&wnrc1), wine_dbgstr_rect(&clrc1),
-          wine_dbgstr_rect(&cmbwrc));
-    SetWindowPos(infoPtr->hwndCombo, HWND_TOP,
-		 0, 0, wnrc1.right-wnrc1.left, wnrc1.bottom-wnrc1.top,
+    GetWindowRect(hwnd, &win_rect);
+
+    if (TRACE_ON(comboex)) {
+	RECT client, rect;
+	GetClientRect(hwnd, &client);
+	GetWindowRect(infoPtr->hwndCombo, &rect);
+	TRACE("EX window=(%s) client=(%s) CB wnd=(%s)\n",
+		wine_dbgstr_rect(&win_rect), wine_dbgstr_rect(&client),
+		wine_dbgstr_rect(&rect));
+    }
+    SetWindowPos(infoPtr->hwndCombo, HWND_TOP, 0, 0,
+		 win_rect.right - win_rect.left, win_rect.bottom - win_rect.top,
 		 SWP_NOACTIVATE | SWP_NOREDRAW);
 
-    GetWindowRect(infoPtr->hwndCombo, &cmbwrc);
-    TRACE("CB window=(%s)\n", wine_dbgstr_rect(&cmbwrc));
-    SetWindowPos(hwnd, HWND_TOP,
-		 0, 0, cmbwrc.right-cmbwrc.left, cmbwrc.bottom-cmbwrc.top,
+    GetWindowRect(infoPtr->hwndCombo, &win_rect);
+    TRACE("CB window=(%s)\n", wine_dbgstr_rect(&win_rect));
+    SetWindowPos(hwnd, HWND_TOP, 0, 0,
+		 win_rect.right - win_rect.left, win_rect.bottom - win_rect.top,
 		 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 
     COMBOEX_AdjustEditPos (infoPtr);
@@ -1357,12 +1363,11 @@ static LRESULT COMBOEX_DrawItem (const COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT con
 		 (dis->itemAction == ODA_DRAWENTIRE)) {
 	    /* draw of edit control data */
 
-	    /* testing */
-	    {
+	    if (TRACE_ON(comboex)) {
 		RECT exrc, cbrc, edrc;
 		GetWindowRect (infoPtr->hwndSelf, &exrc);
 		GetWindowRect (infoPtr->hwndCombo, &cbrc);
-		edrc.left=edrc.top=edrc.right=edrc.bottom=-1;
+		edrc.left = edrc.top = edrc.right = edrc.bottom = -1;
 		if (infoPtr->hwndEdit) GetWindowRect (infoPtr->hwndEdit, &edrc);
                 TRACE("window rects ex=(%s), cb=(%s), ed=(%s)\n",
                       wine_dbgstr_rect(&exrc), wine_dbgstr_rect(&cbrc),
