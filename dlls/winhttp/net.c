@@ -361,7 +361,7 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
             if (!endCert) ret = FALSE;
             if (ret)
             {
-                DWORD err = netconn_verify_cert( endCert, store, server );
+                DWORD_PTR err = netconn_verify_cert( endCert, store, server );
 
                 if (err)
                 {
@@ -641,7 +641,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
     {
         DWORD err;
 
-        err = (DWORD)pSSL_get_ex_data( conn->ssl_conn, error_idx );
+        err = (DWORD_PTR)pSSL_get_ex_data( conn->ssl_conn, error_idx );
         if (!err) err = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
         ERR("couldn't verify server certificate (%d)\n", err);
         set_last_error( err );
