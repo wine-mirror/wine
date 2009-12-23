@@ -63,7 +63,6 @@ static const HOOKPROC hook_procs[NB_HOOKS16] =
 };
 
 
-/* this structure is stored in the thread queue */
 struct hook16_queue_info
 {
     INT        id;                /* id of current hook */
@@ -71,6 +70,19 @@ struct hook16_queue_info
     HOOKPROC16 proc[NB_HOOKS16];  /* 16-bit hook procedures */
 };
 
+static struct hook16_queue_info *get_hook_info( BOOL create )
+{
+    static DWORD hook_tls = TLS_OUT_OF_INDEXES;
+    struct hook16_queue_info *info = TlsGetValue( hook_tls );
+
+    if (!info && create)
+    {
+        if (hook_tls == TLS_OUT_OF_INDEXES) hook_tls = TlsAlloc();
+        info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*info) );
+        TlsSetValue( hook_tls, info );
+    }
+    return info;
+}
 
 
 /***********************************************************************
@@ -108,7 +120,7 @@ static inline void map_msg_32_to_16( const MSG *msg32, MSG16 *msg16 )
  */
 static LRESULT call_hook_16( INT id, INT code, WPARAM wp, LPARAM lp )
 {
-    struct hook16_queue_info *info = get_user_thread_info()->hook16_info;
+    struct hook16_queue_info *info = get_hook_info( FALSE );
     WORD args[4];
     DWORD ret;
     INT prev_id = info->id;
@@ -378,7 +390,6 @@ FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst, HTASK16 hTask )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
     struct hook16_queue_info *info;
     HHOOK hook;
     int index = id - WH_MINHOOK;
@@ -396,11 +407,7 @@ HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst, H
         return 0;
     }
 
-    if (!(info = thread_info->hook16_info))
-    {
-        if (!(info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*info) ))) return 0;
-        thread_info->hook16_info = info;
-    }
+    if (!(info = get_hook_info( TRUE ))) return 0;
     if (info->hook[index])
     {
         FIXME( "Multiple hooks (%d) for the same task not supported yet\n", id );
@@ -422,7 +429,7 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
     int index = id - WH_MINHOOK;
 
     if (id < WH_MINHOOK || id > WH_MAXHOOK16) return FALSE;
-    if (!(info = get_user_thread_info()->hook16_info)) return FALSE;
+    if (!(info = get_hook_info( FALSE ))) return FALSE;
     if (info->proc[index] != proc) return FALSE;
     if (!UnhookWindowsHookEx( info->hook[index] )) return FALSE;
     info->hook[index] = 0;
@@ -439,7 +446,7 @@ BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
     struct hook16_queue_info *info;
     int index;
 
-    if (!(info = get_user_thread_info()->hook16_info)) return FALSE;
+    if (!(info = get_hook_info( FALSE ))) return FALSE;
     for (index = 0; index < NB_HOOKS16; index++)
     {
         if (info->hook[index] == hhook)
@@ -502,7 +509,7 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wparam, LPARA
     struct hook16_queue_info *info;
     LRESULT ret = 0;
 
-    if (!(info = get_user_thread_info()->hook16_info)) return 0;
+    if (!(info = get_hook_info( FALSE ))) return 0;
 
     switch (info->id)
     {

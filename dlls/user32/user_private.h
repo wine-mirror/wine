@@ -122,7 +122,6 @@ extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;
 extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
 
 struct received_message_info;
-struct hook16_queue_info;
 
 enum user_obj_type
 {
@@ -175,7 +174,6 @@ struct user_thread_info
     BOOL                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
     struct received_message_info *receive_info;           /* Message being currently received */
-    struct hook16_queue_info     *hook16_info;            /* Opaque pointer for 16-bit hook support */
     struct wm_char_mapping_data  *wmchar_data;            /* Data for WM_CHAR mappings */
     DWORD                         GetMessageTimeVal;      /* Value for GetMessageTime */
     DWORD                         GetMessagePosVal;       /* Value for GetMessagePos */
