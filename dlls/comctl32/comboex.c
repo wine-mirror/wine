@@ -806,7 +806,7 @@ static BOOL COMBOEX_SetItemW (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     if (cit->mask & CBEIF_INDENT)
         item->iIndent = cit->iIndent;
     if (cit->mask & CBEIF_LPARAM)
-        cit->lParam = cit->lParam;
+        item->lParam = cit->lParam;
 
     if (TRACE_ON(comboex)) COMBOEX_DumpItem (item);
 

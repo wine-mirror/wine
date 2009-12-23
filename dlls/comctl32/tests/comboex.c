@@ -29,6 +29,8 @@
 
 #define EDITBOX_ID         0
 
+#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static HWND hComboExParentWnd;
@@ -491,9 +493,26 @@ static void test_get_set_item(void)
     item.pszText = textA;
     item.iItem = -1;
     ret = SendMessage(hComboEx, CBEM_SETITEMA, 0, (LPARAM)&item);
-    ok(ret, "CBEM_SETITEMA failed\n");
+    expect(TRUE, ret);
 
     ok_sequence(sequences, EDITBOX_SEQ_INDEX, test_setitem_edit_seq, "set item data for edit", FALSE);
+
+    /* get/set lParam */
+    item.mask = CBEIF_LPARAM;
+    item.iItem = -1;
+    item.lParam = 0xdeadbeef;
+    ret = SendMessage(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.lParam == 0, "Expected zero, got %ld\n", item.lParam);
+
+    item.lParam = 0xdeadbeef;
+    ret = SendMessage(hComboEx, CBEM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    item.lParam = 0;
+    ret = SendMessage(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.lParam == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", item.lParam);
 
     DestroyWindow(hComboEx);
 }
