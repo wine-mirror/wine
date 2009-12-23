@@ -56,6 +56,7 @@
 #include "shlobj.h"
 #include "shldisp.h"
 #include "debughlp.h"
+#include "shell32_main.h"
 
 #include "wine/unicode.h"
 
@@ -106,8 +107,7 @@ static void create_listbox(IAutoCompleteImpl *This)
     This->hwndListBox = CreateWindowExW(0, WC_LISTBOXW, NULL,
                                     WS_BORDER | WS_CHILD | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                                     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                    hwndParent, NULL,
-                                    (HINSTANCE)GetWindowLongPtrW( hwndParent, GWLP_HINSTANCE ), NULL);
+                                    hwndParent, NULL, shell32_hInstance, NULL );
 
     if (This->hwndListBox) {
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
