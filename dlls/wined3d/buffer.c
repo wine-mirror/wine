@@ -622,6 +622,14 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         This->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
 
         context_release(context);
+
+        HeapFree(GetProcessHeap(), 0, This->conversion_shift);
+        This->conversion_shift = NULL;
+        HeapFree(GetProcessHeap(), 0, This->conversion_map);
+        This->conversion_map = NULL;
+        This->stride = 0;
+        This->conversion_stride = 0;
+        This->flags &= ~WINED3D_BUFFER_HASDESC;
     }
 }
 
