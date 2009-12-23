@@ -579,7 +579,6 @@ static HRESULT WINAPI Disp_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
@@ -618,7 +617,6 @@ static HRESULT WINAPI Disp_GetTypeInfoCount(
         IDispatch* This,
         UINT *pctinfo)
 {
-    trace("\n");
     return ERROR_SUCCESS;
 }
 
@@ -628,7 +626,6 @@ static HRESULT WINAPI Disp_GetTypeInfo(
         LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    trace("\n");
     return ERROR_SUCCESS;
 }
 
@@ -640,7 +637,6 @@ static HRESULT WINAPI Disp_GetIDsOfNames(
         LCID lcid,
         DISPID *rgDispId)
 {
-    trace("\n");
     return ERROR_SUCCESS;
 }
 
@@ -698,7 +694,6 @@ static HRESULT WINAPI Enum_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumConnections))
@@ -741,7 +736,6 @@ static HRESULT WINAPI Enum_Next(
 {
     EnumCon *iface = (EnumCon*)This;
 
-    trace("\n");
     if (cConnections > 0 && iface->idx < iface->pt->sinkCount)
     {
         rgcd->pUnk = iface->pt->sink[iface->idx];
@@ -760,14 +754,12 @@ static HRESULT WINAPI Enum_Skip(
         IEnumConnections* This,
         ULONG cConnections)
 {
-    trace("\n");
     return E_FAIL;
 }
 
 static HRESULT WINAPI Enum_Reset(
         IEnumConnections* This)
 {
-    trace("\n");
     return E_FAIL;
 }
 
@@ -775,7 +767,6 @@ static HRESULT WINAPI Enum_Clone(
         IEnumConnections* This,
         IEnumConnections **ppEnum)
 {
-    trace("\n");
     return E_FAIL;
 }
 
@@ -795,7 +786,6 @@ static HRESULT WINAPI ConPt_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IConnectionPoint))
@@ -850,7 +840,6 @@ static HRESULT WINAPI ConPt_GetConnectionInterface(
 {
     static int i = 0;
     ConPt *iface = (ConPt*)This;
-    trace("\n");
     if (i==0)
     {
         i++;
@@ -866,7 +855,6 @@ static HRESULT WINAPI ConPt_GetConnectionPointContainer(
         IConnectionPointContainer **ppCPC)
 {
     ConPt *iface = (ConPt*)This;
-    trace("\n");
 
     *ppCPC = (IConnectionPointContainer*)iface->container;
     return S_OK;
@@ -878,7 +866,6 @@ static HRESULT WINAPI ConPt_Advise(
         DWORD *pdwCookie)
 {
     ConPt *iface = (ConPt*)This;
-    trace("\n");
 
     if (iface->sinkCount == 0)
         iface->sink = HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
@@ -896,7 +883,6 @@ static HRESULT WINAPI ConPt_Unadvise(
         DWORD dwCookie)
 {
     ConPt *iface = (ConPt*)This;
-    trace("\n");
 
     if (dwCookie > iface->sinkCount)
         return E_FAIL;
@@ -914,7 +900,6 @@ static HRESULT WINAPI ConPt_EnumConnections(
 {
     EnumCon *ec;
 
-    trace("\n");
     ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumCon));
     ec->vtbl = &enum_vtbl;
     ec->refCount = 1;
@@ -942,7 +927,6 @@ static HRESULT WINAPI EnumPt_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumConnectionPoints))
@@ -985,7 +969,6 @@ static HRESULT WINAPI EnumPt_Next(
 {
     EnumPt *iface = (EnumPt*)This;
 
-    trace("\n");
     if (cConnections > 0 && iface->idx < iface->container->ptCount)
     {
         *rgcd = iface->container->pt[iface->idx];
@@ -1003,14 +986,12 @@ static HRESULT WINAPI EnumPt_Skip(
         IEnumConnectionPoints* This,
         ULONG cConnections)
 {
-    trace("\n");
     return E_FAIL;
 }
 
 static HRESULT WINAPI EnumPt_Reset(
         IEnumConnectionPoints* This)
 {
-    trace("\n");
     return E_FAIL;
 }
 
@@ -1018,7 +999,6 @@ static HRESULT WINAPI EnumPt_Clone(
         IEnumConnectionPoints* This,
         IEnumConnectionPoints **ppEnumPt)
 {
-    trace("\n");
     return E_FAIL;
 }
 
@@ -1038,7 +1018,6 @@ static HRESULT WINAPI Contain_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IConnectionPointContainer))
@@ -1090,7 +1069,6 @@ static HRESULT WINAPI Contain_EnumConnectionPoints(
 {
     EnumPt *ec;
 
-    trace("\n");
     ec = HeapAlloc(GetProcessHeap(),0,sizeof(EnumPt));
     ec->vtbl = &enumpt_vtbl;
     ec->refCount = 1;
@@ -1108,7 +1086,6 @@ static HRESULT WINAPI Contain_FindConnectionPoint(
 {
     Contain *iface = (Contain*)This;
     ConPt *pt;
-    trace("\n");
 
     if (!IsEqualIID(riid, &IID_NULL) || iface->ptCount ==0)
     {
@@ -1219,7 +1196,6 @@ static HRESULT WINAPI Prop_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    trace("\n");
     *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPropertyBag))
