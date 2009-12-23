@@ -227,7 +227,7 @@ Doppelter Netzwerkname
 MessageId=53
 SymbolicName=ERROR_BAD_NETPATH
 Language=DEU
-Fehlerhafter Netzpfad
+Fehlerhafter Netzwerkpfad
 .
 MessageId=54
 SymbolicName=ERROR_NETWORK_BUSY
@@ -487,7 +487,7 @@ Ungültige Ebene
 MessageId=125
 SymbolicName=ERROR_NO_VOLUME_LABEL
 Language=DEU
-Keine Volumen-Bezeichnung
+Keine Datenträgerbezeichnung
 .
 MessageId=126
 SymbolicName=ERROR_MOD_NOT_FOUND
@@ -502,12 +502,12 @@ Prozedur nicht gefunden
 MessageId=128
 SymbolicName=ERROR_WAIT_NO_CHILDREN
 Language=DEU
-Keine Kinder auf die gewartet werden kann
+Keine Unterprogramme auf die gewartet werden kann
 .
 MessageId=129
 SymbolicName=ERROR_CHILD_NOT_COMPLETE
 Language=DEU
-Kind-Prozess ist nicht abgeschlossen
+Unterprogramm ist nicht abgeschlossen
 .
 MessageId=130
 SymbolicName=ERROR_DIRECT_ACCESS_HANDLE
@@ -622,7 +622,7 @@ Event-Anzahl für DosMuxSemWait nicht korrekt
 MessageId=152
 SymbolicName=ERROR_TOO_MANY_MUXWAITERS
 Language=DEU
-Zu viele Warter für DosMuxSemWait
+Zu viele Wartende für DosMuxSemWait
 .
 MessageId=153
 SymbolicName=ERROR_INVALID_LIST_FORMAT
@@ -632,7 +632,7 @@ DosSemMuxWait-Liste ungültig
 MessageId=154
 SymbolicName=ERROR_LABEL_TOO_LONG
 Language=DEU
-Volumen-Bezeichnung zu lang
+Datenträgerbezeichnung zu lang
 .
 MessageId=155
 SymbolicName=ERROR_TOO_MANY_TCBS
@@ -687,7 +687,7 @@ Sperre fehlgeschlagen
 MessageId=170
 SymbolicName=ERROR_BUSY
 Language=DEU
-Resource benutzt
+Resource in Benutzung
 .
 MessageId=173
 SymbolicName=ERROR_CANCEL_VIOLATION
@@ -1687,7 +1687,7 @@ Ungültiger Ereignisname
 MessageId=1212
 SymbolicName=ERROR_INVALID_DOMAINNAME
 Language=DEU
-Ungültiger Domain-Name
+Ungültiger Domänenname
 .
 MessageId=1213
 SymbolicName=ERROR_INVALID_SERVICENAME
@@ -1702,7 +1702,7 @@ Ungültiger Netzwerkname
 MessageId=1215
 SymbolicName=ERROR_INVALID_SHARENAME
 Language=DEU
-Ungültiger Freigabenname
+Ungültiger Freigabename
 .
 MessageId=1216
 SymbolicName=ERROR_INVALID_PASSWORDNAME
@@ -3492,7 +3492,7 @@ Nicht genügend Quota
 MessageId=1817
 SymbolicName=RPC_S_NO_INTERFACES
 Language=DEU
-Keine Interfaces
+Keine Schnittstellen
 .
 MessageId=1818
 SymbolicName=RPC_S_CALL_CANCELLED
@@ -3527,7 +3527,7 @@ Kein RPC-Fehler
 MessageId=1824
 SymbolicName=RPC_S_UUID_LOCAL_ONLY
 Language=DEU
-UUID isr nur lokal
+UUID ist nur lokal
 .
 MessageId=1825
 SymbolicName=RPC_S_SEC_PKG_ERROR
