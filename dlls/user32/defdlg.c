@@ -342,7 +342,6 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
         dlgInfo->idResult    = 0;
         dlgInfo->flags       = 0;
         wndPtr->dlgInfo = dlgInfo;
-        wndPtr->flags |= WIN_ISDIALOG;
     }
 
 out:

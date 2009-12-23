@@ -1986,7 +1986,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
         retvalue = get_win_data( (char *)wndPtr->wExtra + offset, size );
 
         /* Special case for dialog window procedure */
-        if ((offset == DWLP_DLGPROC) && (size == sizeof(LONG_PTR)) && (wndPtr->flags & WIN_ISDIALOG))
+        if ((offset == DWLP_DLGPROC) && (size == sizeof(LONG_PTR)) && wndPtr->dlgInfo)
             retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, unicode );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
@@ -2115,7 +2115,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         break;
     case DWLP_DLGPROC:
         if ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
-            (size == sizeof(LONG_PTR)) && (wndPtr->flags & WIN_ISDIALOG))
+            (size == sizeof(LONG_PTR)) && wndPtr->dlgInfo)
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, unicode );

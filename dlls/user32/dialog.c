@@ -1027,7 +1027,7 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
         pParent = WIN_GetPtr(hParent);
         if (!pParent || pParent == WND_OTHER_PROCESS || pParent == WND_DESKTOP) break;
 
-        if (!(pParent->flags & WIN_ISDIALOG))
+        if (!pParent->dlgInfo)
         {
             WIN_ReleasePtr(pParent);
             break;
@@ -1135,7 +1135,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 
                 if (pWnd && pWnd != WND_OTHER_PROCESS)
                 {
-                    fIsDialog = (pWnd->flags & WIN_ISDIALOG) != 0;
+                    fIsDialog = (pWnd->dlgInfo != NULL);
                     WIN_ReleasePtr(pWnd);
                 }
 
