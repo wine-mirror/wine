@@ -484,13 +484,6 @@ static CBE_ITEMDATA * COMBOEX_FindItem(const COMBOEX_INFO *infoPtr, INT_PTR inde
     return item;
 }
 
-
-static inline BOOL COMBOEX_HasEdit(COMBOEX_INFO const *infoPtr)
-{
-    return infoPtr->hwndEdit ? TRUE : FALSE;
-}
-
-
 /* ***  CBEM_xxx message support  *** */
 
 static UINT COMBOEX_GetListboxText(const COMBOEX_INFO *infoPtr, INT_PTR n, LPWSTR buf)
@@ -557,7 +550,7 @@ static BOOL COMBOEX_GetItemW (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     if ((index >= infoPtr->nb_items) || (index < -1)) return FALSE;
 
     /* if the item is the edit control and there is no edit control, skip */
-    if ((index == -1) && !COMBOEX_HasEdit(infoPtr)) return FALSE;
+    if ((index == -1) && !infoPtr->hwndEdit) return FALSE;
 
     if (!(item = COMBOEX_FindItem(infoPtr, index))) return FALSE;
 
@@ -604,8 +597,7 @@ static BOOL COMBOEX_GetItemA (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
 
 static inline BOOL COMBOEX_HasEditChanged (COMBOEX_INFO const *infoPtr)
 {
-    return COMBOEX_HasEdit(infoPtr) &&
-	   (infoPtr->flags & WCBE_EDITHASCHANGED) == WCBE_EDITHASCHANGED;
+    return infoPtr->hwndEdit && (infoPtr->flags & WCBE_EDITHASCHANGED) == WCBE_EDITHASCHANGED;
 }
 
 
@@ -778,7 +770,7 @@ static BOOL COMBOEX_SetItemW (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     if ((index >= infoPtr->nb_items) || (index < -1)) return FALSE;
 
     /* if the item is the edit control and there is no edit control, skip */
-    if ((index == -1) && !COMBOEX_HasEdit(infoPtr)) return FALSE;
+    if ((index == -1) && !infoPtr->hwndEdit) return FALSE;
 
     if (!(item = COMBOEX_FindItem(infoPtr, index))) return FALSE;
 
