@@ -735,10 +735,10 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
      */
     if (decl_changed)
     {
-        ++This->conversion_count;
+        ++This->decl_change_count;
         This->draw_count = 0;
 
-        if (This->conversion_count > VB_MAXDECLCHANGES)
+        if (This->decl_change_count > VB_MAXDECLCHANGES)
         {
             FIXME("Too many declaration changes, stopping converting\n");
 
@@ -763,7 +763,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
          * decl changes and reset the decl change count after a specific number of them
          */
         ++This->draw_count;
-        if (This->draw_count > VB_RESETDECLCHANGE) This->conversion_count = 0;
+        if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
     }
 
     if (decl_changed)

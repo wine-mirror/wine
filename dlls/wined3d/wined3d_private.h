@@ -2373,7 +2373,7 @@ struct wined3d_buffer
     LONG lock_count;
 
     /* conversion stuff */
-    UINT conversion_count;
+    UINT decl_change_count;
     UINT draw_count;
     UINT stride;                                            /* 0 if no conversion */
     UINT conversion_stride;                                 /* 0 if no shifted conversion */
