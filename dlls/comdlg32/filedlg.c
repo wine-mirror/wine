@@ -3740,7 +3740,7 @@ static void MemFree(void *mem)
  * by a 32 bits application
  *
  */
-static BOOL FD32_GetTemplate(PFD31_DATA lfs)
+BOOL FD32_GetTemplate(PFD31_DATA lfs)
 {
     LPOPENFILENAMEW ofnW = lfs->ofnW;
     LPOPENFILENAMEA ofnA = lfs->ofnA;
@@ -3795,145 +3795,6 @@ static BOOL FD32_GetTemplate(PFD31_DATA lfs)
     return TRUE;
 }
 
-
-/************************************************************************
- *                              FD32_Init          [internal]
- *      called from the common 16/32 code to initialize 32 bit data
- */
-static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
-{
-    BOOL IsUnicode = (BOOL) data;
-
-    if (IsUnicode)
-    {
-        lfs->ofnA = NULL;
-        lfs->ofnW = (LPOPENFILENAMEW) lParam;
-        if (lfs->ofnW->Flags & OFN_ENABLEHOOK)
-            if (lfs->ofnW->lpfnHook)
-                lfs->hook = TRUE;
-    }
-    else
-    {
-        lfs->ofnA = (LPOPENFILENAMEA) lParam;
-        if (lfs->ofnA->Flags & OFN_ENABLEHOOK)
-            if (lfs->ofnA->lpfnHook)
-                lfs->hook = TRUE;
-        lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lfs->ofnW));
-        FD31_MapOfnStructA(lfs->ofnA, lfs->ofnW, lfs->open);
-    }
-
-    if (! FD32_GetTemplate(lfs)) return FALSE;
-
-    return TRUE;
-}
-
-/***********************************************************************
- *                              FD32_CallWindowProc          [internal]
- *
- *      called from the common 16/32 code to call the appropriate hook
- */
-static BOOL CALLBACK FD32_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM wParam,
-                                 LPARAM lParam)
-{
-    BOOL ret;
-
-    if (lfs->ofnA)
-    {
-        TRACE("Call hookA %p (%p, %04x, %08lx, %08lx)\n",
-               lfs->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
-        ret = lfs->ofnA->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
-        TRACE("ret hookA %p (%p, %04x, %08lx, %08lx)\n",
-               lfs->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
-        return ret;
-    }
-
-    TRACE("Call hookW %p (%p, %04x, %08lx, %08lx)\n",
-           lfs->ofnW->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
-    ret = lfs->ofnW->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
-    TRACE("Ret hookW %p (%p, %04x, %08lx, %08lx)\n",
-           lfs->ofnW->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
-    return ret;
-}
-
-/***********************************************************************
- *                              FD32_UpdateResult            [internal]
- *          update the real client structures if any
- */
-static void CALLBACK FD32_UpdateResult(const FD31_DATA *lfs)
-{
-    LPOPENFILENAMEW ofnW = lfs->ofnW;
-    LPOPENFILENAMEA ofnA = lfs->ofnA;
-
-    if (ofnA)
-    {
-        LPSTR lpszTemp;
-        if (ofnW->nMaxFile &&
-            !WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
-                                  ofnA->lpstrFile, ofnA->nMaxFile, NULL, NULL ))
-            ofnA->lpstrFile[ofnA->nMaxFile-1] = 0;
-
-        /* offsets are not guaranteed to be the same in WCHAR to MULTIBYTE conversion */
-        /* set filename offset */
-        lpszTemp = PathFindFileNameA(ofnA->lpstrFile);
-        ofnA->nFileOffset = (lpszTemp - ofnA->lpstrFile);
-
-        /* set extension offset */
-        lpszTemp = PathFindExtensionA(ofnA->lpstrFile);
-        ofnA->nFileExtension = (*lpszTemp) ? (lpszTemp - ofnA->lpstrFile) + 1 : 0;
-    }
-}
-
-/***********************************************************************
- *                              FD32_UpdateFileTitle            [internal]
- *          update the real client structures if any
- */
-static void CALLBACK FD32_UpdateFileTitle(const FD31_DATA *lfs)
-{
-    LPOPENFILENAMEW ofnW = lfs->ofnW;
-    LPOPENFILENAMEA ofnA = lfs->ofnA;
-
-    if (ofnA)
-    {
-        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFileTitle, -1,
-                                  ofnA->lpstrFileTitle, ofnA->nMaxFileTitle, NULL, NULL ))
-            ofnA->lpstrFileTitle[ofnA->nMaxFileTitle-1] = 0;
-    }
-}
-
-
-/***********************************************************************
- *                              FD32_SendLbGetCurSel         [internal]
- *          retrieve selected listbox item
- */
-static LRESULT CALLBACK FD32_SendLbGetCurSel(const FD31_DATA *lfs)
-{
-    return SendDlgItemMessageW(lfs->hwnd, lst1, LB_GETCURSEL, 0, 0);
-}
-
-
-/************************************************************************
- *                              FD32_Destroy          [internal]
- *      called from the common 16/32 code to cleanup 32 bit data
- */
-static void CALLBACK FD32_Destroy(const FD31_DATA *lfs)
-{
-    /* if ofnW has been allocated, have to free everything in it */
-    if (lfs->ofnA)
-    {
-        FD31_FreeOfnW(lfs->ofnW);
-        HeapFree(GetProcessHeap(), 0, lfs->ofnW);
-    }
-}
-
-static void FD32_SetupCallbacks(PFD31_CALLBACKS callbacks)
-{
-    callbacks->Init = FD32_Init;
-    callbacks->CWP = FD32_CallWindowProc;
-    callbacks->UpdateResult = FD32_UpdateResult;
-    callbacks->UpdateFileTitle = FD32_UpdateFileTitle;
-    callbacks->SendLbGetCurSel = FD32_SendLbGetCurSel;
-    callbacks->Destroy = FD32_Destroy;
-}
 
 /***********************************************************************
  *                              FD32_WMMeasureItem           [internal]
@@ -4009,13 +3870,11 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* address of structure with d
     HINSTANCE hInst;
     BOOL bRet = FALSE;
     PFD31_DATA lfs;
-    FD31_CALLBACKS callbacks;
 
     if (!lpofn || !FD31_Init()) return FALSE;
 
     TRACE("ofn flags %08x\n", lpofn->Flags);
-    FD32_SetupCallbacks(&callbacks);
-    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) FALSE);
+    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, FALSE);
     if (lfs)
     {
         hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );
@@ -4040,12 +3899,10 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with d
     HINSTANCE hInst;
     BOOL bRet = FALSE;
     PFD31_DATA lfs;
-    FD31_CALLBACKS callbacks;
 
     if (!lpofn || !FD31_Init()) return FALSE;
 
-    FD32_SetupCallbacks(&callbacks);
-    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) TRUE);
+    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, TRUE);
     if (lfs)
     {
         hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );

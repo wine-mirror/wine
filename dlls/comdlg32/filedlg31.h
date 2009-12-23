@@ -21,21 +21,7 @@
 
 #define FD31_OFN_PROP "FILEDLG_OFN"
 
-/* Forward declare */
-typedef struct tagFD31_DATA FD31_DATA, *PFD31_DATA;
-
-typedef struct tagFD31_CALLBACKS
-{
-    BOOL (CALLBACK *Init)(LPARAM lParam, PFD31_DATA lfs, DWORD data);
-    BOOL (CALLBACK *CWP)(const FD31_DATA *lfs, UINT wMsg, WPARAM wParam,
-                         LPARAM lParam); /* CWP instead of CallWindowProc to avoid macro expansion */
-    void (CALLBACK *UpdateResult)(const FD31_DATA *lfs);
-    void (CALLBACK *UpdateFileTitle)(const FD31_DATA *lfs);
-    LRESULT (CALLBACK *SendLbGetCurSel)(const FD31_DATA *lfs);
-    void (CALLBACK *Destroy)(const FD31_DATA *lfs);
-} FD31_CALLBACKS, *PFD31_CALLBACKS;
-
-struct tagFD31_DATA
+typedef struct tagFD31_DATA
 {
     HWND hwnd; /* file dialog window handle */
     BOOL hook; /* TRUE if the dialog is hooked */
@@ -47,12 +33,12 @@ struct tagFD31_DATA
     LPOPENFILENAMEW ofnW; /* pointer either to the original structure or
                              a W copy for A/16 API */
     LPOPENFILENAMEA ofnA; /* original structure if 32bits ansi dialog */
-    PFD31_CALLBACKS callbacks; /* callbacks to handle 16/32 bit differences */
-};
+} FD31_DATA, *PFD31_DATA;
+
+extern BOOL FD32_GetTemplate(PFD31_DATA lfs);
 
 extern BOOL FD31_Init(void);
-extern PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType,
-                                    PFD31_CALLBACKS callbacks, DWORD data);
+extern PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType, BOOL IsUnicode);
 extern void FD31_DestroyPrivate(PFD31_DATA lfs);
 extern void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL open);
 extern void FD31_FreeOfnW(OPENFILENAMEW *ofnW);
