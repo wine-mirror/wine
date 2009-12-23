@@ -451,10 +451,7 @@ static void COMBOEX_ReSize (const COMBOEX_INFO *infoPtr)
 static void COMBOEX_SetEditText (const COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 {
     if (!infoPtr->hwndEdit) return;
-    /* native issues the following messages to the {Edit} control */
-    /*      WM_SETTEXT (0,addr)     */
-    /*      EM_SETSEL32 (0,0)       */
-    /*      EM_SETSEL32 (0,-1)      */
+
     if (item->mask & CBEIF_TEXT) {
 	SendMessageW (infoPtr->hwndEdit, WM_SETTEXT, 0, (LPARAM)COMBOEX_GetText(infoPtr, item));
 	SendMessageW (infoPtr->hwndEdit, EM_SETSEL, 0, 0);
