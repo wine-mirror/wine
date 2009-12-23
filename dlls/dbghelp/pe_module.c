@@ -98,6 +98,17 @@ static BOOL pe_load_symbol_table(struct module* module, IMAGE_NT_HEADERS* nth, v
     return TRUE;
 }
 
+static inline void* pe_get_sect(IMAGE_NT_HEADERS* nth, void* mapping,
+                                IMAGE_SECTION_HEADER* sect)
+{
+    return (sect) ? RtlImageRvaToVa(nth, mapping, sect->VirtualAddress, NULL) : NULL;
+}
+
+static inline DWORD pe_get_sect_size(IMAGE_SECTION_HEADER* sect)
+{
+    return (sect) ? sect->SizeOfRawData : 0;
+}
+
 /******************************************************************
  *		pe_load_stabs
  *
@@ -108,39 +119,85 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
                           void* mapping, IMAGE_NT_HEADERS* nth)
 {
     IMAGE_SECTION_HEADER*       section;
-    int                         i, stabsize = 0, stabstrsize = 0;
-    unsigned int                stabs = 0, stabstr = 0;
-    BOOL                        ret = FALSE;
+    IMAGE_SECTION_HEADER*       sect_stabs = NULL;
+    IMAGE_SECTION_HEADER*       sect_stabstr = NULL;
+    int                         i;
+    BOOL                        ret;
 
     section = (IMAGE_SECTION_HEADER*)
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++)
     {
-        if (!strcasecmp((const char*)section->Name, ".stab"))
-        {
-            stabs = section->VirtualAddress;
-            stabsize = section->SizeOfRawData;
-        }
-        else if (!strncasecmp((const char*)section->Name, ".stabstr", 8))
-        {
-            stabstr = section->VirtualAddress;
-            stabstrsize = section->SizeOfRawData;
-        }
+        if (!strcasecmp((const char*)section->Name, ".stab"))              sect_stabs = section;
+        else if (!strncasecmp((const char*)section->Name, ".stabstr", 8))  sect_stabstr = section;
     }
-
-    if (stabstrsize && stabsize)
+    if (sect_stabs && sect_stabstr)
     {
-        ret = stabs_parse(module, 
-                          module->module.BaseOfImage - nth->OptionalHeader.ImageBase, 
-                          RtlImageRvaToVa(nth, mapping, stabs, NULL),
-                          stabsize,
-                          RtlImageRvaToVa(nth, mapping, stabstr, NULL),
-                          stabstrsize,
+        ret = stabs_parse(module,
+                          module->module.BaseOfImage - nth->OptionalHeader.ImageBase,
+                          pe_get_sect(nth, mapping, sect_stabs),   pe_get_sect_size(sect_stabs),
+                          pe_get_sect(nth, mapping, sect_stabstr), pe_get_sect_size(sect_stabstr),
                           NULL, NULL);
         if (ret) pe_load_symbol_table(module, nth, mapping);
     }
-
     TRACE("%s the STABS debug info\n", ret ? "successfully loaded" : "failed to load");
+
+    return ret;
+}
+
+/******************************************************************
+ *		pe_load_dwarf
+ *
+ * look for dwarf information in PE header (it's also a way for the mingw compiler
+ * to provide its debugging information)
+ */
+static BOOL pe_load_dwarf(const struct process* pcs, struct module* module,
+                          void* mapping, IMAGE_NT_HEADERS* nth)
+{
+    IMAGE_SECTION_HEADER*       section;
+    IMAGE_SECTION_HEADER*       sect_debuginfo = NULL;
+    IMAGE_SECTION_HEADER*       sect_debugstr = NULL;
+    IMAGE_SECTION_HEADER*       sect_debugabbrev = NULL;
+    IMAGE_SECTION_HEADER*       sect_debugline = NULL;
+    IMAGE_SECTION_HEADER*       sect_debugloc = NULL;
+    int                         i;
+    const char*                 strtable;
+    const char*                 sectname;
+    BOOL                        ret;
+
+    if (nth->FileHeader.PointerToSymbolTable && nth->FileHeader.NumberOfSymbols)
+        /* FIXME: no way to get strtable size */
+        strtable = (const char*)mapping + nth->FileHeader.PointerToSymbolTable +
+             nth->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
+    else strtable = NULL;
+
+    section = (IMAGE_SECTION_HEADER*)
+        ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++)
+    {
+        sectname = (const char*)section->Name;
+        /* long section names start with a '/' (at least on MinGW32) */
+        if (*sectname == '/' && strtable)
+            sectname = strtable + atoi(sectname + 1);
+        if (!strcasecmp(sectname, ".debug_info"))        sect_debuginfo = section;
+        else if (!strcasecmp(sectname, ".debug_str"))    sect_debugstr = section;
+        else if (!strcasecmp(sectname, ".debug_abbrev")) sect_debugabbrev = section;
+        else if (!strcasecmp(sectname, ".debug_line"))   sect_debugline = section;
+        else if (!strcasecmp(sectname, ".debug_loc"))    sect_debugloc = section;
+    }
+    if (sect_debuginfo)
+    {
+        ret = dwarf2_parse(module,
+                           module->module.BaseOfImage - nth->OptionalHeader.ImageBase,
+                           NULL, /* FIXME: some thunks to deal with ? */
+                           pe_get_sect(nth, mapping, sect_debuginfo),   pe_get_sect_size(sect_debuginfo),
+                           pe_get_sect(nth, mapping, sect_debugabbrev), pe_get_sect_size(sect_debugabbrev),
+                           pe_get_sect(nth, mapping, sect_debugstr),    pe_get_sect_size(sect_debugstr),
+                           pe_get_sect(nth, mapping, sect_debugline),   pe_get_sect_size(sect_debugline),
+                           pe_get_sect(nth, mapping, sect_debugloc),    pe_get_sect_size(sect_debugloc));
+    }
+    TRACE("%s the DWARF debug info\n", ret ? "successfully loaded" : "failed to load");
+
     return ret;
 }
 
@@ -349,6 +406,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
             if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
             {
                 ret = pe_load_stabs(pcs, module, mapping, nth) ||
+                    pe_load_dwarf(pcs, module, mapping, nth) ||
                     pe_load_msc_debug_info(pcs, module, mapping, nth);
                 /* if we still have no debug info (we could only get SymExport at this
                  * point), then do the SymExport except if we have an ELF container, 

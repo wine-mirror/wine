@@ -369,7 +369,7 @@ int elf_is_in_thunk_area(unsigned long addr,
 {
     unsigned i;
 
-    for (i = 0; thunks[i].symname; i++)
+    if (thunks) for (i = 0; thunks[i].symname; i++)
     {
         if (addr >= thunks[i].rva_start && addr < thunks[i].rva_end)
             return i;
