@@ -50,7 +50,7 @@ static LPWSTR get_print_file_filter(HWND hMainWnd)
     const WCHAR files_prn[] = {'*','.','P','R','N',0};
     const WCHAR files_all[] = {'*','.','*','\0'};
     LPWSTR p;
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+    HINSTANCE hInstance = GetModuleHandleW(0);
 
     p = wszPrintFilter;
     LoadStringW(hInstance, STRING_PRINTER_FILES_PRN, p, MAX_STRING_LEN);
@@ -88,7 +88,7 @@ void registry_read_pagemargins(HKEY hKey)
 static void AddTextButton(HWND hRebarWnd, UINT string, UINT command, UINT id)
 {
     REBARBANDINFOW rb;
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hRebarWnd, GWLP_HINSTANCE);
+    HINSTANCE hInstance = GetModuleHandleW(0);
     WCHAR text[MAX_STRING_LEN];
     HWND hButton;
 
@@ -846,7 +846,7 @@ LRESULT preview_command(HWND hWnd, WPARAM wParam)
         {
             HWND hReBar = GetDlgItem(hWnd, IDC_REBAR);
             WCHAR name[MAX_STRING_LEN];
-            HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE);
+            HINSTANCE hInst = GetModuleHandleW(0);
 
             if(preview.hdc2)
             {
