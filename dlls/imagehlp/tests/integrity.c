@@ -250,6 +250,15 @@ START_TEST(integrity)
     }
 
     file_size_orig = get_file_size();
+    /*
+     * Align file_size_orig to an 8-byte boundary. This avoids tests failures where
+     * the original dll is not correctly aligned (but when written to it will be).
+     */
+    if (file_size_orig % 8 != 0)
+    {
+        skip("We need to align to an 8-byte boundary\n");
+        file_size_orig = (file_size_orig + 7) & ~7;
+    }
 
     pImageAddCertificate = (void *) GetProcAddress(hImageHlp, "ImageAddCertificate");
     pImageEnumerateCertificates = (void *) GetProcAddress(hImageHlp, "ImageEnumerateCertificates");
