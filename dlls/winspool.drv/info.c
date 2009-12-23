@@ -4447,7 +4447,7 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
 
     if(pcbNeeded) *pcbNeeded = size + needed;
     TRACE("buffer space %d required %d\n", cbBuf, size + needed);
-    if(cbBuf >= needed) return TRUE;
+    if(cbBuf >= size + needed) return TRUE;
     SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return FALSE;
 }
