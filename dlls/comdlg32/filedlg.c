@@ -3867,7 +3867,6 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* address of structure with d
                            UINT dlgType /* type dialogue : open/save */
                            )
 {
-    HINSTANCE hInst;
     BOOL bRet = FALSE;
     PFD31_DATA lfs;
 
@@ -3877,8 +3876,7 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* address of structure with d
     lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, FALSE);
     if (lfs)
     {
-        hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );
-        bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner,
+        bRet = DialogBoxIndirectParamA( COMDLG32_hInstance, lfs->template, lpofn->hwndOwner,
                                         FD32_FileOpenDlgProc, (LPARAM)lfs);
         FD31_DestroyPrivate(lfs);
     }
@@ -3896,7 +3894,6 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with d
                            UINT dlgType /* type dialogue : open/save */
                            )
 {
-    HINSTANCE hInst;
     BOOL bRet = FALSE;
     PFD31_DATA lfs;
 
@@ -3905,8 +3902,7 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with d
     lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, TRUE);
     if (lfs)
     {
-        hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );
-        bRet = DialogBoxIndirectParamW( hInst, lfs->template, lpofn->hwndOwner,
+        bRet = DialogBoxIndirectParamW( COMDLG32_hInstance, lfs->template, lpofn->hwndOwner,
                                         FD32_FileOpenDlgProc, (LPARAM)lfs);
         FD31_DestroyPrivate(lfs);
     }

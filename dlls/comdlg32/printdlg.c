@@ -2080,7 +2080,6 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
         return FALSE;
     }
 
-    hInst = (HINSTANCE)GetWindowLongPtrA( lppd->hwndOwner, GWLP_HINSTANCE );
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
 	const struct pd_flags *pflag = pd_flags;
@@ -2173,6 +2172,8 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	/* and create & process the dialog .
 	 * -1 is failure, 0 is broken hwnd, everything else is ok.
 	 */
+        hInst = COMDLG32_hInstance;
+	if (lppd->Flags & (PD_ENABLESETUPTEMPLATE | PD_ENABLEPRINTTEMPLATE)) hInst = lppd->hInstance;
 	bRet = (0<DialogBoxIndirectParamA(hInst, ptr, lppd->hwndOwner,
 					   PrintDlgProcA,
 					   (LPARAM)PrintStructures));
@@ -2230,7 +2231,6 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
         return FALSE;
     }
 
-    hInst = (HINSTANCE)GetWindowLongPtrW( lppd->hwndOwner, GWLP_HINSTANCE );
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
 	const struct pd_flags *pflag = pd_flags;
@@ -2323,6 +2323,8 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	/* and create & process the dialog .
 	 * -1 is failure, 0 is broken hwnd, everything else is ok.
 	 */
+        hInst = COMDLG32_hInstance;
+	if (lppd->Flags & (PD_ENABLESETUPTEMPLATE | PD_ENABLEPRINTTEMPLATE)) hInst = lppd->hInstance;
 	bRet = (0<DialogBoxIndirectParamW(hInst, ptr, lppd->hwndOwner,
 					   PrintDlgProcW,
 					   (LPARAM)PrintStructures));
