@@ -53,7 +53,7 @@
 53 stub OLEGETICONOFCLASS
 54 pascal CreateILockBytesOnHGlobal(word word ptr) CreateILockBytesOnHGlobal16
 55 stub GETHGLOBALFROMILOCKBYTES
-56 pascal -ret16 OleMetaFilePictFromIconAndLabel(word str str word) OleMetaFilePictFromIconAndLabel16
+56 pascal -ret16 OleMetafilePictFromIconAndLabel(word str str word) OleMetafilePictFromIconAndLabel16
 57 stub GETCLASSFILE
 58 stub OLEDRAW
 59 stub OLECREATEDEFAULTHANDLER

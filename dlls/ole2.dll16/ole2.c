@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define HICON_16(h32)		(LOWORD(h32))
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 /******************************************************************************
  *		OleBuildVersion	(OLE2.1)
@@ -124,49 +123,53 @@ HRESULT WINAPI RevokeDragDrop16(
  * If no hIcon is given, we load the icon via lpszSourceFile and iIconIndex.
  * This code might be wrong at some places.
  */
-HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
+HGLOBAL16 WINAPI OleMetafilePictFromIconAndLabel16(
 	HICON16 hIcon,
 	LPCOLESTR16 lpszLabel,
 	LPCOLESTR16 lpszSourceFile,
 	UINT16 iIconIndex
 ) {
-    METAFILEPICT16 *mf16;
+    METAFILEPICT *pict;
+    HGLOBAL hmf;
     HGLOBAL16 hmf16;
-    HMETAFILE hmf;
-    INT mfSize;
-    HDC hdc;
+    LPWSTR label = NULL, source = NULL;
+    DWORD len;
 
-    if (!hIcon) {
-        if (lpszSourceFile) {
-	    HINSTANCE16 hInstance = LoadLibrary16(lpszSourceFile);
-
-	    /* load the icon at index from lpszSourceFile */
-	    hIcon = HICON_16(LoadIconA(HINSTANCE_32(hInstance), (LPCSTR)(DWORD)iIconIndex));
-	    FreeLibrary16(hInstance);
-	} else
-	    return 0;
+    if (lpszLabel)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpszLabel, -1, NULL, 0 );
+        label = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpszLabel, -1, label, len );
     }
+    if (lpszSourceFile)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpszSourceFile, -1, NULL, 0 );
+        source = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpszSourceFile, -1, source, len );
+    }
+    hmf = OleMetafilePictFromIconAndLabel( HICON_32(hIcon), label, source, iIconIndex );
+    HeapFree( GetProcessHeap(), 0, label );
+    HeapFree( GetProcessHeap(), 0, source );
 
-    FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n",
-          hIcon, lpszLabel, lpszSourceFile, iIconIndex);
-
-    hdc = CreateMetaFileW(NULL);
-    DrawIcon(hdc, 0, 0, HICON_32(hIcon)); /* FIXME */
-    TextOutA(hdc, 0, 0, lpszLabel, 1); /* FIXME */
-    hmf = CloseMetaFile(hdc);
+    if (!hmf) return 0;
+    pict = GlobalLock( hmf );
 
     hmf16 = GlobalAlloc16(0, sizeof(METAFILEPICT16));
-    mf16 = GlobalLock16(hmf16);
-    mf16->mm = MM_ANISOTROPIC;
-    mf16->xExt = 20; /* FIXME: bogus */
-    mf16->yExt = 20; /* ditto */
-    mfSize = GetMetaFileBitsEx(hmf, 0, 0);
-    mf16->hMF = GlobalAlloc16(GMEM_MOVEABLE, mfSize);
-    if(mf16->hMF)
+    if (hmf16)
     {
-        GetMetaFileBitsEx(hmf, mfSize, GlobalLock16(mf16->hMF));
-        GlobalUnlock16(mf16->hMF);
+        METAFILEPICT16 *pict16 = GlobalLock16( hmf16 );
+        pict16->mm   = pict->mm;
+        pict16->xExt = pict->xExt;
+        pict16->yExt = pict->yExt;
+        len = GetMetaFileBitsEx( pict->hMF, 0, 0 );
+        pict16->hMF = GlobalAlloc16( GMEM_MOVEABLE, len );
+        GetMetaFileBitsEx( pict->hMF, len, GlobalLock16( pict16->hMF) );
+        GlobalUnlock16( pict16->hMF );
+        GlobalUnlock16( hmf16 );
     }
+    DeleteMetaFile( pict->hMF );
+    GlobalUnlock( hmf );
+    GlobalFree( hmf );
     return hmf16;
 }
 
