@@ -23,6 +23,9 @@
 #include "user_private.h"
 #include "wine/list.h"
 #include "wine/server.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
@@ -2099,17 +2102,37 @@ INT16 WINAPI SetWindowRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 redraw )
  */
 INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 {
+    char caption[256], text[256];
     MSGBOXPARAMSA msgbox32;
 
     msgbox32.cbSize             = msgbox->cbSize;
     msgbox32.hwndOwner          = WIN_Handle32( msgbox->hwndOwner );
-    msgbox32.hInstance          = HINSTANCE_32(msgbox->hInstance);
-    msgbox32.lpszText           = MapSL(msgbox->lpszText);
-    msgbox32.lpszCaption        = MapSL(msgbox->lpszCaption);
+    msgbox32.hInstance          = 0;
     msgbox32.dwStyle            = msgbox->dwStyle;
-    msgbox32.lpszIcon           = MapSL(msgbox->lpszIcon);
+    msgbox32.lpszIcon           = NULL;
     msgbox32.dwContextHelpId    = msgbox->dwContextHelpId;
     msgbox32.lpfnMsgBoxCallback = msgbox->lpfnMsgBoxCallback;
     msgbox32.dwLanguageId       = msgbox->dwLanguageId;
+
+    if (!HIWORD(msgbox->lpszCaption))
+    {
+        LoadString16( msgbox->hInstance, LOWORD(msgbox->lpszCaption), caption, sizeof(caption) );
+        msgbox32.lpszCaption = caption;
+    }
+    else msgbox32.lpszCaption = MapSL(msgbox->lpszCaption);
+
+    if (!HIWORD(msgbox->lpszText))
+    {
+        LoadString16( msgbox->hInstance, LOWORD(msgbox->lpszText), text, sizeof(text) );
+        msgbox32.lpszText = text;
+    }
+    else msgbox32.lpszText = MapSL(msgbox->lpszText);
+
+    if ((msgbox->dwStyle & MB_ICONMASK) == MB_USERICON)
+    {
+        FIXME( "user icon %s not supported\n", debugstr_a( MapSL(msgbox->lpszIcon) ));
+        msgbox32.dwStyle &= ~MB_USERICON;
+    }
+
     return MessageBoxIndirectA( &msgbox32 );
 }
