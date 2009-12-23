@@ -83,7 +83,7 @@ HINSTANCE hinst;
 DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0, defaultColor = 7;
 static int opt_c, opt_k, opt_s;
-const WCHAR newline[] = {'\n','\0'};
+const WCHAR newline[] = {'\r','\n','\0'};
 static const WCHAR equalsW[] = {'=','\0'};
 static const WCHAR closeBW[] = {')','\0'};
 WCHAR anykey[100];
