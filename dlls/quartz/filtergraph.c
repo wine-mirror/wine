@@ -4899,6 +4899,9 @@ static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
 
     TRACE("(%p/%p)->(%d, %p)\n", This, iface, msTimeout, pEvCode);
 
+    if (This->state != State_Running)
+        return VFW_E_WRONG_STATE;
+
     if (WaitForSingleObject(This->hEventCompletion, msTimeout) == WAIT_OBJECT_0)
     {
 	*pEvCode = This->CompletionStatus;
