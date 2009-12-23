@@ -486,7 +486,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
-    BOOL conv;
 
     if (Pool == WINED3DPOOL_SCRATCH)
     {
@@ -525,16 +524,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
      * Basically converting the vertices in the buffer is quite expensive, and observations
      * show that drawStridedSlow is faster than converting + uploading + drawStridedFast.
      * Therefore do not create a VBO for WINED3DUSAGE_DYNAMIC buffers.
-     *
-     * Direct3D7 has another problem: Its vertexbuffer api doesn't offer a way to specify
-     * the range of vertices being locked, so each lock will require the whole buffer to be transformed.
-     * Moreover geometry data in dx7 is quite simple, so drawStridedSlow isn't a big hit. A plus
-     * is that the vertex buffers fvf can be trusted in dx7. So only create non-converted vbos for
-     * dx7 apps.
-     * There is a IDirect3DVertexBuffer7::Optimize call after which the buffer can't be locked any
-     * more. In this call we can convert dx7 buffers too.
      */
-    conv = ((FVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) || (FVF & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
     if (!This->adapter->gl_info.supported[ARB_VERTEX_BUFFER_OBJECT])
     {
         TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");
@@ -542,8 +532,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
     } else if(Usage & WINED3DUSAGE_DYNAMIC) {
         TRACE("Not creating a vbo because the buffer has dynamic usage\n");
-    } else if(!(Usage & WINED3DUSAGE_OPTIMIZE) && conv) {
-        TRACE("Not creating a vbo because the fvf needs conversion, but VB optimization is disabled\n");
     } else {
         object->flags |= WINED3D_BUFFER_CREATEBO;
     }
