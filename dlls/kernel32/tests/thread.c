@@ -61,6 +61,7 @@ static DWORD (WINAPI *pSetThreadIdealProcessor)(HANDLE,DWORD);
 static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
 static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
 static BOOL (WINAPI *pUnregisterWait)(HANDLE);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -779,6 +780,9 @@ static VOID test_thread_processor(void)
    DWORD_PTR processMask,systemMask;
    SYSTEM_INFO sysInfo;
    int error=0;
+   BOOL is_wow64;
+
+   if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
    sysInfo.dwNumberOfProcessors=0;
    GetSystemInfo(&sysInfo);
@@ -807,12 +811,27 @@ static VOID test_thread_processor(void)
      }
      ok(error!=-1, "SetThreadIdealProcessor failed\n");
 
-     SetLastError(0xdeadbeef);
-     error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
-     ok(error==-1,
-        "SetThreadIdealProcessor succeeded with an illegal processor #\n");
-     ok(GetLastError()==ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     if (is_wow64)
+     {
+         SetLastError(0xdeadbeef);
+         error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
+         todo_wine
+         ok(error!=-1, "SetThreadIdealProcessor failed for %u on Wow64\n", MAXIMUM_PROCESSORS+1);
+
+         SetLastError(0xdeadbeef);
+         error=pSetThreadIdealProcessor(curthread,65);
+         ok(error==-1, "SetThreadIdealProcessor succeeded with an illegal processor #\n");
+         ok(GetLastError()==ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     }
+     else
+     {
+         SetLastError(0xdeadbeef);
+         error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
+         ok(error==-1, "SetThreadIdealProcessor succeeded with an illegal processor #\n");
+         ok(GetLastError()==ERROR_INVALID_PARAMETER,
+            "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+     }
 
      error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
      ok(error==0, "SetThreadIdealProcessor returned an incorrect value\n");
@@ -1208,6 +1227,7 @@ START_TEST(thread)
    pSetThreadPriorityBoost=(void *)GetProcAddress(lib,"SetThreadPriorityBoost");
    pRegisterWaitForSingleObject=(void *)GetProcAddress(lib,"RegisterWaitForSingleObject");
    pUnregisterWait=(void *)GetProcAddress(lib,"UnregisterWait");
+   pIsWow64Process=(void *)GetProcAddress(lib,"IsWow64Process");
 
    if (argc >= 3)
    {
