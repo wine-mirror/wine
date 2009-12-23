@@ -105,11 +105,6 @@ typedef struct tagLookInInfo
   UINT uSelectedItem;
 } LookInInfos;
 
-typedef struct tagFD32_PRIVATE
-{
-    OPENFILENAMEA *ofnA; /* original structure if 32bits ansi dialog */
-} FD32_PRIVATE, *PFD32_PRIVATE;
-
 
 /***********************************************************************
  * Defines and global variables
@@ -3748,7 +3743,7 @@ static void MemFree(void *mem)
 static BOOL FD32_GetTemplate(PFD31_DATA lfs)
 {
     LPOPENFILENAMEW ofnW = lfs->ofnW;
-    PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
+    LPOPENFILENAMEA ofnA = lfs->ofnA;
     HANDLE hDlgTmpl;
 
     if (ofnW->Flags & OFN_ENABLETEMPLATEHANDLE)
@@ -3762,9 +3757,9 @@ static BOOL FD32_GetTemplate(PFD31_DATA lfs)
     else if (ofnW->Flags & OFN_ENABLETEMPLATE)
     {
 	HRSRC hResInfo;
-        if (priv->ofnA)
-	    hResInfo = FindResourceA(priv->ofnA->hInstance,
-				 priv->ofnA->lpTemplateName,
+        if (ofnA)
+	    hResInfo = FindResourceA(ofnA->hInstance,
+				 ofnA->lpTemplateName,
                                  (LPSTR)RT_DIALOG);
         else
 	    hResInfo = FindResourceW(ofnW->hInstance,
@@ -3808,13 +3803,10 @@ static BOOL FD32_GetTemplate(PFD31_DATA lfs)
 static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
 {
     BOOL IsUnicode = (BOOL) data;
-    PFD32_PRIVATE priv;
 
-    priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FD32_PRIVATE));
-    lfs->private1632 = priv;
-    if (NULL == lfs->private1632) return FALSE;
     if (IsUnicode)
     {
+        lfs->ofnA = NULL;
         lfs->ofnW = (LPOPENFILENAMEW) lParam;
         if (lfs->ofnW->Flags & OFN_ENABLEHOOK)
             if (lfs->ofnW->lpfnHook)
@@ -3822,12 +3814,12 @@ static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
     }
     else
     {
-        priv->ofnA = (LPOPENFILENAMEA) lParam;
-        if (priv->ofnA->Flags & OFN_ENABLEHOOK)
-            if (priv->ofnA->lpfnHook)
+        lfs->ofnA = (LPOPENFILENAMEA) lParam;
+        if (lfs->ofnA->Flags & OFN_ENABLEHOOK)
+            if (lfs->ofnA->lpfnHook)
                 lfs->hook = TRUE;
         lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lfs->ofnW));
-        FD31_MapOfnStructA(priv->ofnA, lfs->ofnW, lfs->open);
+        FD31_MapOfnStructA(lfs->ofnA, lfs->ofnW, lfs->open);
     }
 
     if (! FD32_GetTemplate(lfs)) return FALSE;
@@ -3844,15 +3836,14 @@ static BOOL CALLBACK FD32_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM
                                  LPARAM lParam)
 {
     BOOL ret;
-    PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
 
-    if (priv->ofnA)
+    if (lfs->ofnA)
     {
         TRACE("Call hookA %p (%p, %04x, %08lx, %08lx)\n",
-               priv->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
-        ret = priv->ofnA->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
+               lfs->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
+        ret = lfs->ofnA->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
         TRACE("ret hookA %p (%p, %04x, %08lx, %08lx)\n",
-               priv->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
+               lfs->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
         return ret;
     }
 
@@ -3870,25 +3861,25 @@ static BOOL CALLBACK FD32_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM
  */
 static void CALLBACK FD32_UpdateResult(const FD31_DATA *lfs)
 {
-    PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
+    LPOPENFILENAMEA ofnA = lfs->ofnA;
 
-    if (priv->ofnA)
+    if (ofnA)
     {
         LPSTR lpszTemp;
         if (ofnW->nMaxFile &&
             !WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
-                                  priv->ofnA->lpstrFile, ofnW->nMaxFile, NULL, NULL ))
-            priv->ofnA->lpstrFile[ofnW->nMaxFile-1] = 0;
+                                  ofnA->lpstrFile, ofnA->nMaxFile, NULL, NULL ))
+            ofnA->lpstrFile[ofnA->nMaxFile-1] = 0;
 
         /* offsets are not guaranteed to be the same in WCHAR to MULTIBYTE conversion */
         /* set filename offset */
-        lpszTemp = PathFindFileNameA(priv->ofnA->lpstrFile);
-        priv->ofnA->nFileOffset = (lpszTemp - priv->ofnA->lpstrFile);
+        lpszTemp = PathFindFileNameA(ofnA->lpstrFile);
+        ofnA->nFileOffset = (lpszTemp - ofnA->lpstrFile);
 
         /* set extension offset */
-        lpszTemp = PathFindExtensionA(priv->ofnA->lpstrFile);
-        priv->ofnA->nFileExtension = (*lpszTemp) ? (lpszTemp - priv->ofnA->lpstrFile) + 1 : 0;
+        lpszTemp = PathFindExtensionA(ofnA->lpstrFile);
+        ofnA->nFileExtension = (*lpszTemp) ? (lpszTemp - ofnA->lpstrFile) + 1 : 0;
     }
 }
 
@@ -3898,14 +3889,14 @@ static void CALLBACK FD32_UpdateResult(const FD31_DATA *lfs)
  */
 static void CALLBACK FD32_UpdateFileTitle(const FD31_DATA *lfs)
 {
-    PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
+    LPOPENFILENAMEA ofnA = lfs->ofnA;
 
-    if (priv->ofnA)
+    if (ofnA)
     {
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFileTitle, -1,
-                                  priv->ofnA->lpstrFileTitle, ofnW->nMaxFileTitle, NULL, NULL ))
-            priv->ofnA->lpstrFileTitle[ofnW->nMaxFileTitle-1] = 0;
+                                  ofnA->lpstrFileTitle, ofnA->nMaxFileTitle, NULL, NULL ))
+            ofnA->lpstrFileTitle[ofnA->nMaxFileTitle-1] = 0;
     }
 }
 
@@ -3926,10 +3917,8 @@ static LRESULT CALLBACK FD32_SendLbGetCurSel(const FD31_DATA *lfs)
  */
 static void CALLBACK FD32_Destroy(const FD31_DATA *lfs)
 {
-    PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
-
     /* if ofnW has been allocated, have to free everything in it */
-    if (NULL != priv && NULL != priv->ofnA)
+    if (lfs->ofnA)
     {
         FD31_FreeOfnW(lfs->ofnW);
         HeapFree(GetProcessHeap(), 0, lfs->ofnW);

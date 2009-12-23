@@ -46,7 +46,7 @@ struct tagFD31_DATA
     BOOL open; /* TRUE if open dialog, FALSE if save dialog */
     LPOPENFILENAMEW ofnW; /* pointer either to the original structure or
                              a W copy for A/16 API */
-    LPVOID private1632; /* 16/32 bit caller private data */
+    LPOPENFILENAMEA ofnA; /* original structure if 32bits ansi dialog */
     PFD31_CALLBACKS callbacks; /* callbacks to handle 16/32 bit differences */
 };
 
