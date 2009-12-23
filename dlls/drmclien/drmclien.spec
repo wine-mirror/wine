@@ -27,5 +27,5 @@
 @ stub ?GetPublicKey@CDRMLiteCrypto@@QAEJPAUPKCERT@@@Z
 @ stub ?QueryXferToPMEx@CDRMLiteCrypto@@QAEJPBDKPAKPAEK2K12@Z
 @ stub ?RestoreLicenses@CDRMLiteCrypto@@QAEJKPAEPAGPAUIUnknown@@PAHPAX@Z
-@ stub DllRegisterServer
+@ stdcall DllRegisterServer()
 @ stub DllUnregisterServer

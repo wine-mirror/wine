@@ -25,6 +25,8 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(drmclien);
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason)
@@ -39,4 +41,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (drmclien.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("Stub!\n");
+
+    return S_OK;
 }
