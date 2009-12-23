@@ -318,7 +318,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
             if (!endCert) ret = FALSE;
             if (ret)
             {
-                DWORD err = netconn_verify_cert(endCert, store, server);
+                DWORD_PTR err = netconn_verify_cert(endCert, store, server);
 
                 if (err)
                 {
@@ -660,7 +660,7 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
 
     if (pSSL_connect(connection->ssl_s) <= 0)
     {
-        res = (DWORD)pSSL_get_ex_data(connection->ssl_s, error_idx);
+        res = (DWORD_PTR)pSSL_get_ex_data(connection->ssl_s, error_idx);
         if (!res)
             res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         ERR("SSL_connect failed: %d\n", res);
