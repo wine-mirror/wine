@@ -258,8 +258,6 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
         } u;
     } args;
 
-    USER_CheckNotLock();
-
     if (index >= MAX_WINPROCS32) func = winproc16_array[index - MAX_WINPROCS32];
 
     /* Window procedures want ax = hInstance, ds = es = ss */
@@ -1489,7 +1487,8 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
     LRESULT result;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    if (hwnd != HWND_BROADCAST && WIN_IsCurrentThread(hwnd))
+    if (hwnd != HWND_BROADCAST &&
+        GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
     {
         /* call 16-bit window proc directly */
         WNDPROC16 winproc;
@@ -2495,12 +2494,8 @@ static LRESULT mdiclient_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     if (msg == WM_CREATE)
     {
         LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
-        WND *win;
-        BOOL is_win32;
-
-        if (!(win = WIN_GetPtr( hwnd ))) return 0;
-        is_win32 = (win == WND_OTHER_PROCESS || win == WND_DESKTOP || (win->flags & WIN_ISWIN32));
-        WIN_ReleasePtr( win );
+        HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+        BOOL is_win32 = !instance || ((ULONG_PTR)instance >> 16);
 
 	/* Translation layer doesn't know what's in the cs->lpCreateParams
 	 * so we have to keep track of what environment we're in. */
