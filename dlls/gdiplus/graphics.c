@@ -4359,3 +4359,26 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
     FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipIsVisibleClipEmpty [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleClipEmpty(GpGraphics *graphics, BOOL *res)
+{
+    GpStatus stat;
+    GpRegion* rgn;
+
+    TRACE("(%p, %p)\n", graphics, res);
+
+    if((stat = GdipCreateRegion(&rgn)) != Ok)
+        return stat;
+
+    if((stat = get_visible_clip_region(graphics, rgn)) != Ok)
+        goto cleanup;
+
+    stat = GdipIsEmptyRegion(rgn, graphics, res);
+
+cleanup:
+    GdipDeleteRegion(rgn);
+    return stat;
+}
