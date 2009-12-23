@@ -726,6 +726,8 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     if (!decl_changed && !(This->flags & WINED3D_BUFFER_HASDESC && This->flags & WINED3D_BUFFER_DIRTY))
     {
         context_release(context);
+        ++This->draw_count;
+        if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
         return;
     }
 
