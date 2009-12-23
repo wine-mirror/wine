@@ -417,6 +417,7 @@ static BOOL set_registry_environment(void)
                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
                                      'E','n','v','i','r','o','n','m','e','n','t',0};
     static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR volatile_envW[] = {'V','o','l','a','t','i','l','e',' ','E','n','v','i','r','o','n','m','e','n','t',0};
 
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -449,6 +450,15 @@ static BOOL set_registry_environment(void)
         set_registry_variables( hkey, REG_EXPAND_SZ );
         NtClose( hkey );
     }
+
+    RtlInitUnicodeString( &nameW, volatile_envW );
+    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
+    {
+        set_registry_variables( hkey, REG_SZ );
+        set_registry_variables( hkey, REG_EXPAND_SZ );
+        NtClose( hkey );
+    }
+
     NtClose( attr.RootDirectory );
     return ret;
 }
