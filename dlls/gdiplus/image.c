@@ -1725,12 +1725,12 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
 GpStatus WINGDIPAPI GdipImageGetFrameDimensionsCount(GpImage *image,
     UINT* count)
 {
+    /* Native gdiplus 1.1 does not yet support multiple frame dimensions. */
+
     if(!image || !count)
         return InvalidParameter;
 
     *count = 1;
-
-    FIXME("stub\n");
 
     return Ok;
 }
