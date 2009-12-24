@@ -1713,11 +1713,7 @@ the_end:
 static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD msg, DWORD pmt1, DWORD pmt2)
 {
     if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
-	DWORD	count;
-
-	ReleaseThunkLock(&count);
-	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	RestoreThunkLock(count);
+        MsgWaitForMultipleObjects( 1, &lpMidiStrm->hEvent, FALSE, INFINITE, 0 );
     } else {
 	WARN("bad PostThreadMessageA\n");
 	return FALSE;
@@ -1796,17 +1792,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     SetThreadPriority(lpMidiStrm->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 
     /* wait for thread to have started, and for its queue to be created */
-    {
-	DWORD	count;
-
-	/* (Release|Restore)ThunkLock() is needed when this method is called from 16 bit code,
-	 * (meaning the Win16Lock is set), so that it's released and the 32 bit thread running
-	 * MMSYSTEM_MidiStreamPlayer can acquire Win16Lock to create its queue.
-	 */
-	ReleaseThunkLock(&count);
-	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	RestoreThunkLock(count);
-    }
+    WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
