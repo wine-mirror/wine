@@ -31,8 +31,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION This->resource.device->adapter->gl_info
 
-#define VB_MAXDECLCHANGES     100     /* After that number we stop converting */
-#define VB_RESETDECLCHANGE    1000    /* Reset the changecount after that number of draws */
+#define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
+#define VB_RESETDECLCHANGE    1000    /* Reset the decl changecount after that number of draws */
+#define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
+#define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
 /* Context activation is done by the caller. */
 static void buffer_create_buffer_object(struct wined3d_buffer *This)
@@ -711,8 +713,8 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         }
         else
         {
-            context_release(context);
-            return; /* Not doing any conversion */
+            /* Not doing any conversion */
+            goto end;
         }
     }
 
@@ -728,6 +730,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         context_release(context);
         ++This->draw_count;
         if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
+        if (This->draw_count > VB_RESETFULLCONVS) This->full_conversion_count = 0;
         return;
     }
 
@@ -753,8 +756,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
              * rarely
              */
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
-            context_release(context);
-            return;
+            goto end;
         }
         buffer_check_buffer_object_size(This);
     }
@@ -764,8 +766,24 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
          * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
          * decl changes and reset the decl change count after a specific number of them
          */
-        ++This->draw_count;
-        if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
+        if(This->dirty_start == 0 && This->dirty_end == This->resource.size)
+        {
+            ++This->full_conversion_count;
+            if(This->full_conversion_count > VB_MAXFULLCONVERSIONS)
+            {
+                FIXME("Too many full buffer conversions, stopping converting\n");
+                IWineD3DBuffer_UnLoad(iface);
+                This->flags &= ~WINED3D_BUFFER_CREATEBO;
+                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+                goto end;
+            }
+        }
+        else
+        {
+            ++This->draw_count;
+            if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
+            if (This->draw_count > VB_RESETFULLCONVS) This->full_conversion_count = 0;
+        }
     }
 
     if (decl_changed)
@@ -915,7 +933,10 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     }
 
     HeapFree(GetProcessHeap(), 0, data);
+
+end:
     context_release(context);
+    return;
 }
 
 static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
