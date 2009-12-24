@@ -206,7 +206,13 @@ static void test_GdipImageGetFrameDimensionsCount(void)
 
     stat = GdipImageGetFrameDimensionsList((GpImage*)bm, &dimension, 1);
     expect(Ok, stat);
-    expect_guid(&FrameDimensionPage, &dimension, __LINE__, TRUE);
+    expect_guid(&FrameDimensionPage, &dimension, __LINE__, FALSE);
+
+    stat = GdipImageGetFrameDimensionsList((GpImage*)bm, &dimension, 2);
+    expect(InvalidParameter, stat);
+
+    stat = GdipImageGetFrameDimensionsList((GpImage*)bm, &dimension, 0);
+    expect(InvalidParameter, stat);
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bm, &dimension, &count);
@@ -1246,7 +1252,7 @@ static void test_multiframegif(void)
 
     stat = GdipImageGetFrameDimensionsList((GpImage*)bmp, &dimension, 1);
     expect(Ok, stat);
-    expect_guid(&FrameDimensionTime, &dimension, __LINE__, TRUE);
+    expect_guid(&FrameDimensionTime, &dimension, __LINE__, FALSE);
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
@@ -1320,7 +1326,7 @@ static void test_multiframegif(void)
 
     stat = GdipImageGetFrameDimensionsList((GpImage*)bmp, &dimension, 1);
     expect(Ok, stat);
-    expect_guid(&FrameDimensionTime, &dimension, __LINE__, TRUE);
+    expect_guid(&FrameDimensionTime, &dimension, __LINE__, FALSE);
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);

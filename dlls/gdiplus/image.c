@@ -1708,6 +1708,19 @@ GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
     return InvalidParameter;
 }
 
+struct image_format_dimension
+{
+    const GUID *format;
+    const GUID *dimension;
+};
+
+struct image_format_dimension image_format_dimensions[] =
+{
+    {&ImageFormatGIF, &FrameDimensionTime},
+    {&ImageFormatIcon, &FrameDimensionResolution},
+    {NULL}
+};
+
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT* count)
 {
@@ -1738,13 +1751,27 @@ GpStatus WINGDIPAPI GdipImageGetFrameDimensionsCount(GpImage *image,
 GpStatus WINGDIPAPI GdipImageGetFrameDimensionsList(GpImage* image,
     GUID* dimensionIDs, UINT count)
 {
-    static int calls;
+    int i;
+    const GUID *result=NULL;
 
-    if(!image || !dimensionIDs)
+    TRACE("(%p,%p,%u)\n", image, dimensionIDs, count);
+
+    if(!image || !dimensionIDs || count != 1)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    for (i=0; image_format_dimensions[i].format; i++)
+    {
+        if (IsEqualGUID(&image->format, image_format_dimensions[i].format))
+        {
+            result = image_format_dimensions[i].dimension;
+            break;
+        }
+    }
+
+    if (!result)
+        result = &FrameDimensionPage;
+
+    memcpy(dimensionIDs, result, sizeof(GUID));
 
     return Ok;
 }
