@@ -1123,7 +1123,9 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 static DWORD wait_message( DWORD count, CONST HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
 {
-    return USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+    DWORD ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+    if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
+    return ret;
 }
 
 static HICON alloc_icon_handle( unsigned int size )

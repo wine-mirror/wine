@@ -2887,13 +2887,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 
     if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
     {
-        if (!(flags & PM_NOYIELD))
-        {
-            DWORD count;
-            ReleaseThunkLock(&count);
-            NtYieldExecution();
-            if (count) RestoreThunkLock(count);
-        }
+        if (!(flags & PM_NOYIELD)) wow_handlers.wait_message( 0, NULL, 0, 0, 0 );
         return FALSE;
     }
 
