@@ -1195,6 +1195,142 @@ static void test_colormatrix(void)
     GdipDisposeImageAttributes(imageattr);
 }
 
+/* 1x1 pixel gif, 2 frames; first frame is white, second is black */
+static const unsigned char gifanimation[72] = {
+0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00,0x01,0x00,0xa1,0x00,0x00,0x00,0x00,0x00,
+0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x21,0xf9,0x04,0x00,0x0a,0x00,0xff,
+0x00,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x4c,0x01,0x00,
+0x21,0xf9,0x04,0x01,0x0a,0x00,0x01,0x00,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,
+0x00,0x00,0x02,0x02,0x44,0x01,0x00,0x3b
+};
+
+static void test_multiframegif(void)
+{
+    LPSTREAM stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpBitmap *bmp;
+    ARGB color;
+    UINT count;
+    GUID dimension;
+
+    /* Test frame functions with an animated GIF */
+    hglob = GlobalAlloc (0, sizeof(gifanimation));
+    data = GlobalLock (hglob);
+    memcpy(data, gifanimation, sizeof(gifanimation));
+    GlobalUnlock(hglob);
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if(hres != S_OK) return;
+
+    stat = GdipCreateBitmapFromStream(stream, &bmp);
+    ok(stat == Ok, "Failed to create a Bitmap\n");
+    if(stat != Ok){
+        IStream_Release(stream);
+        return;
+    }
+
+    /* Bitmap starts at frame 0 */
+    color = 0xdeadbeef;
+    stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    expect(0xffffffff, color);
+
+    /* Check that we get correct metadata */
+    stat = GdipImageGetFrameDimensionsCount((GpImage*)bmp,&count);
+    expect(Ok, stat);
+    expect(1, count);
+
+    stat = GdipImageGetFrameDimensionsList((GpImage*)bmp, &dimension, 1);
+    expect(Ok, stat);
+    expect_guid(&FrameDimensionTime, &dimension, __LINE__, TRUE);
+
+    count = 12345;
+    stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(2, count);
+
+    /* SelectActiveFrame overwrites our current data */
+    stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 1);
+    expect(Ok, stat);
+
+    color = 0xdeadbeef;
+    GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff000000, color);
+
+    stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 0);
+    expect(Ok, stat);
+
+    color = 0xdeadbeef;
+    GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    expect(0xffffffff, color);
+
+    /* Write over the image data */
+    stat = GdipBitmapSetPixel(bmp, 0, 0, 0xff000000);
+    expect(Ok, stat);
+
+    /* Switching to the same frame does not overwrite our changes */
+    stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 0);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
+
+    /* But switching to another frame and back does */
+    stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 1);
+    expect(Ok, stat);
+
+    stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 0);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffffffff, color);
+
+    GdipDisposeImage((GpImage*)bmp);
+    IStream_Release(stream);
+
+    /* Test with a non-animated gif */
+    hglob = GlobalAlloc (0, sizeof(gifimage));
+    data = GlobalLock (hglob);
+    memcpy(data, gifimage, sizeof(gifimage));
+    GlobalUnlock(hglob);
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if(hres != S_OK) return;
+
+    stat = GdipCreateBitmapFromStream(stream, &bmp);
+    ok(stat == Ok, "Failed to create a Bitmap\n");
+    if(stat != Ok){
+        IStream_Release(stream);
+        return;
+    }
+
+    /* Check metadata */
+    stat = GdipImageGetFrameDimensionsCount((GpImage*)bmp,&count);
+    expect(Ok, stat);
+    expect(1, count);
+
+    stat = GdipImageGetFrameDimensionsList((GpImage*)bmp, &dimension, 1);
+    expect(Ok, stat);
+    expect_guid(&FrameDimensionTime, &dimension, __LINE__, TRUE);
+
+    count = 12345;
+    stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(1, count);
+
+    GdipDisposeImage((GpImage*)bmp);
+    IStream_Release(stream);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1224,6 +1360,7 @@ START_TEST(image)
     test_getsetpixel();
     test_palette();
     test_colormatrix();
+    test_multiframegif();
 
     GdiplusShutdown(gdiplusToken);
 }
