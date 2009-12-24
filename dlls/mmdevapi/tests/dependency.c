@@ -55,15 +55,18 @@ START_TEST(dependency)
     if (FAILED(hr))
     {
         skip("mmdevapi not available: 0x%08x\n", hr);
-        return;
+        goto cleanup;
     }
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
-    ok(hr == S_OK, "GetDefaultAudioEndpoint failed: 0x%08x\n", hr);
+    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08x\n", hr);
     if (hr != S_OK)
     {
-        skip("GetDefaultAudioEndpoint returns 0x%08x, skipping tests\n", hr);
-        return;
+        if (hr == E_NOTFOUND)
+            skip("No sound card available\n");
+        else
+            skip("GetDefaultAudioEndpoint returns 0x%08x\n", hr);
+        goto cleanup;
     }
 
     ok(!GetModuleHandle("dsound.dll"), "dsound.dll was already loaded!\n");
@@ -94,8 +97,14 @@ START_TEST(dependency)
                 ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s", dump_guid(&clsid));
         }
     }
+
+cleanup:
     if (bf)
         IUnknown_Release(bf);
+    if (dev)
+        IUnknown_Release(dev);
+    if (mme)
+        IUnknown_Release(mme);
 
-    IUnknown_Release(mme);
+    CoUninitialize();
 }
