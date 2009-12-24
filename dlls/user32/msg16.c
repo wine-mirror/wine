@@ -2569,6 +2569,20 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 
 
 /***********************************************************************
+ *           wait_message16
+ */
+static DWORD wait_message16( DWORD count, CONST HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
+{
+    DWORD lock, ret;
+
+    ReleaseThunkLock( &lock );
+    ret = wow_handlers32.wait_message( count, handles, timeout, mask, flags );
+    RestoreThunkLock( lock );
+    return ret;
+}
+
+
+/***********************************************************************
  *           create_window16
  */
 HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, BOOL unicode )
@@ -2619,6 +2633,7 @@ void register_wow_handlers(void)
         mdiclient_proc16,
         scrollbar_proc16,
         static_proc16,
+        wait_message16,
         create_window16,
         call_window_proc_Ato16,
         call_dialog_proc_Ato16,

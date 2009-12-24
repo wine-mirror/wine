@@ -2266,7 +2266,6 @@ static void wait_message_reply( UINT flags )
     for (;;)
     {
         unsigned int wake_bits = 0;
-        DWORD dwlc, res;
 
         SERVER_START_REQ( set_queue_mask )
         {
@@ -2286,12 +2285,7 @@ static void wait_message_reply( UINT flags )
             continue;
         }
 
-        /* now wait for it */
-
-        ReleaseThunkLock( &dwlc );
-        res = USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue,
-                                                         INFINITE, QS_SENDMESSAGE, 0 );
-        if (dwlc) RestoreThunkLock( dwlc );
+        wow_handlers.wait_message( 1, &server_queue, INFINITE, QS_SENDMESSAGE, 0 );
     }
 }
 
@@ -2955,11 +2949,7 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
 
     while (!peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask ))
     {
-        DWORD dwlc;
-
-        ReleaseThunkLock( &dwlc );
-        USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE, mask, 0 );
-        if (dwlc) RestoreThunkLock( dwlc );
+        wow_handlers.wait_message( 1, &server_queue, INFINITE, mask, 0 );
     }
 
     return (msg->message != WM_QUIT);
@@ -3269,7 +3259,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
                                           DWORD timeout, DWORD mask, DWORD flags )
 {
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-    DWORD i, ret, lock;
+    DWORD i;
 
     if (count > MAXIMUM_WAIT_OBJECTS-1)
     {
@@ -3291,10 +3281,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
     handles[count] = get_server_queue_handle();
 
-    ReleaseThunkLock( &lock );
-    ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
-    if (lock) RestoreThunkLock( lock );
-    return ret;
+    return wow_handlers.wait_message( count+1, handles, timeout, mask, flags );
 }
 
 

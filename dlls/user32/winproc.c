@@ -1121,6 +1121,11 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     return wow_handlers.static_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
+static DWORD wait_message( DWORD count, CONST HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
+{
+    return USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+}
+
 static HICON alloc_icon_handle( unsigned int size )
 {
     struct user_object *obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) + size );
@@ -1167,6 +1172,7 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
     orig->mdiclient_proc  = MDIClientWndProc_common;
     orig->scrollbar_proc  = ScrollBarWndProc_common;
     orig->static_proc     = StaticWndProc_common;
+    orig->wait_message    = wait_message;
     orig->create_window   = WIN_CreateWindowEx;
     orig->get_win_handle  = WIN_GetFullHandle;
     orig->alloc_winproc   = WINPROC_AllocProc;
@@ -1185,6 +1191,7 @@ struct wow_handlers16 wow_handlers =
     MDIClientWndProc_common,
     ScrollBarWndProc_common,
     StaticWndProc_common,
+    wait_message,
     WIN_CreateWindowEx,
     NULL,  /* call_window_proc */
     NULL,  /* call_dialog_proc */
