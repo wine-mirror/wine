@@ -252,15 +252,19 @@ GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat *format,
 GpStatus WINGDIPAPI GdipSetStringFormatMeasurableCharacterRanges(
     GpStringFormat *format, INT rangeCount, GDIPCONST CharacterRange *ranges)
 {
+    CharacterRange *new_ranges;
+
     if (!(format && ranges))
         return InvalidParameter;
 
     TRACE("%p, %d, %p\n", format, rangeCount, ranges);
 
-    format->character_ranges = GdipAlloc(rangeCount * sizeof(CharacterRange));
-    if (!format->character_ranges)
+    new_ranges = GdipAlloc(rangeCount * sizeof(CharacterRange));
+    if (!new_ranges)
         return OutOfMemory;
 
+    GdipFree(format->character_ranges);
+    format->character_ranges = new_ranges;
     memcpy(format->character_ranges, ranges, sizeof(CharacterRange) * rangeCount);
     format->range_count = rangeCount;
 
