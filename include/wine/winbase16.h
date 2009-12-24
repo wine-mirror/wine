@@ -320,6 +320,30 @@ typedef struct
 #define __AHINCR   (1 << __AHSHIFT)
 
 /* undocumented functions */
+
+typedef struct tagSYSLEVEL
+{
+    CRITICAL_SECTION crst;
+    INT              level;
+} SYSLEVEL;
+
+/* [GS]etProcessDword offsets */
+#define  GPD_APP_COMPAT_FLAGS    (-56)
+#define  GPD_LOAD_DONE_EVENT     (-52)
+#define  GPD_HINSTANCE16         (-48)
+#define  GPD_WINDOWS_VERSION     (-44)
+#define  GPD_THDB                (-40)
+#define  GPD_PDB                 (-36)
+#define  GPD_STARTF_SHELLDATA    (-32)
+#define  GPD_STARTF_HOTKEY       (-28)
+#define  GPD_STARTF_SHOWWINDOW   (-24)
+#define  GPD_STARTF_SIZE         (-20)
+#define  GPD_STARTF_POSITION     (-16)
+#define  GPD_STARTF_FLAGS        (-12)
+#define  GPD_PARENT              (- 8)
+#define  GPD_FLAGS               (- 4)
+#define  GPD_USERDATA            (  0)
+
 WORD        WINAPI AllocCStoDSAlias16(WORD);
 WORD        WINAPI AllocDStoCSAlias16(WORD);
 HGLOBAL16   WINAPI AllocResource16(HINSTANCE16,HRSRC16,DWORD);
@@ -327,6 +351,8 @@ WORD        WINAPI AllocSelector16(WORD);
 WORD        WINAPI AllocSelectorArray16(WORD);
 VOID        WINAPI DirectedYield16(HTASK16);
 HGLOBAL16   WINAPI DirectResAlloc16(HINSTANCE16,WORD,UINT16);
+void        WINAPI DisposeLZ32Handle(HANDLE);
+HANDLE      WINAPI DosFileHandleToWin32Handle(HFILE);
 HANDLE16    WINAPI FarGetOwner16(HGLOBAL16);
 VOID        WINAPI FarSetOwner16(HGLOBAL16,HANDLE16);
 FARPROC16   WINAPI FileCDR16(FARPROC16);
@@ -346,7 +372,9 @@ INT16       WINAPI GetInstanceData16(HINSTANCE16,WORD,INT16);
 BOOL16      WINAPI GetModuleName16(HINSTANCE16,LPSTR,INT16);
 INT16       WINAPI GetModuleUsage16(HINSTANCE16);
 UINT16      WINAPI GetNumTasks16(void);
+VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
 SEGPTR      WINAPI GetpWin16Lock16(void);
+DWORD       WINAPI GetProcessDword(DWORD,INT);
 DWORD       WINAPI GetSelectorLimit16(WORD);
 FARPROC16   WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc);
 HINSTANCE16 WINAPI GetTaskDS16(void);
@@ -375,10 +403,14 @@ WORD        WINAPI LocalHeapSize16(void);
 BOOL16      WINAPI LocalInit16(HANDLE16,WORD,WORD);
 FARPROC16   WINAPI LocalNotify16(FARPROC16);
 HTASK16     WINAPI LockCurrentTask16(BOOL16);
+DWORD       WINAPI MapLS(LPCVOID);
+LPVOID      WINAPI MapSL(DWORD);
 VOID        WINAPI OldYield16(void);
 VOID        WINAPI WIN32_OldYield16(void);
 VOID        WINAPI PostEvent16(HTASK16);
 WORD        WINAPI PrestoChangoSelector16(WORD,WORD);
+VOID        WINAPI ReleaseThunkLock(DWORD*);
+VOID        WINAPI RestoreThunkLock(DWORD);
 WORD        WINAPI SelectorAccessRights16(WORD,WORD,WORD);
 void        WINAPI SetFastQueue16(DWORD,HQUEUE16);
 VOID        WINAPI SetPriority16(HTASK16,INT16);
@@ -387,11 +419,18 @@ WORD        WINAPI SetSelectorLimit16(WORD,DWORD);
 HQUEUE16    WINAPI SetTaskQueue16(HTASK16,HQUEUE16);
 HQUEUE16    WINAPI SetThreadQueue16(DWORD,HQUEUE16);
 VOID        WINAPI SwitchStackTo16(WORD,WORD,WORD);
+VOID        WINAPI UnMapLS(DWORD);
 BOOL16      WINAPI WaitEvent16(HTASK16);
+HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
 VOID        WINAPI WriteOutProfiles16(void);
 VOID        WINAPI hmemcpy16(LPVOID,LPCVOID,LONG);
+VOID        WINAPI _CheckNotSysLevel(SYSLEVEL *lock);
+DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
+DWORD       WINAPI _ConfirmWin16Lock(void);
 VOID        WINAPI _CreateSysLevel(SYSLEVEL*,INT);
+VOID        WINAPI _EnterSysLevel(SYSLEVEL*);
 VOID        WINAPI _EnterWin16Lock(void);
+VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 VOID        WINAPI _LeaveWin16Lock(void);
 
 

@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "wine/windef16.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -31,6 +30,8 @@
 #include "ole2.h"
 #include "oleauto.h"
 #include "winerror.h"
+#include "wine/windef16.h"
+#include "wine/winbase16.h"
 
 #include "ole2disp.h"
 

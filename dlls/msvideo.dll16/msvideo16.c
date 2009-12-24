@@ -29,6 +29,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "wine/winbase16.h"
 #include "vfw16.h"
 #include "wine/debug.h"
 

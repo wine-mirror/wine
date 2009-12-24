@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/windef16.h"
+#include "wine/winbase16.h"
 #include "wownt32.h"
 #include "dde.h"
 #include "ddeml.h"

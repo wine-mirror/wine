@@ -2304,48 +2304,6 @@ WINBASEAPI UINT        WINAPI _lwrite(HFILE,LPCSTR,UINT);
 #define     ZeroMemory RtlZeroMemory
 #define     CopyMemory RtlCopyMemory
 
-/* undocumented functions */
-
-typedef struct tagSYSLEVEL
-{
-    CRITICAL_SECTION crst;
-    INT              level;
-} SYSLEVEL;
-
-/* [GS]etProcessDword offsets */
-#define  GPD_APP_COMPAT_FLAGS    (-56)
-#define  GPD_LOAD_DONE_EVENT     (-52)
-#define  GPD_HINSTANCE16         (-48)
-#define  GPD_WINDOWS_VERSION     (-44)
-#define  GPD_THDB                (-40)
-#define  GPD_PDB                 (-36)
-#define  GPD_STARTF_SHELLDATA    (-32)
-#define  GPD_STARTF_HOTKEY       (-28)
-#define  GPD_STARTF_SHOWWINDOW   (-24)
-#define  GPD_STARTF_SIZE         (-20)
-#define  GPD_STARTF_POSITION     (-16)
-#define  GPD_STARTF_FLAGS        (-12)
-#define  GPD_PARENT              (- 8)
-#define  GPD_FLAGS               (- 4)
-#define  GPD_USERDATA            (  0)
-
-WINBASEAPI void        WINAPI DisposeLZ32Handle(HANDLE);
-WINBASEAPI HANDLE      WINAPI DosFileHandleToWin32Handle(HFILE);
-WINBASEAPI DWORD       WINAPI GetProcessDword(DWORD,INT);
-WINBASEAPI VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
-WINBASEAPI DWORD       WINAPI MapLS(LPCVOID);
-WINBASEAPI LPVOID      WINAPI MapSL(DWORD);
-WINBASEAPI VOID        WINAPI ReleaseThunkLock(DWORD*);
-WINBASEAPI VOID        WINAPI RestoreThunkLock(DWORD);
-WINBASEAPI VOID        WINAPI UnMapLS(DWORD);
-WINBASEAPI HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
-WINBASEAPI VOID        WINAPI _CheckNotSysLevel(SYSLEVEL *lock);
-WINBASEAPI DWORD       WINAPI _ConfirmWin16Lock(void);
-WINBASEAPI DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
-WINBASEAPI VOID        WINAPI _EnterSysLevel(SYSLEVEL*);
-WINBASEAPI VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
-
-
 /* Wine internal functions */
 
 extern char * CDECL wine_get_unix_file_name( LPCWSTR dos );

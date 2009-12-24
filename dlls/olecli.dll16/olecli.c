@@ -27,6 +27,7 @@
 
 #include "windef.h"
 #include "wine/windef16.h"
+#include "wine/winbase16.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wownt32.h"
