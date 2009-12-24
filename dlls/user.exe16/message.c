@@ -584,6 +584,12 @@ static HANDLE16 convert_handle_32_to_16(UINT_PTR src, unsigned int flags)
     return dst;
 }
 
+static BOOL is_old_app( HWND hwnd )
+{
+    HINSTANCE inst = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    return inst && !((ULONG_PTR)inst >> 16) && (GetExpWinVer16(LOWORD(inst)) & 0xFF00) == 0x0300;
+}
+
 static int find_sub_menu( HMENU *hmenu, HMENU16 target )
 {
     int i, pos, count = GetMenuItemCount( *hmenu );
@@ -2382,6 +2388,39 @@ static LRESULT listbox_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     switch (msg)
     {
+    case WM_SIZE:
+        if (is_old_app( hwnd ))
+        {
+            DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
+            int width, height, remaining, item_height;
+            RECT rect;
+
+            /* give a margin for error to old 16 bits programs - if we need
+               less than the height of the nonclient area, round to the
+               *next* number of items */
+
+            if (!(style & LBS_NOINTEGRALHEIGHT) && !(style & LBS_OWNERDRAWVARIABLE))
+            {
+                GetClientRect( hwnd, &rect );
+                width  = rect.right - rect.left;
+                height = rect.bottom - rect.top;
+                item_height = wow_handlers32.listbox_proc( hwnd, LB_GETITEMHEIGHT, 0, 0, FALSE );
+                remaining = item_height ? (height % item_height) : 0;
+                if ((height > item_height) && remaining)
+                {
+                    GetWindowRect( hwnd, &rect );
+                    if ((item_height - remaining) <= rect.bottom - rect.top - height)
+                        remaining = remaining - item_height;
+                    TRACE( "[%p]: changing height %d -> %d\n", hwnd, height, height - remaining );
+                    SetWindowPos( hwnd, 0, 0, 0, rect.right - rect.left,
+                                  rect.bottom - rect.top - remaining,
+                                  SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
+                    return 0;
+                }
+            }
+        }
+        return wow_handlers32.listbox_proc( hwnd, msg, wParam, lParam, unicode );
+
     case LB_RESETCONTENT16:
     case LB_DELETESTRING16:
     case LB_GETITEMDATA16:
