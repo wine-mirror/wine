@@ -628,11 +628,11 @@ int main(int argc, char** argv)
 
 #ifdef __i386__
     be_cpu = &be_i386;
-#elif __powerpc__
+#elif defined(__powerpc__)
     be_cpu = &be_ppc;
-#elif __ALPHA__
+#elif defined(__ALPHA__)
     be_cpu = &be_alpha;
-#elif __x86_64__
+#elif defined(__x86_64__)
     be_cpu = &be_x86_64;
 #else
 # error CPU unknown
