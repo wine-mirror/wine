@@ -277,6 +277,59 @@ static void create_environment_registry_keys( void )
     RegCloseKey( env_key );
 }
 
+static void create_volatile_environment_registry_key(void)
+{
+    static const WCHAR VolatileEnvW[] = {'V','o','l','a','t','i','l','e',' ','E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR AppDataW[] = {'A','P','P','D','A','T','A',0};
+    static const WCHAR ClientNameW[] = {'C','L','I','E','N','T','N','A','M','E',0};
+    static const WCHAR HomeDriveW[] = {'H','O','M','E','D','R','I','V','E',0};
+    static const WCHAR HomePathW[] = {'H','O','M','E','P','A','T','H',0};
+    static const WCHAR HomeShareW[] = {'H','O','M','E','S','H','A','R','E',0};
+    static const WCHAR LocalAppDataW[] = {'L','O','C','A','L','A','P','P','D','A','T','A',0};
+    static const WCHAR LogonServerW[] = {'L','O','G','O','N','S','E','R','V','E','R',0};
+    static const WCHAR SessionNameW[] = {'S','E','S','S','I','O','N','N','A','M','E',0};
+    static const WCHAR ConsoleW[] = {'C','o','n','s','o','l','e',0};
+    static const WCHAR EmptyW[] = {0};
+    WCHAR path[MAX_PATH];
+    WCHAR computername[MAX_COMPUTERNAME_LENGTH + 1 + 2] = {'\\','\\'};
+    DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
+    HKEY hkey;
+    HRESULT hr;
+
+    if (RegCreateKeyExW( HKEY_CURRENT_USER, VolatileEnvW, 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        return;
+
+    hr = SHGetFolderPathW( NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
+    if (SUCCEEDED(hr))
+        RegSetValueExW( hkey, AppDataW, 0, REG_SZ, (const BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+
+    RegSetValueExW( hkey, ClientNameW, 0, REG_SZ, (const BYTE *)ConsoleW, sizeof(ConsoleW) );
+
+    /* Write the profile path's drive letter and directory components into
+     * HOMEDRIVE and HOMEPATH respectively. */
+    hr = SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, path );
+    if (SUCCEEDED(hr))
+    {
+        RegSetValueExW( hkey, HomePathW, 0, REG_SZ, (const BYTE *)&path[2], (strlenW(path) + 1 - 2) * sizeof(WCHAR) );
+        path[2] = '\0';
+        RegSetValueExW( hkey, HomeDriveW, 0, REG_SZ, (const BYTE *)path, 3 * sizeof(WCHAR) );
+    }
+
+    RegSetValueExW( hkey, HomeShareW, 0, REG_SZ, (const BYTE *)EmptyW, sizeof(EmptyW) );
+
+    hr = SHGetFolderPathW( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
+    if (SUCCEEDED(hr))
+        RegSetValueExW( hkey, LocalAppDataW, 0, REG_SZ, (const BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+
+    if (GetComputerNameW(&computername[2], &size))
+        RegSetValueExW( hkey, LogonServerW, 0, REG_SZ, (const BYTE *)computername, (size + 1 + 2) * sizeof(WCHAR) );
+
+    RegSetValueExW( hkey, SessionNameW, 0, REG_SZ, (const BYTE *)ConsoleW, sizeof(ConsoleW) );
+
+    RegCloseKey( hkey );
+}
+
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
  */
@@ -998,6 +1051,8 @@ int main( int argc, char *argv[] )
         start_services_process();
     }
     if (init || update) update_wineprefix( update );
+
+    create_volatile_environment_registry_key();
 
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
 
