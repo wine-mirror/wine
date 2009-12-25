@@ -1378,7 +1378,7 @@ done:
 
 #elif defined HAVE_GETDIRENTRIES
 
-#if _DARWIN_FEATURE_64_BIT_INODE
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
 
 /* Darwin doesn't provide a version of getdirentries with support for 64-bit
  * inodes.  When 64-bit inodes are enabled, the getdirentries symbol is mapped
@@ -1563,7 +1563,7 @@ done:
     return res;
 }
 
-#if _DARWIN_FEATURE_64_BIT_INODE
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
 #undef getdirentries
 #undef dirent
 #endif
