@@ -241,6 +241,7 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
         return (FIELD_OFFSET( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
     default:
         assert(0);
+        return 0;
     }
 }
 
