@@ -375,12 +375,18 @@ static void test_updown_pos(void)
     SetWindowTextA(g_edit, "50");
     updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT, g_edit);
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    /* test sequence only on 5.8x versions */
+    r = SendMessage(updown, UDM_GETPOS32, 0, 0);
+    if (r)
+    {
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    r = SendMessage(updown, UDM_SETPOS, 0, 50);
-    expect(50,r);
-    ok_sequence(sequences, EDIT_SEQ_INDEX, test_updown_pos_nochange_seq,
-                "test updown pos, no change", FALSE);
+        r = SendMessage(updown, UDM_SETPOS, 0, 50);
+        expect(50,r);
+
+        ok_sequence(sequences, EDIT_SEQ_INDEX, test_updown_pos_nochange_seq,
+                    "test updown pos, no change", FALSE);
+    }
 
     DestroyWindow(updown);
 }
