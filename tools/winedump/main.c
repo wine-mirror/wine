@@ -69,6 +69,7 @@ static void do_demangle (const char *arg)
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = DMGL;
     globals.do_code = 1;
+    globals.do_demangle = 1;
 }
 
 
