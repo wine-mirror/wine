@@ -4792,8 +4792,6 @@ static void test_default_body(IHTMLBodyElement *body)
     BSTR bstr;
     HRESULT hres;
     VARIANT v;
-    WCHAR sBodyText[] = {'#','F','F','0','0','0','0',0};
-    WCHAR sTextInvalid[] = {'I','n','v','a','l','i','d',0};
 
     bstr = (void*)0xdeadbeef;
     hres = IHTMLBodyElement_get_background(body, &bstr);
@@ -4814,10 +4812,9 @@ static void test_default_body(IHTMLBodyElement *body)
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
     ok(bstr == NULL, "bstr != NULL\n");
 
-
     /* get_text - Invalid Text */
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = SysAllocString(sTextInvalid);
+    V_BSTR(&v) = a2bstr("Invalid");
     hres = IHTMLBodyElement_put_text(body, v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     VariantClear(&v);
@@ -4826,12 +4823,12 @@ static void test_default_body(IHTMLBodyElement *body)
     hres = IHTMLBodyElement_get_text(body, &v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "#00a0d0"), "v != '#00a0d0'\n");
+    ok(!strcmp_wa(V_BSTR(&v), "#00a0d0"), "v = %s, expected '#00a0d0'\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     /* get_text - Valid Text */
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = SysAllocString(sBodyText);
+    V_BSTR(&v) = a2bstr("#FF0000");
     hres = IHTMLBodyElement_put_text(body, v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     VariantClear(&v);
@@ -4840,23 +4837,22 @@ static void test_default_body(IHTMLBodyElement *body)
     hres = IHTMLBodyElement_get_text(body, &v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "#ff0000"), "v != '#ff0000'\n");
+    ok(!strcmp_wa(V_BSTR(&v), "#ff0000"), "v = %s, expected '#ff0000'\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 }
 
 static void test_body_funs(IHTMLBodyElement *body)
 {
-    static WCHAR sRed[] = {'r','e','d',0};
-    VARIANT vbg;
-    VARIANT vDefaultbg;
+    VARIANT vbg, vDefaultbg;
     HRESULT hres;
 
     hres = IHTMLBodyElement_get_bgColor(body, &vDefaultbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
     ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
+    ok(!V_BSTR(&vDefaultbg), "V_BSTR(bgColor) = %s\n", wine_dbgstr_w(V_BSTR(&vDefaultbg)));
 
     V_VT(&vbg) = VT_BSTR;
-    V_BSTR(&vbg) = SysAllocString(sRed);
+    V_BSTR(&vbg) = a2bstr("red");
     hres = IHTMLBodyElement_put_bgColor(body, vbg);
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
     VariantClear(&vbg);
