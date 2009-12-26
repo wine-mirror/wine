@@ -802,7 +802,7 @@ REBAR_CalcHorzBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
 	  work.right += SEP_WIDTH;
 	  work.bottom += SEP_WIDTH;
 	  InvalidateRect(infoPtr->hwndSelf, &work, TRUE);
-	  InvalidateRect(lpBand->hwndChild, NULL, TRUE);
+	  if (lpBand->hwndChild) InvalidateRect(lpBand->hwndChild, NULL, TRUE);
       }
 
     }
@@ -923,7 +923,7 @@ REBAR_CalcVertBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
 	    work.bottom += SEP_WIDTH;
 	    work.right += SEP_WIDTH;
 	    InvalidateRect(infoPtr->hwndSelf, &work, TRUE);
-	    InvalidateRect(lpBand->hwndChild, NULL, TRUE);
+	    if (lpBand->hwndChild) InvalidateRect(lpBand->hwndChild, NULL, TRUE);
 	}
 
     }
