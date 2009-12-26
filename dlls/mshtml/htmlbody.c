@@ -448,22 +448,21 @@ static HRESULT WINAPI HTMLBodyElement_get_text(IHTMLBodyElement *iface, VARIANT 
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
     nsAString text;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&text, NULL);
-
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = NULL;
-
     nsres = nsIDOMHTMLBodyElement_GetText(This->nsbody, &text);
-    if(NS_SUCCEEDED(nsres))
-    {
-        const PRUnichar *sText;
-        nsAString_GetData(&text, &sText);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *color;
 
+        nsAString_GetData(&text, &color);
         V_VT(p) = VT_BSTR;
-        V_BSTR(p) = SysAllocString(sText);
+        hres = nscolor_to_str(color, &V_BSTR(p));
+    }else {
+        ERR("GetText failed: %08x\n", nsres);
+        hres = E_FAIL;
     }
 
     nsAString_Finish(&text);
