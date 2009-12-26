@@ -83,20 +83,25 @@ static const struct {
     {yellowW,   {'#','f','f','f','f','0','0',0}}
 };
 
-static BSTR nscolor_to_str(LPCWSTR color)
+static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 {
     int i;
 
-    if(!color || *color == '#')
-        return SysAllocString(color);
+    if(!color || *color == '#') {
+        *ret = SysAllocString(color);
+        return *ret ? S_OK : E_OUTOFMEMORY;
+    }
 
     for(i=0; i < sizeof(keyword_table)/sizeof(keyword_table[0]); i++) {
-        if(!strcmpiW(color, keyword_table[i].keyword))
-            return SysAllocString(keyword_table[i].hexstr);
+        if(!strcmpiW(color, keyword_table[i].keyword)) {
+            *ret = SysAllocString(keyword_table[i].hexstr);
+            return *ret ? S_OK : E_OUTOFMEMORY;
+        }
     }
 
     WARN("unknown color %s\n", debugstr_w(color));
-    return SysAllocString(color);
+    *ret = SysAllocString(color);
+    return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
 static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
@@ -348,23 +353,25 @@ static HRESULT WINAPI HTMLBodyElement_get_bgColor(IHTMLBodyElement *iface, VARIA
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
     nsAString strColor;
     nsresult nsres;
-    const PRUnichar *color;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&strColor, NULL);
     nsres = nsIDOMHTMLBodyElement_GetBgColor(This->nsbody, &strColor);
-    if(NS_FAILED(nsres))
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *color;
+
+        nsAString_GetData(&strColor, &color);
+        V_VT(p) = VT_BSTR;
+        hres = nscolor_to_str(color, &V_BSTR(p));
+    }else {
         ERR("SetBgColor failed: %08x\n", nsres);
-
-    nsAString_GetData(&strColor, &color);
-
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = nscolor_to_str(color);
+        hres = E_FAIL;
+    }
 
     nsAString_Finish(&strColor);
-
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT v)
