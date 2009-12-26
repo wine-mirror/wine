@@ -180,6 +180,7 @@ int wpp_parse( const char *input, FILE *output )
     else if (!(pp_status.file = wpp_callbacks->open(input, 1)))
     {
         ppy_error("Could not open %s\n", input);
+        pp_pop_define_state();
         return 2;
     }
 
