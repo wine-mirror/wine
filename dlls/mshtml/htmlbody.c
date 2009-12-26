@@ -83,15 +83,58 @@ static const struct {
     {yellowW,   0xffff00}
 };
 
+static int comp_value(const WCHAR *ptr, int dpc)
+{
+    int ret = 0;
+    WCHAR ch;
+
+    if(dpc > 2)
+        dpc = 2;
+
+    while(dpc--) {
+        if(!*ptr)
+            ret *= 16;
+        else if(isdigitW(ch = *ptr++))
+            ret = ret*16 + (ch-'0');
+        else if('a' <= ch && ch <= 'f')
+            ret = ret*16 + (ch-'a') + 10;
+        else if('A' <= ch && ch <= 'F')
+            ret = ret*16 + (ch-'A') + 10;
+        else
+            ret *= 16;
+    }
+
+    return ret;
+}
+
+/* Based on Gecko NS_LooseHexToRGB */
+static int loose_hex_to_rgb(const WCHAR *hex)
+{
+    int len, dpc;
+
+    len = strlenW(hex);
+    if(*hex == '#') {
+        hex++;
+        len--;
+    }
+    if(len <= 3)
+        return 0;
+
+    dpc = min(len/3 + (len%3 ? 1 : 0), 4);
+    return (comp_value(hex, dpc) << 16)
+        | (comp_value(hex+dpc, dpc) << 8)
+        | comp_value(hex+2*dpc, dpc);
+}
+
 static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 {
     int i, rgb = -1;
 
     static const WCHAR formatW[] = {'#','%','0','2','x','%','0','2','x','%','0','2','x',0};
 
-    if(!color || *color == '#') {
-        *ret = SysAllocString(color);
-        return *ret ? S_OK : E_OUTOFMEMORY;
+    if(!color || !*color) {
+        *ret = NULL;
+        return S_OK;
     }
 
     if(*color != '#') {
@@ -100,11 +143,8 @@ static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
                 rgb = keyword_table[i].rgb;
         }
     }
-    if(rgb == -1) {
-        WARN("unknown color %s\n", debugstr_w(color));
-        *ret = SysAllocString(color);
-        return *ret ? S_OK : E_OUTOFMEMORY;
-    }
+    if(rgb == -1)
+        rgb = loose_hex_to_rgb(color);
 
     *ret = SysAllocStringLen(NULL, 7);
     if(!*ret)
