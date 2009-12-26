@@ -63,45 +63,57 @@ static const WCHAR yellowW[] = {'y','e','l','l','o','w',0};
 
 static const struct {
     LPCWSTR keyword;
-    const WCHAR hexstr[8];
+    DWORD rgb;
 } keyword_table[] = {
-    {aquaW,     {'#','0','0','f','f','f','f',0}},
-    {blackW,    {'#','0','0','0','0','0','0',0}},
-    {blueW,     {'#','0','0','0','0','f','f',0}},
-    {fuchsiaW,  {'#','f','f','0','0','f','f',0}},
-    {grayW,     {'#','8','0','8','0','8','0',0}},
-    {greenW,    {'#','0','0','8','0','0','0',0}},
-    {limeW,     {'#','0','0','f','f','0','0',0}},
-    {maroonW,   {'#','8','0','0','0','0','0',0}},
-    {navyW,     {'#','0','0','0','0','8','0',0}},
-    {oliveW,    {'#','8','0','8','0','0','0',0}},
-    {purpleW,   {'#','8','0','0','0','8','0',0}},
-    {redW,      {'#','f','f','0','0','0','0',0}},
-    {silverW,   {'#','c','0','c','0','c','0',0}},
-    {tealW,     {'#','0','0','8','0','8','0',0}},
-    {whiteW,    {'#','f','f','f','f','f','f',0}},
-    {yellowW,   {'#','f','f','f','f','0','0',0}}
+    {aquaW,     0x00ffff},
+    {blackW,    0x000000},
+    {blueW,     0x0000ff},
+    {fuchsiaW,  0xff00ff},
+    {grayW,     0x808080},
+    {greenW,    0x008000},
+    {limeW,     0x00ff00},
+    {maroonW,   0x800000},
+    {navyW,     0x000080},
+    {oliveW,    0x808000},
+    {purpleW,   0x800080},
+    {redW,      0xff0000},
+    {silverW,   0xc0c0c0},
+    {tealW,     0x008080},
+    {whiteW,    0xffffff},
+    {yellowW,   0xffff00}
 };
 
 static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 {
-    int i;
+    int i, rgb = -1;
+
+    static const WCHAR formatW[] = {'#','%','0','2','x','%','0','2','x','%','0','2','x',0};
 
     if(!color || *color == '#') {
         *ret = SysAllocString(color);
         return *ret ? S_OK : E_OUTOFMEMORY;
     }
 
-    for(i=0; i < sizeof(keyword_table)/sizeof(keyword_table[0]); i++) {
-        if(!strcmpiW(color, keyword_table[i].keyword)) {
-            *ret = SysAllocString(keyword_table[i].hexstr);
-            return *ret ? S_OK : E_OUTOFMEMORY;
+    if(*color != '#') {
+        for(i=0; i < sizeof(keyword_table)/sizeof(keyword_table[0]); i++) {
+            if(!strcmpiW(color, keyword_table[i].keyword))
+                rgb = keyword_table[i].rgb;
         }
     }
+    if(rgb == -1) {
+        WARN("unknown color %s\n", debugstr_w(color));
+        *ret = SysAllocString(color);
+        return *ret ? S_OK : E_OUTOFMEMORY;
+    }
 
-    WARN("unknown color %s\n", debugstr_w(color));
-    *ret = SysAllocString(color);
-    return *ret ? S_OK : E_OUTOFMEMORY;
+    *ret = SysAllocStringLen(NULL, 7);
+    if(!*ret)
+        return E_OUTOFMEMORY;
+
+    sprintfW(*ret, formatW, rgb>>16, (rgb>>8)&0xff, rgb&0xff);
+
+    TRACE("%s -> %s\n", debugstr_w(color), debugstr_w(*ret));
+    return S_OK;
 }
 
 static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
