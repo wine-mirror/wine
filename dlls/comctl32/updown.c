@@ -309,7 +309,9 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
  */
 static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 {
-    WCHAR fmt[3] = { '%', 'd', '\0' };
+    static const WCHAR fmt_hex[] = { '0', 'x', '%', '0', '4', 'X', 0 };
+    static const WCHAR fmt_dec_oct[] = { '%', 'd', '\0' };
+    const WCHAR *fmt;
     WCHAR txt[20], txt_old[20] = { 0 };
     int len;
 
@@ -324,7 +326,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
     }
 
     /* Regular window, so set caption to the number */
-    if (infoPtr->Base == 16) fmt[1] = 'X';
+    fmt = (infoPtr->Base == 16) ? fmt_hex : fmt_dec_oct;
     len = wsprintfW(txt, fmt, infoPtr->CurVal);
 
 
