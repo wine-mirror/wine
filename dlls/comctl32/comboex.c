@@ -173,7 +173,7 @@ static void COMBOEX_DumpInput (COMBOBOXEXITEMW const *input)
 static inline CBE_ITEMDATA *get_item_data(const COMBOEX_INFO *infoPtr, INT index)
 {
     return (CBE_ITEMDATA *)SendMessageW (infoPtr->hwndCombo, CB_GETITEMDATA,
-		                         (WPARAM)index, 0);
+                                         index, 0);
 }
 
 static inline cmp_func_t get_cmp_func(COMBOEX_INFO const *infoPtr)
@@ -533,7 +533,7 @@ static INT COMBOEX_DeleteItem (const COMBOEX_INFO *infoPtr, INT_PTR index)
     if (!COMBOEX_FindItem(infoPtr, index)) return CB_ERR;
 
     /* doing this will result in WM_DELETEITEM being issued */
-    SendMessageW (infoPtr->hwndCombo, CB_DELETESTRING, (WPARAM)index, 0);
+    SendMessageW (infoPtr->hwndCombo, CB_DELETESTRING, index, 0);
 
     return infoPtr->nb_items;
 }
@@ -674,8 +674,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW const *ci
 
     if (TRACE_ON(comboex)) COMBOEX_DumpItem (item);
 
-    SendMessageW (infoPtr->hwndCombo, CB_INSERTSTRING,
-		  (WPARAM)cit->iItem, (LPARAM)item);
+    SendMessageW (infoPtr->hwndCombo, CB_INSERTSTRING, cit->iItem, (LPARAM)item);
 
     memset (&nmcit.ceItem, 0, sizeof(nmcit.ceItem));
     COMBOEX_CopyItem (item, &nmcit.ceItem);
@@ -1066,7 +1065,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     SendMessageW (infoPtr->hwndCombo, WM_SETFONT, (WPARAM)infoPtr->font, 0);
     if (infoPtr->hwndEdit) {
 	SendMessageW (infoPtr->hwndEdit, WM_SETFONT, (WPARAM)infoPtr->font, 0);
-	SendMessageW (infoPtr->hwndEdit, EM_SETMARGINS, (WPARAM)EC_USEFONTINFO, 0);
+       SendMessageW (infoPtr->hwndEdit, EM_SETMARGINS, EC_USEFONTINFO, 0);
     }
 
     COMBOEX_ReSize (infoPtr);
@@ -1849,8 +1848,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		oldItem = SendMessageW (infoPtr->hwndCombo,CB_GETCURSEL, 0, 0);
 		if (oldItem != -1) {
 		    /* if something is selected, then deselect it */
-		    SendMessageW (infoPtr->hwndCombo, CB_SETCURSEL,
-				  (WPARAM)-1, 0);
+                    SendMessageW (infoPtr->hwndCombo, CB_SETCURSEL, -1, 0);
 		}
 		InvalidateRect (infoPtr->hwndCombo, 0, 0);
 		SetFocus(infoPtr->hwndEdit);

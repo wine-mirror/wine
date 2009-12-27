@@ -2606,7 +2606,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		COLORREF oldBk = 0;
 
 		/* get item data */
-		btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, wParam, LB_GETITEMDATA, (WPARAM)lpdis->itemID, 0);
+               btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, wParam, LB_GETITEMDATA, lpdis->itemID, 0);
 		if (btnInfo == NULL)
 		{
 		    FIXME("btnInfo invalid!\n");
@@ -5142,7 +5142,7 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->dwStyle = dwStyle;
     GetClientRect(hwnd, &infoPtr->client_rect);
     infoPtr->bUnicode = infoPtr->hwndNotify && 
-        (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, (LPARAM)NF_REQUERY));
+        (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_REQUERY));
     infoPtr->hwndToolTip = NULL; /* if needed the tooltip control will be created after a WM_MOUSEMOVE */
 
     SystemParametersInfoW (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -5589,7 +5589,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         else
         {
             TRACE("button %d dragged out of toolbar\n", infoPtr->nButtonDrag);
-            TOOLBAR_DeleteButton(infoPtr, (WPARAM)infoPtr->nButtonDrag);
+            TOOLBAR_DeleteButton(infoPtr, infoPtr->nButtonDrag);
         }
 
         /* button under cursor changed so need to re-set hot item */

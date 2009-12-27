@@ -1764,7 +1764,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     /*
      * send the draw message
      */
-    SendMessageW( infoPtr->hwndNotify, WM_DRAWITEM, (WPARAM)id, (LPARAM)&dis );
+    SendMessageW( infoPtr->hwndNotify, WM_DRAWITEM, id, (LPARAM)&dis );
   }
   else
   {
@@ -3100,7 +3100,7 @@ static LRESULT TAB_Create (HWND hwnd, LPARAM lParam)
       nmttc.hwndToolTips = infoPtr->hwndToolTip;
 
       SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
-		    (WPARAM)GetWindowLongPtrW(hwnd, GWLP_ID), (LPARAM)&nmttc);
+                    GetWindowLongPtrW(hwnd, GWLP_ID), (LPARAM)&nmttc);
     }
   }
 

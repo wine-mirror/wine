@@ -1698,10 +1698,10 @@ TREEVIEW_GetImageList(const TREEVIEW_INFO *infoPtr, WPARAM wParam)
 
     switch (wParam)
     {
-    case (WPARAM)TVSIL_NORMAL:
+    case TVSIL_NORMAL:
 	return (LRESULT)infoPtr->himlNormal;
 
-    case (WPARAM)TVSIL_STATE:
+    case TVSIL_STATE:
 	return (LRESULT)infoPtr->himlState;
 
     default:
@@ -1755,7 +1755,7 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
 
     switch (wParam)
     {
-    case (WPARAM)TVSIL_NORMAL:
+    case TVSIL_NORMAL:
 	himlOld = infoPtr->himlNormal;
 	infoPtr->himlNormal = himlNew;
 
@@ -1770,7 +1770,7 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
 
 	break;
 
-    case (WPARAM)TVSIL_STATE:
+    case TVSIL_STATE:
 	himlOld = infoPtr->himlState;
 	infoPtr->himlState = himlNew;
 
@@ -3607,12 +3607,12 @@ TREEVIEW_Edit_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
 
     case WM_KEYDOWN:
-	if (wParam == (WPARAM)VK_ESCAPE)
+       if (wParam == VK_ESCAPE)
 	{
 	    bCancel = TRUE;
 	    break;
 	}
-	else if (wParam == (WPARAM)VK_RETURN)
+       else if (wParam == VK_RETURN)
 	{
 	    break;
 	}
