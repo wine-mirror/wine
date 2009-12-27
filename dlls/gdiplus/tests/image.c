@@ -889,6 +889,69 @@ static void test_createfromwmf(void)
     GdipDisposeImage(img);
 }
 
+static void test_resolution(void)
+{
+    GpStatus stat;
+    GpBitmap *bitmap;
+    REAL res=-1.0;
+    HDC screendc;
+    int screenxres, screenyres;
+
+    /* create Bitmap */
+    stat = GdipCreateBitmapFromScan0(1, 1, 32, PixelFormat24bppRGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    /* test invalid values */
+    stat = GdipGetImageHorizontalResolution(NULL, &res);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageVerticalResolution(NULL, &res);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)bitmap, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetResolution(NULL, 96.0, 96.0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipBitmapSetResolution(bitmap, 0.0, 0.0);
+    todo_wine expect(InvalidParameter, stat);
+
+    /* defaults to screen resolution */
+    screendc = GetDC(0);
+
+    screenxres = GetDeviceCaps(screendc, LOGPIXELSX);
+    screenyres = GetDeviceCaps(screendc, LOGPIXELSY);
+
+    ReleaseDC(0, screendc);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf((REAL)screenxres, res);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf((REAL)screenyres, res);
+
+    /* test changing the resolution */
+    stat = GdipBitmapSetResolution(bitmap, screenxres*2.0, screenyres*3.0);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(screenxres*2.0, res);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(screenyres*3.0, res);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+}
+
 static void test_createhbitmap(void)
 {
     GpStatus stat;
@@ -1465,6 +1528,7 @@ START_TEST(image)
     test_getrawformat();
     test_loadwmf();
     test_createfromwmf();
+    test_resolution();
     test_createhbitmap();
     test_getsetpixel();
     test_palette();
