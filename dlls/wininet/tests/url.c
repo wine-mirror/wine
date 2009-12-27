@@ -23,9 +23,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wininet.h"
 
 #include "wine/test.h"
@@ -123,6 +125,8 @@ static const crack_url_test_t crack_url_tests[] = {
 
 static void test_crack_url(const crack_url_test_t *test)
 {
+    WCHAR buf[INTERNET_MAX_URL_LENGTH];
+    URL_COMPONENTSW urlw;
     URL_COMPONENTSA url;
     BOOL b;
 
@@ -186,6 +190,79 @@ static void test_crack_url(const crack_url_test_t *test)
            test->url, url.lpszExtraInfo, test->url+test->extra_off);
     ok(url.dwExtraInfoLength == test->extra_len, "[%s] url.lpszExtraInfoLength = %d, expected %d\n",
        test->url, url.dwExtraInfoLength, test->extra_len);
+
+    memset(&urlw, 0, sizeof(URL_COMPONENTSW));
+    urlw.dwStructSize = sizeof(URL_COMPONENTSW);
+    urlw.dwSchemeLength = 1;
+    urlw.dwHostNameLength = 1;
+    urlw.dwUserNameLength = 1;
+    urlw.dwPasswordLength = 1;
+    urlw.dwUrlPathLength = 1;
+    urlw.dwExtraInfoLength = 1;
+
+    MultiByteToWideChar(CP_ACP, 0, test->url, -1, buf, sizeof(buf));
+    b = InternetCrackUrlW(buf, lstrlenW(buf), 0, &urlw);
+    if(!b && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("InternetCrackUrlW is not implemented\n");
+        return;
+    }
+    ok(b, "InternetCrackUrl failed with error %d\n", GetLastError());
+
+    if(test->scheme_off == -1)
+        ok(!urlw.lpszScheme, "[%s] urlw.lpszScheme = %p, expected NULL\n", test->url, urlw.lpszScheme);
+    else
+        ok(urlw.lpszScheme == buf+test->scheme_off, "[%s] urlw.lpszScheme = %p, expected %p\n",
+           test->url, urlw.lpszScheme, buf+test->scheme_off);
+    ok(urlw.dwSchemeLength == test->scheme_len, "[%s] urlw.lpszSchemeLength = %d, expected %d\n",
+       test->url, urlw.dwSchemeLength, test->scheme_len);
+
+    ok(urlw.nScheme == test->scheme, "[%s] urlw.nScheme = %d, expected %d\n", test->url, urlw.nScheme, test->scheme);
+
+    if(test->host_off == -1)
+        ok(!urlw.lpszHostName, "[%s] urlw.lpszHostName = %p, expected NULL\n", test->url, urlw.lpszHostName);
+    else
+        ok(urlw.lpszHostName == buf+test->host_off, "[%s] urlw.lpszHostName = %p, expected %p\n",
+           test->url, urlw.lpszHostName, test->url+test->host_off);
+    if(test->host_skip_broken != -1 && urlw.dwHostNameLength == test->host_skip_broken) {
+        win_skip("skipping broken dwHostNameLength result\n");
+        return;
+    }
+    ok(urlw.dwHostNameLength == test->host_len, "[%s] urlw.lpszHostNameLength = %d, expected %d\n",
+       test->url, urlw.dwHostNameLength, test->host_len);
+
+    ok(urlw.nPort == test->port, "[%s] nPort = %d, expected %d\n", test->url, urlw.nPort, test->port);
+
+    if(test->user_off == -1)
+        ok(!urlw.lpszUserName, "[%s] urlw.lpszUserName = %p\n", test->url, urlw.lpszUserName);
+    else
+        ok(urlw.lpszUserName == buf+test->user_off, "[%s] urlw.lpszUserName = %p, expected %p\n",
+           test->url, urlw.lpszUserName, buf+test->user_off);
+    ok(urlw.dwUserNameLength == test->user_len, "[%s] urlw.lpszUserNameLength = %d, expected %d\n",
+       test->url, urlw.dwUserNameLength, test->user_len);
+
+    if(test->pass_off == -1)
+        ok(!urlw.lpszPassword, "[%s] urlw.lpszPassword = %p\n", test->url, urlw.lpszPassword);
+    else
+        ok(urlw.lpszPassword == buf+test->pass_off, "[%s] urlw.lpszPassword = %p, expected %p\n",
+           test->url, urlw.lpszPassword, buf+test->pass_off);
+    ok(urlw.dwPasswordLength == test->pass_len, "[%s] urlw.lpszPasswordLength = %d, expected %d\n",
+       test->url, urlw.dwPasswordLength, test->pass_len);
+
+    if(test->path_off == -1)
+        ok(!urlw.lpszUrlPath, "[%s] urlw.lpszPath = %p, expected NULL\n", test->url, urlw.lpszUrlPath);
+    else
+        ok(urlw.lpszUrlPath == buf+test->path_off, "[%s] urlw.lpszPath = %p, expected %p\n",
+           test->url, urlw.lpszUrlPath, buf+test->path_off);
+    ok(urlw.dwUrlPathLength == test->path_len, "[%s] urlw.lpszUrlPathLength = %d, expected %d\n",
+       test->url, urlw.dwUrlPathLength, test->path_len);
+
+    if(test->extra_off == -1)
+        ok(!urlw.lpszExtraInfo, "[%s] url.lpszExtraInfo = %p, expected NULL\n", test->url, urlw.lpszExtraInfo);
+    else
+        ok(urlw.lpszExtraInfo == buf+test->extra_off, "[%s] urlw.lpszExtraInfo = %p, expected %p\n",
+           test->url, urlw.lpszExtraInfo, buf+test->extra_off);
+    ok(urlw.dwExtraInfoLength == test->extra_len, "[%s] urlw.lpszExtraInfoLength = %d, expected %d\n",
+       test->url, urlw.dwExtraInfoLength, test->extra_len);
 }
 
 static void InternetCrackUrl_test(void)
