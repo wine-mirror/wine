@@ -804,6 +804,55 @@ static void test_getrawformat(void)
     test_bufferrawformat((void*)wmfimage, sizeof(wmfimage), &ImageFormatWMF, __LINE__, FALSE);
 }
 
+static void test_loadwmf(void)
+{
+    LPSTREAM stream;
+    HGLOBAL  hglob;
+    LPBYTE   data;
+    HRESULT  hres;
+    GpStatus stat;
+    GpImage *img;
+    GpRectF bounds;
+    GpUnit unit;
+    REAL res = 12345.0;
+
+    hglob = GlobalAlloc (0, sizeof(wmfimage));
+    data = GlobalLock (hglob);
+    memcpy(data, wmfimage, sizeof(wmfimage));
+    GlobalUnlock(hglob); data = NULL;
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if(hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    ok(stat == Ok, "Failed to create a Bitmap\n");
+    if(stat != Ok){
+        IStream_Release(stream);
+        return;
+    }
+
+    IStream_Release(stream);
+
+    stat = GdipGetImageBounds(img, &bounds, &unit);
+    expect(Ok, stat);
+    todo_wine expect(UnitPixel, unit);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    todo_wine expectf(320.0, bounds.Width);
+    todo_wine expectf(320.0, bounds.Height);
+
+    stat = GdipGetImageHorizontalResolution(img, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(1440.0, res);
+
+    stat = GdipGetImageVerticalResolution(img, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(1440.0, res);
+
+    GdipDisposeImage(img);
+}
+
 static void test_createhbitmap(void)
 {
     GpStatus stat;
@@ -1378,6 +1427,7 @@ START_TEST(image)
     test_testcontrol();
     test_fromhicon();
     test_getrawformat();
+    test_loadwmf();
     test_createhbitmap();
     test_getsetpixel();
     test_palette();
