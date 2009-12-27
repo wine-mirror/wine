@@ -520,12 +520,12 @@ static void test_get_set_bkcolor(void)
     ok(crColor == -1, "Default background color reported as 0x%.8x\n", crColor);
 
     /* Test for black background */
-    SendMessage( hTree, TVM_SETBKCOLOR, 0, (LPARAM)RGB(0,0,0) );
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, RGB(0,0,0) );
     crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
     ok(crColor == RGB(0,0,0), "Black background color reported as 0x%.8x\n", crColor);
 
     /* Test for white background */
-    SendMessage( hTree, TVM_SETBKCOLOR, 0, (LPARAM)RGB(255,255,255) );
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, RGB(255,255,255) );
     crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
     ok(crColor == RGB(255,255,255), "White background color reported as 0x%.8x\n", crColor);
 
@@ -718,12 +718,12 @@ static void test_get_set_textcolor(void)
     ok(crColor == -1, "Default text color reported as 0x%.8x\n", crColor);
 
     /* Test for black text */
-    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, (LPARAM)RGB(0,0,0) );
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, RGB(0,0,0) );
     crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
     ok(crColor == RGB(0,0,0), "Black text color reported as 0x%.8x\n", crColor);
 
     /* Test for white text */
-    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, (LPARAM)RGB(255,255,255) );
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, RGB(255,255,255) );
     crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
     ok(crColor == RGB(255,255,255), "White text color reported as 0x%.8x\n", crColor);
 
@@ -785,7 +785,7 @@ static void test_get_set_unicodeformat(void)
     ok(bNewSetting == 0, "ANSI setting did not work.\n");
 
     /* Revert to original setting */
-    SendMessage( hTree, TVM_SETUNICODEFORMAT, (LPARAM)bPreviousSetting, 0 );
+    SendMessage( hTree, TVM_SETUNICODEFORMAT, bPreviousSetting, 0 );
 
     ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, test_get_set_unicodeformat_seq,
         "test get set unicode format", FALSE);

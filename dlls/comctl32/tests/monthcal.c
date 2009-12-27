@@ -857,7 +857,7 @@ static void test_monthcal_firstDay(void)
         /* checking for the values that actually will be stored as */
         /* current first day when we set a new value */
         for (i = -5; i < 12; i++){
-            res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) i);
+            res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, i);
             expect(prev, res);
             res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
             prev = res;

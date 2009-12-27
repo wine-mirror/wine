@@ -54,7 +54,7 @@ static LONG addItem(HWND cbex, int idx, LPTSTR text) {
     cbexItem.iItem = idx;
     cbexItem.pszText    = text;
     cbexItem.cchTextMax = 0;
-    return (LONG)SendMessage(cbex, CBEM_INSERTITEM, 0,(LPARAM)&cbexItem);
+    return SendMessage(cbex, CBEM_INSERTITEM, 0, (LPARAM)&cbexItem);
 }
 
 static LONG setItem(HWND cbex, int idx, LPTSTR text) {
@@ -64,11 +64,11 @@ static LONG setItem(HWND cbex, int idx, LPTSTR text) {
     cbexItem.iItem = idx;
     cbexItem.pszText    = text;
     cbexItem.cchTextMax = 0;
-    return (LONG)SendMessage(cbex, CBEM_SETITEM, 0,(LPARAM)&cbexItem);
+    return SendMessage(cbex, CBEM_SETITEM, 0, (LPARAM)&cbexItem);
 }
 
 static LONG delItem(HWND cbex, int idx) {
-    return (LONG)SendMessage(cbex, CBEM_DELETEITEM, (LPARAM)idx, 0);
+    return SendMessage(cbex, CBEM_DELETEITEM, idx, 0);
 }
 
 static LONG getItem(HWND cbex, int idx, COMBOBOXEXITEM *cbItem) {
@@ -77,7 +77,7 @@ static LONG getItem(HWND cbex, int idx, COMBOBOXEXITEM *cbItem) {
     cbItem->pszText      = textBuffer;
     cbItem->iItem        = idx;
     cbItem->cchTextMax   = 100;
-    return (LONG)SendMessage(cbex, CBEM_GETITEM, 0, (LPARAM)cbItem);
+    return SendMessage(cbex, CBEM_GETITEM, 0, (LPARAM)cbItem);
 }
 
 static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

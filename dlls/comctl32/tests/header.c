@@ -244,7 +244,7 @@ static LONG addItem(HWND hdex, int idx, LPSTR text)
     hdItem.cxy        = 100;
     hdItem.pszText    = text;
     hdItem.cchTextMax = 0;
-    return (LONG)SendMessage(hdex, HDM_INSERTITEMA, (WPARAM)idx, (LPARAM)&hdItem);
+    return SendMessage(hdex, HDM_INSERTITEMA, idx, (LPARAM)&hdItem);
 }
 
 static LONG setItem(HWND hdex, int idx, LPSTR text, BOOL fCheckNotifies)
@@ -259,7 +259,7 @@ static LONG setItem(HWND hdex, int idx, LPSTR text, BOOL fCheckNotifies)
         expect_notify(HDN_ITEMCHANGINGA, FALSE, &hdexItem);
         expect_notify(HDN_ITEMCHANGEDA, FALSE, &hdexItem);
     }
-    ret = (LONG)SendMessage(hdex, HDM_SETITEMA, (WPARAM)idx, (LPARAM)&hdexItem);
+    ret = SendMessage(hdex, HDM_SETITEMA, idx, (LPARAM)&hdexItem);
     if (fCheckNotifies)
         ok(notifies_received(), "setItem(): not all expected notifies were received\n");
     return ret;
@@ -279,19 +279,19 @@ static LONG setItemUnicodeNotify(HWND hdex, int idx, LPSTR text, LPWSTR wText)
     
     expect_notify(HDN_ITEMCHANGINGW, TRUE, (HDITEMA*)&hdexNotify);
     expect_notify(HDN_ITEMCHANGEDW, TRUE, (HDITEMA*)&hdexNotify);
-    ret = (LONG)SendMessage(hdex, HDM_SETITEMA, (WPARAM)idx, (LPARAM)&hdexItem);
+    ret = SendMessage(hdex, HDM_SETITEMA, idx, (LPARAM)&hdexItem);
     ok(notifies_received(), "setItemUnicodeNotify(): not all expected notifies were received\n");
     return ret;
 }
 
 static LONG delItem(HWND hdex, int idx)
 {
-    return (LONG)SendMessage(hdex, HDM_DELETEITEM, (WPARAM)idx, 0);
+    return SendMessage(hdex, HDM_DELETEITEM, idx, 0);
 }
 
 static LONG getItemCount(HWND hdex)
 {
-    return (LONG)SendMessage(hdex, HDM_GETITEMCOUNT, 0, 0);
+    return SendMessage(hdex, HDM_GETITEMCOUNT, 0, 0);
 }
 
 static LONG getItem(HWND hdex, int idx, LPSTR textBuffer)
@@ -300,7 +300,7 @@ static LONG getItem(HWND hdex, int idx, LPSTR textBuffer)
     hdItem.mask         = HDI_TEXT;
     hdItem.pszText      = textBuffer;
     hdItem.cchTextMax   = MAX_CHARS;
-    return (LONG)SendMessage(hdex, HDM_GETITEMA, (WPARAM)idx, (LPARAM)&hdItem);
+    return SendMessage(hdex, HDM_GETITEMA, idx, (LPARAM)&hdItem);
 }
 
 static void addReadDelItem(HWND hdex, HDITEMA *phdiCreate, int maskRead, HDITEMA *phdiRead)
@@ -748,10 +748,10 @@ static void test_header_control (void)
         TEST_GET_ITEM(i, 4);
         TEST_GET_ITEMCOUNT(6);
     }
-    
-    SendMessageA(hWndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, 0);
+
+    SendMessageA(hWndHeader, HDM_SETUNICODEFORMAT, TRUE, 0);
     setItemUnicodeNotify(hWndHeader, 3, pszUniTestA, pszUniTestW);
-    SendMessageA(hWndHeader, WM_NOTIFYFORMAT, (WPARAM)hHeaderParentWnd, (LPARAM)NF_REQUERY);
+    SendMessageA(hWndHeader, WM_NOTIFYFORMAT, (WPARAM)hHeaderParentWnd, NF_REQUERY);
     setItem(hWndHeader, 3, str_items[4], TRUE);
     
     dont_expect_notify(HDN_GETDISPINFOA);
