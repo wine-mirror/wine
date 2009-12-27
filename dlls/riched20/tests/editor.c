@@ -293,8 +293,7 @@ static void test_EM_FINDTEXT(void)
   /* Setting a format on an arbitrary range should have no effect in search
      results. This tests correct offset reporting across runs. */
   cf2.cbSize = sizeof(CHARFORMAT2);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
-             (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
   cf2.dwMask = CFM_ITALIC | cf2.dwMask;
   cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
   SendMessage(hwndRichEdit, EM_SETSEL, 6, 20);
@@ -1240,31 +1239,30 @@ static void test_TM_PLAINTEXT(void)
   cr.cpMax = 20;
   SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
   cf2.cbSize = sizeof(CHARFORMAT2);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
-	      (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
 
   cf2.dwMask = CFM_BOLD | cf2.dwMask;
   cf2.dwEffects = CFE_BOLD ^ cf2.dwEffects;
 
-  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
   ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
 
-  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_WORD | SCF_SELECTION, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_WORD | SCF_SELECTION, (LPARAM)&cf2);
   ok(rc == 0, "EM_SETCHARFORMAT returned %d instead of 0\n", rc);
 
-  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM)&cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
   /*Get the formatting of those characters*/
 
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
 
   /*Get the formatting of some other characters*/
   cf2test.cbSize = sizeof(CHARFORMAT2);
   cr.cpMin = 21;
   cr.cpMax = 30;
   SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2test);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2test);
 
   /*Test that they are the same as plain text allows only one formatting*/
 
@@ -1286,14 +1284,14 @@ static void test_TM_PLAINTEXT(void)
   /*Swap back to rich text*/
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
-  SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_RICHTEXT, 0);
+  SendMessage(hwndRichEdit, EM_SETTEXTMODE, TM_RICHTEXT, 0);
 
   /*Set the default formatting to bold italics*/
 
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT, (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
   cf2.dwMask |= CFM_ITALIC;
   cf2.dwEffects ^= CFE_ITALIC;
-  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
   /*Set the text in the control to "wine", which will be bold and italicized*/
@@ -1310,14 +1308,14 @@ static void test_TM_PLAINTEXT(void)
   cr.cpMin = 1;
   cr.cpMax = 3;
   SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
 
   /*Select the second "wine" string and retrieve its formatting*/
 
   cr.cpMin = 5;
   cr.cpMax = 7;
   SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2test);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2test);
 
   /*Compare the two formattings. They should be the same.*/
 
@@ -3373,8 +3371,7 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessage(hwndRichEdit, EM_STREAMOUT,
-              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
   r = strlen(buf);
   ok(r == 12, "streamed text length is %d, expecting 12\n", r);
   ok(strcmp(buf, TestItem1) == 0,
@@ -3386,8 +3383,7 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessage(hwndRichEdit, EM_STREAMOUT,
-              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
   r = strlen(buf);
   /* Here again, \r gets converted to \r\n, like WM_GETTEXT */
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
@@ -3399,8 +3395,7 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessage(hwndRichEdit, EM_STREAMOUT,
-              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
   r = strlen(buf);
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
   ok(strcmp(buf, TestItem3) == 0,
@@ -3429,8 +3424,7 @@ static void test_EM_STREAMOUT_FONTTBL(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessage(hwndRichEdit, EM_STREAMOUT,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
 
   /* scans for \fonttbl, error if not found */
   fontTbl = strstr(buf, "\\fonttbl");
@@ -4254,12 +4248,11 @@ static void test_EM_GETMODIFY(void)
   /* set char format */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
   cf2.cbSize = sizeof(CHARFORMAT2);
-  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
-             (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
   cf2.dwMask = CFM_ITALIC | cf2.dwMask;
   cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
-  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
-  result = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2);
+  result = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2);
   ok(result == 1, "EM_SETCHARFORMAT returned %ld instead of 1\n", result);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
@@ -4282,8 +4275,7 @@ static void test_EM_GETMODIFY(void)
   es.dwCookie = (DWORD_PTR)&streamText;
   es.dwError = 0;
   es.pfnCallback = test_EM_GETMODIFY_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN, 
-              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero for EM_STREAM\n");
@@ -5022,8 +5014,7 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText0;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5037,8 +5028,7 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText0a;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5052,8 +5042,7 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText0b;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 14,
@@ -5066,8 +5055,7 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText1;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5079,8 +5067,7 @@ static void test_EM_STREAMIN(void)
 
   es.dwCookie = (DWORD_PTR)&streamText2;
   es.dwError = 0;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 0,
@@ -5091,8 +5078,7 @@ static void test_EM_STREAMIN(void)
 
   es.dwCookie = (DWORD_PTR)&streamText3;
   es.dwError = 0;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 0,
@@ -5104,8 +5090,7 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&cookieForStream4;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback2;
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == length4,
@@ -5143,7 +5128,7 @@ static void test_EM_StreamIn_Undo(void)
   SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
   SendMessage(hwndRichEdit, EM_SETSEL,0,0);
-  SendMessage(hwndRichEdit, EM_STREAMIN, (WPARAM)SF_TEXT, (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   result = strcmp (buffer,"test");
   ok (result  == 0,
@@ -5158,8 +5143,7 @@ static void test_EM_StreamIn_Undo(void)
   SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
   SendMessage(hwndRichEdit, EM_SETSEL,0,0);
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-	      (WPARAM)(SF_TEXT|SFF_SELECTION), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT|SFF_SELECTION, (LPARAM)&es);
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   result = strcmp (buffer,"testSome text");
   ok (result  == 0,
@@ -5175,8 +5159,7 @@ static void test_EM_StreamIn_Undo(void)
   SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
   SendMessage(hwndRichEdit, EM_SETSEL,4,5);
-  SendMessage(hwndRichEdit, EM_STREAMIN,
-	      (WPARAM)(SF_TEXT|SFF_SELECTION), (LPARAM)&es);
+  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT|SFF_SELECTION, (LPARAM)&es);
   SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   result = strcmp (buffer,"Sometesttext");
   ok (result  == 0,
@@ -5284,13 +5267,13 @@ static void test_unicode_conversions(void)
     expect_empty(hwnd, WM_GETTEXT);
     expect_empty(hwnd, EM_GETTEXTEX);
 
-    ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textW[0], 0);
+    ret = SendMessageA(hwnd, WM_CHAR, textW[0], 0);
     ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
     expect_textA(hwnd, WM_GETTEXT, "t");
     expect_textA(hwnd, EM_GETTEXTEX, "t");
     expect_textW(hwnd, EM_GETTEXTEX, tW);
 
-    ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textA[1], 0);
+    ret = SendMessageA(hwnd, WM_CHAR, textA[1], 0);
     ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
     expect_textA(hwnd, WM_GETTEXT, "te");
     expect_textA(hwnd, EM_GETTEXTEX, "te");
@@ -5590,7 +5573,7 @@ static void test_eventMask(void)
     ok(eventMaskEditHwnd != 0, "Failed to create edit window\n");
 
     eventMask = ENM_CHANGE | ENM_UPDATE;
-    ret = SendMessage(eventMaskEditHwnd, EM_SETEVENTMASK, 0, (LPARAM) eventMask);
+    ret = SendMessage(eventMaskEditHwnd, EM_SETEVENTMASK, 0, eventMask);
     ok(ret == ENM_NONE, "wrong event mask\n");
     ret = SendMessage(eventMaskEditHwnd, EM_GETEVENTMASK, 0, 0);
     ok(ret == eventMask, "failed to set event mask\n");
@@ -5689,8 +5672,7 @@ static void test_WM_NOTIFY(void)
        ME_CommitUndo, which should check whether message should be sent */
     received_WM_NOTIFY = 0;
     cf2.cbSize = sizeof(CHARFORMAT2);
-    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
-             (LPARAM) &cf2);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
     cf2.dwMask = CFM_ITALIC | cf2.dwMask;
     cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
     SendMessage(hwndRichedit_WM_NOTIFY, EM_SETCHARFORMAT, 0, (LPARAM) &cf2);
@@ -5833,7 +5815,7 @@ static void test_undo_coalescing(void)
     SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
     result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"abcd");
     ok(result == TRUE, "Failed to set the text.\n");
-    SendMessage(hwnd, EM_SETSEL, (WPARAM)1, (LPARAM)1);
+    SendMessage(hwnd, EM_SETSEL, 1, 1);
     SendMessage(hwnd, WM_KEYDOWN, VK_DELETE, 1);
     SendMessage(hwnd, WM_KEYUP, VK_DELETE, 1);
     SendMessage(hwnd, WM_KEYDOWN, VK_DELETE, 1);
@@ -6592,7 +6574,7 @@ static void test_zoom(void)
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Test how much the mouse wheel can zoom in and out. */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)490, (LPARAM)100);
+    ret = SendMessage(hwnd, EM_SETZOOM, 490, 100);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     hold_key(VK_CONTROL);
@@ -6606,7 +6588,7 @@ static void test_zoom(void)
     ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)491, (LPARAM)100);
+    ret = SendMessage(hwnd, EM_SETZOOM, 491, 100);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     hold_key(VK_CONTROL);
@@ -6620,7 +6602,7 @@ static void test_zoom(void)
     ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)20, (LPARAM)100);
+    ret = SendMessage(hwnd, EM_SETZOOM, 20, 100);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     hold_key(VK_CONTROL);
@@ -6634,7 +6616,7 @@ static void test_zoom(void)
     ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)19, (LPARAM)100);
+    ret = SendMessage(hwnd, EM_SETZOOM, 19, 100);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     hold_key(VK_CONTROL);
@@ -6649,7 +6631,7 @@ static void test_zoom(void)
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Test how WM_SCROLLWHEEL treats our custom denominator. */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)50, (LPARAM)13);
+    ret = SendMessage(hwnd, EM_SETZOOM, 50, 13);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     hold_key(VK_CONTROL);
@@ -6664,13 +6646,13 @@ static void test_zoom(void)
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Test bounds checking on EM_SETZOOM */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)2, (LPARAM)127);
+    ret = SendMessage(hwnd, EM_SETZOOM, 2, 127);
     ok(ret == TRUE, "EM_SETZOOM rejected valid values (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)127, (LPARAM)2);
+    ret = SendMessage(hwnd, EM_SETZOOM, 127, 2);
     ok(ret == TRUE, "EM_SETZOOM rejected valid values (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)2, (LPARAM)128);
+    ret = SendMessage(hwnd, EM_SETZOOM, 2, 128);
     ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
@@ -6678,15 +6660,15 @@ static void test_zoom(void)
     ok(denominator == 2, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)128, (LPARAM)2);
+    ret = SendMessage(hwnd, EM_SETZOOM, 128, 2);
     ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     /* See if negative numbers are accepted. */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)-100, (LPARAM)-100);
+    ret = SendMessage(hwnd, EM_SETZOOM, -100, -100);
     ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     /* See if negative numbers are accepted. */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)0, (LPARAM)100);
+    ret = SendMessage(hwnd, EM_SETZOOM, 0, 100);
     ok(ret == FALSE, "EM_SETZOOM failed (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
@@ -6695,7 +6677,7 @@ static void test_zoom(void)
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Reset the zoom value */
-    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)0, (LPARAM)0);
+    ret = SendMessage(hwnd, EM_SETZOOM, 0, 0);
     ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
 
     DestroyWindow(hwnd);

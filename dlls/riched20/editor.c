@@ -2161,7 +2161,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
                 HWND hwDefCtrl = GetDlgItem(editor->hwndParent, LOWORD(dw));
                 if (hwDefCtrl)
                 {
-                    SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, (LPARAM)TRUE);
+                    SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, TRUE);
                     PostMessageW(hwDefCtrl, WM_KEYDOWN, VK_RETURN, 0);
                 }
             }
