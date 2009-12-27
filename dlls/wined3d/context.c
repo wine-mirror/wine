@@ -1624,16 +1624,16 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  * Params:
  *  This: Device to activate the context for
  *  context: Context to setup
- *  width: render target width
- *  height: render target height
  *
  *****************************************************************************/
 /* Context activation is done by the caller. */
-static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *context, UINT width, UINT height)
+static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 {
     int i;
     const struct StateEntry *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    UINT width = ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Width;
+    UINT height = ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Height;
     DWORD sampler;
 
     TRACE("Setting up context %p for blitting\n", context);
@@ -2205,9 +2205,7 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
             break;
 
         case CTXUSAGE_BLIT:
-            SetupForBlit(device, context,
-                    ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Width,
-                    ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Height);
+            SetupForBlit(device, context);
             break;
 
         default:
