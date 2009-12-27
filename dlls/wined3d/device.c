@@ -520,23 +520,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     TRACE("Created buffer %p.\n", object);
     *ppVertexBuffer = (IWineD3DBuffer *)object;
 
-    /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
-     * drawStridedFast (half-life 2).
-     *
-     * Basically converting the vertices in the buffer is quite expensive, and observations
-     * show that drawStridedSlow is faster than converting + uploading + drawStridedFast.
-     * Therefore do not create a VBO for WINED3DUSAGE_DYNAMIC buffers.
-     */
-    if (!This->adapter->gl_info.supported[ARB_VERTEX_BUFFER_OBJECT])
-    {
-        TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");
-    } else if(Pool == WINED3DPOOL_SYSTEMMEM) {
-        TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
-    } else if(Usage & WINED3DUSAGE_DYNAMIC) {
-        TRACE("Not creating a vbo because the buffer has dynamic usage\n");
-    } else {
-        object->flags |= WINED3D_BUFFER_CREATEBO;
-    }
     return WINED3D_OK;
 }
 
@@ -560,7 +543,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     }
 
     hr = buffer_init(object, This, Length, Usage | WINED3DUSAGE_STATICDECL,
-            WINED3DFMT_UNKNOWN, Pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL, parent, parent_ops);
+            WINED3DFMT_UNKNOWN, Pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL,
+            parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x\n", hr);
@@ -569,12 +553,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     }
 
     TRACE("Created buffer %p.\n", object);
-
-    if (Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC)
-            && This->adapter->gl_info.supported[ARB_VERTEX_BUFFER_OBJECT])
-    {
-        object->flags |= WINED3D_BUFFER_CREATEBO;
-    }
 
     *ppIndexBuffer = (IWineD3DBuffer *) object;
 
