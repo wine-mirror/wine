@@ -6869,8 +6869,8 @@ static const struct message WmVkAppsSeq[] = {
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_APPS, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_APPS, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_APPS, 0xc0000001 },
-    { WM_CONTEXTMENU, lparam, /*hwnd*/0, (LPARAM)-1 },
-    { WM_CONTEXTMENU, sent|lparam, /*hwnd*/0, (LPARAM)-1 },
+    { WM_CONTEXTMENU, lparam, /*hwnd*/0, -1 },
+    { WM_CONTEXTMENU, sent|lparam, /*hwnd*/0, -1 },
     { 0 }
 };
 static const struct message WmVkF10Seq[] = {
