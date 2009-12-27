@@ -1857,11 +1857,12 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
  * Returns: The needed context
  *
  *****************************************************************************/
-static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid)
+static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target)
 {
     IWineD3DSwapChain *swapchain = NULL;
     struct wined3d_context *current_context = context_get_current();
     const struct StateEntry *StateTable = This->StateTable;
+    DWORD tid = GetCurrentThreadId();
     struct wined3d_context *context;
     BOOL old_render_offscreen;
 
@@ -2234,7 +2235,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
 
     TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
 
-    context = FindContext(device, target, GetCurrentThreadId());
+    context = FindContext(device, target);
     context_enter(context);
     if (!context->valid) return context;
 
