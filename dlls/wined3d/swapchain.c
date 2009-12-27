@@ -110,7 +110,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
     if(w == window.right && h == window.bottom) gl_filter = GL_NEAREST;
     else gl_filter = GL_LINEAR;
 
-    if(gl_info->supported[EXT_FRAMEBUFFER_BLIT])
+    if (gl_info->fbo_ops.glBlitFramebuffer)
     {
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
