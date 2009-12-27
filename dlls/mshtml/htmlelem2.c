@@ -451,7 +451,7 @@ static HRESULT WINAPI HTMLElement2_focus(IHTMLElement2 *iface)
 
     nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSHTMLElement_focus(nselem);
+        nsIDOMNSHTMLElement_Focus(nselem);
         nsIDOMNSHTMLElement_Release(nselem);
     }else {
         ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);

@@ -670,7 +670,7 @@ static HRESULT WINAPI HTMLDocument4_focus(IHTMLDocument4 *iface)
         return E_FAIL;
     }
 
-    nsres = nsIDOMNSHTMLElement_focus(nselem);
+    nsres = nsIDOMNSHTMLElement_Focus(nselem);
     nsIDOMNSHTMLElement_Release(nselem);
     if(NS_FAILED(nsres)) {
         ERR("Focus failed: %08x\n", nsres);
