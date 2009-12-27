@@ -915,10 +915,10 @@ static void test_resolution(void)
     expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetResolution(NULL, 96.0, 96.0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipBitmapSetResolution(bitmap, 0.0, 0.0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     /* defaults to screen resolution */
     screendc = GetDC(0);
@@ -938,15 +938,15 @@ static void test_resolution(void)
 
     /* test changing the resolution */
     stat = GdipBitmapSetResolution(bitmap, screenxres*2.0, screenyres*3.0);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &res);
     expect(Ok, stat);
-    todo_wine expectf(screenxres*2.0, res);
+    expectf(screenxres*2.0, res);
 
     stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
     expect(Ok, stat);
-    todo_wine expectf(screenyres*3.0, res);
+    expectf(screenyres*3.0, res);
 
     stat = GdipDisposeImage((GpImage*)bitmap);
     expect(Ok, stat);

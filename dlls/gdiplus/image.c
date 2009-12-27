@@ -535,9 +535,15 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
 GpStatus WINGDIPAPI GdipBitmapSetResolution(GpBitmap* bitmap, REAL xdpi, REAL ydpi)
 {
-    FIXME("(%p, %.2f, %.2f)\n", bitmap, xdpi, ydpi);
+    TRACE("(%p, %.2f, %.2f)\n", bitmap, xdpi, ydpi);
 
-    return NotImplemented;
+    if (!bitmap || xdpi == 0.0 || ydpi == 0.0)
+        return InvalidParameter;
+
+    bitmap->image.xres = xdpi;
+    bitmap->image.yres = ydpi;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
