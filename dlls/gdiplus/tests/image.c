@@ -874,7 +874,7 @@ static void test_createfromwmf(void)
     expect(Ok, stat);
     todo_wine expect(UnitPixel, unit);
     expectf(0.0, bounds.X);
-    todo_wine expectf(0.0, bounds.Y);
+    expectf(0.0, bounds.Y);
     todo_wine expectf(320.0, bounds.Width);
     todo_wine expectf(320.0, bounds.Height);
 
