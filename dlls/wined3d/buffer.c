@@ -805,9 +805,10 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         ++This->decl_change_count;
         This->draw_count = 0;
 
-        if (This->decl_change_count > VB_MAXDECLCHANGES)
+        if (This->decl_change_count > VB_MAXDECLCHANGES ||
+            (This->conversion_map && (This->resource.usage & WINED3DUSAGE_DYNAMIC)))
         {
-            FIXME("Too many declaration changes, stopping converting\n");
+            FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
 
             IWineD3DBuffer_UnLoad(iface);
             This->flags &= ~WINED3D_BUFFER_CREATEBO;
@@ -1152,6 +1153,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, &device->adapter->gl_info);
     HRESULT hr;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    BOOL dynamic_buffer_ok;
 
     if (!size)
     {
@@ -1173,6 +1175,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format_desc->format), buffer->resource.allocatedMemory, buffer);
 
+    dynamic_buffer_ok = FALSE; /* TODO: GL_APPLE_map_buffer_range, GL_ARB_map_buffer_range */
+
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
      * drawStridedFast (half-life 2 and others).
      *
@@ -1188,9 +1192,9 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     {
         TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
     }
-    else if(buffer->resource.usage & WINED3DUSAGE_DYNAMIC)
+    else if(!dynamic_buffer_ok && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
     {
-        TRACE("Not creating a vbo because the buffer has dynamic usage\n");
+        TRACE("Not creating a vbo because the buffer has dynamic usage and no GL support\n");
     }
     else
     {
