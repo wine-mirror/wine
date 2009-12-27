@@ -144,7 +144,7 @@ static void update_comboboxes(HWND dialog)
         if (!strcasecmp (win_versions[i].szVersion, winver))
         {
             SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL,
-                                (WPARAM) i + (current_app?1:0), 0);
+                                i + (current_app?1:0), 0);
             WINE_TRACE("match with %s\n", win_versions[i].szVersion);
             break;
 	}

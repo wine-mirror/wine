@@ -465,8 +465,8 @@ static void on_theme_changed(HWND dialog) {
     if (!update_color_and_size (index, GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
         GetDlgItem (dialog, IDC_THEME_SIZECOMBO)))
     {
-        SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
-        SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
+        SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, -1, 0);
+        SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), CB_SETCURSEL, -1, 0);
         enable_size_and_color_controls (dialog, FALSE);
     }
     else
@@ -699,8 +699,8 @@ static void on_theme_install(HWND dialog)
               GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
               GetDlgItem (dialog, IDC_THEME_SIZECOMBO)))
           {
-              SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
-              SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), CB_SETCURSEL, (WPARAM)-1, 0);
+              SendMessageW (GetDlgItem (dialog, IDC_THEME_COLORCOMBO), CB_SETCURSEL, -1, 0);
+              SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), CB_SETCURSEL, -1, 0);
               enable_size_and_color_controls (dialog, FALSE);
           }
           else
@@ -786,7 +786,7 @@ static void read_shell_folder_link_targets(void) {
 static void update_shell_folder_listview(HWND dialog) {
     int i;
     LVITEMW item;
-    LONG lSelected = SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, (WPARAM)-1, 
+    LONG lSelected = SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
                                         MAKELPARAM(LVNI_SELECTED,0));
     
     SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_DELETEALLITEMS, 0, 0);
@@ -840,7 +840,7 @@ static void update_shell_folder_listview(HWND dialog) {
         item.mask = LVIF_STATE;
         item.state = LVIS_SELECTED;
         item.stateMask = LVIS_SELECTED;
-        SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_SETITEMSTATE, (WPARAM)lSelected, 
+        SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_SETITEMSTATE, lSelected,
                            (LPARAM)&item);
     }
 }
