@@ -1262,7 +1262,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	  case 0x31:
 	  case 0x32:
 	  case 0x33:
-	    This->ListViewSortInfo.nHeaderID = (LPARAM) (dwCmdID - 0x30);
+            This->ListViewSortInfo.nHeaderID = dwCmdID - 0x30;
 	    This->ListViewSortInfo.bIsAscending = TRUE;
 	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
 	    SendMessageA(This->hWndList, LVM_SORTITEMS, (WPARAM) &This->ListViewSortInfo, (LPARAM)ShellView_ListViewCompareItems);

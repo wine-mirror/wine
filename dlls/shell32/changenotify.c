@@ -387,7 +387,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
         ptr->wSignalledEvent |= wEventId;
 
         if (ptr->dwFlags  & SHCNRF_NewDelivery)
-            SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM) ptr, (LPARAM) GetCurrentProcessId());
+            SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM) ptr, GetCurrentProcessId());
         else
             SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM)Pidls, wEventId);
 

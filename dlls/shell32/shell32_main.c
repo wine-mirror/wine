@@ -956,7 +956,7 @@ static INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                 {
                     /* authors list is in utf-8 format */
                     MultiByteToWideChar( CP_UTF8, 0, *pstr, -1, buffer, sizeof(buffer)/sizeof(WCHAR) );
-                    SendMessageW( hWndCtl, LB_ADDSTRING, (WPARAM)-1, (LPARAM)buffer );
+                    SendMessageW( hWndCtl, LB_ADDSTRING, -1, (LPARAM)buffer );
                     pstr++;
                 }
                 SendMessageW( hWndCtl, WM_SETREDRAW, 1, 0 );

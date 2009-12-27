@@ -490,7 +490,7 @@ static void BrsFolder_CheckValidSelection( browse_info *info, LPTV_ITEMDATA lptv
             bEnabled = FALSE;
         }
     }
-    SendMessageW(info->hWnd, BFFM_ENABLEOK, 0, (LPARAM)bEnabled);
+    SendMessageW(info->hWnd, BFFM_ENABLEOK, 0, bEnabled);
 }
 
 static LRESULT BrsFolder_Treeview_Delete( browse_info *info, NMTREEVIEWW *pnmtv )
