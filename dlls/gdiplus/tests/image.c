@@ -853,6 +853,42 @@ static void test_loadwmf(void)
     GdipDisposeImage(img);
 }
 
+static void test_createfromwmf(void)
+{
+    HMETAFILE hwmf;
+    GpImage *img;
+    GpStatus stat;
+    GpRectF bounds;
+    GpUnit unit;
+    REAL res = 12345.0;
+
+    hwmf = SetMetaFileBitsEx(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader),
+        wmfimage+sizeof(WmfPlaceableFileHeader));
+    ok(hwmf != 0, "SetMetaFileBitsEx failed\n");
+
+    stat = GdipCreateMetafileFromWmf(hwmf, TRUE,
+        (WmfPlaceableFileHeader*)wmfimage, (GpMetafile**)&img);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds(img, &bounds, &unit);
+    expect(Ok, stat);
+    todo_wine expect(UnitPixel, unit);
+    expectf(0.0, bounds.X);
+    todo_wine expectf(0.0, bounds.Y);
+    todo_wine expectf(320.0, bounds.Width);
+    todo_wine expectf(320.0, bounds.Height);
+
+    stat = GdipGetImageHorizontalResolution(img, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(1440.0, res);
+
+    stat = GdipGetImageVerticalResolution(img, &res);
+    todo_wine expect(Ok, stat);
+    todo_wine expectf(1440.0, res);
+
+    GdipDisposeImage(img);
+}
+
 static void test_createhbitmap(void)
 {
     GpStatus stat;
@@ -1428,6 +1464,7 @@ START_TEST(image)
     test_fromhicon();
     test_getrawformat();
     test_loadwmf();
+    test_createfromwmf();
     test_createhbitmap();
     test_getsetpixel();
     test_palette();
