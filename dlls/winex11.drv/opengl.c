@@ -1601,7 +1601,7 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
             return FALSE;
         }
 
-        if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, (WPARAM)fmt->fmt_id, 0)) {
+        if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0)) {
             ERR("Couldn't set format of the window, returning failure\n");
             return FALSE;
         }

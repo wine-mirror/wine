@@ -790,7 +790,7 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpDa
              * data requested into the clipboard.
              */
             TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", cbInfo.hWndOwner);
-            SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, (WPARAM)lpData->wFormatID, 0);
+            SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, lpData->wFormatID, 0);
 
             if (!lpData->hData) bret = FALSE;
         }
