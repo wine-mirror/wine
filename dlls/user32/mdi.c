@@ -1583,7 +1583,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
     case WM_SYSCHAR:
         if (wParam == '-')
         {
-            SendMessageW( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (DWORD)VK_SPACE);
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, VK_SPACE);
             return 0;
         }
         break;
@@ -1686,7 +1686,7 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
                 return 0;
             }
             TRACE("wParam = %04lx\n", wParam);
-            SendMessageW(ci->hwndActiveChild, WM_SYSCOMMAND, wParam, (LPARAM)msg->wParam);
+            SendMessageW(ci->hwndActiveChild, WM_SYSCOMMAND, wParam, msg->wParam);
             return 1;
         }
     }

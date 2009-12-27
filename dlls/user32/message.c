@@ -1750,7 +1750,7 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
         {
             /* Handle VK_APPS key by posting a WM_CONTEXTMENU message */
             if (msg->wParam == VK_APPS && !MENU_IsMenuActive())
-                PostMessageW(msg->hwnd, WM_CONTEXTMENU, (WPARAM)msg->hwnd, (LPARAM)-1);
+                PostMessageW(msg->hwnd, WM_CONTEXTMENU, (WPARAM)msg->hwnd, -1);
         }
     }
 

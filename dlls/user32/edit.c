@@ -3195,14 +3195,14 @@ static BOOL EDIT_CheckCombo(EDITSTATE *es, UINT msg, INT key)
             nEUI = 2;
          }
 
-         SendMessageW(hLBox, WM_KEYDOWN, (WPARAM)key, 0);
+         SendMessageW(hLBox, WM_KEYDOWN, key, 0);
          break;
 
       case WM_SYSKEYDOWN: /* Handle Alt+up/down arrows */
          if (nEUI)
             SendMessageW(hCombo, CB_SHOWDROPDOWN, bDropped ? FALSE : TRUE, 0);
          else
-            SendMessageW(hLBox, WM_KEYDOWN, (WPARAM)VK_F4, 0);
+            SendMessageW(hLBox, WM_KEYDOWN, VK_F4, 0);
          break;
    }
 
@@ -3326,7 +3326,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
                     HWND hwDefCtrl = GetDlgItem(es->hwndParent, LOWORD(dw));
                     if (hwDefCtrl)
                     {
-                        SendMessageW(es->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, (LPARAM)TRUE);
+                        SendMessageW(es->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, TRUE);
                         PostMessageW(hwDefCtrl, WM_KEYDOWN, VK_RETURN, 0);
                     }
                 }
@@ -3797,7 +3797,7 @@ static LRESULT EDIT_WM_SysKeyDown(EDITSTATE *es, INT key, DWORD key_data)
 		if (EDIT_CheckCombo(es, WM_SYSKEYDOWN, key))
 			return 0;
 	}
-	return DefWindowProcW(es->hwndSelf, WM_SYSKEYDOWN, (WPARAM)key, (LPARAM)key_data);
+	return DefWindowProcW(es->hwndSelf, WM_SYSKEYDOWN, key, key_data);
 }
 
 
