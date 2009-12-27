@@ -3206,7 +3206,7 @@ static int FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd)
   if(liInfos->iMaxIndentation <= 2)
     return -1;
 
-  if((iItemPos = FILEDLG95_LOOKIN_SearchItem(hwnd,(WPARAM)liInfos->iMaxIndentation,SEARCH_EXP)) >=0)
+  if((iItemPos = FILEDLG95_LOOKIN_SearchItem(hwnd,liInfos->iMaxIndentation,SEARCH_EXP)) >=0)
   {
     SFOLDER *tmpFolder = (LPSFOLDER) CBGetItemDataPtr(hwnd,iItemPos);
     COMDLG32_SHFree(tmpFolder->pidlItem);
@@ -3363,7 +3363,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
       SetWindowTextW( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
        
       /* Select the file name like Windows does */ 
-      SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, (LPARAM)-1);
+      SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, -1);
     }
     HeapFree(GetProcessHeap(),0, lpstrAllFile );
 }

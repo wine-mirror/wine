@@ -187,11 +187,11 @@ static INT_PTR CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPA
 			DestroyWindow(hDlgWnd);
                         return FALSE;
                 }
-		SendDlgItemMessageA(hDlgWnd, edt1, EM_SETLIMITTEXT, (WPARAM)pdata->fr.wFindWhatLen, 0);
+               SendDlgItemMessageA(hDlgWnd, edt1, EM_SETLIMITTEXT, pdata->fr.wFindWhatLen, 0);
 	        SendDlgItemMessageA(hDlgWnd, edt1, WM_SETTEXT, 0, (LPARAM)pdata->fr.lpstrFindWhat);
                 if(pdata->fr.Flags & FR_WINE_REPLACE)
                 {
-			SendDlgItemMessageA(hDlgWnd, edt2, EM_SETLIMITTEXT, (WPARAM)pdata->fr.wReplaceWithLen, 0);
+                       SendDlgItemMessageA(hDlgWnd, edt2, EM_SETLIMITTEXT, pdata->fr.wReplaceWithLen, 0);
 		        SendDlgItemMessageA(hDlgWnd, edt2, WM_SETTEXT, 0, (LPARAM)pdata->fr.lpstrReplaceWith);
                 }
 
