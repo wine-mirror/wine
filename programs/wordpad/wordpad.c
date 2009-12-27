@@ -1241,7 +1241,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         if(pFr->Flags & FR_WHOLEWORD)
             flags |= FR_WHOLEWORD;
 
-        ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, (WPARAM)flags, (LPARAM)&ft);
+        ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, flags, (LPARAM)&ft);
 
         if(ret == -1)
         {
@@ -1250,7 +1250,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
                 ft.chrg.cpMin = cr.cpMin = 0;
                 ft.chrg.cpMax = cr.cpMax = startPos;
 
-                ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, (WPARAM)flags, (LPARAM)&ft);
+                ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, flags, (LPARAM)&ft);
             }
         }
 
@@ -1263,7 +1263,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         {
             end = ret + lstrlenW(pFr->lpstrFindWhat);
             cr.cpMin = end;
-            SendMessageW(hEditorWnd, EM_SETSEL, (WPARAM)ret, (LPARAM)end);
+            SendMessageW(hEditorWnd, EM_SETSEL, ret, end);
             SendMessageW(hEditorWnd, EM_SCROLLCARET, 0, 0);
 
             if(pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL)
@@ -1737,7 +1737,7 @@ static int context_menu(LPARAM lParam)
         int from = 0, to = 0;
         POINTL pt;
         SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
-        SendMessageW(hEditorWnd, EM_POSFROMCHAR, (WPARAM)&pt, (LPARAM)to);
+        SendMessageW(hEditorWnd, EM_POSFROMCHAR, (WPARAM)&pt, to);
         ClientToScreen(hEditorWnd, (POINT*)&pt);
         x = pt.x;
         y = pt.y;
