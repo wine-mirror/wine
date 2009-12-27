@@ -219,6 +219,7 @@ struct GpImage{
     UINT palette_count;
     UINT palette_size;
     ARGB *palette_entries;
+    REAL xres, yres;
 };
 
 struct GpMetafile{

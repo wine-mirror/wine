@@ -843,11 +843,11 @@ static void test_loadwmf(void)
     todo_wine expectf(320.0, bounds.Height);
 
     stat = GdipGetImageHorizontalResolution(img, &res);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     todo_wine expectf(1440.0, res);
 
     stat = GdipGetImageVerticalResolution(img, &res);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     todo_wine expectf(1440.0, res);
 
     GdipDisposeImage(img);
@@ -879,12 +879,12 @@ static void test_createfromwmf(void)
     todo_wine expectf(320.0, bounds.Height);
 
     stat = GdipGetImageHorizontalResolution(img, &res);
-    todo_wine expect(Ok, stat);
-    todo_wine expectf(1440.0, res);
+    expect(Ok, stat);
+    expectf(1440.0, res);
 
     stat = GdipGetImageVerticalResolution(img, &res);
-    todo_wine expect(Ok, stat);
-    todo_wine expectf(1440.0, res);
+    expect(Ok, stat);
+    expectf(1440.0, res);
 
     GdipDisposeImage(img);
 }
@@ -929,23 +929,23 @@ static void test_resolution(void)
     ReleaseDC(0, screendc);
 
     stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &res);
-    todo_wine expect(Ok, stat);
-    todo_wine expectf((REAL)screenxres, res);
+    expect(Ok, stat);
+    expectf((REAL)screenxres, res);
 
     stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
-    todo_wine expect(Ok, stat);
-    todo_wine expectf((REAL)screenyres, res);
+    expect(Ok, stat);
+    expectf((REAL)screenyres, res);
 
     /* test changing the resolution */
     stat = GdipBitmapSetResolution(bitmap, screenxres*2.0, screenyres*3.0);
     todo_wine expect(Ok, stat);
 
     stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &res);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     todo_wine expectf(screenxres*2.0, res);
 
     stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &res);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     todo_wine expectf(screenyres*3.0, res);
 
     stat = GdipDisposeImage((GpImage*)bitmap);

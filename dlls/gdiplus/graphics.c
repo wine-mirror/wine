@@ -1262,6 +1262,8 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     (*metafile)->image.palette_count = 0;
     (*metafile)->image.palette_size = 0;
     (*metafile)->image.palette_entries = NULL;
+    (*metafile)->image.xres = (REAL)placeable->Inch;
+    (*metafile)->image.yres = (REAL)placeable->Inch;
     (*metafile)->bounds.X = ((REAL) placeable->BoundingBox.Left) / ((REAL) placeable->Inch);
     (*metafile)->bounds.Y = ((REAL) placeable->BoundingBox.Top) / ((REAL) placeable->Inch);
     (*metafile)->bounds.Width = ((REAL) (placeable->BoundingBox.Right

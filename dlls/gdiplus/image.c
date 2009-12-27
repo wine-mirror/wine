@@ -1172,6 +1172,20 @@ static void generate_halftone_palette(ARGB *entries, UINT count)
     }
 }
 
+static GpStatus get_screen_resolution(REAL *xres, REAL *yres)
+{
+    HDC screendc = GetDC(0);
+
+    if (!screendc) return GenericError;
+
+    *xres = (REAL)GetDeviceCaps(screendc, LOGPIXELSX);
+    *yres = (REAL)GetDeviceCaps(screendc, LOGPIXELSY);
+
+    ReleaseDC(0, screendc);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
@@ -1181,6 +1195,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     HDC hdc;
     BYTE *bits;
     int i;
+    REAL xres, yres;
+    GpStatus stat;
 
     TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
 
@@ -1193,6 +1209,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
 
     if(scan0 && !stride)
         return InvalidParameter;
+
+    stat = get_screen_resolution(&xres, &yres);
+    if (stat != Ok) return stat;
 
     row_size = (width * PIXELFORMATBPP(format)+7) / 8;
     dib_stride = (row_size + 3) & ~3;
@@ -1243,6 +1262,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->image.palette_count = 0;
     (*bitmap)->image.palette_size = 0;
     (*bitmap)->image.palette_entries = NULL;
+    (*bitmap)->image.xres = xres;
+    (*bitmap)->image.yres = yres;
     (*bitmap)->width = width;
     (*bitmap)->height = height;
     (*bitmap)->format = format;
@@ -1522,15 +1543,14 @@ GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
 
 GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage *image, REAL *res)
 {
-    static int calls;
-
     if(!image || !res)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    *res = image->xres;
 
-    return NotImplemented;
+    TRACE("(%p) <-- %0.2f\n", image, *res);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
@@ -1590,15 +1610,14 @@ GpStatus WINGDIPAPI GdipGetImageType(GpImage *image, ImageType *type)
 
 GpStatus WINGDIPAPI GdipGetImageVerticalResolution(GpImage *image, REAL *res)
 {
-    static int calls;
-
     if(!image || !res)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    *res = image->yres;
 
-    return NotImplemented;
+    TRACE("(%p) <-- %0.2f\n", image, *res);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
