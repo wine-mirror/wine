@@ -1123,7 +1123,8 @@ static enum wined3d_pci_vendor wined3d_guess_vendor(const char *gl_vendor, const
 
     if (strstr(gl_vendor, "Mesa")
             || strstr(gl_vendor, "DRI R300 Project")
-            || strstr(gl_vendor, "Tungsten Graphics, Inc"))
+            || strstr(gl_vendor, "Tungsten Graphics, Inc")
+            || strstr(gl_vendor, "VMware, Inc."))
         return VENDOR_MESA;
 
     FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning VENDOR_WINE.\n", debugstr_a(gl_vendor));
