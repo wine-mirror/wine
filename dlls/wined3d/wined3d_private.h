@@ -2358,11 +2358,16 @@ enum wined3d_buffer_conversion_type
     CONV_FLOAT16_2, /* Also handles FLOAT16_4 */
 };
 
+struct wined3d_map_range
+{
+    UINT offset;
+    UINT size;
+};
+
 #define WINED3D_BUFFER_OPTIMIZED    0x01    /* Optimize has been called for the buffer */
-#define WINED3D_BUFFER_DIRTY        0x02    /* Buffer data has been modified */
-#define WINED3D_BUFFER_HASDESC      0x04    /* A vertex description has been found */
-#define WINED3D_BUFFER_CREATEBO     0x08    /* Attempt to create a buffer object next PreLoad */
-#define WINED3D_BUFFER_DOUBLEBUFFER 0x10    /* Use a vbo and local allocated memory */
+#define WINED3D_BUFFER_HASDESC      0x02    /* A vertex description has been found */
+#define WINED3D_BUFFER_CREATEBO     0x04    /* Attempt to create a buffer object next PreLoad */
+#define WINED3D_BUFFER_DOUBLEBUFFER 0x08    /* Use a vbo and local allocated memory */
 
 struct wined3d_buffer
 {
@@ -2378,9 +2383,9 @@ struct wined3d_buffer
     LONG bind_count;
     DWORD flags;
 
-    UINT dirty_start;
-    UINT dirty_end;
     LONG lock_count;
+    struct wined3d_map_range *maps;
+    ULONG maps_size, modified_areas;
 
     /* conversion stuff */
     UINT decl_change_count, full_conversion_count;
