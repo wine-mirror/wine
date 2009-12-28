@@ -1383,12 +1383,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
 
-    This-> focus_window = This->createParms.hFocusWindow;
-    if (!This->focus_window) This->focus_window = pPresentationParameters->hDeviceWindow;
-    if (!wined3d_register_window(This->focus_window, This))
+    if (!pPresentationParameters->Windowed)
     {
-        ERR("Failed to register window %p.\n", This->focus_window);
-        return E_FAIL;
+        This->focus_window = This->createParms.hFocusWindow;
+        if (!This->focus_window) This->focus_window = pPresentationParameters->hDeviceWindow;
+        if (!wined3d_register_window(This->focus_window, This))
+        {
+            ERR("Failed to register window %p.\n", This->focus_window);
+            return E_FAIL;
+        }
     }
 
     TRACE("(%p) : Creating stateblock\n", This);
@@ -1444,7 +1447,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         }
     }
 
-    SetFocus(This->focus_window);
+    if (This->focus_window) SetFocus(This->focus_window);
 
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
@@ -1580,7 +1583,7 @@ err_out:
     if (This->shader_priv) {
         This->shader_backend->shader_free_private(iface);
     }
-    wined3d_unregister_window(This->focus_window);
+    if (This->focus_window) wined3d_unregister_window(This->focus_window);
     return hr;
 }
 
@@ -1771,7 +1774,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 
     This->d3d_initialized = FALSE;
 
-    wined3d_unregister_window(This->focus_window);
+    if (This->focus_window) wined3d_unregister_window(This->focus_window);
 
     return WINED3D_OK;
 }
