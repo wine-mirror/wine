@@ -122,7 +122,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
     IMAGE_SECTION_HEADER*       sect_stabs = NULL;
     IMAGE_SECTION_HEADER*       sect_stabstr = NULL;
     int                         i;
-    BOOL                        ret;
+    BOOL                        ret = FALSE;
 
     section = (IMAGE_SECTION_HEADER*)
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
@@ -163,7 +163,7 @@ static BOOL pe_load_dwarf(const struct process* pcs, struct module* module,
     int                         i;
     const char*                 strtable;
     const char*                 sectname;
-    BOOL                        ret;
+    BOOL                        ret = FALSE;
 
     if (nth->FileHeader.PointerToSymbolTable && nth->FileHeader.NumberOfSymbols)
         /* FIXME: no way to get strtable size */
