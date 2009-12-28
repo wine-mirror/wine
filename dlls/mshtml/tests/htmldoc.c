@@ -4508,6 +4508,24 @@ static void test_HTMLDocument_http(void)
     ok(!ref, "ref=%d, expected 0\n", ref);
 }
 
+static void test_QueryService(IUnknown *unk, BOOL success)
+{
+    IServiceProvider *sp;
+    IHlinkFrame *hf;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "QueryService returned %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &IID_IHlinkFrame, &IID_IHlinkFrame, (void**)&hf);
+    if(SUCCEEDED(hres))
+        IHlinkFrame_Release(hf);
+
+    ok(hres == (success?S_OK:E_NOINTERFACE), "QueryService returned %08x, expected %08x\n", hres, success?S_OK:E_NOINTERFACE);
+
+    IServiceProvider_Release(sp);
+}
+
 static void test_HTMLDocument_StreamLoad(void)
 {
     IOleObject *oleobj;
@@ -4535,7 +4553,9 @@ static void test_HTMLDocument_StreamLoad(void)
     test_readyState(unk);
     test_IsDirty(unk, S_FALSE);
     test_ConnectionPointContainer(unk);
+    test_QueryService(unk, FALSE);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
+    test_QueryService(unk, TRUE);
     test_DoVerb(oleobj);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
