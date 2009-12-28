@@ -3559,7 +3559,6 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*	case RB_SETCOLORSCHEME: */
 /*	case RB_SETPALETTE: */
-/*	    return REBAR_GetPalette (infoPtr, wParam, lParam); */
 
 	case RB_SETPARENT:
 	    return REBAR_SetParent (infoPtr, (HWND)wParam);
