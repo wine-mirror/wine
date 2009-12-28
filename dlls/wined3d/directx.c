@@ -966,6 +966,8 @@ static const struct driver_version_information driver_version_table[] =
     {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        14, 10, 8681    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        14, 10, 8681    },
 
     /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
 };
@@ -1431,6 +1433,24 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
              * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
             if (WINE_D3D9_CAPABLE(gl_info))
             {
+                /* Radeon EG CYPRESS XT / PRO HD5800 - highend */
+                if (strstr(gl_renderer, "HD 5800")          /* Radeon EG CYPRESS HD58xx generic renderer string */
+                        || strstr(gl_renderer, "HD 5850")   /* Radeon EG CYPRESS XT */
+                        || strstr(gl_renderer, "HD 5870"))  /* Radeon EG CYPRESS PRO */
+                {
+                    *vidmem = 1024; /* note: HD58xx cards use 1024MB  */
+                    return CARD_ATI_RADEON_HD5800;
+                }
+
+                /* Radeon EG JUNIPER XT / LE HD5700 - midend */
+                if (strstr(gl_renderer, "HD 5700")          /* Radeon EG JUNIPER HD57xx generic renderer string */
+                        || strstr(gl_renderer, "HD 5750")   /* Radeon EG JUNIPER LE */
+                        || strstr(gl_renderer, "HD 5770"))  /* Radeon EG JUNIPER XT */
+                {
+                    *vidmem = 512; /* note: HD5770 cards use 1024MB and HD5750 cards use 512MB or 1024MB  */
+                    return CARD_ATI_RADEON_HD5700;
+                }
+
                 /* Radeon R7xx HD4800 - highend */
                 if (strstr(gl_renderer, "HD 4800")          /* Radeon RV7xx HD48xx generic renderer string */
                         || strstr(gl_renderer, "HD 4830")   /* Radeon RV770 */
