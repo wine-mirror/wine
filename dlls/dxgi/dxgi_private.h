@@ -121,13 +121,15 @@ struct dxgi_adapter
 HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */
-extern const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl DECLSPEC_HIDDEN;
 struct dxgi_swapchain
 {
     const struct IDXGISwapChainVtbl *vtbl;
     LONG refcount;
     IWineD3DSwapChain *wined3d_swapchain;
 };
+
+HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
+        WINED3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 
 /* IDXGISurface */
 struct dxgi_surface

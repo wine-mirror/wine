@@ -249,7 +249,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetLastPresentCount(IDXGISwapCha
     return E_NOTIMPL;
 }
 
-const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl =
+static const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl =
 {
     /* IUnknown methods */
     dxgi_swapchain_QueryInterface,
@@ -274,3 +274,22 @@ const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl =
     dxgi_swapchain_GetFrameStatistics,
     dxgi_swapchain_GetLastPresentCount,
 };
+
+HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
+        WINED3DPRESENT_PARAMETERS *present_parameters)
+{
+    HRESULT hr;
+
+    swapchain->vtbl = &dxgi_swapchain_vtbl;
+    swapchain->refcount = 1;
+
+    hr = IWineD3DDevice_CreateSwapChain(device->wined3d_device, present_parameters,
+            &swapchain->wined3d_swapchain, (IUnknown *)swapchain, SURFACE_OPENGL);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}
