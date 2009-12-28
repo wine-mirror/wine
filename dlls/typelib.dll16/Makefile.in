@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = typelib.dll16
-IMPORTS   = oleaut32 advapi32 kernel32
+IMPORTS   = oleaut32 advapi32 kernel32 kernel
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,oleaut32.dll
 
 C_SRCS = typelib.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lzexpand.dll16
-IMPORTS   = lz32 kernel32
+IMPORTS   = lz32 kernel32 kernel
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,lz32.dll
 
 C_SRCS = lzexpand.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvideo.dll16
-IMPORTS   = msvfw32 version advapi32 kernel32
+IMPORTS   = msvfw32 version advapi32 kernel32 kernel
 
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,msvfw32.dll
 

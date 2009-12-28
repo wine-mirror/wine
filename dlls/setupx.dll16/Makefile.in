@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = setupx.dll16
-IMPORTS   = setupapi user32 advapi32 kernel32
+IMPORTS   = setupapi user32 advapi32 kernel32 kernel
 
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,setupapi.dll
 

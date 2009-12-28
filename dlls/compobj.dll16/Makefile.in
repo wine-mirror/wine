@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = compobj.dll16
-IMPORTS   = uuid ole32 advapi32 kernel32
+IMPORTS   = uuid ole32 advapi32 kernel32 kernel
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ole32.dll
 
 C_SRCS = compobj.c

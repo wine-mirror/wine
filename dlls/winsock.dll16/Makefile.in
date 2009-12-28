@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winsock.dll16
-IMPORTS   = ws2_32 kernel32
+IMPORTS   = ws2_32 kernel32 kernel
 DELAYIMPORTS = user32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ws2_32.dll
 

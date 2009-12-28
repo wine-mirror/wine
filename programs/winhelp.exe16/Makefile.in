@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winhelp.exe16
 APPMODE   = -mwindows -Wb,--subsystem,win16
-IMPORTS   = kernel32
+IMPORTS   = kernel32 kernel
 
 C_SRCS = winhelp.c
 

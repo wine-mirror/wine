@@ -27,6 +27,7 @@ STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
 	libd3dx9.$(IMPLIBEXT) \
+	libkernel.$(IMPLIBEXT) \
 	libwinspool.$(IMPLIBEXT) \
 	libxinput.$(IMPLIBEXT)
 
@@ -94,6 +95,7 @@ IMPORT_LIBS = \
 	inetcomm/libinetcomm.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
 	kernel32/libkernel32.$(IMPLIBEXT) \
+	krnl386.exe16/libkernel.$(IMPLIBEXT) \
 	loadperf/libloadperf.$(IMPLIBEXT) \
 	lz32/liblz32.$(IMPLIBEXT) \
 	mapi32/libmapi32.$(IMPLIBEXT) \
@@ -500,6 +502,9 @@ iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a: iphlpapi/iphlpapi.spec $(WINEBU
 kernel32/libkernel32.def kernel32/libkernel32.a: kernel32/kernel32.spec $(WINEBUILD)
 	@cd kernel32 && $(MAKE) `basename $@`
 
+krnl386.exe16/libkernel.def krnl386.exe16/libkernel.a: krnl386.exe16/krnl386.exe16.spec $(WINEBUILD)
+	@cd krnl386.exe16 && $(MAKE) `basename $@`
+
 loadperf/libloadperf.def loadperf/libloadperf.a: loadperf/loadperf.spec $(WINEBUILD)
 	@cd loadperf && $(MAKE) `basename $@`
 
@@ -766,6 +771,12 @@ libd3dx9.a: d3dx9_36/libd3dx9.a
 
 libd3dx9.def: d3dx9_36/libd3dx9.def
 	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.def $@
+
+libkernel.a: krnl386.exe16/libkernel.a
+	$(RM) $@ && $(LN_S) krnl386.exe16/libkernel.a $@
+
+libkernel.def: krnl386.exe16/libkernel.def
+	$(RM) $@ && $(LN_S) krnl386.exe16/libkernel.def $@
 
 libwinspool.a: winspool.drv/libwinspool.a
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.a $@

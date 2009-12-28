@@ -744,7 +744,7 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # 16-bit relays
-@ cdecl -arch=win32 -private __wine_emulate_instruction(ptr ptr)
+@ cdecl -arch=win32 __wine_emulate_instruction(ptr ptr)
 
 # VxDs
 @ cdecl -arch=win32 -private __wine_vxd_open(wstr long ptr)

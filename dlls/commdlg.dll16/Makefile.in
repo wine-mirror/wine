@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = commdlg.dll16
-IMPORTS   = comdlg32 user32 gdi32 kernel32
+IMPORTS   = comdlg32 user32 gdi32 kernel32 kernel
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,comdlg32.dll
 
 C_SRCS = \

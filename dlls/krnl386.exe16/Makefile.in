@@ -3,7 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = krnl386.exe16
+IMPORTLIB = kernel
 IMPORTS   = kernel32 ntdll
+EXTRAIMPLIBFLAGS = --subsystem win16
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--dll-name,kernel
 EXTRARCFLAGS  = -O res16
 

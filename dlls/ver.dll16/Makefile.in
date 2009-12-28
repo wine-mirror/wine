@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ver.dll16
-IMPORTS   = version lz32 kernel32
+IMPORTS   = version lz32 kernel32 kernel
 
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,version.dll
 

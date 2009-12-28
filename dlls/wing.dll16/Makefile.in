@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wing.dll16
-IMPORTS   = gdi32 kernel32
+IMPORTS   = gdi32 kernel32 kernel
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
 C_SRCS = wing.c

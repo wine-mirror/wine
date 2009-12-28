@@ -59,6 +59,7 @@ dlls/kernel32/nls/winerr_nor.mc.rc
 dlls/kernel32/nls/winerr_plk.mc.rc
 dlls/kernel32/nls/winerr_ptg.mc.rc
 dlls/libd3dx9.def
+dlls/libkernel.def
 dlls/libwinspool.def
 dlls/libxinput.def
 dlls/msdaps/msdaps.h
