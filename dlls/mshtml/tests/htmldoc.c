@@ -2953,6 +2953,7 @@ static void test_ConnectionPointContainer(IUnknown *unk)
     if(FAILED(hres))
         return;
 
+    test_ConnectionPoint(container, &IID_IDispatch);
     test_ConnectionPoint(container, &IID_IPropertyNotifySink);
     test_ConnectionPoint(container, &DIID_HTMLDocumentEvents);
     test_ConnectionPoint(container, &DIID_HTMLDocumentEvents2);

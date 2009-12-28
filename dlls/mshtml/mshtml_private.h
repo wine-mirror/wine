@@ -340,6 +340,7 @@ struct HTMLDocument {
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
+    ConnectionPoint cp_dispatch;
 
     IOleAdviseHolder *advise_holder;
 };
