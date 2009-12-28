@@ -7069,6 +7069,9 @@ LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window,
     {
         TRACE("unregister window %p.\n", window);
         wined3d_unregister_window(window);
+
+        if (device->focus_window == window) device->focus_window = NULL;
+        else ERR("Window %p is not the focus window for device %p.\n", window, device);
     }
 
     return CallWindowProcW(proc, window, message, wparam, lparam);
