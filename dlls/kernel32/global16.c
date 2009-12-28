@@ -283,7 +283,11 @@ HGLOBAL16 WINAPI GlobalAlloc16(
     HANDLE16 owner = GetCurrentPDB16();
 
     if (flags & GMEM_DDESHARE)
-        owner = GetExePtr(owner);  /* Make it a module handle */
+    {
+        /* make it owned by the calling module */
+        STACK16FRAME *frame = CURRENT_STACK16;
+        owner = GetExePtr( frame->cs );
+    }
     return GLOBAL_Alloc( flags, size, owner, WINE_LDT_FLAGS_DATA );
 }
 
