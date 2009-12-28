@@ -952,6 +952,21 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                && (BYTE)This->nsstream->buf[1] == 0xfe)
                 This->nschannel->charset = heap_strdupA(UTF16_STR);
 
+            if(!This->nschannel->content_type) {
+                WCHAR *mime;
+
+                hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size, NULL, 0, &mime, 0);
+                if(FAILED(hres))
+                    return hres;
+
+                TRACE("Found MIME %s\n", debugstr_w(mime));
+
+                This->nschannel->content_type = heap_strdupWtoA(mime);
+                CoTaskMemFree(mime);
+                if(!This->nschannel->content_type)
+                    return E_OUTOFMEMORY;
+            }
+
             on_start_nsrequest(This);
 
             if(This->window)
