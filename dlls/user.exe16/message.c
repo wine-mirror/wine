@@ -2594,6 +2594,33 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 {
     switch (msg)
     {
+    case WM_NCCREATE:
+    {
+        CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
+        LRESULT ret = wow_handlers32.static_proc( hwnd, msg, wParam, lParam, unicode );
+
+        if (!ret) return 0;
+        if (((ULONG_PTR)cs->hInstance >> 16)) return ret;  /* 32-bit instance, nothing to do */
+        switch (cs->style & SS_TYPEMASK)
+        {
+        case SS_ICON:
+            {
+                HICON16 icon = LoadIcon16( HINSTANCE_16(cs->hInstance), cs->lpszName );
+                if (!icon) icon = LoadCursor16( HINSTANCE_16(cs->hInstance), cs->lpszName );
+                if (icon) wow_handlers32.static_proc( hwnd, STM_SETIMAGE, IMAGE_ICON,
+                                                      (LPARAM)HICON_32(icon), FALSE );
+                break;
+            }
+        case SS_BITMAP:
+            {
+                HBITMAP16 bitmap = LoadBitmap16( HINSTANCE_16(cs->hInstance), cs->lpszName );
+                if (bitmap) wow_handlers32.static_proc( hwnd, STM_SETIMAGE, IMAGE_BITMAP,
+                                                        (LPARAM)HBITMAP_32(bitmap), FALSE );
+                break;
+            }
+        }
+        return ret;
+    }
     case STM_SETICON16:
         wParam = (WPARAM)HICON_32( (HICON16)wParam );
         return wow_handlers32.static_proc( hwnd, STM_SETICON, wParam, lParam, FALSE );
