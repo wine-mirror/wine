@@ -466,7 +466,7 @@ static void check_undefined_exports( DLLSPEC *spec )
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
-        if (odp->type == TYPE_STUB || odp->type == TYPE_ABS) continue;
+        if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
         if (find_name( odp->link_name, &undef_symbols ))
         {
