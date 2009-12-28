@@ -174,13 +174,10 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
 
         if (ret == MPG123_NEW_FORMAT)
         {
-            if TRACE_ON(mpeg3)
-            {
-                long rate;
-                int channels, enc;
-                mpg123_getformat(amd->mh, &rate, &channels, &enc);
-                TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
-            }
+            long rate;
+            int channels, enc;
+            mpg123_getformat(amd->mh, &rate, &channels, &enc);
+            TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
         }
         dpos += size;
     } while (ret == MPG123_OK);
