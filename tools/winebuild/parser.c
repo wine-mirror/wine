@@ -945,32 +945,33 @@ static int parse_def_export( char *name, DLLSPEC *spec )
 
     /* check for other optional keywords */
 
-    if (token && !strcmp( token, "NONAME" ))
+    while (token)
     {
-        if (odp->ordinal == -1)
+        if (!strcmp( token, "NONAME" ))
         {
-            error( "NONAME requires an ordinal\n" );
+            if (odp->ordinal == -1)
+            {
+                error( "NONAME requires an ordinal\n" );
+                goto error;
+            }
+            odp->export_name = odp->name;
+            odp->name = NULL;
+            odp->flags |= FLAG_NONAME;
+        }
+        else if (!strcmp( token, "PRIVATE" ))
+        {
+            odp->flags |= FLAG_PRIVATE;
+        }
+        else if (!strcmp( token, "DATA" ))
+        {
+            odp->type = TYPE_EXTERN;
+        }
+        else
+        {
+            error( "Garbage text '%s' found at end of export declaration\n", token );
             goto error;
         }
-        odp->export_name = odp->name;
-        odp->name = NULL;
-        odp->flags |= FLAG_NONAME;
         token = GetToken(1);
-    }
-    if (token && !strcmp( token, "PRIVATE" ))
-    {
-        odp->flags |= FLAG_PRIVATE;
-        token = GetToken(1);
-    }
-    if (token && !strcmp( token, "DATA" ))
-    {
-        odp->type = TYPE_EXTERN;
-        token = GetToken(1);
-    }
-    if (token)
-    {
-        error( "Garbage text '%s' found at end of export declaration\n", token );
-        goto error;
     }
     return 1;
 
