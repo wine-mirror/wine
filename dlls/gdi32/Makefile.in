@@ -27,7 +27,6 @@ C_SRCS = \
 	enhmfdrv/objects.c \
 	font.c \
 	freetype.c \
-	gdi_main.c \
 	gdiobj.c \
 	icm.c \
 	mapping.c \

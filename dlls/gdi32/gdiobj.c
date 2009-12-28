@@ -565,15 +565,20 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
 
 
 /***********************************************************************
- *           GDI_Init
+ *           DllMain
  *
  * GDI initialization.
  */
-BOOL GDI_Init(void)
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     LOGFONTW default_gui_font;
     const struct DefaultFontInfo* deffonts;
     int i;
+
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
+
+    DisableThreadLibraryCalls( inst );
+    LoadLibraryA( "gdi.exe16" );
 
     WineEngInit();
 

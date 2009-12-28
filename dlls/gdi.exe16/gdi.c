@@ -428,6 +428,17 @@ static void free_segptr_bits( HBITMAP16 bmp )
     }
 }
 
+
+/**********************************************************************
+ *		DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    if (reason == DLL_PROCESS_ATTACH) LoadLibrary16( "gdi.exe" );
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           SetBkColor    (GDI.1)
  */
