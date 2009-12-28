@@ -1119,16 +1119,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                     FreeLibrary( mod32 );
                     owner_exists = 0;
                 }
-                /* loading the 32-bit library can have the side effect of loading the module */
-                /* if so, simply incr the ref count and return the module */
-                if ((hModule = GetModuleHandle16( libname )))
-                {
-                    TRACE( "module %s already loaded by owner\n", libname );
-                    pModule = NE_GetPtr( hModule );
-                    if (pModule) pModule->count++;
-                    FreeLibrary( mod32 );
-                    return hModule;
-                }
             }
             else
             {
@@ -1136,6 +1126,16 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                 WARN( "couldn't load owner %s for 16-bit dll %s\n", owner, dllname );
                 return ERROR_FILE_NOT_FOUND;
             }
+        }
+        /* loading the 32-bit library can have the side effect of loading the module */
+        /* if so, simply incr the ref count and return the module */
+        if (descr && (hModule = GetModuleHandle16( libname )))
+        {
+            TRACE( "module %s already loaded by owner\n", libname );
+            pModule = NE_GetPtr( hModule );
+            if (pModule) pModule->count++;
+            FreeLibrary( mod32 );
+            return hModule;
         }
     }
 
