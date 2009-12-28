@@ -27,12 +27,11 @@ struct tagSYSLEVEL;
 
 struct kernel_thread_data
 {
-    UINT                code_page;      /* thread code page */
     WORD                stack_sel;      /* 16-bit stack selector */
     WORD                htask16;        /* Win16 task handle */
     DWORD               sys_count[4];   /* syslevel mutex entry counters */
     struct tagSYSLEVEL *sys_mutex[4];   /* syslevel mutex pointers */
-    void               *pad[44];        /* change this if you add fields! */
+    void               *pad[45];        /* change this if you add fields! */
 };
 
 static inline struct kernel_thread_data *kernel_get_thread_data(void)

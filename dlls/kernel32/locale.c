@@ -222,7 +222,8 @@ static const union cptable *get_codepage_table( unsigned int codepage )
     case CP_UTF8:
         break;
     case CP_THREAD_ACP:
-        if (!(codepage = kernel_get_thread_data()->code_page)) return ansi_cptable;
+        if (NtCurrentTeb()->CurrentLocale == GetUserDefaultLCID()) return ansi_cptable;
+        codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale );
         /* fall through */
     default:
         if (codepage == ansi_cptable->info.codepage) return ansi_cptable;
@@ -2057,7 +2058,6 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
         }
 
         NtCurrentTeb()->CurrentLocale = lcid;
-        kernel_get_thread_data()->code_page = get_lcid_codepage( lcid );
     }
     return TRUE;
 }
