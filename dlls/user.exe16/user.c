@@ -2076,8 +2076,18 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
 HICON16 WINAPI CopyImage16(HANDLE16 hnd, UINT16 type, INT16 desiredx,
 			   INT16 desiredy, UINT16 flags)
 {
-  return HICON_16(CopyImage(HANDLE_32(hnd), (UINT)type, (INT)desiredx,
-			    (INT)desiredy, (UINT)flags));
+    if (flags & LR_COPYFROMRESOURCE) FIXME( "LR_COPYFROMRESOURCE not supported\n" );
+
+    switch (type)
+    {
+    case IMAGE_BITMAP:
+        return HBITMAP_16( CopyImage( HBITMAP_32(hnd), type, desiredx, desiredy, flags ));
+    case IMAGE_ICON:
+    case IMAGE_CURSOR:
+        return CopyIcon16( FarGetOwner16(hnd), hnd );
+    default:
+        return 0;
+    }
 }
 
 /**********************************************************************
