@@ -239,6 +239,9 @@ extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);
 extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
 extern int SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
 
+/* syslevel.c */
+extern VOID SYSLEVEL_CheckNotLevel( INT level );
+
 /* task.c */
 extern void TASK_CreateMainTask(void);
 extern HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
@@ -270,6 +273,22 @@ extern DWORD CallTo16_DataSelector;
 extern DWORD CallTo16_TebSelector;
 extern SEGPTR CALL32_CBClient_RetAddr;
 extern SEGPTR CALL32_CBClientEx_RetAddr;
+
+struct tagSYSLEVEL;
+
+struct kernel_thread_data
+{
+    WORD                stack_sel;      /* 16-bit stack selector */
+    WORD                htask16;        /* Win16 task handle */
+    DWORD               sys_count[4];   /* syslevel mutex entry counters */
+    struct tagSYSLEVEL *sys_mutex[4];   /* syslevel mutex pointers */
+    void               *pad[45];        /* change this if you add fields! */
+};
+
+static inline struct kernel_thread_data *kernel_get_thread_data(void)
+{
+    return (struct kernel_thread_data *)NtCurrentTeb()->SystemReserved1;
+}
 
 #ifdef __i386__
 #define DEFINE_REGS_ENTRYPOINT( name, args ) \

@@ -23,22 +23,6 @@
 
 #include "wine/server.h"
 
-struct tagSYSLEVEL;
-
-struct kernel_thread_data
-{
-    WORD                stack_sel;      /* 16-bit stack selector */
-    WORD                htask16;        /* Win16 task handle */
-    DWORD               sys_count[4];   /* syslevel mutex entry counters */
-    struct tagSYSLEVEL *sys_mutex[4];   /* syslevel mutex pointers */
-    void               *pad[45];        /* change this if you add fields! */
-};
-
-static inline struct kernel_thread_data *kernel_get_thread_data(void)
-{
-    return (struct kernel_thread_data *)NtCurrentTeb()->SystemReserved1;
-}
-
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
@@ -67,8 +51,6 @@ extern HMODULE kernel32_handle;
 extern const WCHAR *DIR_Windows;
 extern const WCHAR *DIR_System;
 extern const WCHAR *DIR_SysWow64;
-
-extern VOID SYSLEVEL_CheckNotLevel( INT level );
 
 extern void FILE_SetDosError(void);
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
