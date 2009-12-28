@@ -27,7 +27,6 @@
 #include "wownt32.h"
 #include "wine/winuser16.h"
 
-#include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/debug.h"
 

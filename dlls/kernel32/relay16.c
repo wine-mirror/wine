@@ -32,7 +32,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winternl.h"
-#include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/unicode.h"
 #include "wine/library.h"

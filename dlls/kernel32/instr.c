@@ -33,7 +33,6 @@
 #include "wine/winuser16.h"
 #include "excpt.h"
 #include "wine/debug.h"
-#include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/exception.h"
 

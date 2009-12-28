@@ -39,7 +39,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winioctl.h"
-#include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -49,6 +48,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
 typedef DWORD (WINAPI *VxDCallProc)(DWORD, CONTEXT86 *);
+typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 
 struct vxd_module
 {
