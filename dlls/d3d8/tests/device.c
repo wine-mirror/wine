@@ -46,12 +46,12 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
-static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND device_window, HWND focus_window)
+static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice8 *device;
 
-    present_parameters.Windowed = FALSE;
+    present_parameters.Windowed = windowed;
     present_parameters.hDeviceWindow = device_window;
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferWidth = 640;
@@ -1547,7 +1547,7 @@ static void test_wndproc(void)
     expect_message.window = focus_window;
     expect_message.message = WM_SETFOCUS;
 
-    device = create_device(d3d8, device_window, focus_window);
+    device = create_device(d3d8, device_window, focus_window, FALSE);
     if (!device)
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -1576,7 +1576,7 @@ static void test_wndproc(void)
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
 
-    device = create_device(d3d8, focus_window, focus_window);
+    device = create_device(d3d8, focus_window, focus_window, FALSE);
     if (!device)
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -1586,7 +1586,7 @@ static void test_wndproc(void)
     ref = IDirect3DDevice8_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
 
-    device = create_device(d3d8, device_window, focus_window);
+    device = create_device(d3d8, device_window, focus_window, FALSE);
     if (!device)
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -1603,6 +1603,98 @@ static void test_wndproc(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
             (LONG_PTR)DefWindowProcA, proc);
+
+done:
+    filter_messages = NULL;
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(dummy_window);
+    DestroyWindow(device_window);
+    DestroyWindow(focus_window);
+    UnregisterClassA("d3d8_test_wndproc_wc", GetModuleHandleA(NULL));
+}
+
+static void test_wndproc_windowed(void)
+{
+    HWND device_window, focus_window, dummy_window, tmp;
+    IDirect3DDevice8 *device;
+    WNDCLASSA wc = {0};
+    IDirect3D8 *d3d8;
+    LONG_PTR proc;
+    ULONG ref;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping tests.\n");
+        return;
+    }
+
+    wc.lpfnWndProc = test_proc;
+    wc.lpszClassName = "d3d8_test_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    focus_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    device_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    dummy_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+
+    proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    trace("device_window %p, focus_window %p, dummy_window %p.\n", device_window, focus_window, dummy_window);
+
+    tmp = GetFocus();
+    ok(tmp == dummy_window, "Expected focus %p, got %p.\n", dummy_window, tmp);
+
+    filter_messages = focus_window;
+
+    device = create_device(d3d8, device_window, focus_window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    tmp = GetFocus();
+    ok(tmp == dummy_window, "Expected focus %p, got %p.\n", dummy_window, tmp);
+
+    proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+            (LONG_PTR)test_proc, proc);
+
+    ref = IDirect3DDevice8_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+    filter_messages = device_window;
+
+    device = create_device(d3d8, focus_window, focus_window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    ref = IDirect3DDevice8_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+    device = create_device(d3d8, device_window, focus_window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    ref = IDirect3DDevice8_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
 
 done:
     filter_messages = NULL;
@@ -1649,5 +1741,6 @@ START_TEST(device)
         test_render_zero_triangles();
         test_depth_stencil_reset();
         test_wndproc();
+        test_wndproc_windowed();
     }
 }
