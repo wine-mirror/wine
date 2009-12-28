@@ -549,7 +549,7 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define to 1 if `ns_msg' is a member of `_msg_ptr'. */
+/* Define to 1 if `_msg_ptr' is a member of `ns_msg'. */
 #undef HAVE_NS_MSG__MSG_PTR
 
 /* Define to 1 if the system has the type `off_t'. */
@@ -660,7 +660,7 @@
 /* Define to 1 if you have the `sched_yield' function. */
 #undef HAVE_SCHED_YIELD
 
-/* Define to 1 if `scsireq_t' is a member of `cmd'. */
+/* Define to 1 if `cmd' is a member of `scsireq_t'. */
 #undef HAVE_SCSIREQ_T_CMD
 
 /* Define to 1 if you have the <scsi/scsi.h> header file. */
@@ -687,7 +687,7 @@
 /* Define to 1 if you have the `settimeofday' function. */
 #undef HAVE_SETTIMEOFDAY
 
-/* Define to 1 if `sg_io_hdr_t' is a member of `interface_id'. */
+/* Define to 1 if `interface_id' is a member of `sg_io_hdr_t'. */
 #undef HAVE_SG_IO_HDR_T_INTERFACE_ID
 
 /* Define if sigaddset is supported */
@@ -696,7 +696,7 @@
 /* Define to 1 if you have the `sigaltstack' function. */
 #undef HAVE_SIGALTSTACK
 
-/* Define to 1 if `siginfo_t' is a member of `si_fd'. */
+/* Define to 1 if `si_fd' is a member of `siginfo_t'. */
 #undef HAVE_SIGINFO_T_SI_FD
 
 /* Define to 1 if you have the `sigprocmask' function. */
@@ -768,67 +768,67 @@
 /* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 
-/* Define to 1 if `struct ff_effect' is a member of `direction'. */
+/* Define to 1 if `direction' is a member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 
-/* Define to 1 if `struct icmpstat' is a member of `icps_outhist'. */
+/* Define to 1 if `icps_outhist' is a member of `struct icmpstat'. */
 #undef HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST
 
-/* Define to 1 if `struct msghdr' is a member of `msg_accrights'. */
+/* Define to 1 if `msg_accrights' is a member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 
-/* Define to 1 if `struct mtget' is a member of `mt_blkno'. */
+/* Define to 1 if `mt_blkno' is a member of `struct mtget'. */
 #undef HAVE_STRUCT_MTGET_MT_BLKNO
 
-/* Define to 1 if `struct mtget' is a member of `mt_blksiz'. */
+/* Define to 1 if `mt_blksiz' is a member of `struct mtget'. */
 #undef HAVE_STRUCT_MTGET_MT_BLKSIZ
 
-/* Define to 1 if `struct mtget' is a member of `mt_gstat'. */
+/* Define to 1 if `mt_gstat' is a member of `struct mtget'. */
 #undef HAVE_STRUCT_MTGET_MT_GSTAT
 
-/* Define to 1 if `struct option' is a member of `name'. */
+/* Define to 1 if `name' is a member of `struct option'. */
 #undef HAVE_STRUCT_OPTION_NAME
 
-/* Define to 1 if `struct sockaddr_in6' is a member of `sin6_scope_id'. */
+/* Define to 1 if `sin6_scope_id' is a member of `struct sockaddr_in6'. */
 #undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
 
-/* Define to 1 if `struct sockaddr' is a member of `sa_len'. */
+/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
-/* Define to 1 if `struct sockaddr_un' is a member of `sun_len'. */
+/* Define to 1 if `sun_len' is a member of `struct sockaddr_un'. */
 #undef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
 
-/* Define to 1 if `struct statfs' is a member of `f_bavail'. */
+/* Define to 1 if `f_bavail' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_BAVAIL
 
-/* Define to 1 if `struct statfs' is a member of `f_bfree'. */
+/* Define to 1 if `f_bfree' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_BFREE
 
-/* Define to 1 if `struct statfs' is a member of `f_favail'. */
+/* Define to 1 if `f_favail' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_FAVAIL
 
-/* Define to 1 if `struct statfs' is a member of `f_ffree'. */
+/* Define to 1 if `f_ffree' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_FFREE
 
-/* Define to 1 if `struct statfs' is a member of `f_frsize'. */
+/* Define to 1 if `f_frsize' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_FRSIZE
 
-/* Define to 1 if `struct statfs' is a member of `f_namelen'. */
+/* Define to 1 if `f_namelen' is a member of `struct statfs'. */
 #undef HAVE_STRUCT_STATFS_F_NAMELEN
 
-/* Define to 1 if `struct statvfs' is a member of `f_blocks'. */
+/* Define to 1 if `f_blocks' is a member of `struct statvfs'. */
 #undef HAVE_STRUCT_STATVFS_F_BLOCKS
 
-/* Define to 1 if `struct stat' is a member of `st_atim'. */
+/* Define to 1 if `st_atim' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_ATIM
 
-/* Define to 1 if `struct stat' is a member of `st_blocks'. */
+/* Define to 1 if `st_blocks' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLOCKS
 
-/* Define to 1 if `struct stat' is a member of `st_ctim'. */
+/* Define to 1 if `st_ctim' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_CTIM
 
-/* Define to 1 if `struct stat' is a member of `st_mtim'. */
+/* Define to 1 if `st_mtim' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM
 
 /* Define to 1 if the system has the type `struct xinpgen'. */
@@ -1071,7 +1071,7 @@
 /* Define to 1 if you have the <X11/Xutil.h> header file. */
 #undef HAVE_X11_XUTIL_H
 
-/* Define to 1 if `XICCallback' is a member of `callback'. */
+/* Define to 1 if `callback' is a member of `XICCallback'. */
 #undef HAVE_XICCALLBACK_CALLBACK
 
 /* Define if you have the XKB extension */
