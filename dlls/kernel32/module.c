@@ -31,7 +31,6 @@
 #endif
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "wine/winbase16.h"
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -43,6 +42,8 @@
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
+
+#define NE_FFLAGS_LIBMODULE 0x8000
 
 static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
 

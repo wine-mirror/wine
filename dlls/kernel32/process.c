@@ -43,10 +43,9 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "winternl.h"
 #include "kernel_private.h"
+#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

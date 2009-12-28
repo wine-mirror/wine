@@ -44,7 +44,6 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "wincon.h"
-#include "wine/winbase16.h"
 #include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"

@@ -39,13 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
-/* handle conversions */
-#define HRSRC_32(h16)   ((HRSRC)(ULONG_PTR)(h16))
-#define HRSRC_16(h32)   (LOWORD(h32))
-#define HGLOBAL_32(h16) ((HGLOBAL)(ULONG_PTR)(h16))
-#define HGLOBAL_16(h32) (LOWORD(h32))
-#define HMODULE_16(h32) (LOWORD(h32))
-
 /* retrieve the resource name to pass to the ntdll functions */
 static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
 {

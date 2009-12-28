@@ -35,7 +35,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
-#include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/server.h"
