@@ -438,13 +438,6 @@ int main( int argc, char *argv[] )
     LoadLibrary16( "user.exe" );
     LoadLibrary16( "mmsystem.dll" );
 
-    /* make sure system drivers are loaded */
-    LoadLibrary16( "comm.drv" );
-    LoadLibrary16( "display.drv" );
-    LoadLibrary16( "keyboard.drv" );
-    LoadLibrary16( "mouse.drv" );
-    LoadLibrary16( "sound.drv" );
-
     if ((instance = LoadModule16( appname, &params )) < 32)
     {
         if (instance == 11)

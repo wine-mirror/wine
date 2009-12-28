@@ -1940,6 +1940,9 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE16 inst, WORD ds,
 
     USER_HeapSel = ds;
     register_wow_handlers();
+    LoadLibrary16( "display.drv" );
+    LoadLibrary16( "keyboard.drv" );
+    LoadLibrary16( "mouse.drv" );
     return TRUE;
 }
 

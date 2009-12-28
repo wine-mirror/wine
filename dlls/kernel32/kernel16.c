@@ -86,6 +86,7 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
 
     /* Force loading of some dlls */
     LoadLibrary16( "system.drv" );
+    LoadLibrary16( "comm.drv" );
 
     return TRUE;
 }

@@ -69,8 +69,9 @@ CRITICAL_SECTION mmdrv_cs = { &mmdrv_critsect_debug, -1, 0, 0, 0, 0 };
 BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
-    TRACE("%p 0x%x\n", hinstDLL, fdwReason);
+    static int done;
 
+    if (!done++) LoadLibrary16( "sound.drv" );
     return TRUE;
 }
 

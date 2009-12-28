@@ -273,9 +273,6 @@ static BOOL process_attach(void)
 {
     LoadLibrary16( "user.exe" );
 
-    /* some Win9x dlls expect keyboard to be loaded */
-    if (GetVersion() & 0x80000000) LoadLibrary16( "keyboard.drv" );
-
     winstation_init();
 
     /* Initialize system colors and metrics */
