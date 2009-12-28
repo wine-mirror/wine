@@ -228,25 +228,17 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
 {
     const char *token;
     unsigned int i;
+    int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
 
-    switch(spec->type)
+    if (!is_win32 && odp->type == TYPE_STDCALL)
     {
-    case SPEC_WIN16:
-        if (odp->type == TYPE_STDCALL)
-        {
-            error( "'stdcall' not supported for Win16\n" );
-            return 0;
-        }
-        break;
-    case SPEC_WIN32:
-        if (odp->type == TYPE_PASCAL)
-        {
-            error( "'pascal' not supported for Win32\n" );
-            return 0;
-        }
-        break;
-    default:
-        break;
+        error( "'stdcall' not supported for Win16\n" );
+        return 0;
+    }
+    if (is_win32 && odp->type == TYPE_PASCAL)
+    {
+        error( "'pascal' not supported for Win32\n" );
+        return 0;
     }
 
     if (!(token = GetToken(0))) return 0;
@@ -288,7 +280,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
             return 0;
         }
 
-        if (spec->type == SPEC_WIN32)
+        if (is_win32)
         {
             if (strcmp(token, "long") &&
                 strcmp(token, "ptr") &&
@@ -296,7 +288,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
                 strcmp(token, "wstr") &&
                 strcmp(token, "double"))
             {
-                error( "Type '%s' not supported for Win32\n", token );
+                error( "Type '%s' not supported for Win32 function\n", token );
                 return 0;
             }
         }
@@ -325,7 +317,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         odp->link_name = xstrdup( token );
         if (strchr( odp->link_name, '.' ))
         {
-            if (spec->type == SPEC_WIN16)
+            if (!is_win32)
             {
                 error( "Forwarded functions not supported for Win16\n" );
                 return 0;
@@ -421,7 +413,7 @@ static int parse_spec_extern( ORDDEF *odp, DLLSPEC *spec )
  *
  * Parse the optional flags for an entry point in a .spec file.
  */
-static const char *parse_spec_flags( ORDDEF *odp )
+static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
 {
     unsigned int i;
     const char *token;
@@ -436,7 +428,12 @@ static const char *parse_spec_flags( ORDDEF *odp )
             while (cpu_name)
             {
                 if (!strcmp( cpu_name, "win32" ))
-                    odp->flags |= FLAG_CPU_WIN32;
+                {
+                    if (spec->type == SPEC_WIN32)
+                        odp->flags |= FLAG_CPU_WIN32;
+                    else
+                        odp->flags |= FLAG_EXPORT32;
+                }
                 else if (!strcmp( cpu_name, "win64" ))
                     odp->flags |= FLAG_CPU_WIN64;
                 else
@@ -499,7 +496,13 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     }
 
     if (!(token = GetToken(0))) goto error;
-    if (*token == '-' && !(token = parse_spec_flags( odp ))) goto error;
+    if (*token == '-' && !(token = parse_spec_flags( spec, odp ))) goto error;
+
+    if (ordinal == -1 && spec->type != SPEC_WIN32 && !(odp->flags & FLAG_EXPORT32))
+    {
+        error( "'@' ordinals not supported for Win16\n" );
+        goto error;
+    }
 
     odp->name = xstrdup( token );
     odp->lineno = current_line;
@@ -650,7 +653,8 @@ static void assign_names( DLLSPEC *spec )
     {
         const char *name1 = all_names[i]->name ? all_names[i]->name : all_names[i]->export_name;
         const char *name2 = all_names[i+1]->name ? all_names[i+1]->name : all_names[i+1]->export_name;
-        if (!strcmp( name1, name2 ))
+        if (!strcmp( name1, name2 ) &&
+            !((all_names[i]->flags ^ all_names[i+1]->flags) & FLAG_EXPORT32))
         {
             current_line = max( all_names[i]->lineno, all_names[i+1]->lineno );
             error( "'%s' redefined\n%s:%d: First defined here\n",
@@ -737,12 +741,14 @@ static void assign_ordinals( DLLSPEC *spec )
  */
 void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
 {
+    int i;
     ORDDEF *odp;
 
     /* add an export for the NE module */
 
     odp = add_entry_point( spec32 );
     odp->type = TYPE_EXTERN;
+    odp->flags = FLAG_PRIVATE;
     odp->name = xstrdup( "__wine_spec_dos_header" );
     odp->lineno = 0;
     odp->ordinal = 1;
@@ -752,10 +758,30 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
     {
         odp = add_entry_point( spec32 );
         odp->type = TYPE_EXTERN;
+        odp->flags = FLAG_PRIVATE;
         odp->name = xstrdup( "__wine_spec_main_module" );
         odp->lineno = 0;
         odp->ordinal = 2;
         odp->link_name = xstrdup( ".L__wine_spec_main_module" );
+    }
+
+    /* add the explicit win32 exports */
+
+    for (i = 1; i <= spec16->limit; i++)
+    {
+        ORDDEF *odp16 = spec16->ordinals[i];
+
+        if (!odp16 || !odp16->name) continue;
+        if (!(odp16->flags & FLAG_EXPORT32)) continue;
+
+        odp = add_entry_point( spec32 );
+        odp->flags = odp16->flags & ~FLAG_EXPORT32;
+        odp->type = odp16->type;
+        odp->name = xstrdup( odp16->name );
+        odp->lineno = odp16->lineno;
+        odp->ordinal = -1;
+        odp->link_name = xstrdup( odp16->link_name );
+        strcpy( odp->u.func.arg_types, odp16->u.func.arg_types );
     }
 
     assign_names( spec32 );
@@ -783,11 +809,6 @@ int parse_spec_file( FILE *file, DLLSPEC *spec )
         if (!(token = GetToken(1))) continue;
         if (strcmp(token, "@") == 0)
         {
-            if (spec->type != SPEC_WIN32)
-            {
-                error( "'@' ordinals not supported for Win16\n" );
-                continue;
-            }
             if (!parse_spec_ordinal( -1, spec )) continue;
         }
         else if (IsNumberString(token))

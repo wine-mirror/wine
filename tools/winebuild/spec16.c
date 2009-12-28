@@ -57,6 +57,7 @@ static const char * const nop_sequence[4] =
 
 static inline int is_function( const ORDDEF *odp )
 {
+    if (odp->flags & FLAG_EXPORT32) return 0;
     return (odp->type == TYPE_CDECL ||
             odp->type == TYPE_PASCAL ||
             odp->type == TYPE_VARARGS ||
@@ -130,6 +131,7 @@ static void output_entry_table( DLLSPEC *spec )
         int selector = 0;
         ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
+        if (odp->flags & FLAG_EXPORT32) continue;
 
         switch (odp->type)
         {
@@ -704,6 +706,7 @@ static void output_module16( DLLSPEC *spec )
     {
         ORDDEF *odp = spec->ordinals[i];
         if (!odp || !odp->name[0]) continue;
+        if (odp->flags & FLAG_EXPORT32) continue;
         output_resident_name( odp->name, i );
     }
     output( "\t.byte 0\n" );

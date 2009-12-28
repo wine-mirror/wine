@@ -146,6 +146,7 @@ extern enum target_platform target_platform;
 
 #define FLAG_FORWARD   0x100  /* function is a forwarded name */
 #define FLAG_EXT_LINK  0x200  /* function links to an external symbol */
+#define FLAG_EXPORT32  0x400  /* 32-bit export in 16-bit spec file */
 
 #define FLAG_CPU(cpu)  (0x01000 << (cpu))
 #define FLAG_CPU_MASK  (FLAG_CPU(CPU_LAST + 1) - FLAG_CPU(0))
