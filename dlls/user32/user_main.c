@@ -29,7 +29,6 @@
 #include "controls.h"
 #include "user_private.h"
 #include "win.h"
-#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -271,8 +270,6 @@ static void winstation_init(void)
  */
 static BOOL process_attach(void)
 {
-    LoadLibrary16( "user.exe" );
-
     winstation_init();
 
     /* Initialize system colors and metrics */
@@ -280,6 +277,8 @@ static BOOL process_attach(void)
 
     /* Setup palette function pointers */
     palette_init();
+
+    LoadLibraryA( "user.exe16" );
 
     /* Initialize built-in window classes */
     CLASS_RegisterBuiltinClasses();
