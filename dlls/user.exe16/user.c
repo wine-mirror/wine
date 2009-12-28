@@ -43,7 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 /* handle16 to handle conversions */
 #define HANDLE_32(h16)		((HANDLE)(ULONG_PTR)(h16))
 #define HGDIOBJ_32(h16)		((HGDIOBJ)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 #define IS_MENU_STRING_ITEM(flags) \
     (((flags) & (MF_STRING | MF_BITMAP | MF_OWNERDRAW | MF_SEPARATOR)) == MF_STRING)
@@ -1063,7 +1062,7 @@ HICON16 WINAPI LoadIcon16(HINSTANCE16 hInstance, LPCSTR name)
  */
 HBITMAP16 WINAPI LoadBitmap16(HINSTANCE16 hInstance, LPCSTR name)
 {
-  return HBITMAP_16(LoadBitmapA(HINSTANCE_32(hInstance), name));
+    return LoadImage16( hInstance, name, IMAGE_BITMAP, 0, 0, 0 );
 }
 
 /**********************************************************************
@@ -1978,10 +1977,12 @@ DWORD WINAPI GetMenuContextHelpId16( HMENU16 hMenu )
 
 /***********************************************************************
  *		LoadImage (USER.389)
- *
  */
 HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 cx, INT16 cy, UINT16 flags)
 {
+    HGLOBAL16 handle;
+    HRSRC16 hRsrc, hGroupRsrc;
+
     if (!hinst || (flags & LR_LOADFROMFILE))
         return HICON_16( LoadImageA( 0, name, type, cx, cy, flags ));
 
@@ -2004,14 +2005,39 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
     switch (type)
     {
     case IMAGE_BITMAP:
-        return HBITMAP_16( LoadImageA( HINSTANCE_32(hinst), name, type, cx, cy, flags ));
+    {
+        HBITMAP ret = 0;
+        char *ptr;
+        static const WCHAR prefixW[] = {'b','m','p',0};
+        WCHAR path[MAX_PATH], filename[MAX_PATH];
+        HANDLE file;
+
+        filename[0] = 0;
+        if (!(hRsrc = FindResource16( hinst, name, (LPCSTR)RT_BITMAP ))) return 0;
+        if (!(handle = LoadResource16( hinst, hRsrc ))) return 0;
+        if (!(ptr = LockResource16( handle ))) goto done;
+
+        if (!GetTempPathW( MAX_PATH, path )) goto done;
+        if (!GetTempFileNameW( path, prefixW, 0, filename )) goto done;
+
+        file = CreateFileW( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            DWORD written, size = SizeofResource16( hinst, hRsrc );
+            BOOL ok = WriteFile( file, ptr, size, &written, NULL ) && (written == size);
+            CloseHandle( file );
+            if (ok) ret = LoadImageW( 0, filename, IMAGE_BITMAP, cx, cy, flags | LR_LOADFROMFILE );
+        }
+    done:
+        if (filename[0]) DeleteFileW( filename );
+        FreeResource16( handle );
+        return HBITMAP_16( ret );
+    }
 
     case IMAGE_ICON:
     case IMAGE_CURSOR:
     {
-        HANDLE16 handle;
         HICON16 hIcon = 0;
-        HRSRC16 hRsrc, hGroupRsrc;
         BYTE *dir, *bits;
         INT id = 0;
 
