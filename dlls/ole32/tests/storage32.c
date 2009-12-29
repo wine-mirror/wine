@@ -1593,6 +1593,8 @@ static void test_ReadClassStm(void)
     hr = ReadClassStm(pStream, &clsid);
     ok_ole_success(hr, "ReadClassStm");
     ok(IsEqualCLSID(&clsid, &test_stg_cls), "clsid should have been set to CLSID_WineTest\n");
+
+    IStream_Release(pStream);
 }
 
 struct access_res
