@@ -3282,3 +3282,13 @@ void X11DRV_SelectionClear( HWND hWnd, XEvent *xev )
         X11DRV_CLIPBOARD_ReleaseSelection( event->display, event->selection,
                                            event->window, hWnd, event->time );
 }
+
+/***********************************************************************
+ *           X11DRV_Clipboard_Cleanup
+ */
+void X11DRV_Clipboard_Cleanup(void)
+{
+    selectionAcquired = S_NOSELECTION;
+
+    X11DRV_EmptyClipboard(FALSE);
+}
