@@ -2009,13 +2009,22 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
         HBITMAP ret = 0;
         char *ptr;
         static const WCHAR prefixW[] = {'b','m','p',0};
+        BITMAPFILEHEADER header;
         WCHAR path[MAX_PATH], filename[MAX_PATH];
         HANDLE file;
+        DWORD size;
 
         filename[0] = 0;
         if (!(hRsrc = FindResource16( hinst, name, (LPCSTR)RT_BITMAP ))) return 0;
         if (!(handle = LoadResource16( hinst, hRsrc ))) return 0;
         if (!(ptr = LockResource16( handle ))) goto done;
+        size = SizeofResource16( hinst, hRsrc );
+
+        header.bfType = 0x4d42; /* 'BM' */
+        header.bfReserved1 = 0;
+        header.bfReserved2 = 0;
+        header.bfSize = sizeof(header) + size;
+        header.bfOffBits = 0;  /* not used by the 32-bit loading code */
 
         if (!GetTempPathW( MAX_PATH, path )) goto done;
         if (!GetTempFileNameW( path, prefixW, 0, filename )) goto done;
@@ -2023,8 +2032,10 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
         file = CreateFileW( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
         if (file != INVALID_HANDLE_VALUE)
         {
-            DWORD written, size = SizeofResource16( hinst, hRsrc );
-            BOOL ok = WriteFile( file, ptr, size, &written, NULL ) && (written == size);
+            DWORD written;
+            BOOL ok;
+            ok = WriteFile( file, &header, sizeof(header), &written, NULL ) && (written == sizeof(header));
+            if (ok) ok = WriteFile( file, ptr, size, &written, NULL ) && (written == size);
             CloseHandle( file );
             if (ok) ret = LoadImageW( 0, filename, IMAGE_BITMAP, cx, cy, flags | LR_LOADFROMFILE );
         }
