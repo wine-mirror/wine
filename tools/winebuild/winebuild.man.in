@@ -167,9 +167,9 @@ option.
 Generate 32-bit, respectively 64-bit code.
 .TP
 .BI \-M,\ --main-module= module
-Specify that we are building a 16-bit dll, that will ultimately be
-linked together with the 32-bit dll specified in \fImodule\fR.  Only
-meaningful in \fB--dll\fR mode.
+When building a 16-bit dll, set the name of its 32-bit counterpart to
+\fImodule\fR. This is used to enforce that the load order for the
+16-bit dll matches that of the 32-bit one.
 .TP
 .BI \-N,\ --dll-name= dllname
 Set the internal name of the module. It is only used in Win16
@@ -307,7 +307,11 @@ The entry point will be imported by ordinal instead of by name. The
 name is still exported.
 .TP
 .BI -arch= cpu[,cpu]
-The entry point is only available on the specified CPU architecture(s).
+The entry point is only available on the specified CPU
+architecture(s). The names \fBwin32\fR and \fBwin64\fR match all
+32-bit, respectively 64-bit, CPU architectures. In 16-bit dlls,
+specifying \fB-arch=win32\fR causes the entry point to be exported
+from the 32-bit wrapper module.
 .SS "Function ordinals"
 Syntax:
 .br

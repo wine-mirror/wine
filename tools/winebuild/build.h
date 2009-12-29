@@ -269,7 +269,6 @@ extern void output_res_o_file( DLLSPEC *spec );
 
 extern void BuildRelays16(void);
 extern void BuildRelays32(void);
-extern void BuildSpec16File( DLLSPEC *spec );
 extern void BuildSpec32File( DLLSPEC *spec );
 
 extern void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 );

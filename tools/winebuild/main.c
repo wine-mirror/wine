@@ -633,13 +633,6 @@ int main(int argc, char **argv)
         if (spec->subsystem != IMAGE_SUBSYSTEM_NATIVE)
             spec->characteristics |= IMAGE_FILE_DLL;
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
-        if (spec->type == SPEC_WIN32 && spec->main_module)  /* embedded 16-bit module */
-        {
-            spec->type = SPEC_WIN16;
-            load_resources( argv, spec );
-            if (parse_input_file( spec )) BuildSpec16File( spec );
-            break;
-        }
         /* fall through */
     case MODE_EXE:
         load_resources( argv, spec );

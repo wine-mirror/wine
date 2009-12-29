@@ -463,81 +463,6 @@ static int sort_func_list( ORDDEF **list, int count,
 
 
 /*******************************************************************
- *         output_init_code
- *
- * Output the dll initialization code.
- */
-static void output_init_code( const DLLSPEC *spec )
-{
-    char name[80];
-
-    sprintf( name, ".L__wine_spec_%s_init", make_c_identifier(spec->dll_name) );
-
-    output( "\n/* dll initialization code */\n\n" );
-    output( "\t.text\n" );
-    output( "\t.align 4\n" );
-    output( "\t%s\n", func_declaration(name) );
-    output( "%s:\n", name );
-    output( "\tsubl $4,%%esp\n" );
-    if (UsePIC)
-    {
-        output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-        output( "1:\tleal .L__wine_spec_file_name-1b(%%eax),%%ecx\n" );
-        output( "\tpushl %%ecx\n" );
-        output( "\tleal .L__wine_spec_dos_header-1b(%%eax),%%ecx\n" );
-        output( "\tpushl %%ecx\n" );
-    }
-    else
-    {
-        output( "\tpushl $.L__wine_spec_file_name\n" );
-        output( "\tpushl $.L__wine_spec_dos_header\n" );
-    }
-    output( "\tcall %s\n", asm_name("__wine_dll_register_16") );
-    output( "\taddl $12,%%esp\n" );
-    output( "\tret\n" );
-    output_function_size( name );
-
-    sprintf( name, ".L__wine_spec_%s_fini", make_c_identifier(spec->dll_name) );
-
-    output( "\t.align 4\n" );
-    output( "\t%s\n", func_declaration(name) );
-    output( "%s:\n", name );
-    output( "\tsubl $8,%%esp\n" );
-    if (UsePIC)
-    {
-        output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-        output( "1:\tleal .L__wine_spec_dos_header-1b(%%eax),%%ecx\n" );
-        output( "\tpushl %%ecx\n" );
-    }
-    else
-    {
-        output( "\tpushl $.L__wine_spec_dos_header\n" );
-    }
-    output( "\tcall %s\n", asm_name("__wine_dll_unregister_16") );
-    output( "\taddl $12,%%esp\n" );
-    output( "\tret\n" );
-    output_function_size( name );
-
-    if (target_platform == PLATFORM_APPLE)
-    {
-        output( "\t.mod_init_func\n" );
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t.long .L__wine_spec_%s_init\n", make_c_identifier(spec->dll_name) );
-        output( "\t.mod_term_func\n" );
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t.long .L__wine_spec_%s_fini\n", make_c_identifier(spec->dll_name) );
-    }
-    else
-    {
-        output( "\t.section \".init\",\"ax\"\n" );
-        output( "\tcall .L__wine_spec_%s_init\n", make_c_identifier(spec->dll_name) );
-        output( "\t.section \".fini\",\"ax\"\n" );
-        output( "\tcall .L__wine_spec_%s_fini\n", make_c_identifier(spec->dll_name) );
-    }
-}
-
-
-/*******************************************************************
  *         output_module16
  *
  * Output code for a 16-bit module.
@@ -827,27 +752,6 @@ static void output_module16( DLLSPEC *spec )
     }
 
     free( typelist );
-}
-
-
-/*******************************************************************
- *         BuildSpec16File
- *
- * Build a Win16 assembly file from a spec file.
- */
-void BuildSpec16File( DLLSPEC *spec )
-{
-    output_standard_file_header();
-    output_module16( spec );
-    output_init_code( spec );
-
-    output( "\n\t%s\n", get_asm_string_section() );
-    output( ".L__wine_spec_file_name:\n" );
-    output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
-
-    output_stubs( spec );
-    output_get_pc_thunk();
-    output_gnu_stack_note();
 }
 
 
