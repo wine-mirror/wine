@@ -549,6 +549,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                     goto isc_end;
                 }
                 username = ntlm_GetUsernameArg(ui->wkui1_username, -1);
+                NetApiBufferFree(ui);
 
                 TRACE("using cached credentials\n");
 
@@ -820,6 +821,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_BUFFER_TOO_SMALL;
         if ((phContext == NULL) && (pInput == NULL))
         {
+            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
@@ -838,6 +840,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_BUFFER_TOO_SMALL;
         if ((phContext == NULL) && (pInput == NULL))
         {
+            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
@@ -851,6 +854,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         ret = SEC_E_INTERNAL_ERROR;
         if ((phContext == NULL) && (pInput == NULL))
         {
+            HeapFree(GetProcessHeap(), 0, helper->session_key);
             cleanup_helper(helper);
             phNewContext->dwUpper = 0;
             phNewContext->dwLower = 0;
