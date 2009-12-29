@@ -108,7 +108,7 @@ guiProgress (va_list ap)
     else progressScale = 1;
     pb = GetDlgItem (dialog, IDC_PB0 + progressGroup * 2);
     SendMessage (pb, PBM_SETRANGE, 0, MAKELPARAM (0, max));
-    SendMessage (pb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessage (pb, PBM_SETSTEP, 1, 0);
     return 0;
 }
 
@@ -134,7 +134,7 @@ guiStep (va_list ap)
     progressCurr++;
     SetDlgItemText (dialog, pgID, str);
     SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
-                        (WPARAM)(progressScale * progressCurr), 0);
+                        progressScale * progressCurr, 0);
     heap_free (str);
     return 0;
 }
@@ -163,7 +163,7 @@ guiDelta (va_list ap)
     progressCurr += inc;
     SetDlgItemText (dialog, pgID, str);
     SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
-                        (WPARAM)(progressScale * progressCurr), 0);
+                        progressScale * progressCurr, 0);
     heap_free (str);
     return 0;
 }
