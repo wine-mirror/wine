@@ -118,7 +118,6 @@ dlls/sti/sti_wia.h
 dlls/sti/sti_wia_p.c
 dlls/urlmon/urlmon_urlmon.h
 dlls/urlmon/urlmon_urlmon_p.c
-dlls/wprocs.dll16
 include/activaut.h
 include/activdbg.h
 include/activscp.h

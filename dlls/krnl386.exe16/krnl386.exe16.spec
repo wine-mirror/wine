@@ -523,10 +523,28 @@
 703 stub CallProc32WFix
 704 pascal -register SSConfirmSmallStack() SSConfirmSmallStack
 
-
 # Win95 krnl386.exe also exports ordinals 802-864,
 # however, those seem to be only callback stubs that are
 # never called directly by other modules ...
+
+################################################################
+# VxD entry points
+#
+ 901 pascal -register __wine_vxd_vmm() __wine_vxd_vmm
+ 905 pascal -register __wine_vxd_timer() __wine_vxd_timer
+ 909 pascal -register __wine_vxd_reboot() __wine_vxd_reboot
+ 910 pascal -register __wine_vxd_vdd() __wine_vxd_vdd
+ 912 pascal -register __wine_vxd_vmd() __wine_vxd_vmd
+ 914 pascal -register __wine_vxd_comm() __wine_vxd_comm
+#915 pascal -register __wine_vxd_printer() __wine_vxd_printer
+ 923 pascal -register __wine_vxd_shell() __wine_vxd_shell
+ 933 pascal -register __wine_vxd_pagefile() __wine_vxd_pagefile
+ 938 pascal -register __wine_vxd_apm() __wine_vxd_apm
+ 939 pascal -register __wine_vxd_vxdloader() __wine_vxd_vxdloader
+ 945 pascal -register __wine_vxd_win32s() __wine_vxd_win32s
+ 951 pascal -register __wine_vxd_configmg() __wine_vxd_configmg
+ 955 pascal -register __wine_vxd_enable() __wine_vxd_enable
+1990 pascal -register __wine_vxd_timerapi() __wine_vxd_timerapi
 
 ################################################################
 # 32-bit version of the various 16-bit functions exported by kernel32

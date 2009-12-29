@@ -39,8 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-/* base WPROCS.DLL ordinal number for VxDs */
-#define VXD_BASE 400
+/* base KERNEL ordinal number for VxDs */
+#define VXD_BASE 900
 
 typedef struct
 {
@@ -432,8 +432,7 @@ static void do_int2f_16( CONTEXT86 *context )
 
     case 0x84:  /* Get device API entry point */
         {
-            HMODULE16 mod = GetModuleHandle16("wprocs");
-            if (mod < 32) mod = LoadLibrary16( "wprocs" );
+            HMODULE16 mod = GetModuleHandle16("kernel");
             addr = (DWORD)GetProcAddress16( mod, (LPCSTR)(VXD_BASE + BX_reg(context)) );
             if (!addr)  /* not supported */
                 ERR("Accessing unknown VxD %04x - Expect a failure now.\n", BX_reg(context) );

@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = winedos.dll
 IMPORTS   = user32 kernel32 ntdll
 
-SPEC_SRCS16 = wprocs.spec
-
 C_SRCS = \
 	devices.c \
 	dma.c \
@@ -36,7 +34,6 @@ C_SRCS = \
 	soundblaster.c \
 	timer.c \
 	vga.c \
-	vxd.c \
 	xms.c
 
 @MAKE_DLL_RULES@

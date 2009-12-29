@@ -18,7 +18,7 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 # 16-bit dlls
 
 WIN16_FILES = \
-	wprocs.dll16
+
 
 @MAKE_RULES@
 
@@ -27,9 +27,6 @@ WIN16_FILES = \
 all: $(BUILDSUBDIRS) @WIN16_FILES@
 
 # Placeholders for 16-bit libraries
-
-wprocs.dll16:
-	echo "winedos.dll" >$@
 
 # Import libraries
 

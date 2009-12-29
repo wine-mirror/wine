@@ -298,4 +298,43 @@ static inline struct kernel_thread_data *kernel_get_thread_data(void)
                        "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
                        "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
 
+#define AX_reg(context)      ((WORD)(context)->Eax)
+#define BX_reg(context)      ((WORD)(context)->Ebx)
+#define CX_reg(context)      ((WORD)(context)->Ecx)
+#define DX_reg(context)      ((WORD)(context)->Edx)
+#define SI_reg(context)      ((WORD)(context)->Esi)
+#define DI_reg(context)      ((WORD)(context)->Edi)
+
+#define AL_reg(context)      ((BYTE)(context)->Eax)
+#define AH_reg(context)      ((BYTE)((context)->Eax >> 8))
+#define BL_reg(context)      ((BYTE)(context)->Ebx)
+#define BH_reg(context)      ((BYTE)((context)->Ebx >> 8))
+#define CL_reg(context)      ((BYTE)(context)->Ecx)
+#define CH_reg(context)      ((BYTE)((context)->Ecx >> 8))
+#define DL_reg(context)      ((BYTE)(context)->Edx)
+#define DH_reg(context)      ((BYTE)((context)->Edx >> 8))
+
+#define SET_CFLAG(context)   ((context)->EFlags |= 0x0001)
+#define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
+#define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
+#define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
+#define ISV86(context)       ((context)->EFlags & 0x00020000)
+
+#define SET_AX(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xffff) | (WORD)(val)))
+#define SET_BX(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xffff) | (WORD)(val)))
+#define SET_CX(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xffff) | (WORD)(val)))
+#define SET_DX(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xffff) | (WORD)(val)))
+#define SET_SI(context,val)  ((void)((context)->Esi = ((context)->Esi & ~0xffff) | (WORD)(val)))
+#define SET_DI(context,val)  ((void)((context)->Edi = ((context)->Edi & ~0xffff) | (WORD)(val)))
+
+#define SET_AL(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xff) | (BYTE)(val)))
+#define SET_BL(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xff) | (BYTE)(val)))
+#define SET_CL(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xff) | (BYTE)(val)))
+#define SET_DL(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xff) | (BYTE)(val)))
+
+#define SET_AH(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_BH(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_CH(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_DH(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xff00) | (((BYTE)(val)) << 8)))
+
 #endif  /* __WINE_KERNEL16_PRIVATE_H */
