@@ -505,7 +505,9 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
             /* Does strlenW(bufW) == 0 mean we use the filename? */
             len = strlenW(bufW) + 1;
             TRACE("found FileDescription: %s\n", debugstr_w(bufW));
-            return ASSOC_ReturnData(pszOut, pcchOut, bufW, len);
+            hr = ASSOC_ReturnData(pszOut, pcchOut, bufW, len);
+            HeapFree(GetProcessHeap(), 0, verinfoW);
+            return hr;
           }
         }
       }
@@ -513,7 +515,9 @@ get_friendly_name_fail:
       PathRemoveExtensionW(path);
       PathStripPathW(path);
       TRACE("using filename: %s\n", debugstr_w(path));
-      return ASSOC_ReturnData(pszOut, pcchOut, path, strlenW(path) + 1);
+      hr = ASSOC_ReturnData(pszOut, pcchOut, path, strlenW(path) + 1);
+      HeapFree(GetProcessHeap(), 0, verinfoW);
+      return hr;
     }
 
     case ASSOCSTR_CONTENTTYPE:
