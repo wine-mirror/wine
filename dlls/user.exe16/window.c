@@ -347,7 +347,7 @@ INT16 WINAPI GetWindowText16( HWND16 hwnd, SEGPTR lpString, INT16 nMaxCount )
  */
 BOOL16 WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
 {
-    return SendMessage16( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
+    return SendMessage16( hwnd, WM_SETTEXT, 0, lpString );
 }
 
 
@@ -1475,9 +1475,9 @@ void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
         HWND parent = WIN_Handle32(hwndParent), hwnd32 = WIN_Handle32(hwnd);
 
         if (!parent) return;
-        hbrush = SendMessageW( parent, WM_CTLCOLORMSGBOX + hbrush, (WPARAM)hdc, (LPARAM)hwnd32 );
+        hbrush = SendMessageW( parent, WM_CTLCOLORMSGBOX + hbrush, hdc, (LPARAM)hwnd32 );
         if (!hbrush) hbrush = DefWindowProcW( parent, WM_CTLCOLORMSGBOX + hbrush,
-                                              (WPARAM)hdc, (LPARAM)hwnd32 );
+                                              hdc, (LPARAM)hwnd32 );
     }
     if (hbrush) FillRect16( hdc, rect, hbrush );
 }
@@ -1493,9 +1493,9 @@ HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
     HWND parent = GetParent( hwnd32 );
 
     if (!parent) parent = hwnd32;
-    ret = SendMessageW( parent, WM_CTLCOLORMSGBOX + ctlType, (WPARAM)hdc, (LPARAM)hwnd32 );
+    ret = SendMessageW( parent, WM_CTLCOLORMSGBOX + ctlType, hdc, (LPARAM)hwnd32 );
     if (!ret) ret = DefWindowProcW( parent, WM_CTLCOLORMSGBOX + ctlType,
-                                    (WPARAM)hdc, (LPARAM)hwnd32 );
+                                    hdc, (LPARAM)hwnd32 );
     return ret;
 }
 

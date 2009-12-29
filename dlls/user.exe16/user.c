@@ -2743,22 +2743,21 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	    SetCursor(hCurrentCursor);
 
 	/* send WM_DRAGLOOP */
-	SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer),
-	                                  (LPARAM) spDragInfo );
+        SendMessage16( hWnd, WM_DRAGLOOP, hCurrentCursor != hBummer, spDragInfo );
 	/* send WM_DRAGSELECT or WM_DRAGMOVE */
 	if( hCurrentWnd != lpDragInfo->hScope )
 	{
 	    if( hCurrentWnd )
 	        SendMessage16( hCurrentWnd, WM_DRAGSELECT, 0,
-		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO16),
-				        HIWORD(spDragInfo)) );
+                        MAKELPARAM(LOWORD(spDragInfo)+sizeof(DRAGINFO16),
+                                   HIWORD(spDragInfo)) );
 	    hCurrentWnd = lpDragInfo->hScope;
 	    if( hCurrentWnd )
-                SendMessage16( hCurrentWnd, WM_DRAGSELECT, 1, (LPARAM)spDragInfo);
+                SendMessage16( hCurrentWnd, WM_DRAGSELECT, 1, spDragInfo);
 	}
 	else
 	    if( hCurrentWnd )
-	        SendMessage16( hCurrentWnd, WM_DRAGMOVE, 0, (LPARAM)spDragInfo);
+                SendMessage16( hCurrentWnd, WM_DRAGMOVE, 0, spDragInfo);
 
     } while( msg.message != WM_LBUTTONUP && msg.message != WM_NCLBUTTONUP );
 
@@ -2769,7 +2768,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
     if( hCurrentCursor != hBummer )
 	msg.lParam = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT,
-				   (WPARAM16)hWnd, (LPARAM)spDragInfo );
+                                    hWnd, spDragInfo );
     else
         msg.lParam = 0;
     GlobalFree16(hDragInfo);

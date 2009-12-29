@@ -2287,7 +2287,7 @@ static LRESULT edit_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                                            (INT)(SHORT)LOWORD(lParam), FALSE );
         break;
     case EM_LINEINDEX16:
-        if ((INT16)wParam == -1) wParam = (WPARAM)-1;
+        if ((INT16)wParam == -1) wParam = -1;
         result = wow_handlers32.edit_proc( hwnd, msg - msg16_offset, wParam, lParam, FALSE );
         break;
     case EM_SETSEL16:

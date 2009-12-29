@@ -541,7 +541,7 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
  */
 void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
 {
-    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, lpString );
 }
 
 
@@ -550,7 +550,7 @@ void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
  */
 INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
 {
-    return (INT16)SendDlgItemMessage16( hwnd, id, WM_GETTEXT, len, (LPARAM)str );
+    return SendDlgItemMessage16( hwnd, id, WM_GETTEXT, len, str );
 }
 
 
