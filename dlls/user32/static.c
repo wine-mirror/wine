@@ -258,7 +258,7 @@ static HANDLE STATIC_GetImage( HWND hwnd, WPARAM wParam, DWORD style )
  */
 static HICON STATIC_LoadIconA( HINSTANCE hInstance, LPCSTR name, DWORD style )
 {
-    HICON hicon;
+    HICON hicon = 0;
 
     if (hInstance && ((ULONG_PTR)hInstance >> 16))
     {
@@ -284,7 +284,7 @@ static HICON STATIC_LoadIconA( HINSTANCE hInstance, LPCSTR name, DWORD style )
  */
 static HICON STATIC_LoadIconW( HINSTANCE hInstance, LPCWSTR name, DWORD style )
 {
-    HICON hicon;
+    HICON hicon = 0;
 
     if (hInstance && ((ULONG_PTR)hInstance >> 16))
     {
