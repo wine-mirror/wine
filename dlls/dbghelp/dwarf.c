@@ -1243,6 +1243,10 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
             case DW_TAG_union_type:
             case DW_TAG_typedef:
                 /* FIXME: we need to handle nested udt definitions */
+            case DW_TAG_inheritance:
+            case DW_TAG_subprogram:
+            case DW_TAG_variable:
+                /* FIXME: some C++ related stuff */
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
@@ -1833,6 +1837,11 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
             subpgm.frame.reg = Wine_DW_no_register;
             dwarf2_parse_variable(&subpgm, NULL, di);
         }
+        break;
+    /* silence a couple of C++ defines */
+    case DW_TAG_namespace:
+    case DW_TAG_imported_module:
+    case DW_TAG_imported_declaration:
         break;
     default:
         FIXME("Unhandled Tag type 0x%lx at %s, for %lu\n",
