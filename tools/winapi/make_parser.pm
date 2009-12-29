@@ -347,13 +347,7 @@ sub gcc_output($$) {
 	    } elsif(/^ordered comparison of pointer with integer zero$/) {
 		$suppress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') from incompatible pointer type$/) {
-		my $arg = $1;
-		my $name = $2;
-		if(defined($name) && $name =~ /^GDI_AllocObject$/) {
-		    $suppress = 1;
-		} else {
-		    $suppress = 0;
-		}
+		$suppress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes integer from pointer without a cast$/) {
 		$suppress = 0;
 	    } elsif(/^passing arg (\d+) of (?:pointer to function|\`(\S+)\') makes pointer from integer without a cast$/) {
