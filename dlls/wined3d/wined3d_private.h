@@ -1028,7 +1028,7 @@ struct wined3d_context
      */
     DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
     DWORD                   numDirtyEntries;
-    DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
+    DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
 
     IWineD3DSurface         *surface;
     IWineD3DSurface *current_rt;
@@ -1614,8 +1614,8 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) DE
 
 static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
 {
-    DWORD idx = state >> 5;
-    BYTE shift = state & 0x1f;
+    DWORD idx = state / (sizeof(*context->isStateDirty) * CHAR_BIT);
+    BYTE shift = state & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
     return context->isStateDirty[idx] & (1 << shift);
 }
 

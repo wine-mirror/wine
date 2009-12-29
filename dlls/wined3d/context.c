@@ -898,8 +898,8 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
     if (isStateDirty(context, rep)) return;
 
     context->dirtyArray[context->numDirtyEntries++] = rep;
-    idx = rep >> 5;
-    shift = rep & 0x1f;
+    idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
+    shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
     context->isStateDirty[idx] |= (1 << shift);
 }
 
@@ -2194,8 +2194,8 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
             for (i = 0; i < context->numDirtyEntries; ++i)
             {
                 DWORD rep = context->dirtyArray[i];
-                DWORD idx = rep >> 5;
-                BYTE shift = rep & 0x1f;
+                DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
+                BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
                 context->isStateDirty[idx] &= ~(1 << shift);
                 state_table[rep].apply(rep, device->stateBlock, context);
             }
