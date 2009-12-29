@@ -28,8 +28,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
+/* Disable for now, see longer comment for SECUR32_initNegotiateSP below */
+#if 0
 static char nego_name_A[] = "Negotiate";
 static WCHAR nego_name_W[] = {'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', 0};
+#endif
 
 static SECURITY_STATUS nego_QueryCredentialsAttributes(PCredHandle phCredential,
         ULONG ulAttribute, PVOID pBuffer)
@@ -429,16 +432,23 @@ static const SecurityFunctionTableW negoTableW = {
     NULL,   /* SetContextAttributesW */
 };
 
+/* Disable for now, see comment below.*/
+#if 0
 static WCHAR negotiate_comment_W[] = { 'M', 'i', 'c', 'r', 'o', 's', 'o',
     'f', 't', ' ', 'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ', 'N', 'e', 'g', 'o',
     't', 'i', 'a', 't', 'o', 'r', 0};
 
 static CHAR negotiate_comment_A[] = "Microsoft Package Negotiator";
-
+#endif
 
 
 void SECUR32_initNegotiateSP(void)
 {
+/* Disable until we really implement a Negotiate provider.
+ * For now, the NTLM provider will pretend to be the Negotiate provider as well.
+ * Windows seems to be able to deal with it, and it makes several programs
+ * happy. */
+#if 0
     SecureProvider *provider = SECUR32_addProvider(&negoTableA, &negoTableW,
             NULL);
     /* According to Windows, Negotiate has the following capabilities. 
@@ -462,5 +472,6 @@ void SECUR32_initNegotiateSP(void)
     const SecPkgInfoA infoA = { caps, version, rpcid, max_token, nego_name_A,
         negotiate_comment_A};
 
-    SECUR32_addPackages(provider, 1L, &infoA, &infoW);        
+    SECUR32_addPackages(provider, 1L, &infoA, &infoW);
+#endif
 }
