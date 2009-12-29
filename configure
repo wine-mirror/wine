@@ -4214,6 +4214,23 @@ if test "$FLEX" = "none"
 then
   as_fn_error "no suitable flex found. Please install the 'flex' package." "$LINENO" 5
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether flex is recent enough" >&5
+$as_echo_n "checking whether flex is recent enough... " >&6; }
+cat >conftest.l <<EOF
+%top{
+#include "prediluvian.h"
+}
+%%
+EOF
+if $FLEX -t conftest.l >/dev/null 2>&1
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  as_fn_error "Your flex version is too old. Please install flex version 2.5.33 or newer." "$LINENO" 5
+fi
 
 for ac_prog in bison
 do

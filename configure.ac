@@ -230,6 +230,20 @@ if test "$FLEX" = "none"
 then
   AC_MSG_ERROR([no suitable flex found. Please install the 'flex' package.])
 fi
+AC_MSG_CHECKING([whether flex is recent enough])
+cat >conftest.l <<EOF
+%top{
+#include "prediluvian.h"
+}
+%%
+EOF
+if $FLEX -t conftest.l >/dev/null 2>&1
+then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([Your flex version is too old. Please install flex version 2.5.33 or newer.])
+fi
 
 dnl Check for bison
 AC_CHECK_PROGS(BISON,bison,none)
