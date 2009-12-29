@@ -274,7 +274,7 @@ static IWineD3D * STDMETHODCALLTYPE dxgi_factory_get_wined3d(IWineDXGIFactory *i
     return This->wined3d;
 }
 
-const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
+static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
 {
     /* IUnknown methods */
     dxgi_factory_QueryInterface,
@@ -294,3 +294,74 @@ const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
     /* IWineDXGIFactory methods */
     dxgi_factory_get_wined3d,
 };
+
+HRESULT dxgi_factory_init(struct dxgi_factory *factory)
+{
+    HRESULT hr;
+    UINT i;
+
+    factory->vtbl = &dxgi_factory_vtbl;
+    factory->refcount = 1;
+
+    EnterCriticalSection(&dxgi_cs);
+    factory->wined3d = WineDirect3DCreate(10, (IUnknown *)factory);
+    if (!factory->wined3d)
+    {
+        LeaveCriticalSection(&dxgi_cs);
+        return DXGI_ERROR_UNSUPPORTED;
+    }
+
+    factory->adapter_count = IWineD3D_GetAdapterCount(factory->wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+    factory->adapters = HeapAlloc(GetProcessHeap(), 0, factory->adapter_count * sizeof(*factory->adapters));
+    if (!factory->adapters)
+    {
+        ERR("Failed to allocate DXGI adapter array memory.\n");
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
+
+    for (i = 0; i < factory->adapter_count; ++i)
+    {
+        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(*adapter));
+        if (!adapter)
+        {
+            UINT j;
+
+            ERR("Failed to allocate DXGI adapter memory.\n");
+
+            for (j = 0; j < i; ++j)
+            {
+                IDXGIAdapter_Release(factory->adapters[j]);
+            }
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = dxgi_adapter_init(adapter, (IWineDXGIFactory *)factory, i);
+        if (FAILED(hr))
+        {
+            UINT j;
+
+            ERR("Failed to initialize adapter, hr %#x.\n", hr);
+
+            HeapFree(GetProcessHeap(), 0, adapter);
+            for (j = 0; j < i; ++j)
+            {
+                IDXGIAdapter_Release(factory->adapters[j]);
+            }
+            goto fail;
+        }
+
+        factory->adapters[i] = (IDXGIAdapter *)adapter;
+    }
+
+    return S_OK;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, factory->adapters);
+    EnterCriticalSection(&dxgi_cs);
+    IWineD3D_Release(factory->wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+    return hr;
+}

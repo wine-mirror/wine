@@ -80,7 +80,6 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 {
     struct dxgi_factory *object;
     HRESULT hr;
-    UINT i;
 
     TRACE("riid %s, factory %p\n", debugstr_guid(riid), factory);
 
@@ -92,59 +91,13 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &dxgi_factory_vtbl;
-    object->refcount = 1;
-
-    EnterCriticalSection(&dxgi_cs);
-    object->wined3d = WineDirect3DCreate(10, (IUnknown *)object);
-    if(!object->wined3d)
+    hr = dxgi_factory_init(object);
+    if (FAILED(hr))
     {
-        hr = DXGI_ERROR_UNSUPPORTED;
-        LeaveCriticalSection(&dxgi_cs);
-        goto fail;
-    }
-
-    object->adapter_count = IWineD3D_GetAdapterCount(object->wined3d);
-    LeaveCriticalSection(&dxgi_cs);
-    object->adapters = HeapAlloc(GetProcessHeap(), 0, object->adapter_count * sizeof(*object->adapters));
-    if (!object->adapters)
-    {
-        ERR("Failed to allocate DXGI adapter array memory\n");
-        hr = E_OUTOFMEMORY;
-        goto fail;
-    }
-
-    for (i = 0; i < object->adapter_count; ++i)
-    {
-        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(*adapter));
-        if (!adapter)
-        {
-            UINT j;
-            ERR("Failed to allocate DXGI adapter memory\n");
-            for (j = 0; j < i; ++j)
-            {
-                HeapFree(GetProcessHeap(), 0, object->adapters[j]);
-            }
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = dxgi_adapter_init(adapter, (IWineDXGIFactory *)object, i);
-        if (FAILED(hr))
-        {
-            UINT j;
-
-            ERR("Failed to initialize adapter, hr %#x.\n", hr);
-
-            HeapFree(GetProcessHeap(), 0, adapter);
-            for (j = 0; j < i; ++j)
-            {
-                IDXGIAdapter_Release(object->adapters[j]);
-            }
-            goto fail;
-        }
-
-        object->adapters[i] = (IDXGIAdapter *)adapter;
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *factory = NULL;
+        return hr;
     }
 
     TRACE("Created IDXGIFactory %p\n", object);
@@ -153,19 +106,6 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
     IDXGIFactory_Release((IDXGIFactory *)object);
 
     return hr;
-
-fail:
-    HeapFree(GetProcessHeap(), 0, object->adapters);
-    if (object->wined3d)
-    {
-        EnterCriticalSection(&dxgi_cs);
-        IWineD3D_Release(object->wined3d);
-        LeaveCriticalSection(&dxgi_cs);
-    }
-    HeapFree(GetProcessHeap(), 0, object);
-    *factory = NULL;
-    return hr;
-
 }
 
 static BOOL get_layer(enum dxgi_device_layer_id id, struct dxgi_device_layer *layer)

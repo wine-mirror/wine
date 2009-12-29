@@ -75,7 +75,6 @@ const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 WINED3DFORMAT wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 
 /* IDXGIFactory */
-extern const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl DECLSPEC_HIDDEN;
 struct dxgi_factory
 {
     const struct IWineDXGIFactoryVtbl *vtbl;
@@ -84,6 +83,8 @@ struct dxgi_factory
     UINT adapter_count;
     IDXGIAdapter **adapters;
 };
+
+HRESULT dxgi_factory_init(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
 
 /* IDXGIDevice */
 struct dxgi_device
