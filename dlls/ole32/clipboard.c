@@ -1608,6 +1608,8 @@ void OLEClipbrd_UnInitialize(void)
         }
 
         IStream_Release(clipbrd->marshal_data);
+        if (clipbrd->src_data) IDataObject_Release(clipbrd->src_data);
+        HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
         HeapFree(GetProcessHeap(), 0, clipbrd);
         theOleClipboard = NULL;
     }
