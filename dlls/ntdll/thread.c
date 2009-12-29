@@ -66,40 +66,6 @@ static RTL_BITMAP fls_bitmap;
 static LIST_ENTRY tls_links;
 static int nb_threads = 1;
 
-static RTL_CRITICAL_SECTION ldt_section;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &ldt_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": ldt_section") }
-};
-static RTL_CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-static sigset_t ldt_sigset;
-
-/***********************************************************************
- *           locking for LDT routines
- */
-static void ldt_lock(void)
-{
-    sigset_t sigset;
-
-    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
-    RtlEnterCriticalSection( &ldt_section );
-    if (ldt_section.RecursionCount == 1) ldt_sigset = sigset;
-}
-
-static void ldt_unlock(void)
-{
-    if (ldt_section.RecursionCount == 1)
-    {
-        sigset_t sigset = ldt_sigset;
-        RtlLeaveCriticalSection( &ldt_section );
-        pthread_sigmask( SIG_SETMASK, &sigset, NULL );
-    }
-    else RtlLeaveCriticalSection( &ldt_section );
-}
-
-
 /***********************************************************************
  *           get_unicode_string
  *
@@ -368,9 +334,6 @@ HANDLE thread_init(void)
         wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
         wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
     }
-
-    /* initialize LDT locking */
-    wine_ldt_init_locking( ldt_lock, ldt_unlock );
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );

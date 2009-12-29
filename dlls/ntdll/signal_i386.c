@@ -2004,6 +2004,40 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 }
 
 
+/***********************************************************************
+ *           locking for LDT routines
+ */
+static RTL_CRITICAL_SECTION ldt_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &ldt_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": ldt_section") }
+};
+static RTL_CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static sigset_t ldt_sigset;
+
+static void ldt_lock(void)
+{
+    sigset_t sigset;
+
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
+    RtlEnterCriticalSection( &ldt_section );
+    if (ldt_section.RecursionCount == 1) ldt_sigset = sigset;
+}
+
+static void ldt_unlock(void)
+{
+    if (ldt_section.RecursionCount == 1)
+    {
+        sigset_t sigset = ldt_sigset;
+        RtlLeaveCriticalSection( &ldt_section );
+        pthread_sigmask( SIG_SETMASK, &sigset, NULL );
+    }
+    else RtlLeaveCriticalSection( &ldt_section );
+}
+
+
 /**********************************************************************
  *		signal_alloc_thread
  */
@@ -2146,6 +2180,7 @@ void signal_init_process(void)
     if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
 #endif
 
+    wine_ldt_init_locking( ldt_lock, ldt_unlock );
     return;
 
  error:
