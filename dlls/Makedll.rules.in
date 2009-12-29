@@ -3,7 +3,6 @@
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
 # EXTRALIBS    : extra libraries to link in (optional)
-# SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
 #
 # plus all variables required by the global Make.rules.in
 #
@@ -12,8 +11,6 @@ DLLFLAGS    = @DLLFLAGS@
 DEFS        = -D__WINESRC__ $(EXTRADEFS)
 BASEMODULE  = $(MODULE:%.dll=%)
 MAINSPEC    = $(BASEMODULE).spec
-WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
-ALL_OBJS    = @WIN16_FILES@ $(OBJS)
 ALL_LIBS    = $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 IMPLIBFLAGS = $(TARGETFLAGS) $(EXTRAIMPLIBFLAGS)
@@ -26,8 +23,8 @@ INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(datadir)/w
 
 all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT) $(SUBDIRS)
 
-$(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(ALL_OBJS) Makefile.in
-	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+$(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
+	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for import libraries
 
@@ -59,16 +56,16 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__) dummy
 # Rules for auto documentation
 
 man: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -C$(SRCDIR) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -C$(SRCDIR) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(C_SRCS)
 
 doc-html: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
 
 doc-sgml: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
 
 doc-xml: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide-xml -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide-xml -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
 
 .PHONY: man doc-html doc-sgml doc-xml
 
@@ -110,7 +107,5 @@ uninstall::
 
 clean::
 	$(RM) $(IMPORTLIBFILE)
-
-$(SPEC_DEF) $(SPEC_SRCS16:.spec=.spec.o): $(WINEBUILD)
 
 # End of global dll rules

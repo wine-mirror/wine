@@ -702,8 +702,6 @@ BISON
 FLEX
 TOOLSDIR
 WOW64_DISABLE
-WIN16_INSTALL
-WIN16_FILES
 TARGETFLAGS
 CPPBIN
 ac_ct_CXX
@@ -4101,14 +4099,8 @@ esac
 
 enable_win16=${enable_win16:-no}
 
-WIN16_FILES="\$(WIN16_FILES)"
-
-WIN16_INSTALL="\$(WIN16_INSTALL)"
-
 if test "x$enable_win16" != "xyes"
 then
-    WIN16_FILES=""
-    WIN16_INSTALL=""
     enable_w32skrnl=${enable_w32skrnl:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}

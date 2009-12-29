@@ -283,7 +283,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|C_SRCS16|RC_SRCS16|SPEC_SRCS16|EXTRA_OBJS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -369,8 +369,8 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "BISON_SRCS" );
         replace_makefile_variable( $file, "MC_SRCS" );
         replace_makefile_variable( $file, "SVG_SRCS" );
-        replace_makefile_variable( $file, "C_SRCS" ) unless defined $make{"C_SRCS16"};
-        replace_makefile_variable( $file, "RC_SRCS" ) unless defined $make{"RC_SRCS16"};
+        replace_makefile_variable( $file, "C_SRCS" );
+        replace_makefile_variable( $file, "RC_SRCS" );
     }
 
     push @lines, "\ndnl Build dependencies for test files compiled into winetest\n";
@@ -448,51 +448,14 @@ sub update_dlls(@)
         }
 
         $static_implibs{$module} = 1 if defined $makefile{"IMPLIB_SRCS"};
-
-        if (defined $makefile{"SPEC_SRCS16"})
-        {
-            my @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @{$makefile{"SPEC_SRCS16"}};
-            $altnames{$module} = \@list;
-        }
-        if (defined $makefile{"EXTRA_OBJS16"})
-        {
-            foreach my $obj (@{$makefile{"EXTRA_OBJS16"}})
-            {
-                if ($obj =~ /^(.*\.(exe|mod))\.o/) { push @{$altnames{$module}}, $1; }
-            }
-        }
     }
 
-    # output the list of 16-bit files
-
-    my @targets16 = ();
-    foreach my $mod (sort keys %directories)
-    {
-        next unless defined $altnames{$mod};
-        foreach my $i (sort @{$altnames{$mod}})
-        {
-            push @targets16, $i . "16";
-        }
-    }
-    $text .= "# 16-bit dlls\n\n";
-    $text .= "WIN16_FILES = \\\n";
-    $text .=  "\t" . join( " \\\n\t", sort @targets16 ) . "\n\n";
     $text .= "\@MAKE_RULES\@\n\n";
 
     # output the all: target
 
     $text .= "# Main target\n\n";
-    $text .= "all: \$(BUILDSUBDIRS) \@WIN16_FILES\@\n\n";
-
-    # output the lib name -> directory rules
-
-    $text .= "# Placeholders for 16-bit libraries\n\n";
-    foreach my $mod (sort keys %directories)
-    {
-        next unless defined $altnames{$mod};
-        $text .= sprintf "%s:\n", join(" ", map { $_ . "16"; } sort @{$altnames{$mod}});
-        $text .= sprintf "\techo \"%s\" >\$\@\n\n", $mod;
-    }
+    $text .= "all: \$(BUILDSUBDIRS)\n\n";
 
     # output the import libraries rules
 
@@ -526,10 +489,12 @@ sub update_dlls(@)
     $text .= "\n\nCROSS_IMPLIBS =";
     foreach my $mod (sort @lib_symlinks)
     {
+        next if $mod =~ /16$/;
         $text .= sprintf " \\\n\tlib%s.a", $importlibs{$mod};
     }
     foreach my $mod (sort keys %importlibs)
     {
+        next if $mod =~ /16$/;
         next if defined $static_implibs{$mod};
         $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.a";
     }
@@ -583,7 +548,7 @@ sub update_dlls(@)
     $text .= "\n# Misc rules\n";
 
     replace_in_file( "dlls/Makefile.in",
-                     '^# 16-bit dlls',
+                     '^\@MAKE_RULES\@',
                      '^# Misc rules',
                      $text );
 
@@ -593,12 +558,6 @@ sub update_dlls(@)
     {
         push @ignores, "dlls/lib$importlibs{$mod}.def";
     }
-    foreach my $mod (sort keys %directories)
-    {
-        next unless defined $altnames{$mod};
-        push @ignores, map { "dlls/" . $_ . "16"; } @{$altnames{$mod}};
-    }
-
     return @ignores;
 }
 

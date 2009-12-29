@@ -169,12 +169,8 @@ esac
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
 enable_win16=${enable_win16:-no}
 
-AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
-AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
 if test "x$enable_win16" != "xyes"
 then
-    WIN16_FILES=""
-    WIN16_INSTALL=""
     enable_w32skrnl=${enable_w32skrnl:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}

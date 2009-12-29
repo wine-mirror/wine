@@ -15,18 +15,11 @@ BUILDSUBDIRS   = $(DLLSUBDIRS) $(TESTSUBDIRS)
 INSTALLSUBDIRS = $(DLLSUBDIRS) $(IMPLIBSUBDIRS)
 DOCSUBDIRS     = $(DLLSUBDIRS)
 
-# 16-bit dlls
-
-WIN16_FILES = \
-
-
 @MAKE_RULES@
 
 # Main target
 
-all: $(BUILDSUBDIRS) @WIN16_FILES@
-
-# Placeholders for 16-bit libraries
+all: $(BUILDSUBDIRS)
 
 # Import libraries
 
@@ -801,18 +794,8 @@ winecrt0/libwinecrt0.a: winecrt0
 
 # Misc rules
 
-.PHONY: $(WIN16_FILES:%=__install__/%)
-
-WIN16_INSTALL = $(WIN16_FILES:%=__install__/%)
-
-$(WIN16_FILES:%=__install__/%): $(WIN16_FILES) $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_DATA) `basename $@` $(DESTDIR)$(dlldir)/`basename $@`
-
-install install-lib:: @WIN16_INSTALL@
-
 uninstall::
-	-cd $(DESTDIR)$(dlldir) && $(RM) $(WIN16_FILES)
 	-rmdir $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
 clean::
-	$(RM) $(IMPORT_SYMLINKS) $(WIN16_FILES)
+	$(RM) $(IMPORT_SYMLINKS)
