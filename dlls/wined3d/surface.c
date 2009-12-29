@@ -809,7 +809,6 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
 
         if (context) context_release(context);
     }
-    return;
 }
 
 static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
@@ -928,8 +927,6 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     }
 
     context_release(context);
-
-    return;
 }
 
 /* ******************************************************
@@ -2757,7 +2754,6 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
 
         if (context) context_release(context);
     }
-    return;
 }
 
 #include <errno.h>

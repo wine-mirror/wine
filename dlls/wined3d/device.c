@@ -1297,14 +1297,9 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
         IWineD3DDevice_ColorFill((IWineD3DDevice *) This, This->logo_surface, NULL, 0xffffffff);
     }
 
-    out:
-    if(dcb) {
-        DeleteDC(dcb);
-    }
-    if(hbm) {
-        DeleteObject(hbm);
-    }
-    return;
+out:
+    if (dcb) DeleteDC(dcb);
+    if (hbm) DeleteObject(hbm);
 }
 
 /* Context activation is done by the caller. */
@@ -1809,8 +1804,6 @@ static void WINAPI IWineD3DDeviceImpl_SetMultithreaded(IWineD3DDevice *iface) {
 
     /*For now just store the flag(needed in case of ddraw) */
     This->createParms.BehaviorFlags |= WINED3DCREATE_MULTITHREADED;
-
-    return;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain,
@@ -6631,7 +6624,6 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT 
         IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
-    return;
 }
 
 static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapChain, WINED3DGAMMARAMP* pRamp) {
@@ -6643,7 +6635,6 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
         IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
-    return;
 }
 
 

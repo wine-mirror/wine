@@ -4473,8 +4473,6 @@ static inline void drawPrimitiveTraceDataLocations(const struct wined3d_stream_i
     TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD5);
     TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD6);
     TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD7);
-
-    return;
 }
 
 static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
@@ -4878,8 +4876,6 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3
         glEnable(GL_LIGHT0 + Index);
         checkGLcall("glEnable(GL_LIGHT0 + Index)");
     }
-
-    return;
 }
 
 static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)

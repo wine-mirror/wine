@@ -134,8 +134,6 @@ fail:
     if (This->buffer_object) GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
     This->buffer_object = 0;
     LEAVE_GL();
-
-    return;
 }
 
 static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
@@ -936,7 +934,6 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
 
 end:
     context_release(context);
-    return;
 }
 
 static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
