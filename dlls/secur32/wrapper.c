@@ -283,7 +283,8 @@ SECURITY_STATUS WINAPI InitializeSecurityContextA(
                  cred, ctxt, pszTargetName, fContextReq,
                  Reserved1, TargetDataRep, pInput, Reserved2, phNewContext ? &myCtxt : NULL,
                  pOutput, pfContextAttr, ptsExpiry);
-            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
+            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) &&
+                phNewContext && phNewContext != phContext)
             {
                 SECURITY_STATUS ret2;
                 ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
@@ -346,7 +347,8 @@ SECURITY_STATUS WINAPI InitializeSecurityContextW(
                  cred, ctxt, pszTargetName, fContextReq,
                  Reserved1, TargetDataRep, pInput, Reserved2, phNewContext ? &myCtxt : NULL,
                  pOutput, pfContextAttr, ptsExpiry);
-            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
+            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) &&
+                phNewContext && phNewContext != phContext)
             {
                 SECURITY_STATUS ret2;
                 ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
