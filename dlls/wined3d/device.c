@@ -479,13 +479,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, str
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size,
-        DWORD Usage, DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer,
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface,
+        UINT Size, DWORD Usage, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer,
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
+
+    TRACE("iface %p, size %u, usage %#x, pool %#x, buffer %p, parent %p, parent_ops %p.\n",
+            iface, Size, Usage, Pool, ppVertexBuffer, parent, parent_ops);
 
     if (Pool == WINED3DPOOL_SCRATCH)
     {
@@ -515,7 +518,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     }
 
     TRACE("Created buffer %p.\n", object);
-    TRACE("FVF %#x, Pool %#x.\n", FVF, Pool);
     *ppVertexBuffer = (IWineD3DBuffer *)object;
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +

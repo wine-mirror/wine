@@ -2867,7 +2867,6 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT CreateVertexBuffer(
         [in] UINT length,
         [in] DWORD usage,
-        [in] DWORD fvf,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **vertex_buffer,
         [in] IUnknown *parent,
