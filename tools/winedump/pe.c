@@ -373,8 +373,12 @@ static	void	dump_pe_header(void)
 
 void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
 {
-        if (strtable && sectHead->Name[0] == '/') /* long section name */
-            printf("  %.8s (%s)", sectHead->Name, strtable + atoi((const char*)sectHead->Name + 1));
+        unsigned offset;
+
+        /* long section name ? */
+        if (strtable && sectHead->Name[0] == '/' &&
+            ((offset = atoi((const char*)sectHead->Name + 1)) < *(DWORD*)strtable))
+            printf("  %.8s (%s)", sectHead->Name, strtable + offset);
         else
 	    printf("  %-8.8s", sectHead->Name);
 	printf("   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
@@ -456,7 +460,6 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
 
     if (PE_nt_headers->FileHeader.PointerToSymbolTable && PE_nt_headers->FileHeader.NumberOfSymbols)
     {
-        /* FIXME: no way to get strtable size */
         strtable = (const char*)base +
             PE_nt_headers->FileHeader.PointerToSymbolTable +
             PE_nt_headers->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
