@@ -321,6 +321,7 @@ static SECURITY_STATUS setupClient(SspiData *sspi_data, SEC_CHAR *provider)
     ok(ret == SEC_E_OK, "QuerySecurityPackageInfo returned %s\n", getSecError(ret));
 
     setupBuffers(sspi_data, sec_pkg_info);
+    pFreeContextBuffer(sec_pkg_info);
     
     if((ret = pAcquireCredentialsHandleA(NULL, provider, SECPKG_CRED_OUTBOUND,
             NULL, sspi_data->id, NULL, NULL, sspi_data->cred, &ttl))
@@ -352,6 +353,7 @@ static SECURITY_STATUS setupServer(SspiData *sspi_data, SEC_CHAR *provider)
     ok(ret == SEC_E_OK, "QuerySecurityPackageInfo returned %s\n", getSecError(ret));
 
     setupBuffers(sspi_data, sec_pkg_info);
+    pFreeContextBuffer(sec_pkg_info);
 
     if((ret = pAcquireCredentialsHandleA(NULL, provider, SECPKG_CRED_INBOUND, 
             NULL, NULL, NULL, NULL, sspi_data->cred, &ttl)) != SEC_E_OK)
@@ -382,6 +384,7 @@ static SECURITY_STATUS setupFakeServer(SspiData *sspi_data, SEC_CHAR *provider)
     ok(ret == SEC_E_OK, "QuerySecurityPackageInfo returned %s\n", getSecError(ret));
 
     ret = setupBuffers(sspi_data, sec_pkg_info);
+    pFreeContextBuffer(sec_pkg_info);
     
     return ret;
 }
@@ -627,6 +630,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "With req_attr == 0, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_CONNECTION, the lowest byte should not have bits 0x20 or 0x10 set*/
     req_attr = ISC_REQ_CONNECTION;
@@ -643,6 +647,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "For ISC_REQ_CONNECTION, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_EXTENDED_ERROR, the lowest byte should not have bits 0x20 or 0x10 set*/
     req_attr = ISC_REQ_EXTENDED_ERROR;
@@ -659,6 +664,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "For ISC_REQ_EXTENDED_ERROR, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_MUTUAL_AUTH, the lowest byte should not have bits 0x20 or 0x10 set*/
     req_attr = ISC_REQ_MUTUAL_AUTH;
@@ -675,6 +681,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "For ISC_REQ_MUTUAL_AUTH, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_USE_DCE_STYLE, the lowest byte should not have bits 0x20 or 0x10 set*/
     req_attr = ISC_REQ_USE_DCE_STYLE;
@@ -691,6 +698,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "For ISC_REQ_USE_DCE_STYLE, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_DELEGATE, the lowest byte should not have bits 0x20 or 0x10 set*/
     req_attr = ISC_REQ_DELEGATE;
@@ -707,6 +715,7 @@ static void testInitializeSecurityContextFlags(void)
     ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
             "For ISC_REQ_DELEGATE, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_INTEGRITY, the lowest byte should have bit 0x10 set */
     req_attr = ISC_REQ_INTEGRITY;
@@ -723,6 +732,7 @@ static void testInitializeSecurityContextFlags(void)
     ok((packet[12] & 0x10) != 0,
             "For ISC_REQ_INTEGRITY, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_REPLAY_DETECT, the lowest byte should have bit 0x10 set */
     req_attr = ISC_REQ_REPLAY_DETECT;
@@ -739,6 +749,7 @@ static void testInitializeSecurityContextFlags(void)
     ok((packet[12] & 0x10) != 0,
             "For ISC_REQ_REPLAY_DETECT, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_SEQUENCE_DETECT, the lowest byte should have bit 0x10 set */
     req_attr = ISC_REQ_SEQUENCE_DETECT;
@@ -755,6 +766,7 @@ static void testInitializeSecurityContextFlags(void)
     ok((packet[12] & 0x10) != 0,
             "For ISC_REQ_SEQUENCE_DETECT, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
     /* With ISC_REQ_CONFIDENTIALITY, the lowest byte should have bit 0x20 set */
     req_attr = ISC_REQ_CONFIDENTIALITY;
@@ -771,6 +783,7 @@ static void testInitializeSecurityContextFlags(void)
     ok((packet[12] & 0x20) != 0,
             "For ISC_REQ_CONFIDENTIALITY, flags are 0x%02x%02x%02x%02x.\n",
             packet[15], packet[14], packet[13], packet[12]);
+    pDeleteSecurityContext(client.ctxt);
 
 tISCFend:
     cleanupBuffers(&client);
@@ -1370,6 +1383,12 @@ static void test_null_auth_data(void)
                                          NULL, 0, &ctx, &buffer_desc, &attr, &ttl);
     ok(status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed %s\n", getSecError(status));
 
+    ret = pDeleteSecurityContext(&ctx);
+    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
+    ret = pFreeCredentialsHandle(&cred);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
+
+    pFreeContextBuffer(info);
     HeapFree(GetProcessHeap(), 0, buffers[0].pvBuffer);
 }
 
