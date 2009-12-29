@@ -2770,7 +2770,7 @@ static void test_GetSysColorBrush(void)
 
     SetLastError(0xdeadbeef);
     hbr = GetSysColorBrush(-1);
-    todo_wine ok(hbr == NULL, "Expected NULL brush\n");
+    ok(hbr == NULL, "Expected NULL brush\n");
     ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %x\n", GetLastError());
     /* greater than max index */
     hbr = GetSysColorBrush(COLOR_MENUBAR);
@@ -2778,7 +2778,7 @@ static void test_GetSysColorBrush(void)
     {
         SetLastError(0xdeadbeef);
         hbr = GetSysColorBrush(COLOR_MENUBAR + 1);
-        todo_wine ok(hbr == NULL, "Expected NULL brush\n");
+        ok(hbr == NULL, "Expected NULL brush\n");
         ok(GetLastError() == 0xdeadbeef, "Expected last error not set, got %x\n", GetLastError());
     }
     else
