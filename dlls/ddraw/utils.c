@@ -1221,8 +1221,6 @@ void multiply_matrix_D3D_way(D3DMATRIX* result, const D3DMATRIX *m1, const D3DMA
     temp._44 = m1->_41 * m2->_14 + m1->_42 * m2->_24 + m1->_43 * m2->_34 + m1->_44 * m2->_44;
 
     *result = temp;
-
-    return;
 }
 
 HRESULT
