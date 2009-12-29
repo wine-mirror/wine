@@ -612,7 +612,7 @@
 @ stub KeSetIdealProcessorThread
 @ stub KeSetImportanceDpc
 @ stub KeSetKernelStackSwapEnable
-@ stub KeSetPriorityThread
+@ stdcall KeSetPriorityThread(ptr long)
 @ stub KeSetProfileIrql
 @ stub KeSetSystemAffinityThread
 @ stub KeSetTargetProcessorDpc

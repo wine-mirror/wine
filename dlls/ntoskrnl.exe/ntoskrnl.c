@@ -1110,6 +1110,16 @@ ULONG WINAPI KeQueryTimeIncrement(void)
 
 
 /***********************************************************************
+ *           KeSetPriorityThread   (NTOSKRNL.EXE.@)
+ */
+KPRIORITY WINAPI KeSetPriorityThread( PKTHREAD Thread, KPRIORITY Priority )
+{
+    FIXME("(%p %d)\n", Thread, Priority);
+    return Priority;
+}
+
+
+/***********************************************************************
  *           KeWaitForSingleObject   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI KeWaitForSingleObject(PVOID Object,

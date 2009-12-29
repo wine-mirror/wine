@@ -1065,6 +1065,7 @@ void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
 void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
 ULONG     WINAPI KeQueryTimeIncrement(void);
 LONG      WINAPI KeReleaseSemaphore(PRKSEMAPHORE,KPRIORITY,LONG,BOOLEAN);
+KPRIORITY WINAPI KeSetPriorityThread(PKTHREAD,KPRIORITY);
 
 PVOID     WINAPI MmAllocateContiguousMemory(SIZE_T,PHYSICAL_ADDRESS);
 PVOID     WINAPI MmAllocateNonCachedMemory(SIZE_T);
