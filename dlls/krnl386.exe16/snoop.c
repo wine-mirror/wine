@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
-#ifdef __i386__
-
 #include "pshpack1.h"
 
 static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
@@ -343,13 +341,3 @@ static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context)
                 HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 	ret->origreturn = NULL; /* mark as empty */
 }
-#else	/* !__i386__ */
-void SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
-	if (!TRACE_ON(snoop)) return;
-	FIXME("snooping works only on i386 for now.\n");
-}
-
-FARPROC16 SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
-	return origfun;
-}
-#endif	/* !__i386__ */

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef __i386__
-
 #include <stdarg.h>
 
 #include "wine/winbase16.h"
@@ -325,5 +323,3 @@ WORD WINAPI UTInit16( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
     FIXME("(%08x, %08x, %08x, %08x): stub\n", x1, x2, x3, x4 );
     return 0;
 }
-
-#endif /* __i386__ */

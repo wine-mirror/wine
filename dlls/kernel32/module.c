@@ -1065,3 +1065,28 @@ FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function )
     RaiseException( EXCEPTION_WINE_STUB, EH_NONCONTINUABLE, 2, args );
     return NULL;
 }
+
+
+#ifdef __i386__
+
+/***********************************************************************
+ *           __wine_dll_register_16 (KERNEL32.@)
+ *
+ * No longer used.
+ */
+void __wine_dll_register_16( const IMAGE_DOS_HEADER *header, const char *file_name )
+{
+    ERR( "loading old style 16-bit dll %s no longer supported\n", file_name );
+}
+
+
+/***********************************************************************
+ *           __wine_dll_unregister_16 (KERNEL32.@)
+ *
+ * No longer used.
+ */
+void __wine_dll_unregister_16( const IMAGE_DOS_HEADER *header )
+{
+}
+
+#endif

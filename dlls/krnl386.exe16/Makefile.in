@@ -1,0 +1,42 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = krnl386.exe16
+IMPORTS   = kernel32 ntdll
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--dll-name,kernel
+EXTRARCFLAGS  = -O res16
+
+C_SRCS = \
+	atom.c \
+	dosmem.c \
+	error.c \
+	file.c \
+	global.c \
+	instr.c \
+	kernel.c \
+	local.c \
+	ne_module.c \
+	ne_segment.c \
+	registry.c \
+	relay.c \
+	resource.c \
+	selector.c \
+	snoop.c \
+	syslevel.c \
+	task.c \
+	thunk.c \
+	utthunk.c \
+	vxd.c \
+	wowthunk.c
+
+RC_SRCS = version.rc
+
+EXTRA_OBJS = relay16asm.o
+
+@MAKE_DLL_RULES@
+
+relay16asm.o: $(WINEBUILD)
+	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

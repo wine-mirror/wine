@@ -85,11 +85,6 @@ extern void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info );
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 
-/* vxd.c */
-typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
-extern DeviceIoProc VXD_get_proc( HANDLE handle );
-extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
-
 /* environ.c */
 extern void ENV_CopyStartupInformation(void);
 

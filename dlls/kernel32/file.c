@@ -40,7 +40,6 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "wincon.h"
-#include "wine/winbase16.h"
 #include "kernel_private.h"
 
 #include "wine/exception.h"
@@ -1363,7 +1362,13 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                            options, NULL, 0 );
     if (status)
     {
-        if (vxd_name && vxd_name[0] && (ret = VXD_Open( vxd_name, access, sa ))) goto done;
+        if (vxd_name && vxd_name[0])
+        {
+            static HANDLE (*vxd_open)(LPCWSTR,DWORD,SECURITY_ATTRIBUTES*);
+            if (!vxd_open) vxd_open = (void *)GetProcAddress( GetModuleHandleA("krnl386.exe16"),
+                                                              "__wine_vxd_open" );
+            if (vxd_open && (ret = vxd_open( vxd_name, access, sa ))) goto done;
+        }
 
         WARN("Unable to create file %s (status %x)\n", debugstr_w(filename), status);
         ret = INVALID_HANDLE_VALUE;
@@ -2345,7 +2350,13 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
     if (HIWORD( dwIoControlCode ) == 0 && (GetVersion() & 0x80000000))
     {
-        DeviceIoProc proc = VXD_get_proc( hDevice );
+        typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
+        static DeviceIoProc (*vxd_get_proc)(HANDLE);
+        DeviceIoProc proc = NULL;
+
+        if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleA("krnl386.exe16"),
+                                                                  "__wine_vxd_get_proc" );
+        if (vxd_get_proc) proc = vxd_get_proc( hDevice );
         if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,
                                lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped );
     }

@@ -15122,6 +15122,14 @@ dlls/keyboard.drv16/Makefile: dlls/keyboard.drv16/Makefile.in dlls/Makedll.rules
 ac_config_files="$ac_config_files dlls/keyboard.drv16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/krnl386.exe16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	krnl386.exe16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/krnl386.exe16/Makefile: dlls/krnl386.exe16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/krnl386.exe16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/loadperf/Makefile"
 test "x$enable_loadperf" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	loadperf"
@@ -18924,6 +18932,7 @@ do
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
     "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
     "dlls/keyboard.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/keyboard.drv16/Makefile" ;;
+    "dlls/krnl386.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/krnl386.exe16/Makefile" ;;
     "dlls/loadperf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/loadperf/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;
     "dlls/localspl/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/tests/Makefile" ;;

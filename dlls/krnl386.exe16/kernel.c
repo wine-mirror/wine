@@ -36,6 +36,53 @@ extern DWORD WINAPI GetProcessFlags( DWORD processid );
 
 static DWORD process_dword;
 
+/***********************************************************************
+ *           KERNEL thread initialisation routine
+ */
+static void thread_attach(void)
+{
+    /* allocate the 16-bit stack (FIXME: should be done lazily) */
+    HGLOBAL16 hstack = WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
+    kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
+    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( kernel_get_thread_data()->stack_sel,
+                                                        0x10000 - sizeof(STACK16FRAME) );
+    memset( (char *)GlobalLock16(hstack) + 0x10000 - sizeof(STACK16FRAME), 0, sizeof(STACK16FRAME) );
+}
+
+
+/***********************************************************************
+ *           KERNEL thread finalisation routine
+ */
+static void thread_detach(void)
+{
+    /* free the 16-bit stack */
+    WOWGlobalFree16( kernel_get_thread_data()->stack_sel );
+    NtCurrentTeb()->WOW32Reserved = 0;
+    if (NtCurrentTeb()->Tib.SubSystemTib) TASK_ExitTask();
+}
+
+
+/**************************************************************************
+ *		DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        LoadLibrary16( "krnl386.exe" );
+        /* fall through */
+    case DLL_THREAD_ATTACH:
+        thread_attach();
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
+        break;
+    }
+    return TRUE;
+}
+
+
 /**************************************************************************
  *		DllEntryPoint   (KERNEL.669)
  */
@@ -47,6 +94,9 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
     /* the entry point can be called multiple times */
     if (done) return TRUE;
     done = 1;
+
+    /* setup emulation of protected instructions from 32-bit code */
+    if (GetVersion() & 0x80000000) RtlAddVectoredExceptionHandler( TRUE, INSTR_vectored_handler );
 
     /* Initialize 16-bit thunking entry points */
     if (!WOWTHUNK_Init()) return FALSE;
@@ -68,6 +118,7 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
 
     /* Initialize KERNEL.THHOOK */
     TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( inst, (LPCSTR)332 )));
+    TASK_CreateMainTask();
 
     /* Initialize the real-mode selector entry points */
 #define SET_ENTRY_POINT( num, addr ) \

@@ -134,7 +134,7 @@ static HANDLE open_vxd_handle( LPCWSTR name )
 }
 
 /* retrieve the DeviceIoControl function for a Vxd given a file handle */
-DeviceIoProc VXD_get_proc( HANDLE handle )
+DeviceIoProc __wine_vxd_get_proc( HANDLE handle )
 {
     DeviceIoProc ret = NULL;
     int status, i;
@@ -171,19 +171,13 @@ done:
 
 
 /* load a VxD and return a file handle to it */
-HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
+HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
 {
     static const WCHAR dotVxDW[] = {'.','v','x','d',0};
     int i;
     HANDLE handle;
     HMODULE module;
     WCHAR *p, name[16];
-
-    if (!(GetVersion() & 0x80000000))  /* there are no VxDs on NT */
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return 0;
-    }
 
     /* normalize the filename */
 

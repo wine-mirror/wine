@@ -33,10 +33,8 @@
 #include "winternl.h"
 #include "wownt32.h"
 
-#include "wine/winbase16.h"
 #include "wine/library.h"
 #include "kernel_private.h"
-#include "kernel16_private.h"
 #include "console_private.h"
 #include "wine/debug.h"
 
@@ -45,32 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(process);
 extern int CDECL __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
 static ULONGLONG server_start_time;
-
-/***********************************************************************
- *           KERNEL thread initialisation routine
- */
-static void thread_attach(void)
-{
-    /* allocate the 16-bit stack (FIXME: should be done lazily) */
-    HGLOBAL16 hstack = WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
-    kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
-    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( kernel_get_thread_data()->stack_sel,
-                                                        0x10000 - sizeof(STACK16FRAME) );
-    memset( (char *)GlobalLock16(hstack) + 0x10000 - sizeof(STACK16FRAME), 0, sizeof(STACK16FRAME) );
-}
-
-
-/***********************************************************************
- *           KERNEL thread finalisation routine
- */
-static void thread_detach(void)
-{
-    /* free the 16-bit stack */
-    WOWGlobalFree16( kernel_get_thread_data()->stack_sel );
-    NtCurrentTeb()->WOW32Reserved = 0;
-    if (NtCurrentTeb()->Tib.SubSystemTib) TASK_ExitTask();
-}
-
 
 /***********************************************************************
  *           set_entry_point
@@ -156,8 +128,6 @@ static BOOL process_attach( HMODULE module )
     {
         /* create the shared heap for broken win95 native dlls */
         HeapCreate( HEAP_SHARED, 0, 0 );
-        /* setup emulation of protected instructions from 32-bit code */
-        RtlAddVectoredExceptionHandler( TRUE, INSTR_vectored_handler );
     }
 #endif
 
@@ -176,10 +146,7 @@ static BOOL process_attach( HMODULE module )
      * TBD when not using wineserver handles for console handles
      */
 
-    /* Create 16-bit task */
-    LoadLibrary16( "krnl386.exe" );
-    thread_attach();
-    TASK_CreateMainTask();
+    LoadLibraryA( "krnl386.exe16" );
     return TRUE;
 }
 
@@ -191,13 +158,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
         return process_attach( hinst );
-    case DLL_THREAD_ATTACH:
-        thread_attach();
-        break;
-    case DLL_THREAD_DETACH:
-        thread_detach();
-        break;
     case DLL_PROCESS_DETACH:
         WritePrivateProfileSectionW( NULL, NULL, NULL );
         break;

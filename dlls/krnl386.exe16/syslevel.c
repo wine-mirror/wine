@@ -108,9 +108,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TRACE("(%p, level %d): thread %x count after  %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
-#ifdef __i386__
     if (lock == &Win16Mutex) CallTo16_TebSelector = wine_get_fs();
-#endif
 }
 
 /************************************************************************

@@ -9,8 +9,6 @@ IMPORTS   = ntdll
 EXTRALIBS = @COREFOUNDATIONLIB@ @LIBPOLL@
 EXTRADLLFLAGS = -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
 
-SPEC_SRCS16 = krnl386.exe.spec
-
 C_SRCS = \
 	actctx.c \
 	atom.c \
@@ -20,63 +18,37 @@ C_SRCS = \
 	console.c \
 	cpu.c \
 	debugger.c \
-	dosmem.c \
 	editline.c \
 	environ.c \
 	except.c \
 	fiber.c \
 	file.c \
-	file16.c \
 	format_msg.c \
-	global16.c \
 	heap.c \
-	instr.c \
 	kernel_main.c \
 	lcformat.c \
-	local16.c \
 	locale.c \
 	lzexpand.c \
 	module.c \
-	ne_module.c \
-	ne_segment.c \
 	oldconfig.c \
 	path.c \
 	powermgnt.c \
 	process.c \
 	profile.c \
-	relay16.c \
 	resource.c \
-	resource16.c \
-	selector.c \
-	snoop16.c \
 	string.c \
 	sync.c \
-	syslevel.c \
 	tape.c \
-	task.c \
 	thread.c \
-	thunk.c \
 	time.c \
 	toolhelp.c \
-	utthunk.c \
 	version.c \
 	virtual.c \
-	volume.c \
-	vxd.c \
-	wowthunk.c
-
-C_SRCS16 = \
-	atom16.c \
-	error16.c \
-	kernel16.c \
-	registry16.c
+	volume.c
 
 RC_SRCS = \
 	locale_rc.rc \
 	version.rc
-
-RC_SRCS16 = \
-	version16.rc
 
 MC_SRCS = \
 	nls/winerr_deu.mc \
@@ -90,20 +62,8 @@ MC_SRCS = \
 	nls/winerr_plk.mc \
 	nls/winerr_ptg.mc
 
-EXTRA_OBJS   = relay16asm.o
 EXTRASUBDIRS = nls
 
 @MAKE_DLL_RULES@
-
-relay16asm.o: $(WINEBUILD)
-	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16
-
-# Special rules for 16-bit resource and spec files
-
-krnl386.exe.spec.o: krnl386.exe.spec version16.res
-	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --dll-name kernel --main-module $(MODULE) --res version16.res --export $(SRCDIR)/krnl386.exe.spec
-
-version16.res: version16.rc
-	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

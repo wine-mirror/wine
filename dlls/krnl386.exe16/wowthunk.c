@@ -37,9 +37,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
-
-#ifdef __i386__
-
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
@@ -301,16 +298,6 @@ static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECO
 }
 
 
-#else  /* __i386__ */
-
-BOOL WOWTHUNK_Init(void)
-{
-    return TRUE;
-}
-
-#endif  /* __i386__ */
-
-
 /*
  *  32-bit WOW routines (in WOW32, but actually forwarded to KERNEL32)
  */
@@ -535,7 +522,6 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                                 DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
 {
-#ifdef __i386__
     /*
      * Arguments must be prepared in the correct order by the caller
      * (both for PASCAL and CDECL calling convention), so we simply
@@ -674,9 +660,6 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             SYSLEVEL_CheckNotLevel( 2 );
         }
     }
-#else
-    assert(0);  /* cannot call to 16-bit on non-Intel architectures */
-#endif  /* __i386__ */
 
     return TRUE;  /* success */
 }

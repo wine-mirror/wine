@@ -90,7 +90,6 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
 /* patch all the flat cs references of the code segment if necessary */
 static inline void patch_code_segment( NE_MODULE *pModule )
 {
-#ifdef __i386__
     int i;
     CALLFROM16 *call;
     SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
@@ -112,7 +111,6 @@ static inline void patch_code_segment( NE_MODULE *pModule )
 
     if (TRACE_ON(relay))  /* patch relay functions to all point to relay_call_from_16 */
         for (i = 0; call[i].pushl == 0x68; i++) call[i].relay = relay_call_from_16;
-#endif
 }
 
 
@@ -2168,8 +2166,6 @@ void WINAPI MapHInstSL16( CONTEXT86 *context )
     context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
 
-#ifdef __i386__
-
 /***************************************************************************
  *		MapHInstLS			(KERNEL32.@)
  */
@@ -2205,5 +2201,3 @@ __ASM_STDCALL_FUNC( MapHInstSL_PN, 0,
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapHModuleSL") __ASM_STDCALL(4) "\n"
                    "1:\tret" )
-
-#endif  /* __i386__ */

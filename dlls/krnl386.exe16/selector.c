@@ -89,11 +89,9 @@ WORD WINAPI FreeSelector16( WORD sel )
 
     wine_ldt_get_entry( sel, &entry );
     if (wine_ldt_is_empty( &entry )) return sel;  /* error */
-#ifdef __i386__
     /* Check if we are freeing current %fs selector */
     if (!((wine_get_fs() ^ sel) & ~3))
         WARN("Freeing %%fs selector (%04x), not good.\n", wine_get_fs() );
-#endif  /* __i386__ */
     wine_ldt_free_entries( sel, 1 );
     return 0;
 }
@@ -523,7 +521,6 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
     return MapSL(sptr);
 }
 
-#ifdef __i386__
 
 /***********************************************************************
  *           UnMapSLFixArray   (KERNEL32.@)
@@ -618,5 +615,3 @@ DEFINE_SUnMapLS(28)
 DEFINE_SUnMapLS(32)
 DEFINE_SUnMapLS(36)
 DEFINE_SUnMapLS(40)
-
-#endif  /* __i386__ */

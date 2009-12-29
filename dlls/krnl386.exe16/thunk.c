@@ -31,8 +31,6 @@
 # include <unistd.h>
 #endif
 
-#ifdef __i386__
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -2538,5 +2536,3 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
         DPRINTF(") calling address was 0x%08x\n",calladdr);
         return 0;
 }
-
-#endif /* __i386__ */
