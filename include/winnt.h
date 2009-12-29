@@ -866,9 +866,6 @@ typedef struct _LDT_ENTRY {
             unsigned    BaseHi : 8;
         } Bits;
     } HighWord;
-#ifdef _WIN64  /* FIXME: 64-bit code should not be using the LDT */
-    DWORD BaseHigh;
-#endif
 } LDT_ENTRY, *PLDT_ENTRY;
 
 /* x86-64 context definitions */

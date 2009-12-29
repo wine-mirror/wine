@@ -33,7 +33,7 @@
 #include "winbase.h"
 #include "wine/library.h"
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 
 #ifdef __linux__
 
@@ -118,8 +118,6 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #include <i386/user_ldt.h>
 #endif
 
-#endif  /* __i386__ */
-
 /* local copy of the LDT */
 #ifdef __APPLE__
 struct __wine_ldt_copy wine_ldt_copy = { { 0, 0, 0 } };
@@ -190,8 +188,6 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 
     if (index < LDT_FIRST_ENTRY) return 0;  /* cannot modify reserved entries */
 
-#ifdef __i386__
-
 #ifdef linux
     {
         struct modify_ldt_s ldt_info;
@@ -233,8 +229,6 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
 #endif
-
-#endif  /* __i386__ */
 
     if (ret >= 0)
     {
@@ -383,8 +377,6 @@ void wine_ldt_free_entries( unsigned short sel, int count )
     unlock_ldt();
 }
 
-
-#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 
 static int global_fs_sel = -1;  /* global selector for %fs shared among all threads */
 

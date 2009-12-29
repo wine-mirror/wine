@@ -82,6 +82,8 @@ extern int wine_mmap_is_in_reserved_area( void *addr, size_t size );
 extern int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, void *arg),
                                           void *arg, int top_down );
 
+#ifdef __i386__
+
 /* LDT management */
 
 extern void wine_ldt_init_locking( void (*lock_func)(void), void (*unlock_func)(void) );
@@ -92,15 +94,9 @@ extern void *wine_ldt_get_ptr( unsigned short sel, unsigned long offset );
 extern unsigned short wine_ldt_alloc_entries( int count );
 extern unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount );
 extern void wine_ldt_free_entries( unsigned short sel, int count );
-#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 extern unsigned short wine_ldt_alloc_fs(void);
 extern void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry );
 extern void wine_ldt_free_fs( unsigned short sel );
-#else  /* __i386__ */
-static inline unsigned short wine_ldt_alloc_fs(void) { return 0x0b; /* pseudo GDT selector */ }
-static inline void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry ) { }
-static inline void wine_ldt_free_fs( unsigned short sel ) { }
-#endif  /* __i386__ */
 
 /* the local copy of the LDT */
 extern struct __wine_ldt_copy
@@ -123,9 +119,6 @@ static inline void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
     ent->BaseLow               = (WORD)(ULONG_PTR)base;
     ent->HighWord.Bits.BaseMid = (BYTE)((ULONG_PTR)base >> 16);
     ent->HighWord.Bits.BaseHi  = (BYTE)((ULONG_PTR)base >> 24);
-#ifdef _WIN64
-    ent->BaseHigh              = (ULONG_PTR)base >> 32;
-#endif
 }
 static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 {
@@ -136,9 +129,6 @@ static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 static inline void *wine_ldt_get_base( const LDT_ENTRY *ent )
 {
     return (void *)(ent->BaseLow |
-#ifdef _WIN64
-                    (ULONG_PTR)ent->BaseHigh << 32 |
-#endif
                     (ULONG_PTR)ent->HighWord.Bits.BaseMid << 16 |
                     (ULONG_PTR)ent->HighWord.Bits.BaseHi << 24);
 }
@@ -171,7 +161,6 @@ static inline int wine_ldt_is_empty( const LDT_ENTRY *ent )
 
 /* segment register access */
 
-#ifdef __i386__
 # ifdef __MINGW32__
 #  define __DEFINE_GET_SEG(seg) \
     static inline unsigned short wine_get_##seg(void); \
@@ -200,10 +189,6 @@ static inline int wine_ldt_is_empty( const LDT_ENTRY *ent )
 #  define __DEFINE_GET_SEG(seg) extern unsigned short wine_get_##seg(void);
 #  define __DEFINE_SET_SEG(seg) extern void wine_set_##seg(unsigned int);
 # endif /* __GNUC__ || _MSC_VER */
-#else  /* __i386__ */
-# define __DEFINE_GET_SEG(seg) static inline unsigned short wine_get_##seg(void) { return 0; }
-# define __DEFINE_SET_SEG(seg) static inline void wine_set_##seg(int val) { /* nothing */ }
-#endif  /* __i386__ */
 
 __DEFINE_GET_SEG(cs)
 __DEFINE_GET_SEG(ds)
@@ -215,6 +200,8 @@ __DEFINE_SET_SEG(fs)
 __DEFINE_SET_SEG(gs)
 #undef __DEFINE_GET_SEG
 #undef __DEFINE_SET_SEG
+
+#endif  /* __i386__ */
 
 #ifdef __cplusplus
 }
