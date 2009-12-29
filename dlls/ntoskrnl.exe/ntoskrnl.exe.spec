@@ -588,7 +588,7 @@
 @ stub KeReleaseInterruptSpinLock
 @ stub KeReleaseMutant
 @ stub KeReleaseMutex
-@ stub KeReleaseSemaphore
+@ stdcall KeReleaseSemaphore(ptr long long long)
 @ stub KeReleaseSpinLockFromDpcLevel
 @ stub KeRemoveByKeyDeviceQueue
 @ stub KeRemoveByKeyDeviceQueueIfBusy
