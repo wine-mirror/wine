@@ -67,18 +67,6 @@ struct ne_segment_table_entry_s
 
 #define hFirstModule (pThhook->hExeHead)
 
-struct builtin_dll
-{
-    const IMAGE_DOS_HEADER *header;      /* module headers */
-    const char             *file_name;   /* module file name */
-};
-
-/* Table of all built-in DLLs */
-
-#define MAX_DLLS 50
-
-static struct builtin_dll builtin_dlls[MAX_DLLS];
-
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
@@ -148,79 +136,6 @@ static int NE_strncasecmp( const char *str1, const char *str2, int len )
     for ( ; len > 0; len--, str1++, str2++)
         if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
     return ret;
-}
-
-
-/***********************************************************************
- *           find_dll_descr
- *
- * Find a descriptor in the list
- */
-static const IMAGE_DOS_HEADER *find_dll_descr( const char *dllname, const char **file_name )
-{
-    int i;
-    const IMAGE_DOS_HEADER *mz_header;
-    const IMAGE_OS2_HEADER *ne_header;
-    const BYTE *name_table;
-
-    for (i = 0; i < MAX_DLLS; i++)
-    {
-        mz_header = builtin_dlls[i].header;
-        if (mz_header)
-        {
-            ne_header = (const IMAGE_OS2_HEADER *)((const char *)mz_header + mz_header->e_lfanew);
-            name_table = (const BYTE *)ne_header + ne_header->ne_restab;
-
-            /* check the dll file name */
-            if (!NE_strcasecmp( builtin_dlls[i].file_name, dllname ) ||
-            /* check the dll module name (without extension) */
-                (!NE_strncasecmp( dllname, (const char*)name_table+1, *name_table ) &&
-                 !strcmp( dllname + *name_table, ".dll" )))
-            {
-                *file_name = builtin_dlls[i].file_name;
-                return builtin_dlls[i].header;
-            }
-        }
-    }
-    return NULL;
-}
-
-
-/***********************************************************************
- *           __wine_dll_register_16 (KERNEL32.@)
- *
- * Register a built-in DLL descriptor.
- */
-void __wine_dll_register_16( const IMAGE_DOS_HEADER *header, const char *file_name )
-{
-    int i;
-
-    for (i = 0; i < MAX_DLLS; i++)
-    {
-        if (builtin_dlls[i].header) continue;
-        builtin_dlls[i].header = header;
-        builtin_dlls[i].file_name = file_name;
-        break;
-    }
-    assert( i < MAX_DLLS );
-}
-
-
-/***********************************************************************
- *           __wine_dll_unregister_16 (KERNEL32.@)
- *
- * Unregister a built-in DLL descriptor.
- */
-void __wine_dll_unregister_16( const IMAGE_DOS_HEADER *header )
-{
-    int i;
-
-    for (i = 0; i < MAX_DLLS; i++)
-    {
-        if (builtin_dlls[i].header != header) continue;
-        builtin_dlls[i].header = NULL;
-        break;
-    }
 }
 
 
@@ -1050,7 +965,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     NE_MODULE *pModule;
     const IMAGE_DOS_HEADER *descr = NULL;
     const char *file_name = NULL;
-    char dllname[32], owner[20], *p;
+    char dllname[32], *p;
     const char *basename, *main_module;
     int owner_exists = FALSE;
 
@@ -1103,27 +1018,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                 }
             }
         }
-        *p = 0;
 
-        /* old-style 16-bit placeholders support, to be removed at some point */
-        if (!mod32 && wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
-        {
-            mod32 = LoadLibraryA( owner );
-            if (mod32)
-            {
-                if (!(descr = find_dll_descr( dllname, &file_name )))
-                {
-                    FreeLibrary( mod32 );
-                    owner_exists = 0;
-                }
-            }
-            else
-            {
-                /* it's probably disabled by the load order config */
-                WARN( "couldn't load owner %s for 16-bit dll %s\n", owner, dllname );
-                return ERROR_FILE_NOT_FOUND;
-            }
-        }
         /* loading the 32-bit library can have the side effect of loading the module */
         /* if so, simply incr the ref count and return the module */
         if (descr && (hModule = GetModuleHandle16( libname )))
