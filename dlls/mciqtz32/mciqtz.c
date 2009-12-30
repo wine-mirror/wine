@@ -436,8 +436,25 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
         }
     }
 
-    if (dwFlags & ~MCI_SET_TIME_FORMAT)
-        FIXME("Flags not supported yet %08lX\n", dwFlags & ~MCI_SET_TIME_FORMAT);
+    if (dwFlags & MCI_SET_DOOR_OPEN)
+        FIXME("MCI_SET_DOOR_OPEN not implemented yet\n");
+    if (dwFlags & MCI_SET_DOOR_CLOSED)
+        FIXME("MCI_SET_DOOR_CLOSED not implemented yet\n");
+    if (dwFlags & MCI_SET_AUDIO)
+        FIXME("MCI_SET_AUDIO not implemented yet\n");
+    if (dwFlags & MCI_SET_VIDEO)
+        FIXME("MCI_SET_VIDEO not implemented yet\n");
+    if (dwFlags & MCI_SET_ON)
+        FIXME("MCI_SET_ON not implemented yet\n");
+    if (dwFlags & MCI_SET_OFF)
+        FIXME("MCI_SET_OFF not implemented yet\n");
+    if (dwFlags & MCI_SET_AUDIO_LEFT)
+        FIXME("MCI_SET_AUDIO_LEFT not implemented yet\n");
+    if (dwFlags & MCI_SET_AUDIO_RIGHT)
+        FIXME("MCI_SET_AUDIO_RIGHT not implemented yet\n");
+
+    if (dwFlags & ~0x7f03 /* All MCI_SET flags mask */)
+        ERR("Unknown flags %08x\n", dwFlags & ~0x7f03);
 
     return 0;
 }
