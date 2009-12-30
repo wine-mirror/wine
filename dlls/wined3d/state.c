@@ -1666,19 +1666,33 @@ static void state_scissor(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
     }
 }
 
+/* The Direct3D depth bias is specified in normalized depth coordinates. In
+ * OpenGL the bias is specified in units of "the smallest value that is
+ * guaranteed to produce a resolvable offset for a given implementation". To
+ * convert from D3D to GL we need to divide the D3D depth bias by that value.
+ * There's no practical way to retrieve that value from a given GL
+ * implementation, but the D3D application has essentially the same problem,
+ * which makes a guess of 1e-6f seem reasonable here. Note that
+ * SLOPESCALEDEPTHBIAS is a scaling factor for the depth slope, and doesn't
+ * need to be scaled. */
 static void state_depthbias(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
+    if (stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS]
+            || stateblock->renderState[WINED3DRS_DEPTHBIAS])
+    {
+        union
+        {
+            DWORD d;
+            float f;
+        } scale_bias, const_bias;
 
-    if(stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS] ||
-       stateblock->renderState[WINED3DRS_DEPTHBIAS]) {
-        tmpvalue.d = stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS];
+        scale_bias.d = stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS];
+        const_bias.d = stateblock->renderState[WINED3DRS_DEPTHBIAS];
+
         glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
-        glPolygonOffset(tmpvalue.f, *((float*)&stateblock->renderState[WINED3DRS_DEPTHBIAS]));
+
+        glPolygonOffset(scale_bias.f, const_bias.f * 1e6f);
         checkGLcall("glPolygonOffset(...)");
     } else {
         glDisable(GL_POLYGON_OFFSET_FILL);
