@@ -117,6 +117,7 @@ static const struct
     { "darwin",  PLATFORM_APPLE },
     { "freebsd", PLATFORM_FREEBSD },
     { "solaris", PLATFORM_SOLARIS },
+    { "mingw32", PLATFORM_WINDOWS },
     { "windows", PLATFORM_WINDOWS },
     { "winnt",   PLATFORM_WINDOWS }
 };
