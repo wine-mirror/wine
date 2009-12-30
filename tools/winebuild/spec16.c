@@ -860,14 +860,6 @@ void output_spec16_file( DLLSPEC *spec16 )
 {
     DLLSPEC *spec32 = alloc_dll_spec();
 
-    spec32->file_name = xstrdup( spec16->file_name );
-
-    if (spec16->characteristics & IMAGE_FILE_DLL)
-    {
-        spec32->characteristics = IMAGE_FILE_DLL;
-        spec32->init_func = xstrdup( "__wine_spec_dll_entry" );
-    }
-
     resolve_imports( spec16 );
     add_16bit_exports( spec32, spec16 );
 

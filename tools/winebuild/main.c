@@ -657,7 +657,6 @@ int main(int argc, char **argv)
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        if (spec->type == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         BuildDef32File( spec );

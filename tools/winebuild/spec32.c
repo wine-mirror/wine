@@ -768,8 +768,16 @@ void output_fake_module( DLLSPEC *spec )
  */
 void BuildDef32File( DLLSPEC *spec )
 {
+    DLLSPEC *spec32 = NULL;
     const char *name;
     int i, total;
+
+    if (spec->type == SPEC_WIN16)
+    {
+        spec32 = alloc_dll_spec();
+        add_16bit_exports( spec32, spec );
+        spec = spec32;
+    }
 
     if (spec_file_name)
         output( "; File generated automatically from %s; do not edit!\n\n",
@@ -835,4 +843,5 @@ void BuildDef32File( DLLSPEC *spec )
         output( "\n" );
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
+    if (spec32) free_dll_spec( spec32 );
 }
