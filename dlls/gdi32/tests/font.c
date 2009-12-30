@@ -2845,6 +2845,29 @@ static void test_orientation(void)
     DeleteDC(hdc);
 }
 
+static void test_oemcharset(void)
+{
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, old_hfont;
+    int charset;
+
+    hdc = CreateCompatibleDC(0);
+    ZeroMemory(&lf, sizeof(lf));
+    lf.lfHeight = 12;
+    lf.lfCharSet = OEM_CHARSET;
+    lf.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+    lstrcpyA(lf.lfFaceName, "Terminal");
+    hfont = CreateFontIndirectA(&lf);
+    old_hfont = SelectObject(hdc, hfont);
+    charset = GetTextCharset(hdc);
+todo_wine
+    ok(charset == OEM_CHARSET, "expected %d charset, got %d\n", OEM_CHARSET, charset);
+    SelectObject(hdc, old_hfont);
+    DeleteObject(hfont);
+    DeleteDC(hdc);
+}
+
 static void test_GetGlyphOutline(void)
 {
     MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -3054,4 +3077,5 @@ START_TEST(font)
     test_GetTextMetrics2("Arial", -55);
     test_GetTextMetrics2("Arial", -110);
     test_CreateFontIndirect();
+    test_oemcharset();
 }
