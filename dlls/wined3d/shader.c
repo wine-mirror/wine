@@ -59,6 +59,51 @@ static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, U
     return WINED3D_OK;
 }
 
+static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
+        const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
+{
+    struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    const struct wined3d_shader_frontend *fe;
+    HRESULT hr;
+
+    TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u.\n",
+            shader, byte_code, output_signature, float_const_count);
+
+    fe = shader_select_frontend(*byte_code);
+    if (!fe)
+    {
+        FIXME("Unable to find frontend for shader.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    shader->baseShader.frontend = fe;
+    shader->baseShader.frontend_data = fe->shader_init(byte_code, output_signature);
+    if (!shader->baseShader.frontend_data)
+    {
+        FIXME("Failed to initialize frontend.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* First pass: trace shader. */
+    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, shader->baseShader.frontend_data, byte_code);
+
+    /* Initialize immediate constant lists. */
+    list_init(&shader->baseShader.constantsF);
+    list_init(&shader->baseShader.constantsB);
+    list_init(&shader->baseShader.constantsI);
+
+    /* Second pass: figure out which registers are used, what the semantics are, etc. */
+    hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
+            reg_maps, shader->baseShader.input_signature, shader->baseShader.output_signature,
+            byte_code, float_const_count);
+    if (FAILED(hr)) return hr;
+
+    shader->baseShader.function = HeapAlloc(GetProcessHeap(), 0, shader->baseShader.functionLength);
+    if (!shader->baseShader.function) return E_OUTOFMEMORY;
+    memcpy(shader->baseShader.function, byte_code, shader->baseShader.functionLength);
+
+    return WINED3D_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -279,49 +324,29 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
     }
 }
 
-static HRESULT vertexshader_set_function(IWineD3DVertexShaderImpl *shader,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
+HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
-    const struct wined3d_shader_frontend *fe;
     unsigned int i;
     HRESULT hr;
     WORD map;
 
-    TRACE("shader %p, byte_code %p, output_signature %p.\n", shader, byte_code, output_signature);
+    if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    fe = shader_select_frontend(*byte_code);
-    if (!fe)
+    shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
+    shader_init(&shader->baseShader, device, parent, parent_ops);
+
+    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code,
+            output_signature, device->d3d_vshader_constantF);
+    if (FAILED(hr))
     {
-        FIXME("Unable to find frontend for shader.\n");
-        return WINED3DERR_INVALIDCALL;
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup((IWineD3DBaseShader *)shader);
+        return hr;
     }
-    shader->baseShader.frontend = fe;
-    shader->baseShader.frontend_data = fe->shader_init(byte_code, output_signature);
-    if (!shader->baseShader.frontend_data)
-    {
-        FIXME("Failed to initialize frontend.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* First pass: trace shader. */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, shader->baseShader.frontend_data, byte_code);
-
-    /* Initialize immediate constant lists. */
-    list_init(&shader->baseShader.constantsF);
-    list_init(&shader->baseShader.constantsB);
-    list_init(&shader->baseShader.constantsI);
-
-    /* Second pass: figure out registers used, semantics, etc. */
-    shader->min_rel_offset = device->d3d_vshader_constantF;
-    shader->max_rel_offset = 0;
-    hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
-            reg_maps, shader->baseShader.input_signature, shader->baseShader.output_signature,
-            byte_code, device->d3d_vshader_constantF);
-    if (FAILED(hr)) return hr;
-
 
     map = shader->baseShader.reg_maps.input_registers;
     for (i = 0; map; map >>= 1, ++i)
@@ -368,34 +393,9 @@ static HRESULT vertexshader_set_function(IWineD3DVertexShaderImpl *shader,
             shader->rel_offset = 0;
         }
     }
+
     shader->baseShader.load_local_constsF = shader->baseShader.reg_maps.usesrelconstF
             && !list_empty(&shader->baseShader.constantsF);
-
-    shader->baseShader.function = HeapAlloc(GetProcessHeap(), 0, shader->baseShader.functionLength);
-    if (!shader->baseShader.function) return E_OUTOFMEMORY;
-    memcpy(shader->baseShader.function, byte_code, shader->baseShader.functionLength);
-
-    return WINED3D_OK;
-}
-
-HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
-{
-    HRESULT hr;
-
-    if (!byte_code) return WINED3DERR_INVALIDCALL;
-
-    shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
-    shader_init(&shader->baseShader, device, parent, parent_ops);
-
-    hr = vertexshader_set_function(shader, byte_code, output_signature);
-    if (FAILED(hr))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShader *)shader);
-        return hr;
-    }
 
     return WINED3D_OK;
 }
@@ -642,45 +642,27 @@ static void pixelshader_set_limits(IWineD3DPixelShaderImpl *shader)
     }
 }
 
-static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
+HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
-    const struct wined3d_shader_frontend *fe;
     HRESULT hr;
 
-    TRACE("shader %p, byte_code %p, output_signature %p.\n", shader, byte_code, output_signature);
+    if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    fe = shader_select_frontend(*byte_code);
-    if (!fe)
+    shader->lpVtbl = &IWineD3DPixelShader_Vtbl;
+    shader_init(&shader->baseShader, device, parent, parent_ops);
+
+    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code,
+            output_signature, device->d3d_pshader_constantF);
+    if (FAILED(hr))
     {
-        FIXME("Unable to find frontend for shader.\n");
-        return WINED3DERR_INVALIDCALL;
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup((IWineD3DBaseShader *)shader);
+        return hr;
     }
-    shader->baseShader.frontend = fe;
-    shader->baseShader.frontend_data = fe->shader_init(byte_code, output_signature);
-    if (!shader->baseShader.frontend_data)
-    {
-        FIXME("Failed to initialize frontend.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* First pass: trace shader. */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, shader->baseShader.frontend_data, byte_code);
-
-    /* Initialize immediate constant lists. */
-    list_init(&shader->baseShader.constantsF);
-    list_init(&shader->baseShader.constantsB);
-    list_init(&shader->baseShader.constantsI);
-
-    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
-            reg_maps, shader->baseShader.input_signature, NULL,
-            byte_code, device->d3d_pshader_constantF);
-    if (FAILED(hr)) return hr;
 
     pixelshader_set_limits(shader);
 
@@ -724,32 +706,6 @@ static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
     }
 
     shader->baseShader.load_local_constsF = FALSE;
-
-    shader->baseShader.function = HeapAlloc(GetProcessHeap(), 0, shader->baseShader.functionLength);
-    if (!shader->baseShader.function) return E_OUTOFMEMORY;
-    memcpy(shader->baseShader.function, byte_code, shader->baseShader.functionLength);
-
-    return WINED3D_OK;
-}
-
-HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
-{
-    HRESULT hr;
-
-    if (!byte_code) return WINED3DERR_INVALIDCALL;
-
-    shader->lpVtbl = &IWineD3DPixelShader_Vtbl;
-    shader_init(&shader->baseShader, device, parent, parent_ops);
-
-    hr = pixelshader_set_function(shader, byte_code, output_signature);
-    if (FAILED(hr))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShader *)shader);
-        return hr;
-    }
 
     return WINED3D_OK;
 }
