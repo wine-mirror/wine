@@ -420,7 +420,7 @@ static UINT STREAMS_find_matching_rows(struct tagMSIVIEW *view, UINT col,
                                        UINT val, UINT *row, MSIITERHANDLE *handle)
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
-    UINT index = (UINT)*handle;
+    UINT index = PtrToUlong(*handle);
 
     TRACE("(%d, %d): %d\n", *row, col, val);
 
@@ -438,7 +438,7 @@ static UINT STREAMS_find_matching_rows(struct tagMSIVIEW *view, UINT col,
         index++;
     }
 
-    *handle = (MSIITERHANDLE)++index;
+    *handle = UlongToPtr(++index);
     if (index >= sv->num_rows)
         return ERROR_NO_MORE_ITEMS;
 

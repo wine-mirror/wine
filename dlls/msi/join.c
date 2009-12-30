@@ -259,7 +259,7 @@ static UINT JOIN_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     if (col == 0 || col > jv->columns)
         return ERROR_INVALID_PARAMETER;
 
-    for (i = (UINT)*handle; i < jv->rows; i++)
+    for (i = PtrToUlong(*handle); i < jv->rows; i++)
     {
         if (view->ops->fetch_int( view, i, col, &row_value ) != ERROR_SUCCESS)
             continue;
