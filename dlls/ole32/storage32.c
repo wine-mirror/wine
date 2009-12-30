@@ -448,7 +448,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   if(!(This->openFlags & STGM_TRANSACTED)) {
     if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
     {
-      res = STG_E_ACCESSDENIED;
+      res = STG_E_INVALIDFLAG;
       goto end;
     }
   }

@@ -355,6 +355,19 @@ static void test_storage_stream(void)
 
     r = IStorage_Release(stg);
     ok(r == 0, "wrong ref count\n");
+
+    /* try create some invalid streams */
+    stg = NULL;
+    stm = NULL;
+    r = StgOpenStorage(filename, NULL, STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+    {
+        r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
+        ok(r == STG_E_INVALIDFLAG, "IStorage->OpenStream should return STG_E_INVALIDFLAG instead of 0x%08x\n", r);
+        IStorage_Release(stg);
+    }
+
     r = DeleteFileA(filenameA);
     ok(r, "file should exist\n");
 }
