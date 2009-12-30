@@ -40,6 +40,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+extern LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 
 KSYSTEM_TIME KeTickCount = { 0, 0, 0 };
 
@@ -119,27 +120,6 @@ static HANDLE get_device_manager(void)
             NtClose( handle );  /* somebody beat us to it */
     }
     return ret;
-}
-
-/* exception handler for emulation of privileged instructions */
-static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
-{
-    EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
-
-    if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
-        record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
-    {
-#ifdef __i386__
-        CONTEXT *context = ptrs->ContextRecord;
-        extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context );
-
-        if (__wine_emulate_instruction( record, context ) == ExceptionContinueExecution)
-            return EXCEPTION_CONTINUE_EXECUTION;
-#else
-        FIXME( "Privileged instruction emulation not implemented on this CPU\n" );
-#endif
-    }
-    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 /* process an ioctl request for a given device */
@@ -1399,7 +1379,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
+#ifdef __i386__
         handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
+#endif
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         break;
     case DLL_PROCESS_DETACH:
