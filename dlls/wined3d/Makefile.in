@@ -22,9 +22,9 @@ C_SRCS = \
 	glsl_shader.c \
 	nvidia_texture_shader.c \
 	palette.c \
-	pixelshader.c \
 	query.c \
 	resource.c \
+	shader.c \
 	shader_sm1.c \
 	shader_sm4.c \
 	state.c \
@@ -38,7 +38,6 @@ C_SRCS = \
 	texture.c \
 	utils.c \
 	vertexdeclaration.c \
-	vertexshader.c \
 	view.c \
 	volume.c \
 	volumetexture.c \
