@@ -43,3 +43,7 @@
 #  402 _RUNDLLCHECKDRIVE
 
 #32 WCI
+
+################################################################
+# Wine extensions: functions needed by shell32
+@ stdcall -arch=win32 RunDLL_CallEntry16(long long ptr str long)
