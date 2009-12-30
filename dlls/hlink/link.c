@@ -51,7 +51,6 @@ typedef struct
 
     LPWSTR              FriendlyName;
     LPWSTR              Location;
-    LPWSTR              Target;
     LPWSTR              TargetFrameName;
     IMoniker            *Moniker;
     IHlinkSite          *Site;
@@ -155,7 +154,6 @@ static ULONG WINAPI IHlink_fnRelease (IHlink* iface)
 
     TRACE("-- destroying IHlink (%p)\n", This);
     heap_free(This->FriendlyName);
-    heap_free(This->Target);
     heap_free(This->TargetFrameName);
     heap_free(This->Location);
     if (This->Moniker)
@@ -251,9 +249,45 @@ static HRESULT WINAPI IHlink_fnSetStringReference(IHlink* iface,
 
     if (grfHLSETF & HLINKSETF_TARGET)
     {
-        heap_free(This->Target);
-        This->Target = hlink_strdupW( pwzTarget );
+        if (This->Moniker)
+        {
+            IMoniker_Release(This->Moniker);
+            This->Moniker = NULL;
+        }
+        if (pwzTarget && *pwzTarget)
+        {
+            IMoniker *pMon;
+            IBindCtx *pbc = NULL;
+            ULONG eaten;
+            HRESULT r;
+
+            r = CreateBindCtx(0, &pbc);
+            if (FAILED(r))
+                return E_OUTOFMEMORY;
+
+            r = MkParseDisplayName(pbc, pwzTarget, &eaten, &pMon);
+            IBindCtx_Release(pbc);
+
+            if (FAILED(r))
+            {
+                LPCWSTR p = strchrW(pwzTarget, ':');
+                if (p && (p - pwzTarget > 1))
+                    r = CreateURLMoniker(NULL, pwzTarget, &pMon);
+                else
+                    r = CreateFileMoniker(pwzTarget, &pMon);
+                if (FAILED(r))
+                {
+                    ERR("couldn't create moniker for %s, failed with error 0x%08x\n",
+                        debugstr_w(pwzTarget), r);
+                    return r;
+                }
+            }
+
+            IHlink_SetMonikerReference(iface, HLINKSETF_TARGET, pMon, NULL);
+            IMoniker_Release(pMon);
+        }
     }
+
     if (grfHLSETF & HLINKSETF_LOCATION)
     {
         heap_free(This->Location);
@@ -302,22 +336,19 @@ static HRESULT WINAPI IHlink_fnGetStringReference (IHlink* iface,
 
     if (ppwzTarget)
     {
-        *ppwzTarget = hlink_co_strdupW( This->Target );
-
-        if (!This->Target)
+        IMoniker* mon;
+        __GetMoniker(This, &mon);
+        if (mon)
         {
-            IMoniker* mon;
-            __GetMoniker(This, &mon);
-            if (mon)
-            {
-                IBindCtx *pbc;
+            IBindCtx *pbc;
 
-                CreateBindCtx( 0, &pbc);
-                IMoniker_GetDisplayName(mon, pbc, NULL, ppwzTarget);
-                IBindCtx_Release(pbc);
-                IMoniker_Release(mon);
-            }
+            CreateBindCtx( 0, &pbc);
+            IMoniker_GetDisplayName(mon, pbc, NULL, ppwzTarget);
+            IBindCtx_Release(pbc);
+            IMoniker_Release(mon);
         }
+        else
+            *ppwzTarget = NULL;
     }
     if (ppwzLocation)
         *ppwzLocation = hlink_co_strdupW( This->Location );
