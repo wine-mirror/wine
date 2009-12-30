@@ -100,6 +100,7 @@ enum exec_mode_values
     MODE_DLL,
     MODE_EXE,
     MODE_DEF,
+    MODE_IMPLIB,
     MODE_RELAY16,
     MODE_RELAY32,
     MODE_RESOURCES
@@ -268,6 +269,7 @@ static const char usage_str[] =
 "       --dll                 Build a .c file from a .spec or .def file\n"
 "       --def                 Build a .def file from a .spec file\n"
 "       --exe                 Build a .c file for an executable\n"
+"       --implib              Build an import library\n"
 "       --relay16             Build the 16-bit relay assembly routines\n"
 "       --relay32             Build the 32-bit relay assembly routines\n"
 "       --resources           Build a .o file for the resource files\n\n"
@@ -278,6 +280,7 @@ enum long_options_values
     LONG_OPT_DLL = 1,
     LONG_OPT_DEF,
     LONG_OPT_EXE,
+    LONG_OPT_IMPLIB,
     LONG_OPT_ASCMD,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
@@ -300,6 +303,7 @@ static const struct option long_options[] =
     { "dll",           0, 0, LONG_OPT_DLL },
     { "def",           0, 0, LONG_OPT_DEF },
     { "exe",           0, 0, LONG_OPT_EXE },
+    { "implib",        0, 0, LONG_OPT_IMPLIB },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",   0, 0, LONG_OPT_FAKE_MODULE },
@@ -474,6 +478,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case LONG_OPT_EXE:
             set_exec_mode( MODE_EXE );
             if (!spec->subsystem) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+            break;
+        case LONG_OPT_IMPLIB:
+            set_exec_mode( MODE_IMPLIB );
             break;
         case LONG_OPT_ASCMD:
             as_command = xstrdup( optarg );
@@ -661,6 +668,11 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         BuildDef32File( spec );
+        break;
+    case MODE_IMPLIB:
+        if (!spec_file_name) fatal_error( "missing .spec file\n" );
+        if (!parse_input_file( spec )) break;
+        output_import_lib( spec, argv );
         break;
     case MODE_RELAY16:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );

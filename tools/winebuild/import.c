@@ -1304,3 +1304,52 @@ void output_imports( DLLSPEC *spec )
     if (nb_imports || ext_link_imports.count || has_stubs(spec) || has_relays(spec))
         output_get_pc_thunk();
 }
+
+/* output an import library for a Win32 module and additional object files */
+void output_import_lib( DLLSPEC *spec, char **argv )
+{
+    char *dlltool, *def_file;
+    char *cmd;
+    int err;
+
+    if (target_platform != PLATFORM_WINDOWS)
+        fatal_error( "Unix-style import libraries not supported yet\n" );
+
+    def_file = get_temp_file_name( output_file_name, ".def" );
+    fclose( output_file );
+    if (!(output_file = fopen( def_file, "w" )))
+        fatal_error( "Unable to create output file '%s'\n", def_file );
+    BuildDef32File( spec );
+    fclose( output_file );
+    output_file = NULL;
+
+    dlltool = find_tool( "dlltool", NULL );
+    cmd = xmalloc( strlen(dlltool) + strlen(output_file_name) + strlen(def_file) + 12 );
+    sprintf( cmd, "%s -k -l %s -d %s", dlltool, output_file_name, def_file );
+    if (verbose) fprintf( stderr, "%s\n", cmd );
+    err = system( cmd );
+    if (err) fatal_error( "%s failed with status %d\n", dlltool, err );
+    free( cmd );
+    free( dlltool );
+
+    if (argv[0])
+    {
+        char *ar = find_tool( "ar", NULL );
+        int i, len;
+
+        for (i = len = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
+        cmd = xmalloc( strlen(ar) + strlen(output_file_name) + len + 5 );
+        sprintf( cmd, "%s rs %s", ar, output_file_name );
+        for (i = 0; argv[i]; i++)
+        {
+            strcat( cmd, " " );
+            strcat( cmd, argv[i] );
+        }
+        if (verbose) fprintf( stderr, "%s\n", cmd );
+        err = system( cmd );
+        if (err) fatal_error( "%s failed with status %d\n", dlltool, err );
+        free( cmd );
+        free( ar );
+    }
+    output_file_name = NULL;
+}

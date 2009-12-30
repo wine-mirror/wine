@@ -46,6 +46,10 @@ executable, and all the other object files must be listed as
 Build a .def file from a spec file. The .spec file is specified via the
 -E option. This is used when building dlls with a PE (Win32) compiler.
 .TP
+.BI \--implib
+Build a PE import library from a spec file. The .spec file is
+specified via the -E option.
+.TP
 .B \--relay16
 Generate the assembly code for the 16-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
