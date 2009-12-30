@@ -160,7 +160,7 @@ struct cpu*             dbghelp_current_cpu =
 #elif defined(__x86_64__)
     &cpu_x86_64
 #else
-#error define support for you CPU
+#error define support for your CPU
 #endif
     ;
 
