@@ -9,15 +9,14 @@
 #
 
 DLLFLAGS    = @DLLFLAGS@
-MINGWAR     = @MINGWAR@
 DEFS        = -D__WINESRC__ $(EXTRADEFS)
 BASEMODULE  = $(MODULE:%.dll=%)
 MAINSPEC    = $(BASEMODULE).spec
-SPEC_DEF    = $(BASEMODULE).def
 WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS)
 ALL_LIBS    = $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
+IMPLIBFLAGS = $(TARGETFLAGS) $(EXTRAIMPLIBFLAGS)
 IMPORTLIBFILE = $(IMPORTLIB:%=lib%.@IMPLIBEXT@)
 STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
 DLL_LDPATH  = -L$(DLLDIR) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(IMPORTS:%=-L$(DLLDIR)/%)
@@ -38,17 +37,16 @@ all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
 
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
-$(SPEC_DEF) $(IMPORTLIB:%=lib%.def): $(MAINSPEC)
-	$(WINEBUILD) $(TARGETFLAGS) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
+$(IMPORTLIB:%=lib%.def): $(MAINSPEC)
+	$(WINEBUILD) $(IMPLIBFLAGS) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
 
 $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(IMPLIB_OBJS)
 	$(RANLIB) $@
 
-$(IMPORTLIB:%=lib%.a): $(SPEC_DEF) $(IMPLIB_OBJS)
-	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
-	$(MINGWAR) rs $@ $(IMPLIB_OBJS)
+$(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_OBJS)
+	$(WINEBUILD) $(IMPLIBFLAGS) @CROSSTARGETFLAGS@ -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_OBJS)
 
 $(SUBDIRS): implib
 
@@ -111,7 +109,7 @@ uninstall::
 # Misc. rules
 
 clean::
-	$(RM) $(SPEC_DEF) $(IMPORTLIBFILE)
+	$(RM) $(IMPORTLIBFILE)
 
 $(SPEC_DEF) $(SPEC_SRCS16:.spec=.spec.o): $(WINEBUILD)
 

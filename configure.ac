@@ -587,7 +587,6 @@ case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
-    AC_CHECK_TOOL(MINGWAR,ar,false)
     if test "$DLLWRAP" = "false"; then
       LIBEXT="a"
     else
@@ -756,8 +755,6 @@ dnl Check for cross compiler to build test programs
 if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
 then
     WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
-    WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
-    WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
     if test "$CROSSCC" != "false"
     then
         AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
