@@ -209,10 +209,10 @@ extern void warning( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern char *find_tool( const char *name, const char * const *names );
 extern const char *get_as_command(void);
 extern const char *get_ld_command(void);
 extern const char *get_nm_command(void);
-extern const char *get_windres_command(void);
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );

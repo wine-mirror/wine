@@ -199,14 +199,24 @@ int output( const char *format, ... )
 }
 
 /* find a build tool in the path, trying the various names */
-static char *find_tool( const char * const *names )
+char *find_tool( const char *name, const char * const *names )
 {
     static char **dirs;
     static unsigned int count, maxlen;
 
     char *p, *file;
+    const char *alt_names[2];
     unsigned int i, len;
     struct stat st;
+
+    if (target_alias)
+    {
+        file = xmalloc( strlen(target_alias) + strlen(name) + 2 );
+        strcpy( file, target_alias );
+        strcat( file, "-" );
+        strcat( file, name );
+        return file;
+    }
 
     if (!dirs)
     {
@@ -230,6 +240,13 @@ static char *find_tool( const char * const *names )
         for (i = 0; i < count; i++) maxlen = max( maxlen, strlen(dirs[i])+2 );
     }
 
+    if (!names)
+    {
+        alt_names[0] = name;
+        alt_names[1] = NULL;
+        names = alt_names;
+    }
+
     while (*names)
     {
         len = strlen(*names) + sizeof(EXEEXT) + 1;
@@ -249,24 +266,15 @@ static char *find_tool( const char * const *names )
         free( file );
         names++;
     }
-    return NULL;
+    return xstrdup( name );
 }
 
 const char *get_as_command(void)
 {
     if (!as_command)
     {
-        if (target_alias)
-        {
-            as_command = xmalloc( strlen(target_alias) + sizeof("-as") );
-            strcpy( as_command, target_alias );
-            strcat( as_command, "-as" );
-        }
-        else
-        {
-            static const char * const commands[] = { "gas", "as", NULL };
-            if (!(as_command = find_tool( commands ))) as_command = xstrdup("as");
-        }
+        static const char * const commands[] = { "gas", "as", NULL };
+        as_command = find_tool( "as", commands );
 
         if (force_pointer_size)
         {
@@ -284,17 +292,8 @@ const char *get_ld_command(void)
 {
     if (!ld_command)
     {
-        if (target_alias)
-        {
-            ld_command = xmalloc( strlen(target_alias) + sizeof("-ld") );
-            strcpy( ld_command, target_alias );
-            strcat( ld_command, "-ld" );
-        }
-        else
-        {
-            static const char * const commands[] = { "ld", "gld", NULL };
-            if (!(ld_command = find_tool( commands ))) ld_command = xstrdup("ld");
-        }
+        static const char * const commands[] = { "ld", "gld", NULL };
+        ld_command = find_tool( "ld", commands );
 
         if (force_pointer_size)
         {
@@ -323,40 +322,10 @@ const char *get_nm_command(void)
 {
     if (!nm_command)
     {
-        if (target_alias)
-        {
-            nm_command = xmalloc( strlen(target_alias) + sizeof("-nm") );
-            strcpy( nm_command, target_alias );
-            strcat( nm_command, "-nm" );
-        }
-        else
-        {
-            static const char * const commands[] = { "nm", "gnm", NULL };
-            if (!(nm_command = find_tool( commands ))) nm_command = xstrdup("nm");
-        }
+        static const char * const commands[] = { "nm", "gnm", NULL };
+        nm_command = find_tool( "nm", commands );
     }
     return nm_command;
-}
-
-const char *get_windres_command(void)
-{
-    static char *windres_command;
-
-    if (!windres_command)
-    {
-        if (target_alias)
-        {
-            windres_command = xmalloc( strlen(target_alias) + sizeof("-windres") );
-            strcpy( windres_command, target_alias );
-            strcat( windres_command, "-windres" );
-        }
-        else
-        {
-            static const char * const commands[] = { "windres", NULL };
-            if (!(windres_command = find_tool( commands ))) windres_command = xstrdup("windres");
-        }
-    }
-    return windres_command;
 }
 
 /* get a name for a temp file, automatically cleaned up on exit */

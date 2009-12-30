@@ -652,13 +652,14 @@ void output_res_o_file( DLLSPEC *spec )
 
     if (res_file)
     {
-        const char *prog = get_windres_command();
+        char *prog = find_tool( "windres", NULL );
         char *cmd = xmalloc( strlen(prog) + strlen(res_file) + strlen(output_file_name) + 9 );
         sprintf( cmd, "%s -i %s -o %s", prog, res_file, output_file_name );
         if (verbose) fprintf( stderr, "%s\n", cmd );
         err = system( cmd );
         if (err) fatal_error( "%s failed with status %d\n", prog, err );
         free( cmd );
+        free( prog );
     }
     output_file_name = NULL;  /* so we don't try to assemble it */
 }
