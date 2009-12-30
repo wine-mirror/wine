@@ -1095,6 +1095,7 @@ static HRESULT WINAPI Contain_FindConnectionPoint(
         pt->sinkCount = 0;
         pt->sink = NULL;
         pt->container = iface;
+        pt->id = IID_IDispatch;
 
         if (iface->ptCount == 0)
             iface->pt =HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown*));
