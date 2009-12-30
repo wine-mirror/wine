@@ -288,6 +288,7 @@ static HRESULT vertexshader_set_function(IWineD3DVertexShaderImpl *shader,
     const struct wined3d_shader_frontend *fe;
     unsigned int i;
     HRESULT hr;
+    WORD map;
 
     TRACE("shader %p, byte_code %p, output_signature %p.\n", shader, byte_code, output_signature);
 
@@ -317,9 +318,19 @@ static HRESULT vertexshader_set_function(IWineD3DVertexShaderImpl *shader,
     shader->min_rel_offset = device->d3d_vshader_constantF;
     shader->max_rel_offset = 0;
     hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
-            reg_maps, shader->attributes, NULL, shader->output_signature,
+            reg_maps, shader->input_signature, shader->output_signature,
             byte_code, device->d3d_vshader_constantF);
     if (FAILED(hr)) return hr;
+
+
+    map = shader->baseShader.reg_maps.input_registers;
+    for (i = 0; map; map >>= 1, ++i)
+    {
+        if (!(map & 1) || !shader->baseShader.input_signature[i].semantic_name) continue;
+
+        shader->attributes[i].usage = shader_usage_from_semantic_name(shader->input_signature[i].semantic_name);
+        shader->attributes[i].usage_idx = shader->input_signature[i].semantic_idx;
+    }
 
     if (output_signature)
     {
@@ -666,7 +677,7 @@ static HRESULT pixelshader_set_function(IWineD3DPixelShaderImpl *shader,
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
     hr = shader_get_registers_used((IWineD3DBaseShader *)shader, fe,
-            reg_maps, NULL, shader->input_signature, NULL,
+            reg_maps, shader->input_signature, NULL,
             byte_code, device->d3d_pshader_constantF);
     if (FAILED(hr)) return hr;
 

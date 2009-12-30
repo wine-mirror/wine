@@ -2647,8 +2647,7 @@ unsigned int shader_find_free_input_register(const struct shader_reg_maps *reg_m
 void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx) DECLSPEC_HIDDEN;
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
-        struct shader_reg_maps *reg_maps, struct wined3d_shader_attribute *attributes,
-        struct wined3d_shader_signature_element *input_signature,
+        struct shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
         struct wined3d_shader_signature_element *output_signature,
         const DWORD *byte_code, DWORD constf_size) DECLSPEC_HIDDEN;
 void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *device,
@@ -2656,6 +2655,7 @@ void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *dev
 BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token) DECLSPEC_HIDDEN;
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction) DECLSPEC_HIDDEN;
+WINED3DDECLUSAGE shader_usage_from_semantic_name(const char *semantic_name) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
 {
@@ -2731,6 +2731,7 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* Vertex shader input and output semantics */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
+    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
     struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
 
     UINT                       min_rel_offset, max_rel_offset;
