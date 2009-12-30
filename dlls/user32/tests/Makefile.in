@@ -26,6 +26,7 @@ CTESTS = \
 	static.c \
 	sysparams.c \
 	text.c \
+	uitools.c \
 	win.c \
 	winstation.c \
 	wsprintf.c
