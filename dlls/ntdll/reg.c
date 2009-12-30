@@ -991,7 +991,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         if((pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND) ||
            (pInfo->Type != REG_EXPAND_SZ && pInfo->Type != REG_MULTI_SZ))
         {
-            status = pQuery->QueryRoutine(pInfo->Name, pInfo->Type,
+            status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type,
                 ((CHAR*)pInfo) + pInfo->DataOffset, pInfo->DataLength,
                 pContext, pQuery->EntryContext);
         }
