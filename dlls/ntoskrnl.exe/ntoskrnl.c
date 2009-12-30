@@ -961,6 +961,15 @@ NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING Redi
 }
 
 /***********************************************************************
+ *           KeGetCurrentThread / PsGetCurrentThread   (NTOSKRNL.EXE.@)
+ */
+PRKTHREAD WINAPI KeGetCurrentThread(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )

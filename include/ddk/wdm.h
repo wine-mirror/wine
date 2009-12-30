@@ -134,7 +134,7 @@ typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _FREE_FUNCTION *PFREE_FUNCTION;
-typedef struct _KTHREAD *PKTHREAD;
+typedef struct _KTHREAD *PKTHREAD, *PRKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
 typedef struct _ERESOURCE *PERESOURCE;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;

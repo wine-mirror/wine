@@ -529,7 +529,7 @@
 @ stub KeFindConfigurationNextEntry
 @ stub KeFlushEntireTb
 @ stub KeFlushQueuedDpcs
-@ stub KeGetCurrentThread
+@ stdcall KeGetCurrentThread()
 @ stub KeGetPreviousMode
 @ stub KeGetRecommendedSharedDataAlignment
 @ stub KeI386AbiosCall
@@ -852,7 +852,7 @@
 @ stub PsGetCurrentProcess
 @ stdcall PsGetCurrentProcessId()
 @ stub PsGetCurrentProcessSessionId
-@ stub PsGetCurrentThread
+@ stdcall PsGetCurrentThread() KeGetCurrentThread
 @ stdcall PsGetCurrentThreadId()
 @ stub PsGetCurrentThreadPreviousMode
 @ stub PsGetCurrentThreadStackBase
