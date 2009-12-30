@@ -1198,7 +1198,7 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
         if (get_TOKEN(buf) != TOKEN_CBRACE)
           return FALSE;
         TRACE("Found optional reference %s\n", (char*)buf->value);
-        for (i = 0; i < buf->nb_pxo_globals; i++)
+        for (i = 0; i < (buf->nb_pxo_globals+1); i++)
         {
           for (j = 0; j < (buf->pxo_globals[i])[0].nb_subobjects; j++)
           {
@@ -1207,7 +1207,7 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
           }
         }
 _exit:
-        if (i == buf->nb_pxo_globals)
+        if (i == (buf->nb_pxo_globals+1))
         {
           ERR("Reference to unknown object %s\n", (char*)buf->value);
           return FALSE;
