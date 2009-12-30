@@ -1288,7 +1288,9 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
                 }
 
                 /* Geforce8 - lowend */
-                if (strstr(gl_renderer, "8300")
+                if (strstr(gl_renderer, "8100")
+                        || strstr(gl_renderer, "8200")
+                        || strstr(gl_renderer, "8300")
                         || strstr(gl_renderer, "8400")
                         || strstr(gl_renderer, "8500"))
                 {
