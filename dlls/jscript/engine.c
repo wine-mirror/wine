@@ -493,8 +493,12 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
     if(retv && (exec_type == EXECT_EVAL || rt.type == RT_RETURN))
         *retv = val;
-    else
+    else {
+        if (retv) {
+            VariantInit(retv);
+        }
         VariantClear(&val);
+    }
     return S_OK;
 }
 
