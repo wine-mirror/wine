@@ -3606,7 +3606,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
         WORD map = vs->baseShader.reg_maps.output_registers;
 
         /* The vertex shader writes to its own varyings, the pixel shader needs them in the builtin ones */
-        output_signature = vs->output_signature;
+        output_signature = vs->baseShader.output_signature;
 
         shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
         for (i = 0; map; map >>= 1, ++i)
@@ -3658,7 +3658,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     } else if(ps_major >= 3 && vs_major >= 3) {
         WORD map = vs->baseShader.reg_maps.output_registers;
 
-        output_signature = vs->output_signature;
+        output_signature = vs->baseShader.output_signature;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
         shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
@@ -3683,7 +3683,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->input_signature,
+        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->baseShader.input_signature,
                 &ps->baseShader.reg_maps, output_signature, &vs->baseShader.reg_maps);
 
         shader_addline(buffer, "}\n");
@@ -3694,7 +3694,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->input_signature,
+        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->baseShader.input_signature,
                 &ps->baseShader.reg_maps, NULL, NULL);
         shader_addline(buffer, "}\n");
     } else {
@@ -3766,7 +3766,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
     {
-        shader_glsl_input_pack((IWineD3DPixelShader *) This, buffer, This->input_signature, reg_maps, args->vp_mode);
+        shader_glsl_input_pack((IWineD3DPixelShader *) This, buffer,
+                This->baseShader.input_signature, reg_maps, args->vp_mode);
     }
 
     /* Base Shader Body */

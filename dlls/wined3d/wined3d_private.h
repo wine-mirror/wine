@@ -2621,6 +2621,9 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsI;
     shader_reg_maps reg_maps;
 
+    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
+    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
+
     /* Pointer to the parent device */
     IWineD3DDevice *device;
     struct list     shader_list_entry;
@@ -2729,10 +2732,8 @@ typedef struct IWineD3DVertexShaderImpl {
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass     baseShader;
 
-    /* Vertex shader input and output semantics */
+    /* Vertex shader attributes. */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
-    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
-    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
 
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
@@ -2773,7 +2774,6 @@ typedef struct IWineD3DPixelShaderImpl {
     IWineD3DBaseShaderClass     baseShader;
 
     /* Pixel shader input semantics */
-    struct wined3d_shader_signature_element input_signature[MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
     unsigned int declared_in_count;
