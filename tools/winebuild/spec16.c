@@ -64,22 +64,6 @@ static inline int is_function( const ORDDEF *odp )
             odp->type == TYPE_STUB);
 }
 
-static void init_dll_name( DLLSPEC *spec )
-{
-    if (!spec->file_name)
-    {
-        char *p;
-        spec->file_name = xstrdup( output_file_name );
-        if ((p = strrchr( spec->file_name, '.' ))) *p = 0;
-    }
-    if (!spec->dll_name)  /* set default name from file name */
-    {
-        char *p;
-        spec->dll_name = xstrdup( spec->file_name );
-        if ((p = strrchr( spec->dll_name, '.' ))) *p = 0;
-    }
-}
-
 /*******************************************************************
  *         output_entries
  *
@@ -853,7 +837,6 @@ static void output_module16( DLLSPEC *spec )
  */
 void BuildSpec16File( DLLSPEC *spec )
 {
-    init_dll_name( spec );
     output_standard_file_header();
     output_module16( spec );
     output_init_code( spec );
@@ -877,7 +860,6 @@ void output_spec16_file( DLLSPEC *spec16 )
 {
     DLLSPEC *spec32 = alloc_dll_spec();
 
-    init_dll_name( spec16 );
     spec32->file_name = xstrdup( spec16->file_name );
 
     if (spec16->characteristics & IMAGE_FILE_DLL)
@@ -921,7 +903,6 @@ void output_fake_module16( DLLSPEC *spec )
 
     unsigned int i, rsrctab, restab, namelen, modtab, imptab, enttab, cbenttab, codeseg, dataseg, rsrcdata;
 
-    init_dll_name( spec );
     init_output_buffer();
 
     rsrctab = lfanew;

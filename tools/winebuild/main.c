@@ -138,6 +138,23 @@ static void set_dll_file_name( const char *name, DLLSPEC *spec )
     }
 }
 
+/* set the dll name from the file name */
+static void init_dll_name( DLLSPEC *spec )
+{
+    if (!spec->file_name)
+    {
+        char *p;
+        spec->file_name = xstrdup( output_file_name );
+        if ((p = strrchr( spec->file_name, '.' ))) *p = 0;
+    }
+    if (!spec->dll_name)  /* set default name from file name */
+    {
+        char *p;
+        spec->dll_name = xstrdup( spec->file_name );
+        if ((p = strrchr( spec->dll_name, '.' ))) *p = 0;
+    }
+}
+
 /* set the dll subsystem */
 static void set_subsystem( const char *subsystem, DLLSPEC *spec )
 {
@@ -505,6 +522,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
 
     if (spec->file_name && !strchr( spec->file_name, '.' ))
         strcat( spec->file_name, exec_mode == MODE_EXE ? ".exe" : ".dll" );
+    init_dll_name( spec );
 
     switch (target_cpu)
     {
