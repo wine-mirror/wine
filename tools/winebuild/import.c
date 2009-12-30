@@ -1319,7 +1319,7 @@ void output_import_lib( DLLSPEC *spec, char **argv )
     fclose( output_file );
     if (!(output_file = fopen( def_file, "w" )))
         fatal_error( "Unable to create output file '%s'\n", def_file );
-    BuildDef32File( spec );
+    output_def_file( spec, 0 );
     fclose( output_file );
     output_file = NULL;
 

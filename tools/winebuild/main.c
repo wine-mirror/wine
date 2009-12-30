@@ -667,7 +667,7 @@ int main(int argc, char **argv)
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
-        BuildDef32File( spec );
+        output_def_file( spec, 1 );
         break;
     case MODE_IMPLIB:
         if (!spec_file_name) fatal_error( "missing .spec file\n" );

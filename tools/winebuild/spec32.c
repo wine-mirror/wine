@@ -762,11 +762,11 @@ void output_fake_module( DLLSPEC *spec )
 
 
 /*******************************************************************
- *         BuildDef32File
+ *         output_def_file
  *
  * Build a Win32 def file from a spec file.
  */
-void BuildDef32File( DLLSPEC *spec )
+void output_def_file( DLLSPEC *spec, int include_private )
 {
     DLLSPEC *spec32 = NULL;
     const char *name;
@@ -802,6 +802,7 @@ void BuildDef32File( DLLSPEC *spec )
         else continue;
 
         if (!(odp->flags & FLAG_PRIVATE)) total++;
+        else if (!include_private) continue;
 
         if (odp->type == TYPE_STUB) continue;
 
