@@ -128,7 +128,6 @@ typedef struct {
   WORD current_token;
   BOOL token_present;
   BOOL txt;
-  ULONG cur_subobject;
   ULONG cur_pos_data;
   LPBYTE cur_pstrings;
   BYTE value[100];

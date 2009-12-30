@@ -280,7 +280,6 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->buf.pdxf = This;
   object->buf.txt = (header[2] == XOFFILE_FORMAT_TEXT);
   object->buf.token_present = FALSE;
-  object->buf.cur_subobject = 0;
 
   TRACE("File size is %d bytes\n", file_size);
 
@@ -1044,7 +1043,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   This->buf.pxo_globals = This->xobjects;
   This->buf.nb_pxo_globals = This->nb_xobjects;
-  This->buf.cur_subobject = 1;
   This->buf.level = 0;
 
   This->buf.pxo_tab = HeapAlloc(GetProcessHeap(), 0, sizeof(xobject)*MAX_SUBOBJECTS);
@@ -1059,6 +1057,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   This->buf.pxo->pdata = This->buf.pdata = NULL;
   This->buf.capacity = 0;
   This->buf.cur_pos_data = 0;
+  This->buf.pxo->nb_subobjects = 1;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
   if (!pstrings)
@@ -1076,10 +1075,9 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     goto error;
   }
 
-  This->buf.pxo->nb_subobjects = This->buf.cur_subobject;
-  if (This->buf.cur_subobject > MAX_SUBOBJECTS)
+  if (This->buf.pxo->nb_subobjects > MAX_SUBOBJECTS)
   {
-    FIXME("Too many suobjects %d\n", This->buf.cur_subobject);
+    FIXME("Too many subobjects %d\n", This->buf.pxo->nb_subobjects);
     hr = DXFILEERR_BADALLOC;
     goto error;
   }
