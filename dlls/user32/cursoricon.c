@@ -468,10 +468,10 @@ typedef BOOL (*fnGetCIEntry)( LPVOID dir, int n,
 /**********************************************************************
  *	    CURSORICON_FindBestIcon
  *
- * Find the icon closest to the requested size and number of colors.
+ * Find the icon closest to the requested size and bit depth.
  */
 static int CURSORICON_FindBestIcon( LPVOID dir, fnGetCIEntry get_entry,
-                                    int width, int height, int colors )
+                                    int width, int height, int depth )
 {
     int i, cx, cy, bits, bestEntry = -1;
     UINT iTotalDiff, iXDiff=0, iYDiff=0, iColorDiff;
@@ -498,7 +498,7 @@ static int CURSORICON_FindBestIcon( LPVOID dir, fnGetCIEntry get_entry,
     {
         if(abs(width - cx) == iXDiff && abs(height - cy) == iYDiff)
         {
-            iTempColorDiff = abs(colors - (1<<bits));
+            iTempColorDiff = abs(depth - bits);
             if(iColorDiff > iTempColorDiff)
             {
                 bestEntry = i;
@@ -533,7 +533,7 @@ static BOOL CURSORICON_GetResIconEntry( LPVOID dir, int n,
  * FIXME: parameter 'color' ignored.
  */
 static int CURSORICON_FindBestCursor( LPVOID dir, fnGetCIEntry get_entry,
-                                      int width, int height, int color )
+                                      int width, int height, int depth )
 {
     int i, maxwidth, maxheight, cx, cy, bits, bestEntry = -1;
 
@@ -588,22 +588,22 @@ static BOOL CURSORICON_GetResCursorEntry( LPVOID dir, int n,
 }
 
 static CURSORICONDIRENTRY *CURSORICON_FindBestIconRes( CURSORICONDIR * dir,
-                                      int width, int height, int colors )
+                                      int width, int height, int depth )
 {
     int n;
 
     n = CURSORICON_FindBestIcon( dir, CURSORICON_GetResIconEntry,
-                                 width, height, colors );
+                                 width, height, depth );
     if ( n < 0 )
         return NULL;
     return &dir->idEntries[n];
 }
 
 static CURSORICONDIRENTRY *CURSORICON_FindBestCursorRes( CURSORICONDIR *dir,
-                                      int width, int height, int color )
+                                      int width, int height, int depth )
 {
     int n = CURSORICON_FindBestCursor( dir, CURSORICON_GetResCursorEntry,
-                                   width, height, color );
+                                   width, height, depth );
     if ( n < 0 )
         return NULL;
     return &dir->idEntries[n];
@@ -625,20 +625,20 @@ static BOOL CURSORICON_GetFileEntry( LPVOID dir, int n,
 }
 
 static CURSORICONFILEDIRENTRY *CURSORICON_FindBestCursorFile( CURSORICONFILEDIR *dir,
-                                      int width, int height, int color )
+                                      int width, int height, int depth )
 {
     int n = CURSORICON_FindBestCursor( dir, CURSORICON_GetFileEntry,
-                                       width, height, color );
+                                       width, height, depth );
     if ( n < 0 )
         return NULL;
     return &dir->idEntries[n];
 }
 
 static CURSORICONFILEDIRENTRY *CURSORICON_FindBestIconFile( CURSORICONFILEDIR *dir,
-                                      int width, int height, int color )
+                                      int width, int height, int depth )
 {
     int n = CURSORICON_FindBestIcon( dir, CURSORICON_GetFileEntry,
-                                     width, height, color );
+                                     width, height, depth );
     if ( n < 0 )
         return NULL;
     return &dir->idEntries[n];
@@ -964,7 +964,7 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
  *            \- CHUNK:icon
  */
 static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
-    INT width, INT height, INT colors )
+    INT width, INT height, INT depth )
 {
     HCURSOR cursor;
     ani_header header = {0};
@@ -1017,7 +1017,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     icon_data = fram_chunk.data + (2 * sizeof(DWORD));
 
     entry = CURSORICON_FindBestIconFile( (CURSORICONFILEDIR *) icon_data,
-        width, height, colors );
+        width, height, depth );
 
     frame_bits = HeapAlloc( GetProcessHeap(), 0, entry->dwDIBSize );
     memcpy( frame_bits, icon_data + entry->dwDIBOffset, entry->dwDIBSize );
@@ -1086,7 +1086,7 @@ HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
 
 
 static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
-                             INT width, INT height, INT colors,
+                             INT width, INT height, INT depth,
                              BOOL fCursor, UINT loadflags)
 {
     CURSORICONFILEDIRENTRY *entry;
@@ -1106,7 +1106,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     if (memcmp( bits, "RIFF", 4 ) == 0)
     {
         hIcon = CURSORICON_CreateIconFromANI( bits, filesize, width, height,
-            colors );
+            depth );
         goto end;
     }
 
@@ -1118,9 +1118,9 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
         goto end;
 
     if ( fCursor )
-        entry = CURSORICON_FindBestCursorFile( dir, width, height, colors );
+        entry = CURSORICON_FindBestCursorFile( dir, width, height, depth );
     else
-        entry = CURSORICON_FindBestIconFile( dir, width, height, colors );
+        entry = CURSORICON_FindBestIconFile( dir, width, height, depth );
 
     if ( !entry )
         goto end;
@@ -1157,7 +1157,7 @@ end:
  * Load a cursor or icon from resource or file.
  */
 static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
-                             INT width, INT height, INT colors,
+                             INT width, INT height, INT depth,
                              BOOL fCursor, UINT loadflags)
 {
     HANDLE handle = 0;
@@ -1169,11 +1169,11 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     WORD wResId;
     DWORD dwBytesInRes;
 
-    TRACE("%p, %s, %dx%d, colors %d, fCursor %d, flags 0x%04x\n",
-          hInstance, debugstr_w(name), width, height, colors, fCursor, loadflags);
+    TRACE("%p, %s, %dx%d, depth %d, fCursor %d, flags 0x%04x\n",
+          hInstance, debugstr_w(name), width, height, depth, fCursor, loadflags);
 
     if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
-        return CURSORICON_LoadFromFile( name, width, height, colors, fCursor, loadflags );
+        return CURSORICON_LoadFromFile( name, width, height, depth, fCursor, loadflags );
 
     if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */
 
@@ -1192,9 +1192,9 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
     if (!(dir = LockResource( handle ))) return 0;
     if (fCursor)
-        dirEntry = CURSORICON_FindBestCursorRes( dir, width, height, colors );
+        dirEntry = CURSORICON_FindBestCursorRes( dir, width, height, depth );
     else
-        dirEntry = CURSORICON_FindBestIconRes( dir, width, height, colors );
+        dirEntry = CURSORICON_FindBestIconRes( dir, width, height, depth );
     if (!dirEntry) return 0;
     wResId = dirEntry->wResId;
     dwBytesInRes = dirEntry->dwBytesInRes;
@@ -1767,21 +1767,16 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
         CURSORICONDIRENTRY* entry;
-        HDC hdc;
-        UINT palEnts;
-        int colors;
-        hdc = GetDC(0);
-        palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
-        if (palEnts == 0)
-            palEnts = 256;
-        colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
 
+        const HDC hdc = GetDC(0);
+        const int depth = (cFlag & LR_MONOCHROME) ?
+            1 : GetDeviceCaps(hdc, BITSPIXEL);
         ReleaseDC(0, hdc);
 
         if( bIcon )
-            entry = CURSORICON_FindBestIconRes( dir, width, height, colors );
+            entry = CURSORICON_FindBestIconRes( dir, width, height, depth );
         else
-            entry = CURSORICON_FindBestCursorRes( dir, width, height, colors );
+            entry = CURSORICON_FindBestCursorRes( dir, width, height, depth );
 
         if( entry ) retVal = entry->wResId;
     }
@@ -2532,10 +2527,9 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
         if (screen_dc)
         {
-            UINT palEnts = GetSystemPaletteEntries(screen_dc, 0, 0, NULL);
-            if (palEnts == 0) palEnts = 256;
             return CURSORICON_Load(hinst, name, desiredx, desiredy,
-                                   palEnts, FALSE, loadflags);
+                                   GetDeviceCaps(screen_dc, BITSPIXEL),
+                                   FALSE, loadflags);
         }
         break;
 
