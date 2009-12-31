@@ -18,6 +18,6 @@
 @ stdcall D3DRMVectorRotate(ptr ptr ptr long)
 @ stdcall D3DRMVectorScale(ptr ptr long)
 @ stdcall D3DRMVectorSubtract(ptr ptr ptr)
-@ stub Direct3DRMCreate
+@ stdcall Direct3DRMCreate(ptr)
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject

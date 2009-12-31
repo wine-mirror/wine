@@ -19,6 +19,11 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "d3drm.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 /***********************************************************************
  *		DllMain  (D3DRM.@)
@@ -34,4 +39,14 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *              (D3DRM.@)
+ */
+HRESULT WINAPI Direct3DRMCreate(LPDIRECT3DRM* ppDirect3DRM)
+{
+    FIXME("(%p): stub!\n", ppDirect3DRM);
+
+    return D3DRMERR_INVALIDLIBRARY;
 }
