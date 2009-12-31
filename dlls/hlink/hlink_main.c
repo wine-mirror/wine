@@ -126,7 +126,7 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
 
 
 /***********************************************************************
- *             HlinkNavigate (HLINK.@)
+ *             HlinkCreateBrowseContext (HLINK.@)
  */
 HRESULT WINAPI HlinkCreateBrowseContext( IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
