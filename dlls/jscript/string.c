@@ -703,6 +703,7 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             break;
     }
 
+    heap_free(match_result);
     SysFreeString(val_str);
 
     if(SUCCEEDED(hres) && retv) {
@@ -795,7 +796,7 @@ static HRESULT rep_call(script_ctx_t *ctx, DispatchEx *func, const WCHAR *str, m
     if(SUCCEEDED(hres))
         hres = jsdisp_call_value(func, DISPATCH_METHOD, &dp, &var, ei, caller);
 
-    for(i=0; i < parens_cnt+1; i++) {
+    for(i=0; i < parens_cnt+3; i++) {
         if(i != parens_cnt+1)
             SysFreeString(V_BSTR(get_arg(&dp,i)));
     }

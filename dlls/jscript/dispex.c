@@ -473,6 +473,8 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
         }
         heap_free(This->props);
         script_release(This->ctx);
+        if(This->prototype)
+            jsdisp_release(This->prototype);
 
         if(This->builtin_info->destructor)
             This->builtin_info->destructor(This);

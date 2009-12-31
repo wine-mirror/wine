@@ -330,6 +330,7 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
             hres = create_error(ctx, constr, NULL, msg, &err);
         else
             hres = create_error(ctx, constr, &num, msg, &err);
+        SysFreeString(msg);
 
         if(FAILED(hres))
             return hres;

@@ -586,8 +586,10 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
 
-        if(SUCCEEDED(hres))
+        if(SUCCEEDED(hres)) {
             hres = jsdisp_propput_idx(arr, idx-start, &v, ei, sp);
+            VariantClear(&v);
+        }
 
         if(FAILED(hres)) {
             jsdisp_release(arr);

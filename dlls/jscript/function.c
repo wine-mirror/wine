@@ -213,6 +213,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         hres = create_exec_ctx(ctx, this_obj, var_disp, scope, &exec_ctx);
         scope_release(scope);
     }
+    jsdisp_release(var_disp);
     if(FAILED(hres))
         return hres;
 

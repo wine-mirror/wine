@@ -1583,6 +1583,7 @@ void parser_release(parser_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    script_release(ctx->script);
     heap_free(ctx->begin);
     jsheap_free(&ctx->heap);
     heap_free(ctx);
