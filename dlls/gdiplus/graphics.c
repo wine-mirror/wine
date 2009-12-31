@@ -1217,7 +1217,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     UINT read;
     BYTE* copy;
     HENHMETAFILE hemf;
-    GpStatus retval = GenericError;
+    GpStatus retval = Ok;
 
     TRACE("(%p, %d, %p, %p)\n", hwmf, delete, placeable, metafile);
 
@@ -1242,6 +1242,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     if(CreateStreamOnHGlobal(copy, TRUE, &stream) != S_OK){
         ERR("could not make stream\n");
         GdipFree(copy);
+        retval = GenericError;
         goto err;
     }
 
@@ -1253,7 +1254,10 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
         (LPVOID*) &((*metafile)->image.picture)) != S_OK)
+    {
+        retval = GenericError;
         goto err;
+    }
 
 
     (*metafile)->image.type = ImageTypeMetafile;
@@ -1277,10 +1281,9 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     TRACE("<-- %p\n", *metafile);
 
-    return Ok;
-
 err:
-    GdipFree(*metafile);
+    if (retval != Ok)
+        GdipFree(*metafile);
     IStream_Release(stream);
     return retval;
 }
