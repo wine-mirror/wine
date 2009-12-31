@@ -2189,6 +2189,8 @@ int wmain (int argc, WCHAR *argvW[])
   int opt_t = 0;
   static const WCHAR autoexec[] = {'\\','a','u','t','o','e','x','e','c','.',
                                    'b','a','t','\0'};
+  static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
+  static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
   char ansiVersion[100];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
 
@@ -2521,6 +2523,7 @@ int wmain (int argc, WCHAR *argvW[])
  *	Loop forever getting commands and executing them.
  */
 
+  SetEnvironmentVariableW(promptW, defaultpromptW);
   WCMD_version ();
   while (TRUE) {
 
