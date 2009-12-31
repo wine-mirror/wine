@@ -455,6 +455,7 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 [Environment]
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",0x00020000,"%11%\cmd.exe"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",0x00020002,"%11%;%10%;%11%\wbem"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATHEXT",,".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",2,"c:"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
