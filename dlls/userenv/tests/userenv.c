@@ -95,7 +95,7 @@ static void test_create_env(void)
         { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
         { "TEMP", { 1, 1, 0, 0 } },
         { "TMP", { 1, 1, 0, 0 } },
-        { "CommonProgramFiles", { 1, 1, 1, 1 } },
+        { "CommonProgramFiles", { 1, 1, 0, 0 } },
         { "ProgramFiles", { 1, 1, 0, 0 } }
     };
     static const struct profile_item htok_vars[] = {
