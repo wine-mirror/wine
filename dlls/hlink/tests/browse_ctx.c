@@ -70,6 +70,9 @@ static void test_SetInitialHlink(void)
     ok(hres == S_OK, "GetDisplayName failed: 0x%08x\n", hres);
     ok(!strcmp_ww(found_name, exp_name), "Found display name should have been %s, was: %s\n", wine_dbgstr_w(exp_name), wine_dbgstr_w(found_name));
 
+    CoTaskMemFree(exp_name);
+    CoTaskMemFree(found_name);
+
     IBindCtx_Release(bindctx);
     IMoniker_Release(found_moniker);
     IHlink_Release(found_hlink);

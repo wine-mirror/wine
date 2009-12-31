@@ -1138,6 +1138,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(fnd_tgt == NULL, "Found target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, one), "Found location should have been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_SetStringReference(link, HLINKSETF_LOCATION, one, two);
     ok(hres == S_OK, "IHlink_SetStringReference failed: 0x%08x\n", hres);
@@ -1146,6 +1148,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(fnd_tgt == NULL, "Found target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, two), "Found location should have been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_SetStringReference(link, -HLINKSETF_LOCATION, two, one);
     ok(hres == S_OK, "IHlink_SetStringReference failed: 0x%08x\n", hres);
@@ -1154,6 +1158,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(fnd_tgt == NULL, "Found target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, one), "Found location should have been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     /* test setting/getting target */
     hres = IHlink_SetStringReference(link, HLINKSETF_TARGET, two, three);
@@ -1163,6 +1169,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(!lstrcmpW(fnd_tgt, two), "Found target should have been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, one), "Found location should have been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_SetStringReference(link, -HLINKSETF_TARGET, three, two);
     ok(hres == S_OK, "IHlink_SetStringReference failed: 0x%08x\n", hres);
@@ -1171,6 +1179,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(!lstrcmpW(fnd_tgt, three), "Found target should have been %s, was: %s\n", wine_dbgstr_w(three), wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, two), "Found location should have been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     /* test setting/getting both */
     hres = IHlink_SetStringReference(link, HLINKSETF_TARGET | HLINKSETF_LOCATION, one, two);
@@ -1180,6 +1190,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(!lstrcmpW(fnd_tgt, one), "Found target should have been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, two), "Found location should have been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_SetStringReference(link, -(HLINKSETF_TARGET | HLINKSETF_LOCATION), three, one);
     ok(hres == S_OK, "IHlink_SetStringReference failed: 0x%08x\n", hres);
@@ -1188,6 +1200,8 @@ static void test_HlinkGetSetStringReference(void)
     ok(hres == S_OK, "IHlink_GetStringReference failed: 0x%08x\n", hres);
     ok(!lstrcmpW(fnd_tgt, three), "Found target should have been %s, was: %s\n", wine_dbgstr_w(three), wine_dbgstr_w(fnd_tgt));
     ok(!lstrcmpW(fnd_loc, two), "Found location should have been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     /* test invalid flags/params */
     hres = IHlink_GetStringReference(link, 4, &fnd_tgt, &fnd_loc);
@@ -1195,14 +1209,20 @@ static void test_HlinkGetSetStringReference(void)
            "with E_INVALIDARG (0x%08x), instead: 0x%08x\n", E_INVALIDARG, hres);
     ok(fnd_tgt == NULL, "Found target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
     ok(fnd_loc == NULL, "Found location should have been NULL, was: %s\n", wine_dbgstr_w(fnd_loc));
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_GetStringReference(link, -1, &fnd_tgt, &fnd_loc);
     todo_wine ok(hres == E_FAIL, "IHlink_GetStringReference should have failed "
            "with E_FAIL (0x%08x), instead: 0x%08x\n", E_FAIL, hres);
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_GetStringReference(link, -2, &fnd_tgt, &fnd_loc);
     ok(hres == E_INVALIDARG, "IHlink_GetStringReference should have failed "
            "with E_INVALIDARG (0x%08x), instead: 0x%08x\n", E_INVALIDARG, hres);
+    CoTaskMemFree(fnd_tgt);
+    CoTaskMemFree(fnd_loc);
 
     hres = IHlink_SetStringReference(link, 4, NULL, NULL);
     ok(hres == 4, "IHlink_SetStringReference should have failed with 0x4, instead: 0x%08x\n", hres);
