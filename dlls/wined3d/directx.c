@@ -954,6 +954,7 @@ static const struct driver_version_information driver_version_table[] =
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 8618   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 8618   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 8618   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 8618   },
 
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
     {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
@@ -1221,6 +1222,12 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
                 {
                     *vidmem = 1024;
                     return CARD_NVIDIA_GEFORCE_GTX260;
+                }
+                /* Geforce 200 - midend */
+                if (strstr(gl_renderer, "GT 240"))
+                {
+                   *vidmem = 512;
+                   return CARD_NVIDIA_GEFORCE_GT240;
                 }
 
                 /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */

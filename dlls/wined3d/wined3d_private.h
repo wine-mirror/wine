@@ -1313,6 +1313,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_GEFORCE_GTX260      = 0x05e2,
     CARD_NVIDIA_GEFORCE_GTX275      = 0x05e6,
     CARD_NVIDIA_GEFORCE_GTX280      = 0x05e1,
+    CARD_NVIDIA_GEFORCE_GT240       = 0x0ca3,
 
     CARD_INTEL_845G                 = 0x2562,
     CARD_INTEL_I830G                = 0x3577,
