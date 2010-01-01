@@ -578,6 +578,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     {
         /* we passed a direct reference; no need to do anything */
         bitmap->lockmode = 0;
+        bitmap->numlocks = 0;
         return Ok;
     }
 
@@ -608,6 +609,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     GdipFree(bitmap->bitmapbits);
     bitmap->bitmapbits = NULL;
     bitmap->lockmode = 0;
+    bitmap->numlocks = 0;
 
     return Ok;
 }
