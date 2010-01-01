@@ -323,6 +323,8 @@ static void test_abort_proc(void)
         ok(DeleteFileA(filename), "Failed to delete temporary file\n");
         return;
     }
+    GlobalFree(pd.hDevMode);
+    GlobalFree(pd.hDevNames);
 
     ok(pd.hDC != NULL, "PrintDlg didn't return a DC.\n");
     if (!(print_dc = pd.hDC))
