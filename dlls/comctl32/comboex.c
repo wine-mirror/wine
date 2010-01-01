@@ -1583,6 +1583,7 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
     if (infoPtr->hwndEdit)
         RemoveWindowSubclass(infoPtr->hwndEdit, COMBOEX_EditWndProc, EDIT_SUBCLASSID);
 
+    COMBOEX_FreeText (infoPtr->edit);
     Free (infoPtr->edit);
     infoPtr->edit = 0;
 
