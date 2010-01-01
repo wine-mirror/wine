@@ -28,11 +28,60 @@ extern "C" {
 #endif
 
 typedef D3DVALUE D3DRMMATRIX4D[4][4];
-typedef struct _D3DRMQUATERNION
-{
+
+typedef struct _D3DRMQUATERNION {
     D3DVALUE s;
     D3DVECTOR v;
 } D3DRMQUATERNION, *LPD3DRMQUATERNION;
+
+typedef enum _D3DRMLIGHTTYPE {
+    D3DRMLIGHT_AMBIENT,
+    D3DRMLIGHT_POINT,
+    D3DRMLIGHT_SPOT,
+    D3DRMLIGHT_DIRECTIONAL,
+    D3DRMLIGHT_PARALLELPOINT
+} D3DRMLIGHTTYPE, *LPD3DRMLIGHTTYPE;
+
+typedef struct _D3DRMPALETTEENTRY {
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char flags;
+} D3DRMPALETTEENTRY, *LPD3DRMPALETTEENTRY;
+
+typedef struct _D3DRMIMAGE {
+    int width;
+    int height;
+    int aspectx;
+    int aspecty;
+    int depth;
+    int rgb;
+    int bytes_per_line;
+    void* buffer1;
+    void* buffer2;
+    unsigned long red_mask;
+    unsigned long green_mask;
+    unsigned long blue_mask;
+    unsigned long alpha_mask;
+    int palette_size;
+    D3DRMPALETTEENTRY* palette;
+} D3DRMIMAGE, *LPD3DRMIMAGE;
+
+typedef enum _D3DRMWRAPTYPE {
+    D3DRMWRAP_FLAT,
+    D3DRMWRAP_CYLINDER,
+    D3DRMWRAP_SPHERE,
+    D3DRMWRAP_CHROME,
+    D3DRMWRAP_SHEET,
+    D3DRMWRAP_BOX
+} D3DRMWRAPTYPE, *LPD3DRMWRAPTYPE;
+
+typedef DWORD D3DRMLOADOPTIONS;
+
+typedef enum _D3DRMUSERVISUALREASON {
+    D3DRMUSERVISUAL_CANSEE,
+    D3DRMUSERVISUAL_RENDER
+} D3DRMUSERVISUALREASON, *LPD3DRMUSERVISUALREASON;
 
 void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D, LPD3DRMQUATERNION);
 
