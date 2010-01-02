@@ -1494,8 +1494,8 @@ then
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wstrict-prototypes])
-  WINE_TRY_CFLAGS([-Wwrite-strings])
   WINE_TRY_CFLAGS([-Wtype-limits])
+  WINE_TRY_CFLAGS([-Wwrite-strings])
 
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
