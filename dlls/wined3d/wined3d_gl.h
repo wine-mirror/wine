@@ -73,6 +73,8 @@ typedef float           GLclampf;
 typedef double          GLdouble;
 typedef double          GLclampd;
 typedef void            GLvoid;
+typedef ptrdiff_t       GLintptr;
+typedef ptrdiff_t       GLsizeiptr;
 
 /* Booleans */
 #define GL_FALSE                                0x0
@@ -2500,9 +2502,9 @@ typedef void (WINE_GLAPI * PGLFNBINDBUFFERARBPROC) (GLenum target, GLuint buffer
 typedef void (WINE_GLAPI * PGLFNDELETEBUFFERSARBPROC) (GLsizei n, const GLuint *buffers);
 typedef void (WINE_GLAPI * PGLFNGENBUFFERSARBPROC) (GLsizei n, GLuint *buffers);
 typedef GLboolean (WINE_GLAPI * PGLFNISBUFFERARBPROC) (GLuint buffer);
-typedef void (WINE_GLAPI * PGLFNBUFFERDATAARBPROC) (GLenum target, ptrdiff_t size, const GLvoid *data, GLenum usage);
-typedef void (WINE_GLAPI * PGLFNBUFFERSUBDATAARBPROC) (GLenum target, ptrdiff_t offset, ptrdiff_t size, const GLvoid *data);
-typedef void (WINE_GLAPI * PGLFNGETBUFFERSUBDATAARBPROC) (GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid *data);
+typedef void (WINE_GLAPI * PGLFNBUFFERDATAARBPROC) (GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+typedef void (WINE_GLAPI * PGLFNBUFFERSUBDATAARBPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
+typedef void (WINE_GLAPI * PGLFNGETBUFFERSUBDATAARBPROC) (GLenum target, GLintptr offset, GLsizeiptr size, GLvoid *data);
 typedef GLvoid* (WINE_GLAPI * PGLFNMAPBUFFERARBPROC) (GLenum target, GLenum access);
 typedef GLboolean (WINE_GLAPI * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
 typedef void (WINE_GLAPI * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
