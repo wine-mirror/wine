@@ -248,13 +248,13 @@ static void sock_wake_up( struct sock *sock, int pollev )
     int i;
     int async_active = 0;
 
-    if ( pollev & (POLLIN|POLLPRI) && async_waiting( sock->read_q ))
+    if ( pollev & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
     {
         if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
         async_wake_up( sock->read_q, STATUS_ALERTED );
         async_active = 1;
     }
-    if ( pollev & POLLOUT && async_waiting( sock->write_q ))
+    if ( pollev & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
     {
         if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
         async_wake_up( sock->write_q, STATUS_ALERTED );
