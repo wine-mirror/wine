@@ -3263,6 +3263,15 @@ typedef void (WINE_GLAPI *PGLFNSETFRAGMENTSHADERCONSTANTATI) (GLuint dst, const 
 #define GL_MAX_PROGRAM_CALL_DEPTH_NV                      0x88F5
 #endif
 
+/* GL_APPLE_flush_buffer_range */
+#ifndef GL_APPLE_flush_buffer_range
+#define GL_APPLE_flush_buffer_range
+#define GL_BUFFER_SERIALIZED_MODIFY_APPLE                 0x8A12
+#define GL_BUFFER_FLUSHING_UNMAP_APPLE                    0x8A13
+typedef void (WINE_GLAPI *PGLFNBUFFERPARAMETERIAPPLE) (GLenum target, GLenum pname, GLint param);
+typedef void (WINE_GLAPI *PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE) (GLenum target, GLintptr offset, GLsizeiptr size);
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3572,6 +3581,7 @@ typedef enum _GL_SupportedExt {
   APPLE_FLUSH_RENDER,
   APPLE_YCBCR_422,
   APPLE_FLOAT_PIXELS,
+  APPLE_FLUSH_BUFFER_RANGE,
   /* SGI */
   SGI_VIDEO_SYNC,
   SGIS_GENERATE_MIPMAP,
@@ -3920,7 +3930,11 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNALPHAFRAGMENTOP1ATI,                           glAlphaFragmentOp1ATI,                      ATI_FRAGMENT_SHADER,    NULL )\
     USE_GL_FUNC(PGLFNALPHAFRAGMENTOP2ATI,                           glAlphaFragmentOp2ATI,                      ATI_FRAGMENT_SHADER,    NULL )\
     USE_GL_FUNC(PGLFNALPHAFRAGMENTOP3ATI,                           glAlphaFragmentOp3ATI,                      ATI_FRAGMENT_SHADER,    NULL )\
-    USE_GL_FUNC(PGLFNSETFRAGMENTSHADERCONSTANTATI,                  glSetFragmentShaderConstantATI,             ATI_FRAGMENT_SHADER,    NULL )
+    USE_GL_FUNC(PGLFNSETFRAGMENTSHADERCONSTANTATI,                  glSetFragmentShaderConstantATI,             ATI_FRAGMENT_SHADER,    NULL )\
+    /* GL_APPLE_flush_buffer_range */ \
+    USE_GL_FUNC(PGLFNBUFFERPARAMETERIAPPLE,                         glBufferParameteriAPPLE,                    APPLE_FLUSH_BUFFER_RANGE,NULL)\
+    USE_GL_FUNC(PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE,                   glFlushMappedBufferRangeAPPLE,              APPLE_FLUSH_BUFFER_RANGE,NULL)
+
 
 /****************************************************
  * OpenGL WGL defines and functions pointer

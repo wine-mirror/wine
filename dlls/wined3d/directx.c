@@ -46,6 +46,7 @@ static const struct {
     {"GL_APPLE_flush_render",               APPLE_FLUSH_RENDER,             0                           },
     {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422,                0                           },
     {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS,             0                           },
+    {"GL_APPLE_flush_buffer_range",         APPLE_FLUSH_BUFFER_RANGE,       0                           },
 
     /* ATI */
     {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL,           0                           },
