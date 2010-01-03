@@ -313,7 +313,7 @@ static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_Release(ID3D10GeometryShade
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        IWineD3DGeometryShader_Release(This->wined3d_shader);
     }
 
     return refcount;
@@ -365,10 +365,44 @@ static const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
     d3d10_geometry_shader_SetPrivateDataInterface,
 };
 
-HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader)
+static void STDMETHODCALLTYPE d3d10_geometry_shader_wined3d_object_destroyed(void *parent)
 {
+    struct d3d10_geometry_shader *shader = parent;
+    shader_free_signature(&shader->output_signature);
+    HeapFree(GetProcessHeap(), 0, shader);
+}
+
+static const struct wined3d_parent_ops d3d10_geometry_shader_wined3d_parent_ops =
+{
+    d3d10_geometry_shader_wined3d_object_destroyed,
+};
+
+HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct d3d10_device *device,
+        const void *byte_code, SIZE_T byte_code_length)
+{
+    struct d3d10_shader_info shader_info;
+    HRESULT hr;
+
     shader->vtbl = &d3d10_geometry_shader_vtbl;
     shader->refcount = 1;
+
+    shader_info.output_signature = &shader->output_signature;
+    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info);
+    if (FAILED(hr))
+    {
+        ERR("Failed to extract shader, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IWineD3DDevice_CreateGeometryShader(device->wined3d_device,
+            shader_info.shader_code, &shader->output_signature, &shader->wined3d_shader,
+            (IUnknown *)shader, &d3d10_geometry_shader_wined3d_parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
+        shader_free_signature(&shader->output_signature);
+        return hr;
+    }
 
     return S_OK;
 }

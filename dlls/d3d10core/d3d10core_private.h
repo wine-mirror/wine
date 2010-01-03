@@ -168,9 +168,13 @@ struct d3d10_geometry_shader
 {
     const struct ID3D10GeometryShaderVtbl *vtbl;
     LONG refcount;
+
+    IWineD3DGeometryShader *wined3d_shader;
+    struct wined3d_shader_signature output_signature;
 };
 
-HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader);
+HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct d3d10_device *device,
+        const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
 
 /* ID3D10PixelShader */
 struct d3d10_pixel_shader
