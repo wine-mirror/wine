@@ -325,6 +325,8 @@ static void WCMD_show_prompt (void) {
   }
   p = prompt_string;
   q = out_string;
+  *q++ = '\r';
+  *q++ = '\n';
   *q = '\0';
   while (*p != '\0') {
     if (*p != '$') {
