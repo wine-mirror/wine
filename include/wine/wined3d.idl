@@ -266,6 +266,7 @@ typedef enum _WINED3DFORMAT
     WINED3DFMT_G8R8_G8B8                    = 0x42475247, /* GRGB */
     WINED3DFMT_R8G8_B8G8                    = 0x47424752, /* RGBG */
     WINED3DFMT_ATI2N                        = 0x32495441, /* ATI2 */
+    WINED3DFMT_INST                         = 0x54534e49, /* INST */
     WINED3DFMT_NVHU                         = 0x5548564e, /* NVHU */
     WINED3DFMT_NVHS                         = 0x5348564e, /* NVHS */
 

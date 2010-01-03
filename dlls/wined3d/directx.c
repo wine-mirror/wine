@@ -3124,7 +3124,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
          *
          * With Shader Model 3.0 capable cards Instancing 'just works' in Windows.
          */
-        case WINEMAKEFOURCC('I','N','S','T'):
+        case WINED3DFMT_INST:
             TRACE("ATI Instancing check hack\n");
             if (gl_info->supported[ARB_VERTEX_PROGRAM] || gl_info->supported[ARB_VERTEX_SHADER])
             {
