@@ -716,12 +716,12 @@ typedef enum _WINED3DTRANSFORMSTATETYPE
     WINED3DTS_TEXTURE5                      = 21,
     WINED3DTS_TEXTURE6                      = 22,
     WINED3DTS_TEXTURE7                      = 23,
+    WINED3DTS_WORLD                         = 256, /*WINED3DTS_WORLDMATRIX(0)*/
+    WINED3DTS_WORLD1                        = 257,
+    WINED3DTS_WORLD2                        = 258,
+    WINED3DTS_WORLD3                        = 259,
     WINED3DTS_FORCE_DWORD                   = 0x7fffffff
 } WINED3DTRANSFORMSTATETYPE;
-cpp_quote("#define WINED3DTS_WORLD  WINED3DTS_WORLDMATRIX(0)")
-cpp_quote("#define WINED3DTS_WORLD1 WINED3DTS_WORLDMATRIX(1)")
-cpp_quote("#define WINED3DTS_WORLD2 WINED3DTS_WORLDMATRIX(2)")
-cpp_quote("#define WINED3DTS_WORLD3 WINED3DTS_WORLDMATRIX(3)")
 cpp_quote("#define WINED3DTS_WORLDMATRIX(index) (WINED3DTRANSFORMSTATETYPE)(index + 256)")
 
 typedef enum _WINED3DBASISTYPE
