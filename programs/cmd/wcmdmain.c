@@ -1269,13 +1269,6 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
     handleExpansion(new_redir, (context != NULL), forVariable, forValue);
     cmd = new_cmd;
 
-    /* Show prompt before batch line IF echo is on and in batch program */
-    if (context && echo_mode && (cmd[0] != '@')) {
-      WCMD_show_prompt();
-      WCMD_output_asis ( cmd);
-      WCMD_output_asis ( newline);
-    }
-
 /*
  *	Changing default drive has to be handled as a special case.
  */
@@ -1774,6 +1767,12 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
     /* Replace env vars if in a batch context */
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+    /* Show prompt before batch line IF echo is on and in batch program */
+    if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
+      WCMD_show_prompt();
+      WCMD_output_asis(extraSpace);
+      WCMD_output_asis(newline);
+    }
 
     /* Start with an empty string, copying to the command string */
     curStringLen = 0;
@@ -2106,6 +2105,11 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
         }
         curPos = extraSpace;
         if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+        /* Continue to echo commands IF echo is on and in batch program */
+        if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
+          WCMD_output_asis(extraSpace);
+          WCMD_output_asis(newline);
+        }
       }
     }
 
