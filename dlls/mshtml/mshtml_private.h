@@ -436,7 +436,6 @@ typedef struct {
 
     LONG ref;
 
-    nsIChannel *channel;
     nsIWineURI *uri;
     nsIInputStream *post_data_stream;
     nsILoadGroup *load_group;
