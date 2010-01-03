@@ -89,13 +89,13 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IConnectionPointContainer_AddRef(This->container);
+    return IConnectionPointContainer_AddRef(CONPTCONT(This->container));
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IConnectionPointContainer_Release(This->container);
+    return IConnectionPointContainer_Release(CONPTCONT(This->container));
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
@@ -121,7 +121,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
     if(!ppCPC)
         return E_POINTER;
 
-    *ppCPC = This->container;
+    *ppCPC = CONPTCONT(This->container);
     IConnectionPointContainer_AddRef(*ppCPC);
     return S_OK;
 }
@@ -201,7 +201,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
 void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid, cp_static_data_t *data)
 {
     cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
-    cp->container = CONPTCONT(container);
+    cp->container = container;
     cp->sinks = NULL;
     cp->sinks_size = 0;
     cp->iid = riid;

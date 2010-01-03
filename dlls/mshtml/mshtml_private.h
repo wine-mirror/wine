@@ -286,7 +286,7 @@ typedef struct ConnectionPointContainer {
 struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
-    IConnectionPointContainer *container;
+    ConnectionPointContainer *container;
 
     union {
         IUnknown *unk;
