@@ -6355,9 +6355,6 @@ HRESULT WINAPI StgCreateDocfile(
   if (STGM_SHARE_MODE(grfMode) && !(grfMode & STGM_SHARE_DENY_NONE))
       FIXME("Storage share mode not implemented.\n");
 
-  if (grfMode & STGM_TRANSACTED)
-    FIXME("Transacted mode not implemented.\n");
-
   *ppstgOpen = 0;
 
   hFile = CreateFileW(pwcsName,
