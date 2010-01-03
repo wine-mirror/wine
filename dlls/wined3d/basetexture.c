@@ -323,7 +323,8 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
 }
 
 /* GL locking is done by the caller */
-static void apply_wrap(GLenum target, WINED3DTEXTUREADDRESS d3d_wrap, GLenum param, BOOL cond_np2)
+static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
+        WINED3DTEXTUREADDRESS d3d_wrap, GLenum param, BOOL cond_np2)
 {
     GLint gl_wrap;
 
@@ -341,7 +342,7 @@ static void apply_wrap(GLenum target, WINED3DTEXTUREADDRESS d3d_wrap, GLenum par
     }
     else
     {
-        gl_wrap = wrap_lookup[d3d_wrap - WINED3DTADDRESS_WRAP];
+        gl_wrap = gl_info->wrap_lookup[d3d_wrap - WINED3DTADDRESS_WRAP];
     }
 
     TRACE("Setting param %#x to %#x for target %#x.\n", param, gl_wrap, target);
@@ -352,7 +353,8 @@ static void apply_wrap(GLenum target, WINED3DTEXTUREADDRESS d3d_wrap, GLenum par
 /* GL locking is done by the caller (state handler) */
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
-        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1])
+        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
+        const struct wined3d_gl_info *gl_info)
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     DWORD state;
@@ -373,19 +375,19 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
 
     if(samplerStates[WINED3DSAMP_ADDRESSU]      != gl_tex->states[WINED3DTEXSTA_ADDRESSU]) {
         state = samplerStates[WINED3DSAMP_ADDRESSU];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_S, cond_np2);
+        apply_wrap(gl_info, textureDimensions, state, GL_TEXTURE_WRAP_S, cond_np2);
         gl_tex->states[WINED3DTEXSTA_ADDRESSU] = state;
     }
 
     if(samplerStates[WINED3DSAMP_ADDRESSV]      != gl_tex->states[WINED3DTEXSTA_ADDRESSV]) {
         state = samplerStates[WINED3DSAMP_ADDRESSV];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_T, cond_np2);
+        apply_wrap(gl_info, textureDimensions, state, GL_TEXTURE_WRAP_T, cond_np2);
         gl_tex->states[WINED3DTEXSTA_ADDRESSV] = state;
     }
 
     if(samplerStates[WINED3DSAMP_ADDRESSW]      != gl_tex->states[WINED3DTEXSTA_ADDRESSW]) {
         state = samplerStates[WINED3DSAMP_ADDRESSW];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_R, cond_np2);
+        apply_wrap(gl_info, textureDimensions, state, GL_TEXTURE_WRAP_R, cond_np2);
         gl_tex->states[WINED3DTEXSTA_ADDRESSW] = state;
     }
 
@@ -475,9 +477,6 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
 
     if (gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] != aniso)
     {
-        IWineD3DDeviceImpl *device = This->resource.device;
-        const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-
         if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
         {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);

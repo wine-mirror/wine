@@ -149,8 +149,6 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
 
-extern GLint wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP + 1] DECLSPEC_HIDDEN;
-
 struct min_lookup
 {
     GLenum mip[WINED3DTEXF_LINEAR + 1];
@@ -1758,8 +1756,9 @@ typedef struct IWineD3DBaseTextureImpl
 } IWineD3DBaseTextureImpl;
 
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
-        const DWORD texture_states[WINED3D_HIGHEST_TEXTURE_STATE + 1],
-        const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1]) DECLSPEC_HIDDEN;
+        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
+        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;
 void basetexture_cleanup(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface) DECLSPEC_HIDDEN;
