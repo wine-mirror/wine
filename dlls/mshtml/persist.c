@@ -172,8 +172,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     LPOLESTR url = NULL;
     docobj_task_t *task;
     download_proc_task_t *download_task;
+    nsIWineURI *nsuri;
     HRESULT hres;
-    nsresult nsres;
 
     if(pibc) {
         IUnknown *unk = NULL;
@@ -254,7 +254,21 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         }
     }
 
+    hres = create_doc_uri(This->window, url, &nsuri);
+    CoTaskMemFree(url);
+    if(FAILED(hres))
+        return hres;
+
     bscallback = create_channelbsc(mon);
+
+    nsIWineURI_SetChannelBSC(nsuri, bscallback);
+    hres = load_nsuri(This->window, nsuri, LOAD_INITIAL_DOCUMENT_URI);
+    nsIWineURI_SetChannelBSC(nsuri, NULL);
+    if(SUCCEEDED(hres))
+        set_window_bscallback(This->window, bscallback);
+    IUnknown_Release((IUnknown*)bscallback);
+    if(FAILED(hres))
+        return hres;
 
     if(This->doc_obj->frame) {
         task = heap_alloc(sizeof(docobj_task_t));
@@ -266,23 +280,6 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     download_task->doc = This->doc_obj;
     download_task->set_download = set_download;
     push_task(&download_task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
-
-    if(This->doc_obj->nscontainer) {
-        This->doc_obj->nscontainer->bscallback = bscallback;
-        nsres = nsIWebNavigation_LoadURI(This->doc_obj->nscontainer->navigation, url,
-                LOAD_FLAGS_NONE, NULL, NULL, NULL);
-        This->doc_obj->nscontainer->bscallback = NULL;
-        if(NS_FAILED(nsres)) {
-            WARN("LoadURI failed: %08x\n", nsres);
-            IUnknown_Release((IUnknown*)bscallback);
-            CoTaskMemFree(url);
-            return E_FAIL;
-        }
-    }
-
-    set_window_bscallback(This->window, bscallback);
-    IUnknown_Release((IUnknown*)bscallback);
-    CoTaskMemFree(url);
 
     return S_OK;
 }

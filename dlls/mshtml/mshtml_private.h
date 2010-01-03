@@ -52,7 +52,6 @@
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
-typedef struct nsChannelBSC nsChannelBSC;
 typedef struct event_target_t event_target_t;
 
 /* NOTE: make sure to keep in sync with dispex.c */
@@ -425,7 +424,6 @@ struct NSContainer {
 
     HWND hwnd;
 
-    nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
 };
 
@@ -687,6 +685,7 @@ HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsIWineURI**);
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*);
+HRESULT load_nsuri(HTMLWindow*,nsIWineURI*,DWORD);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);

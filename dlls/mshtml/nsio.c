@@ -38,8 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define LOAD_INITIAL_DOCUMENT_URI 0x80000
-
 #define NS_IOSERVICE_CLASSNAME "nsIOService"
 #define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
 
@@ -60,6 +58,7 @@ typedef struct {
     nsIURL *nsurl;
     NSContainer *container;
     windowref_t *window_ref;
+    nsChannelBSC *channel_bsc;
     LPWSTR wine_url;
     PRBool is_doc_uri;
     BOOL use_wine_url;
@@ -774,15 +773,17 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_UNEXPECTED;
     }
 
-    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI) && window == window->doc_obj->basedoc.window) {
-        if(window->doc_obj->nscontainer->bscallback) {
-            NSContainer *nscontainer = window->doc_obj->nscontainer;
+    if(is_doc_uri && window == window->doc_obj->basedoc.window) {
+        nsChannelBSC *channel_bsc;
 
-            channelbsc_set_channel(nscontainer->bscallback, This, aListener, aContext);
+        nsIWineURI_GetChannelBSC(This->uri, &channel_bsc);
+        if(channel_bsc) {
+            channelbsc_set_channel(channel_bsc, This, aListener, aContext);
+            IUnknown_Release((IUnknown*)channel_bsc);
 
-            if(nscontainer->doc->mime) {
+            if(window->doc_obj->mime) {
                 heap_free(This->content_type);
-                This->content_type = heap_strdupWtoA(nscontainer->doc->mime);
+                This->content_type = heap_strdupWtoA(window->doc_obj->mime);
             }
 
             open = FALSE;
@@ -798,8 +799,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(open)
         nsres = async_open(This, window, is_doc_uri, aListener, aContext);
 
-    if(window)
-        IHTMLWindow2_Release(HTMLWINDOW2(window));
+    IHTMLWindow2_Release(HTMLWINDOW2(window));
     return nsres;
 }
 
@@ -2057,6 +2057,32 @@ static nsresult NSAPI nsURI_SetWindow(nsIWineURI *iface, HTMLWindow *aHTMLWindow
     return NS_OK;
 }
 
+static nsresult NSAPI nsURI_GetChannelBSC(nsIWineURI *iface, nsChannelBSC **aChannelBSC)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aChannelBSC);
+
+    if(This->channel_bsc)
+        IUnknown_AddRef((IUnknown*)This->channel_bsc);
+    *aChannelBSC = This->channel_bsc;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetChannelBSC(nsIWineURI *iface, nsChannelBSC *aChannelBSC)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aChannelBSC);
+
+    if(This->channel_bsc)
+        IUnknown_Release((IUnknown*)This->channel_bsc);
+    if(aChannelBSC)
+        IUnknown_AddRef((IUnknown*)aChannelBSC);
+    This->channel_bsc = aChannelBSC;
+    return NS_OK;
+}
+
 static nsresult NSAPI nsURI_GetIsDocumentURI(nsIWineURI *iface, PRBool *aIsDocumentURI)
 {
     nsURI *This = NSURI_THIS(iface);
@@ -2175,6 +2201,8 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_SetNSContainer,
     nsURI_GetWindow,
     nsURI_SetWindow,
+    nsURI_GetChannelBSC,
+    nsURI_SetChannelBSC,
     nsURI_GetIsDocumentURI,
     nsURI_SetIsDocumentURI,
     nsURI_GetWineURL,
