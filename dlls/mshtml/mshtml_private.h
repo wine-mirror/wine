@@ -269,8 +269,9 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
-typedef struct {
+typedef struct _cp_static_data_t {
     tid_t tid;
+    void (*on_advise)(IUnknown*,struct _cp_static_data_t*);
     DWORD id_cnt;
     DISPID *ids;
 } cp_static_data_t;

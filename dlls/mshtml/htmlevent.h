@@ -48,6 +48,7 @@ HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*);
 HRESULT attach_event(event_target_t**,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*);
 HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*);
 HRESULT call_event(HTMLDOMNode*,eventid_t);
+void update_cp_events(HTMLWindow*,cp_static_data_t*);
 
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 {

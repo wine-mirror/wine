@@ -782,13 +782,11 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid)
     return hres;
 }
 
-static BOOL is_cp_event(ConnectionPoint *cp, DISPID dispid)
+static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 {
-    cp_static_data_t *data;
     int min, max, i;
     HRESULT hres;
 
-    data = cp->data;
     if(!data)
         return FALSE;
 
@@ -866,7 +864,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, IHTMLEventObj *event_obj,
             cp_container = cp_container->forward_container;
 
         for(cp = cp_container->cp_list; cp; cp = cp->next) {
-            if(cp->sinks_size && is_cp_event(cp, event_info[eid].dispid)) {
+            if(cp->sinks_size && is_cp_event(cp->data, event_info[eid].dispid)) {
                 for(i=0; i < cp->sinks_size; i++) {
                     TRACE("cp %s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
                     hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid);
@@ -1019,6 +1017,25 @@ static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, in
     return TRUE;
 }
 
+static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
+{
+    if(!doc->nsdoc || !(event_info[eid].flags & EVENT_DEFAULTLISTENER))
+        return S_OK;
+
+    if(!doc->event_vector) {
+        doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+        if(!doc->event_vector)
+            return E_OUTOFMEMORY;
+    }
+
+    if(!doc->event_vector[eid]) {
+        doc->event_vector[eid] = TRUE;
+        add_nsevent_listener(doc, event_info[eid].name);
+    }
+
+    return S_OK;
+}
+
 static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDocumentNode *doc,
         eventid_t eid, IDispatch *disp)
 {
@@ -1039,20 +1056,7 @@ static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDoc
         return S_OK;
     IDispatch_AddRef(disp);
 
-    if(doc->nsdoc && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
-        if(!doc->event_vector) {
-            doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
-            if(!doc->event_vector)
-                return E_OUTOFMEMORY;
-        }
-
-        if(!doc->event_vector[eid]) {
-            doc->event_vector[eid] = TRUE;
-            add_nsevent_listener(doc, event_info[eid].name);
-        }
-    }
-
-    return S_OK;
+    return ensure_nsevent_handler(doc, eid);
 }
 
 HRESULT set_event_handler(event_target_t **event_target, HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
@@ -1121,6 +1125,16 @@ HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR 
 
     *res = VARIANT_TRUE;
     return S_OK;
+}
+
+void update_cp_events(HTMLWindow *window, cp_static_data_t *cp)
+{
+    int i;
+
+    for(i=0; i < EVENTID_LAST; i++) {
+        if((event_info[i].flags & EVENT_DEFAULTLISTENER) && is_cp_event(cp, event_info[i].dispid))
+            ensure_nsevent_handler(window->doc, i);
+    }
 }
 
 void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)

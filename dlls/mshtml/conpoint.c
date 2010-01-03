@@ -159,6 +159,9 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     This->sinks[i].unk = sink;
     *pdwCookie = i+1;
 
+    if(!i && This->data && This->data->on_advise)
+        This->data->on_advise(This->container->outer, This->data);
+
     return S_OK;
 }
 

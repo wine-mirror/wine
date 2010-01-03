@@ -1466,6 +1466,16 @@ static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
     HTMLDocument_createStyleSheet
 };
 
+static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
+{
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+
+    if(This->window)
+        update_cp_events(This->window, cp);
+}
+
+#undef HTMLDOC_THIS
+
 #define SUPPINFO_THIS(iface) DEFINE_THIS(HTMLDocument, SupportErrorInfo, iface)
 
 static HRESULT WINAPI SupportErrorInfo_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void **ppv)
@@ -1772,7 +1782,7 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
-static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid };
+static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid, HTMLDocument_on_advise };
 
 static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
 {
