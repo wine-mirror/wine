@@ -213,6 +213,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
+    BOOL render_to_fbo;
     unsigned int sync;
     int retval;
 
@@ -271,13 +272,41 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DSurface_BltFast(This->backBuffer[0], 0, 0, This->device->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
     }
 
-    if (pSourceRect || pDestRect) FIXME("Unhandled present rects %s/%s\n", wine_dbgstr_rect(pSourceRect), wine_dbgstr_rect(pDestRect));
-    /* TODO: If only source rect or dest rect are supplied then clip the window to match */
     TRACE("presetting HDC %p\n", This->context[0]->hdc);
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
         IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
+    }
+
+    render_to_fbo = This->render_to_fbo;
+
+    if (pSourceRect)
+    {
+        src_rect = *pSourceRect;
+        if (!render_to_fbo && (src_rect.left || src_rect.top
+                || src_rect.right != This->presentParms.BackBufferWidth
+                || src_rect.bottom != This->presentParms.BackBufferHeight))
+        {
+            render_to_fbo = TRUE;
+        }
+    }
+    else
+    {
+        src_rect.left = 0;
+        src_rect.top = 0;
+        src_rect.right = This->presentParms.BackBufferWidth;
+        src_rect.bottom = This->presentParms.BackBufferHeight;
+    }
+
+    if (pDestRect) dst_rect = *pDestRect;
+    else GetClientRect(This->win_handle, &dst_rect);
+
+    if (!render_to_fbo && (dst_rect.left || dst_rect.top
+            || dst_rect.right != This->presentParms.BackBufferWidth
+            || dst_rect.bottom != This->presentParms.BackBufferHeight))
+    {
+        render_to_fbo = TRUE;
     }
 
     /* Rendering to a window of different size, presenting partial rectangles,
@@ -287,25 +316,14 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
      * Note that FBO_blit from the backbuffer to the frontbuffer cannot solve
      * all these issues - this fails if the window is smaller than the backbuffer.
      */
-    if(This->presentParms.Windowed && !This->render_to_fbo &&
-       wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    if (!This->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        RECT window_size;
-        GetClientRect(This->win_handle, &window_size);
-        if(window_size.bottom != This->presentParms.BackBufferHeight ||
-           window_size.right != This->presentParms.BackBufferWidth)
-        {
-            TRACE("Window size changed from %ux%u to %ux%u, switching to render-to-fbo mode\n",
-                This->presentParms.BackBufferWidth, This->presentParms.BackBufferHeight,
-                window_size.right, window_size.bottom);
+        IWineD3DSurface_LoadLocation(This->backBuffer[0], SFLAG_INTEXTURE, NULL);
+        IWineD3DSurface_ModifyLocation(This->backBuffer[0], SFLAG_INDRAWABLE, FALSE);
+        This->render_to_fbo = TRUE;
 
-            IWineD3DSurface_LoadLocation(This->backBuffer[0], SFLAG_INTEXTURE, NULL);
-            IWineD3DSurface_ModifyLocation(This->backBuffer[0], SFLAG_INDRAWABLE, FALSE);
-            This->render_to_fbo = TRUE;
-
-            /* Force the context manager to update the render target configuration next draw */
-            context->current_rt = NULL;
-        }
+        /* Force the context manager to update the render target configuration next draw. */
+        context->current_rt = NULL;
     }
 
     if(This->render_to_fbo)
@@ -321,13 +339,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         {
             FIXME("Render-to-fbo with WINED3DSWAPEFFECT_FLIP\n");
         }
-
-        src_rect.left = 0;
-        src_rect.top = 0;
-        src_rect.right = This->presentParms.BackBufferWidth;
-        src_rect.bottom = This->presentParms.BackBufferHeight;
-
-        GetClientRect(This->win_handle, &dst_rect);
 
         swapchain_blit(This, context, &src_rect, &dst_rect);
     }
