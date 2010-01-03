@@ -400,6 +400,104 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     return WINED3D_OK;
 }
 
+static HRESULT STDMETHODCALLTYPE geometryshader_QueryInterface(IWineD3DGeometryShader *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DGeometryShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE geometryshader_AddRef(IWineD3DGeometryShader *iface)
+{
+    struct wined3d_geometryshader *shader = (struct wined3d_geometryshader *)iface;
+    ULONG refcount = InterlockedIncrement(&shader->base_shader.ref);
+
+    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DGeometryShader *iface)
+{
+    struct wined3d_geometryshader *shader = (struct wined3d_geometryshader *)iface;
+    ULONG refcount = InterlockedDecrement(&shader->base_shader.ref);
+
+    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+
+    if (!refcount)
+    {
+        shader_cleanup((IWineD3DBaseShader *)iface);
+        shader->base_shader.parent_ops->wined3d_object_destroyed(shader->base_shader.parent);
+        HeapFree(GetProcessHeap(), 0, shader);
+    }
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE geometryshader_GetParent(IWineD3DGeometryShader *iface, IUnknown **parent)
+{
+    TRACE("iface %p, parent %p.\n", iface, parent);
+
+    shader_get_parent((IWineD3DBaseShaderImpl *)iface, parent);
+
+    return WINED3D_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE geometryshader_GetFunction(IWineD3DGeometryShader *iface, void *data, UINT *data_size)
+{
+    TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
+
+    return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
+}
+
+static const IWineD3DGeometryShaderVtbl wined3d_geometryshader_vtbl =
+{
+    /* IUnknown methods */
+    geometryshader_QueryInterface,
+    geometryshader_AddRef,
+    geometryshader_Release,
+    /* IWineD3DBase methods */
+    geometryshader_GetParent,
+    /* IWineD3DBaseShader methods */
+    geometryshader_GetFunction,
+};
+
+HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    HRESULT hr;
+
+    shader->vtbl = &wined3d_geometryshader_vtbl;
+    shader_init(&shader->base_shader, device, parent, parent_ops);
+
+    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code, output_signature, 0);
+    if (FAILED(hr))
+    {
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup((IWineD3DBaseShader *)shader);
+        return hr;
+    }
+
+    shader->base_shader.load_local_constsF = FALSE;
+
+    return WINED3D_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);

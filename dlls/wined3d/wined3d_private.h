@@ -2749,6 +2749,16 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
+struct wined3d_geometryshader
+{
+    const struct IWineD3DGeometryShaderVtbl *vtbl;
+    IWineD3DBaseShaderClass base_shader;
+};
+
+HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */

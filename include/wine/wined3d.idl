@@ -2844,6 +2844,15 @@ interface IWineD3DVertexShader : IWineD3DBaseShader
 [
     object,
     local,
+    uuid(8276c113-388b-49d1-ad8b-c9dd8bcbabcd)
+]
+interface IWineD3DGeometryShader : IWineD3DBaseShader
+{
+}
+
+[
+    object,
+    local,
     uuid(818503da-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DPixelShader : IWineD3DBaseShader
@@ -2978,6 +2987,13 @@ interface IWineD3DDevice : IWineD3DBase
         [in] const DWORD *function,
         [in] const struct wined3d_shader_signature *output_signature,
         [out] IWineD3DVertexShader **shader,
+        [in] IUnknown *parent,
+        [in] const struct wined3d_parent_ops *parent_ops
+    );
+    HRESULT CreateGeometryShader(
+        [in] const DWORD *byte_code,
+        [in] const struct wined3d_shader_signature *output_signature,
+        [out] IWineD3DGeometryShader **shader,
         [in] IUnknown *parent,
         [in] const struct wined3d_parent_ops *parent_ops
     );

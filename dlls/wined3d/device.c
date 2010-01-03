@@ -1181,6 +1181,36 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *iface,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        IWineD3DGeometryShader **shader, IUnknown *parent,
+        const struct wined3d_parent_ops *parent_ops)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_geometryshader *object;
+    HRESULT hr;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = geometryshader_init(object, This, byte_code, output_signature, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created geometry shader %p.\n", object);
+    *shader = (IWineD3DGeometryShader *)object;
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         IWineD3DPixelShader **ppPixelShader, IUnknown *parent,
@@ -6804,6 +6834,7 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexDeclaration,
     IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF,
     IWineD3DDeviceImpl_CreateVertexShader,
+    IWineD3DDeviceImpl_CreateGeometryShader,
     IWineD3DDeviceImpl_CreatePixelShader,
     IWineD3DDeviceImpl_CreatePalette,
     /*** Odd functions **/
