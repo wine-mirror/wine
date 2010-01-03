@@ -96,19 +96,23 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 }
 
 /* A GL context is provided by the caller */
-static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context)
+static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context,
+        const RECT *src_rect, const RECT *dst_rect)
 {
-    RECT window;
     IWineD3DDeviceImpl *device = This->device;
     IWineD3DSurfaceImpl *backbuffer = ((IWineD3DSurfaceImpl *) This->backBuffer[0]);
-    UINT w = backbuffer->currentDesc.Width;
-    UINT h = backbuffer->currentDesc.Height;
+    UINT src_w = src_rect->right - src_rect->left;
+    UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    GetClientRect(This->win_handle, &window);
-    if(w == window.right && h == window.bottom) gl_filter = GL_NEAREST;
-    else gl_filter = GL_LINEAR;
+    TRACE("swapchain %p, context %p, src_rect %s, dst_rect %s.\n",
+            This, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
+
+    if (src_w == dst_rect->right - dst_rect->left && src_h == dst_rect->bottom - dst_rect->top)
+        gl_filter = GL_NEAREST;
+    else
+        gl_filter = GL_LINEAR;
 
     if (gl_info->fbo_ops.glBlitFramebuffer)
     {
@@ -124,8 +128,8 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
         IWineD3DDeviceImpl_MarkStateDirty(This->device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
-        gl_info->fbo_ops.glBlitFramebuffer(0, 0, w, h,
-                                           window.left, window.bottom, window.right, window.top,
+        gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
+                                           dst_rect->left, dst_rect->bottom, dst_rect->right, dst_rect->top,
                                            GL_COLOR_BUFFER_BIT, gl_filter);
         checkGLcall("Swapchain present blit(EXT_framebuffer_blit)\n");
         LEAVE_GL();
@@ -133,19 +137,19 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
     else
     {
         struct wined3d_context *context2;
-        float tex_left = 0;
-        float tex_top = 0;
-        float tex_right = w;
-        float tex_bottom = h;
+        float tex_left = src_rect->left;
+        float tex_top = src_rect->top;
+        float tex_right = src_rect->right;
+        float tex_bottom = src_rect->bottom;
 
         context2 = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_BLIT);
 
         if(backbuffer->Flags & SFLAG_NORMCOORD)
         {
-            tex_left /= w;
-            tex_right /= w;
-            tex_top /= h;
-            tex_bottom /= h;
+            tex_left /= src_w;
+            tex_right /= src_w;
+            tex_top /= src_h;
+            tex_bottom /= src_h;
         }
 
         ENTER_GL();
@@ -171,7 +175,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
          * size - we want the GL drawable(=window) size.
          */
         glPushAttrib(GL_VIEWPORT_BIT);
-        glViewport(window.left, window.top, window.right, window.bottom);
+        glViewport(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -208,6 +212,7 @@ static inline void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_co
 static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     struct wined3d_context *context;
+    RECT src_rect, dst_rect;
     unsigned int sync;
     int retval;
 
@@ -316,7 +321,15 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         {
             FIXME("Render-to-fbo with WINED3DSWAPEFFECT_FLIP\n");
         }
-        swapchain_blit(This, context);
+
+        src_rect.left = 0;
+        src_rect.top = 0;
+        src_rect.right = This->presentParms.BackBufferWidth;
+        src_rect.bottom = This->presentParms.BackBufferHeight;
+
+        GetClientRect(This->win_handle, &dst_rect);
+
+        swapchain_blit(This, context, &src_rect, &dst_rect);
     }
 
     SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
