@@ -967,7 +967,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     const char *file_name = NULL;
     char dllname[32], *p;
     const char *basename, *main_module;
-    int owner_exists = FALSE;
 
     /* strip path information */
 
@@ -1042,7 +1041,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
         TRACE("Trying native dll '%s'\n", libname);
         hinst = NE_LoadModule(libname, lib_only);
         if (hinst > 32) TRACE_(loaddll)("Loaded module %s : native\n", debugstr_a(libname));
-        if (hinst == ERROR_FILE_NOT_FOUND && owner_exists) hinst = 21;  /* win32 module */
     }
 
     if (hinst > 32 && !implicit)
