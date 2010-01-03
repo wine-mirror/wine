@@ -934,7 +934,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, nsIDOMNode *target, nsIDOM
             }
         }
 
-        call_event_handlers(doc, event_obj, doc->basedoc.doc_node->node.event_target, &doc->basedoc.cp_container, eid,
+        call_event_handlers(doc, event_obj, doc->node.event_target, &doc->basedoc.cp_container, eid,
                 (IDispatch*)HTMLDOC(&doc->basedoc));
         break;
 

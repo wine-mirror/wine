@@ -783,8 +783,8 @@ static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = HTMLBODY_NODE_THIS(iface);
 
-    return This->textcont.element.node.doc && This->textcont.element.node.doc->basedoc.window
-        ? &This->textcont.element.node.doc->basedoc.window->event_target
+    return This->textcont.element.node.doc
+        ? &This->textcont.element.node.doc->body_event_target
         : &This->textcont.element.node.event_target;
 }
 

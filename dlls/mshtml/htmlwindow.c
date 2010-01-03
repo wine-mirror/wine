@@ -117,6 +117,26 @@ static HRESULT get_location(HTMLWindow *This, HTMLLocation **ret)
     return S_OK;
 }
 
+static inline HRESULT set_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
+{
+    if(!window->doc) {
+        FIXME("No document\n");
+        return E_FAIL;
+    }
+
+    return set_event_handler(&window->doc->body_event_target, window->doc, eid, var);
+}
+
+static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
+{
+    if(!window->doc) {
+        FIXME("No document\n");
+        return E_FAIL;
+    }
+
+    return get_event_handler(&window->doc->body_event_target, eid, var);
+}
+
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
 
 static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
@@ -206,8 +226,6 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         if(This->screen)
             IHTMLScreen_Release(This->screen);
 
-        if(This->event_target)
-            release_event_target(This->event_target);
         for(i=0; i < This->global_prop_cnt; i++)
             heap_free(This->global_props[i].name);
 
@@ -1391,7 +1409,12 @@ static HRESULT WINAPI HTMLWindow3_attachEvent(IHTMLWindow3 *iface, BSTR event, I
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
 
-    return attach_event(&This->event_target, &This->doc_obj->basedoc, event, pDisp, pfResult);
+    if(!This->doc) {
+        FIXME("No document\n");
+        return E_FAIL;
+    }
+
+    return attach_event(&This->doc->body_event_target, &This->doc->basedoc, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, IDispatch *pDisp)

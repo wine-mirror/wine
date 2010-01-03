@@ -242,7 +242,6 @@ struct HTMLWindow {
     IMoniker *mon;
     LPOLESTR url;
 
-    event_target_t *event_target;
     IHTMLEventObj *event;
 
     SCRIPTMODE scriptmode;
@@ -531,6 +530,7 @@ struct HTMLDocumentNode {
     nsIDOMHTMLDocument *nsdoc;
     HTMLDOMNode *nodes;
     BOOL content_ready;
+    event_target_t *body_event_target;
 
     IInternetSecurityManager *secmgr;
     ICatInformation *catmgr;
