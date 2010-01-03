@@ -1171,7 +1171,7 @@ INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
     retW = GetPrivateProfileStringW( sectionW.Buffer, entryW.Buffer,
                                      def_valW.Buffer, bufferW, len,
                                      filenameW.Buffer);
-    if (len)
+    if (len && buffer)
     {
         if (retW)
         {
