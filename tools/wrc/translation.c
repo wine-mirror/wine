@@ -47,8 +47,6 @@ static language_t get_language(resource_t *resource) {
 			return *resource->res.curg->lvc.language;
 		case res_dlg:
 			return *resource->res.dlg->lvc.language;
-		case res_dlgex:
-			return *resource->res.dlgex->lvc.language;
 		case res_fnt:
 			return *resource->res.fnt->data->lvc.language;
 		case res_fntdir:
@@ -358,6 +356,13 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 		  ((dialog1->gotexstyle && !dialog2->gotexstyle) ||
 		  (!dialog1->gotexstyle && dialog2->gotexstyle)))
 			different = 1;
+	if(!different && dialog1->gothelpid && dialog2->gothelpid) {
+		if(dialog1->helpid != dialog2->helpid)
+			different = 1;
+	} else if(!different &&
+		  ((dialog1->gothelpid && !dialog2->gothelpid) ||
+		  (!dialog1->gothelpid && dialog2->gothelpid)))
+			different = 1;
 	nameid = strdup(get_nameid_str(dialog1->menu));
 	if(!different && strcmp(nameid, get_nameid_str(dialog2->menu)))
 		different = 1;
@@ -369,60 +374,6 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 
         ctrl1 = dialog1->controls;
         ctrl2 = dialog2->controls;
-        while(!different && (ctrl1 || ctrl2))
-        {
-            different = compare_control(ctrl1, ctrl2);
-            if (ctrl1) ctrl1 = ctrl1->next;
-            if (ctrl2) ctrl2 = ctrl2->next;
-        }
-	return different;
-}
-
-static int compare_dialogex(dialogex_t *dialogex1, dialogex_t *dialogex2) {
-	int different = 0;
-	char *nameid = NULL;
-	control_t *ctrl1, *ctrl2;
-	if(!different &&
-	   ((dialogex1->memopt != dialogex2->memopt) ||
-	   (dialogex1->lvc.version != dialogex2->lvc.version) ||
-	   (dialogex1->lvc.characts != dialogex2->lvc.characts)))
-		different = 1;
-	if(!different && dialogex1->gotstyle && dialogex2->gotstyle) {
-		if((!dialogex1->style || !dialogex2->style) ||
-		   (dialogex1->style->and_mask || dialogex2->style->and_mask) ||
-		   (dialogex1->style->or_mask != dialogex2->style->or_mask))
-			different = 1;
-	} else if(!different &&
-		  ((dialogex1->gotstyle && !dialogex2->gotstyle) ||
-		  (!dialogex1->gotstyle && dialogex2->gotstyle)))
-			different = 1;
-	if(!different && dialogex1->gotexstyle && dialogex2->gotexstyle) {
-		if((!dialogex1->exstyle || !dialogex2->exstyle) ||
-		   (dialogex1->exstyle->and_mask || dialogex2->exstyle->and_mask) ||
-		   (dialogex1->exstyle->or_mask != dialogex2->exstyle->or_mask))
-			different = 1;
-	} else if(!different &&
-		  ((dialogex1->gotexstyle && !dialogex2->gotexstyle) ||
-		  (!dialogex1->gotexstyle && dialogex2->gotexstyle)))
-			different = 1;
-	if(!different && dialogex1->gothelpid && dialogex2->gothelpid) {
-		if(dialogex1->helpid != dialogex2->helpid)
-			different = 1;
-	} else if(!different &&
-		  ((dialogex1->gothelpid && !dialogex2->gothelpid) ||
-		  (!dialogex1->gothelpid && dialogex2->gothelpid)))
-			different = 1;
-	nameid = strdup(get_nameid_str(dialogex1->menu));
-	if(!different && strcmp(nameid, get_nameid_str(dialogex2->menu)))
-		different = 1;
-	free(nameid);
-	nameid = strdup(get_nameid_str(dialogex1->dlgclass));
-	if(!different && strcmp(nameid, get_nameid_str(dialogex2->dlgclass)))
-		different = 1;
-	free(nameid);
-
-        ctrl1 = dialogex1->controls;
-        ctrl2 = dialogex2->controls;
         while(!different && (ctrl1 || ctrl2))
         {
             different = compare_control(ctrl1, ctrl2);
@@ -924,8 +875,6 @@ static int compare(resource_t *resource1, resource_t *resource2) {
 			return compare_cursor_group(resource1->res.curg, resource2->res.curg);
 		case res_dlg:
 			return compare_dialog(resource1->res.dlg, resource2->res.dlg);
-		case res_dlgex:
-			return compare_dialogex(resource1->res.dlgex, resource2->res.dlgex);
 		case res_fnt:
 			return compare_font(resource1->res.fnt, resource2->res.fnt);
 		case res_fntdir:
@@ -1034,7 +983,6 @@ static void setup_tabs(void)
 		case res_cur:
 		case res_curg:
 		case res_dlg:
-		case res_dlgex:
 		case res_fnt:
 		case res_fntdir:
 		case res_ico:

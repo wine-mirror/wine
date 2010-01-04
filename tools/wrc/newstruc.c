@@ -47,7 +47,6 @@ typedef struct
 
 /* Generate new_* functions that have no parameters (NOTE: no ';') */
 __NEW_STRUCT_FUNC(dialog)
-__NEW_STRUCT_FUNC(dialogex)
 __NEW_STRUCT_FUNC(name_id)
 __NEW_STRUCT_FUNC(menu)
 __NEW_STRUCT_FUNC(menuex)

@@ -184,7 +184,6 @@ enum res_e {
 	res_toolbar = WRC_RT_TOOLBAR,	/* 241 */
 
 	res_menex = 256 + 4,
-	res_dlgex,
 	res_usr
 };
 
@@ -223,8 +222,11 @@ typedef struct dialog {
 	int		height;
 	style_t		*style;		/* Style */
 	style_t		*exstyle;
+	DWORD		helpid;		/* EX: */
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
+	int		gothelpid;
+	int		is_ex;
 	name_id_t	*menu;
 	name_id_t	*dlgclass;
 	string_t	*title;
@@ -232,27 +234,6 @@ typedef struct dialog {
 	lvc_t		lvc;
 	control_t	*controls;
 } dialog_t;
-
-/* DialogEx structures */
-typedef struct dialogex {
-	DWORD		memopt;
-	int		x;		/* Position */
-	int		y;
-	int		width;		/* Size */
-	int		height;
-	style_t		*style;		/* Style */
-	style_t		*exstyle;
-	DWORD		helpid;		/* EX: */
-	int		gotstyle;	/* Used to determine whether the default */
-	int		gotexstyle;	/* styles must be set */
-	int		gothelpid;
-	name_id_t	*menu;
-	name_id_t	*dlgclass;
-	string_t	*title;
-	font_id_t	*font;
-	lvc_t		lvc;
-	control_t	*controls;
-} dialogex_t;
 
 /* Menu structures */
 typedef struct menu_item {
@@ -611,7 +592,6 @@ typedef struct resource {
 		cursor_t	*cur;
 		cursor_group_t	*curg;
 		dialog_t	*dlg;
-		dialogex_t	*dlgex;
 		dlginit_t       *dlgi;
 		font_t		*fnt;
 		fontdir_t	*fnd;

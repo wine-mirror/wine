@@ -44,7 +44,6 @@ const char *get_typename(const resource_t* r)
 	case res_cur:	return "CURSOR";
 	case res_curg:	return "GROUP_CURSOR";
 	case res_dlg:	return "DIALOG";
-	case res_dlgex:	return "DIALOGEX";
 	case res_fnt:	return "FONT";
 	case res_ico:	return "ICON";
 	case res_icog:	return "GROUP_ICON";
@@ -607,57 +606,6 @@ static void dump_dialog(const dialog_t *dlg)
 
 /*
  *****************************************************************************
- * Function	: dump_dialogex
- * Syntax	: void dump_dialogex(const dialogex_t *dlgex)
- * Input	:
- *	dlgex	- DialogEx resource descriptor
- * Output	:
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-static void dump_dialogex(const dialogex_t *dlgex)
-{
-	const control_t *c = dlgex->controls;
-
-	dump_memopt(dlgex->memopt);
-	dump_lvc(&(dlgex->lvc));
-	printf("x, y, w, h: %d, %d, %d, %d\n", dlgex->x, dlgex->y, dlgex->width, dlgex->height);
-	if(dlgex->gotstyle)
-	{
-		assert(dlgex->style != NULL);
-		assert(dlgex->style->and_mask == 0);
-		printf("Style: %08x\n", dlgex->style->or_mask);
-	}
-	if(dlgex->gotexstyle)
-	{
-		assert(dlgex->exstyle != NULL);
-		assert(dlgex->exstyle->and_mask == 0);
-		printf("ExStyle: %08x\n", dlgex->exstyle->or_mask);
-	}
-	if(dlgex->gothelpid)
-		printf("Helpid: %d\n", dlgex->helpid);
-	printf("Menu: %s\n", get_nameid_str(dlgex->menu));
-	printf("Class: %s\n", get_nameid_str(dlgex->dlgclass));
-	printf("Title: "); print_string(dlgex->title); printf("\n");
-	printf("Font: ");
-	if(!dlgex->font)
-		printf("<none>\n");
-	else
-	{
-		printf("%d, ", dlgex->font->size);
-		print_string(dlgex->font->name);
-		printf(", %d, %d\n", dlgex->font->weight, dlgex->font->italic);
-	}
-	while(c)
-	{
-		dump_control(c);
-		c = c->next;
-	}
-}
-
-/*
- *****************************************************************************
  * Function	: dump_menu_item
  * Syntax	: void dump_menu_item(const menu_item_t *item)
  * Input	:
@@ -985,9 +933,6 @@ void dump_resources(const resource_t *top)
 			break;
 		case res_dlg:
 			dump_dialog(top->res.dlg);
-			break;
-		case res_dlgex:
-			dump_dialogex(top->res.dlgex);
 			break;
 		case res_fnt:
 			dump_font(top->res.fnt);

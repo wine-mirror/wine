@@ -560,8 +560,25 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 	{
 		restag = put_res_header(res, WRC_RT_DIALOG, NULL, name, dlg->memopt, &(dlg->lvc));
 
-		put_dword(res, dlg->style->or_mask);
-		put_dword(res, dlg->gotexstyle ? dlg->exstyle->or_mask : 0);
+		if (dlg->is_ex)
+		{
+			/* FIXME: MS doc says that the first word must contain 0xffff
+			 * and the second 0x0001 to signal a DLGTEMPLATEEX. Borland's
+			 * compiler reverses the two words.
+			 * I don't know which one to choose, but I write it as Mr. B
+			 * writes it.
+			 */
+			put_word(res, 1);		/* Signature */
+			put_word(res, 0xffff);		/* DlgVer */
+			put_dword(res, dlg->gothelpid ? dlg->helpid : 0);
+			put_dword(res, dlg->gotexstyle ? dlg->exstyle->or_mask : 0);
+			put_dword(res, dlg->gotstyle ? dlg->style->or_mask : WS_POPUPWINDOW);
+		}
+		else
+		{
+			put_dword(res, dlg->style->or_mask);
+			put_dword(res, dlg->gotexstyle ? dlg->exstyle->or_mask : 0);
+		}
 		tag_nctrl = res->size;
 		put_word(res, 0);		/* Number of controls */
 		put_word(res, dlg->x);
@@ -583,20 +600,42 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		if(dlg->font)
 		{
 			put_word(res, dlg->font->size);
+			if (dlg->is_ex)
+			{
+				put_word(res, dlg->font->weight);
+				/* FIXME: ? TRUE should be sufficient to say that it's
+				 * italic, but Borland's compiler says it's 0x0101.
+				 * I just copy it here, and hope for the best.
+				 */
+				put_word(res, dlg->font->italic ? 0x0101 : 0);
+			}
 			put_string(res, dlg->font->name, str_unicode, TRUE, dlg->lvc.language);
 		}
 
 		put_pad(res);
 		while(ctrl)
 		{
-			/* FIXME: what is default control style? */
-			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask: WS_CHILD);
-			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
+			if (dlg->is_ex)
+			{
+				put_dword(res, ctrl->gothelpid ? ctrl->helpid : 0);
+				put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
+				/* FIXME: what is default control style? */
+				put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask : WS_CHILD | WS_VISIBLE);
+			}
+			else
+			{
+				/* FIXME: what is default control style? */
+				put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask: WS_CHILD);
+				put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
+			}
 			put_word(res, ctrl->x);
 			put_word(res, ctrl->y);
 			put_word(res, ctrl->width);
 			put_word(res, ctrl->height);
-			put_word(res, ctrl->id);
+			if (dlg->is_ex)
+				put_dword(res, ctrl->id);
+			else
+				put_word(res, ctrl->id);
 			if(ctrl->ctlclass)
 				put_name_id(res, ctrl->ctlclass, TRUE, dlg->lvc.language);
 			else
@@ -688,124 +727,6 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 	}
 	/* Set ResourceSize */
 	SetResSize(res, restag);
-	return res;
-}
-
-/*
- *****************************************************************************
- * Function	: dialogex2res
- * Syntax	: res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
- * Input	:
- *	name	- Name/ordinal of the resource
- *	dlgex	- The dialogex descriptor
- * Output	: New .res format structure
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-static res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
-{
-	int restag;
-	res_t *res;
-	control_t *ctrl;
-	int tag_nctrl;
-	int nctrl = 0;
-	assert(name != NULL);
-	assert(dlgex != NULL);
-
-	ctrl = dlgex->controls;
-	res = new_res();
-	if(win32)
-	{
-		restag = put_res_header(res, WRC_RT_DIALOG, NULL, name, dlgex->memopt, &(dlgex->lvc));
-
-		/* FIXME: MS doc says that the first word must contain 0xffff
-		 * and the second 0x0001 to signal a DLGTEMPLATEEX. Borland's
-		 * compiler reverses the two words.
-		 * I don't know which one to choose, but I write it as Mr. B
-		 * writes it.
-		 */
-		put_word(res, 1);		/* Signature */
-		put_word(res, 0xffff);		/* DlgVer */
-		put_dword(res, dlgex->gothelpid ? dlgex->helpid : 0);
-		put_dword(res, dlgex->gotexstyle ? dlgex->exstyle->or_mask : 0);
-		put_dword(res, dlgex->gotstyle ? dlgex->style->or_mask : WS_POPUPWINDOW);
-		tag_nctrl = res->size;
-		put_word(res, 0);		/* Number of controls */
-		put_word(res, dlgex->x);
-		put_word(res, dlgex->y);
-		put_word(res, dlgex->width);
-		put_word(res, dlgex->height);
-		if(dlgex->menu)
-			put_name_id(res, dlgex->menu, TRUE, dlgex->lvc.language);
-		else
-			put_word(res, 0);
-		if(dlgex->dlgclass)
-			put_name_id(res, dlgex->dlgclass, TRUE, dlgex->lvc.language);
-		else
-			put_word(res, 0);
-		if(dlgex->title)
-			put_string(res, dlgex->title, str_unicode, TRUE, dlgex->lvc.language);
-		else
-			put_word(res, 0);
-		if(dlgex->font)
-		{
-			put_word(res, dlgex->font->size);
-			put_word(res, dlgex->font->weight);
-			/* FIXME: ? TRUE should be sufficient to say that it's
-			 * italic, but Borland's compiler says it's 0x0101.
-			 * I just copy it here, and hope for the best.
-			 */
-			put_word(res, dlgex->font->italic ? 0x0101 : 0);
-			put_string(res, dlgex->font->name, str_unicode, TRUE, dlgex->lvc.language);
-		}
-
-		put_pad(res);
-		while(ctrl)
-		{
-			put_dword(res, ctrl->gothelpid ? ctrl->helpid : 0);
-			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
-			/* FIXME: what is default control style? */
-			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask : WS_CHILD | WS_VISIBLE);
-			put_word(res, ctrl->x);
-			put_word(res, ctrl->y);
-			put_word(res, ctrl->width);
-			put_word(res, ctrl->height);
-			put_dword(res, ctrl->id);
-			if(ctrl->ctlclass)
-				put_name_id(res, ctrl->ctlclass, TRUE, dlgex->lvc.language);
-			else
-				internal_error(__FILE__, __LINE__, "Control has no control-class\n");
-			if(ctrl->title)
-				put_name_id(res, ctrl->title, FALSE, dlgex->lvc.language);
-			else
-				put_word(res, 0);
-			if(ctrl->extra)
-			{
-				put_pad(res);
-				put_word(res, ctrl->extra->size);
-				put_raw_data(res, ctrl->extra, 0);
-			}
-			else
-				put_word(res, 0);
-
-			put_pad(res);
-			nctrl++;
-			ctrl = ctrl->next;
-		}
-		/* Set number of controls */
-		set_word(res, tag_nctrl, (WORD)nctrl);
-		/* Set ResourceSize */
-		SetResSize(res, restag);
-		put_pad(res);
-	}
-	else /* win16 */
-	{
-		/* Do not generate anything in 16-bit mode */
-		free(res->data);
-		free(res);
-		return NULL;
-	}
 	return res;
 }
 
@@ -1881,8 +1802,7 @@ const char *get_c_typename(enum res_e type)
 	case res_bmp:	return "Bmp";
 	case res_cur:	return "Cur";
 	case res_curg:	return "CurGrp";
-	case res_dlg:
-	case res_dlgex:	return "Dlg";
+	case res_dlg:	return "Dlg";
 	case res_fnt:	return "Fnt";
 	case res_fntdir:return "FntDir";
 	case res_ico:	return "Ico";
@@ -1936,10 +1856,6 @@ void resources2res(resource_t *top)
 		case res_dlg:
 			if(!top->binres)
 				top->binres = dialog2res(top->name, top->res.dlg);
-			break;
-		case res_dlgex:
-			if(!top->binres)
-				top->binres = dialogex2res(top->name, top->res.dlgex);
 			break;
 		case res_fnt:
 			if(!top->binres)
