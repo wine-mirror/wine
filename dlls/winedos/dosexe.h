@@ -478,11 +478,6 @@ void DOSVM_BuildCallFrame( CONTEXT86 *, DOSRELAY, LPVOID );
 extern void SB_ioport_out( WORD port, BYTE val );
 extern BYTE SB_ioport_in( WORD port );
 
-/* ppdev.c */
-extern BOOL IO_pp_outp(int port, DWORD* res);
-extern int IO_pp_inp(int port, DWORD* res);
-extern char IO_pp_init(void);
-
 /* timer.c */
 extern void WINAPI DOSVM_Int08Handler(CONTEXT86*);
 

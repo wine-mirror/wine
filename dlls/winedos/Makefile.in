@@ -28,7 +28,6 @@ C_SRCS = \
 	interrupts.c \
 	ioports.c \
 	module.c \
-	ppdev.c \
 	relay.c \
 	soundblaster.c \
 	timer.c \
