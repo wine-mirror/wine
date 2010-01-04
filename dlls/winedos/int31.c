@@ -675,7 +675,7 @@ static RMCB *DPMI_AllocRMCB( void )
 }
 
 
-FARPROC16 WINAPI DPMI_AllocInternalRMCB( RMCBPROC proc )
+FARPROC16 DPMI_AllocInternalRMCB( RMCBPROC proc )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
 

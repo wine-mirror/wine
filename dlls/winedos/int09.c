@@ -224,7 +224,7 @@ static void KbdRelay( CONTEXT86 *context, void *data )
   }
 }
 
-void WINAPI DOSVM_Int09SendScan( BYTE scan, BYTE ascii )
+void DOSVM_Int09SendScan( BYTE scan, BYTE ascii )
 {
   if (kbdinfo.queuelen == QUEUELEN) {
     ERR("keyboard queue overflow\n");
@@ -237,10 +237,7 @@ void WINAPI DOSVM_Int09SendScan( BYTE scan, BYTE ascii )
   DOSVM_QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
-/**********************************************************************
- *	    KbdReadScan (WINEDOS.@)
- */
-BYTE WINAPI DOSVM_Int09ReadScan( BYTE*ascii )
+BYTE DOSVM_Int09ReadScan( BYTE*ascii )
 {
     if (ascii) *ascii = kbdinfo.ascii[0];
     return kbdinfo.queue[0];

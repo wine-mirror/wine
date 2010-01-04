@@ -445,7 +445,7 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
  * Returns FALSE if this interrupt was caused by return 
  * from real mode wrapper.
  */
-BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum ) 
+BOOL DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
 {
     TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"

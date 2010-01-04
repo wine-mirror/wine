@@ -345,24 +345,23 @@ typedef struct
 } WINEDEV;
 
 /* module.c */
-extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
-extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
-extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
-extern BOOL WINAPI MZ_Current( void );
-extern void WINAPI MZ_AllocDPMITask( void );
-extern void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
+extern BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
+extern void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
+extern BOOL MZ_Current( void );
+extern void MZ_AllocDPMITask( void );
+extern void MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
 extern BOOL DOSVM_IsWin16(void);
 extern void DOSVM_Exit( WORD retval );
 
 /* dosvm.c */
 extern void DOSVM_SendQueuedEvents( CONTEXT86 * );
 extern void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 * );
-extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
-extern void WINAPI DOSVM_Wait( CONTEXT86 * );
-extern DWORD WINAPI DOSVM_Loop( HANDLE hThread );
-extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
-extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
-extern void WINAPI DOSVM_SetTimer( UINT ticks );
+extern INT DOSVM_Enter( CONTEXT86 *context );
+extern void DOSVM_Wait( CONTEXT86 * );
+extern DWORD DOSVM_Loop( HANDLE hThread );
+extern void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
+extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
+extern void DOSVM_SetTimer( UINT ticks );
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
@@ -377,7 +376,7 @@ extern void DMA_ioport_out( WORD port, BYTE val );
 extern BYTE DMA_ioport_in( WORD port );
 
 /* dosaspi.c */
-extern void WINAPI DOSVM_ASPIHandler(CONTEXT86*);
+extern void DOSVM_ASPIHandler(CONTEXT86*);
 
 /* dosconf.c */
 extern DOSCONF *DOSCONF_GetConfig( void );
@@ -411,12 +410,12 @@ extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
 
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);
-extern void WINAPI DOSVM_Int09SendScan(BYTE scan,BYTE ascii);
-extern BYTE WINAPI DOSVM_Int09ReadScan(BYTE*ascii);
+extern void DOSVM_Int09SendScan(BYTE scan,BYTE ascii);
+extern BYTE DOSVM_Int09ReadScan(BYTE*ascii);
 
 /* int10.c */
 extern void WINAPI DOSVM_Int10Handler(CONTEXT86*);
-extern void WINAPI DOSVM_PutChar(BYTE ascii);
+extern void DOSVM_PutChar(BYTE ascii);
 
 /* int13.c */
 extern void WINAPI DOSVM_Int13Handler(CONTEXT86*);
@@ -426,8 +425,8 @@ extern void WINAPI DOSVM_Int15Handler(CONTEXT86*);
 
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT86*);
-extern BOOL WINAPI DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT86 * );
-extern int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan);
+extern BOOL DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT86 * );
+extern int DOSVM_Int16AddChar(BYTE ascii,BYTE scan);
 
 /* int21.c */
 extern void WINAPI DOSVM_Int21Handler(CONTEXT86*);
@@ -448,23 +447,23 @@ extern void MSCDEX_InstallCDROM(void);
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 extern void WINAPI DOSVM_RawModeSwitchHandler(CONTEXT86*);
 extern BOOL DOSVM_IsDos32(void);
-extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
+extern FARPROC16 DPMI_AllocInternalRMCB(RMCBPROC);
 extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
 extern BOOL DOSVM_CheckWrappers(CONTEXT86*);
 
 /* int33.c */
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
-extern void WINAPI DOSVM_Int33Message(UINT,WPARAM,LPARAM);
-extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
+extern void DOSVM_Int33Message(UINT,WPARAM,LPARAM);
+extern void DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);
-extern void WINAPI EMS_Ioctl_Handler(CONTEXT86*);
+extern void EMS_Ioctl_Handler(CONTEXT86*);
 
 /* interrupts.c */
 extern void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *, BYTE );
 extern BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *, BYTE );
-extern BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *, BYTE );
+extern BOOL        DOSVM_EmulateInterruptRM( CONTEXT86 *, BYTE );
 extern FARPROC16   DOSVM_GetPMHandler16( BYTE );
 extern FARPROC48   DOSVM_GetPMHandler48( BYTE );
 extern FARPROC16   DOSVM_GetRMHandler( BYTE );
@@ -491,6 +490,6 @@ extern char IO_pp_init(void);
 extern void WINAPI DOSVM_Int08Handler(CONTEXT86*);
 
 /* xms.c */
-extern void WINAPI XMS_Handler(CONTEXT86*);
+extern void XMS_Handler(CONTEXT86*);
 
 #endif /* __WINE_DOSEXE_H */

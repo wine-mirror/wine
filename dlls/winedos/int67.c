@@ -461,7 +461,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
  *
  * Handler for interrupt 21h IOCTL routine for device "EMMXXXX0".
  */
-void WINAPI EMS_Ioctl_Handler( CONTEXT86 *context )
+void EMS_Ioctl_Handler( CONTEXT86 *context )
 {
   assert(AH_reg(context) == 0x44);
 

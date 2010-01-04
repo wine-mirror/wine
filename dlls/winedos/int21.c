@@ -272,13 +272,12 @@ struct magic_device
 };
 
 static void INT21_IoctlScsiMgrHandler( CONTEXT86 * );
-static void INT21_IoctlEMSHandler( CONTEXT86 * );
 static void INT21_IoctlHPScanHandler( CONTEXT86 * );
 
 static struct magic_device magic_devices[] =
 {
     { {'s','c','s','i','m','g','r','$',0}, NULL, { { 0, 0 } }, INT21_IoctlScsiMgrHandler },
-    { {'e','m','m','x','x','x','x','0',0}, NULL, { { 0, 0 } }, INT21_IoctlEMSHandler },
+    { {'e','m','m','x','x','x','x','0',0}, NULL, { { 0, 0 } }, EMS_Ioctl_Handler },
     { {'h','p','s','c','a','n',0},         NULL, { { 0, 0 } }, INT21_IoctlHPScanHandler },
 };
 
@@ -2688,17 +2687,6 @@ static void INT21_IoctlScsiMgrHandler( CONTEXT86 *context )
         INT_BARF( context, 0x21 );
         break;
     }
-}
-
-
-/***********************************************************************
- *           INT21_IoctlEMSHandler
- *
- * IOCTL handler for the EMXXXX0 device.
- */
-static void INT21_IoctlEMSHandler( CONTEXT86 *context )
-{
-    EMS_Ioctl_Handler(context);
 }
 
 

@@ -285,7 +285,7 @@ static void QueueMouseRelay(DWORD mx, DWORD my, WORD mask)
   }
 }
 
-void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
+void DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 {
   WORD mask = 0;
   unsigned Height, Width, SX=1, SY=1;
@@ -329,7 +329,7 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
                  mask);
 }
 
-void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD *record)
+void DOSVM_Int33Console(MOUSE_EVENT_RECORD *record)
 {
   unsigned Height, Width;
   WORD mask = 0;

@@ -251,7 +251,7 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
 /***********************************************************************
  *		QueueEvent (WINEDOS.@)
  */
-void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
+void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   LPDOSEVENT event, cur, prev;
   BOOL       old_pending;
@@ -385,7 +385,7 @@ static void DOSVM_ProcessMessage(MSG *msg)
  * interrupts and waits until some asynchronous event has been 
  * processed.
  */
-void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
+void DOSVM_Wait( CONTEXT86 *waitctx )
 {
     if (DOSVM_HasPendingEvents())
     {
@@ -461,7 +461,7 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
 }
 
 
-DWORD WINAPI DOSVM_Loop( HANDLE hThread )
+DWORD DOSVM_Loop( HANDLE hThread )
 {
   HANDLE objs[2];
   int count = 0;
@@ -569,7 +569,7 @@ static LONG WINAPI exception_handler(EXCEPTION_POINTERS *eptr)
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-INT WINAPI DOSVM_Enter( CONTEXT86 *context )
+INT DOSVM_Enter( CONTEXT86 *context )
 {
   INT ret = 0;
   if (!ISV86(context))
@@ -592,7 +592,7 @@ INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 /***********************************************************************
  *		OutPIC (WINEDOS.@)
  */
-void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
+void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
     if (port != 0x20)
     {
@@ -644,7 +644,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 /***********************************************************************
  *		Enter (WINEDOS.@)
  */
-INT WINAPI DOSVM_Enter( CONTEXT86 *context )
+INT DOSVM_Enter( CONTEXT86 *context )
 {
     SetLastError( ERROR_NOT_SUPPORTED );
     return -1;
@@ -653,17 +653,17 @@ INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 /***********************************************************************
  *		Wait (WINEDOS.@)
  */
-void WINAPI DOSVM_Wait( CONTEXT86 *waitctx ) { }
+void DOSVM_Wait( CONTEXT86 *waitctx ) { }
 
 /***********************************************************************
  *		OutPIC (WINEDOS.@)
  */
-void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
+void DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
 
 /***********************************************************************
  *		QueueEvent (WINEDOS.@)
  */
-void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
+void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   if (irq<0) {
     /* callback event, perform it with dummy context */

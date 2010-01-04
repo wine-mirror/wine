@@ -449,7 +449,7 @@ void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
  *
  * this may only be called from existing DOS processes
  */
-BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   DWORD binType;
   STARTUPINFOA st;
@@ -598,7 +598,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 /***********************************************************************
  *		MZ_AllocDPMITask
  */
-void WINAPI MZ_AllocDPMITask( void )
+void MZ_AllocDPMITask( void )
 {
   MZ_InitMemory();
   MZ_InitTask();
@@ -607,7 +607,7 @@ void WINAPI MZ_AllocDPMITask( void )
 /***********************************************************************
  *		MZ_RunInThread
  */
-void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
+void MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 {
   if (loop_thread) {
     DOS_SPC spc;
@@ -710,7 +710,7 @@ static void MZ_Launch( LPCSTR cmdtail, int length )
 /***********************************************************************
  *		MZ_Exit
  */
-void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   if (DOSVM_psp) {
     WORD psp_seg = cs_psp ? context->SegCs : DOSVM_psp;
@@ -750,7 +750,7 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 /***********************************************************************
  *		MZ_Current
  */
-BOOL WINAPI MZ_Current( void )
+BOOL MZ_Current( void )
 {
   return (dosvm_pid != 0); /* FIXME: do a better check */
 }
@@ -769,7 +769,7 @@ void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 /***********************************************************************
  *		MZ_Exec
  */
-BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   /* can't happen */
   SetLastError(ERROR_BAD_FORMAT);
@@ -779,7 +779,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 /***********************************************************************
  *		MZ_AllocDPMITask
  */
-void WINAPI MZ_AllocDPMITask( void )
+void MZ_AllocDPMITask( void )
 {
     FIXME("Actual real-mode calls not supported on this platform!\n");
 }
@@ -787,7 +787,7 @@ void WINAPI MZ_AllocDPMITask( void )
 /***********************************************************************
  *		MZ_RunInThread
  */
-void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
+void MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 {
     proc(arg);
 }
@@ -795,7 +795,7 @@ void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 /***********************************************************************
  *		MZ_Exit
  */
-void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   DOSVM_Exit( retval );
 }
@@ -803,7 +803,7 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 /***********************************************************************
  *		MZ_Current
  */
-BOOL WINAPI MZ_Current( void )
+BOOL MZ_Current( void )
 {
     return FALSE;
 }

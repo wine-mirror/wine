@@ -1447,7 +1447,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
  * Write single character to VGA console at the current 
  * cursor position and updates the BIOS cursor position.
  */
-void WINAPI DOSVM_PutChar( BYTE ascii )
+void DOSVM_PutChar( BYTE ascii )
 {
   BIOSDATA *data = DOSVM_BiosData();
   unsigned  xpos, ypos;

@@ -144,7 +144,7 @@ static void WINAPI TIMER_DoSetTimer( ULONG_PTR arg )
 /***********************************************************************
  *              DOSVM_SetTimer
  */
-void WINAPI DOSVM_SetTimer( UINT ticks )
+void DOSVM_SetTimer( UINT ticks )
 {
     /* PIT interprets zero as a maximum length delay. */
     if (ticks == 0)

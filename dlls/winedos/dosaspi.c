@@ -190,11 +190,11 @@ static void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 
 
 /**********************************************************************
- *	    ASPIHandler  (WINEDOS.@)
+ *	    ASPIHandler
  *
  * returns the address of a real mode callback to ASPI_DOS_func()
  */
-void WINAPI DOSVM_ASPIHandler( CONTEXT86 *context )
+void DOSVM_ASPIHandler( CONTEXT86 *context )
 {
 	FARPROC16 *p = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 	TRACE("DOS ASPI opening\n");

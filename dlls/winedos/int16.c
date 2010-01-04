@@ -160,7 +160,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
  * Return value will always be TRUE and returned keystroke will be
  * removed from buffer.
  */
-int WINAPI DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
+int DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
 {
     BIOSDATA *data = DOSVM_BiosData();
     WORD CurOfs = data->NextKbdCharPtr;
@@ -195,7 +195,7 @@ int WINAPI DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
     return TRUE;
 }
 
-int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan)
+int DOSVM_Int16AddChar(BYTE ascii,BYTE scan)
 {
   BIOSDATA *data = DOSVM_BiosData();
   WORD CurOfs = data->FirstKbdCharPtr;

@@ -60,7 +60,7 @@ static BYTE * XMS_Offset( MOVEOFS *ofs )
  *	    XMS_Handler
  */
 
-void WINAPI XMS_Handler( CONTEXT86 *context )
+void XMS_Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {
