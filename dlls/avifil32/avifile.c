@@ -2036,7 +2036,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
 	This->lpBuffer = HeapReAlloc(GetProcessHeap(), 0, This->lpBuffer, maxSize);
       if (This->lpBuffer == NULL)
 	return AVIERR_MEMORY;
-      This->cbBuffer = max(size, This->sInfo.dwSuggestedBufferSize);
+      This->cbBuffer = maxSize;
     }
 
     /* now read the complete chunk into our buffer */
