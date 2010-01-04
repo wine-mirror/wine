@@ -48,8 +48,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define HICON_16(h32)		(LOWORD(h32))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
+
+static HICON convert_icon_to_32( HICON16 icon16 )
+{
+    CURSORICONINFO *info = GlobalLock16( icon16 );
+    void *and_bits = info + 1;
+    void *xor_bits = (BYTE *)and_bits + info->nHeight * 2 * ((info->nWidth + 15) / 16);
+    HICON ret = CreateIcon( 0, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel,
+                            and_bits, xor_bits );
+    GlobalUnlock16( icon16 );
+    return ret;
+}
 
 /******************************************************************************
  *		OleBuildVersion	(OLE2.1)
@@ -124,7 +133,7 @@ HRESULT WINAPI RevokeDragDrop16(
  * This code might be wrong at some places.
  */
 HGLOBAL16 WINAPI OleMetafilePictFromIconAndLabel16(
-	HICON16 hIcon,
+	HICON16 icon16,
 	LPCOLESTR16 lpszLabel,
 	LPCOLESTR16 lpszSourceFile,
 	UINT16 iIconIndex
@@ -134,6 +143,7 @@ HGLOBAL16 WINAPI OleMetafilePictFromIconAndLabel16(
     HGLOBAL16 hmf16;
     LPWSTR label = NULL, source = NULL;
     DWORD len;
+    HICON icon = convert_icon_to_32( icon16 );
 
     if (lpszLabel)
     {
@@ -147,9 +157,10 @@ HGLOBAL16 WINAPI OleMetafilePictFromIconAndLabel16(
         source = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, lpszSourceFile, -1, source, len );
     }
-    hmf = OleMetafilePictFromIconAndLabel( HICON_32(hIcon), label, source, iIconIndex );
+    hmf = OleMetafilePictFromIconAndLabel( icon, label, source, iIconIndex );
     HeapFree( GetProcessHeap(), 0, label );
     HeapFree( GetProcessHeap(), 0, source );
+    DestroyIcon( icon );
 
     if (!hmf) return 0;
     pict = GlobalLock( hmf );
