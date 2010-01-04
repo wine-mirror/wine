@@ -362,6 +362,7 @@ extern DWORD DOSVM_Loop( HANDLE hThread );
 extern void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
 extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void DOSVM_SetTimer( UINT ticks );
+extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
@@ -403,10 +404,6 @@ extern void WINAPI DOSVM_Int3bHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3cHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3dHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3eHandler(CONTEXT86*);
-
-/* himem.c */
-extern void DOSVM_InitSegments(void);
-extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
 
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);

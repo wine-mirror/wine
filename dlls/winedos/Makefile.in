@@ -13,7 +13,6 @@ C_SRCS = \
 	dosmem.c \
 	dosvm.c \
 	fpu.c \
-	himem.c \
 	int09.c \
 	int10.c \
 	int13.c \
