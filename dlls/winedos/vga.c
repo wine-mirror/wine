@@ -231,9 +231,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION vga_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
-static DirectDrawCreateProc pDirectDrawCreate;
-
 static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high );
 
 static HWND vga_hwnd = NULL;
@@ -787,16 +784,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 
     if (lpddraw) VGA_DoExit(0);
     if (!lpddraw) {
-        if (!pDirectDrawCreate)
-        {
-            HMODULE hmod = LoadLibraryA( "ddraw.dll" );
-            if (hmod) pDirectDrawCreate = (DirectDrawCreateProc)GetProcAddress( hmod, "DirectDrawCreate" );
-	    if (!pDirectDrawCreate) {
-		ERR("Can't lookup DirectDrawCreate from ddraw.dll.\n");
-		return;
-	    }
-        }
-        res = pDirectDrawCreate(NULL,&lpddraw,NULL);
+        res = DirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
             ERR("DirectDraw is not available (res = 0x%x)\n",res);
             return;
