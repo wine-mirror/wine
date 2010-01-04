@@ -607,7 +607,7 @@ static void dump_dialog(const dialog_t *dlg)
 /*
  *****************************************************************************
  * Function	: dump_menu_item
- * Syntax	: void dump_menu_item(const menu_item_t *item)
+ * Syntax	: void dump_menu_item(const menuex_item_t *item)
  * Input	:
  * Output	:
  * Description	:
@@ -622,6 +622,14 @@ static void dump_menu_item(const menu_item_t *item)
 		{
 			printf("POPUP ");
 			print_string(item->name);
+			if(item->gotid)
+				printf(", Id=%d", item->id);
+			if(item->gottype)
+				printf(", Type=%d", item->type);
+			if(item->gotstate)
+				printf(", State=%08x", item->state);
+			if(item->gothelpid)
+				printf(", HelpId=%d", item->helpid);
 			printf("\n");
 			dump_menu_item(item->popup);
 		}
@@ -631,7 +639,14 @@ static void dump_menu_item(const menu_item_t *item)
 			if(item->name)
 			{
 				print_string(item->name);
-				printf(", %d, %08x", item->id, item->state);
+				if(item->gotid)
+					printf(", Id=%d", item->id);
+				if(item->gottype)
+					printf(", Type=%d", item->type);
+				if(item->gotstate)
+					printf(", State=%08x", item->state);
+				if(item->gothelpid)
+					printf(", HelpId=%d", item->helpid);
 			}
 			else
 				printf("SEPARATOR");
@@ -661,58 +676,6 @@ static void dump_menu(const menu_t *men)
 
 /*
  *****************************************************************************
- * Function	: dump_menuex_item
- * Syntax	: void dump_menuex_item(const menuex_item_t *item)
- * Input	:
- * Output	:
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-static void dump_menuex_item(const menuex_item_t *item)
-{
-	while(item)
-	{
-		if(item->popup)
-		{
-			printf("POPUP ");
-			print_string(item->name);
-			if(item->gotid)
-				printf(", Id=%d", item->id);
-			if(item->gottype)
-				printf(", Type=%d", item->type);
-			if(item->gotstate)
-				printf(", State=%08x", item->state);
-			if(item->gothelpid)
-				printf(", HelpId=%d", item->helpid);
-			printf("\n");
-			dump_menuex_item(item->popup);
-		}
-		else
-		{
-			printf("MENUITEM ");
-			if(item->name)
-			{
-				print_string(item->name);
-				if(item->gotid)
-					printf(", Id=%d", item->id);
-				if(item->gottype)
-					printf(", Type=%d", item->type);
-				if(item->gotstate)
-					printf(", State=%08x", item->state);
-				if(item->gothelpid)
-					printf(", HelpId=%d", item->helpid);
-			}
-			else
-				printf("SEPARATOR");
-			printf("\n");
-		}
-		item = item->next;
-	}
-}
-
-/*
- *****************************************************************************
  * Function	: dump_menuex
  * Syntax	: void dump_menuex(const menuex_t *menex)
  * Input	:
@@ -726,7 +689,7 @@ static void dump_menuex(const menuex_t *menex)
 {
 	dump_memopt(menex->memopt);
 	dump_lvc(&(menex->lvc));
-	dump_menuex_item(menex->items);
+	dump_menu_item(menex->items);
 }
 
 /*

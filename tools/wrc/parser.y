@@ -192,7 +192,6 @@ static control_t *get_control_head(control_t *p);
 static ver_value_t *get_ver_value_head(ver_value_t *p);
 static ver_block_t *get_ver_block_head(ver_block_t *p);
 static resource_t *get_resource_head(resource_t *p);
-static menuex_item_t *get_itemex_head(menuex_item_t *p);
 static menu_item_t *get_item_head(menu_item_t *p);
 static raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str);
 static raw_data_t *merge_raw_data_int(raw_data_t *r1, int i);
@@ -254,7 +253,6 @@ static int rsrcid_to_token(int lookahead);
 	characts_t	*chars;
 	event_t		*event;
 	menu_item_t	*menitm;
-	menuex_item_t	*menexitm;
 	itemex_opt_t	*exopt;
 	raw_data_t	*raw;
 	lvc_t		*lvc;
@@ -318,9 +316,8 @@ static int rsrcid_to_token(int lookahead);
 %type <blk>	ver_blocks ver_block
 %type <val>	ver_values ver_value
 %type <men> 	menu
-%type <menitm>	item_definitions menu_body
+%type <menitm>	item_definitions menu_body itemex_definitions menuex_body
 %type <menex>	menuex
-%type <menexitm> itemex_definitions menuex_body
 %type <exopt>	itemex_p_options itemex_options
 %type <msg> 	messagetable
 %type <usr> 	userres
@@ -1306,7 +1303,7 @@ menuex	: tMENUEX loadmemopts opt_lvc menuex_body	{
 		}
 		else
 			$$->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
-		$$->items = get_itemex_head($4);
+		$$->items = get_item_head($4);
 		if($3)
 		{
 			$$->lvc = *($3);
@@ -1324,7 +1321,7 @@ menuex_body
 itemex_definitions
 	: /* Empty */	{$$ = NULL; }
 	| itemex_definitions tMENUITEM tSTRING itemex_options {
-		$$ = new_menuex_item();
+		$$ = new_menu_item();
 		$$->prev = $1;
 		if($1)
 			$1->next = $$;
@@ -1340,17 +1337,17 @@ itemex_definitions
 		free($4);
 		}
 	| itemex_definitions tMENUITEM tSEPARATOR {
-		$$ = new_menuex_item();
+		$$ = new_menu_item();
 		$$->prev = $1;
 		if($1)
 			$1->next = $$;
 		}
 	| itemex_definitions tPOPUP tSTRING itemex_p_options menuex_body {
-		$$ = new_menuex_item();
+		$$ = new_menu_item();
 		$$->prev = $1;
 		if($1)
 			$1->next = $$;
-		$$->popup = get_itemex_head($5);
+		$$->popup = get_item_head($5);
 		$$->name = $3;
 		$$->id = $4->id;
 		$$->type = $4->type;
@@ -2406,15 +2403,6 @@ static raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str)
 
 /* Function the go back in a list to get the head */
 static menu_item_t *get_item_head(menu_item_t *p)
-{
-	if(!p)
-		return NULL;
-	while(p->prev)
-		p = p->prev;
-	return p;
-}
-
-static menuex_item_t *get_itemex_head(menuex_item_t *p)
 {
 	if(!p)
 		return NULL;

@@ -447,13 +447,67 @@ static int compare_icon_group(icon_group_t *icon_group1, icon_group_t *icon_grou
 static int compare_menu_item(menu_item_t *menu_item1, menu_item_t *menu_item2) {
 	int different = 0;
 	while(!different && menu_item1 && menu_item2) {
-		if(menu_item1->popup && menu_item2->popup)
-			different = compare_menu_item(menu_item1->popup, menu_item2->popup);
-		else if(!menu_item1->popup && !menu_item2->popup) {
-			if(menu_item1->name && menu_item2->name) {
-				if((menu_item1->id != menu_item2->id) ||
-				   (menu_item1->state != menu_item2->state))
+		if(menu_item1->popup && menu_item2->popup) {
+			if(!different && menu_item1->gotid && menu_item2->gotid) {
+				if(menu_item1->id != menu_item2->id)
 					different = 1;
+			} else if(!different &&
+				  ((menu_item1->gotid && !menu_item2->gotid) ||
+				  (!menu_item1->gotid && menu_item2->gotid)))
+					different = 1;
+			if(!different && menu_item1->gottype && menu_item2->gottype) {
+				if(menu_item1->type != menu_item2->type)
+					different = 1;
+			} else if(!different &&
+				  ((menu_item1->gottype && !menu_item2->gottype) ||
+				  (!menu_item1->gottype && menu_item2->gottype)))
+					different = 1;
+			if(!different && menu_item1->gotstate && menu_item2->gotstate) {
+				if(menu_item1->state != menu_item2->state)
+					different = 1;
+			} else if(!different &&
+				  ((menu_item1->gotstate && !menu_item2->gotstate) ||
+				  (!menu_item1->gotstate && menu_item2->gotstate)))
+					different = 1;
+			if(!different && menu_item1->gothelpid && menu_item2->gothelpid) {
+				if(menu_item1->helpid != menu_item2->helpid)
+					different = 1;
+			} else if(!different &&
+				  ((menu_item1->gothelpid && !menu_item2->gothelpid) ||
+				  (!menu_item1->gothelpid && menu_item2->gothelpid)))
+					different = 1;
+			if(!different)
+				different = compare_menu_item(menu_item1->popup, menu_item2->popup);
+		} else if(!menu_item1->popup && !menu_item2->popup) {
+			if(menu_item1->name && menu_item2->name) {
+				if(!different && menu_item1->gotid && menu_item2->gotid) {
+					if(menu_item1->id != menu_item2->id)
+						different = 1;
+				} else if(!different &&
+					  ((menu_item1->gotid && !menu_item2->gotid) ||
+					  (!menu_item1->gotid && menu_item2->gotid)))
+						different = 1;
+				if(!different && menu_item1->gottype && menu_item2->gottype) {
+					if(menu_item1->type != menu_item2->type)
+						different = 1;
+				} else if(!different &&
+					  ((menu_item1->gottype && !menu_item2->gottype) ||
+					  (!menu_item1->gottype && menu_item2->gottype)))
+						different = 1;
+				if(!different && menu_item1->gotstate && menu_item2->gotstate) {
+					if(menu_item1->state != menu_item2->state)
+						different = 1;
+				} else if(!different &&
+					  ((menu_item1->gotstate && !menu_item2->gotstate) ||
+					  (!menu_item1->gotstate && menu_item2->gotstate)))
+						different = 1;
+				if(!different && menu_item1->gothelpid && menu_item2->gothelpid) {
+					if(menu_item1->helpid != menu_item2->helpid)
+						different = 1;
+				} else if(!different &&
+					  ((menu_item1->gothelpid && !menu_item2->gothelpid) ||
+					  (!menu_item1->gothelpid && menu_item2->gothelpid)))
+						different = 1;
 			} else if((menu_item1->name && !menu_item2->name) ||
 				  (!menu_item1->name && menu_item2->name))
 					different = 1;
@@ -481,85 +535,6 @@ static int compare_menu(menu_t *menu1, menu_t *menu2) {
 	return different;
 }
 
-static int compare_menuex_item(menuex_item_t *menuex_item1, menuex_item_t *menuex_item2) {
-	int different = 0;
-	while(!different && menuex_item1 && menuex_item2) {
-		if(menuex_item1->popup && menuex_item2->popup) {
-			if(!different && menuex_item1->gotid && menuex_item2->gotid) {
-				if(menuex_item1->id != menuex_item2->id)
-					different = 1;
-			} else if(!different &&
-				  ((menuex_item1->gotid && !menuex_item2->gotid) ||
-				  (!menuex_item1->gotid && menuex_item2->gotid)))
-					different = 1;
-			if(!different && menuex_item1->gottype && menuex_item2->gottype) {
-				if(menuex_item1->type != menuex_item2->type)
-					different = 1;
-			} else if(!different &&
-				  ((menuex_item1->gottype && !menuex_item2->gottype) ||
-				  (!menuex_item1->gottype && menuex_item2->gottype)))
-					different = 1;
-			if(!different && menuex_item1->gotstate && menuex_item2->gotstate) {
-				if(menuex_item1->state != menuex_item2->state)
-					different = 1;
-			} else if(!different &&
-				  ((menuex_item1->gotstate && !menuex_item2->gotstate) ||
-				  (!menuex_item1->gotstate && menuex_item2->gotstate)))
-					different = 1;
-			if(!different && menuex_item1->gothelpid && menuex_item2->gothelpid) {
-				if(menuex_item1->helpid != menuex_item2->helpid)
-					different = 1;
-			} else if(!different &&
-				  ((menuex_item1->gothelpid && !menuex_item2->gothelpid) ||
-				  (!menuex_item1->gothelpid && menuex_item2->gothelpid)))
-					different = 1;
-			if(!different)
-				different = compare_menuex_item(menuex_item1->popup, menuex_item2->popup);
-		} else if(!menuex_item1->popup && !menuex_item2->popup) {
-			if(menuex_item1->name && menuex_item2->name) {
-				if(!different && menuex_item1->gotid && menuex_item2->gotid) {
-					if(menuex_item1->id != menuex_item2->id)
-						different = 1;
-				} else if(!different &&
-					  ((menuex_item1->gotid && !menuex_item2->gotid) ||
-					  (!menuex_item1->gotid && menuex_item2->gotid)))
-						different = 1;
-				if(!different && menuex_item1->gottype && menuex_item2->gottype) {
-					if(menuex_item1->type != menuex_item2->type)
-						different = 1;
-				} else if(!different &&
-					  ((menuex_item1->gottype && !menuex_item2->gottype) ||
-					  (!menuex_item1->gottype && menuex_item2->gottype)))
-						different = 1;
-				if(!different && menuex_item1->gotstate && menuex_item2->gotstate) {
-					if(menuex_item1->state != menuex_item2->state)
-						different = 1;
-				} else if(!different &&
-					  ((menuex_item1->gotstate && !menuex_item2->gotstate) ||
-					  (!menuex_item1->gotstate && menuex_item2->gotstate)))
-						different = 1;
-				if(!different && menuex_item1->gothelpid && menuex_item2->gothelpid) {
-					if(menuex_item1->helpid != menuex_item2->helpid)
-						different = 1;
-				} else if(!different &&
-					  ((menuex_item1->gothelpid && !menuex_item2->gothelpid) ||
-					  (!menuex_item1->gothelpid && menuex_item2->gothelpid)))
-						different = 1;
-			} else if((menuex_item1->name && !menuex_item2->name) ||
-				  (!menuex_item1->name && menuex_item2->name))
-					different = 1;
-		} else
-			different = 1;
-		menuex_item1 = menuex_item1->next;
-		menuex_item2 = menuex_item2->next;
-	}
-	if(!different &&
-	   ((menuex_item1 && !menuex_item2) ||
-	   (!menuex_item1 && menuex_item2)))
-		different = 1;
-	return different;
-}
-
 static int compare_menuex(menuex_t *menuex1, menuex_t *menuex2) {
 	int different = 0;
 	if(!different &&
@@ -568,7 +543,7 @@ static int compare_menuex(menuex_t *menuex1, menuex_t *menuex2) {
 	   (menuex1->lvc.characts != menuex2->lvc.characts)))
 		different = 1;
 	if(!different)
-		different = compare_menuex_item(menuex1->items, menuex2->items);
+		different = compare_menu_item(menuex1->items, menuex2->items);
 	return different;
 }
 

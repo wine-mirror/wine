@@ -819,9 +819,9 @@ static res_t *menu2res(name_id_t *name, menu_t *men)
  * Remarks	: Self recursive
  *****************************************************************************
 */
-static void menuexitem2res(res_t *res, menuex_item_t *menitem, const language_t *lang)
+static void menuexitem2res(res_t *res, menu_item_t *menitem, const language_t *lang)
 {
-	menuex_item_t *itm = menitem;
+	menu_item_t *itm = menitem;
 	assert(win32 != 0);
 	while(itm)
 	{

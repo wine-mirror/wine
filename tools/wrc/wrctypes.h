@@ -241,22 +241,6 @@ typedef struct menu_item {
 	struct menu_item *prev;
 	struct menu_item *popup;
 	int		id;
-	DWORD		state;
-	string_t	*name;
-} menu_item_t;
-
-typedef struct menu {
-	DWORD		memopt;
-	lvc_t		lvc;
-	menu_item_t	*items;
-} menu_t;
-
-/* MenuEx structures */
-typedef struct menuex_item {
-	struct menuex_item *next;
-	struct menuex_item *prev;
-	struct menuex_item *popup;
-	int		id;
 	DWORD		type;
 	DWORD		state;
 	int		helpid;
@@ -265,12 +249,18 @@ typedef struct menuex_item {
 	int		gottype;
 	int		gotstate;
 	int		gothelpid;
-} menuex_item_t;
+} menu_item_t;
+
+typedef struct menu {
+	DWORD		memopt;
+	lvc_t		lvc;
+	menu_item_t	*items;
+} menu_t;
 
 typedef struct menuex {
 	DWORD		memopt;
 	lvc_t		lvc;
-	menuex_item_t	*items;
+	menu_item_t	*items;
 } menuex_t;
 
 typedef struct itemex_opt
