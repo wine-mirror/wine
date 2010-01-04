@@ -35,12 +35,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
 typedef struct MMDevEnumImpl
 {
-    IMMDeviceEnumeratorVtbl *lpVtbl;
+    const IMMDeviceEnumeratorVtbl *lpVtbl;
     LONG ref;
 } MMDevEnumImpl;
 
 static MMDevEnumImpl *MMDevEnumerator;
-static IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
+static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
 
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
@@ -147,7 +147,7 @@ static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDevice
     return E_NOTIMPL;
 }
 
-static IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
+static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
 {
     MMDevEnum_QueryInterface,
     MMDevEnum_AddRef,
