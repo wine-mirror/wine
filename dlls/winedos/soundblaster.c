@@ -61,9 +61,6 @@ static BYTE dma_buffer[DMATRFSIZE*2];
 #define DSBUFLEN 4096 /* FIXME: Only this value seems to work */
 
 /* Direct Sound playback stuff */
-static HMODULE hmodule;
-typedef HRESULT (WINAPI* fnDirectSoundCreate) (LPGUID,LPDIRECTSOUND*,LPUNKNOWN);
-static fnDirectSoundCreate lpDirectSoundCreate;
 static LPDIRECTSOUND lpdsound;
 static LPDIRECTSOUNDBUFFER lpdsbuf;
 static DSBUFFERDESC buf_desc;
@@ -126,18 +123,7 @@ static BOOL SB_Init(void)
     HRESULT result;
 
     if (!lpdsound) {
-        hmodule = LoadLibraryA("dsound.dll");
-        if (!hmodule) {
-            ERR("Can't load dsound.dll !\n");
-            return 0;
-        }
-        lpDirectSoundCreate = (fnDirectSoundCreate)GetProcAddress(hmodule,"DirectSoundCreate");
-        if (!lpDirectSoundCreate) {
-            /* CloseHandle(hmodule); */
-            ERR("Can't find DirectSoundCreate function !\n");
-            return 0;
-        }
-        result = (*lpDirectSoundCreate)(NULL,&lpdsound,NULL);
+        result = DirectSoundCreate(NULL,&lpdsound,NULL);
         if (result != DS_OK) {
             ERR("Unable to initialize Sound Subsystem err = %x !\n",result);
             return 0;
