@@ -741,6 +741,7 @@ struct x11drv_win_data
     BOOL        shaped : 1;     /* is window using a custom region shape? */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
+    unsigned long configure_serial; /* serial number of last configure request */
     HBITMAP     hWMIconBitmap;
     HBITMAP     hWMIconMask;
 };
