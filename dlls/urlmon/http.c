@@ -79,7 +79,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
     URL_COMPONENTSW url_comp;
     BYTE security_id[512];
     DWORD len = 0;
-    ULONG num = 0;
+    ULONG num;
     BOOL res, b;
     HRESULT hres;
 
@@ -132,8 +132,8 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
                 ? wszBindVerb[This->base.bind_info.dwBindVerb] : This->base.bind_info.szCustomVerb,
             path, NULL, NULL, (LPCWSTR *)accept_mimes, request_flags, (DWORD_PTR)&This->base);
     heap_free(path);
-    while (num<sizeof(accept_mimes)/sizeof(accept_mimes[0]) && accept_mimes[num])
-        CoTaskMemFree(accept_mimes[num++]);
+    while(num--)
+        CoTaskMemFree(accept_mimes[num]);
     if (!This->base.request) {
         WARN("HttpOpenRequest failed: %d\n", GetLastError());
         return INET_E_RESOURCE_NOT_FOUND;
