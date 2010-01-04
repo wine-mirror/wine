@@ -573,8 +573,17 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
 
             if (!updated)
             {
-                ERR("Light %u in stateblock %p does not exist in device stateblock %p.\n",
+                /* This can happen if the light was originally created as a
+                 * default light for SetLightEnable() while recording. */
+                WARN("Light %u in stateblock %p does not exist in device stateblock %p.\n",
                         src->OriginalIndex, This, targetStateBlock);
+
+                src->OriginalParms = WINED3D_default_light;
+                if (src->glIndex != -1)
+                {
+                    This->activeLights[src->glIndex] = NULL;
+                    src->glIndex = -1;
+                }
             }
         }
     }
