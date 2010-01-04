@@ -22,6 +22,7 @@
 #define __WINE_DOSEXE_H
 
 #include <stdarg.h>
+#include <sys/types.h>
 
 #include "windef.h"
 #include "wine/library.h"
@@ -33,6 +34,13 @@
 #define MAX_DOS_DRIVES  26
 
 struct _DOSEVENT;
+
+typedef struct {
+  PAPCFUNC proc;
+  ULONG_PTR arg;
+} DOS_SPC;
+
+extern pid_t dosvm_pid;
 
 /* amount of space reserved for relay stack */
 #define DOSVM_RELAY_DATA_SIZE 4096

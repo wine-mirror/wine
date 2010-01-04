@@ -51,7 +51,6 @@
 #include "wincon.h"
 
 #include "dosexe.h"
-#include "dosvm.h"
 #include "wine/debug.h"
 #include "excpt.h"
 
