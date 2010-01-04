@@ -2027,7 +2027,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
     size += 2 * sizeof(DWORD);
 
     /* check that buffer is big enough -- don't trust dwSuggestedBufferSize */
-    if (This->lpBuffer == NULL || size < This->cbBuffer) {
+    if (This->lpBuffer == NULL || This->cbBuffer < size) {
       DWORD maxSize = max(size, This->sInfo.dwSuggestedBufferSize);
 
       if (This->lpBuffer == NULL)
