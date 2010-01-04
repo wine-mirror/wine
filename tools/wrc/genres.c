@@ -780,37 +780,6 @@ static void menuitem2res(res_t *res, menu_item_t *menitem, const language_t *lan
 
 /*
  *****************************************************************************
- * Function	: menu2res
- * Syntax	: res_t *menu2res(name_id_t *name, menu_t *men)
- * Input	:
- *	name	- Name/ordinal of the resource
- *	men	- The menu descriptor
- * Output	: New .res format structure
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-static res_t *menu2res(name_id_t *name, menu_t *men)
-{
-	int restag;
-	res_t *res;
-	assert(name != NULL);
-	assert(men != NULL);
-
-	res = new_res();
-	restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, win32 ? &(men->lvc) : NULL);
-
-	put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
-	menuitem2res(res, men->items, win32 ? men->lvc.language : NULL);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
-}
-
-/*
- *****************************************************************************
  * Function	: menuexitem2res
  * Syntax	: void menuexitem2res(res_t *res, menuex_item_t *item)
  * Input	:
@@ -846,8 +815,8 @@ static void menuexitem2res(res_t *res, menu_item_t *menitem, const language_t *l
 
 /*
  *****************************************************************************
- * Function	: menuex2res
- * Syntax	: res_t *menuex2res(name_id_t *name, menuex_t *menex)
+ * Function	: menu2res
+ * Syntax	: res_t *menu2res(name_id_t *name, menu_t *men)
  * Input	:
  *	name	- Name/ordinal of the resource
  *	menex	- The menuex descriptor
@@ -856,33 +825,43 @@ static void menuexitem2res(res_t *res, menu_item_t *menitem, const language_t *l
  * Remarks	:
  *****************************************************************************
 */
-static res_t *menuex2res(name_id_t *name, menuex_t *menex)
+static res_t *menu2res(name_id_t *name, menu_t *men)
 {
 	int restag;
 	res_t *res;
 	assert(name != NULL);
-	assert(menex != NULL);
+	assert(men != NULL);
 
 	res = new_res();
 	if(win32)
 	{
-		restag = put_res_header(res, WRC_RT_MENU, NULL, name, menex->memopt, &(menex->lvc));
+		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, &(men->lvc));
 
-		put_word(res, 1);		/* Menuheader: Version */
-		put_word(res, 4);		/* Offset */
-		put_dword(res, 0);		/* HelpId */
-		put_pad(res);
-		menuexitem2res(res, menex->items, menex->lvc.language);
+		if (men->is_ex)
+		{
+			put_word(res, 1);		/* Menuheader: Version */
+			put_word(res, 4);		/* Offset */
+			put_dword(res, 0);		/* HelpId */
+			put_pad(res);
+			menuexitem2res(res, men->items, men->lvc.language);
+		}
+		else
+		{
+			put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
+			menuitem2res(res, men->items, men->lvc.language);
+		}
 		/* Set ResourceSize */
 		SetResSize(res, restag);
 		put_pad(res);
 	}
 	else /* win16 */
 	{
-		/* Do not generate anything in 16-bit mode */
-		free(res->data);
-		free(res);
-		return NULL;
+		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, NULL);
+
+		put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
+		menuitem2res(res, men->items, NULL);
+		/* Set ResourceSize */
+		SetResSize(res, restag);
 	}
 	return res;
 }
@@ -1807,8 +1786,7 @@ const char *get_c_typename(enum res_e type)
 	case res_fntdir:return "FntDir";
 	case res_ico:	return "Ico";
 	case res_icog:	return "IcoGrp";
-	case res_men:
-	case res_menex:	return "Men";
+	case res_men:	return "Men";
 	case res_rdt:	return "RCDat";
 	case res_stt:	return "StrTab";
 	case res_usr:	return "Usr";
@@ -1876,10 +1854,6 @@ void resources2res(resource_t *top)
 		case res_men:
 			if(!top->binres)
 				top->binres = menu2res(top->name, top->res.men);
-			break;
-		case res_menex:
-			if(!top->binres)
-				top->binres = menuex2res(top->name, top->res.menex);
 			break;
 		case res_html:
 			if(!top->binres)

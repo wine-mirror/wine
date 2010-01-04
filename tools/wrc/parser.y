@@ -237,7 +237,6 @@ static int rsrcid_to_token(int lookahead);
 	font_t		*fnt;
 	fontdir_t	*fnd;
 	menu_t		*men;
-	menuex_t	*menex;
 	html_t		*html;
 	rcdata_t	*rdt;
 	stringtable_t	*stt;
@@ -315,9 +314,8 @@ static int rsrcid_to_token(int lookahead);
 %type <verw>	ver_words
 %type <blk>	ver_blocks ver_block
 %type <val>	ver_values ver_value
-%type <men> 	menu
+%type <men> 	menu menuex
 %type <menitm>	item_definitions menu_body itemex_definitions menuex_body
-%type <menex>	menuex
 %type <exopt>	itemex_p_options itemex_options
 %type <msg> 	messagetable
 %type <usr> 	userres
@@ -636,7 +634,7 @@ resource_definition
 	| menu		{ $$ = new_resource(res_men, $1, $1->memopt, $1->lvc.language); }
 	| menuex {
 		if(win32)
-			$$ = new_resource(res_menex, $1, $1->memopt, $1->lvc.language);
+			$$ = new_resource(res_men, $1, $1->memopt, $1->lvc.language);
 		else
 			$$ = NULL;
 		}
@@ -1295,7 +1293,8 @@ menuex	: tMENUEX loadmemopts opt_lvc menuex_body	{
 			parser_warning("MENUEX not supported in 16-bit mode\n");
 		if(!$4)
 			yyerror("MenuEx must contain items");
-		$$ = new_menuex();
+		$$ = new_menu();
+		$$->is_ex = TRUE;
 		if($2)
 		{
 			$$->memopt = *($2);

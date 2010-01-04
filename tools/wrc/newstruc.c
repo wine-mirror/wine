@@ -49,7 +49,6 @@ typedef struct
 __NEW_STRUCT_FUNC(dialog)
 __NEW_STRUCT_FUNC(name_id)
 __NEW_STRUCT_FUNC(menu)
-__NEW_STRUCT_FUNC(menuex)
 __NEW_STRUCT_FUNC(menu_item)
 __NEW_STRUCT_FUNC(control)
 __NEW_STRUCT_FUNC(icon)

@@ -36,7 +36,6 @@
 __NEW_STRUCT_PROTO(dialog);
 __NEW_STRUCT_PROTO(name_id);
 __NEW_STRUCT_PROTO(menu);
-__NEW_STRUCT_PROTO(menuex);
 __NEW_STRUCT_PROTO(menu_item);
 __NEW_STRUCT_PROTO(control);
 __NEW_STRUCT_PROTO(icon);

@@ -57,8 +57,6 @@ static language_t get_language(resource_t *resource) {
 			return *resource->res.icog->lvc.language;
 		case res_men:
 			return *resource->res.men->lvc.language;
-		case res_menex:
-			return *resource->res.menex->lvc.language;
 		case res_rdt:
 			return *resource->res.rdt->data->lvc.language;
 		case res_stt:
@@ -535,18 +533,6 @@ static int compare_menu(menu_t *menu1, menu_t *menu2) {
 	return different;
 }
 
-static int compare_menuex(menuex_t *menuex1, menuex_t *menuex2) {
-	int different = 0;
-	if(!different &&
-	   ((menuex1->memopt != menuex2->memopt) ||
-	   (menuex1->lvc.version != menuex2->lvc.version) ||
-	   (menuex1->lvc.characts != menuex2->lvc.characts)))
-		different = 1;
-	if(!different)
-		different = compare_menu_item(menuex1->items, menuex2->items);
-	return different;
-}
-
 static int compare_rcdata(rcdata_t *rcdata1, rcdata_t *rcdata2) {
 	int different = 0;
 	if(!different &&
@@ -860,8 +846,6 @@ static int compare(resource_t *resource1, resource_t *resource2) {
 			return compare_icon_group(resource1->res.icog, resource2->res.icog);
 		case res_men:
 			return compare_menu(resource1->res.men, resource2->res.men);
-		case res_menex:
-			return compare_menuex(resource1->res.menex, resource2->res.menex);
 		case res_rdt:
 			return compare_rcdata(resource1->res.rdt, resource2->res.rdt);
 		case res_stt:
@@ -963,7 +947,6 @@ static void setup_tabs(void)
 		case res_ico:
 		case res_icog:
 		case res_men:
-		case res_menex:
 		case res_rdt:
 		case res_stt:
 		case res_usr:

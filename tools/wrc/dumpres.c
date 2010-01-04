@@ -48,7 +48,6 @@ const char *get_typename(const resource_t* r)
 	case res_ico:	return "ICON";
 	case res_icog:	return "GROUP_ICON";
 	case res_men:	return "MENU";
-	case res_menex:	return "MENUEX";
 	case res_rdt:	return "RCDATA";
 	case res_stt:	return "STRINGTABLE";
 	case res_usr:   return "UserResource";
@@ -676,24 +675,6 @@ static void dump_menu(const menu_t *men)
 
 /*
  *****************************************************************************
- * Function	: dump_menuex
- * Syntax	: void dump_menuex(const menuex_t *menex)
- * Input	:
- *	menex	- MenuEx resource descriptor
- * Output	:
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-static void dump_menuex(const menuex_t *menex)
-{
-	dump_memopt(menex->memopt);
-	dump_lvc(&(menex->lvc));
-	dump_menu_item(menex->items);
-}
-
-/*
- *****************************************************************************
  * Function	: dump_ver_value
  * Syntax	: void dump_ver_value(const ver_value_t *val)
  * Input	:
@@ -908,9 +889,6 @@ void dump_resources(const resource_t *top)
 			break;
 		case res_men:
 			dump_menu(top->res.men);
-			break;
-		case res_menex:
-			dump_menuex(top->res.menex);
 			break;
 		case res_rdt:
 			dump_rcdata(top->res.rdt);

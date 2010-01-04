@@ -183,8 +183,7 @@ enum res_e {
 	res_dlginit = WRC_RT_DLGINIT,	/* 240 */
 	res_toolbar = WRC_RT_TOOLBAR,	/* 241 */
 
-	res_menex = 256 + 4,
-	res_usr
+	res_usr = 256 + 6
 };
 
 /* Raw bytes in a row... */
@@ -254,14 +253,9 @@ typedef struct menu_item {
 typedef struct menu {
 	DWORD		memopt;
 	lvc_t		lvc;
+	int		is_ex;
 	menu_item_t	*items;
 } menu_t;
-
-typedef struct menuex {
-	DWORD		memopt;
-	lvc_t		lvc;
-	menu_item_t	*items;
-} menuex_t;
 
 typedef struct itemex_opt
 {
@@ -588,7 +582,6 @@ typedef struct resource {
 		icon_t		*ico;
 		icon_group_t	*icog;
 		menu_t		*men;
-		menuex_t	*menex;
 		messagetable_t	*msg;
 		html_t		*html;
 		rcdata_t	*rdt;
