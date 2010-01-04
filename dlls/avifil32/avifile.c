@@ -2030,12 +2030,14 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
     if (This->lpBuffer == NULL || This->cbBuffer < size) {
       DWORD maxSize = max(size, This->sInfo.dwSuggestedBufferSize);
 
-      if (This->lpBuffer == NULL)
+      if (This->lpBuffer == NULL) {
 	This->lpBuffer = HeapAlloc(GetProcessHeap(), 0, maxSize);
-      else
-	This->lpBuffer = HeapReAlloc(GetProcessHeap(), 0, This->lpBuffer, maxSize);
-      if (This->lpBuffer == NULL)
-	return AVIERR_MEMORY;
+        if (!This->lpBuffer) return AVIERR_MEMORY;
+      } else {
+        void *new_buffer = HeapReAlloc(GetProcessHeap(), 0, This->lpBuffer, maxSize);
+        if (!new_buffer) return AVIERR_MEMORY;
+        This->lpBuffer = new_buffer;
+      }
       This->cbBuffer = maxSize;
     }
 
