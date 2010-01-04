@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    DOSVM_Int16Handler (WINEDOS16.122)
+ *	    DOSVM_Int16Handler
  *
  * Handler for int 16h (keyboard)
  *

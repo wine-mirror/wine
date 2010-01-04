@@ -955,7 +955,7 @@ BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *         DOSVM_Int31Handler (WINEDOS16.149)
+ *         DOSVM_Int31Handler
  *
  * Handler for int 31h (DPMI).
  */

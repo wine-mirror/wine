@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 
 /**********************************************************************
- *	    DOSVM_Int15Handler (WINEDOS16.121)
+ *	    DOSVM_Int15Handler
  *
  * Handler for int 15h
  */

@@ -141,7 +141,7 @@ static void DOSVM_Int09UpdateKbdStatusFlags(BYTE scan, BOOL extended, BIOSDATA *
 }
 
 /**********************************************************************
- *	    DOSVM_Int09Handler (WINEDOS16.109)
+ *	    DOSVM_Int09Handler
  *
  * Handler for int 09h.
  * See http://www.execpc.com/~geezer/osd/kbd/ for a very good description

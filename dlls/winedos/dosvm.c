@@ -275,7 +275,7 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
 
 #ifdef MZ_SUPPORTED
 /***********************************************************************
- *		QueueEvent (WINEDOS.@)
+ *		DOSVM_QueueEvent
  */
 void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
@@ -616,7 +616,7 @@ INT DOSVM_Enter( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *		OutPIC (WINEDOS.@)
+ *		DOSVM_PIC_ioport_out
  */
 void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
@@ -668,7 +668,7 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 #else /* !MZ_SUPPORTED */
 
 /***********************************************************************
- *		Enter (WINEDOS.@)
+ *		DOSVM_Enter
  */
 INT DOSVM_Enter( CONTEXT86 *context )
 {
@@ -677,17 +677,17 @@ INT DOSVM_Enter( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *		Wait (WINEDOS.@)
+ *		DOSVM_Wait
  */
 void DOSVM_Wait( CONTEXT86 *waitctx ) { }
 
 /***********************************************************************
- *		OutPIC (WINEDOS.@)
+ *		DOSVM_PIC_ioport_out
  */
 void DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
 
 /***********************************************************************
- *		QueueEvent (WINEDOS.@)
+ *		DOSVM_QueueEvent
  */
 void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {

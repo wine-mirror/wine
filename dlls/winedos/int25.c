@@ -76,7 +76,7 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
 
 
 /**********************************************************************
- *	    DOSVM_Int25Handler (WINEDOS16.137)
+ *	    DOSVM_Int25Handler
  *
  * Handler for int 25h (absolute disk read).
  */

@@ -927,7 +927,7 @@ DWORD WINAPI DOSVM_inport( int port, int size )
 
 
 /**********************************************************************
- *	    outport  (WINEDOS.@)
+ *	    DOSVM_outport
  */
 void WINAPI DOSVM_outport( int port, int size, DWORD value )
 {

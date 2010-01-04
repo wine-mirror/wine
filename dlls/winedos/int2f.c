@@ -116,7 +116,7 @@ DWORD WINAPI GetVersion16(void)
 }
 
 /**********************************************************************
- *          DOSVM_Int2fHandler (WINEDOS16.147)
+ *          DOSVM_Int2fHandler
  *
  * Handler for int 2fh (multiplex).
  */

@@ -65,7 +65,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
 
 
 /**********************************************************************
- *	    DOSVM_Int26Handler (WINEDOS16.138)
+ *	    DOSVM_Int26Handler
  *
  * Handler for int 26h (absolute disk write).
  */

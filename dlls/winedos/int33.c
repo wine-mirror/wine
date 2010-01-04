@@ -71,7 +71,7 @@ static void INT33_ResetMouse( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    DOSVM_Int33Handler (WINEDOS16.151)
+ *	    DOSVM_Int33Handler
  *
  * Handler for int 33h (MS MOUSE).
  */

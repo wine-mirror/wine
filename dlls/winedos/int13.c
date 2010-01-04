@@ -180,7 +180,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
 
 
 /**********************************************************************
- *         DOSVM_Int13Handler (WINEDOS16.119)
+ *         DOSVM_Int13Handler
  *
  * Handler for int 13h (disk I/O).
  */

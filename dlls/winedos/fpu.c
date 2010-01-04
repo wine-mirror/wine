@@ -33,7 +33,7 @@ static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode);
 
 
 /**********************************************************************
- *          DOSVM_Int34Handler (WINEDOS16.152)
+ *          DOSVM_Int34Handler
  *
  * Handler for int 34 (FLOATING POINT EMULATION - Opcode 0xd8).
  *
@@ -48,7 +48,7 @@ void WINAPI DOSVM_Int34Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int35Handler (WINEDOS16.153)
+ *          DOSVM_Int35Handler
  *
  * Handler for int 35 (FLOATING POINT EMULATION - Opcode 0xd9).
  *
@@ -63,7 +63,7 @@ void WINAPI DOSVM_Int35Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int36Handler (WINEDOS16.154)
+ *          DOSVM_Int36Handler
  *
  * Handler for int 36 (FLOATING POINT EMULATION - Opcode 0xda).
  *
@@ -78,7 +78,7 @@ void WINAPI DOSVM_Int36Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int37Handler (WINEDOS16.155)
+ *          DOSVM_Int37Handler
  *
  * Handler for int 37 (FLOATING POINT EMULATION - Opcode 0xdb).
  *
@@ -93,7 +93,7 @@ void WINAPI DOSVM_Int37Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int38Handler (WINEDOS16.156)
+ *          DOSVM_Int38Handler
  *
  * Handler for int 38 (FLOATING POINT EMULATION - Opcode 0xdc).
  *
@@ -111,7 +111,7 @@ void WINAPI DOSVM_Int38Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int39Handler (WINEDOS16.157)
+ *          DOSVM_Int39Handler
  *
  * Handler for int 39 (FLOATING POINT EMULATION - Opcode 0xdd).
  *
@@ -126,7 +126,7 @@ void WINAPI DOSVM_Int39Handler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int3aHandler (WINEDOS16.158)
+ *          DOSVM_Int3aHandler
  *
  * Handler for int 3a (FLOATING POINT EMULATION - Opcode 0xde).
  *
@@ -141,7 +141,7 @@ void WINAPI DOSVM_Int3aHandler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int3bHandler (WINEDOS16.159)
+ *          DOSVM_Int3bHandler
  *
  * Handler for int 3B (FLOATING POINT EMULATION - Opcode 0xdf).
  *
@@ -156,7 +156,7 @@ void WINAPI DOSVM_Int3bHandler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int3cHandler (WINEDOS16.160)
+ *          DOSVM_Int3cHandler
  *
  * Handler for int 3C (FLOATING POINT EMULATION - INSTRUCTIONS WITH SEGMENT OVERRIDE).
  *
@@ -179,7 +179,7 @@ void WINAPI DOSVM_Int3cHandler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int3dHandler (WINEDOS16.161)
+ *          DOSVM_Int3dHandler
  *
  * Handler for int 3D (FLOATING POINT EMULATION - Standalone FWAIT).
  *
@@ -193,7 +193,7 @@ void WINAPI DOSVM_Int3dHandler(CONTEXT86 *context)
 
 
 /**********************************************************************
- *          DOSVM_Int3eHandler (WINEDOS16.162)
+ *          DOSVM_Int3eHandler
  *
  * FLOATING POINT EMULATION -- Borland "Shortcut" call.
  *  The two bytes following the int 3E instruction are
