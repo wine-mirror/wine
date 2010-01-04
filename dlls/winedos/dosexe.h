@@ -489,7 +489,4 @@ extern char IO_pp_init(void);
 /* timer.c */
 extern void WINAPI DOSVM_Int08Handler(CONTEXT86*);
 
-/* xms.c */
-extern void XMS_Handler(CONTEXT86*);
-
 #endif /* __WINE_DOSEXE_H */

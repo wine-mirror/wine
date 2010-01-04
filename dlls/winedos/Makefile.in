@@ -33,8 +33,7 @@ C_SRCS = \
 	relay.c \
 	soundblaster.c \
 	timer.c \
-	vga.c \
-	xms.c
+	vga.c
 
 @MAKE_DLL_RULES@
 
