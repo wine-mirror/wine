@@ -1381,10 +1381,8 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
       ERR(": found palette change in non-video stream!\n");
       return AVIERR_BADFORMAT;
     }
-    This->sInfo.dwFlags |= AVISTREAMINFO_FORMATCHANGES;
-    This->sInfo.dwFormatChangeCount++;
 
-    if (This->idxFmtChanges == NULL || This->nIdxFmtChanges < This->sInfo.dwFormatChangeCount) {
+    if (This->idxFmtChanges == NULL || This->nIdxFmtChanges <= This->sInfo.dwFormatChangeCount) {
       This->nIdxFmtChanges += 16;
       if (This->idxFmtChanges == NULL)
 	This->idxFmtChanges =
@@ -1397,7 +1395,8 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
 	return AVIERR_MEMORY;
     }
 
-    n = This->sInfo.dwFormatChangeCount;
+    This->sInfo.dwFlags |= AVISTREAMINFO_FORMATCHANGES;
+    n = ++This->sInfo.dwFormatChangeCount;
     This->idxFmtChanges[n].ckid          = This->lLastFrame;
     This->idxFmtChanges[n].dwFlags       = 0;
     This->idxFmtChanges[n].dwChunkOffset = offset;
