@@ -1631,11 +1631,9 @@ int dll_open (const char *dll_name)
  */
 int dll_next_symbol (parsed_symbol * sym)
 {
-    if (!dll_current_symbol->symbol)
-	return 1;
-
-    assert (dll_symbols);
-
+    if (!dll_current_symbol || !dll_current_symbol->symbol)
+       return 1;
+     assert (dll_symbols);
     sym->symbol = strdup (dll_current_symbol->symbol);
     sym->ordinal = dll_current_symbol->ordinal;
     dll_current_symbol++;
