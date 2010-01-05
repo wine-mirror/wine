@@ -82,14 +82,18 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     ok(hr == E_INVALIDARG, "Asking for too high device returned 0x%08x\n", hr);
     ok(dev == NULL, "Returned non-null device\n");
 
-    if (!numdev) return;
-    hr = IMMDeviceCollection_Item(col, 0, NULL);
-    ok(hr == E_POINTER, "Query with null pointer returned 0x%08x\n", hr);
+    if (numdev)
+    {
+        hr = IMMDeviceCollection_Item(col, 0, NULL);
+        ok(hr == E_POINTER, "Query with null pointer returned 0x%08x\n", hr);
 
-    hr = IMMDeviceCollection_Item(col, 0, &dev);
-    ok(hr == S_OK, "Valid Item returned 0x%08x\n", hr);
-    ok(dev != NULL, "Device is null!\n");
-    if (dev) IUnknown_Release(dev);
+        hr = IMMDeviceCollection_Item(col, 0, &dev);
+        ok(hr == S_OK, "Valid Item returned 0x%08x\n", hr);
+        ok(dev != NULL, "Device is null!\n");
+        if (dev)
+            IUnknown_Release(dev);
+    }
+    IUnknown_Release(col);
 }
 
 /* Only do parameter tests here, the actual MMDevice testing should be a separate test */
