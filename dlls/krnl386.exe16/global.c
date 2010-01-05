@@ -74,24 +74,6 @@ static int globalArenaSize;
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 
-static inline void*     DOSMEM_AllocBlock(UINT size, UINT16* pseg)
-{
-    if (!winedos.AllocDosBlock) load_winedos();
-    return winedos.AllocDosBlock ? winedos.AllocDosBlock(size, pseg) : NULL;
-}
-
-static inline BOOL      DOSMEM_FreeBlock(void* ptr)
-{
-    if (!winedos.FreeDosBlock) load_winedos();
-    return winedos.FreeDosBlock ? winedos.FreeDosBlock( ptr ) : FALSE;
-}
-
-static inline UINT      DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
-{
-    if (!winedos.ResizeDosBlock) load_winedos();
-    return winedos.ResizeDosBlock ? winedos.ResizeDosBlock(ptr, size, TRUE) : 0;
-}
-
 static HANDLE get_win16_heap(void)
 {
     static HANDLE win16_heap;

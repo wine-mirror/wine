@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
 
-static void (WINAPI *wine_load_dos_exe)( LPCSTR filename, LPCSTR cmdline );
+extern void __wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline );
 
 
 /*** PIF file structures ***/
@@ -244,7 +244,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
      * - hot key's
      * - etc.
      */ 
-    wine_load_dos_exe( progpath, cmdline );
+    __wine_load_dos_exe( progpath, cmdline );
     return;
 }
 
@@ -382,7 +382,6 @@ int main( int argc, char *argv[] )
     STARTUPINFOA info;
     char *cmdline, *appname, **first_arg;
     char *p;
-    HMODULE winedos;
     MEMORY_BASIC_INFORMATION mem_info;
 
     if (!argv[1]) usage();
@@ -401,13 +400,6 @@ int main( int argc, char *argv[] )
         }
         appname = buffer;
         first_arg = argv + 1;
-    }
-
-    if (!(winedos = LoadLibraryA( "winedos.dll" )) ||
-        !(wine_load_dos_exe = (void *)GetProcAddress( winedos, "wine_load_dos_exe" )))
-    {
-        WINE_MESSAGE( "winevdm: unable to exec '%s': DOS support unavailable\n", appname );
-        ExitProcess(1);
     }
 
     if (*first_arg) first_arg++;  /* skip program name */
@@ -455,7 +447,7 @@ int main( int argc, char *argv[] )
 
                 /* try DOS format */
                 /* loader expects arguments to be regular C strings */
-                wine_load_dos_exe( appname, cmdline + 1 );
+                __wine_load_dos_exe( appname, cmdline + 1 );
             }
             /* if we get back here it failed */
             instance = GetLastError();

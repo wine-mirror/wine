@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
+#include "kernel16_private.h"
 #include "dosexe.h"
 
 #include "excpt.h"
@@ -125,7 +126,6 @@ static WORD alloc_pm_selector( WORD seg, unsigned char flags )
  */
 static LONG WINAPI dpmi_exception_handler(EXCEPTION_POINTERS *eptr)
 {
-#ifdef __i386__
     EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
     CONTEXT *context = eptr->ContextRecord;
 
@@ -144,7 +144,6 @@ static LONG WINAPI dpmi_exception_handler(EXCEPTION_POINTERS *eptr)
         return EXCEPTION_EXECUTE_HANDLER;
     }
 
-#endif
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
@@ -298,8 +297,6 @@ static LPVOID DPMI_xrealloc( LPVOID ptr, DWORD newsize )
 }
 
 
-#ifdef __i386__
-
 void DPMI_CallRMCB32(RMCB *rmcb, UINT16 ss, DWORD esp, UINT16*es, DWORD*edi)
 #if 0 /* original code, which early gccs puke on */
 {
@@ -368,8 +365,6 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
     "ret")
 #endif
 
-#endif /* __i386__ */
-
 /**********************************************************************
  *	    DPMI_CallRMCBProc
  *
@@ -386,7 +381,6 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         /* Wine-internal RMCB, call directly */
         ((RMCBPROC)rmcb->proc_ofs)(context);
     } else __TRY {
-#ifdef __i386__
         UINT16 ss,es;
         DWORD esp,edi;
 
@@ -422,11 +416,8 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         }
         wine_ldt_free_entries( ss, 1 );
         INT_GetRealModeContext( MapSL( MAKESEGPTR( es, edi )), context);
-#else
-        ERR("RMCBs only implemented for i386\n");
-#endif
     } __EXCEPT(dpmi_exception_handler) { } __ENDTRY
-        
+
     /* Restore virtual interrupt flag. */
     get_vm86_teb_info()->dpmi_vif = old_vif;
 }

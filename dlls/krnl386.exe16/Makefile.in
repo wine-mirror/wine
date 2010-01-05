@@ -5,17 +5,39 @@ VPATH     = @srcdir@
 MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 IMPORTS   = kernel32 ntdll
+DELAYIMPORTS = ddraw dsound user32
 EXTRAIMPLIBFLAGS = --subsystem win16
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--dll-name,kernel
 EXTRARCFLAGS  = -O res16
 
 C_SRCS = \
 	atom.c \
+	dma.c \
+	dosaspi.c \
+	dosconf.c \
+	dosdev.c \
+	dosexe.c \
 	dosmem.c \
+	dosvm.c \
 	error.c \
 	file.c \
+	fpu.c \
 	global.c \
 	instr.c \
+	int09.c \
+	int10.c \
+	int13.c \
+	int15.c \
+	int16.c \
+	int21.c \
+	int25.c \
+	int26.c \
+	int2f.c \
+	int31.c \
+	int33.c \
+	int67.c \
+	interrupts.c \
+	ioports.c \
 	kernel.c \
 	local.c \
 	ne_module.c \
@@ -25,10 +47,13 @@ C_SRCS = \
 	resource.c \
 	selector.c \
 	snoop.c \
+	soundblaster.c \
 	syslevel.c \
 	task.c \
 	thunk.c \
+	timer.c \
 	utthunk.c \
+	vga.c \
 	vxd.c \
 	wowthunk.c
 

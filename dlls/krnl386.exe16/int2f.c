@@ -63,58 +63,6 @@ typedef struct
 static void do_int2f_16( CONTEXT86 *context );
 static void MSCDEX_Handler( CONTEXT86 *context );
 
-/***********************************************************************
- *         GetVersion   (KERNEL.3)
- *
- * FIXME: Duplicated from kernel since it's a 16-bit function.
- */
-DWORD WINAPI GetVersion16(void)
-{
-    static WORD dosver, winver;
-
-    if (!dosver)  /* not determined yet */
-    {
-        RTL_OSVERSIONINFOEXW info;
-
-        info.dwOSVersionInfoSize = sizeof(info);
-        if (RtlGetVersion( &info )) return 0;
-
-        if (info.dwMajorVersion <= 3)
-            winver = MAKEWORD( info.dwMajorVersion, info.dwMinorVersion );
-        else
-            winver = MAKEWORD( 3, 95 );
-
-        switch(info.dwPlatformId)
-        {
-        case VER_PLATFORM_WIN32s:
-            switch(MAKELONG( info.dwMinorVersion, info.dwMajorVersion ))
-            {
-            case 0x0200:
-                dosver = 0x0303;  /* DOS 3.3 for Windows 2.0 */
-                break;
-            case 0x0300:
-                dosver = 0x0500;  /* DOS 5.0 for Windows 3.0 */
-                break;
-            default:
-                dosver = 0x0616;  /* DOS 6.22 for Windows 3.1 and later */
-                break;
-            }
-            break;
-        case VER_PLATFORM_WIN32_WINDOWS:
-            /* DOS 8.0 for WinME, 7.0 for Win95/98 */
-            if (info.dwMinorVersion >= 90) dosver = 0x0800;
-            else dosver = 0x0700;
-            break;
-        case VER_PLATFORM_WIN32_NT:
-            dosver = 0x0500;  /* always DOS 5.0 for NT */
-            break;
-        }
-        TRACE( "DOS %d.%02d Win %d.%02d\n",
-               HIBYTE(dosver), LOBYTE(dosver), LOBYTE(winver), HIBYTE(winver) );
-    }
-    return MAKELONG( winver, dosver );
-}
-
 /**********************************************************************
  *          DOSVM_Int2fHandler
  *

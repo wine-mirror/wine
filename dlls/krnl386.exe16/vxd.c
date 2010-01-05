@@ -44,6 +44,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "kernel16_private.h"
+#include "dosexe.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/server.h"

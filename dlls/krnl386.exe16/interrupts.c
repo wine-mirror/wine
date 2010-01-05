@@ -22,10 +22,11 @@
 
 #include <stdio.h>
 
+#include "wine/winbase16.h"
+#include "kernel16_private.h"
 #include "dosexe.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/winbase16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -258,7 +259,7 @@ static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
  * Pushes interrupt frame to stack and changes instruction 
  * pointer to interrupt handler.
  */
-BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
+BOOL DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
 {
     TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
@@ -269,6 +270,8 @@ BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
                   context->Esi, context->Edi, context->Ebp, context->Esp,
                   context->SegDs, context->SegEs, context->SegFs, context->SegGs,
                   context->SegSs, context->EFlags );
+
+    DOSMEM_InitDosMemory();
 
     if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
     {
@@ -700,7 +703,7 @@ void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
  *
  * Execute Wine interrupt handler procedure.
  */
-void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum ) 
+void DOSVM_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )
 {
     /*
      * FIXME: Make all builtin interrupt calls go via this routine.
@@ -710,6 +713,16 @@ void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )
 
   INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
   proc( context );
+}
+
+
+/**********************************************************************
+ *         __wine_call_int_handler    (KERNEL.@)
+ */
+void __wine_call_int_handler( CONTEXT86 *context, BYTE intnum )
+{
+    DOSMEM_InitDosMemory();
+    DOSVM_CallBuiltinHandler( context, intnum );
 }
 
 

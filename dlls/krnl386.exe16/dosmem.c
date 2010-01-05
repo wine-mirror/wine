@@ -38,6 +38,7 @@
 #include "wine/winbase16.h"
 
 #include "kernel16_private.h"
+#include "dosexe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosmem);
@@ -50,6 +51,48 @@ WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 /* DOS memory highest address (including HMA) */
 #define DOSMEM_SIZE             0x110000
 #define DOSMEM_64KB             0x10000
+
+/*
+ * Memory Control Block (MCB) definition
+ * FIXME: implement Allocation Strategy
+ */
+
+#define MCB_DUMP(mc) \
+    TRACE ("MCB_DUMP base=%p type=%02xh psp=%04xh size=%04xh\n", mc, mc->type, mc->psp , mc->size )
+
+#define MCB_NEXT(mc) \
+    (MCB*) ((mc->type==MCB_TYPE_LAST) ? NULL : (char*)(mc) + ((mc->size + 1) << 4) )
+
+/* FIXME: should we check more? */
+#define MCB_VALID(mc) \
+    ((mc->type==MCB_TYPE_NORMAL) || (mc->type==MCB_TYPE_LAST))
+
+
+#define MCB_TYPE_NORMAL    0x4d
+#define MCB_TYPE_LAST      0x5a
+
+#define MCB_PSP_DOS        0x0060
+#define MCB_PSP_FREE       0
+
+#include "pshpack1.h"
+typedef struct {
+    BYTE type;
+    WORD psp;     /* segment of owner psp */
+    WORD size;    /* in paragraphs */
+    BYTE pad[3];
+    BYTE name[8];
+} MCB;
+#include "poppack.h"
+
+/*
+#define __DOSMEM_DEBUG__
+ */
+
+#define VM_STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
+#define VM_STUB_SEGMENT 0xf000         /* BIOS segment */
+
+/* FIXME: this should be moved to the LOL */
+static MCB* DOSMEM_root_block;
 
 /* when looking at DOS and real mode memory, we activate in three different
  * modes, depending the situation.
@@ -71,55 +114,232 @@ WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
 /* DOS memory base (linear in process address space) */
 static char *DOSMEM_dosmem;
+static char *DOSMEM_sysmem;
 /* number of bytes protected from _dosmem. 0 when DOS memory is initialized, 
  * 64k otherwise to trap NULL pointers deref */
 static DWORD DOSMEM_protect;
 
 static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except);
 
-struct winedos_exports winedos;
-
-BOOL load_winedos(void)
+/***********************************************************************
+ *           DOSMEM_FillIsrTable
+ *
+ * Fill the interrupt table with fake BIOS calls to BIOSSEG (0xf000).
+ *
+ * NOTES:
+ * Linux normally only traps INTs performed from or destined to BIOSSEG
+ * for us to handle, if the int_revectored table is empty. Filling the
+ * interrupt table with calls to INT stubs in BIOSSEG allows DOS programs
+ * to hook interrupts, as well as use their familiar retf tricks to call
+ * them, AND let Wine handle any unhooked interrupts transparently.
+ */
+static void DOSMEM_FillIsrTable(void)
 {
-    static HANDLE	hRunOnce /* = 0 */;
-    static HMODULE      hWineDos /* = 0 */;
+    SEGPTR *isr = (SEGPTR*)DOSMEM_sysmem;
+    int x;
 
-    /* FIXME: this isn't 100% thread safe, as we won't catch access to 1MB while
-     * loading winedos (and may return uninitialized valued)
+    for (x=0; x<256; x++) isr[x]=MAKESEGPTR(VM_STUB_SEGMENT,x*4);
+}
+
+static void DOSMEM_MakeIsrStubs(void)
+{
+    DWORD *stub = (DWORD*)(DOSMEM_dosmem + (VM_STUB_SEGMENT << 4));
+    int x;
+
+    for (x=0; x<256; x++) stub[x]=VM_STUB(x);
+}
+
+BIOSDATA* DOSVM_BiosData(void)
+{
+    return (BIOSDATA *)(DOSMEM_sysmem + 0x400);
+}
+
+/**********************************************************************
+ *          DOSMEM_GetTicksSinceMidnight
+ *
+ * Return number of clock ticks since midnight.
+ */
+static DWORD DOSMEM_GetTicksSinceMidnight(void)
+{
+    SYSTEMTIME time;
+
+    /* This should give us the (approximately) correct
+     * 18.206 clock ticks per second since midnight.
      */
-    if (hWineDos) goto done;
+
+    GetLocalTime( &time );
+
+    return (((time.wHour * 3600 + time.wMinute * 60 +
+              time.wSecond) * 18206) / 1000) +
+             (time.wMilliseconds * 1000 / 54927);
+}
+
+/***********************************************************************
+ *           DOSMEM_FillBiosSegments
+ *
+ * Fill the BIOS data segment with dummy values.
+ */
+static void DOSMEM_FillBiosSegments(void)
+{
+    BYTE *pBiosSys = (BYTE*)DOSMEM_dosmem + 0xf0000;
+    BYTE *pBiosROMTable = pBiosSys+0xe6f5;
+    BIOSDATA *pBiosData = DOSVM_BiosData();
+    static const char bios_date[] = "13/01/99";
+
+      /* Clear all unused values */
+    memset( pBiosData, 0, sizeof(*pBiosData) );
+
+    /* FIXME: should check the number of configured drives and ports */
+    pBiosData->Com1Addr             = 0x3f8;
+    pBiosData->Com2Addr             = 0x2f8;
+    pBiosData->Lpt1Addr             = 0x378;
+    pBiosData->Lpt2Addr             = 0x278;
+    pBiosData->InstalledHardware    = 0x5463;
+    pBiosData->MemSize              = 640;
+    pBiosData->NextKbdCharPtr       = 0x1e;
+    pBiosData->FirstKbdCharPtr      = 0x1e;
+    pBiosData->VideoMode            = 3;
+    pBiosData->VideoColumns         = 80;
+    pBiosData->VideoPageSize        = 80 * 25 * 2;
+    pBiosData->VideoPageStartAddr   = 0xb800;
+    pBiosData->VideoCtrlAddr        = 0x3d4;
+    pBiosData->Ticks                = DOSMEM_GetTicksSinceMidnight();
+    pBiosData->NbHardDisks          = 2;
+    pBiosData->KbdBufferStart       = 0x1e;
+    pBiosData->KbdBufferEnd         = 0x3e;
+    pBiosData->RowsOnScreenMinus1   = 24;
+    pBiosData->BytesPerChar         = 0x10;
+    pBiosData->ModeOptions          = 0x64;
+    pBiosData->FeatureBitsSwitches  = 0xf9;
+    pBiosData->VGASettings          = 0x51;
+    pBiosData->DisplayCombination   = 0x08;
+    pBiosData->DiskDataRate         = 0;
+
+    /* fill ROM configuration table (values from Award) */
+    *(pBiosROMTable+0x0)	= 0x08; /* number of bytes following LO */
+    *(pBiosROMTable+0x1)	= 0x00; /* number of bytes following HI */
+    *(pBiosROMTable+0x2)	= 0xfc; /* model */
+    *(pBiosROMTable+0x3)	= 0x01; /* submodel */
+    *(pBiosROMTable+0x4)	= 0x00; /* BIOS revision */
+    *(pBiosROMTable+0x5)	= 0x74; /* feature byte 1 */
+    *(pBiosROMTable+0x6)	= 0x00; /* feature byte 2 */
+    *(pBiosROMTable+0x7)	= 0x00; /* feature byte 3 */
+    *(pBiosROMTable+0x8)	= 0x00; /* feature byte 4 */
+    *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
+
+    /* BIOS date string */
+    memcpy(pBiosSys+0xfff5, bios_date, sizeof bios_date);
+
+    /* BIOS ID */
+    *(pBiosSys+0xfffe) = 0xfc;
+
+    /* Reboot vector (f000:fff0 or ffff:0000) */
+    *(DWORD*)(pBiosSys + 0xfff0) = VM_STUB(0x19);
+}
+
+/***********************************************************************
+ *           BiosTick
+ *
+ * Increment the BIOS tick counter. Called by timer signal handler.
+ */
+static void CALLBACK BiosTick( LPVOID arg, DWORD low, DWORD high )
+{
+    BIOSDATA *pBiosData = arg;
+    pBiosData->Ticks++;
+}
+
+/***********************************************************************
+ *           timer_thread
+ */
+static DWORD CALLBACK timer_thread( void *arg )
+{
+    LARGE_INTEGER when;
+    HANDLE timer;
+
+    if (!(timer = CreateWaitableTimerA( NULL, FALSE, NULL ))) return 0;
+
+    when.u.LowPart = when.u.HighPart = 0;
+    SetWaitableTimer( timer, &when, 55 /* actually 54.925 */, BiosTick, arg, FALSE );
+    for (;;) SleepEx( INFINITE, TRUE );
+}
+
+/***********************************************************************
+ *           DOSMEM_Collapse
+ *
+ * Helper function for internal use only.
+ * Attach all following free blocks to this one, even if this one is not free.
+ */
+static void DOSMEM_Collapse( MCB* mcb )
+{
+    MCB* next = MCB_NEXT( mcb );
+
+    while (next && next->psp == MCB_PSP_FREE)
+    {
+        mcb->size = mcb->size + next->size + 1;
+        mcb->type = next->type;    /* make sure keeping MCB_TYPE_LAST */
+        next = MCB_NEXT( next );
+    }
+}
+
+/******************************************************************
+ *		DOSMEM_InitDosMemory
+ */
+BOOL DOSMEM_InitDosMemory(void)
+{
+    static int done;
+    static HANDLE hRunOnce;
+
+    if (done) return TRUE;
+
+    /* FIXME: this isn't 100% thread safe, as we won't catch accesses while initializing */
     if (hRunOnce == 0)
     {
 	HANDLE hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
         if (InterlockedCompareExchangePointer( &hRunOnce, hEvent, 0 ) == 0)
 	{
-            HMODULE hModule;
+            BOOL ret;
+            DWORD reserve;
 
 	    /* ok, we're the winning thread */
-            if (!VirtualProtect( DOSMEM_dosmem + DOSMEM_protect,
-                                 DOSMEM_SIZE - DOSMEM_protect,
-                                 PAGE_READWRITE, NULL ) ||
-                !(hModule = LoadLibraryA( "winedos.dll" )))
-            {
-                ERR("Could not load winedos.dll, DOS subsystem unavailable\n");
-                hModule = (HMODULE)1; /* not to try to load it again */
-            }
-            else
-            {
-#define GET_ADDR(func)  winedos.func = (void *)GetProcAddress( hModule, #func );
-                GET_ADDR(AllocDosBlock);
-                GET_ADDR(FreeDosBlock);
-                GET_ADDR(ResizeDosBlock);
-                GET_ADDR(inport);
-                GET_ADDR(outport);
-                GET_ADDR(EmulateInterruptPM);
-                GET_ADDR(CallBuiltinHandler);
-#undef GET_ADDR
-            }
+            if (!(ret = VirtualProtect( DOSMEM_dosmem + DOSMEM_protect,
+                                        DOSMEM_SIZE - DOSMEM_protect,
+                                        PAGE_READWRITE, NULL )))
+                ERR("Cannot load access low 1Mb, DOS subsystem unavailable\n");
             RtlRemoveVectoredExceptionHandler( dosmem_handler );
-            hWineDos = hModule;
+
+            /*
+             * Reserve either:
+             * - lowest 64k for NULL pointer catching (Win16)
+             * - lowest 1k for interrupt handlers and
+             *   another 0.5k for BIOS, DOS and intra-application
+             *   areas (DOS)
+             */
+            if (DOSMEM_dosmem != DOSMEM_sysmem)
+                reserve = 0x10000; /* 64k */
+            else
+                reserve = 0x600; /* 1.5k */
+
+            /*
+             * Set DOS memory base and initialize conventional memory.
+             */
+            DOSMEM_FillBiosSegments();
+            DOSMEM_FillIsrTable();
+
+            /* align root block to paragraph */
+            DOSMEM_root_block = (MCB*)(DOSMEM_dosmem + reserve);
+            DOSMEM_root_block->type = MCB_TYPE_LAST;
+            DOSMEM_root_block->psp = MCB_PSP_FREE;
+            DOSMEM_root_block->size = (DOSMEM_dosmem + 0x9fffc  - ((char*)DOSMEM_root_block)) >> 4;
+
+            TRACE("DOS conventional memory initialized, %d bytes free.\n",
+                  DOSMEM_Available());
+
+            DOSVM_InitSegments();
+            CloseHandle( CreateThread( NULL, 0, timer_thread, DOSVM_BiosData(), 0, NULL ));
+
             SetEvent( hRunOnce );
-            goto done;
+            done = 1;
+            return ret;
 	}
 	/* someone beat us here... */
 	CloseHandle( hEvent );
@@ -127,8 +347,7 @@ BOOL load_winedos(void)
 
     /* and wait for the winner to have finished */
     WaitForSingleObject( hRunOnce, INFINITE );
- done:
-    return (hWineDos != (HMODULE)1);
+    return TRUE;
 }
 
 /******************************************************************
@@ -143,7 +362,7 @@ static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except)
         char *addr = (char *)except->ExceptionRecord->ExceptionInformation[1];
         if (addr >= DOSMEM_dosmem + DOSMEM_protect && addr < DOSMEM_dosmem + DOSMEM_SIZE)
         {
-            if (load_winedos()) return EXCEPTION_CONTINUE_EXECUTION;
+            if (DOSMEM_InitDosMemory()) return EXCEPTION_CONTINUE_EXECUTION;
         }
     }
     return EXCEPTION_CONTINUE_SEARCH;
@@ -157,7 +376,6 @@ static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except)
  */
 BOOL DOSMEM_Init(void)
 {
-    char *sysmem;
     void *addr = (void *)1;
     SIZE_T size = DOSMEM_SIZE - 1;
 
@@ -172,20 +390,20 @@ BOOL DOSMEM_Init(void)
     {
         DOSMEM_dosmem = 0;
         DOSMEM_protect = DOSMEM_64KB;
-        sysmem = (char *)0xf0000;  /* store sysmem in high addresses for now */
+        DOSMEM_sysmem = (char *)0xf0000;  /* store sysmem in high addresses for now */
     }
     else
     {
         WARN( "First megabyte not available for DOS address space.\n" );
         DOSMEM_dosmem = addr;
         DOSMEM_protect = 0;
-        sysmem = DOSMEM_dosmem;
+        DOSMEM_sysmem = DOSMEM_dosmem;
     }
 
     RtlAddVectoredExceptionHandler(FALSE, dosmem_handler);
-    DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, sysmem,
+    DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
                                        DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
-    DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, sysmem + 0x400,
+    DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem + 0x400,
                                              0x100, 0, WINE_LDT_FLAGS_DATA );
     DOSMEM_BiosSysSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem + 0xf0000,
                                             DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
@@ -231,4 +449,211 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    lin = DOSMEM_dosmem + HIWORD(x) * 16 + LOWORD(x);
    TRACE_(selector)("(0x%08x) returns %p.\n", x, lin );
    return lin;
+}
+
+/***********************************************************************
+ *           DOSMEM_AllocBlock
+ *
+ * Carve a chunk of the DOS memory block (without selector).
+ */
+LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
+{
+    MCB *curr;
+    MCB *next = NULL;
+    WORD psp = DOSVM_psp;
+
+    DOSMEM_InitDosMemory();
+
+    curr = DOSMEM_root_block;
+    if (!(psp = DOSVM_psp)) psp = MCB_PSP_DOS;
+
+    *pseg = 0;
+
+    TRACE( "(%04xh)\n", size );
+
+    /* round up to paragraph */
+    size = (size + 15) >> 4;
+
+#ifdef __DOSMEM_DEBUG__
+    DOSMEM_Available();     /* checks the whole MCB list */
+#endif
+
+    /* loop over all MCB and search the next large enough MCB */
+    while (curr)
+    {
+        if (!MCB_VALID (curr))
+        {
+            ERR( "MCB List Corrupt\n" );
+            MCB_DUMP( curr );
+            return NULL;
+        }
+        if (curr->psp == MCB_PSP_FREE)
+        {
+            DOSMEM_Collapse( curr );
+            /* is it large enough (one paragraph for the MCB)? */
+            if (curr->size >= size)
+            {
+                if (curr->size > size)
+                {
+                    /* split curr */
+                    next = (MCB *) ((char*) curr + ((size+1) << 4));
+                    next->psp = MCB_PSP_FREE;
+                    next->size = curr->size - (size+1);
+                    next->type = curr->type;
+                    curr->type = MCB_TYPE_NORMAL;
+                    curr->size = size;
+                }
+                /* curr is the found block */
+                curr->psp = psp;
+                if( pseg ) *pseg = (((char*)curr) + 16 - DOSMEM_dosmem) >> 4;
+                return (LPVOID) ((char*)curr + 16);
+            }
+        }
+        curr = MCB_NEXT(curr);
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *           DOSMEM_FreeBlock
+ */
+BOOL DOSMEM_FreeBlock(void* ptr)
+{
+    MCB* mcb = (MCB*) ((char*)ptr - 16);
+
+    TRACE( "(%p)\n", ptr );
+
+#ifdef __DOSMEM_DEBUG__
+    DOSMEM_Available();
+#endif
+
+    if (!MCB_VALID (mcb))
+    {
+        ERR( "MCB invalid\n" );
+        MCB_DUMP( mcb );
+        return FALSE;
+    }
+
+    mcb->psp = MCB_PSP_FREE;
+    DOSMEM_Collapse( mcb );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           DOSMEM_ResizeBlock
+ *
+ * Resize DOS memory block in place. Returns block size or -1 on error.
+ *
+ * If exact is TRUE, returned value is either old or requested block
+ * size. If exact is FALSE, block is expanded even if there is not
+ * enough space for full requested block size.
+ *
+ * TODO: return also biggest block size
+ */
+UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
+{
+    MCB* mcb = (MCB*) ((char*)ptr - 16);
+    MCB* next;
+
+    TRACE( "(%p,%04xh,%s)\n", ptr, size, exact ? "TRUE" : "FALSE" );
+
+    /* round up to paragraph */
+    size = (size + 15) >> 4;
+
+#ifdef __DOSMEM_DEBUG__
+    DOSMEM_Available();
+#endif
+
+    if (!MCB_VALID (mcb))
+    {
+        ERR( "MCB invalid\n" );
+        MCB_DUMP( mcb );
+        return -1;
+    }
+
+    /* resize needed? */
+    if (mcb->size == size)
+        return size << 4;
+
+    /* collapse free blocks */
+    DOSMEM_Collapse( mcb );
+
+    /* shrink mcb ? */
+    if (mcb->size > size)
+    {
+        next = (MCB *) ((char*)mcb + ((size+1) << 4));
+        next->type = mcb->type;
+        next->psp = MCB_PSP_FREE;
+        next->size = mcb->size - (size+1);
+        mcb->type = MCB_TYPE_NORMAL;
+        mcb->size = size;
+        return size << 4;
+    }
+
+    if (!exact)
+    {
+        return mcb->size << 4;
+    }
+
+    return -1;
+}
+
+/***********************************************************************
+ *           DOSMEM_Available
+ */
+UINT DOSMEM_Available(void)
+{
+    UINT  available = 0;
+    UINT  total = 0;
+    MCB *curr = DOSMEM_root_block;
+    /* loop over all MCB and search the largest free MCB */
+    while (curr)
+    {
+#ifdef __DOSMEM_DEBUG__
+        MCB_DUMP( curr );
+#endif
+        if (!MCB_VALID (curr))
+        {
+            ERR( "MCB List Corrupt\n" );
+            MCB_DUMP( curr );
+            return 0;
+        }
+        if (curr->psp == MCB_PSP_FREE &&
+            curr->size > available )
+            available = curr->size;
+
+        total += curr->size + 1;
+        curr = MCB_NEXT( curr );
+    }
+    TRACE( " %04xh of %04xh paragraphs available\n", available, total );
+    return available << 4;
+}
+
+/******************************************************************
+ *		DOSMEM_MapDosLayout
+ *
+ * Initialize the first MB of memory to look like a real DOS setup
+ */
+BOOL DOSMEM_MapDosLayout(void)
+{
+    static int already_mapped;
+
+    if (!already_mapped)
+    {
+        if (DOSMEM_dosmem || !VirtualProtect( NULL, DOSMEM_SIZE, PAGE_EXECUTE_READWRITE, NULL ))
+        {
+            ERR( "Need full access to the first megabyte for DOS mode\n" );
+            ExitProcess(1);
+        }
+        /* copy the BIOS and ISR area down */
+        memcpy( DOSMEM_dosmem, DOSMEM_sysmem, 0x400 + 0x100 );
+        DOSMEM_sysmem = DOSMEM_dosmem;
+        SetSelectorBase( DOSMEM_0000H, 0 );
+        SetSelectorBase( DOSMEM_BiosDataSeg, 0x400 );
+        /* we may now need the actual interrupt stubs, and since we've just moved the
+         * interrupt vector table away, we can fill the area with stubs instead... */
+        DOSMEM_MakeIsrStubs();
+        already_mapped = 1;
+    }
+    return TRUE;
 }

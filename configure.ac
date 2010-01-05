@@ -172,7 +172,6 @@ enable_win16=${enable_win16:-no}
 if test "x$enable_win16" != "xyes"
 then
     enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
     enable_wow32=${enable_wow32:-no}
 fi
@@ -2538,7 +2537,6 @@ WINE_CONFIG_MAKEFILE([dlls/wineaudioio.drv/Makefile],[dlls/Makedll.rules],[dlls]
 WINE_CONFIG_MAKEFILE([dlls/winecoreaudio.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winecrt0/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wined3d/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
-WINE_CONFIG_MAKEFILE([dlls/winedos/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wineesd.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winejack.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winejoystick.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

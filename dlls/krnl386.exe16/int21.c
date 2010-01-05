@@ -40,6 +40,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
+#include "kernel16_private.h"
 #include "dosexe.h"
 #include "winerror.h"
 #include "winuser.h"

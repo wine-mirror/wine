@@ -352,7 +352,7 @@ typedef struct
     RMCBPROC interrupt;
 } WINEDEV;
 
-/* module.c */
+/* dosexe.c */
 extern BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
 extern void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern BOOL MZ_Current( void );
@@ -371,6 +371,7 @@ extern void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void DOSVM_SetTimer( UINT ticks );
 extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
+extern void DOSVM_InitSegments(void);
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
@@ -391,13 +392,6 @@ extern void DOSVM_ASPIHandler(CONTEXT86*);
 extern DOSCONF *DOSCONF_GetConfig( void );
 
 /* dosmem.c */
-extern BOOL DOSMEM_InitDosMemory(void);
-extern BOOL DOSMEM_MapDosLayout(void);
-extern WORD   DOSMEM_AllocSelector(WORD); /* FIXME: to be removed */
-extern LPVOID DOSMEM_AllocBlock(UINT size, WORD* p);
-extern BOOL DOSMEM_FreeBlock(void* ptr);
-extern UINT DOSMEM_ResizeBlock(void* ptr, UINT size, BOOL exact);
-extern UINT DOSMEM_Available(void);
 extern BIOSDATA *DOSVM_BiosData( void );
 
 /* fpu.c */
@@ -466,8 +460,9 @@ extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);
 extern void EMS_Ioctl_Handler(CONTEXT86*);
 
 /* interrupts.c */
-extern void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *, BYTE );
-extern BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *, BYTE );
+extern void        __wine_call_int_handler( CONTEXT86 *, BYTE );
+extern void        DOSVM_CallBuiltinHandler( CONTEXT86 *, BYTE );
+extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT86 *, BYTE );
 extern BOOL        DOSVM_EmulateInterruptRM( CONTEXT86 *, BYTE );
 extern FARPROC16   DOSVM_GetPMHandler16( BYTE );
 extern FARPROC48   DOSVM_GetPMHandler48( BYTE );
@@ -477,6 +472,10 @@ extern void        DOSVM_HardwareInterruptRM( CONTEXT86 *, BYTE );
 extern void        DOSVM_SetPMHandler16( BYTE, FARPROC16 );
 extern void        DOSVM_SetPMHandler48( BYTE, FARPROC48 );
 extern void        DOSVM_SetRMHandler( BYTE, FARPROC16 );
+
+/* ioports.c */
+extern DWORD DOSVM_inport( int port, int size );
+extern void DOSVM_outport( int port, int size, DWORD value );
 
 /* relay.c */
 void DOSVM_RelayHandler( CONTEXT86 * );

@@ -4102,7 +4102,6 @@ enable_win16=${enable_win16:-no}
 if test "x$enable_win16" != "xyes"
 then
     enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
     enable_wow32=${enable_wow32:-no}
 fi
@@ -17010,14 +17009,6 @@ dlls/wined3d/Makefile: dlls/wined3d/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wined3d/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
-	dlls/winedos/Makefile"
-test "x$enable_winedos" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
-	winedos"
-ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-dlls/winedos/Makefile: dlls/winedos/Makefile.in dlls/Makedll.rules"
-ac_config_files="$ac_config_files dlls/winedos/Makefile"
-
-ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wineesd.drv/Makefile"
 test "x$enable_wineesd_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	wineesd.drv"
@@ -19161,7 +19152,6 @@ do
     "dlls/winecoreaudio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecoreaudio.drv/Makefile" ;;
     "dlls/winecrt0/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecrt0/Makefile" ;;
     "dlls/wined3d/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wined3d/Makefile" ;;
-    "dlls/winedos/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winedos/Makefile" ;;
     "dlls/wineesd.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineesd.drv/Makefile" ;;
     "dlls/winejack.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winejack.drv/Makefile" ;;
     "dlls/winejoystick.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winejoystick.drv/Makefile" ;;

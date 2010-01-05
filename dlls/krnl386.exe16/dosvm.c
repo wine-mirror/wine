@@ -825,7 +825,7 @@ LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *segment, WORD *selector )
  * Initializes DOSVM_dpmi_segments. Allocates required memory and
  * sets up segments and selectors for accessing the memory.
  */
-static void DOSVM_InitSegments(void)
+void DOSVM_InitSegments(void)
 {
     LPSTR ptr;
     int   i;
@@ -967,25 +967,6 @@ static void DOSVM_InitSegments(void)
      * As we store code in UMB we should make sure it is executable
      */
     VirtualProtect((void *)DOSVM_UMB_BOTTOM, DOSVM_UMB_TOP - DOSVM_UMB_BOTTOM, PAGE_EXECUTE_READWRITE, NULL);
-}
 
-
-/**********************************************************************
- *	    DllMain  (DOSVM.0)
- */
-BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
-{
-    TRACE_(module)("(%p,%d,%p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    if (fdwReason == DLL_PROCESS_ATTACH)
-    {
-        DisableThreadLibraryCalls(hinstDLL);
-        if (!DOSMEM_InitDosMemory()) return FALSE;
-        DOSVM_InitSegments();
-
-        event_notifier = CreateEventW(NULL, FALSE, FALSE, NULL);
-        if(!event_notifier)
-          ERR("Failed to create event object!\n");
-    }
-    return TRUE;
+    event_notifier = CreateEventW(NULL, FALSE, FALSE, NULL);
 }

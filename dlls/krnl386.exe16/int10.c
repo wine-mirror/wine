@@ -620,7 +620,7 @@ static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
 /**********************************************************************
  *         INT10_GetHeap
  */
-INT10_HEAP *INT10_GetHeap( void )
+static INT10_HEAP *INT10_GetHeap( void )
 {
     static INT10_HEAP *heap_pointer = 0;
 

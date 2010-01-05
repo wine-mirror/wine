@@ -46,6 +46,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "kernel16_private.h"
 #include "dosexe.h"
 #include "vga.h"
 
@@ -76,14 +77,6 @@ void DOSVM_Exit( WORD retval )
 
 
 #ifdef MZ_SUPPORTED
-
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-
-/* define this to try mapping through /proc/pid/mem instead of a temp file,
-   but Linus doesn't like mmapping /proc/pid/mem, so it doesn't work for me */
-#undef MZ_MAPSELF
 
 #define BIOS_DATA_SEGMENT 0x40
 #define PSP_SIZE 0x10
@@ -362,12 +355,12 @@ load_error:
 }
 
 /***********************************************************************
- *		wine_load_dos_exe (WINEDOS.@)
+ *		__wine_load_dos_exe (KERNEL.@)
  *
  * Called from WineVDM when a new real-mode DOS process is started.
  * Loads DOS program into memory and executes the program.
  */
-void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
+void __wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
     char dos_cmdtail[126];
     int  dos_length = 0;
@@ -376,6 +369,7 @@ void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
                                 NULL, OPEN_EXISTING, 0, 0 );
     if (hFile == INVALID_HANDLE_VALUE) return;
     DOSVM_isdosexe = TRUE;
+    DOSMEM_InitDosMemory();
 
     if(cmdline && *cmdline)
     {
@@ -757,9 +751,9 @@ BOOL MZ_Current( void )
 #else /* !MZ_SUPPORTED */
 
 /***********************************************************************
- *		wine_load_dos_exe (WINEDOS.@)
+ *		__wine_load_dos_exe (KERNEL.@)
  */
-void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
+void __wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
     FIXME("DOS executables not supported on this platform\n");
     SetLastError(ERROR_BAD_FORMAT);

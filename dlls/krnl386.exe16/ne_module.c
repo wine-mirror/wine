@@ -1072,6 +1072,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
             NE_InitializeDLLs(hModule);
             NE_DllProcessAttach(hModule);
         }
+        else DOSMEM_InitDosMemory();  /* we will be running a 16-bit task, setup DOS memory */
     }
     return hinst;       /* The last error that occurred */
 }

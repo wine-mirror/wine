@@ -32,6 +32,7 @@
 #include "excpt.h"
 #include "wine/debug.h"
 #include "kernel16_private.h"
+#include "dosexe.h"
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -361,10 +362,7 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
  */
 static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 {
-    DWORD res = ~0U;
-
-    if (!winedos.inport) load_winedos();
-    if (winedos.inport) res = winedos.inport( port, size );
+    DWORD res = DOSVM_inport( port, size );
 
     if (TRACE_ON(io))
     {
@@ -395,8 +393,7 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
  */
 static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 {
-    if (!winedos.outport) load_winedos();
-    if (winedos.outport) winedos.outport( port, size, val );
+    DOSVM_outport( port, size, val );
 
     if (TRACE_ON(io))
     {
@@ -761,13 +758,9 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-            if (!winedos.EmulateInterruptPM) load_winedos();
-            if (winedos.EmulateInterruptPM)
-            {
-                context->Eip += prefixlen + 2;
-                if (winedos.EmulateInterruptPM( context, instr[1] )) return ExceptionContinueExecution;
-                context->Eip -= prefixlen + 2;  /* restore eip */
-            }
+            context->Eip += prefixlen + 2;
+            if (DOSVM_EmulateInterruptPM( context, instr[1] )) return ExceptionContinueExecution;
+            context->Eip -= prefixlen + 2;  /* restore eip */
             break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
@@ -885,21 +878,11 @@ LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
 
 
 /***********************************************************************
- *           INSTR_CallBuiltinHandler
- */
-static void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )
-{
-    if (!winedos.CallBuiltinHandler) load_winedos();
-    if (winedos.CallBuiltinHandler) winedos.CallBuiltinHandler( context, intnum );
-}
-
-
-/***********************************************************************
  *           DOS3Call         (KERNEL.102)
  */
 void WINAPI DOS3Call( CONTEXT86 *context )
 {
-    INSTR_CallBuiltinHandler( context, 0x21 );
+    __wine_call_int_handler( context, 0x21 );
 }
 
 
@@ -908,7 +891,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
  */
 void WINAPI NetBIOSCall16( CONTEXT86 *context )
 {
-    INSTR_CallBuiltinHandler( context, 0x5c );
+    __wine_call_int_handler( context, 0x5c );
 }
 
 

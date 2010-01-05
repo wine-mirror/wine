@@ -97,22 +97,7 @@ static void CONTEXT_2_win32apieq(const CONTEXT86 *pCxt, struct win32apireq *pOut
         /* FIXME: pOut->ar_pad ignored */
 }
 
-typedef void (WINAPI *CallBuiltinHandler)( CONTEXT *context, BYTE intnum );
-
-static CallBuiltinHandler load_builtin_handler(void)
-{
-    static CallBuiltinHandler handler;
-    static BOOL init_done;
-
-    if (!init_done)
-    {
-        HMODULE mod = LoadLibraryA( "winedos.dll" );
-        if (mod) handler = (void *)GetProcAddress( mod, "CallBuiltinHandler" );
-        if (!handler) FIXME( "DOS calls not supported\n" );
-        init_done = TRUE;
-    }
-    return handler;
-}
+extern void __wine_call_int_handler( CONTEXT *context, BYTE intnum );
 
 /***********************************************************************
  *           DeviceIoControl   (IFSMGR.VXD.@)
@@ -134,9 +119,6 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
             CONTEXT86 cxt;
             struct win32apireq *pIn=lpvInBuffer;
             struct win32apireq *pOut=lpvOutBuffer;
-            CallBuiltinHandler handler;
-
-            if (!(handler = load_builtin_handler())) return FALSE;
 
             TRACE( "Control '%s': "
                    "proid=0x%08lx, eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
@@ -150,9 +132,9 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
             win32apieq_2_CONTEXT(pIn,&cxt);
 
             if(dwIoControlCode==IFS_IOCTL_21)
-                handler( &cxt, 0x21 );
+                __wine_call_int_handler( &cxt, 0x21 );
             else
-                handler( &cxt, 0x2f );
+                __wine_call_int_handler( &cxt, 0x2f );
 
             CONTEXT_2_win32apieq(&cxt,pOut);
             return TRUE;
