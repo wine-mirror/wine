@@ -21,7 +21,7 @@
  */
 
 /* Protocol specification can be found here:
- * http://sources.redhat.com/gdb/onlinedocs/gdb_32.html
+ * http://sources.redhat.com/gdb/onlinedocs/gdb/Maintenance-Commands.html
  */
 
 #include "config.h"
