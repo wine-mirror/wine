@@ -696,9 +696,7 @@
 ################################################################
 # 16-bit symbols not available from kernel32 but used by other 16-bit dlls
 #
-@ stdcall -arch=win32 AllocCStoDSAlias16(long)
 @ stdcall -arch=win32 AllocSelectorArray16(long)
-@ stdcall -arch=win32 ConvertDialog32To16(ptr long ptr)
 @ stdcall -arch=win32 FarGetOwner16(long)
 @ stdcall -arch=win32 FarSetOwner16(long long)
 @ stdcall -arch=win32 FindResource16(long str str)
@@ -710,10 +708,6 @@
 @ stdcall -arch=win32 GetExePtr(long)
 @ stdcall -arch=win32 GetExpWinVer16(long)
 @ stdcall -arch=win32 GetModuleHandle16(str)
-@ stdcall -arch=win32 GetSelectorLimit16(long)
-@ stdcall -arch=win32 GlobalDOSAlloc16(long)
-@ stdcall -arch=win32 GlobalDOSFree16(long)
-@ stdcall -arch=win32 GlobalFlags16(long)
 @ stdcall -arch=win32 GlobalReAlloc16(long long long)
 @ stdcall -arch=win32 InitTask16(ptr)
 @ stdcall -arch=win32 IsBadReadPtr16(long long)
@@ -731,7 +725,6 @@
 @ stdcall -arch=win32 LocalCountFree16()
 @ stdcall -arch=win32 LocalHeapSize16()
 @ stdcall -arch=win32 LockResource16(long)
-@ stdcall -arch=win32 SelectorAccessRights16(long long long)
 @ stdcall -arch=win32 SetSelectorBase(long long)
 @ stdcall -arch=win32 SetSelectorLimit16(long long)
 @ stdcall -arch=win32 SizeofResource16(long long)
