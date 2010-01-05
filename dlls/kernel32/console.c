@@ -2690,3 +2690,19 @@ DWORD WINAPI GetConsoleAliasW(LPWSTR lpSource, LPWSTR lpTargetBuffer,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+/******************************************************************
+ *              GetConsoleProcessList  (KERNEL32.@)
+ */
+DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
+{
+    FIXME("(%p,%d): stub\n", processlist, processcount);
+
+    if (!processlist || processcount < 1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    return 0;
+}

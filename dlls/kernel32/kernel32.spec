@@ -478,7 +478,7 @@
 @ stdcall GetConsoleMode(long ptr)
 @ stub GetConsoleNlsMode
 @ stdcall GetConsoleOutputCP()
-# @ stub GetConsoleProcessList
+@ stdcall GetConsoleProcessList(ptr long)
 @ stdcall GetConsoleScreenBufferInfo(long ptr)
 # @ stub GetConsoleSelectionInfo
 @ stdcall GetConsoleTitleA(ptr long)
