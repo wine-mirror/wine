@@ -1383,16 +1383,20 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
     }
 
     if (This->idxFmtChanges == NULL || This->nIdxFmtChanges <= This->sInfo.dwFormatChangeCount) {
-      This->nIdxFmtChanges += 16;
-      if (This->idxFmtChanges == NULL)
+      DWORD new_count = This->nIdxFmtChanges + 16;
+      void *new_buffer;
+
+      if (This->idxFmtChanges == NULL) {
 	This->idxFmtChanges =
-	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
-      else
-	This->idxFmtChanges =
-	  HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->idxFmtChanges,
-			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
-      if (This->idxFmtChanges == NULL)
-	return AVIERR_MEMORY;
+          HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(AVIINDEXENTRY));
+        if (!This->idxFmtChanges) return AVIERR_MEMORY;
+      } else {
+        new_buffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->idxFmtChanges,
+                new_count * sizeof(AVIINDEXENTRY));
+        if (!new_buffer) return AVIERR_MEMORY;
+        This->idxFmtChanges = new_buffer;
+      }
+      This->nIdxFmtChanges = new_count;
     }
 
     This->sInfo.dwFlags |= AVISTREAMINFO_FORMATCHANGES;
