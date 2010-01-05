@@ -3592,6 +3592,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                                                  lpwhr->lpHttpSession->lpszPassword,
                                                  Host->lpszValue))
                         {
+                            HeapFree(GetProcessHeap(), 0, requestString);
                             loop_next = TRUE;
                             break;
                         }
