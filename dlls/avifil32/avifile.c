@@ -1384,7 +1384,7 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
     This->sInfo.dwFlags |= AVISTREAMINFO_FORMATCHANGES;
     This->sInfo.dwFormatChangeCount++;
 
-    if (This->idxFmtChanges == NULL || This->sInfo.dwFormatChangeCount < This->nIdxFmtChanges) {
+    if (This->idxFmtChanges == NULL || This->nIdxFmtChanges < This->sInfo.dwFormatChangeCount) {
       This->nIdxFmtChanges += 16;
       if (This->idxFmtChanges == NULL)
 	This->idxFmtChanges =
