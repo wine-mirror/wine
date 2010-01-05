@@ -26,7 +26,7 @@
  *   The "stabs" debug format
  *     by Julia Menapace, Jim Kingdon, David Mackenzie
  *     of Cygnus Support
- *     available (hopefully) from http:\\sources.redhat.com\gdb\onlinedocs
+ *     available (hopefully) from http://sources.redhat.com/gdb/onlinedocs
  */
 
 #include "config.h"
