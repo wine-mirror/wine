@@ -1088,19 +1088,7 @@ static inline void text_buffer_changed(EDITSTATE *es)
 }
 
 /*********************************************************************
- *
- *	EDIT_LockBuffer
- *
- *	This acts as a LocalLock16(), but it locks only once.  This way
- *	you can call it whenever you like, without unlocking.
- *
- *	Initially the edit control allocates a HLOCAL32 buffer 
- *	(32 bit linear memory handler).  However, 16 bit application
- *	might send an EM_GETHANDLE message and expect a HLOCAL16 (16 bit SEG:OFF
- *	handler).  From that moment on we have to keep using this 16 bit memory
- *	handler, because it is supposed to be valid at all times after EM_GETHANDLE.
- *	What we do is create a HLOCAL16 buffer, copy the text, and do pointer
- *	conversion.
+ * EDIT_LockBuffer
  *
  */
 static void EDIT_LockBuffer(EDITSTATE *es)

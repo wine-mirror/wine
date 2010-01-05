@@ -2094,6 +2094,17 @@ static LRESULT combo_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, 
     return wow_handlers32.combo_proc( hwnd, msg, wParam, lParam, FALSE );
 }
 
+/*********************************************************************
+ * edit_lock_buffer (internal)
+ *
+ * A 16 bit application might send an EM_GETHANDLE message and expect a HLOCAL16
+ * (16 bit SEG:OFF handler). From that moment on we have to keep using this
+ * 16 bit memory handler, because it is supposed to be valid at all times after
+ * EM_GETHANDLE.
+ * We create a HLOCAL16 buffer in edit_get_handle and copy the text from the
+ * HLOCAL buffer, when needed
+ *
+ */
 
 #define GWW_HANDLE16 sizeof(void*)
 
