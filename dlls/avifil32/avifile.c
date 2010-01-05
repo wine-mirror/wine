@@ -1362,6 +1362,8 @@ static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream *iface,
 
 static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DWORD offset, DWORD flags)
 {
+  UINT n;
+
   /* pre-conditions */
   assert(This != NULL);
 
@@ -1383,8 +1385,6 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
     This->sInfo.dwFormatChangeCount++;
 
     if (This->idxFmtChanges == NULL || This->sInfo.dwFormatChangeCount < This->nIdxFmtChanges) {
-      UINT n = This->sInfo.dwFormatChangeCount;
-
       This->nIdxFmtChanges += 16;
       if (This->idxFmtChanges == NULL)
 	This->idxFmtChanges =
@@ -1395,15 +1395,15 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
 			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
       if (This->idxFmtChanges == NULL)
 	return AVIERR_MEMORY;
-
-      This->idxFmtChanges[n].ckid          = This->lLastFrame;
-      This->idxFmtChanges[n].dwFlags       = 0;
-      This->idxFmtChanges[n].dwChunkOffset = offset;
-      This->idxFmtChanges[n].dwChunkLength = size;
-
-      return AVIERR_OK;
     }
-    break;
+
+    n = This->sInfo.dwFormatChangeCount;
+    This->idxFmtChanges[n].ckid          = This->lLastFrame;
+    This->idxFmtChanges[n].dwFlags       = 0;
+    This->idxFmtChanges[n].dwChunkOffset = offset;
+    This->idxFmtChanges[n].dwChunkLength = size;
+
+    return AVIERR_OK;
   case cktypeWAVEbytes:
     if (This->paf->fInfo.dwFlags & AVIFILEINFO_TRUSTCKTYPE)
       flags |= AVIIF_KEYFRAME;
