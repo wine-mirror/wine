@@ -58,8 +58,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
-GUID DSOUND_renderer_guid = { 0xbd6dd71a,0x3deb,0x11d1, {0xb1,0x71,0x00,0xc0,0x4f,0xc2,0x00,0x00} };
-GUID DSOUND_capture_guid = { 0xbd6dd71b,0x3deb,0x11d1, {0xb1,0x71,0x00,0xc0,0x4f,0xc2,0x00,0x00} };
+GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
+GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err)
 {
@@ -253,19 +253,17 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultPlayback, pGuidSrc ) ||
-         IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
-        *pGuidDest = DSOUND_renderer_guid;
-        pGuidDest->Data4[7] = ds_default_playback;
+	 IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
+	*pGuidDest = DSOUND_renderer_guids[ds_default_playback];
         TRACE("returns %s\n", get_device_id(pGuidDest));
-        return DS_OK;
+	return DS_OK;
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultCapture, pGuidSrc ) ||
-         IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
-        *pGuidDest = DSOUND_capture_guid;
-        pGuidDest->Data4[7] = ds_default_capture;
+	 IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
+	*pGuidDest = DSOUND_capture_guids[ds_default_capture];
         TRACE("returns %s\n", get_device_id(pGuidDest));
-        return DS_OK;
+	return DS_OK;
     }
 
     *pGuidDest = *pGuidSrc;
@@ -357,16 +355,17 @@ HRESULT WINAPI DirectSoundEnumerateW(
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
             static const WCHAR empty[] = { 0 };
-            wod = guid.Data4[7];
-            if (wod < devs) {
-                err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                          "Primary Sound Driver",desc.szDrvname,lpContext);
-                    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
-                                         wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-                    if (lpDSEnumCallback(NULL, wDesc, empty, lpContext) == FALSE)
-                        return DS_OK;
+	    for (wod = 0; wod < devs; ++wod) {
+                if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod] ) ) {
+                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Driver",desc.szDrvname,lpContext);
+                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
+                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+                        if (lpDSEnumCallback(NULL, wDesc, empty, lpContext) == FALSE)
+                            return DS_OK;
+		    }
 		}
 	    }
 	}
@@ -375,14 +374,13 @@ HRESULT WINAPI DirectSoundEnumerateW(
     for (wod = 0; wod < devs; ++wod) {
         err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
-            guid.Data4[7] = wod;
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&guid),desc.szDesc,desc.szDrvname,lpContext);
+                  debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
-            if (lpDSEnumCallback(&guid, wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -454,18 +452,19 @@ DirectSoundCaptureEnumerateW(
     devs = waveInGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
-            wid = guid.Data4[7];
-            if (wid < devs) {
-                err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                if (err == DS_OK) {
-                    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                          "Primary Sound Capture Driver",desc.szDrvname,lpContext);
-                    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1,
-                                         wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-                    MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
-                                         wName, sizeof(wName)/sizeof(WCHAR) );
-                    if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
-                        return DS_OK;
+	    for (wid = 0; wid < devs; ++wid) {
+                if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
+                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    if (err == DS_OK) {
+                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+                              "Primary Sound Capture Driver",desc.szDrvname,lpContext);
+                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1,
+                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
+                                             wName, sizeof(wName)/sizeof(WCHAR) );
+                        if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
+                            return DS_OK;
+                    }
                 }
 	    }
 	}
@@ -474,14 +473,13 @@ DirectSoundCaptureEnumerateW(
     for (wid = 0; wid < devs; ++wid) {
         err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
-            guid.Data4[7] = wid;
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&guid),desc.szDesc,desc.szDrvname,lpContext);
+                  debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
-            if (lpDSEnumCallback(&guid, wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback(&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -659,6 +657,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         for (i = 0; i < MAXWAVEDRIVERS; i++) {
             DSOUND_renderer[i] = NULL;
             DSOUND_capture[i] = NULL;
+            INIT_GUID(DSOUND_renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
+            INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
         }
         DisableThreadLibraryCalls(hInstDLL);
         /* Increase refcount on dsound by 1 */

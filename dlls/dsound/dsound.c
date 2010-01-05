@@ -1373,10 +1373,12 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
         return DSERR_NODRIVER;
     }
 
-    wod = devGUID.Data4[7];
-    if (!memcmp(&devGUID, &DSOUND_renderer_guid, sizeof(GUID)-1)
-        && wod < wodn)
-        found = TRUE;
+    for (wod=0; wod<wodn; wod++) {
+        if (IsEqualGUID( &devGUID, &DSOUND_renderer_guids[wod])) {
+            found = TRUE;
+            break;
+        }
+    }
 
     if (found == FALSE) {
         WARN("No device found matching given ID!\n");

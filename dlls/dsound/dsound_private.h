@@ -414,9 +414,10 @@ HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8);
 #define DSOUND_FREQSHIFT (20)
 
 extern DirectSoundDevice* DSOUND_renderer[MAXWAVEDRIVERS];
+extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
+
 extern DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
-extern GUID DSOUND_capture_guid;
-extern GUID DSOUND_renderer_guid;
+extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err);
 void setup_dsound_options(void);

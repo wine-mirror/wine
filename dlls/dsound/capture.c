@@ -1059,10 +1059,13 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
 	return DSERR_NODRIVER;
     }
 
-    wid = devGUID.Data4[7];
-    if (!memcmp(&devGUID, &DSOUND_capture_guid, sizeof(GUID)-1)
-        && wid < widn)
-        found = TRUE;
+    /* enumerate WINMM audio devices and find the one we want */
+    for (wid=0; wid<widn; wid++) {
+	if (IsEqualGUID( &devGUID, &DSOUND_capture_guids[wid]) ) {
+	    found = TRUE;
+	    break;
+	}
+    }
 
     if (found == FALSE) {
 	WARN("No device found matching given ID!\n");

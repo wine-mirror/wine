@@ -116,8 +116,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
             res = waveOutGetDevCapsW(wod, &capsW, sizeof(capsW));
             if (res == MMSYSERR_NOERROR) {
                 if (lstrcmpW(capsW.szPname, ppd->DeviceName) == 0) {
-                    ppd->DeviceId = DSOUND_renderer_guid;
-                    ppd->DeviceId.Data4[7] = wod;
+                    ppd->DeviceId = DSOUND_renderer_guids[wod];
                     hr = DS_OK;
                     TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
                           debugstr_w(ppd->DeviceName));
@@ -136,8 +135,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
             res = waveInGetDevCapsW(wid, &capsW, sizeof(capsW));
             if (res == MMSYSERR_NOERROR) {
                 if (lstrcmpW(capsW.szPname, ppd->DeviceName) == 0) {
-                    ppd->DeviceId = DSOUND_capture_guid;
-                    ppd->DeviceId.Data4[7] = wid;
+                    ppd->DeviceId = DSOUND_capture_guids[wid];
                     hr = DS_OK;
                     TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
                           debugstr_w(ppd->DeviceName));
@@ -222,13 +220,13 @@ static HRESULT DSPROPERTY_DescriptionW(
     wodn = waveOutGetNumDevs();
     widn = waveInGetNumDevs();
     wid = wod = dev_guid.Data4[7];
-    if (!memcmp(&dev_guid, &DSOUND_renderer_guid, sizeof(GUID)-1)
+    if (!memcmp(&dev_guid, &DSOUND_renderer_guids[0], sizeof(GUID)-1)
         && wod < wodn)
     {
         ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
         ppd->WaveDeviceId = wod;
     }
-    else if (!memcmp(&dev_guid, &DSOUND_capture_guid, sizeof(GUID)-1)
+    else if (!memcmp(&dev_guid, &DSOUND_capture_guids[0], sizeof(GUID)-1)
              && wid < widn)
     {
         ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
@@ -308,7 +306,7 @@ static HRESULT DSPROPERTY_EnumerateW(
     wodn = waveOutGetNumDevs();
     widn = waveInGetNumDevs();
 
-    data.DeviceId = DSOUND_renderer_guid;
+    data.DeviceId = DSOUND_renderer_guids[0];
     for (i = 0; i < wodn; ++i)
     {
         HRESULT hr;
@@ -326,7 +324,7 @@ static HRESULT DSPROPERTY_EnumerateW(
             return S_OK;
     }
 
-    data.DeviceId = DSOUND_capture_guid;
+    data.DeviceId = DSOUND_capture_guids[0];
     for (i = 0; i < widn; ++i)
     {
         HRESULT hr;
