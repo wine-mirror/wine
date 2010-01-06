@@ -3007,9 +3007,6 @@ exit:
     return hr;
 }
 
-/*
- * TODO: handle dwFlag and lpFallBack
-*/
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicodeEx(
     IMultiLanguage3* iface,
     DWORD* pdwMode,
@@ -3021,7 +3018,10 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicodeEx(
     DWORD dwFlag,
     WCHAR* lpFallBack)
 {
-    FIXME("\n");
+    if (dwFlag || lpFallBack)
+        FIXME("Ignoring dwFlag (0x%x/%d) and lpFallBack (%p)\n",
+                dwFlag, dwFlag, lpFallBack);
+
     return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
         pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
