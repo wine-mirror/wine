@@ -67,7 +67,7 @@ static void test_rasenum(void)
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
-    rasDevInfo = (LPRASDEVINFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    rasDevInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                           max(bufsize,sizeof(RASDEVINFOA)));
     if(!rasDevInfo) {
         win_skip("failed to allocate buffer for RasEnumDevicesA tests\n");
