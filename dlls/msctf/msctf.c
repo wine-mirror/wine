@@ -351,7 +351,7 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     ActivatedTextService *actsvr;
     ITfCategoryMgr *catmgr;
     AtsEntry *entry;
-    ITfThreadMgr *tm = (ITfThreadMgr*)TlsGetValue(tlsIndex);
+    ITfThreadMgr *tm = TlsGetValue(tlsIndex);
     ITfClientId *clientid;
 
     if (!tm) return E_UNEXPECTED;
