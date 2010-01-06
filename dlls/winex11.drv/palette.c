@@ -881,7 +881,7 @@ static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
 int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     WORD 		 index = 0;
-    HPALETTE hPal = physDev ? GetCurrentObject(physDev->hdc, OBJ_PAL ) : GetStockObject(DEFAULT_PALETTE);
+    HPALETTE 		 hPal = GetCurrentObject(physDev->hdc, OBJ_PAL );
     unsigned char	 spec_type = color >> 24;
     int *mapping = palette_get_mapping( hPal );
     PALETTEENTRY entry;
