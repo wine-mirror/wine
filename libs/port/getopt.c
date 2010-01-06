@@ -441,8 +441,7 @@ _getopt_initialize (argc, argv, optstring)
 	      int len = nonoption_flags_max_len = strlen (orig_str);
 	      if (nonoption_flags_max_len < argc)
 		nonoption_flags_max_len = argc;
-	      __getopt_nonoption_flags =
-		(char *) malloc (nonoption_flags_max_len);
+	      __getopt_nonoption_flags = malloc (nonoption_flags_max_len);
 	      if (__getopt_nonoption_flags == NULL)
 		nonoption_flags_max_len = -1;
 	      else
