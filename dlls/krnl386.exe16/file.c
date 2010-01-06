@@ -190,14 +190,14 @@ static char *get_search_path(void)
     }
 
     len = (2 +                                              /* search order: first current dir */
-           GetSystemDirectoryA( NULL, 0 ) + 1 +             /* then system dir */
+           GetSystemDirectory16( NULL, 0 ) + 1 +            /* then system dir */
            GetWindowsDirectoryA( NULL, 0 ) + 1 +            /* then windows dir */
            strlen( module ) + 1 +                           /* then module path */
            GetEnvironmentVariableA( "PATH", NULL, 0 ) + 1); /* then look in PATH */
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
     strcpy( ret, ".;" );
     p = ret + 2;
-    GetSystemDirectoryA( p, ret + len - p );
+    GetSystemDirectory16( p, ret + len - p );
     p += strlen( p );
     *p++ = ';';
     GetWindowsDirectoryA( p, ret + len - p );
@@ -629,7 +629,18 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
  */
 UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 {
-    return GetSystemDirectoryA( path, count );
+    static const char * system16 = "\\SYSTEM";
+    char windir[MAX_PATH];
+    UINT16 len;
+
+    len = GetWindowsDirectory16(windir, sizeof(windir) - sizeof(system16)) + sizeof(system16);
+    if (count >= len)
+    {
+        lstrcpyA(path, windir);
+        lstrcatA(path, system16);
+        len--;  /* space for the terminating zero is not included on success */
+    }
+    return len;
 }
 
 
