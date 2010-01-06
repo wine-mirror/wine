@@ -64,6 +64,7 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_FRC           */ "frc",
     /* WINED3DSIH_IF            */ "if",
     /* WINED3DSIH_IFC           */ "ifc",
+    /* WINED3DSIH_IGE           */ "ige",
     /* WINED3DSIH_LABEL         */ "label",
     /* WINED3DSIH_LIT           */ "lit",
     /* WINED3DSIH_LOG           */ "log",
