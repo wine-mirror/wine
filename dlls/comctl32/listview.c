@@ -3183,28 +3183,30 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 
     TRACE("(%s)\n", debugrange(&range));
     ranges_check(ranges, "before del");
-    
+
     /* we don't use DPAS_SORTED here, since we need *
      * to find the first overlapping range          */
     index = DPA_Search(ranges->hdpa, &range, 0, ranges_cmp, 0, 0);
-    while(index != -1) 
+    while(index != -1)
     {
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
-	
-        TRACE("Matches range %s @%d\n", debugrange(chkrgn), index); 
+
+	TRACE("Matches range %s @%d\n", debugrange(chkrgn), index);
 
 	/* case 1: Same range */
 	if ( (chkrgn->upper == range.upper) &&
 	     (chkrgn->lower == range.lower) )
 	{
 	    DPA_DeletePtr(ranges->hdpa, index);
+	    Free(chkrgn);
 	    break;
 	}
 	/* case 2: engulf */
 	else if ( (chkrgn->upper <= range.upper) &&
-		  (chkrgn->lower >= range.lower) ) 
+		  (chkrgn->lower >= range.lower) )
 	{
 	    DPA_DeletePtr(ranges->hdpa, index);
+	    Free(chkrgn);
 	}
 	/* case 3: overlap upper */
 	else if ( (chkrgn->upper <= range.upper) &&
