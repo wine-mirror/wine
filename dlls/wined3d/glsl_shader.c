@@ -4738,6 +4738,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_EXP           */ shader_glsl_map2gl,
     /* WINED3DSIH_EXPP          */ shader_glsl_expp,
     /* WINED3DSIH_FRC           */ shader_glsl_map2gl,
+    /* WINED3DSIH_IADD          */ NULL,
     /* WINED3DSIH_IF            */ shader_glsl_if,
     /* WINED3DSIH_IFC           */ shader_glsl_ifc,
     /* WINED3DSIH_IGE           */ NULL,
