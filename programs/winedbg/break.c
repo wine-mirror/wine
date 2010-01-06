@@ -60,7 +60,7 @@ void  break_set_xpoints(BOOL set)
             size = 0;
         else
             size = bp[i].w.len + 1;
-        addr = (void*)memory_to_linear_addr(&bp[i].addr);
+        addr = memory_to_linear_addr(&bp[i].addr);
 
         if (set)
             ret = be_cpu->insert_Xpoint(dbg_curr_process->handle,
