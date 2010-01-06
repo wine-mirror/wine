@@ -8387,16 +8387,16 @@ StgIsStorageFile(LPCOLESTR fn)
 	CloseHandle(hf);
 
 	if (bytes_read != 8) {
-		WARN(" too short\n");
+		TRACE(" too short\n");
 		return S_FALSE;
 	}
 
 	if (!memcmp(magic,STORAGE_magic,8)) {
-		WARN(" -> YES\n");
+		TRACE(" -> YES\n");
 		return S_OK;
 	}
 
-	WARN(" -> Invalid header.\n");
+	TRACE(" -> Invalid header.\n");
 	return S_FALSE;
 }
 
