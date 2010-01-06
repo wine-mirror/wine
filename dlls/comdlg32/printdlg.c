@@ -1561,24 +1561,6 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 	}
 	break;
 
-#if 0
-     case psh1:                       /* Print Setup */
-	{
-	    PRINTDLG16	pdlg;
-
-	    if (!PrintStructures->dlg.lpPrintDlg16) {
-		FIXME("The 32bit print dialog does not have this button!?\n");
-		break;
-	    }
-
-	    memcpy(&pdlg,PrintStructures->dlg.lpPrintDlg16,sizeof(pdlg));
-	    pdlg.Flags |= PD_PRINTSETUP;
-	    pdlg.hwndOwner = HWND_16(hDlg);
-	    if (!PrintDlg16(&pdlg))
-		break;
-	}
-	break;
-#endif
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
@@ -1733,11 +1715,6 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
         }
         break;
 
-     case psh1:                       /* Print Setup */
-	{
-		ERR("psh1 is called from 16bit code only, we should not get here.\n");
-	}
-	break;
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
