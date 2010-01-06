@@ -56,6 +56,7 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_DSX           */ "dsx",
     /* WINED3DSIH_DSY           */ "dsy",
     /* WINED3DSIH_ELSE          */ "else",
+    /* WINED3DSIH_EMIT          */ "emit",
     /* WINED3DSIH_ENDIF         */ "endif",
     /* WINED3DSIH_ENDLOOP       */ "endloop",
     /* WINED3DSIH_ENDREP        */ "endrep",
