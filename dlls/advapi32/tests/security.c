@@ -1673,7 +1673,7 @@ static void test_LookupAccountSid(void)
      This assumes this process is running under the account of the current user.*/
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &hToken);
     ret = GetTokenInformation(hToken, TokenUser, NULL, 0, &cbti);
-    ptiUser = (PTOKEN_USER) HeapAlloc(GetProcessHeap(), 0, cbti);
+    ptiUser = HeapAlloc(GetProcessHeap(), 0, cbti);
     if (GetTokenInformation(hToken, TokenUser, ptiUser, cbti, &cbti))
     {
         acc_sizeA = dom_sizeA = MAX_PATH;
