@@ -4748,6 +4748,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LOGP          */ shader_glsl_log,
     /* WINED3DSIH_LOOP          */ shader_glsl_loop,
     /* WINED3DSIH_LRP           */ shader_glsl_lrp,
+    /* WINED3DSIH_LT            */ NULL,
     /* WINED3DSIH_M3x2          */ shader_glsl_mnxn,
     /* WINED3DSIH_M3x3          */ shader_glsl_mnxn,
     /* WINED3DSIH_M3x4          */ shader_glsl_mnxn,

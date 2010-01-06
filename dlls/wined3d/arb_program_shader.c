@@ -4706,6 +4706,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_LOGP          */ shader_hw_log_pow,
     /* WINED3DSIH_LOOP          */ shader_hw_loop,
     /* WINED3DSIH_LRP           */ shader_hw_lrp,
+    /* WINED3DSIH_LT            */ NULL,
     /* WINED3DSIH_M3x2          */ shader_hw_mnxn,
     /* WINED3DSIH_M3x3          */ shader_hw_mnxn,
     /* WINED3DSIH_M3x4          */ shader_hw_mnxn,

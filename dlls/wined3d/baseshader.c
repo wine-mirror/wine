@@ -73,6 +73,7 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_LOGP          */ "logp",
     /* WINED3DSIH_LOOP          */ "loop",
     /* WINED3DSIH_LRP           */ "lrp",
+    /* WINED3DSIH_LT            */ "lt",
     /* WINED3DSIH_M3x2          */ "m3x2",
     /* WINED3DSIH_M3x3          */ "m3x3",
     /* WINED3DSIH_M3x4          */ "m3x4",
