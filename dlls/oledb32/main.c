@@ -140,6 +140,5 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("(): stub\n");
     return S_FALSE;
 }

@@ -859,8 +859,6 @@ static IClassFactoryImpl DINPUT_CF = {&DICF_Vtbl, 1 };
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("(void): stub\n");
-
     return S_FALSE;
 }
 

@@ -258,7 +258,6 @@ CreateDirectDrawFactory(IUnknown* UnkOuter, REFIID iid, void **obj)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("(void): stub\n");
     return S_FALSE;
 }
 

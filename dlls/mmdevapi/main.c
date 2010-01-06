@@ -53,7 +53,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("stub\n");
     return S_FALSE;
 }
 

@@ -347,7 +347,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 
 HRESULT WINAPI DllCanUnloadNow(VOID)
 {
-    FIXME("stub\n");
     return S_OK;
 }
 

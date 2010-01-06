@@ -628,12 +628,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  * Determines whether the DLL is in use.
  *
  * RETURNS
- *    Success: S_OK
- *    Failure: S_FALSE
+ *    Can unload now: S_OK
+ *    Cannot unload now (the DLL is still active): S_FALSE
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("(void): stub\n");
     return S_FALSE;
 }
 
