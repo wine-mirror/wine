@@ -290,7 +290,7 @@ static int parse_fnt_data(unsigned char* file_buffer, int length)
 
     /* malloc size = (# chars) * sizeof(WinCharS) */
 
-    if((cpe_font_struct.dfCharTable = (WinCharS *) calloc(sizeof(WinCharS), l_len)) == NULL)
+    if((cpe_font_struct.dfCharTable = calloc(sizeof(WinCharS), l_len)) == NULL)
 	return ERROR_MEMORY;
 
     /* NOW, convert them all to UNIX (lton) notation... */
@@ -649,7 +649,7 @@ static int get_resource_table(int fd, unsigned char** lpdata, int fsize)
   }
   else return FILE_ERROR;
 
-  *lpdata = (unsigned char*)malloc(size);
+  *lpdata = malloc(size);
 
   if( *lpdata )
   {
@@ -711,7 +711,7 @@ int main(int argc, char **argv)
 		    length = return_data_value(dfShort, &pFontStorage->length) << size_shift;
 		    offset = return_data_value(dfShort, &pFontStorage->offset) << size_shift;
 
-		    if( !(lpfont = (unsigned char*) realloc( lpfont, length )) )
+		    if( !(lpfont = realloc( lpfont, length )) )
 		    {
 			fprintf(stderr, "Memory allocation error.\n" );
 			exit(1);
