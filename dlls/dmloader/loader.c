@@ -644,6 +644,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (L
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %p)\n", This, pObject);
 	
+	if(!pObject) return E_POINTER;
+
 	/* get descriptor */
 	DM_STRUCT_INIT(&Desc);
 	IDirectMusicObject_GetDescriptor (pObject, &Desc);
