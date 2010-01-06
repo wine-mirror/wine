@@ -2221,14 +2221,14 @@ static void test_simple_script(void)
 static void run_js_script(const char *test_name)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
+    char urlA[INTERNET_MAX_URL_LENGTH];
     IPersistMoniker *persist;
     IHTMLDocument2 *doc;
     IMoniker *mon;
-    WCHAR *ptr;
     MSG msg;
     HRESULT hres;
 
-    static const WCHAR resW[] = {'r','e','s',':','/','/'};
+    static const char res[] = "res://";
 
     trace("running %s...\n", test_name);
 
@@ -2239,12 +2239,11 @@ static void run_js_script(const char *test_name)
     set_client_site(doc, TRUE);
     do_advise(doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    memcpy(url, resW, sizeof(resW));
-    ptr = url + sizeof(resW)/sizeof(WCHAR);
-    GetModuleFileNameW(NULL, ptr, sizeof(url)/sizeof(WCHAR) - (ptr-url));
-    ptr += lstrlenW(ptr);
-    *ptr++ = '/';
-    MultiByteToWideChar(CP_ACP, 0, test_name, -1, ptr, sizeof(url)/sizeof(WCHAR) - (ptr-url));
+    lstrcpyA(urlA, res);
+    GetModuleFileNameA(NULL, urlA + lstrlenA(res), sizeof(urlA) - lstrlenA(res));
+    lstrcatA(urlA, "/");
+    lstrcatA(urlA, test_name);
+    MultiByteToWideChar(CP_ACP, 0, urlA, -1, url, sizeof(url)/sizeof(WCHAR));
 
     hres = CreateURLMoniker(NULL, url, &mon);
     ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
