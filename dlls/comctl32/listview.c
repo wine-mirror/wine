@@ -7464,7 +7464,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
         while (i < infoPtr->nItemCount)
         {
             hItem  = DPA_GetPtr( infoPtr->hdpaItems, i);
-            item_s = (ITEM_INFO*)DPA_GetPtr(hItem, 0);
+            item_s = DPA_GetPtr(hItem, 0);
 
             cmpv = textcmpWT(item_s->hdr.pszText, lpLVItem->pszText, isW);
             if (infoPtr->dwStyle & LVS_SORTDESCENDING) cmpv *= -1;
