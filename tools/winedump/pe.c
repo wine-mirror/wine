@@ -1425,7 +1425,7 @@ static void dump_symbol_table(void)
     numsym = PE_nt_headers->FileHeader.NumberOfSymbols;
     if (!PE_nt_headers->FileHeader.PointerToSymbolTable || !numsym)
         return;
-    sym = (const IMAGE_SYMBOL*)PRD(PE_nt_headers->FileHeader.PointerToSymbolTable,
+    sym = PRD(PE_nt_headers->FileHeader.PointerToSymbolTable,
                                    sizeof(*sym) * numsym);
     if (!sym) return;
     /* FIXME: no way to get strtable size */
