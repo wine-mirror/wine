@@ -856,6 +856,19 @@ static const WCHAR *comment_state( struct parser *parser, const WCHAR *pos )
 }
 
 
+static void free_inf_file( struct inf_file *file )
+{
+    unsigned int i;
+
+    for (i = 0; i < file->nb_sections; i++) HeapFree( GetProcessHeap(), 0, file->sections[i] );
+    HeapFree( GetProcessHeap(), 0, file->filename );
+    HeapFree( GetProcessHeap(), 0, file->sections );
+    HeapFree( GetProcessHeap(), 0, file->fields );
+    HeapFree( GetProcessHeap(), 0, file->strings );
+    HeapFree( GetProcessHeap(), 0, file );
+}
+
+
 /* parse a complete buffer */
 static DWORD parse_buffer( struct inf_file *file, const WCHAR *buffer, const WCHAR *end,
                            UINT *error_line )
@@ -1011,7 +1024,7 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD sty
     UnmapViewOfFile( buffer );
     if (err)
     {
-        HeapFree( GetProcessHeap(), 0, file );
+        free_inf_file( file );
         SetLastError( err );
         file = NULL;
     }
@@ -1231,16 +1244,10 @@ HINF WINAPI SetupOpenMasterInf( VOID )
 void WINAPI SetupCloseInfFile( HINF hinf )
 {
     struct inf_file *file = hinf;
-    unsigned int i;
 
     if (!hinf || (hinf == INVALID_HANDLE_VALUE)) return;
 
-    for (i = 0; i < file->nb_sections; i++) HeapFree( GetProcessHeap(), 0, file->sections[i] );
-    HeapFree( GetProcessHeap(), 0, file->filename );
-    HeapFree( GetProcessHeap(), 0, file->sections );
-    HeapFree( GetProcessHeap(), 0, file->fields );
-    HeapFree( GetProcessHeap(), 0, file->strings );
-    HeapFree( GetProcessHeap(), 0, file );
+    free_inf_file( file );
 }
 
 
