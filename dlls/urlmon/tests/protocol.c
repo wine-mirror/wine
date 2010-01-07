@@ -1355,6 +1355,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
            "GetBindString(BINDSTRING_ACCEPT_MIMES) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 1\n", fetched);
         ok(!strcmp_ww(acc_mimeW, accept_mimes[0]), "unexpected mimes %s\n", wine_dbgstr_w(accept_mimes[0]));
+        CoTaskMemFree(accept_mimes[0]);
 
         hres = IInternetBindInfo_QueryInterface(pOIBindInfo, &IID_IServiceProvider,
                                                 (void**)&service_provider);
