@@ -373,7 +373,7 @@ static void dump_varargs_user_handles( const char *prefix, data_size_t size )
 static void dump_varargs_bytes( const char *prefix, data_size_t size )
 {
     const unsigned char *data = cur_data;
-    data_size_t len = size;
+    data_size_t len = min( 1024, size );
 
     fprintf( stderr,"%s{", prefix );
     while (len > 0)
@@ -381,6 +381,7 @@ static void dump_varargs_bytes( const char *prefix, data_size_t size )
         fprintf( stderr, "%02x", *data++ );
         if (--len) fputc( ',', stderr );
     }
+    if (size > 1024) fprintf( stderr, "...(total %u)", size );
     fputc( '}', stderr );
     remove_data( size );
 }
