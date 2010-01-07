@@ -303,7 +303,10 @@ static ULONG ShellLink_Release( IShellLinkImpl *This )
     HeapFree(GetProcessHeap(), 0, This->sArgs);
     HeapFree(GetProcessHeap(), 0, This->sWorkDir);
     HeapFree(GetProcessHeap(), 0, This->sDescription);
-    HeapFree(GetProcessHeap(),0,This->sPath);
+    HeapFree(GetProcessHeap(), 0, This->sPath);
+    HeapFree(GetProcessHeap(), 0, This->sPathRel);
+    HeapFree(GetProcessHeap(), 0, This->sProduct);
+    HeapFree(GetProcessHeap(), 0, This->sComponent);
 
     if (This->site)
         IUnknown_Release( This->site );
