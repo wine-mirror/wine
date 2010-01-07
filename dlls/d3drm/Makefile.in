@@ -4,9 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3drm.dll
 IMPORTLIB = d3drm
-IMPORTS   = kernel32
+IMPORTS   = dxguid uuid kernel32
 
 C_SRCS = \
+	d3drm.c \
 	d3drm_main.c \
 	math.c
 
