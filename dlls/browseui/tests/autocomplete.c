@@ -321,6 +321,9 @@ static void test_ACLMulti(void)
     ok(mgr->lpVtbl->Release(mgr) == 0, "Unexpected references\n");
     ok(acl1->ref == 1, "acl1 not released\n");
     ok(acl2->ref == 1, "acl2 not released\n");
+
+    CoTaskMemFree(acl1);
+    CoTaskMemFree(acl2);
 }
 
 START_TEST(autocomplete)
