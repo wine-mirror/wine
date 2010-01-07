@@ -1321,6 +1321,7 @@ static void test_SafeArrayCopyData(void)
     ok(SafeArrayGetElemsize(sa) == SafeArrayGetElemsize(sacopy),"elemsize wrong\n");
     ok(SafeArrayGetDim(sa) == SafeArrayGetDim(sacopy),"dimensions wrong\n");
     ok(!memcmp(sa->pvData, sacopy->pvData, size * sizeof(int)), "compared different\n");
+    SafeArrayDestroy(sacopy);
   }
 
   SafeArrayDestroy(sa);
@@ -1548,6 +1549,7 @@ static void test_SafeArrayCopy(void)
   hres = SafeArrayCopy(sa, &sa2);
   ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08x\n", hres);
 
+  SafeArrayDestroy(sa2);
   SafeArrayDestroy(sa);
 }
 
@@ -1652,6 +1654,7 @@ static void test_SafeArrayChangeTypeEx(void)
     hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_UI1);
     ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_UI1 returned %x\n", hres);
     SafeArrayDestroy(sa);
+    VariantClear(&v2);
   }
 
   /* NULL/EMPTY */
