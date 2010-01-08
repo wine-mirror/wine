@@ -677,7 +677,9 @@ static void test_query_object(void)
     ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
     ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
     str = (UNICODE_STRING *)buffer;
-    ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len, "unexpected len %u\n", len );
+    ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len ||
+        broken(sizeof(UNICODE_STRING) + str->Length == len), /* NT4 */
+        "unexpected len %u\n", len );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
     pNtClose( handle );
 }
