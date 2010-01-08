@@ -147,7 +147,7 @@ static const WCHAR **load_list( HKEY hkey, const WCHAR *value )
     const WCHAR **list = NULL;
 
     RtlInitUnicodeString( &name, value );
-    status = NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count );
+    status = NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(initial_buffer), &count );
     if (status == STATUS_BUFFER_OVERFLOW)
     {
         buffer = RtlAllocateHeap( GetProcessHeap(), 0, count );
