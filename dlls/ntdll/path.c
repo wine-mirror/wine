@@ -662,9 +662,11 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                 tmp[1] = ':';
                 tmp[2] = '\\';
                 ins_str = tmp;
+                RtlFreeHeap(GetProcessHeap(), 0, val.Buffer);
                 break;
             default:
                 ERR("Unsupported status code\n");
+                RtlFreeHeap(GetProcessHeap(), 0, val.Buffer);
                 break;
             }
             mark = 3;
