@@ -85,6 +85,42 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
             SERVER_END_REQ;
         }
         break;
+    case ObjectNameInformation:
+        {
+            OBJECT_NAME_INFORMATION* p = ptr;
+
+            SERVER_START_REQ( get_object_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (len > sizeof(*p)) wine_server_set_reply( req, p + 1, len - sizeof(*p) );
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
+                {
+                    if (!reply->total)  /* no name */
+                    {
+                        if (sizeof(*p) > len) status = STATUS_INFO_LENGTH_MISMATCH;
+                        else memset( p, 0, sizeof(*p) );
+                        if (used_len) *used_len = sizeof(*p);
+                    }
+                    else if (sizeof(*p) + reply->total + sizeof(WCHAR) > len)
+                    {
+                        if (used_len) *used_len = sizeof(*p) + reply->total + sizeof(WCHAR);
+                        status = STATUS_INFO_LENGTH_MISMATCH;
+                    }
+                    else
+                    {
+                        ULONG res = wine_server_reply_size( reply );
+                        p->Name.Buffer = (WCHAR *)(p + 1);
+                        p->Name.Length = res;
+                        p->Name.MaximumLength = res + sizeof(WCHAR);
+                        p->Name.Buffer[res / sizeof(WCHAR)] = 0;
+                        if (used_len) *used_len = sizeof(*p) + p->Name.MaximumLength;
+                    }
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
     case ObjectDataInformation:
         {
             OBJECT_DATA_INFORMATION* p = ptr;

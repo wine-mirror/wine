@@ -3061,6 +3061,8 @@ enum message_type
 @REPLY
     unsigned int   access;        /* granted access mask */
     unsigned int   ref_count;     /* object ref count */
+    data_size_t    total;         /* total needed size for name */
+    VARARG(name,unicode_str);     /* object name */
 @END
 
 
