@@ -2550,8 +2550,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
         return STATUS_NO_MEMORY;
     unix_name[0] = '.';
 
-    if (!(status = server_get_unix_fd( attr->RootDirectory, FILE_READ_DATA, &root_fd,
-                                       &needs_close, &type, NULL )))
+    if (!(status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
     {
         if (type != FD_TYPE_DIR)
         {
