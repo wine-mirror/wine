@@ -1024,7 +1024,7 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD sty
     UnmapViewOfFile( buffer );
     if (err)
     {
-        free_inf_file( file );
+        if (file) free_inf_file( file );
         SetLastError( err );
         file = NULL;
     }
