@@ -3118,6 +3118,8 @@ DWORD WINAPI GetSecurityInfo(
     }
     if (ppSecurityDescriptor)
         *ppSecurityDescriptor = sd;
+    else
+        LocalFree(sd);
 
     return ERROR_SUCCESS;
 }
