@@ -88,6 +88,34 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
     case ObjectNameInformation:
         {
             OBJECT_NAME_INFORMATION* p = ptr;
+            ANSI_STRING unix_name;
+
+            /* first try as a file object */
+
+            if (!(status = server_get_unix_name( handle, &unix_name )))
+            {
+                UNICODE_STRING nt_name;
+                NTSTATUS status;
+
+                if (!(status = wine_unix_to_nt_file_name( &unix_name, &nt_name )))
+                {
+                    if (sizeof(*p) + nt_name.MaximumLength <= len)
+                    {
+                        p->Name.Buffer = (WCHAR *)(p + 1);
+                        p->Name.Length = nt_name.Length;
+                        p->Name.MaximumLength = nt_name.MaximumLength;
+                        memcpy( p->Name.Buffer, nt_name.Buffer, nt_name.MaximumLength );
+                    }
+                    else status = STATUS_INFO_LENGTH_MISMATCH;
+                    if (used_len) *used_len = sizeof(*p) + nt_name.MaximumLength;
+                    RtlFreeUnicodeString( &nt_name );
+                }
+                RtlFreeAnsiString( &unix_name );
+                break;
+            }
+            else if (status != STATUS_OBJECT_TYPE_MISMATCH) break;
+
+            /* not a file, treat as a generic object */
 
             SERVER_START_REQ( get_object_info )
             {

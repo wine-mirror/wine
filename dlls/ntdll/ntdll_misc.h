@@ -142,6 +142,7 @@ extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice,
 struct stat;
 extern NTSTATUS FILE_GetNtStatus(void);
 extern NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class );
+extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name );
 extern void DIR_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_unmount_device( HANDLE handle );

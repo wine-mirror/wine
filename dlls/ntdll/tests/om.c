@@ -627,6 +627,7 @@ static void test_query_object(void)
     NTSTATUS status;
     ULONG len;
     UNICODE_STRING *str;
+    char dir[MAX_PATH];
 
     handle = CreateEventA( NULL, FALSE, FALSE, "test_event" );
 
@@ -666,6 +667,18 @@ static void test_query_object(void)
     str = (UNICODE_STRING *)buffer;
     ok( str->Length == 0, "unexpected len %u\n", len );
     ok( str->Buffer == NULL, "unexpected ptr %p\n", str->Buffer );
+    pNtClose( handle );
+
+    GetWindowsDirectoryA( dir, MAX_PATH );
+    handle = CreateFileA( dir, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                          FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len, "unexpected len %u\n", len );
+    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
     pNtClose( handle );
 }
 

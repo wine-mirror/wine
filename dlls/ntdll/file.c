@@ -1633,7 +1633,7 @@ NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLAS
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name )
+NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name )
 {
     data_size_t size = 1024;
     NTSTATUS ret;
