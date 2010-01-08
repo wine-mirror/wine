@@ -1100,7 +1100,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     if(patch->has_texcoords) {
         vtxStride += 4 * sizeof(float);
     }
-    memset(&patch->strided, 0, sizeof(&patch->strided));
+    memset(&patch->strided, 0, sizeof(patch->strided));
     patch->strided.position.format = WINED3DFMT_R32G32B32_FLOAT;
     patch->strided.position.lpData = (BYTE *) patch->mem;
     patch->strided.position.dwStride = vtxStride;
