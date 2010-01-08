@@ -925,7 +925,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	    /* fall through to RGB */
 
 	  case 0: /* RGB */
-	    if (physDev && (physDev->depth == 1) )
+	    if (physDev->depth == 1)
 	    {
                 int white = 1;
                 RGBQUAD table[2];
@@ -981,7 +981,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 		/* fall through to RGB */
 
        	    case 0:  /* RGB */
-		if (physDev && (physDev->depth == 1) )
+		if (physDev->depth == 1)
 		{
                     int white = 1;
                     RGBQUAD table[2];
