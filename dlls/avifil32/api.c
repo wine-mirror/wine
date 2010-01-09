@@ -244,7 +244,7 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
   /* if no handler then try guessing it by extension */
   if (lpHandler == NULL) {
     if (! AVIFILE_GetFileHandlerByExtension(szFile, &clsidHandler))
-      return AVIERR_UNSUPPORTED;
+      clsidHandler = CLSID_AVIFile;
   } else
     clsidHandler = *lpHandler;
 
