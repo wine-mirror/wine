@@ -869,10 +869,11 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 		 hmDst, hmSrc, uInsert, uIDAdjust, uIDAdjustMax, uFlags);
 
 	if (!hmDst || !hmSrc)
-	{ return uIDMax;
-	}
+	  return uIDMax;
 
 	nItem = GetMenuItemCount(hmDst);
+        if (nItem == -1)
+	  return uIDMax;
 
 	if (uInsert >= (UINT)nItem)	/* insert position inside menu? */
 	{

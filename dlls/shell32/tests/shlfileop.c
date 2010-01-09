@@ -2224,6 +2224,17 @@ static void test_unicode(void)
     ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
 }
 
+extern HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags);
+
+static void
+test_shlmenu(void) {
+	HRESULT hres;
+	hres = Shell_MergeMenus (0, 0, 0x42, 0x4242, 0x424242, 0);
+	ok (hres == 0x4242, "expected 0x4242 but got %x\n", hres);
+	hres = Shell_MergeMenus ((HMENU)42, 0, 0x42, 0x4242, 0x424242, 0);
+	ok (hres == 0x4242, "expected 0x4242 but got %x\n", hres);
+}
+
 START_TEST(shlfileop)
 {
     InitFunctionPointers();
@@ -2263,4 +2274,6 @@ START_TEST(shlfileop)
     clean_after_shfo_tests();
 
     test_unicode();
+
+    test_shlmenu();
 }
