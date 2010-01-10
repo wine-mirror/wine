@@ -1853,7 +1853,6 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     }
     This->isParsing = FALSE;
 
-    locator->pParserCtxt->sax = NULL;
     xmlFreeParserCtxt(locator->pParserCtxt);
     locator->pParserCtxt = NULL;
     ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
