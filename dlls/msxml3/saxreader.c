@@ -1787,6 +1787,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
         return E_FAIL;
     }
 
+    xmlFree(locator->pParserCtxt->sax);
     locator->pParserCtxt->sax = &locator->saxreader->sax;
     locator->pParserCtxt->userData = locator;
 
