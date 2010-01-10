@@ -107,6 +107,8 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lppd )
     PRINTDLGA pd32;
     BOOL ret;
 
+    if (!lppd) return PrintDlgA(NULL); /* generate failure with CDERR_INITIALIZATION */
+
     pd32.lStructSize = sizeof(pd32);
     pd32.Flags       = lppd->Flags & ~(PD_ENABLEPRINTTEMPLATE | PD_ENABLEPRINTTEMPLATEHANDLE |
                                        PD_ENABLESETUPTEMPLATE | PD_ENABLESETUPTEMPLATEHANDLE |
@@ -127,6 +129,9 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lppd )
         FIXME( "custom print hook %p no longer supported\n", lppd->lpfnPrintHook );
     if (lppd->Flags & PD_ENABLESETUPHOOK)
         FIXME( "custom setup hook %p no longer supported\n", lppd->lpfnSetupHook );
+
+    /* Generate failure with CDERR_STRUCTSIZE, when needed */
+    if (lppd->lStructSize != sizeof(PRINTDLG16)) pd32.lStructSize--;
 
     if ((ret = PrintDlgA( &pd32 )))
     {
