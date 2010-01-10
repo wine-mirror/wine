@@ -3276,7 +3276,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (bRtf) {
       ME_StreamInRTFString(editor, bSelection, (char *)lParam);
       if (bSelection) {
-        /* FIXME: The length returned is doesn't include the rtf control
+        /* FIXME: The length returned doesn't include the rtf control
          * characters, only the actual text. */
         len = lParam ? strlen((char *)lParam) : 0;
       }
