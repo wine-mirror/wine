@@ -354,6 +354,27 @@ static void test_default_data(void)
     ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
 }
 
+static void test_amh_corruption(void)
+{
+    COMMON_AVI_HEADERS cah;
+    char filename[MAX_PATH];
+    PAVIFILE pFile;
+    int res;
+
+    GetTempPath(MAX_PATH, filename);
+    strcpy(filename+strlen(filename), testfilename);
+
+    /* Make sure only AVI files with the proper headers will be loaded */
+    init_test_struct(&cah);
+    cah.fh[3] = mmioFOURCC('A', 'V', 'i', ' ');
+
+    create_avi_file(&cah, filename);
+    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    ok(res != 0, "Able to open file: error=%u\n", res);
+
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
+}
+
 /* ########################### */
 
 START_TEST(api)
@@ -362,6 +383,7 @@ START_TEST(api)
     AVIFileInit();
     test_AVISaveOptions();
     test_default_data();
+    test_amh_corruption();
     AVIFileExit();
 
 }
