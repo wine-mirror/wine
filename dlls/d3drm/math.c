@@ -128,6 +128,7 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DV
 LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b, D3DVALUE alpha)
 {
     D3DVALUE dot, epsilon, temp, theta, u;
+    D3DVECTOR v1, v2;
 
     dot = a->s * b->s + D3DRMVectorDotProduct(&a->v, &b->v);
     epsilon = 1.0f;
@@ -145,8 +146,9 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATER
         u = sin(theta * alpha) / sin(theta);
     }
     q->s = temp * a->s + epsilon * u * b->s;
-    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&a->v, &a->v, temp),
-                   D3DRMVectorScale(&b->v, &b->v, epsilon * u));
+    D3DRMVectorScale(&v1, &a->v, temp);
+    D3DRMVectorScale(&v2, &b->v, epsilon * u);
+    D3DRMVectorAdd(&q->v, &v1, &v2);
     return q;
 }
 

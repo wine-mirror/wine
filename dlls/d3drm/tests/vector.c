@@ -243,7 +243,7 @@ static void QuaternionTest(void)
 {
     D3DVECTOR axis;
     D3DVALUE par,theta;
-    D3DRMQUATERNION q,q1,q2,r;
+    D3DRMQUATERNION q,q1,q1final,q2,q2final,r;
 
 /*_________________QuaternionFromRotation___________________*/
     U1(axis).x=1.0f; U2(axis).y=1.0f; U3(axis).z=1.0f;
@@ -275,8 +275,15 @@ static void QuaternionTest(void)
     q1.s=0.1f; U1(q1.v).x=0.2f; U2(q1.v).y=0.3f; U3(q1.v).z=0.4f;
     q2.s=0.5f; U1(q2.v).x=0.6f; U2(q2.v).y=0.7f; U3(q2.v).z=0.8f;
     q.s = 0.243943f; U1(q.v).x = 0.351172f; U2(q.v).y = 0.458401f; U3(q.v).z = 0.565629f;
+
+    q1final=q1;
+    q2final=q2;
     pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
+
+/* Test to show that the input quaternions are not changed */
+    expect_quat(q1,q1final);
+    expect_quat(q2,q2final);
 }
 
 static void ColorTest(void)
