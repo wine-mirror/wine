@@ -791,6 +791,7 @@
 @ cdecl vfwprintf(ptr wstr ptr) MSVCRT_vfwprintf
 @ cdecl vprintf(str ptr) MSVCRT_vprintf
 @ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
+@ cdecl vsprintf_s(ptr long str ptr) MSVCRT_vsprintf_s
 @ cdecl vswprintf(ptr wstr ptr) MSVCRT_vswprintf
 @ cdecl vswprintf_s(ptr long wstr ptr) MSVCRT_vswprintf_s
 @ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
