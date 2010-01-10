@@ -375,6 +375,76 @@ static void test_amh_corruption(void)
     ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
+static void test_ash1_corruption(void)
+{
+    COMMON_AVI_HEADERS cah;
+    char filename[MAX_PATH];
+    PAVIFILE pFile;
+    int res;
+    PAVISTREAM pStream1;
+    AVISTREAMINFO asi1;
+
+    GetTempPath(MAX_PATH, filename);
+    strcpy(filename+strlen(filename), testfilename);
+
+    /* Corrupt the sample size in the audio stream header */
+    init_test_struct(&cah);
+    cah.ash1.dwSampleSize = 0xdeadbeef;
+
+    create_avi_file(&cah, filename);
+
+    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    ok(res == 0, "Unable to open file: error=%u\n", res);
+
+    res = AVIFileGetStream(pFile, &pStream1, 0, 1);
+    ok(res == 0, "Unable to open audio stream: error=%u\n", res);
+
+    res = AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO));
+    ok(res == 0, "Unable to read stream info: error=%u\n", res);
+
+    /* The result will still be 2, because the value is dynamically replaced with the nBlockAlign
+       value from the stream format header. The next test will prove this */
+    todo_wine{ ok(asi1.dwSampleSize == 2, "got %u (expected 2)\n", asi1.dwSampleSize); }
+
+    AVIStreamRelease(pStream1);
+    AVIFileRelease(pFile);
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
+}
+
+static void test_ash1_corruption2(void)
+{
+    COMMON_AVI_HEADERS cah;
+    char filename[MAX_PATH];
+    PAVIFILE pFile;
+    int res;
+    PAVISTREAM pStream1;
+    AVISTREAMINFO asi1;
+
+    GetTempPath(MAX_PATH, filename);
+    strcpy(filename+strlen(filename), testfilename);
+
+    /* Corrupt the block alignment in the audio format header */
+    init_test_struct(&cah);
+    cah.pcmwf.wf.nBlockAlign = 0xdead;
+
+    create_avi_file(&cah, filename);
+
+    res = AVIFileOpen(&pFile, filename, OF_SHARE_DENY_WRITE, 0L);
+    ok(res == 0, "Unable to open file: error=%u\n", res);
+
+    res = AVIFileGetStream(pFile, &pStream1, 0, 1);
+    ok(res == 0, "Unable to open audio stream: error=%u\n", res);
+
+    ok(AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO)) == 0, "Unable to read stream info\n");
+
+    /* The result will also be the corrupt value, as explained above. */
+    todo_wine{ ok(asi1.dwSampleSize == 0xdead, "got 0x%x (expected 0xdead)\n", asi1.dwSampleSize); }
+
+    AVIStreamRelease(pStream1);
+    AVIFileRelease(pFile);
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
+}
+
 /* ########################### */
 
 START_TEST(api)
@@ -384,6 +454,8 @@ START_TEST(api)
     test_AVISaveOptions();
     test_default_data();
     test_amh_corruption();
+    test_ash1_corruption();
+    test_ash1_corruption2();
     AVIFileExit();
 
 }
