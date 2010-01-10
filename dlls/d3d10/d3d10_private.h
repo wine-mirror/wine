@@ -102,6 +102,7 @@ struct d3d10_effect_variable
     const struct ID3D10EffectVariableVtbl *vtbl;
 
     struct d3d10_effect_variable *buffer;
+    struct d3d10_effect_type *type;
     struct d3d10_effect *effect;
 
     char *name;
@@ -110,7 +111,6 @@ struct d3d10_effect_variable
     DWORD annotation_count;
     DWORD flag;
     DWORD data_size;
-    struct d3d10_effect_type *type;
     struct d3d10_effect_variable *elements;
     struct d3d10_effect_variable *members;
     struct d3d10_effect_variable *annotations;

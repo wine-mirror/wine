@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2009 Rico Schüller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,54 +65,37 @@ static const struct ID3D10EffectSamplerVariableVtbl d3d10_effect_sampler_variabl
 static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 
 /* null objects - needed for invalid calls */
-static struct d3d10_effect_technique null_technique =
-        {&d3d10_effect_technique_vtbl, NULL, NULL, 0, 0, NULL, NULL};
-static struct d3d10_effect_pass null_pass =
-        {&d3d10_effect_pass_vtbl, NULL, NULL, 0, 0, 0, NULL, NULL};
-static struct d3d10_effect_type null_type =
-        {&d3d10_effect_type_vtbl, 0, {NULL, NULL, 0}, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL};
-static struct d3d10_effect_variable null_local_buffer =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_variable =
-        {&d3d10_effect_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_scalar_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_vector_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_matrix_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_string_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_shader_resource_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_render_target_view_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_depth_stencil_view_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_shader_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_blend_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_depth_stencil_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_rasterizer_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
-static struct d3d10_effect_variable null_sampler_variable =
-        {(ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl, &null_local_buffer,
-        NULL, NULL, NULL, 0, 0, 0, 0, &null_type, NULL, NULL, NULL};
+static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl};
+static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl};
+static struct d3d10_effect_type null_type = {&d3d10_effect_type_vtbl};
+static struct d3d10_effect_variable null_local_buffer = {(ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_scalar_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_vector_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_matrix_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_string_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_shader_resource_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_render_target_view_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_depth_stencil_view_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_shader_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_blend_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_depth_stencil_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_rasterizer_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl,
+        &null_local_buffer, &null_type};
+static struct d3d10_effect_variable null_sampler_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl,
+        &null_local_buffer, &null_type};
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
 
