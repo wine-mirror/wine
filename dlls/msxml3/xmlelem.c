@@ -171,31 +171,17 @@ static HRESULT WINAPI xmlelem_Invoke(IXMLElement *iface, DISPID dispIdMember,
     return hr;
 }
 
-static inline BSTR str_dup_upper(BSTR str)
-{
-    INT len = (lstrlenW(str) + 1) * sizeof(WCHAR);
-    BSTR p = SysAllocStringLen(NULL, len);
-    if (p)
-    {
-        memcpy(p, str, len);
-        CharUpperW(p);
-    }
-    return p;
-}
-
 static HRESULT WINAPI xmlelem_get_tagName(IXMLElement *iface, BSTR *p)
 {
     xmlelem *This = impl_from_IXMLElement(iface);
-    BSTR temp;
 
     TRACE("(%p, %p)\n", iface, p);
 
     if (!p)
         return E_INVALIDARG;
 
-    temp = bstr_from_xmlChar(This->node->name);
-    *p = str_dup_upper(temp);
-    SysFreeString(temp);
+    *p = bstr_from_xmlChar(This->node->name);
+    CharUpperBuffW(*p, SysStringLen(*p));
 
     TRACE("returning %s\n", debugstr_w(*p));
 
