@@ -438,6 +438,14 @@ static void test_fgetc( void )
   ret = fgetc(tempfh);
   ok(ich == ret, "Second fgetc expected %x got %x\n", ich, ret);
   fclose(tempfh);
+  tempfh = fopen(tempf,"wt");
+  fputc('\n', tempfh);
+  fclose(tempfh);
+  tempfh = fopen(tempf,"wt");
+  setbuf(tempfh, NULL);
+  ret = fgetc(tempfh);
+  ok(ret == -1, "Unbuffered fgetc in text mode must failed on \\r\\n\n");
+  fclose(tempfh);
   unlink(tempf);
   free(tempf);
 }
