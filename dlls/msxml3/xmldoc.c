@@ -439,8 +439,14 @@ static HRESULT WINAPI xmldoc_put_charset(IXMLDocument *iface, BSTR p)
 
 static HRESULT WINAPI xmldoc_get_version(IXMLDocument *iface, BSTR *p)
 {
-    FIXME("(%p, %p): stub\n", iface, p);
-    return E_NOTIMPL;
+    xmldoc *This = impl_from_IXMLDocument(iface);
+
+    TRACE("(%p, %p)\n", This, p);
+
+    if (!p) return E_INVALIDARG;
+    *p = bstr_from_xmlChar(This->xmldoc->version);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument *iface, BSTR *p)

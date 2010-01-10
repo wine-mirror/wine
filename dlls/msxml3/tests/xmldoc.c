@@ -70,6 +70,7 @@ static void test_xmldoc(void)
     static const WCHAR szNumVal[] = {'1','2','3','4',0};
     static const WCHAR szName[] = {'N','A','M','E',0};
     static const WCHAR szNameVal[] = {'C','a','p','t','a','i','n',' ','A','h','a','b',0};
+    static const WCHAR szVersion[] = {'1','.','0',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
@@ -114,6 +115,15 @@ static void test_xmldoc(void)
         goto cleanup;
 
     ok(stream != NULL, "Expected non-NULL stream\n");
+
+    /* version field */
+    hr = IXMLDocument_get_version(doc, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IXMLDocument_get_version(doc, &name);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!lstrcmpW(name, szVersion), "Expected 1.0, got %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
 
     hr = IXMLDocument_get_root(doc, &element);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
