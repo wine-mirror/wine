@@ -2045,6 +2045,7 @@ static HRESULT internal_parse(
                 hr = internal_parseBuffer(This, (const char*)bstrData,
                         SysStringByteLen(bstrData), vbInterface);
                 IXMLDOMDocument_Release(xmlDoc);
+                SysFreeString(bstrData);
                 break;
             }
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
