@@ -39,6 +39,7 @@ static void create_xml_file(LPCSTR filename)
 
     static const char data[] =
         "<?xml version=\"1.0\" ?>\n"
+        "<!DOCTYPE BankAccount>\n"
         "<BankAccount>\n"
         "  <Number>1234</Number>\n"
         "  <Name>Captain Ahab</Name>\n"
@@ -123,6 +124,15 @@ static void test_xmldoc(void)
     hr = IXMLDocument_get_version(doc, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(name, szVersion), "Expected 1.0, got %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
+
+    /* doctype */
+    hr = IXMLDocument_get_doctype(doc, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IXMLDocument_get_doctype(doc, &name);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!lstrcmpW(name, szBankAccount), "Expected BANKACCOUNT, got %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
 
     hr = IXMLDocument_get_root(doc, &element);

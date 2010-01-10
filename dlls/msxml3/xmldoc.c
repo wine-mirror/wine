@@ -451,8 +451,20 @@ static HRESULT WINAPI xmldoc_get_version(IXMLDocument *iface, BSTR *p)
 
 static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument *iface, BSTR *p)
 {
-    FIXME("(%p, %p): stub\n", iface, p);
-    return E_NOTIMPL;
+    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmlDtd *dtd;
+
+    TRACE("(%p, %p)\n", This, p);
+
+    if (!p) return E_INVALIDARG;
+
+    dtd = xmlGetIntSubset(This->xmldoc);
+    if (!dtd) return S_FALSE;
+
+    *p = bstr_from_xmlChar(dtd->name);
+    CharUpperBuffW(*p, SysStringLen(*p));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmldoc_get_dtdURl(IXMLDocument *iface, BSTR *p)
