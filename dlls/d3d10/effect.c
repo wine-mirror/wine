@@ -266,42 +266,48 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
     return S_OK;
 }
 
-static HRESULT parse_shader(struct d3d10_effect_object *o, const char *data)
+static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
 {
-    ID3D10Device *device = o->pass->technique->effect->device;
+    ID3D10Device *device = v->effect->device;
     struct d3d10_effect_shader_variable *s;
     const char *ptr = data;
     DWORD dxbc_size;
     HRESULT hr;
 
-    o->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct d3d10_effect_shader_variable));
-    if (!o->data)
+    s = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*s));
+    if (!s)
     {
         ERR("Failed to allocate shader variable memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!ptr) return S_OK;
+    v->data = s;
 
-    s = o->data;
+    if (!ptr) return S_OK;
 
     read_dword(&ptr, &dxbc_size);
     TRACE("dxbc size: %#x\n", dxbc_size);
 
-    switch (o->type)
+    switch (v->type->basetype)
     {
-        case D3D10_EOT_VERTEXSHADER:
+        case D3D10_SVT_VERTEXSHADER:
             hr = ID3D10Device_CreateVertexShader(device, ptr, dxbc_size, &s->shader.vs);
             if (FAILED(hr)) return hr;
             break;
 
-        case D3D10_EOT_PIXELSHADER:
+        case D3D10_SVT_PIXELSHADER:
             hr = ID3D10Device_CreatePixelShader(device, ptr, dxbc_size, &s->shader.ps);
             if (FAILED(hr)) return hr;
             break;
-        case D3D10_EOT_GEOMETRYSHADER:
+
+        case D3D10_SVT_GEOMETRYSHADER:
             hr = ID3D10Device_CreateGeometryShader(device, ptr, dxbc_size, &s->shader.gs);
             if (FAILED(hr)) return hr;
+            break;
+
+        default:
+            ERR("This should not happen!\n");
+            return E_FAIL;
             break;
     }
 
@@ -820,56 +826,140 @@ static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char
     return S_OK;
 }
 
+static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_effect_anonymous_shader *s,
+    enum d3d10_effect_object_type otype)
+{
+    struct d3d10_effect_variable *v = &s->shader;
+    struct d3d10_effect_type *t = &s->type;
+    const char *shader = NULL;
+
+    switch (otype)
+    {
+        case D3D10_EOT_VERTEXSHADER:
+            shader = "vertexshader";
+            t->basetype = D3D10_SVT_VERTEXSHADER;
+            break;
+
+        case D3D10_EOT_PIXELSHADER:
+            shader = "pixelshader";
+            t->basetype = D3D10_SVT_PIXELSHADER;
+            break;
+
+        case D3D10_EOT_GEOMETRYSHADER:
+            shader = "geometryshader";
+            t->basetype = D3D10_SVT_GEOMETRYSHADER;
+            break;
+    }
+
+    if (!copy_name(shader, &t->name))
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Type name: %s.\n", debugstr_a(t->name));
+
+    t->type_class = D3D10_SVC_OBJECT;
+
+    t->vtbl = &d3d10_effect_type_vtbl;
+
+    v->type = t;
+    v->effect = e;
+    set_variable_vtbl(v);
+
+    if (!copy_name("$Anonymous", &v->name))
+    {
+        ERR("Failed to copy semantic.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable name: %s.\n", debugstr_a(v->name));
+
+    if (!copy_name(NULL, &v->semantic))
+    {
+        ERR("Failed to copy semantic.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
 {
-    const char *data_ptr;
-    DWORD offset;
+    const char *data_ptr = NULL;
+    DWORD offset, index;
+    enum d3d10_effect_object_operation operation;
     HRESULT hr;
+    struct d3d10_effect *effect = o->pass->technique->effect;
 
     read_dword(ptr, &o->type);
     TRACE("Effect object is of type %#x.\n", o->type);
 
-    skip_dword_unknown(ptr, 2);
+    read_dword(ptr, &index);
+    TRACE("Effect object index %#x.\n", index);
+
+    read_dword(ptr, &operation);
+    TRACE("Effect object operation %#x.\n", operation);
 
     read_dword(ptr, &offset);
     TRACE("Effect object idx is at offset %#x.\n", offset);
 
-    data_ptr = data + offset;
-    read_dword(&data_ptr, &offset);
-
-    TRACE("Effect object starts at offset %#x.\n", offset);
-
-    /* FIXME: This probably isn't completely correct. */
-    if (offset == 1)
+    switch(operation)
     {
-        WARN("Skipping effect object.\n");
-        data_ptr = NULL;
-    }
-    else
-    {
-        data_ptr = data + offset;
-    }
-
-    switch (o->type)
-    {
-        case D3D10_EOT_VERTEXSHADER:
-            TRACE("Vertex shader\n");
-            hr = parse_shader(o, data_ptr);
+        /* FIXME: This probably isn't completely correct. */
+        case D3D10_EOO_VALUE:
+            FIXME("Copy variable value\n");
+            hr = E_FAIL;
             break;
 
-        case D3D10_EOT_PIXELSHADER:
-            TRACE("Pixel shader\n");
-            hr = parse_shader(o, data_ptr);
-            break;
+        case D3D10_EOO_ANONYMOUS_SHADER:
+            TRACE("Anonymous shader\n");
 
-        case D3D10_EOT_GEOMETRYSHADER:
-            TRACE("Geometry shader\n");
-            hr = parse_shader(o, data_ptr);
+            /* check anonymous_shader_current for validity */
+            if (effect->anonymous_shader_current >= effect->anonymous_shader_count)
+            {
+                ERR("Anonymous shader count is wrong!\n");
+                return E_FAIL;
+            }
+
+            data_ptr = data + offset;
+            read_dword(&data_ptr, &offset);
+            TRACE("Effect object starts at offset %#x.\n", offset);
+
+            data_ptr = data + offset;
+
+            hr = parse_fx10_anonymous_shader(effect, &effect->anonymous_shaders[effect->anonymous_shader_current], o->type);
+            if (FAILED(hr)) return hr;
+
+            o->data = &effect->anonymous_shaders[effect->anonymous_shader_current].shader;
+            ++effect->anonymous_shader_current;
+
+            switch (o->type)
+            {
+                case D3D10_EOT_VERTEXSHADER:
+                    TRACE("Vertex shader\n");
+                    hr = parse_shader(o->data, data_ptr);
+                    break;
+
+                case D3D10_EOT_PIXELSHADER:
+                    TRACE("Pixel shader\n");
+                    hr = parse_shader(o->data, data_ptr);
+                    break;
+
+                case D3D10_EOT_GEOMETRYSHADER:
+                    TRACE("Geometry shader\n");
+                    hr = parse_shader(o->data, data_ptr);
+                    break;
+
+                default:
+                    FIXME("Unhandled object type %#x\n", o->type);
+                    hr = E_FAIL;
+                    break;
+            }
             break;
 
         default:
-            FIXME("Unhandled object type %#x\n", o->type);
             hr = E_FAIL;
+            FIXME("Unhandled operation %#x.\n", operation);
             break;
     }
 
@@ -1408,6 +1498,13 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         return E_OUTOFMEMORY;
     }
 
+    e->anonymous_shaders = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->anonymous_shader_count * sizeof(*e->anonymous_shaders));
+    if (!e->anonymous_shaders)
+    {
+        ERR("Failed to allocate techniques memory\n");
+        return E_OUTOFMEMORY;
+    }
+
     e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
     if (!e->techniques)
     {
@@ -1513,8 +1610,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->shader_call_count);
     TRACE("Shader call count: %u\n", e->shader_call_count);
 
-    read_dword(&ptr, &e->shader_compile_count);
-    TRACE("Shader compile count: %u\n", e->shader_compile_count);
+    read_dword(&ptr, &e->anonymous_shader_count);
+    TRACE("Anonymous shader count: %u\n", e->anonymous_shader_count);
 
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }
@@ -1543,42 +1640,25 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
     return parse_dxbc(data, data_size, fx10_chunk_handler, This);
 }
 
-static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
-{
-    TRACE("effect object %p.\n", o);
-
-    switch(o->type)
-    {
-        case D3D10_EOT_VERTEXSHADER:
-        case D3D10_EOT_PIXELSHADER:
-        case D3D10_EOT_GEOMETRYSHADER:
-            HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)o->data)->input_signature);
-            break;
-
-        default:
-            break;
-    }
-    HeapFree(GetProcessHeap(), 0, o->data);
-}
-
 static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 {
     ID3D10Device *device = o->pass->technique->effect->device;
+    struct d3d10_effect_variable *v = (struct d3d10_effect_variable*) o->data;
 
     TRACE("effect object %p, type %#x.\n", o, o->type);
 
     switch(o->type)
     {
         case D3D10_EOT_VERTEXSHADER:
-            ID3D10Device_VSSetShader(device, ((struct d3d10_effect_shader_variable *)o->data)->shader.vs);
+            ID3D10Device_VSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.vs);
             return S_OK;
 
         case D3D10_EOT_PIXELSHADER:
-            ID3D10Device_PSSetShader(device, ((struct d3d10_effect_shader_variable *)o->data)->shader.ps);
+            ID3D10Device_PSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.ps);
             return S_OK;
 
         case D3D10_EOT_GEOMETRYSHADER:
-            ID3D10Device_GSSetShader(device, ((struct d3d10_effect_shader_variable *)o->data)->shader.gs);
+            ID3D10Device_GSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.gs);
             return S_OK;
 
         default:
@@ -1621,6 +1701,22 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         }
         HeapFree(GetProcessHeap(), 0, v->elements);
     }
+
+    if (v->data)
+    {
+        switch(v->type->basetype)
+        {
+            case D3D10_SVT_VERTEXSHADER:
+            case D3D10_SVT_PIXELSHADER:
+            case D3D10_SVT_GEOMETRYSHADER:
+                HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)v->data)->input_signature);
+                break;
+
+            default:
+                break;
+        }
+        HeapFree(GetProcessHeap(), 0, v->data);
+    }
 }
 
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
@@ -1632,10 +1728,6 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
     HeapFree(GetProcessHeap(), 0, p->name);
     if (p->objects)
     {
-        for (i = 0; i < p->object_count; ++i)
-        {
-            d3d10_effect_object_destroy(&p->objects[i]);
-        }
         HeapFree(GetProcessHeap(), 0, p->objects);
     }
 
@@ -1647,7 +1739,6 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
         }
         HeapFree(GetProcessHeap(), 0, p->annotations);
     }
-
 }
 
 static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
@@ -1781,6 +1872,16 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
                 d3d10_effect_local_buffer_destroy(&This->local_buffers[i]);
             }
             HeapFree(GetProcessHeap(), 0, This->local_buffers);
+        }
+
+        if (This->anonymous_shaders)
+        {
+            for (i = 0; i < This->anonymous_shader_count; ++i)
+            {
+                d3d10_effect_variable_destroy(&This->anonymous_shaders[i].shader);
+                HeapFree(GetProcessHeap(), 0, &This->anonymous_shaders[i].type.name);
+            }
+            HeapFree(GetProcessHeap(), 0, This->anonymous_shaders);
         }
 
         wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
@@ -2212,7 +2313,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         struct d3d10_effect_object *o = &This->objects[i];
         if (o->type == D3D10_EOT_VERTEXSHADER)
         {
-            struct d3d10_effect_shader_variable *s = o->data;
+            struct d3d10_effect_variable *v = o->data;
+            struct d3d10_effect_shader_variable *s = v->data;
             desc->pIAInputSignature = (BYTE *)s->input_signature;
             desc->IAInputSignatureSize = s->input_signature_size;
             break;
