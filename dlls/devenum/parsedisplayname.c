@@ -44,7 +44,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
 	return S_OK;
     }
 
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+    FIXME("- no interface IID: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 

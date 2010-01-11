@@ -61,7 +61,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
         return S_OK;
     }
 
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+    FIXME("- no interface IID: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -308,7 +308,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_QueryInterface(
         return S_OK;
     }
 
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+    FIXME("- no interface IID: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -723,7 +723,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_QueryInterface(
         return S_OK;
     }
 
-    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+    FIXME("- no interface IID: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
