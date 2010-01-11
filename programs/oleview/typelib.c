@@ -278,7 +278,7 @@ static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
     HTREEITEM hCur;
     TVITEM tvi;
 
-    memset(&tvi, 0, sizeof(&tvi));
+    memset(&tvi, 0, sizeof(tvi));
 
     hCur = TreeView_GetChild(typelib.hTree, hParent);
     if(!hCur) return;
