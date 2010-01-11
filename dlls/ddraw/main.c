@@ -743,14 +743,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    HRESULT hr;
-    FIXME("(void): stub\n");
-
-    EnterCriticalSection(&ddraw_cs);
-    hr = S_FALSE;
-    LeaveCriticalSection(&ddraw_cs);
-
-    return hr;
+    return S_FALSE;
 }
 
 /*******************************************************************************
