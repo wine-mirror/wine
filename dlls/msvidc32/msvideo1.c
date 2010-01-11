@@ -508,7 +508,7 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         info = HeapAlloc( GetProcessHeap(), 0, sizeof (Msvideo1Context) );
         if( info )
         {
-            memset( info, 0, sizeof info );
+            memset( info, 0, sizeof *info );
             info->dwMagic = CRAM_MAGIC;
         }
         r = (LRESULT) info;
