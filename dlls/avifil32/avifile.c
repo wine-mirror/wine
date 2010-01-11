@@ -1655,7 +1655,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   This->fInfo.dwCaps                = AVIFILECAPS_CANREAD|AVIFILECAPS_CANWRITE;
   This->fInfo.dwLength              = MainAVIHdr.dwTotalFrames;
   This->fInfo.dwStreams             = MainAVIHdr.dwStreams;
-  This->fInfo.dwSuggestedBufferSize = MainAVIHdr.dwSuggestedBufferSize;
+  This->fInfo.dwSuggestedBufferSize = 0;
   This->fInfo.dwWidth               = MainAVIHdr.dwWidth;
   This->fInfo.dwHeight              = MainAVIHdr.dwHeight;
   LoadStringW(AVIFILE_hModule, IDS_AVIFILETYPE, This->fInfo.szFileType,
@@ -1757,8 +1757,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	    pStream->sInfo.dwRate                = streamHdr.dwRate;
 	    pStream->sInfo.dwStart               = streamHdr.dwStart;
 	    pStream->sInfo.dwLength              = streamHdr.dwLength;
-	    pStream->sInfo.dwSuggestedBufferSize =
-	      streamHdr.dwSuggestedBufferSize;
+	    pStream->sInfo.dwSuggestedBufferSize = 0;
 	    pStream->sInfo.dwQuality             = streamHdr.dwQuality;
 	    pStream->sInfo.dwSampleSize          = streamHdr.dwSampleSize;
 	    pStream->sInfo.rcFrame.left          = streamHdr.rcFrame.left;
@@ -1905,6 +1904,13 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	}
       }
     }
+  }
+
+  for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++)
+  {
+    DWORD sugbuf =  This->ppStreams[nStream]->sInfo.dwSuggestedBufferSize;
+    if (This->fInfo.dwSuggestedBufferSize < sugbuf)
+      This->fInfo.dwSuggestedBufferSize = sugbuf;
   }
 
   /* find other chunks */

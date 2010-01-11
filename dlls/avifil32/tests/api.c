@@ -311,7 +311,7 @@ static void test_default_data(void)
     ok(asi0.dwStart == 0, "got %u (expected 0)\n", asi0.dwStart);
     ok(asi0.dwLength == 1, "got %u (expected 1)\n", asi0.dwLength);
     ok(asi0.dwInitialFrames == 0, "got %u (expected 0)\n", asi0.dwInitialFrames);
-    todo_wine { ok(asi0.dwSuggestedBufferSize == 0, "got %u (expected 0)\n", asi0.dwSuggestedBufferSize); }
+    ok(asi0.dwSuggestedBufferSize == 0, "got %u (expected 0)\n", asi0.dwSuggestedBufferSize);
     ok(asi0.dwQuality == 0xffffffff, "got 0x%x (expected 0xffffffff)\n", asi0.dwQuality);
     ok(asi0.dwSampleSize == 0, "got %u (expected 0)\n", asi0.dwSampleSize);
     ok(asi0.rcFrame.left == 0, "got %u (expected 0)\n", asi0.rcFrame.left);
@@ -331,7 +331,7 @@ static void test_default_data(void)
     ok(asi1.dwStart == 0, "got %u (expected 0)\n", asi1.dwStart);
     ok(asi1.dwLength == 1637, "got %u (expected 1637)\n", asi1.dwLength);
     ok(asi1.dwInitialFrames == 0, "got %u (expected 0)\n", asi1.dwInitialFrames);
-    todo_wine { ok(asi1.dwSuggestedBufferSize == 0, "got %u (expected 0)\n", asi1.dwSuggestedBufferSize); }
+    ok(asi1.dwSuggestedBufferSize == 0, "got %u (expected 0)\n", asi1.dwSuggestedBufferSize);
     ok(asi1.dwQuality == 0xffffffff, "got 0x%x (expected 0xffffffff)\n", asi1.dwQuality);
     ok(asi1.dwSampleSize == 2, "got %u (expected 2)\n", asi1.dwSampleSize);
     ok(asi1.rcFrame.left == 0, "got %u (expected 0)\n", asi1.rcFrame.left);
