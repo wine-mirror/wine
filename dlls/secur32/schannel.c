@@ -1451,7 +1451,11 @@ void SECUR32_deinitSchannelSP(void)
 
 #else /* SONAME_LIBGNUTLS */
 
-void SECUR32_initSchannelSP(void) {}
+void SECUR32_initSchannelSP(void)
+{
+    ERR("libgnutls not found, SSL connections will fail\n");
+}
+
 void SECUR32_deinitSchannelSP(void) {}
 
 #endif /* SONAME_LIBGNUTLS */
