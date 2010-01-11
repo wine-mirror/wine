@@ -1095,7 +1095,7 @@ void	dbg_dump(void)
     unsigned			        i;
     const IMAGE_DEBUG_DIRECTORY*	debugDir;
 
-    separateDebugHead = PRD(0, sizeof(separateDebugHead));
+    separateDebugHead = PRD(0, sizeof(*separateDebugHead));
     if (!separateDebugHead) {printf("Can't grab the separate header, aborting\n"); return;}
 
     printf ("Signature:          %.2s (0x%4X)\n",
