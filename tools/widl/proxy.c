@@ -754,7 +754,7 @@ static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], 
             type_t *iface = stmt->u.type;
             if (type_iface_get_inherit(iface) && need_proxy(iface))
             {
-                *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(*ifaces) );
+                *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(**ifaces) );
                 (*ifaces)[(*count)++] = iface;
             }
         }
