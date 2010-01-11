@@ -34,8 +34,8 @@ typedef struct {
  *		DirectMusicChordMap ClassFactory
  */
 static HRESULT WINAPI ChordMapCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
 	
 	return E_NOINTERFACE;
@@ -84,8 +84,8 @@ static IClassFactoryImpl ChordMap_CF = {&ChordMapCF_Vtbl};
  *		DirectMusicComposer ClassFactory
  */
 static HRESULT WINAPI ComposerCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
 	
 	return E_NOINTERFACE;
@@ -134,8 +134,8 @@ static IClassFactoryImpl Composer_CF = {&ComposerCF_Vtbl};
  *		DirectMusicChordMapTrack ClassFactory
  */
 static HRESULT WINAPI ChordMapTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
 	
 	return E_NOINTERFACE;
@@ -184,8 +184,8 @@ static IClassFactoryImpl ChordMapTrack_CF = {&ChordMapTrackCF_Vtbl};
  *		DirectMusicTemplate ClassFactory
  */
 static HRESULT WINAPI TemplateCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
 	
 	return E_NOINTERFACE;
@@ -236,8 +236,8 @@ static IClassFactoryImpl Template_CF = {&TemplateCF_Vtbl};
  *		DirectMusicSignPostTrack ClassFactory
  */
 static HRESULT WINAPI SignPostTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
 	
 	return E_NOINTERFACE;
