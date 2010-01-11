@@ -2697,6 +2697,97 @@ static void test_capture_3(HWND hwnd1, HWND hwnd2)
     ok (ret, "releasecapture did not return TRUE after second try.\n");
 }
 
+static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    GUITHREADINFO gti;
+    HWND cap_wnd, cap_wnd2, set_cap_wnd;
+    BOOL status;
+    switch (msg)
+    {
+        case WM_CAPTURECHANGED:
+
+            /* now try to release capture from menu. this should fail */
+            memset(&gti, 0, sizeof(GUITHREADINFO));
+            gti.cbSize = sizeof(GUITHREADINFO);
+            status = GetGUIThreadInfo(GetCurrentThreadId(), &gti);
+            ok(status, "GetGUIThreadInfo() failed!\n");
+            cap_wnd = GetCapture();
+            ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
+
+            /* check that re-setting the capture for the menu fails */
+            set_cap_wnd = SetCapture(cap_wnd);
+            ok(!set_cap_wnd, "SetCapture should have failed!\n");
+
+            /* check that SetCapture fails for another window and that it does not touch the error code */
+            set_cap_wnd = SetCapture(hWnd);
+            ok(!set_cap_wnd, "ReleaseCapture should have failed!\n");
+
+            /* check that ReleaseCapture fails and does not touch the error code */
+            status = ReleaseCapture();
+            ok(!status, "ReleaseCapture should have failed!\n");
+
+            /* check that thread info did not change */
+            memset(&gti, 0, sizeof(GUITHREADINFO));
+            gti.cbSize = sizeof(GUITHREADINFO);
+            status = GetGUIThreadInfo(GetCurrentThreadId(), &gti);
+            ok(status, "GetGUIThreadInfo() failed!\n");
+            ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
+
+            /* verify that no capture change took place */
+            cap_wnd2 = GetCapture();
+            ok(cap_wnd2 == cap_wnd, "Capture changed!\n");
+
+            /* we are done. kill the window */
+            DestroyWindow(hWnd);
+            break;
+
+        default:
+            return( DefWindowProcA( hWnd, msg, wParam, lParam ) );
+    }
+    return 0;
+}
+
+/* Test that no-one can mess around with the current capture while a menu is open */
+static void test_capture_4(void)
+{
+    BOOL ret;
+    HMENU hmenu;
+    HWND hwnd;
+    WNDCLASSA wclass;
+    HINSTANCE hInstance = GetModuleHandleA( NULL );
+    wclass.lpszClassName = "TestCapture4Class";
+    wclass.style         = CS_HREDRAW | CS_VREDRAW;
+    wclass.lpfnWndProc   = test_capture_4_proc;
+    wclass.hInstance     = hInstance;
+    wclass.hIcon         = LoadIconA( 0, IDI_APPLICATION );
+    wclass.hCursor       = LoadCursorA( NULL, IDC_ARROW );
+    wclass.hbrBackground = (HBRUSH)( COLOR_WINDOW + 1 );
+    wclass.lpszMenuName  = 0;
+    wclass.cbClsExtra    = 0;
+    wclass.cbWndExtra    = 0;
+    assert (RegisterClassA( &wclass ));
+    assert (hwnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
+                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+                                  400, 200, NULL, NULL, hInstance, NULL) );
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    if (!hwnd) return;
+    hmenu = CreatePopupMenu();
+
+    ret = AppendMenuA( hmenu, MF_STRING, 1, "winetest2");
+    ok( ret, "AppendMenA has failed!\n");
+
+    /* set main window to have initial capture */
+    SetCapture(hwnd);
+
+    /* create popup (it will self-destruct) */
+    ret = TrackPopupMenu(hmenu, 0x100, 100,100, 0, hwnd, NULL);
+    ok( ret == 0, "TrackPopupMenu returned %d expected zero\n", ret);
+
+    /* clean up */
+    DestroyMenu(hmenu);
+    DestroyWindow(hwnd);
+}
+
 /* PeekMessage wrapper that ignores the messages we don't care about */
 static BOOL peek_message( MSG *msg )
 {
@@ -5821,6 +5912,7 @@ START_TEST(win)
     test_capture_1();
     test_capture_2();
     test_capture_3(hwndMain, hwndMain2);
+    test_capture_4();
 
     test_CreateWindow();
     test_parent_owner();
