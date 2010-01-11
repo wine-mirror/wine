@@ -32,7 +32,7 @@ typedef struct {
  *		DirectMusicPerformance ClassFactory
  */
 static HRESULT WINAPI PerformanceCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 
@@ -82,7 +82,7 @@ static IClassFactoryImpl Performance_CF = {&PerformanceCF_Vtbl};
  *		DirectMusicSegment ClassFactory
  */
 static HRESULT WINAPI SegmentCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -132,7 +132,7 @@ static IClassFactoryImpl Segment_CF = {&SegmentCF_Vtbl};
  *		DirectMusicSegmentState ClassFactory
  */
 static HRESULT WINAPI SegmentStateCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -182,7 +182,7 @@ static IClassFactoryImpl SegmentState_CF = {&SegmentStateCF_Vtbl};
  *		DirectMusicGraph ClassFactory
  */
 static HRESULT WINAPI GraphCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -232,7 +232,7 @@ static IClassFactoryImpl Graph_CF = {&GraphCF_Vtbl};
  *		DirectMusicTempoTrack ClassFactory
  */
 static HRESULT WINAPI TempoTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -282,7 +282,7 @@ static IClassFactoryImpl TempoTrack_CF = {&TempoTrackCF_Vtbl};
  *		DirectMusicSeqTrack ClassFactory
  */
 static HRESULT WINAPI SeqTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -332,7 +332,7 @@ static IClassFactoryImpl SeqTrack_CF = {&SeqTrackCF_Vtbl};
  *		DirectMusicSysExTrack ClassFactory
  */
 static HRESULT WINAPI SysExTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -381,7 +381,7 @@ static IClassFactoryImpl SysExTrack_CF = {&SysExTrackCF_Vtbl};
  *		DirectMusicTimeSigTrack ClassFactory
  */
 static HRESULT WINAPI TimeSigTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -431,7 +431,7 @@ static IClassFactoryImpl TimeSigTrack_CF = {&TimeSigTrackCF_Vtbl};
  *		DirectMusicParamControlTrack ClassFactory
  */
 static HRESULT WINAPI ParamControlTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -481,7 +481,7 @@ static IClassFactoryImpl ParamControlTrack_CF = {&ParamControlTrackCF_Vtbl};
  *		DirectMusicMarkerTrack ClassFactory
  */
 static HRESULT WINAPI MarkerTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -531,7 +531,7 @@ static IClassFactoryImpl MarkerTrack_CF = {&MarkerTrackCF_Vtbl};
  *		DirectMusicLyricsTrack ClassFactory
  */
 static HRESULT WINAPI LyricsTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -582,7 +582,7 @@ static IClassFactoryImpl LyricsTrack_CF = {&LyricsTrackCF_Vtbl};
  *		DirectMusicSegTriggerTrack ClassFactory
  */
 static HRESULT WINAPI SegTriggerTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -632,7 +632,7 @@ static IClassFactoryImpl SegTriggerTrack_CF = {&SegTriggerTrackCF_Vtbl};
  *		DirectMusicAudioPath ClassFactory
  */
 static HRESULT WINAPI AudioPathCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -682,7 +682,7 @@ static IClassFactoryImpl AudioPath_CF = {&AudioPathCF_Vtbl};
  *		DirectMusicWaveTrack ClassFactory
  */
 static HRESULT WINAPI WaveTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
