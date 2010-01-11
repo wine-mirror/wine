@@ -2409,7 +2409,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, INT iIndex, LPREBARBANDINFOW lprbbi, BOOL
     TRACE("index %d!\n", iIndex);
 
     /* initialize band */
-    memset(lpBand, 0, sizeof(lpBand));
+    memset(lpBand, 0, sizeof(*lpBand));
     lpBand->clrFore = infoPtr->clrText == CLR_NONE ? infoPtr->clrBtnText :
                                                      infoPtr->clrText;
     lpBand->clrBack = infoPtr->clrBk == CLR_NONE ? infoPtr->clrBtnFace :
