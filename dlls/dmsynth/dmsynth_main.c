@@ -36,7 +36,7 @@ typedef struct {
  *		DirectMusicSynth ClassFactory
  */
 static HRESULT WINAPI SynthCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
@@ -85,7 +85,7 @@ static IClassFactoryImpl Synth_CF = {&SynthCF_Vtbl};
  *		DirectMusicSynthSink ClassFactory
  */
 static HRESULT WINAPI SynthSinkCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
 	
