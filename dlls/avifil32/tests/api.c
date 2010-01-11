@@ -404,7 +404,7 @@ static void test_ash1_corruption(void)
 
     /* The result will still be 2, because the value is dynamically replaced with the nBlockAlign
        value from the stream format header. The next test will prove this */
-    todo_wine{ ok(asi1.dwSampleSize == 2, "got %u (expected 2)\n", asi1.dwSampleSize); }
+    ok(asi1.dwSampleSize == 2, "got %u (expected 2)\n", asi1.dwSampleSize);
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
@@ -438,7 +438,7 @@ static void test_ash1_corruption2(void)
     ok(AVIStreamInfo(pStream1, &asi1, sizeof(AVISTREAMINFO)) == 0, "Unable to read stream info\n");
 
     /* The result will also be the corrupt value, as explained above. */
-    todo_wine{ ok(asi1.dwSampleSize == 0xdead, "got 0x%x (expected 0xdead)\n", asi1.dwSampleSize); }
+    ok(asi1.dwSampleSize == 0xdead, "got 0x%x (expected 0xdead)\n", asi1.dwSampleSize);
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);

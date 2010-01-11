@@ -1819,7 +1819,14 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	  if (FAILED(hr))
 	    return hr;
 	};
-
+	if (pStream->lpFormat != NULL && pStream->sInfo.fccType == streamtypeAUDIO)
+	{
+	  WAVEFORMATEX *wfx = pStream->lpFormat;          /* wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample / 8; could be added */
+	  pStream->sInfo.dwSampleSize = wfx->nBlockAlign; /* to deal with corrupt wfx->nBlockAlign but Windows doesn't do this */
+	  TRACE("Block size reset to %u, chan=%u bpp=%u\n", wfx->nBlockAlign, wfx->nChannels, wfx->wBitsPerSample);
+	  pStream->sInfo.dwScale = 1;
+	  pStream->sInfo.dwRate = wfx->nSamplesPerSec;
+	}
 	if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
 	  return AVIERR_FILEREAD;
       }
