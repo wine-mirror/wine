@@ -616,6 +616,8 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
     if (!pStm)
         return E_INVALIDARG;
 
+    /* release previously allocated stream */
+    if (This->stream) IStream_Release(This->stream);
     hr = CreateStreamOnHGlobal(NULL, TRUE, &This->stream);
     if (FAILED(hr))
         return hr;
@@ -639,7 +641,10 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len != 0)
+    {
+        xmlFreeDoc(This->xmldoc);
         This->xmldoc = parse_xml(ptr, len);
+    }
     GlobalUnlock(hglobal);
 
     if (!This->xmldoc)
@@ -648,6 +653,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
         return E_FAIL;
     }
 
+    if (This->root) IXMLElement_Release(This->root);
     xmlnode = xmlDocGetRootElement(This->xmldoc);
     return XMLElement_create((IUnknown *)This, xmlnode, (LPVOID *)&This->root);
 }

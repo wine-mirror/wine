@@ -431,6 +431,14 @@ static void test_persiststreaminit(void)
     hr = IPersistStreamInit_IsDirty(psi);
     todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
 
+    create_stream_on_file(&stream, path);
+    hr = IPersistStreamInit_Load(psi, stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IStream_Release(stream);
+
+    hr = IPersistStreamInit_IsDirty(psi);
+    todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+
     /* reset internal stream */
     hr = IPersistStreamInit_InitNew(psi);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
