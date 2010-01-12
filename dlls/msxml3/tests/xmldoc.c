@@ -355,6 +355,7 @@ static void test_createElement(void)
 static void test_persiststreaminit(void)
 {
     IXMLDocument *doc = NULL;
+    IXMLElement *element = NULL;
     IPersistStreamInit *psi = NULL;
     IStream *stream = NULL;
     STATSTG stat;
@@ -362,6 +363,8 @@ static void test_persiststreaminit(void)
     ULARGE_INTEGER size;
     CHAR path[MAX_PATH];
     CLSID id;
+    BSTR str;
+    static const WCHAR testW[] = {'t','e','s','t',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
@@ -382,7 +385,10 @@ static void test_persiststreaminit(void)
     todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     hr = IPersistStreamInit_GetClassID(psi, NULL);
-    ok(hr == E_POINTER, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
+
+    hr = IPersistStreamInit_IsDirty(psi);
+    todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
 
     create_xml_file("bank.xml");
     GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
@@ -400,6 +406,9 @@ static void test_persiststreaminit(void)
     if(hr == XML_E_INVALIDATROOTLEVEL)
         goto cleanup;
 
+    hr = IPersistStreamInit_IsDirty(psi);
+    todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+
     /* try to save document */
     stream = NULL;
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
@@ -413,9 +422,21 @@ static void test_persiststreaminit(void)
     todo_wine ok(stat.cbSize.QuadPart > 0, "Expected >0\n");
     IStream_Release(stream);
 
+    str = SysAllocString(testW);
+    hr = IXMLDocument_get_root(doc, &element);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    hr = IXMLElement_put_text(element, str);
+    SysFreeString(str);
+
+    hr = IPersistStreamInit_IsDirty(psi);
+    todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+
     /* reset internal stream */
     hr = IPersistStreamInit_InitNew(psi);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IPersistStreamInit_IsDirty(psi);
+    todo_wine ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
 
     stream = NULL;
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);

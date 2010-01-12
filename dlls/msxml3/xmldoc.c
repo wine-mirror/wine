@@ -670,8 +670,9 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_GetSizeMax(
 static HRESULT WINAPI xmldoc_IPersistStreamInit_InitNew(
     IPersistStreamInit *iface)
 {
-    FIXME("(%p): stub!\n", iface);
-    return E_NOTIMPL;
+    xmldoc *This = impl_from_IPersistStreamInit(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
 }
 
 static const IPersistStreamInitVtbl xmldoc_IPersistStreamInit_VTable =
