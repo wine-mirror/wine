@@ -1069,9 +1069,6 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     wwo = &WOutDev[wDevID];
 
-    if (lpdwVol == NULL)
-	return MMSYSERR_NOTENABLED;
-
     rc = ALSA_CheckSetVolume(wwo->hctl, &left, &right, &min, &max, NULL, NULL, NULL);
     if (rc == MMSYSERR_NOERROR)
     {
