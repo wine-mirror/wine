@@ -34,7 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 typedef struct {
-    IDirect3DRM lpVtbl;
+    const IDirect3DRMVtbl *lpVtbl;
     LONG ref;
 } IDirect3DRMImpl;
 
@@ -53,7 +53,7 @@ HRESULT Direct3DRM_create(LPDIRECT3DRM* ppDirect3DRM)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl.lpVtbl = &Direct3DRM_Vtbl;
+    object->lpVtbl = &Direct3DRM_Vtbl;
     object->ref = 1;
 
     *ppDirect3DRM = (IDirect3DRM*)object;
