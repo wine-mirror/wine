@@ -705,7 +705,7 @@ int CDECL MSVCRT__dup2(int od, int nd)
 
   TRACE("(od=%d, nd=%d)\n", od, nd);
   LOCK_FILES();
-  if (nd < MSVCRT_MAX_FILES && msvcrt_is_valid_fd(od))
+  if (nd < MSVCRT_MAX_FILES && nd >= 0 && msvcrt_is_valid_fd(od))
   {
     HANDLE handle;
 

@@ -1363,7 +1363,7 @@ static void test_unlink(void)
 
 void test_dup2(void)
 {
-    todo_wine ok(-1 == _dup2(0, -1), "expected _dup2 to fail when second arg is negative\n" );
+    ok(-1 == _dup2(0, -1), "expected _dup2 to fail when second arg is negative\n" );
 }
 
 START_TEST(file)
