@@ -547,6 +547,169 @@ DECLARE_INTERFACE_(IDirect3DRMDevice2,IDirect3DRMDevice)
 #define IDirect3DRMDevice2_GetDirect3DDevice2(p,a)      (p)->GetDirect3DDevice2(a)
 #endif
 
+/*****************************************************************************
+ * IDirect3DRMDevice3 interface
+ */
+#ifdef WINE_NO_UNICODE_MACROS
+#undef GetClassName
+#endif
+#define INTERFACE IDirect3DRMDevice3
+DECLARE_INTERFACE_(IDirect3DRMDevice3,IDirect3DRMObject)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DRMObject methods ***/
+    STDMETHOD(Clone)(THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
+    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
+    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK pFunc, LPVOID pArg) PURE;
+    STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
+    STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
+    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    /*** IDirect3DRMDevice methods ***/
+    STDMETHOD(Init)(THIS_ ULONG width, ULONG height) PURE;
+    STDMETHOD(InitFromD3D)(THIS_ LPDIRECT3D pD3D, LPDIRECT3DDEVICE pD3DDev) PURE;
+    STDMETHOD(InitFromClipper)(THIS_ LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height) PURE;
+    STDMETHOD(Update)(THIS) PURE;
+    STDMETHOD(AddUpdateCallback)(THIS_ D3DRMUPDATECALLBACK, LPVOID arg) PURE;
+    STDMETHOD(DeleteUpdateCallback)(THIS_ D3DRMUPDATECALLBACK, LPVOID arg) PURE;
+    STDMETHOD(SetBufferCount)(THIS_ DWORD) PURE;
+    STDMETHOD_(DWORD, GetBufferCount)(THIS) PURE;
+    STDMETHOD(SetDither)(THIS_ BOOL) PURE;
+    STDMETHOD(SetShades)(THIS_ DWORD) PURE;
+    STDMETHOD(SetQuality)(THIS_ D3DRMRENDERQUALITY) PURE;
+    STDMETHOD(SetTextureQuality)(THIS_ D3DRMTEXTUREQUALITY) PURE;
+    STDMETHOD(GetViewports)(THIS_ LPDIRECT3DRMVIEWPORTARRAY *return_views) PURE;
+    STDMETHOD_(BOOL, GetDither)(THIS) PURE;
+    STDMETHOD_(DWORD, GetShades)(THIS) PURE;
+    STDMETHOD_(DWORD, GetHeight)(THIS) PURE;
+    STDMETHOD_(DWORD, GetWidth)(THIS) PURE;
+    STDMETHOD_(DWORD, GetTrianglesDrawn)(THIS) PURE;
+    STDMETHOD_(DWORD, GetWireframeOptions)(THIS) PURE;
+    STDMETHOD_(D3DRMRENDERQUALITY, GetQuality)(THIS) PURE;
+    STDMETHOD_(D3DCOLORMODEL, GetColorModel)(THIS) PURE;
+    STDMETHOD_(D3DRMTEXTUREQUALITY, GetTextureQuality)(THIS) PURE;
+    STDMETHOD(GetDirect3DDevice)(THIS_ LPDIRECT3DDEVICE *) PURE;
+    /*** IDirect3DRMDevice2 methods ***/
+    STDMETHOD(InitFromD3D2)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev) PURE;
+    STDMETHOD(InitFromSurface)(THIS_ LPGUID pGUID, LPDIRECTDRAW pDD, LPDIRECTDRAWSURFACE pDDSBack) PURE;
+    STDMETHOD(SetRenderMode)(THIS_ DWORD flags) PURE;
+    STDMETHOD_(DWORD, GetRenderMode)(THIS) PURE;
+    STDMETHOD(GetDirect3DDevice2)(THIS_ LPDIRECT3DDEVICE2 *) PURE;
+    /*** IDirect3DRMDevice3 methods ***/
+    STDMETHOD(FindPreferredTextureFormat)(THIS_ DWORD BitDepths, DWORD flags, LPDDPIXELFORMAT pDDPF) PURE;
+    STDMETHOD(RenderStateChange)(THIS_ D3DRENDERSTATETYPE drsType, DWORD val, DWORD flags) PURE;
+    STDMETHOD(LightStateChange)(THIS_ D3DLIGHTSTATETYPE drsType, DWORD val, DWORD flags) PURE;
+    STDMETHOD(GetStateChangeOptions)(THIS_ DWORD StateClass, DWORD StateNum, LPDWORD pFlags) PURE;
+    STDMETHOD(SetStateChangeOptions)(THIS_ DWORD StateClass, DWORD StateNum, DWORD flags) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirect3DRMDevice3_QueryInterface(p,a,b)               (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DRMDevice3_AddRef(p)                           (p)->lpVtbl->AddRef(p)
+#define IDirect3DRMDevice3_Release(p)                          (p)->lpVtbl->Release(p)
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMDevice3_Clone(p,a,b,c)                      (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirect3DRMDevice3_AddDestroyCallback(p,a,b)           (p)->lpVtbl->AddDestroyCallback(p,a,b)
+#define IDirect3DRMDevice3_DeleteDestroyCallback(p,a,b)        (p)->lpVtbl->DeleteDestroyCallback(p,a,b)
+#define IDirect3DRMDevice3_SetAppData(p,a)                     (p)->lpVtbl->SetAppData(p,a)
+#define IDirect3DRMDevice3_GetAppData(p)                       (p)->lpVtbl->GetAppData(p)
+#define IDirect3DRMDevice3_SetName(p,a)                        (p)->lpVtbl->SetName(p,a)
+#define IDirect3DRMDevice3_GetName(p,a,b)                      (p)->lpVtbl->GetName(p,a,b)
+#define IDirect3DRMDevice3_GetClassName(p,a,b)                 (p)->lpVtbl->GetClassName(p,a,b)
+/*** IDirect3DRMDevice methods ***/
+#define IDirect3DRMDevice3_Init(p,a,b)                         (p)->lpVtbl->Init(p,a,b)
+#define IDirect3DRMDevice3_InitFromD3D(p,a,b)                  (p)->lpVtbl->InitFromD3D(p,a,b)
+#define IDirect3DRMDevice3_InitFromClipper(p,a,b,c,d)          (p)->lpVtbl->InitFromClipper(p,a,b,c,d)
+#define IDirect3DRMDevice3_Update(p)                           (p)->lpVtbl->Update(p)
+#define IDirect3DRMDevice3_AddUpdateCallback(p,a,b)            (p)->lpVtbl->AddUpdateCallback(p,a,b)
+#define IDirect3DRMDevice3_DeleteUpdateCallback(p,a,b)         (p)->lpVtbl->DeleteUpdateCallback(p,a,b,c)
+#define IDirect3DRMDevice3_SetBufferCount(p,a)                 (p)->lpVtbl->SetBufferCount(p,a)
+#define IDirect3DRMDevice3_GetBufferCount(p)                   (p)->lpVtbl->GetBufferCount(p)
+#define IDirect3DRMDevice3_SetDither(p,a)                      (p)->lpVtbl->SetDither(p,a)
+#define IDirect3DRMDevice3_SetShades(p,a)                      (p)->lpVtbl->SetShades(p,a)
+#define IDirect3DRMDevice3_SetQuality(p,a)                     (p)->lpVtbl->SetQuality(p,a)
+#define IDirect3DRMDevice3_SetTextureQuality(p,a)              (p)->lpVtbl->SetTextureQuality(p,a)
+#define IDirect3DRMDevice3_GetViewports(p,a)                   (p)->lpVtbl->GetViewports(p,a)
+#define IDirect3DRMDevice3_GetDither(p)                        (p)->lpVtbl->GetDither(p)
+#define IDirect3DRMDevice3_GetShades(p)                        (p)->lpVtbl->GetShades(p)
+#define IDirect3DRMDevice3_GetHeight(p)                        (p)->lpVtbl->GetHeight(p)
+#define IDirect3DRMDevice3_GetWidth(p)                         (p)->lpVtbl->GetWidth(p)
+#define IDirect3DRMDevice3_GetTrianglesDrawn(p)                (p)->lpVtbl->GetTrianglesDrawn(p)
+#define IDirect3DRMDevice3_GetWireframeOptions(p)              (p)->lpVtbl->GetWireframeOptions(p)
+#define IDirect3DRMDevice3_GetQuality(p)                       (p)->lpVtbl->GetQuality(p)
+#define IDirect3DRMDevice3_GetColorModel(p)                    (p)->lpVtbl->GetColorModel(p)
+#define IDirect3DRMDevice3_GetTextureQuality(p)                (p)->lpVtbl->GetTextureQuality(p)
+#define IDirect3DRMDevice3_GetDirect3DDevice(p,a)              (p)->lpVtbl->GetDirect3DDevice(p,a)
+/*** IDirect3DRMDevice2 methods ***/
+#define IDirect3DRMDevice3_InitFromD3D2(p,a,b)                 (p)->lpVtbl->InitFromD3D2(p,a,b)
+#define IDirect3DRMDevice3_InitFromSurface(p,a,b,c)            (p)->lpVtbl->InitFromSurface(p,a,b,c)
+#define IDirect3DRMDevice3_SetRenderMode(p,a)                  (p)->lpVtbl->SetRenderMode(p,a)
+#define IDirect3DRMDevice3_GetRenderMode(p)                    (p)->lpVtbl->GetRenderMode(p)
+#define IDirect3DRMDevice3_GetDirect3DDevice2(p,a)             (p)->lpVtbl->GetDirect3DDevice2(p,a)
+/*** IDirect3DRMDevice3 methods ***/
+#define IDirect3DRMDevice3_FindPreferredTextureFormat(p,a,b,c) (p)->lpVtbl->FindPreferredTextureFormat(p,a,b)
+#define IDirect3DRMDevice3_RenderStateChange(p,a,b,c)          (p)->lpVtbl->RenderStateChange(p,a,b)
+#define IDirect3DRMDevice3_LightStateChange(p,a,b,c)           (p)->lpVtbl->LightStateChange(p,a,b)
+#define IDirect3DRMDevice3_GetStateChangeOptions(p,a,b,c)      (p)->lpVtbl->GetStateChangeOptions(p,a,b)
+#define IDirect3DRMDevice3_SetStateChangeOptions(p,a,b,c)      (p)->lpVtbl->SetStateChangeOptions(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DRMDevice3_QueryInterface(p,a,b)               (p)->QueryInterface(a,b)
+#define IDirect3DRMDevice3_AddRef(p)                           (p)->AddRef()
+#define IDirect3DRMDevice3_Release(p)                          (p)->Release()
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMDevice3_Clone(p,a,b,c)                      (p)->Clone(a,b,c)
+#define IDirect3DRMDevice3_AddDestroyCallback(p,a,b)           (p)->AddDestroyCallback(a,b)
+#define IDirect3DRMDevice3_DeleteDestroyCallback(p,a,b)        (p)->DeleteDestroyCallback(a,b)
+#define IDirect3DRMDevice3_SetAppData(p,a)                     (p)->SetAppData(a)
+#define IDirect3DRMDevice3_GetAppData(p)                       (p)->GetAppData()
+#define IDirect3DRMDevice3_SetName(p,a)                        (p)->SetName(a)
+#define IDirect3DRMDevice3_GetName(p,a,b)                      (p)->GetName(a,b)
+#define IDirect3DRMDevice3_GetClassName(p,a,b)                 (p)->GetClassName(a,b)
+/*** IDirect3DRMDevice methods ***/
+#define IDirect3DRMDevice3_Init(p,a,b)                         (p)->Init(p,a,b)
+#define IDirect3DRMDevice3_InitFromD3D(p,a,b)                  (p)->InitFromD3D(p,a,b)
+#define IDirect3DRMDevice3_InitFromClipper(p,a,b,c,d)          (p)->InitFromClipper(p,a,b,c,d)
+#define IDirect3DRMDevice3_Update(p)                           (p)->Update(p)
+#define IDirect3DRMDevice3_AddUpdateCallback(p,a,b)            (p)->AddUpdateCallback(p,a,b)
+#define IDirect3DRMDevice3_DeleteUpdateCallback(p,a,b)         (p)->DeleteUpdateCallback(p,a,b,c)
+#define IDirect3DRMDevice3_SetBufferCount(p,a)                 (p)->SetBufferCount(p,a)
+#define IDirect3DRMDevice3_GetBufferCount(p)                   (p)->GetBufferCount(p)
+#define IDirect3DRMDevice3_SetDither(p,a)                      (p)->SetDither(p,a)
+#define IDirect3DRMDevice3_SetShades(p,a)                      (p)->SetShades(p,a)
+#define IDirect3DRMDevice3_SetQuality(p,a)                     (p)->SetQuality(p,a)
+#define IDirect3DRMDevice3_SetTextureQuality(p,a)              (p)->SetTextureQuality(p,a)
+#define IDirect3DRMDevice3_GetViewports(p,a)                   (p)->GetViewports(p,a)
+#define IDirect3DRMDevice3_GetDither(p)                        (p)->GetDither(p)
+#define IDirect3DRMDevice3_GetShades(p)                        (p)->GetShades(p)
+#define IDirect3DRMDevice3_GetHeight(p)                        (p)->GetHeight(p)
+#define IDirect3DRMDevice3_GetWidth(p)                         (p)->GetWidth(p)
+#define IDirect3DRMDevice3_GetTrianglesDrawn(p)                (p)->GetTrianglesDrawn(p)
+#define IDirect3DRMDevice3_GetWireframeOptions(p)              (p)->GetWireframeOptions(p)
+#define IDirect3DRMDevice3_GetQuality(p)                       (p)->GetQuality(p)
+#define IDirect3DRMDevice3_GetColorModel(p)                    (p)->GetColorModel(p)
+#define IDirect3DRMDevice3_GetTextureQuality(p)                (p)->GetTextureQuality(p)
+#define IDirect3DRMDevice3_GetDirect3DDevice(p,a)              (p)->GetDirect3DDevice(p,a)
+/*** IDirect3DRMDevice2 methods ***/
+#define IDirect3DRMDevice3_InitFromD3D2(p,a,b)                 (p)->InitFromD3D2(a,b)
+#define IDirect3DRMDevice3_InitFromSurface(p,a,b,c)            (p)->InitFromSurface(a,b,c)
+#define IDirect3DRMDevice3_SetRenderMode(p,a)                  (p)->SetRenderMode(a)
+#define IDirect3DRMDevice3_GetRenderMode(p)                    (p)->GetRenderMode()
+#define IDirect3DRMDevice3_GetDirect3DDevice2(p,a)             (p)->GetDirect3DDevice2(a)
+/*** IDirect3DRMDevice3 methods ***/
+#define IDirect3DRMDevice3_FindPreferredTextureFormat(p,a,b,c) (p)->FindPreferredTextureFormat(a,b,c)
+#define IDirect3DRMDevice3_RenderStateChange(p,a,b,c)          (p)->RenderStateChange(a,b,c)
+#define IDirect3DRMDevice3_LightStateChange(p,a,b,c)           (p)->LightStateChange(a,b,c)
+#define IDirect3DRMDevice3_GetStateChangeOptions(p,a,b,c)      (p)->GetStateChangeOptions(a,b,c)
+#define IDirect3DRMDevice3_SetStateChangeOptions(p,a,b,c)      (p)->SetStateChangeOptions(a,b,c)
+#endif
+
 #ifdef __cplusplus
 };
 #endif
