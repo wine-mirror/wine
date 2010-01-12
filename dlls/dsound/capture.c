@@ -1249,7 +1249,7 @@ static HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
 
     /* FIXME: We can only have one buffer so what do we do here? */
     if (This->device->capture_buffer) {
-	WARN("lnvalid parameter: already has buffer\n");
+	WARN("invalid parameter: already has buffer\n");
 	return DSERR_INVALIDPARAM;    /* DSERR_GENERIC ? */
     }
 
