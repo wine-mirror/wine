@@ -361,6 +361,7 @@ static void test_persiststreaminit(void)
     HRESULT hr;
     ULARGE_INTEGER size;
     CHAR path[MAX_PATH];
+    CLSID id;
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
@@ -379,6 +380,9 @@ static void test_persiststreaminit(void)
 
     hr = IPersistStreamInit_Save(psi, NULL, FALSE);
     todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IPersistStreamInit_GetClassID(psi, NULL);
+    ok(hr == E_POINTER, "Expected E_INVALIDARG, got %08x\n", hr);
 
     create_xml_file("bank.xml");
     GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
@@ -425,6 +429,11 @@ static void test_persiststreaminit(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     todo_wine ok(stat.cbSize.QuadPart > 0, "Expected >0\n");
     IStream_Release(stream);
+
+    memset(&id, 0, sizeof(id));
+    hr = IPersistStreamInit_GetClassID(psi, &id);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(IsEqualCLSID(&id, &CLSID_XMLDocument), "Expected CLSID_XMLDocument\n");
 
 cleanup:
     IPersistStreamInit_Release(psi);

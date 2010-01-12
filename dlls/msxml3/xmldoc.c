@@ -574,8 +574,13 @@ static ULONG WINAPI xmldoc_IPersistStreamInit_Release(
 static HRESULT WINAPI xmldoc_IPersistStreamInit_GetClassID(
     IPersistStreamInit *iface, CLSID *classid)
 {
-    FIXME("(%p,%p): stub!\n", iface, classid);
-    return E_NOTIMPL;
+    xmldoc *this = impl_from_IPersistStreamInit(iface);
+    TRACE("(%p,%p)\n", this, classid);
+
+    if (!classid) return E_POINTER;
+
+    *classid = CLSID_XMLDocument;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmldoc_IPersistStreamInit_IsDirty(
