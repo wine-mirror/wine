@@ -257,9 +257,6 @@ static int get_osx_device_name(int id, char *name, int length)
 
     tIOHIDDeviceRef = ( IOHIDDeviceRef ) CFArrayGetValueAtIndex( gDevices, id );
 
-    if (!tIOHIDDeviceRef)
-        return 0;
-
     if (name)
         name[0] = 0;
 
