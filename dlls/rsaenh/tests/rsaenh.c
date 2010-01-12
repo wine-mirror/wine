@@ -275,7 +275,6 @@ static BOOL derive_key(ALG_ID aiAlgid, HCRYPTKEY *phKey, DWORD len)
         return FALSE;
     } 
     ok(result, "%08x\n", GetLastError());
-    if (!result) return FALSE;
     result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return FALSE;
