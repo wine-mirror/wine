@@ -657,7 +657,8 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Save(
 static HRESULT WINAPI xmldoc_IPersistStreamInit_GetSizeMax(
     IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize)
 {
-    FIXME("(%p, %p): stub!\n", iface, pcbSize);
+    xmldoc *This = impl_from_IPersistStreamInit(iface);
+    TRACE("(%p, %p)\n", This, pcbSize);
     return E_NOTIMPL;
 }
 

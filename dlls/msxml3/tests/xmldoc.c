@@ -49,6 +49,33 @@ static void create_xml_file(LPCSTR filename)
     CloseHandle(hf);
 }
 
+static void create_stream_on_file(IStream **stream, LPCSTR path)
+{
+    HANDLE hfile;
+    HGLOBAL hglobal;
+    LPVOID ptr;
+    HRESULT hr;
+    DWORD file_size, read;
+
+    hfile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hfile != INVALID_HANDLE_VALUE, "Expected a valid file handle\n");
+    file_size = GetFileSize(hfile, NULL);
+
+    hglobal = GlobalAlloc(GHND, file_size);
+    ptr = GlobalLock(hglobal);
+
+    ReadFile(hfile, ptr, file_size, &read, NULL);
+    ok(file_size == read, "Expected to read the whole file, read %d\n", read);
+
+    hr = CreateStreamOnHGlobal(hglobal, TRUE, stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(*stream != NULL, "Expected non-NULL stream\n");
+
+    CloseHandle(hfile);
+    GlobalUnlock(hglobal);
+}
+
 static void test_xmldoc(void)
 {
     HRESULT hr;
@@ -57,10 +84,6 @@ static void test_xmldoc(void)
     IXMLElementCollection *collection = NULL, *inner = NULL;
     IPersistStreamInit *psi = NULL;
     IStream *stream = NULL;
-    HGLOBAL hglobal;
-    HANDLE hfile;
-    LPVOID ptr;
-    DWORD file_size, read;
     CHAR path[MAX_PATH];
     LONG type, num_child;
     VARIANT vIndex, vName;
@@ -75,32 +98,11 @@ static void test_xmldoc(void)
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
-    if (FAILED(hr))
-    {
-        skip("Failed to create XMLDocument instance\n");
-        return;
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     create_xml_file("bank.xml");
     GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
-
-    hfile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(hfile != INVALID_HANDLE_VALUE, "Expected a valid file handle\n");
-    file_size = GetFileSize(hfile, NULL);
-
-    hglobal = GlobalAlloc(GHND, file_size);
-    ptr = GlobalLock(hglobal);
-
-    ReadFile(hfile, ptr, file_size, &read, NULL);
-    ok(file_size == read, "Expected to read the whole file, read %d\n", read);
-
-    hr = CreateStreamOnHGlobal(hglobal, TRUE, &stream);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(stream != NULL, "Expected non-NULL stream\n");
-
-    CloseHandle(hfile);
-    GlobalUnlock(hglobal);
+    create_stream_on_file(&stream, path);
 
     hr = IXMLDocument_QueryInterface(doc, &IID_IPersistStreamInit, (LPVOID *)&psi);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -271,11 +273,7 @@ static void test_createElement(void)
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
-    if (FAILED(hr))
-    {
-        skip("Failed to create XMLDocument instance\n");
-        return;
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* invalid vType type */
     V_VT(&vType) = VT_NULL;
@@ -354,6 +352,103 @@ static void test_createElement(void)
     IXMLDocument_Release(doc);
 }
 
+static void test_persiststreaminit(void)
+{
+    IXMLDocument *doc = NULL;
+    IPersistStreamInit *psi = NULL;
+    IStream *stream = NULL;
+    STATSTG stat;
+    HRESULT hr;
+    ULARGE_INTEGER size;
+    CHAR path[MAX_PATH];
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IXMLDocument, (LPVOID*)&doc);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXMLDocument_QueryInterface(doc, &IID_IPersistStreamInit, (LPVOID *)&psi);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(psi != NULL, "Expected non-NULL psi\n");
+
+    /* null arguments */
+    hr = IPersistStreamInit_GetSizeMax(psi, NULL);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
+
+    hr = IPersistStreamInit_Load(psi, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IPersistStreamInit_Save(psi, NULL, FALSE);
+    todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    create_xml_file("bank.xml");
+    GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
+    create_stream_on_file(&stream, path);
+
+    /* GetSizeMax not implemented */
+    size.QuadPart = 0;
+    hr = IPersistStreamInit_GetSizeMax(psi, &size);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
+    ok(size.QuadPart == 0, "Expected 0\n");
+
+    hr = IPersistStreamInit_Load(psi, stream);
+    IStream_Release(stream);
+    ok(hr == S_OK || hr == XML_E_INVALIDATROOTLEVEL, "Expected S_OK, got %08x\n", hr);
+    if(hr == XML_E_INVALIDATROOTLEVEL)
+        goto cleanup;
+
+    /* try to save document */
+    stream = NULL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    hr = IPersistStreamInit_Save(psi, stream, FALSE);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    stat.cbSize.QuadPart = 0;
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine ok(stat.cbSize.QuadPart > 0, "Expected >0\n");
+    IStream_Release(stream);
+
+    /* reset internal stream */
+    hr = IPersistStreamInit_InitNew(psi);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    stream = NULL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IPersistStreamInit_Save(psi, stream, FALSE);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    stat.cbSize.QuadPart = 0;
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine ok(stat.cbSize.QuadPart > 0, "Expected >0\n");
+    IStream_Release(stream);
+
+cleanup:
+    IPersistStreamInit_Release(psi);
+    IXMLDocument_Release(doc);
+    DeleteFileA("bank.xml");
+}
+
+static BOOL test_try_xmldoc(void)
+{
+    IXMLDocument *doc = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IXMLDocument, (LPVOID*)&doc);
+    if (FAILED(hr))
+    {
+        skip("Failed to create XMLDocument instance\n");
+        return FALSE;
+    }
+
+    IXMLDocument_Release(doc);
+    return TRUE;
+}
+
 START_TEST(xmldoc)
 {
     HRESULT hr;
@@ -361,8 +456,15 @@ START_TEST(xmldoc)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "failed to init com\n");
 
+    if (!test_try_xmldoc())
+    {
+        CoUninitialize();
+        return;
+    }
+
     test_xmldoc();
     test_createElement();
+    test_persiststreaminit();
 
     CoUninitialize();
 }
