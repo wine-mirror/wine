@@ -35,7 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
-    IAMMultiMediaStream lpVtbl;
+    const IAMMultiMediaStreamVtbl *lpVtbl;
     LONG ref;
     IGraphBuilder* pFilterGraph;
     IPin* ipin;
@@ -63,7 +63,7 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl.lpVtbl = &AM_Vtbl;
+    object->lpVtbl = &AM_Vtbl;
     object->ref = 1;
 
     *ppObj = object;

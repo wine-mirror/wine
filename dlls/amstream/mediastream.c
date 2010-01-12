@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
-    IMediaStream lpVtbl;
+    const IMediaStreamVtbl *lpVtbl;
     LONG ref;
     IMultiMediaStream* Parent;
     MSPID PurposeId;
@@ -44,7 +44,7 @@ typedef struct {
 } IMediaStreamImpl;
 
 typedef struct {
-    IDirectDrawMediaStream lpVtbl;
+    const IDirectDrawMediaStreamVtbl *lpVtbl;
     LONG ref;
     IMultiMediaStream* Parent;
     MSPID PurposeId;
@@ -67,7 +67,7 @@ HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, S
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl.lpVtbl = &MediaStream_Vtbl;
+    object->lpVtbl = &MediaStream_Vtbl;
     object->ref = 1;
 
     object->Parent = Parent;
@@ -207,7 +207,7 @@ HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPu
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl.lpVtbl = &DirectDrawMediaStream_Vtbl;
+    object->lpVtbl = &DirectDrawMediaStream_Vtbl;
     object->ref = 1;
 
     object->Parent = Parent;
