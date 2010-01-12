@@ -71,7 +71,7 @@ HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
         return DXFILEERR_BADALLOC;
     }
 
-    object->lpVtbl.lpVtbl = &IDirectXFile_Vtbl;
+    object->lpVtbl = &IDirectXFile_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -451,7 +451,7 @@ static HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj)
         return DXFILEERR_BADALLOC;
     }
 
-    object->lpVtbl.lpVtbl = &IDirectXFileBinary_Vtbl;
+    object->lpVtbl = &IDirectXFileBinary_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -579,7 +579,7 @@ static HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj)
         return DXFILEERR_BADALLOC;
     }
 
-    object->lpVtbl.lpVtbl = &IDirectXFileData_Vtbl;
+    object->lpVtbl = &IDirectXFileData_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -822,7 +822,7 @@ static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImp
         return DXFILEERR_BADALLOC;
     }
     
-    object->lpVtbl.lpVtbl = &IDirectXFileDataReference_Vtbl;
+    object->lpVtbl = &IDirectXFileDataReference_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -955,7 +955,7 @@ static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** pp
         return DXFILEERR_BADALLOC;
     }
     
-    object->lpVtbl.lpVtbl = &IDirectXFileEnumObject_Vtbl;
+    object->lpVtbl = &IDirectXFileEnumObject_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -1148,7 +1148,7 @@ static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** pp
         return DXFILEERR_BADALLOC;
     }
 
-    object->lpVtbl.lpVtbl = &IDirectXFileSaveObject_Vtbl;
+    object->lpVtbl = &IDirectXFileSaveObject_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
