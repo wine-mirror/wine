@@ -990,9 +990,12 @@ static void test_RtlAllocateAndInitializeSid(void)
     ret = pRtlFreeSid(psid);
     ok(!ret, "RtlFreeSid error %08x\n", ret);
 
-    /* these tests crash on XP
-    ret = pRtlAllocateAndInitializeSid(NULL, 0, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
-    ret = pRtlAllocateAndInitializeSid(&sia, 0, 1, 2, 3, 4, 5, 6, 7, 8, NULL);*/
+    /* these tests crash on XP */
+    if (0)
+    {
+        ret = pRtlAllocateAndInitializeSid(NULL, 0, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
+        ret = pRtlAllocateAndInitializeSid(&sia, 0, 1, 2, 3, 4, 5, 6, 7, 8, NULL);
+    }
 
     ret = pRtlAllocateAndInitializeSid(&sia, 9, 1, 2, 3, 4, 5, 6, 7, 8, &psid);
     ok(ret == STATUS_INVALID_SID, "wrong error %08x\n", ret);
