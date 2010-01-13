@@ -1113,10 +1113,21 @@ static void test_wtoi64(void)
     }
 }
 
-static void test_wcsfuncs(void)
+static void test_wcschr(void)
+{
+    static const WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
+
+    ok(p_wcschr(teststringW, 'a') == teststringW + 0,
+       "wcschr should have returned a pointer to the first 'a' character\n");
+    ok(p_wcschr(teststringW, 0) == teststringW + 11,
+       "wcschr should have returned a pointer to the null terminator\n");
+    ok(p_wcschr(teststringW, 'x') == NULL,
+       "wcschr should have returned NULL\n");
+}
+
+static void test_wcsrchr(void)
 {       
     static const WCHAR testing[] = {'T','e','s','t','i','n','g',0};
-    ok (p_wcschr(testing,0)!=NULL, "wcschr Not finding terminating character\n");
     ok (p_wcsrchr(testing,0)!=NULL, "wcsrchr Not finding terminating character\n");
 }
 
@@ -1140,8 +1151,10 @@ START_TEST(string)
         test_wtol();
     if (p_wtoi64)
         test_wtoi64();
-    if (p_wcschr && p_wcsrchr)
-        test_wcsfuncs();
+    if (p_wcschr)
+        test_wcschr();
+    if (p_wcsrchr)
+        test_wcsrchr();
     if (patoi)
         test_atoi();
     if (patol)
