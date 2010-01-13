@@ -2,6 +2,7 @@
  * wineconsole (Russian resources)
  *
  * Copyright 2003 Igor Stepin
+ * Copyright 2010 Vitaly Lipatov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,36 +34,36 @@ IDS_PROPERTIES,		"С&войства"
 IDS_MARK,		"&Выделить"
 IDS_COPY,		"&Копировать"
 IDS_PASTE,		"&Вставить"
-IDS_SELECTALL,		"Выделить в&се"
+IDS_SELECTALL,		"Выделить в&сё"
 IDS_SCROLL,		"Прок&рутить"
 IDS_SEARCH,		"По&иск"
 IDS_FNT_DISPLAY,	"Каждый символ %ld пикселей в ширину и %ld пикселей в высоту"
 IDS_FNT_PREVIEW_1,	"Это тест"
 IDS_FNT_PREVIEW_2,	"This is a test"
-IDS_DLG_TIT_DEFAULT,     "Настройка - Установки по умолчанию"
-IDS_DLG_TIT_CURRENT,     "Настройка - Текущие установки"
-IDS_DLG_TIT_ERROR,     "Ошибка настройки"
+IDS_DLG_TIT_DEFAULT,       "Настройка - Установки по умолчанию"
+IDS_DLG_TIT_CURRENT,       "Настройка - Текущие установки"
+IDS_DLG_TIT_ERROR,         "Ошибка настройки"
 IDS_DLG_ERR_SBWINSIZE,     "Размер буфера экрана должен быть не менее буфера окна"
 
-IDS_CMD_INVALID_EVENT_ID   "wineconsole: Не верно указан код события\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole: Не известный backend\n"
-IDS_CMD_INVALID_OPTION     "wineconsole: Указанная опция не найдена\n"
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Неверно указан код события\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Неизвестный backend\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Неверный параметр командной строки\n"
 IDS_CMD_ABOUT              "Запуск программы в консоли Wine\n"
 IDS_CMD_LAUNCH_FAILED      "wineconsole: Не удался запуск программы '%s'.\n"\
-                           "Не верно указанна команда.\n"
+                           "Неверно указана команда.\n"
 
-IDS_USAGE_HEADER           "\nВызов:\n  wineconsole [опции] <команда>\n\nОпции:\n"
+IDS_USAGE_HEADER           "\nВызов:\n  wineconsole [параметры] <команда>\n\nПараметры:\n"
 IDS_USAGE_BACKEND          "  --backend={user|curses}  Выбор 'user' откроет новое окно с полной поддержкой\n"\
                            "                            всех режимов работы консоли. 'curses' - использует\n"\
                            "                            текущее окно с ограниченной функциональностью\n"\
-IDS_USAGE_COMMAND          "  <команда>                Имя программы для запуска в консоли Wine\n"
+IDS_USAGE_COMMAND          "  <команда>                Название программы для запуска в консоли Wine\n"
 IDS_USAGE_FOOTER           "\nНапример:\n  wineconsole cmd\nЗапустить командный процессор Wine в консоли Wine\n\n"
 
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " Опции "
+CAPTION " Параметры "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Размер курсора", -1, 10, 11, 60, 54, BS_GROUPBOX
@@ -81,7 +82,7 @@ FONT 8, "MS Shell Dlg"
 	LTEXT "&История команд:", -1, 14, 77, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 82, 79, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	AUTOCHECKBOX "&Удалять дублирующиеся", IDC_OPT_HIST_NODOUBLE, 120, 77, 70, 18, WS_TABSTOP|BS_MULTILINE
+	AUTOCHECKBOX "&Удалять повторяющиеся", IDC_OPT_HIST_NODOUBLE, 120, 77, 70, 18, WS_TABSTOP|BS_MULTILINE
 }
 
 IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
@@ -106,18 +107,18 @@ CAPTION " Настройка "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Зона буфера", -1, 8, 11, 100, 42, BS_GROUPBOX
-	LTEXT "&Ширина :", -1, 14, 25, 54, 9
+	LTEXT "&Ширина:", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "&Высота :", -1, 14, 39, 54, 9
+	LTEXT "&Высота:", -1, 14, 39, 54, 9
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "Размер окна", -1, 8, 55, 100, 42
-	LTEXT "Ш&ирина :", -1, 14, 69, 54, 9
+	LTEXT "Ш&ирина:", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "В&ысота :", -1, 14, 83, 54, 9
+	LTEXT "В&ысота:", -1, 14, 83, 54, 9
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
