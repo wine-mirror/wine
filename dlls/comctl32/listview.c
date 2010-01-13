@@ -9188,10 +9188,14 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
  *   Success: 0
  *   Failure: -1
  */
-static LRESULT LISTVIEW_Destroy(const LISTVIEW_INFO *infoPtr)
+static LRESULT LISTVIEW_Destroy(LISTVIEW_INFO *infoPtr)
 {
     HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
     CloseThemeData(theme);
+
+    /* delete all items */
+    LISTVIEW_DeleteAllItems(infoPtr, TRUE);
+
     return 0;
 }
 
@@ -9922,9 +9926,6 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   INT i;
 
   TRACE("()\n");
-
-  /* delete all items */
-  LISTVIEW_DeleteAllItems(infoPtr, TRUE);
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);

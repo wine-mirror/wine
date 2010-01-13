@@ -32,7 +32,8 @@
 #define PARENT_FULL_SEQ_INDEX  1
 #define LISTVIEW_SEQ_INDEX     2
 #define EDITBOX_SEQ_INDEX      3
-#define NUM_MSG_SEQUENCES      4
+#define COMBINED_SEQ_INDEX     4
+#define NUM_MSG_SEQUENCES      5
 
 #define LISTVIEW_ID 0
 #define HEADER_ID   1
@@ -286,6 +287,18 @@ static const struct message hover_parent[] = {
     { 0 }
 };
 
+static const struct message listview_destroy[] = {
+    { 0x0090, sent|optional }, /* Vista */
+    { WM_PARENTNOTIFY, sent },
+    { WM_SHOWWINDOW, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { WM_DESTROY, sent },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_DELETEALLITEMS },
+    { WM_NCDESTROY, sent },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -312,6 +325,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
+        add_message(sequences, COMBINED_SEQ_INDEX, &msg);
     }
     add_message(sequences, PARENT_FULL_SEQ_INDEX, &msg);
 
@@ -460,6 +474,7 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     msg.lParam = lParam;
     msg.id = LISTVIEW_ID;
     add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+    add_message(sequences, COMBINED_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
@@ -4263,6 +4278,18 @@ static void test_hover(void)
     DestroyWindow(hwnd);
 }
 
+static void test_destroynotify(void)
+{
+    HWND hwnd;
+
+    hwnd = create_listview_control(LVS_REPORT);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, listview_destroy, "check destroy order", FALSE);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4323,6 +4350,7 @@ START_TEST(listview)
     test_approximate_viewrect();
     test_finditem();
     test_hover();
+    test_destroynotify();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
