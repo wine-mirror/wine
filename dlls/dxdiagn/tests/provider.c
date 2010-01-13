@@ -32,7 +32,9 @@ static void test_Initialize(void)
 
     hr = CoCreateInstance(&CLSID_DxDiagProvider, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDxDiagProvider, (LPVOID*)&pddp);
-    ok(hr == S_OK, "Creating a IDxDiagProvider instance failed with %x\n", hr);
+    ok(hr == S_OK ||
+       broken(hr == REGDB_E_CLASSNOTREG), /* Clean W2K3 */
+       "Creating a IDxDiagProvider instance failed with %x\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to create a IDxDiagProvider instance\n");
@@ -97,7 +99,9 @@ static void test_GetRootContainer(void)
 
     hr = CoCreateInstance(&CLSID_DxDiagProvider, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDxDiagProvider, (LPVOID*)&pddp);
-    ok(hr == S_OK, "Creating a IDxDiagProvider instance failed with %x\n", hr);
+    ok(hr == S_OK ||
+       broken(hr == REGDB_E_CLASSNOTREG), /* Clean W2K3 */
+       "Creating a IDxDiagProvider instance failed with %x\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to create a IDxDiagProvider instance\n");
