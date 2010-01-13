@@ -6903,6 +6903,32 @@ static const struct message WmVkF10Seq[] = {
     { WM_SYSKEYUP, sent|wparam|lparam, VK_F10, 0xc0000001 },
     { 0 }
 };
+static const struct message WmShiftF10Seq[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 1 }, /* XP */
+    { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 0x00000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F10, 1 }, /* XP */
+    { WM_SYSKEYDOWN, wparam|lparam, VK_F10, 1 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_F10, 0x00000001 },
+    { WM_CONTEXTMENU, sent|defwinproc|lparam, /*hwnd*/0, MAKELPARAM(-1, -1) },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F10, 0xc0000001 }, /* XP */
+    { WM_SYSKEYUP, wparam|lparam, VK_F10, 0xc0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_F10, 0xc0000001 },
+    { WM_SYSCOMMAND, sent|defwinproc|wparam, SC_KEYMENU },
+    { HCBT_SYSCOMMAND, hook },
+    { WM_ENTERMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
+    { WM_INITMENU, sent|defwinproc },
+    { WM_MENUSELECT, sent|defwinproc|wparam, MAKEWPARAM(0,MF_SYSMENU|MF_POPUP|MF_HILITE) },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xd0000001 }, /* XP */
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 0x10000001 }, /* XP */
+    { WM_CAPTURECHANGED, sent|defwinproc|wparam|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|defwinproc|wparam|lparam, 0xffff0000, 0 },
+    { WM_EXITMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 0xc0000001 }, /* XP */
+    { WM_KEYUP, wparam|lparam, VK_ESCAPE, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_ESCAPE, 0xc0000001 },
+    { 0 }
+};
 
 static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 {
@@ -7122,6 +7148,16 @@ static void test_accelerators(void)
     keybd_event(VK_F10, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmVkF10Seq, "VK_F10 press/release", TRUE);
+
+    trace("testing SHIFT+F10 press/release\n");
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event(VK_F10, 0, 0, 0);
+    keybd_event(VK_F10, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_ESCAPE, 0, 0, 0);
+    keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmShiftF10Seq, "SHIFT+F10 press/release", TRUE);
 
     trace("testing Shift+MouseButton press/release\n");
     /* first, move mouse pointer inside of the window client area */
