@@ -362,21 +362,13 @@ void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
   DWORD dwVariableSize;
   DWORD dwVariableLen;
   /* LPCDPMSG_ENUMSESSIONSREQUEST msg = (LPDPMSG_ENUMSESSIONSREQUEST)lpcMsg; */
-  BOOL bAnsi = TRUE; /* FIXME: This needs to be in the DPLAY interface */
 
-  FIXME( ": few fixed + need to check request for response\n" );
+  /* FIXME: Should handle ANSI or WIDECHAR input. Currently just ANSI input */
+  FIXME( ": few fixed + need to check request for response, might need UNICODE input ability.\n" );
 
-  if (bAnsi)
-  {
-      dwVariableLen = MultiByteToWideChar( CP_ACP, 0,
-                                           lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA,
-                                           -1, NULL, 0 );
-  }
-  else
-  {
-      dwVariableLen = strlenW( lpDP->dp2->lpSessionDesc->u1.lpszSessionName ) + 1;
-  }
-
+  dwVariableLen = MultiByteToWideChar( CP_ACP, 0,
+                                       lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA,
+                                       -1, NULL, 0 );
   dwVariableSize = dwVariableLen * sizeof( WCHAR );
 
   *lpdwReplySize = lpDP->dp2->spData.dwSPHeaderSize +
@@ -394,13 +386,6 @@ void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
   CopyMemory( &rmsg->sd, lpDP->dp2->lpSessionDesc,
               lpDP->dp2->lpSessionDesc->dwSize );
   rmsg->dwUnknown = 0x0000005c;
-  if( bAnsi )
-  {
-      MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA, -1,
-                           (LPWSTR)(rmsg+1), dwVariableLen );
-  }
-  else
-  {
-      strcpyW( (LPWSTR)(rmsg+1), lpDP->dp2->lpSessionDesc->u1.lpszSessionName );
-  }
+  MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA, -1,
+                       (LPWSTR)(rmsg+1), dwVariableLen );
 }
