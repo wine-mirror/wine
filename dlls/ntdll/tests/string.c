@@ -1126,9 +1126,15 @@ static void test_wcschr(void)
 }
 
 static void test_wcsrchr(void)
-{       
-    static const WCHAR testing[] = {'T','e','s','t','i','n','g',0};
-    ok (p_wcsrchr(testing,0)!=NULL, "wcsrchr Not finding terminating character\n");
+{
+    static const WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
+
+    ok(p_wcsrchr(teststringW, 'a') == teststringW + 10,
+       "wcsrchr should have returned a pointer to the last 'a' character\n");
+    ok(p_wcsrchr(teststringW, 0) == teststringW + 11,
+       "wcsrchr should have returned a pointer to the null terminator\n");
+    ok(p_wcsrchr(teststringW, 'x') == NULL,
+       "wcsrchr should have returned NULL\n");
 }
 
 START_TEST(string)
