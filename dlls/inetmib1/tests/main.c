@@ -47,6 +47,8 @@ static void testInit(void)
     ok(ret, "SnmpExtensionInit failed: %d\n", GetLastError());
     ok(!strcmp("1.3.6.1.2.1.1", SnmpUtilOidToA(&oid)),
         "Expected 1.3.6.1.2.1.1, got %s\n", SnmpUtilOidToA(&oid));
+
+    SnmpUtilOidFree(&oid);
 }
 
 static void testQuery(void)
