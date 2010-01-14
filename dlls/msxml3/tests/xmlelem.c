@@ -478,7 +478,7 @@ static void test_xmlelem_children(void)
 
     /* remove/add child and check what happens with collection */
     hr = IXMLElement_removeChild(element, child);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     length = -1;
     hr = IXMLElementCollection_get_length(collection, &length);
@@ -522,13 +522,33 @@ static void test_xmlelem_children(void)
     hr = IXMLElementCollection_item(collection, vIndex, vName, (IDispatch **)&child2);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child2 != NULL, "Expected not NULL child\n");
+    IXMLElementCollection_Release(collection);
+
+    /* add element->child->child2 structure, then remove child2 from node */
+    V_VT(&vType) = VT_I4;
+    V_I4(&vType) = XMLELEMTYPE_TEXT;
+    V_VT(&vName) = VT_NULL;
+    hr = IXMLDocument_createElement(doc, vType, vName, &child2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(child2 != NULL, "Expected non-NULL child\n");
+
+    hr = IXMLElement_addChild(child, child2, 0, -1);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXMLElement_removeChild(element, child2);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IXMLElement_removeChild(child, child2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXMLElement_removeChild(child, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     IXMLElement_Release(element);
     IXMLElement_Release(child);
-    IXMLElementCollection_Release(collection);
+    IXMLElement_Release(child2);
     IXMLDocument_Release(doc);
 }
-
 
 static BOOL test_try_xmldoc(void)
 {

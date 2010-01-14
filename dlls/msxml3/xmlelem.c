@@ -412,8 +412,21 @@ static HRESULT WINAPI xmlelem_addChild(IXMLElement *iface, IXMLElement *pChildEl
 
 static HRESULT WINAPI xmlelem_removeChild(IXMLElement *iface, IXMLElement *pChildElem)
 {
-    FIXME("(%p, %p): stub\n", iface, pChildElem);
-    return E_NOTIMPL;
+    xmlelem *This = impl_from_IXMLElement(iface);
+    xmlelem *childElem = impl_from_IXMLElement(pChildElem);
+
+    TRACE("(%p, %p)\n", This, childElem);
+
+    if (!pChildElem)
+        return E_INVALIDARG;
+
+    /* only supported for This is childElem parent case */
+    if (This->node != childElem->node->parent)
+        return E_INVALIDARG;
+
+    xmlUnlinkNode(childElem->node);
+
+    return S_OK;
 }
 
 static const struct IXMLElementVtbl xmlelem_vtbl =
