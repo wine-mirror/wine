@@ -30,6 +30,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnetwk.h"
 #include "wine/winnet16.h"
 #include "wine/debug.h"
 
@@ -306,10 +307,26 @@ WORD WINAPI WNetGetCaps16( WORD capability )
 /**************************************************************************
  *		WNetGetUser			[USER.516]
  */
-WORD WINAPI WNetGetUser16( LPCSTR lpName, LPSTR szUser, LPINT16 nBufferSize )
+WORD WINAPI WNetGetUser16( LPSTR szUser, LPINT16 nBufferSize )
 {
-    FIXME( "(%p, %p, %p): stub\n", lpName, szUser, nBufferSize );
-    return WN16_NOT_SUPPORTED;
+    DWORD lpBufferSize, ret;
+
+    if(!szUser || !nBufferSize) return WN16_BAD_POINTER;
+
+    lpBufferSize = *nBufferSize;
+    ret = WNetGetUserA( NULL, szUser, &lpBufferSize );
+    *nBufferSize = lpBufferSize;
+
+    switch (ret)
+    {
+        case NO_ERROR:
+            return WN16_SUCCESS;
+        case ERROR_MORE_DATA:
+            return WN16_MORE_DATA;
+        default:
+            FIXME("Untranslated return value %d\n", ret);
+    }
+    return ret;
 }
 
 

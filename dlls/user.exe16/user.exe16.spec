@@ -463,7 +463,7 @@
 513 pascal -ret16 WNetGetCaps(word) WNetGetCaps16
 514 pascal -ret16 WNetDeviceMode(word) WNetDeviceMode16
 515 pascal -ret16 WNetBrowseDialog(word word ptr) WNetBrowseDialog16
-516 pascal -ret16 WNetGetUser(ptr ptr ptr) WNetGetUser16
+516 pascal -ret16 WNetGetUser(ptr ptr) WNetGetUser16
 517 pascal -ret16 WNetAddConnection(str str str) WNetAddConnection16
 518 pascal -ret16 WNetCancelConnection(str word) WNetCancelConnection16
 519 pascal -ret16 WNetGetError(ptr) WNetGetError16
