@@ -157,7 +157,7 @@
 @ stub ExIsProcessorFeaturePresent
 @ stub ExIsResourceAcquiredExclusiveLite
 @ stub ExIsResourceAcquiredSharedLite
-@ stub ExLocalTimeToSystemTime
+@ stdcall ExLocalTimeToSystemTime(ptr ptr) ntdll.RtlLocalTimeToSystemTime
 @ stub ExNotifyCallback
 @ stub ExQueryPoolBlockSize
 @ stub ExQueueWorkItem
@@ -173,7 +173,7 @@
 @ stub ExSetResourceOwnerPointer
 @ stub ExSetTimerResolution
 @ stub ExSystemExceptionFilter
-@ stub ExSystemTimeToLocalTime
+@ stdcall ExSystemTimeToLocalTime(ptr ptr) ntdll.RtlSystemTimeToLocalTime
 @ stub ExUnregisterCallback
 @ stub ExUuidCreate
 @ stub ExVerifySuite
