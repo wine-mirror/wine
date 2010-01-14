@@ -3118,8 +3118,11 @@ DWORD WINAPI GetSecurityInfo(
     }
     if (ppSecurityDescriptor)
         *ppSecurityDescriptor = sd;
-    else
-        LocalFree(sd);
+
+    /* The security descriptor (sd) cannot be freed if ppSecurityDescriptor is
+     * NULL, because native happily returns the SIDs and ACLs that are requested
+     * in this case.
+     */
 
     return ERROR_SUCCESS;
 }
