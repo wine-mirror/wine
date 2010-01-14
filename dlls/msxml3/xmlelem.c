@@ -48,6 +48,7 @@ typedef struct _xmlelem
     const IXMLElementVtbl *lpVtbl;
     LONG ref;
     xmlNodePtr node;
+    BOOL own;
 } xmlelem;
 
 static inline xmlelem *impl_from_IXMLElement(IXMLElement *iface)
@@ -94,6 +95,7 @@ static ULONG WINAPI xmlelem_Release(IXMLElement *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
+        if (This->own) xmlFreeNode(This->node);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -212,7 +214,7 @@ static HRESULT WINAPI xmlelem_get_parent(IXMLElement *iface, IXMLElement **paren
     if (!This->node->parent)
         return S_FALSE;
 
-    return XMLElement_create((IUnknown *)iface, This->node->parent, (LPVOID *)parent);
+    return XMLElement_create((IUnknown *)iface, This->node->parent, (LPVOID *)parent, FALSE);
 }
 
 static HRESULT WINAPI xmlelem_setAttribute(IXMLElement *iface, BSTR strPropertyName,
@@ -407,6 +409,9 @@ static HRESULT WINAPI xmlelem_addChild(IXMLElement *iface, IXMLElement *pChildEl
     else
         child = xmlAddNextSibling(This->node, childElem->node->last);
 
+    /* parent is responsible for child data */
+    if (child) childElem->own = FALSE;
+
     return (child) ? S_OK : S_FALSE;
 }
 
@@ -425,6 +430,8 @@ static HRESULT WINAPI xmlelem_removeChild(IXMLElement *iface, IXMLElement *pChil
         return E_INVALIDARG;
 
     xmlUnlinkNode(childElem->node);
+    /* standalone element now */
+    childElem->own = TRUE;
 
     return S_OK;
 }
@@ -452,7 +459,7 @@ static const struct IXMLElementVtbl xmlelem_vtbl =
     xmlelem_removeChild
 };
 
-HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj)
+HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own)
 {
     xmlelem *elem;
 
@@ -470,6 +477,7 @@ HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj)
     elem->lpVtbl = &xmlelem_vtbl;
     elem->ref = 1;
     elem->node = node;
+    elem->own  = own;
 
     *ppObj = &elem->lpVtbl;
 
@@ -652,7 +660,7 @@ static HRESULT WINAPI xmlelem_collection_item(IXMLElementCollection *iface, VARI
     for (i = 0; i < index; i++)
         ptr = ptr->next;
 
-    return XMLElement_create((IUnknown *)iface, ptr, (LPVOID *)ppDisp);
+    return XMLElement_create((IUnknown *)iface, ptr, (LPVOID *)ppDisp, FALSE);
 }
 
 static const struct IXMLElementCollectionVtbl xmlelem_collection_vtbl =
@@ -712,7 +720,7 @@ static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Next(
     This->current = This->current->next;
 
     V_VT(rgVar) = VT_DISPATCH;
-    return XMLElement_create((IUnknown *)iface, ptr, (LPVOID *)&V_DISPATCH(rgVar));
+    return XMLElement_create((IUnknown *)iface, ptr, (LPVOID *)&V_DISPATCH(rgVar), FALSE);
 }
 
 static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Skip(

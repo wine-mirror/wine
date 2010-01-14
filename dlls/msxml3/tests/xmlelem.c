@@ -523,6 +523,7 @@ static void test_xmlelem_children(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child2 != NULL, "Expected not NULL child\n");
     IXMLElementCollection_Release(collection);
+    IXMLElement_Release(child2);
 
     /* add element->child->child2 structure, then remove child2 from node */
     V_VT(&vType) = VT_I4;

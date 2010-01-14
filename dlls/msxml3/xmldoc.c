@@ -209,7 +209,7 @@ static HRESULT WINAPI xmldoc_get_root(IXMLDocument *iface, IXMLElement **p)
     if (!(root = xmlDocGetRootElement(This->xmldoc)))
         return E_FAIL;
 
-    return XMLElement_create((IUnknown *)This, root, (LPVOID *)p);
+    return XMLElement_create((IUnknown *)This, root, (LPVOID *)p, FALSE);
 }
 
 static HRESULT WINAPI xmldoc_get_fileSize(IXMLDocument *iface, BSTR *p)
@@ -520,7 +520,7 @@ static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
     node->type = type_msxml_to_libxml(V_I4(&vType));
 
     /* FIXME: create xmlNodePtr based on vType and var1 */
-    return XMLElement_create((IUnknown *)iface, node, (LPVOID *)ppElem);
+    return XMLElement_create((IUnknown *)iface, node, (LPVOID *)ppElem, TRUE);
 }
 
 static const struct IXMLDocumentVtbl xmldoc_vtbl =
