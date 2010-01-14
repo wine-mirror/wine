@@ -1726,10 +1726,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
     TRACE("pass %p\n", p);
 
     HeapFree(GetProcessHeap(), 0, p->name);
-    if (p->objects)
-    {
-        HeapFree(GetProcessHeap(), 0, p->objects);
-    }
+    HeapFree(GetProcessHeap(), 0, p->objects);
 
     if (p->annotations)
     {
