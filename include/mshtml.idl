@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Jacek Caban for CodeWeavers
+ * Copyright 2004-2010 Jacek Caban for CodeWeavers
  * Copyright 2008      Konstantin Kondratyuk (Etersoft)
  *
  * This library is free software; you can redistribute it and/or
@@ -14726,6 +14726,36 @@ interface IHTMLFrameBase2 : IDispatch
 
     [propget, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]
     HRESULT allowTransparency([retval, out] VARIANT_BOOL *p);
+}
+
+/*****************************************************************************
+ *    IHTMLIFrameElement dispinterface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f315-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLIFrameElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT_VSPACE)]
+    HRESULT vspace([in] LONG v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT_VSPACE)]
+    HRESULT vspace([retval, out] LONG *p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT_HSPACE)]
+    HRESULT hspace([in] LONG v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT_HSPACE)]
+    HRESULT hspace([retval, out] LONG *p);
+
+    [propput, id(DISPID_IHTMLIFRAMEELEMENT_ALIGN), displaybind, bindable]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLIFRAMEELEMENT_ALIGN), displaybind, bindable]
+    HRESULT align([retval, out] BSTR *p);
 }
 
 /*****************************************************************************
