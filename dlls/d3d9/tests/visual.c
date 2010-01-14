@@ -495,9 +495,6 @@ static void clear_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_GetViewport(device, &old_vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
 
-    trace("viewport: X %u, Y %u, W %u, H %u, MinZ %.8e, MaxZ %.8e.\n",
-            old_vp.X, old_vp.Y, old_vp.Width, old_vp.Height, old_vp.MinZ, old_vp.MaxZ);
-
     vp.X = 160;
     vp.Y = 120;
     vp.Width = 160;
@@ -10433,7 +10430,6 @@ static void loop_index_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        trace("going to draw index\n");
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
         ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
