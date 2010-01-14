@@ -199,7 +199,7 @@ static void test_mmioDescend(char *fname)
 
 static void test_mmioOpen(char *fname)
 {
-    char buf[256];
+    char buf[MMIO_DEFAULTBUFFER];
     MMRESULT ret;
     HMMIO hmmio;
     MMIOINFO mmio;
