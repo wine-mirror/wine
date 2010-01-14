@@ -141,6 +141,13 @@ static void test_xmldoc(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(element != NULL, "Expected non-NULL element\n");
 
+    /* ::root() returns new instance each time */
+    hr = IXMLDocument_get_root(doc, &child);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(child != NULL, "Expected non-NULL element\n");
+    ok(child != element, "Expected new element instance\n");
+    IXMLElement_Release(child);
+
     hr = IXMLElement_get_type(element, &type);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %d\n", type);

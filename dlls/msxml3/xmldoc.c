@@ -54,7 +54,6 @@ typedef struct _xmldoc
     HRESULT error;
 
     /* IXMLDocument */
-    IXMLElement *root;
     xmlDocPtr xmldoc;
 
     /* IPersistStream */
@@ -198,17 +197,19 @@ static HRESULT WINAPI xmldoc_Invoke(IXMLDocument *iface, DISPID dispIdMember,
 static HRESULT WINAPI xmldoc_get_root(IXMLDocument *iface, IXMLElement **p)
 {
     xmldoc *This = impl_from_IXMLDocument(iface);
+    xmlNodePtr root;
 
     TRACE("(%p, %p)\n", iface, p);
 
     if (!p)
         return E_INVALIDARG;
 
-    *p = This->root;
-    if (!*p)
+    *p = NULL;
+
+    if (!(root = xmlDocGetRootElement(This->xmldoc)))
         return E_FAIL;
 
-    return S_OK;
+    return XMLElement_create((IUnknown *)This, root, (LPVOID *)p);
 }
 
 static HRESULT WINAPI xmldoc_get_fileSize(IXMLDocument *iface, BSTR *p)
@@ -604,7 +605,6 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
     IPersistStreamInit *iface, LPSTREAM pStm)
 {
     xmldoc *This = impl_from_IPersistStreamInit(iface);
-    xmlNodePtr xmlnode;
     HRESULT hr;
     HGLOBAL hglobal;
     DWORD read, written, len;
@@ -653,9 +653,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
         return E_FAIL;
     }
 
-    if (This->root) IXMLElement_Release(This->root);
-    xmlnode = xmlDocGetRootElement(This->xmldoc);
-    return XMLElement_create((IUnknown *)This, xmlnode, (LPVOID *)&This->root);
+    return S_OK;
 }
 
 static HRESULT WINAPI xmldoc_IPersistStreamInit_Save(
@@ -708,7 +706,6 @@ HRESULT XMLDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpvtblIPersistStreamInit = &xmldoc_IPersistStreamInit_VTable;
     doc->ref = 1;
     doc->error = S_OK;
-    doc->root = NULL;
     doc->xmldoc = NULL;
     doc->stream = NULL;
 
