@@ -262,6 +262,7 @@ static const tid_t HTMLIFrame_iface_tids[] = {
     IHTMLElement3_tid,
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,
+    IHTMLIFrameElement_tid,
     0
 };
 
