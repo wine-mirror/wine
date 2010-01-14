@@ -316,7 +316,7 @@ static HRESULT WINAPI xmlelem_get_children(IXMLElement *iface, IXMLElementCollec
     if (!p)
         return E_INVALIDARG;
 
-    return XMLElementCollection_create((IUnknown *)iface, This->node->children, (LPVOID *)p);
+    return XMLElementCollection_create((IUnknown *)iface, This->node, (LPVOID *)p);
 }
 
 static LONG type_libxml_to_msxml(xmlElementType type)
@@ -492,6 +492,19 @@ typedef struct _xmlelem_collection
     xmlNodePtr current;
 } xmlelem_collection;
 
+static inline LONG xmlelem_collection_updatelength(xmlelem_collection *collection)
+{
+    xmlNodePtr ptr = collection->node->children;
+
+    collection->length = 0;
+    while (ptr)
+    {
+        collection->length++;
+        ptr = ptr->next;
+    }
+    return collection->length;
+}
+
 static inline xmlelem_collection *impl_from_IXMLElementCollection(IXMLElementCollection *iface)
 {
     return (xmlelem_collection *)((char*)iface - FIELD_OFFSET(xmlelem_collection, lpVtbl));
@@ -596,7 +609,7 @@ static HRESULT WINAPI xmlelem_collection_get_length(IXMLElementCollection *iface
     if (!p)
         return E_INVALIDARG;
 
-    *p = This->length;
+    *p = xmlelem_collection_updatelength(This);
     return S_OK;
 }
 
@@ -618,7 +631,7 @@ static HRESULT WINAPI xmlelem_collection_item(IXMLElementCollection *iface, VARI
                                               VARIANT var2, IDispatch **ppDisp)
 {
     xmlelem_collection *This = impl_from_IXMLElementCollection(iface);
-    xmlNodePtr ptr = This->node;
+    xmlNodePtr ptr = This->node->children;
     int index, i;
 
     TRACE("(%p, %p)\n", iface, ppDisp);
@@ -631,6 +644,8 @@ static HRESULT WINAPI xmlelem_collection_item(IXMLElementCollection *iface, VARI
     index = V_I4(&var1);
     if (index < 0)
         return E_INVALIDARG;
+
+    xmlelem_collection_updatelength(This);
     if (index >= This->length)
         return E_FAIL;
 
@@ -711,7 +726,7 @@ static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Reset(
     IEnumVARIANT *iface)
 {
     xmlelem_collection *This = impl_from_IEnumVARIANT(iface);
-    This->current = This->node;
+    This->current = This->node->children;
     return S_OK;
 }
 
@@ -736,13 +751,12 @@ static const struct IEnumVARIANTVtbl xmlelem_collection_IEnumVARIANTvtbl =
 static HRESULT XMLElementCollection_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj)
 {
     xmlelem_collection *collection;
-    xmlNodePtr ptr;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
     *ppObj = NULL;
 
-    if (!node)
+    if (!node->children)
         return S_FALSE;
 
     collection = HeapAlloc(GetProcessHeap(), 0, sizeof (*collection));
@@ -754,14 +768,8 @@ static HRESULT XMLElementCollection_create(IUnknown *pUnkOuter, xmlNodePtr node,
     collection->ref = 1;
     collection->length = 0;
     collection->node = node;
-    collection->current = node;
-
-    ptr = node;
-    while (ptr)
-    {
-        collection->length++;
-        ptr = ptr->next;
-    }
+    collection->current = node->children;
+    xmlelem_collection_updatelength(collection);
 
     *ppObj = &collection->lpVtbl;
 

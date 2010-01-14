@@ -483,7 +483,7 @@ static void test_xmlelem_children(void)
     length = -1;
     hr = IXMLElementCollection_get_length(collection, &length);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    todo_wine ok(length == 0, "Expected 0, got %08x\n", length);
+    ok(length == 0, "Expected 0, got %08x\n", length);
     IXMLElementCollection_Release(collection);
 
     hr = IXMLElement_AddRef(child);
