@@ -587,7 +587,6 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))
     {
        strcpyW(filetype, wszFolder);
-       filetypelen = 6;    /* strlen("Folder") */
     }
     else
     {
@@ -660,14 +659,12 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
         else
         {
             *filetype = '\0';
-            filetypelen = 0;
         }
     }
 
     if (*filetype)
     {
         /* pass the operation string to SHELL_FindExecutableByOperation() */
-        filetype[filetypelen] = '\0';
         retval = SHELL_FindExecutableByOperation(lpOperation, key, filetype, command, sizeof(command));
 
 	if (retval > 32)
