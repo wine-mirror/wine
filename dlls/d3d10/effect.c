@@ -308,7 +308,6 @@ static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
         default:
             ERR("This should not happen!\n");
             return E_FAIL;
-            break;
     }
 
     return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, s);
