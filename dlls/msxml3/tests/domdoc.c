@@ -509,8 +509,8 @@ static char *list_to_string(IXMLDOMNodeList *list)
     return buf;
 }
 
-#define expect_node(node, expstr) { char str[4096]; node_to_string(node, str); ok(strcmp(str, expstr)==0, "Invalid node: %s, exptected %s\n", str, expstr); }
-#define expect_list_and_release(list, expstr) { char *str = list_to_string(list); ok(strcmp(str, expstr)==0, "Invalid node list: %s, exptected %s\n", str, expstr); if (list) IXMLDOMNodeList_Release(list); }
+#define expect_node(node, expstr) { char str[4096]; node_to_string(node, str); ok(strcmp(str, expstr)==0, "Invalid node: %s, expected %s\n", str, expstr); }
+#define expect_list_and_release(list, expstr) { char *str = list_to_string(list); ok(strcmp(str, expstr)==0, "Invalid node list: %s, expected %s\n", str, expstr); if (list) IXMLDOMNodeList_Release(list); }
 
 static void test_domdoc( void )
 {
@@ -1071,6 +1071,7 @@ static void test_domnode( void )
         r = IXMLDOMNode_get_ownerDocument( element, &owner );
         ok( r == S_OK, "get_ownerDocument return code\n");
         ok( owner != doc, "get_ownerDocument return\n");
+        IXMLDOMDocument_Release(owner);
 
         type = NODE_INVALID;
         r = IXMLDOMNode_get_nodeType( element, &type);
