@@ -970,6 +970,14 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 /* a name change since win95 */
 #define EM_SETLIMITTEXT          EM_LIMITTEXT
 
+/* IMESTATUS type */
+#define EMSIS_COMPOSITIONSTRING 1
+
+/* IMESTATUS type specific data */
+#define EIMES_GETCOMPSTRATONCE         0x0001
+#define EIMES_CANCELCOMPSTRINFOCUS     0x0002
+#define EIMES_COMPLETECOMPSTRKILLFOCUS 0x0004
+
 /* EDITWORDBREAKPROC code values */
 #define WB_LEFT         0
 #define WB_RIGHT        1
