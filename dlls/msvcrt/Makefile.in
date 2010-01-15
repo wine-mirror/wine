@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = msvcrt.dll
 IMPORTLIB = msvcrt
 IMPORTS   = kernel32 ntdll
-DELAYIMPORTS = user32
+DELAYIMPORTS = advapi32 user32
 
 C_SRCS = \
 	console.c \

@@ -736,6 +736,7 @@
 @ cdecl qsort(ptr long long ptr) ntdll.qsort
 @ cdecl raise(long) MSVCRT_raise
 @ cdecl rand() MSVCRT_rand
+@ cdecl rand_s(ptr) MSVCRT_rand_s
 @ cdecl realloc(ptr long) MSVCRT_realloc
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename

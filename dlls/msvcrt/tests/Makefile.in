@@ -16,6 +16,7 @@ CTESTS = \
 	file.c \
 	headers.c \
 	heap.c \
+	misc.c \
 	printf.c \
 	scanf.c \
 	signal.c \

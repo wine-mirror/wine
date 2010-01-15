@@ -25,6 +25,7 @@
 
 #include "msvcrt.h"
 #include "wine/debug.h"
+#include "ntsecapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -58,6 +59,19 @@ int CDECL MSVCRT_rand(void)
      * http://en.wikipedia.org/wiki/List_of_pseudorandom_number_generators */
     data->random_seed = data->random_seed * 214013 + 2531011;
     return (data->random_seed >> 16) & MSVCRT_RAND_MAX;
+}
+
+/*********************************************************************
+ *		rand_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_rand_s(unsigned int *pval)
+{
+    if (!pval || !RtlGenRandom(pval, sizeof(*pval)))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    return 0;
 }
 
 /*********************************************************************
