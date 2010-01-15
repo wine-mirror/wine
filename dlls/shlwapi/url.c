@@ -2384,7 +2384,7 @@ HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
           dwResLen = strlenW(lpszRes) + 1;
           if (dwDestLen >= dwResLen + 1)
           {
-            lpszDest[szResLen + dwPathLen + dwResLen] = '/';
+            lpszDest[szResLen + dwPathLen-1] = '/';
             memcpy(lpszDest + szResLen + dwPathLen, lpszRes, dwResLen * sizeof(WCHAR));
             hRet = S_OK;
           }
