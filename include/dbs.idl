@@ -183,10 +183,27 @@ enum DBSTATUSENUM
     DBSTATUS_S_DEFAULT = 13
 };
 
-cpp_quote("DEFINE_GUID(DBGUID_SESSION,    0xc8b522f5, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
-cpp_quote("DEFINE_GUID(DBGUID_ROWSET,     0xc8b522f6, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
-cpp_quote("DEFINE_GUID(DBGUID_ROW,        0xc8b522f7, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
-cpp_quote("DEFINE_GUID(DBGUID_STREAM,     0xc8b522f9, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
+cpp_quote("#ifdef DBINITCONSTANTS")
+cpp_quote("#ifdef __cplusplus")
+cpp_quote("#define DEFINE_DBGUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \\")
+cpp_quote("        EXTERN_C const GUID name DECLSPEC_HIDDEN;     \\")
+cpp_quote("        EXTERN_C const GUID name =                    \\")
+cpp_quote("	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }")
+cpp_quote("#else")
+cpp_quote("#define DEFINE_DBGUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \\")
+cpp_quote("        const GUID name DECLSPEC_HIDDEN;      \\")
+cpp_quote("        const GUID name =                             \\")
+cpp_quote("	{ l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }")
+cpp_quote("#endif")
+cpp_quote("#else")
+cpp_quote("#define DEFINE_DBGUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \\")
+cpp_quote("    EXTERN_C const GUID name DECLSPEC_HIDDEN")
+cpp_quote("#endif")
+
+cpp_quote("DEFINE_DBGUID(DBGUID_SESSION,    0xc8b522f5, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
+cpp_quote("DEFINE_DBGUID(DBGUID_ROWSET,     0xc8b522f6, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
+cpp_quote("DEFINE_DBGUID(DBGUID_ROW,        0xc8b522f7, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
+cpp_quote("DEFINE_DBGUID(DBGUID_STREAM,     0xc8b522f9, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);")
 
 typedef struct tagDBCOLUMNACCESS
 {
