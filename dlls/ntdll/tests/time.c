@@ -101,4 +101,6 @@ START_TEST(time)
     pRtlTimeFieldsToTime = (void *)GetProcAddress(mod,"RtlTimeFieldsToTime");
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
+    else
+        win_skip("Required time conversion functions are not available\n");
 }
