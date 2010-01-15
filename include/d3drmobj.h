@@ -87,10 +87,12 @@ typedef struct IDirect3DRMClippedVisual   *LPDIRECT3DRMCLIPPEDVISUAL, **LPLPDIRE
 
 typedef void (__cdecl *D3DRMOBJECTCALLBACK)(LPDIRECT3DRMOBJECT obj, LPVOID arg);
 typedef void (__cdecl *D3DRMFRAMEMOVECALLBACK)(LPDIRECT3DRMFRAME obj, LPVOID arg, D3DVALUE delta);
+typedef void (__cdecl *D3DRMFRAME3MOVECALLBACK)(LPDIRECT3DRMFRAME3 obj, LPVOID arg, D3DVALUE delta);
 typedef void (__cdecl *D3DRMUPDATECALLBACK)(LPDIRECT3DRMDEVICE obj, LPVOID arg, int, LPD3DRECT);
 typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(LPDIRECT3DRMUSERVISUAL obj, LPVOID arg,
     D3DRMUSERVISUALREASON reason, LPDIRECT3DRMDEVICE dev, LPDIRECT3DRMVIEWPORT view);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE *);
+typedef HRESULT (__cdecl *D3DRMLOADTEXTURE3CALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE3 *);
 typedef void (__cdecl *D3DRMLOADCALLBACK)(LPDIRECT3DRMOBJECT object, REFIID objectguid, LPVOID arg);
 
 typedef struct _D3DRMPICKDESC
@@ -1508,6 +1510,303 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
 #define IDirect3DRMFrame2_SetQuaternion(p,a,b)             (p)->SetQuaternion(a,b)
 #define IDirect3DRMFrame2_RayPick(p,a,b,c,d)               (p)->RayPick(a,b,c,d)
 #define IDirect3DRMFrame2_Save(p,a,b,c)                    (p)->Save(a,b,c)
+#endif
+
+/*****************************************************************************
+ * IDirect3DRMFrame3 interface
+ */
+#define INTERFACE IDirect3DRMFrame3
+DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DRMObject methods ***/
+    STDMETHOD(Clone)(THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
+    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
+    STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
+    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    /*** IDirect3DRMFrame3 methods ***/
+    STDMETHOD(AddChild)(THIS_ LPDIRECT3DRMFRAME3 child) PURE;
+    STDMETHOD(AddLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(AddMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg, DWORD flags) PURE;
+    STDMETHOD(AddTranslation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(AddScale)(THIS_ D3DRMCOMBINETYPE, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
+    STDMETHOD(AddRotation)(THIS_ D3DRMCOMBINETYPE, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta) PURE;
+    STDMETHOD(AddVisual)(THIS_ LPUNKNOWN) PURE;
+    STDMETHOD(GetChildren)(THIS_ LPDIRECT3DRMFRAMEARRAY *children) PURE;
+    STDMETHOD_(D3DCOLOR, GetColor)(THIS) PURE;
+    STDMETHOD(GetLights)(THIS_ LPDIRECT3DRMLIGHTARRAY *lights) PURE;
+    STDMETHOD_(D3DRMMATERIALMODE, GetMaterialMode)(THIS) PURE;
+    STDMETHOD(GetParent)(THIS_ LPDIRECT3DRMFRAME3 *) PURE;
+    STDMETHOD(GetPosition)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DVECTOR return_position) PURE;
+    STDMETHOD(GetRotation)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DVECTOR axis, LPD3DVALUE return_theta) PURE;
+    STDMETHOD(GetScene)(THIS_ LPDIRECT3DRMFRAME3 *) PURE;
+    STDMETHOD_(D3DRMSORTMODE, GetSortMode)(THIS) PURE;
+    STDMETHOD(GetTexture)(THIS_ LPDIRECT3DRMTEXTURE3 *) PURE;
+    STDMETHOD(GetTransform)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DRMMATRIX4D rmMatrix) PURE;
+    STDMETHOD(GetVelocity)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DVECTOR return_velocity,
+        BOOL with_rotation) PURE;
+    STDMETHOD(GetOrientation)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DVECTOR dir, LPD3DVECTOR up) PURE;
+    STDMETHOD(GetVisuals)(THIS_ LPDWORD pCount, LPUNKNOWN *) PURE;
+    STDMETHOD(InverseTransform)(THIS_ D3DVECTOR *d, D3DVECTOR *s) PURE;
+    STDMETHOD(Load)(THIS_ LPVOID filename, LPVOID name, D3DRMLOADOPTIONS loadflags,
+        D3DRMLOADTEXTURE3CALLBACK, LPVOID pArg) PURE;
+    STDMETHOD(LookAt)(THIS_ LPDIRECT3DRMFRAME3 target, LPDIRECT3DRMFRAME3 reference, D3DRMFRAMECONSTRAINT) PURE;
+    STDMETHOD(Move)(THIS_ D3DVALUE delta) PURE;
+    STDMETHOD(DeleteChild)(THIS_ LPDIRECT3DRMFRAME3) PURE;
+    STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DRMLIGHT) PURE;
+    STDMETHOD(DeleteMoveCallback)(THIS_ D3DRMFRAME3MOVECALLBACK, VOID *arg) PURE;
+    STDMETHOD(DeleteVisual)(THIS_ LPUNKNOWN) PURE;
+    STDMETHOD_(D3DCOLOR, GetSceneBackground)(THIS) PURE;
+    STDMETHOD(GetSceneBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE *) PURE;
+    STDMETHOD_(D3DCOLOR, GetSceneFogColor)(THIS) PURE;
+    STDMETHOD_(BOOL, GetSceneFogEnable)(THIS) PURE;
+    STDMETHOD_(D3DRMFOGMODE, GetSceneFogMode)(THIS) PURE;
+    STDMETHOD(GetSceneFogParams)(THIS_ D3DVALUE *return_start, D3DVALUE *return_end,
+        D3DVALUE *return_density) PURE;
+    STDMETHOD(SetSceneBackground)(THIS_ D3DCOLOR) PURE;
+    STDMETHOD(SetSceneBackgroundRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
+    STDMETHOD(SetSceneBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE) PURE;
+    STDMETHOD(SetSceneBackgroundImage)(THIS_ LPDIRECT3DRMTEXTURE3) PURE;
+    STDMETHOD(SetSceneFogEnable)(THIS_ BOOL) PURE;
+    STDMETHOD(SetSceneFogColor)(THIS_ D3DCOLOR) PURE;
+    STDMETHOD(SetSceneFogMode)(THIS_ D3DRMFOGMODE) PURE;
+    STDMETHOD(SetSceneFogParams)(THIS_ D3DVALUE start, D3DVALUE end, D3DVALUE density) PURE;
+    STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
+    STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
+    STDMETHOD_(D3DRMZBUFFERMODE, GetZbufferMode)(THIS) PURE;
+    STDMETHOD(SetMaterialMode)(THIS_ D3DRMMATERIALMODE) PURE;
+    STDMETHOD(SetOrientation)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz,
+        D3DVALUE ux, D3DVALUE uy, D3DVALUE uz) PURE;
+    STDMETHOD(SetPosition)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(SetRotation)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DVALUE x, D3DVALUE y, D3DVALUE z,
+        D3DVALUE theta) PURE;
+    STDMETHOD(SetSortMode)(THIS_ D3DRMSORTMODE) PURE;
+    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE3) PURE;
+    STDMETHOD(SetVelocity)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DVALUE x, D3DVALUE y, D3DVALUE z,
+        BOOL with_rotation) PURE;
+    STDMETHOD(SetZbufferMode)(THIS_ D3DRMZBUFFERMODE) PURE;
+    STDMETHOD(Transform)(THIS_ D3DVECTOR *d, D3DVECTOR *s) PURE;
+    STDMETHOD(GetBox)(THIS_ LPD3DRMBOX) PURE;
+    STDMETHOD_(BOOL, GetBoxEnable)(THIS) PURE;
+    STDMETHOD(GetAxes)(THIS_ LPD3DVECTOR dir, LPD3DVECTOR up);
+    STDMETHOD(GetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2 *) PURE;
+    STDMETHOD_(BOOL, GetInheritAxes)(THIS);
+    STDMETHOD(GetHierarchyBox)(THIS_ LPD3DRMBOX) PURE;
+    STDMETHOD(SetBox)(THIS_ LPD3DRMBOX) PURE;
+    STDMETHOD(SetBoxEnable)(THIS_ BOOL) PURE;
+    STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz);
+    STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
+    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2) PURE;
+    STDMETHOD(SetQuaternion)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DRMQUATERNION *q) PURE;
+    STDMETHOD(RayPick)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DRMRAY ray, DWORD flags,
+        LPDIRECT3DRMPICKED2ARRAY *return_visuals) PURE;
+    STDMETHOD(Save)(THIS_ LPCSTR filename, D3DRMXOFFORMAT d3dFormat, D3DRMSAVEOPTIONS d3dSaveFlags);
+    STDMETHOD(TransformVectors)(THIS_ LPDIRECT3DRMFRAME3 reference, DWORD NumVectors,
+        LPD3DVECTOR pDstVectors, LPD3DVECTOR pSrcVectors) PURE;
+    STDMETHOD(InverseTransformVectors)(THIS_ LPDIRECT3DRMFRAME3 reference, DWORD NumVectors,
+        LPD3DVECTOR pDstVectors, LPD3DVECTOR pSrcVectors) PURE;
+    STDMETHOD(SetTraversalOptions)(THIS_ DWORD flags) PURE;
+    STDMETHOD(GetTraversalOptions)(THIS_ LPDWORD pFlags) PURE;
+    STDMETHOD(SetSceneFogMethod)(THIS_ DWORD flags) PURE;
+    STDMETHOD(GetSceneFogMethod)(THIS_ LPDWORD pFlags) PURE;
+    STDMETHOD(SetMaterialOverride)(THIS_ LPD3DRMMATERIALOVERRIDE) PURE;
+    STDMETHOD(GetMaterialOverride)(THIS_ LPD3DRMMATERIALOVERRIDE) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirect3DRMFrame3_QueryInterface(p,a,b)              (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DRMFrame3_AddRef(p)                          (p)->lpVtbl->AddRef(p)
+#define IDirect3DRMFrame3_Release(p)                         (p)->lpVtbl->Release(p)
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMFrame3_Clone(p,a,b,c)                     (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirect3DRMFrame3_AddDestroyCallback(p,a,b)          (p)->lpVtbl->AddDestroyCallback(p,a,b)
+#define IDirect3DRMFrame3_DeleteDestroyCallback(p,a,b)       (p)->lpVtbl->DeleteDestroyCallback(p,a,b)
+#define IDirect3DRMFrame3_SetAppData(p,a)                    (p)->lpVtbl->SetAppData(p,a)
+#define IDirect3DRMFrame3_GetAppData(p)                      (p)->lpVtbl->GetAppData(p)
+#define IDirect3DRMFrame3_SetName(p,a)                       (p)->lpVtbl->SetName(p,a)
+#define IDirect3DRMFrame3_GetName(p,a,b)                     (p)->lpVtbl->GetName(p,a,b)
+#define IDirect3DRMFrame3_GetClassName(p,a,b)                (p)->lpVtbl->GetClassName(p,a,b)
+/*** IDirect3DRMFrame3 methods ***/
+#define IDirect3DRMFrame3_AddChild(p,a)                      (p)->lpVtbl->AddChild(p,a)
+#define IDirect3DRMFrame3_AddLight(p,a)                      (p)->lpVtbl->AddLight(p,a)
+#define IDirect3DRMFrame3_AddMoveCallback(p,a,b,c)           (p)->lpVtbl->AddMoveCallback(p,a,b,c)
+#define IDirect3DRMFrame3_AddTransform(p,a,b)                (p)->lpVtbl->AddTransform(p,a,b)
+#define IDirect3DRMFrame3_AddTranslation(p,a,b,c,d)          (p)->lpVtbl->AddTranslation(p,a,b,c,d)
+#define IDirect3DRMFrame3_AddScale(p,a,b,c,d)                (p)->lpVtbl->AddScale(p,a,b,c,d)
+#define IDirect3DRMFrame3_AddRotation(p,a,b,c,d,e)           (p)->lpVtbl->AddRotation(p,a,b,c,d,e)
+#define IDirect3DRMFrame3_AddVisual(p,a)                     (p)->lpVtbl->AddVisual(p,a)
+#define IDirect3DRMFrame3_GetChildren(p,a)                   (p)->lpVtbl->GetChildren(p,a)
+#define IDirect3DRMFrame3_GetColor(p)                        (p)->lpVtbl->GetColor(p)
+#define IDirect3DRMFrame3_GetLights(p,a)                     (p)->lpVtbl->GetLights(p,a)
+#define IDirect3DRMFrame3_GetMaterialMode(p)                 (p)->lpVtbl->GetMaterialMode(p)
+#define IDirect3DRMFrame3_GetParent(p,a)                     (p)->lpVtbl->GetParent(p,a)
+#define IDirect3DRMFrame3_GetPosition(p,a,b)                 (p)->lpVtbl->GetPosition(p,a,b)
+#define IDirect3DRMFrame3_GetRotation(p,a,b,c)               (p)->lpVtbl->GetRotation(p,a,b,c)
+#define IDirect3DRMFrame3_GetScene(p,a)                      (p)->lpVtbl->GetScene(p,a)
+#define IDirect3DRMFrame3_GetSortMode(p)                     (p)->lpVtbl->GetSortMode(p)
+#define IDirect3DRMFrame3_GetTexture(p,a)                    (p)->lpVtbl->GetTexture(p,a)
+#define IDirect3DRMFrame3_GetTransform(p,a,b)                (p)->lpVtbl->GetTransform(p,a,b)
+#define IDirect3DRMFrame3_GetVelocity(p,a,b,c)               (p)->lpVtbl->GetVelocity(p,a,b,c)
+#define IDirect3DRMFrame3_GetOrientation(p,a,b,c)            (p)->lpVtbl->GetOrientation(p,a,b,c)
+#define IDirect3DRMFrame3_GetVisuals(p,a,b)                  (p)->lpVtbl->GetVisuals(p,a,b)
+#define IDirect3DRMFrame3_InverseTransform(p,a,b)            (p)->lpVtbl->InverseTransform(p,a,b)
+#define IDirect3DRMFrame3_Load(p,a,b,c,d,e)                  (p)->lpVtbl->Load(p,a,b,c,d,e)
+#define IDirect3DRMFrame3_LookAt(p,a,b,c)                    (p)->lpVtbl->LookAt(p,a,b,c)
+#define IDirect3DRMFrame3_Move(p,a)                          (p)->lpVtbl->Move(p,a)
+#define IDirect3DRMFrame3_DeleteChild(p,a)                   (p)->lpVtbl->DeleteChild(p,a)
+#define IDirect3DRMFrame3_DeleteLight(p,a)                   (p)->lpVtbl->DeleteLight(p,a)
+#define IDirect3DRMFrame3_DeleteMoveCallback(p,a,b)          (p)->lpVtbl->DeleteMoveCallback(p,a,b)
+#define IDirect3DRMFrame3_DeleteVisual(p,a)                  (p)->lpVtbl->DeleteVisual(p,a)
+#define IDirect3DRMFrame3_GetSceneBackground(p)              (p)->lpVtbl->GetSceneBackground(p)
+#define IDirect3DRMFrame3_GetSceneBackgroundDepth(p,a)       (p)->lpVtbl->GetSceneBackgroundDepth(p,a)
+#define IDirect3DRMFrame3_GetSceneFogColor(p)                (p)->lpVtbl->GetSceneFogColor(p)
+#define IDirect3DRMFrame3_GetSceneFogEnable(p)               (p)->lpVtbl->GetSceneFogEnable(p)
+#define IDirect3DRMFrame3_GetSceneFogMode(p)                 (p)->lpVtbl->GetSceneFogMode(p)
+#define IDirect3DRMFrame3_GetSceneFogParams(p,a,b,c)         (p)->lpVtbl->GetSceneFogParams(p,a,b,c)
+#define IDirect3DRMFrame3_SetSceneBackground(p,a)            (p)->lpVtbl->SetSceneBackground(p,a)
+#define IDirect3DRMFrame3_SetSceneBackgroundRGB(p,a,b,c)     (p)->lpVtbl->SetSceneBackgroundRGB(p,a,b,c)
+#define IDirect3DRMFrame3_SetSceneBackgroundDepth(p,a)       (p)->lpVtbl->SetSceneBackgroundDepth(p,a)
+#define IDirect3DRMFrame3_SetSceneBackgroundImage(p,a)       (p)->lpVtbl->SetSceneBackgroundImage(p,a)
+#define IDirect3DRMFrame3_SetSceneFogEnable(p,a)             (p)->lpVtbl->SetSceneFogEnable(p,a)
+#define IDirect3DRMFrame3_SetSceneFogColor(p,a)              (p)->lpVtbl->SetSceneFogColor(p,a)
+#define IDirect3DRMFrame3_SetSceneFogMode(p,a)               (p)->lpVtbl->SetSceneFogMode(p,a)
+#define IDirect3DRMFrame3_SetSceneFogParams(p,a,b,c)         (p)->lpVtbl->SetSceneFogParams(p,a,b,c)
+#define IDirect3DRMFrame3_SetColor(p,a)                      (p)->lpVtbl->SetColor(p,a)
+#define IDirect3DRMFrame3_SetColorRGB(p,a,b,c)               (p)->lpVtbl->SetColorRGB(p,a,b,c)
+#define IDirect3DRMFrame3_GetZbufferMode(p)                  (p)->lpVtbl->GetZbufferMode(p)
+#define IDirect3DRMFrame3_SetMaterialMode(p,a)               (p)->lpVtbl->SetMaterialMode(p,a)
+#define IDirect3DRMFrame3_SetOrientation(p,a,b,c,d,e,f,g)    (p)->lpVtbl->SetOrientation(p,a,b,c,d,e,f,g)
+#define IDirect3DRMFrame3_SetPosition(p,a,b,c,d)             (p)->lpVtbl->SetPosition(p,a,b,c,d)
+#define IDirect3DRMFrame3_SetRotation(p,a,b,c,d,e)           (p)->lpVtbl->SetRotation(p,a,b,c,d,e)
+#define IDirect3DRMFrame3_SetSortMode(p,a)                   (p)->lpVtbl->SetSortMode(p,a)
+#define IDirect3DRMFrame3_SetTexture(p,a)                    (p)->lpVtbl->SetTexture(p,a)
+#define IDirect3DRMFrame3_SetVelocity(p,a,b,c,d,e)           (p)->lpVtbl->SetVelocity(p,a,b,c,d,e)
+#define IDirect3DRMFrame3_SetZbufferMode(p,a)                (p)->lpVtbl->SetZbufferMode(p,a)
+#define IDirect3DRMFrame3_Transform(p,a,b)                   (p)->lpVtbl->Transform(p,a,b)
+#define IDirect3DRMFrame3_GetBox(p,a)                        (p)->lpVtbl->GetBox(p,a)
+#define IDirect3DRMFrame3_GetBoxEnable(p)                    (p)->lpVtbl->GetBoxEnable(p)
+#define IDirect3DRMFrame3_GetAxes(p,a,b)                     (p)->lpVtbl->GetAxes(p,a,b)
+#define IDirect3DRMFrame3_GetMaterial(p,a)                   (p)->lpVtbl->GetMaterial(p,a)
+#define IDirect3DRMFrame3_GetInheritAxes(p)                  (p)->lpVtbl->GetInheritAxes(p)
+#define IDirect3DRMFrame3_GetHierarchyBox(p,a)               (p)->lpVtbl->GetHierarchyBox(p,a)
+#define IDirect3DRMFrame3_SetBox(p,a)                        (p)->lpVtbl->SetBox(p,a)
+#define IDirect3DRMFrame3_SetBoxEnable(p,a)                  (p)->lpVtbl->SetBoxEnable(p,a)
+#define IDirect3DRMFrame3_SetAxes(p,a,b,c,d,e,f)             (p)->lpVtbl->SetAxes(p,a,b,c,d,e,f)
+#define IDirect3DRMFrame3_SetInheritAxes(p,a)                (p)->lpVtbl->SetInheritAxes(p,a)
+#define IDirect3DRMFrame3_SetMaterial(p,a)                   (p)->lpVtbl->SetMaterial(p,a)
+#define IDirect3DRMFrame3_SetQuaternion(p,a,b)               (p)->lpVtbl->SetQuaternion(p,a,b)
+#define IDirect3DRMFrame3_RayPick(p,a,b,c,d)                 (p)->lpVtbl->RayPick(p,a,b,c,d)
+#define IDirect3DRMFrame3_Save(p,a,b,c)                      (p)->lpVtbl->Save(p,a,b,c)
+#define IDirect3DRMFrame3_TransformVectors(p,a,b,c,d)        (p)->lpVtbl->TransformVectors(p,a,b,c,d)
+#define IDirect3DRMFrame3_InverseTransformVectors(p,a,b,c,d) (p)->lpVtbl->InverseTransformVectors(p,a,b,c,d)
+#define IDirect3DRMFrame3_SetTraversalOptions(p,a)           (p)->lpVtbl->SetTraversalOptions(p,a)
+#define IDirect3DRMFrame3_GetTraversalOptions(p,a)           (p)->lpVtbl->GetTraversalOptions(p,a)
+#define IDirect3DRMFrame3_SetSceneFogMethod(p,a)             (p)->lpVtbl->SetSceneFogMethod(p,a)
+#define IDirect3DRMFrame3_GetSceneFogMethod(p,a)             (p)->lpVtbl->GetSceneFogMethod(p,a)
+#define IDirect3DRMFrame3_SetMaterialOverride(p,a)           (p)->lpVtbl->SetMaterialOverride(p,a)
+#define IDirect3DRMFrame3_GetMaterialOverride(p,a)           (p)->lpVtbl->GetMaterialOverride(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DRMFrame3_QueryInterface(p,a,b)              (p)->QueryInterface(a,b)
+#define IDirect3DRMFrame3_AddRef(p)                          (p)->AddRef()
+#define IDirect3DRMFrame3_Release(p)                         (p)->Release()
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMFrame3_Clone(p,a,b,c)                     (p)->Clone(a,b,c)
+#define IDirect3DRMFrame3_AddDestroyCallback(p,a,b)          (p)->AddDestroyCallback(a,b)
+#define IDirect3DRMFrame3_DeleteDestroyCallback(p,a,b)       (p)->DeleteDestroyCallback(a,b)
+#define IDirect3DRMFrame3_SetAppData(p,a)                    (p)->SetAppData(a)
+#define IDirect3DRMFrame3_GetAppData(p)                      (p)->GetAppData()
+#define IDirect3DRMFrame3_SetName(p,a)                       (p)->SetName(a)
+#define IDirect3DRMFrame3_GetName(p,a,b)                     (p)->GetName(a,b)
+#define IDirect3DRMFrame3_GetClassName(p,a,b)                (p)->GetClassName(a,b)
+/*** IDirect3DRMFrame3 methods ***/
+#define IDirect3DRMFrame3_AddChild(p,a)                      (p)->AddChild(a)
+#define IDirect3DRMFrame3_AddLight(p,a)                      (p)->AddLight(a)
+#define IDirect3DRMFrame3_AddMoveCallback(p,a,b,c)           (p)->AddMoveCallback(a,b,c)
+#define IDirect3DRMFrame3_AddTransform(p,a,b)                (p)->AddTransform(a,b)
+#define IDirect3DRMFrame3_AddTranslation(p,a,b,c,d)          (p)->AddTranslation(a,b,c,d)
+#define IDirect3DRMFrame3_AddScale(p,a,b,c,d)                (p)->AddScale(a,b,c,d)
+#define IDirect3DRMFrame3_AddRotation(p,a,b,c,d,e)           (p)->AddRotation(a,b,c,d,e)
+#define IDirect3DRMFrame3_AddVisual(p,a)                     (p)->AddVisual(a)
+#define IDirect3DRMFrame3_GetChildren(p,a)                   (p)->GetChildren(a)
+#define IDirect3DRMFrame3_GetColor(p)                        (p)->GetColor()
+#define IDirect3DRMFrame3_GetLights(p,a)                     (p)->GetLights(a)
+#define IDirect3DRMFrame3_GetMaterialMode(p)                 (p)->GetMaterialMode()
+#define IDirect3DRMFrame3_GetParent(p,a)                     (p)->GetParent(a)
+#define IDirect3DRMFrame3_GetPosition(p,a,b)                 (p)->GetPosition(a,b)
+#define IDirect3DRMFrame3_GetRotation(p,a,b,c)               (p)->GetRotation(a,b,c)
+#define IDirect3DRMFrame3_GetScene(p,a)                      (p)->GetScene(a)
+#define IDirect3DRMFrame3_GetSortMode(p)                     (p)->GetSortMode()
+#define IDirect3DRMFrame3_GetTexture(p,a)                    (p)->GetTexture(a)
+#define IDirect3DRMFrame3_GetTransform(p,a,b)                (p)->GetTransform(a,b)
+#define IDirect3DRMFrame3_GetVelocity(p,a,b,c)               (p)->GetVelocity(a,b,c)
+#define IDirect3DRMFrame3_GetOrientation(p,a,b,c)            (p)->GetOrientation(a,b,c)
+#define IDirect3DRMFrame3_GetVisuals(p,a,b)                  (p)->GetVisuals(a,b)
+#define IDirect3DRMFrame3_InverseTransform(p,a,b)            (p)->InverseTransform(a,b)
+#define IDirect3DRMFrame3_Load(p,a,b,c,d,e)                  (p)->Load(a,b,c,d,e)
+#define IDirect3DRMFrame3_LookAt(p,a,b,c)                    (p)->LookAt(a,b,c)
+#define IDirect3DRMFrame3_Move(p,a)                          (p)->Move(a)
+#define IDirect3DRMFrame3_DeleteChild(p,a)                   (p)->DeleteChild(a)
+#define IDirect3DRMFrame3_DeleteLight(p,a)                   (p)->DeleteLight(a)
+#define IDirect3DRMFrame3_DeleteMoveCallback(p,a,b)          (p)->DeleteMoveCallback(a,b)
+#define IDirect3DRMFrame3_DeleteVisual(p,a)                  (p)->DeleteVisual(a)
+#define IDirect3DRMFrame3_GetSceneBackground(p)              (p)->GetSceneBackground()
+#define IDirect3DRMFrame3_GetSceneBackgroundDepth(p,a)       (p)->GetSceneBackgroundDepth(a)
+#define IDirect3DRMFrame3_GetSceneFogColor(p)                (p)->GetSceneFogColor()
+#define IDirect3DRMFrame3_GetSceneFogEnable(p)               (p)->GetSceneFogEnable()
+#define IDirect3DRMFrame3_GetSceneFogMode(p)                 (p)->GetSceneFogMode()
+#define IDirect3DRMFrame3_GetSceneFogParams(p,a,b,c)         (p)->GetSceneFogParams(a,b,c)
+#define IDirect3DRMFrame3_SetSceneBackground(p,a)            (p)->SetSceneBackground(a)
+#define IDirect3DRMFrame3_SetSceneBackgroundRGB(p,a,b,c)     (p)->SetSceneBackgroundRGB(a,b,c)
+#define IDirect3DRMFrame3_SetSceneBackgroundDepth(p,a)       (p)->SetSceneBackgroundDepth(a)
+#define IDirect3DRMFrame3_SetSceneBackgroundImage(p,a)       (p)->SetSceneBackgroundImage(a)
+#define IDirect3DRMFrame3_SetSceneFogEnable(p,a)             (p)->SetSceneFogEnable(a)
+#define IDirect3DRMFrame3_SetSceneFogColor(p,a)              (p)->SetSceneFogColor(a)
+#define IDirect3DRMFrame3_SetSceneFogMode(p,a)               (p)->SetSceneFogMode(a)
+#define IDirect3DRMFrame3_SetSceneFogParams(p,a,b,c)         (p)->SetSceneFogParams(a,b,c)
+#define IDirect3DRMFrame3_SetColor(p,a)                      (p)->SetColor(a)
+#define IDirect3DRMFrame3_SetColorRGB(p,a,b,c)               (p)->SetColorRGB(a,b,c)
+#define IDirect3DRMFrame3_GetZbufferMode(p)                  (p)->GetZbufferMode()
+#define IDirect3DRMFrame3_SetMaterialMode(p,a)               (p)->SetMaterialMode(a)
+#define IDirect3DRMFrame3_SetOrientation(p,a,b,c,d,e,f,g)    (p)->SetOrientation(a,b,c,d,e,f,g)
+#define IDirect3DRMFrame3_SetPosition(p,a,b,c,d)             (p)->SetPosition(a,b,c,d)
+#define IDirect3DRMFrame3_SetRotation(p,a,b,c,d,e)           (p)->SetRotation(a,b,c,d,e)
+#define IDirect3DRMFrame3_SetSortMode(p,a)                   (p)->SetSortMode(a)
+#define IDirect3DRMFrame3_SetTexture(p,a)                    (p)->SetTexture(a)
+#define IDirect3DRMFrame3_SetVelocity(p,a,b,c,d,e)           (p)->SetVelocity(a,b,c,d,e)
+#define IDirect3DRMFrame3_SetZbufferMode(p,a)                (p)->SetZbufferMode(a)
+#define IDirect3DRMFrame3_Transform(p,a,b)                   (p)->Transform(a,b)
+#define IDirect3DRMFrame3_GetBox(p,a)                        (p)->GetBox(a)
+#define IDirect3DRMFrame3_GetBoxEnable(p)                    (p)->GetBoxEnable()
+#define IDirect3DRMFrame3_GetAxes(p,a,b)                     (p)->GetAxes(a,b)
+#define IDirect3DRMFrame3_GetMaterial(p,a)                   (p)->GetMaterial(a)
+#define IDirect3DRMFrame3_GetInheritAxes(p)                  (p)->GetInheritAxes()
+#define IDirect3DRMFrame3_GetHierarchyBox(p,a)               (p)->GetHierarchyBox(a)
+#define IDirect3DRMFrame3_SetBox(p,a)                        (p)->SetBox(a)
+#define IDirect3DRMFrame3_SetBoxEnable(p,a)                  (p)->SetBoxEnable(a)
+#define IDirect3DRMFrame3_SetAxes(p,a,b,c,d,e,f)             (p)->SetAxes(a,b,c,d,e,f)
+#define IDirect3DRMFrame3_SetInheritAxes(p,a)                (p)->SetInheritAxes(a)
+#define IDirect3DRMFrame3_SetMaterial(p,a)                   (p)->SetMaterial(a)
+#define IDirect3DRMFrame3_SetQuaternion(p,a,b)               (p)->SetQuaternion(a,b)
+#define IDirect3DRMFrame3_RayPick(p,a,b,c,d)                 (p)->RayPick(a,b,c,d)
+#define IDirect3DRMFrame3_Save(p,a,b,c)                      (p)->Save(a,b,c)
+#define IDirect3DRMFrame3_TransformVectors(p,a,b,c,d)        (p)->TransformVectors(a,b,c,d)
+#define IDirect3DRMFrame3_InverseTransformVectors(p,a,b,c,d) (p)->InverseTransformVectors(a,b,c,d)
+#define IDirect3DRMFrame3_SetTraversalOptions(p,a)           (p)->SetTraversalOptions(a)
+#define IDirect3DRMFrame3_GetTraversalOptions(p,a)           (p)->GetTraversalOptions(a)
+#define IDirect3DRMFrame3_SetSceneFogMethod(p,a)             (p)->SetSceneFogMethod(a)
+#define IDirect3DRMFrame3_GetSceneFogMethod(p,a)             (p)->GetSceneFogMethod(a)
+#define IDirect3DRMFrame3_SetMaterialOverride(p,a)           (p)->SetMaterialOverride(a)
+#define IDirect3DRMFrame3_GetMaterialOverride(p,a)           (p)->GetMaterialOverride(a)
 #endif
 
 #ifdef __cplusplus
