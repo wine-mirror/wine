@@ -688,6 +688,31 @@ ok(arr.valueOf === Object.prototype.valueOf, "arr.valueOf !== Object.prototype.v
 ok(arr === arr.valueOf(), "arr !== arr.valueOf");
 
 arr = [1,2,3];
+tmp = arr.reverse();
+ok(tmp === arr, "tmp !== arr");
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(arr.toString() === "3,2,1", "arr.toString() = " + arr.toString());
+
+arr = [];
+arr[3] = 5;
+arr[5] = 1;
+tmp = arr.reverse();
+ok(tmp === arr, "tmp !== arr");
+ok(arr.length === 6, "arr.length = " + arr.length);
+ok(arr.toString() === "1,,5,,,", "arr.toString() = " + arr.toString());
+
+arr = new Object();
+arr.length = 3;
+arr[0] = "aa";
+arr[2] = 2;
+arr[7] = 3;
+arr.reverse = Array.prototype.reverse;
+tmp = arr.reverse();
+ok(tmp === arr, "tmp !== arr");
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(arr[0] === 2 && arr[1] === undefined && arr[2] === "aa", "unexpected array");
+
+arr = [1,2,3];
 tmp = arr.unshift(0);
 ok(tmp === (invokeVersion < 2 ? undefined : 4), "[1,2,3].unshift(0) returned " +tmp);
 ok(arr.length === 4, "arr.length = " + arr.length);
@@ -1854,6 +1879,7 @@ testArrayHostThis("shift");
 testArrayHostThis("slice");
 testArrayHostThis("splice");
 testArrayHostThis("unshift");
+testArrayHostThis("reverse");
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");

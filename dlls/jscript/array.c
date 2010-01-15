@@ -469,8 +469,41 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
 static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *jsthis;
+    DWORD length, k, l;
+    VARIANT v1, v2;
+    HRESULT hres1, hres2;
+
+    TRACE("\n");
+
+    hres1 = get_length(ctx, vthis, ei, &jsthis, &length);
+    if(FAILED(hres1))
+        return hres1;
+
+    for(k=0; k<length/2; k++) {
+        l = length-k-1;
+
+        hres1 = jsdisp_propget_idx(jsthis, k, &v1, ei, sp);
+        hres2 = jsdisp_propget_idx(jsthis, l, &v2, ei, sp);
+
+        if(hres1 == DISP_E_UNKNOWNNAME)
+            jsdisp_delete_idx(jsthis, l);
+        else
+            jsdisp_propput_idx(jsthis, l, &v1, ei, sp);
+
+        if(hres2 == DISP_E_UNKNOWNNAME)
+            jsdisp_delete_idx(jsthis, k);
+        else
+            jsdisp_propput_idx(jsthis, k, &v2, ei, sp);
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+        IDispatch_AddRef(V_DISPATCH(retv));
+    }
+
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.4.4.9 */
