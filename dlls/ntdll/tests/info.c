@@ -878,14 +878,10 @@ static void test_readvirtualmemory(void)
     ok( readcount == 12, "Expected to read 12 bytes, got %ld\n",readcount);
     ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
-    /* this test currently crashes wine with "wine client error:<process id>: read: Bad address"
-     * because the reply from wine server is directly read into the buffer and that fails with EFAULT
-     */
     /* illegal local address */
-    /*status = pNtReadVirtualMemory(process, teststring, (void *)0x1234, 12, &readcount);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
+    status = pNtReadVirtualMemory(process, teststring, (void *)0x1234, 12, &readcount);
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
     ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
-    */
 
     CloseHandle(process);
 }
