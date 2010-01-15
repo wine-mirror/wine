@@ -1003,8 +1003,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
     {
         /* this is a LOAD_LIBRARY_AS_DATAFILE module */
         char *ptr = (char *)hLibModule - 1;
-        UnmapViewOfFile( ptr );
-        return TRUE;
+        return UnmapViewOfFile( ptr );
     }
 
     if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;
