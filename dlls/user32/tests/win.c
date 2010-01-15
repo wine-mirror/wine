@@ -52,6 +52,7 @@ static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
+static BOOL (WINAPI *pGetGUIThreadInfo)(DWORD, GUITHREADINFO*);
 
 static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
@@ -2707,12 +2708,15 @@ static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, 
         case WM_CAPTURECHANGED:
 
             /* now try to release capture from menu. this should fail */
-            memset(&gti, 0, sizeof(GUITHREADINFO));
-            gti.cbSize = sizeof(GUITHREADINFO);
-            status = GetGUIThreadInfo(GetCurrentThreadId(), &gti);
-            ok(status, "GetGUIThreadInfo() failed!\n");
+            if (pGetGUIThreadInfo)
+            {
+                memset(&gti, 0, sizeof(GUITHREADINFO));
+                gti.cbSize = sizeof(GUITHREADINFO);
+                status = pGetGUIThreadInfo(GetCurrentThreadId(), &gti);
+                ok(status, "GetGUIThreadInfo() failed!\n");
+                ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
+            }
             cap_wnd = GetCapture();
-            ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
 
             /* check that re-setting the capture for the menu fails */
             set_cap_wnd = SetCapture(cap_wnd);
@@ -2727,11 +2731,14 @@ static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, 
             ok(!status, "ReleaseCapture should have failed!\n");
 
             /* check that thread info did not change */
-            memset(&gti, 0, sizeof(GUITHREADINFO));
-            gti.cbSize = sizeof(GUITHREADINFO);
-            status = GetGUIThreadInfo(GetCurrentThreadId(), &gti);
-            ok(status, "GetGUIThreadInfo() failed!\n");
-            ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
+            if (pGetGUIThreadInfo)
+            {
+                memset(&gti, 0, sizeof(GUITHREADINFO));
+                gti.cbSize = sizeof(GUITHREADINFO);
+                status = pGetGUIThreadInfo(GetCurrentThreadId(), &gti);
+                ok(status, "GetGUIThreadInfo() failed!\n");
+                ok(gti.flags & GUI_INMENUMODE, "Thread info incorrect (flags=%08X)!\n", gti.flags);
+            }
 
             /* verify that no capture change took place */
             cap_wnd2 = GetCapture();
@@ -2755,6 +2762,10 @@ static void test_capture_4(void)
     HWND hwnd;
     WNDCLASSA wclass;
     HINSTANCE hInstance = GetModuleHandleA( NULL );
+
+    if (!pGetGUIThreadInfo)
+        win_skip("GetGUIThreadInfo is not available\n");
+
     wclass.lpszClassName = "TestCapture4Class";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = test_capture_4_proc;
@@ -5881,6 +5892,7 @@ START_TEST(win)
     pGetMonitorInfoA = (void *)GetProcAddress( user32,  "GetMonitorInfoA" );
     pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );
+    pGetGUIThreadInfo = (void *)GetProcAddress( user32, "GetGUIThreadInfo" );
 
     if (!RegisterWindowClasses()) assert(0);
 
