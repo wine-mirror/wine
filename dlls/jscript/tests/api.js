@@ -654,6 +654,16 @@ ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 tmp = arr.toString("test");
 ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 
+arr = new Object();
+arr.length = 3;
+arr[0] = "aa";
+arr[2] = 2;
+arr[7] = 3;
+arr.join = Array.prototype.join;
+tmp = arr.join(",");
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(tmp === "aa,,2", "tmp = " + tmp);
+
 arr = [5,true,2,-1,3,false,"2.5"];
 tmp = arr.sort(function(x,y) { return y-x; });
 ok(tmp === arr, "tmp !== arr");
@@ -1880,6 +1890,7 @@ testArrayHostThis("slice");
 testArrayHostThis("splice");
 testArrayHostThis("unshift");
 testArrayHostThis("reverse");
+testArrayHostThis("join");
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");

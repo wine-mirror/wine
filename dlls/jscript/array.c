@@ -342,20 +342,18 @@ static HRESULT array_join(script_ctx_t *ctx, DispatchEx *array, DWORD length, co
 }
 
 /* ECMA-262 3rd Edition    15.4.4.5 */
-static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DispatchEx *jsthis;
     DWORD length;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(is_vclass(jsthis, JSCLASS_ARRAY)) {
-        length = array_from_vdisp(jsthis)->length;
-    }else {
-        FIXME("dispid is not Array\n");
-        return E_NOTIMPL;
-    }
+    hres = get_length(ctx, vthis, ei, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
 
     if(arg_cnt(dp)) {
         BSTR sep;
@@ -364,11 +362,11 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
         if(FAILED(hres))
             return hres;
 
-        hres = array_join(ctx, jsthis->u.jsdisp, length, sep, retv, ei, caller);
+        hres = array_join(ctx, jsthis, length, sep, retv, ei, caller);
 
         SysFreeString(sep);
     }else {
-        hres = array_join(ctx, jsthis->u.jsdisp, length, default_separatorW, retv, ei, caller);
+        hres = array_join(ctx, jsthis, length, default_separatorW, retv, ei, caller);
     }
 
     return hres;
