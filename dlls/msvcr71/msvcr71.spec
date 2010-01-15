@@ -42,11 +42,11 @@
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_new_handler@@YAP6AXXZP6AXXZ@Z
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
-@ stub ?swprintf@@YAHPAGIPBGZZ
+@ varargs ?swprintf@@YAHPAGIPBGZZ(ptr long wstr) msvcrt._snwprintf
 @ stub ?swprintf@@YAHPA_WIPB_WZZ
 @ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
-@ stub ?vswprintf@@YAHPAGIPBGPAD@Z
+@ cdecl ?vswprintf@@YAHPAGIPBGPAD@Z(ptr long wstr ptr) msvcrt._vsnwprintf
 @ stub ?vswprintf@@YAHPA_WIPB_WPAD@Z
 @ cdecl -i386 ?what@exception@@UBEPBDXZ() msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
