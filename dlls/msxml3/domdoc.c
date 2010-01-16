@@ -1279,14 +1279,25 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     BSTR tagName,
     IXMLDOMNodeList** resultList )
 {
+    static const WCHAR xpathformat[] =
+            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'','%','s','\'',']',0 };
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
     LPWSTR szPattern;
     HRESULT hr;
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(tagName), resultList);
 
-    szPattern = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(2+lstrlenW(tagName)+1));
-    szPattern[0] = szPattern[1] = '/';
-    lstrcpyW(szPattern + 2, tagName);
+    if (tagName[0] == '*' && tagName[1] == 0)
+    {
+        szPattern = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*4);
+        szPattern[0] = szPattern[1] = '/';
+        szPattern[2] = '*';
+        szPattern[3] = 0;
+    }
+    else
+    {
+        szPattern = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(20+lstrlenW(tagName)+1));
+        wsprintfW(szPattern, xpathformat, tagName);
+    }
 
     hr = queryresult_create((xmlNodePtr)get_doc(This), szPattern, resultList);
     HeapFree(GetProcessHeap(), 0, szPattern);
