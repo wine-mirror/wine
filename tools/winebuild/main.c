@@ -101,7 +101,6 @@ enum exec_mode_values
     MODE_EXE,
     MODE_DEF,
     MODE_IMPLIB,
-    MODE_RELAY16,
     MODE_RESOURCES
 };
 
@@ -269,7 +268,6 @@ static const char usage_str[] =
 "       --def                 Build a .def file from a .spec file\n"
 "       --exe                 Build a .c file for an executable\n"
 "       --implib              Build an import library\n"
-"       --relay16             Build the 16-bit relay assembly routines\n"
 "       --resources           Build a .o file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
@@ -286,7 +284,6 @@ enum long_options_values
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
     LONG_OPT_NXCOMPAT,
-    LONG_OPT_RELAY16,
     LONG_OPT_RESOURCES,
     LONG_OPT_SAVE_TEMPS,
     LONG_OPT_SUBSYSTEM,
@@ -308,7 +305,6 @@ static const struct option long_options[] =
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
     { "nxcompat",      1, 0, LONG_OPT_NXCOMPAT },
-    { "relay16",       0, 0, LONG_OPT_RELAY16 },
     { "resources",     0, 0, LONG_OPT_RESOURCES },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
     { "subsystem",     1, 0, LONG_OPT_SUBSYSTEM },
@@ -500,9 +496,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             if (optarg[0] == 'n' || optarg[0] == 'N')
                 spec->dll_characteristics &= ~IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
             break;
-        case LONG_OPT_RELAY16:
-            set_exec_mode( MODE_RELAY16 );
-            break;
         case LONG_OPT_RESOURCES:
             set_exec_mode( MODE_RESOURCES );
             break;
@@ -659,10 +652,6 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         output_import_lib( spec, argv );
-        break;
-    case MODE_RELAY16:
-        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        BuildRelays16();
         break;
     case MODE_RESOURCES:
         load_resources( argv, spec );

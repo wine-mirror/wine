@@ -903,23 +903,15 @@ static void BuildPendingEventCheck(void)
 
 
 /*******************************************************************
- *         BuildRelays16
+ *         output_asm_relays16
  *
  * Build all the 16-bit relay callbacks
  */
-void BuildRelays16(void)
+void output_asm_relays16(void)
 {
-    if (target_cpu != CPU_x86)
-    {
-        output( "/* File not used with this architecture. Do not edit! */\n\n" );
-        return;
-    }
-
     /* File header */
 
-    output( "/* File generated automatically. Do not edit! */\n\n" );
     output( "\t.text\n" );
-
     output( "%s:\n\n", asm_name("__wine_spec_thunk_text_16") );
 
     output( "%s\n", asm_globl("__wine_call16_start") );
@@ -958,14 +950,11 @@ void BuildRelays16(void)
     output( "\n\t.data\n\t.align %d\n", get_alignment(4) );
     output( "%s\n\t.long 0\n", asm_globl("CallTo16_DataSelector") );
     output( "%s\n\t.long 0\n", asm_globl("CallTo16_TebSelector") );
-    if (UsePIC) output( "wine_ldt_copy_ptr:\t.long %s\n", asm_name("wine_ldt_copy") );
 
     output( "\t.text\n" );
-    output( "%s:\n\n", asm_name("__wine_spec_thunk_text_32") );
+    output( "%s:\n", asm_name("__wine_spec_thunk_text_32") );
     build_call_from_regs_x86();
     output_function_size( "__wine_spec_thunk_text_32" );
-
-    output_gnu_stack_note();
 }
 
 
