@@ -423,7 +423,7 @@ static wine_signal_handler handlers[256];
 
 static int fpux_support;  /* whether the CPU support extended fpu context */
 
-extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *context );
+extern void DECLSPEC_NORETURN __wine_restore_regs( const CONTEXT *context );
 
 enum i386_trap_code
 {
@@ -1173,7 +1173,7 @@ void set_cpu_context( const CONTEXT *context )
         if (!(flags & CONTEXT_CONTROL))
             FIXME( "setting partial context (%x) not supported\n", flags );
         else if (flags & CONTEXT_SEGMENTS)
-            __wine_call_from_32_restore_regs( context );
+            __wine_restore_regs( context );
         else
         {
             CONTEXT newcontext = *context;
@@ -1181,7 +1181,7 @@ void set_cpu_context( const CONTEXT *context )
             newcontext.SegEs = wine_get_es();
             newcontext.SegFs = wine_get_fs();
             newcontext.SegGs = wine_get_gs();
-            __wine_call_from_32_restore_regs( &newcontext );
+            __wine_restore_regs( &newcontext );
         }
     }
 }

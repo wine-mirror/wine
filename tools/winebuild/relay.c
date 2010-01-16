@@ -752,7 +752,8 @@ static void BuildCallFrom32Regs(void)
 
     /* Function header */
 
-    function_header( "__wine_call_from_32_regs" );
+    output( "\t.text\n" );
+    function_header( "__wine_call_from_regs" );
 
     /* Allocate some buffer space on the stack */
 
@@ -845,12 +846,12 @@ static void BuildCallFrom32Regs(void)
 
     output( "\tpopl %%ds\n" );
     output( "\tiret\n" );
-    output_function_size( "__wine_call_from_32_regs" );
+    output_function_size( "__wine_call_from_regs" );
 
-    function_header( "__wine_call_from_32_restore_regs" );
+    function_header( "__wine_restore_regs" );
     output( "\tmovl 4(%%esp),%%ecx\n" );
     output( "\tjmp 2b\n" );
-    output_function_size( "__wine_call_from_32_restore_regs" );
+    output_function_size( "__wine_restore_regs" );
 }
 
 
@@ -991,6 +992,7 @@ static void build_call_from_regs_x86_64(void)
 
     /* Function header */
 
+    output( "\t.text\n" );
     function_header( "__wine_call_from_regs" );
 
     output( "\t.cfi_startproc\n" );
@@ -1170,7 +1172,6 @@ void BuildRelays32(void)
 
     case CPU_x86_64:
         output( "/* File generated automatically. Do not edit! */\n\n" );
-        output( "\t.text\n" );
         build_call_from_regs_x86_64();
         output_gnu_stack_note();
         break;
