@@ -60,6 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define WX_OPEN           0x01
 #define WX_ATEOF          0x02
 #define WX_READEOF        0x04  /* like ATEOF, but for underlying file rather than buffer */
+#define WX_READCR         0x08  /* underlying file is at \r */
 #define WX_DONTINHERIT    0x10
 #define WX_APPEND         0x20
 #define WX_TEXT           0x80
@@ -941,6 +942,9 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
 			if (file->_ptr[i] == '\n')
 				offset--;
 		}
+		/* Black magic when reading CR at buffer boundary*/
+		if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
+		    offset--;
 	}
   }
   /* Discard buffered input */
@@ -1742,6 +1746,10 @@ int CDECL _rmtmp(void)
 
 /*********************************************************************
  * (internal) read_i
+ *
+ * When reading \r as last character in text mode, read() positions
+ * the file pointer on the \r character while getc() goes on to
+ * the following \n
  */
 static int read_i(int fd, void *buf, unsigned int count)
 {
@@ -1768,6 +1776,13 @@ static int read_i(int fd, void *buf, unsigned int count)
         if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
         {
             DWORD i, j;
+            if (bufstart[num_read-1] == '\r')
+            {
+	        MSVCRT_fdesc[fd].wxflag  |= WX_READCR;
+	        num_read--;
+            }
+	    else
+	      MSVCRT_fdesc[fd].wxflag  &=  ~WX_READCR;
             for (i=0, j=0; i<num_read; i++)
             {
                 /* in text mode, a ctrl-z signals EOF */
@@ -2890,6 +2905,10 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
 				if (file->_ptr[i] == '\n')
 					off--;
 			}
+		        /* Black magic when reading CR at buffer boundary*/
+			if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
+			  off--;
+
 		}
 	}
   }
@@ -2916,6 +2935,9 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 				if (file->_ptr[i] == '\n')
 					off--;
 			}
+		        /* Black magic when reading CR at buffer boundary*/
+			if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
+			  off--;
 		}
 	}
   }

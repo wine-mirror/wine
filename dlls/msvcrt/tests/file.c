@@ -422,6 +422,35 @@ static WCHAR* AtoW( const char* p )
     return buffer;
 }
 
+/* Test reading in text mode when the 512'th character read is \r*/
+static void test_readboundary(void)
+{
+  FILE *fp;
+  char buf[513], rbuf[513];
+  int i, j;
+  for (i = 0; i < 511; i++)
+    {
+      j = (i%('~' - ' ')+ ' ');
+      buf[i] = j;
+    }
+  buf[511] = '\n';
+  buf[512] =0;
+  fp = fopen("boundary.tst", "wt");
+  fwrite(buf, 512,1,fp);
+  fclose(fp);
+  fp = fopen("boundary.tst", "rt");
+  for(i=0; i<512; i++)
+    {
+      fseek(fp,0 , SEEK_CUR);
+      rbuf[i] = fgetc(fp);
+    }
+  rbuf[512] =0;
+  fclose(fp);
+  unlink("boundary.tst");
+
+  ok(strcmp(buf, rbuf) == 0,"CRLF on buffer boundary failure\n");
+  }
+
 static void test_fgetc( void )
 {
   char* tempf;
@@ -808,15 +837,23 @@ static void test_file_write_read( void )
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
   _lseek(tempfd, -1, FILE_END);
   ret = _read(tempfd,btext,LLEN);
-  ok(ret == 1, "_read expected 1 got bad length: %d\n", ret);
+  ok(ret == 1 && *btext == '\n', "_read expected 1 got bad length: %d\n", ret);
   _lseek(tempfd, -2, FILE_END);
   ret = _read(tempfd,btext,LLEN);
   ok(ret == 1 && *btext == '\n', "_read expected '\\n' got bad length: %d\n", ret);
   _lseek(tempfd, -3, FILE_END);
+  ret = _read(tempfd,btext,1);
+  ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
+  ok(tell(tempfd) == 41, "bad position %u expecting 41\n", tell(tempfd));
+  _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,2);
   ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
   ok(tell(tempfd) == 42, "bad position %u expecting 42\n", tell(tempfd));
-  _close(tempfd);
+  _lseek(tempfd, -3, FILE_END);
+  ret = _read(tempfd,btext,3);
+  ok(ret == 2 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
+  ok(tell(tempfd) == 43, "bad position %u expecting 43\n", tell(tempfd));
+   _close(tempfd);
 
   ret = unlink(tempf);
   ok( ret == 0 ,"Can't unlink '%s': %d\n", tempf, errno);
@@ -1402,6 +1439,7 @@ START_TEST(file)
     test_asciimode2();
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
+    test_readboundary();
     test_fgetc();
     test_fputc();
     test_flsbuf();
