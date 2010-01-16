@@ -1044,6 +1044,7 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
       *open_flags &= ~MSVCRT__O_BINARY;
       break;
     case '+':
+    case ' ':
       break;
     default:
       FIXME(":unknown flag %c not supported\n",mode[-1]);
