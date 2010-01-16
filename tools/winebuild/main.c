@@ -102,7 +102,6 @@ enum exec_mode_values
     MODE_DEF,
     MODE_IMPLIB,
     MODE_RELAY16,
-    MODE_RELAY32,
     MODE_RESOURCES
 };
 
@@ -271,7 +270,6 @@ static const char usage_str[] =
 "       --exe                 Build a .c file for an executable\n"
 "       --implib              Build an import library\n"
 "       --relay16             Build the 16-bit relay assembly routines\n"
-"       --relay32             Build the 32-bit relay assembly routines\n"
 "       --resources           Build a .o file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
@@ -289,7 +287,6 @@ enum long_options_values
     LONG_OPT_NMCMD,
     LONG_OPT_NXCOMPAT,
     LONG_OPT_RELAY16,
-    LONG_OPT_RELAY32,
     LONG_OPT_RESOURCES,
     LONG_OPT_SAVE_TEMPS,
     LONG_OPT_SUBSYSTEM,
@@ -312,7 +309,6 @@ static const struct option long_options[] =
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
     { "nxcompat",      1, 0, LONG_OPT_NXCOMPAT },
     { "relay16",       0, 0, LONG_OPT_RELAY16 },
-    { "relay32",       0, 0, LONG_OPT_RELAY32 },
     { "resources",     0, 0, LONG_OPT_RESOURCES },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
     { "subsystem",     1, 0, LONG_OPT_SUBSYSTEM },
@@ -507,9 +503,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case LONG_OPT_RELAY16:
             set_exec_mode( MODE_RELAY16 );
             break;
-        case LONG_OPT_RELAY32:
-            set_exec_mode( MODE_RELAY32 );
-            break;
         case LONG_OPT_RESOURCES:
             set_exec_mode( MODE_RESOURCES );
             break;
@@ -670,10 +663,6 @@ int main(int argc, char **argv)
     case MODE_RELAY16:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         BuildRelays16();
-        break;
-    case MODE_RELAY32:
-        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        BuildRelays32();
         break;
     case MODE_RESOURCES:
         load_resources( argv, spec );

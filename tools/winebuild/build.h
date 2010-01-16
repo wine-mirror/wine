@@ -244,7 +244,8 @@ extern void add_delayed_import( const char *name );
 extern void add_ignore_symbol( const char *name );
 extern void add_extra_ld_symbol( const char *name );
 extern void read_undef_symbols( DLLSPEC *spec, char **argv );
-extern int resolve_imports( DLLSPEC *spec );
+extern void resolve_imports( DLLSPEC *spec );
+extern int is_undefined( const char *name );
 extern int has_imports(void);
 extern int has_relays( DLLSPEC *spec );
 extern void output_get_pc_thunk(void);
@@ -266,6 +267,7 @@ extern void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset 
 extern void output_spec16_file( DLLSPEC *spec );
 extern void output_fake_module16( DLLSPEC *spec16 );
 extern void output_res_o_file( DLLSPEC *spec );
+extern void output_asm_relays(void);
 
 extern void BuildRelays16(void);
 extern void BuildRelays32(void);

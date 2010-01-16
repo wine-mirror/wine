@@ -721,7 +721,7 @@ static void BuildCallTo32CBClient( int isEx )
 
 
 /*******************************************************************
- *         BuildCallFrom32Regs
+ *         build_call_from_regs_x86
  *
  * Build a 32-bit-to-Wine call-back function for a 'register' function.
  * 'args' is the number of dword arguments.
@@ -746,7 +746,7 @@ static void BuildCallTo32CBClient( int isEx )
  * pointer on return (with the return address and arguments already
  * removed).
  */
-static void BuildCallFrom32Regs(void)
+static void build_call_from_regs_x86(void)
 {
     static const int STACK_SPACE = 128 + 0x2cc /* sizeof(CONTEXT86) */;
 
@@ -962,7 +962,7 @@ void BuildRelays16(void)
 
     output( "\t.text\n" );
     output( "%s:\n\n", asm_name("__wine_spec_thunk_text_32") );
-    BuildCallFrom32Regs();
+    build_call_from_regs_x86();
     output_function_size( "__wine_spec_thunk_text_32" );
 
     output_gnu_stack_note();
@@ -1150,34 +1150,21 @@ static void build_call_from_regs_x86_64(void)
 
 
 /*******************************************************************
- *         BuildRelays32
+ *         output_asm_relays
  *
- * Build all the 32-bit relay callbacks
+ * Build all the assembly relay callbacks
  */
-void BuildRelays32(void)
+void output_asm_relays(void)
 {
     switch (target_cpu)
     {
     case CPU_x86:
-        output( "/* File generated automatically. Do not edit! */\n\n" );
-        output( "\t.text\n" );
-        output( "%s:\n\n", asm_name("__wine_spec_thunk_text_32") );
-
-        /* 32-bit register entry point */
-        BuildCallFrom32Regs();
-
-        output_function_size( "__wine_spec_thunk_text_32" );
-        output_gnu_stack_note();
+        build_call_from_regs_x86();
         break;
-
     case CPU_x86_64:
-        output( "/* File generated automatically. Do not edit! */\n\n" );
         build_call_from_regs_x86_64();
-        output_gnu_stack_note();
         break;
-
     default:
-        output( "/* File not used with this architecture. Do not edit! */\n\n" );
-        return;
+        break;
     }
 }

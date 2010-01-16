@@ -54,10 +54,6 @@ specified via the -E option.
 Generate the assembly code for the 16-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
 .TP
-.B \--relay32
-Generate the assembly code for the 32-bit relay routines. This is for
-Wine internal usage only, you should never need to use this option.
-.TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful
 when building with a PE compiler, since the PE binutils cannot handle
