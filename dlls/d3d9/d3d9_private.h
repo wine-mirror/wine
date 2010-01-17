@@ -228,9 +228,6 @@ extern HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantB(IDirect3DDevi
         UINT StartRegister, const BOOL *pConstantData, UINT BoolCount) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantB(IDirect3DDevice9Ex *iface,
         UINT StartRegister, BOOL *pConstantData, UINT BoolCount) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(IDirect3DDevice9Ex *iface,
-        D3DQUERYTYPE Type, IDirect3DQuery9 **ppQuery) DECLSPEC_HIDDEN;
-
 
 /* ---------------- */
 /* IDirect3DVolume9 */
@@ -563,5 +560,8 @@ typedef struct IDirect3DQuery9Impl {
     /* Parent reference */
     LPDIRECT3DDEVICE9EX    parentDevice;
 } IDirect3DQuery9Impl;
+
+HRESULT query_init(IDirect3DQuery9Impl *query, IDirect3DDevice9Impl *device,
+        D3DQUERYTYPE type) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3D9_PRIVATE_H */

@@ -2178,6 +2178,37 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DeletePatch(LPDIRECT3DDEVICE9EX ifa
     return hr;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(IDirect3DDevice9Ex *iface,
+        D3DQUERYTYPE type, IDirect3DQuery9 **query)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DQuery9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, type %#x, query %p.\n", iface, type, query);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate query memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = query_init(object, This, type);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize query, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created query %p.\n", object);
+    if (query) *query = (IDirect3DQuery9 *)object;
+    else IDirect3DQuery9_Release((IDirect3DQuery9 *)object);
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI IDirect3DDevice9ExImpl_SetConvolutionMonoKernel(IDirect3DDevice9Ex *iface,
         UINT width, UINT height, float *rows, float *columns)
 {
