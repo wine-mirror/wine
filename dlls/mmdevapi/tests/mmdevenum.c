@@ -90,6 +90,18 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
         hr = IMMDeviceCollection_Item(col, 0, &dev);
         ok(hr == S_OK, "Valid Item returned 0x%08x\n", hr);
         ok(dev != NULL, "Device is null!\n");
+        if (dev != NULL)
+        {
+            char temp[128];
+            WCHAR *id = NULL;
+            if (IMMDevice_GetId(dev, &id) == S_OK)
+            {
+                temp[sizeof(temp)-1] = 0;
+                WideCharToMultiByte(CP_ACP, 0, id, -1, temp, sizeof(temp)-1, NULL, NULL);
+                trace("Device found: %s\n", temp);
+                CoTaskMemFree(id);
+            }
+        }
         if (dev)
             IUnknown_Release(dev);
     }
