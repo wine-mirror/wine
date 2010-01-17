@@ -2347,9 +2347,8 @@ typedef struct IWineD3DQueryImpl
     void                     *extendedData;
 } IWineD3DQueryImpl;
 
-extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl DECLSPEC_HIDDEN;
-extern const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl DECLSPEC_HIDDEN;
-extern const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl DECLSPEC_HIDDEN;
+HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
+        WINED3DQUERYTYPE type, IUnknown *parent) DECLSPEC_HIDDEN;
 
 /* IWineD3DBuffer */
 

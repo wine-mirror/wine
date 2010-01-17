@@ -626,7 +626,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
  * IWineD3DQuery VTbl follows
  **********************************************************/
 
-const IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
+static const IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DQueryImpl_QueryInterface,
@@ -640,7 +640,7 @@ const IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
     IWineD3DQueryImpl_Issue
 };
 
-const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl =
+static const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DQueryImpl_QueryInterface,
@@ -654,7 +654,7 @@ const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl =
     IWineD3DEventQueryImpl_Issue
 };
 
-const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl =
+static const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DQueryImpl_QueryInterface,
@@ -667,3 +667,75 @@ const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl =
     IWineD3DQueryImpl_GetType,
     IWineD3DOcclusionQueryImpl_Issue
 };
+
+HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
+        WINED3DQUERYTYPE type, IUnknown *parent)
+{
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
+    switch (type)
+    {
+        case WINED3DQUERYTYPE_OCCLUSION:
+            TRACE("Occlusion query.\n");
+            if (!gl_info->supported[ARB_OCCLUSION_QUERY])
+            {
+                WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+            query->lpVtbl = &IWineD3DOcclusionQuery_Vtbl;
+            query->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_occlusion_query));
+            if (!query->extendedData)
+            {
+                ERR("Failed to allocate occlusion query extended data.\n");
+                return E_OUTOFMEMORY;
+            }
+            ((struct wined3d_occlusion_query *)query->extendedData)->context = NULL;
+            break;
+
+        case WINED3DQUERYTYPE_EVENT:
+            TRACE("Event query.\n");
+            if (!gl_info->supported[NV_FENCE] && !gl_info->supported[APPLE_FENCE])
+            {
+                /* Half-Life 2 needs this query. It does not render the main
+                 * menu correctly otherwise. Pretend to support it, faking
+                 * this query does not do much harm except potentially
+                 * lowering performance. */
+                FIXME("Event query: Unimplemented, but pretending to be supported.\n");
+            }
+            query->lpVtbl = &IWineD3DEventQuery_Vtbl;
+            query->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_event_query));
+            if (!query->extendedData)
+            {
+                ERR("Failed to allocate event query extended data.\n");
+                return E_OUTOFMEMORY;
+            }
+            ((struct wined3d_event_query *)query->extendedData)->context = NULL;
+            break;
+
+        case WINED3DQUERYTYPE_VCACHE:
+        case WINED3DQUERYTYPE_RESOURCEMANAGER:
+        case WINED3DQUERYTYPE_VERTEXSTATS:
+        case WINED3DQUERYTYPE_TIMESTAMP:
+        case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
+        case WINED3DQUERYTYPE_TIMESTAMPFREQ:
+        case WINED3DQUERYTYPE_PIPELINETIMINGS:
+        case WINED3DQUERYTYPE_INTERFACETIMINGS:
+        case WINED3DQUERYTYPE_VERTEXTIMINGS:
+        case WINED3DQUERYTYPE_PIXELTIMINGS:
+        case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
+        case WINED3DQUERYTYPE_CACHEUTILIZATION:
+        default:
+            /* Use the base query vtable until we have a special one for each query. */
+            query->lpVtbl = &IWineD3DQuery_Vtbl;
+            FIXME("Unhandled query type %#x.\n", type);
+            return WINED3DERR_NOTAVAILABLE;
+    }
+
+    query->type = type;
+    query->state = QUERY_CREATED;
+    query->device = device;
+    query->parent = parent;
+    query->ref = 1;
+
+    return WINED3D_OK;
+}

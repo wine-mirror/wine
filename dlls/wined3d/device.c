@@ -784,104 +784,33 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown* parent) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
+        WINED3DQUERYTYPE type, IWineD3DQuery **query, IUnknown *parent)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
-    HRESULT hr = WINED3DERR_NOTAVAILABLE;
-    const IWineD3DQueryVtbl *vtable;
+    IWineD3DQueryImpl *object;
+    HRESULT hr;
 
-    /* Just a check to see if we support this type of query */
-    switch(Type) {
-    case WINED3DQUERYTYPE_OCCLUSION:
-        TRACE("(%p) occlusion query\n", This);
-        if (gl_info->supported[ARB_OCCLUSION_QUERY])
-            hr = WINED3D_OK;
-        else
-            WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+    TRACE("iface %p, type %#x, query %p, parent %p.\n", iface, type, query, parent);
 
-        vtable = &IWineD3DOcclusionQuery_Vtbl;
-        break;
-
-    case WINED3DQUERYTYPE_EVENT:
-        if (!gl_info->supported[NV_FENCE] && !gl_info->supported[APPLE_FENCE])
-        {
-            /* Half-Life 2 needs this query. It does not render the main menu correctly otherwise
-             * Pretend to support it, faking this query does not do much harm except potentially lowering performance
-             */
-            FIXME("(%p) Event query: Unimplemented, but pretending to be supported\n", This);
-        }
-        vtable = &IWineD3DEventQuery_Vtbl;
-        hr = WINED3D_OK;
-        break;
-
-    case WINED3DQUERYTYPE_VCACHE:
-    case WINED3DQUERYTYPE_RESOURCEMANAGER:
-    case WINED3DQUERYTYPE_VERTEXSTATS:
-    case WINED3DQUERYTYPE_TIMESTAMP:
-    case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
-    case WINED3DQUERYTYPE_TIMESTAMPFREQ:
-    case WINED3DQUERYTYPE_PIPELINETIMINGS:
-    case WINED3DQUERYTYPE_INTERFACETIMINGS:
-    case WINED3DQUERYTYPE_VERTEXTIMINGS:
-    case WINED3DQUERYTYPE_PIXELTIMINGS:
-    case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
-    case WINED3DQUERYTYPE_CACHEUTILIZATION:
-    default:
-        /* Use the base Query vtable until we have a special one for each query */
-        vtable = &IWineD3DQuery_Vtbl;
-        FIXME("(%p) Unhandled query type %d\n", This, Type);
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate query memory.\n");
+        return E_OUTOFMEMORY;
     }
-    if(NULL == ppQuery || hr != WINED3D_OK) {
+
+    hr = query_init(object, This, type, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize query, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if(!object)
-    {
-        ERR("Out of memory\n");
-        *ppQuery = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
+    TRACE("Created query %p.\n", object);
+    *query = (IWineD3DQuery *)object;
 
-    object->lpVtbl = vtable;
-    object->type = Type;
-    object->state = QUERY_CREATED;
-    object->device = This;
-    object->parent = parent;
-    object->ref = 1;
-
-    *ppQuery = (IWineD3DQuery *)object;
-
-    /* allocated the 'extended' data based on the type of query requested */
-    switch(Type){
-    case WINED3DQUERYTYPE_OCCLUSION:
-        object->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_occlusion_query));
-        ((struct wined3d_occlusion_query *)object->extendedData)->context = NULL;
-        break;
-
-    case WINED3DQUERYTYPE_EVENT:
-        object->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_event_query));
-        ((struct wined3d_event_query *)object->extendedData)->context = NULL;
-        break;
-
-    case WINED3DQUERYTYPE_VCACHE:
-    case WINED3DQUERYTYPE_RESOURCEMANAGER:
-    case WINED3DQUERYTYPE_VERTEXSTATS:
-    case WINED3DQUERYTYPE_TIMESTAMP:
-    case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
-    case WINED3DQUERYTYPE_TIMESTAMPFREQ:
-    case WINED3DQUERYTYPE_PIPELINETIMINGS:
-    case WINED3DQUERYTYPE_INTERFACETIMINGS:
-    case WINED3DQUERYTYPE_VERTEXTIMINGS:
-    case WINED3DQUERYTYPE_PIXELTIMINGS:
-    case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
-    case WINED3DQUERYTYPE_CACHEUTILIZATION:
-    default:
-        object->extendedData = 0;
-        FIXME("(%p) Unhandled query type %d\n",This , Type);
-    }
-    TRACE("(%p) : Created Query %p\n", This, object);
     return WINED3D_OK;
 }
 
