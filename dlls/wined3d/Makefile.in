@@ -9,7 +9,6 @@ IMPORTS   = uuid user32 gdi32 advapi32 kernel32
 C_SRCS = \
 	arb_program_shader.c \
 	ati_fragment_shader.c \
-	baseshader.c \
 	basetexture.c \
 	buffer.c \
 	clipper.c \

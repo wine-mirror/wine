@@ -2605,8 +2605,6 @@ int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_li
 extern BOOL vshader_get_input(IWineD3DVertexShader *iface,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 
-extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */
@@ -2655,7 +2653,6 @@ typedef struct IWineD3DBaseShaderImpl {
 void shader_buffer_clear(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
 BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
 void shader_buffer_free(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
-void shader_cleanup(IWineD3DBaseShader *iface) DECLSPEC_HIDDEN;
 void shader_dump_src_param(const struct wined3d_shader_src_param *param,
         const struct wined3d_shader_version *shader_version) DECLSPEC_HIDDEN;
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
@@ -2663,16 +2660,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
 unsigned int shader_find_free_input_register(const struct shader_reg_maps *reg_maps, unsigned int max) DECLSPEC_HIDDEN;
 void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx) DECLSPEC_HIDDEN;
-HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
-        struct shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
-        struct wined3d_shader_signature_element *output_signature,
-        const DWORD *byte_code, DWORD constf_size) DECLSPEC_HIDDEN;
-void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *device,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
-const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token) DECLSPEC_HIDDEN;
-void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction) DECLSPEC_HIDDEN;
-WINED3DDECLUSAGE shader_usage_from_semantic_name(const char *semantic_name) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
 {
