@@ -7,7 +7,8 @@ IMPORTS   = ole32 version user32 kernel32
 
 CTESTS = \
 	dependency.c \
-	mmdevenum.c
+	mmdevenum.c \
+	propstore.c
 
 @MAKE_TEST_RULES@
 
