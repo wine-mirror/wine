@@ -24,6 +24,8 @@
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
+#include "winreg.h"
 #include "wine/debug.h"
 
 #include "ole2.h"
@@ -33,6 +35,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
+static const WCHAR software_mmdevapi[] =
+    { 'S','o','f','t','w','a','r','e','\\',
+      'M','i','c','r','o','s','o','f','t','\\',
+      'W','i','n','d','o','w','s','\\',
+      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+      'M','M','D','e','v','i','c','e','s','\\',
+      'A','u','d','i','o',0};
+static const WCHAR reg_render[] =
+    { 'R','e','n','d','e','r',0 };
+static const WCHAR reg_capture[] =
+    { 'C','a','p','t','u','r','e',0 };
+static const WCHAR reg_devicestate[] =
+    { 'D','e','v','i','c','e','S','t','a','t','e',0 };
+static const WCHAR reg_alname[] =
+    { 'A','L','N','a','m','e',0 };
+static const WCHAR reg_properties[] =
+    { 'P','r','o','p','e','r','t','i','e','s',0 };
+
 typedef struct MMDevEnumImpl
 {
     const IMMDeviceEnumeratorVtbl *lpVtbl;
@@ -41,27 +61,35 @@ typedef struct MMDevEnumImpl
 
 static MMDevEnumImpl *MMDevEnumerator;
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
+static const IMMDeviceCollectionVtbl MMDevColVtbl;
 
 typedef struct MMDevColImpl
 {
     const IMMDeviceCollectionVtbl *lpVtbl;
     LONG ref;
-    MMDevEnumImpl *parent;
     EDataFlow flow;
     DWORD state;
 } MMDevColImpl;
-static const IMMDeviceCollectionVtbl MMDevColVtbl;
 
-static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, MMDevEnumImpl *parent, EDataFlow flow, DWORD state)
+/* Creates or updates the state of a device
+ * If GUID is null, a random guid will be assigned
+ * and the device will be created
+ */
+static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state)
+{
+    FIXME("stub\n");
+}
+
+static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD state)
 {
     MMDevColImpl *This;
+
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     *ppv = NULL;
     if (!This)
         return E_OUTOFMEMORY;
     This->lpVtbl = &MMDevColVtbl;
     This->ref = 1;
-    This->parent = parent;
     This->flow = flow;
     This->state = state;
     *ppv = (IMMDeviceCollection*)This;
@@ -143,6 +171,10 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 
     if (!This)
     {
+        DWORD i = 0;
+        HKEY root, cur, key_capture = NULL, key_render = NULL;
+        LONG ret;
+
         This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
         *ppv = NULL;
         if (!This)
@@ -150,6 +182,47 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
         This->ref = 1;
         This->lpVtbl = &MMDevEnumVtbl;
         MMDevEnumerator = This;
+
+        ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, KEY_READ, &root);
+        if (ret == ERROR_SUCCESS)
+            ret = RegOpenKeyExW(root, reg_capture, 0, KEY_READ, &key_capture);
+        if (ret == ERROR_SUCCESS)
+            ret = RegOpenKeyExW(root, reg_render, 0, KEY_READ, &key_render);
+        cur = key_capture;
+        if (ret != ERROR_SUCCESS)
+        {
+            RegCloseKey(key_capture);
+            RegCloseKey(key_render);
+            TRACE("Couldn't open key: %u\n", ret);
+        }
+        else do {
+            WCHAR guidvalue[39];
+            WCHAR alname[128];
+            GUID guid;
+            DWORD len;
+
+            len = sizeof(guidvalue);
+            ret = RegEnumKeyExW(cur, i++, guidvalue, &len, NULL, NULL, NULL, NULL);
+            if (ret == ERROR_NO_MORE_ITEMS)
+            {
+                if (cur == key_capture)
+                {
+                    cur = key_render;
+                    i = 0;
+                    continue;
+                }
+                break;
+            }
+            if (ret != ERROR_SUCCESS)
+                continue;
+            len = sizeof(alname);
+            RegGetValueW(cur, guidvalue, reg_alname, RRF_RT_REG_SZ, NULL, alname, &len);
+            if (SUCCEEDED(CLSIDFromString(guidvalue, &guid)))
+                MMDevice_Create(alname, &guid,
+                                cur == key_capture ? eCapture : eRender,
+                                DEVICE_STATE_NOTPRESENT);
+        } while (1);
+        RegCloseKey(root);
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
@@ -206,7 +279,7 @@ static HRESULT WINAPI MMDevEnum_EnumAudioEndpoints(IMMDeviceEnumerator *iface, E
         return E_INVALIDARG;
     if (mask & ~DEVICE_STATEMASK_ALL)
         return E_INVALIDARG;
-    return MMDevCol_Create(devices, This, flow, mask);
+    return MMDevCol_Create(devices, flow, mask);
 }
 
 static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *iface, EDataFlow flow, ERole role, IMMDevice **device)
