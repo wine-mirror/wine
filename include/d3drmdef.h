@@ -1,6 +1,7 @@
 /*
  * Copyright 2007 Vijay Kiran Kamuju
  * Copyright 2007 David ADAM
+ * Copyright 2010 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -175,6 +176,18 @@ typedef enum _D3DRMUSERVISUALREASON {
     D3DRMUSERVISUAL_CANSEE,
     D3DRMUSERVISUAL_RENDER
 } D3DRMUSERVISUALREASON, *LPD3DRMUSERVISUALREASON;
+
+typedef DWORD D3DRMMAPPING;
+
+typedef struct _D3DRMVERTEX {
+    D3DVECTOR position;
+    D3DVECTOR normal;
+    D3DVALUE  tu;
+    D3DVALUE  tv;
+    D3DCOLOR  color;
+} D3DRMVERTEX, *LPD3DRMVERTEX;
+
+typedef LONG D3DRMGROUPINDEX;
 
 void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D, LPD3DRMQUATERNION);
 
