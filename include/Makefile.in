@@ -96,7 +96,8 @@ PUBLIC_IDL_H_SRCS = \
 	wtypes.idl \
 	wuapi.idl \
 	xmldom.idl \
-	xmldso.idl
+	xmldso.idl \
+	xmllite.idl
 
 IDL_TLB_SRCS = \
 	stdole2.idl

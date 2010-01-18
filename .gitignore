@@ -212,6 +212,7 @@ include/wtypes.h
 include/wuapi.h
 include/xmldom.h
 include/xmldso.h
+include/xmllite.h
 libs/wpp/ppl.yy.c
 libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h
