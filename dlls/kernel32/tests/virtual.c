@@ -922,11 +922,20 @@ static void test_IsBadWritePtr(void)
     ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
 }
 
-static void test_BadPtr(void)
+static void test_IsBadCodePtr(void)
 {
-    void *ptr = (void*)1;
-    /* We assume address 1 is not mapped. */
-    ok(IsBadCodePtr(ptr),"IsBadCodePtr(1) failed.\n");
+    BOOL ret;
+    void *ptr = (void *)0xdeadbeef;
+    char stackval;
+
+    ret = IsBadCodePtr(NULL);
+    ok(ret == TRUE, "Expected IsBadCodePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadCodePtr(ptr);
+    ok(ret == TRUE, "Expected IsBadCodePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadCodePtr((void *)&stackval);
+    ok(ret == FALSE, "Expected IsBadCodePtr to return FALSE, got %d\n", ret);
 }
 
 static void test_write_watch(void)
@@ -1270,6 +1279,6 @@ START_TEST(virtual)
     test_CreateFileMapping();
     test_IsBadReadPtr();
     test_IsBadWritePtr();
-    test_BadPtr();
+    test_IsBadCodePtr();
     test_write_watch();
 }
