@@ -598,8 +598,19 @@ static HRESULT WINAPI domelem_removeAttribute(
     IXMLDOMElement *iface,
     BSTR p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    IXMLDOMNamedNodeMap *attr;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s)", This, debugstr_w(p));
+
+    hr = IXMLDOMElement_get_attributes(iface, &attr);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLDOMNamedNodeMap_removeNamedItem(attr, p, NULL);
+    IXMLDOMNamedNodeMap_Release(attr);
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_getAttributeNode(
