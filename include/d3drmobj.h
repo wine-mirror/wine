@@ -2181,6 +2181,116 @@ DECLARE_INTERFACE_(IDirect3DRMShadow2,IDirect3DRMVisual)
 #define IDirect3DRMShadow2_SetOptions(p,a)                (p)->lpVtbl->SetOptions(p,a)
 #endif
 
+/*****************************************************************************
+ * IDirect3DRMFace interface
+ */
+#define INTERFACE IDirect3DRMFace
+DECLARE_INTERFACE_(IDirect3DRMFace,IDirect3DRMObject)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DRMObject methods ***/
+    STDMETHOD(Clone)(THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
+    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
+    STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
+    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    /*** IDirect3DRMFace methods ***/
+    STDMETHOD(AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(AddVertexAndNormalIndexed)(THIS_ DWORD vertex, DWORD normal) PURE;
+    STDMETHOD(SetColorRGB)(THIS_ D3DVALUE, D3DVALUE, D3DVALUE) PURE;
+    STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
+    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetTextureCoordinates)(THIS_ DWORD vertex, D3DVALUE u, D3DVALUE v) PURE;
+    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
+    STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
+    STDMETHOD(GetVertex)(THIS_ DWORD index, D3DVECTOR *vertex, D3DVECTOR *normal) PURE;
+    STDMETHOD(GetVertices)(THIS_ DWORD *vertex_count, D3DVECTOR *coords, D3DVECTOR *normals);
+    STDMETHOD(GetTextureCoordinates)(THIS_ DWORD vertex, D3DVALUE *u, D3DVALUE *v) PURE;
+    STDMETHOD(GetTextureTopology)(THIS_ BOOL *wrap_u, BOOL *wrap_v) PURE;
+    STDMETHOD(GetNormal)(THIS_ D3DVECTOR *) PURE;
+    STDMETHOD(GetTexture)(THIS_ LPDIRECT3DRMTEXTURE *) PURE;
+    STDMETHOD(GetMaterial)(THIS_ LPDIRECT3DRMMATERIAL *) PURE;
+    STDMETHOD_(int, GetVertexCount)(THIS) PURE;
+    STDMETHOD_(int, GetVertexIndex)(THIS_ DWORD which) PURE;
+    STDMETHOD_(int, GetTextureCoordinateIndex)(THIS_ DWORD which) PURE;
+    STDMETHOD_(D3DCOLOR, GetColor)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirect3DRMFace_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DRMFace_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirect3DRMFace_Release(p)                        (p)->lpVtbl->Release(p)
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMFace_Clone(p,a,b,c)                    (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirect3DRMFace_AddDestroyCallback(p,a,b)         (p)->lpVtbl->AddDestroyCallback(p,a,b)
+#define IDirect3DRMFace_DeleteDestroyCallback(p,a,b)      (p)->lpVtbl->DeleteDestroyCallback(p,a,b)
+#define IDirect3DRMFace_SetAppData(p,a)                   (p)->lpVtbl->SetAppData(p,a)
+#define IDirect3DRMFace_GetAppData(p)                     (p)->lpVtbl->GetAppData(p)
+#define IDirect3DRMFace_SetName(p,a)                      (p)->lpVtbl->SetName(p,a)
+#define IDirect3DRMFace_GetName(p,a,b)                    (p)->lpVtbl->GetName(p,a,b)
+#define IDirect3DRMFace_GetClassName(p,a,b)               (p)->lpVtbl->GetClassName(p,a,b)
+/*** IDirect3DRMFace methods ***/
+#define IDirect3DRMFace_AddVertex(p,a,b,c)                (p)->lpVtbl->AddVertex(p,a,b,c)
+#define IDirect3DRMFace_AddVertexAndNormalIndexed(p,a,b)  (p)->lpVtbl->AddVertexAndNormalIndexed(p,a,b)
+#define IDirect3DRMFace_SetColorRGB(p,a,b,c)              (p)->lpVtbl->SetColorRGB(p,a,b,c)
+#define IDirect3DRMFace_SetColor(p,a)                     (p)->lpVtbl->SetColor(p,a)
+#define IDirect3DRMFace_SetTexture(p,a)                   (p)->lpVtbl->SetTexture(p,a)
+#define IDirect3DRMFace_SetTextureCoordinates(p,a,b,c)    (p)->lpVtbl->SetTextureCoordinates(p,a,b,c)
+#define IDirect3DRMFace_SetMaterial(p,a)                  (p)->lpVtbl->SetMaterial(p,a)
+#define IDirect3DRMFace_SetTextureTopology(p,a,b)         (p)->lpVtbl->SetTextureTopology(p,a,b)
+#define IDirect3DRMFace_GetVertex(p,a,b,c)                (p)->lpVtbl->GetVertex(p,a,b,c)
+#define IDirect3DRMFace_GetVertices(p,a,b,c)              (p)->lpVtbl->GetVertices(p,a,b,c)
+#define IDirect3DRMFace_GetTextureCoordinates(p,a,b,c)    (p)->lpVtbl->GetTextureCoordinates(p,a,b,c)
+#define IDirect3DRMFace_GetTextureTopology(p,a,b)         (p)->lpVtbl->GetTextureTopology(p,a,b)
+#define IDirect3DRMFace_GetNormal(p,a)                    (p)->lpVtbl->GetNormal(p,a)
+#define IDirect3DRMFace_GetTexture(p,a)                   (p)->lpVtbl->GetTexture(p,a)
+#define IDirect3DRMFace_GetVertexCount(p)                 (p)->lpVtbl->GetVertexCount(p)
+#define IDirect3DRMFace_GetVertexIndex(p,a)               (p)->lpVtbl->GetVertexIndex(p,a)
+#define IDirect3DRMFace_GetTextureCoordinateIndex(p,a)    (p)->lpVtbl->GetTextureCoordinateIndex(p,a)
+#define IDirect3DRMFace_GetColor(p,a)                     (p)->lpVtbl->GetColor(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DRMFace_QueryInterface(p,a,b)             (p)->QueryInterface(a,b)
+#define IDirect3DRMFace_AddRef(p)                         (p)->AddRef()
+#define IDirect3DRMFace_Release(p)                        (p)->Release()
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMFace_Clone(p,a,b,c)                    (p)->Clone(a,b,c)
+#define IDirect3DRMFace_AddDestroyCallback(p,a,b)         (p)->AddDestroyCallback(a,b)
+#define IDirect3DRMFace_DeleteDestroyCallback(p,a,b)      (p)->DeleteDestroyCallback(a,b)
+#define IDirect3DRMFace_SetAppData(p,a)                   (p)->SetAppData(a)
+#define IDirect3DRMFace_GetAppData(p)                     (p)->GetAppData()
+#define IDirect3DRMFace_SetName(p,a)                      (p)->SetName(a)
+#define IDirect3DRMFace_GetName(p,a,b)                    (p)->GetName(a,b)
+#define IDirect3DRMFace_GetClassName(p,a,b)               (p)->GetClassName(a,b)
+/*** IDirect3DRMFace methods ***/
+#define IDirect3DRMFace_AddVertex(p,a,b,c)                (p)->AddVertex(a,b,c)
+#define IDirect3DRMFace_AddVertexAndNormalIndexed(p,a,b)  (p)->AddVertexAndNormalIndexed(a,b)
+#define IDirect3DRMFace_SetColorRGB(p,a,b,c)              (p)->SetColorRGB(a,b,c)
+#define IDirect3DRMFace_SetColor(p,a)                     (p)->SetColor(a)
+#define IDirect3DRMFace_SetTexture(p,a)                   (p)->SetTexture(a)
+#define IDirect3DRMFace_SetTextureCoordinates(p,a,b,c)    (p)->SetTextureCoordinates(a,b,c)
+#define IDirect3DRMFace_SetMaterial(p,a)                  (p)->SetMaterial(a)
+#define IDirect3DRMFace_SetTextureTopology(p,a,b)         (p)->SetTextureTopology(a,b)
+#define IDirect3DRMFace_GetVertex(p,a,b,c)                (p)->GetVertex(a,b,c)
+#define IDirect3DRMFace_GetVertices(p,a,b,c)              (p)->GetVertices(a,b,c)
+#define IDirect3DRMFace_GetTextureCoordinates(p,a,b,c)    (p)->GetTextureCoordinates(a,b,c)
+#define IDirect3DRMFace_GetTextureTopology(p,a,b)         (p)->GetTextureTopology(a,b)
+#define IDirect3DRMFace_GetNormal(p,a)                    (p)->GetNormal(a)
+#define IDirect3DRMFace_GetTexture(p,a)                   (p)->GetTexture(a)
+#define IDirect3DRMFace_GetVertexCount(p)                 (p)->GetVertexCount()
+#define IDirect3DRMFace_GetVertexIndex(p,a)               (p)->GetVertexIndex(a)
+#define IDirect3DRMFace_GetTextureCoordinateIndex(p,a)    (p)->GetTextureCoordinateIndex(a)
+#define IDirect3DRMFace_GetColor(p,a)                     (p)->GetColor(a)
+#endif
+
 #ifdef __cplusplus
 };
 #endif
