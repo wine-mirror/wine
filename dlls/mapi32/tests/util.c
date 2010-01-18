@@ -46,7 +46,10 @@ static void test_SwapPword(void)
 
     pSwapPword = (void*)GetProcAddress(hMapi32, "SwapPword@8");
     if (!pSwapPword)
+    {
+        win_skip("SwapPword is not available\n");
         return;
+    }
 
     shorts[0] = 0xff01;
     shorts[1] = 0x10ff;
@@ -63,7 +66,10 @@ static void test_SwapPlong(void)
 
     pSwapPlong = (void*)GetProcAddress(hMapi32, "SwapPlong@8");
     if (!pSwapPlong)
+    {
+        win_skip("SwapPlong is not available\n");
         return;
+    }
 
     longs[0] = 0xffff0001;
     longs[1] = 0x1000ffff;
@@ -92,7 +98,10 @@ static void test_HexFromBin(void)
     pHexFromBin = (void*)GetProcAddress(hMapi32, "HexFromBin@12");
     pFBinFromHex = (void*)GetProcAddress(hMapi32, "FBinFromHex@8");
     if (!pHexFromBin || !pFBinFromHex)
+    {
+        win_skip("Hexadecimal conversion functions are not available\n");
         return;
+    }
 
     for (i = 0; i < 255; i++)
         data[i] = i;
@@ -114,7 +123,10 @@ static void test_UFromSz(void)
 {
     pUFromSz = (void*)GetProcAddress(hMapi32, "UFromSz@4");
     if (!pUFromSz)
+    {
+        win_skip("UFromSz is not available\n");
         return;
+    }
 
     ok(pUFromSz("105679") == 105679u,
        "UFromSz: expected 105679, got %d\n", pUFromSz("105679"));
@@ -127,7 +139,10 @@ static void test_UlFromSzHex(void)
 {
     pUlFromSzHex = (void*)GetProcAddress(hMapi32, "UlFromSzHex@4");
     if (!pUlFromSzHex)
+    {
+        win_skip("UlFromSzHex is not available\n");
         return;
+    }
 
     ok(pUlFromSzHex("fF") == 0xffu,
        "UlFromSzHex: expected 0xff, got 0x%x\n", pUlFromSzHex("fF"));
@@ -143,7 +158,10 @@ static void test_CbOfEncoded(void)
 
     pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
     if (!pCbOfEncoded)
+    {
+        win_skip("CbOfEncoded is not available\n");
         return;
+    }
 
     for (i = 0; i < sizeof(buff) - 1; i++)
     {
@@ -162,7 +180,10 @@ static void test_IsBadBoundedStringPtr(void)
 {
     pIsBadBoundedStringPtr = (void*)GetProcAddress(hMapi32, "IsBadBoundedStringPtr@8");
     if (!pIsBadBoundedStringPtr)
+    {
+        win_skip("IsBadBoundedStringPtr is not available\n");
         return;
+    }
 
     ok(pIsBadBoundedStringPtr(NULL, 0) == TRUE, "IsBadBoundedStringPtr: expected TRUE\n");
     ok(pIsBadBoundedStringPtr("TEST", 4) == TRUE, "IsBadBoundedStringPtr: expected TRUE\n");
