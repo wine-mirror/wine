@@ -92,15 +92,26 @@ static void test_PropCopyMore(void)
     pPropCopyMore = (void*)GetProcAddress(hMapi32, "PropCopyMore@16");
 
     if (!pPropCopyMore)
+    {
+        win_skip("PropCopyMore is not available\n");
         return;
+    }
 
     scode = pMAPIAllocateBuffer(sizeof(LPSPropValue), lpDest);
+    ok(scode == S_OK, "Expected MAPIAllocateBuffer to return S_OK, got 0x%x\n", scode);
     if (FAILED(scode))
+    {
+        skip("MAPIAllocateBuffer failed\n");
         return;
+    }
 
     scode = pMAPIAllocateMore(sizeof(LPSPropValue), lpDest, lpSrc);
+    ok(scode == S_OK, "Expected MAPIAllocateMore to return S_OK, got 0x%x\n", scode);
     if (FAILED(scode))
+    {
+        skip("MAPIAllocateMore failed\n");
         return;
+    }
 
     for (i = 0; i < sizeof(ptTypes)/sizeof(ptTypes[0]); i++)
     {
@@ -163,7 +174,10 @@ static void test_UlPropSize(void)
     pUlPropSize = (void*)GetProcAddress(hMapi32, "UlPropSize@4");
 
     if (!pUlPropSize)
+    {
+        win_skip("UlPropSize is not available\n");
         return;
+    }
 
     for (pt = 0; pt < PROP_ID_INVALID; pt++)
     {
@@ -260,7 +274,10 @@ static void test_FPropContainsProp(void)
     pFPropContainsProp = (void*)GetProcAddress(hMapi32, "FPropContainsProp@12");
 
     if (!pFPropContainsProp)
+    {
+        win_skip("FPropContainsProp is not available\n");
         return;
+    }
 
     /* Ensure that only PT_STRING8 and PT_BINARY are handled */
     for (pt = 0; pt < PROP_ID_INVALID; pt++)
@@ -409,7 +426,10 @@ static void test_FPropCompareProp(void)
     pFPropCompareProp = (void*)GetProcAddress(hMapi32, "FPropCompareProp@12");
 
     if (!pFPropCompareProp)
+    {
+        win_skip("FPropCompareProp is not available\n");
         return;
+    }
 
     lbuffa[1] = '\0';
     rbuffa[1] = '\0';
@@ -538,7 +558,10 @@ static void test_LPropCompareProp(void)
     pLPropCompareProp = (void*)GetProcAddress(hMapi32, "LPropCompareProp@8");
 
     if (!pLPropCompareProp)
+    {
+        win_skip("LPropCompareProp is not available\n");
         return;
+    }
 
     lbuffa[1] = '\0';
     rbuffa[1] = '\0';
@@ -643,7 +666,10 @@ static void test_PpropFindProp(void)
     pPpropFindProp = (void*)GetProcAddress(hMapi32, "PpropFindProp@12");
 
     if (!pPpropFindProp)
+    {
+        win_skip("PpropFindProp is not available\n");
         return;
+    }
 
     for (i = 0; i < sizeof(ptTypes)/sizeof(ptTypes[0]); i++)
     {
@@ -682,7 +708,10 @@ static void test_ScCountProps(void)
     pScCountProps = (void*)GetProcAddress(hMapi32, "ScCountProps@12");
 
     if (!pScCountProps)
+    {
+        win_skip("ScCountProps is not available\n");
         return;
+    }
 
     for (pt = 0; pt < PROP_ID_INVALID && success; pt++)
     {
@@ -818,7 +847,10 @@ static void test_ScCopyRelocProps(void)
     pScRelocProps = (void*)GetProcAddress(hMapi32, "ScRelocProps@20");
 
     if (!pScCopyProps || !pScRelocProps)
+    {
+        win_skip("SPropValue copy functions are not available\n");
         return;
+    }
 
     pvProp.ulPropTag = PROP_TAG(PT_MV_STRING8, 1u);
 
@@ -880,7 +912,10 @@ static void test_LpValFindProp(void)
     pLpValFindProp = (void*)GetProcAddress(hMapi32, "LpValFindProp@12");
 
     if (!pLpValFindProp)
+    {
+        win_skip("LpValFindProp is not available\n");
         return;
+    }
 
     for (i = 0; i < sizeof(ptTypes)/sizeof(ptTypes[0]); i++)
     {
@@ -914,7 +949,10 @@ static void test_FBadRglpszA(void)
 
     pFBadRglpszA = (void*)GetProcAddress(hMapi32, "FBadRglpszA@8");
     if (!pFBadRglpszA)
+    {
+        win_skip("FBadRglpszA is not available\n");
         return;
+    }
 
     bRet = pFBadRglpszA(NULL, 10);
     ok(bRet == TRUE, "FBadRglpszA(Null): expected TRUE, got FALSE\n");
@@ -939,7 +977,10 @@ static void test_FBadRglpszW(void)
 
     pFBadRglpszW = (void*)GetProcAddress(hMapi32, "FBadRglpszW@8");
     if (!pFBadRglpszW)
+    {
+        win_skip("FBadRglpszW is not available\n");
         return;
+    }
 
     bRet = pFBadRglpszW(NULL, 10);
     ok(bRet == TRUE, "FBadRglpszW(Null): expected TRUE, got FALSE\n");
@@ -962,7 +1003,10 @@ static void test_FBadRowSet(void)
 
     pFBadRowSet = (void*)GetProcAddress(hMapi32, "FBadRowSet@4");
     if (!pFBadRowSet)
+    {
+        win_skip("FBadRowSet is not available\n");
         return;
+    }
 
     ulRet = pFBadRowSet(NULL);
     ok(ulRet != 0, "FBadRow(null): Expected non-zero, got 0\n");
@@ -976,7 +1020,10 @@ static void test_FBadPropTag(void)
 
     pFBadPropTag = (void*)GetProcAddress(hMapi32, "FBadPropTag@4");
     if (!pFBadPropTag)
+    {
+        win_skip("FBadPropTag is not available\n");
         return;
+    }
 
     for (pt = 0; pt < PROP_ID_INVALID; pt++)
     {
@@ -1008,7 +1055,10 @@ static void test_FBadRow(void)
 
     pFBadRow = (void*)GetProcAddress(hMapi32, "FBadRow@4");
     if (!pFBadRow)
+    {
+        win_skip("FBadRow is not available\n");
         return;
+    }
 
     ulRet = pFBadRow(NULL);
     ok(ulRet != 0, "FBadRow(null): Expected non-zero, got 0\n");
@@ -1025,7 +1075,10 @@ static void test_FBadProp(void)
 
     pFBadProp = (void*)GetProcAddress(hMapi32, "FBadProp@4");
     if (!pFBadProp)
+    {
+        win_skip("FBadProp is not available\n");
         return;
+    }
 
     for (pt = 0; pt < PROP_ID_INVALID; pt++)
     {
@@ -1099,7 +1152,10 @@ static void test_FBadColumnSet(void)
 
     pFBadColumnSet = (void*)GetProcAddress(hMapi32, "FBadColumnSet@4");
     if (!pFBadColumnSet)
+    {
+        win_skip("FBadColumnSet is not available\n");
         return;
+    }
 
     res = pFBadColumnSet(NULL);
     ok(res != 0, "(null): Expected non-zero, got 0\n");
@@ -1160,7 +1216,10 @@ static void test_IProp(void)
     pCreateIProp = (void*)GetProcAddress(hMapi32, "CreateIProp@24");
 
     if (!pCreateIProp)
+    {
+        win_skip("CreateIProp is not available\n");
         return;
+    }
 
     memset(&tags, 0 , sizeof(tags));
 
