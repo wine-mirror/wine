@@ -69,10 +69,10 @@ static BOOL InitFuncPtrs(void)
         return FALSE;
 }
 
+/* FIXME: Test PT_I2, PT_I4, PT_R4, PT_R8, PT_CURRENCY, PT_APPTIME, PT_SYSTIME,
+ * PT_ERROR, PT_BOOLEAN, PT_I8, and PT_CLSID. */
 static ULONG ptTypes[] = {
-    PT_I2, PT_I4, PT_R4, PT_R8, PT_CURRENCY, PT_APPTIME, PT_SYSTIME,
-    PT_ERROR, PT_BOOLEAN, PT_I8, PT_CLSID, PT_STRING8, PT_BINARY,
-    PT_UNICODE
+    PT_STRING8, PT_BINARY, PT_UNICODE
 };
 
 static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
@@ -97,7 +97,7 @@ static void test_PropCopyMore(void)
         return;
     }
 
-    scode = pMAPIAllocateBuffer(sizeof(LPSPropValue), lpDest);
+    scode = pMAPIAllocateBuffer(sizeof(SPropValue), &lpDest);
     ok(scode == S_OK, "Expected MAPIAllocateBuffer to return S_OK, got 0x%x\n", scode);
     if (FAILED(scode))
     {
@@ -105,7 +105,7 @@ static void test_PropCopyMore(void)
         return;
     }
 
-    scode = pMAPIAllocateMore(sizeof(LPSPropValue), lpDest, lpSrc);
+    scode = pMAPIAllocateMore(sizeof(SPropValue), lpDest, &lpSrc);
     ok(scode == S_OK, "Expected MAPIAllocateMore to return S_OK, got 0x%x\n", scode);
     if (FAILED(scode))
     {
@@ -159,7 +159,8 @@ static void test_PropCopyMore(void)
     }
 
     /* Since all allocations are linked, freeing lpDest frees everything */
-    pMAPIFreeBuffer(lpDest);
+    scode = pMAPIFreeBuffer(lpDest);
+    ok(scode == S_OK, "Expected MAPIFreeBuffer to return S_OK, got 0x%x\n", scode);
 }
 
 static void test_UlPropSize(void)
