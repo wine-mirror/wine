@@ -186,7 +186,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
-%token <str> aSTRING aWSTRING
+%token <str> aSTRING aWSTRING aSQSTRING
 %token <uuid> aUUID
 %token aEOF
 %token SHL SHR
@@ -632,6 +632,7 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
 	| aSTRING				{ $$ = make_exprs(EXPR_STRLIT, $1); }
 	| aWSTRING				{ $$ = make_exprs(EXPR_WSTRLIT, $1); }
+	| aSQSTRING				{ $$ = make_exprs(EXPR_CHARCONST, $1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
 	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
 	| expr LOGICALOR expr			{ $$ = make_expr2(EXPR_LOGOR, $1, $3); }
