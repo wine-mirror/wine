@@ -897,11 +897,35 @@ static void test_IsBadReadPtr(void)
     ok(ret == FALSE, "Expected IsBadReadPtr to return FALSE, got %d\n", ret);
 }
 
+static void test_IsBadWritePtr(void)
+{
+    BOOL ret;
+    void *ptr = (void *)0xdeadbeef;
+    char stackval;
+
+    ret = IsBadWritePtr(NULL, 0);
+    ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadWritePtr(NULL, 1);
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadWritePtr(ptr, 0);
+    ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadWritePtr(ptr, 1);
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadWritePtr(&stackval, 0);
+    ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadWritePtr(&stackval, sizeof(char));
+    ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+}
+
 static void test_BadPtr(void)
 {
     void *ptr = (void*)1;
     /* We assume address 1 is not mapped. */
-    ok(IsBadWritePtr(ptr,1),"IsBadWritePtr(1) failed.\n");
     ok(IsBadCodePtr(ptr),"IsBadCodePtr(1) failed.\n");
 }
 
@@ -1245,6 +1269,7 @@ START_TEST(virtual)
     test_NtMapViewOfSection();
     test_CreateFileMapping();
     test_IsBadReadPtr();
+    test_IsBadWritePtr();
     test_BadPtr();
     test_write_watch();
 }
