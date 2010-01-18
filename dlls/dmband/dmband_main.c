@@ -32,10 +32,10 @@ typedef struct {
  */
  
 static HRESULT WINAPI BandCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
-	
+
 	return E_NOINTERFACE;
 }
 
@@ -84,10 +84,10 @@ static IClassFactoryImpl Band_CF = {&BandCF_Vtbl};
  */
  
 static HRESULT WINAPI BandTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
-	
+	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+
 	if (ppobj == NULL) return E_POINTER;
-	
+
 	return E_NOINTERFACE;
 }
 
