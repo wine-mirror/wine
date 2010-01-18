@@ -126,6 +126,11 @@ static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return (saxattributes *)((char*)iface - FIELD_OFFSET(saxattributes, lpSAXAttributesVtbl));
 }
 
+static inline BOOL has_content_handler(const saxlocator *locator)
+{
+    return  (locator->vbInterface && locator->saxreader->vbcontentHandler) ||
+           (!locator->vbInterface && locator->saxreader->contentHandler);
+}
 
 static HRESULT namespacePush(saxlocator *locator, int ns)
 {
@@ -978,8 +983,7 @@ static void libxmlStartDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
-    if((This->vbInterface && This->saxreader->vbcontentHandler)
-            || (!This->vbInterface && This->saxreader->contentHandler))
+    if(has_content_handler(This))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_startDocument(This->saxreader->vbcontentHandler);
@@ -1003,8 +1007,7 @@ static void libxmlEndDocument(void *ctx)
 
     if(This->ret != S_OK) return;
 
-    if((This->vbInterface && This->saxreader->vbcontentHandler)
-            || (!This->vbInterface && This->saxreader->contentHandler))
+    if(has_content_handler(This))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_endDocument(This->saxreader->vbcontentHandler);
@@ -1039,8 +1042,7 @@ static void libxmlStartElementNS(
         update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
     hr = namespacePush(This, nb_namespaces);
-    if(hr==S_OK && ((This->vbInterface && This->saxreader->vbcontentHandler)
-                || (!This->vbInterface && This->saxreader->contentHandler)))
+    if(hr==S_OK && has_content_handler(This))
     {
         for(index=0; index<nb_namespaces; index++)
         {
@@ -1119,8 +1121,7 @@ static void libxmlEndElementNS(
 
     nsNr = namespacePop(This);
 
-    if((This->vbInterface && This->saxreader->vbcontentHandler)
-            || (!This->vbInterface && This->saxreader->contentHandler))
+    if(has_content_handler(This))
     {
         NamespaceUri = bstr_from_xmlChar(URI);
         LocalName = bstr_from_xmlChar(localname);
@@ -1186,9 +1187,7 @@ static void libxmlCharacters(
     xmlChar *end;
     BOOL lastEvent = FALSE;
 
-    if((This->vbInterface && !This->saxreader->vbcontentHandler)
-            || (!This->vbInterface && !This->saxreader->contentHandler))
-        return;
+    if(!(has_content_handler(This))) return;
 
     cur = (xmlChar*)ch;
     if(*(ch-1)=='\r') cur--;
@@ -1384,8 +1383,7 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
 
         if(change) *end = '\n';
 
-        if((This->vbInterface && This->saxreader->vbcontentHandler) ||
-                (!This->vbInterface && This->saxreader->contentHandler))
+        if(has_content_handler(This))
         {
             Chars = bstr_from_xmlCharN(cur, end-cur+1);
             if(This->vbInterface)
