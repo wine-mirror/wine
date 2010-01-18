@@ -117,8 +117,11 @@ static UINT JOIN_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStr
 
 static UINT JOIN_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
 {
-    FIXME("(%p, %d, %p): stub!\n", view, row, rec);
-    return ERROR_FUNCTION_FAILED;
+    MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
+
+    TRACE("%p %d %p\n", jv, row, rec);
+
+    return msi_view_get_row( jv->db, view, row, rec );
 }
 
 static UINT JOIN_execute( struct tagMSIVIEW *view, MSIRECORD *record )
