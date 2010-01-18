@@ -1562,8 +1562,10 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
 
             while (ptr)
             {
-                if ((ptr2 && strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
-                    || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
+                int len = ptr2 - ptr;
+
+                if ((ptr2 && strlenW(feature->Feature) == len && !strncmpW(ptr, feature->Feature, len))
+                    || (!ptr2 && !strcmpW(ptr, feature->Feature)))
                 {
                     msi_feature_set_state(package, feature, state);
                     break;
