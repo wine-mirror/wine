@@ -65,12 +65,7 @@ static void test_reader_create(void)
     }
 
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    if (hr != S_OK)
-    {
-        skip("Failed to create IXmlReader instance\n");
-        return;
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = CoGetMalloc(1, &imalloc);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);

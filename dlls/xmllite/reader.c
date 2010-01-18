@@ -31,8 +31,269 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 
+typedef struct _xmlreader
+{
+    const IXmlReaderVtbl *lpVtbl;
+    LONG ref;
+} xmlreader;
+
+static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
+{
+    return (xmlreader *)((char*)iface - FIELD_OFFSET(xmlreader, lpVtbl));
+}
+
+static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
+{
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IXmlReader))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IXmlReader_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI xmlreader_AddRef(IXmlReader *iface)
+{
+    xmlreader *This = impl_from_IXmlReader(iface);
+    TRACE("%p\n", This);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
+{
+    xmlreader *This = impl_from_IXmlReader(iface);
+    LONG ref;
+
+    TRACE("%p\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
+{
+    FIXME("(%p %p): stub\n", iface, input);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LONG_PTR *value)
+{
+    FIXME("(%p %u %p): stub\n", iface, property, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LONG_PTR value)
+{
+    FIXME("(%p %u %lu): stub\n", iface, property, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
+{
+    FIXME("(%p %p): stub\n", iface, node_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node_type)
+{
+    FIXME("(%p %p): stub\n", iface, node_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_MoveToFirstAttribute(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
+                                                      LPCWSTR local_name,
+                                                      LPCWSTR namespaceUri)
+{
+    FIXME("(%p %p %p): stub\n", iface, local_name, namespaceUri);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *qualifiedName,
+                                                 UINT *qualifiedName_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, qualifiedName, qualifiedName_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface,
+                                                LPCWSTR *namespaceUri,
+                                                UINT *namespaceUri_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, namespaceUri, namespaceUri_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface,
+                                             LPCWSTR *local_name,
+                                             UINT *local_name_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, local_name, local_name_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface,
+                                          LPCWSTR *prefix,
+                                          UINT *prefix_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, prefix, prefix_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface,
+                                         LPCWSTR *value,
+                                         UINT *value_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, value, value_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_ReadValueChunk(IXmlReader* iface,
+                                               WCHAR *buffer,
+                                               UINT   chunk_size,
+                                               UINT  *read)
+{
+    FIXME("(%p %p %u %p): stub\n", iface, buffer, chunk_size, read);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetBaseUri(IXmlReader* iface,
+                                           LPCWSTR *baseUri,
+                                           UINT *baseUri_length)
+{
+    FIXME("(%p %p %p): stub\n", iface, baseUri, baseUri_length);
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI xmlreader_IsDefault(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI xmlreader_IsEmptyElement(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *lineNumber)
+{
+    FIXME("(%p %p): stub\n", iface, lineNumber);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *linePosition)
+{
+    FIXME("(%p %p): stub\n", iface, linePosition);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetAttributeCount(IXmlReader* iface, UINT *attributeCount)
+{
+    FIXME("(%p %p): stub\n", iface, attributeCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmlreader_GetDepth(IXmlReader* iface, UINT *depth)
+{
+    FIXME("(%p %p): stub\n", iface, depth);
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI xmlreader_IsEOF(IXmlReader* iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static const struct IXmlReaderVtbl xmlreader_vtbl =
+{
+    xmlreader_QueryInterface,
+    xmlreader_AddRef,
+    xmlreader_Release,
+    xmlreader_SetInput,
+    xmlreader_GetProperty,
+    xmlreader_SetProperty,
+    xmlreader_Read,
+    xmlreader_GetNodeType,
+    xmlreader_MoveToFirstAttribute,
+    xmlreader_MoveToNextAttribute,
+    xmlreader_MoveToAttributeByName,
+    xmlreader_MoveToElement,
+    xmlreader_GetQualifiedName,
+    xmlreader_GetNamespaceUri,
+    xmlreader_GetLocalName,
+    xmlreader_GetPrefix,
+    xmlreader_GetValue,
+    xmlreader_ReadValueChunk,
+    xmlreader_GetBaseUri,
+    xmlreader_IsDefault,
+    xmlreader_IsEmptyElement,
+    xmlreader_GetLineNumber,
+    xmlreader_GetLinePosition,
+    xmlreader_GetAttributeCount,
+    xmlreader_GetDepth,
+    xmlreader_IsEOF
+};
+
 HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
 {
-    FIXME("(%s, %p, %p)\n", wine_dbgstr_guid(riid), pObject, pMalloc);
-    return E_NOTIMPL;
+    xmlreader *reader;
+
+    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), pObject, pMalloc);
+
+    if (pMalloc) FIXME("custom IMalloc not supported yet\n");
+
+    if (!IsEqualGUID(riid, &IID_IXmlReader))
+    {
+        ERR("Unexpected IID requested -> (%s)\n", wine_dbgstr_guid(riid));
+        return E_FAIL;
+    }
+
+    reader = HeapAlloc(GetProcessHeap(), 0, sizeof (*reader));
+    if(!reader) return E_OUTOFMEMORY;
+
+    reader->lpVtbl = &xmlreader_vtbl;
+    reader->ref = 1;
+
+    *pObject = &reader->lpVtbl;
+
+    TRACE("returning iface %p\n", *pObject);
+
+    return S_OK;
 }
