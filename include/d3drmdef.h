@@ -172,6 +172,17 @@ typedef struct _D3DRMMATERIALOVERRIDE {
 
 typedef DWORD D3DRMLOADOPTIONS;
 
+typedef struct _D3DRMPMESHLOADSTATUS {
+    DWORD dwSize;
+    DWORD dwPMeshSize;
+    DWORD dwBaseMeshSize;
+    DWORD dwBytesLoaded;
+    DWORD dwVerticesLoaded;
+    DWORD dwFacesLoaded;
+    HRESULT dwLoadResult;
+    DWORD dwFlags;
+} D3DRMPMESHLOADSTATUS, *LPD3DRMPMESHLOADSTATUS;
+
 typedef enum _D3DRMUSERVISUALREASON {
     D3DRMUSERVISUAL_CANSEE,
     D3DRMUSERVISUAL_RENDER
