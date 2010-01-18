@@ -247,12 +247,8 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous 
  * NtCreateEvent (NTDLL.@)
  * ZwCreateEvent (NTDLL.@)
  */
-NTSTATUS WINAPI NtCreateEvent(
-	OUT PHANDLE EventHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN const OBJECT_ATTRIBUTES *attr,
-	IN BOOLEAN ManualReset,
-	IN BOOLEAN InitialState)
+NTSTATUS WINAPI NtCreateEvent( PHANDLE EventHandle, ACCESS_MASK DesiredAccess,
+                               const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN InitialState)
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
@@ -274,7 +270,7 @@ NTSTATUS WINAPI NtCreateEvent(
     {
         req->access = DesiredAccess;
         req->attributes = (attr) ? attr->Attributes : 0;
-        req->manual_reset = ManualReset;
+        req->manual_reset = (type == NotificationEvent);
         req->initial_state = InitialState;
         wine_server_add_data( req, &objattr, sizeof(objattr) );
         if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );

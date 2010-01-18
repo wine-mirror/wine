@@ -651,7 +651,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
     {
         OBJECT_ATTRIBUTES attr;
         InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
-        ret = NtCreateEvent( &Event, EVENT_ALL_ACCESS, &attr, FALSE, FALSE );
+        ret = NtCreateEvent( &Event, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE );
         if (ret != STATUS_SUCCESS)
             return ret;
     }

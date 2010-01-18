@@ -1195,7 +1195,7 @@ static	BOOL	start_console_renderer(STARTUPINFOA* si)
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE);
+    NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE);
     if (!hEvent) return FALSE;
 
     /* first try environment variable */

@@ -440,7 +440,7 @@ NTSTATUS WINAPI RtlRegisterWait(PHANDLE NewWaitObject, HANDLE Object,
     wait_work_item->DeleteCount = 0;
     wait_work_item->CompletionEvent = NULL;
 
-    status = NtCreateEvent( &wait_work_item->CancelEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
+    status = NtCreateEvent( &wait_work_item->CancelEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
     if (status != STATUS_SUCCESS)
     {
         RtlFreeHeap( GetProcessHeap(), 0, wait_work_item );
@@ -485,7 +485,7 @@ NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
         {
             if (CompletionEvent == INVALID_HANDLE_VALUE)
             {
-                status = NtCreateEvent( &CompletionEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
+                status = NtCreateEvent( &CompletionEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
                 if (status != STATUS_SUCCESS)
                     return status;
                 interlocked_xchg_ptr( &wait_work_item->CompletionEvent, CompletionEvent );
@@ -778,7 +778,7 @@ NTSTATUS WINAPI RtlCreateTimerQueue(PHANDLE NewTimerQueue)
     RtlInitializeCriticalSection(&q->cs);
     list_init(&q->timers);
     q->quit = FALSE;
-    status = NtCreateEvent(&q->event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
+    status = NtCreateEvent(&q->event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE);
     if (status != STATUS_SUCCESS)
     {
         RtlFreeHeap(GetProcessHeap(), 0, q);
@@ -1013,7 +1013,7 @@ NTSTATUS WINAPI RtlDeleteTimer(HANDLE TimerQueue, HANDLE Timer,
         return STATUS_INVALID_PARAMETER_1;
     q = t->q;
     if (CompletionEvent == INVALID_HANDLE_VALUE)
-        status = NtCreateEvent(&event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
+        status = NtCreateEvent(&event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE);
     else if (CompletionEvent)
         event = CompletionEvent;
 

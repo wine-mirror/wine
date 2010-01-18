@@ -366,7 +366,7 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 
 	/* ask for manual reset, so that once the debugger is started,
 	 * every thread will know it */
-	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE );
+	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE );
         if (InterlockedCompareExchangePointer( &hRunOnce, hEvent, 0 ) == 0)
 	{
 	    /* ok, our event has been set... we're the winning thread */

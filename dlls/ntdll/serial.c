@@ -1363,7 +1363,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
             attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
             attr.SecurityDescriptor       = NULL;
             attr.SecurityQualityOfService = NULL;
-            status = NtCreateEvent(&hev, EVENT_ALL_ACCESS, &attr, FALSE, FALSE);
+            status = NtCreateEvent(&hev, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE);
 
             if (status) goto done;
         }

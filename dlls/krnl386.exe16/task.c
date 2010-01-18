@@ -350,7 +350,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
     /* Create scheduler event for 16-bit tasks */
 
     if ( !(pTask->flags & TDBF_WIN32) )
-        NtCreateEvent( &pTask->hEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
+        NtCreateEvent( &pTask->hEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
 
     if (!initial_task) initial_task = hTask;
 

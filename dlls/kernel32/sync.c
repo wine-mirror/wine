@@ -489,7 +489,8 @@ HANDLE WINAPI CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags
         attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
-    status = NtCreateEvent( &ret, access, &attr, (flags & CREATE_EVENT_MANUAL_RESET) != 0,
+    status = NtCreateEvent( &ret, access, &attr,
+                            (flags & CREATE_EVENT_MANUAL_RESET) ? NotificationEvent : SynchronizationEvent,
                             (flags & CREATE_EVENT_INITIAL_SET) != 0 );
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
