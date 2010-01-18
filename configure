@@ -17409,6 +17409,14 @@ dlls/xmllite/Makefile: dlls/xmllite/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/xmllite/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/xmllite/tests/Makefile"
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	xmllite/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/xmllite/tests/Makefile: dlls/xmllite/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/xmllite/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	documentation/Makefile"
 test "x$enable_documentation" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	documentation"
@@ -19218,6 +19226,7 @@ do
     "dlls/xinput1_3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/tests/Makefile" ;;
     "dlls/xinput9_1_0/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput9_1_0/Makefile" ;;
     "dlls/xmllite/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xmllite/Makefile" ;;
+    "dlls/xmllite/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xmllite/tests/Makefile" ;;
     "documentation/Makefile") CONFIG_FILES="$CONFIG_FILES documentation/Makefile" ;;
     "fonts/Makefile") CONFIG_FILES="$CONFIG_FILES fonts/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;

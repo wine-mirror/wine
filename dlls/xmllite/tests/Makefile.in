@@ -1,14 +1,13 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
+TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = xmllite.dll
-IMPORTS   = kernel32
+TESTDLL   = xmllite.dll
+IMPORTS   = kernel32 ole32
 
-C_SRCS = \
-	reader.c \
-	xmllite_main.c
+CTESTS = \
+	reader.c
 
-@MAKE_DLL_RULES@
+@MAKE_TEST_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
