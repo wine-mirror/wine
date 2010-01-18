@@ -228,6 +228,34 @@ static void test_stillimage_aggregation(void)
         skip("No StiCreateInstanceW function\n");
 }
 
+static void test_launch_app_registry(void)
+{
+    static WCHAR appName[] = {'w','i','n','e','s','t','i','t','e','s','t','a','p','p',0};
+    IStillImageW *pStiW = NULL;
+    HRESULT hr;
+
+    if (pStiCreateInstanceW == NULL)
+    {
+        win_skip("No StiCreateInstanceW function\n");
+        return;
+    }
+
+    hr = pStiCreateInstance(GetModuleHandle(NULL), STI_VERSION_REAL | STI_VERSION_FLAG_UNICODE, &pStiW, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = IStillImage_RegisterLaunchApplication(pStiW, appName, appName);
+        ok(SUCCEEDED(hr), "could not register launch application, error 0x%X\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IStillImage_UnregisterLaunchApplication(pStiW, appName);
+            ok(SUCCEEDED(hr), "could not unregister launch application, error 0x%X\n", hr);
+        }
+        IStillImage_Release(pStiW);
+    }
+    else
+        ok(0, "could not create StillImageW, hr = 0x%X\n", hr);
+}
+
 START_TEST(sti)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
@@ -236,6 +264,7 @@ START_TEST(sti)
         {
             test_version_flag_versus_aw();
             test_stillimage_aggregation();
+            test_launch_app_registry();
             FreeLibrary(sti_dll);
         }
         else

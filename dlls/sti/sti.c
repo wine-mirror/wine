@@ -31,8 +31,18 @@
 #include "sti_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sti);
+
+static const WCHAR registeredAppsLaunchPath[] = {
+    'S','O','F','T','W','A','R','E','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'S','t','i','l','l','I','m','a','g','e','\\',
+    'R','e','g','i','s','t','e','r','e','d',' ','A','p','p','l','i','c','a','t','i','o','n','s',0
+};
 
 static inline stillimage *impl_from_StillImageW(IStillImageW *iface)
 {
@@ -119,16 +129,60 @@ static HRESULT WINAPI stillimagew_GetSTILaunchInformation(IStillImageW *iface, L
 static HRESULT WINAPI stillimagew_RegisterLaunchApplication(IStillImageW *iface, LPWSTR pwszAppName,
                                                             LPWSTR pwszCommandLine)
 {
+    static const WCHAR format[] = {'%','s',' ','%','s',0};
+    static const WCHAR commandLineSuffix[] = {
+        '/','S','t','i','D','e','v','i','c','e',':','%','1',' ',
+        '/','S','t','i','E','v','e','n','t',':','%','2',0};
+    HKEY registeredAppsKey = NULL;
+    DWORD ret;
+    HRESULT hr = S_OK;
     stillimage *This = impl_from_StillImageW(iface);
-    FIXME("(%p, %s, %s): stub\n", This, debugstr_w(pwszAppName), debugstr_w(pwszCommandLine));
-    return E_NOTIMPL;
+
+    TRACE("(%p, %s, %s)\n", This, debugstr_w(pwszAppName), debugstr_w(pwszCommandLine));
+
+    ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, registeredAppsLaunchPath, &registeredAppsKey);
+    if (ret == ERROR_SUCCESS)
+    {
+        WCHAR *value = HeapAlloc(GetProcessHeap(), 0,
+            (lstrlenW(pwszCommandLine) + 1 + lstrlenW(commandLineSuffix) + 1) * sizeof(WCHAR));
+        if (value)
+        {
+            sprintfW(value, format, pwszCommandLine, commandLineSuffix);
+            ret = RegSetValueExW(registeredAppsKey, pwszAppName, 0,
+                REG_SZ, (BYTE*)value, (lstrlenW(value)+1)*sizeof(WCHAR));
+            if (ret != ERROR_SUCCESS)
+                hr = HRESULT_FROM_WIN32(ret);
+            HeapFree(GetProcessHeap(), 0, value);
+        }
+        else
+            hr = E_OUTOFMEMORY;
+        RegCloseKey(registeredAppsKey);
+    }
+    else
+        hr = HRESULT_FROM_WIN32(ret);
+    return hr;
 }
 
 static HRESULT WINAPI stillimagew_UnregisterLaunchApplication(IStillImageW *iface, LPWSTR pwszAppName)
 {
     stillimage *This = impl_from_StillImageW(iface);
-    FIXME("(%p, %s): stub\n", This, debugstr_w(pwszAppName));
-    return S_OK;
+    HKEY registeredAppsKey = NULL;
+    DWORD ret;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %s)\n", This, debugstr_w(pwszAppName));
+
+    ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, registeredAppsLaunchPath, &registeredAppsKey);
+    if (ret == ERROR_SUCCESS)
+    {
+        ret = RegDeleteValueW(registeredAppsKey, pwszAppName);
+        if (ret != ERROR_SUCCESS)
+            hr = HRESULT_FROM_WIN32(ret);
+        RegCloseKey(registeredAppsKey);
+    }
+    else
+        hr = HRESULT_FROM_WIN32(ret);
+    return hr;
 }
 
 static HRESULT WINAPI stillimagew_EnableHwNotifications(IStillImageW *iface, LPCWSTR pwszDeviceName,
