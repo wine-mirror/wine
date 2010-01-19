@@ -3218,6 +3218,9 @@ static void test_join(void)
         ok( !lstrcmp( buf, join_res_first[i].two ),
             "For (row %d, column 2) expected '%s', got %s\n", i, join_res_first[i].two, buf );
 
+        r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+        todo_wine ok( r == ERROR_SUCCESS, "failed to modiy view: %d\n", r );
+
         i++;
         MsiCloseHandle(hrec);
     }
