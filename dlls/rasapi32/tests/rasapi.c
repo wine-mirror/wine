@@ -55,7 +55,8 @@ static void test_rasenum(void)
 
     /* create the return buffer */
     result = pRasEnumDevicesA(NULL, &bufsize, &cDevices);
-    if(ERROR_RASMAN_CANNOT_INITIALIZE == result) {
+    if(ERROR_RASMAN_CANNOT_INITIALIZE == result ||
+       ERROR_STATE_MACHINES_NOT_STARTED == result) {
         win_skip("RAS configuration problem\n");
         return;
     }
