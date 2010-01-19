@@ -34,6 +34,12 @@
 #include <fcntl.h>
 #include <assert.h>
 
+#ifdef HAVE_COREAUDIO_COREAUDIO_H
+#include <CoreAudio/CoreAudio.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <libkern/OSAtomic.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -55,9 +61,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #if defined(HAVE_COREAUDIO_COREAUDIO_H) && defined(HAVE_AUDIOUNIT_AUDIOUNIT_H)
-#include <CoreAudio/CoreAudio.h>
-#include <CoreFoundation/CoreFoundation.h>
-#include <libkern/OSAtomic.h>
 
 WINE_DECLARE_DEBUG_CHANNEL(coreaudio);
 
