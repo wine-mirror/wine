@@ -59,7 +59,7 @@ DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header)
     sizeof(Header->request), 0, sizeof(Header->response),
     sizeof(Header->fault), 0, 0, 0, 0, 0, 0, 0, sizeof(Header->bind),
     sizeof(Header->bind_ack), sizeof(Header->bind_nack),
-    0, 0, sizeof(Header->common), 0, 0, 0, sizeof(Header->http)
+    0, 0, sizeof(Header->auth3), 0, 0, 0, sizeof(Header->http)
   };
   ULONG ret = 0;
   
@@ -217,12 +217,12 @@ static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
   RpcPktHdr *header;
 
   header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(header->common));
+                     sizeof(header->auth3));
   if (header == NULL)
     return NULL;
 
   RPCRT4_BuildCommonHeader(header, PKT_AUTH3, DataRepresentation);
-  header->common.frag_len = sizeof(header->common);
+  header->common.frag_len = sizeof(header->auth3);
 
   return header;
 }

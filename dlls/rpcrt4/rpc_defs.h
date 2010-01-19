@@ -139,6 +139,13 @@ typedef struct
   unsigned short num_data_items;
 } RpcPktHttpHdr;
 
+/* AUTH3 packet */
+typedef struct
+{
+  RpcPktCommonHdr common;
+  unsigned int pad; /* ignored */
+} RpcPktAuth3Hdr;
+
 /* Union representing all possible packet headers */
 typedef union
 {
@@ -150,6 +157,7 @@ typedef union
   RpcPktBindAckHdr bind_ack;
   RpcPktBindNAckHdr bind_nack;
   RpcPktHttpHdr http;
+  RpcPktAuth3Hdr auth3;
 } RpcPktHdr;
 
 typedef struct
