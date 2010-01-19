@@ -913,10 +913,15 @@ err:
         HeapFree(GetProcessHeap(), 0, swapchain->backBuffer);
     }
 
-    if (swapchain->context && swapchain->context[0])
+    if (swapchain->context)
     {
-        context_release(swapchain->context[0]);
-        context_destroy(device, swapchain->context[0]);
+        if (swapchain->context[0])
+        {
+            context_release(swapchain->context[0]);
+            context_destroy(device, swapchain->context[0]);
+            swapchain->num_contexts = 0;
+        }
+        HeapFree(GetProcessHeap(), 0, swapchain->context);
     }
 
     if (swapchain->frontBuffer) IWineD3DSurface_Release(swapchain->frontBuffer);
