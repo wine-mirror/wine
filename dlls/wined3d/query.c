@@ -31,7 +31,7 @@
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION This->device->adapter->gl_info
+#define GLINFO_LOCATION (*gl_info)
 
 /* *******************************************
    IWineD3DQuery IUnknown parts follow
@@ -179,6 +179,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
 static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *) iface;
     struct wined3d_event_query *query = This->extendedData;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BOOL *data = pData;
 
@@ -204,15 +205,16 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
     }
 
     context = context_acquire(This->device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+    gl_info = context->gl_info;
 
     ENTER_GL();
 
-    if (context->gl_info->supported[APPLE_FENCE])
+    if (gl_info->supported[APPLE_FENCE])
     {
         *data = GL_EXTCALL(glTestFenceAPPLE(query->id));
         checkGLcall("glTestFenceAPPLE");
     }
-    else if (context->gl_info->supported[NV_FENCE])
+    else if (gl_info->supported[NV_FENCE])
     {
         *data = GL_EXTCALL(glTestFenceNV(query->id));
         checkGLcall("glTestFenceNV");
@@ -255,6 +257,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
     if (dwIssueFlags & WINED3DISSUE_END)
     {
         struct wined3d_event_query *query = This->extendedData;
+        const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
         if (query->context)
@@ -276,14 +279,16 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
             context_alloc_event_query(context, query);
         }
 
+        gl_info = context->gl_info;
+
         ENTER_GL();
 
-        if (context->gl_info->supported[APPLE_FENCE])
+        if (gl_info->supported[APPLE_FENCE])
         {
             GL_EXTCALL(glSetFenceAPPLE(query->id));
             checkGLcall("glSetFenceAPPLE");
         }
-        else if (context->gl_info->supported[NV_FENCE])
+        else if (gl_info->supported[NV_FENCE])
         {
             GL_EXTCALL(glSetFenceNV(query->id, GL_ALL_COMPLETED_NV));
             checkGLcall("glSetFenceNV");
