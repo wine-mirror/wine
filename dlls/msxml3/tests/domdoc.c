@@ -2927,6 +2927,76 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
                 SysFreeString(str);
 
+                /* delete data */
+                /* invalid arguments */
+                hr = IXMLDOMComment_deleteData(pComment, -1, 1);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_deleteData(pComment, 0, 0);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_deleteData(pComment, 0, -1);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 43, "expected 43 got %d\n", len);
+
+                hr = IXMLDOMComment_deleteData(pComment, len, 1);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_deleteData(pComment, len+1, 1);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                /* delete from start */
+                hr = IXMLDOMComment_deleteData(pComment, 0, 5);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 38, "expected 38 got %d\n", len);
+
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* delete from end */
+                hr = IXMLDOMComment_deleteData(pComment, 35, 3);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 35, "expected 35 got %d\n", len);
+
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* delete from inside */
+                hr = IXMLDOMComment_deleteData(pComment, 1, 33);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 2, "expected 2 got %d\n", len);
+
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* delete whole data ... */
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_deleteData(pComment, 0, len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                /* ... and try again with empty string */
+                hr = IXMLDOMComment_deleteData(pComment, 0, len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
                 IXMLDOMComment_Release(pComment);
             }
 

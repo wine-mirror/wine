@@ -541,7 +541,7 @@ static HRESULT WINAPI domcomment_substringData(
     LONG nLength = 0;
     HRESULT hr = S_FALSE;
 
-    TRACE("%p\n", iface);
+    TRACE("%p %d %d %p\n", iface, offset, count, p);
 
     if(!p)
         return E_INVALIDARG;
@@ -551,7 +551,7 @@ static HRESULT WINAPI domcomment_substringData(
         return E_INVALIDARG;
 
     if(count == 0)
-        return hr;
+        return S_FALSE;
 
     pContent = xmlNodeGetContent(This->node.node);
     if(pContent)
@@ -630,7 +630,7 @@ static HRESULT WINAPI domcomment_insertData(
     LONG nLength = 0, nLengthP = 0;
     xmlChar *str = NULL;
 
-    TRACE("%p\n", This);
+    TRACE("%p %d %p\n", iface, offset, p);
 
     /* If have a NULL or empty string, don't do anything. */
     if(SysStringLen(p) == 0)
@@ -692,8 +692,47 @@ static HRESULT WINAPI domcomment_deleteData(
     IXMLDOMComment *iface,
     LONG offset, LONG count)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LONG len = -1;
+    BSTR str;
+
+    TRACE("%p %d %d\n", iface, offset, count);
+
+    hr = IXMLDOMComment_get_length(iface, &len);
+    if(hr != S_OK) return hr;
+
+    if((offset < 0) || (offset > len) || (count < 0))
+        return E_INVALIDARG;
+
+    if(len == 0) return S_OK;
+
+    /* cutting start or end */
+    if((offset == 0) || ((count + offset) >= len))
+    {
+        if(offset == 0)
+            IXMLDOMComment_substringData(iface, count, len - count, &str);
+        else
+            IXMLDOMComment_substringData(iface, 0, offset, &str);
+        hr = IXMLDOMComment_put_data(iface, str);
+    }
+    else
+    /* cutting from the inside */
+    {
+        BSTR str_end;
+
+        IXMLDOMComment_substringData(iface, 0, offset, &str);
+        IXMLDOMComment_substringData(iface, offset + count, len - count, &str_end);
+
+        hr = IXMLDOMComment_put_data(iface, str);
+        if(hr == S_OK)
+            hr = IXMLDOMComment_appendData(iface, str_end);
+
+        SysFreeString(str_end);
+    }
+
+    SysFreeString(str);
+
+    return hr;
 }
 
 static HRESULT WINAPI domcomment_replaceData(
