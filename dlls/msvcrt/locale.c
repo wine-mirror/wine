@@ -462,7 +462,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 }
 
 /*********************************************************************
- *		setlocale (MSVCRT.@)
+ *		wsetlocale (MSVCRT.@)
  */
 MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* locale)
 {
