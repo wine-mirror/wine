@@ -1414,6 +1414,97 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderState(LPDIRECT3DDEVICE9EX 
     return hr;
 }
 
+static HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(IDirect3DDevice9Ex *iface,
+        D3DSTATEBLOCKTYPE type, IDirect3DStateBlock9 **stateblock)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DStateBlock9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, type %#x, stateblock %p.\n", iface, type, stateblock);
+
+    if (type != D3DSBT_ALL && type != D3DSBT_PIXELSTATE && type != D3DSBT_VERTEXSTATE)
+    {
+        WARN("Unexpected stateblock type, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate stateblock memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = stateblock_init(object, This, type, NULL);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize stateblock, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created stateblock %p.\n", object);
+    *stateblock = (IDirect3DStateBlock9 *)object;
+
+    return D3D_OK;
+}
+
+static HRESULT WINAPI IDirect3DDevice9Impl_BeginStateBlock(IDirect3DDevice9Ex *iface)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_BeginStateBlock(This->WineD3DDevice);
+    wined3d_mutex_unlock();
+
+    return hr;
+}
+
+static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *iface, IDirect3DStateBlock9 **stateblock)
+{
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IWineD3DStateBlock *wined3d_stateblock;
+    IDirect3DStateBlock9Impl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, stateblock %p.\n", iface, stateblock);
+
+    wined3d_mutex_lock();
+    hr = IWineD3DDevice_EndStateBlock(This->WineD3DDevice, &wined3d_stateblock);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+       WARN("IWineD3DDevice_EndStateBlock() failed, hr %#x.\n", hr);
+       return hr;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate stateblock memory.\n");
+        IWineD3DStateBlock_Release(wined3d_stateblock);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = stateblock_init(object, This, 0, wined3d_stateblock);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize stateblock, hr %#x.\n", hr);
+        IWineD3DStateBlock_Release(wined3d_stateblock);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created stateblock %p.\n", object);
+    *stateblock = (IDirect3DStateBlock9 *)object;
+
+    return D3D_OK;
+}
+
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetClipStatus(LPDIRECT3DDEVICE9EX iface, CONST D3DCLIPSTATUS9* pClipStatus) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
