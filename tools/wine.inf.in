@@ -39,7 +39,6 @@ AddReg=\
     Desktop,\
     Metrics,\
     DirectX,\
-    Environment,\
     Fonts,\
     MCI,\
     Misc,\
@@ -47,6 +46,7 @@ AddReg=\
     OLE,\
     Printing,\
     Services, \
+    SessionMgr,\
     Tapi,\
     Timezones
 
@@ -63,7 +63,6 @@ AddReg=\
     Desktop,\
     Metrics,\
     DirectX,\
-    Environment,\
     Fonts,\
     MCI,\
     Misc,\
@@ -71,6 +70,7 @@ AddReg=\
     OLE,\
     Printing,\
     Services, \
+    SessionMgr,\
     Tapi,\
     Timezones,\
     VersionInfo
@@ -452,18 +452,25 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For DirectPlay,"Guid",,"{0F1D6860-88D9-11cf-9C4E-00A0C905425E}"
 HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For DirectPlay,"Path",,"dpmodemx.dll"
 
-[Environment]
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"CommonProgramFiles",,"%16427%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",0x00020000,"%11%\cmd.exe"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",0x00020002,"%11%;%10%;%11%\wbem"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATHEXT",,".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",2,"c:"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",0x00020002,"%10%\temp"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",0x00020002,"%10%\temp"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"windir",0x00020000,"%10%"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"winsysdir",,"%11%"
+[SessionMgr]
+HKLM,%Control%\Session Manager,CriticalSectionTimeout,0x00040002,0x00278d00
+HKLM,%Control%\Session Manager,GlobalFlag,0x00040002,0
+HKLM,%Control%\Session Manager,HeapDeCommitFreeBlockThreshold,0x00040002,0
+HKLM,%Control%\Session Manager,HeapDeCommitTotalFreeThreshold,0x00040002,0
+HKLM,%Control%\Session Manager,HeapSegmentCommit,0x00040002,0
+HKLM,%Control%\Session Manager,HeapSegmentReserve,0x00040002,0
+HKLM,%Control%\Session Manager\Environment,"CommonProgramFiles",,"%16427%"
+HKLM,%Control%\Session Manager\Environment,"ComSpec",0x00020000,"%11%\cmd.exe"
+HKLM,%Control%\Session Manager\Environment,"PATH",0x00020002,"%11%;%10%;%11%\wbem"
+HKLM,%Control%\Session Manager\Environment,"PATHEXT",,".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH"
+HKLM,%Control%\Session Manager\Environment,"ProgramFiles",,"%16422%"
+HKLM,%Control%\Session Manager\Environment,"SystemDrive",2,"c:"
+HKLM,%Control%\Session Manager\Environment,"SYSTEMROOT",,"%10%"
+HKLM,%Control%\Session Manager\Environment,"TEMP",0x00020002,"%10%\temp"
+HKLM,%Control%\Session Manager\Environment,"TMP",0x00020002,"%10%\temp"
+HKLM,%Control%\Session Manager\Environment,"windir",0x00020000,"%10%"
+HKLM,%Control%\Session Manager\Environment,"winsysdir",,"%11%"
+HKLM,%Control%\Session Manager\Memory Management,WriteWatch,0x00040002,1
 
 [Fonts]
 HKLM,%FontSubStr%,"Arial Baltic,186",,"Arial,186"
@@ -539,7 +546,6 @@ HKLM,Software\Microsoft\Rpc\SecurityService,16,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,18,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,68,2,"netlogon.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,9,2,"secur32.dll"
-HKLM,System\CurrentControlSet\Control\Session Manager,,,""
 HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
 HKCU,Software\Microsoft\Protected Storage System Provider,,,""
