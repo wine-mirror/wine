@@ -961,7 +961,7 @@ deserialize_param(
 		unsigned char *buffer;
 		buffer = BSTR_UserUnmarshal(&flags, buf->base + buf->curoff, (BSTR *)arg);
 		buf->curoff = buffer - buf->base;
-		if (debugout) TRACE_(olerelay)("%s",relaystr(*(BSTR *)arg));
+		if (debugout) TRACE_(olerelay)("%s",debugstr_w(*(BSTR *)arg));
 	    }
 	    return S_OK;
 	}
