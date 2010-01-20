@@ -433,6 +433,7 @@ static void test_persiststreaminit(void)
     hr = IXMLDocument_get_root(doc, &element);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     hr = IXMLElement_put_text(element, str);
+    IXMLElement_Release(element);
     SysFreeString(str);
 
     hr = IPersistStreamInit_IsDirty(psi);
