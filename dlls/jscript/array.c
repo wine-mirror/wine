@@ -473,17 +473,35 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
         l = length-k-1;
 
         hres1 = jsdisp_propget_idx(jsthis, k, &v1, ei, sp);
+        if(FAILED(hres1))
+            return hres1;
+
         hres2 = jsdisp_propget_idx(jsthis, l, &v2, ei, sp);
+        if(FAILED(hres2)) {
+            VariantClear(&v1);
+            return hres2;
+        }
 
         if(hres1 == DISP_E_UNKNOWNNAME)
-            jsdisp_delete_idx(jsthis, l);
+            hres1 = jsdisp_delete_idx(jsthis, l);
         else
-            jsdisp_propput_idx(jsthis, l, &v1, ei, sp);
+            hres1 = jsdisp_propput_idx(jsthis, l, &v1, ei, sp);
+
+        if(FAILED(hres1)) {
+            VariantClear(&v1);
+            VariantClear(&v2);
+            return hres1;
+        }
 
         if(hres2 == DISP_E_UNKNOWNNAME)
-            jsdisp_delete_idx(jsthis, k);
+            hres2 = jsdisp_delete_idx(jsthis, k);
         else
-            jsdisp_propput_idx(jsthis, k, &v2, ei, sp);
+            hres2 = jsdisp_propput_idx(jsthis, k, &v2, ei, sp);
+
+        if(FAILED(hres2)) {
+            VariantClear(&v2);
+            return hres2;
+        }
     }
 
     if(retv) {
