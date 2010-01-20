@@ -2552,6 +2552,59 @@ static NTSTATUS attach_process_dlls( void *wm )
 
 
 /***********************************************************************
+ *           load_global_options
+ */
+static void load_global_options(void)
+{
+    static const WCHAR sessionW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
+    static const WCHAR critsectW[] = {'C','r','i','t','i','c','a','l','S','e','c','t','i','o','n','T','i','m','e','o','u','t',0};
+    static const WCHAR heapresW[] = {'H','e','a','p','S','e','g','m','e','n','t','R','e','s','e','r','v','e',0};
+    static const WCHAR heapcommitW[] = {'H','e','a','p','S','e','g','m','e','n','t','C','o','m','m','i','t',0};
+    static const WCHAR decommittotalW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','T','o','t','a','l','F','r','e','e','T','h','r','e','s','h','o','l','d',0};
+    static const WCHAR decommitfreeW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','F','r','e','e','B','l','o','c','k','T','h','r','e','s','h','o','l','d',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name_str;
+    HANDLE hkey;
+    ULONG value;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name_str;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &name_str, sessionW );
+
+    if (NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr )) return;
+
+    query_dword_option( hkey, globalflagW, &NtCurrentTeb()->Peb->NtGlobalFlag );
+
+    query_dword_option( hkey, critsectW, &value );
+    NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
+
+    query_dword_option( hkey, heapresW, &value );
+    NtCurrentTeb()->Peb->HeapSegmentReserve = value;
+
+    query_dword_option( hkey, heapcommitW, &value );
+    NtCurrentTeb()->Peb->HeapSegmentCommit = value;
+
+    query_dword_option( hkey, decommittotalW, &value );
+    NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
+
+    query_dword_option( hkey, decommitfreeW, &value );
+    NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
+
+    NtClose( hkey );
+}
+
+
+/***********************************************************************
  *           start_process
  */
 static void start_process( void *kernel_start )
@@ -2798,6 +2851,8 @@ void __wine_process_init(void)
     /* retrieve current umask */
     FILE_umask = umask(0777);
     umask( FILE_umask );
+
+    load_global_options();
 
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );
