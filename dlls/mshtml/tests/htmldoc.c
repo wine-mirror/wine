@@ -4445,9 +4445,6 @@ static void test_HTMLDocument_http(void)
 
     trace("Testing HTMLDocument (http)...\n");
 
-    hres = CreateURLMoniker(NULL, http_urlW, &http_mon);
-    ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
-
     init_test(LD_DOLOAD);
     ipsex = TRUE;
 
@@ -4455,6 +4452,9 @@ static void test_HTMLDocument_http(void)
     if(FAILED(hres))
         return;
     doc_unk = (IUnknown*)doc;
+
+    hres = CreateURLMoniker(NULL, http_urlW, &http_mon);
+    ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
 
     test_ConnectionPointContainer(doc);
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
