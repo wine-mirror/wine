@@ -2483,6 +2483,63 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
                                    wbuffer, wlen );
         break;
+    case INTERNET_OPTION_PER_CONNECTION_OPTION: {
+        int i;
+        INTERNET_PER_CONN_OPTION_LISTW *listW;
+        INTERNET_PER_CONN_OPTION_LISTA *listA = lpBuffer;
+        wlen = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
+        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen );
+        listW = wbuffer;
+
+        listW->dwSize = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
+        if (listA->pszConnection)
+        {
+            wlen = MultiByteToWideChar( CP_ACP, 0, listA->pszConnection, -1, NULL, 0 );
+            listW->pszConnection = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+            MultiByteToWideChar( CP_ACP, 0, listA->pszConnection, -1, listW->pszConnection, wlen );
+        }
+        else
+            listW->pszConnection = NULL;
+        listW->dwOptionCount = listA->dwOptionCount;
+        listW->dwOptionError = listA->dwOptionError;
+        listW->pOptions = HeapAlloc( GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONW) * listA->dwOptionCount );
+
+        for (i = 0; i < listA->dwOptionCount; ++i) {
+            INTERNET_PER_CONN_OPTIONA *optA = listA->pOptions + i;
+            INTERNET_PER_CONN_OPTIONW *optW = listW->pOptions + i;
+
+            optW->dwOption = optA->dwOption;
+
+            switch (optA->dwOption) {
+            case INTERNET_PER_CONN_AUTOCONFIG_URL:
+            case INTERNET_PER_CONN_PROXY_BYPASS:
+            case INTERNET_PER_CONN_PROXY_SERVER:
+            case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
+                if (optA->Value.pszValue)
+                {
+                    wlen = MultiByteToWideChar( CP_ACP, 0, optA->Value.pszValue, -1, NULL, 0 );
+                    optW->Value.pszValue = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+                    MultiByteToWideChar( CP_ACP, 0, optA->Value.pszValue, -1, optW->Value.pszValue, wlen );
+                }
+                else
+                    optW->Value.pszValue = NULL;
+                break;
+            case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
+            case INTERNET_PER_CONN_FLAGS:
+            case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
+                optW->Value.dwValue = optA->Value.dwValue;
+                break;
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
+                optW->Value.ftValue = optA->Value.ftValue;
+            default:
+                WARN("Unknown PER_CONN dwOption: %d, guessing at conversion to Wide\n", optA->dwOption);
+                optW->Value.dwValue = optA->Value.dwValue;
+                break;
+            }
+        }
+        }
+        break;
     default:
         wbuffer = lpBuffer;
         wlen = dwBufferLength;
@@ -2491,7 +2548,29 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
     r = InternetSetOptionW(hInternet,dwOption, wbuffer, wlen);
 
     if( lpBuffer != wbuffer )
+    {
+        if (dwOption == INTERNET_OPTION_PER_CONNECTION_OPTION)
+        {
+            INTERNET_PER_CONN_OPTION_LISTW *list = wbuffer;
+            int i;
+            for (i = 0; i < list->dwOptionCount; ++i) {
+                INTERNET_PER_CONN_OPTIONW *opt = list->pOptions + i;
+                switch (opt->dwOption) {
+                case INTERNET_PER_CONN_AUTOCONFIG_URL:
+                case INTERNET_PER_CONN_PROXY_BYPASS:
+                case INTERNET_PER_CONN_PROXY_SERVER:
+                case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
+                case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
+                    HeapFree( GetProcessHeap(), 0, opt->Value.pszValue );
+                    break;
+                default:
+                    break;
+                }
+            }
+            HeapFree( GetProcessHeap(), 0, list->pOptions );
+        }
         HeapFree( GetProcessHeap(), 0, wbuffer );
+    }
 
     return r;
 }
