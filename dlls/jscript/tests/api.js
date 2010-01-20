@@ -695,6 +695,15 @@ ok(arr.sort() === arr, "arr.sort() !== arr");
 for(var i=0; i < arr.length; i++)
     ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
 
+arr = new Object();
+arr.length = 3;
+arr[0] = 1;
+arr[2] = "aa";
+arr.sort = Array.prototype.sort;
+tmp = arr.sort();
+ok(arr === tmp, "tmp !== arr");
+ok(arr[0]===1 && arr[1]==="aa" && arr[2]===undefined, "arr is sorted incorectly");
+
 arr = ["1", "2", "3"];
 arr.length = 1;
 ok(arr.length === 1, "arr.length = " + arr.length);
@@ -1903,6 +1912,7 @@ testArrayHostThis("unshift");
 testArrayHostThis("reverse");
 testArrayHostThis("join");
 testArrayHostThis("pop");
+testArrayHostThis("sort");
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");

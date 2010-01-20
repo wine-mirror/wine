@@ -685,10 +685,10 @@ static HRESULT sort_cmp(script_ctx_t *ctx, DispatchEx *cmp_func, VARIANT *v1, VA
 }
 
 /* ECMA-262 3rd Edition    15.4.4.11 */
-static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *cmp_func = NULL;
+    DispatchEx *jsthis, *cmp_func = NULL;
     VARIANT *vtab, **sorttab = NULL;
     DWORD length;
     DWORD i;
@@ -696,12 +696,9 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 
     TRACE("\n");
 
-    if(is_vclass(jsthis, JSCLASS_ARRAY)) {
-        length = array_from_vdisp(jsthis)->length;
-    }else {
-        FIXME("unsupported this not array\n");
-        return E_NOTIMPL;
-    }
+    hres = get_length(ctx, vthis, ei, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
 
     if(arg_cnt(dp) > 1) {
         WARN("invalid arg_cnt %d\n", arg_cnt(dp));
@@ -731,8 +728,8 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
             jsdisp_release(cmp_func);
         if(retv) {
             V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = jsthis->u.disp;
-	    IDispatch_AddRef(jsthis->u.disp);
+            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+	    IDispatch_AddRef(V_DISPATCH(retv));
         }
         return S_OK;
     }
@@ -740,7 +737,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
     vtab = heap_alloc_zero(length * sizeof(VARIANT));
     if(vtab) {
         for(i=0; i<length; i++) {
-            hres = jsdisp_propget_idx(jsthis->u.jsdisp, i, vtab+i, ei, caller);
+            hres = jsdisp_propget_idx(jsthis, i, vtab+i, ei, caller);
             if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME) {
                 WARN("Could not get elem %d: %08x\n", i, hres);
                 break;
@@ -817,7 +814,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
         }
 
         for(i=0; SUCCEEDED(hres) && i < length; i++)
-            hres = jsdisp_propput_idx(jsthis->u.jsdisp, i, sorttab[i], ei, caller);
+            hres = jsdisp_propput_idx(jsthis, i, sorttab[i], ei, caller);
     }
 
     if(vtab) {
@@ -834,8 +831,8 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 
     if(retv) {
         V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = jsthis->u.disp;
-        IDispatch_AddRef(jsthis->u.disp);
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+        IDispatch_AddRef(V_DISPATCH(retv));
     }
 
     return S_OK;
