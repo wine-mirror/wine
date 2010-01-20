@@ -372,52 +372,42 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
     return hres;
 }
 
-static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
+static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    DispatchEx *jsthis;
     VARIANT val;
     DWORD length;
-    WCHAR buf[14];
-    DISPID id;
     HRESULT hres;
-
-    static const WCHAR formatW[] = {'%','d',0};
 
     TRACE("\n");
 
-    if(is_vclass(jsthis, JSCLASS_ARRAY)) {
-        ArrayInstance *array = array_from_vdisp(jsthis);
-        length = array->length;
-    }else {
-        FIXME("not Array this\n");
-        return E_NOTIMPL;
-    }
+    hres = get_length(ctx, vthis, ei, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
 
     if(!length) {
+        hres = set_length(jsthis, ei, 0);
+        if(FAILED(hres))
+            return hres;
+
         if(retv)
             V_VT(retv) = VT_EMPTY;
         return S_OK;
     }
 
-    sprintfW(buf, formatW, --length);
-    hres = jsdisp_get_id(jsthis->u.jsdisp, buf, 0, &id);
+    length--;
+    hres = jsdisp_propget_idx(jsthis, length, &val, ei, caller);
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propget(jsthis->u.jsdisp, id, &val, ei, caller);
-        if(FAILED(hres))
-            return hres;
-
-        hres = IDispatchEx_DeleteMemberByDispID(jsthis->u.dispex, id);
-    }else if(hres == DISP_E_UNKNOWNNAME) {
+        hres = jsdisp_delete_idx(jsthis, length);
+    } else if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&val) = VT_EMPTY;
         hres = S_OK;
-    }else {
+    } else
         return hres;
-    }
 
-    if(SUCCEEDED(hres)) {
-        ArrayInstance *array = array_from_vdisp(jsthis);
-        array->length = length;
-    }
+    if(SUCCEEDED(hres))
+        hres = set_length(jsthis, ei, length);
 
     if(FAILED(hres)) {
         VariantClear(&val);
@@ -428,6 +418,7 @@ static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         *retv = val;
     else
         VariantClear(&val);
+
     return S_OK;
 }
 

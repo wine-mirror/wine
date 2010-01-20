@@ -618,6 +618,12 @@ ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
 ok(arr[8] === "b", "arr[8] != 'b'");
 ok(arr.length === 10, "arr.length != 10");
 
+arr.pop = Array.prototype.pop;
+ok(arr.pop() === false, "arr.pop() !== false");
+ok(arr[8] === "b", "arr[8] !== 'b'");
+ok(arr.pop() === 'b', "arr.pop() !== 'b'");
+ok(arr[8] === undefined, "arr[8] !== undefined");
+
 arr = [3,4,5];
 tmp = arr.pop();
 ok(arr.length === 2, "arr.length = " + arr.length);
@@ -630,6 +636,11 @@ ok(arr.length === 0, "arr.length = " + arr.length);
 ok(tmp === 3, "pop() = " + tmp);
 for(tmp in arr)
     ok(false, "not deleted " + tmp);
+tmp = arr.pop();
+ok(arr.length === 0, "arr.length = " + arr.length);
+ok(tmp === undefined, "tmp = " + tmp);
+arr = new Object();
+arr.pop = Array.prototype.pop;
 tmp = arr.pop();
 ok(arr.length === 0, "arr.length = " + arr.length);
 ok(tmp === undefined, "tmp = " + tmp);
@@ -1891,6 +1902,7 @@ testArrayHostThis("splice");
 testArrayHostThis("unshift");
 testArrayHostThis("reverse");
 testArrayHostThis("join");
+testArrayHostThis("pop");
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");
