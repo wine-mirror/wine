@@ -2199,6 +2199,106 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
 }
 
 
+static NTSTATUS query_dword_option( HANDLE hkey, LPCWSTR name, ULONG *value )
+{
+    NTSTATUS status;
+    UNICODE_STRING str;
+    ULONG size;
+    WCHAR buffer[64];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+
+    RtlInitUnicodeString( &str, name );
+
+    size = sizeof(buffer) - sizeof(WCHAR);
+    if ((status = NtQueryValueKey( hkey, &str, KeyValuePartialInformation, buffer, size, &size )))
+        return status;
+
+    if (info->Type != REG_DWORD)
+    {
+        buffer[size / sizeof(WCHAR)] = 0;
+        *value = strtoulW( (WCHAR *)info->Data, 0, 16 );
+    }
+    else memcpy( value, info->Data, sizeof(*value) );
+    return status;
+}
+
+static NTSTATUS query_string_option( HANDLE hkey, LPCWSTR name, ULONG type,
+                                     void *data, ULONG in_size, ULONG *out_size )
+{
+    NTSTATUS status;
+    UNICODE_STRING str;
+    ULONG size;
+    char *buffer;
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+    static const int info_size = FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data );
+
+    RtlInitUnicodeString( &str, name );
+
+    size = info_size + in_size;
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
+    info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    status = NtQueryValueKey( hkey, &str, KeyValuePartialInformation, buffer, size, &size );
+    if (!status || status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (out_size) *out_size = info->DataLength;
+        if (data && !status) memcpy( data, info->Data, info->DataLength );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return status;
+}
+
+
+/******************************************************************
+ *		LdrQueryImageFileExecutionOptions  (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LPCWSTR value, ULONG type,
+                                                   void *data, ULONG in_size, ULONG *out_size )
+{
+    static const WCHAR optionsW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'M','i','c','r','o','s','o','f','t','\\',
+                                     'W','i','n','d','o','w','s',' ','N','T','\\',
+                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                     'I','m','a','g','e',' ','F','i','l','e',' ',
+                                     'E','x','e','c','u','t','i','o','n',' ','O','p','t','i','o','n','s','\\'};
+    WCHAR path[MAX_PATH + sizeof(optionsW)/sizeof(WCHAR)];
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name_str;
+    HANDLE hkey;
+    NTSTATUS status;
+    ULONG len;
+    WCHAR *p;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name_str;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if ((p = memrchrW( key->Buffer, '\\', key->Length / sizeof(WCHAR) ))) p++;
+    else p = key->Buffer;
+    len = key->Length - (p - key->Buffer) * sizeof(WCHAR);
+    name_str.Buffer = path;
+    name_str.Length = sizeof(optionsW) + len;
+    name_str.MaximumLength = name_str.Length;
+    memcpy( path, optionsW, sizeof(optionsW) );
+    memcpy( path + sizeof(optionsW)/sizeof(WCHAR), p, len );
+    if ((status = NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))) return status;
+
+    if (type == REG_DWORD)
+    {
+        if (out_size) *out_size = sizeof(ULONG);
+        if (in_size >= sizeof(ULONG)) status = query_dword_option( hkey, value, data );
+        else status = STATUS_BUFFER_OVERFLOW;
+    }
+    else status = query_string_option( hkey, value, type, data, in_size, out_size );
+
+    NtClose( hkey );
+    return status;
+}
+
+
 /******************************************************************
  *		RtlDllShutdownInProgress  (NTDLL.@)
  */
@@ -2466,6 +2566,7 @@ static void start_process( void *kernel_start )
 void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
                                 ULONG_PTR unknown3, ULONG_PTR unknown4 )
 {
+    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path;
@@ -2486,6 +2587,9 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     peb->LoaderLock = &loader_section;
     peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
     version_init( wm->ldr.FullDllName.Buffer );
+
+    LdrQueryImageFileExecutionOptions( &peb->ProcessParameters->ImagePathName, globalflagW,
+                                       REG_DWORD, &peb->NtGlobalFlag, sizeof(peb->NtGlobalFlag), NULL );
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
