@@ -824,6 +824,31 @@ static void test_PrivacyGetSetZonePreferenceW(void)
     ok(ret == 0, "expected ret == 0, got %u\n", ret);
 }
 
+static void test_Option_Policy(void)
+{
+    HINTERNET hinet;
+    BOOL ret;
+
+    hinet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(hinet != 0, "InternetOpen failed: 0x%08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InternetSetOptionW(hinet, INTERNET_OPTION_POLICY, NULL, 0);
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError should've "
+            "given ERROR_INVALID_PARAMETER, gave: 0x%08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionW(hinet, INTERNET_OPTION_POLICY, NULL, 0);
+    ok(ret == FALSE, "InternetQueryOption should've failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError should've "
+            "given ERROR_INVALID_PARAMETER, gave: 0x%08x\n", GetLastError());
+
+    ret = InternetCloseHandle(hinet);
+    ok(ret == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
+}
+
+
 /* ############################### */
 
 START_TEST(internet)
@@ -846,6 +871,7 @@ START_TEST(internet)
     test_complicated_cookie();
     test_version();
     test_null();
+    test_Option_Policy();
 
     if (!pInternetTimeFromSystemTimeA)
         win_skip("skipping the InternetTime tests\n");

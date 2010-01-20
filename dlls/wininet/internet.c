@@ -2170,6 +2170,8 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
     }
     case INTERNET_OPTION_USER_AGENT:
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    case INTERNET_OPTION_POLICY:
+        return ERROR_INVALID_PARAMETER;
     }
 
     FIXME("Stub for %d\n", option);
@@ -2399,6 +2401,10 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_IDN:
         FIXME("INTERNET_OPTION_IDN; STUB\n");
         SetLastError(ERROR_INTERNET_INVALID_OPTION);
+        ret = FALSE;
+        break;
+    case INTERNET_OPTION_POLICY:
+        SetLastError(ERROR_INVALID_PARAMETER);
         ret = FALSE;
         break;
     default:
