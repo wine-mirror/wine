@@ -1136,6 +1136,10 @@ void fill_cpu_info(void)
         ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
         if (!ret)
             NtCurrentTeb()->Peb->NumberOfProcessors = num;
+
+        len = sizeof(num);
+        if (!sysctlbyname("dev.cpu.0.freq", &num, &len, NULL, 0))
+            cpuHz = num * 1000 * 1000;
     }
 #elif defined(__sun)
     {
