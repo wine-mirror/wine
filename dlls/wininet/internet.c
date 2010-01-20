@@ -105,6 +105,20 @@ static object_header_t **WININET_Handles;
 static UINT WININET_dwNextHandle;
 static UINT WININET_dwMaxHandles;
 
+typedef struct
+{
+    DWORD dwProxyEnabled;
+    LPWSTR lpszProxyServer;
+    LPWSTR lpszProxyBypass;
+} proxyinfo_t;
+
+static const WCHAR szInternetSettings[] =
+    { 'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+      'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+      'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0 };
+static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
+static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
+
 HINTERNET WININET_AllocHandle( object_header_t *info )
 {
     object_header_t **p;
@@ -342,33 +356,45 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
     return FALSE;
 }
 
+static void FreeProxyInfo( proxyinfo_t *lpwpi )
+{
+    HeapFree(GetProcessHeap(), 0, lpwpi->lpszProxyServer);
+    HeapFree(GetProcessHeap(), 0, lpwpi->lpszProxyBypass);
+}
 
 /***********************************************************************
- *           INTERNET_ConfigureProxy
+ *          INTERNET_LoadProxySettings
+ *
+ * Loads proxy information from the registry or environment into lpwpi.
+ *
+ * The caller should call FreeProxyInfo when done with lpwpi.
  *
  * FIXME:
  * The proxy may be specified in the form 'http=proxy.my.org'
  * Presumably that means there can be ftp=ftpproxy.my.org too.
  */
-static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
+static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 {
     HKEY key;
-    DWORD type, len, enabled = 0;
+    DWORD type, len;
     LPCSTR envproxy;
-    static const WCHAR szInternetSettings[] =
-        { 'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-          'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0 };
-    static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
-    static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
+    LONG ret;
 
-    if (RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )) return FALSE;
+    if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
+        return ret;
 
-    len = sizeof enabled;
-    if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&enabled, &len ) || type != REG_DWORD)
-        RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&enabled, sizeof(REG_DWORD) );
+    len = sizeof(DWORD);
+    if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&lpwpi->dwProxyEnabled, &len ) || type != REG_DWORD)
+    {
+        lpwpi->dwProxyEnabled = 0;
+        if((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&lpwpi->dwProxyEnabled, sizeof(DWORD) )))
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
 
-    if (enabled)
+    if (!(envproxy = getenv( "http_proxy" )) || lpwpi->dwProxyEnabled)
     {
         TRACE("Proxy is enabled.\n");
 
@@ -381,7 +407,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
             if (!(szProxy = HeapAlloc( GetProcessHeap(), 0, len )))
             {
                 RegCloseKey( key );
-                return FALSE;
+                return ERROR_OUTOFMEMORY;
             }
             RegQueryValueExW( key, szProxyServer, NULL, &type, (BYTE*)szProxy, &len );
 
@@ -395,35 +421,56 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
             p = strchrW( szProxy, ' ' );
             if (p) *p = 0;
 
-            lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
-            lpwai->lpszProxy = szProxy;
+            lpwpi->lpszProxyServer = szProxy;
 
-            TRACE("http proxy = %s\n", debugstr_w(lpwai->lpszProxy));
+            TRACE("http proxy = %s\n", debugstr_w(lpwpi->lpszProxyServer));
         }
         else
-            ERR("Couldn't read proxy server settings from registry.\n");
+        {
+            TRACE("No proxy server settings in registry.\n");
+            lpwpi->lpszProxyServer = NULL;
+        }
     }
-    else if ((envproxy = getenv( "http_proxy" )))
+    else if (envproxy)
     {
         WCHAR *envproxyW;
 
         len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
-        if (!(envproxyW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR)))) return FALSE;
+        if (!(envproxyW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR))))
+            return ERROR_OUTOFMEMORY;
         MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
-        lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
-        lpwai->lpszProxy = envproxyW;
+        lpwpi->dwProxyEnabled = 1;
+        lpwpi->lpszProxyServer = envproxyW;
 
-        TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwai->lpszProxy));
-        enabled = 1;
-    }
-    if (!enabled)
-    {
-        TRACE("Proxy is not enabled.\n");
-        lpwai->dwAccessType = INTERNET_OPEN_TYPE_DIRECT;
+        TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->lpszProxyServer));
     }
     RegCloseKey( key );
-    return (enabled > 0);
+
+    lpwpi->lpszProxyBypass = NULL;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *           INTERNET_ConfigureProxy
+ */
+static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
+{
+    proxyinfo_t wpi;
+
+    if (INTERNET_LoadProxySettings( &wpi ))
+        return FALSE;
+
+    if (wpi.dwProxyEnabled)
+    {
+        lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
+        lpwai->lpszProxy = wpi.lpszProxyServer;
+        return TRUE;
+    }
+
+    lpwai->dwAccessType = INTERNET_OPEN_TYPE_DIRECT;
+    return FALSE;
 }
 
 /***********************************************************************
@@ -2112,16 +2159,17 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
         INTERNET_PER_CONN_OPTION_LISTW *con = buffer;
         INTERNET_PER_CONN_OPTION_LISTA *conA = buffer;
         DWORD res = ERROR_SUCCESS, i;
-        appinfo_t ai;
+        proxyinfo_t pi;
+        LONG ret;
 
         TRACE("Getting global proxy info\n");
-        memset(&ai, 0, sizeof(appinfo_t));
-        INTERNET_ConfigureProxy(&ai);
+        if((ret = INTERNET_LoadProxySettings(&pi)))
+            return ret;
 
         FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
 
         if (*size < sizeof(INTERNET_PER_CONN_OPTION_LISTW)) {
-            APPINFO_Destroy(&ai.hdr);
+            FreeProxyInfo(&pi);
             return ERROR_INSUFFICIENT_BUFFER;
         }
 
@@ -2131,21 +2179,24 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 
             switch (option->dwOption) {
             case INTERNET_PER_CONN_FLAGS:
-                option->Value.dwValue = ai.dwAccessType;
+                if(pi.dwProxyEnabled)
+                    option->Value.dwValue = PROXY_TYPE_PROXY;
+                else
+                    option->Value.dwValue = PROXY_TYPE_DIRECT;
                 break;
 
             case INTERNET_PER_CONN_PROXY_SERVER:
                 if (unicode)
-                    option->Value.pszValue = heap_strdupW(ai.lpszProxy);
+                    option->Value.pszValue = heap_strdupW(pi.lpszProxyServer);
                 else
-                    optionA->Value.pszValue = heap_strdupWtoA(ai.lpszProxy);
+                    optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyServer);
                 break;
 
             case INTERNET_PER_CONN_PROXY_BYPASS:
                 if (unicode)
-                    option->Value.pszValue = heap_strdupW(ai.lpszProxyBypass);
+                    option->Value.pszValue = heap_strdupW(pi.lpszProxyBypass);
                 else
-                    optionA->Value.pszValue = heap_strdupWtoA(ai.lpszProxyBypass);
+                    optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyBypass);
                 break;
 
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
@@ -2164,7 +2215,7 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
                 break;
             }
         }
-        APPINFO_Destroy(&ai.hdr);
+        FreeProxyInfo(&pi);
 
         return res;
     }
