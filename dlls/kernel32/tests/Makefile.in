@@ -17,6 +17,7 @@ CTESTS = \
 	directory.c \
 	drive.c \
 	environ.c \
+	fiber.c \
 	file.c \
 	format_msg.c \
 	generated.c \
