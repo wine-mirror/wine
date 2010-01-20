@@ -4924,16 +4924,30 @@ static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
         LPCWSTR ptr = *value;
         if (!strncmpW(ptr, prefix, prefix_len))
         {
-            *flags |= ENV_MOD_APPEND;
-            *value += lstrlenW(prefix);
+            if (ptr[prefix_len] == szSemiColon[0])
+            {
+                *flags |= ENV_MOD_APPEND;
+                *value += lstrlenW(prefix);
+            }
+            else
+            {
+                *value = NULL;
+            }
         }
         else if (lstrlenW(*value) >= prefix_len)
         {
             ptr += lstrlenW(ptr) - prefix_len;
             if (!lstrcmpW(ptr, prefix))
             {
-                *flags |= ENV_MOD_PREFIX;
-                /* the "[~]" will be removed by deformat_string */;
+                if ((ptr-1) > *value && *(ptr-1) == szSemiColon[0])
+                {
+                    *flags |= ENV_MOD_PREFIX;
+                    /* the "[~]" will be removed by deformat_string */;
+                }
+                else
+                {
+                    *value = NULL;
+                }
             }
         }
     }
@@ -4979,7 +4993,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     TRACE("name %s value %s\n", debugstr_w(name), debugstr_w(value));
 
     res = env_set_flags(&name, &value, &flags);
-    if (res != ERROR_SUCCESS)
+    if (res != ERROR_SUCCESS || !value)
        goto done;
 
     if (value && !deformat_string(package, value, &deformatted))
@@ -5025,6 +5039,9 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
 
+        /* If we are appending but the string was empty, strip ; */
+        if ((flags & ENV_MOD_APPEND) && (value[0] == szSemiColon[0])) value++;
+
         size = (lstrlenW(value) + 1) * sizeof(WCHAR);
         newval = strdupW(value);
         if (!newval)
@@ -5035,7 +5052,8 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     }
     else
     {
-        if (flags & ENV_ACT_SETABSENT)
+        /* Contrary to MSDN, +-variable to [~];path works */
+        if (flags & ENV_ACT_SETABSENT && !(flags & ENV_MOD_MASK))
         {
             res = ERROR_SUCCESS;
             goto done;
@@ -5065,7 +5083,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             int multiplier = 0;
             if (flags & ENV_MOD_APPEND) multiplier++;
             if (flags & ENV_MOD_PREFIX) multiplier++;
-            mod_size = (lstrlenW(value) + 1) * multiplier;
+            mod_size = lstrlenW(value) * multiplier;
             size += mod_size * sizeof(WCHAR);
         }
 
@@ -5080,15 +5098,13 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         if (flags & ENV_MOD_PREFIX)
         {
             lstrcpyW(newval, value);
-            lstrcatW(newval, szSemiColon);
-            ptr = newval + lstrlenW(value) + 1;
+            ptr = newval + lstrlenW(value);
         }
 
         lstrcpyW(ptr, data);
 
         if (flags & ENV_MOD_APPEND)
         {
-            lstrcatW(newval, szSemiColon);
             lstrcatW(newval, value);
         }
     }

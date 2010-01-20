@@ -226,7 +226,36 @@ static const CHAR environment_dat[] = "Environment\tName\tValue\tComponent_\n"
                                       "Var7\t!-MSITESTVAR7\t\tOne\n"
                                       "Var8\t!-*MSITESTVAR8\t\tOne\n"
                                       "Var9\t=-MSITESTVAR9\t\tOne\n"
-                                      "Var10\t=MSITESTVAR10\t\tOne\n";
+                                      "Var10\t=MSITESTVAR10\t\tOne\n"
+                                      "Var11\t+-MSITESTVAR11\t[~];1\tOne\n"
+                                      "Var12\t+-MSITESTVAR11\t[~];2\tOne\n"
+                                      "Var13\t+-MSITESTVAR12\t[~];1\tOne\n"
+                                      "Var14\t=MSITESTVAR13\t[~];1\tOne\n"
+                                      "Var15\t=MSITESTVAR13\t[~];2\tOne\n"
+                                      "Var16\t=MSITESTVAR14\t;1;\tOne\n"
+                                      "Var17\t=MSITESTVAR15\t;;1;;\tOne\n"
+                                      "Var18\t=MSITESTVAR16\t 1 \tOne\n"
+                                      "Var19\t+-MSITESTVAR17\t1\tOne\n"
+                                      "Var20\t+-MSITESTVAR17\t;;2;;[~]\tOne\n"
+                                      "Var21\t+-MSITESTVAR18\t1\tOne\n"
+                                      "Var22\t+-MSITESTVAR18\t[~];;2;;\tOne\n"
+                                      "Var23\t+-MSITESTVAR19\t1\tOne\n"
+                                      "Var24\t+-MSITESTVAR19\t[~]2\tOne\n"
+                                      "Var25\t+-MSITESTVAR20\t1\tOne\n"
+                                      "Var26\t+-MSITESTVAR20\t2[~]\tOne\n";
+
+/* Expected results, starting from MSITESTVAR11 onwards */
+static const CHAR *environment_dat_results[] = {"1;2",    /*MSITESTVAR11*/
+                                                "1",      /*MSITESTVAR12*/
+                                                "1;2",    /*MSITESTVAR13*/
+                                                ";1;",    /*MSITESTVAR14*/
+                                                ";;1;;",  /*MSITESTVAR15*/
+                                                " 1 ",    /*MSITESTVAR16*/
+                                                ";;2;;1", /*MSITESTVAR17*/
+                                                "1;;2;;", /*MSITESTVAR18*/
+                                                "1",      /*MSITESTVAR19*/
+                                                "1",      /*MSITESTVAR20*/
+                                                NULL};
 
 static const CHAR condition_dat[] = "Feature_\tLevel\tCondition\n"
                                     "s38\ti2\tS255\n"
@@ -6732,6 +6761,7 @@ static void test_envvar(void)
     LONG res;
     DWORD type, size;
     char buffer[16];
+    UINT i;
 
     if (on_win9x)
     {
@@ -6800,8 +6830,27 @@ static void test_envvar(void)
     res = RegDeleteValueA(env, "MSITESTVAR10");
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    RegCloseKey(env);
+    i = 11;
+    while (environment_dat_results[(i-11)]) {
+        char name[20];
+        sprintf(name, "MSITESTVAR%d", i);
 
+        type = REG_NONE;
+        size = sizeof(buffer);
+        buffer[0] = 0;
+        res = RegQueryValueExA(env, name, NULL, &type, (LPBYTE)buffer, &size);
+        ok(res == ERROR_SUCCESS, "%d: Expected ERROR_SUCCESS, got %d\n", i, res);
+        ok(type == REG_SZ, "%d: Expected REG_SZ, got %u\n", i, type);
+        ok(!lstrcmp(buffer, environment_dat_results[(i-11)]), "%d: Expected %s, got %s\n",
+           i, environment_dat_results[(i-11)], buffer);
+
+        res = RegDeleteValueA(env, name);
+        ok(res == ERROR_SUCCESS, "%d: Expected ERROR_SUCCESS, got %d\n", i, res);
+        i++;
+    }
+
+
+    RegCloseKey(env);
     delete_pf("msitest\\cabout\\new\\five.txt", TRUE);
     delete_pf("msitest\\cabout\\new", FALSE);
     delete_pf("msitest\\cabout\\four.txt", TRUE);
