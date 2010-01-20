@@ -319,6 +319,48 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *           INTERNET_SaveProxySettings
+ *
+ * Stores the proxy settings given by lpwai into the registry
+ *
+ * RETURNS
+ *     ERROR_SUCCESS if no error, or error code on fail
+ */
+static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
+{
+    HKEY key;
+    LONG ret;
+
+    if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
+        return ret;
+
+    if ((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE*)&lpwpi->dwProxyEnabled, sizeof(DWORD))))
+    {
+        RegCloseKey( key );
+        return ret;
+    }
+
+    if (lpwpi->lpszProxyServer)
+    {
+        if ((ret = RegSetValueExW( key, szProxyServer, 0, REG_SZ, (BYTE*)lpwpi->lpszProxyServer, sizeof(WCHAR) * (lstrlenW(lpwpi->lpszProxyServer) + 1))))
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+    else
+    {
+        if ((ret = RegDeleteValueW( key, szProxyServer )))
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+
+    RegCloseKey(key);
+    return ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *           InternetInitializeAutoProxyDll   (WININET.@)
@@ -2458,6 +2500,49 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         SetLastError(ERROR_INVALID_PARAMETER);
         ret = FALSE;
         break;
+    case INTERNET_OPTION_PER_CONNECTION_OPTION: {
+        INTERNET_PER_CONN_OPTION_LISTW *con = lpBuffer;
+        LONG res;
+        int i;
+        proxyinfo_t pi;
+
+        INTERNET_LoadProxySettings(&pi);
+
+        for (i = 0; i < con->dwOptionCount; i++) {
+            INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
+
+            switch (option->dwOption) {
+            case INTERNET_PER_CONN_PROXY_SERVER:
+                HeapFree(GetProcessHeap(), 0, pi.lpszProxyServer);
+                pi.lpszProxyServer = heap_strdupW(option->Value.pszValue);
+                break;
+
+            case INTERNET_PER_CONN_FLAGS:
+            case INTERNET_PER_CONN_AUTOCONFIG_URL:
+            case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
+            case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
+            case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
+            case INTERNET_PER_CONN_PROXY_BYPASS:
+                FIXME("Unhandled dwOption %d\n", option->dwOption);
+                break;
+
+            default:
+                FIXME("Unknown dwOption %d\n", option->dwOption);
+                SetLastError(ERROR_INVALID_PARAMETER);
+                break;
+            }
+        }
+
+        if ((res = INTERNET_SaveProxySettings(&pi)))
+            SetLastError(res);
+
+        FreeProxyInfo(&pi);
+
+        ret = (res == ERROR_SUCCESS);
+        break;
+        }
     default:
         FIXME("Option %d STUB\n",dwOption);
         SetLastError(ERROR_INTERNET_INVALID_OPTION);
