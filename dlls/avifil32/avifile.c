@@ -1103,6 +1103,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     samples *= This->sInfo.dwSampleSize;
 
     while (samples > 0 && buffersize > 0) {
+      LONG blocksize;
       if (block != This->dwCurrentFrame) {
 	hr = AVIFILE_ReadBlock(This, block, NULL, 0);
 	if (FAILED(hr))
@@ -1110,7 +1111,9 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
       }
 
       size = min((DWORD)samples, (DWORD)buffersize);
-      size = min(size, This->cbBuffer - offset);
+      blocksize = This->lpBuffer[1];
+      TRACE("blocksize = %u\n",blocksize);
+      size = min(size, blocksize - offset);
       memcpy(buffer, ((BYTE*)&This->lpBuffer[2]) + offset, size);
 
       block++;
