@@ -857,10 +857,11 @@ static void test_Option_PerConnectionOption(void)
     static WCHAR proxy_srvW[] = {'p','r','o','x','y','.','e','x','a','m','p','l','e',0};
 
     /* get the global IE proxy server info, to restore later */
-    list.dwOptionCount = 1;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONW));
+    list.dwOptionCount = 2;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONW));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
 
     ret = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
@@ -868,11 +869,13 @@ static void test_Option_PerConnectionOption(void)
     orig_settings = list.pOptions;
 
     /* set the global IE proxy server */
-    list.dwOptionCount = 1;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONW));
+    list.dwOptionCount = 2;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONW));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
     list.pOptions[0].Value.pszValue = proxy_srvW;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
+    list.pOptions[1].Value.dwValue = PROXY_TYPE_PROXY;
 
     ret = InternetSetOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, size);
@@ -881,11 +884,12 @@ static void test_Option_PerConnectionOption(void)
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* get & verify the global IE proxy server */
-    list.dwOptionCount = 1;
+    list.dwOptionCount = 2;
     list.dwOptionError = 0;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONW));
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONW));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
 
     ret = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
@@ -893,11 +897,14 @@ static void test_Option_PerConnectionOption(void)
     ok(!lstrcmpW(list.pOptions[0].Value.pszValue, proxy_srvW),
             "Retrieved proxy server should've been %s, was: %s\n",
             wine_dbgstr_w(proxy_srvW), wine_dbgstr_w(list.pOptions[0].Value.pszValue));
+    ok(list.pOptions[1].Value.dwValue == PROXY_TYPE_PROXY,
+            "Retrieved flags should've been PROXY_TYPE_PROXY, was: %d\n",
+            list.pOptions[1].Value.dwValue);
 
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* restore original settings */
-    list.dwOptionCount = 1;
+    list.dwOptionCount = 2;
     list.pOptions = orig_settings;
 
     ret = InternetSetOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
@@ -916,10 +923,11 @@ static void test_Option_PerConnectionOptionA(void)
     char proxy_srv[] = "proxy.example";
 
     /* get the global IE proxy server info, to restore later */
-    list.dwOptionCount = 1;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONA));
+    list.dwOptionCount = 2;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONA));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
 
     ret = InternetQueryOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
@@ -927,11 +935,13 @@ static void test_Option_PerConnectionOptionA(void)
     orig_settings = list.pOptions;
 
     /* set the global IE proxy server */
-    list.dwOptionCount = 1;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONA));
+    list.dwOptionCount = 2;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONA));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
     list.pOptions[0].Value.pszValue = proxy_srv;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
+    list.pOptions[1].Value.dwValue = PROXY_TYPE_PROXY;
 
     ret = InternetSetOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, size);
@@ -940,11 +950,12 @@ static void test_Option_PerConnectionOptionA(void)
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* get & verify the global IE proxy server */
-    list.dwOptionCount = 1;
+    list.dwOptionCount = 2;
     list.dwOptionError = 0;
-    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONA));
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(INTERNET_PER_CONN_OPTIONA));
 
     list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+    list.pOptions[1].dwOption = INTERNET_PER_CONN_FLAGS;
 
     ret = InternetQueryOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
@@ -952,11 +963,14 @@ static void test_Option_PerConnectionOptionA(void)
     ok(!lstrcmpA(list.pOptions[0].Value.pszValue, "proxy.example"),
             "Retrieved proxy server should've been \"%s\", was: \"%s\"\n",
             proxy_srv, list.pOptions[0].Value.pszValue);
+    ok(list.pOptions[1].Value.dwValue == PROXY_TYPE_PROXY,
+            "Retrieved flags should've been PROXY_TYPE_PROXY, was: %d\n",
+            list.pOptions[1].Value.dwValue);
 
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* restore original settings */
-    list.dwOptionCount = 1;
+    list.dwOptionCount = 2;
     list.pOptions = orig_settings;
 
     ret = InternetSetOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
