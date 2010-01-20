@@ -1087,6 +1087,15 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     LONG block = start;
     LONG offset = 0;
 
+    if (!buffer)
+    {
+      if (bytesread)
+        *bytesread = samples*This->sInfo.dwSampleSize;
+      if (samplesread)
+        *samplesread = samples;
+      return AVIERR_OK;
+    }
+
     /* convert start sample to block,offset pair */
     AVIFILE_SamplesToBlock(This, &block, &offset);
 
