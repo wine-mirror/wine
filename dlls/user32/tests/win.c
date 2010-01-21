@@ -2785,14 +2785,21 @@ static void test_capture_4(void)
     hmenu = CreatePopupMenu();
 
     ret = AppendMenuA( hmenu, MF_STRING, 1, "winetest2");
-    ok( ret, "AppendMenA has failed!\n");
+    ok( ret, "AppendMenuA has failed!\n");
 
     /* set main window to have initial capture */
     SetCapture(hwnd);
 
-    /* create popup (it will self-destruct) */
-    ret = TrackPopupMenu(hmenu, 0x100, 100,100, 0, hwnd, NULL);
-    ok( ret == 0, "TrackPopupMenu returned %d expected zero\n", ret);
+    if (!GetWindowLongW(GetDesktopWindow(), GWL_STYLE))
+    {
+        win_skip("TrackPopupMenu test crashes on Win9x/WinMe\n");
+    }
+    else
+    {
+        /* create popup (it will self-destruct) */
+        ret = TrackPopupMenu(hmenu, TPM_RETURNCMD, 100, 100, 0, hwnd, NULL);
+        ok( ret == 0, "TrackPopupMenu returned %d expected zero\n", ret);
+    }
 
     /* clean up */
     DestroyMenu(hmenu);
