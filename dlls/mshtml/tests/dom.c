@@ -5158,10 +5158,12 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     SafeArrayDestroy(sa);
 }
 
-static void test_frame_doc(IUnknown *frame_elem)
+static void test_frame_doc(IUnknown *frame_elem, BOOL iframe)
 {
     IHTMLDocument2 *window_doc, *elem_doc;
+    IHTMLFrameElement3 *frame_elem3;
     IHTMLWindow2 *content_window;
+    HRESULT hres;
 
     content_window = get_frame_content_window(frame_elem);
     window_doc = get_window_doc(content_window);
@@ -5169,6 +5171,23 @@ static void test_frame_doc(IUnknown *frame_elem)
 
     elem_doc = get_elem_doc(frame_elem);
     ok(iface_cmp((IUnknown*)window_doc, (IUnknown*)elem_doc), "content_doc != elem_doc\n");
+
+    if(!iframe) {
+        hres = IUnknown_QueryInterface(frame_elem, &IID_IHTMLFrameElement3, (void**)&frame_elem3);
+        if(SUCCEEDED(hres)) {
+            IDispatch *disp = NULL;
+
+            hres = IHTMLFrameElement3_get_contentDocument(frame_elem3, &disp);
+            ok(hres == S_OK, "get_contentDocument failed: %08x\n", hres);
+            ok(disp != NULL, "contentDocument == NULL\n");
+            ok(iface_cmp((IUnknown*)disp, (IUnknown*)window_doc), "contentDocument != contentWindow.document\n");
+
+            IDispatch_Release(disp);
+            IHTMLFrameElement3_Release(frame_elem3);
+        }else {
+            win_skip("IHTMLFrameElement3 not supported\n");
+        }
+    }
 
     IHTMLDocument2_Release(elem_doc);
     IHTMLDocument2_Release(window_doc);
@@ -5192,7 +5211,7 @@ static void test_iframe_elem(IHTMLElement *elem)
         ET_BR
     };
 
-    test_frame_doc((IUnknown*)elem);
+    test_frame_doc((IUnknown*)elem, TRUE);
 
     content_window = get_frame_content_window((IUnknown*)elem);
     test_window_length(content_window, 0);
@@ -5981,7 +6000,7 @@ static void test_frame(IDispatch *disp, const char *exp_id)
         return;
 
     test_elem_type((IUnknown*)frame_elem, ET_FRAME);
-    test_frame_doc((IUnknown*)frame_elem);
+    test_frame_doc((IUnknown*)frame_elem, FALSE);
     test_elem_id((IUnknown*)frame_elem, exp_id);
     IHTMLElement_Release(frame_elem);
 

@@ -94,8 +94,22 @@ static HRESULT WINAPI HTMLFrameElement3_Invoke(IHTMLFrameElement3 *iface, DISPID
 static HRESULT WINAPI HTMLFrameElement3_get_contentDocument(IHTMLFrameElement3 *iface, IDispatch **p)
 {
     HTMLFrameElement *This = HTMLFRAME3_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->framebase.content_window) {
+        FIXME("NULL window\n");
+        return E_FAIL;
+    }
+
+    hres = IHTMLWindow2_get_document(HTMLWINDOW2(This->framebase.content_window), &doc);
+    if(FAILED(hres))
+        return hres;
+
+    *p = doc ? (IDispatch*)doc : NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFrameElement3_put_src(IHTMLFrameElement3 *iface, BSTR v)
