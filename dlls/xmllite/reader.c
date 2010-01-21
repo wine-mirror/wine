@@ -31,15 +31,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 
+/* not defined in public headers */
+DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
+
 typedef struct _xmlreader
 {
     const IXmlReaderVtbl *lpVtbl;
     LONG ref;
 } xmlreader;
 
+typedef struct _xmlreaderinput
+{
+    const IUnknownVtbl *lpVtbl;
+    LONG ref;
+} xmlreaderinput;
+
 static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
 {
     return (xmlreader *)((char*)iface - FIELD_OFFSET(xmlreader, lpVtbl));
+}
+
+static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
+{
+    return (xmlreaderinput *)((char*)iface - FIELD_OFFSET(xmlreaderinput, lpVtbl));
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -271,6 +285,59 @@ static const struct IXmlReaderVtbl xmlreader_vtbl =
     xmlreader_IsEOF
 };
 
+/* IXmlReaderInput */
+static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFIID riid, void** ppvObject)
+{
+    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID(riid, &IID_IXmlReaderInput) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI xmlreaderinput_AddRef(IXmlReaderInput *iface)
+{
+    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
+    TRACE("%p\n", This);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
+{
+    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
+    LONG ref;
+
+    TRACE("%p\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static const struct IUnknownVtbl xmlreaderinput_vtbl =
+{
+    xmlreaderinput_QueryInterface,
+    xmlreaderinput_AddRef,
+    xmlreaderinput_Release
+};
+
 HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
 {
     xmlreader *reader;
@@ -305,7 +372,22 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
                                                     LPCWSTR base_uri,
                                                     IXmlReaderInput **ppInput)
 {
-    FIXME("%p %p %s %d %s %p\n", stream, pMalloc, wine_dbgstr_w(encoding),
-                                 hint, wine_dbgstr_w(base_uri), ppInput);
-    return E_NOTIMPL;
+    xmlreaderinput *readerinput;
+
+    FIXME("%p %p %s %d %s %p: stub\n", stream, pMalloc, wine_dbgstr_w(encoding),
+                                       hint, wine_dbgstr_w(base_uri), ppInput);
+
+    if (!stream || !ppInput) return E_INVALIDARG;
+
+    readerinput = HeapAlloc(GetProcessHeap(), 0, sizeof (*readerinput));
+    if(!readerinput) return E_OUTOFMEMORY;
+
+    readerinput->lpVtbl = &xmlreaderinput_vtbl;
+    readerinput->ref = 1;
+
+    *ppInput = (IXmlReaderInput*)&readerinput->lpVtbl;
+
+    TRACE("returning iface %p\n", *ppInput);
+
+    return S_OK;
 }

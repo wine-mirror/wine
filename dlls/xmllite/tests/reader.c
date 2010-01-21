@@ -218,9 +218,9 @@ static void test_readerinput(void)
     LONG ref;
 
     hr = pCreateXmlReaderInputWithEncodingName(NULL, NULL, NULL, FALSE, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     hr = pCreateXmlReaderInputWithEncodingName(NULL, NULL, NULL, FALSE, NULL, &reader_input);
-    todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -229,17 +229,11 @@ static void test_readerinput(void)
     ok(ref == 2, "Expected 2, got %d\n", ref);
     IStream_Release(stream);
     hr = pCreateXmlReaderInputWithEncodingName((IUnknown*)stream, NULL, NULL, FALSE, NULL, &reader_input);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    if(hr != S_OK)
-    {
-        skip("CreateXmlReaderInputWithEncodingName not implemented\n");
-        IStream_Release(stream);
-        return;
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* IXmlReader grabs a stream reference */
     ref = IStream_AddRef(stream);
-    ok(ref == 3, "Expected 3, got %d\n", ref);
+    todo_wine ok(ref == 3, "Expected 3, got %d\n", ref);
     IStream_Release(stream);
 
     /* IID_IXmlReaderInput */
@@ -249,6 +243,9 @@ static void test_readerinput(void)
     obj = (IUnknown*)0xdeadbeef;
     hr = IUnknown_QueryInterface(reader_input, &IID_IXmlReaderInput, (void**)&obj);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IUnknown_Release(reader_input);
 
     IUnknown_Release(reader_input);
     IStream_Release(stream);
