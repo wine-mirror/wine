@@ -65,14 +65,14 @@ static void parse_args( int argc, char *argv[] )
 
     static struct option long_options[] =
     {
-        {"debug",       2, 0, 'd'},
-        {"foreground",  0, 0, 'f'},
-        {"help",        0, 0, 'h'},
-        {"kill",        2, 0, 'k'},
-        {"persistent",  2, 0, 'p'},
-        {"version",     0, 0, 'v'},
-        {"wait",        0, 0, 'w'},
-        { NULL,         0, 0, 0}
+        {"debug",       2, NULL, 'd'},
+        {"foreground",  0, NULL, 'f'},
+        {"help",        0, NULL, 'h'},
+        {"kill",        2, NULL, 'k'},
+        {"persistent",  2, NULL, 'p'},
+        {"version",     0, NULL, 'v'},
+        {"wait",        0, NULL, 'w'},
+        { NULL,         0, NULL, 0}
     };
 
     server_argv0 = argv[0];

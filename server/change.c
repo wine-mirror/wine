@@ -451,8 +451,8 @@ struct inode {
     char *name;              /* basename name of the inode */
 };
 
-struct list inode_hash[ HASH_SIZE ];
-struct list wd_hash[ HASH_SIZE ];
+static struct list inode_hash[ HASH_SIZE ];
+static struct list wd_hash[ HASH_SIZE ];
 
 static int inotify_add_dir( char *path, unsigned int filter );
 
