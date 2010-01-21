@@ -21,18 +21,137 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "ole2.h"
 #include "xmllite.h"
-#include "initguid.h"
 #include "wine/test.h"
 
-DEFINE_GUID(IID_IXmlReader, 0x7279fc81, 0x709d, 0x4095, 0xb6, 0x3d, 0x69,
-                            0xfe, 0x4b, 0x0d, 0x90, 0x30);
+DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
 HRESULT WINAPI (*pCreateXmlReader)(REFIID riid, void **ppvObject, IMalloc *pMalloc);
+HRESULT WINAPI (*pCreateXmlReaderInputWithEncodingName)(IUnknown *stream,
+                                                        IMalloc *pMalloc,
+                                                        LPCWSTR encoding,
+                                                        BOOL hint,
+                                                        LPCWSTR base_uri,
+                                                        IXmlReaderInput **ppInput);
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
+typedef struct input_iids_t {
+    IID iids[10];
+    int count;
+} input_iids_t;
+
+static const IID *setinput_full[] = {
+    &IID_IXmlReaderInput,
+    &IID_ISequentialStream,
+    &IID_IStream
+};
+
+static input_iids_t input_iids;
+
+static void ok_iids_(const input_iids_t *iids, const IID **expected, int size, int todo, int line)
+{
+    int i;
+
+    if (todo) {
+        todo_wine
+            ok_(__FILE__, line)(iids->count == size, "Sequence size mismatch (%d), got (%d)\n", size, iids->count);
+    }
+    else
+       ok_(__FILE__, line)(iids->count == size, "Sequence size mismatch (%d), got (%d)\n", size, iids->count);
+
+    if (iids->count != size) return;
+
+    for (i = 0; i < size; i++) {
+        ok_(__FILE__, line)(IsEqualGUID(&iids->iids[i], expected[i]),
+             "Wrong IID(%d), got (%s)\n", i, debugstr_guid(&iids->iids[i]));
+    }
+}
+#define ok_iids(got, exp, size, todo) ok_iids_(got, exp, size, todo, __LINE__)
+
+typedef struct _testinput
+{
+    const IUnknownVtbl *lpVtbl;
+    LONG ref;
+} testinput;
+
+static inline testinput *impl_from_IUnknown(IUnknown *iface)
+{
+    return (testinput *)((char*)iface - FIELD_OFFSET(testinput, lpVtbl));
+}
+
+static HRESULT WINAPI testinput_QueryInterface(IUnknown *iface, REFIID riid, void** ppvObj)
+{
+    if (IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    input_iids.iids[input_iids.count++] = *riid;
+
+    *ppvObj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testinput_AddRef(IUnknown *iface)
+{
+    testinput *This = impl_from_IUnknown(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI testinput_Release(IUnknown *iface)
+{
+    testinput *This = impl_from_IUnknown(iface);
+    LONG ref;
+
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static const struct IUnknownVtbl testinput_vtbl =
+{
+    testinput_QueryInterface,
+    testinput_AddRef,
+    testinput_Release
+};
+
+static HRESULT testinput_createinstance(void **ppObj)
+{
+    testinput *input;
+
+    input = HeapAlloc(GetProcessHeap(), 0, sizeof (*input));
+    if(!input) return E_OUTOFMEMORY;
+
+    input->lpVtbl = &testinput_vtbl;
+    input->ref = 1;
+
+    *ppObj = &input->lpVtbl;
+
+    return S_OK;
+}
 
 static BOOL init_pointers(void)
 {
@@ -45,8 +164,10 @@ static BOOL init_pointers(void)
         return FALSE;
     }
 
-    pCreateXmlReader = (void*)GetProcAddress(mod, "CreateXmlReader");
-    if (!pCreateXmlReader) return FALSE;
+#define MAKEFUNC(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return FALSE;
+    MAKEFUNC(CreateXmlReader);
+    MAKEFUNC(CreateXmlReaderInputWithEncodingName);
+#undef MAKEFUNC
 
     return TRUE;
 }
@@ -56,6 +177,7 @@ static void test_reader_create(void)
     HRESULT hr;
     IXmlReader *reader;
     IMalloc *imalloc;
+    IUnknown *input;
 
     /* crashes native */
     if (0)
@@ -73,7 +195,63 @@ static void test_reader_create(void)
     hr = IMalloc_DidAlloc(imalloc, reader);
     ok(hr != 1, "Expected 0 or -1, got %08x\n", hr);
 
+    /* test input interface selection sequence */
+    hr = testinput_createinstance((void**)&input);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    input_iids.count = 0;
+    hr = IXmlReader_SetInput(reader, input);
+    todo_wine ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
+    ok_iids(&input_iids, setinput_full, sizeof(setinput_full)/sizeof(REFIID), TRUE);
+
+    IUnknown_Release(input);
+
     IXmlReader_Release(reader);
+}
+
+static void test_readerinput(void)
+{
+    IXmlReaderInput *reader_input;
+    IUnknown *obj;
+    IStream *stream;
+    HRESULT hr;
+    LONG ref;
+
+    hr = pCreateXmlReaderInputWithEncodingName(NULL, NULL, NULL, FALSE, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    hr = pCreateXmlReaderInputWithEncodingName(NULL, NULL, NULL, FALSE, NULL, &reader_input);
+    todo_wine ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    ref = IStream_AddRef(stream);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IStream_Release(stream);
+    hr = pCreateXmlReaderInputWithEncodingName((IUnknown*)stream, NULL, NULL, FALSE, NULL, &reader_input);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    if(hr != S_OK)
+    {
+        skip("CreateXmlReaderInputWithEncodingName not implemented\n");
+        IStream_Release(stream);
+        return;
+    }
+
+    /* IXmlReader grabs a stream reference */
+    ref = IStream_AddRef(stream);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IStream_Release(stream);
+
+    /* IID_IXmlReaderInput */
+    /* it returns a kind of private undocumented vtable incompatible with IUnknown,
+       so it's not a COM interface actually.
+       Such query will be used only to check if input is really IXmlReaderInput */
+    obj = (IUnknown*)0xdeadbeef;
+    hr = IUnknown_QueryInterface(reader_input, &IID_IXmlReaderInput, (void**)&obj);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    IUnknown_Release(reader_input);
+    IStream_Release(stream);
 }
 
 START_TEST(reader)
@@ -90,6 +268,7 @@ START_TEST(reader)
     }
 
     test_reader_create();
+    test_readerinput();
 
     CoUninitialize();
 }

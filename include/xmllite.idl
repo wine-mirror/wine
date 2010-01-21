@@ -80,3 +80,5 @@ interface IXmlReader : IUnknown
 
 /* IXmlReader construction */
 cpp_quote("STDAPI CreateXmlReader(REFIID riid, void **ppvObject, IMalloc *pMalloc);")
+
+typedef IUnknown IXmlReaderInput;

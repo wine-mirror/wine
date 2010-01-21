@@ -297,3 +297,15 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
 
     return S_OK;
 }
+
+HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
+                                                    IMalloc *pMalloc,
+                                                    LPCWSTR encoding,
+                                                    BOOL hint,
+                                                    LPCWSTR base_uri,
+                                                    IXmlReaderInput **ppInput)
+{
+    FIXME("%p %p %s %d %s %p\n", stream, pMalloc, wine_dbgstr_w(encoding),
+                                 hint, wine_dbgstr_w(base_uri), ppInput);
+    return E_NOTIMPL;
+}
