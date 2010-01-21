@@ -3273,13 +3273,6 @@ typedef void (WINE_GLAPI *PGLFNGETCOMPRESSEDTEXIMAGEPROC)(GLenum target, GLint l
 #define GL_DOT3_RGBA_EXT                                    0x8741
 #endif
 
-/* GL_EXT_texture_env_dot3 */
-#ifndef GL_EXT_texture_env_dot3
-#define GL_EXT_texture_env_dot3 1
-#define GL_DOT3_RGB_EXT                                     0x8740
-#define GL_DOT3_RGBA_EXT                                    0x8741
-#endif
-
 /* GL_EXT_texture_filter_anisotropic */
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_EXT_texture_filter_anisotropic 1
