@@ -64,8 +64,6 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
 #include "parser.tab.h"
 
-extern char *temp_name;
-
 static void addcchar(char c);
 static char *get_buffered_cstring(void);
 

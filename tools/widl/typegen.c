@@ -69,7 +69,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
                                type_t *type, int toplevel_param,
                                const char *name, unsigned int *typestring_offset);
 
-const char *string_of_type(unsigned char type)
+static const char *string_of_type(unsigned char type)
 {
     switch (type)
     {
@@ -133,7 +133,7 @@ static void *get_aliaschain_attrp(const type_t *type, enum attr_type attr)
             return get_attrp(t->attrs, attr);
         else if (type_is_alias(t))
             t = type_alias_get_aliasee(t);
-        else return 0;
+        else return NULL;
     }
 }
 
@@ -391,7 +391,7 @@ unsigned char get_struct_fc(const type_t *type)
   return RPC_FC_STRUCT;
 }
 
-unsigned char get_array_fc(const type_t *type)
+static unsigned char get_array_fc(const type_t *type)
 {
     unsigned char fc;
     const expr_t *size_is;
@@ -641,7 +641,7 @@ static type_t *get_user_type(const type_t *t, const char **pname)
         if (type_is_alias(t))
             t = type_alias_get_aliasee(t);
         else
-            return 0;
+            return NULL;
     }
 }
 
