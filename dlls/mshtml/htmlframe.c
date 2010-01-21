@@ -269,6 +269,25 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     HTMLFrameElement_bind_to_tree
 };
 
+static const tid_t HTMLFrameElement_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLElement3_tid,
+    IHTMLFrameBase_tid,
+    IHTMLFrameBase2_tid,
+    IHTMLFrameElement3_tid,
+    0
+};
+
+static dispex_static_data_t HTMLFrameElement_dispex = {
+    NULL,
+    DispHTMLFrameElement_tid,
+    NULL,
+    HTMLFrameElement_iface_tids
+};
+
 HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     HTMLFrameElement *ret;
@@ -278,7 +297,7 @@ HTMLElement *HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *n
     ret->framebase.element.node.vtbl = &HTMLFrameElementImplVtbl;
     ret->lpIHTMLFrameElement3Vtbl = &HTMLFrameElement3Vtbl;
 
-    HTMLFrameBase_Init(&ret->framebase, doc, nselem, NULL);
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLFrameElement_dispex);
 
     return &ret->framebase.element;
 }
