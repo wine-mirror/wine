@@ -195,14 +195,18 @@ static void test_reader_create(void)
     hr = IMalloc_DidAlloc(imalloc, reader);
     ok(hr != 1, "Expected 0 or -1, got %08x\n", hr);
 
+    /* Null input pointer, releases previous input */
+    hr = IXmlReader_SetInput(reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
     /* test input interface selection sequence */
     hr = testinput_createinstance((void**)&input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     input_iids.count = 0;
     hr = IXmlReader_SetInput(reader, input);
-    todo_wine ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
-    ok_iids(&input_iids, setinput_full, sizeof(setinput_full)/sizeof(REFIID), TRUE);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
+    ok_iids(&input_iids, setinput_full, sizeof(setinput_full)/sizeof(REFIID), FALSE);
 
     IUnknown_Release(input);
 
