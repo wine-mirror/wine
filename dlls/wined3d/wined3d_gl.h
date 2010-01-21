@@ -2835,7 +2835,6 @@ typedef GLint (WINE_GLAPI *WINED3D_PFNGLGETATTRIBLOCATIONARBPROC)(GLhandleARB pr
 #define GL_QUARTER_BIT_ATI                                  0x00000010
 #define GL_EIGHTH_BIT_ATI                                   0x00000020
 #define GL_SATURATE_BIT_ATI                                 0x00000040
-#define GL_2X_BIT_ATI                                       0x00000001
 #define GL_COMP_BIT_ATI                                     0x00000002
 #define GL_NEGATE_BIT_ATI                                   0x00000004
 #define GL_BIAS_BIT_ATI                                     0x00000008
