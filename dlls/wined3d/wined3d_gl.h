@@ -2308,14 +2308,6 @@ typedef void (WINE_GLAPI *PGLFNGETQUERYOBJECTUIVARBPROC)(GLuint query, GLenum pn
 /* GL_ARB_pixel_buffer_object */
 #ifndef GL_ARB_pixel_buffer_object
 #define GL_ARB_pixel_buffer_object 1
-#endif
-#define GL_PIXEL_PACK_BUFFER_ARB                            0x88eb
-#define GL_PIXEL_UNPACK_BUFFER_ARB                          0x88ec
-#define GL_PIXEL_PACK_BUFFER_BINDING_ARB                    0x88ed
-#define GL_PIXEL_UNPACK_BUFFER_BINDING_ARB                  0x88ef
-
-/* GL_ARB_pixel_buffer_object */
-#ifndef GL_ARB_pixel_buffer_object
 #define GL_PIXEL_PACK_BUFFER_ARB                            0x88eb
 #define GL_PIXEL_UNPACK_BUFFER_ARB                          0x88ec
 #define GL_PIXEL_PACK_BUFFER_BINDING_ARB                    0x88ed
