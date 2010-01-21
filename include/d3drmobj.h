@@ -2401,6 +2401,177 @@ DECLARE_INTERFACE_(IDirect3DRMFace2,IDirect3DRMObject)
 #define IDirect3DRMFace2_GetColor(p,a)                     (p)->GetColor(a)
 #endif
 
+/*****************************************************************************
+ * IDirect3DRMMeshBuilder interface
+ */
+#define INTERFACE IDirect3DRMMeshBuilder
+DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DRMObject methods ***/
+    STDMETHOD(Clone)(THIS_ LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObj) PURE;
+    STDMETHOD(AddDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(DeleteDestroyCallback)(THIS_ D3DRMOBJECTCALLBACK, LPVOID argument) PURE;
+    STDMETHOD(SetAppData)(THIS_ DWORD data) PURE;
+    STDMETHOD_(DWORD, GetAppData)(THIS) PURE;
+    STDMETHOD(SetName)(THIS_ LPCSTR) PURE;
+    STDMETHOD(GetName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    STDMETHOD(GetClassName)(THIS_ LPDWORD lpdwSize, LPSTR lpName) PURE;
+    /*** IDirect3DRMMeshBuilder methods ***/
+    STDMETHOD(Load)(THIS_ LPVOID filename, LPVOID name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURECALLBACK, LPVOID pArg) PURE;
+    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT, D3DRMSAVEOPTIONS save) PURE;
+    STDMETHOD(Scale)(THIS_ D3DVALUE sx, D3DVALUE sy, D3DVALUE sz) PURE;
+    STDMETHOD(Translate)(THIS_ D3DVALUE tx, D3DVALUE ty, D3DVALUE tz) PURE;
+    STDMETHOD(SetColorSource)(THIS_ D3DRMCOLORSOURCE) PURE;
+    STDMETHOD(GetBox)(THIS_ D3DRMBOX *) PURE;
+    STDMETHOD(GenerateNormals)(THIS) PURE;
+    STDMETHOD_(D3DRMCOLORSOURCE, GetColorSource)(THIS) PURE;
+    STDMETHOD(AddMesh)(THIS_ LPDIRECT3DRMMESH) PURE;
+    STDMETHOD(AddMeshBuilder)(THIS_ LPDIRECT3DRMMESHBUILDER) PURE;
+    STDMETHOD(AddFrame)(THIS_ LPDIRECT3DRMFRAME) PURE;
+    STDMETHOD(AddFace)(THIS_ LPDIRECT3DRMFACE) PURE;
+    STDMETHOD(AddFaces)(THIS_ DWORD vcount, D3DVECTOR *vertices, DWORD ncount, D3DVECTOR *normals, DWORD *data,
+        LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(ReserveSpace)(THIS_ DWORD vertex_Count, DWORD normal_count, DWORD face_count) PURE;
+    STDMETHOD(SetColorRGB)(THIS_ D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
+    STDMETHOD(SetColor)(THIS_ D3DCOLOR) PURE;
+    STDMETHOD(SetTexture)(THIS_ LPDIRECT3DRMTEXTURE) PURE;
+    STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
+    STDMETHOD(SetTextureTopology)(THIS_ BOOL wrap_u, BOOL wrap_v) PURE;
+    STDMETHOD(SetQuality)(THIS_ D3DRMRENDERQUALITY) PURE;
+    STDMETHOD(SetPerspective)(THIS_ BOOL) PURE;
+    STDMETHOD(SetVertex)(THIS_ DWORD index, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(SetNormal)(THIS_ DWORD index, D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(SetTextureCoordinates)(THIS_ DWORD index, D3DVALUE u, D3DVALUE v) PURE;
+    STDMETHOD(SetVertexColor)(THIS_ DWORD index, D3DCOLOR) PURE;
+    STDMETHOD(SetVertexColorRGB)(THIS_ DWORD index, D3DVALUE red, D3DVALUE green, D3DVALUE blue) PURE;
+    STDMETHOD(GetFaces)(THIS_ LPDIRECT3DRMFACEARRAY*) PURE;
+    STDMETHOD(GetVertices)(THIS_ DWORD *vcount, D3DVECTOR *vertices, DWORD *ncount, D3DVECTOR *normals,
+        DWORD *face_data_size, DWORD *face_data) PURE;
+    STDMETHOD(GetTextureCoordinates)(THIS_ DWORD index, D3DVALUE *u, D3DVALUE *v) PURE;
+    STDMETHOD_(int, AddVertex)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD_(int, AddNormal)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z) PURE;
+    STDMETHOD(CreateFace)(THIS_ LPDIRECT3DRMFACE*) PURE;
+    STDMETHOD_(D3DRMRENDERQUALITY, GetQuality)(THIS) PURE;
+    STDMETHOD_(BOOL, GetPerspective)(THIS) PURE;
+    STDMETHOD_(int, GetFaceCount)(THIS) PURE;
+    STDMETHOD_(int, GetVertexCount)(THIS) PURE;
+    STDMETHOD_(D3DCOLOR, GetVertexColor)(THIS_ DWORD index) PURE;
+    STDMETHOD(CreateMesh)(THIS_ LPDIRECT3DRMMESH*) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirect3DRMMeshBuilder_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DRMMeshBuilder_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirect3DRMMeshBuilder_Release(p)                        (p)->lpVtbl->Release(p)
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMMeshBuilder_Clone(p,a,b,c)                    (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirect3DRMMeshBuilder_AddDestroyCallback(p,a,b)         (p)->lpVtbl->AddDestroyCallback(p,a,b)
+#define IDirect3DRMMeshBuilder_DeleteDestroyCallback(p,a,b)      (p)->lpVtbl->DeleteDestroyCallback(p,a,b)
+#define IDirect3DRMMeshBuilder_SetAppData(p,a)                   (p)->lpVtbl->SetAppData(p,a)
+#define IDirect3DRMMeshBuilder_GetAppData(p)                     (p)->lpVtbl->GetAppData(p)
+#define IDirect3DRMMeshBuilder_SetName(p,a)                      (p)->lpVtbl->SetName(p,a)
+#define IDirect3DRMMeshBuilder_GetName(p,a,b)                    (p)->lpVtbl->GetName(p,a,b)
+#define IDirect3DRMMeshBuilder_GetClassName(p,a,b)               (p)->lpVtbl->GetClassName(p,a,b)
+/*** IDirect3DRMMeshBuilder methods ***/
+#define IDirect3DRMMeshBuilder_Load(p,a,b,c,d,e)                 (p)->lpVtbl->Load(p,a,b,c,d,e)
+#define IDirect3DRMMeshBuilder_Save(p,a,b,c)                     (p)->lpVtbl->Save(p,a,b,c)
+#define IDirect3DRMMeshBuilder_Scale(p,a,b,c)                    (p)->lpVtbl->Scale(p,a,b,c)
+#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->lpVtbl->Translate(p,a)
+#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->lpVtbl->SetColorSource(p,a,b,c)
+#define IDirect3DRMMeshBuilder_GetBox(p,a)                       (p)->lpVtbl->GetBox(p,a)
+#define IDirect3DRMMeshBuilder_GenerateNormals(p)                (p)->lpVtbl->GenerateNormals(p)
+#define IDirect3DRMMeshBuilder_GetColorSource(p)                 (p)->lpVtbl->GetColorSource(p)
+#define IDirect3DRMMeshBuilder_AddMesh(p,a)                      (p)->lpVtbl->AddMesh(p,a)
+#define IDirect3DRMMeshBuilder_AddMeshBuilder(p,a)               (p)->lpVtbl->AddMeshBuilder(p,a)
+#define IDirect3DRMMeshBuilder_AddFrame(p,a)                     (p)->lpVtbl->AddFrame(p,a)
+#define IDirect3DRMMeshBuilder_AddFace(p,a)                      (p)->lpVtbl->AddFace(p,a)
+#define IDirect3DRMMeshBuilder_AddFaces(p,a,b,c,d,e,f)           (p)->lpVtbl->AddFaces(p,a,b,c,d,e,f)
+#define IDirect3DRMMeshBuilder_ReserveSpace(p,a,b,c)             (p)->lpVtbl->ReserveSpace(p,a,b,c)
+#define IDirect3DRMMeshBuilder_SetColorRGB(p,a,b,c)              (p)->lpVtbl->SetColorRGB(p,a,b,c)
+#define IDirect3DRMMeshBuilder_SetColor(p,a)                     (p)->lpVtbl->SetColor(p,a)
+#define IDirect3DRMMeshBuilder_SetTexture(p,a)                   (p)->lpVtbl->SetTexture(p,a)
+#define IDirect3DRMMeshBuilder_SetMateria(p,a)                   (p)->lpVtbl->SetMateria(p,a)
+#define IDirect3DRMMeshBuilder_SetTextureTopology(p,a,b)         (p)->lpVtbl->SetTextureTopology(p,a,b)
+#define IDirect3DRMMeshBuilder_SetQuality(p,a)                   (p)->lpVtbl->SetQuality(p,a)
+#define IDirect3DRMMeshBuilder_SetPerspective(p,a)               (p)->lpVtbl->SetPerspective(p,a)
+#define IDirect3DRMMeshBuilder_SetVertex(p,a,b,c,d)              (p)->lpVtbl->SetVertex(p,a,b,c,d)
+#define IDirect3DRMMeshBuilder_SetNormal(p,a,b,c,d)              (p)->lpVtbl->SetNormal(p,a,b,c,d)
+#define IDirect3DRMMeshBuilder_SetTextureCoordinates(p,a,b,c)    (p)->lpVtbl->SetTextureCoordinates(p,a,b,c)
+#define IDirect3DRMMeshBuilder_SetVertexColor(p,a,b)             (p)->lpVtbl->SetVertexColor(p,a,b)
+#define IDirect3DRMMeshBuilder_SetVertexColorRGB(p,a,b,c,d)      (p)->lpVtbl->SetVertexColorRGB(p,a,b,c,d)
+#define IDirect3DRMMeshBuilder_GetFaces(p,a)                     (p)->lpVtbl->GetFaces(p,a)
+#define IDirect3DRMMeshBuilder_GetVertices(p,a,b,c,d,e,f)        (p)->lpVtbl->GetVertices(p,a,b,c,d,e,f)
+#define IDirect3DRMMeshBuilder_GetTextureCoordinates(p,a,b,c)    (p)->lpVtbl->GetTextureCoordinates(p,a,b,c)
+#define IDirect3DRMMeshBuilder_AddVertex(p,a,b,c)                (p)->lpVtbl->AddVertex(p,a,b,c)
+#define IDirect3DRMMeshBuilder_AddNormal(p,a,b,c)                (p)->lpVtbl->AddNormal(p,a,b,c)
+#define IDirect3DRMMeshBuilder_CreateFace(p,a)                   (p)->lpVtbl->CreateFace(p,a)
+#define IDirect3DRMMeshBuilder_GetQuality(p)                     (p)->lpVtbl->GetQuality(p)
+#define IDirect3DRMMeshBuilder_GetPerspective(p)                 (p)->lpVtbl->GetPerspective(p)
+#define IDirect3DRMMeshBuilder_GetFaceCount(p)                   (p)->lpVtbl->GetFaceCount(p)
+#define IDirect3DRMMeshBuilder_GetVertexCount(p)                 (p)->lpVtbl->GetVertexCount(p)
+#define IDirect3DRMMeshBuilder_GetVertexColor(p,a)               (p)->lpVtbl->GetVertexColor(p,a)
+#define IDirect3DRMMeshBuilder_CreateMesh(p,a)                   (p)->lpVtbl->CreateMesh(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDirect3DRMMeshBuilder_QueryInterface(p,a,b)             (p)->QueryInterface(a,b)
+#define IDirect3DRMMeshBuilder_AddRef(p)                         (p)->AddRef()
+#define IDirect3DRMMeshBuilder_Release(p)                        (p)->Release()
+/*** IDirect3DRMObject methods ***/
+#define IDirect3DRMMeshBuilder_Clone(p,a,b,c)                    (p)->Clone(a,b,c)
+#define IDirect3DRMMeshBuilder_AddDestroyCallback(p,a,b)         (p)->AddDestroyCallback(a,b)
+#define IDirect3DRMMeshBuilder_DeleteDestroyCallback(p,a,b)      (p)->DeleteDestroyCallback(a,b)
+#define IDirect3DRMMeshBuilder_SetAppData(p,a)                   (p)->SetAppData(a)
+#define IDirect3DRMMeshBuilder_GetAppData(p)                     (p)->GetAppData()
+#define IDirect3DRMMeshBuilder_SetName(p,a)                      (p)->SetName(a)
+#define IDirect3DRMMeshBuilder_GetName(p,a,b)                    (p)->GetName(a,b)
+#define IDirect3DRMMeshBuilder_GetClassName(p,a,b)               (p)->GetClassName(a,b)
+/*** IDirect3DRMMeshBuilder methods ***/
+#define IDirect3DRMMeshBuilder_Load(p,a,b,c,d,e)                 (p)->Load(a,b,c,d,e)
+#define IDirect3DRMMeshBuilder_Save(p,a,b,c)                     (p)->Save(a,b,c)
+#define IDirect3DRMMeshBuilder_Scale(p,a,b,c)                    (p)->Scale(a,b,c)
+#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->Translate(a)
+#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->SetColorSource(a,b,c)
+#define IDirect3DRMMeshBuilder_GetBox(p,a)                       (p)->GetBox(a)
+#define IDirect3DRMMeshBuilder_GenerateNormals(p)                (p)->GenerateNormals()
+#define IDirect3DRMMeshBuilder_GetColorSource(p)                 (p)->GetColorSource()
+#define IDirect3DRMMeshBuilder_AddMesh(p,a)                      (p)-->AddMesh(a)
+#define IDirect3DRMMeshBuilder_AddMeshBuilder(p,a)               (p)->AddMeshBuilder(a)
+#define IDirect3DRMMeshBuilder_AddFrame(p,a)                     (p)->AddFrame(a)
+#define IDirect3DRMMeshBuilder_AddFace(p,a)                      (p)->AddFace(a)
+#define IDirect3DRMMeshBuilder_AddFaces(p,a,b,c,d,e,f)           (p)->AddFaces(a,b,c,d,e,f)
+#define IDirect3DRMMeshBuilder_ReserveSpace(p,a,b,c)             (p)->ReserveSpace(a,b,c)
+#define IDirect3DRMMeshBuilder_SetColorRGB(p,a,b,c)              (p)->SetColorRGB(a,b,c)
+#define IDirect3DRMMeshBuilder_SetColor(p,a)                     (p)->SetColor(a)
+#define IDirect3DRMMeshBuilder_SetTexture(p,a)                   (p)->SetTexture(a)
+#define IDirect3DRMMeshBuilder_SetMateria(p,a)                   (p)->SetMateria(a)
+#define IDirect3DRMMeshBuilder_SetTextureTopology(p,a,b)         (p)->SetTextureTopology(a,b)
+#define IDirect3DRMMeshBuilder_SetQuality(p,a)                   (p)->SetQuality(a)
+#define IDirect3DRMMeshBuilder_SetPerspective(p,a)               (p)->SetPerspective(a)
+#define IDirect3DRMMeshBuilder_SetVertex(p,a,b,c,d)              (p)->SetVertex(a,b,c,d)
+#define IDirect3DRMMeshBuilder_SetNormal(p,a,b,c,d)              (p)->SetNormal(a,b,c,d)
+#define IDirect3DRMMeshBuilder_SetTextureCoordinates(p,a,b,c)    (p)->SetTextureCoordinates(a,b,c)
+#define IDirect3DRMMeshBuilder_SetVertexColor(p,a,b)             (p)->SetVertexColor(a,b)
+#define IDirect3DRMMeshBuilder_SetVertexColorRGB(p,a,b,c,d)      (p)->SetVertexColorRGB(a,b,c,d)
+#define IDirect3DRMMeshBuilder_GetFaces(p,a)                     (p)->GetFaces(a)
+#define IDirect3DRMMeshBuilder_GetVertices(p,a,b,c,d,e,f)        (p)->GetVertices(a,b,c,d,e,f)
+#define IDirect3DRMMeshBuilder_GetTextureCoordinates(p,a,b,c)    (p)->GetTextureCoordinates(a,b,c)
+#define IDirect3DRMMeshBuilder_AddVertex(p,a,b,c)                (p)->AddVertex(a,b,c)
+#define IDirect3DRMMeshBuilder_AddNormal(p,a,b,c)                (p)->AddNormal(a,b,c)
+#define IDirect3DRMMeshBuilder_CreateFace(p,a)                   (p)->CreateFace(a)
+#define IDirect3DRMMeshBuilder_GetQuality(p)                     (p)->GetQuality()
+#define IDirect3DRMMeshBuilder_GetPerspective(p)                 (p)->GetPerspective()
+#define IDirect3DRMMeshBuilder_GetFaceCount(p)                   (p)->GetFaceCount()
+#define IDirect3DRMMeshBuilder_GetVertexCount(p)                 (p)->GetVertexCount()
+#define IDirect3DRMMeshBuilder_GetVertexColor(p,a)               (p)->GetVertexColor(a)
+#define IDirect3DRMMeshBuilder_CreateMesh(p,a)                   (p)->CreateMesh(a)
+#endif
+
 #ifdef __cplusplus
 };
 #endif
