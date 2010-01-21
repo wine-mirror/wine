@@ -1,0 +1,56 @@
+/*
+ * Wine row server interface.
+ *
+ * Copyright (C) 2010 Huw Davies
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+[
+    uuid(38248178-cf6d-11de-abe5-000c2916d865)
+]
+coclass wine_row_server
+{
+
+}
+
+[
+    uuid(38248179-cf6d-11de-abe5-000c2916d865)
+]
+coclass wine_row_proxy
+{
+
+}
+
+[
+    uuid(3824817a-cf6d-11de-abe5-000c2916d865)
+]
+coclass wine_rowset_server
+{
+
+}
+
+[
+    uuid(3824817b-cf6d-11de-abe5-000c2916d865)
+]
+coclass wine_rowset_proxy
+{
+
+}
+
+cpp_quote("extern HRESULT create_row_server( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_row_marshal( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_rowset_server( IUnknown*, LPVOID* );")
+cpp_quote("extern HRESULT create_rowset_marshal( IUnknown*, LPVOID* );")

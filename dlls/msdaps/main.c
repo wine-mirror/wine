@@ -33,6 +33,8 @@
 #include "oleauto.h"
 #include "oledb.h"
 
+#include "row_server.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
@@ -49,11 +51,110 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     return msdaps_DllMain(instance, reason, reserved);
 }
 
+
+/******************************************************************************
+ * ClassFactory
+ */
+typedef struct
+{
+    const IClassFactoryVtbl *lpVtbl;
+    HRESULT (*create_object)( IUnknown*, LPVOID* );
+} cf;
+
+static HRESULT WINAPI CF_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
+{
+    cf *This = (cf *)iface;
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if( IsEqualCLSID( riid, &IID_IUnknown ) ||
+        IsEqualCLSID( riid, &IID_IClassFactory ) )
+    {
+        IClassFactory_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI CF_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI CF_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter, REFIID riid, void **obj)
+{
+    cf *This = (cf *)iface;
+    IUnknown *unk = NULL;
+    HRESULT r;
+
+    TRACE("(%p, %p, %s, %p)\n", This, pOuter, debugstr_guid(riid), obj);
+
+    r = This->create_object( pOuter, (void **) &unk );
+    if (SUCCEEDED(r))
+    {
+        r = IUnknown_QueryInterface( unk, riid, obj );
+        IUnknown_Release( unk );
+    }
+    return r;
+}
+
+static HRESULT WINAPI CF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    FIXME("(%p, %d): stub\n", iface, dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl CF_Vtbl =
+{
+    CF_QueryInterface,
+    CF_AddRef,
+    CF_Release,
+    CF_CreateInstance,
+    CF_LockServer
+};
+
+static cf row_server_cf = { &CF_Vtbl, create_row_server };
+static cf row_proxy_cf  = { &CF_Vtbl, create_row_marshal };
+static cf rowset_server_cf = { &CF_Vtbl, create_rowset_server };
+static cf rowset_proxy_cf  = { &CF_Vtbl, create_rowset_marshal };
+
 /***********************************************************************
  *              DllGetClassObject
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *obj)
 {
+    TRACE("(%s, %s, %p)\n", debugstr_guid(clsid), debugstr_guid(iid), obj);
+
+    if (IsEqualCLSID(clsid, &CLSID_wine_row_server))
+    {
+        *obj = &row_server_cf;
+        return S_OK;
+    }
+
+    if (IsEqualCLSID(clsid, &CLSID_wine_row_proxy))
+    {
+        *obj = &row_proxy_cf;
+        return S_OK;
+    }
+
+    if (IsEqualCLSID(clsid, &CLSID_wine_rowset_server))
+    {
+        *obj = &rowset_server_cf;
+        return S_OK;
+    }
+
+    if (IsEqualCLSID(clsid, &CLSID_wine_rowset_proxy))
+    {
+        *obj = &rowset_proxy_cf;
+        return S_OK;
+    }
+
     return msdaps_DllGetClassObject(clsid, iid, obj);
 }
 
