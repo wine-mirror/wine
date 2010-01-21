@@ -1810,7 +1810,6 @@ typedef enum wined3d_gl_extension
     NV_FRAGMENT_PROGRAM_OPTION,
     NV_HALF_FLOAT,
     NV_LIGHT_MAX_EXPONENT,
-    NV_OCCLUSION_QUERY,
     NV_REGISTER_COMBINERS,
     NV_REGISTER_COMBINERS2,
     NV_TEXGEN_REFLECTION,
@@ -3318,13 +3317,6 @@ typedef void (WINE_GLAPI *PGLFNGETCOMPRESSEDTEXIMAGEPROC)(GLenum target, GLint l
 #define GL_TEXTURE_SWIZZLE_RGBA_EXT                         0x8e46
 #endif
 
-/* GL_HP_occlusion_test */
-#ifndef GL_HP_occlusion_test
-#define GL_HP_occlusion_test 1
-#define GL_OCCLUSION_TEST_HP                                0x8165
-#define GL_OCCLUSION_TEST_RESULT_HP                         0x8165
-#endif
-
 /* GL_NV_depth_clamp */
 #ifndef GL_NV_depth_clamp
 #define GL_NV_depth_clamp 1
@@ -3414,22 +3406,6 @@ typedef void (WINE_GLAPI *PGLFNVERTEXATTRIBS4HVNVPROC)(GLuint index, GLsizei n, 
 #define GL_MAX_SHININESS_NV                                 0x8504
 #define GL_MAX_SPOT_EXPONENT_NV                             0x8505
 #endif
-
-/* GL_NV_occlusion_query */
-#ifndef GL_NV_occlusion_query
-#define GL_NV_occlusion_query 1
-#define GL_PIXEL_COUNTER_BITS_NV                            0x8864
-#define GL_CURRENT_OCCLUSION_QUERY_ID_NV                    0x8865
-#define GL_PIXEL_COUNT_NV                                   0x8866
-#define GL_PIXEL_COUNT_AVAILABLE_NV                         0x8867
-#endif
-typedef void (WINE_GLAPI *PGLFNGENOCCLUSIONQUERIESNVPROC)(GLsizei n, GLuint *ids);
-typedef void (WINE_GLAPI *PGLFNDELETEOCCLUSIONQUERIESNVPROC)(GLsizei n, const GLuint *ids);
-typedef GLboolean (WINE_GLAPI *PGLFNISOCCLUSIONQUERYNVPROC)(GLuint id);
-typedef void (WINE_GLAPI *PGLFNBEGINOCCLUSIONQUERYNVPROC)(GLuint id);
-typedef void (WINE_GLAPI *PGLFNENDOCCLUSIONQUERYNVPROC)(void);
-typedef void (WINE_GLAPI *PGLFNGETOCCLUSIONQUERYIVNVPROC)(GLuint id, GLenum pname, GLint *params);
-typedef void (WINE_GLAPI *PGLFNGETOCCLUSIONQUERYUIVNVPROC)(GLuint id, GLenum pname, GLuint *params);
 
 /* GL_NV_register_combiners */
 #ifndef GL_NV_register_combiners

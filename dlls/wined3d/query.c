@@ -435,7 +435,7 @@ HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
             TRACE("Occlusion query.\n");
             if (!gl_info->supported[ARB_OCCLUSION_QUERY])
             {
-                WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+                WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY.\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
             query->lpVtbl = &IWineD3DOcclusionQuery_Vtbl;
