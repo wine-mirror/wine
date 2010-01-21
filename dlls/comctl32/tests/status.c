@@ -494,6 +494,84 @@ static void test_gettext(void)
     DestroyWindow(hwndStatus);
 }
 
+/* Notify events to parent */
+static BOOL g_got_dblclk;
+static BOOL g_got_click;
+static BOOL g_got_rdblclk;
+static BOOL g_got_rclick;
+
+/* Messages to parent */
+static BOOL g_got_contextmenu;
+
+static LRESULT WINAPI test_notify_parent_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+   switch(msg)
+   {
+       case WM_NOTIFY:
+       {
+           NMHDR *hdr = ((LPNMHDR)lParam);
+           switch(hdr->code)
+           {
+               case NM_DBLCLK: g_got_dblclk = TRUE; break;
+               case NM_CLICK: g_got_click = TRUE; break;
+               case NM_RDBLCLK: g_got_rdblclk = TRUE; break;
+               case NM_RCLICK: g_got_rclick = TRUE; break;
+           }
+
+           /* Return zero to indicate default processing */
+           return 0;
+       }
+
+       case WM_CONTEXTMENU: g_got_contextmenu = TRUE; return 0;
+
+       default:
+            return( DefWindowProcA(hwnd, msg, wParam, lParam));
+   }
+
+   return 0;
+}
+
+/* Test that WM_NOTIFY messages from the status control works correctly */
+static void test_notify(void)
+{
+    HWND hwndParent;
+    HWND hwndStatus;
+    ATOM atom;
+    WNDCLASSA wclass = {0};
+    wclass.lpszClassName = "TestNotifyParentClass";
+    wclass.lpfnWndProc   = test_notify_parent_proc;
+    atom = RegisterClassA(&wclass);
+    ok(atom, "RegisterClass failed!n");
+
+    /* create parent */
+    hwndParent = CreateWindow(wclass.lpszClassName, "parent", WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, 0, 300, 20, NULL, NULL, NULL, NULL);
+    ok(hwndParent != NULL, "Parent creation failed!\n");
+
+    /* create status bar */
+    hwndStatus = CreateWindow(STATUSCLASSNAME, NULL, WS_VISIBLE | WS_CHILD,
+      0, 0, 300, 20, hwndParent, NULL, NULL, NULL);
+    ok(hwndStatus != NULL, "Status creation failed!\n");
+
+    /* Send various mouse event, and check that we get them */
+    g_got_dblclk = FALSE;
+    SendMessage(hwndStatus, WM_LBUTTONDBLCLK, 0, 0);
+    ok(g_got_dblclk, "WM_LBUTTONDBLCLK was not processed correctly!\n");
+    g_got_rdblclk = FALSE;
+    SendMessage(hwndStatus, WM_RBUTTONDBLCLK, 0, 0);
+    ok(g_got_rdblclk, "WM_RBUTTONDBLCLK was not processed correctly!\n");
+    g_got_click = FALSE;
+    SendMessage(hwndStatus, WM_LBUTTONUP, 0, 0);
+    ok(g_got_click, "WM_LBUTTONUP was not processed correctly!\n");
+
+    /* For R-UP, check that we also get the context menu from the default processing */
+    g_got_contextmenu = FALSE;
+    g_got_rclick = FALSE;
+    SendMessage(hwndStatus, WM_RBUTTONUP, 0, 0);
+    ok(g_got_rclick, "WM_RBUTTONUP was not processed correctly!\n");
+    ok(g_got_contextmenu, "WM_RBUTTONUP did not activate the context menu!\n");
+}
+
 START_TEST(status)
 {
     hinst = GetModuleHandleA(NULL);
@@ -512,4 +590,5 @@ START_TEST(status)
     test_height();
     test_status_ownerdraw();
     test_gettext();
+    test_notify();
 }

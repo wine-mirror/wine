@@ -1162,7 +1162,7 @@ STATUSBAR_NotifyFormat (STATUS_INFO *infoPtr, HWND from, INT cmd)
 
 
 static LRESULT
-STATUSBAR_SendMouseNotify(const STATUS_INFO *infoPtr, UINT code, LPARAM lParam)
+STATUSBAR_SendMouseNotify(const STATUS_INFO *infoPtr, UINT code, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     NMMOUSE  nm;
 
@@ -1175,7 +1175,12 @@ STATUSBAR_SendMouseNotify(const STATUS_INFO *infoPtr, UINT code, LPARAM lParam)
     nm.dwItemSpec = STATUSBAR_InternalHitTest(infoPtr, &nm.pt);
     nm.dwItemData = 0;
     nm.dwHitInfo = 0x30000;     /* seems constant */
-    SendMessageW(infoPtr->Notify, WM_NOTIFY, 0, (LPARAM)&nm);
+
+    /* Do default processing if WM_NOTIFY returns zero */
+    if(!SendMessageW(infoPtr->Notify, WM_NOTIFY, nm.hdr.idFrom, (LPARAM)&nm))
+    {
+      return DefWindowProcW(infoPtr->Self, msg, wParam, lParam);
+    }
     return 0;
 }
 
@@ -1276,10 +1281,10 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_GetTextLength (infoPtr, 0);
 
 	case WM_LBUTTONDBLCLK:
-            return STATUSBAR_SendMouseNotify(infoPtr, NM_DBLCLK, lParam);
+            return STATUSBAR_SendMouseNotify(infoPtr, NM_DBLCLK, msg, wParam, lParam);
 
 	case WM_LBUTTONUP:
-	    return STATUSBAR_SendMouseNotify(infoPtr, NM_CLICK, lParam);
+	    return STATUSBAR_SendMouseNotify(infoPtr, NM_CLICK, msg, wParam, lParam);
 
 	case WM_MOUSEMOVE:
 	    return STATUSBAR_Relay2Tip (infoPtr, msg, wParam, lParam);
@@ -1303,10 +1308,10 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_WMPaint (infoPtr, (HDC)wParam);
 
 	case WM_RBUTTONDBLCLK:
-	    return STATUSBAR_SendMouseNotify(infoPtr, NM_RDBLCLK, lParam);
+	    return STATUSBAR_SendMouseNotify(infoPtr, NM_RDBLCLK, msg, wParam, lParam);
 
 	case WM_RBUTTONUP:
-	    return STATUSBAR_SendMouseNotify(infoPtr, NM_RCLICK, lParam);
+	    return STATUSBAR_SendMouseNotify(infoPtr, NM_RCLICK, msg, wParam, lParam);
 
 	case WM_SETFONT:
 	    return STATUSBAR_WMSetFont (infoPtr, (HFONT)wParam, LOWORD(lParam));
