@@ -14814,6 +14814,39 @@ interface IHTMLFrameBase2 : IDispatch
     WINE_IHTMLFRAMEBASE3_DISPINTERFACE_DECL
 
 /*****************************************************************************
+ *    IHTMLFrameElement3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051042d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLFrameElement3 : IDispatch
+{
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_CONTENTDOCUMENT)]
+    HRESULT contentDocument([out, retval] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_SRC)]
+    HRESULT src([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_SRC)]
+    HRESULT src([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_LONGDESC)]
+    HRESULT longDesc([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_LONGDESC)]
+    HRESULT longDesc([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    HRESULT frameBorder([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    HRESULT frameBorder([out, retval] BSTR * p);
+}
+
+/*****************************************************************************
  *    DispHTMLFrameElement dispinterface
  */
 [
