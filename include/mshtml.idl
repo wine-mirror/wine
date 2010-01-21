@@ -14692,6 +14692,61 @@ interface IHTMLFrameBase : IDispatch
     HRESULT scrolling([out, retval] BSTR *p);
 }
 
+#define WINE_IHTMLFRAMEBASE_DISPINTERFACE_DECL          \
+    [propput, id(DISPID_IHTMLFRAMEBASE_SRC)]            \
+    void src(BSTR v);                                   \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_SRC)]            \
+    BSTR src();                                         \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_NAME)]           \
+    void name(BSTR v);                                  \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_NAME)]           \
+    BSTR name();                                        \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_BORDER)]         \
+    void border(VARIANT v);                             \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_BORDER)]         \
+    VARIANT border();                                   \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]    \
+    void frameBorder(BSTR v);                           \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]    \
+    BSTR frameBorder();                                 \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]   \
+    void frameSpacing(VARIANT v);                       \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]   \
+    VARIANT frameSpacing();                             \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]    \
+    void marginWidth(VARIANT v);                        \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]    \
+    VARIANT marginWidth();                              \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]   \
+    void marginHeight(VARIANT v);                       \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]   \
+    VARIANT marginHeight();                             \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]       \
+    void noResize(VARIANT_BOOL v);                      \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]       \
+    VARIANT_BOOL noResize();                            \
+                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]      \
+    void scrolling(BSTR v);                             \
+                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]      \
+    BSTR scrolling()
+
 /*****************************************************************************
  *    IHTMLFrameBase2 interface
  */
@@ -14728,8 +14783,91 @@ interface IHTMLFrameBase2 : IDispatch
     HRESULT allowTransparency([retval, out] VARIANT_BOOL *p);
 }
 
+#define WINE_IHTMLFRAMEBASE2_DISPINTERFACE_DECL                         \
+    [propget, id(DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW)]                 \
+    IHTMLWindow2 *contentWindow();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable] \
+    void onload(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable] \
+    VARIANT onload();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]             \
+    void allowTransparency(VARIANT_BOOL v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]             \
+    VARIANT_BOOL allowTransparency()
+
+#define WINE_IHTMLFRAMEBASE3_DISPINTERFACE_DECL                           \
+    [propput, id(DISPID_IHTMLFRAMEBASE3_LONGDESC), displaybind, bindable] \
+    void longDesc(BSTR v);                                                \
+                                                                          \
+    [propget, id(DISPID_IHTMLFRAMEBASE3_LONGDESC), displaybind, bindable] \
+    BSTR longDesc()
+
+
+#define WINE_HTMLFRAMEBASE_DISPINTERFACE_DECL \
+    WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;  \
+    WINE_IHTMLFRAMEBASE_DISPINTERFACE_DECL;   \
+    WINE_IHTMLFRAMEBASE2_DISPINTERFACE_DECL;  \
+    WINE_IHTMLFRAMEBASE3_DISPINTERFACE_DECL
+
 /*****************************************************************************
- *    IHTMLIFrameElement dispinterface
+ *    DispHTMLFrameElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f513-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLFrameElement
+{
+properties:
+methods:
+    WINE_HTMLFRAMEBASE_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT_BORDERCOLOR)]
+    void borderColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT_BORDERCOLOR)]
+    VARIANT borderColor();
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT2_HEIGHT)]
+    void height(VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT2_HEIGHT)]
+    VARIANT height();
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT2_WIDTH)]
+    void width(VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT2_WIDTH)]
+    VARIANT width();
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_CONTENTDOCUMENT)]
+    IDispatch *contentDocument();
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_SRC)]
+    void ie8_src(BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_SRC)]
+    BSTR ie8_src();
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_LONGDESC)]
+    void ie8_longDesc(BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_LONGDESC)]
+    BSTR ie8_longDesc();
+
+    [propput, id(DISPID_IHTMLFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    void ie8_frameBorder(BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEELEMENT3_IE8_FRAMEBORDER)]
+    BSTR ie8_frameBorder();
+}
+
+/*****************************************************************************
+ *    IHTMLIFrameElement interface
  */
 [
     odl,
@@ -14769,82 +14907,7 @@ dispinterface DispHTMLIFrame
 {
 properties:
 methods:
-    WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_SRC)]
-    void src(BSTR v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_SRC)]
-    BSTR src();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_NAME)]
-    void name(BSTR v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_NAME)]
-    BSTR name();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_BORDER)]
-    void border(VARIANT v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_BORDER)]
-    VARIANT border();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]
-    void frameBorder(BSTR v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]
-    BSTR frameBorder();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]
-    void frameSpacing(VARIANT v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]
-    VARIANT frameSpacing();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]
-    void marginWidth(VARIANT v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]
-    VARIANT marginWidth();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]
-    void marginHeight(VARIANT v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]
-    VARIANT marginHeight();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]
-    void noResize(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]
-    VARIANT_BOOL noResize();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]
-    void scrolling(BSTR v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]
-    BSTR scrolling();
-
-    [propget, id(DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW)]
-    IHTMLWindow2 *contentWindow();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable]
-    void onload(VARIANT v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable]
-    VARIANT onload();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]
-    void allowTransparency(VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]
-    VARIANT_BOOL allowTransparency();
-
-    [propput, id(DISPID_IHTMLFRAMEBASE3_LONGDESC), displaybind, bindable]
-    void longDesc(BSTR v);
-
-    [propget, id(DISPID_IHTMLFRAMEBASE3_LONGDESC), displaybind, bindable]
-    BSTR longDesc();
+    WINE_HTMLFRAMEBASE_DISPINTERFACE_DECL;
 
     [propput, id(DISPID_IHTMLIFRAMEELEMENT_VSPACE)]
     void vspace(LONG v);
