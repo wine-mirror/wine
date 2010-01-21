@@ -101,7 +101,7 @@ int rcinline = 0;
 /*
  * Debugging flag (-D option)
  */
-int dodebug = 0;
+static int dodebug = 0;
 
 char *output_name = NULL;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
@@ -114,6 +114,8 @@ char *cmdline;			/* The entire commandline */
 time_t now;			/* The time of start of wmc */
 
 int mcy_debug;
+
+FILE *yyin;
 
 int getopt (int argc, char *const *argv, const char *optstring);
 static void segvhandler(int sig);
@@ -242,8 +244,8 @@ int main(int argc,char *argv[])
 	mcy_debug = dodebug;
 	if(dodebug)
 	{
-		setbuf(stdout, 0);
-		setbuf(stderr, 0);
+		setbuf(stdout, NULL);
+		setbuf(stderr, NULL);
 	}
 
 	/* Check for input file on command-line */

@@ -65,7 +65,7 @@ extern node_t *nodehead;
 extern lan_blk_t *lanblockhead;
 
 int mcy_lex(void);
-FILE *yyin;
+extern FILE *yyin;
 void set_codepage(int cp);
 
 void add_token(tok_e type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix);
