@@ -122,16 +122,22 @@ static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"c:dir\\file", 0, S_OK, "file:///c:dir/file", FALSE},
     {"c:\\tests\\foo bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar", FALSE},
     {"c:\\tests\\foo bar", 0, S_OK, "file:///c:/tests/foo%20bar", FALSE},
+    {"res://file", 0, S_OK, "res://file/", FALSE},
+    {"res://file", URL_FILE_USE_PATHURL, S_OK, "res://file/", FALSE},
     {"res:///c:/tests/foo%20bar", URL_UNESCAPE , S_OK, "res:///c:/tests/foo bar", FALSE},
-    {"res:///c:/tests\\foo%20bar", URL_UNESCAPE , S_OK, "res:///c:/tests\\foo bar", TRUE},
+    {"res:///c:/tests\\foo%20bar", URL_UNESCAPE , S_OK, "res:///c:/tests\\foo bar", FALSE},
     {"res:///c:/tests/foo%20bar", 0, S_OK, "res:///c:/tests/foo%20bar", FALSE},
-    {"res:///c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res:///c:/tests/foo%20bar", TRUE},
-    {"res://c:/tests/../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", TRUE},
-    {"res://c:/tests\\../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", TRUE},
-    {"res://c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", TRUE},
-    {"res:///c://tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res:///c://tests/foo%20bar", TRUE},
-    {"res:///c:\\tests\\foo bar", 0, S_OK, "res:///c:\\tests\\foo bar", TRUE},
-    {"res:///c:\\tests\\foo bar", URL_DONT_SIMPLIFY, S_OK, "res:///c:\\tests\\foo bar", TRUE},
+    {"res:///c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res:///c:/tests/foo%20bar", FALSE},
+    {"res://c:/tests/../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", FALSE},
+    {"res://c:/tests\\../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", FALSE},
+    {"res://c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res://c:/tests/foo%20bar", FALSE},
+    {"res:///c://tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "res:///c://tests/foo%20bar", FALSE},
+    {"res:///c:\\tests\\foo bar", 0, S_OK, "res:///c:\\tests\\foo bar", FALSE},
+    {"res:///c:\\tests\\foo bar", URL_DONT_SIMPLIFY, S_OK, "res:///c:\\tests\\foo bar", FALSE},
+    {"res://c:\\tests\\foo bar/res", URL_FILE_USE_PATHURL, S_OK, "res://c:\\tests\\foo bar/res", FALSE},
+    {"res://c:\\tests/res\\foo%20bar/strange\\sth", 0, S_OK, "res://c:\\tests/res\\foo%20bar/strange\\sth", FALSE},
+    {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_FILE_USE_PATHURL, S_OK, "res://c:\\tests/res\\foo%20bar/strange\\sth", FALSE},
+    {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_UNESCAPE, S_OK, "res://c:\\tests/res\\foo bar/strange\\sth", FALSE},
     {"A", 0, S_OK, "A", FALSE},
     {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, S_OK, "/uri-res/N2R?urn:sha1:B3K", FALSE} /*LimeWire online installer calls this*/,
     {"http:www.winehq.org/dir/../index.html", 0, S_OK, "http:www.winehq.org/index.html"},
@@ -1096,5 +1102,4 @@ START_TEST(url)
   test_UrlIs();
   test_UrlUnescape();
   test_ParseURL();
-
 }
