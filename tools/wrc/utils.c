@@ -367,7 +367,7 @@ struct lang2cp
     unsigned short lang;
     unsigned short sublang;
     unsigned int   cp;
-} lang2cp_t;
+};
 
 /* language to codepage conversion table */
 /* specific sublanguages need only be specified if their codepage */

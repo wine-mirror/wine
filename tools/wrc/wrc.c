@@ -161,7 +161,7 @@ static int verify_translations_mode;
 
 char *output_name = NULL;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
-char *temp_name = NULL;		/* Temporary file for preprocess pipe */
+static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
@@ -193,27 +193,27 @@ enum long_options_values
 static const char short_options[] =
 	"D:Ef:F:hi:I:J:l:o:O:rU:v";
 static const struct option long_options[] = {
-	{ "debug", 1, 0, LONG_OPT_DEBUG },
-	{ "define", 1, 0, 'D' },
-	{ "endianess", 1, 0, LONG_OPT_ENDIANESS },
-	{ "help", 0, 0, 'h' },
-	{ "include-dir", 1, 0, 'I' },
-	{ "input", 1, 0, 'i' },
-	{ "input-format", 1, 0, 'J' },
-	{ "language", 1, 0, 'l' },
-	{ "no-use-temp-file", 0, 0, LONG_OPT_NOTMPFILE },
-	{ "nostdinc", 0, 0, LONG_OPT_NOSTDINC },
-	{ "output", 1, 0, 'o' },
-	{ "output-format", 1, 0, 'O' },
-	{ "pedantic", 0, 0, LONG_OPT_PEDANTIC },
-	{ "preprocessor", 1, 0, LONG_OPT_PREPROCESSOR },
-	{ "target", 1, 0, 'F' },
-	{ "undefine", 1, 0, 'U' },
-	{ "use-temp-file", 0, 0, LONG_OPT_TMPFILE },
-	{ "verbose", 0, 0, 'v' },
-	{ "verify-translations", 0, 0, LONG_OPT_VERIFY_TRANSL },
-	{ "version", 0, 0, LONG_OPT_VERSION },
-	{ 0, 0, 0, 0 }
+	{ "debug", 1, NULL, LONG_OPT_DEBUG },
+	{ "define", 1, NULL, 'D' },
+	{ "endianess", 1, NULL, LONG_OPT_ENDIANESS },
+	{ "help", 0, NULL, 'h' },
+	{ "include-dir", 1, NULL, 'I' },
+	{ "input", 1, NULL, 'i' },
+	{ "input-format", 1, NULL, 'J' },
+	{ "language", 1, NULL, 'l' },
+	{ "no-use-temp-file", 0, NULL, LONG_OPT_NOTMPFILE },
+	{ "nostdinc", 0, NULL, LONG_OPT_NOSTDINC },
+	{ "output", 1, NULL, 'o' },
+	{ "output-format", 1, NULL, 'O' },
+	{ "pedantic", 0, NULL, LONG_OPT_PEDANTIC },
+	{ "preprocessor", 1, NULL, LONG_OPT_PREPROCESSOR },
+	{ "target", 1, NULL, 'F' },
+	{ "undefine", 1, NULL, 'U' },
+	{ "use-temp-file", 0, NULL, LONG_OPT_TMPFILE },
+	{ "verbose", 0, NULL, 'v' },
+	{ "verify-translations", 0, NULL, LONG_OPT_VERIFY_TRANSL },
+	{ "version", 0, NULL, LONG_OPT_VERSION },
+	{ NULL, 0, NULL, 0 }
 };
 
 static void set_version_defines(void)
@@ -489,8 +489,8 @@ int main(int argc,char *argv[])
 	/* Kill io buffering when some kind of debuglevel is enabled */
 	if(debuglevel)
 	{
-		setbuf(stdout,0);
-		setbuf(stderr,0);
+		setbuf(stdout, NULL);
+		setbuf(stderr, NULL);
 	}
 
 	parser_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;

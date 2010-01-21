@@ -887,7 +887,7 @@ typedef struct resource_id_node
     struct resource_id_node *next;
 } resource_id_node_t;
 
-struct
+static struct
 {
     int enabled;
     struct resource_id_node *ids;
