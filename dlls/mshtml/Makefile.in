@@ -26,6 +26,7 @@ C_SRCS = \
 	htmlelemcol.c \
 	htmlevent.c \
 	htmlform.c \
+	htmlframe.c \
 	htmlframebase.c \
 	htmlgeneric.c \
 	htmliframe.c \

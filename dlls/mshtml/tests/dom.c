@@ -99,7 +99,8 @@ typedef enum {
     ET_TR,
     ET_TD,
     ET_IFRAME,
-    ET_FORM
+    ET_FORM,
+    ET_FRAME
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -310,6 +311,19 @@ static const IID * const td_iids[] = {
     NULL
 };
 
+static const IID * const frame_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLElement3,
+    &IID_IHTMLFrameBase,
+    &IID_IHTMLFrameBase2,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const iframe_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -318,6 +332,7 @@ static const IID * const iframe_iids[] = {
     &IID_IHTMLElement3,
     &IID_IHTMLFrameBase,
     &IID_IHTMLFrameBase2,
+    &IID_IHTMLIFrameElement,
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
@@ -405,7 +420,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TR",        tr_iids,          &DIID_DispHTMLTableRow},
     {"TD",        td_iids,          NULL},
     {"IFRAME",    iframe_iids,      &DIID_DispHTMLIFrame},
-    {"FORM",      form_iids,        &DIID_DispHTMLFormElement}
+    {"FORM",      form_iids,        &DIID_DispHTMLFormElement},
+    {"FRAME",     frame_iids,       NULL}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -5964,6 +5980,7 @@ static void test_frame(IDispatch *disp, const char *exp_id)
     if(FAILED(hres))
         return;
 
+    test_elem_type((IUnknown*)frame_elem, ET_FRAME);
     test_frame_doc((IUnknown*)frame_elem);
     test_elem_id((IUnknown*)frame_elem, exp_id);
     IHTMLElement_Release(frame_elem);
