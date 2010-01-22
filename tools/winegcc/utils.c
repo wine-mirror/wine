@@ -1,5 +1,5 @@
 /*
- * Useful functions for winegcc/winewrap
+ * Useful functions for winegcc
  *
  * Copyright 2000 Francois Gouget
  * Copyright 2002 Dimitrie O. Paun
