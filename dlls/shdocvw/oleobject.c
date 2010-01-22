@@ -255,6 +255,36 @@ static HRESULT on_silent_change(WebBrowser *This)
     return S_OK;
 }
 
+static void release_client_site(WebBrowser *This)
+{
+    release_dochost_client(&This->doc_host);
+
+    if(This->shell_embedding_hwnd) {
+        DestroyWindow(This->shell_embedding_hwnd);
+        This->shell_embedding_hwnd = NULL;
+    }
+
+    if(This->inplace) {
+        IOleInPlaceSite_Release(This->inplace);
+        This->inplace = NULL;
+    }
+
+    if(This->container) {
+        IOleContainer_Release(This->container);
+        This->container = NULL;
+    }
+
+    if(This->uiwindow) {
+        IOleInPlaceUIWindow_Release(This->uiwindow);
+        This->uiwindow = NULL;
+    }
+
+    if(This->client) {
+        IOleClientSite_Release(This->client);
+        This->client = NULL;
+    }
+}
+
 /**********************************************************************
  * Implement the IOleObject interface for the WebBrowser control
  */
@@ -292,22 +322,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->client == pClientSite)
         return S_OK;
 
-    release_dochost_client(&This->doc_host);
-
-    if(This->shell_embedding_hwnd) {
-        DestroyWindow(This->shell_embedding_hwnd);
-        This->shell_embedding_hwnd = NULL;
-    }
-
-    if(This->inplace) {
-        IOleInPlaceSite_Release(This->inplace);
-        This->inplace = NULL;
-    }
-
-    if(This->client)
-        IOleClientSite_Release(This->client);
-
-    This->client = pClientSite;
+    release_client_site(This);
 
     if(!pClientSite) {
         if(This->doc_host.document)
@@ -316,6 +331,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     }
 
     IOleClientSite_AddRef(pClientSite);
+    This->client = pClientSite;
 
     hres = IOleClientSite_QueryInterface(This->client, &IID_IDispatch,
             (void**)&disp);
@@ -962,10 +978,5 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
 
 void WebBrowser_OleObject_Destroy(WebBrowser *This)
 {
-    if(This->client)
-        IOleObject_SetClientSite(OLEOBJ(This), NULL);
-    if(This->container)
-        IOleContainer_Release(This->container);
-    if(This->uiwindow)
-        IOleInPlaceUIWindow_Release(This->uiwindow);
+    release_client_site(This);
 }
