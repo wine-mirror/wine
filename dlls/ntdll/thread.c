@@ -57,6 +57,7 @@ struct startup_info
     void                           *entry_arg;
 };
 
+static PEB *peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
 static WCHAR current_dir[MAX_NT_PATH_LENGTH];
@@ -191,7 +192,6 @@ done:
  */
 HANDLE thread_init(void)
 {
-    PEB *peb;
     TEB *teb;
     void *addr;
     SIZE_T size, info_size;
@@ -519,6 +519,16 @@ error:
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
     return status;
+}
+
+
+/******************************************************************************
+ *              RtlGetNtGlobalFlags   (NTDLL.@)
+ */
+ULONG WINAPI RtlGetNtGlobalFlags(void)
+{
+    if (!peb) return 0;  /* init not done yet */
+    return peb->NtGlobalFlag;
 }
 
 
