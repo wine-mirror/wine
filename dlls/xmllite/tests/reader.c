@@ -176,7 +176,6 @@ static void test_reader_create(void)
 {
     HRESULT hr;
     IXmlReader *reader;
-    IMalloc *imalloc;
     IUnknown *input;
 
     /* crashes native */
@@ -188,12 +187,6 @@ static void test_reader_create(void)
 
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    hr = CoGetMalloc(1, &imalloc);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    hr = IMalloc_DidAlloc(imalloc, reader);
-    ok(hr != 1, "Expected 0 or -1, got %08x\n", hr);
 
     /* Null input pointer, releases previous input */
     hr = IXmlReader_SetInput(reader, NULL);
