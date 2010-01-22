@@ -205,6 +205,7 @@ void WebBrowser_OleObject_Destroy(WebBrowser*);
 void DocHost_Init(DocHost*,IDispatch*);
 void DocHost_ClientSite_Init(DocHost*);
 void DocHost_Frame_Init(DocHost*);
+void release_dochost_client(DocHost*);
 
 void DocHost_Release(DocHost*);
 void DocHost_ClientSite_Release(DocHost*);

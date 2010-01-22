@@ -292,10 +292,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->client == pClientSite)
         return S_OK;
 
-    if(This->doc_host.hwnd) {
-        DestroyWindow(This->doc_host.hwnd);
-        This->doc_host.hwnd = NULL;
-    }
+    release_dochost_client(&This->doc_host);
+
     if(This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);
         This->shell_embedding_hwnd = NULL;
@@ -304,11 +302,6 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->inplace) {
         IOleInPlaceSite_Release(This->inplace);
         This->inplace = NULL;
-    }
-
-    if(This->doc_host.hostui) {
-        IDocHostUIHandler_Release(This->doc_host.hostui);
-        This->doc_host.hostui = NULL;
     }
 
     if(This->client)

@@ -362,6 +362,29 @@ void deactivate_document(DocHost *This)
     This->document = NULL;
 }
 
+void release_dochost_client(DocHost *This)
+{
+    if(This->hwnd) {
+        DestroyWindow(This->hwnd);
+        This->hwnd = NULL;
+    }
+
+    if(This->hostui) {
+        IDocHostUIHandler_Release(This->hostui);
+        This->hostui = NULL;
+    }
+
+    if(This->client_disp) {
+        IDispatch_Release(This->client_disp);
+        This->client_disp = NULL;
+    }
+
+    if(This->frame) {
+        IOleInPlaceFrame_Release(This->frame);
+        This->frame = NULL;
+    }
+}
+
 #define OLECMD_THIS(iface) DEFINE_THIS(DocHost, OleCommandTarget, iface)
 
 static HRESULT WINAPI ClOleCommandTarget_QueryInterface(IOleCommandTarget *iface,
@@ -744,11 +767,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
 void DocHost_Release(DocHost *This)
 {
-    if(This->client_disp)
-        IDispatch_Release(This->client_disp);
-    if(This->frame)
-        IOleInPlaceFrame_Release(This->frame);
-
+    release_dochost_client(This);
     DocHost_ClientSite_Release(This);
 
     ConnectionPointContainer_Destroy(&This->cps);
