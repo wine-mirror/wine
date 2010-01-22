@@ -720,6 +720,8 @@ static IActiveScriptParse *create_script(void)
     hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&script);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
 
     set_safety_options((IUnknown*)script);
 
@@ -1058,13 +1060,37 @@ static BOOL register_activex(void)
     return TRUE;
 }
 
+static BOOL check_jscript(void)
+{
+    IActiveScriptParse *parser;
+    BSTR str;
+    HRESULT hres;
+
+    parser = create_script();
+    if(!parser)
+        return FALSE;
+
+    str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
+    hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    SysFreeString(str);
+    IUnknown_Release(parser);
+
+    return hres == S_OK;
+}
+
 START_TEST(activex)
 {
     CoInitialize(NULL);
-    register_activex();
 
-    test_ActiveXObject();
+    if(check_jscript()) {
+        register_activex();
 
-    init_registry(FALSE);
+        test_ActiveXObject();
+
+        init_registry(FALSE);
+    }else {
+        win_skip("Broken engine, probably too old\n");
+    }
+
     CoUninitialize();
 }
