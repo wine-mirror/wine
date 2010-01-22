@@ -21,14 +21,25 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "wine/test.h"
 
 #define MAGIC_DEAD 0xdeadbeef
 
 static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOID, SIZE_T, PSIZE_T);
+static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
+
+struct heap_layout
+{
+    DWORD unknown[3];
+    DWORD flags;
+    DWORD force_flags;
+};
 
 static SIZE_T resize_9x(SIZE_T size)
 {
@@ -467,8 +478,132 @@ static void test_HeapQueryInformation(void)
     ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %u\n", info);
 }
 
+static void test_debug_heap( const char *argv0, DWORD flags )
+{
+    char keyname[MAX_PATH];
+    char buffer[MAX_PATH];
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA startup;
+    BOOL ret;
+    DWORD err;
+    HKEY hkey;
+    const char *basename;
+
+    if ((basename = strrchr( argv0, '\\' ))) basename++;
+    else basename = argv0;
+
+    sprintf( keyname, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\%s",
+             basename );
+    if (!strcmp( keyname + strlen(keyname) - 3, ".so" )) keyname[strlen(keyname) - 3] = 0;
+
+    err = RegCreateKeyA( HKEY_LOCAL_MACHINE, keyname, &hkey );
+    ok( !err, "failed to create '%s' error %u\n", keyname, err );
+    if (err) return;
+
+    if (flags == 0xdeadbeef)  /* magic value for unsetting it */
+        RegDeleteValueA( hkey, "GlobalFlag" );
+    else
+        RegSetValueExA( hkey, "GlobalFlag", 0, REG_DWORD, (BYTE *)&flags, sizeof(flags) );
+
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+
+    sprintf( buffer, "%s heap.c 0x%x", argv0, flags );
+    ret = CreateProcessA( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok( ret, "failed to create child process error %u\n", GetLastError() );
+    if (ret)
+    {
+        winetest_wait_child_process( info.hProcess );
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
+    }
+    RegDeleteValueA( hkey, "GlobalFlag" );
+    RegCloseKey( hkey );
+    RegDeleteKeyA( HKEY_LOCAL_MACHINE, keyname );
+}
+
+static DWORD heap_flags_from_global_flag( DWORD flag )
+{
+    DWORD ret = 0;
+
+    if (flag & FLG_HEAP_ENABLE_TAIL_CHECK)
+        ret |= HEAP_TAIL_CHECKING_ENABLED;
+    if (flag & FLG_HEAP_ENABLE_FREE_CHECK)
+        ret |= HEAP_FREE_CHECKING_ENABLED;
+    if (flag & FLG_HEAP_VALIDATE_PARAMETERS)
+        ret |= 0x50000000 | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+    if (flag & FLG_HEAP_VALIDATE_ALL)
+        ret |= 0x30000000 | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+    if (flag & FLG_HEAP_DISABLE_COALESCING)
+        ret |= HEAP_DISABLE_COALESCE_ON_FREE;
+    if (flag & FLG_HEAP_PAGE_ALLOCS)
+        ret |= 0x01000000 | HEAP_GROWABLE;
+    return ret;
+}
+
+static void test_child_heap( const char *arg )
+{
+    struct heap_layout *heap = GetProcessHeap();
+    DWORD expected = strtoul( arg, 0, 16 );
+
+    if (expected == 0xdeadbeef)  /* expected value comes from Session Manager global flags */
+    {
+        HKEY hkey;
+        expected = 0;
+        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager", &hkey ))
+        {
+            char buffer[32];
+            DWORD type, size = sizeof(buffer);
+
+            if (!RegQueryValueExA( hkey, "GlobalFlag", 0, &type, (BYTE *)buffer, &size ))
+            {
+                if (type == REG_DWORD) expected = *(DWORD *)buffer;
+                else if (type == REG_SZ) expected = strtoul( buffer, 0, 16 );
+            }
+            RegCloseKey( hkey );
+        }
+    }
+    if (expected && !pRtlGetNtGlobalFlags())  /* not working on NT4 */
+    {
+        win_skip( "global flags not set\n" );
+        return;
+    }
+
+    ok( pRtlGetNtGlobalFlags() == expected,
+        "%s: got global flags %08x expected %08x\n", arg, pRtlGetNtGlobalFlags(), expected );
+
+    if (!(heap->flags & HEAP_GROWABLE) || heap->flags == 0xeeeeeeee)  /* vista layout */
+    {
+        if (expected & FLG_HEAP_PAGE_ALLOCS)
+            ok( heap->flags == 0xeeeeeeee, "%s: got heap flags %08x expected 0xeeeeeeee\n",
+                arg, heap->flags );
+        else
+            ok( heap->flags == 0, "%s: got heap flags %08x expected 0\n", arg, heap->flags );
+    }
+    else
+    {
+        expected = heap_flags_from_global_flag( expected );
+        ok( heap->flags == (expected | HEAP_GROWABLE),
+            "%s: got heap flags %08x expected %08x\n", arg, heap->flags, expected );
+        ok( heap->force_flags == (expected & ~0x18000080),
+            "%s: got heap force flags %08x expected %08x\n", arg, heap->force_flags, expected );
+    }
+}
+
 START_TEST(heap)
 {
+    int argc;
+    char **argv;
+
+    pRtlGetNtGlobalFlags = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlGetNtGlobalFlags" );
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc >= 3)
+    {
+        test_child_heap( argv[2] );
+        return;
+    }
+
     test_heap();
     test_obsolete_flags();
 
@@ -480,4 +615,20 @@ START_TEST(heap)
     test_sized_HeapReAlloc((1 << 20), (2 << 20));
     test_sized_HeapReAlloc((1 << 20), 1);
     test_HeapQueryInformation();
+
+    if (pRtlGetNtGlobalFlags)
+    {
+        test_debug_heap( argv[0], 0 );
+        test_debug_heap( argv[0], FLG_HEAP_ENABLE_TAIL_CHECK );
+        test_debug_heap( argv[0], FLG_HEAP_ENABLE_FREE_CHECK );
+        test_debug_heap( argv[0], FLG_HEAP_VALIDATE_PARAMETERS );
+        test_debug_heap( argv[0], FLG_HEAP_VALIDATE_ALL );
+        test_debug_heap( argv[0], FLG_POOL_ENABLE_TAGGING );
+        test_debug_heap( argv[0], FLG_HEAP_ENABLE_TAGGING );
+        test_debug_heap( argv[0], FLG_HEAP_ENABLE_TAG_BY_DLL );
+        test_debug_heap( argv[0], FLG_HEAP_DISABLE_COALESCING );
+        test_debug_heap( argv[0], FLG_HEAP_PAGE_ALLOCS );
+        test_debug_heap( argv[0], 0xdeadbeef );
+    }
+    else win_skip( "RtlGetNtGlobalFlags not found, skipping heap debug tests\n" );
 }
