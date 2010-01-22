@@ -654,9 +654,13 @@ static void test_RpcStringBindingParseA(void)
     ok(status == RPC_S_INVALID_STRING_BINDING, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_BINDING instead of %d\n", status);
     todo_wine
     ok(uuid == NULL, "uuid was %p instead of NULL\n", uuid);
+    if (uuid)
+        RpcStringFreeA(&uuid);
     ok(protseq == NULL, "protseq was %p instead of NULL\n", protseq);
     todo_wine
     ok(network_addr == NULL, "network_addr was %p instead of NULL\n", network_addr);
+    if (network_addr)
+        RpcStringFreeA(&network_addr);
     ok(endpoint == NULL, "endpoint was %p instead of NULL\n", endpoint);
     ok(options == NULL, "options was %p instead of NULL\n", options);
 }
