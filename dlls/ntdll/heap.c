@@ -155,6 +155,12 @@ typedef struct tagHEAP
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
+/* some undocumented flags (names are made up) */
+#define HEAP_PAGE_ALLOCS      0x01000000
+#define HEAP_VALIDATE         0x10000000
+#define HEAP_VALIDATE_ALL     0x20000000
+#define HEAP_VALIDATE_PARAMS  0x40000000
+
 static HEAP *processHeap;  /* main process heap */
 
 static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
@@ -1233,6 +1239,32 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
 
 
 /***********************************************************************
+ *           heap_set_debug_flags
+ */
+void heap_set_debug_flags( HANDLE handle )
+{
+    HEAP *heap = HEAP_GetPtr( handle );
+    ULONG global_flags = RtlGetNtGlobalFlags();
+    ULONG flags = 0;
+
+    if (global_flags & FLG_HEAP_ENABLE_TAIL_CHECK) flags |= HEAP_TAIL_CHECKING_ENABLED;
+    if (global_flags & FLG_HEAP_ENABLE_FREE_CHECK) flags |= HEAP_FREE_CHECKING_ENABLED;
+    if (global_flags & FLG_HEAP_DISABLE_COALESCING) flags |= HEAP_DISABLE_COALESCE_ON_FREE;
+    if (global_flags & FLG_HEAP_PAGE_ALLOCS) flags |= HEAP_PAGE_ALLOCS | HEAP_GROWABLE;
+
+    if (global_flags & FLG_HEAP_VALIDATE_PARAMETERS)
+        flags |= HEAP_VALIDATE | HEAP_VALIDATE_PARAMS |
+                 HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+    if (global_flags & FLG_HEAP_VALIDATE_ALL)
+        flags |= HEAP_VALIDATE | HEAP_VALIDATE_ALL |
+                 HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+
+    heap->flags |= flags;
+    heap->force_flags |= flags & ~(HEAP_VALIDATE | HEAP_DISABLE_COALESCE_ON_FREE);
+}
+
+
+/***********************************************************************
  *           RtlCreateHeap   (NTDLL.@)
  *
  * Create a new Heap.
@@ -1278,6 +1310,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         list_init( &processHeap->entry );
     }
 
+    heap_set_debug_flags( subheap->heap );
     return subheap->heap;
 }
 
