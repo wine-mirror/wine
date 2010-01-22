@@ -3218,9 +3218,6 @@ static void test_join(void)
         ok( !lstrcmp( buf, join_res_first[i].two ),
             "For (row %d, column 2) expected '%s', got %s\n", i, join_res_first[i].two, buf );
 
-        r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-        todo_wine ok( r == ERROR_SUCCESS, "failed to modiy view: %d\n", r );
-
         i++;
         MsiCloseHandle(hrec);
     }
@@ -3647,6 +3644,63 @@ static void test_join(void)
     r = MsiDatabaseOpenView(hdb, query, &hview);
     ok( r == ERROR_BAD_QUERY_SYNTAX,
         "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r );
+
+    /* try updating a row in a join table */
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` "
+            "WHERE `Component`.`Component` = `FeatureComponents`.`Component_` "
+            "ORDER BY `Feature_`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    r = MsiViewFetch(hview, &hrec);
+    ok( r == ERROR_SUCCESS, "failed to fetch view: %d\n", r );
+
+    r = MsiRecordSetString( hrec, 1, "epicranius" );
+    ok( r == ERROR_SUCCESS, "failed to set string: %d\n", r );
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    ok( r == ERROR_SUCCESS, "failed to update row: %d\n", r );
+
+    /* try another valid operation for joins */
+    r = MsiViewModify(hview, MSIMODIFY_REFRESH, hrec);
+    todo_wine ok( r == ERROR_SUCCESS, "failed to refresh row: %d\n", r );
+
+    /* try an invalid operation for joins */
+    r = MsiViewModify(hview, MSIMODIFY_DELETE, hrec);
+    ok( r == ERROR_FUNCTION_FAILED, "unexpected result: %d\n", r );
+
+    r = MsiRecordSetString( hrec, 2, "epicranius" );
+    ok( r == ERROR_SUCCESS, "failed to set string: %d\n", r );
+
+    /* primary key cannot be updated */
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine ok( r == ERROR_FUNCTION_FAILED, "failed to update row: %d\n", r );
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( hrec, 1, buf, &size );
+    ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
+    ok( !lstrcmp( buf, "epicranius" ), "expected 'epicranius', got %s\n", buf );
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
 
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
