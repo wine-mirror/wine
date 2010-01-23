@@ -772,7 +772,7 @@ then
         done
         if test -n "$target"
         then
-            AC_SUBST(CROSSTARGETFLAGS,"-b $target")
+            AC_SUBST(CROSSTARGET,"$target")
         fi
     fi
 fi

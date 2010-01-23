@@ -28,6 +28,8 @@ $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
 
 # Rules for import libraries
 
+IMPLIB_CROSSOBJS = $(IMPLIB_OBJS:.o=.cross.o)
+
 .PHONY: implib $(IMPLIB_SRCS:%=__static_implib__%)
 
 all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
@@ -43,7 +45,10 @@ $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RANLIB) $@
 
 $(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_OBJS)
-	$(WINEBUILD) $(IMPLIBFLAGS) @CROSSTARGETFLAGS@ -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_OBJS)
+	$(WINEBUILD) $(IMPLIBFLAGS) -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_OBJS)
+
+$(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_CROSSOBJS)
+	$(WINEBUILD) $(IMPLIBFLAGS) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_CROSSOBJS)
 
 $(SUBDIRS): implib
 

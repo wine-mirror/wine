@@ -653,7 +653,7 @@ X_PRE_LIBS
 X_CFLAGS
 XMKMF
 LIBPTHREAD
-CROSSTARGETFLAGS
+CROSSTARGET
 CROSSTEST
 CROSSCC
 CARBONLIB
@@ -6950,7 +6950,7 @@ test -n "$CROSSCC" || CROSSCC="false"
         done
         if test -n "$target"
         then
-            CROSSTARGETFLAGS="-b $target"
+            CROSSTARGET="$target"
 
         fi
     fi

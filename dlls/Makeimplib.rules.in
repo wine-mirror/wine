@@ -21,6 +21,11 @@ $(MODULE:%=lib%.a): $(OBJS) Makefile.in
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
 
+$(MODULE:%=lib%.cross.a): $(CROSSOBJS) Makefile.in
+	$(RM) $@
+	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
+	$(CROSSRANLIB) $@
+
 # Rules for installation
 
 install install-dev:: $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)
