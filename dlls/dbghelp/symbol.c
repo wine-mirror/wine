@@ -304,8 +304,7 @@ struct symt_compiland* symt_new_compiland(struct module* module,
 struct symt_public* symt_new_public(struct module* module, 
                                     struct symt_compiland* compiland,
                                     const char* name,
-                                    unsigned long address, unsigned size,
-                                    BOOL in_code, BOOL is_func)
+                                    unsigned long address, unsigned size)
 {
     struct symt_public* sym;
     struct symt**       p;
@@ -322,8 +321,6 @@ struct symt_public* symt_new_public(struct module* module,
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->address       = address;
         sym->size          = size;
-        sym->in_code       = in_code;
-        sym->is_function   = is_func;
         symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {

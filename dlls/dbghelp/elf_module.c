@@ -749,8 +749,7 @@ static int elf_new_public_symbols(struct module* module, const struct hash_table
     {
         symt_new_public(module, ste->compiland, ste->ht_elt.name,
                         module->elf_info->elf_addr + ste->symp->st_value,
-                        ste->symp->st_size, TRUE /* FIXME */, 
-                        ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);
+                        ste->symp->st_size);
     }
     return TRUE;
 }

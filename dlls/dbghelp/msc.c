@@ -1919,8 +1919,7 @@ static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYT
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->data_v1.p_name),
-                                codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
-                                1, TRUE /* FIXME */, TRUE /* FIXME */);
+                                codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset), 1);
             }
             break;
 	case S_PUB_V2: /* FIXME is this really a 'data_v2' structure ?? */
@@ -1928,8 +1927,7 @@ static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYT
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->data_v2.p_name),
-                                codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
-                                1, TRUE /* FIXME */, TRUE /* FIXME */);
+                                codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset), 1);
             }
 	    break;
 
@@ -1938,8 +1936,7 @@ static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYT
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 sym->data_v3.name,
-                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                1, FALSE /* FIXME */, FALSE);
+                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset), 1);
             }
             break;
         case S_PUB_FUNC1_V3:
@@ -1950,8 +1947,7 @@ static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYT
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 sym->data_v3.name,
-                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                1, TRUE /* FIXME */, TRUE);
+                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset), 1);
             }
 #endif
             break;

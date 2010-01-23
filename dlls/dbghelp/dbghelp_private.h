@@ -227,8 +227,6 @@ struct symt_public
     struct symt*                container;      /* compiland */
     unsigned long               address;
     unsigned long               size;
-    unsigned                    in_code : 1,
-                                is_function : 1;
 };
 
 struct symt_thunk
@@ -593,8 +591,7 @@ extern struct symt_public*
                     symt_new_public(struct module* module, 
                                     struct symt_compiland* parent, 
                                     const char* typename,
-                                    unsigned long address, unsigned size,
-                                    BOOL in_code, BOOL is_func);
+                                    unsigned long address, unsigned size);
 extern struct symt_data*
                     symt_new_global_variable(struct module* module, 
                                              struct symt_compiland* parent,
