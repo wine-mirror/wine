@@ -55,6 +55,23 @@ my %dont_install =
   "winetest" => 1,
 );
 
+# Dlls and programs that are 16-bit specific
+my %modules16 =
+(
+  "ifsmgr.vxd" => 1,
+  "mmdevldr.vxd" => 1,
+  "monodebg.vxd" => 1,
+  "vdhcp.vxd" => 1,
+  "vmm.vxd" => 1,
+  "vnbt.vxd" => 1,
+  "vnetbios.vxd" => 1,
+  "vtdapi.vxd" => 1,
+  "vwin32.vxd" => 1,
+  "w32skrnl.dll" => 1,
+  "winevdm.exe" => 1,
+  "wow32.dll" => 1,
+);
+
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
@@ -339,10 +356,11 @@ sub update_makefiles(@)
         my %make = %{$makefiles{$file}};
         my $rules = $make{"=rules"};
         my $args = "";
+        my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
         if ($rules eq $makerules{"MAKE_DLL_RULES"})
         {
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            $args .= ",enable_win16" if $make{"MODULE"} =~ /(16|\.vxd)$/;
+            $args .= ",enable_win16" if $is_win16;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
@@ -352,7 +370,7 @@ sub update_makefiles(@)
             $args .= ",ALL_PROGRAM_INSTALL_DIRS" unless $dont_install{$name};
             $args .= ",ALL_PROGRAM_BIN_INSTALL_DIRS" if $bin_install{$name};
             $args .= "]";
-            $args .= ",enable_win16" if $make{"MODULE"} =~ /16$/;
+            $args .= ",enable_win16" if $is_win16;
             push @lines, "WINE_CONFIG_PROGRAM($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_TEST_RULES"})

@@ -169,13 +169,6 @@ esac
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
 enable_win16=${enable_win16:-no}
 
-if test "x$enable_win16" != "xyes"
-then
-    enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_winevdm=${enable_winevdm:-no}
-    enable_wow32=${enable_wow32:-no}
-fi
-
 dnl Some special cases for the wow64 build
 if test -n "$with_wine64"
 then
@@ -2524,7 +2517,7 @@ WINE_CONFIG_DLL(vnbt.vxd,enable_win16)
 WINE_CONFIG_DLL(vnetbios.vxd,enable_win16)
 WINE_CONFIG_DLL(vtdapi.vxd,enable_win16)
 WINE_CONFIG_DLL(vwin32.vxd,enable_win16)
-WINE_CONFIG_DLL(w32skrnl)
+WINE_CONFIG_DLL(w32skrnl,enable_win16)
 WINE_CONFIG_DLL(w32sys.dll16,enable_win16)
 WINE_CONFIG_DLL(wbemprox)
 WINE_CONFIG_DLL(wiaservc)
@@ -2574,7 +2567,7 @@ WINE_CONFIG_TEST(dlls/wldap32/tests)
 WINE_CONFIG_DLL(wmi)
 WINE_CONFIG_DLL(wmiutils)
 WINE_CONFIG_DLL(wnaspi32)
-WINE_CONFIG_DLL(wow32)
+WINE_CONFIG_DLL(wow32,enable_win16)
 WINE_CONFIG_DLL(ws2_32)
 WINE_CONFIG_TEST(dlls/ws2_32/tests)
 WINE_CONFIG_DLL(wsock32)
@@ -2643,7 +2636,7 @@ WINE_CONFIG_PROGRAM(winemenubuilder,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_PROGRAM(winemine,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS,ALL_PROGRAM_BIN_INSTALL_DIRS])
 WINE_CONFIG_PROGRAM(winepath,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS,ALL_PROGRAM_BIN_INSTALL_DIRS])
 WINE_CONFIG_PROGRAM(winetest,[ALL_PROGRAM_DIRS])
-WINE_CONFIG_PROGRAM(winevdm,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
+WINE_CONFIG_PROGRAM(winevdm,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS],enable_win16)
 WINE_CONFIG_PROGRAM(winhelp.exe16,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS],enable_win16)
 WINE_CONFIG_PROGRAM(winhlp32,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_PROGRAM(winoldap.mod16,[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS],enable_win16)

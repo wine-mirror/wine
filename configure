@@ -4099,13 +4099,6 @@ esac
 
 enable_win16=${enable_win16:-no}
 
-if test "x$enable_win16" != "xyes"
-then
-    enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_winevdm=${enable_winevdm:-no}
-    enable_wow32=${enable_wow32:-no}
-fi
-
 if test -n "$with_wine64"
 then
     if test "x$enable_win64" = "xyes"
@@ -16906,7 +16899,7 @@ ac_config_files="$ac_config_files dlls/vwin32.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/w32skrnl/Makefile"
-test "x$enable_w32skrnl" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	w32skrnl"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/w32skrnl/Makefile: dlls/w32skrnl/Makefile.in dlls/Makedll.rules"
@@ -17306,7 +17299,7 @@ ac_config_files="$ac_config_files dlls/wnaspi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wow32/Makefile"
-test "x$enable_wow32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	wow32"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wow32/Makefile: dlls/wow32/Makefile.in dlls/Makedll.rules"
@@ -17909,7 +17902,7 @@ ac_config_files="$ac_config_files programs/winetest/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winevdm/Makefile"
-test "x$enable_winevdm" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+test "x$enable_win16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winevdm" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
 	winevdm"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
