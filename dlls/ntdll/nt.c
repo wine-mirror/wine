@@ -845,10 +845,13 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             info->Level = 3;
             break;
         }
-        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
-        user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
-        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
-        user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]       = !(regs2[3] & 1);
+        user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE]   = (regs2[3] & (1 << 4 )) >> 4;
+        user_shared_data->ProcessorFeatures[PF_PAE_ENABLED]                   = (regs2[3] & (1 << 6 )) >> 6;
+        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE]       = (regs2[3] & (1 << 8 )) >> 8;
+        user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE]    = (regs2[3] & (1 << 23)) >> 23;
+        user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = (regs2[3] & (1 << 25)) >> 25;
+        user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 26)) >> 26;
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
