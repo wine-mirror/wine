@@ -58,15 +58,37 @@ typedef struct input_iids_t {
 
 static const IID *setinput_full[] = {
     &IID_IXmlReaderInput,
+    &IID_IStream,
     &IID_ISequentialStream,
-    &IID_IStream
+    NULL
+};
+
+/* this applies to early xmllite versions */
+static const IID *setinput_full_old[] = {
+    &IID_IXmlReaderInput,
+    &IID_ISequentialStream,
+    &IID_IStream,
+    NULL
+};
+
+/* after ::SetInput(IXmlReaderInput*) */
+static const IID *setinput_readerinput[] = {
+    &IID_IStream,
+    &IID_ISequentialStream,
+    NULL
+};
+
+static const IID *empty_seq[] = {
+    NULL
 };
 
 static input_iids_t input_iids;
 
-static void ok_iids_(const input_iids_t *iids, const IID **expected, int size, int todo, int line)
+static void ok_iids_(const input_iids_t *iids, const IID **expected, const IID **exp_broken, int todo, int line)
 {
-    int i;
+    int i = 0, size = 0;
+
+    while (expected[i++]) size++;
 
     if (todo) {
         todo_wine
@@ -78,11 +100,12 @@ static void ok_iids_(const input_iids_t *iids, const IID **expected, int size, i
     if (iids->count != size) return;
 
     for (i = 0; i < size; i++) {
-        ok_(__FILE__, line)(IsEqualGUID(&iids->iids[i], expected[i]),
-             "Wrong IID(%d), got (%s)\n", i, debugstr_guid(&iids->iids[i]));
+        ok_(__FILE__, line)(IsEqualGUID(&iids->iids[i], expected[i]) ||
+            (exp_broken ? broken(IsEqualGUID(&iids->iids[i], exp_broken[i])) : FALSE),
+            "Wrong IID(%d), got (%s)\n", i, debugstr_guid(&iids->iids[i]));
     }
 }
-#define ok_iids(got, exp, size, todo) ok_iids_(got, exp, size, todo, __LINE__)
+#define ok_iids(got, exp, brk, todo) ok_iids_(got, exp, brk, todo, __LINE__)
 
 typedef struct _testinput
 {
@@ -199,7 +222,7 @@ static void test_reader_create(void)
     input_iids.count = 0;
     hr = IXmlReader_SetInput(reader, input);
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
-    ok_iids(&input_iids, setinput_full, sizeof(setinput_full)/sizeof(REFIID), FALSE);
+    ok_iids(&input_iids, setinput_full, setinput_full_old, FALSE);
 
     IUnknown_Release(input);
 
@@ -209,7 +232,8 @@ static void test_reader_create(void)
 static void test_readerinput(void)
 {
     IXmlReaderInput *reader_input;
-    IUnknown *obj;
+    IXmlReader *reader, *reader2;
+    IUnknown *obj, *input;
     IStream *stream;
     HRESULT hr;
     LONG ref;
@@ -228,10 +252,39 @@ static void test_readerinput(void)
     hr = pCreateXmlReaderInputWithEncodingName((IUnknown*)stream, NULL, NULL, FALSE, NULL, &reader_input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    /* IXmlReader grabs a stream reference */
+    /* IXmlReaderInput grabs a stream reference */
     ref = IStream_AddRef(stream);
-    todo_wine ok(ref == 3, "Expected 3, got %d\n", ref);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
     IStream_Release(stream);
+
+    /* try ::SetInput() with valid IXmlReaderInput */
+    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IUnknown_Release(reader_input);
+
+    hr = IXmlReader_SetInput(reader, reader_input);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    /* IXmlReader grabs a IXmlReaderInput reference */
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IUnknown_Release(reader_input);
+
+    ref = IStream_AddRef(stream);
+    ok(ref == 4, "Expected 4, got %d\n", ref);
+    IStream_Release(stream);
+
+    IXmlReader_Release(reader);
+
+    ref = IStream_AddRef(stream);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IStream_Release(stream);
+
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IUnknown_Release(reader_input);
 
     /* IID_IXmlReaderInput */
     /* it returns a kind of private undocumented vtable incompatible with IUnknown,
@@ -246,6 +299,66 @@ static void test_readerinput(void)
 
     IUnknown_Release(reader_input);
     IStream_Release(stream);
+
+    /* test input interface selection sequence */
+    hr = testinput_createinstance((void**)&input);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    input_iids.count = 0;
+    ref = IUnknown_AddRef(input);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IUnknown_Release(input);
+    hr = pCreateXmlReaderInputWithEncodingName(input, NULL, NULL, FALSE, NULL, &reader_input);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok_iids(&input_iids, empty_seq, NULL, FALSE);
+    /* IXmlReaderInput stores stream interface as IUnknown */
+    ref = IUnknown_AddRef(input);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IUnknown_Release(input);
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    input_iids.count = 0;
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IUnknown_Release(reader_input);
+    ref = IUnknown_AddRef(input);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IUnknown_Release(input);
+    hr = IXmlReader_SetInput(reader, reader_input);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
+    ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
+
+    ref = IUnknown_AddRef(input);
+    ok(ref == 3, "Expected 3, got %d\n", ref);
+    IUnknown_Release(input);
+
+    ref = IUnknown_AddRef(reader_input);
+    ok(ref == 2, "Expected 2, got %d\n", ref);
+    IUnknown_Release(reader_input);
+    /* repeat another time, no check or caching here */
+    input_iids.count = 0;
+    hr = IXmlReader_SetInput(reader, reader_input);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
+    ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
+
+    /* another reader */
+    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader2, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* resolving from IXmlReaderInput to IStream/ISequentialStream is done at
+       ::SetInput() level, each time it's called */
+    input_iids.count = 0;
+    hr = IXmlReader_SetInput(reader2, reader_input);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
+    ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
+
+    IXmlReader_Release(reader2);
+    IXmlReader_Release(reader);
+
+    IUnknown_Release(reader_input);
+    IUnknown_Release(input);
 }
 
 START_TEST(reader)

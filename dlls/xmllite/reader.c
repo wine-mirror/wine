@@ -34,17 +34,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 /* not defined in public headers */
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
+static HRESULT xmlreaderinput_query_for_stream(IXmlReaderInput *iface, void **pObj);
+
 typedef struct _xmlreader
 {
     const IXmlReaderVtbl *lpVtbl;
     LONG ref;
     IXmlReaderInput *input;
+    ISequentialStream *stream;/* stored as sequential stream, cause currently
+                                 optimizations possible with IStream aren't implemented */
 } xmlreader;
 
 typedef struct _xmlreaderinput
 {
     const IUnknownVtbl *lpVtbl;
     LONG ref;
+    IUnknown *input;          /* reference passed on IXmlReaderInput creation */
 } xmlreaderinput;
 
 static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
@@ -96,7 +101,11 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
-        if (This->input) IUnknown_Release(This->input);
+        if (This->input)
+        {
+            IUnknown_Release(This->stream);
+            IUnknown_Release(This->input);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -123,22 +132,22 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     hr = IUnknown_QueryInterface(input, &IID_IXmlReaderInput, (void**)&This->input);
     if (hr != S_OK)
     {
-        IUnknown *stream_input = NULL;
-
-        hr = IUnknown_QueryInterface(input, &IID_ISequentialStream, (void**)&stream_input);
-        if (hr != S_OK)
-        {
-            hr = IUnknown_QueryInterface(input, &IID_IStream, (void**)&stream_input);
-            if (hr != S_OK) return hr;
-        }
-
         /* create IXmlReaderInput basing on supplied interface */
-        IUnknown_Release(stream_input);
-        return CreateXmlReaderInputWithEncodingName(stream_input,
+        hr = CreateXmlReaderInputWithEncodingName(input,
                                          NULL, NULL, FALSE, NULL, &This->input);
+        if (hr != S_OK) return hr;
     }
 
-    return S_OK;
+    /* set stream for supplied IXmlReaderInput */
+    hr = xmlreaderinput_query_for_stream(This->input, (void**)&This->stream);
+    if (hr != S_OK)
+    {
+        /* IXmlReaderInput doesn't provide streaming interface */
+        IUnknown_Release(This->input);
+        This->input = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LONG_PTR *value)
@@ -319,7 +328,22 @@ static const struct IXmlReaderVtbl xmlreader_vtbl =
     xmlreader_IsEOF
 };
 
-/* IXmlReaderInput */
+/** IXmlReaderInput **/
+
+/* Queries already stored interface for IStream/ISequentialStream.
+   Interface supplied on creation will be overwritten */
+static HRESULT xmlreaderinput_query_for_stream(IXmlReaderInput *iface, void **pObj)
+{
+    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(This->input, &IID_IStream, pObj);
+    if (hr != S_OK)
+        hr = IUnknown_QueryInterface(This->input, &IID_ISequentialStream, pObj);
+
+    return hr;
+}
+
 static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFIID riid, void** ppvObject)
 {
     xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
@@ -359,6 +383,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
+        if (This->input) IUnknown_Release(This->input);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -391,6 +416,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
 
     reader->lpVtbl = &xmlreader_vtbl;
     reader->ref = 1;
+    reader->stream = NULL;
     reader->input = NULL;
 
     *pObject = &reader->lpVtbl;
@@ -419,6 +445,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
 
     readerinput->lpVtbl = &xmlreaderinput_vtbl;
     readerinput->ref = 1;
+    IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&readerinput->input);
 
     *ppInput = (IXmlReaderInput*)&readerinput->lpVtbl;
 
