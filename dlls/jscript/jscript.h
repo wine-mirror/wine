@@ -226,6 +226,7 @@ HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_math(script_ctx_t*,DispatchEx**);
 HRESULT create_array(script_ctx_t*,DWORD,DispatchEx**);
 HRESULT create_regexp(script_ctx_t*,const WCHAR *,int,DWORD,DispatchEx**);
+HRESULT create_regexp_var(script_ctx_t*,VARIANT*,VARIANT*,DispatchEx**);
 HRESULT create_string(script_ctx_t*,const WCHAR*,DWORD,DispatchEx**);
 HRESULT create_bool(script_ctx_t*,VARIANT_BOOL,DispatchEx**);
 HRESULT create_number(script_ctx_t*,VARIANT*,DispatchEx**);
