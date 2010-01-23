@@ -972,7 +972,7 @@ static	WORD		MCI_GetMessage(LPCWSTR lpCmd)
 /**************************************************************************
  * 				MCI_GetDWord			[internal]
  */
-static	BOOL		MCI_GetDWord(LPDWORD data, LPWSTR* ptr)
+static	BOOL		MCI_GetDWord(DWORD_PTR* data, LPWSTR* ptr)
 {
     DWORD	val;
     LPWSTR	ret;
@@ -1025,7 +1025,7 @@ static	DWORD	MCI_GetString(LPWSTR* str, LPWSTR* args)
 /**************************************************************************
  * 				MCI_ParseOptArgs		[internal]
  */
-static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCWSTR lpCmd,
+static	DWORD	MCI_ParseOptArgs(DWORD_PTR* data, int _offset, LPCWSTR lpCmd,
 				 LPWSTR args, LPDWORD dwFlags)
 {
     int		len, offset;
@@ -1147,8 +1147,8 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCWSTR lpCmd,
 /**************************************************************************
  * 				MCI_HandleReturnValues	[internal]
  */
-static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD retType, 
-                                       LPDWORD data, LPWSTR lpstrRet, UINT uRetLen)
+static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD retType,
+                                       DWORD_PTR* data, LPWSTR lpstrRet, UINT uRetLen)
 {
     static const WCHAR wszLd  [] = {'%','l','d',0};
     static const WCHAR wszLd4 [] = {'%','l','d',' ','%','l','d',' ','%','l','d',' ','%','l','d',0};
@@ -1226,12 +1226,12 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     LPWINE_MCIDRIVER	wmd = 0;
     DWORD		dwFlags = 0, dwRet = 0;
     int			offset = 0;
-    DWORD		data[MCI_DATA_SIZE];
+    DWORD_PTR		data[MCI_DATA_SIZE];
     DWORD		retType;
     LPCWSTR		lpCmd = 0;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
-    static const WCHAR wszTypeS[] = {'t','y','p','e',' ',0};
+    static const WCHAR  wszTypeS[] = {'t','y','p','e',' ',0};
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
@@ -1278,15 +1278,15 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    tmp = devType; devType = dev; dev = tmp;
 
 	    dwFlags |= MCI_OPEN_TYPE;
-	    data[2] = (DWORD)devType;
+	    data[2] = (DWORD_PTR)devType;
 	    devType = str_dup_upper(devType);
 	    dwFlags |= MCI_OPEN_ELEMENT;
-	    data[3] = (DWORD)dev;
+	    data[3] = (DWORD_PTR)dev;
 	} else if (DRIVER_GetLibName(dev, wszMci, buf, sizeof(buf))) {
             /* this is the name of a mci driver's type */
 	    tmp = strchrW(dev, ' ');
 	    if (tmp) *tmp = '\0';
-	    data[2] = (DWORD)dev;
+	    data[2] = (DWORD_PTR)dev;
 	    devType = str_dup_upper(dev);
 	    if (tmp) *tmp = ' ';
 	    dwFlags |= MCI_OPEN_TYPE;
@@ -1305,7 +1305,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 		devType = str_dup_upper(buf);
 	    }
 	    dwFlags |= MCI_OPEN_ELEMENT;
-	    data[3] = (DWORD)dev;
+	    data[3] = (DWORD_PTR)dev;
 	}
 	if (!strstrW(args, wszSAliasS) && !dev) {
 	    dwRet = MCIERR_NEW_REQUIRES_ALIAS;
@@ -1362,7 +1362,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     switch (retType = MCI_GetReturnType(lpCmd)) {
     case 0:		offset = 1;	break;
     case MCI_INTEGER:	offset = 2;	break;
-    case MCI_STRING:	data[1] = (DWORD)lpstrRet; data[2] = uRetLen; offset = 3; break;
+    case MCI_STRING:	data[1] = (DWORD_PTR)lpstrRet; data[2] = uRetLen; offset = 3; break;
     case MCI_RECT:	offset = 5;	break;
     default:	ERR("oops\n");
     }
@@ -1375,7 +1375,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 
     /* set up call back */
     if (dwFlags & MCI_NOTIFY) {
-	data[0] = (DWORD)hwndCallback;
+	data[0] = (DWORD_PTR)hwndCallback;
     }
 
     /* FIXME: the command should get it's own notification window set up and
@@ -1383,7 +1383,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
      */
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
-    TRACE("[%d, %s, %08x, %08x/%s %08x/%s %08x/%s %08x/%s %08x/%s %08x/%s]\n",
+    TRACE("[%d, %s, %08x, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
 	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
 	  data[0], debugstr_w((WCHAR *)data[0]), data[1], debugstr_w((WCHAR *)data[1]),
 	  data[2], debugstr_w((WCHAR *)data[2]), data[3], debugstr_w((WCHAR *)data[3]),
@@ -2214,7 +2214,7 @@ HTASK WINAPI mciGetCreatorTask(MCIDEVICEID uDeviceID)
     LPWINE_MCIDRIVER	wmd;
     HTASK ret = 0;
 
-    if ((wmd = MCI_GetDriver(uDeviceID))) ret = (HTASK)wmd->CreatorThread;
+    if ((wmd = MCI_GetDriver(uDeviceID))) ret = (HTASK)(DWORD_PTR)wmd->CreatorThread;
 
     TRACE("(%u) => %p\n", uDeviceID, ret);
     return ret;
