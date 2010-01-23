@@ -726,7 +726,7 @@ static IActiveScript *create_script(void)
     return script;
 }
 
-static void parse_script(DWORD flags, BSTR script_str)
+static HRESULT parse_script(DWORD flags, BSTR script_str)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -734,14 +734,14 @@ static void parse_script(DWORD flags, BSTR script_str)
 
     engine = create_script();
     if(!engine)
-        return;
+        return S_OK;
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
     if (FAILED(hres))
     {
         IActiveScript_Release(engine);
-        return;
+        return hres;
     }
 
     hres = IActiveScriptParse64_InitNew(parser);
@@ -763,11 +763,12 @@ static void parse_script(DWORD flags, BSTR script_str)
     ok(script_disp != (IDispatch*)&Global, "script_disp == Global\n");
 
     hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
     IUnknown_Release(parser);
+
+    return hres;
 }
 
 static HRESULT parse_htmlscript(BSTR script_str)
@@ -813,9 +814,13 @@ static HRESULT parse_htmlscript(BSTR script_str)
 
 static void parse_script_af(DWORD flags, const char *src)
 {
-    BSTR tmp = a2bstr(src);
-    parse_script(flags, tmp);
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(src);
+    hres = parse_script(flags, tmp);
     SysFreeString(tmp);
+    ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
 static void parse_script_a(const char *src)
@@ -873,14 +878,17 @@ static BSTR get_script_from_file(const char *filename)
 
 static void run_from_file(const char *filename)
 {
-    BSTR script_str = get_script_from_file(filename);
+    BSTR script_str;
+    HRESULT hres;
+
+    script_str = get_script_from_file(filename);
+    if(!script_str)
+        return;
 
     strict_dispid_check = FALSE;
-
-    if(script_str)
-        parse_script(SCRIPTITEM_GLOBALMEMBERS, script_str);
-
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, script_str);
     SysFreeString(script_str);
+    ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
 static void run_from_res(const char *name)
@@ -889,6 +897,7 @@ static void run_from_res(const char *name)
     DWORD size, len;
     BSTR str;
     HRSRC src;
+    HRESULT hres;
 
     strict_dispid_check = FALSE;
     test_name = name;
@@ -905,10 +914,11 @@ static void run_from_res(const char *name)
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    parse_script(SCRIPTITEM_GLOBALMEMBERS, str);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, str);
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
+    ok(hres == S_OK, "parse_script failed: %08x\n", hres);
     SysFreeString(str);
 }
 
@@ -1078,6 +1088,18 @@ static void run_tests(void)
     ok(hres != S_OK, "ParseScriptText have not failed\n");
 }
 
+static BOOL check_jscript(void)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
+    hres = parse_script(0, str);
+    SysFreeString(str);
+
+    return hres == S_OK;
+}
+
 START_TEST(run)
 {
     int argc;
@@ -1087,7 +1109,9 @@ START_TEST(run)
 
     CoInitialize(NULL);
 
-    if(argc > 2) {
+    if(!check_jscript()) {
+        win_skip("Broken engine, probably too old\n");
+    }else if(argc > 2) {
         run_from_file(argv[2]);
     }else {
         trace("invoke version 0\n");
