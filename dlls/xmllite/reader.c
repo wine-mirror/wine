@@ -43,6 +43,7 @@ typedef struct _xmlreader
     IXmlReaderInput *input;
     ISequentialStream *stream;/* stored as sequential stream, cause currently
                                  optimizations possible with IStream aren't implemented */
+    XmlReadState state;
 } xmlreader;
 
 typedef struct _xmlreaderinput
@@ -122,11 +123,21 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     if (This->input)
     {
         IUnknown_Release(This->input);
-        This->input = NULL;
+        This->input  = NULL;
+    }
+
+    if (This->stream)
+    {
+        IUnknown_Release(This->stream);
+        This->stream = NULL;
     }
 
     /* just reset current input */
-    if (!input) return S_OK;
+    if (!input)
+    {
+        This->state = XmlReadState_Closed;
+        return S_OK;
+    }
 
     /* now try IXmlReaderInput, ISequentialStream, IStream */
     hr = IUnknown_QueryInterface(input, &IID_IXmlReaderInput, (void**)&This->input);
@@ -146,14 +157,31 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
         IUnknown_Release(This->input);
         This->input = NULL;
     }
+    else
+        This->state = XmlReadState_Initial;
 
     return hr;
 }
 
 static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LONG_PTR *value)
 {
-    FIXME("(%p %u %p): stub\n", iface, property, value);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p %u %p)\n", This, property, value);
+
+    if (!value) return E_INVALIDARG;
+
+    switch (property)
+    {
+        case XmlReaderProperty_ReadState:
+            *value = This->state;
+            break;
+        default:
+            FIXME("Unimplemented property (%u)\n", property);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LONG_PTR value)
@@ -418,6 +446,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
     reader->ref = 1;
     reader->stream = NULL;
     reader->input = NULL;
+    reader->state = XmlReadState_Closed;
 
     *pObject = &reader->lpVtbl;
 
