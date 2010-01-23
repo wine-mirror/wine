@@ -189,6 +189,34 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 AC_CONFIG_FILES([$1])dnl
 m4_popdef([ac_dir])])
 
+dnl **** Create a dll makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_DLL(name,enable)
+dnl
+AC_DEFUN([WINE_CONFIG_DLL],
+[WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[$2])])
+
+dnl **** Create a program makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_PROGRAM(name,var,enable)
+dnl
+AC_DEFUN([WINE_CONFIG_PROGRAM],
+[WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[programs],[$2],[$3])])
+
+dnl **** Create a test makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_TEST(dir)
+dnl
+AC_DEFUN([WINE_CONFIG_TEST],
+[WINE_CONFIG_MAKEFILE([$1/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])])
+
+dnl **** Create a static lib makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_LIB(name)
+dnl
+AC_DEFUN([WINE_CONFIG_LIB],
+[WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])])
+
 dnl **** Add a message to the list displayed at the end ****
 dnl
 dnl Usage: WINE_NOTICE(notice)
