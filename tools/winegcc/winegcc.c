@@ -199,6 +199,7 @@ struct options
     const char* output_name;
     const char* image_base;
     const char* section_align;
+    const char* lib_suffix;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -520,7 +521,7 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
 {
     char *static_lib, *fullname = 0;
 
-    switch(get_lib_type(opts->target_platform, lib_dirs, library, &fullname))
+    switch(get_lib_type(opts->target_platform, lib_dirs, library, opts->lib_suffix, &fullname))
     {
     case file_arh:
         strarray_add(files, strmake("-a%s", fullname));
@@ -1331,6 +1332,12 @@ int main(int argc, char **argv)
                     {
                         if (argv[i][9] == '=') opts.wine_objdir = argv[i] + 10;
                         else opts.wine_objdir = argv[++i];
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
+                    else if (!strncmp("--lib-suffix", argv[i], 12) && opts.wine_objdir)
+                    {
+                        if (argv[i][12] == '=') opts.lib_suffix = argv[i] + 13;
+                        else opts.lib_suffix = argv[++i];
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;

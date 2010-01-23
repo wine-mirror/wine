@@ -259,7 +259,7 @@ static char* try_lib_path(const char* dir, const char* pre,
 }
 
 static file_type guess_lib_type(enum target_platform platform, const char* dir,
-                                const char* library, char** file)
+                                const char* library, const char *suffix, char** file)
 {
     if (platform != PLATFORM_WINDOWS)
     {
@@ -277,19 +277,21 @@ static file_type guess_lib_type(enum target_platform platform, const char* dir,
     }
 
     /* static archives */
-    if ((*file = try_lib_path(dir, "lib", library, ".a", file_arh)))
+    if ((*file = try_lib_path(dir, "lib", library, suffix, file_arh)))
 	return file_arh;
 
     return file_na;
 }
 
-file_type get_lib_type(enum target_platform platform, strarray* path, const char* library, char** file)
+file_type get_lib_type(enum target_platform platform, strarray* path, const char *library,
+                       const char *suffix, char** file)
 {
     unsigned int i;
 
+    if (!suffix) suffix = ".a";
     for (i = 0; i < path->size; i++)
     {
-        file_type type = guess_lib_type(platform, path->base[i], library, file);
+        file_type type = guess_lib_type(platform, path->base[i], library, suffix, file);
 	if (type != file_na) return type;
     }
     return file_na;
