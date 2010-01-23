@@ -524,13 +524,17 @@ sub update_dlls(@)
     foreach my $mod (sort @lib_symlinks)
     {
         next if $mod =~ /16$/;
-        $text .= sprintf " \\\n\tlib%s.a", $importlibs{$mod};
+        $text .= sprintf " \\\n\tlib%s.cross.a", $importlibs{$mod};
+    }
+    foreach my $mod (sort keys %staticlib_dirs)
+    {
+        $text .= sprintf " \\\n\t%s/lib%s.cross.a", $staticlib_dirs{$mod}, $mod;
     }
     foreach my $mod (sort keys %importlibs)
     {
         next if $mod =~ /16$/;
         next if defined $static_implibs{$mod};
-        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.a";
+        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.cross.a";
     }
     $text .= "\n\n";
     $text .= "\$(TESTSUBDIRS:%=%/__crosstest__): \$(CROSS_IMPLIBS)\n\n";
@@ -548,13 +552,13 @@ sub update_dlls(@)
         {
             $text .= sprintf "%s/lib%s.def: %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
             $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.def\n\n", $dir, $lib;
-            $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
+            $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT) %s/lib%s.cross.a: dummy\n", $dir, $lib, $dir, $lib, $dir, $spec;
             $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
         }
         else
         {
-            $text .= sprintf "%s/lib%s.def %s/lib%s.a: %s/%s.spec \$(WINEBUILD)\n",
-                             $dir, $lib, $dir, $lib, $dir, $spec;
+            $text .= sprintf "%s/lib%s.def %s/lib%s.a %s/lib%s.cross.a: %s/%s.spec \$(WINEBUILD)\n",
+                             $dir, $lib, $dir, $lib, $dir, $lib, $dir, $spec;
             $text .= sprintf "\t\@cd %s && \$(MAKE) `basename \$\@`\n\n", $dir;
         }
     }
@@ -564,6 +568,8 @@ sub update_dlls(@)
         my $lib = "lib" . $importlibs{$mod};
         $text .= sprintf "%s.a: %s/%s.a\n", $lib, $dir, $lib;
         $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.a \$@\n\n", $dir, $lib;
+        $text .= sprintf "%s.cross.a: %s/%s.cross.a\n", $lib, $dir, $lib;
+        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.cross.a \$@\n\n", $dir, $lib;
         $text .= sprintf "%s.def: %s/%s.def\n", $lib, $dir, $lib;
         $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.def \$@\n\n", $dir, $lib;
     }
@@ -577,7 +583,10 @@ sub update_dlls(@)
 
     foreach my $mod (sort keys %staticlib_dirs)
     {
+        my $dir = $staticlib_dirs{$mod};
         $text .= sprintf "%s/lib%s.a: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};
+        $text .= sprintf "%s/lib%s.cross.a: dummy\n", $dir, $mod;
+        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.cross.a\n\n", $dir, $mod;
     }
     $text .= "\n# Misc rules\n";
 

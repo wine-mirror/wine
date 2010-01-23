@@ -185,149 +185,156 @@ IMPORT_LIBS = \
 	xinput1_3/libxinput.$(IMPLIBEXT)
 
 CROSS_IMPLIBS = \
-	libd3dx9.a \
-	libwinspool.a \
-	libxinput.a \
-	aclui/libaclui.a \
-	activeds/libactiveds.a \
-	advapi32/libadvapi32.a \
-	advpack/libadvpack.a \
-	atl/libatl.a \
-	avicap32/libavicap32.a \
-	avifil32/libavifil32.a \
-	avrt/libavrt.a \
-	cabinet/libcabinet.a \
-	capi2032/libcapi2032.a \
-	cards/libcards.a \
-	cfgmgr32/libcfgmgr32.a \
-	clusapi/libclusapi.a \
-	comctl32/libcomctl32.a \
-	comdlg32/libcomdlg32.a \
-	compstui/libcompstui.a \
-	credui/libcredui.a \
-	crtdll/libcrtdll.a \
-	crypt32/libcrypt32.a \
-	cryptdll/libcryptdll.a \
-	cryptnet/libcryptnet.a \
-	cryptui/libcryptui.a \
-	ctl3d32/libctl3d32.a \
-	d3d10/libd3d10.a \
-	d3d10core/libd3d10core.a \
-	d3d8/libd3d8.a \
-	d3d9/libd3d9.a \
-	d3dim/libd3dim.a \
-	d3drm/libd3drm.a \
-	d3dx9_36/libd3dx9.a \
-	d3dxof/libd3dxof.a \
-	dbghelp/libdbghelp.a \
-	dciman32/libdciman32.a \
-	ddraw/libddraw.a \
-	dinput8/libdinput8.a \
-	dmusic32/libdmusic32.a \
-	dnsapi/libdnsapi.a \
-	dplay/libdplay.a \
-	dplayx/libdplayx.a \
-	dpnet/libdpnet.a \
-	dsound/libdsound.a \
-	dwmapi/libdwmapi.a \
-	dxgi/libdxgi.a \
-	gdi32/libgdi32.a \
-	gdiplus/libgdiplus.a \
-	glu32/libglu32.a \
-	hid/libhid.a \
-	hlink/libhlink.a \
-	imagehlp/libimagehlp.a \
-	imm32/libimm32.a \
-	inetcomm/libinetcomm.a \
-	iphlpapi/libiphlpapi.a \
-	kernel32/libkernel32.a \
-	loadperf/libloadperf.a \
-	lz32/liblz32.a \
-	mapi32/libmapi32.a \
-	mlang/libmlang.a \
-	mpr/libmpr.a \
-	mprapi/libmprapi.a \
-	msacm32/libmsacm32.a \
-	mscms/libmscms.a \
-	msdmo/libmsdmo.a \
-	mshtml/libmshtml.a \
-	msi/libmsi.a \
-	msimg32/libmsimg32.a \
-	msvcr71/libmsvcr71.a \
-	msvcrt/libmsvcrt.a \
-	msvcrt20/libmsvcrt20.a \
-	msvcrt40/libmsvcrt40.a \
-	msvcrtd/libmsvcrtd.a \
-	msvfw32/libmsvfw32.a \
-	mswsock/libmswsock.a \
-	nddeapi/libnddeapi.a \
-	netapi32/libnetapi32.a \
-	newdev/libnewdev.a \
-	ntdll/libntdll.a \
-	ntdsapi/libntdsapi.a \
-	ntoskrnl.exe/libntoskrnl.exe.a \
-	odbc32/libodbc32.a \
-	odbccp32/libodbccp32.a \
-	ole32/libole32.a \
-	oleacc/liboleacc.a \
-	oleaut32/liboleaut32.a \
-	olecli32/libolecli32.a \
-	oledlg/liboledlg.a \
-	olepro32/libolepro32.a \
-	olesvr32/libolesvr32.a \
-	opengl32/libopengl32.a \
-	pdh/libpdh.a \
-	powrprof/libpowrprof.a \
-	psapi/libpsapi.a \
-	quartz/libquartz.a \
-	rasapi32/librasapi32.a \
-	rasdlg/librasdlg.a \
-	resutils/libresutils.a \
-	riched20/libriched20.a \
-	rpcrt4/librpcrt4.a \
-	rsaenh/librsaenh.a \
-	rtutils/librtutils.a \
-	secur32/libsecur32.a \
-	sensapi/libsensapi.a \
-	serialui/libserialui.a \
-	setupapi/libsetupapi.a \
-	sfc/libsfc.a \
-	sfc_os/libsfc_os.a \
-	shdocvw/libshdocvw.a \
-	shell32/libshell32.a \
-	shfolder/libshfolder.a \
-	shlwapi/libshlwapi.a \
-	slc/libslc.a \
-	snmpapi/libsnmpapi.a \
-	spoolss/libspoolss.a \
-	sti/libsti.a \
-	tapi32/libtapi32.a \
-	unicows/libunicows.a \
-	url/liburl.a \
-	urlmon/liburlmon.a \
-	user32/libuser32.a \
-	userenv/libuserenv.a \
-	usp10/libusp10.a \
-	uxtheme/libuxtheme.a \
-	vdmdbg/libvdmdbg.a \
-	version/libversion.a \
-	windowscodecs/libwindowscodecs.a \
-	wined3d/libwined3d.a \
-	winhttp/libwinhttp.a \
-	wininet/libwininet.a \
-	winmm/libwinmm.a \
-	winnls32/libwinnls32.a \
-	winscard/libwinscard.a \
-	winspool.drv/libwinspool.a \
-	wintab32/libwintab32.a \
-	wintrust/libwintrust.a \
-	wldap32/libwldap32.a \
-	wnaspi32/libwnaspi32.a \
-	wow32/libwow32.a \
-	ws2_32/libws2_32.a \
-	wsock32/libwsock32.a \
-	wtsapi32/libwtsapi32.a \
-	xinput1_3/libxinput.a
+	libd3dx9.cross.a \
+	libwinspool.cross.a \
+	libxinput.cross.a \
+	adsiid/libadsiid.cross.a \
+	dxerr8/libdxerr8.cross.a \
+	dxerr9/libdxerr9.cross.a \
+	dxguid/libdxguid.cross.a \
+	strmiids/libstrmiids.cross.a \
+	uuid/libuuid.cross.a \
+	winecrt0/libwinecrt0.cross.a \
+	aclui/libaclui.cross.a \
+	activeds/libactiveds.cross.a \
+	advapi32/libadvapi32.cross.a \
+	advpack/libadvpack.cross.a \
+	atl/libatl.cross.a \
+	avicap32/libavicap32.cross.a \
+	avifil32/libavifil32.cross.a \
+	avrt/libavrt.cross.a \
+	cabinet/libcabinet.cross.a \
+	capi2032/libcapi2032.cross.a \
+	cards/libcards.cross.a \
+	cfgmgr32/libcfgmgr32.cross.a \
+	clusapi/libclusapi.cross.a \
+	comctl32/libcomctl32.cross.a \
+	comdlg32/libcomdlg32.cross.a \
+	compstui/libcompstui.cross.a \
+	credui/libcredui.cross.a \
+	crtdll/libcrtdll.cross.a \
+	crypt32/libcrypt32.cross.a \
+	cryptdll/libcryptdll.cross.a \
+	cryptnet/libcryptnet.cross.a \
+	cryptui/libcryptui.cross.a \
+	ctl3d32/libctl3d32.cross.a \
+	d3d10/libd3d10.cross.a \
+	d3d10core/libd3d10core.cross.a \
+	d3d8/libd3d8.cross.a \
+	d3d9/libd3d9.cross.a \
+	d3dim/libd3dim.cross.a \
+	d3drm/libd3drm.cross.a \
+	d3dx9_36/libd3dx9.cross.a \
+	d3dxof/libd3dxof.cross.a \
+	dbghelp/libdbghelp.cross.a \
+	dciman32/libdciman32.cross.a \
+	ddraw/libddraw.cross.a \
+	dinput8/libdinput8.cross.a \
+	dmusic32/libdmusic32.cross.a \
+	dnsapi/libdnsapi.cross.a \
+	dplay/libdplay.cross.a \
+	dplayx/libdplayx.cross.a \
+	dpnet/libdpnet.cross.a \
+	dsound/libdsound.cross.a \
+	dwmapi/libdwmapi.cross.a \
+	dxgi/libdxgi.cross.a \
+	gdi32/libgdi32.cross.a \
+	gdiplus/libgdiplus.cross.a \
+	glu32/libglu32.cross.a \
+	hid/libhid.cross.a \
+	hlink/libhlink.cross.a \
+	imagehlp/libimagehlp.cross.a \
+	imm32/libimm32.cross.a \
+	inetcomm/libinetcomm.cross.a \
+	iphlpapi/libiphlpapi.cross.a \
+	kernel32/libkernel32.cross.a \
+	loadperf/libloadperf.cross.a \
+	lz32/liblz32.cross.a \
+	mapi32/libmapi32.cross.a \
+	mlang/libmlang.cross.a \
+	mpr/libmpr.cross.a \
+	mprapi/libmprapi.cross.a \
+	msacm32/libmsacm32.cross.a \
+	mscms/libmscms.cross.a \
+	msdmo/libmsdmo.cross.a \
+	mshtml/libmshtml.cross.a \
+	msi/libmsi.cross.a \
+	msimg32/libmsimg32.cross.a \
+	msvcr71/libmsvcr71.cross.a \
+	msvcrt/libmsvcrt.cross.a \
+	msvcrt20/libmsvcrt20.cross.a \
+	msvcrt40/libmsvcrt40.cross.a \
+	msvcrtd/libmsvcrtd.cross.a \
+	msvfw32/libmsvfw32.cross.a \
+	mswsock/libmswsock.cross.a \
+	nddeapi/libnddeapi.cross.a \
+	netapi32/libnetapi32.cross.a \
+	newdev/libnewdev.cross.a \
+	ntdll/libntdll.cross.a \
+	ntdsapi/libntdsapi.cross.a \
+	ntoskrnl.exe/libntoskrnl.exe.cross.a \
+	odbc32/libodbc32.cross.a \
+	odbccp32/libodbccp32.cross.a \
+	ole32/libole32.cross.a \
+	oleacc/liboleacc.cross.a \
+	oleaut32/liboleaut32.cross.a \
+	olecli32/libolecli32.cross.a \
+	oledlg/liboledlg.cross.a \
+	olepro32/libolepro32.cross.a \
+	olesvr32/libolesvr32.cross.a \
+	opengl32/libopengl32.cross.a \
+	pdh/libpdh.cross.a \
+	powrprof/libpowrprof.cross.a \
+	psapi/libpsapi.cross.a \
+	quartz/libquartz.cross.a \
+	rasapi32/librasapi32.cross.a \
+	rasdlg/librasdlg.cross.a \
+	resutils/libresutils.cross.a \
+	riched20/libriched20.cross.a \
+	rpcrt4/librpcrt4.cross.a \
+	rsaenh/librsaenh.cross.a \
+	rtutils/librtutils.cross.a \
+	secur32/libsecur32.cross.a \
+	sensapi/libsensapi.cross.a \
+	serialui/libserialui.cross.a \
+	setupapi/libsetupapi.cross.a \
+	sfc/libsfc.cross.a \
+	sfc_os/libsfc_os.cross.a \
+	shdocvw/libshdocvw.cross.a \
+	shell32/libshell32.cross.a \
+	shfolder/libshfolder.cross.a \
+	shlwapi/libshlwapi.cross.a \
+	slc/libslc.cross.a \
+	snmpapi/libsnmpapi.cross.a \
+	spoolss/libspoolss.cross.a \
+	sti/libsti.cross.a \
+	tapi32/libtapi32.cross.a \
+	unicows/libunicows.cross.a \
+	url/liburl.cross.a \
+	urlmon/liburlmon.cross.a \
+	user32/libuser32.cross.a \
+	userenv/libuserenv.cross.a \
+	usp10/libusp10.cross.a \
+	uxtheme/libuxtheme.cross.a \
+	vdmdbg/libvdmdbg.cross.a \
+	version/libversion.cross.a \
+	windowscodecs/libwindowscodecs.cross.a \
+	wined3d/libwined3d.cross.a \
+	winhttp/libwinhttp.cross.a \
+	wininet/libwininet.cross.a \
+	winmm/libwinmm.cross.a \
+	winnls32/libwinnls32.cross.a \
+	winscard/libwinscard.cross.a \
+	winspool.drv/libwinspool.cross.a \
+	wintab32/libwintab32.cross.a \
+	wintrust/libwintrust.cross.a \
+	wldap32/libwldap32.cross.a \
+	wnaspi32/libwnaspi32.cross.a \
+	wow32/libwow32.cross.a \
+	ws2_32/libws2_32.cross.a \
+	wsock32/libwsock32.cross.a \
+	wtsapi32/libwtsapi32.cross.a \
+	xinput1_3/libxinput.cross.a
 
 $(TESTSUBDIRS:%=%/__crosstest__): $(CROSS_IMPLIBS)
 
@@ -337,437 +344,440 @@ testsubdirs: $(TESTSUBDIRS)
 
 .PHONY: implib testsubdirs
 
-aclui/libaclui.def aclui/libaclui.a: aclui/aclui.spec $(WINEBUILD)
+aclui/libaclui.def aclui/libaclui.a aclui/libaclui.cross.a: aclui/aclui.spec $(WINEBUILD)
 	@cd aclui && $(MAKE) `basename $@`
 
-activeds/libactiveds.def activeds/libactiveds.a: activeds/activeds.spec $(WINEBUILD)
+activeds/libactiveds.def activeds/libactiveds.a activeds/libactiveds.cross.a: activeds/activeds.spec $(WINEBUILD)
 	@cd activeds && $(MAKE) `basename $@`
 
-advapi32/libadvapi32.def advapi32/libadvapi32.a: advapi32/advapi32.spec $(WINEBUILD)
+advapi32/libadvapi32.def advapi32/libadvapi32.a advapi32/libadvapi32.cross.a: advapi32/advapi32.spec $(WINEBUILD)
 	@cd advapi32 && $(MAKE) `basename $@`
 
-advpack/libadvpack.def advpack/libadvpack.a: advpack/advpack.spec $(WINEBUILD)
+advpack/libadvpack.def advpack/libadvpack.a advpack/libadvpack.cross.a: advpack/advpack.spec $(WINEBUILD)
 	@cd advpack && $(MAKE) `basename $@`
 
-atl/libatl.def atl/libatl.a: atl/atl.spec $(WINEBUILD)
+atl/libatl.def atl/libatl.a atl/libatl.cross.a: atl/atl.spec $(WINEBUILD)
 	@cd atl && $(MAKE) `basename $@`
 
-avicap32/libavicap32.def avicap32/libavicap32.a: avicap32/avicap32.spec $(WINEBUILD)
+avicap32/libavicap32.def avicap32/libavicap32.a avicap32/libavicap32.cross.a: avicap32/avicap32.spec $(WINEBUILD)
 	@cd avicap32 && $(MAKE) `basename $@`
 
-avifil32/libavifil32.def avifil32/libavifil32.a: avifil32/avifil32.spec $(WINEBUILD)
+avifil32/libavifil32.def avifil32/libavifil32.a avifil32/libavifil32.cross.a: avifil32/avifil32.spec $(WINEBUILD)
 	@cd avifil32 && $(MAKE) `basename $@`
 
-avrt/libavrt.def avrt/libavrt.a: avrt/avrt.spec $(WINEBUILD)
+avrt/libavrt.def avrt/libavrt.a avrt/libavrt.cross.a: avrt/avrt.spec $(WINEBUILD)
 	@cd avrt && $(MAKE) `basename $@`
 
-cabinet/libcabinet.def cabinet/libcabinet.a: cabinet/cabinet.spec $(WINEBUILD)
+cabinet/libcabinet.def cabinet/libcabinet.a cabinet/libcabinet.cross.a: cabinet/cabinet.spec $(WINEBUILD)
 	@cd cabinet && $(MAKE) `basename $@`
 
-capi2032/libcapi2032.def capi2032/libcapi2032.a: capi2032/capi2032.spec $(WINEBUILD)
+capi2032/libcapi2032.def capi2032/libcapi2032.a capi2032/libcapi2032.cross.a: capi2032/capi2032.spec $(WINEBUILD)
 	@cd capi2032 && $(MAKE) `basename $@`
 
-cards/libcards.def cards/libcards.a: cards/cards.spec $(WINEBUILD)
+cards/libcards.def cards/libcards.a cards/libcards.cross.a: cards/cards.spec $(WINEBUILD)
 	@cd cards && $(MAKE) `basename $@`
 
-cfgmgr32/libcfgmgr32.def cfgmgr32/libcfgmgr32.a: cfgmgr32/cfgmgr32.spec $(WINEBUILD)
+cfgmgr32/libcfgmgr32.def cfgmgr32/libcfgmgr32.a cfgmgr32/libcfgmgr32.cross.a: cfgmgr32/cfgmgr32.spec $(WINEBUILD)
 	@cd cfgmgr32 && $(MAKE) `basename $@`
 
-clusapi/libclusapi.def clusapi/libclusapi.a: clusapi/clusapi.spec $(WINEBUILD)
+clusapi/libclusapi.def clusapi/libclusapi.a clusapi/libclusapi.cross.a: clusapi/clusapi.spec $(WINEBUILD)
 	@cd clusapi && $(MAKE) `basename $@`
 
-comctl32/libcomctl32.def comctl32/libcomctl32.a: comctl32/comctl32.spec $(WINEBUILD)
+comctl32/libcomctl32.def comctl32/libcomctl32.a comctl32/libcomctl32.cross.a: comctl32/comctl32.spec $(WINEBUILD)
 	@cd comctl32 && $(MAKE) `basename $@`
 
-comdlg32/libcomdlg32.def comdlg32/libcomdlg32.a: comdlg32/comdlg32.spec $(WINEBUILD)
+comdlg32/libcomdlg32.def comdlg32/libcomdlg32.a comdlg32/libcomdlg32.cross.a: comdlg32/comdlg32.spec $(WINEBUILD)
 	@cd comdlg32 && $(MAKE) `basename $@`
 
-compstui/libcompstui.def compstui/libcompstui.a: compstui/compstui.spec $(WINEBUILD)
+compstui/libcompstui.def compstui/libcompstui.a compstui/libcompstui.cross.a: compstui/compstui.spec $(WINEBUILD)
 	@cd compstui && $(MAKE) `basename $@`
 
-credui/libcredui.def credui/libcredui.a: credui/credui.spec $(WINEBUILD)
+credui/libcredui.def credui/libcredui.a credui/libcredui.cross.a: credui/credui.spec $(WINEBUILD)
 	@cd credui && $(MAKE) `basename $@`
 
-crtdll/libcrtdll.def crtdll/libcrtdll.a: crtdll/crtdll.spec $(WINEBUILD)
+crtdll/libcrtdll.def crtdll/libcrtdll.a crtdll/libcrtdll.cross.a: crtdll/crtdll.spec $(WINEBUILD)
 	@cd crtdll && $(MAKE) `basename $@`
 
-crypt32/libcrypt32.def crypt32/libcrypt32.a: crypt32/crypt32.spec $(WINEBUILD)
+crypt32/libcrypt32.def crypt32/libcrypt32.a crypt32/libcrypt32.cross.a: crypt32/crypt32.spec $(WINEBUILD)
 	@cd crypt32 && $(MAKE) `basename $@`
 
-cryptdll/libcryptdll.def cryptdll/libcryptdll.a: cryptdll/cryptdll.spec $(WINEBUILD)
+cryptdll/libcryptdll.def cryptdll/libcryptdll.a cryptdll/libcryptdll.cross.a: cryptdll/cryptdll.spec $(WINEBUILD)
 	@cd cryptdll && $(MAKE) `basename $@`
 
-cryptnet/libcryptnet.def cryptnet/libcryptnet.a: cryptnet/cryptnet.spec $(WINEBUILD)
+cryptnet/libcryptnet.def cryptnet/libcryptnet.a cryptnet/libcryptnet.cross.a: cryptnet/cryptnet.spec $(WINEBUILD)
 	@cd cryptnet && $(MAKE) `basename $@`
 
-cryptui/libcryptui.def cryptui/libcryptui.a: cryptui/cryptui.spec $(WINEBUILD)
+cryptui/libcryptui.def cryptui/libcryptui.a cryptui/libcryptui.cross.a: cryptui/cryptui.spec $(WINEBUILD)
 	@cd cryptui && $(MAKE) `basename $@`
 
-ctl3d32/libctl3d32.def ctl3d32/libctl3d32.a: ctl3d32/ctl3d32.spec $(WINEBUILD)
+ctl3d32/libctl3d32.def ctl3d32/libctl3d32.a ctl3d32/libctl3d32.cross.a: ctl3d32/ctl3d32.spec $(WINEBUILD)
 	@cd ctl3d32 && $(MAKE) `basename $@`
 
-d3d10/libd3d10.def d3d10/libd3d10.a: d3d10/d3d10.spec $(WINEBUILD)
+d3d10/libd3d10.def d3d10/libd3d10.a d3d10/libd3d10.cross.a: d3d10/d3d10.spec $(WINEBUILD)
 	@cd d3d10 && $(MAKE) `basename $@`
 
-d3d10core/libd3d10core.def d3d10core/libd3d10core.a: d3d10core/d3d10core.spec $(WINEBUILD)
+d3d10core/libd3d10core.def d3d10core/libd3d10core.a d3d10core/libd3d10core.cross.a: d3d10core/d3d10core.spec $(WINEBUILD)
 	@cd d3d10core && $(MAKE) `basename $@`
 
-d3d8/libd3d8.def d3d8/libd3d8.a: d3d8/d3d8.spec $(WINEBUILD)
+d3d8/libd3d8.def d3d8/libd3d8.a d3d8/libd3d8.cross.a: d3d8/d3d8.spec $(WINEBUILD)
 	@cd d3d8 && $(MAKE) `basename $@`
 
-d3d9/libd3d9.def d3d9/libd3d9.a: d3d9/d3d9.spec $(WINEBUILD)
+d3d9/libd3d9.def d3d9/libd3d9.a d3d9/libd3d9.cross.a: d3d9/d3d9.spec $(WINEBUILD)
 	@cd d3d9 && $(MAKE) `basename $@`
 
-d3dim/libd3dim.def d3dim/libd3dim.a: d3dim/d3dim.spec $(WINEBUILD)
+d3dim/libd3dim.def d3dim/libd3dim.a d3dim/libd3dim.cross.a: d3dim/d3dim.spec $(WINEBUILD)
 	@cd d3dim && $(MAKE) `basename $@`
 
-d3drm/libd3drm.def d3drm/libd3drm.a: d3drm/d3drm.spec $(WINEBUILD)
+d3drm/libd3drm.def d3drm/libd3drm.a d3drm/libd3drm.cross.a: d3drm/d3drm.spec $(WINEBUILD)
 	@cd d3drm && $(MAKE) `basename $@`
 
-d3dx9_36/libd3dx9.def d3dx9_36/libd3dx9.a: d3dx9_36/d3dx9_36.spec $(WINEBUILD)
+d3dx9_36/libd3dx9.def d3dx9_36/libd3dx9.a d3dx9_36/libd3dx9.cross.a: d3dx9_36/d3dx9_36.spec $(WINEBUILD)
 	@cd d3dx9_36 && $(MAKE) `basename $@`
 
-d3dxof/libd3dxof.def d3dxof/libd3dxof.a: d3dxof/d3dxof.spec $(WINEBUILD)
+d3dxof/libd3dxof.def d3dxof/libd3dxof.a d3dxof/libd3dxof.cross.a: d3dxof/d3dxof.spec $(WINEBUILD)
 	@cd d3dxof && $(MAKE) `basename $@`
 
-dbghelp/libdbghelp.def dbghelp/libdbghelp.a: dbghelp/dbghelp.spec $(WINEBUILD)
+dbghelp/libdbghelp.def dbghelp/libdbghelp.a dbghelp/libdbghelp.cross.a: dbghelp/dbghelp.spec $(WINEBUILD)
 	@cd dbghelp && $(MAKE) `basename $@`
 
-dciman32/libdciman32.def dciman32/libdciman32.a: dciman32/dciman32.spec $(WINEBUILD)
+dciman32/libdciman32.def dciman32/libdciman32.a dciman32/libdciman32.cross.a: dciman32/dciman32.spec $(WINEBUILD)
 	@cd dciman32 && $(MAKE) `basename $@`
 
-ddraw/libddraw.def ddraw/libddraw.a: ddraw/ddraw.spec $(WINEBUILD)
+ddraw/libddraw.def ddraw/libddraw.a ddraw/libddraw.cross.a: ddraw/ddraw.spec $(WINEBUILD)
 	@cd ddraw && $(MAKE) `basename $@`
 
 dinput/libdinput.def: dinput/dinput.spec $(WINEBUILD)
 	@cd dinput && $(MAKE) libdinput.def
 
-dinput/libdinput.$(STATIC_IMPLIBEXT): dummy
+dinput/libdinput.$(STATIC_IMPLIBEXT) dinput/libdinput.cross.a: dummy
 	@cd dinput && $(MAKE) libdinput.$(STATIC_IMPLIBEXT)
 
-dinput8/libdinput8.def dinput8/libdinput8.a: dinput8/dinput8.spec $(WINEBUILD)
+dinput8/libdinput8.def dinput8/libdinput8.a dinput8/libdinput8.cross.a: dinput8/dinput8.spec $(WINEBUILD)
 	@cd dinput8 && $(MAKE) `basename $@`
 
-dmusic32/libdmusic32.def dmusic32/libdmusic32.a: dmusic32/dmusic32.spec $(WINEBUILD)
+dmusic32/libdmusic32.def dmusic32/libdmusic32.a dmusic32/libdmusic32.cross.a: dmusic32/dmusic32.spec $(WINEBUILD)
 	@cd dmusic32 && $(MAKE) `basename $@`
 
-dnsapi/libdnsapi.def dnsapi/libdnsapi.a: dnsapi/dnsapi.spec $(WINEBUILD)
+dnsapi/libdnsapi.def dnsapi/libdnsapi.a dnsapi/libdnsapi.cross.a: dnsapi/dnsapi.spec $(WINEBUILD)
 	@cd dnsapi && $(MAKE) `basename $@`
 
-dplay/libdplay.def dplay/libdplay.a: dplay/dplay.spec $(WINEBUILD)
+dplay/libdplay.def dplay/libdplay.a dplay/libdplay.cross.a: dplay/dplay.spec $(WINEBUILD)
 	@cd dplay && $(MAKE) `basename $@`
 
-dplayx/libdplayx.def dplayx/libdplayx.a: dplayx/dplayx.spec $(WINEBUILD)
+dplayx/libdplayx.def dplayx/libdplayx.a dplayx/libdplayx.cross.a: dplayx/dplayx.spec $(WINEBUILD)
 	@cd dplayx && $(MAKE) `basename $@`
 
-dpnet/libdpnet.def dpnet/libdpnet.a: dpnet/dpnet.spec $(WINEBUILD)
+dpnet/libdpnet.def dpnet/libdpnet.a dpnet/libdpnet.cross.a: dpnet/dpnet.spec $(WINEBUILD)
 	@cd dpnet && $(MAKE) `basename $@`
 
-dsound/libdsound.def dsound/libdsound.a: dsound/dsound.spec $(WINEBUILD)
+dsound/libdsound.def dsound/libdsound.a dsound/libdsound.cross.a: dsound/dsound.spec $(WINEBUILD)
 	@cd dsound && $(MAKE) `basename $@`
 
-dwmapi/libdwmapi.def dwmapi/libdwmapi.a: dwmapi/dwmapi.spec $(WINEBUILD)
+dwmapi/libdwmapi.def dwmapi/libdwmapi.a dwmapi/libdwmapi.cross.a: dwmapi/dwmapi.spec $(WINEBUILD)
 	@cd dwmapi && $(MAKE) `basename $@`
 
-dxgi/libdxgi.def dxgi/libdxgi.a: dxgi/dxgi.spec $(WINEBUILD)
+dxgi/libdxgi.def dxgi/libdxgi.a dxgi/libdxgi.cross.a: dxgi/dxgi.spec $(WINEBUILD)
 	@cd dxgi && $(MAKE) `basename $@`
 
-gdi32/libgdi32.def gdi32/libgdi32.a: gdi32/gdi32.spec $(WINEBUILD)
+gdi32/libgdi32.def gdi32/libgdi32.a gdi32/libgdi32.cross.a: gdi32/gdi32.spec $(WINEBUILD)
 	@cd gdi32 && $(MAKE) `basename $@`
 
-gdiplus/libgdiplus.def gdiplus/libgdiplus.a: gdiplus/gdiplus.spec $(WINEBUILD)
+gdiplus/libgdiplus.def gdiplus/libgdiplus.a gdiplus/libgdiplus.cross.a: gdiplus/gdiplus.spec $(WINEBUILD)
 	@cd gdiplus && $(MAKE) `basename $@`
 
-glu32/libglu32.def glu32/libglu32.a: glu32/glu32.spec $(WINEBUILD)
+glu32/libglu32.def glu32/libglu32.a glu32/libglu32.cross.a: glu32/glu32.spec $(WINEBUILD)
 	@cd glu32 && $(MAKE) `basename $@`
 
-hid/libhid.def hid/libhid.a: hid/hid.spec $(WINEBUILD)
+hid/libhid.def hid/libhid.a hid/libhid.cross.a: hid/hid.spec $(WINEBUILD)
 	@cd hid && $(MAKE) `basename $@`
 
-hlink/libhlink.def hlink/libhlink.a: hlink/hlink.spec $(WINEBUILD)
+hlink/libhlink.def hlink/libhlink.a hlink/libhlink.cross.a: hlink/hlink.spec $(WINEBUILD)
 	@cd hlink && $(MAKE) `basename $@`
 
-imagehlp/libimagehlp.def imagehlp/libimagehlp.a: imagehlp/imagehlp.spec $(WINEBUILD)
+imagehlp/libimagehlp.def imagehlp/libimagehlp.a imagehlp/libimagehlp.cross.a: imagehlp/imagehlp.spec $(WINEBUILD)
 	@cd imagehlp && $(MAKE) `basename $@`
 
-imm32/libimm32.def imm32/libimm32.a: imm32/imm32.spec $(WINEBUILD)
+imm32/libimm32.def imm32/libimm32.a imm32/libimm32.cross.a: imm32/imm32.spec $(WINEBUILD)
 	@cd imm32 && $(MAKE) `basename $@`
 
-inetcomm/libinetcomm.def inetcomm/libinetcomm.a: inetcomm/inetcomm.spec $(WINEBUILD)
+inetcomm/libinetcomm.def inetcomm/libinetcomm.a inetcomm/libinetcomm.cross.a: inetcomm/inetcomm.spec $(WINEBUILD)
 	@cd inetcomm && $(MAKE) `basename $@`
 
-iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a: iphlpapi/iphlpapi.spec $(WINEBUILD)
+iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a iphlpapi/libiphlpapi.cross.a: iphlpapi/iphlpapi.spec $(WINEBUILD)
 	@cd iphlpapi && $(MAKE) `basename $@`
 
-kernel32/libkernel32.def kernel32/libkernel32.a: kernel32/kernel32.spec $(WINEBUILD)
+kernel32/libkernel32.def kernel32/libkernel32.a kernel32/libkernel32.cross.a: kernel32/kernel32.spec $(WINEBUILD)
 	@cd kernel32 && $(MAKE) `basename $@`
 
-krnl386.exe16/libkernel.def krnl386.exe16/libkernel.a: krnl386.exe16/krnl386.exe16.spec $(WINEBUILD)
+krnl386.exe16/libkernel.def krnl386.exe16/libkernel.a krnl386.exe16/libkernel.cross.a: krnl386.exe16/krnl386.exe16.spec $(WINEBUILD)
 	@cd krnl386.exe16 && $(MAKE) `basename $@`
 
-loadperf/libloadperf.def loadperf/libloadperf.a: loadperf/loadperf.spec $(WINEBUILD)
+loadperf/libloadperf.def loadperf/libloadperf.a loadperf/libloadperf.cross.a: loadperf/loadperf.spec $(WINEBUILD)
 	@cd loadperf && $(MAKE) `basename $@`
 
-lz32/liblz32.def lz32/liblz32.a: lz32/lz32.spec $(WINEBUILD)
+lz32/liblz32.def lz32/liblz32.a lz32/liblz32.cross.a: lz32/lz32.spec $(WINEBUILD)
 	@cd lz32 && $(MAKE) `basename $@`
 
-mapi32/libmapi32.def mapi32/libmapi32.a: mapi32/mapi32.spec $(WINEBUILD)
+mapi32/libmapi32.def mapi32/libmapi32.a mapi32/libmapi32.cross.a: mapi32/mapi32.spec $(WINEBUILD)
 	@cd mapi32 && $(MAKE) `basename $@`
 
-mlang/libmlang.def mlang/libmlang.a: mlang/mlang.spec $(WINEBUILD)
+mlang/libmlang.def mlang/libmlang.a mlang/libmlang.cross.a: mlang/mlang.spec $(WINEBUILD)
 	@cd mlang && $(MAKE) `basename $@`
 
-mpr/libmpr.def mpr/libmpr.a: mpr/mpr.spec $(WINEBUILD)
+mpr/libmpr.def mpr/libmpr.a mpr/libmpr.cross.a: mpr/mpr.spec $(WINEBUILD)
 	@cd mpr && $(MAKE) `basename $@`
 
-mprapi/libmprapi.def mprapi/libmprapi.a: mprapi/mprapi.spec $(WINEBUILD)
+mprapi/libmprapi.def mprapi/libmprapi.a mprapi/libmprapi.cross.a: mprapi/mprapi.spec $(WINEBUILD)
 	@cd mprapi && $(MAKE) `basename $@`
 
-msacm32/libmsacm32.def msacm32/libmsacm32.a: msacm32/msacm32.spec $(WINEBUILD)
+msacm32/libmsacm32.def msacm32/libmsacm32.a msacm32/libmsacm32.cross.a: msacm32/msacm32.spec $(WINEBUILD)
 	@cd msacm32 && $(MAKE) `basename $@`
 
-mscms/libmscms.def mscms/libmscms.a: mscms/mscms.spec $(WINEBUILD)
+mscms/libmscms.def mscms/libmscms.a mscms/libmscms.cross.a: mscms/mscms.spec $(WINEBUILD)
 	@cd mscms && $(MAKE) `basename $@`
 
-msdmo/libmsdmo.def msdmo/libmsdmo.a: msdmo/msdmo.spec $(WINEBUILD)
+msdmo/libmsdmo.def msdmo/libmsdmo.a msdmo/libmsdmo.cross.a: msdmo/msdmo.spec $(WINEBUILD)
 	@cd msdmo && $(MAKE) `basename $@`
 
-mshtml/libmshtml.def mshtml/libmshtml.a: mshtml/mshtml.spec $(WINEBUILD)
+mshtml/libmshtml.def mshtml/libmshtml.a mshtml/libmshtml.cross.a: mshtml/mshtml.spec $(WINEBUILD)
 	@cd mshtml && $(MAKE) `basename $@`
 
-msi/libmsi.def msi/libmsi.a: msi/msi.spec $(WINEBUILD)
+msi/libmsi.def msi/libmsi.a msi/libmsi.cross.a: msi/msi.spec $(WINEBUILD)
 	@cd msi && $(MAKE) `basename $@`
 
-msimg32/libmsimg32.def msimg32/libmsimg32.a: msimg32/msimg32.spec $(WINEBUILD)
+msimg32/libmsimg32.def msimg32/libmsimg32.a msimg32/libmsimg32.cross.a: msimg32/msimg32.spec $(WINEBUILD)
 	@cd msimg32 && $(MAKE) `basename $@`
 
-msvcr71/libmsvcr71.def msvcr71/libmsvcr71.a: msvcr71/msvcr71.spec $(WINEBUILD)
+msvcr71/libmsvcr71.def msvcr71/libmsvcr71.a msvcr71/libmsvcr71.cross.a: msvcr71/msvcr71.spec $(WINEBUILD)
 	@cd msvcr71 && $(MAKE) `basename $@`
 
-msvcrt/libmsvcrt.def msvcrt/libmsvcrt.a: msvcrt/msvcrt.spec $(WINEBUILD)
+msvcrt/libmsvcrt.def msvcrt/libmsvcrt.a msvcrt/libmsvcrt.cross.a: msvcrt/msvcrt.spec $(WINEBUILD)
 	@cd msvcrt && $(MAKE) `basename $@`
 
-msvcrt20/libmsvcrt20.def msvcrt20/libmsvcrt20.a: msvcrt20/msvcrt20.spec $(WINEBUILD)
+msvcrt20/libmsvcrt20.def msvcrt20/libmsvcrt20.a msvcrt20/libmsvcrt20.cross.a: msvcrt20/msvcrt20.spec $(WINEBUILD)
 	@cd msvcrt20 && $(MAKE) `basename $@`
 
-msvcrt40/libmsvcrt40.def msvcrt40/libmsvcrt40.a: msvcrt40/msvcrt40.spec $(WINEBUILD)
+msvcrt40/libmsvcrt40.def msvcrt40/libmsvcrt40.a msvcrt40/libmsvcrt40.cross.a: msvcrt40/msvcrt40.spec $(WINEBUILD)
 	@cd msvcrt40 && $(MAKE) `basename $@`
 
-msvcrtd/libmsvcrtd.def msvcrtd/libmsvcrtd.a: msvcrtd/msvcrtd.spec $(WINEBUILD)
+msvcrtd/libmsvcrtd.def msvcrtd/libmsvcrtd.a msvcrtd/libmsvcrtd.cross.a: msvcrtd/msvcrtd.spec $(WINEBUILD)
 	@cd msvcrtd && $(MAKE) `basename $@`
 
-msvfw32/libmsvfw32.def msvfw32/libmsvfw32.a: msvfw32/msvfw32.spec $(WINEBUILD)
+msvfw32/libmsvfw32.def msvfw32/libmsvfw32.a msvfw32/libmsvfw32.cross.a: msvfw32/msvfw32.spec $(WINEBUILD)
 	@cd msvfw32 && $(MAKE) `basename $@`
 
-mswsock/libmswsock.def mswsock/libmswsock.a: mswsock/mswsock.spec $(WINEBUILD)
+mswsock/libmswsock.def mswsock/libmswsock.a mswsock/libmswsock.cross.a: mswsock/mswsock.spec $(WINEBUILD)
 	@cd mswsock && $(MAKE) `basename $@`
 
-nddeapi/libnddeapi.def nddeapi/libnddeapi.a: nddeapi/nddeapi.spec $(WINEBUILD)
+nddeapi/libnddeapi.def nddeapi/libnddeapi.a nddeapi/libnddeapi.cross.a: nddeapi/nddeapi.spec $(WINEBUILD)
 	@cd nddeapi && $(MAKE) `basename $@`
 
-netapi32/libnetapi32.def netapi32/libnetapi32.a: netapi32/netapi32.spec $(WINEBUILD)
+netapi32/libnetapi32.def netapi32/libnetapi32.a netapi32/libnetapi32.cross.a: netapi32/netapi32.spec $(WINEBUILD)
 	@cd netapi32 && $(MAKE) `basename $@`
 
-newdev/libnewdev.def newdev/libnewdev.a: newdev/newdev.spec $(WINEBUILD)
+newdev/libnewdev.def newdev/libnewdev.a newdev/libnewdev.cross.a: newdev/newdev.spec $(WINEBUILD)
 	@cd newdev && $(MAKE) `basename $@`
 
-ntdll/libntdll.def ntdll/libntdll.a: ntdll/ntdll.spec $(WINEBUILD)
+ntdll/libntdll.def ntdll/libntdll.a ntdll/libntdll.cross.a: ntdll/ntdll.spec $(WINEBUILD)
 	@cd ntdll && $(MAKE) `basename $@`
 
-ntdsapi/libntdsapi.def ntdsapi/libntdsapi.a: ntdsapi/ntdsapi.spec $(WINEBUILD)
+ntdsapi/libntdsapi.def ntdsapi/libntdsapi.a ntdsapi/libntdsapi.cross.a: ntdsapi/ntdsapi.spec $(WINEBUILD)
 	@cd ntdsapi && $(MAKE) `basename $@`
 
-ntoskrnl.exe/libntoskrnl.exe.def ntoskrnl.exe/libntoskrnl.exe.a: ntoskrnl.exe/ntoskrnl.exe.spec $(WINEBUILD)
+ntoskrnl.exe/libntoskrnl.exe.def ntoskrnl.exe/libntoskrnl.exe.a ntoskrnl.exe/libntoskrnl.exe.cross.a: ntoskrnl.exe/ntoskrnl.exe.spec $(WINEBUILD)
 	@cd ntoskrnl.exe && $(MAKE) `basename $@`
 
-odbc32/libodbc32.def odbc32/libodbc32.a: odbc32/odbc32.spec $(WINEBUILD)
+odbc32/libodbc32.def odbc32/libodbc32.a odbc32/libodbc32.cross.a: odbc32/odbc32.spec $(WINEBUILD)
 	@cd odbc32 && $(MAKE) `basename $@`
 
-odbccp32/libodbccp32.def odbccp32/libodbccp32.a: odbccp32/odbccp32.spec $(WINEBUILD)
+odbccp32/libodbccp32.def odbccp32/libodbccp32.a odbccp32/libodbccp32.cross.a: odbccp32/odbccp32.spec $(WINEBUILD)
 	@cd odbccp32 && $(MAKE) `basename $@`
 
-ole32/libole32.def ole32/libole32.a: ole32/ole32.spec $(WINEBUILD)
+ole32/libole32.def ole32/libole32.a ole32/libole32.cross.a: ole32/ole32.spec $(WINEBUILD)
 	@cd ole32 && $(MAKE) `basename $@`
 
-oleacc/liboleacc.def oleacc/liboleacc.a: oleacc/oleacc.spec $(WINEBUILD)
+oleacc/liboleacc.def oleacc/liboleacc.a oleacc/liboleacc.cross.a: oleacc/oleacc.spec $(WINEBUILD)
 	@cd oleacc && $(MAKE) `basename $@`
 
-oleaut32/liboleaut32.def oleaut32/liboleaut32.a: oleaut32/oleaut32.spec $(WINEBUILD)
+oleaut32/liboleaut32.def oleaut32/liboleaut32.a oleaut32/liboleaut32.cross.a: oleaut32/oleaut32.spec $(WINEBUILD)
 	@cd oleaut32 && $(MAKE) `basename $@`
 
-olecli32/libolecli32.def olecli32/libolecli32.a: olecli32/olecli32.spec $(WINEBUILD)
+olecli32/libolecli32.def olecli32/libolecli32.a olecli32/libolecli32.cross.a: olecli32/olecli32.spec $(WINEBUILD)
 	@cd olecli32 && $(MAKE) `basename $@`
 
-oledlg/liboledlg.def oledlg/liboledlg.a: oledlg/oledlg.spec $(WINEBUILD)
+oledlg/liboledlg.def oledlg/liboledlg.a oledlg/liboledlg.cross.a: oledlg/oledlg.spec $(WINEBUILD)
 	@cd oledlg && $(MAKE) `basename $@`
 
-olepro32/libolepro32.def olepro32/libolepro32.a: olepro32/olepro32.spec $(WINEBUILD)
+olepro32/libolepro32.def olepro32/libolepro32.a olepro32/libolepro32.cross.a: olepro32/olepro32.spec $(WINEBUILD)
 	@cd olepro32 && $(MAKE) `basename $@`
 
-olesvr32/libolesvr32.def olesvr32/libolesvr32.a: olesvr32/olesvr32.spec $(WINEBUILD)
+olesvr32/libolesvr32.def olesvr32/libolesvr32.a olesvr32/libolesvr32.cross.a: olesvr32/olesvr32.spec $(WINEBUILD)
 	@cd olesvr32 && $(MAKE) `basename $@`
 
-opengl32/libopengl32.def opengl32/libopengl32.a: opengl32/opengl32.spec $(WINEBUILD)
+opengl32/libopengl32.def opengl32/libopengl32.a opengl32/libopengl32.cross.a: opengl32/opengl32.spec $(WINEBUILD)
 	@cd opengl32 && $(MAKE) `basename $@`
 
-pdh/libpdh.def pdh/libpdh.a: pdh/pdh.spec $(WINEBUILD)
+pdh/libpdh.def pdh/libpdh.a pdh/libpdh.cross.a: pdh/pdh.spec $(WINEBUILD)
 	@cd pdh && $(MAKE) `basename $@`
 
-powrprof/libpowrprof.def powrprof/libpowrprof.a: powrprof/powrprof.spec $(WINEBUILD)
+powrprof/libpowrprof.def powrprof/libpowrprof.a powrprof/libpowrprof.cross.a: powrprof/powrprof.spec $(WINEBUILD)
 	@cd powrprof && $(MAKE) `basename $@`
 
-psapi/libpsapi.def psapi/libpsapi.a: psapi/psapi.spec $(WINEBUILD)
+psapi/libpsapi.def psapi/libpsapi.a psapi/libpsapi.cross.a: psapi/psapi.spec $(WINEBUILD)
 	@cd psapi && $(MAKE) `basename $@`
 
-quartz/libquartz.def quartz/libquartz.a: quartz/quartz.spec $(WINEBUILD)
+quartz/libquartz.def quartz/libquartz.a quartz/libquartz.cross.a: quartz/quartz.spec $(WINEBUILD)
 	@cd quartz && $(MAKE) `basename $@`
 
-rasapi32/librasapi32.def rasapi32/librasapi32.a: rasapi32/rasapi32.spec $(WINEBUILD)
+rasapi32/librasapi32.def rasapi32/librasapi32.a rasapi32/librasapi32.cross.a: rasapi32/rasapi32.spec $(WINEBUILD)
 	@cd rasapi32 && $(MAKE) `basename $@`
 
-rasdlg/librasdlg.def rasdlg/librasdlg.a: rasdlg/rasdlg.spec $(WINEBUILD)
+rasdlg/librasdlg.def rasdlg/librasdlg.a rasdlg/librasdlg.cross.a: rasdlg/rasdlg.spec $(WINEBUILD)
 	@cd rasdlg && $(MAKE) `basename $@`
 
-resutils/libresutils.def resutils/libresutils.a: resutils/resutils.spec $(WINEBUILD)
+resutils/libresutils.def resutils/libresutils.a resutils/libresutils.cross.a: resutils/resutils.spec $(WINEBUILD)
 	@cd resutils && $(MAKE) `basename $@`
 
-riched20/libriched20.def riched20/libriched20.a: riched20/riched20.spec $(WINEBUILD)
+riched20/libriched20.def riched20/libriched20.a riched20/libriched20.cross.a: riched20/riched20.spec $(WINEBUILD)
 	@cd riched20 && $(MAKE) `basename $@`
 
-rpcrt4/librpcrt4.def rpcrt4/librpcrt4.a: rpcrt4/rpcrt4.spec $(WINEBUILD)
+rpcrt4/librpcrt4.def rpcrt4/librpcrt4.a rpcrt4/librpcrt4.cross.a: rpcrt4/rpcrt4.spec $(WINEBUILD)
 	@cd rpcrt4 && $(MAKE) `basename $@`
 
-rsaenh/librsaenh.def rsaenh/librsaenh.a: rsaenh/rsaenh.spec $(WINEBUILD)
+rsaenh/librsaenh.def rsaenh/librsaenh.a rsaenh/librsaenh.cross.a: rsaenh/rsaenh.spec $(WINEBUILD)
 	@cd rsaenh && $(MAKE) `basename $@`
 
-rtutils/librtutils.def rtutils/librtutils.a: rtutils/rtutils.spec $(WINEBUILD)
+rtutils/librtutils.def rtutils/librtutils.a rtutils/librtutils.cross.a: rtutils/rtutils.spec $(WINEBUILD)
 	@cd rtutils && $(MAKE) `basename $@`
 
-secur32/libsecur32.def secur32/libsecur32.a: secur32/secur32.spec $(WINEBUILD)
+secur32/libsecur32.def secur32/libsecur32.a secur32/libsecur32.cross.a: secur32/secur32.spec $(WINEBUILD)
 	@cd secur32 && $(MAKE) `basename $@`
 
-sensapi/libsensapi.def sensapi/libsensapi.a: sensapi/sensapi.spec $(WINEBUILD)
+sensapi/libsensapi.def sensapi/libsensapi.a sensapi/libsensapi.cross.a: sensapi/sensapi.spec $(WINEBUILD)
 	@cd sensapi && $(MAKE) `basename $@`
 
-serialui/libserialui.def serialui/libserialui.a: serialui/serialui.spec $(WINEBUILD)
+serialui/libserialui.def serialui/libserialui.a serialui/libserialui.cross.a: serialui/serialui.spec $(WINEBUILD)
 	@cd serialui && $(MAKE) `basename $@`
 
-setupapi/libsetupapi.def setupapi/libsetupapi.a: setupapi/setupapi.spec $(WINEBUILD)
+setupapi/libsetupapi.def setupapi/libsetupapi.a setupapi/libsetupapi.cross.a: setupapi/setupapi.spec $(WINEBUILD)
 	@cd setupapi && $(MAKE) `basename $@`
 
-sfc/libsfc.def sfc/libsfc.a: sfc/sfc.spec $(WINEBUILD)
+sfc/libsfc.def sfc/libsfc.a sfc/libsfc.cross.a: sfc/sfc.spec $(WINEBUILD)
 	@cd sfc && $(MAKE) `basename $@`
 
-sfc_os/libsfc_os.def sfc_os/libsfc_os.a: sfc_os/sfc_os.spec $(WINEBUILD)
+sfc_os/libsfc_os.def sfc_os/libsfc_os.a sfc_os/libsfc_os.cross.a: sfc_os/sfc_os.spec $(WINEBUILD)
 	@cd sfc_os && $(MAKE) `basename $@`
 
-shdocvw/libshdocvw.def shdocvw/libshdocvw.a: shdocvw/shdocvw.spec $(WINEBUILD)
+shdocvw/libshdocvw.def shdocvw/libshdocvw.a shdocvw/libshdocvw.cross.a: shdocvw/shdocvw.spec $(WINEBUILD)
 	@cd shdocvw && $(MAKE) `basename $@`
 
-shell32/libshell32.def shell32/libshell32.a: shell32/shell32.spec $(WINEBUILD)
+shell32/libshell32.def shell32/libshell32.a shell32/libshell32.cross.a: shell32/shell32.spec $(WINEBUILD)
 	@cd shell32 && $(MAKE) `basename $@`
 
-shfolder/libshfolder.def shfolder/libshfolder.a: shfolder/shfolder.spec $(WINEBUILD)
+shfolder/libshfolder.def shfolder/libshfolder.a shfolder/libshfolder.cross.a: shfolder/shfolder.spec $(WINEBUILD)
 	@cd shfolder && $(MAKE) `basename $@`
 
-shlwapi/libshlwapi.def shlwapi/libshlwapi.a: shlwapi/shlwapi.spec $(WINEBUILD)
+shlwapi/libshlwapi.def shlwapi/libshlwapi.a shlwapi/libshlwapi.cross.a: shlwapi/shlwapi.spec $(WINEBUILD)
 	@cd shlwapi && $(MAKE) `basename $@`
 
-slc/libslc.def slc/libslc.a: slc/slc.spec $(WINEBUILD)
+slc/libslc.def slc/libslc.a slc/libslc.cross.a: slc/slc.spec $(WINEBUILD)
 	@cd slc && $(MAKE) `basename $@`
 
-snmpapi/libsnmpapi.def snmpapi/libsnmpapi.a: snmpapi/snmpapi.spec $(WINEBUILD)
+snmpapi/libsnmpapi.def snmpapi/libsnmpapi.a snmpapi/libsnmpapi.cross.a: snmpapi/snmpapi.spec $(WINEBUILD)
 	@cd snmpapi && $(MAKE) `basename $@`
 
-spoolss/libspoolss.def spoolss/libspoolss.a: spoolss/spoolss.spec $(WINEBUILD)
+spoolss/libspoolss.def spoolss/libspoolss.a spoolss/libspoolss.cross.a: spoolss/spoolss.spec $(WINEBUILD)
 	@cd spoolss && $(MAKE) `basename $@`
 
-sti/libsti.def sti/libsti.a: sti/sti.spec $(WINEBUILD)
+sti/libsti.def sti/libsti.a sti/libsti.cross.a: sti/sti.spec $(WINEBUILD)
 	@cd sti && $(MAKE) `basename $@`
 
-tapi32/libtapi32.def tapi32/libtapi32.a: tapi32/tapi32.spec $(WINEBUILD)
+tapi32/libtapi32.def tapi32/libtapi32.a tapi32/libtapi32.cross.a: tapi32/tapi32.spec $(WINEBUILD)
 	@cd tapi32 && $(MAKE) `basename $@`
 
-unicows/libunicows.def unicows/libunicows.a: unicows/unicows.spec $(WINEBUILD)
+unicows/libunicows.def unicows/libunicows.a unicows/libunicows.cross.a: unicows/unicows.spec $(WINEBUILD)
 	@cd unicows && $(MAKE) `basename $@`
 
-url/liburl.def url/liburl.a: url/url.spec $(WINEBUILD)
+url/liburl.def url/liburl.a url/liburl.cross.a: url/url.spec $(WINEBUILD)
 	@cd url && $(MAKE) `basename $@`
 
-urlmon/liburlmon.def urlmon/liburlmon.a: urlmon/urlmon.spec $(WINEBUILD)
+urlmon/liburlmon.def urlmon/liburlmon.a urlmon/liburlmon.cross.a: urlmon/urlmon.spec $(WINEBUILD)
 	@cd urlmon && $(MAKE) `basename $@`
 
-user32/libuser32.def user32/libuser32.a: user32/user32.spec $(WINEBUILD)
+user32/libuser32.def user32/libuser32.a user32/libuser32.cross.a: user32/user32.spec $(WINEBUILD)
 	@cd user32 && $(MAKE) `basename $@`
 
-userenv/libuserenv.def userenv/libuserenv.a: userenv/userenv.spec $(WINEBUILD)
+userenv/libuserenv.def userenv/libuserenv.a userenv/libuserenv.cross.a: userenv/userenv.spec $(WINEBUILD)
 	@cd userenv && $(MAKE) `basename $@`
 
-usp10/libusp10.def usp10/libusp10.a: usp10/usp10.spec $(WINEBUILD)
+usp10/libusp10.def usp10/libusp10.a usp10/libusp10.cross.a: usp10/usp10.spec $(WINEBUILD)
 	@cd usp10 && $(MAKE) `basename $@`
 
-uxtheme/libuxtheme.def uxtheme/libuxtheme.a: uxtheme/uxtheme.spec $(WINEBUILD)
+uxtheme/libuxtheme.def uxtheme/libuxtheme.a uxtheme/libuxtheme.cross.a: uxtheme/uxtheme.spec $(WINEBUILD)
 	@cd uxtheme && $(MAKE) `basename $@`
 
-vdmdbg/libvdmdbg.def vdmdbg/libvdmdbg.a: vdmdbg/vdmdbg.spec $(WINEBUILD)
+vdmdbg/libvdmdbg.def vdmdbg/libvdmdbg.a vdmdbg/libvdmdbg.cross.a: vdmdbg/vdmdbg.spec $(WINEBUILD)
 	@cd vdmdbg && $(MAKE) `basename $@`
 
-version/libversion.def version/libversion.a: version/version.spec $(WINEBUILD)
+version/libversion.def version/libversion.a version/libversion.cross.a: version/version.spec $(WINEBUILD)
 	@cd version && $(MAKE) `basename $@`
 
-windowscodecs/libwindowscodecs.def windowscodecs/libwindowscodecs.a: windowscodecs/windowscodecs.spec $(WINEBUILD)
+windowscodecs/libwindowscodecs.def windowscodecs/libwindowscodecs.a windowscodecs/libwindowscodecs.cross.a: windowscodecs/windowscodecs.spec $(WINEBUILD)
 	@cd windowscodecs && $(MAKE) `basename $@`
 
-wined3d/libwined3d.def wined3d/libwined3d.a: wined3d/wined3d.spec $(WINEBUILD)
+wined3d/libwined3d.def wined3d/libwined3d.a wined3d/libwined3d.cross.a: wined3d/wined3d.spec $(WINEBUILD)
 	@cd wined3d && $(MAKE) `basename $@`
 
-winhttp/libwinhttp.def winhttp/libwinhttp.a: winhttp/winhttp.spec $(WINEBUILD)
+winhttp/libwinhttp.def winhttp/libwinhttp.a winhttp/libwinhttp.cross.a: winhttp/winhttp.spec $(WINEBUILD)
 	@cd winhttp && $(MAKE) `basename $@`
 
-wininet/libwininet.def wininet/libwininet.a: wininet/wininet.spec $(WINEBUILD)
+wininet/libwininet.def wininet/libwininet.a wininet/libwininet.cross.a: wininet/wininet.spec $(WINEBUILD)
 	@cd wininet && $(MAKE) `basename $@`
 
-winmm/libwinmm.def winmm/libwinmm.a: winmm/winmm.spec $(WINEBUILD)
+winmm/libwinmm.def winmm/libwinmm.a winmm/libwinmm.cross.a: winmm/winmm.spec $(WINEBUILD)
 	@cd winmm && $(MAKE) `basename $@`
 
-winnls32/libwinnls32.def winnls32/libwinnls32.a: winnls32/winnls32.spec $(WINEBUILD)
+winnls32/libwinnls32.def winnls32/libwinnls32.a winnls32/libwinnls32.cross.a: winnls32/winnls32.spec $(WINEBUILD)
 	@cd winnls32 && $(MAKE) `basename $@`
 
-winscard/libwinscard.def winscard/libwinscard.a: winscard/winscard.spec $(WINEBUILD)
+winscard/libwinscard.def winscard/libwinscard.a winscard/libwinscard.cross.a: winscard/winscard.spec $(WINEBUILD)
 	@cd winscard && $(MAKE) `basename $@`
 
-winspool.drv/libwinspool.def winspool.drv/libwinspool.a: winspool.drv/winspool.drv.spec $(WINEBUILD)
+winspool.drv/libwinspool.def winspool.drv/libwinspool.a winspool.drv/libwinspool.cross.a: winspool.drv/winspool.drv.spec $(WINEBUILD)
 	@cd winspool.drv && $(MAKE) `basename $@`
 
-wintab32/libwintab32.def wintab32/libwintab32.a: wintab32/wintab32.spec $(WINEBUILD)
+wintab32/libwintab32.def wintab32/libwintab32.a wintab32/libwintab32.cross.a: wintab32/wintab32.spec $(WINEBUILD)
 	@cd wintab32 && $(MAKE) `basename $@`
 
-wintrust/libwintrust.def wintrust/libwintrust.a: wintrust/wintrust.spec $(WINEBUILD)
+wintrust/libwintrust.def wintrust/libwintrust.a wintrust/libwintrust.cross.a: wintrust/wintrust.spec $(WINEBUILD)
 	@cd wintrust && $(MAKE) `basename $@`
 
-wldap32/libwldap32.def wldap32/libwldap32.a: wldap32/wldap32.spec $(WINEBUILD)
+wldap32/libwldap32.def wldap32/libwldap32.a wldap32/libwldap32.cross.a: wldap32/wldap32.spec $(WINEBUILD)
 	@cd wldap32 && $(MAKE) `basename $@`
 
-wnaspi32/libwnaspi32.def wnaspi32/libwnaspi32.a: wnaspi32/wnaspi32.spec $(WINEBUILD)
+wnaspi32/libwnaspi32.def wnaspi32/libwnaspi32.a wnaspi32/libwnaspi32.cross.a: wnaspi32/wnaspi32.spec $(WINEBUILD)
 	@cd wnaspi32 && $(MAKE) `basename $@`
 
-wow32/libwow32.def wow32/libwow32.a: wow32/wow32.spec $(WINEBUILD)
+wow32/libwow32.def wow32/libwow32.a wow32/libwow32.cross.a: wow32/wow32.spec $(WINEBUILD)
 	@cd wow32 && $(MAKE) `basename $@`
 
-ws2_32/libws2_32.def ws2_32/libws2_32.a: ws2_32/ws2_32.spec $(WINEBUILD)
+ws2_32/libws2_32.def ws2_32/libws2_32.a ws2_32/libws2_32.cross.a: ws2_32/ws2_32.spec $(WINEBUILD)
 	@cd ws2_32 && $(MAKE) `basename $@`
 
-wsock32/libwsock32.def wsock32/libwsock32.a: wsock32/wsock32.spec $(WINEBUILD)
+wsock32/libwsock32.def wsock32/libwsock32.a wsock32/libwsock32.cross.a: wsock32/wsock32.spec $(WINEBUILD)
 	@cd wsock32 && $(MAKE) `basename $@`
 
-wtsapi32/libwtsapi32.def wtsapi32/libwtsapi32.a: wtsapi32/wtsapi32.spec $(WINEBUILD)
+wtsapi32/libwtsapi32.def wtsapi32/libwtsapi32.a wtsapi32/libwtsapi32.cross.a: wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) `basename $@`
 
-xinput1_3/libxinput.def xinput1_3/libxinput.a: xinput1_3/xinput1_3.spec $(WINEBUILD)
+xinput1_3/libxinput.def xinput1_3/libxinput.a xinput1_3/libxinput.cross.a: xinput1_3/xinput1_3.spec $(WINEBUILD)
 	@cd xinput1_3 && $(MAKE) `basename $@`
 
 libd3dx9.a: d3dx9_36/libd3dx9.a
 	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.a $@
+
+libd3dx9.cross.a: d3dx9_36/libd3dx9.cross.a
+	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.cross.a $@
 
 libd3dx9.def: d3dx9_36/libd3dx9.def
 	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.def $@
@@ -775,17 +785,26 @@ libd3dx9.def: d3dx9_36/libd3dx9.def
 libkernel.a: krnl386.exe16/libkernel.a
 	$(RM) $@ && $(LN_S) krnl386.exe16/libkernel.a $@
 
+libkernel.cross.a: krnl386.exe16/libkernel.cross.a
+	$(RM) $@ && $(LN_S) krnl386.exe16/libkernel.cross.a $@
+
 libkernel.def: krnl386.exe16/libkernel.def
 	$(RM) $@ && $(LN_S) krnl386.exe16/libkernel.def $@
 
 libwinspool.a: winspool.drv/libwinspool.a
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.a $@
 
+libwinspool.cross.a: winspool.drv/libwinspool.cross.a
+	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.cross.a $@
+
 libwinspool.def: winspool.drv/libwinspool.def
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.def $@
 
 libxinput.a: xinput1_3/libxinput.a
 	$(RM) $@ && $(LN_S) xinput1_3/libxinput.a $@
+
+libxinput.cross.a: xinput1_3/libxinput.cross.a
+	$(RM) $@ && $(LN_S) xinput1_3/libxinput.cross.a $@
 
 libxinput.def: xinput1_3/libxinput.def
 	$(RM) $@ && $(LN_S) xinput1_3/libxinput.def $@
@@ -796,12 +815,33 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 # Map library name to the corresponding directory
 
 adsiid/libadsiid.a: adsiid
+adsiid/libadsiid.cross.a: dummy
+	@cd adsiid && $(MAKE) libadsiid.cross.a
+
 dxerr8/libdxerr8.a: dxerr8
+dxerr8/libdxerr8.cross.a: dummy
+	@cd dxerr8 && $(MAKE) libdxerr8.cross.a
+
 dxerr9/libdxerr9.a: dxerr9
+dxerr9/libdxerr9.cross.a: dummy
+	@cd dxerr9 && $(MAKE) libdxerr9.cross.a
+
 dxguid/libdxguid.a: dxguid
+dxguid/libdxguid.cross.a: dummy
+	@cd dxguid && $(MAKE) libdxguid.cross.a
+
 strmiids/libstrmiids.a: strmiids
+strmiids/libstrmiids.cross.a: dummy
+	@cd strmiids && $(MAKE) libstrmiids.cross.a
+
 uuid/libuuid.a: uuid
+uuid/libuuid.cross.a: dummy
+	@cd uuid && $(MAKE) libuuid.cross.a
+
 winecrt0/libwinecrt0.a: winecrt0
+winecrt0/libwinecrt0.cross.a: dummy
+	@cd winecrt0 && $(MAKE) libwinecrt0.cross.a
+
 
 # Misc rules
 
