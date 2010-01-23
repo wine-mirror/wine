@@ -36,14 +36,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 /******************************************************************
- *		pe_load_symbol_table
+ *		pe_locate_with_coff_symbol_table
  *
  * Use the COFF symbol table (if any) from the IMAGE_FILE_HEADER to set the absolute address
  * of global symbols.
  * Mingw32 requires this for stabs debug information as address for global variables isn't filled in
  * (this is similar to what is done in elf_module.c when using the .symtab ELF section)
  */
-static BOOL pe_load_symbol_table(struct module* module, IMAGE_NT_HEADERS* nth, void* mapping)
+static BOOL pe_locate_with_coff_symbol_table(struct module* module, IMAGE_NT_HEADERS* nth, void* mapping)
 {
     const IMAGE_SYMBOL* isym;
     int                 i, numsym, naux;
@@ -98,6 +98,67 @@ static BOOL pe_load_symbol_table(struct module* module, IMAGE_NT_HEADERS* nth, v
     return TRUE;
 }
 
+/******************************************************************
+ *		pe_load_coff_symbol_table
+ *
+ * Load public symbols out of the COFF symbol table (if any).
+ */
+static BOOL pe_load_coff_symbol_table(struct module* module, IMAGE_NT_HEADERS* nth, void* mapping)
+{
+    const IMAGE_SYMBOL* isym;
+    int                 i, numsym, naux;
+    const char*         strtable;
+    char                tmp[9];
+    const char*         name;
+    const char*         lastfilename = NULL;
+    struct symt_compiland*   compiland = NULL;
+    const IMAGE_SECTION_HEADER* sect;
+
+    numsym = nth->FileHeader.NumberOfSymbols;
+    if (!nth->FileHeader.PointerToSymbolTable || !numsym)
+        return TRUE;
+    isym = (const IMAGE_SYMBOL*)((char*)mapping + nth->FileHeader.PointerToSymbolTable);
+    /* FIXME: no way to get strtable size */
+    strtable = (const char*)&isym[numsym];
+    sect = IMAGE_FIRST_SECTION(nth);
+
+    for (i = 0; i < numsym; i+= naux, isym += naux)
+    {
+        if (isym->StorageClass == IMAGE_SYM_CLASS_FILE)
+        {
+            lastfilename = (const char*)(isym + 1);
+            compiland = NULL;
+        }
+        if (isym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL &&
+            isym->SectionNumber > 0 && isym->SectionNumber <= nth->FileHeader.NumberOfSections)
+        {
+            if (isym->N.Name.Short)
+            {
+                name = memcpy(tmp, isym->N.ShortName, 8);
+                tmp[8] = '\0';
+            }
+            else name = strtable + isym->N.Name.Long;
+            if (name[0] == '_') name++;
+
+            if (!compiland && lastfilename)
+                compiland = symt_new_compiland(module, 0,
+                                               source_new(module, NULL, lastfilename));
+            symt_new_public(module, compiland, name,
+                            module->module.BaseOfImage + sect[isym->SectionNumber - 1].VirtualAddress + isym->Value,
+                            1);
+        }
+        naux = isym->NumberOfAuxSymbols + 1;
+    }
+    module->module.SymType = SymCoff;
+    module->module.LineNumbers = FALSE;
+    module->module.GlobalSymbols = FALSE;
+    module->module.TypeInfo = FALSE;
+    module->module.SourceIndexed = FALSE;
+    module->module.Publics = TRUE;
+
+    return TRUE;
+}
+
 static inline void* pe_get_sect(IMAGE_NT_HEADERS* nth, void* mapping,
                                 IMAGE_SECTION_HEADER* sect)
 {
@@ -138,7 +199,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
                           pe_get_sect(nth, mapping, sect_stabs),   pe_get_sect_size(sect_stabs),
                           pe_get_sect(nth, mapping, sect_stabstr), pe_get_sect_size(sect_stabstr),
                           NULL, NULL);
-        if (ret) pe_load_symbol_table(module, nth, mapping);
+        if (ret) pe_locate_with_coff_symbol_table(module, nth, mapping);
     }
     TRACE("%s the STABS debug info\n", ret ? "successfully loaded" : "failed to load");
 
@@ -402,7 +463,8 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
             {
                 ret = pe_load_stabs(pcs, module, mapping, nth) ||
                     pe_load_dwarf(pcs, module, mapping, nth) ||
-                    pe_load_msc_debug_info(pcs, module, mapping, nth);
+                    pe_load_msc_debug_info(pcs, module, mapping, nth) ||
+                    pe_load_coff_symbol_table(module, nth, mapping);
                 /* if we still have no debug info (we could only get SymExport at this
                  * point), then do the SymExport except if we have an ELF container, 
                  * in which case we'll rely on the export's on the ELF side
