@@ -397,7 +397,7 @@ static int JACK_callback_wwo (nframes_t nframes, void *arg)
     if(wwo->buffer_size < (nframes * sizeof(short) * 2))
     {
       ERR("for some reason JACK_BufSize() didn't allocate enough memory\n");
-      ERR("allocated %ld bytes, need %d bytes\n", wwo->buffer_size, (nframes * sizeof(short) * 2));
+      ERR("allocated %ld bytes, need %d bytes\n", wwo->buffer_size, (nframes * (unsigned)sizeof(short) * 2));
       return 0;
     }
 
