@@ -52,6 +52,7 @@ LINTFLAGS = @LINTFLAGS@
 FONTFORGE = @FONTFORGE@
 RSVG      = @RSVG@
 ICOTOOL   = @ICOTOOL@
+CROSSCC   = @CROSSCC@
 FAKEEXT   = $(DLLEXT:.so=.fake)
 INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 EXTRACFLAGS  = @EXTRACFLAGS@
@@ -72,6 +73,7 @@ WRC          = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
 WMC          = $(TOOLSDIR)/tools/wmc/wmc$(TOOLSEXT)
 WIDL         = $(TOOLSDIR)/tools/widl/widl$(TOOLSEXT)
 WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR)
+CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc @CROSSTARGETFLAGS@ -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR)
 RELPATH      = $(TOOLSDIR)/tools/relpath$(TOOLSEXT)
 SFNT2FNT     = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)
 RC           = $(WRC)
@@ -120,6 +122,7 @@ CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
        $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(EXTRA_OBJS)
 
+CROSSOBJS = $(OBJS:.o=.cross.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
 # 'all' target first in case the enclosing Makefile didn't define any target
@@ -133,10 +136,13 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .sfd .ttf .svg .ico
+.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.c.cross.o:
+	$(CROSSCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 .y.tab.c:
 	$(BISON) $(BISONFLAGS) -p $*_ -o $@ $<

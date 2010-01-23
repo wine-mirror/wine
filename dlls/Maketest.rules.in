@@ -22,8 +22,6 @@ ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 EXTRA_OBJS   = testlist.o
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSCC      = @CROSSCC@
-CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc @CROSSTARGETFLAGS@ -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR)
 MAKEDEPFLAGS = -xo -xcross.o
 
 @MAKE_RULES@
@@ -47,13 +45,6 @@ check test:: $(TESTRESULTS)
 $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
-
-CROSSOBJS = $(OBJS:.o=.cross.o)
-
-.SUFFIXES: .cross.o
-
-.c.cross.o:
-	$(CROSSCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 crosstest:: @CROSSTEST@
 
