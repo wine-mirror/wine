@@ -76,9 +76,9 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	    /* if filename NULL, assume open file handle in adwInfo[0] */
 	    if (szFileName) {
                 OFSTRUCT    ofs;
-                lpmmioinfo->adwInfo[0] = (DWORD)OpenFile(szFileName, &ofs, lpmmioinfo->dwFlags & 0xFFFF);
+                lpmmioinfo->adwInfo[0] = OpenFile(szFileName, &ofs, lpmmioinfo->dwFlags & 0xFFFF);
             }
-	    if (lpmmioinfo->adwInfo[0] == (DWORD)HFILE_ERROR)
+	    if (lpmmioinfo->adwInfo[0] == HFILE_ERROR)
 		ret = MMIOERR_CANNOTOPEN;
 	}
 	break;
@@ -582,6 +582,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 {
     LPWINE_MMIO		wm;
     MMIOINFO    	mmioinfo;
+    DWORD               pos;
 
     TRACE("('%s', %p, %08X, %s);\n", szFileName, refmminfo, dwOpenFlags, is_unicode ? "unicode" : "ansi");
 
@@ -666,7 +667,12 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
                                         (LPARAM)szFileName, 0, FALSE);
 
     /* grab file size, when possible */
-    wm->dwFileSize = GetFileSize((HANDLE)wm->info.adwInfo[0], NULL);
+    if ((pos = _llseek((HFILE)wm->info.adwInfo[0], 0, SEEK_CUR)) != -1)
+    {
+        wm->dwFileSize = _llseek((HFILE)wm->info.adwInfo[0], 0, SEEK_END);
+        _llseek((HFILE)wm->info.adwInfo[0], pos, SEEK_SET);
+    }
+    else wm->dwFileSize = 0;
 
     if (refmminfo->wErrorRet == 0)
 	return wm->info.hmmio;
