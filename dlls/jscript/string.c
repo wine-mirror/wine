@@ -820,7 +820,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     DispatchEx *rep_func = NULL, *regexp = NULL;
     match_result_t *parens = NULL, match, **parens_ptr = &parens;
     strbuf_t ret = {NULL,0,0};
-    BOOL gcheck = FALSE;
+    DWORD re_flags = 0;
     VARIANT *arg_var;
     HRESULT hres = S_OK;
 
@@ -897,9 +897,9 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 
         while(1) {
             if(regexp) {
-                hres = regexp_match_next(ctx, regexp, gcheck, str, length, &cp, parens_ptr,
+                hres = regexp_match_next(ctx, regexp, re_flags, str, length, &cp, parens_ptr,
                         &parens_size, &parens_cnt, &match);
-                gcheck = TRUE;
+                re_flags = REM_CHECK_GLOBAL;
 
                 if(hres == S_FALSE) {
                     hres = S_OK;
@@ -1073,7 +1073,7 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     }
 
     cp = str;
-    hres = regexp_match_next(ctx, regexp, FALSE, str, length, &cp, NULL, NULL, NULL, &match);
+    hres = regexp_match_next(ctx, regexp, REM_RESET_INDEX, str, length, &cp, NULL, NULL, NULL, &match);
     SysFreeString(val_str);
     jsdisp_release(regexp);
     if(FAILED(hres))

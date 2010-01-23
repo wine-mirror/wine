@@ -3308,8 +3308,9 @@ static void set_last_index(RegExpInstance *This, DWORD last_index)
     num_set_val(&This->last_index_var, last_index);
 }
 
-static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, const WCHAR *str, DWORD len,
-        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
+static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, DWORD rem_flags,
+        const WCHAR *str, DWORD len, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
+        DWORD *parens_cnt, match_result_t *ret)
 {
     REMatchState *x, *result;
     REGlobalData gData;
@@ -3334,8 +3335,11 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, c
         return E_FAIL;
     }
 
-    if(!result)
+    if(!result) {
+        if(rem_flags & REM_RESET_INDEX)
+            set_last_index(regexp, 0);
         return S_FALSE;
+    }
 
     if(parens) {
         DWORD i;
@@ -3375,19 +3379,20 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, c
     return S_OK;
 }
 
-HRESULT regexp_match_next(script_ctx_t *ctx, DispatchEx *dispex, BOOL gcheck, const WCHAR *str, DWORD len,
-        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
+HRESULT regexp_match_next(script_ctx_t *ctx, DispatchEx *dispex, DWORD rem_flags, const WCHAR *str,
+        DWORD len, const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt,
+        match_result_t *ret)
 {
     RegExpInstance *regexp = (RegExpInstance*)dispex;
     jsheap_t *mark;
     HRESULT hres;
 
-    if(gcheck && !(regexp->jsregexp->flags & JSREG_GLOB))
+    if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & JSREG_GLOB))
         return S_FALSE;
 
     mark = jsheap_mark(&ctx->tmp_heap);
 
-    hres = do_regexp_match_next(ctx, regexp, str, len, cp, parens, parens_size, parens_cnt, ret);
+    hres = do_regexp_match_next(ctx, regexp, rem_flags, str, len, cp, parens, parens_size, parens_cnt, ret);
 
     jsheap_clear(mark);
     return hres;
@@ -3406,7 +3411,7 @@ HRESULT regexp_match(script_ctx_t *ctx, DispatchEx *dispex, const WCHAR *str, DW
     mark = jsheap_mark(&ctx->tmp_heap);
 
     while(1) {
-        hres = do_regexp_match_next(ctx, This, str, len, &cp, NULL, NULL, NULL, &cres);
+        hres = do_regexp_match_next(ctx, This, 0, str, len, &cp, NULL, NULL, NULL, &cres);
         if(hres == S_FALSE) {
             hres = S_OK;
             break;
@@ -3653,20 +3658,14 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, VARIANT *arg, jsexce
         last_index = regexp->last_index;
 
     cp = string + last_index;
-    hres = regexp_match_next(ctx, &regexp->dispex, FALSE, string, length, &cp, parens, parens ? &parens_size : NULL,
-            parens_cnt, match);
+    hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string, length, &cp, parens,
+            parens ? &parens_size : NULL, parens_cnt, match);
     if(FAILED(hres)) {
         SysFreeString(string);
         return hres;
     }
 
-    if(hres == S_OK) {
-        *ret = VARIANT_TRUE;
-    }else {
-        set_last_index(regexp, 0);
-        *ret = VARIANT_FALSE;
-    }
-
+    *ret = hres == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
     if(input) {
         *input = string;
     }else {

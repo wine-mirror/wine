@@ -318,7 +318,9 @@ typedef struct {
     DWORD len;
 } match_result_t;
 
-HRESULT regexp_match_next(script_ctx_t*,DispatchEx*,BOOL,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
+#define REM_CHECK_GLOBAL 0x0001
+#define REM_RESET_INDEX  0x0002
+HRESULT regexp_match_next(script_ctx_t*,DispatchEx*,DWORD,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*);
 HRESULT regexp_match(script_ctx_t*,DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*);

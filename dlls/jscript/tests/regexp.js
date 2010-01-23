@@ -433,6 +433,7 @@ re = /d/g;
 re.lastIndex = 1;
 i = 'abc'.search(re);
 ok(i === -1, "'abc'.search(/d/g) = " + i);
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
 
 i = 'abcdde'.search(/[df]/);
 ok(i === 3, "'abc'.search(/[df]/) = " + i);
