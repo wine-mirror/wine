@@ -1032,8 +1032,58 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *regexp = NULL;
+    const WCHAR *str, *cp;
+    match_result_t match;
+    VARIANT *arg;
+    DWORD length;
+    BSTR val_str;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_string_val(ctx, jsthis, ei, &str, &length, &val_str);
+    if(FAILED(hres))
+        return hres;
+
+    if(!arg_cnt(dp)) {
+        if(retv)
+            V_VT(retv) = VT_NULL;
+        SysFreeString(val_str);
+        return S_OK;
+    }
+
+    arg = get_arg(dp,0);
+    if(V_VT(arg) == VT_DISPATCH) {
+        regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
+        if(regexp) {
+            if(!is_class(regexp, JSCLASS_REGEXP)) {
+                jsdisp_release(regexp);
+                regexp = NULL;
+            }
+        }
+    }
+
+    if(!regexp) {
+        hres = create_regexp_var(ctx, arg, NULL, &regexp);
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
+            return hres;
+        }
+    }
+
+    cp = str;
+    hres = regexp_match_next(ctx, regexp, FALSE, str, length, &cp, NULL, NULL, NULL, &match);
+    SysFreeString(val_str);
+    jsdisp_release(regexp);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = hres == S_OK ? match.str-str : -1;
+    }
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.5.4.13 */

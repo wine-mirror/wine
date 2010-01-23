@@ -17,7 +17,7 @@
  */
 
 
-var m, re, b;
+var m, re, b, i, obj;
 
 re = /a+/;
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
@@ -408,5 +408,48 @@ ok(re.lastIndex === -1, "re.lastIndex = " + re.lastIndex + " expected -1");
 m = re.exec("  ");
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
 ok(m === null, "m = " + m + " expected null");
+
+re = /aa/g;
+i = 'baacd'.search(re);
+ok(i === 1, "'baacd'.search(re) = " + i);
+ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
+
+re.lastIndex = 2;
+i = 'baacdaa'.search(re);
+ok(i === 1, "'baacd'.search(re) = " + i);
+ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
+
+re = /aa/;
+i = 'baacd'.search(re);
+ok(i === 1, "'baacd'.search(re) = " + i);
+ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
+
+re.lastIndex = 2;
+i = 'baacdaa'.search(re);
+ok(i === 1, "'baacd'.search(re) = " + i);
+ok(re.lastIndex === 3, "re.lastIndex = " + re.lastIndex);
+
+re = /d/g;
+re.lastIndex = 1;
+i = 'abc'.search(re);
+ok(i === -1, "'abc'.search(/d/g) = " + i);
+
+i = 'abcdde'.search(/[df]/);
+ok(i === 3, "'abc'.search(/[df]/) = " + i);
+
+i = 'abcdde'.search(/[df]/, "a");
+ok(i === 3, "'abc'.search(/[df]/) = " + i);
+
+i = 'abcdde'.search("[df]");
+ok(i === 3, "'abc'.search(/d*/) = " + i);
+
+obj = {
+    toString: function() { return "abc"; }
+};
+i = String.prototype.search.call(obj, "b");
+ok(i === 1, "String.prototype.seatch.apply(obj, 'b') = " + i);
+
+i = " undefined ".search();
+ok(i === null, "' undefined '.search() = " + i);
 
 reportSuccess();
