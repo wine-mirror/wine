@@ -1,5 +1,5 @@
 /*
- * Unit test suite for directory functions.
+ * Unit test suite for thread functions.
  *
  * Copyright 2002 Geoffrey Hausheer
  *
