@@ -1822,6 +1822,9 @@ static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
 /* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
 static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
 {
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     glsl_src_param_t src0_param;
     DWORD write_mask;
@@ -1847,12 +1850,26 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
     {
         /* We need to *round* to the nearest int here. */
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
-        if (mask_size > 1) {
-            shader_addline(buffer, "ivec%d(floor(abs(%s) + vec%d(0.5)) * sign(%s)));\n", mask_size, src0_param.param_str, mask_size, src0_param.param_str);
-        } else {
-            shader_addline(buffer, "int(floor(abs(%s) + 0.5) * sign(%s)));\n", src0_param.param_str, src0_param.param_str);
+
+        if (gl_info->supported[EXT_GPU_SHADER4])
+        {
+            if (mask_size > 1)
+                shader_addline(buffer, "ivec%d(round(%s)));\n", mask_size, src0_param.param_str);
+            else
+                shader_addline(buffer, "int(round(%s)));\n", src0_param.param_str);
         }
-    } else {
+        else
+        {
+            if (mask_size > 1)
+                shader_addline(buffer, "ivec%d(floor(abs(%s) + vec%d(0.5)) * sign(%s)));\n",
+                        mask_size, src0_param.param_str, mask_size, src0_param.param_str);
+            else
+                shader_addline(buffer, "int(floor(abs(%s) + 0.5) * sign(%s)));\n",
+                        src0_param.param_str, src0_param.param_str);
+        }
+    }
+    else
+    {
         shader_addline(buffer, "%s);\n", src0_param.param_str);
     }
 }
@@ -3759,6 +3776,10 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
          */
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
     }
+    if (gl_info->supported[EXT_GPU_SHADER4])
+    {
+        shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+    }
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShader *)This, reg_maps, &priv_ctx);
@@ -3845,6 +3866,11 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
     shader_addline(buffer, "#version 120\n");
+
+    if (gl_info->supported[EXT_GPU_SHADER4])
+    {
+        shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+    }
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
