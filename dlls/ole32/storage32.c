@@ -1796,8 +1796,8 @@ static HRESULT WINAPI StorageImpl_Commit(
 static HRESULT WINAPI StorageImpl_Revert(
   IStorage* iface)
 {
-  FIXME("(%p): stub\n", iface);
-  return E_NOTIMPL;
+  TRACE("(%p)\n", iface);
+  return S_OK;
 }
 
 /*************************************************************************

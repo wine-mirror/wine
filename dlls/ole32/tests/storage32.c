@@ -1384,7 +1384,7 @@ static void test_revert(void)
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
     r = IStorage_Revert(stg);
-    todo_wine ok(r==S_OK, "IStorage->Revert failed %08x\n", r);
+    ok(r==S_OK, "IStorage->Revert failed %08x\n", r);
 
     r = IStream_Write(stm, "this works\n", 11, NULL);
     ok(r==S_OK, "IStream_Write should succeed %08x\n", r);
