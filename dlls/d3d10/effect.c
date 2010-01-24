@@ -965,6 +965,17 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             hr = S_OK;
             break;
 
+        case D3D10_EOO_PARSED_OBJECT_INDEX:
+            /* This is a local object, we've parsed in parse_fx10_local_object, which has an array index. */
+            data_ptr = data + offset;
+            read_dword(&data_ptr, &offset);
+            read_dword(&data_ptr, &o->index);
+            TRACE("Shader = %s[%u].\n", data + offset, o->index);
+
+            o->data = e->lpVtbl->GetVariableByName(e, data + offset);
+            hr = S_OK;
+            break;
+
         case D3D10_EOO_ANONYMOUS_SHADER:
             TRACE("Anonymous shader\n");
 

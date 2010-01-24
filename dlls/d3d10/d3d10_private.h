@@ -49,6 +49,7 @@ enum d3d10_effect_object_operation
 {
     D3D10_EOO_VALUE = 1,
     D3D10_EOO_PARSED_OBJECT = 2,
+    D3D10_EOO_PARSED_OBJECT_INDEX = 3,
     D3D10_EOO_ANONYMOUS_SHADER = 7,
 };
 
