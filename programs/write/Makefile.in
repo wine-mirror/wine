@@ -23,7 +23,8 @@ RC_SRCS = \
 	Ro.rc \
 	Ru.rc \
 	Si.rc \
-	Sv.rc
+	Sv.rc \
+	Uk.rc
 
 @MAKE_PROG_RULES@
 
