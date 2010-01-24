@@ -92,6 +92,7 @@ RC_SRCS = \
 	Si.rc \
 	Sv.rc \
 	Tr.rc \
+	Uk.rc \
 	Zh.rc \
 	rsrc.rc
 
