@@ -26,6 +26,7 @@ RC_SRCS = \
 	credui_Ru.rc \
 	credui_Si.rc \
 	credui_Sv.rc \
+	credui_Uk.rc \
 	credui_Zh.rc
 
 @MAKE_DLL_RULES@
