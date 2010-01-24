@@ -1780,6 +1780,7 @@ typedef enum wined3d_gl_extension
     EXT_FRAMEBUFFER_MULTISAMPLE,
     EXT_FRAMEBUFFER_OBJECT,
     EXT_GPU_PROGRAM_PARAMETERS,
+    EXT_GPU_SHADER4,
     EXT_PACKED_DEPTH_STENCIL,
     EXT_PALETTED_TEXTURE,
     EXT_PIXEL_BUFFER_OBJECT,
@@ -3042,6 +3043,74 @@ typedef void (WINE_GLAPI *PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC)(GLenum target,
         GLuint index, GLsizei count, const float *params);
 #endif
 
+/* GL_EXT_gpu_shader4 */
+#ifndef GL_EXT_gpu_shader4
+#define GL_EXT_gpu_shader4 1
+#define GL_VERTEX_ATTRIB_ARRAY_INTEGER_EXT                  0x88fd
+#define GL_SAMPLER_1D_ARRAY_EXT                             0x8dc0
+#define GL_SAMPLER_2D_ARRAY_EXT                             0x8dc1
+#define GL_SAMPLER_BUFFER_EXT                               0x8dc2
+#define GL_SAMPLER_1D_ARRAY_SHADOW_EXT                      0x8dc3
+#define GL_SAMPLER_2D_ARRAY_SHADOW_EXT                      0x8dc4
+#define GL_SAMPLER_CUBE_SHADOW_EXT                          0x8dc5
+#define GL_UNSIGNED_INT_VEC2_EXT                            0x8dc6
+#define GL_UNSIGNED_INT_VEC3_EXT                            0x8dc7
+#define GL_UNSIGNED_INT_VEC4_EXT                            0x8dc8
+#define GL_INT_SAMPLER_1D_EXT                               0x8dc9
+#define GL_INT_SAMPLER_2D_EXT                               0x8dca
+#define GL_INT_SAMPLER_3D_EXT                               0x8dcb
+#define GL_INT_SAMPLER_CUBE_EXT                             0x8dcc
+#define GL_INT_SAMPLER_2D_RECT_EXT                          0x8dcd
+#define GL_INT_SAMPLER_1D_ARRAY_EXT                         0x8dce
+#define GL_INT_SAMPLER_2D_ARRAY_EXT                         0x8dcf
+#define GL_INT_SAMPLER_BUFFER_EXT                           0x8dd0
+#define GL_UNSIGNED_INT_SAMPLER_1D_EXT                      0x8dd1
+#define GL_UNSIGNED_INT_SAMPLER_2D_EXT                      0x8dd2
+#define GL_UNSIGNED_INT_SAMPLER_3D_EXT                      0x8dd3
+#define GL_UNSIGNED_INT_SAMPLER_CUBE_EXT                    0x8dd4
+#define GL_UNSIGNED_INT_SAMPLER_2D_RECT_EXT                 0x8dd5
+#define GL_UNSIGNED_INT_SAMPLER_1D_ARRAY_EXT                0x8dd6
+#define GL_UNSIGNED_INT_SAMPLER_2D_ARRAY_EXT                0x8dd7
+#define GL_UNSIGNED_INT_SAMPLER_BUFFER_EXT                  0x8dd8
+#define GL_MIN_PROGRAM_TEXEL_OFFSET_EXT                     0x8904
+#define GL_MAX_PROGRAM_TEXEL_OFFSET_EXT                     0x8905
+#endif
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI1IEXTPROC)(GLuint index, GLint x);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI2IEXTPROC)(GLuint index, GLint x, GLint y);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI3IEXTPROC)(GLuint index, GLint x, GLint y, GLint z);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4IEXTPROC)(GLuint index, GLint x, GLint y, GLint z, GLint w);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI1UIEXTPROC)(GLuint index, GLuint x);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI2UIEXTPROC)(GLuint index, GLuint x, GLuint y);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI3UIEXTPROC)(GLuint index, GLuint x, GLuint y, GLuint z);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4UIEXTPROC)(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI1IVEXTPROC)(GLuint index, const GLint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI2IVEXTPROC)(GLuint index, const GLint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI3IVEXTPROC)(GLuint index, const GLint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4IVEXTPROC)(GLuint index, const GLint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI1UIVEXTPROC)(GLuint index, const GLuint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI2UIVEXTPROC)(GLuint index, const GLuint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI3UIVEXTPROC)(GLuint index, const GLuint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4UIVEXTPROC)(GLuint index, const GLuint *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4BVEXTPROC)(GLuint index, const GLbyte *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4SVEXTPROC)(GLuint index, const GLshort *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4UBVEXTPROC)(GLuint index, const GLubyte *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBI4USVEXTPROC)(GLuint index, const GLushort *v);
+typedef GLvoid (WINE_GLAPI *PGLFNVERTEXATTRIBIPOINTEREXTPROC)(GLuint index, GLint size, GLenum type,
+        GLsizei stride, const GLvoid *pointer);
+typedef GLvoid (WINE_GLAPI *PGLFNGETVERTEXATTRIBIIVEXTPROC)(GLuint index, GLenum pname, GLint *params);
+typedef GLvoid (WINE_GLAPI *PGLFNGETVERTEXATTRIBIUIVEXTPROC)(GLuint index, GLenum pname, GLuint *params);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM1UIEXTPROC)(GLint location, GLuint v0);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM2UIEXTPROC)(GLint location, GLuint v0, GLuint v1);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM3UIEXTPROC)(GLint location, GLuint v0, GLuint v1, GLuint v2);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM4UIEXTPROC)(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM1UIVEXTPROC)(GLint location, GLsizei count, const GLuint *value);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM2UIVEXTPROC)(GLint location, GLsizei count, const GLuint *value);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM3UIVEXTPROC)(GLint location, GLsizei count, const GLuint *value);
+typedef GLvoid (WINE_GLAPI *PGLFNUNIFORM4UIVEXTPROC)(GLint location, GLsizei count, const GLuint *value);
+typedef GLvoid (WINE_GLAPI *PGLFNGETUNIFORMUIVEXTPROC)(GLuint program, GLint location, const GLuint *params);
+typedef GLvoid (WINE_GLAPI *PGLFNBINDFRAGDATALOCATIONEXTPROC)(GLuint program, GLuint color_number, const GLchar *name);
+typedef GLint (WINE_GLAPI *PGLFNGETFRAGDATALOCATIONEXTPROC)(GLuint program, const GLchar *name);
+
 /* GL_EXT_packed_depth_stencil */
 #ifndef GL_EXT_packed_depth_stencil
 #define GL_EXT_packed_depth_stencil 1
@@ -4208,6 +4277,75 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glProgramEnvParameters4fvEXT,               EXT_GPU_PROGRAM_PARAMETERS,     NULL) \
     USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC, \
             glProgramLocalParameters4fvEXT,             EXT_GPU_PROGRAM_PARAMETERS,     NULL) \
+    /* GL_EXT_gpu_shader4 */\
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI1IEXTPROC, \
+            glVertexAttribI1iEXT,                       EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI2IEXTPROC, \
+            glVertexAttribI2iEXT,                       EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI3IEXTPROC, \
+            glVertexAttribI3iEXT,                       EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4IEXTPROC, \
+            glVertexAttribI4iEXT,                       EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI1UIEXTPROC, \
+            glVertexAttribI1uiEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI2UIEXTPROC, \
+            glVertexAttribI2uiEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI3UIEXTPROC, \
+            glVertexAttribI3uiEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UIEXTPROC, \
+            glVertexAttribI4uiEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI1IVEXTPROC, \
+            glVertexAttribI1ivEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI2IVEXTPROC, \
+            glVertexAttribI2ivEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI3IVEXTPROC, \
+            glVertexAttribI3ivEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4IVEXTPROC, \
+            glVertexAttribI4ivEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI1UIVEXTPROC, \
+            glVertexAttribI1uivEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI2UIVEXTPROC, \
+            glVertexAttribI2uivEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI3UIVEXTPROC, \
+            glVertexAttribI3uivEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UIVEXTPROC, \
+            glVertexAttribI4uivEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4BVEXTPROC, \
+            glVertexAttribI4bvEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4SVEXTPROC, \
+            glVertexAttribI4svEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4UBVEXTPROC, \
+            glVertexAttribI4ubvEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBI4USVEXTPROC, \
+            glVertexAttribI4usvEXT,                     EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBIPOINTEREXTPROC, \
+            glVertexAttribIPointerEXT,                  EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBIIVEXTPROC, \
+            glVertexAttribIivEXT,                       EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBIUIVEXTPROC, \
+            glVertexAttribIuivEXT,                      EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM1UIEXTPROC, \
+            glUniform1uiEXT,                            EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM2UIEXTPROC, \
+            glUniform2uiEXT,                            EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM3UIEXTPROC, \
+            glUniform3uiEXT,                            EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM4UIEXTPROC, \
+            glUniform4uiEXT,                            EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM1UIVEXTPROC, \
+            glUniform1uivEXT,                           EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM2UIVEXTPROC, \
+            glUniform2uivEXT,                           EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM3UIVEXTPROC, \
+            glUniform3uivEXT,                           EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNUNIFORM4UIVEXTPROC, \
+            glUniform4uivEXT,                           EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNGETUNIFORMUIVEXTPROC, \
+            glGetUniformuivEXT,                         EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNBINDFRAGDATALOCATIONEXTPROC, \
+            glBindFragDataLocationEXT,                  EXT_GPU_SHADER4,                NULL) \
+    USE_GL_FUNC(PGLFNGETFRAGDATALOCATIONEXTPROC, \
+            glGetFragDataLocationEXT,                   EXT_GPU_SHADER4,                NULL) \
     /* GL_EXT_paletted_texture */ \
     USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC, \
             glColorTableEXT,                            EXT_PALETTED_TEXTURE,           NULL) \
