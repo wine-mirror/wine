@@ -1576,10 +1576,7 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, gls
                 if(lod) {
                     sample_function->name = projected ? "texture2DRectProjLod" : "texture2DRectLod";
                 } else  if(grad) {
-                    /* What good are texrect grad functions? I don't know, but GL_EXT_gpu_shader4 defines them.
-                    * There is no GL_ARB_shader_texture_lod spec yet, so I don't know if they're defined there
-                     */
-                    sample_function->name = projected ? "shadow2DRectProjGradARB" : "shadow2DRectGradARB";
+                    sample_function->name = projected ? "texture2DRectProjGradARB" : "texture2DRectGradARB";
                 } else {
                     sample_function->name = projected ? "texture2DRectProj" : "texture2DRect";
                 }
