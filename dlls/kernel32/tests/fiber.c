@@ -27,6 +27,7 @@ static void (WINAPI *pSwitchToFiber)(LPVOID);
 static void (WINAPI *pDeleteFiber)(LPVOID);
 static LPVOID (WINAPI *pConvertThreadToFiberEx)(LPVOID,DWORD);
 static LPVOID (WINAPI *pCreateFiberEx)(SIZE_T,SIZE_T,DWORD,LPFIBER_START_ROUTINE,LPVOID);
+static BOOL (WINAPI *pIsThreadAFiber)(void);
 
 static LPVOID fibers[2];
 static BYTE testparam = 185;
@@ -43,6 +44,7 @@ static VOID init_funcs(void)
     X(DeleteFiber);
     X(ConvertThreadToFiberEx);
     X(CreateFiberEx);
+    X(IsThreadAFiber);
 #undef X
 }
 
@@ -122,6 +124,16 @@ static void test_FiberHandling(void)
 
     pSwitchToFiber(fibers[1]);
     pDeleteFiber(fibers[1]);
+
+    if (!pIsThreadAFiber)
+    {
+        skip( "IsThreadAFiber not present\n" );
+        return;
+    }
+
+    ok(pIsThreadAFiber(), "IsThreadAFiber reported FALSE\n");
+    test_ConvertFiberToThread();
+    ok(!pIsThreadAFiber(), "IsThreadAFiber reported TRUE\n");
 }
 
 START_TEST(fiber)
