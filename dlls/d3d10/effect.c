@@ -2418,9 +2418,40 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10Eff
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if (This == &null_pass)
+    {
+        WARN("Null pass specified\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < This->object_count; ++i)
+    {
+        struct d3d10_effect_object *o = &This->objects[i];
+
+        if (o->type == D3D10_EOT_GEOMETRYSHADER)
+        {
+            desc->pShaderVariable = o->data;
+            desc->ShaderIndex = o->index;
+            return S_OK;
+        }
+    }
+
+    TRACE("Returning null_shader_variable\n");
+    desc->pShaderVariable = (ID3D10EffectShaderVariable *)&null_shader_variable;
+    desc->ShaderIndex = 0;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10EffectPass *iface,
