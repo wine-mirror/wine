@@ -43,7 +43,8 @@ RC_SRCS = \
 	wldap32_Pt.rc \
 	wldap32_Ru.rc \
 	wldap32_Sv.rc \
-	wldap32_Tr.rc
+	wldap32_Tr.rc \
+	wldap32_Uk.rc
 
 @MAKE_DLL_RULES@
 
