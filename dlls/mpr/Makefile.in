@@ -37,6 +37,7 @@ RC_SRCS = \
 	mpr_Si.rc \
 	mpr_Sv.rc \
 	mpr_Tr.rc \
+	mpr_Uk.rc \
 	mpr_Zh.rc \
 	version.rc
 
