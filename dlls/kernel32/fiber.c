@@ -304,3 +304,11 @@ BOOL WINAPI FlsSetValue( DWORD index, PVOID data )
     NtCurrentTeb()->FlsSlots[index] = data;
     return TRUE;
 }
+
+/***********************************************************************
+ *           IsThreadAFiber   (KERNEL32.@)
+ */
+BOOL WINAPI IsThreadAFiber(void)
+{
+    return NtCurrentTeb()->Tib.u.FiberData != NULL;
+}

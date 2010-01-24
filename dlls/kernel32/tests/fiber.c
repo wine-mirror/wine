@@ -146,7 +146,7 @@ static void test_FiberHandling(void)
 
     if (!pIsThreadAFiber)
     {
-        skip( "IsThreadAFiber not present\n" );
+        win_skip( "IsThreadAFiber not present\n" );
         return;
     }
 
