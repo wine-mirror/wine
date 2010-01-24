@@ -25,7 +25,8 @@ RC_SRCS = \
 	Pl.rc \
 	Pt.rc \
 	Ru.rc \
-	Si.rc
+	Si.rc \
+	Uk.rc
 
 @MAKE_PROG_RULES@
 
