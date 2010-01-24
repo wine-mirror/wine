@@ -816,7 +816,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, IHTMLEventObj *event_obj,
         ConnectionPointContainer *cp_container, eventid_t eid, IDispatch *this_obj)
 {
     handler_vector_t *handler_vector = NULL;
-    DWORD i;
+    int i;
     HRESULT hres;
 
     if(event_target)
@@ -845,7 +845,8 @@ static void call_event_handlers(HTMLDocumentNode *doc, IHTMLEventObj *event_obj,
         V_VT(&arg) = VT_DISPATCH;
         V_DISPATCH(&arg) = (IDispatch*)event_obj;
 
-        for(i=0; i < handler_vector->handler_cnt; i++) {
+        i = handler_vector->handler_cnt;
+        while(i--) {
             if(handler_vector->handlers[i]) {
                 TRACE("%s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
                 hres = call_disp_func(handler_vector->handlers[i], &dp);
