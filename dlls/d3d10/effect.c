@@ -6017,9 +6017,9 @@ static const struct ID3D10EffectSamplerVariableVtbl d3d10_effect_sampler_variabl
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_type_IsValid(ID3D10EffectType *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p\n", iface);
 
-    return FALSE;
+    return (struct d3d10_effect_type *)iface != &null_type;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *iface, D3D10_EFFECT_TYPE_DESC *desc)
