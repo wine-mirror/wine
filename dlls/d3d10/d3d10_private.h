@@ -56,6 +56,7 @@ struct d3d10_effect_object
     struct d3d10_effect_pass *pass;
     enum d3d10_effect_object_type type;
     DWORD idx_offset;
+    DWORD index;
     void *data;
 };
 

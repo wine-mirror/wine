@@ -906,7 +906,7 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
 static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
 {
     const char *data_ptr = NULL;
-    DWORD offset, index;
+    DWORD offset;
     enum d3d10_effect_object_operation operation;
     HRESULT hr;
     struct d3d10_effect *effect = o->pass->technique->effect;
@@ -914,8 +914,8 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     read_dword(ptr, &o->type);
     TRACE("Effect object is of type %#x.\n", o->type);
 
-    read_dword(ptr, &index);
-    TRACE("Effect object index %#x.\n", index);
+    read_dword(ptr, &o->index);
+    TRACE("Effect object index %#x.\n", o->index);
 
     read_dword(ptr, &operation);
     TRACE("Effect object operation %#x.\n", operation);
@@ -2379,9 +2379,40 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if (This == &null_pass)
+    {
+        WARN("Null pass specified\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < This->object_count; ++i)
+    {
+        struct d3d10_effect_object *o = &This->objects[i];
+
+        if (o->type == D3D10_EOT_VERTEXSHADER)
+        {
+            desc->pShaderVariable = o->data;
+            desc->ShaderIndex = o->index;
+            return S_OK;
+        }
+    }
+
+    TRACE("Returning null_shader_variable\n");
+    desc->pShaderVariable = (ID3D10EffectShaderVariable *)&null_shader_variable;
+    desc->ShaderIndex = 0;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10EffectPass *iface,
