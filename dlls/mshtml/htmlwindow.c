@@ -1688,13 +1688,20 @@ static HRESULT WINAPI WindowDispEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid
                                                  LCID lcid, DISPID *rgDispId)
 {
     HTMLWindow *This = DISPEX_THIS(iface);
+    UINT i;
+    HRESULT hres;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    WARN("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
-    /* FIXME: Use script dispatch */
+    for(i=0; i < cNames; i++) {
+        /* We shouldn't use script's IDispatchEx here, so we shouldn't use GetDispID */
+        hres = IDispatchEx_GetDispID(DISPATCHEX(This), rgszNames[i], 0, rgDispId+i);
+        if(FAILED(hres))
+            return hres;
+    }
 
-    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
+    return S_OK;
 }
 
 static HRESULT WINAPI WindowDispEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
