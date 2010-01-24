@@ -28,6 +28,10 @@ static void (WINAPI *pDeleteFiber)(LPVOID);
 static LPVOID (WINAPI *pConvertThreadToFiberEx)(LPVOID,DWORD);
 static LPVOID (WINAPI *pCreateFiberEx)(SIZE_T,SIZE_T,DWORD,LPFIBER_START_ROUTINE,LPVOID);
 static BOOL (WINAPI *pIsThreadAFiber)(void);
+static DWORD (WINAPI *pFlsAlloc)(PFLS_CALLBACK_FUNCTION);
+static BOOL (WINAPI *pFlsFree)(DWORD);
+static PVOID (WINAPI *pFlsGetValue)(DWORD);
+static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
 
 static LPVOID fibers[2];
 static BYTE testparam = 185;
@@ -45,7 +49,16 @@ static VOID init_funcs(void)
     X(ConvertThreadToFiberEx);
     X(CreateFiberEx);
     X(IsThreadAFiber);
+    X(FlsAlloc);
+    X(FlsFree);
+    X(FlsGetValue);
+    X(FlsSetValue);
 #undef X
+}
+
+static VOID WINAPI FiberLocalStorageProc(PVOID lpFlsData)
+{
+    ok(lpFlsData == (PVOID) 1587, "FlsData expected not to be changed\n");
 }
 
 static VOID WINAPI FiberMainProc(LPVOID lpFiberParameter)
@@ -136,6 +149,29 @@ static void test_FiberHandling(void)
     ok(!pIsThreadAFiber(), "IsThreadAFiber reported TRUE\n");
 }
 
+static void test_FiberLocalStorage(PFLS_CALLBACK_FUNCTION cbfunc)
+{
+    DWORD fls;
+    BOOL ret;
+    PVOID val = (PVOID) 1587;
+
+    if (!pFlsAlloc)
+    {
+        win_skip( "Fiber Local Storage not supported\n" );
+        return;
+    }
+
+    fls = pFlsAlloc(cbfunc);
+    ok(fls != FLS_OUT_OF_INDEXES, "FlsAlloc failed with error %d\n", GetLastError());
+
+    ret = pFlsSetValue(fls, val);
+    ok(ret, "FlsSetValue failed\n");
+    ok(val == pFlsGetValue(fls), "FlsGetValue failed\n");
+
+    ret = pFlsFree(fls);
+    ok(ret, "FlsFree failed\n");
+}
+
 START_TEST(fiber)
 {
     init_funcs();
@@ -147,4 +183,6 @@ START_TEST(fiber)
     }
 
     test_FiberHandling();
+    test_FiberLocalStorage(NULL);
+    test_FiberLocalStorage(FiberLocalStorageProc);
 }
