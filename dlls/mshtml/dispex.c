@@ -400,18 +400,19 @@ HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp)
     VARIANT res;
     HRESULT hres;
 
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
-        FIXME("Could not get IDispatchEx interface: %08x\n", hres);
-        return hres;
-    }
-
     VariantInit(&res);
     memset(&ei, 0, sizeof(ei));
 
-    hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, dp, &res, &ei, NULL);
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, dp, &res, &ei, NULL);
+        IDispatchEx_Release(dispex);
+    }else {
+        TRACE("Could not get IDispatchEx interface: %08x\n", hres);
+        hres = IDispatch_Invoke(disp, 0, &IID_NULL, GetUserDefaultLCID(), DISPATCH_METHOD,
+                dp, &res, &ei, NULL);
+    }
 
-    IDispatchEx_Release(dispex);
     VariantClear(&res);
     return hres;
 }
