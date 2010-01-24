@@ -549,6 +549,7 @@ typedef struct shader_reg_maps
 struct wined3d_shader_context
 {
     IWineD3DBaseShader *shader;
+    const struct wined3d_gl_info *gl_info;
     const struct shader_reg_maps *reg_maps;
     struct wined3d_shader_buffer *buffer;
     void *backend_data;

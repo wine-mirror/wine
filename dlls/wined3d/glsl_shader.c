@@ -1194,8 +1194,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     static const char * const hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
     *is_color = FALSE;
@@ -1819,9 +1818,7 @@ static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
 /* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
 static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     glsl_src_param_t src0_param;
     DWORD write_mask;
@@ -2776,7 +2773,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, dx_param, dy_param;
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_GRAD;
@@ -2810,7 +2807,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;

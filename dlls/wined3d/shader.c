@@ -1100,6 +1100,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
 
     /* Initialize current parsing state. */
     ctx.shader = iface;
+    ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
     ctx.backend_data = backend_ctx;
