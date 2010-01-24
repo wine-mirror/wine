@@ -53,6 +53,7 @@ RC_SRCS = \
 	oleaut32_Sv.rc \
 	oleaut32_Th.rc \
 	oleaut32_Tr.rc \
+	oleaut32_Uk.rc \
 	oleaut32_Zh.rc \
 	version.rc
 
