@@ -45,6 +45,7 @@ RC_SRCS = \
 	crypt32_Pt.rc \
 	crypt32_Ro.rc \
 	crypt32_Sv.rc \
+	crypt32_Uk.rc \
 	version.rc
 
 @MAKE_DLL_RULES@
