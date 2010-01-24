@@ -910,6 +910,7 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     enum d3d10_effect_object_operation operation;
     HRESULT hr;
     struct d3d10_effect *effect = o->pass->technique->effect;
+    ID3D10Effect *e = (ID3D10Effect *)effect;
 
     read_dword(ptr, &o->type);
     TRACE("Effect object is of type %#x.\n", o->type);
@@ -954,6 +955,14 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                     hr = E_FAIL;
                     break;
             }
+            break;
+
+        case D3D10_EOO_PARSED_OBJECT:
+            /* This is a local object, we've parsed in parse_fx10_local_object. */
+            TRACE("Shader = %s.\n", data + offset);
+
+            o->data = e->lpVtbl->GetVariableByName(e, data + offset);
+            hr = S_OK;
             break;
 
         case D3D10_EOO_ANONYMOUS_SHADER:
