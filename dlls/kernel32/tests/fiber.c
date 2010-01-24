@@ -27,39 +27,51 @@ static void (WINAPI *pSwitchToFiber)(LPVOID);
 static void (WINAPI *pDeleteFiber)(LPVOID);
 
 static LPVOID fibers[2];
-static BYTE testparam = 187;
+static BYTE testparam = 185;
 
-static BOOL init_funcs(void)
+static VOID init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandle("kernel32");
 
-#define X(f) if (!(p##f = (void*)GetProcAddress(hKernel32, #f))) return FALSE;
+#define X(f) p##f = (void*)GetProcAddress(hKernel32, #f);
     X(CreateFiber);
     X(ConvertThreadToFiber);
     X(ConvertFiberToThread);
     X(SwitchToFiber);
     X(DeleteFiber);
 #undef X
-
-    return TRUE;
 }
 
 static VOID WINAPI FiberMainProc(LPVOID lpFiberParameter)
 {
     BYTE *tparam = (BYTE *)lpFiberParameter;
-    ok(*tparam == 187, "Parameterdata expected not to be changed\n");
+    ok(*tparam == 185, "Parameterdata expected not to be changed\n");
     pSwitchToFiber(fibers[0]);
 }
 
 static void test_ConvertThreadToFiber(void)
 {
-    fibers[0] = pConvertThreadToFiber(&testparam);
-    ok(fibers[0] != 0, "ConvertThreadToFiber failed with error %d\n", GetLastError());
+    if (pConvertThreadToFiber)
+    {
+        fibers[0] = pConvertThreadToFiber(&testparam);
+        ok(fibers[0] != 0, "ConvertThreadToFiber failed with error %d\n", GetLastError());
+    }
+    else
+    {
+        win_skip( "ConvertThreadToFiber not present\n" );
+    }
 }
 
 static void test_ConvertFiberToThread(void)
 {
-    ok(pConvertFiberToThread() , "ConvertThreadToFiber failed with error %d\n", GetLastError());
+    if (pConvertFiberToThread)
+    {
+        ok(pConvertFiberToThread() , "ConvertFiberToThread failed with error %d\n", GetLastError());
+    }
+    else
+    {
+        win_skip( "ConvertFiberToThread not present\n" );
+    }
 }
 
 static void test_CreateFiber(void)
@@ -73,9 +85,11 @@ static void test_CreateFiber(void)
 
 START_TEST(fiber)
 {
-    if (!init_funcs())
+    init_funcs();
+
+    if (!pCreateFiber)
     {
-        win_skip("Needed functions are not available\n");
+        win_skip( "Fibers not supported by win95\n" );
         return;
     }
 
