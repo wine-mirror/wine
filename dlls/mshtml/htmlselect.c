@@ -332,8 +332,26 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
                                             VARIANT before)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p v)\n", This, element);
-    return E_NOTIMPL;
+    IHTMLDOMNode *node, *tmp;
+    HRESULT hres;
+
+    FIXME("(%p)->(%p %s): semi-stub\n", This, element, debugstr_variant(&before));
+
+    if(V_VT(&before) != VT_EMPTY) {
+        FIXME("unhandled before %s\n", debugstr_variant(&before));
+        return E_NOTIMPL;
+    }
+
+    hres = IHTMLElement_QueryInterface(element, &IID_IHTMLDOMNode, (void**)&node);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_appendChild(HTMLDOMNODE(&This->element.node), node, &tmp);
+    IHTMLDOMNode_Release(node);
+    if(SUCCEEDED(hres) && tmp)
+        IHTMLDOMNode_Release(tmp);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLSelectElement_remove(IHTMLSelectElement *iface, LONG index)
