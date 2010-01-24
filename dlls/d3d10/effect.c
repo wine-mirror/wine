@@ -306,6 +306,9 @@ static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
     read_dword(&ptr, &dxbc_size);
     TRACE("dxbc size: %#x\n", dxbc_size);
 
+    /* We got a shader VertexShader vs = NULL, so it is fine to skip this. */
+    if (!dxbc_size) return S_OK;
+
     switch (v->type->basetype)
     {
         case D3D10_SVT_VERTEXSHADER:
@@ -1208,16 +1211,26 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
         case D3D10_SVT_VERTEXSHADER:
         case D3D10_SVT_PIXELSHADER:
         case D3D10_SVT_GEOMETRYSHADER:
-            TRACE("SVT is a shader.\n");
+            TRACE("Shader type is %s\n", debug_d3d10_shader_variable_type(v->type->basetype));
             for (i = 0; i < max(v->type->element_count, 1); ++i)
             {
                 DWORD shader_offset;
+                struct d3d10_effect_variable *var;
 
-                /*
-                 * TODO: Parse the shader
-                 */
+                if (!v->type->element_count)
+                {
+                    var = v;
+                }
+                else
+                {
+                    var = &v->elements[i];
+                }
+
                 read_dword(ptr, &shader_offset);
-                FIXME("Shader offset: %#x.\n", shader_offset);
+                TRACE("Shader offset: %#x.\n", shader_offset);
+
+                hr = parse_shader(var, data + shader_offset);
+                if (FAILED(hr)) return hr;
             }
             break;
 
