@@ -449,13 +449,13 @@ static void test_editselection(void)
     SendMessage(hCombo, CB_GETEDITSEL, (WPARAM)&start, (WPARAM)&end);
     len = SendMessage(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==0, "Unexpected start position for selection %d\n", LOWORD(len));
-    todo_wine ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
+    ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
 
     /* Now emulate a key press */
     edit[0] = 0x00;
     SendMessage(hCombo, WM_CHAR, 'A', 0x1c0001);
     SendMessage(hCombo, WM_GETTEXT, sizeof(edit), (LPARAM)edit);
-    todo_wine ok(strcmp(edit, "A")==0, "Unexpected text retrieved %s\n", edit);
+    ok(strcmp(edit, "A")==0, "Unexpected text retrieved %s\n", edit);
 
     len = SendMessage(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==1, "Unexpected start position for selection %d\n", LOWORD(len));
@@ -489,7 +489,7 @@ static void test_editselection(void)
     SendMessage(hCombo, CB_GETEDITSEL, (WPARAM)&start, (WPARAM)&end);
     len = SendMessage(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==0, "Unexpected start position for selection %d\n", LOWORD(len));
-    todo_wine ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
+    ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
 
     /* Now change the selection to the apparently invalid start -1, end -1 and
        show it means no selection (ie start -1) but cursor at end              */
@@ -497,7 +497,7 @@ static void test_editselection(void)
     edit[0] = 0x00;
     SendMessage(hCombo, WM_CHAR, 'A', 0x1c0001);
     SendMessage(hCombo, WM_GETTEXT, sizeof(edit), (LPARAM)edit);
-    todo_wine ok(strcmp(edit, "Jason2A")==0, "Unexpected text retrieved %s\n", edit);
+    ok(strcmp(edit, "Jason2A")==0, "Unexpected text retrieved %s\n", edit);
     DestroyWindow(hCombo);
 }
 
