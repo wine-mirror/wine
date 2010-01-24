@@ -35,6 +35,7 @@ static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
 
 static LPVOID fibers[2];
 static BYTE testparam = 185;
+static WORD cbCount;
 
 static VOID init_funcs(void)
 {
@@ -58,12 +59,14 @@ static VOID init_funcs(void)
 
 static VOID WINAPI FiberLocalStorageProc(PVOID lpFlsData)
 {
+    cbCount++;
     ok(lpFlsData == (PVOID) 1587, "FlsData expected not to be changed\n");
 }
 
 static VOID WINAPI FiberMainProc(LPVOID lpFiberParameter)
 {
     BYTE *tparam = (BYTE *)lpFiberParameter;
+    cbCount++;
     ok(*tparam == 185, "Parameterdata expected not to be changed\n");
     pSwitchToFiber(fibers[0]);
 }
@@ -108,6 +111,7 @@ static void test_ConvertFiberToThread(void)
 
 static void test_FiberHandling(void)
 {
+    cbCount = 0;
     fibers[0] = pCreateFiber(0,FiberMainProc,&testparam);
     ok(fibers[0] != 0, "CreateFiber failed with error %d\n", GetLastError());
     pDeleteFiber(fibers[0]);
@@ -124,6 +128,7 @@ static void test_FiberHandling(void)
     ok(fibers[1] != 0, "CreateFiber failed with error %d\n", GetLastError());
 
     pSwitchToFiber(fibers[1]);
+    ok(cbCount == 1, "Wrong callback count: %d\n", cbCount);
     pDeleteFiber(fibers[1]);
 
     if (!pCreateFiberEx)
@@ -136,6 +141,7 @@ static void test_FiberHandling(void)
     ok(fibers[1] != 0, "CreateFiberEx failed with error %d\n", GetLastError());
 
     pSwitchToFiber(fibers[1]);
+    ok(cbCount == 2, "Wrong callback count: %d\n", cbCount);
     pDeleteFiber(fibers[1]);
 
     if (!pIsThreadAFiber)
@@ -160,6 +166,7 @@ static void test_FiberLocalStorage(PFLS_CALLBACK_FUNCTION cbfunc)
         win_skip( "Fiber Local Storage not supported\n" );
         return;
     }
+    cbCount = 0;
 
     fls = pFlsAlloc(cbfunc);
     ok(fls != FLS_OUT_OF_INDEXES, "FlsAlloc failed with error %d\n", GetLastError());
@@ -170,6 +177,8 @@ static void test_FiberLocalStorage(PFLS_CALLBACK_FUNCTION cbfunc)
 
     ret = pFlsFree(fls);
     ok(ret, "FlsFree failed\n");
+    if (cbfunc)
+        todo_wine ok(cbCount == 1, "Wrong callback count: %d\n", cbCount);
 }
 
 START_TEST(fiber)
