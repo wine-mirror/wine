@@ -76,11 +76,14 @@ struct d3d10_effect_type
 {
     const struct ID3D10EffectTypeVtbl *vtbl;
 
+    char *name;
+    D3D10_SHADER_VARIABLE_TYPE basetype;
+    D3D10_SHADER_VARIABLE_CLASS type_class;
+
     DWORD id;
     struct wine_rb_entry entry;
     struct d3d10_effect *effect;
 
-    char *name;
     DWORD element_count;
     DWORD size_unpacked;
     DWORD stride;
@@ -88,8 +91,6 @@ struct d3d10_effect_type
     DWORD member_count;
     DWORD column_count;
     DWORD row_count;
-    D3D10_SHADER_VARIABLE_TYPE basetype;
-    D3D10_SHADER_VARIABLE_CLASS type_class;
     struct d3d10_effect_type *elementtype;
     struct d3d10_effect_type_member *members;
 };
@@ -109,7 +110,6 @@ struct d3d10_effect_variable
 
     struct d3d10_effect_variable *buffer;
     struct d3d10_effect_type *type;
-    struct d3d10_effect *effect;
 
     void *data;
     char *name;
@@ -118,6 +118,7 @@ struct d3d10_effect_variable
     DWORD annotation_count;
     DWORD flag;
     DWORD data_size;
+    struct d3d10_effect *effect;
     struct d3d10_effect_variable *elements;
     struct d3d10_effect_variable *members;
     struct d3d10_effect_variable *annotations;

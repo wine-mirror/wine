@@ -97,6 +97,24 @@ static struct d3d10_effect_variable null_rasterizer_variable = {(ID3D10EffectVar
 static struct d3d10_effect_variable null_sampler_variable = {(ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl,
         &null_local_buffer, &null_type};
 
+/* anonymous_shader_type and anonymous_shader */
+static char anonymous_name[] = "$Anonymous";
+static char anonymous_vertexshader_name[] = "vertexshader";
+static char anonymous_pixelshader_name[] = "pixelshader";
+static char anonymous_geometryshader_name[] = "geometryshader";
+static struct d3d10_effect_type anonymous_vs_type = {&d3d10_effect_type_vtbl, anonymous_vertexshader_name,
+        D3D10_SVT_VERTEXSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_type anonymous_ps_type = {&d3d10_effect_type_vtbl, anonymous_pixelshader_name,
+        D3D10_SVT_PIXELSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_type anonymous_gs_type = {&d3d10_effect_type_vtbl, anonymous_geometryshader_name,
+        D3D10_SVT_GEOMETRYSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_variable anonymous_vs = {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+        &null_local_buffer, &anonymous_vs_type, &null_shader_variable, anonymous_name};
+static struct d3d10_effect_variable anonymous_ps = {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+        &null_local_buffer, &anonymous_ps_type, &null_shader_variable, anonymous_name};
+static struct d3d10_effect_variable anonymous_gs = {(ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+        &null_local_buffer, &anonymous_gs_type, &null_shader_variable, anonymous_name};
+
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
 
 static inline void read_dword(const char **ptr, DWORD *d)
@@ -904,10 +922,35 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
 
     switch(operation)
     {
-        /* FIXME: This probably isn't completely correct. */
         case D3D10_EOO_VALUE:
-            FIXME("Copy variable value\n");
+            TRACE("Copy variable values\n");
             hr = E_FAIL;
+
+            switch (o->type)
+            {
+                case D3D10_EOT_VERTEXSHADER:
+                    TRACE("Vertex shader\n");
+                    o->data = &anonymous_vs;
+                    hr = S_OK;
+                    break;
+
+                case D3D10_EOT_PIXELSHADER:
+                    TRACE("Pixel shader\n");
+                    o->data = &anonymous_ps;
+                    hr = S_OK;
+                    break;
+
+                case D3D10_EOT_GEOMETRYSHADER:
+                    TRACE("Geometry shader\n");
+                    o->data = &anonymous_gs;
+                    hr = S_OK;
+                    break;
+
+                default:
+                    FIXME("Unhandled object type %#x\n", o->type);
+                    hr = E_FAIL;
+                    break;
+            }
             break;
 
         case D3D10_EOO_ANONYMOUS_SHADER:
@@ -2454,18 +2497,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
-    if(This == &null_variable)
+    if (!iface->lpVtbl->IsValid(iface))
     {
         WARN("Null variable specified\n");
         return E_FAIL;
     }
 
-    if(!desc)
+    if (!desc)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
+    /* FIXME: This isn't correct. Anonymous shaders let desc->ExplicitBindPoint untouched, but normal shaders set it! */
     memset(desc, 0, sizeof(*desc));
     desc->Name = This->name;
     desc->Semantic = This->semantic;
@@ -2473,7 +2517,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
     desc->Annotations = This->annotation_count;
     desc->BufferOffset = This->buffer_offset;
 
-    if( This->flag == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
+    if (This->flag & D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
     {
         desc->ExplicitBindPoint = This->buffer_offset;
     }
