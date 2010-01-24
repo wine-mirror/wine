@@ -463,6 +463,9 @@ static HRESULT WINAPI OLEFontImpl_put_Name(
   OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, name);
 
+  if (!name)
+    return CTL_E_INVALIDPROPERTYVALUE;
+
   if (this->description.lpstrName==0)
   {
     this->description.lpstrName = HeapAlloc(GetProcessHeap(),

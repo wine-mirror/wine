@@ -795,6 +795,45 @@ static void test_AddRefHfont(void)
     IFont_Release(ifnt3);
 }
 
+static void test_returns(void)
+{
+    IFont *pFont;
+    FONTDESC fontdesc;
+    HRESULT hr;
+
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = MSSansSerif_font;
+    fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
+    fontdesc.sWeight = FW_NORMAL;
+    fontdesc.sCharset = 0;
+    fontdesc.fItalic = FALSE;
+    fontdesc.fUnderline = FALSE;
+    fontdesc.fStrikethrough = FALSE;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&pFont);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_put_Name(pFont, NULL);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE,
+       "IFont::put_Name: Expected CTL_E_INVALIDPROPERTYVALUE got 0x%08x\n",
+       hr);
+
+    hr = IFont_get_Name(pFont, NULL);
+    ok(hr == E_POINTER,
+       "IFont::get_Name: Expected E_POINTER got 0x%08x\n",
+       hr);
+
+    hr = IFont_get_Size(pFont, NULL);
+    ok(hr == E_POINTER,
+       "IFont::get_Size: Expected E_POINTER got 0x%08x\n",
+       hr);
+
+    hr = IFont_get_Bold(pFont, NULL);
+    ok(hr == E_POINTER,
+       "IFont::get_Bold: Expected E_POINTER got 0x%08x\n",
+       hr);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -827,4 +866,5 @@ START_TEST(olefont)
 	test_IsEqual();
 	test_ReleaseHfont();
 	test_AddRefHfont();
+	test_returns();
 }
