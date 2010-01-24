@@ -36,6 +36,7 @@ RC_SRCS = \
 	msacm_Si.rc \
 	msacm_Sv.rc \
 	msacm_Tr.rc \
+	msacm_Uk.rc \
 	msacm_Zh.rc
 
 @MAKE_DLL_RULES@
