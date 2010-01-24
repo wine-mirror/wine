@@ -82,6 +82,7 @@ RC_SRCS = \
 	msi_Si.rc \
 	msi_Sv.rc \
 	msi_Tr.rc \
+	msi_Uk.rc \
 	msi_Zh.rc \
 	version.rc
 
