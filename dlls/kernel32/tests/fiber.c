@@ -25,6 +25,8 @@ static LPVOID (WINAPI *pConvertThreadToFiber)(LPVOID);
 static BOOL (WINAPI *pConvertFiberToThread)(void);
 static void (WINAPI *pSwitchToFiber)(LPVOID);
 static void (WINAPI *pDeleteFiber)(LPVOID);
+static LPVOID (WINAPI *pConvertThreadToFiberEx)(LPVOID,DWORD);
+static LPVOID (WINAPI *pCreateFiberEx)(SIZE_T,SIZE_T,DWORD,LPFIBER_START_ROUTINE,LPVOID);
 
 static LPVOID fibers[2];
 static BYTE testparam = 185;
@@ -39,6 +41,8 @@ static VOID init_funcs(void)
     X(ConvertFiberToThread);
     X(SwitchToFiber);
     X(DeleteFiber);
+    X(ConvertThreadToFiberEx);
+    X(CreateFiberEx);
 #undef X
 }
 
@@ -62,6 +66,19 @@ static void test_ConvertThreadToFiber(void)
     }
 }
 
+static void test_ConvertThreadToFiberEx(void)
+{
+    if (pConvertThreadToFiberEx)
+    {
+        fibers[0] = pConvertThreadToFiberEx(&testparam, 0);
+        ok(fibers[0] != 0, "ConvertThreadToFiberEx failed with error %d\n", GetLastError());
+    }
+    else
+    {
+        win_skip( "ConvertThreadToFiberEx not present\n" );
+    }
+}
+
 static void test_ConvertFiberToThread(void)
 {
     if (pConvertFiberToThread)
@@ -74,10 +91,34 @@ static void test_ConvertFiberToThread(void)
     }
 }
 
-static void test_CreateFiber(void)
+static void test_FiberHandling(void)
 {
+    fibers[0] = pCreateFiber(0,FiberMainProc,&testparam);
+    ok(fibers[0] != 0, "CreateFiber failed with error %d\n", GetLastError());
+    pDeleteFiber(fibers[0]);
+
+    test_ConvertThreadToFiber();
+    test_ConvertFiberToThread();
+    if (pConvertThreadToFiberEx)
+        test_ConvertThreadToFiberEx();
+    else
+        test_ConvertThreadToFiber();
+
+
     fibers[1] = pCreateFiber(0,FiberMainProc,&testparam);
     ok(fibers[1] != 0, "CreateFiber failed with error %d\n", GetLastError());
+
+    pSwitchToFiber(fibers[1]);
+    pDeleteFiber(fibers[1]);
+
+    if (!pCreateFiberEx)
+    {
+        win_skip( "CreateFiberEx not present\n" );
+        return;
+    }
+
+    fibers[1] = pCreateFiberEx(0,0,0,FiberMainProc,&testparam);
+    ok(fibers[1] != 0, "CreateFiberEx failed with error %d\n", GetLastError());
 
     pSwitchToFiber(fibers[1]);
     pDeleteFiber(fibers[1]);
@@ -93,8 +134,5 @@ START_TEST(fiber)
         return;
     }
 
-    test_ConvertThreadToFiber();
-    test_ConvertFiberToThread();
-    test_ConvertThreadToFiber();
-    test_CreateFiber();
+    test_FiberHandling();
 }
