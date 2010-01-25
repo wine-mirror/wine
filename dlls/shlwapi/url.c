@@ -1401,8 +1401,7 @@ HRESULT WINAPI HashData(const unsigned char *lpSrc, DWORD nSrcLen,
 {
   INT srcCount = nSrcLen - 1, destCount = nDestLen - 1;
 
-  if (IsBadReadPtr(lpSrc, nSrcLen) ||
-      IsBadWritePtr(lpDest, nDestLen))
+  if (!lpSrc || !lpDest)
     return E_INVALIDARG;
 
   while (destCount >= 0)
