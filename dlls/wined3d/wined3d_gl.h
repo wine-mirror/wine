@@ -4567,9 +4567,6 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
     USE_GL_FUNC(WINED3D_PFNWGLQUERYPBUFFERARBPROC,              wglQueryPbufferARB,             0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLSETPIXELFORMATWINE,               wglSetPixelFormatWINE,          0, NULL)
 
-#define WINE_DEFAULT_VIDMEM 64*1024*1024
-#define MAKEDWORD_VERSION(maj, min)  ((maj & 0x0000FFFF) << 16) | (min & 0x0000FFFF)
-
 struct wined3d_fbo_ops
 {
     PGLFNGLISRENDERBUFFERPROC                       glIsRenderbuffer;
