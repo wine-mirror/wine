@@ -205,7 +205,7 @@ HRESULT jsdisp_propget(DispatchEx*,DISPID,VARIANT*,jsexcept_t*,IServiceProvider*
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_idx(DispatchEx*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget_name(DispatchEx*,LPCWSTR,VARIANT*,jsexcept_t*,IServiceProvider*);
-HRESULT jsdisp_propget_idx(DispatchEx*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_get_idx(DispatchEx*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_get_id(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 HRESULT jsdisp_delete_idx(DispatchEx*,DWORD);
 

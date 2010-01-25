@@ -166,7 +166,7 @@ static HRESULT concat_array(DispatchEx *array, ArrayInstance *obj, DWORD *len,
     HRESULT hres;
 
     for(i=0; i < obj->length; i++) {
-        hres = jsdisp_propget_idx(&obj->dispex, i, &var, ei, caller);
+        hres = jsdisp_get_idx(&obj->dispex, i, &var, ei, caller);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
         if(FAILED(hres))
@@ -267,8 +267,11 @@ static HRESULT array_join(script_ctx_t *ctx, DispatchEx *array, DWORD length, co
         return E_OUTOFMEMORY;
 
     for(i=0; i < length; i++) {
-        hres = jsdisp_propget_idx(array, i, &var, ei, caller);
-        if(FAILED(hres))
+        hres = jsdisp_get_idx(array, i, &var, ei, caller);
+        if(hres == DISP_E_UNKNOWNNAME) {
+            hres = S_OK;
+            continue;
+        } else if(FAILED(hres))
             break;
 
         if(V_VT(&var) != VT_EMPTY && V_VT(&var) != VT_NULL)
@@ -397,7 +400,7 @@ static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARA
     }
 
     length--;
-    hres = jsdisp_propget_idx(jsthis, length, &val, ei, caller);
+    hres = jsdisp_get_idx(jsthis, length, &val, ei, caller);
     if(SUCCEEDED(hres)) {
         hres = jsdisp_delete_idx(jsthis, length);
     } else if(hres == DISP_E_UNKNOWNNAME) {
@@ -472,11 +475,11 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
     for(k=0; k<length/2; k++) {
         l = length-k-1;
 
-        hres1 = jsdisp_propget_idx(jsthis, k, &v1, ei, sp);
+        hres1 = jsdisp_get_idx(jsthis, k, &v1, ei, sp);
         if(FAILED(hres1) && hres1!=DISP_E_UNKNOWNNAME)
             return hres1;
 
-        hres2 = jsdisp_propget_idx(jsthis, l, &v2, ei, sp);
+        hres2 = jsdisp_get_idx(jsthis, l, &v2, ei, sp);
         if(FAILED(hres2) && hres2!=DISP_E_UNKNOWNNAME) {
             VariantClear(&v1);
             return hres2;
@@ -540,14 +543,14 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         return S_OK;
     }
 
-    hres = jsdisp_propget_idx(jsthis, 0, &ret, ei, caller);
+    hres = jsdisp_get_idx(jsthis, 0, &ret, ei, caller);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&ret) = VT_EMPTY;
         hres = S_OK;
     }
 
     for(i=1; SUCCEEDED(hres) && i<length; i++) {
-        hres = jsdisp_propget_idx(jsthis, i, &v, ei, caller);
+        hres = jsdisp_get_idx(jsthis, i, &v, ei, caller);
         if(hres == DISP_E_UNKNOWNNAME)
             hres = jsdisp_delete_idx(jsthis, i-1);
         else if(SUCCEEDED(hres))
@@ -622,7 +625,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         return hres;
 
     for(idx=start; idx<end; idx++) {
-        hres = jsdisp_propget_idx(jsthis, idx, &v, ei, sp);
+        hres = jsdisp_get_idx(jsthis, idx, &v, ei, sp);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
 
@@ -755,8 +758,11 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
     vtab = heap_alloc_zero(length * sizeof(VARIANT));
     if(vtab) {
         for(i=0; i<length; i++) {
-            hres = jsdisp_propget_idx(jsthis, i, vtab+i, ei, caller);
-            if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME) {
+            hres = jsdisp_get_idx(jsthis, i, vtab+i, ei, caller);
+            if(hres == DISP_E_UNKNOWNNAME) {
+                V_VT(vtab+i) = VT_EMPTY;
+                hres = S_OK;
+            } else if(FAILED(hres)) {
                 WARN("Could not get elem %d: %08x\n", i, hres);
                 break;
             }
@@ -908,7 +914,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             return hres;
 
         for(i=0; SUCCEEDED(hres) && i < delete_cnt; i++) {
-            hres = jsdisp_propget_idx(jsthis, start+i, &v, ei, caller);
+            hres = jsdisp_get_idx(jsthis, start+i, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = S_OK;
             else if(SUCCEEDED(hres))
@@ -925,7 +931,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
 
     if(add_args < delete_cnt) {
         for(i = start; SUCCEEDED(hres) && i < length-delete_cnt; i++) {
-            hres = jsdisp_propget_idx(jsthis, i+delete_cnt, &v, ei, caller);
+            hres = jsdisp_get_idx(jsthis, i+delete_cnt, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(jsthis, i+add_args);
             else if(SUCCEEDED(hres))
@@ -936,7 +942,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             hres = jsdisp_delete_idx(jsthis, i-1);
     }else if(add_args > delete_cnt) {
         for(i=length-delete_cnt; SUCCEEDED(hres) && i != start; i--) {
-            hres = jsdisp_propget_idx(jsthis, i+delete_cnt-1, &v, ei, caller);
+            hres = jsdisp_get_idx(jsthis, i+delete_cnt-1, &v, ei, caller);
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(jsthis, i+add_args-1);
             else if(SUCCEEDED(hres))

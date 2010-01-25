@@ -1003,14 +1003,26 @@ HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, VARIANT *var, js
     return prop_get(obj, prop, &dp, var, ei, caller);
 }
 
-HRESULT jsdisp_propget_idx(DispatchEx *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_get_idx(DispatchEx *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
 {
-    WCHAR buf[12];
+    WCHAR name[12];
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    dispex_prop_t *prop;
+    HRESULT hres;
 
     static const WCHAR formatW[] = {'%','d',0};
 
-    sprintfW(buf, formatW, idx);
-    return jsdisp_propget_name(obj, buf, var, ei, caller);
+    sprintfW(name, formatW, idx);
+
+    hres = find_prop_name_prot(obj, name, FALSE, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(var) = VT_EMPTY;
+    if(!prop)
+        return DISP_E_UNKNOWNNAME;
+
+    return prop_get(obj, prop, &dp, var, ei, caller);
 }
 
 HRESULT jsdisp_propget(DispatchEx *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)

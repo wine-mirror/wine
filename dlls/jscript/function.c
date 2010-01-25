@@ -374,8 +374,10 @@ static HRESULT array_to_args(script_ctx_t *ctx, DispatchEx *arg_array, jsexcept_
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
-        hres = jsdisp_propget_idx(arg_array, i, argv+i, ei, caller);
-        if(FAILED(hres)) {
+        hres = jsdisp_get_idx(arg_array, i, argv+i, ei, caller);
+        if(hres == DISP_E_UNKNOWNNAME)
+            V_VT(argv+i) = VT_EMPTY;
+        else if(FAILED(hres)) {
             while(i--)
                 VariantClear(argv+i);
             heap_free(argv);
