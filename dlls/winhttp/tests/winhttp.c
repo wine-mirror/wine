@@ -248,8 +248,8 @@ static void test_empty_headers_param(void)
 static void test_SendRequest (void)
 {
     HINTERNET session, request, connection;
-    DWORD header_len, optional_len, total_len;
-    DWORD bytes_rw;
+    DWORD header_len, optional_len, total_len, bytes_rw, size;
+    DWORD_PTR context;
     BOOL ret;
     CHAR buffer[256];
     int i;
@@ -284,8 +284,19 @@ static void test_SendRequest (void)
     }
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
-    ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, 0);
+    context = 0xdeadbeef;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(context));
+    ok(ret, "WinHttpSetOption failed: %u\n", GetLastError());
+
+    context++;
+    ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, context);
     ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
+
+    context = 0;
+    size = sizeof(context);
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context, &size);
+    ok(ret, "WinHttpQueryOption failed: %u\n", GetLastError());
+    ok(context == 0xdeadbef0, "expected 0xdeadbef0, got %lx\n", context);
 
     for (i = 3; post_data[i]; i++)
     {
