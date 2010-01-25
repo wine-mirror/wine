@@ -145,11 +145,6 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
     {
         TRACE("Gl usage = GL_STREAM_DRAW_ARB\n");
         gl_usage = GL_STREAM_DRAW_ARB;
-    }
-    else
-    {
-        TRACE("Gl usage = GL_DYNAMIC_DRAW_ARB\n");
-        gl_usage = GL_DYNAMIC_DRAW_ARB;
 
         if(gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
         {
@@ -157,6 +152,11 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
             checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE)");
             This->flags |= WINED3D_BUFFER_FLUSH;
         }
+    }
+    else
+    {
+        TRACE("Gl usage = GL_DYNAMIC_DRAW_ARB\n");
+        gl_usage = GL_DYNAMIC_DRAW_ARB;
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
