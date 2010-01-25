@@ -47,6 +47,8 @@
        broken(retval == ret_prewin32),\
        "Expected %d, got %d\n", ret, retval)
 
+static BOOL old_shell32 = FALSE;
+
 static CHAR CURR_DIR[MAX_PATH];
 static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00ae,'\0','\0'};
     /* "c:\®" can be used in all codepages */
@@ -764,6 +766,8 @@ static void test_rename(void)
     /* pTo already exist */
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "test2.txt\0";
+    if (old_shell32)
+        shfo.fFlags |= FOF_NOCONFIRMMKDIR;
     retval = SHFileOperationA(&shfo);
     if (retval == ERROR_SUCCESS)
     {
@@ -2235,10 +2239,54 @@ test_shlmenu(void) {
 	ok (hres == 0x4242, "expected 0x4242 but got %x\n", hres);
 }
 
+/* Check for old shell32 (4.0.x) */
+static BOOL is_old_shell32(void)
+{
+    SHFILEOPSTRUCTA shfo;
+    CHAR from[5*MAX_PATH];
+    CHAR to[5*MAX_PATH];
+    DWORD retval;
+
+    shfo.hwnd = NULL;
+    shfo.wFunc = FO_COPY;
+    shfo.pFrom = from;
+    shfo.pTo = to;
+    /* FOF_NOCONFIRMMKDIR is needed for old shell32 */
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_MULTIDESTFILES | FOF_NOCONFIRMMKDIR;
+    shfo.hNameMappings = NULL;
+    shfo.lpszProgressTitle = NULL;
+
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt");
+    set_curr_dir_path(to, "test6.txt\0test7.txt\0");
+    retval = SHFileOperationA(&shfo);
+
+    /* Delete extra files on old shell32 and Vista+*/
+    DeleteFileA("test6.txt\\test1.txt");
+    /* Delete extra files on old shell32 */
+    DeleteFileA("test6.txt\\test2.txt");
+    DeleteFileA("test6.txt\\test3.txt");
+    /* Delete extra directory on old shell32 and Vista+ */
+    RemoveDirectoryA("test6.txt");
+    /* Delete extra files/directories on Vista+*/
+    DeleteFileA("test7.txt\\test2.txt");
+    RemoveDirectoryA("test7.txt");
+
+    if (retval == ERROR_SUCCESS)
+        return TRUE;
+
+    return FALSE;
+}
+
 START_TEST(shlfileop)
 {
     InitFunctionPointers();
 
+    clean_after_shfo_tests();
+
+    init_shfo_tests();
+    old_shell32 = is_old_shell32();
+    if (old_shell32)
+        win_skip("Need to cater for old shell32 (4.0.x) on Win95\n");
     clean_after_shfo_tests();
 
     init_shfo_tests();
