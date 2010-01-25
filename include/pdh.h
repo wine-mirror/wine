@@ -49,6 +49,10 @@ typedef HANDLE PDH_HLOG;
 #define PDH_FMT_1000        0x00002000
 #define PDH_FMT_NOCAP100    0x00008000
 
+#define DATA_SOURCE_REGISTRY    0x00000001
+#define DATA_SOURCE_LOGFILE     0x00000002
+#define DATA_SOURCE_WBEM        0x00000004
+
 typedef struct _PDH_FMT_COUNTERVALUE
 {
     DWORD CStatus;
@@ -198,6 +202,7 @@ PDH_STATUS WINAPI PdhOpenQueryW(LPCWSTR, DWORD_PTR, PDH_HQUERY *);
 #define    PdhOpenQuery WINELIB_NAME_AW(PdhOpenQuery)
 PDH_STATUS WINAPI PdhRemoveCounter(PDH_HCOUNTER);
 PDH_STATUS WINAPI PdhSetCounterScaleFactor(PDH_HCOUNTER, LONG);
+PDH_STATUS WINAPI PdhSetDefaultRealTimeDataSource(DWORD);
 PDH_STATUS WINAPI PdhValidatePathA(LPCSTR);
 PDH_STATUS WINAPI PdhValidatePathW(LPCWSTR);
 #define    PdhValidatePath WINELIB_NAME_AW(PdhValidatePath)

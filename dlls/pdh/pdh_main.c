@@ -1211,3 +1211,12 @@ PDH_STATUS WINAPI PdhEnumObjectItemsW(LPCWSTR szDataSource, LPCWSTR szMachineNam
 
     return PDH_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *              PdhSetDefaultRealTimeDataSource   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhSetDefaultRealTimeDataSource( DWORD source )
+{
+    FIXME("%u\n", source);
+    return ERROR_SUCCESS;
+}

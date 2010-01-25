@@ -127,7 +127,7 @@
 @ stub PdhSelectDataSourceA
 @ stub PdhSelectDataSourceW
 @ stdcall PdhSetCounterScaleFactor(ptr long)
-@ stub PdhSetDefaultRealTimeDataSource
+@ stdcall PdhSetDefaultRealTimeDataSource(long)
 @ stub PdhSetLogSetRunID
 @ stub PdhSetQueryTimeRange
 @ stub PdhTranslate009CounterA
