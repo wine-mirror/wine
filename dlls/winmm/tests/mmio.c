@@ -45,6 +45,21 @@ static DWORD RIFF_buf[] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+static void expect_buf_offset_dbg(HMMIO hmmio, LONG off, int line)
+{
+    MMIOINFO mmio;
+    LONG ret;
+
+    memset(&mmio, 0, sizeof(mmio));
+    ret = mmioGetInfo(hmmio, &mmio, 0);
+    ok_(__FILE__, line)(ret == MMSYSERR_NOERROR, "mmioGetInfo error %u\n", ret);
+    ok_(__FILE__, line)(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok_(__FILE__, line)(ret == off, "expected %d, got %d\n", off, ret);
+}
+
+#define expect_buf_offset(a1, a2) expect_buf_offset_dbg(a1, a2, __LINE__)
+
 static void test_mmioDescend(char *fname)
 {
     MMRESULT ret;
@@ -64,22 +79,30 @@ static void test_mmioDescend(char *fname)
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
 
+    expect_buf_offset(hmmio, 0);
+
     /* first normal RIFF AVI parsing */
     ret = mmioDescend(hmmio, &ckRiff, NULL, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ckRiff.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ckRiff.ckid);
     ok(ckRiff.fccType == formtypeAVI, "wrong fccType: %04x\n", ckRiff.fccType);
+    ok(ckRiff.dwDataOffset == 8, "expected 8 got %u\n", ckRiff.dwDataOffset);
     trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ckRiff.ckid, ckRiff.cksize, (LPCSTR)&ckRiff.fccType,
           ckRiff.dwDataOffset, ckRiff.dwFlags);
+
+    expect_buf_offset(hmmio, 12);
 
     ret = mmioDescend(hmmio, &ckList, &ckRiff, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList.ckid);
     ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ckList.fccType);
+    ok(ckList.dwDataOffset == 20, "expected 20 got %u\n", ckList.dwDataOffset);
     trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ckList.ckid, ckList.cksize, (LPCSTR)&ckList.fccType,
           ckList.dwDataOffset, ckList.dwFlags);
+
+    expect_buf_offset(hmmio, 24);
 
     ret = mmioDescend(hmmio, &ck, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -89,8 +112,11 @@ static void test_mmioDescend(char *fname)
           (LPCSTR)&ck.ckid, ck.cksize, (LPCSTR)&ck.fccType,
           ck.dwDataOffset, ck.dwFlags);
 
+    expect_buf_offset(hmmio, 32);
+
     /* Skip chunk data */
-    mmioSeek(hmmio, ck.cksize, SEEK_CUR);
+    ret = mmioSeek(hmmio, ck.cksize, SEEK_CUR);
+    ok(ret == 0x58, "expected 0x58, got %#x\n", ret);
 
     ret = mmioDescend(hmmio, &ckList, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -100,6 +126,8 @@ static void test_mmioDescend(char *fname)
           (LPCSTR)&ckList.ckid, ckList.cksize, (LPCSTR)&ckList.fccType,
           ckList.dwDataOffset, ckList.dwFlags);
 
+    expect_buf_offset(hmmio, 100);
+
     ret = mmioDescend(hmmio, &ck, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ck.ckid == ckidSTREAMHEADER, "wrong ckid: %04x\n", ck.ckid);
@@ -107,6 +135,8 @@ static void test_mmioDescend(char *fname)
     trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ck.ckid, ck.cksize, (LPCSTR)&ck.fccType,
           ck.dwDataOffset, ck.dwFlags);
+
+    expect_buf_offset(hmmio, 108);
 
     /* test various mmioDescend flags */
 
@@ -224,6 +254,17 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == sizeof(buf), "got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -242,6 +283,14 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 0, "expected 0, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -260,6 +309,16 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 0, "expected 0, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == NULL, "expected NULL\n");
+    ok(mmio.pchNext == NULL, "expected NULL\n");
+    ok(mmio.pchEndRead == NULL, "expected NULL\n");
+    ok(mmio.pchEndWrite == NULL, "expected NULL\n");
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     mmioClose(hmmio, 0);
 
@@ -278,6 +337,19 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 256, "expected 256, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer != NULL, "expected not NULL\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     mmioClose(hmmio, 0);
 
@@ -296,6 +368,17 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == sizeof(buf), "got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -314,6 +397,19 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == MMIO_DEFAULTBUFFER, "expected MMIO_DEFAULTBUFFER, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer != NULL, "expected not NULL\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     mmioClose(hmmio, 0);
 
@@ -332,6 +428,19 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 256, "expected 256, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer != NULL, "expected not NULL\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     mmioClose(hmmio, 0);
 
@@ -356,6 +465,17 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == MMIO_DEFAULTBUFFER, "expected MMIO_DEFAULTBUFFER, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 }
@@ -387,6 +507,17 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == sizeof(buf), "got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    if (mmio.fccIOProc == FOURCC_DOS)
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    else
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     ret = mmioSetBuffer(hmmio, NULL, 0, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -399,6 +530,18 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 0, "got not 0\n");
     ok(mmio.pchBuffer == NULL, "got not NULL buf\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
+#if 0 /* remove once passes under Wine */
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+#endif
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     ret = mmioSetBuffer(hmmio, NULL, 0, MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -411,6 +554,18 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 0, "got not 0\n");
     ok(mmio.pchBuffer == NULL, "got not NULL buf\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
+#if 0 /* remove once passes under Wine */
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+#endif
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     ret = mmioSetBuffer(hmmio, buf, 0, MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -423,6 +578,18 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 0, "got not 0\n");
     ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
+#if 0 /* remove once passes under Wine */
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+#endif
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     ret = mmioSetBuffer(hmmio, NULL, 256, MMIO_WRITE|MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -436,6 +603,18 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.cchBuffer == 256, "got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer != NULL, "expected not NULL\n");
     ok(mmio.pchBuffer != buf, "expected != buf\n");
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", buf, mmio.pchEndRead);
+    ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+#if 0 /* remove once passes under Wine */
+    ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
+    ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
+#endif
+
+#if 0 /* remove once passes under Wine */
+    ret = mmioSeek(hmmio, 0, SEEK_CUR);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+#endif
 
     mmioClose(hmmio, 0);
 }
