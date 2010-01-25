@@ -821,6 +821,12 @@ static void test_copy(void)
     LPSTR ptr;
     BOOL on_nt4 = FALSE;
 
+    if (old_shell32)
+    {
+        win_skip("Too many differences for old shell32\n");
+        return;
+    }
+
     shfo.hwnd = NULL;
     shfo.wFunc = FO_COPY;
     shfo.pFrom = from;
