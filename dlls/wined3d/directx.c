@@ -82,6 +82,7 @@ static const struct {
     {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO,   MAKEDWORD_VERSION(2, 0)     },
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE,          0                           },
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG,                 0                           },
+    {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA,          0                           },
     {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND,               0                           },
     {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT,       0                           },
     {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM,             0                           },
@@ -1841,6 +1842,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     {
         TRACE_(d3d_caps)(" IMPLIED: ARB_depth_clamp support (by NV_depth_clamp).\n");
         gl_info->supported[ARB_DEPTH_CLAMP] = TRUE;
+    }
+    if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA] && gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
+    {
+        TRACE_(d3d_caps)(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
+        gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
     }
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {

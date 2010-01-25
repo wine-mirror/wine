@@ -1098,7 +1098,7 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
     gl_info->gl_formats[idx].heightscale = 1.5f;
     gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
 
-    if (gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
+    if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
     {
         idx = getFmtIdx(WINED3DFMT_B8G8R8A8_UNORM);
         gl_info->gl_formats[idx].gl_vtx_format = GL_BGRA;

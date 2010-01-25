@@ -298,7 +298,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
-            if (!This->adapter->gl_info.supported[EXT_VERTEX_ARRAY_BGRA]
+            if (!This->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1 << idx;
@@ -361,7 +361,7 @@ void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
     {
         if (!stream_info->elements[i].format_desc) continue;
 
-        if (!gl_info->supported[EXT_VERTEX_ARRAY_BGRA]
+        if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                 && stream_info->elements[i].format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
         {
             stream_info->swizzle_map |= 1 << i;

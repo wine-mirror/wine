@@ -4167,7 +4167,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
                 case WINED3DFMT_B8G8R8A8_UNORM:
-                    if (gl_info->supported[EXT_VERTEX_ARRAY_BGRA])
+                    if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
                     {
                         const DWORD *src = (const DWORD *)ptr;
                         DWORD c = *src & 0xff00ff00;
@@ -4544,7 +4544,7 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     else
     {
         WORD slow_mask = (1 << WINED3D_FFP_PSIZE);
-        slow_mask |= -!gl_info->supported[EXT_VERTEX_ARRAY_BGRA]
+        slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                 & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
 
         if (fixup || (!dataLocations->position_transformed

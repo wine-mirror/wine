@@ -483,7 +483,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
          * FLOAT16s if not supported. Also, we can't iterate over the array, so use macros to generate code for all
          * the attributes that our current fixed function pipeline implementation cares for.
          */
-        BOOL support_d3dcolor = gl_info->supported[EXT_VERTEX_ARRAY_BGRA];
+        BOOL support_d3dcolor = gl_info->supported[ARB_VERTEX_ARRAY_BGRA];
         ret = buffer_check_attribute(This, si, WINED3D_FFP_POSITION,
                 TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
         ret = buffer_check_attribute(This, si, WINED3D_FFP_NORMAL,
