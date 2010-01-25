@@ -2518,16 +2518,13 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                 break;
 
             case INTERNET_PER_CONN_FLAGS:
-                switch(option->Value.dwValue) {
-                case PROXY_TYPE_PROXY:
+                if(option->Value.dwValue & PROXY_TYPE_PROXY)
                     pi.dwProxyEnabled = 1;
-                    break;
-                case PROXY_TYPE_DIRECT:
+                else
+                {
+                    if(option->Value.dwValue != PROXY_TYPE_DIRECT)
+                        FIXME("Unhandled flags: 0x%x\n", option->Value.dwValue);
                     pi.dwProxyEnabled = 0;
-                    break;
-                default:
-                    FIXME("Unhandled flag: %d\n", option->Value.dwValue);
-                    break;
                 }
                 break;
 
