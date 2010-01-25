@@ -75,6 +75,9 @@ typedef double          GLclampd;
 typedef void            GLvoid;
 typedef ptrdiff_t       GLintptr;
 typedef ptrdiff_t       GLsizeiptr;
+typedef INT64           GLint64;
+typedef UINT64          GLuint64;
+typedef struct __GLsync *GLsync;
 
 /* Booleans */
 #define GL_FALSE                                0x0
@@ -1749,6 +1752,7 @@ typedef enum wined3d_gl_extension
     ARB_PROVOKING_VERTEX,
     ARB_SHADER_OBJECTS,
     ARB_SHADER_TEXTURE_LOD,
+    ARB_SYNC,
     ARB_TEXTURE_BORDER_CLAMP,
     ARB_TEXTURE_COMPRESSION,
     ARB_TEXTURE_CUBE_MAP,
@@ -2388,6 +2392,34 @@ typedef unsigned int GLhandleARB;
 #define GL_ARB_shading_language_100 1
 #define GL_SHADING_LANGUAGE_VERSION_ARB                     0x8b8c
 #endif
+
+/* GL_ARB_sync */
+#ifndef GL_ARB_sync
+#define GL_ARB_sync 1
+#define GL_MAX_SERVER_WAIT_TIMEOUT              0x9111
+#define GL_OBJECT_TYPE                          0x9112
+#define GL_SYNC_CONDITION                       0x9113
+#define GL_SYNC_STATUS                          0x9114
+#define GL_SYNC_FLAGS                           0x9115
+#define GL_SYNC_FENCE                           0x9116
+#define GL_SYNC_GPU_COMMANDS_COMPLETE           0x9117
+#define GL_UNSIGNALED                           0x9118
+#define GL_SIGNALED                             0x9119
+#define GL_SYNC_FLUSH_COMMANDS_BIT              0x00000001
+#define GL_TIMEOUT_IGNORED                      0xffffffffffffffffULL
+#define GL_ALREADY_SIGNALED                     0x911a
+#define GL_TIMEOUT_EXPIRED                      0x911b
+#define GL_CONDITION_SATISFIED                  0x911c
+#define GL_WAIT_FAILED                          0x911d
+#endif
+typedef GLsync (WINE_GLAPI *PGLFNFENCESYNCPROC)(GLenum condition, GLbitfield flags);
+typedef GLboolean (WINE_GLAPI *PGLFNISSYNCPROC)(GLsync sync);
+typedef GLvoid (WINE_GLAPI *PGLFNDELETESYNCPROC)(GLsync sync);
+typedef GLenum (WINE_GLAPI *PGLFNCLIENTWAITSYNCPROC)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+typedef GLvoid (WINE_GLAPI *PGLFNWAITSYNCPROC)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+typedef GLvoid (WINE_GLAPI *PGLFNGETINTEGER64VPROC)(GLenum pname, GLint64 *params);
+typedef GLvoid (WINE_GLAPI *PGLFNGETSYNCIVPROC)(GLsync sync, GLenum pname, GLsizei bufsize,
+        GLsizei *length, GLint *values);
 
 /* GL_ARB_texture_border_clamp */
 #ifndef GL_ARB_texture_border_clamp
@@ -4032,6 +4064,21 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glBindAttribLocationARB,                    ARB_SHADER_OBJECTS,             NULL) \
     USE_GL_FUNC(WINED3D_PFNGLGETATTRIBLOCATIONARBPROC, \
             glGetAttribLocationARB,                     ARB_SHADER_OBJECTS,             NULL) \
+    /* GL_ARB_sync */ \
+    USE_GL_FUNC(PGLFNFENCESYNCPROC, \
+            glFenceSync,                                ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNISSYNCPROC, \
+            glIsSync,                                   ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNDELETESYNCPROC, \
+            glDeleteSync,                               ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNCLIENTWAITSYNCPROC, \
+            glClientWaitSync,                           ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNWAITSYNCPROC, \
+            glWaitSync,                                 ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNGETINTEGER64VPROC, \
+            glGetInteger64v,                            ARB_SYNC,                       NULL) \
+    USE_GL_FUNC(PGLFNGETSYNCIVPROC, \
+            glGetSynciv,                                ARB_SYNC,                       NULL) \
     /* GL_ARB_texture_compression */ \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE2DPROC, \
             glCompressedTexImage2DARB,                  ARB_TEXTURE_COMPRESSION,        NULL) \
