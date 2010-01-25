@@ -27,6 +27,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "wininet.h"
+#include "intshcut.h"
 
 /* ################ */
 static HMODULE hShlwapi;
@@ -1013,17 +1014,17 @@ static const struct parse_url_test_t {
     {"http://www.winehq.org/",S_OK,4,URL_SCHEME_HTTP},
     {"https://www.winehq.org/",S_OK,5,URL_SCHEME_HTTPS},
     {"ftp://www.winehq.org/",S_OK,3,URL_SCHEME_FTP},
-    {"test.txt?test=c:/dir",0x80041001},
-    {"test.txt",0x80041001},
+    {"test.txt?test=c:/dir",URL_E_INVALID_SYNTAX},
+    {"test.txt",URL_E_INVALID_SYNTAX},
     {"xxx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
     {"1xx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
     {"-xx://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
     {"xx0://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
-    {"x://www.winehq.org/",0x80041001},
-    {"xx$://www.winehq.org/",0x80041001},
-    {"htt?p://www.winehq.org/",0x80041001},
+    {"x://www.winehq.org/",URL_E_INVALID_SYNTAX},
+    {"xx$://www.winehq.org/",URL_E_INVALID_SYNTAX},
+    {"htt?p://www.winehq.org/",URL_E_INVALID_SYNTAX},
     {"ab-://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
-    {" http://www.winehq.org/",0x80041001},
+    {" http://www.winehq.org/",URL_E_INVALID_SYNTAX},
 };
 
 static void test_ParseURL(void)
