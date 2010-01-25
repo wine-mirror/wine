@@ -2743,8 +2743,8 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
  ********************************************/
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *)shader->baseShader.device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
@@ -3064,7 +3064,7 @@ static void shader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins)
  * Calculate the 1st or 2nd row of a 3-row matrix multiplication. */
 static void shader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -3100,11 +3100,11 @@ static void shader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_src_param_t src0_param;
     DWORD reg = ins->dst[0].reg.idx;
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[reg];
     glsl_sample_function_t sample_function;
 
@@ -3125,11 +3125,11 @@ static void shader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    SHADER_PARSE_STATE *current_state = &shader->baseShader.parse_state;
     glsl_src_param_t src0_param;
     char dst_mask[6];
     DWORD reg = ins->dst[0].reg.idx;
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-    SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
 
@@ -3144,7 +3144,7 @@ static void shader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     DWORD reg = ins->dst[0].reg.idx;
     glsl_src_param_t src0_param;
@@ -3176,7 +3176,7 @@ static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins
  * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     DWORD reg = ins->dst[0].reg.idx;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -3211,8 +3211,8 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
  */
 static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param;
@@ -4321,10 +4321,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
      * load them now to have them hardcoded in the GLSL program. This saves some CPU cycles
      * later
      */
-    if(pshader && !((IWineD3DPixelShaderImpl*)pshader)->baseShader.load_local_constsF) {
+    if (pshader && !((IWineD3DBaseShaderImpl *)pshader)->baseShader.load_local_constsF)
+    {
         hardcode_local_constants((IWineD3DBaseShaderImpl *) pshader, gl_info, programId, 'P');
     }
-    if(vshader && !((IWineD3DVertexShaderImpl*)vshader)->baseShader.load_local_constsF) {
+    if (vshader && !((IWineD3DBaseShaderImpl *)vshader)->baseShader.load_local_constsF)
+    {
         hardcode_local_constants((IWineD3DBaseShaderImpl *) vshader, gl_info, programId, 'V');
     }
 }
@@ -4485,8 +4487,6 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
     struct shader_glsl_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info;
-    IWineD3DPixelShaderImpl *ps = NULL;
-    IWineD3DVertexShaderImpl *vs = NULL;
     struct wined3d_context *context;
 
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
@@ -4496,12 +4496,11 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
 
     if(pshader) {
         struct glsl_pshader_private *shader_data;
-        ps = (IWineD3DPixelShaderImpl *) This;
-        shader_data = ps->baseShader.backend_data;
+        shader_data = This->baseShader.backend_data;
         if(!shader_data || shader_data->num_gl_shaders == 0)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
-            ps->baseShader.backend_data = NULL;
+            This->baseShader.backend_data = NULL;
             return;
         }
 
@@ -4516,12 +4515,11 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
     } else {
         struct glsl_vshader_private *shader_data;
-        vs = (IWineD3DVertexShaderImpl *) This;
-        shader_data = vs->baseShader.backend_data;
+        shader_data = This->baseShader.backend_data;
         if(!shader_data || shader_data->num_gl_shaders == 0)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
-            vs->baseShader.backend_data = NULL;
+            This->baseShader.backend_data = NULL;
             return;
         }
 
@@ -4557,7 +4555,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
 
     if(pshader) {
         UINT i;
-        struct glsl_pshader_private *shader_data = ps->baseShader.backend_data;
+        struct glsl_pshader_private *shader_data = This->baseShader.backend_data;
 
         ENTER_GL();
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
@@ -4567,11 +4565,11 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
         LEAVE_GL();
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
-        HeapFree(GetProcessHeap(), 0, shader_data);
-        ps->baseShader.backend_data = NULL;
-    } else {
+    }
+    else
+    {
         UINT i;
-        struct glsl_vshader_private *shader_data = vs->baseShader.backend_data;
+        struct glsl_vshader_private *shader_data = This->baseShader.backend_data;
 
         ENTER_GL();
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
@@ -4581,9 +4579,10 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
         LEAVE_GL();
         HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
-        HeapFree(GetProcessHeap(), 0, shader_data);
-        vs->baseShader.backend_data = NULL;
     }
+
+    HeapFree(GetProcessHeap(), 0, This->baseShader.backend_data);
+    This->baseShader.backend_data = NULL;
 
     context_release(context);
 }
