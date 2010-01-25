@@ -166,9 +166,9 @@ static HEAP *processHeap;  /* main process heap */
 static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
 
 /* mark a block of memory as free for debugging purposes */
-static inline void mark_block_free( void *ptr, SIZE_T size )
+static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
 {
-    if (TRACE_ON(heap) || WARN_ON(heap)) memset( ptr, ARENA_FREE_FILLER, size );
+    if (flags & HEAP_FREE_CHECKING_ENABLED) memset( ptr, ARENA_FREE_FILLER, size );
 #if defined(VALGRIND_MAKE_MEM_NOACCESS)
     VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
 #elif defined( VALGRIND_MAKE_NOACCESS)
@@ -187,14 +187,14 @@ static inline void mark_block_initialized( void *ptr, SIZE_T size )
 }
 
 /* mark a block of memory as uninitialized for debugging purposes */
-static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
+static inline void mark_block_uninitialized( void *ptr, SIZE_T size, DWORD flags )
 {
 #if defined(VALGRIND_MAKE_MEM_UNDEFINED)
     VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
 #elif defined(VALGRIND_MAKE_WRITABLE)
     VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
 #endif
-    if (TRACE_ON(heap) || WARN_ON(heap))
+    if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
         memset( ptr, ARENA_INUSE_FILLER, size );
 #if defined(VALGRIND_MAKE_MEM_UNDEFINED)
@@ -403,7 +403,7 @@ static HEAP *HEAP_GetPtr(
         ERR("Invalid heap %p!\n", heap );
         return NULL;
     }
-    if (TRACE_ON(heap) && !HEAP_IsRealArena( heapPtr, 0, NULL, NOISY ))
+    if ((heapPtr->flags & HEAP_VALIDATE_ALL) && !HEAP_IsRealArena( heapPtr, 0, NULL, NOISY ))
     {
         HEAP_Dump( heapPtr );
         assert( FALSE );
@@ -524,9 +524,10 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
     ARENA_FREE *pFree;
     char *pEnd;
     BOOL last;
+    DWORD flags = subheap->heap->flags;
 
     /* Create a free arena */
-    mark_block_uninitialized( ptr, sizeof( ARENA_FREE ) );
+    mark_block_uninitialized( ptr, sizeof(ARENA_FREE), flags );
     pFree = ptr;
     pFree->magic = ARENA_FREE_MAGIC;
 
@@ -535,7 +536,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
     pEnd = (char *)ptr + size;
     if (pEnd > (char *)subheap->base + subheap->commitSize)
         pEnd = (char *)subheap->base + subheap->commitSize;
-    if (pEnd > (char *)(pFree + 1)) mark_block_free( pFree + 1, pEnd - (char *)(pFree + 1) );
+    if (pEnd > (char *)(pFree + 1)) mark_block_free( pFree + 1, pEnd - (char *)(pFree + 1), flags );
 
     /* Check if next block is free also */
 
@@ -546,7 +547,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
         ARENA_FREE *pNext = (ARENA_FREE *)((char *)ptr + size);
         list_remove( &pNext->entry );
         size += (pNext->size & ARENA_SIZE_MASK) + sizeof(*pNext);
-        mark_block_free( pNext, sizeof(ARENA_FREE) );
+        mark_block_free( pNext, sizeof(ARENA_FREE), flags );
     }
 
     /* Set the next block PREV_FREE flag and pointer */
@@ -1247,6 +1248,8 @@ void heap_set_debug_flags( HANDLE handle )
     ULONG global_flags = RtlGetNtGlobalFlags();
     ULONG flags = 0;
 
+    if (TRACE_ON(heap)) global_flags |= FLG_HEAP_VALIDATE_ALL;
+
     if (global_flags & FLG_HEAP_ENABLE_TAIL_CHECK) flags |= HEAP_TAIL_CHECKING_ENABLED;
     if (global_flags & FLG_HEAP_ENABLE_FREE_CHECK) flags |= HEAP_FREE_CHECKING_ENABLED;
     if (global_flags & FLG_HEAP_DISABLE_COALESCING) flags |= HEAP_DISABLE_COALESCE_ON_FREE;
@@ -1258,6 +1261,8 @@ void heap_set_debug_flags( HANDLE handle )
     if (global_flags & FLG_HEAP_VALIDATE_ALL)
         flags |= HEAP_VALIDATE | HEAP_VALIDATE_ALL |
                  HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+
+    if (WARN_ON(heap)) flags |= HEAP_VALIDATE | HEAP_VALIDATE_PARAMS | HEAP_FREE_CHECKING_ENABLED;
 
     heap->flags |= flags;
     heap->force_flags |= flags & ~(HEAP_VALIDATE | HEAP_DISABLE_COALESCE_ON_FREE);
@@ -1456,10 +1461,10 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     if (flags & HEAP_ZERO_MEMORY)
     {
         clear_block( pInUse + 1, size );
-        mark_block_uninitialized( (char *)(pInUse + 1) + size, pInUse->unused_bytes );
+        mark_block_uninitialized( (char *)(pInUse + 1) + size, pInUse->unused_bytes, flags );
     }
     else
-        mark_block_uninitialized( pInUse + 1, pInUse->size & ARENA_SIZE_MASK );
+        mark_block_uninitialized( pInUse + 1, pInUse->size & ARENA_SIZE_MASK, flags );
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
@@ -1670,11 +1675,11 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
         if (flags & HEAP_ZERO_MEMORY)
         {
             clear_block( (char *)(pArena + 1) + oldActualSize, size - oldActualSize );
-            mark_block_uninitialized( (char *)(pArena + 1) + size, pArena->unused_bytes );
+            mark_block_uninitialized( (char *)(pArena + 1) + size, pArena->unused_bytes, flags );
         }
         else
             mark_block_uninitialized( (char *)(pArena + 1) + oldActualSize,
-                                      (pArena->size & ARENA_SIZE_MASK) - oldActualSize );
+                                      (pArena->size & ARENA_SIZE_MASK) - oldActualSize, flags );
     }
 
     /* Return the new arena */
