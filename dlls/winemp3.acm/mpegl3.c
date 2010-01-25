@@ -180,7 +180,8 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
             TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
         }
         dpos += size;
-    } while (ret == MPG123_OK);
+        if (dpos > *ndst) break;
+    } while (ret != MPG123_ERR && ret != MPG123_NEED_MORE);
     *ndst = dpos;
 }
 
