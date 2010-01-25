@@ -1634,7 +1634,7 @@ ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx, INT cGrow,
     LPWSTR lpbmpW;
     DWORD len;
 
-    if (!HIWORD(lpbmp))
+    if (IS_INTRESOURCE(lpbmp))
         return ImageList_LoadImageW(hi, (LPCWSTR)lpbmp, cx, cGrow, clrMask,
                                     uType, uFlags);
 

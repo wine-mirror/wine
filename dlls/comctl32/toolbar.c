@@ -264,7 +264,7 @@ TOOLBAR_GetText(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
     LPWSTR lpText = NULL;
 
     /* NOTE: iString == -1 is undocumented */
-    if ((HIWORD(btnPtr->iString) != 0) && (btnPtr->iString != -1))
+    if (!IS_INTRESOURCE(btnPtr->iString) && (btnPtr->iString != -1))
         lpText = (LPWSTR)btnPtr->iString;
     else if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
         lpText = infoPtr->strings[btnPtr->iString];
@@ -1837,7 +1837,7 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
         btnPtr->dwData    = lpTbb[iButton].dwData;
         if (btnPtr->fsStyle & BTNS_SEP)
             btnPtr->iString = -1;
-        else if(HIWORD(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
+        else if(!IS_INTRESOURCE(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
         {
             if (fUnicode)
                 Str_SetPtrW((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[iButton].iString );
@@ -2897,7 +2897,7 @@ TOOLBAR_AddStringW (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
     BOOL fFirstString = (infoPtr->nNumStrings == 0);
     INT nIndex = infoPtr->nNumStrings;
 
-    if (hInstance && (HIWORD(lParam) == 0)) {
+    if (hInstance && IS_INTRESOURCE(lParam)) {
 	WCHAR szString[MAX_RESOURCE_STRING_LENGTH];
 	WCHAR delimiter;
 	WCHAR *next_delim;
@@ -2965,7 +2965,7 @@ TOOLBAR_AddStringA (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
     INT nIndex;
     INT len;
 
-    if (hInstance && (HIWORD(lParam) == 0))  /* load from resources */
+    if (hInstance && IS_INTRESOURCE(lParam))  /* load from resources */
         return TOOLBAR_AddStringW(infoPtr, hInstance, lParam);
 
     p = (LPSTR)lParam;
@@ -3362,7 +3362,7 @@ TOOLBAR_GetButtonInfoT(const TOOLBAR_INFO *infoPtr, INT Id, LPTBBUTTONINFOW lpTb
     if (lpTbInfo->dwMask & TBIF_TEXT) {
         /* TB_GETBUTTONINFO doesn't retrieve text from the string list, so we
            can't use TOOLBAR_GetText here */
-        if (HIWORD(btnPtr->iString) && (btnPtr->iString != -1)) {
+        if (!IS_INTRESOURCE(btnPtr->iString) && (btnPtr->iString != -1)) {
             LPWSTR lpText = (LPWSTR)btnPtr->iString;
             if (bUnicode)
                 Str_GetPtrW(lpText, lpTbInfo->pszText, lpTbInfo->cchText);
@@ -4142,7 +4142,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
 
                 /* can't contain real string as we don't know whether
                  * the client put an ANSI or Unicode string in there */
-                if (HIWORD(nmtbr.tbButton.iString))
+                if (!IS_INTRESOURCE(nmtbr.tbButton.iString))
                     nmtbr.tbButton.iString = 0;
 
                 TOOLBAR_InsertButtonT(infoPtr, -1, &nmtbr.tbButton, TRUE);
