@@ -195,7 +195,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
         return S_OK;
     }
 
-    if (query->context->tid != GetCurrentThreadId())
+    if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
     {
         /* See comment in IWineD3DQuery::Issue, event query codeblock */
         FIXME("Wrong thread, reporting GPU idle.\n");
@@ -209,14 +209,37 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
 
     ENTER_GL();
 
-    if (gl_info->supported[APPLE_FENCE])
+    if (gl_info->supported[ARB_SYNC])
     {
-        *data = GL_EXTCALL(glTestFenceAPPLE(query->id));
+        GLenum ret = GL_EXTCALL(glClientWaitSync(query->object.sync, 0, 0));
+        checkGLcall("glClientWaitSync");
+
+        switch (ret)
+        {
+            case GL_ALREADY_SIGNALED:
+            case GL_CONDITION_SATISFIED:
+                *data = TRUE;
+                break;
+
+            case GL_TIMEOUT_EXPIRED:
+                *data = FALSE;
+                break;
+
+            case GL_WAIT_FAILED:
+            default:
+                ERR("glClientWaitSync returned %#x.\n", ret);
+                *data = FALSE;
+                break;
+        }
+    }
+    else if (gl_info->supported[APPLE_FENCE])
+    {
+        *data = GL_EXTCALL(glTestFenceAPPLE(query->object.id));
         checkGLcall("glTestFenceAPPLE");
     }
     else if (gl_info->supported[NV_FENCE])
     {
-        *data = GL_EXTCALL(glTestFenceNV(query->id));
+        *data = GL_EXTCALL(glTestFenceNV(query->object.id));
         checkGLcall("glTestFenceNV");
     }
     else
@@ -262,7 +285,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
 
         if (query->context)
         {
-            if (query->context->tid != GetCurrentThreadId())
+            if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
             {
                 context_free_event_query(query);
                 context = context_acquire(This->device, NULL, CTXUSAGE_RESOURCELOAD);
@@ -283,14 +306,21 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
 
         ENTER_GL();
 
-        if (gl_info->supported[APPLE_FENCE])
+        if (gl_info->supported[ARB_SYNC])
         {
-            GL_EXTCALL(glSetFenceAPPLE(query->id));
+            if (query->object.sync) GL_EXTCALL(glDeleteSync(query->object.sync));
+            checkGLcall("glDeleteSync");
+            query->object.sync = GL_EXTCALL(glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
+            checkGLcall("glFenceSync");
+        }
+        else if (gl_info->supported[APPLE_FENCE])
+        {
+            GL_EXTCALL(glSetFenceAPPLE(query->object.id));
             checkGLcall("glSetFenceAPPLE");
         }
         else if (gl_info->supported[NV_FENCE])
         {
-            GL_EXTCALL(glSetFenceNV(query->id, GL_ALL_COMPLETED_NV));
+            GL_EXTCALL(glSetFenceNV(query->object.id, GL_ALL_COMPLETED_NV));
             checkGLcall("glSetFenceNV");
         }
 
@@ -450,7 +480,8 @@ HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
 
         case WINED3DQUERYTYPE_EVENT:
             TRACE("Event query.\n");
-            if (!gl_info->supported[NV_FENCE] && !gl_info->supported[APPLE_FENCE])
+            if (!gl_info->supported[ARB_SYNC] && !gl_info->supported[NV_FENCE]
+                    && !gl_info->supported[APPLE_FENCE])
             {
                 /* Half-Life 2 needs this query. It does not render the main
                  * menu correctly otherwise. Pretend to support it, faking

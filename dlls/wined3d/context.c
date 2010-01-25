@@ -532,32 +532,38 @@ void context_alloc_event_query(struct wined3d_context *context, struct wined3d_e
 
     if (context->free_event_query_count)
     {
-        query->id = context->free_event_queries[--context->free_event_query_count];
+        query->object = context->free_event_queries[--context->free_event_query_count];
     }
     else
     {
-        if (gl_info->supported[APPLE_FENCE])
+        if (gl_info->supported[ARB_SYNC])
+        {
+            /* Using ARB_sync, not much to do here. */
+            query->object.sync = NULL;
+            TRACE("Allocated event query %p in context %p.\n", query->object.sync, context);
+        }
+        else if (gl_info->supported[APPLE_FENCE])
         {
             ENTER_GL();
-            GL_EXTCALL(glGenFencesAPPLE(1, &query->id));
+            GL_EXTCALL(glGenFencesAPPLE(1, &query->object.id));
             checkGLcall("glGenFencesAPPLE");
             LEAVE_GL();
 
-            TRACE("Allocated event query %u in context %p.\n", query->id, context);
+            TRACE("Allocated event query %u in context %p.\n", query->object.id, context);
         }
         else if(gl_info->supported[NV_FENCE])
         {
             ENTER_GL();
-            GL_EXTCALL(glGenFencesNV(1, &query->id));
+            GL_EXTCALL(glGenFencesNV(1, &query->object.id));
             checkGLcall("glGenFencesNV");
             LEAVE_GL();
 
-            TRACE("Allocated event query %u in context %p.\n", query->id, context);
+            TRACE("Allocated event query %u in context %p.\n", query->object.id, context);
         }
         else
         {
             WARN("Event queries not supported, not allocating query id.\n");
-            query->id = 0;
+            query->object.id = 0;
         }
     }
 
@@ -575,12 +581,12 @@ void context_free_event_query(struct wined3d_event_query *query)
     if (context->free_event_query_count >= context->free_event_query_size - 1)
     {
         UINT new_size = context->free_event_query_size << 1;
-        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_event_queries,
+        union wined3d_gl_query_object *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_event_queries,
                 new_size * sizeof(*context->free_event_queries));
 
         if (!new_data)
         {
-            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->object.id, context);
             return;
         }
 
@@ -588,7 +594,7 @@ void context_free_event_query(struct wined3d_event_query *query)
         context->free_event_queries = new_data;
     }
 
-    context->free_event_queries[context->free_event_query_count++] = query->id;
+    context->free_event_queries[context->free_event_query_count++] = query->object;
 }
 
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
@@ -661,6 +667,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     struct fbo_entry *entry, *entry2;
     HGLRC restore_ctx;
     HDC restore_dc;
+    unsigned int i;
 
     restore_ctx = pwglGetCurrentContext();
     restore_dc = pwglGetCurrentDC();
@@ -682,8 +689,12 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     {
         if (context->valid)
         {
-            if (gl_info->supported[APPLE_FENCE]) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->id));
-            else if (gl_info->supported[NV_FENCE]) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
+            if (gl_info->supported[ARB_SYNC])
+            {
+                if (event_query->object.sync) GL_EXTCALL(glDeleteSync(event_query->object.sync));
+            }
+            else if (gl_info->supported[APPLE_FENCE]) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->object.id));
+            else if (gl_info->supported[NV_FENCE]) GL_EXTCALL(glDeleteFencesNV(1, &event_query->object.id));
         }
         event_query->context = NULL;
     }
@@ -720,10 +731,24 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         if (gl_info->supported[ARB_OCCLUSION_QUERY])
             GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
 
-        if (gl_info->supported[APPLE_FENCE])
-            GL_EXTCALL(glDeleteFencesAPPLE(context->free_event_query_count, context->free_event_queries));
+        if (gl_info->supported[ARB_SYNC])
+        {
+            if (event_query->object.sync) GL_EXTCALL(glDeleteSync(event_query->object.sync));
+        }
+        else if (gl_info->supported[APPLE_FENCE])
+        {
+            for (i = 0; i < context->free_event_query_count; ++i)
+            {
+                GL_EXTCALL(glDeleteFencesAPPLE(1, &context->free_event_queries[i].id));
+            }
+        }
         else if (gl_info->supported[NV_FENCE])
-            GL_EXTCALL(glDeleteFencesNV(context->free_event_query_count, context->free_event_queries));
+        {
+            for (i = 0; i < context->free_event_query_count; ++i)
+            {
+                GL_EXTCALL(glDeleteFencesNV(1, &context->free_event_queries[i].id));
+            }
+        }
 
         checkGLcall("context cleanup");
     }

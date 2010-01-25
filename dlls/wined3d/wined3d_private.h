@@ -1014,10 +1014,16 @@ struct wined3d_occlusion_query
     struct wined3d_context *context;
 };
 
+union wined3d_gl_query_object
+{
+    GLuint id;
+    GLsync sync;
+};
+
 struct wined3d_event_query
 {
     struct list entry;
-    GLuint id;
+    union wined3d_gl_query_object object;
     struct wined3d_context *context;
 };
 
@@ -1090,7 +1096,7 @@ struct wined3d_context
     UINT free_occlusion_query_count;
     struct list occlusion_queries;
 
-    GLuint *free_event_queries;
+    union wined3d_gl_query_object *free_event_queries;
     UINT free_event_query_size;
     UINT free_event_query_count;
     struct list event_queries;
