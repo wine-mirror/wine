@@ -440,6 +440,7 @@ static void test_readerinput(void)
     IUnknown_Release(reader_input);
 
     IUnknown_Release(reader_input);
+    IUnknown_Release(reader_input);
     IStream_Release(stream);
 
     /* test input interface selection sequence */
@@ -479,7 +480,8 @@ static void test_readerinput(void)
     IUnknown_Release(input);
 
     ref = IUnknown_AddRef(reader_input);
-    ok(ref == 2, "Expected 2, got %d\n", ref);
+    ok(ref == 3 || broken(ref == 2) /* versions 1.0.x and 1.1.x - XP, Vista */,
+          "Expected 3, got %d\n", ref);
     IUnknown_Release(reader_input);
     /* repeat another time, no check or caching here */
     input_iids.count = 0;

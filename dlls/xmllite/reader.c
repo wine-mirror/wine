@@ -103,11 +103,8 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
-        if (This->input)
-        {
-            IUnknown_Release(This->stream);
-            IUnknown_Release(This->input);
-        }
+        if (This->input)  IUnknown_Release(This->input);
+        if (This->stream) IUnknown_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -154,13 +151,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
 
     /* set stream for supplied IXmlReaderInput */
     hr = xmlreaderinput_query_for_stream(This->input, (void**)&This->stream);
-    if (hr != S_OK)
-    {
-        /* IXmlReaderInput doesn't provide streaming interface */
-        IUnknown_Release(This->input);
-        This->input = NULL;
-    }
-    else
+    if (hr == S_OK)
         This->state = XmlReadState_Initial;
 
     return hr;
