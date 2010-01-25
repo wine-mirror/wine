@@ -473,11 +473,11 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
         l = length-k-1;
 
         hres1 = jsdisp_propget_idx(jsthis, k, &v1, ei, sp);
-        if(FAILED(hres1))
+        if(FAILED(hres1) && hres1!=DISP_E_UNKNOWNNAME)
             return hres1;
 
         hres2 = jsdisp_propget_idx(jsthis, l, &v2, ei, sp);
-        if(FAILED(hres2)) {
+        if(FAILED(hres2) && hres2!=DISP_E_UNKNOWNNAME) {
             VariantClear(&v1);
             return hres2;
         }
