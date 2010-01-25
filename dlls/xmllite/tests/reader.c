@@ -51,6 +51,51 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static const char xmldecl_full[] = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
+
+static IStream *create_stream_on_data(const char *data, int size)
+{
+    IStream *stream = NULL;
+    HGLOBAL hglobal;
+    void *ptr;
+    HRESULT hr;
+
+    hglobal = GlobalAlloc(GHND, size);
+    ptr = GlobalLock(hglobal);
+
+    memcpy(ptr, data, size);
+
+    hr = CreateStreamOnHGlobal(hglobal, TRUE, &stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(stream != NULL, "Expected non-NULL stream\n");
+
+    GlobalUnlock(hglobal);
+
+    return stream;
+}
+
+static void ok_pos_(IXmlReader *reader, int line, int pos, int todo, int _line_)
+{
+    UINT l, p;
+    HRESULT hr;
+
+    hr = IXmlReader_GetLineNumber(reader, &l);
+    ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    hr = IXmlReader_GetLinePosition(reader, &p);
+    ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    if (todo)
+        todo_wine
+        ok_(__FILE__, _line_)(l == line && pos == p,
+                            "Expected (%d,%d), got (%d,%d)\n", line, pos, l, p);
+    else
+    {
+        ok_(__FILE__, _line_)(l == line && pos == p,
+                            "Expected (%d,%d), got (%d,%d)\n", line, pos, l, p);
+    }
+}
+#define ok_pos(reader, l, p, todo) ok_pos_(reader, l, p, todo, __LINE__)
+
 typedef struct input_iids_t {
     IID iids[10];
     int count;
@@ -127,6 +172,43 @@ static const char *state_to_str(XmlReadState state)
     case XmlReadState_EndOfFile:
     case XmlReadState_Closed:
         return state_names[state];
+    default:
+        return unknown;
+    }
+}
+
+static const char *type_to_str(XmlNodeType type)
+{
+    static const char* type_names[] = {
+        "XmlNodeType_None",
+        "XmlNodeType_Element",
+        "XmlNodeType_Attribute",
+        "XmlNodeType_Text",
+        "XmlNodeType_CDATA",
+        "XmlNodeType_ProcessingInstruction",
+        "XmlNodeType_Comment",
+        "XmlNodeType_DocumentType",
+        "XmlNodeType_Whitespace",
+        "XmlNodeType_EndElement",
+        "XmlNodeType_XmlDeclaration"
+    };
+
+    static const char unknown[] = "unknown";
+
+    switch (type)
+    {
+    case XmlNodeType_None:
+    case XmlNodeType_Element:
+    case XmlNodeType_Attribute:
+    case XmlNodeType_Text:
+    case XmlNodeType_CDATA:
+    case XmlNodeType_ProcessingInstruction:
+    case XmlNodeType_Comment:
+    case XmlNodeType_DocumentType:
+    case XmlNodeType_Whitespace:
+    case XmlNodeType_EndElement:
+    case XmlNodeType_XmlDeclaration:
+        return type_names[type];
     default:
         return unknown;
     }
@@ -438,6 +520,64 @@ static void test_reader_state(void)
     IXmlReader_Release(reader);
 }
 
+static void test_read_xmldeclaration(void)
+{
+    IXmlReader *reader;
+    IStream *stream;
+    HRESULT hr;
+    XmlNodeType type;
+    UINT count = 0;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* position methods with Null args */
+    hr = IXmlReader_GetLineNumber(reader, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IXmlReader_GetLinePosition(reader, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    stream = create_stream_on_data(xmldecl_full, sizeof(xmldecl_full));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    ok_pos(reader, 0, 0, FALSE);
+
+    type = -1;
+    hr = IXmlReader_Read(reader, &type);
+todo_wine {
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(type == XmlNodeType_XmlDeclaration,
+                     "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
+}
+    ok_pos(reader, 1, 55, TRUE);
+
+    /* check attributes */
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok_pos(reader, 1, 55, TRUE);
+
+    hr = IXmlReader_MoveToFirstAttribute(reader);
+    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok_pos(reader, 1, 55, TRUE);
+
+    hr = IXmlReader_GetAttributeCount(reader, &count);
+todo_wine {
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(count == 3, "Expected 3, got %d\n", count);
+}
+    hr = IXmlReader_GetDepth(reader, &count);
+todo_wine {
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(count == 1, "Expected 1, got %d\n", count);
+}
+
+    IStream_Release(stream);
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -454,6 +594,7 @@ START_TEST(reader)
     test_reader_create();
     test_readerinput();
     test_reader_state();
+    test_read_xmldeclaration();
 
     CoUninitialize();
 }

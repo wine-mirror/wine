@@ -44,6 +44,7 @@ typedef struct _xmlreader
     ISequentialStream *stream;/* stored as sequential stream, cause currently
                                  optimizations possible with IStream aren't implemented */
     XmlReadState state;
+    UINT line, pos;           /* reader position in XML stream */
 } xmlreader;
 
 typedef struct _xmlreaderinput
@@ -131,6 +132,8 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
         IUnknown_Release(This->stream);
         This->stream = NULL;
     }
+
+    This->line = This->pos = 0;
 
     /* just reset current input */
     if (!input)
@@ -298,14 +301,28 @@ static BOOL WINAPI xmlreader_IsEmptyElement(IXmlReader* iface)
 
 static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *lineNumber)
 {
-    FIXME("(%p %p): stub\n", iface, lineNumber);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p %p)\n", This, lineNumber);
+
+    if (!lineNumber) return E_INVALIDARG;
+
+    *lineNumber = This->line;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *linePosition)
 {
-    FIXME("(%p %p): stub\n", iface, linePosition);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p %p)\n", This, linePosition);
+
+    if (!linePosition) return E_INVALIDARG;
+
+    *linePosition = This->pos;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetAttributeCount(IXmlReader* iface, UINT *attributeCount)
@@ -447,6 +464,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
     reader->stream = NULL;
     reader->input = NULL;
     reader->state = XmlReadState_Closed;
+    reader->line  = reader->pos = 0;
 
     *pObject = &reader->lpVtbl;
 
