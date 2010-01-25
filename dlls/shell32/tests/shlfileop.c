@@ -1761,6 +1761,8 @@ static void test_move(void)
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
+    if (old_shell32)
+        shfo2.fFlags |= FOF_NOCONFIRMMKDIR;
     ok(!SHFileOperationA(&shfo2), "Move many files\n");
     ok(DeleteFileA("test6.txt"), "The file is not moved - many files are "
        "specified as a target\n");
@@ -1775,12 +1777,23 @@ static void test_move(void)
     retval = SHFileOperationA(&shfo2);
     if (dir_exists("test6.txt"))
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %d\n", retval);
-        ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved\n");
-        RemoveDirectoryA("test6.txt");
-        ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not moved\n");
-        RemoveDirectoryA("test7.txt");
+        if (retval == ERROR_SUCCESS)
+        {
+            /* Old shell32 */
+            DeleteFileA("test6.txt\\test1.txt");
+            DeleteFileA("test6.txt\\test2.txt");
+            RemoveDirectoryA("test6.txt\\test4.txt");
+            RemoveDirectoryA("test6.txt");
+        }
+        else
+        {
+            /* Vista and W2K8 (broken or new behavior ?) */
+            ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %d\n", retval);
+            ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved\n");
+            RemoveDirectoryA("test6.txt");
+            ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not moved\n");
+            RemoveDirectoryA("test7.txt");
+        }
     }
     else
     {
@@ -1798,9 +1811,12 @@ static void test_move(void)
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
+    if (old_shell32)
+        shfo.fFlags |= FOF_NOCONFIRMMKDIR;
     retval = SHFileOperationA(&shfo);
     if (dir_exists("test6.txt"))
     {
+        /* Old shell32 */
         /* Vista and W2K8 (broken or new behavior ?) */
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
@@ -1849,8 +1865,14 @@ static void test_move(void)
     else
     {
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        if (old_shell32)
+        {
+            DeleteFile("a.txt\\a.txt");
+            RemoveDirectoryA("a.txt");
+        }
+        else
+            ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
         ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
-        ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
     }
     ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
 
@@ -1860,6 +1882,7 @@ static void test_move(void)
     retval = SHFileOperationA(&shfo);
     if (dir_exists("test1.txt"))
     {
+        /* Old shell32 */
         /* Vista and W2K8 (broken or new behavior ?) */
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFileA("test1.txt\\test2.txt"), "Expected test1.txt\\test2.txt to exist\n");
@@ -1892,6 +1915,7 @@ static void test_move(void)
     retval = SHFileOperationA(&shfo);
     if (dir_exists("d.txt"))
     {
+        /* Old shell32 */
         /* Vista and W2K8 (broken or new behavior ?) */
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
@@ -1913,13 +1937,23 @@ static void test_move(void)
     retval = SHFileOperationA(&shfo);
     if (dir_exists("d.txt"))
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == DE_SAMEFILE,
-           "Expected DE_SAMEFILE, got %d\n", retval);
-        ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
-        ok(!file_exists("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to not exist\n");
-        RemoveDirectoryA("d.txt");
-        createTestFile("test2.txt");
+        if (old_shell32)
+        {
+            DeleteFileA("d.txt\\test2.txt");
+            DeleteFileA("d.txt\\test3.txt");
+            RemoveDirectoryA("d.txt");
+            createTestFile("test2.txt");
+        }
+        else
+        {
+            /* Vista and W2K8 (broken or new behavior ?) */
+            ok(retval == DE_SAMEFILE,
+               "Expected DE_SAMEFILE, got %d\n", retval);
+            ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
+            ok(!file_exists("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to not exist\n");
+            RemoveDirectoryA("d.txt");
+            createTestFile("test2.txt");
+        }
     }
     else
     {
@@ -1957,7 +1991,13 @@ static void test_move(void)
     {
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
         ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
-        ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
+        if (old_shell32)
+        {
+            DeleteFileA("test3.txt\\test3.txt");
+            RemoveDirectoryA("test3.txt");
+        }
+        else
+            ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
     }
 }
 
