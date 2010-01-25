@@ -550,9 +550,14 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 static void ME_GetTextExtent(ME_Context *c, LPCWSTR szText, int nChars, ME_Style *s, SIZE *size)
 {
   HGDIOBJ hOldFont;
-  hOldFont = ME_SelectStyleFont(c, s);
-  GetTextExtentPoint32W(c->hDC, szText, nChars, size);
-  ME_UnselectStyleFont(c, s, hOldFont);
+  if (c->hDC) {
+    hOldFont = ME_SelectStyleFont(c, s);
+    GetTextExtentPoint32W(c->hDC, szText, nChars, size);
+    ME_UnselectStyleFont(c, s, hOldFont);
+  } else {
+    size->cx = 0;
+    size->cy = 0;
+  }
 }
 
 /******************************************************************************
