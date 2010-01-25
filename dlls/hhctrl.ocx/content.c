@@ -151,31 +151,57 @@ static BOOL next_node(stream_t *stream, strbuf_t *buf)
     return TRUE;
 }
 
+/*
+ * Find the value of a named HTML attribute.
+ *
+ * Note: Attribute names are case insensitive, so it is necessary to
+ * put both the node text and the attribute name in the same case
+ * before attempting a string search.
+ */
 static const char *get_attr(const char *node, const char *name, int *len)
 {
     const char *ptr, *ptr2;
+    int name_len, node_len;
     char name_buf[32];
-    int nlen;
+    char *node_buf;
+    int i;
 
-    nlen = strlen(name);
-    memcpy(name_buf, name, nlen);
-    name_buf[nlen++] = '=';
-    name_buf[nlen++] = '\"';
-    name_buf[nlen] = 0;
+    /* Create a lower case copy of the node */
+    node_len = strlen(node)+1;
+    node_buf = heap_alloc(node_len*sizeof(char));
+    if(!node_buf)
+        return NULL;
+    memcpy(node_buf, node, node_len);
+    for(i=0;i<node_len;i++)
+        node_buf[i] = tolower(node_buf[i]);
+    /* Create a lower case copy of the attribute name (search string) */
+    name_len = strlen(name);
+    memcpy(name_buf, name, name_len);
+    for(i=0;i<name_len;i++)
+        name_buf[i] = tolower(name_buf[i]);
+    name_buf[name_len++] = '=';
+    name_buf[name_len++] = '\"';
+    name_buf[name_len] = 0;
 
-    ptr = strstr(node, name_buf);
+    ptr = strstr(node_buf, name_buf);
     if(!ptr) {
         WARN("name not found\n");
+        heap_free(name_buf);
         return NULL;
     }
 
-    ptr += nlen;
+    ptr += name_len;
     ptr2 = strchr(ptr, '\"');
     if(!ptr2)
+    {
+        heap_free(name_buf);
         return NULL;
+    }
 
     *len = ptr2-ptr;
-    return ptr;
+    heap_free(name_buf);
+    /* Return the pointer offset within the original string */
+    return node+(ptr-node_buf);
 }
 
 static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text)
