@@ -74,27 +74,35 @@ static IStream *create_stream_on_data(const char *data, int size)
     return stream;
 }
 
-static void ok_pos_(IXmlReader *reader, int line, int pos, int todo, int _line_)
+static void ok_pos_(IXmlReader *reader, int line, int pos, int line_broken,
+                                           int pos_broken, int todo, int _line_)
 {
     UINT l, p;
     HRESULT hr;
+    int broken_state;
 
     hr = IXmlReader_GetLineNumber(reader, &l);
     ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     hr = IXmlReader_GetLinePosition(reader, &p);
     ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    if (line_broken == -1 && pos_broken == -1)
+        broken_state = 0;
+    else
+        broken_state = broken((line_broken == -1 ? line : line_broken) == l &&
+                              (pos_broken == -1 ? pos : pos_broken) == p);
+
     if (todo)
         todo_wine
-        ok_(__FILE__, _line_)(l == line && pos == p,
+        ok_(__FILE__, _line_)((l == line && pos == p) || broken_state,
                             "Expected (%d,%d), got (%d,%d)\n", line, pos, l, p);
     else
     {
-        ok_(__FILE__, _line_)(l == line && pos == p,
+        ok_(__FILE__, _line_)((l == line && pos == p) || broken_state,
                             "Expected (%d,%d), got (%d,%d)\n", line, pos, l, p);
     }
 }
-#define ok_pos(reader, l, p, todo) ok_pos_(reader, l, p, todo, __LINE__)
+#define ok_pos(reader, l, p, l_brk, p_brk, todo) ok_pos_(reader, l, p, l_brk, p_brk, todo, __LINE__)
 
 typedef struct input_iids_t {
     IID iids[10];
@@ -214,27 +222,34 @@ static const char *type_to_str(XmlNodeType type)
     }
 }
 
-static void test_read_state_(IXmlReader *reader, XmlReadState expected, int todo, int line)
+static void test_read_state_(IXmlReader *reader, XmlReadState expected,
+                                    XmlReadState exp_broken, int todo, int line)
 {
     XmlReadState state;
     HRESULT hr;
+    int broken_state;
 
     state = -1; /* invalid value */
     hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, (LONG_PTR*)&state);
     ok_(__FILE__, line)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    if (exp_broken == -1)
+        broken_state = 0;
+    else
+        broken_state = broken(exp_broken == state);
+
     if (todo)
     {
     todo_wine
-        ok_(__FILE__, line)(state == expected, "Expected (%s), got (%s)\n",
+        ok_(__FILE__, line)(state == expected || broken_state, "Expected (%s), got (%s)\n",
                                    state_to_str(expected), state_to_str(state));
     }
     else
-        ok_(__FILE__, line)(state == expected, "Expected (%s), got (%s)\n",
+        ok_(__FILE__, line)(state == expected || broken_state, "Expected (%s), got (%s)\n",
                                    state_to_str(expected), state_to_str(state));
 }
 
-#define test_read_sate(reader, exp, todo) test_read_state_(reader, exp, todo, __LINE__)
+#define test_read_sate(reader, exp, brk, todo) test_read_state_(reader, exp, brk, todo, __LINE__)
 
 typedef struct _testinput
 {
@@ -340,13 +355,13 @@ static void test_reader_create(void)
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Closed, FALSE);
+    test_read_sate(reader, XmlReadState_Closed, -1, FALSE);
 
     /* Null input pointer, releases previous input */
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Closed, FALSE);
+    test_read_sate(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
 
     /* test input interface selection sequence */
     hr = testinput_createinstance((void**)&input);
@@ -401,7 +416,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, reader_input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Initial, FALSE);
+    test_read_sate(reader, XmlReadState_Initial, -1, FALSE);
 
     /* IXmlReader grabs a IXmlReaderInput reference */
     ref = IUnknown_AddRef(reader_input);
@@ -416,7 +431,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Closed, FALSE);
+    test_read_sate(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
 
     IXmlReader_Release(reader);
 
@@ -473,7 +488,7 @@ static void test_readerinput(void)
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
     ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
 
-    test_read_sate(reader, XmlReadState_Closed, FALSE);
+    test_read_sate(reader, XmlReadState_Closed, -1, FALSE);
 
     ref = IUnknown_AddRef(input);
     ok(ref == 3, "Expected 3, got %d\n", ref);
@@ -545,7 +560,7 @@ static void test_read_xmldeclaration(void)
     hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    ok_pos(reader, 0, 0, FALSE);
+    ok_pos(reader, 0, 0, -1, -1, FALSE);
 
     type = -1;
     hr = IXmlReader_Read(reader, &type);
@@ -554,16 +569,17 @@ todo_wine {
     ok(type == XmlNodeType_XmlDeclaration,
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
 }
-    ok_pos(reader, 1, 55, TRUE);
+    /* new version 1.2.x and 1.3.x properly update postition for <?xml ?> */
+    ok_pos(reader, 1, 3, -1, 55, TRUE);
 
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
     todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok_pos(reader, 1, 55, TRUE);
+    ok_pos(reader, 1, 7, -1, 55, TRUE);
 
     hr = IXmlReader_MoveToFirstAttribute(reader);
     todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok_pos(reader, 1, 55, TRUE);
+    ok_pos(reader, 1, 7, -1, 55, TRUE);
 
     hr = IXmlReader_GetAttributeCount(reader, &count);
 todo_wine {

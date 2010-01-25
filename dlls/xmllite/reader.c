@@ -135,7 +135,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     /* just reset current input */
     if (!input)
     {
-        This->state = XmlReadState_Closed;
+        This->state = XmlReadState_Initial;
         return S_OK;
     }
 
