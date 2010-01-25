@@ -39,10 +39,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
+/* we don't want to include winuser.h just for this */
+#define IS_INTRESOURCE(x)   (((ULONG_PTR)(x) >> 16) == 0)
+
 /* retrieve the resource name to pass to the ntdll functions */
 static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
 {
-    if (!HIWORD(name))
+    if (IS_INTRESOURCE(name))
     {
         str->Buffer = ULongToPtr(LOWORD(name));
         return STATUS_SUCCESS;
@@ -63,7 +66,7 @@ static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
 /* retrieve the resource name to pass to the ntdll functions */
 static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
 {
-    if (!HIWORD(name))
+    if (IS_INTRESOURCE(name))
     {
         str->Buffer = ULongToPtr(LOWORD(name));
         return STATUS_SUCCESS;
@@ -110,8 +113,8 @@ static HRSRC find_resourceA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lan
     }
     __ENDTRY
 
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     return (HRSRC)entry;
 }
 
@@ -143,8 +146,8 @@ static HRSRC find_resourceW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD l
     }
     __ENDTRY
 
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     return (HRSRC)entry;
 }
 
@@ -357,7 +360,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
 
 done:
     HeapFree( GetProcessHeap(), 0, name );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
@@ -427,7 +430,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
     __ENDTRY
 done:
     HeapFree( GetProcessHeap(), 0, name );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
@@ -478,8 +481,8 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
     }
     __ENDTRY
 done:
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
@@ -530,8 +533,8 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
     }
     __ENDTRY
 done:
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
@@ -619,12 +622,12 @@ static int resource_strcmp( LPCWSTR a, LPCWSTR b )
 {
     if ( a == b )
         return 0;
-    if (HIWORD( a ) && HIWORD( b ) )
+    if (!IS_INTRESOURCE( a ) && !IS_INTRESOURCE( b ) )
         return lstrcmpW( a, b );
     /* strings come before ids */
-    if (HIWORD( a ) && !HIWORD( b ))
+    if (!IS_INTRESOURCE( a ) && IS_INTRESOURCE( b ))
         return -1;
-    if (HIWORD( b ) && !HIWORD( a ))
+    if (!IS_INTRESOURCE( b ) && IS_INTRESOURCE( a ))
         return 1;
     return ( a < b ) ? -1 : 1;
 }
@@ -688,7 +691,7 @@ static LPWSTR res_strdupW( LPCWSTR str )
     LPWSTR ret;
     UINT len;
 
-    if (HIWORD(str) == 0)
+    if (IS_INTRESOURCE(str))
         return (LPWSTR) (UINT_PTR) LOWORD(str);
     len = (lstrlenW( str ) + 1) * sizeof (WCHAR);
     ret = HeapAlloc( GetProcessHeap(), 0, len );
@@ -698,7 +701,7 @@ static LPWSTR res_strdupW( LPCWSTR str )
 
 static void res_free_str( LPWSTR str )
 {
-    if (HIWORD(str))
+    if (!IS_INTRESOURCE(str))
         HeapFree( GetProcessHeap(), 0, str );
 }
 
@@ -1157,14 +1160,14 @@ static void get_resource_sizes( QUEUEDUPDATES *updates, struct resource_size_inf
     LIST_FOR_EACH_ENTRY( types, &updates->root, struct resource_dir_entry, entry )
     {
         num_types++;
-        if (HIWORD( types->id ))
+        if (!IS_INTRESOURCE( types->id ))
             strings_size += sizeof (WORD) + lstrlenW( types->id )*sizeof (WCHAR);
 
         LIST_FOR_EACH_ENTRY( names, &types->children, struct resource_dir_entry, entry )
         {
             num_names++;
 
-            if (HIWORD( names->id ))
+            if (!IS_INTRESOURCE( names->id ))
                 strings_size += sizeof (WORD) + lstrlenW( names->id )*sizeof (WCHAR);
 
             LIST_FOR_EACH_ENTRY( data, &names->children, struct resource_data, entry )
@@ -1233,7 +1236,7 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
 
         e1 = (IMAGE_RESOURCE_DIRECTORY_ENTRY*) &base[si->types_ofs];
         memset( e1, 0, sizeof *e1 );
-        if (HIWORD( types->id ))
+        if (!IS_INTRESOURCE( types->id ))
         {
             WCHAR *strings;
             DWORD len;
@@ -1269,7 +1272,7 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
 
             e2 = (IMAGE_RESOURCE_DIRECTORY_ENTRY*) &base[si->names_ofs];
             memset( e2, 0, sizeof *e2 );
-            if (HIWORD( names->id ))
+            if (!IS_INTRESOURCE( names->id ))
             {
                 WCHAR *strings;
                 DWORD len;
@@ -1655,16 +1658,16 @@ BOOL WINAPI UpdateResourceA( HANDLE hUpdate, LPCSTR lpType, LPCSTR lpName,
     BOOL ret;
     UNICODE_STRING TypeW;
     UNICODE_STRING NameW;
-    if(!HIWORD(lpType))
+    if(IS_INTRESOURCE(lpType))
         TypeW.Buffer = ULongToPtr(LOWORD(lpType));
     else
         RtlCreateUnicodeStringFromAsciiz(&TypeW, lpType);
-    if(!HIWORD(lpName))
+    if(IS_INTRESOURCE(lpName))
         NameW.Buffer = ULongToPtr(LOWORD(lpName));
     else
         RtlCreateUnicodeStringFromAsciiz(&NameW, lpName);
     ret = UpdateResourceW(hUpdate, TypeW.Buffer, NameW.Buffer, wLanguage, lpData, cbData);
-    if(HIWORD(lpType)) RtlFreeUnicodeString(&TypeW);
-    if(HIWORD(lpName)) RtlFreeUnicodeString(&NameW);
+    if(!IS_INTRESOURCE(lpType)) RtlFreeUnicodeString(&TypeW);
+    if(!IS_INTRESOURCE(lpName)) RtlFreeUnicodeString(&NameW);
     return ret;
 }
