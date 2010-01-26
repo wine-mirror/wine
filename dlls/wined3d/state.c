@@ -3884,62 +3884,18 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
     glLoadIdentity();
     checkGLcall("glLoadIdentity");
 
-    if(context->last_was_rhw) {
-        double X, Y, height, width, minZ, maxZ;
+    if (context->last_was_rhw)
+    {
+        double x = stateblock->viewport.X;
+        double y = stateblock->viewport.Y;
+        double w = stateblock->viewport.Width;
+        double h = stateblock->viewport.Height;
 
-        X      = stateblock->viewport.X;
-        Y      = stateblock->viewport.Y;
-        height = stateblock->viewport.Height;
-        width  = stateblock->viewport.Width;
-        minZ   = stateblock->viewport.MinZ;
-        maxZ   = stateblock->viewport.MaxZ;
-
-        if (!stateblock->device->untransformed)
-        {
-            /* Transformed vertices are supposed to bypass the whole transform pipeline including
-             * frustum clipping. This can't be done in opengl, so this code adjusts the Z range to
-             * suppress depth clipping. This can be done because it is an orthogonal projection and
-             * the Z coordinate does not affect the size of the primitives. Half Life 1 and Prince of
-             * Persia 3D need this.
-             *
-             * Note that using minZ and maxZ here doesn't entirely fix the problem, since view frustum
-             * clipping is still enabled, but it seems to fix it for all apps tested so far. A minor
-             * problem can be witnessed in half-life 1 engine based games, the weapon is clipped close
-             * to the viewer.
-             *
-             * Also note that this breaks z comparison against z values filled in with clear,
-             * but no app depending on that and disabled clipping has been found yet. Comparing
-             * primitives against themselves works, so the Z buffer is still intact for normal hidden
-             * surface removal.
-             *
-             * We could disable clipping entirely by setting the near to infinity and far to -infinity,
-             * but this would break Z buffer operation. Raising the range to something less than
-             * infinity would help a bit at the cost of Z precision, but it wouldn't eliminate the
-             * problem either.
-             */
-            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            if (context->render_offscreen)
-            {
-                glOrtho(X, X + width, -Y, -Y - height, -minZ, -maxZ);
-            } else {
-                glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-            }
-        } else {
-            /* If the app mixes transformed and untransformed primitives we can't use the coordinate system
-             * trick above because this would mess up transformed and untransformed Z order. Pass the z position
-             * unmodified to opengl.
-             *
-             * If the app depends on mixed types and disabled clipping we're out of luck without a pipeline
-             * replacement shader.
-             */
-            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
-            if (context->render_offscreen)
-            {
-                glOrtho(X, X + width, -Y, -Y - height, 0.0, -1.0);
-            } else {
-                glOrtho(X, X + width, Y + height, Y, 0.0, -1.0);
-            }
-        }
+        TRACE("Calling glOrtho with x %.8e, y %.8e, w %.8e, h %.8e.\n", x, y, w, h);
+        if (context->render_offscreen)
+            glOrtho(x, x + w, -y, -y - h, 0.0, -1.0);
+        else
+            glOrtho(x, x + w, y + h, y, 0.0, -1.0);
         checkGLcall("glOrtho");
 
         /* Window Coord 0 is the middle of the first pixel, so translate by 1/2 pixels */

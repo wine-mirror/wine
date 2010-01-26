@@ -2795,15 +2795,15 @@ static void depth_clamp_test(IDirect3DDevice7 *device)
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     color = getPixelColor(device, 75, 75);
-    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 150, 150);
-    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 330);
-    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 330);
-    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
 
     vp.dvMinZ = 0.0;
     vp.dvMaxZ = 1.0;
