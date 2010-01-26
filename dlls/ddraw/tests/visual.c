@@ -27,6 +27,7 @@
 HWND window;
 IDirectDraw7        *DirectDraw = NULL;
 IDirectDrawSurface7 *Surface;
+IDirectDrawSurface7 *depth_buffer;
 IDirect3D7          *Direct3D = NULL;
 IDirect3DDevice7    *Direct3DDevice = NULL;
 
@@ -40,6 +41,18 @@ IDirect3DViewport *Viewport = NULL;
 static BOOL refdevice = FALSE;
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+
+static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    return TRUE;
+}
 
 static BOOL createObjects(void)
 {
@@ -93,6 +106,24 @@ static BOOL createObjects(void)
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
     if(FAILED(hr)) goto err;
 
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd).ddpfPixelFormat).dwZBufferBitDepth = 32;
+    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0xffffffff;
+    ddsd.dwWidth = 640;
+    ddsd.dwHeight = 480;
+    hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &depth_buffer, NULL);
+    ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
+    if (FAILED(hr)) goto err;
+
+    hr = IDirectDrawSurface_AddAttachedSurface(Surface, depth_buffer);
+    ok(SUCCEEDED(hr), "AddAttachedSurface failed, hr %#x.\n", hr);
+    if (FAILED(hr)) goto err;
+
     hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DTnLHalDevice, Surface, &Direct3DDevice);
     if(FAILED(hr))
     {
@@ -111,6 +142,7 @@ static BOOL createObjects(void)
 
     err:
     if(DirectDraw) IDirectDraw7_Release(DirectDraw);
+    if (depth_buffer) IDirectDrawSurface7_Release(depth_buffer);
     if(Surface) IDirectDrawSurface7_Release(Surface);
     if(Direct3D) IDirect3D7_Release(Direct3D);
     if(Direct3DDevice) IDirect3DDevice7_Release(Direct3DDevice);
@@ -122,6 +154,7 @@ static void releaseObjects(void)
 {
     IDirect3DDevice7_Release(Direct3DDevice);
     IDirect3D7_Release(Direct3D);
+    IDirectDrawSurface7_Release(depth_buffer);
     IDirectDrawSurface7_Release(Surface);
     IDirectDraw7_Release(DirectDraw);
     DestroyWindow(window);
@@ -207,6 +240,12 @@ static void set_the_same_viewport_again(IDirect3DDevice7 *device)
 struct vertex
 {
     float x, y, z;
+    DWORD diffuse;
+};
+
+struct tvertex
+{
+    float x, y, z, w;
     DWORD diffuse;
 };
 
@@ -2654,6 +2693,124 @@ out:
     IDirectDrawSurface7_Release(cubemap);
 }
 
+/* This test tests depth clamping / clipping behaviour:
+ *   - When D3DRS_CLIPPING is disabled depth values are *clamped* to the
+ *   minimum/maximum z value.
+ *   - The viewport's MinZ/MaxZ is irrelevant for this.
+ *   - When D3DRS_CLIPPING is enabled depth values are clipped.
+ *   - Pretransformed vertices behave the same as regular vertices.
+ */
+static void depth_clamp_test(IDirect3DDevice7 *device)
+{
+    struct tvertex quad1[] =
+    {
+        {    0,    0,  5.0f, 1.0, 0xff002b7f},
+        {  640,    0,  5.0f, 1.0, 0xff002b7f},
+        {    0,  480,  5.0f, 1.0, 0xff002b7f},
+        {  640,  480,  5.0f, 1.0, 0xff002b7f},
+    };
+    struct tvertex quad2[] =
+    {
+        {    0,  300, 10.0f, 1.0, 0xfff9e814},
+        {  640,  300, 10.0f, 1.0, 0xfff9e814},
+        {    0,  360, 10.0f, 1.0, 0xfff9e814},
+        {  640,  360, 10.0f, 1.0, 0xfff9e814},
+    };
+    struct vertex quad3[] =
+    {
+        {-0.65, 0.55,  5.0f,      0xffffffff},
+        {-0.35, 0.55,  5.0f,      0xffffffff},
+        {-0.65, 0.15,  5.0f,      0xffffffff},
+        {-0.35, 0.15,  5.0f,      0xffffffff},
+    };
+    struct vertex quad4[] =
+    {
+        {-0.87, 0.83, 10.0f,      0xffffffff},
+        {-0.65, 0.83, 10.0f,      0xffffffff},
+        {-0.87, 0.55, 10.0f,      0xffffffff},
+        {-0.65, 0.55, 10.0f,      0xffffffff},
+    };
+    struct vertex quad5[] =
+    {
+        { -0.5,  0.5, 10.0f,      0xff14f914},
+        {  0.5,  0.5, 10.0f,      0xff14f914},
+        { -0.5, -0.5, 10.0f,      0xff14f914},
+        {  0.5, -0.5, 10.0f,      0xff14f914},
+    };
+    struct tvertex quad6[] =
+    {
+        {    0,  120, 10.0f, 1.0, 0xfff91414},
+        {  640,  120, 10.0f, 1.0, 0xfff91414},
+        {    0,  180, 10.0f, 1.0, 0xfff91414},
+        {  640,  180, 10.0f, 1.0, 0xfff91414},
+    };
+
+    D3DVIEWPORT7 vp;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvMinZ = 0.0;
+    vp.dvMaxZ = 7.5;
+
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad1, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad2, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad3, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad4, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad5, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad6, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 75, 75);
+    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 150);
+    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 330);
+    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 330);
+    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+
+    vp.dvMinZ = 0.0;
+    vp.dvMaxZ = 1.0;
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -2694,6 +2851,7 @@ START_TEST(visual)
     }
 
     /* Now run the tests */
+    depth_clamp_test(Direct3DDevice);
     lighting_test(Direct3DDevice);
     clear_test(Direct3DDevice);
     fog_test(Direct3DDevice);
