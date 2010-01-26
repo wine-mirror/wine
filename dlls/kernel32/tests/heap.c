@@ -488,7 +488,7 @@ static void test_heap_checks( DWORD flags )
 {
     BYTE old, *p, *p2;
     BOOL ret;
-    SIZE_T size;
+    SIZE_T size, large_size = 800 * 1024 + 37;
 
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
     trace( "testing heap flags %08x\n", flags );
@@ -595,6 +595,51 @@ static void test_heap_checks( DWORD flags )
         ret = HeapValidate( GetProcessHeap(), 0, NULL );
         ok( ret, "HeapValidate failed\n" );
     }
+
+    /* now test large blocks */
+
+    p = HeapAlloc( GetProcessHeap(), 0, large_size );
+    ok( p != NULL, "HeapAlloc failed\n" );
+
+    ret = HeapValidate( GetProcessHeap(), 0, p );
+    ok( ret, "HeapValidate failed\n" );
+
+    size = HeapSize( GetProcessHeap(), 0, p );
+    ok( size == large_size, "Wrong size %lu\n", size );
+
+    ok( p[large_size - 2] == 0, "wrong data %x\n", p[large_size - 2] );
+    ok( p[large_size - 1] == 0, "wrong data %x\n", p[large_size - 1] );
+
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
+        /* Windows doesn't do tail checking on large blocks */
+        ok( p[large_size] == 0xab || broken(p[large_size] == 0), "wrong data %x\n", p[large_size] );
+        ok( p[large_size+1] == 0xab || broken(p[large_size+1] == 0), "wrong data %x\n", p[large_size+1] );
+        ok( p[large_size+2] == 0xab || broken(p[large_size+2] == 0), "wrong data %x\n", p[large_size+2] );
+        if (p[large_size] == 0xab)
+        {
+            p[large_size] = 0xcc;
+            ret = HeapValidate( GetProcessHeap(), 0, p );
+            ok( !ret, "HeapValidate succeeded\n" );
+
+            /* other calls only check when HEAP_VALIDATE is set */
+            if (flags & HEAP_VALIDATE)
+            {
+                size = HeapSize( GetProcessHeap(), 0, p );
+                ok( size == ~(SIZE_T)0, "Wrong size %lu\n", size );
+
+                p2 = HeapReAlloc( GetProcessHeap(), 0, p, large_size - 3 );
+                ok( p2 == NULL, "HeapReAlloc succeeded\n" );
+
+                ret = HeapFree( GetProcessHeap(), 0, p );
+                ok( !ret, "HeapFree succeeded\n" );
+            }
+            p[large_size] = 0xab;
+        }
+    }
+
+    ret = HeapFree( GetProcessHeap(), 0, p );
+    ok( ret, "HeapFree failed\n" );
 }
 
 static void test_debug_heap( const char *argv0, DWORD flags )
