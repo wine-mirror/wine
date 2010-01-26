@@ -602,6 +602,7 @@ ALL_PROGRAM_INSTALL_DIRS
 ALL_PROGRAM_DIRS
 ALL_TEST_DIRS
 ALL_IMPORTLIB_RULES
+ALL_IMPORT_LIBS
 ALL_STATIC_LIBS
 ALL_IMPLIB_DIRS
 ALL_DLL_DIRS
@@ -6164,6 +6165,7 @@ LDRPATH_INSTALL=""
 
 LDRPATH_LOCAL=""
 
+STATIC_IMPLIBEXT="def.a"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -6399,6 +6401,7 @@ fi
             LIBEXT="dll"
     fi
     IMPLIBEXT="a"
+    STATIC_IMPLIBEXT="a"
         enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
     enable_msvcrt=${enable_msvcrt:-no}
@@ -13608,6 +13611,8 @@ ALL_IMPLIB_DIRS=""
 
 ALL_STATIC_LIBS=""
 
+ALL_IMPORT_LIBS=""
+
 ALL_IMPORTLIB_RULES=""
 
 ALL_TEST_DIRS=""
@@ -13695,6 +13700,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/acledit/Makefile: dlls/acledit/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/acledit/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	aclui/libaclui.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+aclui/libaclui.def aclui/libaclui.a aclui/libaclui.cross.a: aclui/aclui.spec \$(WINEBUILD)
+	@cd aclui && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/aclui/Makefile"
 test "x$enable_aclui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13703,6 +13713,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/aclui/Makefile: dlls/aclui/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/aclui/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	activeds/libactiveds.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+activeds/libactiveds.def activeds/libactiveds.a activeds/libactiveds.cross.a: activeds/activeds.spec \$(WINEBUILD)
+	@cd activeds && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/activeds/Makefile"
 test "x$enable_activeds" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13733,6 +13748,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/adsiid/Makefile: dlls/adsiid/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/adsiid/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	advapi32/libadvapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+advapi32/libadvapi32.def advapi32/libadvapi32.a advapi32/libadvapi32.cross.a: advapi32/advapi32.spec \$(WINEBUILD)
+	@cd advapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advapi32/Makefile"
 test "x$enable_advapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13749,6 +13769,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/advapi32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	advpack/libadvpack.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+advpack/libadvpack.def advpack/libadvpack.a advpack/libadvpack.cross.a: advpack/advpack.spec \$(WINEBUILD)
+	@cd advpack && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advpack/Makefile"
 test "x$enable_advpack" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13789,6 +13814,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/appwiz.cpl/Makefile: dlls/appwiz.cpl/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/appwiz.cpl/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	atl/libatl.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+atl/libatl.def atl/libatl.a atl/libatl.cross.a: atl/atl.spec \$(WINEBUILD)
+	@cd atl && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/atl/Makefile"
 test "x$enable_atl" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13805,6 +13835,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/authz/Makefile: dlls/authz/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/authz/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	avicap32/libavicap32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+avicap32/libavicap32.def avicap32/libavicap32.a avicap32/libavicap32.cross.a: avicap32/avicap32.spec \$(WINEBUILD)
+	@cd avicap32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/avicap32/Makefile"
 test "x$enable_avicap32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13813,6 +13848,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/avicap32/Makefile: dlls/avicap32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/avicap32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	avifil32/libavifil32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+avifil32/libavifil32.def avifil32/libavifil32.a avifil32/libavifil32.cross.a: avifil32/avifil32.spec \$(WINEBUILD)
+	@cd avifil32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/avifil32/Makefile"
 test "x$enable_avifil32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13837,6 +13877,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/avifile.dll16/Makefile: dlls/avifile.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/avifile.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	avrt/libavrt.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+avrt/libavrt.def avrt/libavrt.a avrt/libavrt.cross.a: avrt/avrt.spec \$(WINEBUILD)
+	@cd avrt && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/avrt/Makefile"
 test "x$enable_avrt" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13869,6 +13914,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/browseui/tests/Makefile: dlls/browseui/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/browseui/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cabinet/libcabinet.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cabinet/libcabinet.def cabinet/libcabinet.a cabinet/libcabinet.cross.a: cabinet/cabinet.spec \$(WINEBUILD)
+	@cd cabinet && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cabinet/Makefile"
 test "x$enable_cabinet" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13885,6 +13935,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/cabinet/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	capi2032/libcapi2032.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+capi2032/libcapi2032.def capi2032/libcapi2032.a capi2032/libcapi2032.cross.a: capi2032/capi2032.spec \$(WINEBUILD)
+	@cd capi2032 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/capi2032/Makefile"
 test "x$enable_capi2032" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13893,6 +13948,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/capi2032/Makefile: dlls/capi2032/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/capi2032/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cards/libcards.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cards/libcards.def cards/libcards.a cards/libcards.cross.a: cards/cards.spec \$(WINEBUILD)
+	@cd cards && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cards/Makefile"
 test "x$enable_cards" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13901,6 +13961,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cards/Makefile: dlls/cards/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/cards/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cfgmgr32/libcfgmgr32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cfgmgr32/libcfgmgr32.def cfgmgr32/libcfgmgr32.a cfgmgr32/libcfgmgr32.cross.a: cfgmgr32/cfgmgr32.spec \$(WINEBUILD)
+	@cd cfgmgr32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cfgmgr32/Makefile"
 test "x$enable_cfgmgr32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13909,6 +13974,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cfgmgr32/Makefile: dlls/cfgmgr32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/cfgmgr32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	clusapi/libclusapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+clusapi/libclusapi.def clusapi/libclusapi.a clusapi/libclusapi.cross.a: clusapi/clusapi.spec \$(WINEBUILD)
+	@cd clusapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/clusapi/Makefile"
 test "x$enable_clusapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13933,6 +14003,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/comcat/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	comctl32/libcomctl32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+comctl32/libcomctl32.def comctl32/libcomctl32.a comctl32/libcomctl32.cross.a: comctl32/comctl32.spec \$(WINEBUILD)
+	@cd comctl32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comctl32/Makefile"
 test "x$enable_comctl32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13949,6 +14024,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comctl32/tests/Makefile: dlls/comctl32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/comctl32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	comdlg32/libcomdlg32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+comdlg32/libcomdlg32.def comdlg32/libcomdlg32.a comdlg32/libcomdlg32.cross.a: comdlg32/comdlg32.spec \$(WINEBUILD)
+	@cd comdlg32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comdlg32/Makefile"
 test "x$enable_comdlg32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13989,6 +14069,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/compobj.dll16/Makefile: dlls/compobj.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/compobj.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	compstui/libcompstui.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+compstui/libcompstui.def compstui/libcompstui.a compstui/libcompstui.cross.a: compstui/compstui.spec \$(WINEBUILD)
+	@cd compstui && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/compstui/Makefile"
 test "x$enable_compstui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -13997,6 +14082,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/compstui/Makefile: dlls/compstui/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/compstui/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	credui/libcredui.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+credui/libcredui.def credui/libcredui.a credui/libcredui.cross.a: credui/credui.spec \$(WINEBUILD)
+	@cd credui && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/credui/Makefile"
 test "x$enable_credui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14013,6 +14103,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/credui/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	crtdll/libcrtdll.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+crtdll/libcrtdll.def crtdll/libcrtdll.a crtdll/libcrtdll.cross.a: crtdll/crtdll.spec \$(WINEBUILD)
+	@cd crtdll && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/crtdll/Makefile"
 test "x$enable_crtdll" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14021,6 +14116,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/crtdll/Makefile: dlls/crtdll/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/crtdll/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	crypt32/libcrypt32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+crypt32/libcrypt32.def crypt32/libcrypt32.a crypt32/libcrypt32.cross.a: crypt32/crypt32.spec \$(WINEBUILD)
+	@cd crypt32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/crypt32/Makefile"
 test "x$enable_crypt32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14045,6 +14145,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptdlg/Makefile: dlls/cryptdlg/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/cryptdlg/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cryptdll/libcryptdll.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cryptdll/libcryptdll.def cryptdll/libcryptdll.a cryptdll/libcryptdll.cross.a: cryptdll/cryptdll.spec \$(WINEBUILD)
+	@cd cryptdll && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptdll/Makefile"
 test "x$enable_cryptdll" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14053,6 +14158,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptdll/Makefile: dlls/cryptdll/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/cryptdll/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cryptnet/libcryptnet.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cryptnet/libcryptnet.def cryptnet/libcryptnet.a cryptnet/libcryptnet.cross.a: cryptnet/cryptnet.spec \$(WINEBUILD)
+	@cd cryptnet && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptnet/Makefile"
 test "x$enable_cryptnet" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14069,6 +14179,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/cryptnet/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	cryptui/libcryptui.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+cryptui/libcryptui.def cryptui/libcryptui.a cryptui/libcryptui.cross.a: cryptui/cryptui.spec \$(WINEBUILD)
+	@cd cryptui && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptui/Makefile"
 test "x$enable_cryptui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14101,6 +14216,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ctl3d.dll16/Makefile: dlls/ctl3d.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ctl3d.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ctl3d32/libctl3d32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ctl3d32/libctl3d32.def ctl3d32/libctl3d32.a ctl3d32/libctl3d32.cross.a: ctl3d32/ctl3d32.spec \$(WINEBUILD)
+	@cd ctl3d32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ctl3d32/Makefile"
 test "x$enable_ctl3d32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14117,6 +14237,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ctl3dv2.dll16/Makefile: dlls/ctl3dv2.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ctl3dv2.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3d10/libd3d10.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3d10/libd3d10.def d3d10/libd3d10.a d3d10/libd3d10.cross.a: d3d10/d3d10.spec \$(WINEBUILD)
+	@cd d3d10 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10/Makefile"
 test "x$enable_d3d10" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14133,6 +14258,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3d10/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3d10core/libd3d10core.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3d10core/libd3d10core.def d3d10core/libd3d10core.a d3d10core/libd3d10core.cross.a: d3d10core/d3d10core.spec \$(WINEBUILD)
+	@cd d3d10core && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10core/Makefile"
 test "x$enable_d3d10core" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14149,6 +14279,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10core/tests/Makefile: dlls/d3d10core/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3d10core/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3d8/libd3d8.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3d8/libd3d8.def d3d8/libd3d8.a d3d8/libd3d8.cross.a: d3d8/d3d8.spec \$(WINEBUILD)
+	@cd d3d8 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d8/Makefile"
 test "x$enable_d3d8" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14165,6 +14300,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d8/tests/Makefile: dlls/d3d8/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3d8/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3d9/libd3d9.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3d9/libd3d9.def d3d9/libd3d9.a d3d9/libd3d9.cross.a: d3d9/d3d9.spec \$(WINEBUILD)
+	@cd d3d9 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d9/Makefile"
 test "x$enable_d3d9" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14181,6 +14321,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d9/tests/Makefile: dlls/d3d9/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3d9/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3dim/libd3dim.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3dim/libd3dim.def d3dim/libd3dim.a d3dim/libd3dim.cross.a: d3dim/d3dim.spec \$(WINEBUILD)
+	@cd d3dim && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dim/Makefile"
 test "x$enable_d3dim" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14189,6 +14334,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dim/Makefile: dlls/d3dim/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/d3dim/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3drm/libd3drm.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3drm/libd3drm.def d3drm/libd3drm.a d3drm/libd3drm.cross.a: d3drm/d3drm.spec \$(WINEBUILD)
+	@cd d3drm && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3drm/Makefile"
 test "x$enable_d3drm" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14301,6 +14451,20 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_35/Makefile: dlls/d3dx9_35/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/d3dx9_35/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3dx9_36/libd3dx9.$IMPLIBEXT \\
+	libd3dx9.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+libd3dx9.a: d3dx9_36/libd3dx9.a
+	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.a \$@
+libd3dx9.cross.a: d3dx9_36/libd3dx9.cross.a
+	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.cross.a \$@
+libd3dx9.def: d3dx9_36/libd3dx9.def
+	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.def \$@
+clean::
+	\$(RM) libd3dx9.def
+d3dx9_36/libd3dx9.def d3dx9_36/libd3dx9.a d3dx9_36/libd3dx9.cross.a: d3dx9_36/d3dx9_36.spec \$(WINEBUILD)
+	@cd d3dx9_36 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dx9_36/Makefile"
 test "x$enable_d3dx9_36" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14365,6 +14529,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_42/Makefile: dlls/d3dx9_42/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/d3dx9_42/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	d3dxof/libd3dxof.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+d3dxof/libd3dxof.def d3dxof/libd3dxof.a d3dxof/libd3dxof.cross.a: d3dxof/d3dxof.spec \$(WINEBUILD)
+	@cd d3dxof && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dxof/Makefile"
 test "x$enable_d3dxof" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14381,6 +14550,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dxof/tests/Makefile: dlls/d3dxof/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3dxof/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dbghelp/libdbghelp.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dbghelp/libdbghelp.def dbghelp/libdbghelp.a dbghelp/libdbghelp.cross.a: dbghelp/dbghelp.spec \$(WINEBUILD)
+	@cd dbghelp && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dbghelp/Makefile"
 test "x$enable_dbghelp" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14389,6 +14563,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dbghelp/Makefile: dlls/dbghelp/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dbghelp/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dciman32/libdciman32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dciman32/libdciman32.def dciman32/libdciman32.a dciman32/libdciman32.cross.a: dciman32/dciman32.spec \$(WINEBUILD)
+	@cd dciman32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dciman32/Makefile"
 test "x$enable_dciman32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14405,6 +14584,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddeml.dll16/Makefile: dlls/ddeml.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ddeml.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ddraw/libddraw.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ddraw/libddraw.def ddraw/libddraw.a ddraw/libddraw.cross.a: ddraw/ddraw.spec \$(WINEBUILD)
+	@cd ddraw && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ddraw/Makefile"
 test "x$enable_ddraw" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14445,6 +14629,14 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/devenum/Makefile: dlls/devenum/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/devenum/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dinput/libdinput.$IMPLIBEXT \\
+	dinput/libdinput.$STATIC_IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dinput/libdinput.def: dinput/dinput.spec \$(WINEBUILD)
+	@cd dinput && \$(MAKE) \`basename \$@\`
+dinput/libdinput.$STATIC_IMPLIBEXT dinput/libdinput.cross.a: dummy
+	@cd dinput && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dinput/Makefile"
 test "x$enable_dinput" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14461,6 +14653,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/dinput/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dinput8/libdinput8.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dinput8/libdinput8.def dinput8/libdinput8.a dinput8/libdinput8.cross.a: dinput8/dinput8.spec \$(WINEBUILD)
+	@cd dinput8 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dinput8/Makefile"
 test "x$enable_dinput8" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14557,6 +14754,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dmusic/Makefile: dlls/dmusic/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dmusic/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dmusic32/libdmusic32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dmusic32/libdmusic32.def dmusic32/libdmusic32.a dmusic32/libdmusic32.cross.a: dmusic32/dmusic32.spec \$(WINEBUILD)
+	@cd dmusic32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dmusic32/Makefile"
 test "x$enable_dmusic32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14565,6 +14767,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dmusic32/Makefile: dlls/dmusic32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dmusic32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dnsapi/libdnsapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dnsapi/libdnsapi.def dnsapi/libdnsapi.a dnsapi/libdnsapi.cross.a: dnsapi/dnsapi.spec \$(WINEBUILD)
+	@cd dnsapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dnsapi/Makefile"
 test "x$enable_dnsapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14581,6 +14788,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/dnsapi/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dplay/libdplay.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dplay/libdplay.def dplay/libdplay.a dplay/libdplay.cross.a: dplay/dplay.spec \$(WINEBUILD)
+	@cd dplay && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dplay/Makefile"
 test "x$enable_dplay" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14589,6 +14801,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dplay/Makefile: dlls/dplay/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dplay/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dplayx/libdplayx.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dplayx/libdplayx.def dplayx/libdplayx.a dplayx/libdplayx.cross.a: dplayx/dplayx.spec \$(WINEBUILD)
+	@cd dplayx && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dplayx/Makefile"
 test "x$enable_dplayx" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14613,6 +14830,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dpnaddr/Makefile: dlls/dpnaddr/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dpnaddr/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dpnet/libdpnet.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dpnet/libdpnet.def dpnet/libdpnet.a dpnet/libdpnet.cross.a: dpnet/dpnet.spec \$(WINEBUILD)
+	@cd dpnet && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dpnet/Makefile"
 test "x$enable_dpnet" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14653,6 +14875,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/drmclien/Makefile: dlls/drmclien/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/drmclien/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dsound/libdsound.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dsound/libdsound.def dsound/libdsound.a dsound/libdsound.cross.a: dsound/dsound.spec \$(WINEBUILD)
+	@cd dsound && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dsound/Makefile"
 test "x$enable_dsound" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14685,6 +14912,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dswave/Makefile: dlls/dswave/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dswave/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dwmapi/libdwmapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dwmapi/libdwmapi.def dwmapi/libdwmapi.a dwmapi/libdwmapi.cross.a: dwmapi/dwmapi.spec \$(WINEBUILD)
+	@cd dwmapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dwmapi/Makefile"
 test "x$enable_dwmapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14737,6 +14969,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/dxerr9/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	dxgi/libdxgi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dxgi/libdxgi.def dxgi/libdxgi.a dxgi/libdxgi.cross.a: dxgi/dxgi.spec \$(WINEBUILD)
+	@cd dxgi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxgi/Makefile"
 test "x$enable_dxgi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14815,6 +15052,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdi.exe16/Makefile: dlls/gdi.exe16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/gdi.exe16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	gdi32/libgdi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+gdi32/libgdi32.def gdi32/libgdi32.a gdi32/libgdi32.cross.a: gdi32/gdi32.spec \$(WINEBUILD)
+	@cd gdi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdi32/Makefile"
 test "x$enable_gdi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14831,6 +15073,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	gdiplus/libgdiplus.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+gdiplus/libgdiplus.def gdiplus/libgdiplus.a gdiplus/libgdiplus.cross.a: gdiplus/gdiplus.spec \$(WINEBUILD)
+	@cd gdiplus && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdiplus/Makefile"
 test "x$enable_gdiplus" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14847,6 +15094,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdiplus/tests/Makefile: dlls/gdiplus/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/gdiplus/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	glu32/libglu32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+glu32/libglu32.def glu32/libglu32.a glu32/libglu32.cross.a: glu32/glu32.spec \$(WINEBUILD)
+	@cd glu32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/glu32/Makefile"
 test "x$enable_glu32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14887,6 +15139,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/hhctrl.ocx/Makefile: dlls/hhctrl.ocx/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/hhctrl.ocx/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	hid/libhid.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+hid/libhid.def hid/libhid.a hid/libhid.cross.a: hid/hid.spec \$(WINEBUILD)
+	@cd hid && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/hid/Makefile"
 test "x$enable_hid" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14895,6 +15152,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/hid/Makefile: dlls/hid/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/hid/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	hlink/libhlink.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+hlink/libhlink.def hlink/libhlink.a hlink/libhlink.cross.a: hlink/hlink.spec \$(WINEBUILD)
+	@cd hlink && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/hlink/Makefile"
 test "x$enable_hlink" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14959,6 +15221,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imaadp32.acm/Makefile: dlls/imaadp32.acm/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/imaadp32.acm/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	imagehlp/libimagehlp.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+imagehlp/libimagehlp.def imagehlp/libimagehlp.a imagehlp/libimagehlp.cross.a: imagehlp/imagehlp.spec \$(WINEBUILD)
+	@cd imagehlp && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imagehlp/Makefile"
 test "x$enable_imagehlp" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14983,6 +15250,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imm.dll16/Makefile: dlls/imm.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/imm.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	imm32/libimm32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+imm32/libimm32.def imm32/libimm32.a imm32/libimm32.cross.a: imm32/imm32.spec \$(WINEBUILD)
+	@cd imm32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imm32/Makefile"
 test "x$enable_imm32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -14999,6 +15271,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/imm32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	inetcomm/libinetcomm.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+inetcomm/libinetcomm.def inetcomm/libinetcomm.a inetcomm/libinetcomm.cross.a: inetcomm/inetcomm.spec \$(WINEBUILD)
+	@cd inetcomm && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/inetcomm/Makefile"
 test "x$enable_inetcomm" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15071,6 +15348,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inseng/Makefile: dlls/inseng/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/inseng/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	iphlpapi/libiphlpapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a iphlpapi/libiphlpapi.cross.a: iphlpapi/iphlpapi.spec \$(WINEBUILD)
+	@cd iphlpapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/iphlpapi/Makefile"
 test "x$enable_iphlpapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15127,6 +15409,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/jscript/tests/Makefile: dlls/jscript/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/jscript/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	kernel32/libkernel32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+kernel32/libkernel32.def kernel32/libkernel32.a kernel32/libkernel32.cross.a: kernel32/kernel32.spec \$(WINEBUILD)
+	@cd kernel32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/kernel32/Makefile"
 test "x$enable_kernel32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15151,6 +15438,20 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/keyboard.drv16/Makefile: dlls/keyboard.drv16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/keyboard.drv16/Makefile"
 
+test "x$enable_win16" = xno || ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	krnl386.exe16/libkernel.$IMPLIBEXT \\
+	libkernel.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+libkernel.a: krnl386.exe16/libkernel.a
+	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.a \$@
+libkernel.cross.a: krnl386.exe16/libkernel.cross.a
+	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.cross.a \$@
+libkernel.def: krnl386.exe16/libkernel.def
+	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.def \$@
+clean::
+	\$(RM) libkernel.def
+krnl386.exe16/libkernel.def krnl386.exe16/libkernel.a krnl386.exe16/libkernel.cross.a: krnl386.exe16/krnl386.exe16.spec \$(WINEBUILD)
+	@cd krnl386.exe16 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/krnl386.exe16/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15159,6 +15460,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/krnl386.exe16/Makefile: dlls/krnl386.exe16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/krnl386.exe16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	loadperf/libloadperf.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+loadperf/libloadperf.def loadperf/libloadperf.a loadperf/libloadperf.cross.a: loadperf/loadperf.spec \$(WINEBUILD)
+	@cd loadperf && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/loadperf/Makefile"
 test "x$enable_loadperf" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15199,6 +15505,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localui/tests/Makefile: dlls/localui/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/localui/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	lz32/liblz32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+lz32/liblz32.def lz32/liblz32.a lz32/liblz32.cross.a: lz32/lz32.spec \$(WINEBUILD)
+	@cd lz32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/lz32/Makefile"
 test "x$enable_lz32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15223,6 +15534,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/lzexpand.dll16/Makefile: dlls/lzexpand.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/lzexpand.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mapi32/libmapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mapi32/libmapi32.def mapi32/libmapi32.a mapi32/libmapi32.cross.a: mapi32/mapi32.spec \$(WINEBUILD)
+	@cd mapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mapi32/Makefile"
 test "x$enable_mapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15295,6 +15611,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/midimap/Makefile: dlls/midimap/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/midimap/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mlang/libmlang.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mlang/libmlang.def mlang/libmlang.a mlang/libmlang.cross.a: mlang/mlang.spec \$(WINEBUILD)
+	@cd mlang && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mlang/Makefile"
 test "x$enable_mlang" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15367,6 +15688,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mouse.drv16/Makefile: dlls/mouse.drv16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mouse.drv16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mpr/libmpr.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mpr/libmpr.def mpr/libmpr.a mpr/libmpr.cross.a: mpr/mpr.spec \$(WINEBUILD)
+	@cd mpr && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mpr/Makefile"
 test "x$enable_mpr" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15375,6 +15701,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mpr/Makefile: dlls/mpr/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mpr/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mprapi/libmprapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mprapi/libmprapi.def mprapi/libmprapi.a mprapi/libmprapi.cross.a: mprapi/mprapi.spec \$(WINEBUILD)
+	@cd mprapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mprapi/Makefile"
 test "x$enable_mprapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15399,6 +15730,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msacm32.drv/Makefile: dlls/msacm32.drv/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msacm32.drv/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msacm32/libmsacm32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msacm32/libmsacm32.def msacm32/libmsacm32.a msacm32/libmsacm32.cross.a: msacm32/msacm32.spec \$(WINEBUILD)
+	@cd msacm32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msacm32/Makefile"
 test "x$enable_msacm32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15431,6 +15767,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mscat32/Makefile: dlls/mscat32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mscat32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mscms/libmscms.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mscms/libmscms.def mscms/libmscms.a mscms/libmscms.cross.a: mscms/mscms.spec \$(WINEBUILD)
+	@cd mscms && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mscms/Makefile"
 test "x$enable_mscms" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15479,6 +15820,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msdaps/Makefile: dlls/msdaps/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msdaps/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msdmo/libmsdmo.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msdmo/libmsdmo.def msdmo/libmsdmo.a msdmo/libmsdmo.cross.a: msdmo/msdmo.spec \$(WINEBUILD)
+	@cd msdmo && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msdmo/Makefile"
 test "x$enable_msdmo" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15519,6 +15865,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mshtml.tlb/Makefile: dlls/mshtml.tlb/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mshtml.tlb/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mshtml/libmshtml.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mshtml/libmshtml.def mshtml/libmshtml.a mshtml/libmshtml.cross.a: mshtml/mshtml.spec \$(WINEBUILD)
+	@cd mshtml && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mshtml/Makefile"
 test "x$enable_mshtml" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15535,6 +15886,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/mshtml/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msi/libmsi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msi/libmsi.def msi/libmsi.a msi/libmsi.cross.a: msi/msi.spec \$(WINEBUILD)
+	@cd msi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msi/Makefile"
 test "x$enable_msi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15551,6 +15907,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/msi/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msimg32/libmsimg32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msimg32/libmsimg32.def msimg32/libmsimg32.a msimg32/libmsimg32.cross.a: msimg32/msimg32.spec \$(WINEBUILD)
+	@cd msimg32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msimg32/Makefile"
 test "x$enable_msimg32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15639,6 +16000,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcirt/Makefile: dlls/msvcirt/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvcirt/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvcr71/libmsvcr71.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvcr71/libmsvcr71.def msvcr71/libmsvcr71.a msvcr71/libmsvcr71.cross.a: msvcr71/msvcr71.spec \$(WINEBUILD)
+	@cd msvcr71 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcr71/Makefile"
 test "x$enable_msvcr71" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15647,6 +16013,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcr71/Makefile: dlls/msvcr71/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvcr71/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvcrt/libmsvcrt.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvcrt/libmsvcrt.def msvcrt/libmsvcrt.a msvcrt/libmsvcrt.cross.a: msvcrt/msvcrt.spec \$(WINEBUILD)
+	@cd msvcrt && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrt/Makefile"
 test "x$enable_msvcrt" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15663,6 +16034,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt/tests/Makefile: dlls/msvcrt/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/msvcrt/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvcrt20/libmsvcrt20.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvcrt20/libmsvcrt20.def msvcrt20/libmsvcrt20.a msvcrt20/libmsvcrt20.cross.a: msvcrt20/msvcrt20.spec \$(WINEBUILD)
+	@cd msvcrt20 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrt20/Makefile"
 test "x$enable_msvcrt20" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15671,6 +16047,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt20/Makefile: dlls/msvcrt20/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvcrt20/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvcrt40/libmsvcrt40.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvcrt40/libmsvcrt40.def msvcrt40/libmsvcrt40.a msvcrt40/libmsvcrt40.cross.a: msvcrt40/msvcrt40.spec \$(WINEBUILD)
+	@cd msvcrt40 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrt40/Makefile"
 test "x$enable_msvcrt40" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15679,6 +16060,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt40/Makefile: dlls/msvcrt40/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvcrt40/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvcrtd/libmsvcrtd.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvcrtd/libmsvcrtd.def msvcrtd/libmsvcrtd.a msvcrtd/libmsvcrtd.cross.a: msvcrtd/msvcrtd.spec \$(WINEBUILD)
+	@cd msvcrtd && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrtd/Makefile"
 test "x$enable_msvcrtd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15695,6 +16081,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrtd/tests/Makefile: dlls/msvcrtd/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/msvcrtd/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	msvfw32/libmsvfw32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+msvfw32/libmsvfw32.def msvfw32/libmsvfw32.a msvfw32/libmsvfw32.cross.a: msvfw32/msvfw32.spec \$(WINEBUILD)
+	@cd msvfw32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvfw32/Makefile"
 test "x$enable_msvfw32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15727,6 +16118,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvideo.dll16/Makefile: dlls/msvideo.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvideo.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	mswsock/libmswsock.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+mswsock/libmswsock.def mswsock/libmswsock.a mswsock/libmswsock.cross.a: mswsock/mswsock.spec \$(WINEBUILD)
+	@cd mswsock && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mswsock/Makefile"
 test "x$enable_mswsock" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15751,6 +16147,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/msxml3/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	nddeapi/libnddeapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+nddeapi/libnddeapi.def nddeapi/libnddeapi.a nddeapi/libnddeapi.cross.a: nddeapi/nddeapi.spec \$(WINEBUILD)
+	@cd nddeapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/nddeapi/Makefile"
 test "x$enable_nddeapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15759,6 +16160,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/nddeapi/Makefile: dlls/nddeapi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/nddeapi/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	netapi32/libnetapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+netapi32/libnetapi32.def netapi32/libnetapi32.a netapi32/libnetapi32.cross.a: netapi32/netapi32.spec \$(WINEBUILD)
+	@cd netapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/netapi32/Makefile"
 test "x$enable_netapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15775,6 +16181,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/netapi32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	newdev/libnewdev.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+newdev/libnewdev.def newdev/libnewdev.a newdev/libnewdev.cross.a: newdev/newdev.spec \$(WINEBUILD)
+	@cd newdev && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/newdev/Makefile"
 test "x$enable_newdev" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15783,6 +16194,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/newdev/Makefile: dlls/newdev/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/newdev/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ntdll/libntdll.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ntdll/libntdll.def ntdll/libntdll.a ntdll/libntdll.cross.a: ntdll/ntdll.spec \$(WINEBUILD)
+	@cd ntdll && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdll/Makefile"
 test "x$enable_ntdll" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15799,6 +16215,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/ntdll/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ntdsapi/libntdsapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ntdsapi/libntdsapi.def ntdsapi/libntdsapi.a ntdsapi/libntdsapi.cross.a: ntdsapi/ntdsapi.spec \$(WINEBUILD)
+	@cd ntdsapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdsapi/Makefile"
 test "x$enable_ntdsapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15815,6 +16236,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/ntdsapi/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ntoskrnl.exe/libntoskrnl.exe.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ntoskrnl.exe/libntoskrnl.exe.def ntoskrnl.exe/libntoskrnl.exe.a ntoskrnl.exe/libntoskrnl.exe.cross.a: ntoskrnl.exe/ntoskrnl.exe.spec \$(WINEBUILD)
+	@cd ntoskrnl.exe && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntoskrnl.exe/Makefile"
 test "x$enable_ntoskrnl_exe" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15847,6 +16273,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/objsel/Makefile: dlls/objsel/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/objsel/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	odbc32/libodbc32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+odbc32/libodbc32.def odbc32/libodbc32.a odbc32/libodbc32.cross.a: odbc32/odbc32.spec \$(WINEBUILD)
+	@cd odbc32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/odbc32/Makefile"
 test "x$enable_odbc32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15855,6 +16286,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/odbc32/Makefile: dlls/odbc32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/odbc32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	odbccp32/libodbccp32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+odbccp32/libodbccp32.def odbccp32/libodbccp32.a odbccp32/libodbccp32.cross.a: odbccp32/odbccp32.spec \$(WINEBUILD)
+	@cd odbccp32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/odbccp32/Makefile"
 test "x$enable_odbccp32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15919,6 +16355,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2thk.dll16/Makefile: dlls/ole2thk.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ole2thk.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ole32/libole32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ole32/libole32.def ole32/libole32.a ole32/libole32.cross.a: ole32/ole32.spec \$(WINEBUILD)
+	@cd ole32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole32/Makefile"
 test "x$enable_ole32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15935,6 +16376,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/ole32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	oleacc/liboleacc.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+oleacc/liboleacc.def oleacc/liboleacc.a oleacc/liboleacc.cross.a: oleacc/oleacc.spec \$(WINEBUILD)
+	@cd oleacc && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleacc/Makefile"
 test "x$enable_oleacc" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15951,6 +16397,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleacc/tests/Makefile: dlls/oleacc/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/oleacc/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	oleaut32/liboleaut32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+oleaut32/liboleaut32.def oleaut32/liboleaut32.a oleaut32/liboleaut32.cross.a: oleaut32/oleaut32.spec \$(WINEBUILD)
+	@cd oleaut32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleaut32/Makefile"
 test "x$enable_oleaut32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15975,6 +16426,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/olecli.dll16/Makefile: dlls/olecli.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/olecli.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	olecli32/libolecli32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+olecli32/libolecli32.def olecli32/libolecli32.a olecli32/libolecli32.cross.a: olecli32/olecli32.spec \$(WINEBUILD)
+	@cd olecli32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olecli32/Makefile"
 test "x$enable_olecli32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -15999,6 +16455,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oledb32/tests/Makefile: dlls/oledb32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/oledb32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	oledlg/liboledlg.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+oledlg/liboledlg.def oledlg/liboledlg.a oledlg/liboledlg.cross.a: oledlg/oledlg.spec \$(WINEBUILD)
+	@cd oledlg && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oledlg/Makefile"
 test "x$enable_oledlg" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16007,6 +16468,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oledlg/Makefile: dlls/oledlg/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/oledlg/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	olepro32/libolepro32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+olepro32/libolepro32.def olepro32/libolepro32.a olepro32/libolepro32.cross.a: olepro32/olepro32.spec \$(WINEBUILD)
+	@cd olepro32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olepro32/Makefile"
 test "x$enable_olepro32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16023,6 +16489,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/olesvr.dll16/Makefile: dlls/olesvr.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/olesvr.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	olesvr32/libolesvr32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+olesvr32/libolesvr32.def olesvr32/libolesvr32.a olesvr32/libolesvr32.cross.a: olesvr32/olesvr32.spec \$(WINEBUILD)
+	@cd olesvr32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olesvr32/Makefile"
 test "x$enable_olesvr32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16047,6 +16518,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/openal32/Makefile: dlls/openal32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/openal32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	opengl32/libopengl32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+opengl32/libopengl32.def opengl32/libopengl32.a opengl32/libopengl32.cross.a: opengl32/opengl32.spec \$(WINEBUILD)
+	@cd opengl32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/opengl32/Makefile"
 test "x$enable_opengl32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16063,6 +16539,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/opengl32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	pdh/libpdh.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+pdh/libpdh.def pdh/libpdh.a pdh/libpdh.cross.a: pdh/pdh.spec \$(WINEBUILD)
+	@cd pdh && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/pdh/Makefile"
 test "x$enable_pdh" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16087,6 +16568,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/pidgen/Makefile: dlls/pidgen/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/pidgen/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	powrprof/libpowrprof.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+powrprof/libpowrprof.def powrprof/libpowrprof.a powrprof/libpowrprof.cross.a: powrprof/powrprof.spec \$(WINEBUILD)
+	@cd powrprof && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/powrprof/Makefile"
 test "x$enable_powrprof" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16111,6 +16597,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/propsys/Makefile: dlls/propsys/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/propsys/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	psapi/libpsapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+psapi/libpsapi.def psapi/libpsapi.a psapi/libpsapi.cross.a: psapi/psapi.spec \$(WINEBUILD)
+	@cd psapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/psapi/Makefile"
 test "x$enable_psapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16183,6 +16674,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qmgrprxy/Makefile: dlls/qmgrprxy/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/qmgrprxy/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	quartz/libquartz.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+quartz/libquartz.def quartz/libquartz.a quartz/libquartz.cross.a: quartz/quartz.spec \$(WINEBUILD)
+	@cd quartz && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/quartz/Makefile"
 test "x$enable_quartz" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16215,6 +16711,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasapi16.dll16/Makefile: dlls/rasapi16.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/rasapi16.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	rasapi32/librasapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+rasapi32/librasapi32.def rasapi32/librasapi32.a rasapi32/librasapi32.cross.a: rasapi32/rasapi32.spec \$(WINEBUILD)
+	@cd rasapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rasapi32/Makefile"
 test "x$enable_rasapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16231,6 +16732,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/rasapi32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	rasdlg/librasdlg.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+rasdlg/librasdlg.def rasdlg/librasdlg.a rasdlg/librasdlg.cross.a: rasdlg/rasdlg.spec \$(WINEBUILD)
+	@cd rasdlg && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rasdlg/Makefile"
 test "x$enable_rasdlg" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16239,6 +16745,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasdlg/Makefile: dlls/rasdlg/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/rasdlg/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	resutils/libresutils.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+resutils/libresutils.def resutils/libresutils.a resutils/libresutils.cross.a: resutils/resutils.spec \$(WINEBUILD)
+	@cd resutils && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/resutils/Makefile"
 test "x$enable_resutils" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16247,6 +16758,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/resutils/Makefile: dlls/resutils/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/resutils/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	riched20/libriched20.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+riched20/libriched20.def riched20/libriched20.a riched20/libriched20.cross.a: riched20/riched20.spec \$(WINEBUILD)
+	@cd riched20 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/riched20/Makefile"
 test "x$enable_riched20" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16279,6 +16795,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/riched32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	rpcrt4/librpcrt4.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+rpcrt4/librpcrt4.def rpcrt4/librpcrt4.a rpcrt4/librpcrt4.cross.a: rpcrt4/rpcrt4.spec \$(WINEBUILD)
+	@cd rpcrt4 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rpcrt4/Makefile"
 test "x$enable_rpcrt4" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16303,6 +16824,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rsabase/Makefile: dlls/rsabase/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/rsabase/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	rsaenh/librsaenh.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+rsaenh/librsaenh.def rsaenh/librsaenh.a rsaenh/librsaenh.cross.a: rsaenh/rsaenh.spec \$(WINEBUILD)
+	@cd rsaenh && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rsaenh/Makefile"
 test "x$enable_rsaenh" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16319,6 +16845,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	rtutils/librtutils.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+rtutils/librtutils.def rtutils/librtutils.a rtutils/librtutils.cross.a: rtutils/rtutils.spec \$(WINEBUILD)
+	@cd rtutils && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rtutils/Makefile"
 test "x$enable_rtutils" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16359,6 +16890,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/schannel/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	secur32/libsecur32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+secur32/libsecur32.def secur32/libsecur32.a secur32/libsecur32.cross.a: secur32/secur32.spec \$(WINEBUILD)
+	@cd secur32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/secur32/Makefile"
 test "x$enable_secur32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16383,6 +16919,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/security/Makefile: dlls/security/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/security/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	sensapi/libsensapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+sensapi/libsensapi.def sensapi/libsensapi.a sensapi/libsensapi.cross.a: sensapi/sensapi.spec \$(WINEBUILD)
+	@cd sensapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sensapi/Makefile"
 test "x$enable_sensapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16391,6 +16932,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/sensapi/Makefile: dlls/sensapi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/sensapi/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	serialui/libserialui.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+serialui/libserialui.def serialui/libserialui.a serialui/libserialui.cross.a: serialui/serialui.spec \$(WINEBUILD)
+	@cd serialui && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/serialui/Makefile"
 test "x$enable_serialui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16407,6 +16953,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/serialui/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	setupapi/libsetupapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+setupapi/libsetupapi.def setupapi/libsetupapi.a setupapi/libsetupapi.cross.a: setupapi/setupapi.spec \$(WINEBUILD)
+	@cd setupapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/setupapi/Makefile"
 test "x$enable_setupapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16431,6 +16982,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/setupx.dll16/Makefile: dlls/setupx.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/setupx.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	sfc/libsfc.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+sfc/libsfc.def sfc/libsfc.a sfc/libsfc.cross.a: sfc/sfc.spec \$(WINEBUILD)
+	@cd sfc && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sfc/Makefile"
 test "x$enable_sfc" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16439,6 +16995,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/sfc/Makefile: dlls/sfc/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/sfc/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	sfc_os/libsfc_os.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+sfc_os/libsfc_os.def sfc_os/libsfc_os.a sfc_os/libsfc_os.cross.a: sfc_os/sfc_os.spec \$(WINEBUILD)
+	@cd sfc_os && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sfc_os/Makefile"
 test "x$enable_sfc_os" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16455,6 +17016,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shdoclc/Makefile: dlls/shdoclc/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/shdoclc/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	shdocvw/libshdocvw.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+shdocvw/libshdocvw.def shdocvw/libshdocvw.a shdocvw/libshdocvw.cross.a: shdocvw/shdocvw.spec \$(WINEBUILD)
+	@cd shdocvw && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shdocvw/Makefile"
 test "x$enable_shdocvw" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16479,6 +17045,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shell.dll16/Makefile: dlls/shell.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/shell.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	shell32/libshell32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+shell32/libshell32.def shell32/libshell32.a shell32/libshell32.cross.a: shell32/shell32.spec \$(WINEBUILD)
+	@cd shell32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shell32/Makefile"
 test "x$enable_shell32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16495,6 +17066,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shell32/tests/Makefile: dlls/shell32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/shell32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	shfolder/libshfolder.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+shfolder/libshfolder.def shfolder/libshfolder.a shfolder/libshfolder.cross.a: shfolder/shfolder.spec \$(WINEBUILD)
+	@cd shfolder && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shfolder/Makefile"
 test "x$enable_shfolder" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16503,6 +17079,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shfolder/Makefile: dlls/shfolder/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/shfolder/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	shlwapi/libshlwapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+shlwapi/libshlwapi.def shlwapi/libshlwapi.a shlwapi/libshlwapi.cross.a: shlwapi/shlwapi.spec \$(WINEBUILD)
+	@cd shlwapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shlwapi/Makefile"
 test "x$enable_shlwapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16527,6 +17108,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/slbcsp/Makefile: dlls/slbcsp/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/slbcsp/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	slc/libslc.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+slc/libslc.def slc/libslc.a slc/libslc.cross.a: slc/slc.spec \$(WINEBUILD)
+	@cd slc && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/slc/Makefile"
 test "x$enable_slc" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16535,6 +17121,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/slc/Makefile: dlls/slc/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/slc/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	snmpapi/libsnmpapi.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+snmpapi/libsnmpapi.def snmpapi/libsnmpapi.a snmpapi/libsnmpapi.cross.a: snmpapi/snmpapi.spec \$(WINEBUILD)
+	@cd snmpapi && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/snmpapi/Makefile"
 test "x$enable_snmpapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16567,6 +17158,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/sound.drv16/Makefile: dlls/sound.drv16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/sound.drv16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	spoolss/libspoolss.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+spoolss/libspoolss.def spoolss/libspoolss.a spoolss/libspoolss.cross.a: spoolss/spoolss.spec \$(WINEBUILD)
+	@cd spoolss && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/spoolss/Makefile"
 test "x$enable_spoolss" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16599,6 +17195,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/stdole32.tlb/Makefile: dlls/stdole32.tlb/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/stdole32.tlb/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	sti/libsti.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+sti/libsti.def sti/libsti.a sti/libsti.cross.a: sti/sti.spec \$(WINEBUILD)
+	@cd sti && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sti/Makefile"
 test "x$enable_sti" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16677,6 +17278,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/t2embed/Makefile: dlls/t2embed/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/t2embed/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	tapi32/libtapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+tapi32/libtapi32.def tapi32/libtapi32.a tapi32/libtapi32.cross.a: tapi32/tapi32.spec \$(WINEBUILD)
+	@cd tapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/tapi32/Makefile"
 test "x$enable_tapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16733,6 +17339,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/typelib.dll16/Makefile: dlls/typelib.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/typelib.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	unicows/libunicows.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+unicows/libunicows.def unicows/libunicows.a unicows/libunicows.cross.a: unicows/unicows.spec \$(WINEBUILD)
+	@cd unicows && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/unicows/Makefile"
 test "x$enable_unicows" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16749,6 +17360,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/updspapi/Makefile: dlls/updspapi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/updspapi/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	url/liburl.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+url/liburl.def url/liburl.a url/liburl.cross.a: url/url.spec \$(WINEBUILD)
+	@cd url && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/url/Makefile"
 test "x$enable_url" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16757,6 +17373,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/url/Makefile: dlls/url/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/url/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	urlmon/liburlmon.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+urlmon/liburlmon.def urlmon/liburlmon.a urlmon/liburlmon.cross.a: urlmon/urlmon.spec \$(WINEBUILD)
+	@cd urlmon && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/urlmon/Makefile"
 test "x$enable_urlmon" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16781,6 +17402,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/user.exe16/Makefile: dlls/user.exe16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/user.exe16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	user32/libuser32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+user32/libuser32.def user32/libuser32.a user32/libuser32.cross.a: user32/user32.spec \$(WINEBUILD)
+	@cd user32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/user32/Makefile"
 test "x$enable_user32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16797,6 +17423,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/user32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	userenv/libuserenv.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+userenv/libuserenv.def userenv/libuserenv.a userenv/libuserenv.cross.a: userenv/userenv.spec \$(WINEBUILD)
+	@cd userenv && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/userenv/Makefile"
 test "x$enable_userenv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16813,6 +17444,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/userenv/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	usp10/libusp10.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+usp10/libusp10.def usp10/libusp10.a usp10/libusp10.cross.a: usp10/usp10.spec \$(WINEBUILD)
+	@cd usp10 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/usp10/Makefile"
 test "x$enable_usp10" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16843,6 +17479,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/uuid/Makefile: dlls/uuid/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/uuid/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	uxtheme/libuxtheme.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+uxtheme/libuxtheme.def uxtheme/libuxtheme.a uxtheme/libuxtheme.cross.a: uxtheme/uxtheme.spec \$(WINEBUILD)
+	@cd uxtheme && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/uxtheme/Makefile"
 test "x$enable_uxtheme" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16867,6 +17508,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vdhcp.vxd/Makefile: dlls/vdhcp.vxd/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/vdhcp.vxd/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	vdmdbg/libvdmdbg.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+vdmdbg/libvdmdbg.def vdmdbg/libvdmdbg.a vdmdbg/libvdmdbg.cross.a: vdmdbg/vdmdbg.spec \$(WINEBUILD)
+	@cd vdmdbg && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vdmdbg/Makefile"
 test "x$enable_vdmdbg" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -16883,6 +17529,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ver.dll16/Makefile: dlls/ver.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ver.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	version/libversion.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+version/libversion.def version/libversion.a version/libversion.cross.a: version/version.spec \$(WINEBUILD)
+	@cd version && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/version/Makefile"
 test "x$enable_version" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17003,6 +17654,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/windebug.dll16/Makefile: dlls/windebug.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/windebug.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	windowscodecs/libwindowscodecs.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+windowscodecs/libwindowscodecs.def windowscodecs/libwindowscodecs.a windowscodecs/libwindowscodecs.cross.a: windowscodecs/windowscodecs.spec \$(WINEBUILD)
+	@cd windowscodecs && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/windowscodecs/Makefile"
 test "x$enable_windowscodecs" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17057,6 +17713,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winecrt0/Makefile: dlls/winecrt0/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/winecrt0/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wined3d/libwined3d.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wined3d/libwined3d.def wined3d/libwined3d.a wined3d/libwined3d.cross.a: wined3d/wined3d.spec \$(WINEBUILD)
+	@cd wined3d && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wined3d/Makefile"
 test "x$enable_wined3d" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17169,6 +17830,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wing32/Makefile: dlls/wing32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wing32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	winhttp/libwinhttp.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+winhttp/libwinhttp.def winhttp/libwinhttp.a winhttp/libwinhttp.cross.a: winhttp/winhttp.spec \$(WINEBUILD)
+	@cd winhttp && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winhttp/Makefile"
 test "x$enable_winhttp" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17185,6 +17851,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winhttp/tests/Makefile: dlls/winhttp/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/winhttp/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wininet/libwininet.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wininet/libwininet.def wininet/libwininet.a wininet/libwininet.cross.a: wininet/wininet.spec \$(WINEBUILD)
+	@cd wininet && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wininet/Makefile"
 test "x$enable_wininet" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17201,6 +17872,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/wininet/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	winmm/libwinmm.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+winmm/libwinmm.def winmm/libwinmm.a winmm/libwinmm.cross.a: winmm/winmm.spec \$(WINEBUILD)
+	@cd winmm && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winmm/Makefile"
 test "x$enable_winmm" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17225,6 +17901,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winnls.dll16/Makefile: dlls/winnls.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/winnls.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	winnls32/libwinnls32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+winnls32/libwinnls32.def winnls32/libwinnls32.a winnls32/libwinnls32.cross.a: winnls32/winnls32.spec \$(WINEBUILD)
+	@cd winnls32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winnls32/Makefile"
 test "x$enable_winnls32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17233,6 +17914,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winnls32/Makefile: dlls/winnls32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/winnls32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	winscard/libwinscard.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+winscard/libwinscard.def winscard/libwinscard.a winscard/libwinscard.cross.a: winscard/winscard.spec \$(WINEBUILD)
+	@cd winscard && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winscard/Makefile"
 test "x$enable_winscard" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17249,6 +17935,20 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winsock.dll16/Makefile: dlls/winsock.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/winsock.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	winspool.drv/libwinspool.$IMPLIBEXT \\
+	libwinspool.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+libwinspool.a: winspool.drv/libwinspool.a
+	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.a \$@
+libwinspool.cross.a: winspool.drv/libwinspool.cross.a
+	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.cross.a \$@
+libwinspool.def: winspool.drv/libwinspool.def
+	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.def \$@
+clean::
+	\$(RM) libwinspool.def
+winspool.drv/libwinspool.def winspool.drv/libwinspool.a winspool.drv/libwinspool.cross.a: winspool.drv/winspool.drv.spec \$(WINEBUILD)
+	@cd winspool.drv && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winspool.drv/Makefile"
 test "x$enable_winspool_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17273,6 +17973,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintab.dll16/Makefile: dlls/wintab.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wintab.dll16/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wintab32/libwintab32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wintab32/libwintab32.def wintab32/libwintab32.a wintab32/libwintab32.cross.a: wintab32/wintab32.spec \$(WINEBUILD)
+	@cd wintab32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintab32/Makefile"
 test "x$enable_wintab32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17289,6 +17994,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintab32/tests/Makefile: dlls/wintab32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/wintab32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wintrust/libwintrust.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wintrust/libwintrust.def wintrust/libwintrust.a wintrust/libwintrust.cross.a: wintrust/wintrust.spec \$(WINEBUILD)
+	@cd wintrust && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintrust/Makefile"
 test "x$enable_wintrust" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17305,6 +18015,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/wintrust/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wldap32/libwldap32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wldap32/libwldap32.def wldap32/libwldap32.a wldap32/libwldap32.cross.a: wldap32/wldap32.spec \$(WINEBUILD)
+	@cd wldap32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wldap32/Makefile"
 test "x$enable_wldap32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17337,6 +18052,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wmiutils/Makefile: dlls/wmiutils/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wmiutils/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wnaspi32/libwnaspi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wnaspi32/libwnaspi32.def wnaspi32/libwnaspi32.a wnaspi32/libwnaspi32.cross.a: wnaspi32/wnaspi32.spec \$(WINEBUILD)
+	@cd wnaspi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wnaspi32/Makefile"
 test "x$enable_wnaspi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17345,6 +18065,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wnaspi32/Makefile: dlls/wnaspi32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wnaspi32/Makefile"
 
+test "x$enable_win16" = xno || ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wow32/libwow32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wow32/libwow32.def wow32/libwow32.a wow32/libwow32.cross.a: wow32/wow32.spec \$(WINEBUILD)
+	@cd wow32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wow32/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17353,6 +18078,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wow32/Makefile: dlls/wow32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wow32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ws2_32/libws2_32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+ws2_32/libws2_32.def ws2_32/libws2_32.a ws2_32/libws2_32.cross.a: ws2_32/ws2_32.spec \$(WINEBUILD)
+	@cd ws2_32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ws2_32/Makefile"
 test "x$enable_ws2_32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17369,6 +18099,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ws2_32/tests/Makefile: dlls/ws2_32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/ws2_32/tests/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wsock32/libwsock32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wsock32/libwsock32.def wsock32/libwsock32.a wsock32/libwsock32.cross.a: wsock32/wsock32.spec \$(WINEBUILD)
+	@cd wsock32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wsock32/Makefile"
 test "x$enable_wsock32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17377,6 +18112,11 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wsock32/Makefile: dlls/wsock32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wsock32/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	wtsapi32/libwtsapi32.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+wtsapi32/libwtsapi32.def wtsapi32/libwtsapi32.a wtsapi32/libwtsapi32.cross.a: wtsapi32/wtsapi32.spec \$(WINEBUILD)
+	@cd wtsapi32 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wtsapi32/Makefile"
 test "x$enable_wtsapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
@@ -17417,6 +18157,20 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xinput1_2/Makefile: dlls/xinput1_2/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/xinput1_2/Makefile"
 
+ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	xinput1_3/libxinput.$IMPLIBEXT \\
+	libxinput.$IMPLIBEXT"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+libxinput.a: xinput1_3/libxinput.a
+	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.a \$@
+libxinput.cross.a: xinput1_3/libxinput.cross.a
+	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.cross.a \$@
+libxinput.def: xinput1_3/libxinput.def
+	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.def \$@
+clean::
+	\$(RM) libxinput.def
+xinput1_3/libxinput.def xinput1_3/libxinput.a xinput1_3/libxinput.cross.a: xinput1_3/xinput1_3.spec \$(WINEBUILD)
+	@cd xinput1_3 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xinput1_3/Makefile"
 test "x$enable_xinput1_3" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\

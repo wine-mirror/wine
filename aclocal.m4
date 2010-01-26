@@ -191,10 +191,32 @@ m4_popdef([ac_dir])])
 
 dnl **** Create a dll makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_DLL(name,enable)
+dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],
-[WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[$2])])
+[m4_ifval([$3],[m4_ifval([$2],[test "x$[$2]" = xno || ])ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	$1/lib$3.$IMPLIBEXT[]dnl
+m4_if($1,$3,,[ \\
+	lib$3.$IMPLIBEXT])[]dnl
+m4_ifval([$4],[ \\
+	$1/lib$3.$STATIC_IMPLIBEXT])"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+m4_if($1,$3,,[lib$3.a: $1/lib$3.a
+	\$(RM) \$[@] && \$(LN_S) $1/lib$3.a \$[@]
+lib$3.cross.a: $1/lib$3.cross.a
+	\$(RM) \$[@] && \$(LN_S) $1/lib$3.cross.a \$[@]
+lib$3.def: $1/lib$3.def
+	\$(RM) \$[@] && \$(LN_S) $1/lib$3.def \$[@]
+clean::
+	\$(RM) lib$3.def
+])m4_ifval([$4],[$1/lib$3.def: $1/$1.spec \$(WINEBUILD)
+	@cd $1 && \$(MAKE) \`basename \$[@]\`
+$1/lib$3.$STATIC_IMPLIBEXT $1/lib$3.cross.a: dummy
+	@cd $1 && \$(MAKE) \`basename \$[@]\`],
+[$1/lib$3.def $1/lib$3.a $1/lib$3.cross.a: $1/$1.spec \$(WINEBUILD)
+	@cd $1 && \$(MAKE) \`basename \$[@]\`])"
+])dnl
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[$2])])
 
 dnl **** Create a program makefile from config.status ****
 dnl

@@ -360,7 +360,12 @@ sub update_makefiles(@)
         if ($rules eq $makerules{"MAKE_DLL_RULES"})
         {
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            $args .= ",enable_win16" if $is_win16;
+            my $implib = $make{"IMPORTLIB"} || "";
+            my $implib_srcs = defined($make{"IMPLIB_SRCS"}) && join( " ", @{$make{"IMPLIB_SRCS"}} );
+            $args .= "," if $implib || $is_win16;
+            $args .= "enable_win16" if $is_win16;
+            $args .= ",[$implib]" if $implib;
+            $args .= ",[$implib_srcs]" if $implib_srcs;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
@@ -434,154 +439,18 @@ sub update_ignores(@)
         {
             push @ignores, $makefile{"=dir"} . $f unless $f =~ /\$\(.*\)/;  # skip make variables
         }
-    }
-    return @ignores;
-}
-
-################################################################
-# update dlls/Makefile.in
-
-sub update_dlls(@)
-{
-    my (%directories, %importlibs, %static_implibs, %staticlib_dirs, %altnames);
-    my $text = "";
-    my @ignores = ();
-
-    foreach my $make (@_)
-    {
-        my %makefile = %{$makefiles{$make}};
-        next if ($makefile{"=rules"} eq $makerules{"MAKE_TEST_RULES"});
-
-        next unless defined $makefile{"MODULE"};
-        my $module = $makefile{"MODULE"};
-        (my $dir = $makefile{"=dir"}) =~ s/^dlls\/(.*)\//$1/;
-
-        if ($makefile{"=rules"} eq $makerules{"MAKE_IMPLIB_RULES"})
-        {
-            $staticlib_dirs{$module} = $dir;
-            die "invalid module $module in dir $staticlib_dirs{$module}\n" if "$staticlib_dirs{$module}" ne $module;
-        }
-        else
-        {
-            die "invalid module $module" unless $module =~ /\./;
-            (my $mod = $module) =~ s/\.dll$//;
-            die "invalid directory $dir for module $module\n" unless $mod eq $dir;
-            $directories{$module} = $dir;
-        }
 
         if (defined $makefile{"IMPORTLIB"})
         {
             if ($makefile{"IMPORTLIB"} =~ /^([a-zA-Z0-9_.]+)/)
             {
-                $importlibs{$module} = $1;
+                if ("dlls/$1/" ne $makefile{"=dir"}) { push @ignores, "dlls/lib$1.def"; }
             }
             else
             {
-                die "invalid importlib name $makefile{IMPORTLIB} in $make";
+                die "invalid importlib name $makefile{IMPORTLIB} in $file";
             }
         }
-
-        $static_implibs{$module} = 1 if defined $makefile{"IMPLIB_SRCS"};
-    }
-
-    $text .= "\@MAKE_RULES\@\n\n";
-
-    # output the all: target
-
-    $text .= "# Main target\n\n";
-    $text .= "all: \$(BUILDSUBDIRS)\n\n";
-
-    # output the import libraries rules
-
-    $text .= "# Import libraries\n\n";
-    $text .= "STATIC_IMPLIBEXT = \$(IMPLIBEXT:def=def.a)\n\n";
-
-    my @lib_symlinks = ();
-    foreach my $mod (sort keys %importlibs)
-    {
-        my $dir = $directories{$mod};
-        my $lib = $importlibs{$mod};
-        if ($lib ne $dir) { push @lib_symlinks, $mod; }
-    }
-    $text .= "IMPORT_SYMLINKS =";
-    foreach my $mod (sort @lib_symlinks)
-    {
-        $text .= sprintf " \\\n\tlib%s.\$(IMPLIBEXT)", $importlibs{$mod};
-    }
-
-    $text .= "\n\nSTATIC_LIBS = \@ALL_STATIC_LIBS\@\n";
-    $text .= "IMPORT_LIBS = \$(STATIC_LIBS) \\\n\t\$(IMPORT_SYMLINKS)";
-    foreach my $mod (sort keys %importlibs)
-    {
-        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(IMPLIBEXT)";
-        next unless defined $static_implibs{$mod};
-        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
-    }
-    $text .= "\n\nCROSS_IMPLIBS = \$(STATIC_LIBS:.a=.cross.a)";
-    foreach my $mod (sort @lib_symlinks)
-    {
-        next if $mod =~ /16$/;
-        $text .= sprintf " \\\n\tlib%s.cross.a", $importlibs{$mod};
-    }
-    foreach my $mod (sort keys %importlibs)
-    {
-        next if $mod =~ /16$/;
-        next if defined $static_implibs{$mod};
-        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.cross.a";
-    }
-    $text .= "\n\n";
-    $text .= "\$(TESTSUBDIRS:%=%/__crosstest__): \$(CROSS_IMPLIBS)\n\n";
-    $text .= "implib: \$(IMPORT_LIBS)\n\n";
-    $text .= "testsubdirs: \$(TESTSUBDIRS)\n\n";
-    $text .= ".PHONY: implib testsubdirs\n\n";
-
-    foreach my $mod (sort keys %importlibs)
-    {
-        my $dir = $directories{$mod};
-        my $lib = $importlibs{$mod};
-        my $spec = $mod;
-        $spec =~ s/\.dll$//;
-        if (defined($static_implibs{$mod}))
-        {
-            $text .= sprintf "%s/lib%s.def: %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
-            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.def\n\n", $dir, $lib;
-            $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT) %s/lib%s.cross.a: dummy\n", $dir, $lib, $dir, $lib, $dir, $spec;
-            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
-        }
-        else
-        {
-            $text .= sprintf "%s/lib%s.def %s/lib%s.a %s/lib%s.cross.a: %s/%s.spec \$(WINEBUILD)\n",
-                             $dir, $lib, $dir, $lib, $dir, $lib, $dir, $spec;
-            $text .= sprintf "\t\@cd %s && \$(MAKE) `basename \$\@`\n\n", $dir;
-        }
-    }
-    foreach my $mod (sort @lib_symlinks)
-    {
-        my $dir = $directories{$mod};
-        my $lib = "lib" . $importlibs{$mod};
-        $text .= sprintf "%s.a: %s/%s.a\n", $lib, $dir, $lib;
-        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.a \$@\n\n", $dir, $lib;
-        $text .= sprintf "%s.cross.a: %s/%s.cross.a\n", $lib, $dir, $lib;
-        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.cross.a \$@\n\n", $dir, $lib;
-        $text .= sprintf "%s.def: %s/%s.def\n", $lib, $dir, $lib;
-        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.def \$@\n\n", $dir, $lib;
-    }
-
-    $text .= "\$(BUILDSUBDIRS): \$(IMPORT_LIBS)\n";
-    $text .= "\$(INSTALLSUBDIRS:%=%/__install__) \$(INSTALLSUBDIRS:%=%/__install-lib__): \$(IMPORT_LIBS)\n\n";
-    $text .= "\@ALL_IMPORTLIB_RULES\@\n";
-    $text .= "\n# Misc rules\n";
-
-    replace_in_file( "dlls/Makefile.in",
-                     '^\@MAKE_RULES\@',
-                     '^# Misc rules',
-                     $text );
-
-    # .gitignore file
-
-    foreach my $mod (sort @lib_symlinks)
-    {
-        push @ignores, "dlls/lib$importlibs{$mod}.def";
     }
     return @ignores;
 }
@@ -676,5 +545,4 @@ assign_sources_to_makefiles();
 update_makefiles( @makefiles );
 push @ignores, update_includes();
 push @ignores, update_ignores( @makefiles );
-push @ignores, update_dlls( sort grep /^dlls\//, @makefiles );
 update_gitignore( @ignores );
