@@ -1273,6 +1273,7 @@ void heap_set_debug_flags( HANDLE handle )
     ULONG flags = 0;
 
     if (TRACE_ON(heap)) global_flags |= FLG_HEAP_VALIDATE_ALL;
+    if (WARN_ON(heap)) global_flags |= FLG_HEAP_VALIDATE_PARAMETERS;
 
     if (global_flags & FLG_HEAP_ENABLE_TAIL_CHECK) flags |= HEAP_TAIL_CHECKING_ENABLED;
     if (global_flags & FLG_HEAP_ENABLE_FREE_CHECK) flags |= HEAP_FREE_CHECKING_ENABLED;
@@ -1286,10 +1287,39 @@ void heap_set_debug_flags( HANDLE handle )
         flags |= HEAP_VALIDATE | HEAP_VALIDATE_ALL |
                  HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
 
-    if (WARN_ON(heap)) flags |= HEAP_VALIDATE | HEAP_VALIDATE_PARAMS | HEAP_FREE_CHECKING_ENABLED;
-
     heap->flags |= flags;
     heap->force_flags |= flags & ~(HEAP_VALIDATE | HEAP_DISABLE_COALESCE_ON_FREE);
+
+    if (flags & (HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED))  /* fix existing blocks */
+    {
+        SUBHEAP *subheap;
+
+        LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
+        {
+            char *ptr = (char *)subheap->base + subheap->headerSize;
+            char *end = (char *)subheap->base + subheap->commitSize;
+            while (ptr < end)
+            {
+                ARENA_INUSE *arena = (ARENA_INUSE *)ptr;
+                SIZE_T size = arena->size & ARENA_SIZE_MASK;
+                if (arena->size & ARENA_FLAG_FREE)
+                {
+                    SIZE_T count = size;
+
+                    ptr += sizeof(ARENA_FREE) + size;
+                    if (ptr > end) count = end - (char *)((ARENA_FREE *)arena + 1);
+                    else count -= sizeof(DWORD);
+                    mark_block_free( (ARENA_FREE *)arena + 1, count, flags );
+                }
+                else
+                {
+                    mark_block_tail( (char *)(arena + 1) + size - arena->unused_bytes,
+                                     arena->unused_bytes, flags );
+                    ptr += sizeof(ARENA_INUSE) + size;
+                }
+            }
+        }
+    }
 }
 
 
