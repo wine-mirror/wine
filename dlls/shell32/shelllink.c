@@ -499,7 +499,7 @@ static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLEST
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *ppszFileName)
 {
 	IShellLinkImpl *This = impl_from_IPersistFile(iface);
-	FIXME("(%p)\n",This);
+	FIXME("(%p)->(%p): stub\n", This, ppszFileName);
 	return NOERROR;
 }
 
@@ -2313,7 +2313,7 @@ ShellLink_DataList_Release( IShellLinkDataList* iface )
 static HRESULT WINAPI
 ShellLink_AddDataBlock( IShellLinkDataList* iface, void* pDataBlock )
 {
-    FIXME("\n");
+    FIXME("(%p)->(%p): stub\n", iface, pDataBlock);
     return E_NOTIMPL;
 }
 
@@ -2351,7 +2351,7 @@ ShellLink_CopyDataBlock( IShellLinkDataList* iface, DWORD dwSig, void** ppDataBl
 static HRESULT WINAPI
 ShellLink_RemoveDataBlock( IShellLinkDataList* iface, DWORD dwSig )
 {
-    FIXME("\n");
+    FIXME("(%p)->(%u): stub\n", iface, dwSig);
     return E_NOTIMPL;
 }
 
@@ -2361,7 +2361,7 @@ ShellLink_GetFlags( IShellLinkDataList* iface, DWORD* pdwFlags )
     IShellLinkImpl *This = impl_from_IShellLinkDataList(iface);
     DWORD flags = 0;
 
-    FIXME("%p %p\n", This, pdwFlags );
+    FIXME("(%p)->(%p): partially implemented\n", This, pdwFlags);
 
     /* FIXME: add more */
     if (This->sArgs)
@@ -2383,7 +2383,7 @@ ShellLink_GetFlags( IShellLinkDataList* iface, DWORD* pdwFlags )
 static HRESULT WINAPI
 ShellLink_SetFlags( IShellLinkDataList* iface, DWORD dwFlags )
 {
-    FIXME("\n");
+    FIXME("(%p)->(%u): stub\n", iface, dwFlags);
     return E_NOTIMPL;
 }
 
@@ -2639,7 +2639,7 @@ ShellLink_GetCommandString( IContextMenu* iface, UINT_PTR idCmd, UINT uType,
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
 
-    FIXME("%p %lu %u %p %p %u\n", This,
+    FIXME("(%p)->(%lu %u %p %p %u): stub\n", This,
           idCmd, uType, pwReserved, pszName, cchMax );
 
     return E_NOTIMPL;
