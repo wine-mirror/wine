@@ -693,6 +693,7 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     arena->size = ARENA_LARGE_SIZE;
     arena->magic = ARENA_LARGE_MAGIC;
     list_add_tail( &heap->large_list, &arena->entry );
+    notify_alloc( arena + 1, size, flags & HEAP_ZERO_MEMORY );
     return arena + 1;
 }
 
@@ -1518,7 +1519,6 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
         void *ret = allocate_large_block( heap, flags, size );
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         if (!ret && (flags & HEAP_GENERATE_EXCEPTIONS)) RtlRaiseStatus( STATUS_NO_MEMORY );
-        notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
         TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, ret );
         return ret;
     }
@@ -1675,7 +1675,6 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
         if (!find_large_block( heapPtr, ptr )) goto error;
         if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
         notify_free( ptr );
-        notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
         goto done;
     }
     if ((char *)pArena < (char *)subheap->base + subheap->headerSize) goto error;
@@ -1693,7 +1692,6 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) goto oom;
             if (!(ret = allocate_large_block( heapPtr, flags, size ))) goto oom;
-            notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
             memcpy( ret, pArena + 1, oldActualSize );
             notify_free( pArena + 1 );
             HEAP_MakeInUseBlockFree( subheap, pArena );
