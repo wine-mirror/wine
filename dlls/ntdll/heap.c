@@ -692,6 +692,7 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     arena->block_size = block_size;
     arena->size = ARENA_LARGE_SIZE;
     arena->magic = ARENA_LARGE_MAGIC;
+    mark_block_tail( (char *)(arena + 1) + size, block_size - sizeof(*arena) - size, flags );
     list_add_tail( &heap->large_list, &arena->entry );
     notify_alloc( arena + 1, size, flags & HEAP_ZERO_MEMORY );
     return arena + 1;
@@ -722,9 +723,13 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
 
     if (arena->block_size - sizeof(*arena) >= size)
     {
+        SIZE_T unused = arena->block_size - sizeof(*arena) - size;
+
         /* FIXME: we could remap zero-pages instead */
-        if ((flags & HEAP_ZERO_MEMORY) && size > arena->data_size)
-            memset( (char *)ptr + arena->data_size, 0, size - arena->data_size );
+        if (size > arena->data_size)
+            initialize_block( (char *)ptr + arena->data_size, size - arena->data_size, unused, flags );
+        else
+            mark_block_tail( (char *)ptr + size, unused, flags );
         arena->data_size = size;
         return ptr;
     }
