@@ -215,7 +215,13 @@ dnl
 dnl Usage: WINE_CONFIG_LIB(name)
 dnl
 AC_DEFUN([WINE_CONFIG_LIB],
-[WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])])
+[ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	$1/lib$1.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+$1/lib$1.a: $1
+$1/lib$1.cross.a: dummy
+	@cd $1 && \$(MAKE) lib$1.cross.a"
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl

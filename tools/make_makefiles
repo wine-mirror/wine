@@ -509,26 +509,19 @@ sub update_dlls(@)
         $text .= sprintf " \\\n\tlib%s.\$(IMPLIBEXT)", $importlibs{$mod};
     }
 
-    $text .= "\n\nIMPORT_LIBS = \\\n\t\$(IMPORT_SYMLINKS)";
-    foreach my $mod (sort keys %staticlib_dirs)
-    {
-        $text .= sprintf " \\\n\t%s/lib%s.a", $staticlib_dirs{$mod}, $mod;
-    }
+    $text .= "\n\nSTATIC_LIBS = \@ALL_STATIC_LIBS\@\n";
+    $text .= "IMPORT_LIBS = \$(STATIC_LIBS) \\\n\t\$(IMPORT_SYMLINKS)";
     foreach my $mod (sort keys %importlibs)
     {
         $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(IMPLIBEXT)";
         next unless defined $static_implibs{$mod};
         $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
     }
-    $text .= "\n\nCROSS_IMPLIBS =";
+    $text .= "\n\nCROSS_IMPLIBS = \$(STATIC_LIBS:.a=.cross.a)";
     foreach my $mod (sort @lib_symlinks)
     {
         next if $mod =~ /16$/;
         $text .= sprintf " \\\n\tlib%s.cross.a", $importlibs{$mod};
-    }
-    foreach my $mod (sort keys %staticlib_dirs)
-    {
-        $text .= sprintf " \\\n\t%s/lib%s.cross.a", $staticlib_dirs{$mod}, $mod;
     }
     foreach my $mod (sort keys %importlibs)
     {
@@ -576,18 +569,7 @@ sub update_dlls(@)
 
     $text .= "\$(BUILDSUBDIRS): \$(IMPORT_LIBS)\n";
     $text .= "\$(INSTALLSUBDIRS:%=%/__install__) \$(INSTALLSUBDIRS:%=%/__install-lib__): \$(IMPORT_LIBS)\n\n";
-
-    # output the inter-dll dependencies and rules
-
-    $text .= "# Map library name to the corresponding directory\n\n";
-
-    foreach my $mod (sort keys %staticlib_dirs)
-    {
-        my $dir = $staticlib_dirs{$mod};
-        $text .= sprintf "%s/lib%s.a: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};
-        $text .= sprintf "%s/lib%s.cross.a: dummy\n", $dir, $mod;
-        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.cross.a\n\n", $dir, $mod;
-    }
+    $text .= "\@ALL_IMPORTLIB_RULES\@\n";
     $text .= "\n# Misc rules\n";
 
     replace_in_file( "dlls/Makefile.in",

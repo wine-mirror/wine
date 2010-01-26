@@ -31,15 +31,9 @@ IMPORT_SYMLINKS = \
 	libwinspool.$(IMPLIBEXT) \
 	libxinput.$(IMPLIBEXT)
 
-IMPORT_LIBS = \
+STATIC_LIBS = @ALL_STATIC_LIBS@
+IMPORT_LIBS = $(STATIC_LIBS) \
 	$(IMPORT_SYMLINKS) \
-	adsiid/libadsiid.a \
-	dxerr8/libdxerr8.a \
-	dxerr9/libdxerr9.a \
-	dxguid/libdxguid.a \
-	strmiids/libstrmiids.a \
-	uuid/libuuid.a \
-	winecrt0/libwinecrt0.a \
 	aclui/libaclui.$(IMPLIBEXT) \
 	activeds/libactiveds.$(IMPLIBEXT) \
 	advapi32/libadvapi32.$(IMPLIBEXT) \
@@ -184,17 +178,10 @@ IMPORT_LIBS = \
 	wtsapi32/libwtsapi32.$(IMPLIBEXT) \
 	xinput1_3/libxinput.$(IMPLIBEXT)
 
-CROSS_IMPLIBS = \
+CROSS_IMPLIBS = $(STATIC_LIBS:.a=.cross.a) \
 	libd3dx9.cross.a \
 	libwinspool.cross.a \
 	libxinput.cross.a \
-	adsiid/libadsiid.cross.a \
-	dxerr8/libdxerr8.cross.a \
-	dxerr9/libdxerr9.cross.a \
-	dxguid/libdxguid.cross.a \
-	strmiids/libstrmiids.cross.a \
-	uuid/libuuid.cross.a \
-	winecrt0/libwinecrt0.cross.a \
 	aclui/libaclui.cross.a \
 	activeds/libactiveds.cross.a \
 	advapi32/libadvapi32.cross.a \
@@ -812,36 +799,7 @@ libxinput.def: xinput1_3/libxinput.def
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
 
-# Map library name to the corresponding directory
-
-adsiid/libadsiid.a: adsiid
-adsiid/libadsiid.cross.a: dummy
-	@cd adsiid && $(MAKE) libadsiid.cross.a
-
-dxerr8/libdxerr8.a: dxerr8
-dxerr8/libdxerr8.cross.a: dummy
-	@cd dxerr8 && $(MAKE) libdxerr8.cross.a
-
-dxerr9/libdxerr9.a: dxerr9
-dxerr9/libdxerr9.cross.a: dummy
-	@cd dxerr9 && $(MAKE) libdxerr9.cross.a
-
-dxguid/libdxguid.a: dxguid
-dxguid/libdxguid.cross.a: dummy
-	@cd dxguid && $(MAKE) libdxguid.cross.a
-
-strmiids/libstrmiids.a: strmiids
-strmiids/libstrmiids.cross.a: dummy
-	@cd strmiids && $(MAKE) libstrmiids.cross.a
-
-uuid/libuuid.a: uuid
-uuid/libuuid.cross.a: dummy
-	@cd uuid && $(MAKE) libuuid.cross.a
-
-winecrt0/libwinecrt0.a: winecrt0
-winecrt0/libwinecrt0.cross.a: dummy
-	@cd winecrt0 && $(MAKE) libwinecrt0.cross.a
-
+@ALL_IMPORTLIB_RULES@
 
 # Misc rules
 

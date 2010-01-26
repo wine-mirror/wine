@@ -601,6 +601,8 @@ ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_PROGRAM_INSTALL_DIRS
 ALL_PROGRAM_DIRS
 ALL_TEST_DIRS
+ALL_IMPORTLIB_RULES
+ALL_STATIC_LIBS
 ALL_IMPLIB_DIRS
 ALL_DLL_DIRS
 ALL_TOP_DIRS
@@ -13604,6 +13606,10 @@ ALL_DLL_DIRS=""
 
 ALL_IMPLIB_DIRS=""
 
+ALL_STATIC_LIBS=""
+
+ALL_IMPORTLIB_RULES=""
+
 ALL_TEST_DIRS=""
 
 ALL_PROGRAM_DIRS=""
@@ -13713,6 +13719,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/actxprxy/Makefile: dlls/actxprxy/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/actxprxy/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	adsiid/libadsiid.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+adsiid/libadsiid.a: adsiid
+adsiid/libadsiid.cross.a: dummy
+	@cd adsiid && \$(MAKE) libadsiid.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/adsiid/Makefile"
 test "x$enable_adsiid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -14697,6 +14709,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxdiagn/tests/Makefile: dlls/dxdiagn/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/dxdiagn/tests/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	dxerr8/libdxerr8.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dxerr8/libdxerr8.a: dxerr8
+dxerr8/libdxerr8.cross.a: dummy
+	@cd dxerr8 && \$(MAKE) libdxerr8.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxerr8/Makefile"
 test "x$enable_dxerr8" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -14705,6 +14723,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxerr8/Makefile: dlls/dxerr8/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/dxerr8/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	dxerr9/libdxerr9.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dxerr9/libdxerr9.a: dxerr9
+dxerr9/libdxerr9.cross.a: dummy
+	@cd dxerr9 && \$(MAKE) libdxerr9.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxerr9/Makefile"
 test "x$enable_dxerr9" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -14729,6 +14753,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/dxgi/tests/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	dxguid/libdxguid.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+dxguid/libdxguid.a: dxguid
+dxguid/libdxguid.cross.a: dummy
+	@cd dxguid && \$(MAKE) libdxguid.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxguid/Makefile"
 test "x$enable_dxguid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -16601,6 +16631,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/stress.dll16/Makefile: dlls/stress.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/stress.dll16/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	strmiids/libstrmiids.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+strmiids/libstrmiids.a: strmiids
+strmiids/libstrmiids.cross.a: dummy
+	@cd strmiids && \$(MAKE) libstrmiids.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/strmiids/Makefile"
 test "x$enable_strmiids" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -16793,6 +16829,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	uuid/libuuid.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+uuid/libuuid.a: uuid
+uuid/libuuid.cross.a: dummy
+	@cd uuid && \$(MAKE) libuuid.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/uuid/Makefile"
 test "x$enable_uuid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
@@ -17001,6 +17043,12 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winecoreaudio.drv/Makefile: dlls/winecoreaudio.drv/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/winecoreaudio.drv/Makefile"
 
+ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
+	winecrt0/libwinecrt0.a"
+ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
+winecrt0/libwinecrt0.a: winecrt0
+winecrt0/libwinecrt0.cross.a: dummy
+	@cd winecrt0 && \$(MAKE) libwinecrt0.cross.a"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winecrt0/Makefile"
 test "x$enable_winecrt0" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
