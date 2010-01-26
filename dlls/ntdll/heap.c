@@ -1341,6 +1341,7 @@ void heap_set_debug_flags( HANDLE handle )
     if (flags & (HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED))  /* fix existing blocks */
     {
         SUBHEAP *subheap;
+        ARENA_LARGE *large;
 
         LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
         {
@@ -1367,6 +1368,10 @@ void heap_set_debug_flags( HANDLE handle )
                 }
             }
         }
+
+        LIST_FOR_EACH_ENTRY( large, &heap->large_list, ARENA_LARGE, entry )
+            mark_block_tail( (char *)(large + 1) + large->data_size,
+                             large->block_size - sizeof(*large) - large->data_size, flags );
     }
 }
 
