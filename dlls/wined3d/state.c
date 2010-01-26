@@ -584,6 +584,10 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
             glEnable(GL_DEPTH_CLAMP);
             checkGLcall("glEnable(GL_DEPTH_CLAMP)");
         }
+        else
+        {
+            FIXME("Clipping disabled, but ARB_depth_clamp isn't supported.\n");
+        }
     }
 
     if (enable & WINED3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
