@@ -154,6 +154,12 @@ struct vertex
     DWORD diffuse;
 };
 
+struct tvertex
+{
+    float x, y, z, w;
+    DWORD diffuse;
+};
+
 struct nvertex
 {
     float x, y, z;
@@ -1292,6 +1298,138 @@ static void texop_test(IDirect3DDevice8 *device)
     if (texture) IDirect3DTexture8_Release(texture);
 }
 
+/* This test tests depth clamping / clipping behaviour:
+ *   - When D3DRS_CLIPPING is disabled depth values are *clamped* to the
+ *   minimum/maximum z value.
+ *   - The viewport's MinZ/MaxZ is irrelevant for this.
+ *   - When D3DRS_CLIPPING is enabled depth values are clipped.
+ *   - Pretransformed vertices behave the same as regular vertices.
+ */
+static void depth_clamp_test(IDirect3DDevice8 *device)
+{
+    const struct tvertex quad1[] =
+    {
+        {    0,    0,  5.0f, 1.0, 0xff002b7f},
+        {  640,    0,  5.0f, 1.0, 0xff002b7f},
+        {    0,  480,  5.0f, 1.0, 0xff002b7f},
+        {  640,  480,  5.0f, 1.0, 0xff002b7f},
+    };
+    const struct tvertex quad2[] =
+    {
+        {    0,  300, 10.0f, 1.0, 0xfff9e814},
+        {  640,  300, 10.0f, 1.0, 0xfff9e814},
+        {    0,  360, 10.0f, 1.0, 0xfff9e814},
+        {  640,  360, 10.0f, 1.0, 0xfff9e814},
+    };
+    const struct vertex quad3[] =
+    {
+        {-0.65, 0.55,  5.0f,      0xffffffff},
+        {-0.35, 0.55,  5.0f,      0xffffffff},
+        {-0.65, 0.15,  5.0f,      0xffffffff},
+        {-0.35, 0.15,  5.0f,      0xffffffff},
+    };
+    const struct vertex quad4[] =
+    {
+        {-0.87, 0.83, 10.0f,      0xffffffff},
+        {-0.65, 0.83, 10.0f,      0xffffffff},
+        {-0.87, 0.55, 10.0f,      0xffffffff},
+        {-0.65, 0.55, 10.0f,      0xffffffff},
+    };
+    const struct vertex quad5[] =
+    {
+        { -0.5,  0.5, 10.0f,      0xff14f914},
+        {  0.5,  0.5, 10.0f,      0xff14f914},
+        { -0.5, -0.5, 10.0f,      0xff14f914},
+        {  0.5, -0.5, 10.0f,      0xff14f914},
+    };
+    const struct tvertex quad6[] =
+    {
+        {    0,  120, 10.0f, 1.0, 0xfff91414},
+        {  640,  120, 10.0f, 1.0, 0xfff91414},
+        {    0,  180, 10.0f, 1.0, 0xfff91414},
+        {  640,  180, 10.0f, 1.0, 0xfff91414},
+    };
+
+    D3DVIEWPORT8 vp;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    vp.X = 0;
+    vp.Y = 0;
+    vp.Width = 640;
+    vp.Height = 480;
+    vp.MinZ = 0.0;
+    vp.MaxZ = 7.5;
+
+    hr = IDirect3DDevice8_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetVertexSahder failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(*quad3));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(*quad4));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad5, sizeof(*quad5));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad6, sizeof(*quad6));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 75, 75);
+    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 150);
+    todo_wine ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 330);
+    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 320, 330);
+    todo_wine ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    vp.MinZ = 0.0;
+    vp.MaxZ = 1.0;
+    hr = IDirect3DDevice8_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -1347,6 +1485,7 @@ START_TEST(visual)
     IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
 
     /* Now run the real test */
+    depth_clamp_test(device_ptr);
     lighting_test(device_ptr);
     clear_test(device_ptr);
     fog_test(device_ptr);
