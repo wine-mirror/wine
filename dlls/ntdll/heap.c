@@ -764,6 +764,8 @@ static ARENA_LARGE *find_large_block( HEAP *heap, const void *ptr )
  */
 static BOOL validate_large_arena( HEAP *heap, const ARENA_LARGE *arena, BOOL quiet )
 {
+    DWORD flags = heap->flags;
+
     if ((ULONG_PTR)arena % getpagesize())
     {
         if (quiet == NOISY)
@@ -793,6 +795,25 @@ static BOOL validate_large_arena( HEAP *heap, const ARENA_LARGE *arena, BOOL qui
             if (TRACE_ON(heap)) HEAP_Dump( heap );
         }
         return FALSE;
+    }
+    if (arena->data_size > arena->block_size - sizeof(*arena))
+    {
+        ERR( "Heap %p: invalid large arena %p size %lx/%lx\n",
+             heap, arena, arena->data_size, arena->block_size );
+        return FALSE;
+    }
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
+        SIZE_T i, unused = arena->block_size - sizeof(*arena) - arena->data_size;
+        const unsigned char *data = (const unsigned char *)(arena + 1) + arena->data_size;
+
+        for (i = 0; i < unused; i++)
+        {
+            if (data[i] == ARENA_TAIL_FILLER) continue;
+            ERR("Heap %p: block %p tail overwritten at %p (byte %lu/%lu == 0x%02x)\n",
+                heap, arena + 1, data + i, i, unused, data[i] );
+            return FALSE;
+        }
     }
     return TRUE;
 }
@@ -1614,7 +1635,11 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     pInUse  = (ARENA_INUSE *)ptr - 1;
     if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse )))
     {
-        if (!find_large_block( heapPtr, ptr )) goto error;
+        ARENA_LARGE *large_arena = find_large_block( heapPtr, ptr );
+
+        if (!large_arena) goto error;
+        if ((heapPtr->flags & HEAP_VALIDATE) && !validate_large_arena( heapPtr, large_arena, QUIET ))
+            goto error;
         free_large_block( heapPtr, flags, ptr );
         goto done;
     }
@@ -1682,7 +1707,11 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     pArena = (ARENA_INUSE *)ptr - 1;
     if (!(subheap = HEAP_FindSubHeap( heapPtr, pArena )))
     {
-        if (!find_large_block( heapPtr, ptr )) goto error;
+        ARENA_LARGE *large_arena = find_large_block( heapPtr, ptr );
+
+        if (!large_arena) goto error;
+        if ((heapPtr->flags & HEAP_VALIDATE) && !validate_large_arena( heapPtr, large_arena, QUIET ))
+            goto error;
         if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
         notify_free( ptr );
         goto done;
