@@ -1005,6 +1005,8 @@ static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const ARENA_FREE *ptr )
  */
 static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 {
+    DWORD flags = subheap->heap->flags;
+    SIZE_T size;
     ARENA_FREE *prev, *next;
     char *heapEnd = (char *)subheap->base + subheap->size;
 
@@ -1030,10 +1032,10 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         return FALSE;
     }
     /* Check arena size */
-    if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
+    size = pArena->size & ARENA_SIZE_MASK;
+    if ((char *)(pArena + 1) + size > heapEnd)
     {
-        ERR("Heap %p: bad size %08x for free arena %p\n",
-            subheap->heap, pArena->size & ARENA_SIZE_MASK, pArena );
+        ERR("Heap %p: bad size %08lx for free arena %p\n", subheap->heap, size, pArena );
         return FALSE;
     }
     /* Check that next pointer is valid */
@@ -1069,23 +1071,38 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         return FALSE;
     }
     /* Check that next block has PREV_FREE flag */
-    if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) < heapEnd)
+    if ((char *)(pArena + 1) + size < heapEnd)
     {
-        if (!(*(DWORD *)((char *)(pArena + 1) +
-            (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
+        if (!(*(DWORD *)((char *)(pArena + 1) + size) & ARENA_FLAG_PREV_FREE))
         {
             ERR("Heap %p: free arena %p next block has no PREV_FREE flag\n",
                 subheap->heap, pArena );
             return FALSE;
         }
         /* Check next block back pointer */
-        if (*((ARENA_FREE **)((char *)(pArena + 1) +
-            (pArena->size & ARENA_SIZE_MASK)) - 1) != pArena)
+        if (*((ARENA_FREE **)((char *)(pArena + 1) + size) - 1) != pArena)
         {
             ERR("Heap %p: arena %p has wrong back ptr %p\n",
                 subheap->heap, pArena,
-                *((ARENA_FREE **)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
+                *((ARENA_FREE **)((char *)(pArena+1) + size) - 1));
             return FALSE;
+        }
+    }
+    if (flags & HEAP_FREE_CHECKING_ENABLED)
+    {
+        DWORD *ptr = (DWORD *)(pArena + 1);
+        char *end = (char *)(pArena + 1) + size;
+
+        if (end >= heapEnd) end = (char *)subheap->base + subheap->commitSize;
+        while (ptr < (DWORD *)end - 1)
+        {
+            if (*ptr != ARENA_FREE_FILLER)
+            {
+                ERR("Heap %p: free block %p overwritten at %p by %08x\n",
+                    subheap->heap, (ARENA_INUSE *)pArena + 1, ptr, *ptr );
+                return FALSE;
+            }
+            ptr++;
         }
     }
     return TRUE;
