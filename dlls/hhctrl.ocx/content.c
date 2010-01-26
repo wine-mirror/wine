@@ -186,7 +186,7 @@ static const char *get_attr(const char *node, const char *name, int *len)
     ptr = strstr(node_buf, name_buf);
     if(!ptr) {
         WARN("name not found\n");
-        heap_free(name_buf);
+        heap_free(node_buf);
         return NULL;
     }
 
@@ -194,14 +194,16 @@ static const char *get_attr(const char *node, const char *name, int *len)
     ptr2 = strchr(ptr, '\"');
     if(!ptr2)
     {
-        heap_free(name_buf);
+        heap_free(node_buf);
         return NULL;
     }
 
     *len = ptr2-ptr;
-    heap_free(name_buf);
     /* Return the pointer offset within the original string */
-    return node+(ptr-node_buf);
+    ptr = node+(ptr-node_buf);
+
+    heap_free(node_buf);
+    return ptr;
 }
 
 static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text)
