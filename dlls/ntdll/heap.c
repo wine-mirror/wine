@@ -85,7 +85,7 @@ typedef struct
 
 #define ARENA_INUSE_FILLER     0x55
 #define ARENA_TAIL_FILLER      0xab
-#define ARENA_FREE_FILLER      0xaa
+#define ARENA_FREE_FILLER      0xfeeefeee
 
 /* everything is aligned on 8 byte boundaries (16 for Win64) */
 #define ALIGNMENT              (2*sizeof(void*))
@@ -169,7 +169,11 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL qu
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
 {
-    if (flags & HEAP_FREE_CHECKING_ENABLED) memset( ptr, ARENA_FREE_FILLER, size );
+    if (flags & HEAP_FREE_CHECKING_ENABLED)
+    {
+        SIZE_T i;
+        for (i = 0; i < size / sizeof(DWORD); i++) ((DWORD *)ptr)[i] = ARENA_FREE_FILLER;
+    }
 #if defined(VALGRIND_MAKE_MEM_NOACCESS)
     VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
 #elif defined( VALGRIND_MAKE_NOACCESS)
