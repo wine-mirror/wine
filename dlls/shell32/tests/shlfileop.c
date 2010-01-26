@@ -2302,7 +2302,7 @@ static BOOL is_old_shell32(void)
     shfo.hNameMappings = NULL;
     shfo.lpszProgressTitle = NULL;
 
-    set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt");
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     retval = SHFileOperationA(&shfo);
 
