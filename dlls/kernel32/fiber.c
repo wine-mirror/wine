@@ -21,6 +21,10 @@
  * - proper handling of 16-bit stack and signal stack
  */
 
+/* Fortify source chokes on siglongjmp stack switching, so disable it */
+#undef _FORTIFY_SOURCE
+#define _FORTIFY_SOURCE 0
+
 #include "config.h"
 #include "wine/port.h"
 
