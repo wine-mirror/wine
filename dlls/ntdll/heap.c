@@ -84,6 +84,7 @@ typedef struct
 #define ARENA_LARGE_MAGIC      0x6752614c
 
 #define ARENA_INUSE_FILLER     0x55
+#define ARENA_TAIL_FILLER      0xab
 #define ARENA_FREE_FILLER      0xaa
 
 /* everything is aligned on 8 byte boundaries (16 for Win64) */
@@ -187,30 +188,49 @@ static inline void mark_block_initialized( void *ptr, SIZE_T size )
 }
 
 /* mark a block of memory as uninitialized for debugging purposes */
-static inline void mark_block_uninitialized( void *ptr, SIZE_T size, DWORD flags )
+static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
 {
 #if defined(VALGRIND_MAKE_MEM_UNDEFINED)
     VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
 #elif defined(VALGRIND_MAKE_WRITABLE)
     VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
 #endif
-    if (flags & HEAP_FREE_CHECKING_ENABLED)
+}
+
+/* mark a block of memory as a tail block */
+static inline void mark_block_tail( void *ptr, SIZE_T size, DWORD flags )
+{
+    mark_block_uninitialized( ptr, size );
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
-        memset( ptr, ARENA_INUSE_FILLER, size );
-#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
-        VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
-#elif defined(VALGRIND_MAKE_WRITABLE)
-        /* make it uninitialized to valgrind again */
-        VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
+        memset( ptr, ARENA_TAIL_FILLER, size );
+#if defined(VALGRIND_MAKE_MEM_NOACCESS)
+        VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
+#elif defined( VALGRIND_MAKE_NOACCESS)
+        VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
 #endif
     }
 }
 
-/* clear contents of a block of memory */
-static inline void clear_block( void *ptr, SIZE_T size )
+/* initialize contents of a newly created block of memory */
+static inline void initialize_block( void *ptr, SIZE_T size, SIZE_T unused, DWORD flags )
 {
-    mark_block_initialized( ptr, size );
-    memset( ptr, 0, size );
+    if (flags & HEAP_ZERO_MEMORY)
+    {
+        mark_block_initialized( ptr, size );
+        memset( ptr, 0, size );
+    }
+    else
+    {
+        mark_block_uninitialized( ptr, size );
+        if (flags & HEAP_FREE_CHECKING_ENABLED)
+        {
+            memset( ptr, ARENA_INUSE_FILLER, size );
+            mark_block_uninitialized( ptr, size );
+        }
+    }
+
+    mark_block_tail( (char *)ptr + size, unused, flags );
 }
 
 /* notify that a new block of memory has been allocated for debugging purposes */
@@ -527,7 +547,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
     DWORD flags = subheap->heap->flags;
 
     /* Create a free arena */
-    mark_block_uninitialized( ptr, sizeof(ARENA_FREE), flags );
+    mark_block_uninitialized( ptr, sizeof(ARENA_FREE) );
     pFree = ptr;
     pFree->magic = ARENA_FREE_MAGIC;
 
@@ -1457,14 +1477,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     pInUse->unused_bytes = (pInUse->size & ARENA_SIZE_MASK) - size;
 
     notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
-
-    if (flags & HEAP_ZERO_MEMORY)
-    {
-        clear_block( pInUse + 1, size );
-        mark_block_uninitialized( (char *)(pInUse + 1) + size, pInUse->unused_bytes, flags );
-    }
-    else
-        mark_block_uninitialized( pInUse + 1, pInUse->size & ARENA_SIZE_MASK, flags );
+    initialize_block( pInUse + 1, size, pInUse->unused_bytes, flags );
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
@@ -1671,16 +1684,10 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     /* Clear the extra bytes if needed */
 
     if (size > oldActualSize)
-    {
-        if (flags & HEAP_ZERO_MEMORY)
-        {
-            clear_block( (char *)(pArena + 1) + oldActualSize, size - oldActualSize );
-            mark_block_uninitialized( (char *)(pArena + 1) + size, pArena->unused_bytes, flags );
-        }
-        else
-            mark_block_uninitialized( (char *)(pArena + 1) + oldActualSize,
-                                      (pArena->size & ARENA_SIZE_MASK) - oldActualSize, flags );
-    }
+        initialize_block( (char *)(pArena + 1) + oldActualSize, size - oldActualSize,
+                          pArena->unused_bytes, flags );
+    else
+        mark_block_tail( (char *)(pArena + 1) + size, pArena->unused_bytes, flags );
 
     /* Return the new arena */
 
