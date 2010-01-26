@@ -31,6 +31,12 @@
 
 #define MAGIC_DEAD 0xdeadbeef
 
+/* some undocumented flags (names are made up) */
+#define HEAP_PAGE_ALLOCS      0x01000000
+#define HEAP_VALIDATE         0x10000000
+#define HEAP_VALIDATE_ALL     0x20000000
+#define HEAP_VALIDATE_PARAMS  0x40000000
+
 static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOID, SIZE_T, PSIZE_T);
 static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
 
@@ -478,6 +484,119 @@ static void test_HeapQueryInformation(void)
     ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %u\n", info);
 }
 
+static void test_heap_checks( DWORD flags )
+{
+    BYTE old, *p, *p2;
+    BOOL ret;
+    SIZE_T size;
+
+    if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
+    trace( "testing heap flags %08x\n", flags );
+
+    p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
+    ok( p != NULL, "HeapAlloc failed\n" );
+
+    ret = HeapValidate( GetProcessHeap(), 0, p );
+    ok( ret, "HeapValidate failed\n" );
+
+    size = HeapSize( GetProcessHeap(), 0, p );
+    ok( size == 17, "Wrong size %lu\n", size );
+
+    ok( p[14] == 0, "wrong data %x\n", p[14] );
+    ok( p[15] == 0, "wrong data %x\n", p[15] );
+    ok( p[16] == 0, "wrong data %x\n", p[16] );
+
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
+        ok( p[17] == 0xab, "wrong padding %x\n", p[17] );
+        ok( p[18] == 0xab, "wrong padding %x\n", p[18] );
+        ok( p[19] == 0xab, "wrong padding %x\n", p[19] );
+    }
+
+    p2 = HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, p, 14 );
+    if (p2 == p)
+    {
+        if (flags & HEAP_TAIL_CHECKING_ENABLED)
+        {
+            ok( p[14] == 0xab, "wrong padding %x\n", p[14] );
+            ok( p[15] == 0xab, "wrong padding %x\n", p[15] );
+            ok( p[16] == 0xab, "wrong padding %x\n", p[16] );
+        }
+        else
+        {
+            ok( p[14] == 0, "wrong padding %x\n", p[14] );
+            ok( p[15] == 0, "wrong padding %x\n", p[15] );
+            ok( p[16] == 0, "wrong padding %x\n", p[16] );
+        }
+    }
+    else skip( "realloc in place failed\n ");
+
+    ret = HeapFree( GetProcessHeap(), 0, p );
+    ok( ret, "HeapFree failed\n" );
+
+    p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
+    ok( p != NULL, "HeapAlloc failed\n" );
+    old = p[17];
+    p[17] = 0xcc;
+
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
+        ret = HeapValidate( GetProcessHeap(), 0, p );
+        ok( !ret, "HeapValidate succeeded\n" );
+
+        /* other calls only check when HEAP_VALIDATE is set */
+        if (flags & HEAP_VALIDATE)
+        {
+            size = HeapSize( GetProcessHeap(), 0, p );
+            ok( size == ~(SIZE_T)0, "Wrong size %lu\n", size );
+
+            p2 = HeapReAlloc( GetProcessHeap(), 0, p, 14 );
+            ok( p2 == NULL, "HeapReAlloc succeeded\n" );
+
+            ret = HeapFree( GetProcessHeap(), 0, p );
+            ok( !ret, "HeapFree succeeded\n" );
+        }
+
+        p[17] = old;
+        size = HeapSize( GetProcessHeap(), 0, p );
+        ok( size == 17, "Wrong size %lu\n", size );
+
+        p2 = HeapReAlloc( GetProcessHeap(), 0, p, 14 );
+        ok( p2 != NULL, "HeapReAlloc failed\n" );
+        p = p2;
+    }
+
+    ret = HeapFree( GetProcessHeap(), 0, p );
+    ok( ret, "HeapFree failed\n" );
+
+    p = HeapAlloc( GetProcessHeap(), 0, 37 );
+    ok( p != NULL, "HeapAlloc failed\n" );
+    memset( p, 0xcc, 37 );
+
+    ret = HeapFree( GetProcessHeap(), 0, p );
+    ok( ret, "HeapFree failed\n" );
+
+    if (flags & HEAP_FREE_CHECKING_ENABLED)
+    {
+        ok( p[16] == 0xee, "wrong data %x\n", p[16] );
+        ok( p[17] == 0xfe, "wrong data %x\n", p[17] );
+        ok( p[18] == 0xee, "wrong data %x\n", p[18] );
+        ok( p[19] == 0xfe, "wrong data %x\n", p[19] );
+
+        ret = HeapValidate( GetProcessHeap(), 0, NULL );
+        ok( ret, "HeapValidate failed\n" );
+
+        old = p[16];
+        p[16] = 0xcc;
+        ret = HeapValidate( GetProcessHeap(), 0, NULL );
+        ok( !ret, "HeapValidate succeeded\n" );
+
+        p[16] = old;
+        ret = HeapValidate( GetProcessHeap(), 0, NULL );
+        ok( ret, "HeapValidate failed\n" );
+    }
+}
+
 static void test_debug_heap( const char *argv0, DWORD flags )
 {
     char keyname[MAX_PATH];
@@ -531,13 +650,13 @@ static DWORD heap_flags_from_global_flag( DWORD flag )
     if (flag & FLG_HEAP_ENABLE_FREE_CHECK)
         ret |= HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_VALIDATE_PARAMETERS)
-        ret |= 0x50000000 | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+        ret |= HEAP_VALIDATE_PARAMS | HEAP_VALIDATE | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_VALIDATE_ALL)
-        ret |= 0x30000000 | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+        ret |= HEAP_VALIDATE_ALL | HEAP_VALIDATE | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_DISABLE_COALESCING)
         ret |= HEAP_DISABLE_COALESCE_ON_FREE;
     if (flag & FLG_HEAP_PAGE_ALLOCS)
-        ret |= 0x01000000 | HEAP_GROWABLE;
+        ret |= HEAP_PAGE_ALLOCS | HEAP_GROWABLE;
     return ret;
 }
 
@@ -545,6 +664,7 @@ static void test_child_heap( const char *arg )
 {
     struct heap_layout *heap = GetProcessHeap();
     DWORD expected = strtoul( arg, 0, 16 );
+    DWORD expect_heap;
 
     if (expected == 0xdeadbeef)  /* expected value comes from Session Manager global flags */
     {
@@ -572,6 +692,8 @@ static void test_child_heap( const char *arg )
     ok( pRtlGetNtGlobalFlags() == expected,
         "%s: got global flags %08x expected %08x\n", arg, pRtlGetNtGlobalFlags(), expected );
 
+    expect_heap = heap_flags_from_global_flag( expected );
+
     if (!(heap->flags & HEAP_GROWABLE) || heap->flags == 0xeeeeeeee)  /* vista layout */
     {
         if (expected & FLG_HEAP_PAGE_ALLOCS)
@@ -582,12 +704,13 @@ static void test_child_heap( const char *arg )
     }
     else
     {
-        expected = heap_flags_from_global_flag( expected );
-        ok( heap->flags == (expected | HEAP_GROWABLE),
-            "%s: got heap flags %08x expected %08x\n", arg, heap->flags, expected );
-        ok( heap->force_flags == (expected & ~0x18000080),
-            "%s: got heap force flags %08x expected %08x\n", arg, heap->force_flags, expected );
+        ok( heap->flags == (expect_heap | HEAP_GROWABLE),
+            "%s: got heap flags %08x expected %08x\n", arg, heap->flags, expect_heap );
+        ok( heap->force_flags == (expect_heap & ~0x18000080),
+            "%s: got heap force flags %08x expected %08x\n", arg, heap->force_flags, expect_heap );
     }
+
+    test_heap_checks( expect_heap );
 }
 
 START_TEST(heap)
