@@ -65,6 +65,23 @@ typedef struct ContentItem {
     ChmPath merge;
 } ContentItem;
 
+typedef struct IndexSubItem {
+    LPWSTR name;
+    LPWSTR local;
+} IndexSubItem;
+
+typedef struct IndexItem {
+    struct IndexItem *next;
+
+    HTREEITEM id;
+    LPWSTR keyword;
+    ChmPath merge;
+
+    int nItems;
+    int itemFlags;
+    IndexSubItem *items;
+} IndexItem;
+
 typedef struct CHMInfo
 {
     IITStorage *pITStorage;
@@ -111,6 +128,7 @@ typedef struct {
 
     CHMInfo *pCHMInfo;
     ContentItem *content;
+    IndexItem *index;
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
     HFONT hFont;
@@ -126,6 +144,9 @@ void DoPageAction(HHInfo*,DWORD);
 
 void InitContent(HHInfo*);
 void ReleaseContent(HHInfo*);
+
+void InitIndex(HHInfo*);
+void ReleaseIndex(HHInfo*);
 
 CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL LoadWinTypeFromCHM(HHInfo *info);

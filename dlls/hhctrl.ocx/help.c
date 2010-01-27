@@ -397,26 +397,53 @@ static LRESULT OnTabChange(HWND hwnd)
     return 0;
 }
 
-static LRESULT OnTopicChange(HWND hwnd, ContentItem *item)
+static LRESULT OnTopicChange(HWND hwnd, void *user_data)
 {
     HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-    LPCWSTR chmfile = NULL;
-    ContentItem *iter = item;
+    LPCWSTR chmfile = NULL, name = NULL, local = NULL;
+    ContentItem *citer;
+    IndexItem *iiter;
 
-    if(!item || !info)
+    if(!user_data || !info)
         return 0;
 
-    TRACE("name %s loal %s\n", debugstr_w(item->name), debugstr_w(item->local));
-
-    while(iter) {
-        if(iter->merge.chm_file) {
-            chmfile = iter->merge.chm_file;
-            break;
+    switch (info->current_tab)
+    {
+    case TAB_CONTENTS:
+        citer = (ContentItem *) user_data;
+        name = citer->name;
+        local = citer->local;
+        while(citer) {
+            if(citer->merge.chm_file) {
+                chmfile = citer->merge.chm_file;
+                break;
+            }
+            citer = citer->parent;
         }
-        iter = iter->parent;
+        chmfile = citer->merge.chm_file;
+        break;
+    case TAB_INDEX:
+        iiter = (IndexItem *) user_data;
+        if(iiter->nItems == 0) {
+            FIXME("No entries for this item!\n");
+            return 0;
+        }
+        if(iiter->nItems > 1) {
+            FIXME("Support for sub-topics not implemented.\n");
+            return 0;
+        }
+        name = iiter->items[0].name;
+        local = iiter->items[0].local;
+        chmfile = iiter->merge.chm_file;
+        break;
+    default:
+        FIXME("Unhandled operation for this tab!\n");
+        return 0;
     }
 
-    NavigateToChm(info, chmfile, item->local);
+    TRACE("name %s loal %s\n", debugstr_w(name), debugstr_w(local));
+
+    NavigateToChm(info, chmfile, local);
     return 0;
 }
 
@@ -434,7 +461,9 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case TCN_SELCHANGE:
             return OnTabChange(hWnd);
         case TVN_SELCHANGEDW:
-            return OnTopicChange(hWnd, (ContentItem*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
+            return OnTopicChange(hWnd, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
+        case NM_DBLCLK:
+            return OnTopicChange(hWnd, (void*)((NMITEMACTIVATE *)lParam)->lParam);
         }
         break;
     }
@@ -975,6 +1004,7 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
         return FALSE;
 
     InitContent(pHHInfo);
+    InitIndex(pHHInfo);
 
     return TRUE;
 }
@@ -1003,6 +1033,7 @@ void ReleaseHelpViewer(HHInfo *info)
 
     ReleaseWebBrowser(info);
     ReleaseContent(info);
+    ReleaseIndex(info);
 
     if(info->WinType.hwndHelp)
         DestroyWindow(info->WinType.hwndHelp);
