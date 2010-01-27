@@ -1031,6 +1031,113 @@ static void test_set_default_proxy_config(void)
            GetLastError());
 }
 
+static void test_Timeouts (void)
+{
+    BOOL ret;
+    HINTERNET ses, req, con;
+    static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
+
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, -2, 0, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, 0, -2, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, 0, 0, -2, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, 0, 0, 0, -2);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, -1, -1, -1, -1);
+    todo_wine ok(ret, "%u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(ses, 0, 0, 0, 0);
+    todo_wine ok(ret, "%u\n", GetLastError());
+
+    con = WinHttpConnect(ses, codeweavers, 0, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, -2, 0, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, 0, -2, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, 0, 0, -2, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, 0, 0, 0, -2);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, -1, -1, -1, -1);
+    ok(!ret && GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE,
+       "expected ERROR_WINHTTP_INVALID_TYPE, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(con, 0, 0, 0, 0);
+    ok(!ret && GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE,
+       "expected ERROR_WINHTTP_INVALID_TYPE, got %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, -2, 0, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, 0, -2, 0, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, 0, 0, -2, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, 0, 0, 0, -2);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, -1, -1, -1, -1);
+    ok(ret, "%u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetTimeouts(req, 0, 0, 0, 0);
+    ok(ret, "%u\n", GetLastError());
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
 START_TEST (winhttp)
 {
     test_OpenRequest();
@@ -1043,4 +1150,5 @@ START_TEST (winhttp)
     test_QueryOption();
     test_set_default_proxy_config();
     test_empty_headers_param();
+    test_Timeouts();
 }
