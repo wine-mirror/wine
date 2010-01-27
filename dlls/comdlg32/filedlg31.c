@@ -778,7 +778,7 @@ void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL op
     ofnW->lpstrDefExt = FD31_DupToW(ofnA->lpstrDefExt, 3);
     if ((ofnA->Flags & OFN_ENABLETEMPLATE) && (ofnA->lpTemplateName))
     {
-        if (HIWORD(ofnA->lpTemplateName))
+        if (!IS_INTRESOURCE(ofnA->lpTemplateName))
         {
             RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpTemplateName);
             ofnW->lpTemplateName = usBuffer.Buffer;
@@ -801,7 +801,7 @@ void FD31_FreeOfnW(OPENFILENAMEW *ofnW)
    HeapFree(GetProcessHeap(), 0, ofnW->lpstrFileTitle);
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrInitialDir);
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrTitle);
-   if (HIWORD(ofnW->lpTemplateName))
+   if (!IS_INTRESOURCE(ofnW->lpTemplateName))
        HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpTemplateName);
 }
 

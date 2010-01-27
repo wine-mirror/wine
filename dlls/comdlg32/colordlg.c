@@ -1366,7 +1366,7 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
   lpcc->lCustData = lpChCol->lCustData;
   lpcc->lpfnHook = lpChCol->lpfnHook;
   if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName)) {
-      if (HIWORD(lpChCol->lpTemplateName)) {
+      if (!IS_INTRESOURCE(lpChCol->lpTemplateName)) {
 	  INT len = MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, NULL, 0);
           template_name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
           MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, template_name, len );
