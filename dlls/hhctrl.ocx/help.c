@@ -320,8 +320,10 @@ static LRESULT Child_OnPaint(HWND hWnd)
     return 0;
 }
 
-static void ResizeTabChild(HHInfo *info, HWND hwnd)
+static void ResizeTabChild(HHInfo *info, int tab)
 {
+    HWND hwnd = info->tabs[tab].hwnd;
+    INT width, height;
     RECT rect, tabrc;
     DWORD cnt;
 
@@ -333,9 +335,28 @@ static void ResizeTabChild(HHInfo *info, HWND hwnd)
     rect.top = TAB_TOP_PADDING + cnt*(tabrc.bottom-tabrc.top) + TAB_MARGIN;
     rect.right -= TAB_RIGHT_PADDING + TAB_MARGIN;
     rect.bottom -= TAB_MARGIN;
+    width = rect.right-rect.left;
+    height = rect.bottom-rect.top;
 
-    SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right-rect.left,
-                 rect.bottom-rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+    SetWindowPos(hwnd, NULL, rect.left, rect.top, width, height,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+
+    /* Resize the tab widget column to perfectly fit the tab window and
+     * leave sufficient space for the scroll widget.
+     */
+    switch (tab)
+    {
+    case TAB_INDEX: {
+        int scroll_width = GetSystemMetrics(SM_CXVSCROLL);
+        int border_width = GetSystemMetrics(SM_CXBORDER);
+        int edge_width = GetSystemMetrics(SM_CXEDGE);
+
+        SendMessageW(info->tabs[TAB_INDEX].hwnd, LVM_SETCOLUMNWIDTH, 0,
+                     width-scroll_width-2*border_width-2*edge_width);
+
+        break;
+    }
+    }
 }
 
 static LRESULT Child_OnSize(HWND hwnd)
@@ -351,7 +372,8 @@ static LRESULT Child_OnSize(HWND hwnd)
                  rect.right - TAB_RIGHT_PADDING,
                  rect.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
 
-    ResizeTabChild(info, info->tabs[TAB_CONTENTS].hwnd);
+    ResizeTabChild(info, TAB_CONTENTS);
+    ResizeTabChild(info, TAB_INDEX);
     return 0;
 }
 
@@ -729,6 +751,8 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
 static BOOL AddContentTab(HHInfo *info)
 {
+    if(info->tabs[TAB_CONTENTS].id == -1)
+        return TRUE; /* No "Contents" tab */
     info->tabs[TAB_CONTENTS].hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW,
            szEmpty, WS_CHILD | WS_BORDER | 0x25, 50, 50, 100, 100,
            info->WinType.hwndNavigation, NULL, hhctrl_hinstance, NULL);
@@ -737,8 +761,37 @@ static BOOL AddContentTab(HHInfo *info)
         return FALSE;
     }
 
-    ResizeTabChild(info, info->tabs[TAB_CONTENTS].hwnd);
+    ResizeTabChild(info, TAB_CONTENTS);
     ShowWindow(info->tabs[TAB_CONTENTS].hwnd, SW_SHOW);
+
+    return TRUE;
+}
+
+static BOOL AddIndexTab(HHInfo *info)
+{
+    char hidden_column[] = "Column";
+    LVCOLUMNA lvc;
+
+    if(info->tabs[TAB_INDEX].id == -1)
+        return TRUE; /* No "Index" tab */
+    info->tabs[TAB_INDEX].hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW,
+           szEmpty, WS_CHILD | WS_BORDER | LVS_SINGLESEL | LVS_REPORT | LVS_NOCOLUMNHEADER, 50, 50, 100, 100,
+           info->WinType.hwndNavigation, NULL, hhctrl_hinstance, NULL);
+    if(!info->tabs[TAB_INDEX].hwnd) {
+        ERR("Could not create ListView control\n");
+        return FALSE;
+    }
+    memset(&lvc, 0, sizeof(lvc));
+    lvc.mask = LVCF_TEXT;
+    lvc.pszText = hidden_column;
+    if(SendMessageW(info->tabs[TAB_INDEX].hwnd, LVM_INSERTCOLUMNA, 0, (LPARAM) &lvc) == -1)
+    {
+        ERR("Could not create ListView column\n");
+        return FALSE;
+    }
+
+    ResizeTabChild(info, TAB_INDEX);
+    ShowWindow(info->tabs[TAB_INDEX].hwnd, SW_HIDE);
 
     return TRUE;
 }
@@ -918,6 +971,9 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
     if (!AddContentTab(pHHInfo))
         return FALSE;
 
+    if (!AddIndexTab(pHHInfo))
+        return FALSE;
+
     InitContent(pHHInfo);
 
     return TRUE;
@@ -958,6 +1014,13 @@ void ReleaseHelpViewer(HHInfo *info)
 HHInfo *CreateHelpViewer(LPCWSTR filename)
 {
     HHInfo *info = heap_alloc_zero(sizeof(HHInfo));
+    int i;
+
+    /* Set the invalid tab ID (-1) as the default value for all
+     * of the tabs, this matches a failed TCM_INSERTITEM call.
+     */
+    for(i=0;i<sizeof(info->tabs)/sizeof(HHTab);i++)
+        info->tabs[i].id = -1;
 
     OleInitialize(NULL);
 
