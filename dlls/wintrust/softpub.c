@@ -520,9 +520,9 @@ static CERT_INFO *WINTRUST_GetSignerCertInfo(CRYPT_PROVIDER_DATA *data,
     return certInfo;
 }
 
-static BOOL WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+static DWORD WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
-    BOOL ret;
+    DWORD err;
     CERT_INFO *certInfo = WINTRUST_GetSignerCertInfo(data, signerIdx);
 
     if (certInfo)
@@ -535,25 +535,24 @@ static BOOL WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
             CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA para = { sizeof(para), 0,
              signerIdx, CMSG_VERIFY_SIGNER_CERT, (LPVOID)subject };
 
-            ret = CryptMsgControl(data->hMsg, 0, CMSG_CTRL_VERIFY_SIGNATURE_EX,
-             &para);
-            if (!ret)
-                SetLastError(TRUST_E_CERT_SIGNATURE);
+            if (!CryptMsgControl(data->hMsg, 0, CMSG_CTRL_VERIFY_SIGNATURE_EX,
+             &para))
+                err = TRUST_E_CERT_SIGNATURE;
             else
+            {
                 data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
                  subject);
+                err = ERROR_SUCCESS;
+            }
             CertFreeCertificateContext(subject);
         }
         else
-        {
-            SetLastError(TRUST_E_NO_SIGNER_CERT);
-            ret = FALSE;
-        }
+            err = TRUST_E_NO_SIGNER_CERT;
         data->psPfns->pfnFree(certInfo);
     }
     else
-        ret = FALSE;
-    return ret;
+        err = GetLastError();
+    return err;
 }
 
 HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
@@ -579,7 +578,16 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
             for (i = 0; ret && i < signerCount; i++)
             {
                 if ((ret = WINTRUST_SaveSigner(data, i)))
-                    ret = WINTRUST_VerifySigner(data, i);
+                {
+                    DWORD err;
+
+                    err = WINTRUST_VerifySigner(data, i);
+                    if (err)
+                    {
+                        SetLastError(err);
+                        ret = FALSE;
+                    }
+                }
             }
         }
         else
