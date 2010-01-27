@@ -694,24 +694,22 @@ static DWORD WINTRUST_TrustStatusToError(DWORD errorStatus)
     return error;
 }
 
-static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+static DWORD WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
-    BOOL ret;
+    DWORD err, i;
     PCERT_SIMPLE_CHAIN simpleChain =
      data->pasSigners[signerIdx].pChainContext->rgpChain[0];
-    DWORD i;
 
     data->pasSigners[signerIdx].pasCertChain[0].dwConfidence =
      WINTRUST_TrustStatusToConfidence(
      simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
     data->pasSigners[signerIdx].pasCertChain[0].pChainElement =
      simpleChain->rgpElement[0];
-    ret = TRUE;
-    for (i = 1; ret && i < simpleChain->cElement; i++)
+    err = ERROR_SUCCESS;
+    for (i = 1; !err && i < simpleChain->cElement; i++)
     {
-        ret = data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
-         simpleChain->rgpElement[i]->pCertContext);
-        if (ret)
+        if (data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
+         simpleChain->rgpElement[i]->pCertContext))
         {
             data->pasSigners[signerIdx].pasCertChain[i].pChainElement =
              simpleChain->rgpElement[i];
@@ -719,12 +717,14 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
              WINTRUST_TrustStatusToConfidence(
              simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
         }
+        else
+            err = GetLastError();
     }
     data->pasSigners[signerIdx].pasCertChain[simpleChain->cElement - 1].dwError
      = WINTRUST_TrustStatusToError(
      simpleChain->rgpElement[simpleChain->cElement - 1]->
      TrustStatus.dwErrorStatus);
-    return ret;
+    return err;
 }
 
 static void WINTRUST_CreateChainPolicyCreateInfo(
@@ -792,13 +792,20 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
             }
             else
             {
-                if ((ret = WINTRUST_CopyChain(data, signer)))
+                DWORD err;
+
+                if (!(err = WINTRUST_CopyChain(data, signer)))
                 {
                     if (data->psPfns->pfnCertCheckPolicy)
                         ret = data->psPfns->pfnCertCheckPolicy(data, signer,
                          FALSE, 0);
                     else
                         TRACE("no cert check policy, skipping policy check\n");
+                }
+                else
+                {
+                    SetLastError(err);
+                    ret = FALSE;
                 }
             }
         }
