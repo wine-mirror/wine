@@ -56,7 +56,13 @@ static inline BOOL buffer_add_dirty_area(struct wined3d_buffer *This, UINT offse
         }
     }
 
-    if(!offset && !size)
+    if(offset > This->resource.size || offset + size > This->resource.size)
+    {
+        WARN("Invalid range dirtified, marking entire buffer dirty\n");
+        offset = 0;
+        size = This->resource.size;
+    }
+    else if(!offset && !size)
     {
         size = This->resource.size;
     }
@@ -1026,6 +1032,32 @@ static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *ifac
 
 /* IWineD3DBuffer methods */
 
+static DWORD buffer_sanitize_flags(DWORD flags)
+{
+    /* Not all flags make sense together, but Windows never returns an error. Catch the
+     * cases that could cause issues */
+    if(flags & WINED3DLOCK_READONLY)
+    {
+        if(flags & WINED3DLOCK_DISCARD)
+        {
+            WARN("WINED3DLOCK_READONLY combined with WINED3DLOCK_DISCARD, ignoring flags\n");
+            return 0;
+        }
+        if(flags & WINED3DLOCK_NOOVERWRITE)
+        {
+            WARN("WINED3DLOCK_READONLY combined with WINED3DLOCK_NOOVERWRITE, ignoring flags\n");
+            return 0;
+        }
+    }
+    else if((flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE)) == (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE))
+    {
+        WARN("WINED3DLOCK_DISCARD and WINED3DLOCK_NOOVERWRITE used together, ignoring\n");
+        return 0;
+    }
+
+    return flags;
+}
+
 static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
@@ -1033,6 +1065,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
 
+    flags = buffer_sanitize_flags(flags);
     if (!buffer_add_dirty_area(This, offset, size)) return E_OUTOFMEMORY;
 
     count = InterlockedIncrement(&This->lock_count);
