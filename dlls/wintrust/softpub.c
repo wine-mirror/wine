@@ -282,9 +282,9 @@ error:
     return err;
 }
 
-static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err;
 
     if (data->pWintrustData->u.pCert &&
      WVT_IS_CBSTRUCT_GT_MEMBEROFFSET(WINTRUST_CERT_INFO,
@@ -294,6 +294,7 @@ static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
         {
             CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
             DWORD i;
+            BOOL ret;
 
             /* Add a signer with nothing but the time to verify, so we can
              * add a cert to it
@@ -321,19 +322,18 @@ static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
                             ret = data->psPfns->pfnAddStore2Chain(data,
                              data->pWintrustData->u.pCert->pahStores[i]);
             }
+            if (!ret)
+                err = GetLastError();
         }
         else
         {
             /* Do nothing!?  See the tests */
-            ret = TRUE;
+            err = ERROR_SUCCESS;
         }
     }
     else
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        ret = FALSE;
-    }
-    return ret;
+        err = ERROR_INVALID_PARAMETER;
+    return err;
 }
 
 static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
@@ -408,7 +408,6 @@ error:
 
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret = TRUE;
     DWORD err = ERROR_SUCCESS;
 
     TRACE("(%p)\n", data);
@@ -419,7 +418,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
     switch (data->pWintrustData->dwUnionChoice)
     {
     case WTD_CHOICE_CERT:
-        ret = SOFTPUB_LoadCertMessage(data);
+        err = SOFTPUB_LoadCertMessage(data);
         break;
     case WTD_CHOICE_FILE:
         err = SOFTPUB_LoadFileMessage(data);
@@ -429,21 +428,14 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         break;
     default:
         FIXME("unimplemented for %d\n", data->pWintrustData->dwUnionChoice);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        ret = FALSE;
+        err = ERROR_INVALID_PARAMETER;
     }
 
-    if (!ret)
-        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
-         GetLastError();
-    else if (err)
-    {
+    if (err)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] = err;
-        ret = FALSE;
-    }
-    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+    TRACE("returning %d (%08x)\n", !err ? S_OK : S_FALSE,
      data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
-    return ret ? S_OK : S_FALSE;
+    return !err ? S_OK : S_FALSE;
 }
 
 static CMSG_SIGNER_INFO *WINTRUST_GetSigner(CRYPT_PROVIDER_DATA *data,
