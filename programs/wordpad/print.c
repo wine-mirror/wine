@@ -243,9 +243,11 @@ static int get_num_pages(HWND hEditorWnd, FORMATRANGE fr)
 
     do
     {
+        int bottom = fr.rc.bottom;
         page++;
         fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE,
                                      (LPARAM)&fr);
+        fr.rc.bottom = bottom;
     }
     while(fr.chrg.cpMin && fr.chrg.cpMin < fr.chrg.cpMax);
 
@@ -260,7 +262,9 @@ static void char_from_pagenum(HWND hEditorWnd, FORMATRANGE *fr, int page)
 
     for(i = 1; i < page; i++)
     {
+        int bottom = fr->rc.bottom;
         fr->chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)fr);
+        fr->rc.bottom = bottom;
     }
 }
 
@@ -328,6 +332,7 @@ static void print(LPPRINTDLGW pd, LPWSTR wszFileName)
     StartDocW(fr.hdc, &di);
     do
     {
+        int bottom = fr.rc.bottom;
         if(StartPage(fr.hdc) <= 0)
             break;
 
@@ -335,6 +340,7 @@ static void print(LPPRINTDLGW pd, LPWSTR wszFileName)
 
         if(EndPage(fr.hdc) <= 0)
             break;
+        bottom = fr.rc.bottom;
 
         printedPages++;
         if((pd->Flags & PD_PAGENUMS) && (printedPages > (pd->nToPage - pd->nFromPage)))
