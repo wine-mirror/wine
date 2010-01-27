@@ -266,6 +266,12 @@ static DWORD modOpen(DWORD_PTR *lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     if (!mom) return MMSYSERR_NOMEM;
 
+    if (HIWORD(dwFlags & CALLBACK_TYPEMASK)) {
+	FIXME("NIY callback flags %08x\n", dwFlags);
+	HeapFree(GetProcessHeap(), 0, mom);
+	return MMSYSERR_INVALFLAG;
+    }
+
     if (MIDIMAP_LoadSettings(mom))
     {
 	*lpdwUser = (DWORD_PTR)mom;
