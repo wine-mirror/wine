@@ -249,7 +249,7 @@ static void test_read_state_(IXmlReader *reader, XmlReadState expected,
                                    state_to_str(expected), state_to_str(state));
 }
 
-#define test_read_sate(reader, exp, brk, todo) test_read_state_(reader, exp, brk, todo, __LINE__)
+#define test_read_state(reader, exp, brk, todo) test_read_state_(reader, exp, brk, todo, __LINE__)
 
 typedef struct _testinput
 {
@@ -355,13 +355,13 @@ static void test_reader_create(void)
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Closed, -1, FALSE);
+    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
 
     /* Null input pointer, releases previous input */
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
+    test_read_state(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
 
     /* test input interface selection sequence */
     hr = testinput_createinstance((void**)&input);
@@ -416,7 +416,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, reader_input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Initial, -1, FALSE);
+    test_read_state(reader, XmlReadState_Initial, -1, FALSE);
 
     /* IXmlReader grabs a IXmlReaderInput reference */
     ref = IUnknown_AddRef(reader_input);
@@ -431,7 +431,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_sate(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
+    test_read_state(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
 
     IXmlReader_Release(reader);
 
@@ -488,7 +488,7 @@ static void test_readerinput(void)
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
     ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
 
-    test_read_sate(reader, XmlReadState_Closed, -1, FALSE);
+    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
 
     ref = IUnknown_AddRef(input);
     ok(ref == 3, "Expected 3, got %d\n", ref);
