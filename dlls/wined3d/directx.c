@@ -72,6 +72,7 @@ static const struct {
     {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX,           0                           },
     {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS,             0                           },
     {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD,         0                           },
+    {"GL_ARB_shading_language_100",         ARB_SHADING_LANGUAGE_100,       0                           },
     {"GL_ARB_sync",                         ARB_SYNC,                       0                           },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP,       0                           },
     {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION,        0                           },
@@ -2006,6 +2007,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
         glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
         gl_info->limits.glsl_varyings = gl_max;
         TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
+    }
+    if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
+    {
+        const char *str = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
+        TRACE_(d3d_caps)("GLSL version string: %s.\n", debugstr_a(str));
     }
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
     {
