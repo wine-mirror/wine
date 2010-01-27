@@ -146,9 +146,10 @@ static DWORD SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
 /* Assumes data->u.pPDSip has been loaded, and data->u.pPDSip->pSip allocated.
  * Calls data->u.pPDSip->pSip->pfGet to construct data->hMsg.
  */
-static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
+static DWORD SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
  LPCWSTR filePath)
 {
+    DWORD err = ERROR_SUCCESS;
     BOOL ret;
     LPBYTE buf = NULL;
     DWORD size = 0;
@@ -156,10 +157,7 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
     data->u.pPDSip->psSipSubjectInfo =
      data->psPfns->pfnAlloc(sizeof(SIP_SUBJECTINFO));
     if (!data->u.pPDSip->psSipSubjectInfo)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
+        return ERROR_OUTOFMEMORY;
 
     data->u.pPDSip->psSipSubjectInfo->cbSize = sizeof(SIP_SUBJECTINFO);
     data->u.pPDSip->psSipSubjectInfo->pgSubjectType = &data->u.pPDSip->gSubject;
@@ -169,17 +167,11 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
     ret = data->u.pPDSip->pSip->pfGet(data->u.pPDSip->psSipSubjectInfo,
      &data->dwEncoding, 0, &size, 0);
     if (!ret)
-    {
-        SetLastError(TRUST_E_NOSIGNATURE);
-        return FALSE;
-    }
+        return TRUST_E_NOSIGNATURE;
 
     buf = data->psPfns->pfnAlloc(size);
     if (!buf)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
+        return ERROR_OUTOFMEMORY;
 
     ret = data->u.pPDSip->pSip->pfGet(data->u.pPDSip->psSipSubjectInfo,
      &data->dwEncoding, 0, &size, buf);
@@ -188,12 +180,18 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
         data->hMsg = CryptMsgOpenToDecode(data->dwEncoding, 0, 0, data->hProv,
          NULL, NULL);
         if (data->hMsg)
+        {
             ret = CryptMsgUpdate(data->hMsg, buf, size, TRUE);
+            if (!ret)
+                err = GetLastError();
+        }
     }
+    else
+        err = GetLastError();
 
     data->psPfns->pfnFree(buf);
-    TRACE("returning %d\n", ret);
-    return ret;
+    TRACE("returning %d\n", err);
+    return err;
 }
 
 static BOOL SOFTPUB_CreateStoreFromMessage(CRYPT_PROVIDER_DATA *data)
@@ -339,12 +337,10 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_GetSIP(data);
     if (err)
         goto error;
-    if (!SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
-     data->pWintrustData->u.pFile->pcwszFilePath))
-    {
-        err = GetLastError();
+    err = SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
+     data->pWintrustData->u.pFile->pcwszFilePath);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_CreateStoreFromMessage(data))
     {
         err = GetLastError();
@@ -381,12 +377,10 @@ static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_GetSIP(data);
     if (err)
         goto error;
-    if (!SOFTPUB_GetMessageFromFile(data, catalog,
-     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath))
-    {
-        err = GetLastError();
+    err = SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
+     data->pWintrustData->u.pFile->pcwszFilePath);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_CreateStoreFromMessage(data))
     {
         err = GetLastError();
