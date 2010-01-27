@@ -488,7 +488,7 @@ static void test_heap_checks( DWORD flags )
 {
     BYTE old, *p, *p2;
     BOOL ret;
-    SIZE_T size, large_size = 800 * 1024 + 37;
+    SIZE_T i, size, large_size = 800 * 1024 + 37;
 
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
     trace( "testing heap flags %08x\n", flags );
@@ -640,6 +640,18 @@ static void test_heap_checks( DWORD flags )
 
     ret = HeapFree( GetProcessHeap(), 0, p );
     ok( ret, "HeapFree failed\n" );
+
+    /* test block sizes when tail checking */
+    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
+        for (size = 0; size < 64; size++)
+        {
+            p = HeapAlloc( GetProcessHeap(), 0, size );
+            for (i = 0; i < 32; i++) if (p[size + i] != 0xab) break;
+            ok( i >= 8, "only %lu tail bytes for size %lu\n", i, size );
+            HeapFree( GetProcessHeap(), 0, p );
+        }
+    }
 }
 
 static void test_debug_heap( const char *argv0, DWORD flags )
