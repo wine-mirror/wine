@@ -3024,6 +3024,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 static void device_map_psamplers(IWineD3DDeviceImpl *This) {
     const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
             ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.sampler_type;
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
@@ -3031,7 +3032,8 @@ static void device_map_psamplers(IWineD3DDeviceImpl *This) {
         {
             device_map_stage(This, i, i);
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
-            if (i < MAX_TEXTURES) {
+            if (i < gl_info->limits.texture_stages)
+            {
                 markTextureStagesDirty(This, i);
             }
         }
@@ -3735,11 +3737,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     DWORD oldValue = This->updateStateBlock->textureState[Stage][Type];
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
 
     TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
-    if (Stage >= MAX_TEXTURES) {
-        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring\n", Stage, MAX_TEXTURES - 1);
+    if (Stage >= gl_info->limits.texture_stages)
+    {
+        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
+                Stage, gl_info->limits.texture_stages - 1);
         return WINED3D_OK;
     }
 
@@ -3820,6 +3825,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
         DWORD stage, IWineD3DBaseTexture *texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     IWineD3DBaseTexture *prev;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
@@ -3878,7 +3884,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
         }
 
-        if (!prev && stage < MAX_TEXTURES)
+        if (!prev && stage < gl_info->limits.texture_stages)
         {
             /* The source arguments for color and alpha ops have different
              * meanings when a NULL texture is bound, so the COLOROP and
@@ -3897,7 +3903,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
 
         IWineD3DBaseTexture_Release(prev);
 
-        if (!texture && stage < MAX_TEXTURES)
+        if (!texture && stage < gl_info->limits.texture_stages)
         {
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));

@@ -3601,9 +3601,9 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
         }
     } else {
         /* Disabled the pixel shader - color ops weren't applied
-         * while it was enabled, so re-apply them.
-         */
-        for(i=0; i < MAX_TEXTURES; i++) {
+         * while it was enabled, so re-apply them. */
+        for (i = 0; i < context->gl_info->limits.texture_stages; ++i)
+        {
             if(!isStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP))) {
                 device->StateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].apply
                         (STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
