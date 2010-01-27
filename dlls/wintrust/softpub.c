@@ -364,9 +364,9 @@ error:
     return err;
 }
 
-static BOOL SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err;
     HANDLE catalog = INVALID_HANDLE_VALUE;
 
     if (!data->pWintrustData->u.pCatalog)
@@ -378,27 +378,36 @@ static BOOL SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
      GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
      NULL);
     if (catalog == INVALID_HANDLE_VALUE)
-        return FALSE;
-    ret = CryptSIPRetrieveSubjectGuid(
+        return GetLastError();
+    if (!CryptSIPRetrieveSubjectGuid(
      data->pWintrustData->u.pCatalog->pcwszCatalogFilePath, catalog,
-     &data->u.pPDSip->gSubject);
-    if (!ret)
+     &data->u.pPDSip->gSubject))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_GetSIP(data);
-    if (!ret)
+    }
+    if (!SOFTPUB_GetSIP(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_GetMessageFromFile(data, catalog,
-     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath);
-    if (!ret)
+    }
+    if (!SOFTPUB_GetMessageFromFile(data, catalog,
+     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_CreateStoreFromMessage(data);
-    if (!ret)
+    }
+    if (!SOFTPUB_CreateStoreFromMessage(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_DecodeInnerContent(data);
+    }
+    if (!SOFTPUB_DecodeInnerContent(data))
+        err = GetLastError();
     /* FIXME: this loads the catalog file, but doesn't validate the member. */
 error:
     CloseHandle(catalog);
-    return ret;
+    return err;
 }
 
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
@@ -420,7 +429,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         err = SOFTPUB_LoadFileMessage(data);
         break;
     case WTD_CHOICE_CATALOG:
-        ret = SOFTPUB_LoadCatalogMessage(data);
+        err = SOFTPUB_LoadCatalogMessage(data);
         break;
     default:
         FIXME("unimplemented for %d\n", data->pWintrustData->dwUnionChoice);
