@@ -193,11 +193,16 @@ static const char *type_to_str(XmlNodeType type)
         "XmlNodeType_Attribute",
         "XmlNodeType_Text",
         "XmlNodeType_CDATA",
+        "", "",
         "XmlNodeType_ProcessingInstruction",
         "XmlNodeType_Comment",
+        "",
         "XmlNodeType_DocumentType",
+        "", "",
         "XmlNodeType_Whitespace",
+        "",
         "XmlNodeType_EndElement",
+        "",
         "XmlNodeType_XmlDeclaration"
     };
 
