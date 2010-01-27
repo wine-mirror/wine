@@ -130,6 +130,10 @@ const char* WINMM_ErrorToString(MMRESULT error)
     ERR_TO_STR(WAVERR_STILLPLAYING);
     ERR_TO_STR(WAVERR_UNPREPARED);
     ERR_TO_STR(WAVERR_SYNC);
+    ERR_TO_STR(MIDIERR_INVALIDSETUP);
+    ERR_TO_STR(MIDIERR_NODEVICE);
+    ERR_TO_STR(MIDIERR_STILLPLAYING);
+    ERR_TO_STR(MIDIERR_UNPREPARED);
     }
 #undef ERR_TO_STR
     return wine_dbg_sprintf("Unknown(0x%08x)", error);
@@ -882,9 +886,7 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, DWORD_PTR* lpdwCallback,
 
     lpwm = (LPWINE_MIDI)MMDRV_Alloc(size, MMDRV_MIDIOUT, &hMidiOut, lpdwFlags,
 				    lpdwCallback, lpdwInstance);
-
-    if (lphMidiOut != NULL)
-	*lphMidiOut = hMidiOut;
+    *lphMidiOut = hMidiOut;
 
     if (lpwm) {
         lpwm->mod.hMidi = hMidiOut;
@@ -1777,8 +1779,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 	return MMSYSERR_NOMEM;
     }
     lpMidiStrm->hDevice = hMidiOut;
-    if (lphMidiStrm)
-	*lphMidiStrm = (HMIDISTRM)hMidiOut;
+    *lphMidiStrm = (HMIDISTRM)hMidiOut;
 
     lpwm->mld.uDeviceID = *lpuDeviceID;
 
@@ -1820,11 +1821,19 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 
     TRACE("(%p, %p, %u)!\n", hMidiStrm, lpMidiHdr, cbMidiHdr);
 
+    if (cbMidiHdr < sizeof(MIDIHDR) || !lpMidiHdr || !lpMidiHdr->lpData)
+	return MMSYSERR_INVALPARAM;
+
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MIDIERR_UNPREPARED;
+
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
+
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
-    } else if (!lpMidiHdr) {
-        ret = MMSYSERR_INVALPARAM;
     } else {
+	lpMidiHdr->dwFlags |= MHDR_ISSTRM;
 	if (!PostThreadMessageA(lpMidiStrm->dwThreadID,
                                 WINE_MSM_HEADER, cbMidiHdr,
                                 (LPARAM)lpMidiHdr)) {
