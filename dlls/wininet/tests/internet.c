@@ -40,6 +40,16 @@ static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);
 static DWORD (WINAPI *pPrivacyGetZonePreferenceW)(DWORD, DWORD, LPDWORD, LPWSTR, LPDWORD);
 static DWORD (WINAPI *pPrivacySetZonePreferenceW)(DWORD, DWORD, DWORD, LPCWSTR);
 
+/* Win9x and WinMe don't have lstrcmpW */
+static int strcmp_ww(const WCHAR *str1, const WCHAR *str2)
+{
+    DWORD len1 = lstrlenW(str1);
+    DWORD len2 = lstrlenW(str2);
+
+    if (len1 != len2) return 1;
+    return memcmp(str1, str2, len1 * sizeof(WCHAR));
+}
+
 /* ############################### */
 
 static void test_InternetCanonicalizeUrlA(void)
@@ -466,7 +476,7 @@ static void test_null(void)
   ok( sz == 1 + lstrlenW(buffer) || sz == lstrlenW(buffer), "sz wrong %d\n", sz);
 
   /* before XP SP2, buffer is "server; server" */
-  ok( !lstrcmpW(szExpect, buffer) || !lstrcmpW(szServer, buffer), "cookie data wrong\n");
+  ok( !strcmp_ww(szExpect, buffer) || !strcmp_ww(szServer, buffer), "cookie data wrong\n");
 
   sz = sizeof(buffer);
   r = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECTED_STATE, buffer, &sz);
@@ -855,17 +865,14 @@ static void r_verifyProxyEnable(LONG l, DWORD exp)
     HKEY hkey;
     DWORD type, val, size = sizeof(DWORD);
     LONG ret;
-    static const WCHAR szInternetSettings[] =
-            { 'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-              'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-              'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0 };
-    static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
+    static const CHAR szInternetSettings[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
+    static const CHAR szProxyEnable[] = "ProxyEnable";
 
-    ret = RegOpenKeyW(HKEY_CURRENT_USER, szInternetSettings, &hkey);
-    ok_(__FILE__,l) (!ret, "RegOpenKeyW failed: 0x%08x\n", ret);
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, szInternetSettings, &hkey);
+    ok_(__FILE__,l) (!ret, "RegOpenKeyA failed: 0x%08x\n", ret);
 
-    ret = RegQueryValueExW(hkey, szProxyEnable, 0, &type, (BYTE*)&val, &size);
-    ok_(__FILE__,l) (!ret, "RegQueryValueExW failed: 0x%08x\n", ret);
+    ret = RegQueryValueExA(hkey, szProxyEnable, 0, &type, (BYTE*)&val, &size);
+    ok_(__FILE__,l) (!ret, "RegQueryValueExA failed: 0x%08x\n", ret);
     ok_(__FILE__,l) (type == REG_DWORD, "Expected regtype to be REG_DWORD, was: %d\n", type);
     ok_(__FILE__,l) (val == exp, "Expected ProxyEnabled to be %d, got: %d\n", exp, val);
 
@@ -919,7 +926,7 @@ static void test_Option_PerConnectionOption(void)
     ret = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
     ok(ret == TRUE, "InternetQueryOption should've succeeded\n");
-    ok(!lstrcmpW(list.pOptions[0].Value.pszValue, proxy_srvW),
+    ok(!strcmp_ww(list.pOptions[0].Value.pszValue, proxy_srvW),
             "Retrieved proxy server should've been %s, was: %s\n",
             wine_dbgstr_w(proxy_srvW), wine_dbgstr_w(list.pOptions[0].Value.pszValue));
     ok(list.pOptions[1].Value.dwValue == PROXY_TYPE_PROXY,
