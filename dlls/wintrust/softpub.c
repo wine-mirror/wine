@@ -474,9 +474,9 @@ static CMSG_SIGNER_INFO *WINTRUST_GetSigner(CRYPT_PROVIDER_DATA *data,
     return signerInfo;
 }
 
-static BOOL WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
+static DWORD WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
-    BOOL ret;
+    DWORD err;
     CMSG_SIGNER_INFO *signerInfo = WINTRUST_GetSigner(data, signerIdx);
 
     if (signerInfo)
@@ -485,11 +485,14 @@ static BOOL WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 
         sgnr.psSigner = signerInfo;
         sgnr.sftVerifyAsOf = data->sftSystemTime;
-        ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr);
+        if (!data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr))
+            err = GetLastError();
+        else
+            err = ERROR_SUCCESS;
     }
     else
-        ret = FALSE;
-    return ret;
+        err = GetLastError();
+    return err;
 }
 
 static CERT_INFO *WINTRUST_GetSignerCertInfo(CRYPT_PROVIDER_DATA *data,
@@ -574,21 +577,15 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
         if (ret)
         {
             DWORD i;
+            DWORD err = ERROR_SUCCESS;
 
-            for (i = 0; ret && i < signerCount; i++)
+            for (i = 0; !err && i < signerCount; i++)
             {
-                if ((ret = WINTRUST_SaveSigner(data, i)))
-                {
-                    DWORD err;
-
+                if (!(err = WINTRUST_SaveSigner(data, i)))
                     err = WINTRUST_VerifySigner(data, i);
-                    if (err)
-                    {
-                        SetLastError(err);
-                        ret = FALSE;
-                    }
-                }
             }
+            if (err)
+                ret = FALSE;
         }
         else
             SetLastError(TRUST_E_NOSIGNATURE);
