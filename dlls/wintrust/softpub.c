@@ -323,35 +323,45 @@ static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
     return ret;
 }
 
-static BOOL SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err = ERROR_SUCCESS;
 
     if (!data->pWintrustData->u.pFile)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        ret = FALSE;
+        err = ERROR_INVALID_PARAMETER;
         goto error;
     }
-    ret = SOFTPUB_OpenFile(data);
-    if (!ret)
+    if (!SOFTPUB_OpenFile(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_GetFileSubject(data);
-    if (!ret)
+    }
+    if (!SOFTPUB_GetFileSubject(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_GetSIP(data);
-    if (!ret)
+    }
+    if (!SOFTPUB_GetSIP(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
-     data->pWintrustData->u.pFile->pcwszFilePath);
-    if (!ret)
+    }
+    if (!SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
+     data->pWintrustData->u.pFile->pcwszFilePath))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_CreateStoreFromMessage(data);
-    if (!ret)
+    }
+    if (!SOFTPUB_CreateStoreFromMessage(data))
+    {
+        err = GetLastError();
         goto error;
-    ret = SOFTPUB_DecodeInnerContent(data);
+    }
+    if (!SOFTPUB_DecodeInnerContent(data))
+        err = GetLastError();
 error:
-    return ret;
+    return err;
 }
 
 static BOOL SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
@@ -393,7 +403,8 @@ error:
 
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    BOOL ret = TRUE;
+    DWORD err = ERROR_SUCCESS;
 
     TRACE("(%p)\n", data);
 
@@ -406,7 +417,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         ret = SOFTPUB_LoadCertMessage(data);
         break;
     case WTD_CHOICE_FILE:
-        ret = SOFTPUB_LoadFileMessage(data);
+        err = SOFTPUB_LoadFileMessage(data);
         break;
     case WTD_CHOICE_CATALOG:
         ret = SOFTPUB_LoadCatalogMessage(data);
@@ -420,6 +431,11 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
          GetLastError();
+    else if (err)
+    {
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] = err;
+        ret = FALSE;
+    }
     TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
      data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
     return ret ? S_OK : S_FALSE;
