@@ -245,7 +245,7 @@ static int get_num_pages(HWND hEditorWnd, FORMATRANGE fr)
     {
         int bottom = fr.rc.bottom;
         page++;
-        fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE,
+        fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE,
                                      (LPARAM)&fr);
         fr.rc.bottom = bottom;
     }
@@ -263,7 +263,7 @@ static void char_from_pagenum(HWND hEditorWnd, FORMATRANGE *fr, int page)
     for(i = 1; i < page; i++)
     {
         int bottom = fr->rc.bottom;
-        fr->chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)fr);
+        fr->chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, (LPARAM)fr);
         fr->rc.bottom = bottom;
     }
 }
