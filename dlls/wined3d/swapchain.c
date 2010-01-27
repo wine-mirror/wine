@@ -343,6 +343,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         swapchain_blit(This, context, &src_rect, &dst_rect);
     }
 
+    if (This->num_contexts > 1) wglFinish();
     SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
 
     TRACE("SwapBuffers called, Starting new frame\n");
