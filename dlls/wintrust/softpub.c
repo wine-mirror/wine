@@ -364,6 +364,14 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_DecodeInnerContent(data);
 
 error:
+    if (err && data->fOpenedFile && data->pWintrustData->u.pFile)
+    {
+        /* The caller won't expect the file to be open on failure, so close it.
+         */
+        CloseHandle(data->pWintrustData->u.pFile->hFile);
+        data->pWintrustData->u.pFile->hFile = INVALID_HANDLE_VALUE;
+        data->fOpenedFile = FALSE;
+    }
     return err;
 }
 
