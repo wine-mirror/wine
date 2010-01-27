@@ -194,20 +194,23 @@ static DWORD SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
     return err;
 }
 
-static BOOL SOFTPUB_CreateStoreFromMessage(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_CreateStoreFromMessage(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret = FALSE;
+    DWORD err = ERROR_SUCCESS;
     HCERTSTORE store;
 
     store = CertOpenStore(CERT_STORE_PROV_MSG, data->dwEncoding,
      data->hProv, CERT_STORE_NO_CRYPT_RELEASE_FLAG, data->hMsg);
     if (store)
     {
-        ret = data->psPfns->pfnAddStore2Chain(data, store);
+        if (!data->psPfns->pfnAddStore2Chain(data, store))
+            err = GetLastError();
         CertCloseStore(store, 0);
     }
-    TRACE("returning %d\n", ret);
-    return ret;
+    else
+        err = GetLastError();
+    TRACE("returning %d\n", err);
+    return err;
 }
 
 static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
@@ -341,11 +344,9 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
      data->pWintrustData->u.pFile->pcwszFilePath);
     if (err)
         goto error;
-    if (!SOFTPUB_CreateStoreFromMessage(data))
-    {
-        err = GetLastError();
+    err = SOFTPUB_CreateStoreFromMessage(data);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_DecodeInnerContent(data))
         err = GetLastError();
 error:
@@ -381,11 +382,9 @@ static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
      data->pWintrustData->u.pFile->pcwszFilePath);
     if (err)
         goto error;
-    if (!SOFTPUB_CreateStoreFromMessage(data))
-    {
-        err = GetLastError();
+    err = SOFTPUB_CreateStoreFromMessage(data);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_DecodeInnerContent(data))
         err = GetLastError();
     /* FIXME: this loads the catalog file, but doesn't validate the member. */
