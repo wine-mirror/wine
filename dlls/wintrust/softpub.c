@@ -75,9 +75,9 @@ HRESULT WINAPI DriverFinalPolicy(CRYPT_PROVIDER_DATA *data)
 /* Assumes data->pWintrustData->u.pFile exists.  Makes sure a file handle is
  * open for the file.
  */
-static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret = TRUE;
+    DWORD err = ERROR_SUCCESS;
 
     /* PSDK implies that all values should be initialized to NULL, so callers
      * typically have hFile as NULL rather than INVALID_HANDLE_VALUE.  Check
@@ -92,13 +92,13 @@ static BOOL SOFTPUB_OpenFile(CRYPT_PROVIDER_DATA *data)
         if (data->pWintrustData->u.pFile->hFile != INVALID_HANDLE_VALUE)
             data->fOpenedFile = TRUE;
         else
-            ret = FALSE;
+            err = GetLastError();
     }
-    if (ret)
+    if (!err)
         GetFileTime(data->pWintrustData->u.pFile->hFile, &data->sftSystemTime,
          NULL, NULL);
-    TRACE("returning %d\n", ret);
-    return ret;
+    TRACE("returning %d\n", err);
+    return err;
 }
 
 /* Assumes data->pWintrustData->u.pFile exists.  Sets data->pPDSip->gSubject to
@@ -332,11 +332,9 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
         err = ERROR_INVALID_PARAMETER;
         goto error;
     }
-    if (!SOFTPUB_OpenFile(data))
-    {
-        err = GetLastError();
+    err = SOFTPUB_OpenFile(data);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_GetFileSubject(data))
     {
         err = GetLastError();
