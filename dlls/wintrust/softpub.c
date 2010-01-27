@@ -753,11 +753,11 @@ static void WINTRUST_CreateChainPolicyCreateInfo(
     info->pvReserved = NULL;
 }
 
-static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
+static DWORD WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
  DWORD signer, PWTD_GENERIC_CHAIN_POLICY_CREATE_INFO createInfo,
  PCERT_CHAIN_PARA chainPara)
 {
-    BOOL ret = TRUE;
+    DWORD err = ERROR_SUCCESS;
     HCERTSTORE store = NULL;
 
     if (data->chStores)
@@ -772,15 +772,17 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
                 CertAddStoreToCollection(store, data->pahStores[i], 0, 0);
         }
         else
-            ret = FALSE;
+            err = GetLastError();
     }
-    if (ret)
+    if (!err)
     {
         /* Expect the end certificate for each signer to be the only cert in
          * the chain:
          */
         if (data->pasSigners[signer].csCertChain)
         {
+            BOOL ret;
+
             /* Create a certificate chain for each signer */
             ret = CertGetCertificateChain(createInfo->hChainEngine,
              data->pasSigners[signer].pasCertChain[0].pCert,
@@ -792,45 +794,41 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
                 if (data->pasSigners[signer].pChainContext->cChain != 1)
                 {
                     FIXME("unimplemented for more than 1 simple chain\n");
-                    ret = FALSE;
+                    err = E_NOTIMPL;
                 }
                 else
                 {
-                    DWORD err;
-
                     if (!(err = WINTRUST_CopyChain(data, signer)))
                     {
                         if (data->psPfns->pfnCertCheckPolicy)
+                        {
                             ret = data->psPfns->pfnCertCheckPolicy(data, signer,
                              FALSE, 0);
+                            if (!ret)
+                                err = GetLastError();
+                        }
                         else
                             TRACE(
                              "no cert check policy, skipping policy check\n");
                     }
-                    else
-                    {
-                        SetLastError(err);
-                        ret = FALSE;
-                    }
                 }
             }
+            else
+                err = GetLastError();
         }
         CertCloseStore(store, 0);
     }
-    return ret;
+    return err;
 }
 
 HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err;
 
     TRACE("(%p)\n", data);
 
     if (!data->csSigners)
-    {
-        ret = FALSE;
-        SetLastError(TRUST_E_NOSIGNATURE);
-    }
+        err = TRUST_E_NOSIGNATURE;
     else
     {
         DWORD i;
@@ -838,17 +836,16 @@ HRESULT WINAPI WintrustCertificateTrust(CRYPT_PROVIDER_DATA *data)
         CERT_CHAIN_PARA chainPara;
 
         WINTRUST_CreateChainPolicyCreateInfo(data, &createInfo, &chainPara);
-        ret = TRUE;
-        for (i = 0; i < data->csSigners; i++)
-            ret = WINTRUST_CreateChainForSigner(data, i, &createInfo,
+        err = ERROR_SUCCESS;
+        for (i = 0; !err && i < data->csSigners; i++)
+            err = WINTRUST_CreateChainForSigner(data, i, &createInfo,
              &chainPara);
     }
-    if (!ret)
-        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] =
-         GetLastError();
-    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+    if (err)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV] = err;
+    TRACE("returning %d (%08x)\n", !err ? S_OK : S_FALSE,
      data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_CERTPROV]);
-    return ret ? S_OK : S_FALSE;
+    return !err ? S_OK : S_FALSE;
 }
 
 HRESULT WINAPI GenericChainCertificateTrust(CRYPT_PROVIDER_DATA *data)
