@@ -8,6 +8,7 @@ IMPORTS   = winmm user32 kernel32
 CTESTS = \
 	capture.c \
 	mci.c \
+	midi.c \
 	mixer.c \
 	mmio.c \
 	timer.c \
