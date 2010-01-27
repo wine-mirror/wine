@@ -771,46 +771,52 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
             for (i = 0; i < data->chStores; i++)
                 CertAddStoreToCollection(store, data->pahStores[i], 0, 0);
         }
+        else
+            ret = FALSE;
     }
-    /* Expect the end certificate for each signer to be the only cert in the
-     * chain:
-     */
-    if (data->pasSigners[signer].csCertChain)
+    if (ret)
     {
-        /* Create a certificate chain for each signer */
-        ret = CertGetCertificateChain(createInfo->hChainEngine,
-         data->pasSigners[signer].pasCertChain[0].pCert,
-         &data->pasSigners[signer].sftVerifyAsOf, store,
-         chainPara, createInfo->dwFlags, createInfo->pvReserved,
-         &data->pasSigners[signer].pChainContext);
-        if (ret)
+        /* Expect the end certificate for each signer to be the only cert in
+         * the chain:
+         */
+        if (data->pasSigners[signer].csCertChain)
         {
-            if (data->pasSigners[signer].pChainContext->cChain != 1)
+            /* Create a certificate chain for each signer */
+            ret = CertGetCertificateChain(createInfo->hChainEngine,
+             data->pasSigners[signer].pasCertChain[0].pCert,
+             &data->pasSigners[signer].sftVerifyAsOf, store,
+             chainPara, createInfo->dwFlags, createInfo->pvReserved,
+             &data->pasSigners[signer].pChainContext);
+            if (ret)
             {
-                FIXME("unimplemented for more than 1 simple chain\n");
-                ret = FALSE;
-            }
-            else
-            {
-                DWORD err;
-
-                if (!(err = WINTRUST_CopyChain(data, signer)))
+                if (data->pasSigners[signer].pChainContext->cChain != 1)
                 {
-                    if (data->psPfns->pfnCertCheckPolicy)
-                        ret = data->psPfns->pfnCertCheckPolicy(data, signer,
-                         FALSE, 0);
-                    else
-                        TRACE("no cert check policy, skipping policy check\n");
+                    FIXME("unimplemented for more than 1 simple chain\n");
+                    ret = FALSE;
                 }
                 else
                 {
-                    SetLastError(err);
-                    ret = FALSE;
+                    DWORD err;
+
+                    if (!(err = WINTRUST_CopyChain(data, signer)))
+                    {
+                        if (data->psPfns->pfnCertCheckPolicy)
+                            ret = data->psPfns->pfnCertCheckPolicy(data, signer,
+                             FALSE, 0);
+                        else
+                            TRACE(
+                             "no cert check policy, skipping policy check\n");
+                    }
+                    else
+                    {
+                        SetLastError(err);
+                        ret = FALSE;
+                    }
                 }
             }
         }
+        CertCloseStore(store, 0);
     }
-    CertCloseStore(store, 0);
     return ret;
 }
 
