@@ -546,7 +546,7 @@ static DWORD MIDIOut_GetVolume(WORD wDevID, DWORD *lpdwVolume)
         float right;
         AudioUnit_GetVolume(destinations[wDevID].synth, &left, &right);
 
-        *lpdwVolume = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
+        *lpdwVolume = (WORD) (left * 0xFFFF) + ((WORD) (right * 0xFFFF) << 16);
 
         return MMSYSERR_NOERROR;
     }
