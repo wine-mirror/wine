@@ -1772,6 +1772,10 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     /* FIXME: the correct value is not allocated yet for MAPPER */
     mosm.wDeviceID  = *lpuDeviceID;
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm);
+    if (!lpwm) {
+	HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+	return MMSYSERR_NOMEM;
+    }
     lpMidiStrm->hDevice = hMidiOut;
     if (lphMidiStrm)
 	*lphMidiStrm = (HMIDISTRM)hMidiOut;
@@ -1779,6 +1783,12 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpwm->mld.uDeviceID = *lpuDeviceID;
 
     ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD_PTR)&lpwm->mod, fdwOpen);
+    if (ret != MMSYSERR_NOERROR) {
+	MMDRV_Free(hMidiOut, &lpwm->mld);
+	HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+	return ret;
+    }
+
     lpMidiStrm->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     lpMidiStrm->wFlags = HIWORD(fdwOpen);
 
