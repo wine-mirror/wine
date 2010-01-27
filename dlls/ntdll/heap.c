@@ -1333,6 +1333,52 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
 
 
 /***********************************************************************
+ *           validate_block_pointer
+ *
+ * Minimum validation needed to catch bad parameters in heap functions.
+ */
+static BOOL validate_block_pointer( HEAP *heap, SUBHEAP **ret_subheap, const ARENA_INUSE *arena )
+{
+    SUBHEAP *subheap;
+    BOOL ret = FALSE;
+
+    if (!(*ret_subheap = subheap = HEAP_FindSubHeap( heap, arena )))
+    {
+        ARENA_LARGE *large_arena = find_large_block( heap, arena + 1 );
+
+        if (!large_arena)
+        {
+            WARN( "Heap %p: pointer %p is not inside heap\n", heap, arena + 1 );
+            return FALSE;
+        }
+        if ((heap->flags & HEAP_VALIDATE) && !validate_large_arena( heap, large_arena, QUIET ))
+            return FALSE;
+        return TRUE;
+    }
+
+    if ((char *)arena < (char *)subheap->base + subheap->headerSize)
+        WARN( "Heap %p: pointer %p is inside subheap %p header\n", subheap->heap, arena + 1, subheap );
+    else if (subheap->heap->flags & HEAP_VALIDATE)  /* do the full validation */
+        ret = HEAP_ValidateInUseArena( subheap, arena, QUIET );
+    else if ((ULONG_PTR)arena % ALIGNMENT != ARENA_OFFSET)
+        WARN( "Heap %p: unaligned arena pointer %p\n", subheap->heap, arena );
+    else if (arena->magic != ARENA_INUSE_MAGIC)
+        WARN( "Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, arena->magic, arena );
+    else if (arena->size & ARENA_FLAG_FREE)
+        ERR( "Heap %p: bad flags %08x for in-use arena %p\n",
+             subheap->heap, arena->size & ~ARENA_SIZE_MASK, arena );
+    else if ((const char *)(arena + 1) + (arena->size & ARENA_SIZE_MASK) > (const char *)subheap->base + subheap->size ||
+             (const char *)(arena + 1) + (arena->size & ARENA_SIZE_MASK) < (const char *)(arena + 1))
+        ERR( "Heap %p: bad size %08x for in-use arena %p\n",
+             subheap->heap, arena->size & ARENA_SIZE_MASK, arena );
+    else
+        ret = TRUE;
+
+    return ret;
+}
+
+
+/***********************************************************************
  *           heap_set_debug_flags
  */
 void heap_set_debug_flags( HANDLE handle )
@@ -1633,24 +1679,13 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     /* Some sanity checks */
     pInUse  = (ARENA_INUSE *)ptr - 1;
-    if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse )))
-    {
-        ARENA_LARGE *large_arena = find_large_block( heapPtr, ptr );
+    if (!validate_block_pointer( heapPtr, &subheap, pInUse )) goto error;
 
-        if (!large_arena) goto error;
-        if ((heapPtr->flags & HEAP_VALIDATE) && !validate_large_arena( heapPtr, large_arena, QUIET ))
-            goto error;
+    if (!subheap)
         free_large_block( heapPtr, flags, ptr );
-        goto done;
-    }
-    if ((char *)pInUse < (char *)subheap->base + subheap->headerSize) goto error;
-    if (!HEAP_ValidateInUseArena( subheap, pInUse, QUIET )) goto error;
+    else
+        HEAP_MakeInUseBlockFree( subheap, pInUse );
 
-    /* Turn the block into a free block */
-
-    HEAP_MakeInUseBlockFree( subheap, pInUse );
-
-done:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     TRACE("(%p,%08x,%p): returning TRUE\n", heap, flags, ptr );
     return TRUE;
@@ -1705,19 +1740,13 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     pArena = (ARENA_INUSE *)ptr - 1;
-    if (!(subheap = HEAP_FindSubHeap( heapPtr, pArena )))
+    if (!validate_block_pointer( heapPtr, &subheap, pArena )) goto error;
+    if (!subheap)
     {
-        ARENA_LARGE *large_arena = find_large_block( heapPtr, ptr );
-
-        if (!large_arena) goto error;
-        if ((heapPtr->flags & HEAP_VALIDATE) && !validate_large_arena( heapPtr, large_arena, QUIET ))
-            goto error;
         if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
         notify_free( ptr );
         goto done;
     }
-    if ((char *)pArena < (char *)subheap->base + subheap->headerSize) goto error;
-    if (!HEAP_ValidateInUseArena( subheap, pArena, QUIET )) goto error;
 
     /* Check if we need to grow the block */
 
@@ -1910,6 +1939,8 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
 {
     SIZE_T ret;
+    const ARENA_INUSE *pArena;
+    SUBHEAP *subheap;
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
     if (!heapPtr)
@@ -1920,20 +1951,21 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
+
+    pArena = (const ARENA_INUSE *)ptr - 1;
+    if (!validate_block_pointer( heapPtr, &subheap, pArena ))
     {
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
         ret = ~0UL;
     }
+    else if (!subheap)
+    {
+        const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
+        ret = large_arena->data_size;
+    }
     else
     {
-        const ARENA_INUSE *pArena = (const ARENA_INUSE *)ptr - 1;
-        if (pArena->size == ARENA_LARGE_SIZE)
-        {
-            const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
-            ret = large_arena->data_size;
-        }
-        else ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
+        ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
