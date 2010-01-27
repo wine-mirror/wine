@@ -127,20 +127,20 @@ static DWORD SOFTPUB_GetFileSubject(CRYPT_PROVIDER_DATA *data)
 /* Assumes data->u.pPDSip exists, and its gSubject member set.
  * Allocates data->u.pPDSip->pSip and loads it, if possible.
  */
-static BOOL SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
+static DWORD SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err = ERROR_SUCCESS;
 
     data->u.pPDSip->pSip = data->psPfns->pfnAlloc(sizeof(SIP_DISPATCH_INFO));
     if (data->u.pPDSip->pSip)
-        ret = CryptSIPLoad(&data->u.pPDSip->gSubject, 0, data->u.pPDSip->pSip);
-    else
     {
-        SetLastError(ERROR_OUTOFMEMORY);
-        ret = FALSE;
+        if (!CryptSIPLoad(&data->u.pPDSip->gSubject, 0, data->u.pPDSip->pSip))
+            err = GetLastError();
     }
-    TRACE("returning %d\n", ret);
-    return ret;
+    else
+        err = ERROR_OUTOFMEMORY;
+    TRACE("returning %d\n", err);
+    return err;
 }
 
 /* Assumes data->u.pPDSip has been loaded, and data->u.pPDSip->pSip allocated.
@@ -336,11 +336,9 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_GetFileSubject(data);
     if (err)
         goto error;
-    if (!SOFTPUB_GetSIP(data))
-    {
-        err = GetLastError();
+    err = SOFTPUB_GetSIP(data);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
      data->pWintrustData->u.pFile->pcwszFilePath))
     {
@@ -380,11 +378,9 @@ static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
         err = GetLastError();
         goto error;
     }
-    if (!SOFTPUB_GetSIP(data))
-    {
-        err = GetLastError();
+    err = SOFTPUB_GetSIP(data);
+    if (err)
         goto error;
-    }
     if (!SOFTPUB_GetMessageFromFile(data, catalog,
      data->pWintrustData->u.pCatalog->pcwszCatalogFilePath))
     {
