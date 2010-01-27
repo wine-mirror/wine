@@ -29,6 +29,8 @@
 #include <string.h>
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
+#else
+#define RUNNING_ON_VALGRIND 0
 #endif
 
 #define NONAMELESSUNION
@@ -107,7 +109,7 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  0x7f000
 /* extra size to add at the end of block for tail checking */
-#define HEAP_TAIL_EXTRA_SIZE(flags)  (flags & HEAP_TAIL_CHECKING_ENABLED ? 8 : 0)
+#define HEAP_TAIL_EXTRA_SIZE(flags) ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? 8 : 0)
 
 /* Max size of the blocks on the free lists */
 static const SIZE_T HEAP_freeListSizes[] =
@@ -206,16 +208,16 @@ static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
 /* mark a block of memory as a tail block */
 static inline void mark_block_tail( void *ptr, SIZE_T size, DWORD flags )
 {
-    mark_block_uninitialized( ptr, size );
     if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
+        mark_block_uninitialized( ptr, size );
         memset( ptr, ARENA_TAIL_FILLER, size );
-#if defined(VALGRIND_MAKE_MEM_NOACCESS)
-        VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
-#elif defined( VALGRIND_MAKE_NOACCESS)
-        VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
-#endif
     }
+#if defined(VALGRIND_MAKE_MEM_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
+#elif defined( VALGRIND_MAKE_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
+#endif
 }
 
 /* initialize contents of a newly created block of memory */
