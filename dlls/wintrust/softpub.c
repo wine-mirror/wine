@@ -560,7 +560,7 @@ static DWORD WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 
 HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 {
-    BOOL ret;
+    DWORD err;
 
     TRACE("(%p)\n", data);
 
@@ -572,30 +572,26 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
         DWORD signerCount, size;
 
         size = sizeof(signerCount);
-        ret = CryptMsgGetParam(data->hMsg, CMSG_SIGNER_COUNT_PARAM, 0,
-         &signerCount, &size);
-        if (ret)
+        if (CryptMsgGetParam(data->hMsg, CMSG_SIGNER_COUNT_PARAM, 0,
+         &signerCount, &size))
         {
             DWORD i;
-            DWORD err = ERROR_SUCCESS;
 
+            err = ERROR_SUCCESS;
             for (i = 0; !err && i < signerCount; i++)
             {
                 if (!(err = WINTRUST_SaveSigner(data, i)))
                     err = WINTRUST_VerifySigner(data, i);
             }
-            if (err)
-                ret = FALSE;
         }
         else
-            SetLastError(TRUST_E_NOSIGNATURE);
+            err = TRUST_E_NOSIGNATURE;
     }
     else
-        ret = TRUE;
-    if (!ret)
-        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_SIGPROV] =
-         GetLastError();
-    return ret ? S_OK : S_FALSE;
+        err = ERROR_SUCCESS;
+    if (err)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_SIGPROV] = err;
+    return !err ? S_OK : S_FALSE;
 }
 
 static DWORD WINTRUST_TrustStatusToConfidence(DWORD errorStatus)
