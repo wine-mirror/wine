@@ -283,6 +283,7 @@ static void test_SendRequest (void)
         goto done;
     }
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
+    if (!request) goto done;
 
     context = 0xdeadbeef;
     ret = WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(context));
