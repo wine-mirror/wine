@@ -216,56 +216,70 @@ static DWORD SOFTPUB_CreateStoreFromMessage(CRYPT_PROVIDER_DATA *data)
 static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
-    DWORD size;
+    DWORD size, err = ERROR_SUCCESS;
     LPSTR oid = NULL;
     LPBYTE buf = NULL;
 
     ret = CryptMsgGetParam(data->hMsg, CMSG_INNER_CONTENT_TYPE_PARAM, 0, NULL,
      &size);
     if (!ret)
+    {
+        err = GetLastError();
         goto error;
+    }
     oid = data->psPfns->pfnAlloc(size);
     if (!oid)
     {
-        SetLastError(ERROR_OUTOFMEMORY);
-        ret = FALSE;
+        err = ERROR_OUTOFMEMORY;
         goto error;
     }
     ret = CryptMsgGetParam(data->hMsg, CMSG_INNER_CONTENT_TYPE_PARAM, 0, oid,
      &size);
     if (!ret)
+    {
+        err = GetLastError();
         goto error;
+    }
     ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, NULL, &size);
     if (!ret)
+    {
+        err = GetLastError();
         goto error;
+    }
     buf = data->psPfns->pfnAlloc(size);
     if (!buf)
     {
-        SetLastError(ERROR_OUTOFMEMORY);
-        ret = FALSE;
+        err = ERROR_OUTOFMEMORY;
         goto error;
     }
     ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, buf, &size);
     if (!ret)
+    {
+        err = GetLastError();
         goto error;
+    }
     ret = CryptDecodeObject(data->dwEncoding, oid, buf, size, 0, NULL, &size);
     if (!ret)
+    {
+        err = GetLastError();
         goto error;
+    }
     data->u.pPDSip->psIndirectData = data->psPfns->pfnAlloc(size);
     if (!data->u.pPDSip->psIndirectData)
     {
-        SetLastError(ERROR_OUTOFMEMORY);
-        ret = FALSE;
+        err = ERROR_OUTOFMEMORY;
         goto error;
     }
     ret = CryptDecodeObject(data->dwEncoding, oid, buf, size, 0,
      data->u.pPDSip->psIndirectData, &size);
+    if (!ret)
+        err = GetLastError();
 
 error:
-    TRACE("returning %d\n", ret);
+    TRACE("returning %d\n", err);
     data->psPfns->pfnFree(oid);
     data->psPfns->pfnFree(buf);
-    return ret;
+    return err;
 }
 
 static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
@@ -347,8 +361,8 @@ static DWORD SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_CreateStoreFromMessage(data);
     if (err)
         goto error;
-    if (!SOFTPUB_DecodeInnerContent(data))
-        err = GetLastError();
+    err = SOFTPUB_DecodeInnerContent(data);
+
 error:
     return err;
 }
@@ -385,8 +399,7 @@ static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_CreateStoreFromMessage(data);
     if (err)
         goto error;
-    if (!SOFTPUB_DecodeInnerContent(data))
-        err = GetLastError();
+    err = SOFTPUB_DecodeInnerContent(data);
     /* FIXME: this loads the catalog file, but doesn't validate the member. */
 error:
     CloseHandle(catalog);
