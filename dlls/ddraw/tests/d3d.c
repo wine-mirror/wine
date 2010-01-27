@@ -3172,6 +3172,58 @@ done:
     UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void VertexBufferLockRest(void)
+{
+    D3DVERTEXBUFFERDESC desc;
+    IDirect3DVertexBuffer7 *buffer;
+    HRESULT hr;
+    unsigned int i;
+    void *data;
+    const struct
+    {
+        DWORD flags;
+        const char *debug_string;
+        HRESULT result;
+    }
+    test_data[] =
+    {
+        {0,                                         "(none)",                                       D3D_OK },
+        {DDLOCK_WAIT,                               "DDLOCK_WAIT",                                  D3D_OK },
+        {DDLOCK_EVENT,                              "DDLOCK_EVENT",                                 D3D_OK },
+        {DDLOCK_READONLY,                           "DDLOCK_READONLY",                              D3D_OK },
+        {DDLOCK_WRITEONLY,                          "DDLOCK_WRITEONLY",                             D3D_OK },
+        {DDLOCK_NOSYSLOCK,                          "DDLOCK_NOSYSLOCK",                             D3D_OK },
+        {DDLOCK_NOOVERWRITE,                        "DDLOCK_NOOVERWRITE",                           D3D_OK },
+        {DDLOCK_DISCARDCONTENTS,                    "DDLOCK_DISCARDCONTENTS",                       D3D_OK },
+
+        {DDLOCK_READONLY | DDLOCK_WRITEONLY,        "DDLOCK_READONLY | DDLOCK_WRITEONLY",           D3D_OK },
+        {DDLOCK_READONLY | DDLOCK_DISCARDCONTENTS,  "DDLOCK_READONLY | DDLOCK_DISCARDCONTENTS",     D3D_OK },
+        {0xdeadbeef,                                "0xdeadbeef",                                   D3D_OK },
+    };
+
+    memset(&desc, 0 , sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwCaps = 0;
+    desc.dwFVF = D3DFVF_XYZ;
+    desc.dwNumVertices = 64;
+    hr = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &buffer, 0);
+    ok(hr == D3D_OK, "IDirect3D7_CreateVertexBuffer failed, 0x%08x\n", hr);
+
+    for(i = 0; i < (sizeof(test_data) / sizeof(*test_data)); i++)
+    {
+        hr = IDirect3DVertexBuffer7_Lock(buffer, test_data[i].flags, &data, NULL);
+        ok(hr == test_data[i].result, "Lock flags %s returned 0x%08x, expected 0x%08x\n",
+            test_data[i].debug_string, hr, test_data[i].result);
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DVertexBuffer7_Unlock(buffer);
+            ok(hr == D3D_OK, "IDirect3DVertexBuffer7_Unlock failed, 0x%08x\n", hr);
+        }
+    }
+
+    IDirect3DVertexBuffer7_Release(buffer);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -3196,6 +3248,7 @@ START_TEST(d3d)
         D3D7_OldRenderStateTest();
         DeviceLoadTest();
         SetRenderTargetTest();
+        VertexBufferLockRest();
         ReleaseDirect3D();
     }
 
