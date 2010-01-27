@@ -3447,6 +3447,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
 
     LEAVE_GL();
+
+    wglFlush(); /* Flush to ensure ordering across contexts. */
+
     context_release(context);
 
     /* The texture is now most up to date - If the surface is a render target and has a drawable, this
@@ -3921,9 +3924,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         /* Leave the opengl state valid for blitting */
         myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
-        /* Flush in case the drawable is used by multiple GL contexts */
-        if(dstSwapchain && (This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer || dstSwapchain->num_contexts >= 2))
-            wglFlush();
+        wglFlush(); /* Flush to ensure ordering across contexts. */
 
         context_release(context);
 
@@ -4552,7 +4553,11 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
             else context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
 
             LEAVE_GL();
-        } else {
+
+            wglFlush(); /* Flush to ensure ordering across contexts. */
+        }
+        else
+        {
             FIXME("No up to date depth stencil location\n");
         }
     } else if (location == SFLAG_DS_ONSCREEN) {
@@ -4569,7 +4574,11 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
             if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
 
             LEAVE_GL();
-        } else {
+
+            wglFlush(); /* Flush to ensure ordering across contexts. */
+        }
+        else
+        {
             FIXME("No up to date depth stencil location\n");
         }
     } else {
@@ -4802,15 +4811,14 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     LEAVE_GL();
 
+    wglFlush(); /* Flush to ensure ordering across contexts. */
+
     if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain)))
     {
-        /* Make sure to flush the buffers. This is needed in apps like Red Alert II and Tiberian SUN that use multiple WGL contexts. */
-        if(((IWineD3DSwapChainImpl*)swapchain)->frontBuffer == (IWineD3DSurface*)This ||
-           ((IWineD3DSwapChainImpl*)swapchain)->num_contexts >= 2)
-            wglFlush();
-
         IWineD3DSwapChain_Release(swapchain);
-    } else {
+    }
+    else
+    {
         /* We changed the filtering settings on the texture. Inform the container about this to get the filters
          * reset properly next draw
          */

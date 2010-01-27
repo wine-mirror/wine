@@ -690,6 +690,9 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 
     /* Finished updating the screen, restore lock */
     LEAVE_GL();
+
+    wglFlush(); /* Flush to ensure ordering across contexts. */
+
     context_release(context);
 
     TRACE("Done all gl drawing\n");
