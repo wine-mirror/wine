@@ -6885,9 +6885,9 @@ static void test_preselected(void)
     ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
     ok(!delete_pf("msitest\\first", FALSE), "File installed\n");
     ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    todo_wine ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    todo_wine ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -7310,6 +7310,32 @@ static void test_MsiSetExternalUI(void)
     ok(!error, "MsiSetExternalUIRecord failed %u\n", error);
 }
 
+static void test_feature_override(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, "ADDLOCAL=One");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\new", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\changed", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\first", FALSE), "File installed\n");
+    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7400,6 +7426,7 @@ START_TEST(install)
     test_file_in_use_cab();
     test_MsiSetExternalUI();
     test_allusers_prop();
+    test_feature_override();
 
     DeleteFileA(log_file);
 

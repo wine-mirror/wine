@@ -1585,55 +1585,57 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
     return TRUE;
 }
 
-UINT MSI_SetFeatureStates(MSIPACKAGE *package)
+static BOOL process_overrides( MSIPACKAGE *package, int level )
 {
-    int level;
-    static const WCHAR szlevel[] =
-        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szAddLocal[] =
         {'A','D','D','L','O','C','A','L',0};
     static const WCHAR szAddSource[] =
         {'A','D','D','S','O','U','R','C','E',0};
     static const WCHAR szAdvertise[] =
         {'A','D','V','E','R','T','I','S','E',0};
-    BOOL override = FALSE;
+    BOOL ret = FALSE;
+
+    /* all these activation/deactivation things happen in order and things
+     * later on the list override things earlier on the list.
+     *
+     *  0  INSTALLLEVEL processing
+     *  1  ADDLOCAL
+     *  2  REMOVE
+     *  3  ADDSOURCE
+     *  4  ADDDEFAULT
+     *  5  REINSTALL
+     *  6  ADVERTISE
+     *  7  COMPADDLOCAL
+     *  8  COMPADDSOURCE
+     *  9  FILEADDLOCAL
+     * 10  FILEADDSOURCE
+     * 11  FILEADDDEFAULT
+     */
+    ret |= process_state_property( package, level, szAddLocal, INSTALLSTATE_LOCAL );
+    ret |= process_state_property( package, level, szRemove, INSTALLSTATE_ABSENT );
+    ret |= process_state_property( package, level, szAddSource, INSTALLSTATE_SOURCE );
+    ret |= process_state_property( package, level, szReinstall, INSTALLSTATE_UNKNOWN );
+    ret |= process_state_property( package, level, szAdvertise, INSTALLSTATE_ADVERTISED );
+
+    if (ret)
+        MSI_SetPropertyW( package, szPreselected, szOne );
+
+    return ret;
+}
+
+UINT MSI_SetFeatureStates(MSIPACKAGE *package)
+{
+    int level;
+    static const WCHAR szlevel[] =
+        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     MSICOMPONENT* component;
     MSIFEATURE *feature;
-
-
-    /* I do not know if this is where it should happen.. but */
 
     TRACE("Checking Install Level\n");
 
     level = msi_get_property_int(package, szlevel, 1);
 
-    /* ok here is the _real_ rub
-     * all these activation/deactivation things happen in order and things
-     * later on the list override things earlier on the list.
-     * 0) INSTALLLEVEL processing
-     * 1) ADDLOCAL
-     * 2) REMOVE
-     * 3) ADDSOURCE
-     * 4) ADDDEFAULT
-     * 5) REINSTALL
-     * 6) ADVERTISE
-     * 7) COMPADDLOCAL
-     * 8) COMPADDSOURCE
-     * 9) FILEADDLOCAL
-     * 10) FILEADDSOURCE
-     * 11) FILEADDDEFAULT
-     *
-     * I am still ignoring a lot of these. But that is ok for now, ADDLOCAL and
-     * REMOVE are the big ones, since we don't handle administrative installs
-     * yet anyway.
-     */
-    override |= process_state_property(package, level, szAddLocal, INSTALLSTATE_LOCAL);
-    override |= process_state_property(package, level, szRemove, INSTALLSTATE_ABSENT);
-    override |= process_state_property(package, level, szAddSource, INSTALLSTATE_SOURCE);
-    override |= process_state_property(package, level, szReinstall, INSTALLSTATE_UNKNOWN);
-    override |= process_state_property(package, level, szAdvertise, INSTALLSTATE_ADVERTISED);
-
-    if (!override)
+    if (!msi_get_property_int( package, szPreselected, 0 ))
     {
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
@@ -1663,8 +1665,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 msi_feature_set_state(package, fl->feature, INSTALLSTATE_UNKNOWN);
         }
     }
-    else
-        MSI_SetPropertyW(package, szPreselected, szOne);
 
     /*
      * now we want to enable or disable components base on feature
@@ -1963,7 +1963,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR szOutOfDiskSpace[] =
         {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
-    UINT rc;
+    UINT rc = ERROR_SUCCESS;
     MSIQUERY * view;
     LPWSTR level;
 
@@ -1984,26 +1984,28 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("File calculations\n");
     msi_check_file_install_states( package );
 
-    TRACE("Evaluating Condition Table\n");
-
-    rc = MSI_DatabaseOpenViewW(package->db, ConditionQuery, &view);
-    if (rc == ERROR_SUCCESS)
+    if (!process_overrides( package, msi_get_property_int( package, szlevel, 1 ) ))
     {
-        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeConditions,
-                    package);
-        msiobj_release(&view->hdr);
-    }
+        TRACE("Evaluating Condition Table\n");
 
-    TRACE("Enabling or Disabling Components\n");
-    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
-    {
-        if (MSI_EvaluateConditionW(package, comp->Condition) == MSICONDITION_FALSE)
+        rc = MSI_DatabaseOpenViewW( package->db, ConditionQuery, &view );
+        if (rc == ERROR_SUCCESS)
         {
-            TRACE("Disabling component %s\n", debugstr_w(comp->Component));
-            comp->Enabled = FALSE;
+            rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );
+            msiobj_release( &view->hdr );
         }
-        else
-            comp->Enabled = TRUE;
+
+        TRACE("Enabling or Disabling Components\n");
+        LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+        {
+            if (MSI_EvaluateConditionW( package, comp->Condition ) == MSICONDITION_FALSE)
+            {
+                TRACE("Disabling component %s\n", debugstr_w(comp->Component));
+                comp->Enabled = FALSE;
+            }
+            else
+                comp->Enabled = TRUE;
+        }
     }
 
     MSI_SetPropertyW(package,szCosting,szOne);
