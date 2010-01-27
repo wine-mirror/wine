@@ -318,8 +318,14 @@ static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwPara
 
     if (MIDIMAP_IsBadData(mom))
 	return MMSYSERR_ERROR;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MIDIERR_UNPREPARED;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
 
     mh = *lpMidiHdr;
+    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
     for (chn = 0; chn < 16; chn++)
     {
 	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0)
@@ -327,10 +333,15 @@ static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwPara
 	    mh.dwFlags = 0;
 	    midiOutPrepareHeader(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
 	    ret = midiOutLongMsg(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
+	    /* As of 2009, wineXYZ.drv's LongData handlers are synchronous */
+	    if (!ret && !(mh.dwFlags & MHDR_DONE))
+		FIXME("wait until MHDR_DONE\n");
 	    midiOutUnprepareHeader(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
 	    if (ret != MMSYSERR_NOERROR) break;
 	}
     }
+    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+    lpMidiHdr->dwFlags |= MHDR_DONE;
     return ret;
 }
 
@@ -397,21 +408,23 @@ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
     return ret;
 }
 
-static DWORD modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
+static DWORD modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwSize)
 {
     if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
-    if (lpMidiHdr->dwFlags & (MHDR_ISSTRM|MHDR_PREPARED))
+    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE))
 	return MMSYSERR_INVALPARAM;
 
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
+    lpMidiHdr->dwFlags &= ~MHDR_DONE;
     return MMSYSERR_NOERROR;
 }
 
 static DWORD modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
 {
     if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
-    if ((lpMidiHdr->dwFlags & MHDR_ISSTRM) || !(lpMidiHdr->dwFlags & MHDR_PREPARED))
-	return MMSYSERR_INVALPARAM;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
 
     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
     return MMSYSERR_NOERROR;
