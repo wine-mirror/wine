@@ -4466,8 +4466,8 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
     SC_HANDLE scm, service = NULL;
-    LPCWSTR name, *vector = NULL;
-    LPWSTR args;
+    LPCWSTR *vector = NULL;
+    LPWSTR name, args;
     DWORD event, numargs;
     UINT r = ERROR_FUNCTION_FAILED;
 
@@ -4475,9 +4475,9 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
         return ERROR_SUCCESS;
 
-    name = MSI_RecordGetString(rec, 2);
+    deformat_string(package, MSI_RecordGetString(rec, 2), &name);
+    deformat_string(package, MSI_RecordGetString(rec, 4), &args);
     event = MSI_RecordGetInteger(rec, 3);
-    args = strdupW(MSI_RecordGetString(rec, 4));
 
     if (!(event & msidbServiceControlEventStart))
         return ERROR_SUCCESS;
@@ -4510,6 +4510,7 @@ done:
     CloseServiceHandle(service);
     CloseServiceHandle(scm);
 
+    msi_free(name);
     msi_free(args);
     msi_free(vector);
     return r;
@@ -4594,7 +4595,6 @@ static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
 
     deformat_string(package, MSI_RecordGetString(rec, 2), &name);
     deformat_string(package, MSI_RecordGetString(rec, 4), &args);
-    args = strdupW(MSI_RecordGetString(rec, 4));
 
     scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!scm)
