@@ -2268,6 +2268,42 @@ static void _SHCreateSymbolicLinks(void)
     }
 }
 
+/******************************************************************************
+ * create_extra_folders  [Internal]
+ *
+ * Create some extra folders that don't have a standard CSIDL definition.
+ */
+static HRESULT create_extra_folders(void)
+{
+    static const WCHAR environW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR TempW[]    = {'T','e','m','p',0};
+    static const WCHAR TEMPW[]    = {'T','E','M','P',0};
+    static const WCHAR TMPW[]     = {'T','M','P',0};
+    WCHAR path[MAX_PATH+5];
+    HRESULT hr;
+    HKEY hkey;
+    DWORD type, size, ret;
+
+    ret = RegCreateKeyW( HKEY_CURRENT_USER, environW, &hkey );
+    if (ret) return HRESULT_FROM_WIN32( ret );
+
+    /* FIXME: should be under AppData, but we don't want spaces in the temp path */
+    hr = SHGetFolderPathAndSubDirW( 0, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL,
+                                    SHGFP_TYPE_DEFAULT, TempW, path );
+    if (SUCCEEDED(hr))
+    {
+        size = sizeof(path);
+        if (RegQueryValueExW( hkey, TEMPW, NULL, &type, (LPBYTE)path, &size ))
+            RegSetValueExW( hkey, TEMPW, 0, REG_SZ, (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+        size = sizeof(path);
+        if (RegQueryValueExW( hkey, TMPW, NULL, &type, (LPBYTE)path, &size ))
+            RegSetValueExW( hkey, TMPW, 0, REG_SZ, (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+    }
+    RegCloseKey( hkey );
+    return hr;
+}
+
+
 /* Register the default values in the registry, as some apps seem to depend
  * on their presence.  The set registered was taken from Windows XP.
  */
@@ -2286,6 +2322,8 @@ HRESULT SHELL_RegisterShellFolders(void)
         hr = _SHRegisterUserShellFolders(FALSE);
     if (SUCCEEDED(hr))
         hr = _SHRegisterCommonShellFolders();
+    if (SUCCEEDED(hr))
+        hr = create_extra_folders();
     return hr;
 }
 
