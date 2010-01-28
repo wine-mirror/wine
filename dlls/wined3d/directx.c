@@ -63,6 +63,7 @@ static const struct {
     {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL,           0                           },
     {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX,          0                           },
     {"GL_ARB_imaging",                      ARB_IMAGING,                    0                           },
+    {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE,           0                           },
     {"GL_ARB_multisample",                  ARB_MULTISAMPLE,                0                           }, /* needs GLX_ARB_MULTISAMPLE as well */
     {"GL_ARB_multitexture",                 ARB_MULTITEXTURE,               0                           },
     {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY,            0                           },
@@ -1836,6 +1837,12 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
             TRACE_(d3d_caps)(" IMPLIED: GL_ARB_half_float_pixel support(from GL_APPLE_float_pixels.\n");
             gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
         }
+    }
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    {
+        /* GL_ARB_map_buffer_range and GL_APPLE_flush_buffer_range provide the same
+         * functionality. Prefer the ARB extension */
+        gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] = FALSE;
     }
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {

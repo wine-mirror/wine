@@ -1743,6 +1743,7 @@ typedef enum wined3d_gl_extension
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
     ARB_IMAGING,
+    ARB_MAP_BUFFER_RANGE,
     ARB_MULTISAMPLE,
     ARB_MULTITEXTURE,
     ARB_OCCLUSION_QUERY,
@@ -2224,6 +2225,19 @@ typedef void (WINE_GLAPI *PGLFNFRAMEBUFFERTEXTUREFACEARBPROC)(GLenum target, GLe
 #endif
 typedef void (WINE_GLAPI *PGLFNBLENDCOLORPROC)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONPROC)(GLenum mode);
+
+/* GL_ARB_map_buffer_range */
+#ifndef GL_ARB_map_buffer_range
+#define GL_ARB_map_buffer_range 1
+#define GL_MAP_READ_BIT                                     0x0001
+#define GL_MAP_WRITE_BIT                                    0x0002
+#define GL_MAP_INVALIDATE_RANGE_BIT                         0x0004
+#define GL_MAP_INVALIDATE_BUFFER_BIT                        0x0008
+#define GL_MAP_FLUSH_EXPLICIT_BIT                           0x0010
+#define GL_MAP_UNSYNCHRONIZED_BIT                           0x0020
+#endif
+typedef GLvoid *(WINE_GLAPI *PGLFNMAPBUFFERRANGEPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void (WINE_GLAPI *PGLFNFLUSHMAPPEDBUFFERRANGEPROC)(GLenum target, GLintptr offset, GLsizeiptr length);
 
 /* GL_ARB_multisample */
 #ifndef GL_ARB_multisample
@@ -3934,6 +3948,11 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glBlendColorEXT,                            EXT_BLEND_COLOR,                NULL) \
     USE_GL_FUNC(PGLFNBLENDEQUATIONPROC, \
             glBlendEquationEXT,                         EXT_BLEND_MINMAX,               NULL) \
+    /* GL_ARB_map_buffer_range */ \
+    USE_GL_FUNC(PGLFNMAPBUFFERRANGEPROC, \
+            glMapBufferRange,                           ARB_MAP_BUFFER_RANGE,           NULL) \
+    USE_GL_FUNC(PGLFNFLUSHMAPPEDBUFFERRANGEPROC, \
+            glFlushMappedBufferRange,                   ARB_MAP_BUFFER_RANGE,           NULL) \
     /* GL_ARB_multisample */ \
     USE_GL_FUNC(WINED3D_PFNGLSAMPLECOVERAGEARBPROC, \
             glSampleCoverageARB,                        ARB_MULTISAMPLE,                NULL) \
