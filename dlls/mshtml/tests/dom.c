@@ -412,7 +412,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"BR",        elem_iids,        NULL},
     {"TABLE",     table_iids,       &DIID_DispHTMLTable},
     {"TBODY",     elem_iids,        NULL},
-    {"SCRIPT",    script_iids,      NULL},
+    {"SCRIPT",    script_iids,      &DIID_DispHTMLScriptElement},
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
     {"TEST",      generic_iids,     &DIID_DispHTMLGenericElement},
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
