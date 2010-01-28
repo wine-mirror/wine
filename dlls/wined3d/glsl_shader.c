@@ -156,6 +156,20 @@ struct glsl_vshader_private
     UINT                            num_gl_shaders, shader_array_size;
 };
 
+static const char *debug_gl_shader_type(GLenum type)
+{
+    switch (type)
+    {
+#define WINED3D_TO_STR(u) case u: return #u
+        WINED3D_TO_STR(GL_VERTEX_SHADER_ARB);
+        WINED3D_TO_STR(GL_GEOMETRY_SHADER_ARB);
+        WINED3D_TO_STR(GL_FRAGMENT_SHADER_ARB);
+#undef WINED3D_TO_STR
+        default:
+            return wine_dbg_sprintf("UNKNOWN(%#x)", type);
+    }
+}
+
 /* Extract a line from the info log.
  * Note that this modifies the source string. */
 static char *get_info_log_line(char **ptr)
@@ -236,6 +250,81 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
         }
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
+}
+
+/* GL locking is done by the caller. */
+static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLhandleARB program)
+{
+    GLint i, object_count, source_size;
+    GLhandleARB *objects;
+    char *source = NULL;
+
+    GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_ATTACHED_OBJECTS_ARB, &object_count));
+    objects = HeapAlloc(GetProcessHeap(), 0, object_count * sizeof(*objects));
+    if (!objects)
+    {
+        ERR("Failed to allocate object array memory.\n");
+        return;
+    }
+
+    GL_EXTCALL(glGetAttachedObjectsARB(program, object_count, NULL, objects));
+    for (i = 0; i < object_count; ++i)
+    {
+        char *ptr, *line;
+        GLint tmp;
+
+        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_SHADER_SOURCE_LENGTH_ARB, &tmp));
+
+        if (!source || source_size < tmp)
+        {
+            HeapFree(GetProcessHeap(), 0, source);
+
+            source = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tmp);
+            if (!source)
+            {
+                ERR("Failed to allocate %d bytes for shader source.\n", tmp);
+                HeapFree(GetProcessHeap(), 0, objects);
+                return;
+            }
+            source_size = tmp;
+        }
+
+        FIXME("Object %u:\n", objects[i]);
+        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_SUBTYPE_ARB, &tmp));
+        FIXME("    GL_OBJECT_SUBTYPE_ARB: %s.\n", debug_gl_shader_type(tmp));
+        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_COMPILE_STATUS_ARB, &tmp));
+        FIXME("    GL_OBJECT_COMPILE_STATUS_ARB: %d.\n", tmp);
+        FIXME("\n");
+
+        ptr = source;
+        GL_EXTCALL(glGetShaderSourceARB(objects[i], source_size, NULL, source));
+        while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
+        FIXME("\n");
+    }
+
+    HeapFree(GetProcessHeap(), 0, source);
+    HeapFree(GetProcessHeap(), 0, objects);
+}
+
+/* GL locking is done by the caller. */
+static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLhandleARB program)
+{
+    GLint tmp;
+
+    if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader)) return;
+
+    GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_TYPE_ARB, &tmp));
+    if (tmp == GL_PROGRAM_OBJECT_ARB)
+    {
+        GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &tmp));
+        if (!tmp)
+        {
+            FIXME("Program %u link status invalid.\n", program);
+            shader_glsl_dump_program_source(gl_info, program);
+        }
+    }
+
+    print_glsl_info_log(gl_info, program);
 }
 
 /**
@@ -4240,7 +4329,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Link the program */
     TRACE("Linking GLSL shader program %u\n", programId);
     GL_EXTCALL(glLinkProgramARB(programId));
-    print_glsl_info_log(gl_info, programId);
+    shader_glsl_validate_link(gl_info, programId);
 
     entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
@@ -4396,7 +4485,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     GL_EXTCALL(glAttachObjectARB(program_id, pshader_id));
     GL_EXTCALL(glLinkProgramARB(program_id));
 
-    print_glsl_info_log(gl_info, program_id);
+    shader_glsl_validate_link(gl_info, program_id);
 
     /* Once linked we can mark the shaders for deletion. They will be deleted once the program
      * is destroyed
