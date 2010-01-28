@@ -524,28 +524,14 @@ static void set_additional_environment(void)
                                          'P','r','o','f','i','l','e','L','i','s','t',0};
     static const WCHAR profiles_valueW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
     static const WCHAR all_users_valueW[] = {'A','l','l','U','s','e','r','s','P','r','o','f','i','l','e','\0'};
-    static const WCHAR usernameW[] = {'U','S','E','R','N','A','M','E',0};
-    static const WCHAR userprofileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
     static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    WCHAR *user_name = NULL, *profile_dir = NULL, *all_users_dir = NULL;
+    WCHAR *profile_dir = NULL, *all_users_dir = NULL;
     HANDLE hkey;
-    const char *name = wine_get_user_name();
     DWORD len;
 
-    /* set the USERNAME variable */
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
-    if (len)
-    {
-        user_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_UNIXCP, 0, name, -1, user_name, len );
-        SetEnvironmentVariableW( usernameW, user_name );
-    }
-    else WARN( "user name %s not convertible.\n", debugstr_a(name) );
-
-    /* set the USERPROFILE and ALLUSERSPROFILE variables */
+    /* set the ALLUSERSPROFILE variables */
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -561,31 +547,22 @@ static void set_additional_environment(void)
         NtClose( hkey );
     }
 
-    if (profile_dir)
+    if (profile_dir && all_users_dir)
     {
         WCHAR *value, *p;
 
-        if (all_users_dir) len = max( len, strlenW(all_users_dir) + 1 );
-        len += strlenW(profile_dir) + 1;
+        len = strlenW(profile_dir) + strlenW(all_users_dir) + 2;
         value = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         strcpyW( value, profile_dir );
         p = value + strlenW(value);
         if (p > value && p[-1] != '\\') *p++ = '\\';
-        if (user_name) {
-            strcpyW( p, user_name );
-            SetEnvironmentVariableW( userprofileW, value );
-        }
-        if (all_users_dir)
-        {
-            strcpyW( p, all_users_dir );
-            SetEnvironmentVariableW( allusersW, value );
-        }
+        strcpyW( p, all_users_dir );
+        SetEnvironmentVariableW( allusersW, value );
         HeapFree( GetProcessHeap(), 0, value );
     }
 
     HeapFree( GetProcessHeap(), 0, all_users_dir );
     HeapFree( GetProcessHeap(), 0, profile_dir );
-    HeapFree( GetProcessHeap(), 0, user_name );
 }
 
 /***********************************************************************
