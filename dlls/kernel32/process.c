@@ -410,7 +410,7 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
  * %SystemRoot% which are predefined. But Wine defines these in the
  * registry, so we need two passes.
  */
-static BOOL set_registry_environment(void)
+static BOOL set_registry_environment( BOOL volatile_only )
 {
     static const WCHAR env_keyW[] = {'M','a','c','h','i','n','e','\\',
                                      'S','y','s','t','e','m','\\',
@@ -435,7 +435,7 @@ static BOOL set_registry_environment(void)
 
     /* first the system environment variables */
     RtlInitUnicodeString( &nameW, env_keyW );
-    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
+    if (!volatile_only && NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
     {
         set_registry_variables( hkey, REG_SZ );
         set_registry_variables( hkey, REG_EXPAND_SZ );
@@ -446,7 +446,7 @@ static BOOL set_registry_environment(void)
     /* then the ones for the current user */
     if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
     RtlInitUnicodeString( &nameW, envW );
-    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
+    if (!volatile_only && NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
     {
         set_registry_variables( hkey, REG_SZ );
         set_registry_variables( hkey, REG_EXPAND_SZ );
@@ -1090,7 +1090,7 @@ void CDECL __wine_kernel_init(void)
         /* convert old configuration to new format */
         convert_old_config();
 
-        got_environment = set_registry_environment();
+        got_environment = set_registry_environment( FALSE );
         set_additional_environment();
     }
 
@@ -1140,12 +1140,9 @@ void CDECL __wine_kernel_init(void)
             ERR( "boot event wait timed out\n" );
         CloseHandle( boot_events[0] );
         if (boot_events[1]) CloseHandle( boot_events[1] );
-        /* if we didn't find environment section, try again now that wineboot has run */
-        if (!got_environment)
-        {
-            set_registry_environment();
-            set_additional_environment();
-        }
+        /* reload environment now that wineboot has run */
+        set_registry_environment( got_environment );
+        set_additional_environment();
     }
 
     if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
