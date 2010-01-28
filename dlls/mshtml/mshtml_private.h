@@ -712,6 +712,7 @@ void nsACString_SetData(nsACString*,const char*);
 PRUint32 nsACString_GetData(const nsACString*,const char**);
 
 BOOL nsAString_Init(nsAString*,const PRUnichar*);
+void nsAString_InitDepend(nsAString*,const PRUnichar*);
 void nsAString_SetData(nsAString*,const PRUnichar*);
 PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**);
 void nsAString_Finish(nsAString*);

@@ -55,6 +55,8 @@ struct nsCStringContainer {
     PRUint32 d3;
 };
 
+#define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
+
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
@@ -558,6 +560,15 @@ static void nsACString_Finish(nsACString *str)
 BOOL nsAString_Init(nsAString *str, const PRUnichar *data)
 {
     return NS_SUCCEEDED(NS_StringContainerInit2(str, data, PR_UINT32_MAX, 0));
+}
+
+/*
+ * Initializes nsAString with data owned by caller.
+ * Caller must ensure that data is valid during lifetime of string object.
+ */
+void nsAString_InitDepend(nsAString *str, const PRUnichar *data)
+{
+    NS_StringContainerInit2(str, data, PR_UINT32_MAX, NS_STRING_CONTAINER_INIT_DEPEND);
 }
 
 void nsAString_SetData(nsAString *str, const PRUnichar *data)

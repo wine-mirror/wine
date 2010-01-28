@@ -315,9 +315,9 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     if(flags & ATTR_FIX_URL)
         val = fix_url_value(value);
 
-    nsAString_Init(&str_name, style_tbl[sid].name);
-    nsAString_Init(&str_value, val ? val : value);
-    nsAString_Init(&str_empty, wszEmpty);
+    nsAString_InitDepend(&str_name, style_tbl[sid].name);
+    nsAString_InitDepend(&str_value, val ? val : value);
+    nsAString_InitDepend(&str_empty, wszEmpty);
     heap_free(val);
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
@@ -369,7 +369,7 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     nsAString str_name;
     nsresult nsres;
 
-    nsAString_Init(&str_name, style_tbl[sid].name);
+    nsAString_InitDepend(&str_name, style_tbl[sid].name);
 
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     if(NS_FAILED(nsres)) {
@@ -2129,7 +2129,7 @@ static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&text_str, v);
+    nsAString_InitDepend(&text_str, v);
     nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->nsstyle, &text_str);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
