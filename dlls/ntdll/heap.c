@@ -82,6 +82,7 @@ typedef struct
 
 /* Value for arena 'magic' field */
 #define ARENA_INUSE_MAGIC      0x455355
+#define ARENA_PENDING_MAGIC    0xbedead
 #define ARENA_FREE_MAGIC       0x45455246
 #define ARENA_LARGE_MAGIC      0x6752614c
 
@@ -151,6 +152,8 @@ typedef struct tagHEAP
     struct list      large_list;    /* Large blocks list */
     SIZE_T           grow_size;     /* Size of next subheap for growing heap */
     DWORD            magic;         /* Magic number */
+    DWORD            pending_pos;   /* Position in pending free requests ring */
+    ARENA_INUSE    **pending_free;  /* Ring buffer for pending free requests */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
     FREE_LIST_ENTRY *freeList;      /* Free lists */
 } HEAP;
@@ -159,6 +162,7 @@ typedef struct tagHEAP
 
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
+#define MAX_FREE_PENDING     1024    /* max number of free requests to delay */
 
 /* some undocumented flags (names are made up) */
 #define HEAP_PAGE_ALLOCS      0x01000000
@@ -275,7 +279,8 @@ static void subheap_notify_free_all(SUBHEAP const *subheap)
         else
         {
             ARENA_INUSE const *pArena = (ARENA_INUSE const *)ptr;
-            if (pArena->magic!=ARENA_INUSE_MAGIC) ERR("bad inuse_magic @%p\n", pArena);
+            if (pArena->magic != ARENA_INUSE_MAGIC && pArena->magic != ARENA_PENDING_MAGIC)
+                ERR("bad inuse_magic @%p\n", pArena);
             notify_free(pArena + 1);
             ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
         }
@@ -362,7 +367,9 @@ static void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p %08x used %08x\n", pArena, pArena->magic, pArena->size & ARENA_SIZE_MASK );
+                DPRINTF( "%p %08x %s %08x\n",
+                         pArena, pArena->magic, pArena->magic == ARENA_INUSE_MAGIC ? "used" : "pend",
+                         pArena->size & ARENA_SIZE_MASK );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -607,11 +614,25 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
  */
 static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 {
+    HEAP *heap = subheap->heap;
     ARENA_FREE *pFree;
-    SIZE_T size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
+    SIZE_T size;
+
+    if (heap->pending_free)
+    {
+        ARENA_INUSE *prev = heap->pending_free[heap->pending_pos];
+        heap->pending_free[heap->pending_pos] = pArena;
+        heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
+        pArena->magic = ARENA_PENDING_MAGIC;
+        mark_block_free( pArena + 1, pArena->size & ARENA_SIZE_MASK, heap->flags );
+        if (!prev) return;
+        pArena = prev;
+        subheap = HEAP_FindSubHeap( heap, pArena );
+    }
 
     /* Check if we can merge with previous block */
 
+    size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
     if (pArena->size & ARENA_FLAG_PREV_FREE)
     {
         pFree = *((ARENA_FREE **)pArena - 1);
@@ -1168,7 +1189,7 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     }
 
     /* Check magic number */
-    if (pArena->magic != ARENA_INUSE_MAGIC)
+    if (pArena->magic != ARENA_INUSE_MAGIC && pArena->magic != ARENA_PENDING_MAGIC)
     {
         if (quiet == NOISY) {
             ERR("Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
@@ -1238,7 +1259,24 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
         return FALSE;
     }
     /* Check unused bytes */
-    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    if (pArena->magic == ARENA_PENDING_MAGIC)
+    {
+        DWORD *ptr = (DWORD *)(pArena + 1);
+        DWORD *end = (DWORD *)((char *)ptr + size);
+
+        while (ptr < end)
+        {
+            if (*ptr != ARENA_FREE_FILLER)
+            {
+                ERR("Heap %p: free block %p overwritten at %p by %08x\n",
+                    subheap->heap, (ARENA_INUSE *)pArena + 1, ptr, *ptr );
+                if (!*ptr) { HEAP_Dump( subheap->heap ); DbgBreakPoint(); }
+                return FALSE;
+            }
+            ptr++;
+        }
+    }
+    else if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
         const unsigned char *data = (const unsigned char *)(pArena + 1) + size - pArena->unused_bytes;
 
@@ -1366,6 +1404,8 @@ static BOOL validate_block_pointer( HEAP *heap, SUBHEAP **ret_subheap, const ARE
         ret = HEAP_ValidateInUseArena( subheap, arena, QUIET );
     else if ((ULONG_PTR)arena % ALIGNMENT != ARENA_OFFSET)
         WARN( "Heap %p: unaligned arena pointer %p\n", subheap->heap, arena );
+    else if (arena->magic == ARENA_PENDING_MAGIC)
+        WARN( "Heap %p: block %p used after free\n", subheap->heap, arena + 1 );
     else if (arena->magic != ARENA_INUSE_MAGIC)
         WARN( "Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, arena->magic, arena );
     else if (arena->size & ARENA_FLAG_FREE)
@@ -1435,8 +1475,11 @@ void heap_set_debug_flags( HANDLE handle )
                 }
                 else
                 {
-                    mark_block_tail( (char *)(arena + 1) + size - arena->unused_bytes,
-                                     arena->unused_bytes, flags );
+                    if (arena->magic == ARENA_PENDING_MAGIC)
+                        mark_block_free( arena + 1, size, flags );
+                    else
+                        mark_block_tail( (char *)(arena + 1) + size - arena->unused_bytes,
+                                         arena->unused_bytes, flags );
                     ptr += sizeof(ARENA_INUSE) + size;
                 }
             }
@@ -1445,6 +1488,19 @@ void heap_set_debug_flags( HANDLE handle )
         LIST_FOR_EACH_ENTRY( large, &heap->large_list, ARENA_LARGE, entry )
             mark_block_tail( (char *)(large + 1) + large->data_size,
                              large->block_size - sizeof(*large) - large->data_size, flags );
+    }
+
+    if ((heap->flags & HEAP_GROWABLE) && !heap->pending_free &&
+        ((flags & HEAP_FREE_CHECKING_ENABLED) || RUNNING_ON_VALGRIND))
+    {
+        void *ptr = NULL;
+        SIZE_T size = MAX_FREE_PENDING * sizeof(*heap->pending_free);
+
+        if (!NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 4, &size, MEM_COMMIT, PAGE_READWRITE ))
+        {
+            heap->pending_free = ptr;
+            heap->pending_pos = 0;
+        }
     }
 }
 
@@ -1550,6 +1606,12 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     subheap_notify_free_all(&heapPtr->subheap);
+    if (heapPtr->pending_free)
+    {
+        size = 0;
+        addr = heapPtr->pending_free;
+        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+    }
     size = 0;
     addr = heapPtr->subheap.base;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
@@ -2052,7 +2114,8 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
             goto HW_end;
         }
 
-        if (((ARENA_INUSE *)ptr - 1)->magic == ARENA_INUSE_MAGIC)
+        if (((ARENA_INUSE *)ptr - 1)->magic == ARENA_INUSE_MAGIC ||
+            ((ARENA_INUSE *)ptr - 1)->magic == ARENA_PENDING_MAGIC)
         {
             ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
             ptr += pArena->size & ARENA_SIZE_MASK;
@@ -2100,7 +2163,8 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
         entry->lpData = pArena + 1;
         entry->cbData = pArena->size & ARENA_SIZE_MASK;
         entry->cbOverhead = sizeof(ARENA_INUSE);
-        entry->wFlags = PROCESS_HEAP_ENTRY_BUSY;
+        entry->wFlags = (pArena->magic == ARENA_PENDING_MAGIC) ?
+                        PROCESS_HEAP_UNCOMMITTED_RANGE : PROCESS_HEAP_ENTRY_BUSY;
         /* FIXME: can't handle PROCESS_HEAP_ENTRY_MOVEABLE
         and PROCESS_HEAP_ENTRY_DDESHARE yet */
     }
