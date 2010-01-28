@@ -2876,7 +2876,7 @@ interface IHTMLCurrentStyle4 : IDispatch
 
     [propget, id(DISPID_IHTMLCURRENTSTYLE4_MAXWIDTH), displaybind, bindable]
     HRESULT maxWidth([retval, out] VARIANT * p);
-};
+}
 
 /*****************************************************************************
  *    DispHTMLCurrentStyle dispinterface
@@ -5903,7 +5903,7 @@ coclass HTMLStyleSheetPage
     [default]           dispinterface DispHTMLStyleSheetPage;
                         interface IHTMLStyleSheetPage;
                         interface IHTMLDOMConstructor;
-};
+}
 
 [
     odl,
@@ -6702,7 +6702,7 @@ methods:
 
     [id(DISPID_HTMLFORMELEMENTEVENTS_ONRESET)]
     VARIANT_BOOL onreset();
-};
+}
 
 interface IHTMLEventObj;
 
@@ -6905,7 +6905,7 @@ methods:
 
     [id(DISPID_HTMLFORMELEMENTEVENTS2_ONRESET)]
     VARIANT_BOOL onreset([in] IHTMLEventObj* pEvtObj);
-};
+}
 
 [
     noncreatable,
@@ -7365,7 +7365,7 @@ interface IHTMLControlElement : IDispatch
 
     [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTLEFT), displaybind, bindable]
     HRESULT clientLeft([retval, out] LONG * p);
-};
+}
 
 /*****************************************************************************
  *    IHTMLBodyElement interface
@@ -7634,7 +7634,7 @@ methods:
 
     [propget, id(DISPID_IHTMLBODYELEMENT2_ONAFTERPRINT), displaybind, bindable]
     VARIANT onafterprint();
-};
+}
 
 [
     uuid(3050f24a-98b5-11cf-bb82-00aa00bdce0b)
@@ -7655,7 +7655,7 @@ coclass HTMLBody
                         interface IHTMLTextContainer;
                         interface IHTMLBodyElement;
                         interface IHTMLBodyElement2;
-};
+}
 
 /*****************************************************************************
  *    IHTMLAnchorElement interface
@@ -10245,7 +10245,7 @@ interface IHTMLWindow4 : IDispatch
 
     [propget, id(DISPID_IHTMLWINDOW4_FRAMEELEMENT)]
     HRESULT frameElement([retval, out] IHTMLFrameBase* * p);
-};
+}
 
 /*****************************************************************************
  *    IHTMLWindow5 interface
@@ -10263,7 +10263,7 @@ interface IHTMLWindow5 : IDispatch
 
     [propget, id(DISPID_IHTMLWINDOW5_XMLHTTPREQUEST)]
     HRESULT XMLHttpRequest([retval, out] VARIANT * p);
-};
+}
 
 /*****************************************************************************
  *    DispHTMLScreen dispinterface
@@ -10902,7 +10902,7 @@ methods:
 
     [propget, id(DISPID_IHTMLWINDOW5_XMLHTTPREQUEST)]
     VARIANT XMLHttpRequest();
-};
+}
 
 /*****************************************************************************
  *    HTMLWindowEvents interface
@@ -10949,7 +10949,7 @@ methods:
 
     [id(DISPID_HTMLWINDOWEVENTS_ONAFTERPRINT)]
     void onafterprint();
-};
+}
 
 /*****************************************************************************
  *    HTMLWindowEvents2 interface
@@ -10996,7 +10996,7 @@ methods:
 
     [id(DISPID_HTMLWINDOWEVENTS2_ONAFTERPRINT)]
     void onafterprint([in] IHTMLEventObj* pEvtObj);
-};
+}
 
 /*****************************************************************************
  *    HTMLWindowProxy class
@@ -11013,7 +11013,7 @@ coclass HTMLWindowProxy
                         interface IHTMLWindow3;
                         interface IHTMLWindow4;
                         interface IHTMLWindow5;
-};
+}
 
 /*****************************************************************************
  *    HTMLDocumentEvents2 interface
@@ -11473,7 +11473,7 @@ methods:
 
     [id(DISPID_HTMLTEXTCONTAINEREVENTS_ONSELECT)]
     void onselect();
-};
+}
 
 /*****************************************************************************
  *    HTMLTextContainerEvents2 interface
@@ -11677,7 +11677,7 @@ methods:
 
     [id(DISPID_HTMLTEXTCONTAINEREVENTS2_ONSELECT)]
     void onselect([in] IHTMLEventObj* pEvtObj);
-};
+}
 
 /*****************************************************************************
  *    IHTMLDocument interface
@@ -13329,7 +13329,8 @@ methods:
 
     [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEWHEEL)]
     VARIANT_BOOL onmousewheel([in] IHTMLEventObj* pEvtObj);
-};
+}
+
 [
     hidden,
     uuid(3050f33c-98b5-11cf-bb82-00aa00bdce0b)
@@ -13526,8 +13527,7 @@ methods:
 
     [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSOUT)]
     void onfocusout();
-
-};
+}
 
 [
     noncreatable,
@@ -13943,7 +13943,7 @@ methods:
 
     [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEWHEEL)]
     VARIANT_BOOL onmousewheel([in] IHTMLEventObj* pEvtObj);
-};
+}
 
 /*****************************************************************************
  *    IHTMLTableCaption interface
@@ -14153,7 +14153,7 @@ interface IHTMLTable2 : IDispatch
     HRESULT moveRow([defaultvalue(-1), in] LONG indexFrom,
         [defaultvalue(-1), in] LONG indexTo,
         [retval, out] IDispatch** row);
-};
+}
 
 [
     odl,
@@ -14168,7 +14168,7 @@ interface IHTMLTable3 : IDispatch
 
     [propget, id(DISPID_IHTMLTABLE3_SUMMARY), displaybind, bindable]
     HRESULT summary([retval, out] BSTR * p);
-};
+}
 
 [
     noncreatable,
@@ -14191,7 +14191,7 @@ coclass HTMLTable
                         interface IHTMLTable;
                         interface IHTMLTable2;
                         interface IHTMLTable3;
-};
+}
 
 [
     odl,
