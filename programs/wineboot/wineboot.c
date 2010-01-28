@@ -291,11 +291,13 @@ static void create_volatile_environment_registry_key(void)
     static const WCHAR LocalAppDataW[] = {'L','O','C','A','L','A','P','P','D','A','T','A',0};
     static const WCHAR LogonServerW[] = {'L','O','G','O','N','S','E','R','V','E','R',0};
     static const WCHAR SessionNameW[] = {'S','E','S','S','I','O','N','N','A','M','E',0};
+    static const WCHAR UserNameW[] = {'U','S','E','R','N','A','M','E',0};
+    static const WCHAR UserProfileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
     static const WCHAR ConsoleW[] = {'C','o','n','s','o','l','e',0};
     static const WCHAR EmptyW[] = {0};
     WCHAR path[MAX_PATH];
     WCHAR computername[MAX_COMPUTERNAME_LENGTH + 1 + 2];
-    DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
+    DWORD size;
     HKEY hkey;
     HRESULT hr;
 
@@ -313,10 +315,14 @@ static void create_volatile_environment_registry_key(void)
     hr = SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr))
     {
+        set_reg_value( hkey, UserProfileW, path );
         set_reg_value( hkey, HomePathW, path + 2 );
         path[2] = '\0';
         set_reg_value( hkey, HomeDriveW, path );
     }
+
+    size = sizeof(path);
+    if (GetUserNameW( path, &size )) set_reg_value( hkey, UserNameW, path );
 
     set_reg_value( hkey, HomeShareW, EmptyW );
 
@@ -324,6 +330,7 @@ static void create_volatile_environment_registry_key(void)
     if (SUCCEEDED(hr))
         set_reg_value( hkey, LocalAppDataW, path );
 
+    size = sizeof(computername) - 2;
     if (GetComputerNameW(&computername[2], &size))
     {
         computername[0] = computername[1] = '\\';
