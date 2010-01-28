@@ -8971,6 +8971,92 @@ interface IHTMLTextAreaElement : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLTextAreaElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f521-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLTextAreaElement
+{
+properties:
+methods:
+    WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_TYPE)]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_VALUE), displaybind, bindable]
+    void value(BSTR v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_VALUE), displaybind, bindable]
+    BSTR value();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_NAME), displaybind, bindable]
+    void name(BSTR v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_NAME), displaybind, bindable]
+    BSTR name();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_STATUS)]
+    void status(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_STATUS)]
+    VARIANT status();
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_FORM)]
+    IHTMLFormElement *form();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_DEFAULTVALUE), displaybind, bindable, hidden]
+    void defaultValue(BSTR v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_DEFAULTVALUE), displaybind, bindable, hidden]
+    BSTR defaultValue();
+
+    [id(DISPID_IHTMLTEXTAREAELEMENT_SELECT)]
+    void select();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_ONCHANGE), displaybind, bindable]
+    void onchange(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_ONCHANGE), displaybind, bindable]
+    VARIANT onchange();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_ONSELECT), displaybind, bindable]
+    void onselect(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_ONSELECT), displaybind, bindable]
+    VARIANT onselect();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_READONLY), displaybind, bindable]
+    void readOnly(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_READONLY), displaybind, bindable]
+    VARIANT_BOOL readOnly();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_ROWS), displaybind, bindable]
+    void rows(LONG v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_ROWS), displaybind, bindable]
+    LONG rows();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_COLS), displaybind, bindable]
+    void cols(LONG v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_COLS), displaybind, bindable]
+    LONG cols();
+
+    [propput, id(DISPID_IHTMLTEXTAREAELEMENT_WRAP), displaybind, bindable]
+    void wrap(BSTR v);
+
+    [propget, id(DISPID_IHTMLTEXTAREAELEMENT_WRAP), displaybind, bindable]
+    BSTR wrap();
+
+    [id(DISPID_IHTMLTEXTAREAELEMENT_CREATETEXTRANGE)]
+    IHTMLTxtRange *createTextRange();
+}
+
+/*****************************************************************************
  *    DispHTMLUnknownElement interface
  */
 [
