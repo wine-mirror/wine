@@ -397,9 +397,8 @@ static LRESULT OnTabChange(HWND hwnd)
     return 0;
 }
 
-static LRESULT OnTopicChange(HWND hwnd, void *user_data)
+static LRESULT OnTopicChange(HHInfo *info, void *user_data)
 {
-    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     LPCWSTR chmfile = NULL, name = NULL, local = NULL;
     ContentItem *citer;
     IndexItem *iiter;
@@ -474,14 +473,17 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     case WM_SIZE:
         return Child_OnSize(hWnd);
     case WM_NOTIFY: {
+        HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
         NMHDR *nmhdr = (NMHDR*)lParam;
+
         switch(nmhdr->code) {
         case TCN_SELCHANGE:
             return OnTabChange(hWnd);
         case TVN_SELCHANGEDW:
-            return OnTopicChange(hWnd, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
+            return OnTopicChange(info, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
         case NM_DBLCLK:
-            return OnTopicChange(hWnd, (void*)((NMITEMACTIVATE *)lParam)->lParam);
+            if(info->current_tab == TAB_INDEX)
+                return OnTopicChange(info, (void*)((NMITEMACTIVATE *)lParam)->lParam);
         }
         break;
     }
