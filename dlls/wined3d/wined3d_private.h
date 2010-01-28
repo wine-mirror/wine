@@ -994,8 +994,10 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_IS_CLIPPLANE(a) ((a) >= STATE_CLIPPLANE(0) && (a) <= STATE_CLIPPLANE(MAX_CLIPPLANES - 1))
 
 #define STATE_MATERIAL (STATE_CLIPPLANE(MAX_CLIPPLANES))
+#define STATE_IS_MATERIAL(a) ((a) == STATE_MATERIAL)
 
 #define STATE_FRONTFACE (STATE_MATERIAL + 1)
+#define STATE_IS_FRONTFACE(a) ((a) == STATE_FRONTFACE)
 
 #define STATE_HIGHEST (STATE_FRONTFACE)
 
@@ -2506,6 +2508,7 @@ const char *debug_d3ddeclusage(BYTE usage) DECLSPEC_HIDDEN;
 const char *debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType) DECLSPEC_HIDDEN;
 const char *debug_d3drenderstate(DWORD state) DECLSPEC_HIDDEN;
 const char *debug_d3dsamplerstate(DWORD state) DECLSPEC_HIDDEN;
+const char *debug_d3dstate(DWORD state) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturestate(DWORD state) DECLSPEC_HIDDEN;
 const char *debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) DECLSPEC_HIDDEN;

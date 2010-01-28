@@ -1786,6 +1786,51 @@ const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) {
     }
 }
 
+const char *debug_d3dstate(DWORD state)
+{
+    if (STATE_IS_RENDER(state))
+        return wine_dbg_sprintf("STATE_RENDER(%s)", debug_d3drenderstate(state - STATE_RENDER(0)));
+    if (STATE_IS_TEXTURESTAGE(state))
+    {
+        DWORD texture_stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+        DWORD texture_state = state - STATE_TEXTURESTAGE(texture_stage, 0);
+        return wine_dbg_sprintf("STATE_TEXTURESTAGE(%#x, %s)",
+                texture_stage, debug_d3dtexturestate(texture_state));
+    }
+    if (STATE_IS_SAMPLER(state))
+        return wine_dbg_sprintf("STATE_SAMPLER(%#x)", state - STATE_SAMPLER(0));
+    if (STATE_IS_PIXELSHADER(state))
+        return "STATE_PIXELSHADER";
+    if (STATE_IS_TRANSFORM(state))
+        return wine_dbg_sprintf("STATE_TRANSFORM(%s)", debug_d3dtstype(state - STATE_TRANSFORM(0)));
+    if (STATE_IS_STREAMSRC(state))
+        return "STATE_STREAMSRC";
+    if (STATE_IS_INDEXBUFFER(state))
+        return "STATE_INDEXBUFFER";
+    if (STATE_IS_VDECL(state))
+        return "STATE_VDECL";
+    if (STATE_IS_VSHADER(state))
+        return "STATE_VSHADER";
+    if (STATE_IS_VIEWPORT(state))
+        return "STATE_VIEWPORT";
+    if (STATE_IS_VERTEXSHADERCONSTANT(state))
+        return "STATE_VERTEXSHADERCONSTANT";
+    if (STATE_IS_PIXELSHADERCONSTANT(state))
+        return "STATE_PIXELSHADERCONSTANT";
+    if (STATE_IS_ACTIVELIGHT(state))
+        return wine_dbg_sprintf("STATE_ACTIVELIGHT(%#x)", state - STATE_ACTIVELIGHT(0));
+    if (STATE_IS_SCISSORRECT(state))
+        return "STATE_SCISSORRECT";
+    if (STATE_IS_CLIPPLANE(state))
+        return wine_dbg_sprintf("STATE_CLIPPLANE(%#x)", state - STATE_CLIPPLANE(0));
+    if (STATE_IS_MATERIAL(state))
+        return "STATE_MATERIAL";
+    if (STATE_IS_FRONTFACE(state))
+        return "STATE_FRONTFACE";
+
+    return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
+}
+
 const char* debug_d3dpool(WINED3DPOOL Pool) {
   switch (Pool) {
 #define POOL_TO_STR(p) case p: return #p
