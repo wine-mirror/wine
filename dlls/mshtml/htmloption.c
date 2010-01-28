@@ -117,7 +117,7 @@ static HRESULT WINAPI HTMLOptionElement_put_value(IHTMLOptionElement *iface, BST
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&value_str, v);
+    nsAString_InitDepend(&value_str, v);
     nsres = nsIDOMHTMLOptionElement_SetValue(This->nsoption, &value_str);
     nsAString_Finish(&value_str);
     if(NS_FAILED(nsres))
@@ -209,7 +209,7 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
         }
     }
 
-    nsAString_Init(&text_str, v);
+    nsAString_InitDepend(&text_str, v);
     nsres = nsIDOMHTMLDocument_CreateTextNode(This->element.node.doc->nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {

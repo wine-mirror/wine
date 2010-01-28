@@ -316,7 +316,7 @@ static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
     nsAString type_str;
     nsresult nsres;
 
-    nsAString_Init(&type_str, type);
+    nsAString_InitDepend(&type_str, type);
     nsres = nsIDOMEventTarget_AddEventListener(target, &type_str, listener, capture);
     nsAString_Finish(&type_str);
     if(NS_FAILED(nsres))

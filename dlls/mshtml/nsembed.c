@@ -426,7 +426,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     nsAString path;
     nsIFile *gre_dir;
 
-    nsAString_Init(&path, gre_path);
+    nsAString_InitDepend(&path, gre_path);
     nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
     nsAString_Finish(&path);
     if(NS_FAILED(nsres)) {

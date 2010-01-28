@@ -283,10 +283,10 @@ static HRESULT WINAPI HTMLFrameBase_put_scrolling(IHTMLFrameBase *iface, BSTR v)
         return E_INVALIDARG;
 
     if(This->nsframe) {
-        nsAString_Init(&nsstr, v);
+        nsAString_InitDepend(&nsstr, v);
         nsres = nsIDOMHTMLFrameElement_SetScrolling(This->nsframe, &nsstr);
     }else if(This->nsiframe) {
-        nsAString_Init(&nsstr, v);
+        nsAString_InitDepend(&nsstr, v);
         nsres = nsIDOMHTMLIFrameElement_SetScrolling(This->nsiframe, &nsstr);
     }else {
         ERR("No attached ns frame object\n");

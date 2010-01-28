@@ -143,7 +143,7 @@ static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR 
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&val_str, v);
+    nsAString_InitDepend(&val_str, v);
     nsres = nsIDOMHTMLInputElement_SetValue(This->nsinput, &val_str);
     nsAString_Finish(&val_str);
     if(NS_FAILED(nsres))
@@ -512,7 +512,7 @@ static HRESULT WINAPI HTMLInputElement_put_src(IHTMLInputElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&nsstr, v);
+    nsAString_InitDepend(&nsstr, v);
     nsres = nsIDOMHTMLInputElement_SetSrc(This->nsinput, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres))

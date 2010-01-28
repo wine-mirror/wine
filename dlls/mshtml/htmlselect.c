@@ -253,7 +253,7 @@ static HRESULT WINAPI HTMLSelectElement_put_value(IHTMLSelectElement *iface, BST
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&value_str, v);
+    nsAString_InitDepend(&value_str, v);
     nsres = nsIDOMHTMLSelectElement_SetValue(This->nsselect, &value_str);
     nsAString_Finish(&value_str);
     if(NS_FAILED(nsres))

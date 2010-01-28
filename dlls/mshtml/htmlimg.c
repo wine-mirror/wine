@@ -228,7 +228,7 @@ static HRESULT WINAPI HTMLImgElement_put_alt(IHTMLImgElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&alt_str, v);
+    nsAString_InitDepend(&alt_str, v);
     nsres = nsIDOMHTMLImageElement_SetAlt(This->nsimg, &alt_str);
     nsAString_Finish(&alt_str);
     if(NS_FAILED(nsres))
@@ -268,7 +268,7 @@ static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&src_str, v);
+    nsAString_InitDepend(&src_str, v);
     nsres = nsIDOMHTMLImageElement_SetSrc(This->nsimg, &src_str);
     nsAString_Finish(&src_str);
     if(NS_FAILED(nsres))

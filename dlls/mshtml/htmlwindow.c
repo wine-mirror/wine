@@ -694,7 +694,7 @@ static HRESULT WINAPI HTMLWindow2_put_name(IHTMLWindow2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&name_str, v);
+    nsAString_InitDepend(&name_str, v);
     nsres = nsIDOMWindow_SetName(This->nswindow, &name_str);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres))
