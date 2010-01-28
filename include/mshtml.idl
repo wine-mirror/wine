@@ -14627,6 +14627,74 @@ interface IHTMLScriptElement2 : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLScriptElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f530-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLScriptElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_SRC), displaybind, bindable]
+    void src(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_SRC), displaybind, bindable]
+    BSTR src();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_HTMLFOR), displaybind, bindable]
+    void htmlFor(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_HTMLFOR), displaybind, bindable]
+    BSTR htmlFor();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_EVENT), displaybind, bindable]
+    void event(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_EVENT), displaybind, bindable]
+    BSTR event();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_TEXT), displaybind, bindable]
+    void text(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_TEXT), displaybind, bindable]
+    BSTR text();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_DEFER), displaybind, bindable]
+    void defer(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_DEFER), displaybind, bindable]
+    VARIANT_BOOL defer();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_ONERROR), displaybind, bindable]
+    void onerror(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_ONERROR), displaybind, bindable]
+    VARIANT onerror();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_TYPE), displaybind, bindable]
+    void type(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_TYPE), displaybind, bindable]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT2_CHARSET), displaybind, bindable]
+    void charset(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT2_CHARSET), displaybind, bindable]
+    BSTR charset();
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT3_IE8_SRC)]
+    void ie8_src(BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT3_IE8_SRC)]
+    BSTR ie8_src();
+}
+
+/*****************************************************************************
  *    IHTMLFrameBase interface
  */
 [
