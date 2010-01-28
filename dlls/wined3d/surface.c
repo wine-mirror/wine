@@ -4665,11 +4665,10 @@ static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DBaseTextureImpl *texture;
     struct wined3d_context *context;
     struct coords coords[4];
     RECT rect;
-    IWineD3DSwapChain *swapchain;
-    IWineD3DBaseTexture *texture;
     GLenum bind_target;
     struct float_rect f;
 
@@ -4813,22 +4812,14 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     wglFlush(); /* Flush to ensure ordering across contexts. */
 
-    if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain)))
+    /* We changed the filtering settings on the texture. Inform the
+     * container about this to get the filters reset properly next draw. */
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DBaseTexture, (void **)&texture)))
     {
-        IWineD3DSwapChain_Release(swapchain);
-    }
-    else
-    {
-        /* We changed the filtering settings on the texture. Inform the container about this to get the filters
-         * reset properly next draw
-         */
-        if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DBaseTexture, (void **) &texture)))
-        {
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-            ((IWineD3DBaseTextureImpl *) texture)->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
-            IWineD3DBaseTexture_Release(texture);
-        }
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
     }
 
     context_release(context);
