@@ -119,6 +119,7 @@ static inline int contains_path( LPCWSTR name )
 static inline int is_special_env_var( const char *var )
 {
     return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
+            !strncmp( var, "PWD=", sizeof("PWD=")-1 ) ||
             !strncmp( var, "HOME=", sizeof("HOME=")-1 ) ||
             !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
             !strncmp( var, "TMP=", sizeof("TMP=")-1 ));
