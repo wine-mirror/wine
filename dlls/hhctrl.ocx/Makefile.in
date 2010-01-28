@@ -11,6 +11,7 @@ C_SRCS = \
 	help.c \
 	hhctrl.c \
 	regsvr.c \
+	stream.c \
 	webbrowser.c
 
 RC_SRCS = \
