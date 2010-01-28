@@ -3,7 +3,7 @@
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2007 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2010 Stefan Dösinger for CodeWeavers
  * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -158,6 +158,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
             checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE)");
             This->flags |= WINED3D_BUFFER_FLUSH;
         }
+        /* No setup is needed here for GL_ARB_map_buffer_range */
     }
     else
     {
@@ -1058,6 +1059,25 @@ static DWORD buffer_sanitize_flags(DWORD flags)
     return flags;
 }
 
+static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
+{
+    GLbitfield ret = GL_MAP_FLUSH_EXPLICIT_BIT;
+
+    if (!(d3d_flags & WINED3DLOCK_READONLY)) ret |= GL_MAP_WRITE_BIT;
+
+    if (d3d_flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE))
+    {
+        if(d3d_flags & WINED3DLOCK_DISCARD) ret |= GL_MAP_INVALIDATE_BUFFER_BIT;
+        ret |= GL_MAP_UNSYNCHRONIZED_BIT;
+    }
+    else
+    {
+        ret |= GL_MAP_READ_BIT;
+    }
+
+    return ret;
+}
+
 static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
@@ -1076,6 +1096,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
         {
             IWineD3DDeviceImpl *device = This->resource.device;
             struct wined3d_context *context;
+            const struct wined3d_gl_info *gl_info;
 
             if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
             {
@@ -1083,9 +1104,20 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
             }
 
             context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            gl_info = context->gl_info;
             ENTER_GL();
             GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-            This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+
+            if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+            {
+                GLbitfield mapflags = buffer_gl_map_flags(flags);
+                This->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
+                                                                             This->resource.size, mapflags));
+            }
+            else
+            {
+                This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+            }
             LEAVE_GL();
             context_release(context);
         }
@@ -1126,6 +1158,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
     if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
     {
         IWineD3DDeviceImpl *device = This->resource.device;
+        const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
         if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
@@ -1134,10 +1167,21 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
         }
 
         context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        gl_info = context->gl_info;
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
 
-        if(This->flags & WINED3D_BUFFER_FLUSH)
+        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+        {
+            for(i = 0; i < This->modified_areas; i++)
+            {
+                GL_EXTCALL(glFlushMappedBufferRange(This->buffer_type_hint,
+                                                    This->maps[i].offset,
+                                                    This->maps[i].size));
+                checkGLcall("glFlushMappedBufferRange");
+            }
+        }
+        else if (This->flags & WINED3D_BUFFER_FLUSH)
         {
             for(i = 0; i < This->modified_areas; i++)
             {
@@ -1229,8 +1273,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format_desc->format), buffer->resource.allocatedMemory, buffer);
 
-    /* TODO: GL_ARB_map_buffer_range */
-    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE];
+    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
      * drawStridedFast (half-life 2 and others).
