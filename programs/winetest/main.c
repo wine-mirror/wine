@@ -132,6 +132,18 @@ static int running_under_wine (void)
     return (GetProcAddress(module, "wine_server_call") != NULL);
 }
 
+static int check_mount_mgr(void)
+{
+    if (running_under_wine())
+    {
+        HANDLE handle = CreateFileA( "\\\\.\\MountPointManager", GENERIC_READ,
+                                     FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+        if (handle == INVALID_HANDLE_VALUE) return FALSE;
+        CloseHandle( handle );
+    }
+    return TRUE;
+}
+
 static int running_on_visible_desktop (void)
 {
     HWND desktop;
@@ -1020,6 +1032,9 @@ int main( int argc, char *argv[] )
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
+
+        if (!check_mount_mgr())
+            report (R_FATAL, "Mount manager not running, most likely your WINEPREFIX wasn't created correctly");
 
         SetConsoleCtrlHandler(ctrl_handler, TRUE);
 
