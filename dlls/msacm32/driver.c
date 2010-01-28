@@ -214,6 +214,7 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
     else if (pad->pLocalDrvrInst)
         MSACM_CloseLocalDriver(pad->pLocalDrvrInst);
 
+    pad->obj.dwType = 0;
     HeapFree(MSACM_hHeap, 0, pad);
 
     return MMSYSERR_NOERROR;
