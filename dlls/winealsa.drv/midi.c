@@ -1066,6 +1066,17 @@ static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 }
 
 /**************************************************************************
+ * 			modGetVolume				[internal]
+ */
+static DWORD modGetVolume(WORD wDevID, DWORD* lpdwVolume)
+{
+    if (!lpdwVolume) return MMSYSERR_INVALPARAM;
+    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
+    *lpdwVolume = 0xFFFFFFFF;
+    return (MidiOutDev[wDevID].caps.dwSupport & MIDICAPS_VOLUME) ? 0 : MMSYSERR_NOTSUPPORTED;
+}
+
+/**************************************************************************
  * 			modReset				[internal]
  */
 static DWORD modReset(WORD wDevID)
@@ -1371,7 +1382,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case MODM_GETNUMDEVS:
 	return MODM_NumDevs;
     case MODM_GETVOLUME:
-	return 0;
+	return modGetVolume(wDevID, (DWORD*)dwParam1);
     case MODM_SETVOLUME:
 	return 0;
     case MODM_RESET:
