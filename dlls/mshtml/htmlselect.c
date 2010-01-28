@@ -505,11 +505,7 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
 };
 
 static const tid_t HTMLSelectElement_tids[] = {
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLElement_tid,
-    IHTMLElement2_tid,
-    IHTMLElement3_tid,
+    HTMLELEMENT_TIDS,
     IHTMLSelectElement_tid,
     0
 };

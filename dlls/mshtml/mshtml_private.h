@@ -490,6 +490,14 @@ typedef struct {
     nsIDOMHTMLElement *nselem;
 } HTMLElement;
 
+#define HTMLELEMENT_TIDS    \
+    IHTMLDOMNode_tid,       \
+    IHTMLDOMNode2_tid,      \
+    IHTMLElement_tid,       \
+    IHTMLElement2_tid,      \
+    IHTMLElement3_tid,      \
+    IHTMLElement4_tid
+
 typedef struct {
     HTMLElement element;
 

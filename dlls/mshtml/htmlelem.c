@@ -1572,11 +1572,7 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
 };
 
 static const tid_t HTMLElement_iface_tids[] = {
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLElement_tid,
-    IHTMLElement2_tid,
-    IHTMLElement3_tid,
+    HTMLELEMENT_TIDS,
     0
 };
 

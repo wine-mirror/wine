@@ -1173,11 +1173,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLElement_tid,
-    IHTMLElement2_tid,
-    IHTMLElement3_tid,
+    HTMLELEMENT_TIDS,
     IHTMLInputElement_tid,
     0
 };

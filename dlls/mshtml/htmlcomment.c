@@ -171,11 +171,7 @@ static const NodeImplVtbl HTMLCommentElementImplVtbl = {
 };
 
 static const tid_t HTMLCommentElement_iface_tids[] = {
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLElement_tid,
-    IHTMLElement2_tid,
-    IHTMLElement3_tid,
+    HTMLELEMENT_TIDS,
     IHTMLCommentElement_tid,
     0
 };

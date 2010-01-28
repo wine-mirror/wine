@@ -255,11 +255,7 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLElement_tid,
-    IHTMLElement2_tid,
-    IHTMLElement3_tid,
+    HTMLELEMENT_TIDS,
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,
     IHTMLIFrameElement_tid,
