@@ -158,6 +158,12 @@ done:
     return ret;
 }
 
+/* wrapper for RegSetValueExW */
+static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
+{
+    return RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)value, (strlenW(value) + 1) * sizeof(WCHAR) );
+}
+
 /* create the volatile hardware registry keys */
 static void create_hardware_registry_keys(void)
 {
@@ -192,7 +198,7 @@ static void create_hardware_registry_keys(void)
                          KEY_ALL_ACCESS, NULL, &system_key, NULL ))
         return;
 
-    RegSetValueExW( system_key, IdentifierW, 0, REG_SZ, (const BYTE *)SysidW, sizeof(SysidW) );
+    set_reg_value( system_key, IdentifierW, SysidW );
 
     if (RegCreateKeyExW( system_key, fpuW, 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
@@ -209,19 +215,16 @@ static void create_hardware_registry_keys(void)
         if (!RegCreateKeyExW( cpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
-            RegSetValueExW( hkey, IdentifierW, 0, REG_SZ,
-                            (const BYTE *)idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+            set_reg_value( hkey, IdentifierW, idW );
             /*TODO; report amd's properly*/
-            RegSetValueExW( hkey, VendorIdentifierW, 0, REG_SZ,
-                            (const BYTE *)VenidIntelW, sizeof(VenidIntelW) );
+            set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
             RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info.MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
         }
         if (!RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
-            RegSetValueExW( hkey, IdentifierW, 0, REG_SZ,
-                            (const BYTE *)idW, (strlenW(idW) + 1) * sizeof(WCHAR) );
+            set_reg_value( hkey, IdentifierW, idW );
             RegCloseKey( hkey );
         }
     }
@@ -258,21 +261,21 @@ static void create_environment_registry_keys( void )
     if (RegCreateKeyW( HKEY_LOCAL_MACHINE, EnvironW, &env_key )) return;
 
     sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
-    RegSetValueExW( env_key, NumProcW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+    set_reg_value( env_key, NumProcW, buffer );
 
     /* TODO: currently hardcoded x86, add different processors */
-    RegSetValueExW( env_key, ProcArchW, 0, REG_SZ, (const BYTE *)x86W, sizeof(x86W) );
+    set_reg_value( env_key, ProcArchW, x86W );
 
     /* TODO: currently hardcoded Intel, add different processors */
     sprintfW( buffer, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
-    RegSetValueExW( env_key, ProcIdW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+    set_reg_value( env_key, ProcIdW, buffer );
 
     sprintfW( buffer, PercentDW, sci.Level );
-    RegSetValueExW( env_key, ProcLvlW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+    set_reg_value( env_key, ProcLvlW, buffer );
 
     /* Properly report model/stepping */
     sprintfW( buffer, Percent04XW, sci.Revision );
-    RegSetValueExW( env_key, ProcRevW, 0, REG_SZ, (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+    set_reg_value( env_key, ProcRevW, buffer );
 
     RegCloseKey( env_key );
 }
@@ -291,7 +294,7 @@ static void create_volatile_environment_registry_key(void)
     static const WCHAR ConsoleW[] = {'C','o','n','s','o','l','e',0};
     static const WCHAR EmptyW[] = {0};
     WCHAR path[MAX_PATH];
-    WCHAR computername[MAX_COMPUTERNAME_LENGTH + 1 + 2] = {'\\','\\'};
+    WCHAR computername[MAX_COMPUTERNAME_LENGTH + 1 + 2];
     DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
     HKEY hkey;
     HRESULT hr;
@@ -301,32 +304,33 @@ static void create_volatile_environment_registry_key(void)
         return;
 
     hr = SHGetFolderPathW( NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
-    if (SUCCEEDED(hr))
-        RegSetValueExW( hkey, AppDataW, 0, REG_SZ, (const BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+    if (SUCCEEDED(hr)) set_reg_value( hkey, AppDataW, path );
 
-    RegSetValueExW( hkey, ClientNameW, 0, REG_SZ, (const BYTE *)ConsoleW, sizeof(ConsoleW) );
+    set_reg_value( hkey, ClientNameW, ConsoleW );
 
     /* Write the profile path's drive letter and directory components into
      * HOMEDRIVE and HOMEPATH respectively. */
     hr = SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr))
     {
-        RegSetValueExW( hkey, HomePathW, 0, REG_SZ, (const BYTE *)&path[2], (strlenW(path) + 1 - 2) * sizeof(WCHAR) );
+        set_reg_value( hkey, HomePathW, path + 2 );
         path[2] = '\0';
-        RegSetValueExW( hkey, HomeDriveW, 0, REG_SZ, (const BYTE *)path, 3 * sizeof(WCHAR) );
+        set_reg_value( hkey, HomeDriveW, path );
     }
 
-    RegSetValueExW( hkey, HomeShareW, 0, REG_SZ, (const BYTE *)EmptyW, sizeof(EmptyW) );
+    set_reg_value( hkey, HomeShareW, EmptyW );
 
     hr = SHGetFolderPathW( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr))
-        RegSetValueExW( hkey, LocalAppDataW, 0, REG_SZ, (const BYTE *)path, (strlenW(path) + 1) * sizeof(WCHAR) );
+        set_reg_value( hkey, LocalAppDataW, path );
 
     if (GetComputerNameW(&computername[2], &size))
-        RegSetValueExW( hkey, LogonServerW, 0, REG_SZ, (const BYTE *)computername, (size + 1 + 2) * sizeof(WCHAR) );
+    {
+        computername[0] = computername[1] = '\\';
+        set_reg_value( hkey, LogonServerW, computername );
+    }
 
-    RegSetValueExW( hkey, SessionNameW, 0, REG_SZ, (const BYTE *)ConsoleW, sizeof(ConsoleW) );
-
+    set_reg_value( hkey, SessionNameW, ConsoleW );
     RegCloseKey( hkey );
 }
 
