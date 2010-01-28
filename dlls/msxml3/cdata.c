@@ -684,8 +684,47 @@ static HRESULT WINAPI domcdata_deleteData(
     IXMLDOMCDATASection *iface,
     LONG offset, LONG count)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LONG len = -1;
+    BSTR str;
+
+    TRACE("%p %d %d\n", iface, offset, count);
+
+    hr = IXMLDOMCDATASection_get_length(iface, &len);
+    if(hr != S_OK) return hr;
+
+    if((offset < 0) || (offset > len) || (count < 0))
+        return E_INVALIDARG;
+
+    if(len == 0) return S_OK;
+
+    /* cutting start or end */
+    if((offset == 0) || ((count + offset) >= len))
+    {
+        if(offset == 0)
+            IXMLDOMCDATASection_substringData(iface, count, len - count, &str);
+        else
+            IXMLDOMCDATASection_substringData(iface, 0, offset, &str);
+        hr = IXMLDOMCDATASection_put_data(iface, str);
+    }
+    else
+    /* cutting from the inside */
+    {
+        BSTR str_end;
+
+        IXMLDOMCDATASection_substringData(iface, 0, offset, &str);
+        IXMLDOMCDATASection_substringData(iface, offset + count, len - count, &str_end);
+
+        hr = IXMLDOMCDATASection_put_data(iface, str);
+        if(hr == S_OK)
+            hr = IXMLDOMCDATASection_appendData(iface, str_end);
+
+        SysFreeString(str_end);
+    }
+
+    SysFreeString(str);
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_replaceData(
