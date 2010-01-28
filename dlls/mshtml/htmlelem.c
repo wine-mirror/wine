@@ -1671,7 +1671,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
 
     if(!ret) {
         ret = heap_alloc_zero(sizeof(HTMLElement));
-        HTMLElement_Init(ret, doc, nselem, NULL);
+        HTMLElement_Init(ret, doc, nselem, &HTMLElement_dispex);
         ret->node.vtbl = &HTMLElementImplVtbl;
     }
 
