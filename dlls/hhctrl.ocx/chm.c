@@ -38,12 +38,13 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
         return NULL;
 
     if(chm->strings_size <= (offset >> BLOCK_BITS)) {
+        chm->strings_size = (offset >> BLOCK_BITS)+1;
         if(chm->strings)
             chm->strings = heap_realloc_zero(chm->strings,
-                    chm->strings_size = ((offset >> BLOCK_BITS)+1)*sizeof(char*));
+                    chm->strings_size*sizeof(char*));
         else
             chm->strings = heap_alloc_zero(
-                    chm->strings_size = ((offset >> BLOCK_BITS)+1)*sizeof(char*));
+                    chm->strings_size*sizeof(char*));
 
     }
 
