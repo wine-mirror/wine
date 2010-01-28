@@ -5685,6 +5685,22 @@ static void multistate_apply_3(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     stateblock->device->multistate_funcs[state][2](state, stateblock, context);
 }
 
+static void validate_state_table(struct StateEntry *state_table)
+{
+    unsigned int i;
+
+    for (i = 0; i < STATE_HIGHEST + 1; ++i)
+    {
+        DWORD rep = state_table[i].representative;
+        if (rep && !state_table[rep].representative)
+        {
+            ERR("State %s (%#x) has invalid representative %s (%#x).\n",
+                    debug_d3dstate(i), i, debug_d3dstate(rep), rep);
+            state_table[i].representative = 0;
+        }
+    }
+}
+
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
         const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc)
@@ -5783,6 +5799,8 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
             StateTable[cur[i].state].representative = cur[i].content.representative;
         }
     }
+
+    validate_state_table(StateTable);
 
     return WINED3D_OK;
 
