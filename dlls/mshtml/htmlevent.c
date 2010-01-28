@@ -743,7 +743,7 @@ static IHTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEve
         if(NS_SUCCEEDED(nsres)) {
             nsAString type_str;
 
-            nsAString_Init(&type_str, event_types[event_info[eid].type]);
+            nsAString_InitDepend(&type_str, event_types[event_info[eid].type]);
             nsres = nsIDOMDocumentEvent_CreateEvent(doc_event, &type_str, &ret->nsevent);
             nsAString_Finish(&type_str);
             nsIDOMDocumentEvent_Release(doc_event);

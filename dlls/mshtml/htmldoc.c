@@ -348,7 +348,7 @@ static HRESULT WINAPI HTMLDocument_put_title(IHTMLDocument2 *iface, BSTR v)
         return E_UNEXPECTED;
     }
 
-    nsAString_Init(&nsstr, v);
+    nsAString_InitDepend(&nsstr, v);
     nsres = nsIDOMHTMLDocument_SetTitle(This->doc_node->nsdoc, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres))
