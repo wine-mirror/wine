@@ -1786,8 +1786,16 @@ static int read_i(int fd, void *buf, unsigned int count)
             DWORD i, j;
             if (bufstart[num_read-1] == '\r')
             {
-	        MSVCRT_fdesc[fd].wxflag  |= WX_READCR;
-	        num_read--;
+                if(count == 1)
+                {
+                    MSVCRT_fdesc[fd].wxflag  &=  ~WX_READCR;
+                    ReadFile(hand, bufstart, 1, &num_read, NULL);
+                }
+                else
+                {
+                    MSVCRT_fdesc[fd].wxflag  |= WX_READCR;
+                    num_read--;
+                }
             }
 	    else
 	      MSVCRT_fdesc[fd].wxflag  &=  ~WX_READCR;

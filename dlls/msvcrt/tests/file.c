@@ -880,7 +880,23 @@ static void test_file_write_read( void )
       "problems with _O_BINARY _write / _O_TEXT _read\n");
   _close(tempfd);
 
-   ret =_chmod (tempf, _S_IREAD | _S_IWRITE);
+  /* test _read with single bytes. CR should be skipped and LF pulled in */
+  tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
+  for (i=0; i<strlen(mytext); i++)  /* */
+    {
+      _read(tempfd,btext, 1);
+      ok(btext[0] ==  mytext[i],"_read failed at pos %d 0x%02x vs 0x%02x\n", i, btext[0], mytext[i]);
+    }
+  while (_read(tempfd,btext, 1));
+  _close(tempfd);
+
+  /* test _read in buffered mode. Last CR should be skipped but  LF not pulled in */
+  tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
+  i = _read(tempfd,btext, strlen(mytext));
+  ok(i == strlen(mytext)-1, "_read_i %d vs %d\n", i, strlen(mytext));
+  _close(tempfd);
+
+  ret =_chmod (tempf, _S_IREAD | _S_IWRITE);
   ok( ret == 0,
      "Can't chmod '%s' to read-write: %d\n", tempf, errno);
   ret = unlink(tempf);
