@@ -358,12 +358,19 @@ static BOOL build_initial_environment(void)
  */
 static void set_registry_variables( HANDLE hkey, ULONG type )
 {
+    static const WCHAR pathW[] = {'P','A','T','H'};
+    static const WCHAR sep[] = {';',0};
     UNICODE_STRING env_name, env_value;
     NTSTATUS status;
     DWORD size;
     int index;
     char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_FULL_INFORMATION)];
+    WCHAR tmpbuf[1024];
+    UNICODE_STRING tmp;
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+
+    tmp.Buffer = tmpbuf;
+    tmp.MaximumLength = sizeof(tmpbuf);
 
     for (index = 0; ; index++)
     {
@@ -376,24 +383,27 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
         env_name.Buffer = info->Name;
         env_name.Length = env_name.MaximumLength = info->NameLength;
         env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
-        env_value.Length = env_value.MaximumLength = info->DataLength;
+        env_value.Length = info->DataLength;
+        env_value.MaximumLength = sizeof(buffer) - info->DataOffset;
         if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
             env_value.Length -= sizeof(WCHAR);  /* don't count terminating null if any */
         if (!env_value.Length) continue;
         if (info->Type == REG_EXPAND_SZ)
         {
-            WCHAR buf_expanded[1024];
-            UNICODE_STRING env_expanded;
-            env_expanded.Length = env_expanded.MaximumLength = sizeof(buf_expanded);
-            env_expanded.Buffer=buf_expanded;
-            status = RtlExpandEnvironmentStrings_U(NULL, &env_value, &env_expanded, NULL);
-            if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
-                RtlSetEnvironmentVariable( NULL, &env_name, &env_expanded );
+            status = RtlExpandEnvironmentStrings_U( NULL, &env_value, &tmp, NULL );
+            if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) continue;
+            RtlCopyUnicodeString( &env_value, &tmp );
         }
-        else
+        /* PATH is magic */
+        if (env_name.Length == sizeof(pathW) &&
+            !memicmpW( env_name.Buffer, pathW, sizeof(pathW)/sizeof(WCHAR) ) &&
+            !RtlQueryEnvironmentVariable_U( NULL, &env_name, &tmp ))
         {
-            RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
+            RtlAppendUnicodeToString( &tmp, sep );
+            if (RtlAppendUnicodeStringToString( &tmp, &env_value )) continue;
+            RtlCopyUnicodeString( &env_value, &tmp );
         }
+        RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
     }
 }
 
