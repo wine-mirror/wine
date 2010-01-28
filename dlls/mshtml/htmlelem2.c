@@ -1087,7 +1087,7 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
 
-    nsAString_Init(&tag_str, v);
+    nsAString_InitDepend(&tag_str, v);
     nsres = nsIDOMHTMLElement_GetElementsByTagName(This->nselem, &tag_str, &nslist);
     nsAString_Finish(&tag_str);
     if(NS_FAILED(nsres)) {

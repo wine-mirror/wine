@@ -65,7 +65,7 @@ HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement
         return E_UNEXPECTED;
     }
 
-    nsAString_Init(&tag_str, tag);
+    nsAString_InitDepend(&tag_str, tag);
     nsres = nsIDOMDocument_CreateElement(doc->nsdoc, &tag_str, &nselem);
     nsAString_Finish(&tag_str);
     if(NS_FAILED(nsres)) {
@@ -215,7 +215,7 @@ static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
         return E_NOTIMPL;
     }
 
-    nsAString_Init(&classname_str, v);
+    nsAString_InitDepend(&classname_str, v);
     nsres = nsIDOMHTMLElement_SetClassName(This->nselem, &classname_str);
     nsAString_Finish(&classname_str);
     if(NS_FAILED(nsres))
@@ -269,7 +269,7 @@ static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
         return S_OK;
     }
 
-    nsAString_Init(&id_str, v);
+    nsAString_InitDepend(&id_str, v);
     nsres = nsIDOMHTMLElement_SetId(This->nselem, &id_str);
     nsAString_Finish(&id_str);
     if(NS_FAILED(nsres))
@@ -601,7 +601,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_Init(&title_str, v);
+    nsAString_InitDepend(&title_str, v);
     nsres = nsIDOMHTMLElement_SetTitle(This->nselem, &title_str);
     nsAString_Finish(&title_str);
     if(NS_FAILED(nsres))
@@ -820,7 +820,7 @@ static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)
         return E_FAIL;
     }
 
-    nsAString_Init(&html_str, v);
+    nsAString_InitDepend(&html_str, v);
     nsres = nsIDOMNSHTMLElement_SetInnerHTML(nselem, &html_str);
     nsAString_Finish(&html_str);
 
@@ -896,7 +896,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
         nsIDOMNode_Release(tmp);
     }
 
-    nsAString_Init(&text_str, v);
+    nsAString_InitDepend(&text_str, v);
     nsres = nsIDOMHTMLDocument_CreateTextNode(This->node.doc->nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
@@ -955,7 +955,7 @@ static HRESULT WINAPI HTMLElement_put_outerHTML(IHTMLElement *iface, BSTR v)
         return E_FAIL;
     }
 
-    nsAString_Init(&html_str, v);
+    nsAString_InitDepend(&html_str, v);
     nsIDOMNSRange_CreateContextualFragment(nsrange, &html_str, &nsfragment);
     nsIDOMNSRange_Release(nsrange);
     nsAString_Finish(&html_str);
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    nsAString_Init(&ns_html, html);
+    nsAString_InitDepend(&ns_html, html);
 
     nsres = nsIDOMNSRange_CreateContextualFragment(nsrange, &ns_html, (nsIDOMDocumentFragment **)&nsnode);
     nsIDOMNSRange_Release(nsrange);
@@ -1166,7 +1166,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
     }
 
 
-    nsAString_Init(&ns_text, text);
+    nsAString_InitDepend(&ns_text, text);
     nsres = nsIDOMDocument_CreateTextNode(This->node.doc->nsdoc, &ns_text, (nsIDOMText **)&nsnode);
     nsAString_Finish(&ns_text);
 
