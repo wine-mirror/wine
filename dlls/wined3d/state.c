@@ -5685,6 +5685,27 @@ static void multistate_apply_3(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     stateblock->device->multistate_funcs[state][2](state, stateblock, context);
 }
 
+static void prune_invalid_states(struct StateEntry *state_table, const struct wined3d_gl_info *gl_info)
+{
+    unsigned int start, last, i;
+
+    start = STATE_TEXTURESTAGE(gl_info->limits.texture_stages, 0);
+    last = STATE_TEXTURESTAGE(MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE);
+    for (i = start; i <= last; ++i)
+    {
+        state_table[i].representative = 0;
+        state_table[i].apply = state_undefined;
+    }
+
+    start = STATE_TRANSFORM(WINED3DTS_TEXTURE0 + gl_info->limits.texture_stages);
+    last = STATE_TRANSFORM(WINED3DTS_TEXTURE0 + MAX_TEXTURES - 1);
+    for (i = start; i <= last; ++i)
+    {
+        state_table[i].representative = 0;
+        state_table[i].apply = state_undefined;
+    }
+}
+
 static void validate_state_table(struct StateEntry *state_table)
 {
     unsigned int i;
@@ -5800,6 +5821,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
         }
     }
 
+    prune_invalid_states(StateTable, gl_info);
     validate_state_table(StateTable);
 
     return WINED3D_OK;
