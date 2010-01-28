@@ -1406,6 +1406,8 @@ void heap_set_debug_flags( HANDLE handle )
         flags |= HEAP_VALIDATE | HEAP_VALIDATE_ALL |
                  HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
 
+    if (RUNNING_ON_VALGRIND) flags = 0; /* no sense in validating since Valgrind catches accesses */
+
     heap->flags |= flags;
     heap->force_flags |= flags & ~(HEAP_VALIDATE | HEAP_DISABLE_COALESCE_ON_FREE);
 
