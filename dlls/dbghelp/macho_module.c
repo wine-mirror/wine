@@ -826,8 +826,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 
         if (ste->is_public && !(dbghelp_options & SYMOPT_NO_PUBLICS))
         {
-            symt_new_public(module, ste->compiland, ste->ht_elt.name,
-                            ste->addr, 0, ste->is_code, ste->is_code);
+            symt_new_public(module, ste->compiland, ste->ht_elt.name, ste->addr, 0);
         }
     }
 }
