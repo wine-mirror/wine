@@ -4492,7 +4492,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     service = OpenServiceW(scm, name, SERVICE_START);
     if (!service)
     {
-        ERR("Failed to open service %s\n", debugstr_w(name));
+        ERR("Failed to open service %s (%u)\n", debugstr_w(name), GetLastError());
         goto done;
     }
 
@@ -4500,7 +4500,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
 
     if (!StartServiceW(service, numargs, vector))
     {
-        ERR("Failed to start service %s\n", debugstr_w(name));
+        ERR("Failed to start service %s (%u)\n", debugstr_w(name), GetLastError());
         goto done;
     }
 
