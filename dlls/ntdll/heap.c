@@ -856,16 +856,13 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     if (!address)
     {
-        /* round-up sizes on a 64K boundary */
-        totalSize  = (totalSize + 0xffff) & 0xffff0000;
-        commitSize = (commitSize + 0xffff) & 0xffff0000;
-        if (!commitSize) commitSize = 0x10000;
+        if (!commitSize) commitSize = COMMIT_MASK + 1;
         totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4Gb */
         if (totalSize < commitSize) totalSize = commitSize;
         if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
 
         /* allocate the memory block */
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 5, &totalSize,
                                      MEM_RESERVE, get_protection_type( flags ) ))
         {
             WARN("Could not allocate %08lx bytes\n", totalSize );
