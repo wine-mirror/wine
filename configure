@@ -803,6 +803,7 @@ with_oss
 with_png
 with_pthread
 with_sane
+with_v4l
 with_xcomposite
 with_xcursor
 with_xinerama
@@ -1488,6 +1489,7 @@ Optional Packages:
   --without-png           do not use PNG
   --without-pthread       do not use the pthread library
   --without-sane          do not use SANE (scanner support)
+  --without-v4l           do not use v4l1 (v4l support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
   --without-xinerama      do not use Xinerama (multi-monitor support)
@@ -2662,6 +2664,12 @@ fi
 # Check whether --with-sane was given.
 if test "${with_sane+set}" = set; then :
   withval=$with_sane;
+fi
+
+
+# Check whether --with-v4l was given.
+if test "${with_v4l+set}" = set; then :
+  withval=$with_v4l;
 fi
 
 
@@ -9612,6 +9620,68 @@ if test "x$ac_cv_lib_soname_sane" = "x"; then :
   xno) ;;
   *)   as_fn_error "libsane ${notice_platform}development files not found, scanners won't be supported.
 This is an error since --with-sane was requested." "$LINENO" 5 ;;
+esac
+fi
+
+if test "x$with_v4l" != "xno"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lv4l1" >&5
+$as_echo_n "checking for -lv4l1... " >&6; }
+if test "${ac_cv_lib_soname_v4l1+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lv4l1  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char v4l1_open ();
+int
+main ()
+{
+return v4l1_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_v4l1=`otool -L conftest$ac_exeext | grep "libv4l1\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libv4l1\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_v4l1=`$ac_cv_path_LDD conftest$ac_exeext | grep "libv4l1\\.$LIBEXT" | sed -e "s/^.*\(libv4l1\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_v4l1" = "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_v4l1" >&5
+$as_echo "$ac_cv_lib_soname_v4l1" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBV4L1 "$ac_cv_lib_soname_v4l1"
+_ACEOF
+
+
+fi
+fi
+if test "x$ac_cv_lib_soname_v4l1" = "x"; then :
+  case "x$with_v4l" in
+  x)   wine_notices="$wine_notices|libv4l ${notice_platform}development files not found." ;;
+  xno) ;;
+  *)   as_fn_error "libv4l ${notice_platform}development files not found.
+This is an error since --with-v4l was requested." "$LINENO" 5 ;;
 esac
 fi
 

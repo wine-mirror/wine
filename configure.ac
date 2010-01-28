@@ -65,6 +65,7 @@ AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
+AC_ARG_WITH(v4l,       AS_HELP_STRING([--without-v4l],[do not use v4l1 (v4l support)]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi])
 AC_ARG_WITH(xcursor,   AS_HELP_STRING([--without-xcursor],[do not use the Xcursor extension]),
@@ -1137,6 +1138,14 @@ then
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.])
+
+dnl **** Check for libv4l1 ****
+if test "x$with_v4l" != "xno"
+then
+    WINE_CHECK_SONAME(v4l1,v4l1_open,,,)
+fi
+WINE_NOTICE_WITH(v4l,[test "x$ac_cv_lib_soname_v4l1" = "x"],
+                 [libv4l ${notice_platform}development files not found.])
 
 dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"

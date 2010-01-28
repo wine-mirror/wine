@@ -24,6 +24,7 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/library.h"
 
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
@@ -72,6 +73,32 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap_v4l);
 
 #ifdef HAVE_LINUX_VIDEODEV_H
+
+static typeof(open) *video_open = open;
+static typeof(close) *video_close = close;
+static typeof(ioctl) *video_ioctl = ioctl;
+static typeof(read) *video_read = read;
+static typeof(mmap) *video_mmap = mmap;
+static typeof(munmap) *video_munmap = munmap;
+
+static void video_init(void)
+{
+#ifdef SONAME_LIBV4L1
+    static void *video_lib;
+
+    if (video_lib)
+        return;
+    video_lib = wine_dlopen(SONAME_LIBV4L1, RTLD_NOW, NULL, 0);
+    if (!video_lib)
+        return;
+    video_open = wine_dlsym(video_lib, "v4l1_open", NULL, 0);
+    video_close = wine_dlsym(video_lib, "v4l1_close", NULL, 0);
+    video_ioctl = wine_dlsym(video_lib, "v4l1_ioctl", NULL, 0);
+    video_read = wine_dlsym(video_lib, "v4l1_read", NULL, 0);
+    video_mmap = wine_dlsym(video_lib, "v4l1_mmap", NULL, 0);
+    video_munmap = wine_dlsym(video_lib, "v4l1_munmap", NULL, 0);
+#endif
+}
 
 typedef void (* Renderer)(const Capture *, LPBYTE bufferin, const BYTE *stream);
 
@@ -146,7 +173,7 @@ static int xioctl(int fd, int request, void * arg)
     int r;
 
     do {
-        r = ioctl (fd, request, arg);
+        r = video_ioctl (fd, request, arg);
     } while (-1 == r && EINTR == errno);
 
     return r;
@@ -168,8 +195,8 @@ static HRESULT V4l_Prepare(Capture *capBox)
         TRACE("%p: Using %d/%d buffers\n", capBox,
               capBox->buffers, capBox->gb_buffers.frames);
 
-        capBox->pmap = mmap( 0, capBox->gb_buffers.size, PROT_READ|PROT_WRITE,
-                             MAP_SHARED, capBox->fd, 0 );
+        capBox->pmap = video_mmap( 0, capBox->gb_buffers.size, PROT_READ|PROT_WRITE,
+                                   MAP_SHARED, capBox->fd, 0 );
         if (capBox->pmap != MAP_FAILED)
         {
             int i;
@@ -177,7 +204,7 @@ static HRESULT V4l_Prepare(Capture *capBox)
             capBox->grab_buf = CoTaskMemAlloc(sizeof(struct video_mmap) * capBox->buffers);
             if (!capBox->grab_buf)
             {
-                munmap(capBox->pmap, capBox->gb_buffers.size);
+                video_munmap(capBox->pmap, capBox->gb_buffers.size);
                 return E_OUTOFMEMORY;
             }
 
@@ -211,7 +238,7 @@ static void V4l_Unprepare(Capture *capBox)
     {
         for (capBox->curframe = 0; capBox->curframe < capBox->buffers; capBox->curframe++) 
             xioctl(capBox->fd, VIDIOCSYNC, &capBox->grab_buf[capBox->curframe]);
-        munmap(capBox->pmap, capBox->gb_buffers.size);
+        video_munmap(capBox->pmap, capBox->gb_buffers.size);
         CoTaskMemFree(capBox->grab_buf);
     }
     else
@@ -223,7 +250,7 @@ HRESULT qcap_driver_destroy(Capture *capBox)
     TRACE("%p\n", capBox);
 
     if( capBox->fd != -1 )
-        close(capBox->fd);
+        video_close(capBox->fd);
     capBox->CritSect.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&capBox->CritSect);
     CoTaskMemFree(capBox);
@@ -546,7 +573,7 @@ static void V4l_GetFrame(Capture * capBox, unsigned char ** pInput)
     else
     {
         int retval;
-        while ((retval = read(capBox->fd, capBox->grab_data, capBox->imagesize)) == -1)
+        while ((retval = video_read(capBox->fd, capBox->grab_data, capBox->imagesize)) == -1)
             if (errno != EAGAIN) break;
         if (retval == -1)
             WARN("Error occurred while reading from device: %s\n", strerror(errno));
@@ -782,6 +809,7 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     struct video_window window;
 
     YUV_Init();
+    video_init();
 
     capBox = CoTaskMemAlloc(sizeof(Capture));
     if (!capBox)
@@ -794,7 +822,7 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
 
     sprintf(device, "/dev/video%i", card);
     TRACE("opening %s\n", device);
-    capBox->fd = open(device, O_RDWR | O_NONBLOCK);
+    capBox->fd = video_open(device, O_RDWR | O_NONBLOCK);
     if (capBox->fd == -1)
     {
         WARN("open failed (%d)\n", errno);
