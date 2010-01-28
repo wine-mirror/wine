@@ -959,10 +959,6 @@ UINT msi_create_component_directories( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
-/*
- * Also we cannot enable/disable components either, so for now I am just going 
- * to do all the directories for all the components.
- */
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
     static const WCHAR ExecSeqQuery[] =
@@ -980,8 +976,6 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_CreateFolders, package);
     msiobj_release(&view->hdr);
-
-    msi_create_component_directories( package );
 
     return rc;
 }

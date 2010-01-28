@@ -1063,6 +1063,38 @@ static const CHAR aup_custom_action_dat[] = "Action\tType\tSource\tTarget\tISCom
                                             "CustomAction\tAction\n"
                                             "TestAllUsersProp\t19\t\tTest failed\t\n";
 
+static const CHAR cf_create_folders_dat[] = "Directory_\tComponent_\n"
+                                            "s72\ts72\n"
+                                            "CreateFolder\tDirectory_\tComponent_\n"
+                                            "MSITESTDIR\tOne\n";
+
+static const CHAR cf_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "ValidateProductID\t\t700\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "RemoveFiles\t\t3500\n"
+                                              "CreateFolders\t\t3700\n"
+                                              "InstallExecute\t\t3800\n"
+                                              "TestCreateFolders\t\t3900\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "RegisterUser\t\t6000\n"
+                                              "RegisterProduct\t\t6100\n"
+                                              "PublishFeatures\t\t6300\n"
+                                              "PublishProduct\t\t6400\n"
+                                              "InstallFinalize\t\t6600\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "ProcessComponents\t\t1600\n"
+                                              "UnpublishFeatures\t\t1800\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "LaunchConditions\t\t100\n";
+
+static const CHAR cf_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                           "s72\ti2\tS64\tS0\tS255\n"
+                                           "CustomAction\tAction\n"
+                                           "TestCreateFolders\t19\t\tHalts installation\t\n";
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1764,6 +1796,20 @@ static const msi_table fiuc_tables[] =
     ADD_TABLE(pp_install_exec_seq),
     ADD_TABLE(rofc_media),
     ADD_TABLE(property),
+};
+
+static const msi_table cf_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(cf_create_folders),
+    ADD_TABLE(cf_install_exec_seq),
+    ADD_TABLE(cf_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
 };
 
 /* cabinet definitions */
@@ -7336,6 +7382,34 @@ static void test_feature_override(void)
     delete_test_files();
 }
 
+static void test_create_folder(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, cf_tables, sizeof(cf_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
+    todo_wine ok(!delete_pf("msitest", FALSE), "Directory created\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7427,6 +7501,7 @@ START_TEST(install)
     test_MsiSetExternalUI();
     test_allusers_prop();
     test_feature_override();
+    test_create_folder();
 
     DeleteFileA(log_file);
 
