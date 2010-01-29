@@ -396,6 +396,7 @@ SRCDIR_INCLUDES = \
 	poppack.h \
 	powrprof.h \
 	profinfo.h \
+	propkey.h \
 	propkeydef.h \
 	propvarutil.h \
 	prsht.h \
