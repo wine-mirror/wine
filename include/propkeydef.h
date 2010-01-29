@@ -48,7 +48,11 @@
 #endif
 
 #ifndef IsEqualPropertyKey
+#ifdef __cplusplus
 #define IsEqualPropertyKey(a,b) (((a).pid == (b).pid) && IsEqualIID((a).fmtid,(b).fmtid))
+#else
+#define IsEqualPropertyKey(a,b) (((a).pid == (b).pid) && IsEqualIID(&(a).fmtid,&(b).fmtid))
+#endif
 #endif
 
 #ifndef _PROPERTYKEY_EQUALITY_OPERATORS_
