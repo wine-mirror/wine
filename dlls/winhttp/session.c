@@ -91,6 +91,8 @@ static void session_destroy( object_header_t *hdr )
 
 static BOOL session_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
 {
+    session_t *session = (session_t *)hdr;
+
     switch (option)
     {
     case WINHTTP_OPTION_REDIRECT_POLICY:
@@ -106,6 +108,18 @@ static BOOL session_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         *buflen = sizeof(DWORD);
         return TRUE;
     }
+    case WINHTTP_OPTION_CONNECT_TIMEOUT:
+        *(DWORD *)buffer = session->connect_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_SEND_TIMEOUT:
+        *(DWORD *)buffer = session->send_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_RECEIVE_TIMEOUT:
+        *(DWORD *)buffer = session->recv_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
@@ -115,6 +129,8 @@ static BOOL session_query_option( object_header_t *hdr, DWORD option, LPVOID buf
 
 static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
 {
+    session_t *session = (session_t *)hdr;
+
     switch (option)
     {
     case WINHTTP_OPTION_PROXY:
@@ -142,6 +158,15 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
     case WINHTTP_OPTION_DISABLE_FEATURE:
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
+    case WINHTTP_OPTION_CONNECT_TIMEOUT:
+        session->connect_timeout = *(DWORD *)buffer;
+        return TRUE;
+    case WINHTTP_OPTION_SEND_TIMEOUT:
+        session->send_timeout = *(DWORD *)buffer;
+        return TRUE;
+    case WINHTTP_OPTION_RECEIVE_TIMEOUT:
+        session->recv_timeout = *(DWORD *)buffer;
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
@@ -251,6 +276,18 @@ static BOOL connect_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         *buflen = sizeof(HINTERNET);
         return TRUE;
     }
+    case WINHTTP_OPTION_CONNECT_TIMEOUT:
+        *(DWORD *)buffer = connect->session->connect_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_SEND_TIMEOUT:
+        *(DWORD *)buffer = connect->session->send_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_RECEIVE_TIMEOUT:
+        *(DWORD *)buffer = connect->session->recv_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
@@ -499,6 +536,8 @@ static void request_destroy( object_header_t *hdr )
 
 static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
 {
+    request_t *request = (request_t *)hdr;
+
     switch (option)
     {
     case WINHTTP_OPTION_SECURITY_FLAGS:
@@ -521,7 +560,6 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     case WINHTTP_OPTION_SERVER_CERT_CONTEXT:
     {
         const CERT_CONTEXT *cert;
-        request_t *request = (request_t *)hdr;
 
         if (!buffer || *buflen < sizeof(cert))
         {
@@ -548,6 +586,18 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         *buflen = sizeof(DWORD);
         return TRUE;
     }
+    case WINHTTP_OPTION_CONNECT_TIMEOUT:
+        *(DWORD *)buffer = request->connect_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_SEND_TIMEOUT:
+        *(DWORD *)buffer = request->send_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    case WINHTTP_OPTION_RECEIVE_TIMEOUT:
+        *(DWORD *)buffer = request->recv_timeout;
+        *buflen = sizeof(DWORD);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
@@ -557,6 +607,8 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
 
 static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
 {
+    request_t *request = (request_t *)hdr;
+
     switch (option)
     {
     case WINHTTP_OPTION_PROXY:
@@ -614,6 +666,15 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
     case WINHTTP_OPTION_SECURITY_FLAGS:
         FIXME("WINHTTP_OPTION_SECURITY_FLAGS unimplemented (%08x)\n",
               *(DWORD *)buffer);
+        return TRUE;
+    case WINHTTP_OPTION_CONNECT_TIMEOUT:
+        request->connect_timeout = *(DWORD *)buffer;
+        return TRUE;
+    case WINHTTP_OPTION_SEND_TIMEOUT:
+        request->send_timeout = *(DWORD *)buffer;
+        return TRUE;
+    case WINHTTP_OPTION_RECEIVE_TIMEOUT:
+        request->recv_timeout = *(DWORD *)buffer;
         return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
