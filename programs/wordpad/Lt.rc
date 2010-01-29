@@ -221,8 +221,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Ankstesnis puslapis"
     STRING_PREVIEW_TWOPAGES,         "Du puslapiai"
     STRING_PREVIEW_ONEPAGE,          "Vienas puslapis"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_ZOOMIN,           "Didinti"
+    STRING_PREVIEW_ZOOMOUT,          "Mažinti"
     STRING_PREVIEW_CLOSE,            "Užverti"
 END
 
