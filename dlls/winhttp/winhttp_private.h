@@ -96,6 +96,9 @@ typedef struct
     object_header_t hdr;
     LPWSTR agent;
     DWORD access;
+    int connect_timeout;
+    int send_timeout;
+    int recv_timeout;
     LPWSTR proxy_server;
     LPWSTR proxy_bypass;
     LPWSTR proxy_username;

@@ -173,6 +173,9 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->hdr.flags = flags;
     session->hdr.refs = 1;
     session->hdr.redirect_policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
+    session->connect_timeout = DEFAULT_CONNECT_TIMEOUT;
+    session->send_timeout = DEFAULT_SEND_TIMEOUT;
+    session->recv_timeout = DEFAULT_RECEIVE_TIMEOUT;
     list_init( &session->cookie_cache );
 
     if (agent && !(session->agent = strdupW( agent ))) goto end;
@@ -668,9 +671,9 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     list_add_head( &connect->hdr.children, &request->hdr.entry );
 
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
-    request->connect_timeout = DEFAULT_CONNECT_TIMEOUT;
-    request->send_timeout = DEFAULT_SEND_TIMEOUT;
-    request->recv_timeout = DEFAULT_RECEIVE_TIMEOUT;
+    request->connect_timeout = connect->session->connect_timeout;
+    request->send_timeout = connect->session->send_timeout;
+    request->recv_timeout = connect->session->recv_timeout;
 
     if (!verb || !verb[0]) verb = getW;
     if (!(request->verb = strdupW( verb ))) goto end;
@@ -1190,7 +1193,9 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
 BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int send, int receive )
 {
     BOOL ret = TRUE;
+    object_header_t *hdr;
     request_t *request;
+    session_t *session;
 
     TRACE("%p, %d, %d, %d, %d\n", handle, resolve, connect, send, receive);
 
@@ -1203,34 +1208,49 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
     if (resolve > 0)
         FIXME("resolve timeout (%d) not supported\n", resolve);
 
-    if (!(request = (request_t *)grab_object( handle )))
+    if (!(hdr = grab_object( handle )))
     {
         set_last_error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
 
-    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    switch(hdr->type)
     {
-        release_object( &request->hdr );
-        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
-        return FALSE;
+        case WINHTTP_HANDLE_TYPE_REQUEST:
+            request = (request_t *)hdr;
+            request->connect_timeout = connect;
+
+            if (send < 0) send = 0;
+            request->send_timeout = send;
+
+            if (receive < 0) receive = 0;
+            request->recv_timeout = receive;
+
+            if (netconn_connected( &request->netconn ))
+            {
+                if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
+                if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
+            }
+
+            release_object( &request->hdr );
+            break;
+
+        case WINHTTP_HANDLE_TYPE_SESSION:
+            session = (session_t *)hdr;
+            session->connect_timeout = connect;
+
+            if (send < 0) send = 0;
+            session->send_timeout = send;
+
+            if (receive < 0) receive = 0;
+            session->recv_timeout = receive;
+            break;
+
+        default:
+            release_object( hdr );
+            set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+            return FALSE;
     }
-
-    request->connect_timeout = connect;
-
-    if (send < 0) send = 0;
-    request->send_timeout = send;
-
-    if (receive < 0) receive = 0;
-    request->recv_timeout = receive;
-
-    if (netconn_connected( &request->netconn ))
-    {
-        if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
-        if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
-    }
-
-    release_object( &request->hdr );
     return ret;
 }
 

@@ -1064,15 +1064,15 @@ static void test_Timeouts (void)
 
     SetLastError(0xdeadbeef);
     ret = WinHttpSetTimeouts(ses, -1, -1, -1, -1);
-    todo_wine ok(ret, "%u\n", GetLastError());
+    ok(ret, "%u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WinHttpSetTimeouts(ses, 0, 0, 0, 0);
-    todo_wine ok(ret, "%u\n", GetLastError());
+    ok(ret, "%u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WinHttpSetTimeouts(ses, 0x0123, 0x4567, 0x89ab, 0xcdef);
-    todo_wine ok(ret, "%u\n", GetLastError());
+    ok(ret, "%u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     value = 0xdeadbeef;
