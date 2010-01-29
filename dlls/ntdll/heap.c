@@ -110,7 +110,8 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  0x7f000
 /* extra size to add at the end of block for tail checking */
-#define HEAP_TAIL_EXTRA_SIZE(flags) ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? 8 : 0)
+#define HEAP_TAIL_EXTRA_SIZE(flags) \
+    ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? ALIGNMENT : 0)
 
 /* Max size of the blocks on the free lists */
 static const SIZE_T HEAP_freeListSizes[] =
@@ -143,7 +144,8 @@ typedef struct tagSUBHEAP
 
 typedef struct tagHEAP
 {
-    DWORD            unknown[3];
+    DWORD_PTR        unknown1[2];
+    DWORD            unknown2;
     DWORD            flags;         /* Heap flags */
     DWORD            force_flags;   /* Forced heap flags for debugging */
     SUBHEAP          subheap;       /* First sub-heap */
@@ -1143,7 +1145,8 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         char *end = (char *)(pArena + 1) + size;
 
         if (end >= heapEnd) end = (char *)subheap->base + subheap->commitSize;
-        while (ptr < (DWORD *)end - 1)
+        else end -= sizeof(ARENA_FREE *);
+        while (ptr < (DWORD *)end)
         {
             if (*ptr != ARENA_FREE_FILLER)
             {
@@ -1466,8 +1469,8 @@ void heap_set_debug_flags( HANDLE handle )
                     SIZE_T count = size;
 
                     ptr += sizeof(ARENA_FREE) + size;
-                    if (ptr > end) count = end - (char *)((ARENA_FREE *)arena + 1);
-                    else count -= sizeof(DWORD);
+                    if (ptr >= end) count = end - (char *)((ARENA_FREE *)arena + 1);
+                    else count -= sizeof(ARENA_FREE *);
                     mark_block_free( (ARENA_FREE *)arena + 1, count, flags );
                 }
                 else
