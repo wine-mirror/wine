@@ -9,7 +9,8 @@ IMPORTS   = dxguid uuid kernel32
 C_SRCS = \
 	d3drm.c \
 	d3drm_main.c \
-	math.c
+	math.c \
+	meshbuilder.c
 
 RC_SRCS = version.rc
 

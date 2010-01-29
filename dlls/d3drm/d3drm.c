@@ -134,9 +134,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateMeshBuilder(IDirect3DRM* iface, LPDI
 {
     IDirect3DRMImpl *This = (IDirect3DRMImpl *)iface;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, ppMeshBuilder);
+    TRACE("(%p/%p)->(%p)\n", iface, This, ppMeshBuilder);
 
-    return E_NOTIMPL;
+    return Direct3DRMMeshBuilder_create(ppMeshBuilder);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, LPDIRECT3DRMFACE * ppFace)

@@ -27,5 +27,6 @@
 #include "d3drm.h"
 
 HRESULT Direct3DRM_create(LPDIRECT3DRM* ppDirect3DRM);
+HRESULT Direct3DRMMeshBuilder_create(LPDIRECT3DRMMESHBUILDER* ppMeshBuilder);
 
 #endif /* __D3DRM_PRIVATE_INCLUDED__ */
