@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
 
+#define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -92,9 +94,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 static const char *url_oid_to_str(LPCSTR oid)
 {
-    if (HIWORD(oid))
-        return oid;
-    else
+    if (IS_INTOID(oid))
     {
         static char buf[10];
 
@@ -115,6 +115,8 @@ static const char *url_oid_to_str(LPCSTR oid)
             return buf;
         }
     }
+    else
+        return oid;
 }
 
 typedef BOOL (WINAPI *UrlDllGetObjectUrlFunc)(LPCSTR, LPVOID, DWORD,
@@ -379,7 +381,7 @@ BOOL WINAPI CryptGetObjectUrl(LPCSTR pszUrlOid, LPVOID pvPara, DWORD dwFlags,
     TRACE("(%s, %p, %08x, %p, %p, %p, %p, %p)\n", debugstr_a(pszUrlOid),
      pvPara, dwFlags, pUrlArray, pcbUrlArray, pUrlInfo, pcbUrlInfo, pvReserved);
 
-    if (!HIWORD(pszUrlOid))
+    if (IS_INTOID(pszUrlOid))
     {
         switch (LOWORD(pszUrlOid))
         {
@@ -1398,7 +1400,7 @@ static BOOL CRYPT_GetCreateFunction(LPCSTR pszObjectOid,
 
     *pFunc = NULL;
     *phFunc = 0;
-    if (!HIWORD(pszObjectOid))
+    if (IS_INTOID(pszObjectOid))
     {
         switch (LOWORD(pszObjectOid))
         {
@@ -1468,7 +1470,7 @@ static BOOL CRYPT_GetExpirationFunction(LPCSTR pszObjectOid,
 {
     BOOL ret;
 
-    if (!HIWORD(pszObjectOid))
+    if (IS_INTOID(pszObjectOid))
     {
         switch (LOWORD(pszObjectOid))
         {
