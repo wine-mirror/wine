@@ -213,9 +213,9 @@ static void test_dpa(void)
     dpa3 = pDPA_CreateEx(0, hHeap);
     ok(dpa3 != NULL, "\n");
     ret = pDPA_Grow(dpa3, si.dwPageSize + 1);
-    todo_wine ok(!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY, 
+    ok(!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
        "ret=%d error=%d\n", ret, GetLastError());
-        
+
     dpa = pDPA_Create(0);
     ok(dpa != NULL, "\n");
 
