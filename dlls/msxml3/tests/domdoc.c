@@ -868,6 +868,77 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
         SysFreeString(str);
 
+        /* delete data */
+        /* invalid arguments */
+        r = IXMLDOMText_deleteData(nodetext, -1, 1);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMText_deleteData(nodetext, 0, 0);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_deleteData(nodetext, 0, -1);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok(nLength == 43, "expected 43 got %d\n", nLength);
+
+        r = IXMLDOMText_deleteData(nodetext, nLength, 1);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_deleteData(nodetext, nLength+1, 1);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        /* delete from start */
+        r = IXMLDOMText_deleteData(nodetext, 0, 5);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok(nLength == 38, "expected 38 got %d\n", nLength);
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        /* whitespace preserving needs to be handled here */
+        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* delete from end */
+        r = IXMLDOMText_deleteData(nodetext, 35, 3);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok(nLength == 35, "expected 35 got %d\n", nLength);
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* delete from inside */
+        r = IXMLDOMText_deleteData(nodetext, 1, 33);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok(nLength == 2, "expected 2 got %d\n", nLength);
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        todo_wine ok( !lstrcmpW( str, _bstr_("") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* delete whole data ... */
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_deleteData(nodetext, 0, nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        /* ... and try again with empty string */
+        r = IXMLDOMText_deleteData(nodetext, 0, nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+
         /* test put_data */
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(szstr1);
