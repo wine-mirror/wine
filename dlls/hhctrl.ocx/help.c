@@ -419,7 +419,6 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
             }
             citer = citer->parent;
         }
-        chmfile = citer->merge.chm_file;
         break;
     case TAB_INDEX:
         iiter = (IndexItem *) user_data;
@@ -455,6 +454,12 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
         break;
     default:
         FIXME("Unhandled operation for this tab!\n");
+        return 0;
+    }
+
+    if(!chmfile)
+    {
+        FIXME("No help file found for this item!\n");
         return 0;
     }
 
