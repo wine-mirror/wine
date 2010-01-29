@@ -42,7 +42,8 @@ static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
 
 struct heap_layout
 {
-    DWORD unknown[3];
+    DWORD_PTR unknown[2];
+    DWORD pattern;
     DWORD flags;
     DWORD force_flags;
 };
@@ -488,7 +489,7 @@ static void test_heap_checks( DWORD flags )
 {
     BYTE old, *p, *p2;
     BOOL ret;
-    SIZE_T i, size, large_size = 800 * 1024 + 37;
+    SIZE_T i, size, large_size = 3000 * 1024 + 37;
 
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
     trace( "testing heap flags %08x\n", flags );
@@ -751,7 +752,7 @@ static void test_child_heap( const char *arg )
 
     expect_heap = heap_flags_from_global_flag( expected );
 
-    if (!(heap->flags & HEAP_GROWABLE) || heap->flags == 0xeeeeeeee)  /* vista layout */
+    if (!(heap->flags & HEAP_GROWABLE) || heap->pattern == 0xffeeffee || heap->pattern == 0xeeeeeeee)  /* vista layout */
     {
         if (expected & FLG_HEAP_PAGE_ALLOCS)
             ok( heap->flags == 0xeeeeeeee, "%s: got heap flags %08x expected 0xeeeeeeee\n",
@@ -765,6 +766,7 @@ static void test_child_heap( const char *arg )
             "%s: got heap flags %08x expected %08x\n", arg, heap->flags, expect_heap );
         ok( heap->force_flags == (expect_heap & ~0x18000080),
             "%s: got heap force flags %08x expected %08x\n", arg, heap->force_flags, expect_heap );
+        expect_heap = heap->flags;
     }
 
     test_heap_checks( expect_heap );
