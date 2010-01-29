@@ -3380,7 +3380,7 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
     TRACE("(%s, %p, %p, %p)\n", debugstr_a(szPolicyOID), pChainContext,
      pPolicyPara, pPolicyStatus);
 
-    if (!HIWORD(szPolicyOID))
+    if (IS_INTOID(szPolicyOID))
     {
         switch (LOWORD(szPolicyOID))
         {
