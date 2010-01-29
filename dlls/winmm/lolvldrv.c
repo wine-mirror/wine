@@ -59,7 +59,7 @@ static LPWINE_MLD	MM_MLDrvs[40];
 static WINE_LLTYPE	llTypes[MMDRV_MAX] = {
     A(TRUE,  Aux),
     A(FALSE, Mixer),
-    A(TRUE,  MidiIn),
+    A(FALSE, MidiIn),
     A(TRUE,  MidiOut),
     A(TRUE,  WaveIn),
     A(TRUE,  WaveOut),
