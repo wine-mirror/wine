@@ -220,6 +220,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Prejšnja"
     STRING_PREVIEW_TWOPAGES,         "Dve strani"
     STRING_PREVIEW_ONEPAGE,          "Ena stran"
+    STRING_PREVIEW_ZOOMIN,           "Zoom in"
+    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "Zapri"
 END
 

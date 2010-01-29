@@ -221,6 +221,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "前のページ"
     STRING_PREVIEW_TWOPAGES,         "2ページ"
     STRING_PREVIEW_ONEPAGE,          "1ページ"
+    STRING_PREVIEW_ZOOMIN,           "Zoom in"
+    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "閉じる"
 END
 

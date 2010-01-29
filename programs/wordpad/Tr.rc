@@ -220,6 +220,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Previous page"
     STRING_PREVIEW_TWOPAGES,         "Two pages"
     STRING_PREVIEW_ONEPAGE,          "One page"
+    STRING_PREVIEW_ZOOMIN,           "Zoom in"
+    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "Close"
 END
 

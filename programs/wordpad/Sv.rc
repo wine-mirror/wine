@@ -220,6 +220,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Föregående sida"
     STRING_PREVIEW_TWOPAGES,         "Två sidor"
     STRING_PREVIEW_ONEPAGE,          "En sida"
+    STRING_PREVIEW_ZOOMIN,           "Zoom in"
+    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "Stäng"
 END
 

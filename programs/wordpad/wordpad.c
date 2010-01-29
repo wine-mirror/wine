@@ -56,6 +56,9 @@ static const WCHAR wszMainWndClass[] = {'W','O','R','D','P','A','D','T','O','P',
 
 static const WCHAR stringFormat[] = {'%','2','d','\0'};
 
+const WCHAR wszPreviewWndClass[] = {'P','r','t','P','r','e','v','i','e','w',0};
+LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 static HWND hMainWnd;
 static HWND hEditorWnd;
 static HWND hFindWnd;
@@ -2447,7 +2450,7 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 {
     int nStatusSize = 0;
     RECT rc;
-    HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
+    HWND hwndEditor = preview_isactive() ? GetDlgItem(hWnd, IDC_PREVIEW) : GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hRulerWnd = GetDlgItem(hWnd, IDC_RULER);
@@ -2550,9 +2553,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
         break;
     case WM_PAINT:
-        if(preview_isactive())
-            return print_preview(hWnd);
-        else
+        if(!preview_isactive())
             return DefWindowProcW(hWnd, msg, wParam, lParam);
 
     default:
@@ -2590,6 +2591,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MAINMENU);
     wc.lpszClassName = wszMainWndClass;
+    RegisterClassW(&wc);
+
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = preview_proc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = hInstance;
+    wc.hIcon = NULL;
+    wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
+    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = wszPreviewWndClass;
     RegisterClassW(&wc);
 
     registry_read_winrect(&rc);
