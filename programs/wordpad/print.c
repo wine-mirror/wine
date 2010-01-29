@@ -690,7 +690,7 @@ LRESULT print_preview(HWND hMainWnd)
     float ratioWidth, ratioHeight, ratio;
     int xOffset, yOffset;
     int barheight;
-    float spacing = 20.0;
+    float spacing = 10.0;
     HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
     PAINTSTRUCT ps;
 
@@ -752,12 +752,12 @@ LRESULT print_preview(HWND hMainWnd)
     }
 
     barheight = SendMessageW(hReBar, RB_GETBARHEIGHT, 0, 0);
-    ratioHeight = ((float)window.bottom - spacing - (float)barheight) / (float)bmHeight;
+    ratioHeight = (window.bottom - spacing * 2 - barheight) / (float)bmHeight;
 
     if(preview.hdc2)
-        ratioWidth = ((float)window.right / 2.0 - spacing * 2.0) / (float)bmWidth;
+        ratioWidth = ((window.right - spacing * 3) / 2.0) / (float)bmWidth;
     else
-        ratioWidth = ((float)window.right - spacing * 3.0) / (float)bmWidth;
+        ratioWidth = (window.right - spacing * 2) / (float)bmWidth;
 
     if(ratioWidth > ratioHeight)
         ratio = ratioHeight;
@@ -772,7 +772,7 @@ LRESULT print_preview(HWND hMainWnd)
     if(!preview.hdc2)
         xOffset = (window.right - bmNewWidth) / 2;
     else
-        xOffset = (window.right - bmNewWidth * 2) / 2;
+        xOffset = (window.right - bmNewWidth * 2) / 3;
 
     window.top = barheight;
     FillRect(hdc, &window, GetStockObject(GRAY_BRUSH));
@@ -790,8 +790,8 @@ LRESULT print_preview(HWND hMainWnd)
 
         if(preview.hdc2)
         {
-            background.left += bmNewWidth + spacing;
-            background.right += bmNewWidth + spacing;
+            background.left += bmNewWidth + xOffset;
+            background.right += bmNewWidth + xOffset;
 
             FillRect(hdc, &background, GetStockObject(BLACK_BRUSH));
 
@@ -803,7 +803,7 @@ LRESULT print_preview(HWND hMainWnd)
 
     if(preview.hdc2)
     {
-        BitBlt(hdc, xOffset + bmNewWidth + spacing, yOffset, bmNewWidth, bmNewHeight, preview.hdcSized2, 0, 0, SRCCOPY);
+        BitBlt(hdc, xOffset * 2 + bmNewWidth, yOffset, bmNewWidth, bmNewHeight, preview.hdcSized2, 0, 0, SRCCOPY);
     }
 
     DeleteDC(fr.hdcTarget);
