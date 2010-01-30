@@ -697,7 +697,7 @@ UINT WINAPI auxGetDevCapsW(UINT_PTR uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+	return MMSYSERR_BADDEVICEID;
     return MMDRV_Message(wmld, AUXDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize);
 }
 
@@ -789,7 +789,7 @@ UINT WINAPI midiOutGetDevCapsW(UINT_PTR uDeviceID, LPMIDIOUTCAPSW lpCaps,
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIOUT, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+	return MMSYSERR_BADDEVICEID;
 
     return MMDRV_Message(wmld, MODM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize);
 }
@@ -1161,7 +1161,7 @@ UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSi
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIIN, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+	return MMSYSERR_BADDEVICEID;
 
    return MMDRV_Message(wmld, MIDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize);
 }
