@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlEscapeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
+static HRESULT (WINAPI *pUrlEscapeW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCreateFromPathA)(LPCSTR,LPSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCreateFromPathW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCombineA)(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD);
@@ -595,18 +597,23 @@ static void test_url_escape(const char *szUrl, DWORD dwFlags, HRESULT dwExpectRe
     WCHAR *urlW, *expected_urlW;
     dwEscaped=INTERNET_MAX_URL_LENGTH;
 
-    ok(UrlEscapeA(szUrl, szReturnUrl, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeA didn't return 0x%08x from \"%s\"\n", dwExpectReturn, szUrl);
+    ok(pUrlEscapeA(szUrl, szReturnUrl, &dwEscaped, dwFlags) == dwExpectReturn,
+        "UrlEscapeA didn't return 0x%08x from \"%s\"\n", dwExpectReturn, szUrl);
     ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", szExpectUrl, szReturnUrl, szUrl);
 
-    dwEscaped = INTERNET_MAX_URL_LENGTH;
-    urlW = GetWideString(szUrl);
-    expected_urlW = GetWideString(szExpectUrl);
-    ok(UrlEscapeW(urlW, ret_urlW, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeW didn't return 0x%08x from \"%s\"\n", dwExpectReturn, szUrl);
-    WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
-    ok(lstrcmpW(ret_urlW, expected_urlW)==0, "Expected \"%s\", but got \"%s\" from \"%s\" flags %08x\n", szExpectUrl, szReturnUrl, szUrl, dwFlags);
-    FreeWideString(urlW);
-    FreeWideString(expected_urlW);
-
+    if (pUrlEscapeW) {
+        dwEscaped = INTERNET_MAX_URL_LENGTH;
+        urlW = GetWideString(szUrl);
+        expected_urlW = GetWideString(szExpectUrl);
+        ok(pUrlEscapeW(urlW, ret_urlW, &dwEscaped, dwFlags) == dwExpectReturn,
+            "UrlEscapeW didn't return 0x%08x from \"%s\"\n", dwExpectReturn, szUrl);
+        WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
+        ok(lstrcmpW(ret_urlW, expected_urlW)==0,
+            "Expected \"%s\", but got \"%s\" from \"%s\" flags %08x\n",
+            szExpectUrl, szReturnUrl, szUrl, dwFlags);
+        FreeWideString(urlW);
+        FreeWideString(expected_urlW);
+    }
 }
 
 static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, HRESULT dwExpectReturnAlt, const char *szExpectUrl, BOOL todo)
@@ -659,27 +666,32 @@ static void test_UrlEscape(void)
     unsigned int i;
     char empty_string[] = "";
 
-    ret = UrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    if (!pUrlEscapeA) {
+        win_skip("UrlEscapeA noz found\n");
+        return;
+    }
+
+    ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 0, "got %d, expected %d\n", size, 0);
 
     size = 0;
-    ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 0, "got %d, expected %d\n", size, 0);
 
     size = 1;
-    ret = UrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 1, "got %d, expected %d\n", size, 1);
 
     size = 1;
-    ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
+    ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
     ok(size == 1, "got %d, expected %d\n", size, 1);
 
     size = 1;
-    ret = UrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
     ok(size == 34, "got %d, expected %d\n", size, 34);
 
@@ -1215,6 +1227,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlEscapeA = (void *) GetProcAddress(hShlwapi, "UrlEscapeA");
+  pUrlEscapeW = (void *) GetProcAddress(hShlwapi, "UrlEscapeW");
   pUrlCreateFromPathA = (void *) GetProcAddress(hShlwapi, "UrlCreateFromPathA");
   pUrlCreateFromPathW = (void *) GetProcAddress(hShlwapi, "UrlCreateFromPathW");
   pUrlCombineA = (void *) GetProcAddress(hShlwapi, "UrlCombineA");
