@@ -32,6 +32,8 @@
 /* ################ */
 static HMODULE hShlwapi;
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
+static HRESULT (WINAPI *pUrlApplySchemeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
+static HRESULT (WINAPI *pUrlApplySchemeW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pParseURLA)(LPCSTR,PARSEDURLA*);
 static HRESULT (WINAPI *pParseURLW)(LPCWSTR,PARSEDURLW*);
 static HRESULT (WINAPI *pHashData)(LPBYTE, DWORD, LPBYTE, DWORD);
@@ -408,10 +410,15 @@ static void test_UrlApplyScheme(void)
     DWORD len;
     DWORD i;
 
+    if (!pUrlApplySchemeA) {
+        win_skip("UrlApplySchemeA not found\n");
+        return;
+    }
+
     for(i = 0; i < sizeof(TEST_APPLY)/sizeof(TEST_APPLY[0]); i++) {
         len = TEST_APPLY_MAX_LENGTH;
         lstrcpyA(newurl, untouchedA);
-        res = UrlApplySchemeA(TEST_APPLY[i].url, newurl, &len, TEST_APPLY[i].flags);
+        res = pUrlApplySchemeA(TEST_APPLY[i].url, newurl, &len, TEST_APPLY[i].flags);
         ok( res == TEST_APPLY[i].res,
             "#%dA: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
 
@@ -427,7 +434,7 @@ static void test_UrlApplyScheme(void)
         MultiByteToWideChar(CP_ACP, 0, newurl, -1, newurlW, len);
         MultiByteToWideChar(CP_ACP, 0, TEST_APPLY[i].url, -1, urlW, len);
 
-        res = UrlApplySchemeW(urlW, newurlW, &len, TEST_APPLY[i].flags);
+        res = pUrlApplySchemeW(urlW, newurlW, &len, TEST_APPLY[i].flags);
         WideCharToMultiByte(CP_ACP, 0, newurlW, -1, newurl, TEST_APPLY_MAX_LENGTH, NULL, NULL);
         ok( res == TEST_APPLY[i].res,
             "#%dW: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
@@ -443,7 +450,7 @@ static void test_UrlApplyScheme(void)
     /* buffer too small */
     lstrcpyA(newurl, untouchedA);
     len = lstrlenA(TEST_APPLY[0].newurl);
-    res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, &len, TEST_APPLY[0].flags);
+    res = pUrlApplySchemeA(TEST_APPLY[0].url, newurl, &len, TEST_APPLY[0].flags);
     ok(res == E_POINTER, "got HRESULT 0x%x (expected E_POINTER)\n", res);
     /* The returned length include the space for the terminating 0 */
     i = lstrlenA(TEST_APPLY[0].newurl)+1;
@@ -453,18 +460,18 @@ static void test_UrlApplyScheme(void)
     /* NULL as parameter. The length and the buffer are not modified */
     lstrcpyA(newurl, untouchedA);
     len = TEST_APPLY_MAX_LENGTH;
-    res = UrlApplySchemeA(NULL, newurl, &len, TEST_APPLY[0].flags);
+    res = pUrlApplySchemeA(NULL, newurl, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
     ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
     ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
 
     len = TEST_APPLY_MAX_LENGTH;
-    res = UrlApplySchemeA(TEST_APPLY[0].url, NULL, &len, TEST_APPLY[0].flags);
+    res = pUrlApplySchemeA(TEST_APPLY[0].url, NULL, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
     ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
 
     lstrcpyA(newurl, untouchedA);
-    res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, NULL, TEST_APPLY[0].flags);
+    res = pUrlApplySchemeA(TEST_APPLY[0].url, newurl, NULL, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
     ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
 
@@ -1177,6 +1184,8 @@ START_TEST(url)
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
+  pUrlApplySchemeA = (void *) GetProcAddress(hShlwapi, "UrlApplySchemeA");
+  pUrlApplySchemeW = (void *) GetProcAddress(hShlwapi, "UrlApplySchemeW");
   pParseURLA = (void*)GetProcAddress(hShlwapi, (LPCSTR)1);
   pParseURLW = (void*)GetProcAddress(hShlwapi, (LPCSTR)2);
   pHashData = (void*)GetProcAddress(hShlwapi, "HashData");
