@@ -31,6 +31,7 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlCanonicalizeA)(LPCSTR, LPSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pUrlApplySchemeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlApplySchemeW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
@@ -616,8 +617,9 @@ static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, H
     DWORD dwSize;
 
     dwSize = INTERNET_MAX_URL_LENGTH;
-    ok(UrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer, index %d\n", index);
-    ret = UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags);
+    ret = pUrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags);
+    ok(ret != dwExpectReturn, "got 0s%x: Unexpected return for NULL buffer, index %d\n", ret, index);
+    ret = pUrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags);
     ok(ret == dwExpectReturn || ret == dwExpectReturnAlt,
        "UrlCanonicalizeA failed: expected=0x%08x or 0x%08x, got=0x%08x, index %d\n",
        dwExpectReturn, dwExpectReturnAlt, ret, index);
@@ -627,13 +629,19 @@ static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, H
     else
         ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08x url '%s' Expected \"%s\", but got \"%s\", index %d\n", dwFlags, szUrl, szExpectUrl, szReturnUrl, index);
 
-    dwSize = INTERNET_MAX_URL_LENGTH;
-    ok(UrlCanonicalizeW(wszUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer, index %d\n", index);
-    ok(UrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeW didn't return 0x%08x, index %d\n", dwExpectReturn, index);
-    wszConvertedUrl = GetWideString(szReturnUrl);
-    ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCanonicalize, index %d!\n", index);
-    FreeWideString(wszConvertedUrl);
+    if (pUrlCanonicalizeW) {
+        dwSize = INTERNET_MAX_URL_LENGTH;
+        ret = pUrlCanonicalizeW(wszUrl, NULL, &dwSize, dwFlags);
+        ok(ret != dwExpectReturn, "got 0x%x: Unexpected return for NULL buffer, index %d\n", ret, index);
+        ret = pUrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags);
+        ok(ret == dwExpectReturn, "UrlCanonicalizeW failed: expected 0x%08x, got 0x%x, index %d\n",
+            dwExpectReturn, ret, index);
 
+        wszConvertedUrl = GetWideString(szReturnUrl);
+        ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0,
+            "Strings didn't match between ascii and unicode UrlCanonicalize, index %d!\n", index);
+        FreeWideString(wszConvertedUrl);
+    }
 
     FreeWideString(wszUrl);
     FreeWideString(wszExpectUrl);
@@ -687,6 +695,11 @@ static void test_UrlCanonicalizeA(void)
     DWORD urllen;
     HRESULT hr;
 
+    if (!pUrlCanonicalizeA) {
+        win_skip("UrlCanonicalizeA not found\n");
+        return;
+    }
+
     urllen = lstrlenA(winehqA);
 
     /* buffer has no space for the result */
@@ -694,7 +707,7 @@ static void test_UrlCanonicalizeA(void)
     memset(szReturnUrl, '#', urllen+4);
     szReturnUrl[urllen+4] = '\0';
     SetLastError(0xdeadbeef);
-    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY  | URL_ESCAPE_UNSAFE);
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY  | URL_ESCAPE_UNSAFE);
     ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
         "got 0x%x with %u and size %u for '%s' and %u (expected 'E_POINTER' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen+1);
@@ -704,7 +717,7 @@ static void test_UrlCanonicalizeA(void)
     memset(szReturnUrl, '#', urllen+4);
     szReturnUrl[urllen+4] = '\0';
     SetLastError(0xdeadbeef);
-    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
     ok( (hr == E_POINTER) && (dwSize == (urllen + 1)),
         "got 0x%x with %u and size %u for '%s' and %u (expected 'E_POINTER' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen+1);
@@ -714,7 +727,7 @@ static void test_UrlCanonicalizeA(void)
     memset(szReturnUrl, '#', urllen+4);
     szReturnUrl[urllen+4] = '\0';
     SetLastError(0xdeadbeef);
-    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
     ok( (hr == S_OK) && (dwSize == urllen),
         "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
@@ -724,7 +737,7 @@ static void test_UrlCanonicalizeA(void)
     memset(szReturnUrl, '#', urllen+4);
     szReturnUrl[urllen+4] = '\0';
     SetLastError(0xdeadbeef);
-    hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
     ok( (hr == S_OK) && (dwSize == urllen),
         "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
@@ -751,7 +764,7 @@ static void test_UrlCanonicalizeW(void)
 
 
     if (!pUrlCanonicalizeW) {
-        skip("UrlCanonicalizeW\n");
+        win_skip("UrlCanonicalizeW not found\n");
         return;
     }
     urllen = lstrlenW(winehqW);
@@ -1183,6 +1196,7 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlCanonicalizeA = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeA");
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
   pUrlApplySchemeA = (void *) GetProcAddress(hShlwapi, "UrlApplySchemeA");
   pUrlApplySchemeW = (void *) GetProcAddress(hShlwapi, "UrlApplySchemeW");
