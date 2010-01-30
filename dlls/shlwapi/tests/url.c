@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlCreateFromPathA)(LPCSTR,LPSTR,LPDWORD,DWORD);
+static HRESULT (WINAPI *pUrlCreateFromPathW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCombineA)(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCombineW)(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCanonicalizeA)(LPCSTR, LPSTR, LPDWORD, DWORD);
@@ -916,24 +918,32 @@ static void test_UrlCreateFromPath(void)
     WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
     WCHAR *pathW, *urlW;
 
+    if (!pUrlCreateFromPathA) {
+        win_skip("UrlCreateFromPathA not found\n");
+        return;
+    }
+
     for(i = 0; i < sizeof(TEST_URLFROMPATH) / sizeof(TEST_URLFROMPATH[0]); i++) {
         len = INTERNET_MAX_URL_LENGTH;
-        ret = UrlCreateFromPathA(TEST_URLFROMPATH[i].path, ret_url, &len, 0);
+        ret = pUrlCreateFromPathA(TEST_URLFROMPATH[i].path, ret_url, &len, 0);
         ok(ret == TEST_URLFROMPATH[i].ret, "ret %08x from path %s\n", ret, TEST_URLFROMPATH[i].path);
         ok(!lstrcmpi(ret_url, TEST_URLFROMPATH[i].url), "url %s from path %s\n", ret_url, TEST_URLFROMPATH[i].path);
         ok(len == strlen(ret_url), "ret len %d from path %s\n", len, TEST_URLFROMPATH[i].path);
 
-        len = INTERNET_MAX_URL_LENGTH;
-        pathW = GetWideString(TEST_URLFROMPATH[i].path);
-        urlW = GetWideString(TEST_URLFROMPATH[i].url);
-        ret = UrlCreateFromPathW(pathW, ret_urlW, &len, 0);
-        WideCharToMultiByte(CP_ACP, 0, ret_urlW, -1, ret_url, sizeof(ret_url),0,0);
-        ok(ret == TEST_URLFROMPATH[i].ret, "ret %08x from path L\"%s\", expected %08x\n",
-           ret, TEST_URLFROMPATH[i].path, TEST_URLFROMPATH[i].ret);
-        ok(!lstrcmpiW(ret_urlW, urlW), "got %s expected %s from path L\"%s\"\n", ret_url, TEST_URLFROMPATH[i].url, TEST_URLFROMPATH[i].path);
-        ok(len == lstrlenW(ret_urlW), "ret len %d from path L\"%s\"\n", len, TEST_URLFROMPATH[i].path);
-        FreeWideString(urlW);
-        FreeWideString(pathW);
+        if (pUrlCreateFromPathW) {
+            len = INTERNET_MAX_URL_LENGTH;
+            pathW = GetWideString(TEST_URLFROMPATH[i].path);
+            urlW = GetWideString(TEST_URLFROMPATH[i].url);
+            ret = pUrlCreateFromPathW(pathW, ret_urlW, &len, 0);
+            WideCharToMultiByte(CP_ACP, 0, ret_urlW, -1, ret_url, sizeof(ret_url),0,0);
+            ok(ret == TEST_URLFROMPATH[i].ret, "ret %08x from path L\"%s\", expected %08x\n",
+                ret, TEST_URLFROMPATH[i].path, TEST_URLFROMPATH[i].ret);
+            ok(!lstrcmpiW(ret_urlW, urlW), "got %s expected %s from path L\"%s\"\n",
+                ret_url, TEST_URLFROMPATH[i].url, TEST_URLFROMPATH[i].path);
+            ok(len == lstrlenW(ret_urlW), "ret len %d from path L\"%s\"\n", len, TEST_URLFROMPATH[i].path);
+            FreeWideString(urlW);
+            FreeWideString(pathW);
+        }
     }
 }
 
@@ -1205,6 +1215,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlCreateFromPathA = (void *) GetProcAddress(hShlwapi, "UrlCreateFromPathA");
+  pUrlCreateFromPathW = (void *) GetProcAddress(hShlwapi, "UrlCreateFromPathW");
   pUrlCombineA = (void *) GetProcAddress(hShlwapi, "UrlCombineA");
   pUrlCombineW = (void *) GetProcAddress(hShlwapi, "UrlCombineW");
   pUrlCanonicalizeA = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeA");
