@@ -481,28 +481,25 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     if (FAILED(hr))
         return hr;
 
-    if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+    if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
     {
-        if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
-            IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
-            IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
-            IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
-        {
-             hr = DEVENUM_CreateSpecialCategories();
-             if (FAILED(hr))
-                 return hr;
-             if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
-             {
-                 ERR("Couldn't open registry key for special device: %s\n",
-                     debugstr_guid(clsidDeviceClass));
-                 return S_FALSE;
-             }
-        }
-        else
-        {
-            FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
-            return S_FALSE;
-        }
+         hr = DEVENUM_CreateSpecialCategories();
+         if (FAILED(hr))
+             return hr;
+         if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+         {
+             ERR("Couldn't open registry key for special device: %s\n",
+                 debugstr_guid(clsidDeviceClass));
+             return S_FALSE;
+         }
+    }
+    else if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+    {
+        FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
+        return S_FALSE;
     }
 
     return DEVENUM_IEnumMoniker_Construct(hkey, ppEnumMoniker);
@@ -556,6 +553,12 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
     return res;
 }
 
+static HANDLE DEVENUM_populate_handle;
+static const WCHAR DEVENUM_populate_handle_nameW[] =
+    {'_','_','W','I','N','E','_',
+     'D','e','v','e','n','u','m','_',
+     'P','o','p','u','l','a','t','e',0};
+
 /**********************************************************************
  * DEVENUM_CreateSpecialCategories (INTERNAL)
  *
@@ -571,6 +574,35 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
     IFilterMapper2 * pMapper = NULL;
     REGFILTER2 rf2;
     REGFILTERPINS2 rfp2;
+    WCHAR path[MAX_PATH];
+    HKEY basekey;
+
+    if (DEVENUM_populate_handle)
+        return S_OK;
+    DEVENUM_populate_handle = CreateEventW(NULL, TRUE, FALSE, DEVENUM_populate_handle_nameW);
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        /* Webcams can take some time to scan if the driver is badly written and it enables them,
+         * so have a 10 s timeout here
+         */
+        if (WaitForSingleObject(DEVENUM_populate_handle, 10000) == WAIT_TIMEOUT)
+            WARN("Waiting for object timed out\n");
+        TRACE("No need to rescan\n");
+        return S_OK;
+    }
+    TRACE("Scanning for devices\n");
+
+    /* Since devices can change between session, for example because you just plugged in a webcam
+     * or switched from pulseaudio to alsa, delete all old devices first
+     */
+    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_AudioRendererCategory, &basekey, path, MAX_PATH)))
+        RegDeleteTreeW(basekey, path);
+    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_AudioInputDeviceCategory, &basekey, path, MAX_PATH)))
+        RegDeleteTreeW(basekey, path);
+    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_VideoInputDeviceCategory, &basekey, path, MAX_PATH)))
+        RegDeleteTreeW(basekey, path);
+    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_MidiRendererCategory, &basekey, path, MAX_PATH)))
+        RegDeleteTreeW(basekey, path);
 
     rf2.dwVersion = 2;
     rf2.dwMerit = MERIT_PREFERRED;
@@ -814,5 +846,6 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
 
     if (pMapper)
         IFilterMapper2_Release(pMapper);
+    SetEvent(DEVENUM_populate_handle);
     return res;
 }
