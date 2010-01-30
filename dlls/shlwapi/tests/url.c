@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlGetPartA)(LPCSTR,LPSTR,LPDWORD,DWORD,DWORD);
+static HRESULT (WINAPI *pUrlGetPartW)(LPCWSTR,LPWSTR,LPDWORD,DWORD,DWORD);
 static HRESULT (WINAPI *pUrlEscapeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlEscapeW)(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCreateFromPathA)(LPCSTR,LPSTR,LPDWORD,DWORD);
@@ -516,20 +518,29 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   WCHAR wszPart[INTERNET_MAX_URL_LENGTH];
   LPWSTR wszUrl = GetWideString(szUrl);
   LPWSTR wszConvertedPart;
-
+  HRESULT res;
   DWORD dwSize;
 
   dwSize = INTERNET_MAX_URL_LENGTH;
-  ok( UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartA for \"%s\" part 0x%08x didn't return S_OK but \"%s\"\n", szUrl, dwPart, szPart);
-  dwSize = INTERNET_MAX_URL_LENGTH;
-  ok( UrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartW didn't return S_OK\n" );
+  res = pUrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
+  ok(res == S_OK,
+    "UrlGetPartA for \"%s\" part 0x%08x returned 0x%x and \"%s\"\n",
+    szUrl, dwPart, res, szPart);
+  if (pUrlGetPartW) {
+    dwSize = INTERNET_MAX_URL_LENGTH;
+    res = pUrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags);
+    ok(res == S_OK,
+      "UrlGetPartW for \"%s\" part 0x%08x returned 0x%x\n",
+      szUrl, dwPart, res);
 
-  wszConvertedPart = GetWideString(szPart);
+    wszConvertedPart = GetWideString(szPart);
 
-  ok(lstrcmpW(wszPart,wszConvertedPart)==0, "Strings didn't match between ascii and unicode UrlGetPart!\n");
+    ok(lstrcmpW(wszPart,wszConvertedPart)==0,
+        "Strings didn't match between ascii and unicode UrlGetPart!\n");
 
+    FreeWideString(wszConvertedPart);
+  }
   FreeWideString(wszUrl);
-  FreeWideString(wszConvertedPart);
 
   /* Note that v6.0 and later don't return '?' with the query */
   ok(strcmp(szPart,szExpected)==0 ||
@@ -548,16 +559,21 @@ static void test_UrlGetPart(void)
   DWORD dwSize;
   HRESULT res;
 
+  if (!pUrlGetPartA) {
+    win_skip("UrlGetPartA not found\n");
+    return;
+  }
+
   dwSize = sizeof szPart;
   szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
+  res = pUrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
   todo_wine {
   ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
   ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
   }
   dwSize = sizeof szPart;
   szPart[0]='x'; szPart[1]=0;
-  res = UrlGetPartA("hi", szPart, &dwSize, URL_PART_QUERY, 0);
+  res = pUrlGetPartA("hi", szPart, &dwSize, URL_PART_QUERY, 0);
   todo_wine {
   ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
   ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
@@ -576,12 +592,12 @@ static void test_UrlGetPart(void)
   test_url_part(http_url, URL_PART_PASSWORD, 0, "pass 123");
 
   dwSize = sizeof(szPart);
-  res = UrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  res = pUrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
   ok(res==S_FALSE, "returned %08x\n", res);
 
   dwSize = sizeof(szPart);
   szPart[0] = 'x'; szPart[1] = '\0';
-  res = UrlGetPartA("file:some text", szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  res = pUrlGetPartA("file:some text", szPart, &dwSize, URL_PART_HOSTNAME, 0);
   ok(res==S_FALSE, "returned %08x\n", res);
   ok(szPart[0] == '\0', "szPart[0] = %c\n", szPart[0]);
   ok(dwSize == 0, "dwSize = %d\n", dwSize);
@@ -1227,6 +1243,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlGetPartA = (void *) GetProcAddress(hShlwapi, "UrlGetPartA");
+  pUrlGetPartW = (void *) GetProcAddress(hShlwapi, "UrlGetPartW");
   pUrlEscapeA = (void *) GetProcAddress(hShlwapi, "UrlEscapeA");
   pUrlEscapeW = (void *) GetProcAddress(hShlwapi, "UrlEscapeW");
   pUrlCreateFromPathA = (void *) GetProcAddress(hShlwapi, "UrlCreateFromPathA");
