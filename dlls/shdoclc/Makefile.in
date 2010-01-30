@@ -24,6 +24,7 @@ RC_SRCS = \
 	Si.rc \
 	Sv.rc \
 	Tr.rc \
+	Uk.rc \
 	Zh.rc
 
 @MAKE_DLL_RULES@
