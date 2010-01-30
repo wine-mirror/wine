@@ -1872,6 +1872,12 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	ret = MMSYSERR_INVALPARAM;
     } else {
 	switch (lpMMT->wType) {
+	default:
+	    FIXME("Unsupported time type %x\n", lpMMT->wType);
+	case TIME_BYTES:
+	case TIME_SAMPLES:
+	    lpMMT->wType = TIME_MS;
+	    /* fall through to alternative format */
 	case TIME_MS:
 	    lpMMT->u.ms = lpMidiStrm->dwPositionMS;
 	    TRACE("=> %d ms\n", lpMMT->u.ms);
@@ -1879,11 +1885,6 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	case TIME_TICKS:
 	    lpMMT->u.ticks = lpMidiStrm->dwPulses;
 	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
-	    break;
-	default:
-	    WARN("Unsupported time type %d\n", lpMMT->wType);
-	    lpMMT->wType = TIME_MS;
-	    ret = MMSYSERR_INVALPARAM;
 	    break;
 	}
     }
