@@ -222,7 +222,7 @@ interface IAudioSessionEnumerator : IUnknown
     pointer_default(unique),
     object
 ]
-interface IAudiosessionManager2 : IAudioSessionManager
+interface IAudioSessionManager2 : IAudioSessionManager
 {
     HRESULT GetSessionEnumerator(
         [retval,out] IAudioSessionEnumerator **SessionEnum
