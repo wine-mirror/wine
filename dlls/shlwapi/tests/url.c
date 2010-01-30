@@ -34,6 +34,7 @@ static HMODULE hShlwapi;
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pParseURLA)(LPCSTR,PARSEDURLA*);
 static HRESULT (WINAPI *pParseURLW)(LPCWSTR,PARSEDURLW*);
+static HRESULT (WINAPI *pHashData)(LPBYTE, DWORD, LPBYTE, DWORD);
 
 static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
@@ -1102,36 +1103,36 @@ static void test_HashData(void)
     int i;
 
     /* Test hashing with identically sized input/output buffers. */
-    res = HashData(input, 16, output, 16);
+    res = pHashData(input, 16, output, 16);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
     if(res == S_OK)
        ok(!memcmp(output, expected, sizeof(expected)),
           "Output buffer did not match expected contents\n");
 
     /* Test hashing with larger output buffer. */
-    res = HashData(input, 16, output, 32);
+    res = pHashData(input, 16, output, 32);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
     if(res == S_OK)
        ok(!memcmp(output, expected2, sizeof(expected2)),
           "Output buffer did not match expected contents\n");
 
     /* Test hashing with smaller input buffer. */
-    res = HashData(input, 8, output, 16);
+    res = pHashData(input, 8, output, 16);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
     if(res == S_OK)
        ok(!memcmp(output, expected3, sizeof(expected3)),
           "Output buffer did not match expected contents\n");
 
     /* Test passing NULL pointers for input/output parameters. */
-    res = HashData(NULL, 0, NULL, 0);
+    res = pHashData(NULL, 0, NULL, 0);
     ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
        "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
 
-    res = HashData(input, 0, NULL, 0);
+    res = pHashData(input, 0, NULL, 0);
     ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
        "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
 
-    res = HashData(NULL, 0, output, 0);
+    res = pHashData(NULL, 0, output, 0);
     ok(res == E_INVALIDARG || broken(res == S_OK), /* Windows 2000 */
        "Expected HashData to return E_INVALIDARG, got 0x%08x\n", res);
 
@@ -1142,7 +1143,7 @@ static void test_HashData(void)
     for (i = 0; i < sizeof(output)/sizeof(BYTE); i++)
         output[i] = 0xFF;
 
-    res = HashData(input, 0, output, 0);
+    res = pHashData(input, 0, output, 0);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
 
     /* The buffers should be unchanged. */
@@ -1159,12 +1160,12 @@ static void test_HashData(void)
     }
 
     /* Input/output parameters are not validated. */
-    res = HashData((BYTE *)0xdeadbeef, 0, (BYTE *)0xdeadbeef, 0);
+    res = pHashData((BYTE *)0xdeadbeef, 0, (BYTE *)0xdeadbeef, 0);
     ok(res == S_OK, "Expected HashData to return S_OK, got 0x%08x\n", res);
 
     if (0)
     {
-        res = HashData((BYTE *)0xdeadbeef, 1, (BYTE *)0xdeadbeef, 1);
+        res = pHashData((BYTE *)0xdeadbeef, 1, (BYTE *)0xdeadbeef, 1);
         trace("HashData returned 0x%08x\n", res);
     }
 }
@@ -1178,6 +1179,7 @@ START_TEST(url)
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
   pParseURLA = (void*)GetProcAddress(hShlwapi, (LPCSTR)1);
   pParseURLW = (void*)GetProcAddress(hShlwapi, (LPCSTR)2);
+  pHashData = (void*)GetProcAddress(hShlwapi, "HashData");
 
   test_UrlApplyScheme();
   test_UrlHash();
