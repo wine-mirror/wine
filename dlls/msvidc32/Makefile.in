@@ -25,7 +25,8 @@ RC_SRCS = \
 	msvidc32_Ru.rc \
 	msvidc32_Si.rc \
 	msvidc32_Sv.rc \
-	msvidc32_Tr.rc
+	msvidc32_Tr.rc \
+	msvidc32_Uk.rc
 
 @MAKE_DLL_RULES@
 
