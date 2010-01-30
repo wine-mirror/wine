@@ -1,7 +1,7 @@
 /* Unit test suite for Path functions
  *
  * Copyright 2002 Matthew Mastracci
- * Copyright 2007,2008 Detlef Riekenberg
+ * Copyright 2007-2010 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlCombineA)(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD);
+static HRESULT (WINAPI *pUrlCombineW)(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD);
 static HRESULT (WINAPI *pUrlCanonicalizeA)(LPCSTR, LPSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pUrlCanonicalizeW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pUrlApplySchemeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
@@ -842,43 +844,50 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
     DWORD dwSize;
     DWORD dwExpectLen = lstrlen(szExpectUrl);
 
-    hr = UrlCombineA(szUrl1, szUrl2, NULL, NULL, dwFlags);
+    if (!pUrlCombineA) {
+        win_skip("UrlCombineA not found\n");
+        return;
+    }
+
+    hr = pUrlCombineA(szUrl1, szUrl2, NULL, NULL, dwFlags);
     ok(hr == E_INVALIDARG, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, E_INVALIDARG);
 
     dwSize = 0;
-    hr = UrlCombineA(szUrl1, szUrl2, NULL, &dwSize, dwFlags);
+    hr = pUrlCombineA(szUrl1, szUrl2, NULL, &dwSize, dwFlags);
     ok(hr == E_POINTER, "Checking length of string, return was 0x%08x, expected 0x%08x\n", hr, E_POINTER);
     ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
     dwSize--;
-    hr = UrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
+    hr = pUrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
     ok(hr == E_POINTER, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, E_POINTER);
     ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
-    hr = UrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
+    hr = pUrlCombineA(szUrl1, szUrl2, szReturnUrl, &dwSize, dwFlags);
     ok(hr == dwExpectReturn, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, dwExpectReturn);
     ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
     if(SUCCEEDED(hr)) {
         ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
     }
 
-    dwSize = 0;
-    hr = UrlCombineW(wszUrl1, wszUrl2, NULL, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "Checking length of string, return was 0x%08x, expected 0x%08x\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
+    if (pUrlCombineW) {
+        dwSize = 0;
+        hr = pUrlCombineW(wszUrl1, wszUrl2, NULL, &dwSize, dwFlags);
+        ok(hr == E_POINTER, "Checking length of string, return was 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+        ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
-    dwSize--;
-    hr = UrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
-    ok(hr == E_POINTER, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, E_POINTER);
-    ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
+        dwSize--;
+        hr = pUrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
+        ok(hr == E_POINTER, "UrlCombineW returned 0x%08x, expected 0x%08x\n", hr, E_POINTER);
+        ok(dwSize == dwExpectLen+1, "Got length %d, expected %d\n", dwSize, dwExpectLen+1);
 
-    hr = UrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
-    ok(hr == dwExpectReturn, "UrlCombineW returned 0x%08x, expected 0x%08x\n", hr, dwExpectReturn);
-    ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
-    if(SUCCEEDED(hr)) {
-        wszConvertedUrl = GetWideString(szReturnUrl);
-        ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCombine!\n");
-        FreeWideString(wszConvertedUrl);
+        hr = pUrlCombineW(wszUrl1, wszUrl2, wszReturnUrl, &dwSize, dwFlags);
+        ok(hr == dwExpectReturn, "UrlCombineW returned 0x%08x, expected 0x%08x\n", hr, dwExpectReturn);
+        ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
+        if(SUCCEEDED(hr)) {
+            wszConvertedUrl = GetWideString(szReturnUrl);
+            ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCombine!\n");
+            FreeWideString(wszConvertedUrl);
+        }
     }
 
     FreeWideString(wszUrl1);
@@ -1196,6 +1205,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlCombineA = (void *) GetProcAddress(hShlwapi, "UrlCombineA");
+  pUrlCombineW = (void *) GetProcAddress(hShlwapi, "UrlCombineW");
   pUrlCanonicalizeA = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeA");
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
   pUrlApplySchemeA = (void *) GetProcAddress(hShlwapi, "UrlApplySchemeA");
