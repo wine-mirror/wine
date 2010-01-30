@@ -1365,6 +1365,68 @@ static void test_colormatrix(void)
     GdipDisposeImageAttributes(imageattr);
 }
 
+static void test_gamma(void)
+{
+    GpStatus stat;
+    GpImageAttributes *imageattr;
+    GpBitmap *bitmap1, *bitmap2;
+    GpGraphics *graphics;
+    ARGB color;
+
+    stat = GdipSetImageAttributesGamma(NULL, ColorAdjustTypeDefault, TRUE, 1.0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateImageAttributes(&imageattr);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, TRUE, 1.0);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeAny, TRUE, 1.0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, TRUE, -1.0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, TRUE, 0.0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, TRUE, 0.5);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, FALSE, 0.0);
+    expect(Ok, stat);
+
+    /* Drawing a bitmap transforms the colors */
+    stat = GdipSetImageAttributesGamma(imageattr, ColorAdjustTypeDefault, TRUE, 3.0);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap2);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0xff80ffff);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap2, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipDrawImageRectRectI(graphics, (GpImage*)bitmap1, 0,0,1,1, 0,0,1,1,
+        UnitPixel, imageattr, NULL, NULL);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff20ffff, color);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap1);
+    GdipDisposeImage((GpImage*)bitmap2);
+    GdipDisposeImageAttributes(imageattr);
+}
+
 /* 1x1 pixel gif, 2 frames; first frame is white, second is black */
 static const unsigned char gifanimation[72] = {
 0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00,0x01,0x00,0xa1,0x00,0x00,0x00,0x00,0x00,
@@ -1533,6 +1595,7 @@ START_TEST(image)
     test_getsetpixel();
     test_palette();
     test_colormatrix();
+    test_gamma();
     test_multiframegif();
 
     GdiplusShutdown(gdiplusToken);

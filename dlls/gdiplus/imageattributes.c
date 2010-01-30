@@ -149,14 +149,15 @@ GpStatus WINGDIPAPI GdipSetImageAttributesCachedBackground(GpImageAttributes *im
 GpStatus WINGDIPAPI GdipSetImageAttributesGamma(GpImageAttributes *imageAttr,
     ColorAdjustType type, BOOL enableFlag, REAL gamma)
 {
-    static int calls;
-
     TRACE("(%p,%u,%i,%0.2f)\n", imageAttr, type, enableFlag, gamma);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!imageAttr || (enableFlag && gamma <= 0.0) || type >= ColorAdjustTypeCount)
+        return InvalidParameter;
 
-    return NotImplemented;
+    imageAttr->gamma_enabled[type] = enableFlag;
+    imageAttr->gamma[type] = gamma;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetImageAttributesNoOp(GpImageAttributes *imageAttr,

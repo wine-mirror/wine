@@ -263,6 +263,8 @@ struct GpImageAttributes{
     WrapMode wrap;
     struct color_key colorkeys[ColorAdjustTypeCount];
     struct color_matrix colormatrices[ColorAdjustTypeCount];
+    BOOL gamma_enabled[ColorAdjustTypeCount];
+    REAL gamma[ColorAdjustTypeCount];
 };
 
 struct GpFont{
