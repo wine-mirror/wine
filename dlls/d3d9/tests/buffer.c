@@ -111,6 +111,56 @@ static void lock_flag_test(IDirect3DDevice9 *device)
     IDirect3DVertexBuffer9_Release(buffer);
 }
 
+static inline const char *debug_d3dpool(D3DPOOL pool)
+{
+    switch(pool)
+    {
+        case D3DPOOL_DEFAULT: return "D3DPOOL_DEFAULT";
+        case D3DPOOL_SYSTEMMEM: return "D3DPOOL_SYSTEMMEM";
+        case D3DPOOL_SCRATCH: return "D3DPOOL_SCRATCH";
+        case D3DPOOL_MANAGED: return "D3DPOOL_MANAGED";
+        default:
+        return "unknown pool";
+    }
+}
+
+static void test_vertex_buffer_alignment(IDirect3DDevice9 *device)
+{
+    IDirect3DVertexBuffer9 *buffer = NULL;
+    HRESULT hr;
+    D3DPOOL pools[] = {D3DPOOL_DEFAULT, D3DPOOL_SYSTEMMEM, D3DPOOL_SCRATCH, D3DPOOL_MANAGED};
+    DWORD sizes[] = {1, 4, 16, 17, 32, 33, 64, 65, 1024, 1025, 1048576, 1048577};
+    unsigned int i, j;
+    void *data;
+
+    for(i = 0; i < (sizeof(sizes) / sizeof(sizes[0])); i++)
+    {
+        for(j = 0; j < (sizeof(pools) / sizeof(pools[0])); j++)
+        {
+            hr = IDirect3DDevice9_CreateVertexBuffer(device, sizes[i], 0, 0, pools[j], &buffer, NULL);
+            if(pools[j] == D3DPOOL_SCRATCH)
+            {
+                ok(hr == D3DERR_INVALIDCALL, "Creating a D3DPOOL_SCRATCH buffer returned (0x%08x)\n", hr);
+            }
+            else
+            {
+                ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexBuffer failed (0x%08x). Pool = %s, size %d\n", hr,
+                   debug_d3dpool(pools[j]), sizes[i]);
+            }
+            if(FAILED(hr)) continue;
+
+            hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, 0);
+            ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Lock failed (0x%08x)\n", hr);
+            ok(((DWORD_PTR) data & 31) == 0, "Vertex buffer start address is not 32 byte aligned(size: %d, pool: %s, data: %p)\n",
+               sizes[i], debug_d3dpool(pools[j]), data);
+            hr = IDirect3DVertexBuffer9_Unlock(buffer);
+            ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Unlock failed (0x%08x)\n", hr);
+
+            if(buffer) IDirect3DVertexBuffer9_Release(buffer);
+        }
+    }
+}
+
 START_TEST(buffer)
 {
     IDirect3DDevice9 *device_ptr;
@@ -127,6 +177,7 @@ START_TEST(buffer)
     if (!device_ptr) return;
 
     lock_flag_test(device_ptr);
+    test_vertex_buffer_alignment(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
