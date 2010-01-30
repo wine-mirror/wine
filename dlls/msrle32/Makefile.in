@@ -28,7 +28,8 @@ RC_SRCS = \
 	msrle_Ru.rc \
 	msrle_Si.rc \
 	msrle_Sv.rc \
-	msrle_Tr.rc
+	msrle_Tr.rc \
+	msrle_Uk.rc
 
 @MAKE_DLL_RULES@
 
