@@ -218,10 +218,10 @@ BEGIN
     STRING_PREVIEW_PRINT,            "&Drucken"
     STRING_PREVIEW_NEXTPAGE,         "&Nächste"
     STRING_PREVIEW_PREVPAGE,         "&Vorherige"
-    STRING_PREVIEW_TWOPAGES,         "Zwei Seiten"
-    STRING_PREVIEW_ONEPAGE,          "Eine Seite"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_TWOPAGES,         "&Zwei Seiten"
+    STRING_PREVIEW_ONEPAGE,          "&Eine Seite"
+    STRING_PREVIEW_ZOOMIN,           "Ver&größern"
+    STRING_PREVIEW_ZOOMOUT,          "Ver&kleinern"
     STRING_PREVIEW_CLOSE,            "&Schließen"
 END
 
