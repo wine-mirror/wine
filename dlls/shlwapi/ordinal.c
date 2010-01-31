@@ -3913,6 +3913,8 @@ BOOL WINAPI IsOS(DWORD feature)
     case OS_APPLIANCE:
         FIXME("(OS_APPLIANCE) What should we return here?\n");
         return FALSE;
+    case 0x25: /*OS_VISTAORGREATER*/
+        ISOS_RETURN(platform == VER_PLATFORM_WIN32_NT && majorv >= 6)
     }
 
 #undef ISOS_RETURN
