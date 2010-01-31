@@ -34,7 +34,7 @@ static SCODE (WINAPI *pScInitMapiUtil)(ULONG);
 static void  (WINAPI *pSwapPword)(PUSHORT,ULONG);
 static void  (WINAPI *pSwapPlong)(PULONG,ULONG);
 static void  (WINAPI *pHexFromBin)(LPBYTE,int,LPWSTR);
-static void  (WINAPI *pFBinFromHex)(LPWSTR,LPBYTE);
+static BOOL  (WINAPI *pFBinFromHex)(LPWSTR,LPBYTE);
 static UINT  (WINAPI *pUFromSz)(LPCSTR);
 static ULONG (WINAPI *pUlFromSzHex)(LPCSTR);
 static ULONG (WINAPI *pCbOfEncoded)(LPCSTR);
