@@ -460,8 +460,8 @@
 460 stdcall -noname SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
 461 stdcall -noname SHGetAppCompatFlags(long)
 462 stdcall -noname UrlFixupW(wstr wstr long)
-463 stub -noname SHExpandEnvironmentStringsForUserA
-464 stub -noname SHExpandEnvironmentStringsForUserW
+463 stdcall -noname SHExpandEnvironmentStringsForUserA(ptr str ptr long) userenv.ExpandEnvironmentStringsForUserA
+464 stdcall -noname SHExpandEnvironmentStringsForUserW(ptr wstr ptr long) userenv.ExpandEnvironmentStringsForUserW
 465 stub -noname PathUnExpandEnvStringsForUserA
 466 stub -noname PathUnExpandEnvStringsForUserW
 467 stub -noname SHRunIndirectRegClientCommand
