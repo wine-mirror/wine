@@ -40,11 +40,25 @@ static ULONG (WINAPI *pUlFromSzHex)(LPCSTR);
 static ULONG (WINAPI *pCbOfEncoded)(LPCSTR);
 static BOOL  (WINAPI *pIsBadBoundedStringPtr)(LPCSTR,ULONG);
 
+static void init_function_pointers(void)
+{
+    hMapi32 = LoadLibraryA("mapi32.dll");
+
+    pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+    pSwapPword = (void*)GetProcAddress(hMapi32, "SwapPword@8");
+    pSwapPlong = (void*)GetProcAddress(hMapi32, "SwapPlong@8");
+    pHexFromBin = (void*)GetProcAddress(hMapi32, "HexFromBin@12");
+    pFBinFromHex = (void*)GetProcAddress(hMapi32, "FBinFromHex@8");
+    pUFromSz = (void*)GetProcAddress(hMapi32, "UFromSz@4");
+    pUlFromSzHex = (void*)GetProcAddress(hMapi32, "UlFromSzHex@4");
+    pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
+    pIsBadBoundedStringPtr = (void*)GetProcAddress(hMapi32, "IsBadBoundedStringPtr@8");
+}
+
 static void test_SwapPword(void)
 {
     USHORT shorts[3];
 
-    pSwapPword = (void*)GetProcAddress(hMapi32, "SwapPword@8");
     if (!pSwapPword)
     {
         win_skip("SwapPword is not available\n");
@@ -64,7 +78,6 @@ static void test_SwapPlong(void)
 {
     ULONG longs[3];
 
-    pSwapPlong = (void*)GetProcAddress(hMapi32, "SwapPlong@8");
     if (!pSwapPlong)
     {
         win_skip("SwapPlong is not available\n");
@@ -95,8 +108,6 @@ static void test_HexFromBin(void)
     BOOL bOk;
     int i;
 
-    pHexFromBin = (void*)GetProcAddress(hMapi32, "HexFromBin@12");
-    pFBinFromHex = (void*)GetProcAddress(hMapi32, "FBinFromHex@8");
     if (!pHexFromBin || !pFBinFromHex)
     {
         win_skip("Hexadecimal conversion functions are not available\n");
@@ -121,7 +132,6 @@ static void test_HexFromBin(void)
 
 static void test_UFromSz(void)
 {
-    pUFromSz = (void*)GetProcAddress(hMapi32, "UFromSz@4");
     if (!pUFromSz)
     {
         win_skip("UFromSz is not available\n");
@@ -137,7 +147,6 @@ static void test_UFromSz(void)
 
 static void test_UlFromSzHex(void)
 {
-    pUlFromSzHex = (void*)GetProcAddress(hMapi32, "UlFromSzHex@4");
     if (!pUlFromSzHex)
     {
         win_skip("UlFromSzHex is not available\n");
@@ -156,7 +165,6 @@ static void test_CbOfEncoded(void)
     char buff[129];
     unsigned int i;
 
-    pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
     if (!pCbOfEncoded)
     {
         win_skip("CbOfEncoded is not available\n");
@@ -178,7 +186,6 @@ static void test_CbOfEncoded(void)
 
 static void test_IsBadBoundedStringPtr(void)
 {
-    pIsBadBoundedStringPtr = (void*)GetProcAddress(hMapi32, "IsBadBoundedStringPtr@8");
     if (!pIsBadBoundedStringPtr)
     {
         win_skip("IsBadBoundedStringPtr is not available\n");
@@ -200,9 +207,7 @@ START_TEST(util)
         return;
     }
 
-    hMapi32 = LoadLibraryA("mapi32.dll");
-
-    pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+    init_function_pointers();
 
     if (!pScInitMapiUtil)
     {
