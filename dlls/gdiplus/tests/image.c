@@ -1133,6 +1133,7 @@ static void test_palette(void)
     INT size;
     BYTE buffer[1040];
     ColorPalette *palette=(ColorPalette*)buffer;
+    ARGB color=0;
 
     /* test initial palette from non-indexed bitmap */
     stat = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat32bppRGB, NULL, &bitmap);
@@ -1178,6 +1179,22 @@ static void test_palette(void)
     expect(0xff000000, palette->Entries[0]);
     expect(0xffffffff, palette->Entries[1]);
 
+    /* test getting/setting pixels */
+    stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff000000, color);
+
+    stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffffffff);
+    todo_wine ok((stat == Ok) ||
+       broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipBitmapGetPixel(bitmap, 0, 1, &color);
+        expect(Ok, stat);
+        expect(0xffffffff, color);
+    }
+
     GdipDisposeImage((GpImage*)bitmap);
 
     /* test initial palette on 4-bit bitmap */
@@ -1195,6 +1212,22 @@ static void test_palette(void)
 
     check_halftone_palette(palette);
 
+    /* test getting/setting pixels */
+    stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff000000, color);
+
+    stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffff00ff);
+    todo_wine ok((stat == Ok) ||
+       broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipBitmapGetPixel(bitmap, 0, 1, &color);
+        expect(Ok, stat);
+        expect(0xffff00ff, color);
+    }
+
     GdipDisposeImage((GpImage*)bitmap);
 
     /* test initial palette on 8-bit bitmap */
@@ -1211,6 +1244,22 @@ static void test_palette(void)
     expect(256, palette->Count);
 
     check_halftone_palette(palette);
+
+    /* test getting/setting pixels */
+    stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff000000, color);
+
+    stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffcccccc);
+    todo_wine ok((stat == Ok) ||
+       broken(stat == InvalidParameter) /* pre-win7 */, "stat=%.8x\n", stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipBitmapGetPixel(bitmap, 0, 1, &color);
+        expect(Ok, stat);
+        expect(0xffcccccc, color);
+    }
 
     /* test setting/getting a different palette */
     palette->Entries[1] = 0xffcccccc;
