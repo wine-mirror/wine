@@ -725,8 +725,8 @@
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)
 @ stdcall SHRegGetUSValueA ( str str ptr ptr ptr long ptr long )
 @ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long )
-@ stdcall SHRegGetValueA ( long str str long ptr ptr ptr )
-@ stdcall SHRegGetValueW ( long wstr wstr long ptr ptr ptr )
+@ stdcall SHRegGetValueA ( long str str long ptr ptr ptr ) advapi32.RegGetValueA
+@ stdcall SHRegGetValueW ( long wstr wstr long ptr ptr ptr ) advapi32.RegGetValueW
 @ stdcall SHRegOpenUSKeyA ( str long long long long )
 @ stdcall SHRegOpenUSKeyW ( wstr long long long long )
 @ stdcall SHRegQueryInfoUSKeyA ( long ptr ptr ptr ptr long )
