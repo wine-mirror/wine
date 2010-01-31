@@ -31,6 +31,7 @@
 static HMODULE hMapi32 = 0;
 
 static SCODE (WINAPI *pScInitMapiUtil)(ULONG);
+static void  (WINAPI *pDeinitMapiUtil)(void);
 static void  (WINAPI *pSwapPword)(PUSHORT,ULONG);
 static void  (WINAPI *pSwapPlong)(PULONG,ULONG);
 static void  (WINAPI *pHexFromBin)(LPBYTE,int,LPWSTR);
@@ -39,12 +40,15 @@ static UINT  (WINAPI *pUFromSz)(LPCSTR);
 static ULONG (WINAPI *pUlFromSzHex)(LPCSTR);
 static ULONG (WINAPI *pCbOfEncoded)(LPCSTR);
 static BOOL  (WINAPI *pIsBadBoundedStringPtr)(LPCSTR,ULONG);
+static SCODE (WINAPI *pMAPIInitialize)(LPVOID);
+static void  (WINAPI *pMAPIUninitialize)(void);
 
 static void init_function_pointers(void)
 {
     hMapi32 = LoadLibraryA("mapi32.dll");
 
     pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+    pDeinitMapiUtil = (void*)GetProcAddress(hMapi32, "DeinitMapiUtil@0");
     pSwapPword = (void*)GetProcAddress(hMapi32, "SwapPword@8");
     pSwapPlong = (void*)GetProcAddress(hMapi32, "SwapPlong@8");
     pHexFromBin = (void*)GetProcAddress(hMapi32, "HexFromBin@12");
@@ -53,6 +57,8 @@ static void init_function_pointers(void)
     pUlFromSzHex = (void*)GetProcAddress(hMapi32, "UlFromSzHex@4");
     pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
     pIsBadBoundedStringPtr = (void*)GetProcAddress(hMapi32, "IsBadBoundedStringPtr@8");
+    pMAPIInitialize = (void*)GetProcAddress(hMapi32, "MAPIInitialize");
+    pMAPIUninitialize = (void*)GetProcAddress(hMapi32, "MAPIUninitialize");
 }
 
 static void test_SwapPword(void)
@@ -209,9 +215,9 @@ START_TEST(util)
 
     init_function_pointers();
 
-    if (!pScInitMapiUtil)
+    if (!pScInitMapiUtil || !pDeinitMapiUtil)
     {
-        win_skip("ScInitMapiUtil is not available\n");
+        win_skip("MAPI utility initialization functions are not available\n");
         FreeLibrary(hMapi32);
         return;
     }
@@ -233,11 +239,22 @@ START_TEST(util)
 
     test_SwapPword();
     test_SwapPlong();
+
+    /* We call MAPIInitialize here for the benefit of native extended MAPI
+     * providers which crash in the HexFromBin tests when MAPIInitialize has
+     * not been called. Since MAPIInitialize is irrelevant for HexFfromBin on
+     * Wine, we do not care whether MAPIInitialize succeeds. */
+    if (pMAPIInitialize)
+        ret = pMAPIInitialize(NULL);
     test_HexFromBin();
+    if (pMAPIUninitialize && ret == S_OK)
+        pMAPIUninitialize();
+
     test_UFromSz();
     test_UlFromSzHex();
     test_CbOfEncoded();
     test_IsBadBoundedStringPtr();
 
+    pDeinitMapiUtil();
     FreeLibrary(hMapi32);
 }
