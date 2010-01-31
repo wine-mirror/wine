@@ -1181,8 +1181,8 @@ static void test_palette(void)
 
     /* test getting/setting pixels */
     stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(0xff000000, color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffffffff);
     todo_wine ok((stat == Ok) ||
@@ -1214,8 +1214,8 @@ static void test_palette(void)
 
     /* test getting/setting pixels */
     stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(0xff000000, color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffff00ff);
     todo_wine ok((stat == Ok) ||
@@ -1247,8 +1247,8 @@ static void test_palette(void)
 
     /* test getting/setting pixels */
     stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(0xff000000, color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
 
     stat = GdipBitmapSetPixel(bitmap, 0, 1, 0xffcccccc);
     todo_wine ok((stat == Ok) ||

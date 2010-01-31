@@ -94,6 +94,24 @@ GpStatus WINGDIPAPI GdipBitmapCreateApplyEffect(GpBitmap** inputBitmaps,
     return NotImplemented;
 }
 
+static inline void getpixel_1bppIndexed(BYTE *index, const BYTE *row, UINT x)
+{
+    *index = (row[x/8]>>(7-x%8)) & 1;
+}
+
+static inline void getpixel_4bppIndexed(BYTE *index, const BYTE *row, UINT x)
+{
+    if (x & 1)
+        *index = row[x/2]&0xf;
+    else
+        *index = row[x/2]>>4;
+}
+
+static inline void getpixel_8bppIndexed(BYTE *index, const BYTE *row, UINT x)
+{
+    *index = row[x];
+}
+
 static inline void getpixel_16bppGrayScale(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
     const BYTE *row, UINT x)
 {
@@ -211,6 +229,7 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB *color)
 {
     BYTE r, g, b, a;
+    BYTE index;
     BYTE *row;
     TRACE("%p %d %d %p\n", bitmap, x, y, color);
 
@@ -222,6 +241,15 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
 
     switch (bitmap->format)
     {
+        case PixelFormat1bppIndexed:
+            getpixel_1bppIndexed(&index,row,x);
+            break;
+        case PixelFormat4bppIndexed:
+            getpixel_4bppIndexed(&index,row,x);
+            break;
+        case PixelFormat8bppIndexed:
+            getpixel_8bppIndexed(&index,row,x);
+            break;
         case PixelFormat16bppGrayScale:
             getpixel_16bppGrayScale(&r,&g,&b,&a,row,x);
             break;
@@ -260,7 +288,10 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
             return NotImplemented;
     }
 
-    *color = a<<24|r<<16|g<<8|b;
+    if (bitmap->format & PixelFormatIndexed)
+        *color = bitmap->image.palette_entries[index];
+    else
+        *color = a<<24|r<<16|g<<8|b;
 
     return Ok;
 }
