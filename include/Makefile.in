@@ -204,6 +204,7 @@ SRCDIR_INCLUDES = \
 	ddrawi.h \
 	devenum.idl \
 	devguid.h \
+	devpropdef.h \
 	digitalv.h \
 	dinput.h \
 	dispdib.h \
