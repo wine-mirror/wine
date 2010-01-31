@@ -297,6 +297,18 @@ BOOLEAN WINAPI WritePwrScheme(PUINT puiID, LPWSTR lpszName, LPWSTR lpszDescripti
    return FALSE;
 }
 
+DWORD WINAPI PowerGetActiveScheme(HKEY UserRootPowerKey, GUID **polguid)
+{
+   FIXME("(%p,%p) stub!\n", UserRootPowerKey, polguid);
+   return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD WINAPI PowerReadDCValue(HKEY RootPowerKey, const GUID *Scheme, const GUID *SubGroup, const GUID *PowerSettings, PULONG Type, PUCHAR Buffer, DWORD *BufferSize)
+{
+   FIXME("(%p,%s,%s,%s,%p,%p,%p) stub!\n", RootPowerKey, debugstr_guid(Scheme), debugstr_guid(SubGroup), debugstr_guid(PowerSettings), Type, Buffer, BufferSize);
+   return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
    switch(fdwReason) {
