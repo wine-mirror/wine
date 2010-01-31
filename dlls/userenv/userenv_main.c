@@ -115,6 +115,18 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
     return FALSE;
 }
 
+BOOL WINAPI GetAllUsersProfileDirectoryA( LPSTR lpProfileDir, LPDWORD lpcchSize )
+{
+    FIXME("%p %p\n", lpProfileDir, lpcchSize);
+    return FALSE;
+}
+
+BOOL WINAPI GetAllUsersProfileDirectoryW( LPWSTR lpProfileDir, LPDWORD lpcchSize )
+{
+    FIXME("%p %p\n", lpProfileDir, lpcchSize);
+    return FALSE;
+}
+
 BOOL WINAPI GetProfileType( DWORD *pdwFlags )
 {
     FIXME("%p\n", pdwFlags );

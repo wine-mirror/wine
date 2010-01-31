@@ -2,6 +2,8 @@
 @ stub DestroyEnvironmentBlock
 @ stdcall ExpandEnvironmentStringsForUserA(ptr str ptr long)
 @ stdcall ExpandEnvironmentStringsForUserW(ptr wstr ptr long)
+@ stdcall GetAllUsersProfileDirectoryA(ptr ptr)
+@ stdcall GetAllUsersProfileDirectoryW(ptr ptr)
 @ stdcall GetProfilesDirectoryA(ptr ptr)
 @ stdcall GetProfilesDirectoryW(ptr ptr)
 @ stdcall GetProfileType(ptr)
