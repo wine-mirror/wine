@@ -18,6 +18,7 @@ RC_SRCS = \
 	msvfw32_Es.rc \
 	msvfw32_Fr.rc \
 	msvfw32_Hu.rc \
+	msvfw32_It.rc \
 	msvfw32_Ko.rc \
 	msvfw32_Lt.rc \
 	msvfw32_Nl.rc \
