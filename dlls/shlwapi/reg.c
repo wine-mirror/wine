@@ -1155,7 +1155,7 @@ DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
  *   Success: ERROR_SUCCESS. Output parameters contain the details read.
  *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA().
  */
-DWORD WINAPI SHRegGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue, DWORD srrfFlags,
+LSTATUS WINAPI SHRegGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue, SRRF srrfFlags,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pcbData)
 {
   DWORD dwRet = 0;
@@ -1180,7 +1180,7 @@ DWORD WINAPI SHRegGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue, DWOR
  *
  * See SHGetValueA.
  */
-DWORD WINAPI SHRegGetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue, DWORD srrfFlags,
+LSTATUS WINAPI SHRegGetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue, SRRF srrfFlags,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pcbData)
 {
   DWORD dwRet = 0;
