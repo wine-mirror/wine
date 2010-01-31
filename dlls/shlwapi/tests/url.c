@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlUnescapeA)(LPSTR,LPSTR,LPDWORD,DWORD);
+static HRESULT (WINAPI *pUrlUnescapeW)(LPWSTR,LPWSTR,LPDWORD,DWORD);
 static BOOL    (WINAPI *pUrlIsA)(LPCSTR,URLIS);
 static BOOL    (WINAPI *pUrlIsW)(LPCWSTR,URLIS);
 static HRESULT (WINAPI *pUrlHashA)(LPCSTR,LPBYTE,DWORD);
@@ -1055,45 +1057,71 @@ static void test_UrlUnescape(void)
     static char another_inplace[] = "file:///C:/Program%20Files";
     static const char expected[] = "file:///C:/Program Files";
     static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m',' ','F','i','l','e','s',0};
-    static WCHAR another_inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
+    static WCHAR another_inplaceW[] ={'f','i','l','e',':','/','/','/',
+                'C',':','/','P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
+    HRESULT res;
 
+    if (!pUrlUnescapeA) {
+        win_skip("UrlUnescapeA not found\n");
+        return;
+    }
     for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) {
         dwEscaped=INTERNET_MAX_URL_LENGTH;
-        ok(UrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, &dwEscaped, 0) == S_OK, "UrlUnescapeA didn't return 0x%08x from \"%s\"\n", S_OK, TEST_URL_UNESCAPE[i].url);
+        res = pUrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, &dwEscaped, 0);
+        ok(res == S_OK,
+            "UrlUnescapeA returned 0x%x (expected S_OK) for \"%s\"\n",
+            res, TEST_URL_UNESCAPE[i].url);
         ok(strcmp(szReturnUrl,TEST_URL_UNESCAPE[i].expect)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url);
 
         ZeroMemory(szReturnUrl, sizeof(szReturnUrl));
         /* if we set the bufferpointer to NULL here UrlUnescape  fails and string gets not converted */
-        ok(UrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, NULL, 0) == E_INVALIDARG, "UrlUnescapeA didn't return 0x%08x from \"%s\"\n", E_INVALIDARG ,TEST_URL_UNESCAPE[i].url);
+        res = pUrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, NULL, 0);
+        ok(res == E_INVALIDARG,
+            "UrlUnescapeA returned 0x%x (expected E_INVALIDARG) for \"%s\"\n",
+            res, TEST_URL_UNESCAPE[i].url);
         ok(strcmp(szReturnUrl,"")==0, "Expected empty string\n");
 
-        dwEscaped = INTERNET_MAX_URL_LENGTH;
-        urlW = GetWideString(TEST_URL_UNESCAPE[i].url);
-        expected_urlW = GetWideString(TEST_URL_UNESCAPE[i].expect);
-        ok(UrlUnescapeW(urlW, ret_urlW, &dwEscaped, 0) == S_OK, "UrlUnescapeW didn't return 0x%08x from \"%s\"\n", S_OK, TEST_URL_UNESCAPE[i].url);
-        WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
-        ok(lstrcmpW(ret_urlW, expected_urlW)==0, "Expected \"%s\", but got \"%s\" from \"%s\" flags %08lx\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url, 0L);
-        FreeWideString(urlW);
-        FreeWideString(expected_urlW);
+        if (pUrlUnescapeW) {
+            dwEscaped = INTERNET_MAX_URL_LENGTH;
+            urlW = GetWideString(TEST_URL_UNESCAPE[i].url);
+            expected_urlW = GetWideString(TEST_URL_UNESCAPE[i].expect);
+            res = pUrlUnescapeW(urlW, ret_urlW, &dwEscaped, 0);
+            ok(res == S_OK,
+                "UrlUnescapeW returned 0x%x (expected S_OK) for \"%s\"\n",
+                res, TEST_URL_UNESCAPE[i].url);
+
+            WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
+            ok(lstrcmpW(ret_urlW, expected_urlW)==0,
+                "Expected \"%s\", but got \"%s\" from \"%s\" flags %08lx\n",
+                TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url, 0L);
+            FreeWideString(urlW);
+            FreeWideString(expected_urlW);
+        }
     }
 
     dwEscaped = sizeof(inplace);
-    ok(UrlUnescapeA(inplace, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
+    res = pUrlUnescapeA(inplace, NULL, &dwEscaped, URL_UNESCAPE_INPLACE);
+    ok(res == S_OK, "UrlUnescapeA returned 0x%x (expected S_OK)\n", res);
     ok(!strcmp(inplace, expected), "got %s expected %s\n", inplace, expected);
     ok(dwEscaped == 27, "got %d expected 27\n", dwEscaped);
 
     /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
-    ok(UrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
+    res = pUrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE);
+    ok(res == S_OK, "UrlUnescapeA returned 0x%x (expected S_OK)\n", res);
     ok(!strcmp(another_inplace, expected), "got %s expected %s\n", another_inplace, expected);
 
-    dwEscaped = sizeof(inplaceW);
-    ok(UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
-    ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
+    if (pUrlUnescapeW) {
+        dwEscaped = sizeof(inplaceW);
+        res = pUrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE);
+        ok(res == S_OK, "UrlUnescapeW returned 0x%x (expected S_OK)\n", res);
+        ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
 
-    /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
-    ok(UrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
-    ok(lstrlenW(another_inplaceW) == 24, "got %d expected 24\n", lstrlenW(another_inplaceW));
+        /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
+        res = pUrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE);
+        ok(res == S_OK, "UrlUnescapeW returned 0x%x (expected S_OK)\n", res);
 
+        ok(lstrlenW(another_inplaceW) == 24, "got %d expected 24\n", lstrlenW(another_inplaceW));
+    }
 }
 
 static const struct parse_url_test_t {
@@ -1266,6 +1294,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlUnescapeA = (void *) GetProcAddress(hShlwapi, "UrlUnescapeA");
+  pUrlUnescapeW = (void *) GetProcAddress(hShlwapi, "UrlUnescapeW");
   pUrlIsA = (void *) GetProcAddress(hShlwapi, "UrlIsA");
   pUrlIsW = (void *) GetProcAddress(hShlwapi, "UrlIsW");
   pUrlHashA = (void *) GetProcAddress(hShlwapi, "UrlHashA");
