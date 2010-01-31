@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static HRESULT (WINAPI *pUrlHashA)(LPCSTR,LPBYTE,DWORD);
+static HRESULT (WINAPI *pUrlHashW)(LPCWSTR,LPBYTE,DWORD);
 static HRESULT (WINAPI *pUrlGetPartA)(LPCSTR,LPSTR,LPDWORD,DWORD,DWORD);
 static HRESULT (WINAPI *pUrlGetPartW)(LPCWSTR,LPWSTR,LPDWORD,DWORD,DWORD);
 static HRESULT (WINAPI *pUrlEscapeA)(LPCSTR,LPSTR,LPDWORD,DWORD);
@@ -492,19 +494,29 @@ static void hash_url(const char* szUrl)
 {
   LPCSTR szTestUrl = szUrl;
   LPWSTR wszTestUrl = GetWideString(szTestUrl);
+  HRESULT res;
 
   DWORD cbSize = sizeof(DWORD);
   DWORD dwHash1, dwHash2;
-  ok(UrlHashA(szTestUrl, (LPBYTE)&dwHash1, cbSize) == S_OK, "UrlHashA didn't return S_OK\n");
-  ok(UrlHashW(wszTestUrl, (LPBYTE)&dwHash2, cbSize) == S_OK, "UrlHashW didn't return S_OK\n");
-
+  res = pUrlHashA(szTestUrl, (LPBYTE)&dwHash1, cbSize);
+  ok(res == S_OK, "UrlHashA returned 0x%x (expected S_OK) for %s\n", res, szUrl);
+  if (pUrlHashW) {
+    res = pUrlHashW(wszTestUrl, (LPBYTE)&dwHash2, cbSize);
+    ok(res == S_OK, "UrlHashW returned 0x%x (expected S_OK) for %s\n", res, szUrl);
+    ok(dwHash1 == dwHash2,
+        "Hashes didn't match (A: 0x%x, W: 0x%x) for %s\n", dwHash1, dwHash2, szUrl);
+  }
   FreeWideString(wszTestUrl);
 
-  ok(dwHash1 == dwHash2, "Hashes didn't compare\n");
 }
 
 static void test_UrlHash(void)
 {
+  if (!pUrlHashA) {
+    win_skip("UrlHashA not found\n");
+    return;
+  }
+
   hash_url(TEST_URL_1);
   hash_url(TEST_URL_2);
   hash_url(TEST_URL_3);
@@ -1243,6 +1255,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlHashA = (void *) GetProcAddress(hShlwapi, "UrlHashA");
+  pUrlHashW = (void *) GetProcAddress(hShlwapi, "UrlHashW");
   pUrlGetPartA = (void *) GetProcAddress(hShlwapi, "UrlGetPartA");
   pUrlGetPartW = (void *) GetProcAddress(hShlwapi, "UrlGetPartW");
   pUrlEscapeA = (void *) GetProcAddress(hShlwapi, "UrlEscapeA");
