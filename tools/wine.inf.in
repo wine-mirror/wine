@@ -2426,7 +2426,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 [FakeDllsSection]
 ; create some directories first
 10,inf,
-10,system,
 10,temp,
 11,mui,
 11,spool\drivers\color,
@@ -2441,6 +2440,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,winhelp.exe,winhelp.exe16
 10,,winhlp32.exe
 10,command,start.exe
+10,system,ddeml.dll,ddeml.dll16
 11,,ddhelp.exe
 11,,dosx.exe
 11,,dsound.vxd
