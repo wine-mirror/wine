@@ -80,6 +80,7 @@ RC_SRCS = \
 	Fi.rc \
 	Fr.rc \
 	Hu.rc \
+	It.rc \
 	Ja.rc \
 	Ko.rc \
 	Lt.rc \
