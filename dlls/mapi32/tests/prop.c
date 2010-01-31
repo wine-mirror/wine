@@ -32,6 +32,7 @@
 static HMODULE hMapi32 = 0;
 
 static SCODE        (WINAPI *pScInitMapiUtil)(ULONG);
+static void         (WINAPI *pDeinitMapiUtil)(void);
 static SCODE        (WINAPI *pPropCopyMore)(LPSPropValue,LPSPropValue,ALLOCATEMORE*,LPVOID);
 static ULONG        (WINAPI *pUlPropSize)(LPSPropValue);
 static BOOL         (WINAPI *pFPropContainsProp)(LPSPropValue,LPSPropValue,ULONG);
@@ -53,7 +54,9 @@ static SCODE        (WINAPI *pCreateIProp)(LPCIID,ALLOCATEBUFFER*,ALLOCATEMORE*,
                                            FREEBUFFER*,LPVOID,LPPROPDATA*);
 static SCODE        (WINAPI *pMAPIAllocateBuffer)(ULONG, LPVOID);
 static SCODE        (WINAPI *pMAPIAllocateMore)(ULONG, LPVOID, LPVOID);
+static SCODE        (WINAPI *pMAPIInitialize)(LPVOID);
 static SCODE        (WINAPI *pMAPIFreeBuffer)(LPVOID);
+static void         (WINAPI *pMAPIUninitialize)(void);
 
 static BOOL InitFuncPtrs(void)
 {
@@ -79,13 +82,15 @@ static BOOL InitFuncPtrs(void)
     pCreateIProp = (void*)GetProcAddress(hMapi32, "CreateIProp@24");
 
     pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+    pDeinitMapiUtil = (void*)GetProcAddress(hMapi32, "DeinitMapiUtil@0");
     pMAPIAllocateBuffer = (void*)GetProcAddress(hMapi32, "MAPIAllocateBuffer");
     pMAPIAllocateMore = (void*)GetProcAddress(hMapi32, "MAPIAllocateMore");
     pMAPIFreeBuffer = (void*)GetProcAddress(hMapi32, "MAPIFreeBuffer");
-    if(pScInitMapiUtil && pMAPIAllocateBuffer && pMAPIAllocateMore && pMAPIFreeBuffer)
-        return TRUE;
-    else
-        return FALSE;
+    pMAPIInitialize = (void*)GetProcAddress(hMapi32, "MAPIInitialize");
+    pMAPIUninitialize = (void*)GetProcAddress(hMapi32, "MAPIUninitialize");
+
+    return pMAPIAllocateBuffer && pMAPIAllocateMore && pMAPIFreeBuffer &&
+           pScInitMapiUtil && pDeinitMapiUtil;
 }
 
 /* FIXME: Test PT_I2, PT_I4, PT_R4, PT_R8, PT_CURRENCY, PT_APPTIME, PT_SYSTIME,
@@ -1441,7 +1446,17 @@ START_TEST(prop)
 
     test_PropCopyMore();
     test_UlPropSize();
+
+    /* We call MAPIInitialize here for the benefit of native extended MAPI
+     * providers which crash in the FPropContainsProp tests when MAPIInitialize
+     * has not been called. Since MAPIInitialize is irrelevant for FPropContainsProp
+     * on Wine, we do not care whether MAPIInitialize succeeds. */
+    if (pMAPIInitialize)
+        ret = pMAPIInitialize(NULL);
     test_FPropContainsProp();
+    if (pMAPIUninitialize && ret == S_OK)
+        pMAPIUninitialize();
+
     test_FPropCompareProp();
     test_LPropCompareProp();
     test_PpropFindProp();
@@ -1457,5 +1472,7 @@ START_TEST(prop)
     test_FBadColumnSet();
 
     test_IProp();
+
+    pDeinitMapiUtil();
     FreeLibrary(hMapi32);
 }
