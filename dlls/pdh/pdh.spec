@@ -57,7 +57,7 @@
 @ stub PdhGetDefaultPerfObjectHA
 @ stub PdhGetDefaultPerfObjectHW
 @ stub PdhGetDefaultPerfObjectW
-@ stub PdhGetDllVersion
+@ stdcall PdhGetDllVersion(ptr)
 @ stub PdhGetFormattedCounterArrayA
 @ stub PdhGetFormattedCounterArrayW
 @ stdcall PdhGetFormattedCounterValue(ptr long ptr ptr)

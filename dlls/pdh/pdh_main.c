@@ -726,6 +726,19 @@ PDH_STATUS WINAPI PdhGetCounterTimeBase( PDH_HCOUNTER handle, LONGLONG *base )
 }
 
 /***********************************************************************
+ *              PdhGetDllVersion   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetDllVersion( LPDWORD version )
+{
+    if (!version)
+        return PDH_INVALID_ARGUMENT;
+
+    *version = PDH_VERSION;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *              PdhGetFormattedCounterValue   (PDH.@)
  */
 PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format,
