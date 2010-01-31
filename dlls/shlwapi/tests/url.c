@@ -31,6 +31,8 @@
 
 /* ################ */
 static HMODULE hShlwapi;
+static BOOL    (WINAPI *pUrlIsA)(LPCSTR,URLIS);
+static BOOL    (WINAPI *pUrlIsW)(LPCWSTR,URLIS);
 static HRESULT (WINAPI *pUrlHashA)(LPCSTR,LPBYTE,DWORD);
 static HRESULT (WINAPI *pUrlHashW)(LPCWSTR,LPBYTE,DWORD);
 static HRESULT (WINAPI *pUrlGetPartA)(LPCSTR,LPSTR,LPDWORD,DWORD,DWORD);
@@ -995,39 +997,48 @@ static void test_UrlIs(void)
     size_t i;
     WCHAR wurl[80];
 
+    if (!pUrlIsA) {
+        win_skip("UrlIsA not found\n");
+        return;
+    }
+
     for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
 	MultiByteToWideChar(CP_ACP, 0, TEST_PATH_IS_URL[i].path, -1, wurl, 80);
 
-        ret = UrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
+        ret = pUrlIsA( TEST_PATH_IS_URL[i].path, URLIS_URL );
         ok( ret == TEST_PATH_IS_URL[i].expect,
             "returned %d from path %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
             TEST_PATH_IS_URL[i].expect );
 
-        ret = UrlIsW( wurl, URLIS_URL );
-        ok( ret == TEST_PATH_IS_URL[i].expect,
-            "returned %d from path (UrlIsW) %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
-            TEST_PATH_IS_URL[i].expect );
+        if (pUrlIsW) {
+            ret = pUrlIsW( wurl, URLIS_URL );
+            ok( ret == TEST_PATH_IS_URL[i].expect,
+                "returned %d from path (UrlIsW) %s, expected %d\n", ret,
+                TEST_PATH_IS_URL[i].path, TEST_PATH_IS_URL[i].expect );
+        }
     }
     for(i = 0; i < sizeof(TEST_URLIS_ATTRIBS) / sizeof(TEST_URLIS_ATTRIBS[0]); i++) {
 	MultiByteToWideChar(CP_ACP, 0, TEST_URLIS_ATTRIBS[i].url, -1, wurl, 80);
 
-        ret = UrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_OPAQUE);
+        ret = pUrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_OPAQUE);
 	ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,
 	    "returned %d for URLIS_OPAQUE, url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
 	    TEST_URLIS_ATTRIBS[i].expectOpaque );
-        ret = UrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_FILEURL);
+        ret = pUrlIsA( TEST_URLIS_ATTRIBS[i].url, URLIS_FILEURL);
 	ok( ret == TEST_URLIS_ATTRIBS[i].expectFile,
 	    "returned %d for URLIS_FILEURL, url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
 	    TEST_URLIS_ATTRIBS[i].expectFile );
 
-        ret = UrlIsW( wurl, URLIS_OPAQUE);
-	ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,
-	    "returned %d for URLIS_OPAQUE (UrlIsW), url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
-	    TEST_URLIS_ATTRIBS[i].expectOpaque );
-        ret = UrlIsW( wurl, URLIS_FILEURL);
-	ok( ret == TEST_URLIS_ATTRIBS[i].expectFile,
-	    "returned %d for URLIS_FILEURL (UrlIsW), url \"%s\", expected %d\n", ret, TEST_URLIS_ATTRIBS[i].url,
-	    TEST_URLIS_ATTRIBS[i].expectFile );
+        if (pUrlIsW) {
+            ret = pUrlIsW( wurl, URLIS_OPAQUE);
+            ok( ret == TEST_URLIS_ATTRIBS[i].expectOpaque,
+                "returned %d for URLIS_OPAQUE (UrlIsW), url \"%s\", expected %d\n",
+                ret, TEST_URLIS_ATTRIBS[i].url, TEST_URLIS_ATTRIBS[i].expectOpaque );
+            ret = pUrlIsW( wurl, URLIS_FILEURL);
+            ok( ret == TEST_URLIS_ATTRIBS[i].expectFile,
+                "returned %d for URLIS_FILEURL (UrlIsW), url \"%s\", expected %d\n",
+                ret, TEST_URLIS_ATTRIBS[i].url, TEST_URLIS_ATTRIBS[i].expectFile );
+        }
     }
 }
 
@@ -1255,6 +1266,8 @@ START_TEST(url)
 {
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pUrlIsA = (void *) GetProcAddress(hShlwapi, "UrlIsA");
+  pUrlIsW = (void *) GetProcAddress(hShlwapi, "UrlIsW");
   pUrlHashA = (void *) GetProcAddress(hShlwapi, "UrlHashA");
   pUrlHashW = (void *) GetProcAddress(hShlwapi, "UrlHashW");
   pUrlGetPartA = (void *) GetProcAddress(hShlwapi, "UrlGetPartA");
