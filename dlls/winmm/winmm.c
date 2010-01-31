@@ -969,6 +969,7 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
+    /* FIXME: detect MIDIStream handles and enforce 64KB buffer limit on those */
 
     return MMDRV_Message(wmld, MODM_PREPARE, (DWORD_PTR)lpMidiOutHdr, uSize);
 }

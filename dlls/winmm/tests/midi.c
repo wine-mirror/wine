@@ -121,7 +121,7 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     ok(mhdr.lpData!=NULL, "No %d bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         rc = midiInPrepareHeader(hm, &mhdr, sizeof(mhdr));
-        todo_wine ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
+        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
         rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiInUnprepare rc=%s\n", mmsys_error(rc));
         trace("MIDIHDR flags=%x when unsent\n", mhdr.dwFlags);
@@ -260,7 +260,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         test_notification(hwnd, "midiOutLong unprepared", 0, WHATEVER);
 
         rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
-        todo_wine ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
+        ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
         rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
         trace("MIDIHDR flags=%x when unsent\n", mhdr.dwFlags);
@@ -416,7 +416,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         mhdr.dwFlags = 0;
         /* PrepareHeader detects the too large buffer is for a stream. */
         rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
-        ok(rc==MMSYSERR_INVALPARAM, "midiOutPrepare stream too large rc=%s\n", mmsys_error(rc));
+        todo_wine ok(rc==MMSYSERR_INVALPARAM, "midiOutPrepare stream too large rc=%s\n", mmsys_error(rc));
 
         rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));

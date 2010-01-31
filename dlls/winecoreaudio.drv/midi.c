@@ -470,8 +470,7 @@ static DWORD MIDIOut_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * So at least check for the inqueue flag
      */
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
-	lpMidiHdr->dwBufferLength >= 0x10000ul) {
+	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
 	WARN("%p %p %08x %lu/%d\n", lpMidiHdr, lpMidiHdr->lpData,
 	           lpMidiHdr->dwFlags, sizeof(MIDIHDR), dwSize);
 	return MMSYSERR_INVALPARAM;
@@ -721,8 +720,7 @@ static DWORD MIDIIn_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * So at least check for the inqueue flag
      */
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
-	lpMidiHdr->dwBufferLength >= 0x10000ul) {
+	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
 	WARN("Invalid parameter %p %p %08x %d\n", lpMidiHdr, lpMidiHdr->lpData,
 	           lpMidiHdr->dwFlags, dwSize);
 	return MMSYSERR_INVALPARAM;
