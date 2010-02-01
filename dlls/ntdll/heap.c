@@ -281,9 +281,8 @@ static void subheap_notify_free_all(SUBHEAP const *subheap)
         else
         {
             ARENA_INUSE const *pArena = (ARENA_INUSE const *)ptr;
-            if (pArena->magic != ARENA_INUSE_MAGIC && pArena->magic != ARENA_PENDING_MAGIC)
-                ERR("bad inuse_magic @%p\n", pArena);
-            notify_free(pArena + 1);
+            if (pArena->magic == ARENA_INUSE_MAGIC) notify_free(pArena + 1);
+            else if (pArena->magic != ARENA_PENDING_MAGIC) ERR("bad inuse_magic @%p\n", pArena);
             ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
         }
     }
