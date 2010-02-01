@@ -810,7 +810,6 @@ START_TEST(heap)
         test_debug_heap( argv[0], FLG_HEAP_DISABLE_COALESCING );
         test_debug_heap( argv[0], FLG_HEAP_PAGE_ALLOCS );
         test_debug_heap( argv[0], 0xdeadbeef );
-        Sleep(5000);
     }
     else win_skip( "RtlGetNtGlobalFlags not found, skipping heap debug tests\n" );
 }
