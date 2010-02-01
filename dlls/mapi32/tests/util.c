@@ -242,7 +242,7 @@ START_TEST(util)
 
     /* We call MAPIInitialize here for the benefit of native extended MAPI
      * providers which crash in the HexFromBin tests when MAPIInitialize has
-     * not been called. Since MAPIInitialize is irrelevant for HexFfromBin on
+     * not been called. Since MAPIInitialize is irrelevant for HexFromBin on
      * Wine, we do not care whether MAPIInitialize succeeds. */
     if (pMAPIInitialize)
         ret = pMAPIInitialize(NULL);
