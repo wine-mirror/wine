@@ -284,7 +284,7 @@ error:
 
 static DWORD SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
 {
-    DWORD err;
+    DWORD err = ERROR_SUCCESS;
 
     if (data->pWintrustData->u.pCert &&
      WVT_IS_CBSTRUCT_GT_MEMBEROFFSET(WINTRUST_CERT_INFO,
@@ -324,11 +324,6 @@ static DWORD SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
             }
             if (!ret)
                 err = GetLastError();
-        }
-        else
-        {
-            /* Do nothing!?  See the tests */
-            err = ERROR_SUCCESS;
         }
     }
     else
