@@ -20,9 +20,12 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE {
 IDS_APPNAME, "Wine Disinstallazione Applicazioni"
-IDS_UNINSTALLFAILED, "Esecuzione del comando di disinstallazione '%s' è fallita, forse a causa di un eseguibile mancante.\r\nVuoi rimuovere dal registro la entry di disinstallazione?"
+IDS_UNINSTALLFAILED, "L'esecuzione del comando di disinstallazione '%s' Ã¨ fallita, forse a causa di un eseguibile mancante.\r\nVuoi rimuovere dal registro la voce di disinstallazione?"
 }
