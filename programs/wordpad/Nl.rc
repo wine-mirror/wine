@@ -47,7 +47,7 @@ BEGIN
         MENUITEM "&Verwijderen\tDel",           ID_EDIT_CLEAR
         MENUITEM "&Alles selecteren\tCtrl+A",   ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Zoeken...\tCrtl+F",            ID_FIND
+        MENUITEM "&Zoeken...\tCtrl+F",            ID_FIND
         MENUITEM "Zoek vo&lgende\tF3",              ID_FIND_NEXT
         MENUITEM "Ve&rvang...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR

@@ -50,7 +50,7 @@ BEGIN
         MENUITEM "Ca&ncella\tDEL",                 ID_EDIT_CLEAR
         MENUITEM "&Seleziona tutto\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "T&rova...\tCrtl+F",            ID_FIND
+        MENUITEM "T&rova...\tCtrl+F",            ID_FIND
         MENUITEM "Trova s&uccessivo\tF3",              ID_FIND_NEXT
         MENUITEM "S&ostituisci...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR

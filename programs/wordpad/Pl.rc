@@ -47,7 +47,7 @@ BEGIN
         MENUITEM "&Usuñ\tDel",                    ID_EDIT_CLEAR
         MENUITEM "&Zaznacz wszystko\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "Znaj&dŸ...\tCrtl+F",           ID_FIND
+        MENUITEM "Znaj&dŸ...\tCtrl+F",           ID_FIND
         MENUITEM "Z&najdŸ nastêpny\tF3",                ID_FIND_NEXT
         MENUITEM "Za&mieñ...\tCtrl+H",        ID_REPLACE
         MENUITEM SEPARATOR

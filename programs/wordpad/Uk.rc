@@ -53,7 +53,7 @@ BEGIN
         MENUITEM "О&чистити\tDEL",                 ID_EDIT_CLEAR
         MENUITEM "Виб&рати все\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Знайти...\tCrtl+F",            ID_FIND
+        MENUITEM "&Знайти...\tCtrl+F",            ID_FIND
         MENUITEM "Знайти д&алі\tF3",              ID_FIND_NEXT
         MENUITEM "За&мінтити...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR

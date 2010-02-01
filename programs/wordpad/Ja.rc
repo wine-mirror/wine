@@ -49,7 +49,7 @@ BEGIN
         MENUITEM "クリア(&C)\tDEL",             ID_EDIT_CLEAR
         MENUITEM "すべて選択(&S)\tCtrl+A",      ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "検索(&F)...\tCrtl+F",         ID_FIND
+        MENUITEM "検索(&F)...\tCtrl+F",         ID_FIND
         MENUITEM "次を検索(&N)\tF3",            ID_FIND_NEXT
         MENUITEM "置換(&R)...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR

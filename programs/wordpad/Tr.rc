@@ -48,7 +48,7 @@ BEGIN
         MENUITEM "&Sil\tDel",                   ID_EDIT_CLEAR
         MENUITEM "&Tümünü seç\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Find...\tCrtl+F",            ID_FIND
+        MENUITEM "&Find...\tCtrl+F",            ID_FIND
         MENUITEM "Find &next\tF3",              ID_FIND_NEXT
         MENUITEM "&Replace...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR

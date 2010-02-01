@@ -48,7 +48,7 @@ BEGIN
         MENUITEM "&Fjern\tDEL",               ID_EDIT_CLEAR
         MENUITEM "&Merk alt\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Søk etter...\tCrtl+F",  ID_FIND
+        MENUITEM "&Søk etter...\tCtrl+F",  ID_FIND
         MENUITEM "Søk etter &neste\tF3",      ID_FIND_NEXT
         MENUITEM "E&rstatt...\tCtrl+H",    ID_REPLACE
         MENUITEM SEPARATOR
