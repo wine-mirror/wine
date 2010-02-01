@@ -564,3 +564,8 @@
 
 # Wine internal functions
 1010 pascal __wine_call_wndproc(word word word long long) __wine_call_wndproc
+
+################################################################
+# 32-bit exports of the 16-bit functions needed by other dlls
+#
+@ stdcall -arch=win32 CreateIcon16(long long long long long ptr ptr)
