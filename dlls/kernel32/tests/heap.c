@@ -527,7 +527,6 @@ static void test_heap_checks( DWORD flags )
         {
             ok( p[14] == 0, "wrong padding %x\n", p[14] );
             ok( p[15] == 0, "wrong padding %x\n", p[15] );
-            ok( p[16] == 0, "wrong padding %x\n", p[16] );
         }
     }
     else skip( "realloc in place failed\n ");
@@ -549,7 +548,7 @@ static void test_heap_checks( DWORD flags )
         if (flags & HEAP_VALIDATE)
         {
             size = HeapSize( GetProcessHeap(), 0, p );
-            ok( size == ~(SIZE_T)0, "Wrong size %lu\n", size );
+            ok( size == ~(SIZE_T)0 || broken(size == ~0u), "Wrong size %lu\n", size );
 
             p2 = HeapReAlloc( GetProcessHeap(), 0, p, 14 );
             ok( p2 == NULL, "HeapReAlloc succeeded\n" );
@@ -752,13 +751,13 @@ static void test_child_heap( const char *arg )
 
     expect_heap = heap_flags_from_global_flag( expected );
 
-    if (!(heap->flags & HEAP_GROWABLE) || heap->pattern == 0xffeeffee || heap->pattern == 0xeeeeeeee)  /* vista layout */
+    if (!(heap->flags & HEAP_GROWABLE) || heap->pattern == 0xffeeffee)  /* vista layout */
     {
-        if (expected & FLG_HEAP_PAGE_ALLOCS)
-            ok( heap->flags == 0xeeeeeeee, "%s: got heap flags %08x expected 0xeeeeeeee\n",
-                arg, heap->flags );
-        else
-            ok( heap->flags == 0, "%s: got heap flags %08x expected 0\n", arg, heap->flags );
+        ok( heap->flags == 0, "%s: got heap flags %08x expected 0\n", arg, heap->flags );
+    }
+    else if (heap->pattern == 0xeeeeeeee && heap->flags == 0xeeeeeeee)
+    {
+        ok( expected & FLG_HEAP_PAGE_ALLOCS, "%s: got heap flags 0xeeeeeeee without page alloc\n", arg );
     }
     else
     {
@@ -811,6 +810,7 @@ START_TEST(heap)
         test_debug_heap( argv[0], FLG_HEAP_DISABLE_COALESCING );
         test_debug_heap( argv[0], FLG_HEAP_PAGE_ALLOCS );
         test_debug_heap( argv[0], 0xdeadbeef );
+        Sleep(5000);
     }
     else win_skip( "RtlGetNtGlobalFlags not found, skipping heap debug tests\n" );
 }
