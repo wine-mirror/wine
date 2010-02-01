@@ -562,23 +562,17 @@ static void process_unload_dll( struct process *process, mod_handle_t base )
 /* terminate a process with the given exit code */
 static void terminate_process( struct process *process, struct thread *skip, int exit_code )
 {
-    struct list *ptr;
-
-    if (skip && skip->process == process)  /* move it to the end of the list */
-    {
-        assert( skip->state != TERMINATED );
-        list_remove( &skip->proc_entry );
-        list_add_tail( &process->thread_list, &skip->proc_entry );
-    }
+    struct thread *thread;
 
     grab_object( process );  /* make sure it doesn't get freed when threads die */
-    while ((ptr = list_head( &process->thread_list )))
+restart:
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
-
         if (exit_code) thread->exit_code = exit_code;
-        if (thread == skip) break;
+        if (thread == skip) continue;
+        if (thread->state == TERMINATED) continue;
         kill_thread( thread, 1 );
+        goto restart;
     }
     release_object( process );
 }
