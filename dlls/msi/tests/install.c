@@ -837,7 +837,8 @@ static const CHAR df_duplicate_file_dat[] = "FileKey\tComponent_\tFile_\tDestNam
                                             "s72\ts72\ts72\tS255\tS72\n"
                                             "DuplicateFile\tFileKey\n"
                                             "maximus\tmaximus\tmaximus\taugustus\t\n"
-                                            "caesar\tmaximus\tmaximus\t\tNONEXISTENT\n";
+                                            "caesar\tmaximus\tmaximus\t\tNONEXISTENT\n"
+                                            "augustus\tnosuchcomponent\tmaximus\t\tMSITESTDIR\n";
 
 static const CHAR wrv_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
