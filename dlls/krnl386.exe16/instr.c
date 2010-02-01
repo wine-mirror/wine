@@ -104,6 +104,7 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 {
     if (*sel == 0x40)
     {
+        DOSVM_start_bios_timer();
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }

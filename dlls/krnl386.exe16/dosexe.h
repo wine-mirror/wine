@@ -393,6 +393,7 @@ extern DOSCONF *DOSCONF_GetConfig( void );
 
 /* dosmem.c */
 extern BIOSDATA *DOSVM_BiosData( void );
+extern void DOSVM_start_bios_timer(void);
 
 /* fpu.c */
 extern void WINAPI DOSVM_Int34Handler(CONTEXT86*);
