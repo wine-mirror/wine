@@ -4492,7 +4492,8 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
 
     vector = msi_service_args_to_vector(args, &numargs);
 
-    if (!StartServiceW(service, numargs, vector))
+    if (!StartServiceW(service, numargs, vector) &&
+        GetLastError() != ERROR_SERVICE_ALREADY_RUNNING)
     {
         ERR("Failed to start service %s (%u)\n", debugstr_w(name), GetLastError());
         goto done;

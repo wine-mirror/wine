@@ -349,6 +349,29 @@ static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArgument
                                           "ServiceControl\tServiceControl\n"
                                           "ServiceControl\tTestService\t8\t\t0\tservice_comp";
 
+static const CHAR sss_service_control_dat[] = "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
+                                              "s72\tl255\ti2\tL255\tI2\ts72\n"
+                                              "ServiceControl\tServiceControl\n"
+                                              "ServiceControl\tTermService\t1\t\t0\tservice_comp";
+
+static const CHAR sss_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "ResolveSource\t\t950\n"
+                                               "MoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t4000\n"
+                                               "DuplicateFiles\t\t4500\n"
+                                               "WriteEnvironmentStrings\t\t4550\n"
+                                               "CreateShortcuts\t\t4600\n"
+                                               "StartServices\t\t5000\n"
+                                               "InstallFinalize\t\t6600\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "LaunchConditions\t\t100\n";
+
 /* tables for test_continuouscabs */
 static const CHAR cc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -1808,6 +1831,19 @@ static const msi_table cf_tables[] =
     ADD_TABLE(cf_create_folders),
     ADD_TABLE(cf_install_exec_seq),
     ADD_TABLE(cf_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table sss_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(sss_install_exec_seq),
+    ADD_TABLE(sss_service_control),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -7410,6 +7446,69 @@ static void test_create_folder(void)
     delete_test_files();
 }
 
+static void test_start_services(void)
+{
+    UINT r;
+    SC_HANDLE scm, service;
+    BOOL ret;
+    DWORD error = ERROR_SUCCESS;
+
+    scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    ok(scm != NULL, "Failed to open the SC Manager\n");
+
+    service = OpenService(scm, "TermService", SC_MANAGER_ALL_ACCESS);
+    ok(service != NULL, "Failed to open TermService\n");
+
+    ret = StartService(service, 0, NULL);
+    if (!ret && (error = GetLastError()) != ERROR_SERVICE_ALREADY_RUNNING)
+    {
+        skip("Terminal service not available, skipping test\n");
+        CloseServiceHandle(service);
+        CloseServiceHandle(scm);
+        return;
+    }
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(scm);
+
+    create_test_files();
+    create_database(msifile, sss_tables, sizeof(sss_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    delete_test_files();
+
+    if (error == ERROR_SUCCESS)
+    {
+        SERVICE_STATUS status;
+
+        scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+        service = OpenService(scm, "TermService", SC_MANAGER_ALL_ACCESS);
+
+        ret = ControlService(service, SERVICE_CONTROL_STOP, &status);
+        ok(ret, "ControlService failed %u\n", GetLastError());
+
+        CloseServiceHandle(service);
+        CloseServiceHandle(scm);
+    }
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7502,6 +7601,7 @@ START_TEST(install)
     test_allusers_prop();
     test_feature_override();
     test_create_folder();
+    test_start_services();
 
     DeleteFileA(log_file);
 
