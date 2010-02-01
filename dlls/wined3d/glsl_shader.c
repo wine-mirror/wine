@@ -2253,10 +2253,15 @@ static void shader_glsl_rsq(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
 
-    if (mask_size > 1) {
-        shader_addline(buffer, "vec%d(inversesqrt(%s)));\n", mask_size, src_param.param_str);
-    } else {
-        shader_addline(buffer, "inversesqrt(%s));\n", src_param.param_str);
+    if (mask_size > 1)
+    {
+        shader_addline(buffer, "vec%d(%s == 0.0 ? FLT_MAX : inversesqrt(%s)));\n",
+                mask_size, src_param.param_str, src_param.param_str);
+    }
+    else
+    {
+        shader_addline(buffer, "%s == 0.0 ? FLT_MAX : inversesqrt(%s));\n",
+                src_param.param_str, src_param.param_str);
     }
 }
 
