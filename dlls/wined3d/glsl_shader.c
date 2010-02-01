@@ -2255,12 +2255,12 @@ static void shader_glsl_rsq(const struct wined3d_shader_instruction *ins)
 
     if (mask_size > 1)
     {
-        shader_addline(buffer, "vec%d(%s == 0.0 ? FLT_MAX : inversesqrt(%s)));\n",
+        shader_addline(buffer, "vec%d(%s == 0.0 ? FLT_MAX : inversesqrt(abs(%s))));\n",
                 mask_size, src_param.param_str, src_param.param_str);
     }
     else
     {
-        shader_addline(buffer, "%s == 0.0 ? FLT_MAX : inversesqrt(%s));\n",
+        shader_addline(buffer, "%s == 0.0 ? FLT_MAX : inversesqrt(abs(%s)));\n",
                 src_param.param_str, src_param.param_str);
     }
 }
