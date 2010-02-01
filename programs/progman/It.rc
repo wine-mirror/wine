@@ -4,6 +4,7 @@
  * Copyright 1996 Ulrich Schmid
  * Copyright 2002 Sylvain Petreolle
  * Copyright 2003 Ivan Leo Puoti
+ * Copyright 2010 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,9 @@
 
 #include "progman.h"
 
+/*UTF-8*/
+#pragma code_page(65001)
+
 /* Menu */
 
 MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
@@ -32,7 +36,7 @@ MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
    MENUITEM "&Sposta...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copia...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Elimina\tEntf",           PM_DELETE
-   MENUITEM "&Propriet�...\tAlt+Invio",       PM_ATTRIBUTES
+   MENUITEM "&Proprietà...\tAlt+Invio",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Esegui...",          PM_EXECUTE
    MENUITEM SEPARATOR
@@ -122,7 +126,7 @@ PUSHBUTTON    "&Aiuto",            PM_HELP,           185, 45,  60, 15, WS_TABST
 DIALOG_GROUP DIALOG 0, 0, 230, 65
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Propriet� del gruppo di Programmi"
+CAPTION "Proprietà del gruppo di Programmi"
 {
 LTEXT     "&Descrizione:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
@@ -138,7 +142,7 @@ PUSHBUTTON    "&Aiuto",          PM_HELP,             155, 45,  60, 15, WS_TABST
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Propriet� del programma"
+CAPTION "Proprietà del programma"
 {
 LTEXT         "&Descrizione:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
@@ -208,7 +212,7 @@ IDS_NOT_IMPLEMENTED,		"Non implementato"
 IDS_FILE_READ_ERROR_s,		"Errore di lettura `%s'."
 IDS_FILE_WRITE_ERROR_s,		"Errore di scrittura `%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Il file di gruppo `%s' non puo' essere aperto.\n\
+Il file di gruppo `%s' non può essere aperto.\n\
 Provare ad aprirlo in futuro?"
 IDS_OUT_OF_MEMORY,		"Memoria esaurita"
 IDS_WINHELP_ERROR,		"Guida non disponibile"
@@ -221,4 +225,28 @@ IDS_PROGRAMS,			"Programmi"
 IDS_LIBRARIES_DLL,		"Librerie (*.dll)"
 IDS_SYMBOL_FILES,		"File icona"
 IDS_SYMBOLS_ICO,		"Icone (*.ico)"
+}
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
+{
+IDS_LICENSE_CAPTION,            "LICENZA"
+IDS_LICENSE,
+"Questo programma è software libero; puoi redistribuirlo e/o \
+modificarlo sotto i termini della GNU Lesser General Public \
+License come pubblicata dalla Free Software Foundation; sia la \
+versione 2.1 della LGPL, che (a tua scelta) una versione più nuova.\n\
+Questo programma è distribuito nella speranza che sarà utile, \
+ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
+COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
+Lesser General Public License per più informazioni.\n\
+Dovresti aver ricevuto una copia della GNU Lesser General Public \
+License insieme a questo programma; sennò, scrivi alla Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+
+IDS_WARRANTY_CAPTION, "NESSUNA GARANZIA"
+IDS_WARRANTY,
+"Questo programma è distribuito nella speranza che sarà utile, \
+ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
+COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
+Lesser General Public License per più informazioni."
 }
