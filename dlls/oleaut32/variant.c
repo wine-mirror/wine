@@ -1129,30 +1129,47 @@ static inline double VARIANT_JulianFromDMY(USHORT year, USHORT month, USHORT day
 static HRESULT VARIANT_RollUdate(UDATE *lpUd)
 {
   static const BYTE days[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+  short iYear, iMonth, iDay, iHour, iMinute, iSecond;
 
-  TRACE("Raw date: %d/%d/%d %d:%d:%d\n", lpUd->st.wDay, lpUd->st.wMonth,
-        lpUd->st.wYear, lpUd->st.wHour, lpUd->st.wMinute, lpUd->st.wSecond);
+  /* interpret values signed */
+  iYear   = lpUd->st.wYear;
+  iMonth  = lpUd->st.wMonth;
+  iDay    = lpUd->st.wDay;
+  iHour   = lpUd->st.wHour;
+  iMinute = lpUd->st.wMinute;
+  iSecond = lpUd->st.wSecond;
 
+  TRACE("Raw date: %d/%d/%d %d:%d:%d\n", iDay, iMonth,
+        iYear, iHour, iMinute, iSecond);
+
+  if (iYear > 9999 || iYear < -9999)
+    return E_INVALIDARG; /* Invalid value */
   /* Years < 100 are treated as 1900 + year */
-  if (lpUd->st.wYear < 100)
-    lpUd->st.wYear += 1900;
+  if (iYear >= 0 && iYear < 100)
+    iYear += 1900;
 
-  if (!lpUd->st.wMonth)
-  {
-    /* Roll back to December of the previous year */
-    lpUd->st.wMonth = 12;
-    lpUd->st.wYear--;
-  }
-  else while (lpUd->st.wMonth > 12)
-  {
-    /* Roll forward the correct number of months */
-    lpUd->st.wYear++;
-    lpUd->st.wMonth -= 12;
-  }
+  iMinute += (iSecond - (iSecond % 60)) / 60;
+  iSecond = iSecond % 60;
+  iHour   += (iMinute - (iMinute % 60)) / 60;
+  iMinute = iMinute % 60;
+  iDay    += (iHour - (iHour % 24)) / 24;
+  iHour   = iHour % 24;
+  /* FIXME: Roll Days */
+  iYear    += (iMonth - (iMonth % 12)) / 12;
+  iMonth   = iMonth % 12;
 
-  if (lpUd->st.wYear > 9999 || lpUd->st.wHour > 23 ||
-      lpUd->st.wMinute > 59 || lpUd->st.wSecond > 59)
-    return E_INVALIDARG; /* Invalid values */
+  if (iSecond<0){iSecond+=60; iMinute--;}
+  if (iMinute<0){iMinute+=60; iHour--;}
+  if (iHour<0)  {iHour+=24; iDay--;}
+  if (iDay<0)
+  {
+      iDay+=days[iMonth];
+      iMonth--;
+      if (iMonth == 2 && IsLeapYear(iYear))
+        iDay++;
+  }
+  if (iMonth<=0) {iMonth+=12; iYear--;}
+  if (iYear<0)  iYear+=2000;
 
   if (!lpUd->st.wDay)
   {
@@ -1178,22 +1195,30 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
     int rollForward = 0;
 
     /* Possibly need to roll the date forward */
-    if (lpUd->st.wMonth == 2 && IsLeapYear(lpUd->st.wYear))
-      rollForward = lpUd->st.wDay - 29; /* February has 29 days on leap years */
+    if (iMonth == 2 && IsLeapYear(iYear))
+      rollForward = iDay - 29; /* February has 29 days on leap years */
     else
-      rollForward = lpUd->st.wDay - days[lpUd->st.wMonth];
+      rollForward = iDay - days[iMonth];
 
     if (rollForward > 0)
     {
-      lpUd->st.wDay = rollForward;
-      lpUd->st.wMonth++;
-      if (lpUd->st.wMonth > 12)
+      iDay = rollForward;
+      iMonth++;
+      if (iMonth > 12)
       {
-        lpUd->st.wMonth = 1; /* Roll forward into January of the next year */
-        lpUd->st.wYear++;
+        iMonth = 1; /* Roll forward into January of the next year */
+        iYear++;
       }
     }
   }
+
+  lpUd->st.wYear   = iYear;
+  lpUd->st.wMonth  = iMonth;
+  lpUd->st.wDay    = iDay;
+  lpUd->st.wHour   = iHour;
+  lpUd->st.wMinute = iMinute;
+  lpUd->st.wSecond = iSecond;
+
   TRACE("Rolled date: %d/%d/%d %d:%d:%d\n", lpUd->st.wDay, lpUd->st.wMonth,
         lpUd->st.wYear, lpUd->st.wHour, lpUd->st.wMinute, lpUd->st.wSecond);
   return S_OK;
@@ -1250,6 +1275,8 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
   ud.st.wMinute = DOS_MINUTE(wDosTime);
   ud.st.wSecond = DOS_SECOND(wDosTime);
   ud.st.wDayOfWeek = ud.st.wMilliseconds = 0;
+  if (ud.st.wHour > 23 || ud.st.wMinute > 59 || ud.st.wSecond > 59)
+    return FALSE; /* Invalid values in Dos*/
 
   return VarDateFromUdate(&ud, 0, pDateOut) == S_OK;
 }
