@@ -65,6 +65,17 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     return FALSE;
 }
 
+BOOL WINAPI DestroyEnvironmentBlock(LPVOID lpEnvironment)
+{
+    NTSTATUS r;
+
+    TRACE("%p\n", lpEnvironment);
+    r = RtlDestroyEnvironment(lpEnvironment);
+    if (r == STATUS_SUCCESS)
+        return TRUE;
+    return FALSE;
+}
+
 BOOL WINAPI ExpandEnvironmentStringsForUserA( HANDLE hToken, LPCSTR lpSrc,
                      LPSTR lpDest, DWORD dwSize )
 {
