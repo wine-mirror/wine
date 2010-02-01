@@ -52,7 +52,6 @@ extern HINSTANCE WINAPI WOWShellExecute(HWND hWnd, LPCSTR lpOperation,LPCSTR lpF
                                         LPCSTR lpParameters,LPCSTR lpDirectory,
                                         INT iShowCmd, void *callback);
 
-#define HICON_16(h32)		(LOWORD(h32))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 #define HINSTANCE_16(h32)	(LOWORD(h32))
 
@@ -82,6 +81,50 @@ static HICON convert_icon_to_32( HICON16 icon16 )
                             and_bits, xor_bits );
     GlobalUnlock16( icon16 );
     return ret;
+}
+
+static HICON16 convert_icon_to_16( HINSTANCE16 inst, HICON icon )
+{
+    static HICON16 (WINAPI *pCreateIcon16)(HINSTANCE16,INT16,INT16,BYTE,BYTE,LPCVOID,LPCVOID);
+    ICONINFO info;
+    BITMAP bm;
+    UINT and_size, xor_size;
+    void *xor_bits = NULL, *and_bits;
+    HICON16 handle = 0;
+
+    if (!pCreateIcon16 &&
+        !(pCreateIcon16 = (void *)GetProcAddress( GetModuleHandleA("user.exe16"), "CreateIcon16" )))
+        return 0;
+
+    if (!(GetIconInfo( icon, &info ))) return 0;
+    GetObjectW( info.hbmMask, sizeof(bm), &bm );
+    and_size = bm.bmHeight * bm.bmWidthBytes;
+    if (!(and_bits = HeapAlloc( GetProcessHeap(), 0, and_size ))) goto done;
+    GetBitmapBits( info.hbmMask, and_size, and_bits );
+    if (info.hbmColor)
+    {
+        GetObjectW( info.hbmColor, sizeof(bm), &bm );
+        xor_size = bm.bmHeight * bm.bmWidthBytes;
+        if (!(xor_bits = HeapAlloc( GetProcessHeap(), 0, xor_size ))) goto done;
+        GetBitmapBits( info.hbmColor, xor_size, xor_bits );
+    }
+    else
+    {
+        bm.bmHeight /= 2;
+        xor_bits = (char *)and_bits + and_size / 2;
+    }
+    handle = pCreateIcon16( inst, bm.bmWidth, bm.bmHeight, bm.bmPlanes, bm.bmBitsPixel,
+                            and_bits, xor_bits );
+done:
+    HeapFree( GetProcessHeap(), 0, and_bits );
+    if (info.hbmColor)
+    {
+        HeapFree( GetProcessHeap(), 0, xor_bits );
+        DeleteObject( info.hbmColor );
+    }
+    DeleteObject( info.hbmMask );
+    DestroyIcon( icon );
+    return handle;
 }
 
 /***********************************************************************
@@ -239,7 +282,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	  if ((ret != 0xffffffff) && ret)
 	  {
 	    int i;
-	    for (i = 0; i < n; i++) RetPtr[i] = HICON_16(icons[i]);
+	    for (i = 0; i < n; i++) RetPtr[i] = convert_icon_to_16(hInstance, icons[i]);
 	  }
 	  else
 	  {
@@ -257,19 +300,18 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 	UINT16 nIconIndex )
 {   TRACE("\n");
-    return HICON_16(ExtractIconA(HINSTANCE_32(hInstance), lpszExeFileName, nIconIndex));
+    return convert_icon_to_16( hInstance, ExtractIconA(NULL, lpszExeFileName, nIconIndex) );
 }
 
 /*************************************************************************
  *             ExtractIconEx   (SHELL.40)
  */
-HICON16 WINAPI ExtractIconEx16(
+UINT16 WINAPI ExtractIconEx16(
 	LPCSTR lpszFile, INT16 nIconIndex, HICON16 *phiconLarge,
 	HICON16 *phiconSmall, UINT16 nIcons
 ) {
     HICON	*ilarge,*ismall;
-    UINT16	ret;
-    int		i;
+    int		i, ret;
 
     if (phiconLarge)
     	ilarge = HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON));
@@ -279,15 +321,15 @@ HICON16 WINAPI ExtractIconEx16(
     	ismall = HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON));
     else
     	ismall = NULL;
-    ret = HICON_16(ExtractIconExA(lpszFile,nIconIndex,ilarge,ismall,nIcons));
+    ret = ExtractIconExA(lpszFile,nIconIndex,ilarge,ismall,nIcons);
     if (ilarge) {
-    	for (i=0;i<nIcons;i++)
-	    phiconLarge[i]=HICON_16(ilarge[i]);
+	for (i=0;i<ret;i++)
+	    phiconLarge[i] = convert_icon_to_16(0, ilarge[i]);
 	HeapFree(GetProcessHeap(),0,ilarge);
     }
     if (ismall) {
-    	for (i=0;i<nIcons;i++)
-	    phiconSmall[i]=HICON_16(ismall[i]);
+	for (i=0;i<ret;i++)
+	    phiconSmall[i] = convert_icon_to_16(0, ismall[i]);
 	HeapFree(GetProcessHeap(),0,ismall);
     }
     return ret;
@@ -301,8 +343,7 @@ HICON16 WINAPI ExtractIconEx16(
  */
 HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWORD lpiIcon)
 {
-    return HICON_16(ExtractAssociatedIconA(HINSTANCE_32(hInst), lpIconPath,
-		    lpiIcon));
+    return convert_icon_to_16( hInst, ExtractAssociatedIconA(NULL, lpIconPath, lpiIcon) );
 }
 
 /*************************************************************************
