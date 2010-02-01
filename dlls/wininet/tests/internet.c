@@ -934,6 +934,7 @@ static void test_Option_PerConnectionOption(void)
             list.pOptions[1].Value.dwValue);
     verifyProxyEnable(1);
 
+    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* disable the proxy server */
@@ -1060,6 +1061,7 @@ static void test_Option_PerConnectionOptionA(void)
             "Retrieved flags should've been PROXY_TYPE_PROXY, was: %d\n",
             list.pOptions[1].Value.dwValue);
 
+    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* restore original settings */
