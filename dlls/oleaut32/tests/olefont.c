@@ -838,7 +838,7 @@ static void test_returns(void)
 
 static void test_hfont_lifetime(void)
 {
-    IFont *font;
+    IFont *font, *font2;
     FONTDESC fontdesc;
     HRESULT hr;
     HFONT hfont, first_hfont = NULL;
@@ -877,13 +877,13 @@ static void test_hfont_lifetime(void)
 
         /* put_Size doesn't cause the new font to be realized */
         obj_type = GetObjectType(last_hfont);
+todo_wine
         ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
 
         hr = IFont_get_hFont(font, &hfont);
         ok_ole_success(hr, "get_hFont");
 
         obj_type = GetObjectType(last_hfont);
-todo_wine
         ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
     }
 
@@ -939,6 +939,7 @@ todo_wine
 
         /* put_Size doesn't cause the new font to be realized */
         obj_type = GetObjectType(last_hfont);
+todo_wine
         ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
 
         hr = IFont_get_hFont(font, &hfont);
@@ -951,7 +952,6 @@ todo_wine
         ok_ole_success(hr, "ReleaseHfont");
 
         obj_type = GetObjectType(last_hfont);
-todo_wine
         ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
     }
 
@@ -981,6 +981,42 @@ todo_wine
     IFont_Release(font);
 
     obj_type = GetObjectType(first_hfont);
+    ok(obj_type == 0, "got obj type %d\n", obj_type);
+
+    /* If we take two internal references on a hfont then we can release
+       it twice.  So it looks like there's a total reference count
+       that includes internal and external references */
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font2);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_get_hFont(font, &hfont);
+    ok_ole_success(hr, "get_hFont");
+    hr = IFont_get_hFont(font2, &first_hfont);
+    ok_ole_success(hr, "get_hFont");
+todo_wine
+    ok(hfont == first_hfont, "fonts differ\n");
+    hr = IFont_ReleaseHfont(font, hfont);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IFont_ReleaseHfont(font, hfont);
+todo_wine
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IFont_ReleaseHfont(font, hfont);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+
+    obj_type = GetObjectType(hfont);
+    ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+    IFont_Release(font);
+
+    obj_type = GetObjectType(hfont);
+    ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+    IFont_Release(font2);
+
+    obj_type = GetObjectType(hfont);
     ok(obj_type == 0, "got obj type %d\n", obj_type);
 }
 

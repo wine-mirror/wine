@@ -62,10 +62,13 @@ typedef struct _HFONTItem
 {
   struct list entry;
 
-  /* Reference count for that instance of the class. */
-  LONG ref;
+  /* Reference count of any IFont objects that own this hfont */
+  LONG int_refs;
 
-  /* Contain the font associated with this object. */
+  /* Total reference count of any refs held by the application obtained by AddRefHfont plus any internal refs */
+  LONG total_refs;
+
+  /* The font associated with this object. */
   HFONT gdiFont;
 
 } HFONTItem, *PHFONTItem;
@@ -93,6 +96,96 @@ static void HFONTItem_Delete(PHFONTItem item)
   DeleteObject(item->gdiFont);
   list_remove(&item->entry);
   HeapFree(GetProcessHeap(), 0, item);
+}
+
+/* Find hfont item entry in the list.  Should be called while holding the crit sect */
+static HFONTItem *find_hfontitem(HFONT hfont)
+{
+    HFONTItem *item;
+
+    LIST_FOR_EACH_ENTRY(item, &OLEFontImpl_hFontList, HFONTItem, entry)
+    {
+        if (item->gdiFont == hfont)
+            return item;
+    }
+    return NULL;
+}
+
+static HRESULT inc_int_ref(HFONT hfont)
+{
+    HFONTItem *item;
+    HRESULT hr = S_FALSE;
+
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+    item = find_hfontitem(hfont);
+
+    if(item)
+    {
+        item->int_refs++;
+        item->total_refs++;
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    return hr;
+}
+
+/* decrements the internal ref of a hfont item.  If both refs are zero it'll
+   remove the item from the list and delete the hfont */
+static HRESULT dec_int_ref(HFONT hfont)
+{
+    HFONTItem *item;
+    HRESULT hr = S_FALSE;
+
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+    item = find_hfontitem(hfont);
+
+    if(item)
+    {
+        item->int_refs--;
+        item->total_refs--;
+        if(item->int_refs == 0 && item->total_refs == 0)
+            HFONTItem_Delete(item);
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    return hr;
+}
+
+static HRESULT inc_ext_ref(HFONT hfont)
+{
+    HFONTItem *item;
+    HRESULT hr = S_FALSE;
+
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    item = find_hfontitem(hfont);
+    if(item)
+    {
+        item->total_refs++;
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    return hr;
+}
+
+static HRESULT dec_ext_ref(HFONT hfont)
+{
+    HFONTItem *item;
+    HRESULT hr = S_FALSE;
+
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    item = find_hfontitem(hfont);
+    if(item)
+    {
+        if(--item->total_refs >= 0) hr = S_OK;
+    }
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -277,6 +370,7 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
   CONNECTDATA CD;
   HRESULT hres;
 
+  dec_int_ref(this->gdiFont);
   this->gdiFont = 0;
   hres = IConnectionPoint_EnumConnections(this->pPropertyNotifyCP, &pEnum);
   if (SUCCEEDED(hres))
@@ -402,7 +496,6 @@ static ULONG WINAPI OLEFontImpl_Release(
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
   ULONG ret;
-  PHFONTItem ptr, next;
   TRACE("(%p)->(ref=%d)\n", this, this->ref);
 
   /* Decrease the reference count for current interface */
@@ -412,13 +505,20 @@ static ULONG WINAPI OLEFontImpl_Release(
   if (ret == 0)
   {
     ULONG fontlist_refs = InterlockedDecrement(&ifont_cnt);
-    /* Check if all HFONT list refs are zero */
+
+    /* Final IFont object so destroy font cache */
     if (fontlist_refs == 0)
     {
+      HFONTItem *item, *cursor2;
+
       EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
-      LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
-        HFONTItem_Delete(ptr);
+      LIST_FOR_EACH_ENTRY_SAFE(item, cursor2, &OLEFontImpl_hFontList, HFONTItem, entry)
+        HFONTItem_Delete(item);
       LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+    }
+    else
+    {
+      dec_int_ref(this->gdiFont);
     }
     OLEFontImpl_Destroy(this);
   }
@@ -829,7 +929,8 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
 
     /* Add font to the cache */
     newEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(HFONTItem));
-    newEntry->ref = 1;
+    newEntry->int_refs = 1;
+    newEntry->total_refs = 1;
     newEntry->gdiFont = this->gdiFont;
     EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
     list_add_tail(&OLEFontImpl_hFontList,&newEntry->entry);
@@ -851,12 +952,8 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   IFont** ppfont)
 {
   OLEFontImpl* newObject = 0;
-  LOGFONTW logFont;
-  INT      fontHeight;
-  CY       cySize;
-  PHFONTItem newEntry;
-
   OLEFontImpl *this = (OLEFontImpl *)iface;
+
   TRACE("(%p)->(%p)\n", this, ppfont);
 
   if (ppfont == NULL)
@@ -882,36 +979,12 @@ static HRESULT WINAPI OLEFontImpl_Clone(
 	(1+strlenW(this->description.lpstrName))*2
   );
   strcpyW(newObject->description.lpstrName, this->description.lpstrName);
-  /* We need to clone the HFONT too. This is just cut & paste from above */
-  IFont_get_Size(iface, &cySize);
 
-  fontHeight = MulDiv(cySize.s.Lo, this->cyLogical*635,this->cyHimetric*18);
 
-  memset(&logFont, 0, sizeof(LOGFONTW));
+  /* Increment internal ref in hfont item list */
+  if(newObject->gdiFont) inc_int_ref(newObject->gdiFont);
 
-  logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L)-1 :
-							    (-fontHeight/10000L);
-  logFont.lfItalic          = this->description.fItalic;
-  logFont.lfUnderline       = this->description.fUnderline;
-  logFont.lfStrikeOut       = this->description.fStrikethrough;
-  logFont.lfWeight          = this->description.sWeight;
-  logFont.lfCharSet         = this->description.sCharset;
-  logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
-  logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
-  logFont.lfQuality         = DEFAULT_QUALITY;
-  logFont.lfPitchAndFamily  = DEFAULT_PITCH;
-  strcpyW(logFont.lfFaceName,this->description.lpstrName);
-
-  newObject->gdiFont = CreateFontIndirectW(&logFont);
-
-  /* Add font to the cache */
   InterlockedIncrement(&ifont_cnt);
-  newEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(HFONTItem));
-  newEntry->ref = 1;
-  newEntry->gdiFont = newObject->gdiFont;
-  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
-  list_add_tail(&OLEFontImpl_hFontList,&newEntry->entry);
-  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
 
   /* create new connection points */
   newObject->pPropertyNotifyCP = NULL;
@@ -1024,29 +1097,13 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
   IFont*  iface,
   HFONT hfont)
 {
-  OLEFontImpl *this = (OLEFontImpl *)iface;
-  PHFONTItem ptr, next;
-  HRESULT hres = S_FALSE; /* assume not present */
+    OLEFontImpl *this = (OLEFontImpl *)iface;
 
-  TRACE("(%p)->(%p)\n", this, hfont);
+    TRACE("(%p)->(%p)\n", this, hfont);
 
-  if (!hfont)
-    return E_INVALIDARG;
+    if (!hfont) return E_INVALIDARG;
 
-  /* Check of the hFont is already in the list */
-  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
-  LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
-  {
-    if (ptr->gdiFont == hfont)
-    {
-      ptr->ref++;
-      hres = S_OK;
-      break;
-    }
-  }
-  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
-
-  return hres;
+    return inc_ext_ref(hfont);
 }
 
 /************************************************************************
@@ -1058,34 +1115,13 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   IFont*  iface,
   HFONT hfont)
 {
-  OLEFontImpl *this = (OLEFontImpl *)iface;
-  PHFONTItem ptr, next;
-  HRESULT hres = S_FALSE; /* assume not present */
+    OLEFontImpl *this = (OLEFontImpl *)iface;
 
-  TRACE("(%p)->(%p)\n", this, hfont);
+    TRACE("(%p)->(%p)\n", this, hfont);
 
-  if (!hfont)
-    return E_INVALIDARG;
+    if (!hfont) return E_INVALIDARG;
 
-  /* Check of the hFont is already in the list */
-  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
-  LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
-  {
-    if ((ptr->gdiFont == hfont) && ptr->ref)
-    {
-      /* Remove from cache and delete object if not referenced */
-      if (!--ptr->ref)
-      {
-        if (ptr->gdiFont == this->gdiFont)
-          this->gdiFont = NULL;
-      }
-      hres = S_OK;
-      break;
-    }
-  }
-  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
-
-  return hres;
+    return dec_ext_ref(hfont);
 }
 
 /************************************************************************
@@ -1678,7 +1714,7 @@ static HRESULT WINAPI OLEFontImpl_Load(
   this->description.lpstrName[len] = 0;
 
   /* Ensure use of this font causes a new one to be created @@@@ */
-  DeleteObject(this->gdiFont);
+  dec_int_ref(this->gdiFont);
   this->gdiFont = 0;
 
   return S_OK;
@@ -2282,9 +2318,6 @@ static void OLEFontImpl_Destroy(OLEFontImpl* fontDesc)
   TRACE("(%p)\n", fontDesc);
 
   HeapFree(GetProcessHeap(), 0, fontDesc->description.lpstrName);
-
-  if (fontDesc->gdiFont!=0)
-    DeleteObject(fontDesc->gdiFont);
 
   if (fontDesc->pPropertyNotifyCP)
       IConnectionPoint_Release(fontDesc->pPropertyNotifyCP);
