@@ -78,12 +78,12 @@ void Test(void)
     info.lpMemory = data_bad;
     info.dSize = sizeof(data_bad);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    todo_wine ok(hr == D3DRMERR_BADFILE, "Sould have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_BADFILE, "Sould have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
 
     info.lpMemory = data_ok;
     info.dSize = sizeof(data_ok);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    todo_wine ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
 
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
