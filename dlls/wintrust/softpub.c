@@ -395,8 +395,8 @@ static DWORD SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
     err = SOFTPUB_GetSIP(data);
     if (err)
         goto error;
-    err = SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
-     data->pWintrustData->u.pFile->pcwszFilePath);
+    err = SOFTPUB_GetMessageFromFile(data, catalog,
+     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath);
     if (err)
         goto error;
     err = SOFTPUB_CreateStoreFromMessage(data);
