@@ -5,7 +5,9 @@ VPATH     = @srcdir@
 TESTDLL   = d3drm.dll
 IMPORTS   = kernel32
 
-CTESTS = vector.c
+CTESTS = \
+	d3drm.c \
+	vector.c
 
 @MAKE_TEST_RULES@
 
