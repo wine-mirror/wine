@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
+WINE_DEFAULT_DEBUG_CHANNEL(d3dxof_parsing);
 
 #define TOKEN_NAME         1
 #define TOKEN_STRING       2
