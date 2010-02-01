@@ -1161,7 +1161,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       }
     }
 
-    if (buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE))
+    if (nb_elems && buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE))
     {
       token = get_TOKEN(buf);
       if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))
