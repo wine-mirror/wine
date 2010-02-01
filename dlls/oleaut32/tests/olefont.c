@@ -832,6 +832,8 @@ static void test_returns(void)
     ok(hr == E_POINTER,
        "IFont::get_Bold: Expected E_POINTER got 0x%08x\n",
        hr);
+
+    IFont_Release(pFont);
 }
 
 START_TEST(olefont)
