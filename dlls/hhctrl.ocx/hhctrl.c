@@ -297,7 +297,6 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
             space = strchr(ptr, ' ');
             memcpy(idtxt, ptr, space-ptr);
             idtxt[space-ptr] = '\0';
-            filename += (space-ptr)+1;
             mapid = atoi(idtxt);
             szCmdLine = space+1;
         }
