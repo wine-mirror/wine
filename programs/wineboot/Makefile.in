@@ -18,6 +18,7 @@ RC_SRCS = \
 	wineboot_En.rc \
 	wineboot_Es.rc \
 	wineboot_Fr.rc \
+	wineboot_It.rc \
 	wineboot_Ja.rc \
 	wineboot_Ko.rc \
 	wineboot_Lt.rc \
