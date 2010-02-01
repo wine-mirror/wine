@@ -36,7 +36,9 @@ static IDXGIDevice *create_device(HMODULE d3d10core)
     if (FAILED(hr)) goto cleanup;
 
     hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
-    ok(SUCCEEDED(hr), "EnumAdapters failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr) ||
+       hr == DXGI_ERROR_NOT_FOUND, /* Some VMware and VirtualBox */
+       "EnumAdapters failed, hr %#x\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     hr = DXGID3D10CreateDevice(d3d10core, factory, adapter, 0, NULL, (void **)&device);
