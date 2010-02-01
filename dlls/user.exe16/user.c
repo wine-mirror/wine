@@ -265,6 +265,8 @@ struct cache_entry
 
 static struct list icon_cache = LIST_INIT( icon_cache );
 
+static const WORD ICON_HOTSPOT = 0x4242;
+
 static HICON16 alloc_icon_handle( unsigned int size )
 {
     HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
@@ -2117,15 +2119,43 @@ BOOL16 WINAPI DrawIconEx16(HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
  */
 BOOL16 WINAPI GetIconInfo16(HICON16 hIcon, LPICONINFO16 iconinfo)
 {
-  ICONINFO ii32;
-  BOOL16 ret = GetIconInfo(HICON_32(hIcon), &ii32);
+    CURSORICONINFO *info = get_icon_ptr( hIcon );
+    INT height;
 
-  iconinfo->fIcon = ii32.fIcon;
-  iconinfo->xHotspot = ii32.xHotspot;
-  iconinfo->yHotspot = ii32.yHotspot;
-  iconinfo->hbmMask  = HBITMAP_16(ii32.hbmMask);
-  iconinfo->hbmColor = HBITMAP_16(ii32.hbmColor);
-  return ret;
+    if (!info) return FALSE;
+
+    if ((info->ptHotSpot.x == ICON_HOTSPOT) && (info->ptHotSpot.y == ICON_HOTSPOT))
+    {
+        iconinfo->fIcon    = TRUE;
+        iconinfo->xHotspot = info->nWidth / 2;
+        iconinfo->yHotspot = info->nHeight / 2;
+    }
+    else
+    {
+        iconinfo->fIcon    = FALSE;
+        iconinfo->xHotspot = info->ptHotSpot.x;
+        iconinfo->yHotspot = info->ptHotSpot.y;
+    }
+
+    height = info->nHeight;
+
+    if (info->bBitsPerPixel > 1)
+    {
+        iconinfo->hbmColor = HBITMAP_16( CreateBitmap( info->nWidth, info->nHeight,
+                                                       info->bPlanes, info->bBitsPerPixel,
+                                                       (char *)(info + 1)
+                                                       + info->nHeight *
+                                                       get_bitmap_width_bytes(info->nWidth,1) ));
+    }
+    else
+    {
+        iconinfo->hbmColor = 0;
+        height *= 2;
+    }
+
+    iconinfo->hbmMask = HBITMAP_16( CreateBitmap( info->nWidth, height, 1, 1, info + 1 ));
+    release_icon_ptr( hIcon, info );
+    return TRUE;
 }
 
 
@@ -2167,7 +2197,6 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
                              INT16 nHeight, BYTE bPlanes, BYTE bBitsPixel,
                              LPCVOID lpANDbits, LPCVOID lpXORbits )
 {
-    static const WORD ICON_HOTSPOT = 0x4242;
     CURSORICONINFO info;
 
     info.ptHotSpot.x = ICON_HOTSPOT;
