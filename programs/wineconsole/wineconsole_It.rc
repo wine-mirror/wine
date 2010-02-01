@@ -18,26 +18,42 @@
 
 #include "wineconsole_res.h"
 
+/*UTF-8*/
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"&Modifica"
 IDS_DEFAULT,		"Imposta &Default"
-IDS_PROPERTIES,		"&Propriet‡"
+IDS_PROPERTIES,		"&Propriet√†"
 IDS_MARK,		"Mark&"
 IDS_COPY,		"&Copia"
 IDS_PASTE,		"&Incolla"
 IDS_SELECTALL,		"&Seleziona tutto"
 IDS_SCROLL,		"Sc&orri"
 IDS_SEARCH,		"C&erca"
-IDS_FNT_DISPLAY,	"Il carattere Ë %ld pixel di larghezza e %ld pixel di altezza"
-IDS_FNT_PREVIEW_1,	"Questa Ë una prova"
+IDS_FNT_DISPLAY,	"Il carattere √® %ld pixel di larghezza e %ld pixel di altezza"
+IDS_FNT_PREVIEW_1,	"Questa √® una prova"
 IDS_FNT_PREVIEW_2,	""
 IDS_DLG_TIT_DEFAULT,    "Impostazioni di Default"
 IDS_DLG_TIT_CURRENT,    "Impostazioni correnti"
 IDS_DLG_TIT_ERROR,	"Errore di configurazione"
-IDS_DLG_ERR_SBWINSIZE,	"Il buffer dello schermo deve essere pi˘ grande o uguale a quello della finestra"
+IDS_DLG_ERR_SBWINSIZE,	"Il buffer dello schermo deve essere pi√π grande o uguale a quello della finestra"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: impossibile parse event id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: backend non valido\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: opzione della linea di comando non riconosciuta\n"
+IDS_CMD_ABOUT              "Avvia un programma in una console Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Impossibile avviare %s.\n"\
+                           "Il comando non √® valido.\n"
+
+IDS_USAGE_HEADER           "\nUso:\n  wineconsole [opzioni] <comando>\n\nOpzioni:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Scegliere user far√† aprire una nuova finestra, curses prover√†\n"\
+                           "                            ad inizializzare terminale corrente come una console Wine\n"
+IDS_USAGE_COMMAND          "  <comando>                 Il programma di Wine da lanciare in una console\n"
+IDS_USAGE_FOOTER           "\nEsempio:\n  wineconsole cmd\nAvvia il prompt dei comandi di Wine in una console Wine\n\n"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
@@ -66,7 +82,7 @@ FONT 8, "MS Shell Dlg"
 
 IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " Caratteri "
+CAPTION " Carattere "
 FONT 8, "MS Shell Dlg"
 {
 	LTEXT "&Font", -1, 5, 5, 24, 8
