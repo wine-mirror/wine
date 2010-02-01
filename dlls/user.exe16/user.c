@@ -2614,9 +2614,8 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
  */
 HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 {
-    LPBYTE bits = LockResource16( hResource );
-    return HICON_16(CreateIconFromResourceEx( bits, 0, TRUE,
-                                              bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR));
+    return CreateIconFromResourceEx16( LockResource16( hResource ), 0, TRUE,
+                                       bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR );
 }
 
 
