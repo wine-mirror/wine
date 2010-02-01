@@ -19,6 +19,7 @@ RC_SRCS = \
 	rsrc_En.rc \
 	rsrc_Es.rc \
 	rsrc_Fr.rc \
+	rsrc_It.rc \
 	rsrc_Ja.rc \
 	rsrc_Ko.rc \
 	rsrc_Lt.rc \
