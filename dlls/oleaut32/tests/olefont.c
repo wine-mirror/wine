@@ -836,6 +836,155 @@ static void test_returns(void)
     IFont_Release(pFont);
 }
 
+static void test_hfont_lifetime(void)
+{
+    IFont *font;
+    FONTDESC fontdesc;
+    HRESULT hr;
+    HFONT hfont, first_hfont = NULL;
+    CY size;
+    DWORD obj_type;
+    int i;
+
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = arial_font;
+    fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
+    fontdesc.sWeight = FW_NORMAL;
+    fontdesc.sCharset = ANSI_CHARSET;
+    fontdesc.fItalic = FALSE;
+    fontdesc.fUnderline = FALSE;
+    fontdesc.fStrikethrough = FALSE;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_get_hFont(font, &hfont);
+    ok_ole_success(hr, "get_hFont");
+
+    /* show that if the font is updated the old hfont is deleted when the
+       new font is realized */
+    for(i = 0; i < 100; i++)
+    {
+        HFONT last_hfont = hfont;
+
+        size.int64 = (i + 10) * 20000;
+
+        obj_type = GetObjectType(hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_put_Size(font, size);
+        ok_ole_success(hr, "put_Size");
+
+        /* put_Size doesn't cause the new font to be realized */
+        obj_type = GetObjectType(last_hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_get_hFont(font, &hfont);
+        ok_ole_success(hr, "get_hFont");
+
+        obj_type = GetObjectType(last_hfont);
+todo_wine
+        ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
+    }
+
+    /* now show that if we take a reference on the hfont, it persists
+       until the font object is released */
+    for(i = 0; i < 100; i++)
+    {
+
+        size.int64 = (i + 10) * 20000;
+
+        obj_type = GetObjectType(hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_put_Size(font, size);
+        ok_ole_success(hr, "put_Size");
+
+        hr = IFont_get_hFont(font, &hfont);
+        ok_ole_success(hr, "get_hFont");
+
+        hr = IFont_AddRefHfont(font, hfont);
+        ok_ole_success(hr, "AddRefHfont");
+
+        if(i == 0) first_hfont = hfont;
+        obj_type = GetObjectType(first_hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+    }
+
+    IFont_Release(font);
+
+    obj_type = GetObjectType(first_hfont);
+    ok(obj_type == 0, "got obj type %d\n", obj_type);
+
+    /* An AddRefHfont followed by a ReleaseHfont means the font doesn't not persist
+       through re-realization */
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_get_hFont(font, &hfont);
+    ok_ole_success(hr, "get_hFont");
+
+    for(i = 0; i < 100; i++)
+    {
+        HFONT last_hfont = hfont;
+
+        size.int64 = (i + 10) * 20000;
+
+        obj_type = GetObjectType(hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_put_Size(font, size);
+        ok_ole_success(hr, "put_Size");
+
+        /* put_Size doesn't cause the new font to be realized */
+        obj_type = GetObjectType(last_hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_get_hFont(font, &hfont);
+        ok_ole_success(hr, "get_hFont");
+
+        hr = IFont_AddRefHfont(font, hfont);
+        ok_ole_success(hr, "AddRefHfont");
+
+        hr = IFont_ReleaseHfont(font, hfont);
+        ok_ole_success(hr, "ReleaseHfont");
+
+        obj_type = GetObjectType(last_hfont);
+todo_wine
+        ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
+    }
+
+    /* Interestingly if we release a non-existent reference on the hfont, it persists
+       until the font object is released */
+    for(i = 0; i < 100; i++)
+    {
+        size.int64 = (i + 10) * 20000;
+
+        obj_type = GetObjectType(hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+
+        hr = IFont_put_Size(font, size);
+        ok_ole_success(hr, "put_Size");
+
+        hr = IFont_get_hFont(font, &hfont);
+        ok_ole_success(hr, "get_hFont");
+
+        hr = IFont_ReleaseHfont(font, hfont);
+        ok_ole_success(hr, "ReleaseHfont");
+
+        if(i == 0) first_hfont = hfont;
+        obj_type = GetObjectType(first_hfont);
+        ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
+    }
+
+    IFont_Release(font);
+
+    obj_type = GetObjectType(first_hfont);
+    ok(obj_type == 0, "got obj type %d\n", obj_type);
+}
+
+
 START_TEST(olefont)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -869,4 +1018,5 @@ START_TEST(olefont)
 	test_ReleaseHfont();
 	test_AddRefHfont();
 	test_returns();
+        test_hfont_lifetime();
 }
