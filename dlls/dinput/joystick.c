@@ -53,7 +53,7 @@ HRESULT WINAPI JoystickAGenericImpl_SetProperty(
     if (TRACE_ON(dinput))
         _dump_DIPROPHEADER(ph);
 
-    if (!HIWORD(rguid)) {
+    if (IS_DIPROP(rguid)) {
         switch (LOWORD(rguid)) {
         case (DWORD_PTR)DIPROP_RANGE: {
             LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
@@ -230,7 +230,7 @@ HRESULT WINAPI JoystickAGenericImpl_GetProperty(
     if (TRACE_ON(dinput))
         _dump_DIPROPHEADER(pdiph);
 
-    if (!HIWORD(rguid)) {
+    if (IS_DIPROP(rguid)) {
         switch (LOWORD(rguid)) {
         case (DWORD_PTR) DIPROP_RANGE: {
             LPDIPROPRANGE pr = (LPDIPROPRANGE)pdiph;

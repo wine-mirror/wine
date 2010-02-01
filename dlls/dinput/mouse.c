@@ -587,7 +587,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     TRACE("(%p) %s,%p\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
     
-    if (!HIWORD(rguid)) {
+    if (IS_DIPROP(rguid)) {
 	switch (LOWORD(rguid)) {
 	    case (DWORD_PTR) DIPROP_GRANULARITY: {
 		LPDIPROPDWORD pr = (LPDIPROPDWORD) pdiph;

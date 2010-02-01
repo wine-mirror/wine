@@ -447,7 +447,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
-    if (HIWORD(rguid)) return DI_OK;
+    if (!IS_DIPROP(rguid)) return DI_OK;
 
     switch (LOWORD(rguid))
     {

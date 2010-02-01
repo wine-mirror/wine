@@ -847,7 +847,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
   TRACE("ph.dwSize = %d, ph.dwHeaderSize =%d, ph.dwObj = %d, ph.dwHow= %d\n",
         ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
 
-  if (!HIWORD(rguid)) {
+  if (IS_DIPROP(rguid)) {
     switch (LOWORD(rguid)) {
     case (DWORD_PTR)DIPROP_CALIBRATIONMODE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
@@ -898,7 +898,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     TRACE("(this=%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
-    if (HIWORD(rguid)) return DI_OK;
+    if (!IS_DIPROP(rguid)) return DI_OK;
 
     switch (LOWORD(rguid)) {
     case (DWORD_PTR) DIPROP_AUTOCENTER:

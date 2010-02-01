@@ -65,4 +65,6 @@ typedef int (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);
 
 extern void _dump_diactionformatA(LPDIACTIONFORMATA);
 
+#define IS_DIPROP(x)    (((ULONG_PTR)(x) >> 16) == 0)
+
 #endif /* __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H */
