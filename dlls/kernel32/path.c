@@ -76,7 +76,7 @@ static DWORD copy_filename_WtoA( LPCWSTR nameW, LPSTR buffer, DWORD len )
         ANSI_STRING str;
 
         str.Buffer = buffer;
-        str.MaximumLength = len;
+        str.MaximumLength = min( len, UNICODE_STRING_MAX_CHARS );
         if (is_ansi)
             RtlUnicodeStringToAnsiString( &str, &strW, FALSE );
         else

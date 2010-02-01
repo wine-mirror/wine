@@ -423,6 +423,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
 static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
 {
   CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH];
+  char *buffer;
   DWORD len,len1;
 /* Save the original directory, so that we can return to it at the end
    of the test
@@ -437,6 +438,35 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
   ok(len1==len+1, "GetCurrentDirectoryA returned %d instead of %d\n",len1,len+1);
   ok(lstrcmpiA(tmpstr,"aaaaaaa")==0,
      "GetCurrentDirectoryA should not have modified the buffer\n");
+
+  buffer = HeapAlloc( GetProcessHeap(), 0, 2 * 65536 );
+  SetLastError( 0xdeadbeef );
+  strcpy( buffer, "foo" );
+  len = GetCurrentDirectoryA( 32767, buffer );
+  ok( len != 0 && len < MAX_PATH, "GetCurrentDirectoryA failed %u err %u\n", len, GetLastError() );
+  if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
+  SetLastError( 0xdeadbeef );
+  strcpy( buffer, "foo" );
+  len = GetCurrentDirectoryA( 32768, buffer );
+  ok( len != 0 && len < MAX_PATH, "GetCurrentDirectoryA failed %u err %u\n", len, GetLastError() );
+  if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
+  SetLastError( 0xdeadbeef );
+  strcpy( buffer, "foo" );
+  len = GetCurrentDirectoryA( 65535, buffer );
+  ok( (len != 0 && len < MAX_PATH) || broken(!len), /* nt4, win2k, xp */ "GetCurrentDirectoryA failed %u err %u\n", len, GetLastError() );
+  if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
+  SetLastError( 0xdeadbeef );
+  strcpy( buffer, "foo" );
+  len = GetCurrentDirectoryA( 65536, buffer );
+  ok( (len != 0 && len < MAX_PATH) || broken(!len), /* nt4 */ "GetCurrentDirectoryA failed %u err %u\n", len, GetLastError() );
+  if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
+  SetLastError( 0xdeadbeef );
+  strcpy( buffer, "foo" );
+  len = GetCurrentDirectoryA( 2 * 65536, buffer );
+  ok( (len != 0 && len < MAX_PATH) || broken(!len), /* nt4 */ "GetCurrentDirectoryA failed %u err %u\n", len, GetLastError() );
+  if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
+  HeapFree( GetProcessHeap(), 0, buffer );
+
 /* SetCurrentDirectoryA shouldn't care whether the string has a
    trailing '\\' or not
 */
