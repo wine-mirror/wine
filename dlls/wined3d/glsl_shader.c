@@ -2229,10 +2229,15 @@ static void shader_glsl_rcp(const struct wined3d_shader_instruction *ins)
     mask_size = shader_glsl_get_write_mask_size(write_mask);
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
 
-    if (mask_size > 1) {
-        shader_addline(ins->ctx->buffer, "vec%d(1.0 / %s));\n", mask_size, src_param.param_str);
-    } else {
-        shader_addline(ins->ctx->buffer, "1.0 / %s);\n", src_param.param_str);
+    if (mask_size > 1)
+    {
+        shader_addline(ins->ctx->buffer, "vec%d(%s == 0.0 ? FLT_MAX : 1.0 / %s));\n",
+                mask_size, src_param.param_str, src_param.param_str);
+    }
+    else
+    {
+        shader_addline(ins->ctx->buffer, "%s == 0.0 ? FLT_MAX : 1.0 / %s);\n",
+                src_param.param_str, src_param.param_str);
     }
 }
 
