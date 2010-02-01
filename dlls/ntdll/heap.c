@@ -767,6 +767,7 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
     }
     memcpy( new_ptr, ptr, arena->data_size );
     free_large_block( heap, flags, ptr );
+    notify_free( ptr );
     return new_ptr;
 }
 
@@ -1811,7 +1812,6 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     if (!subheap)
     {
         if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
-        notify_free( ptr );
         goto done;
     }
 
