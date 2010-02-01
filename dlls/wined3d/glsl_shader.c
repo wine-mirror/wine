@@ -1172,6 +1172,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
     }
 
+    shader_addline(buffer, "const float FLT_MAX = 1e38;\n");
+
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
     if(pshader && reg_maps->vpos) {
@@ -2127,7 +2129,6 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_MAX: instruction = "max"; break;
         case WINED3DSIH_ABS: instruction = "abs"; break;
         case WINED3DSIH_FRC: instruction = "fract"; break;
-        case WINED3DSIH_NRM: instruction = "normalize"; break;
         case WINED3DSIH_EXP: instruction = "exp2"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
@@ -2152,6 +2153,22 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     }
 
     shader_addline(buffer, "));\n");
+}
+
+static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    glsl_src_param_t src_param;
+    DWORD write_mask;
+    char dst_mask[6];
+
+    write_mask = shader_glsl_get_write_mask(ins->dst, dst_mask);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
+
+    shader_addline(buffer, "tmp0.x = length(%s);\n", src_param.param_str);
+    shader_glsl_append_dst(buffer, ins);
+    shader_addline(buffer, "tmp0.x == 0.0 ? (%s * FLT_MAX) : (%s / tmp0.x));",
+            src_param.param_str, src_param.param_str);
 }
 
 /** Process the WINED3DSIO_EXPP instruction in GLSL:
@@ -4941,7 +4958,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MOVA          */ shader_glsl_mov,
     /* WINED3DSIH_MUL           */ shader_glsl_arith,
     /* WINED3DSIH_NOP           */ NULL,
-    /* WINED3DSIH_NRM           */ shader_glsl_map2gl,
+    /* WINED3DSIH_NRM           */ shader_glsl_nrm,
     /* WINED3DSIH_PHASE         */ NULL,
     /* WINED3DSIH_POW           */ shader_glsl_pow,
     /* WINED3DSIH_RCP           */ shader_glsl_rcp,
