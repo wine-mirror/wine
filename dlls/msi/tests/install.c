@@ -352,7 +352,7 @@ static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArgument
 static const CHAR sss_service_control_dat[] = "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
                                               "s72\tl255\ti2\tL255\tI2\ts72\n"
                                               "ServiceControl\tServiceControl\n"
-                                              "ServiceControl\tTermService\t1\t\t0\tservice_comp";
+                                              "ServiceControl\tSpooler\t1\t\t0\tservice_comp";
 
 static const CHAR sss_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
@@ -7453,11 +7453,22 @@ static void test_start_services(void)
     BOOL ret;
     DWORD error = ERROR_SUCCESS;
 
+    if (on_win9x)
+    {
+        win_skip("Services are not implemented on Win9x and WinMe\n");
+        return;
+    }
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     ok(scm != NULL, "Failed to open the SC Manager\n");
 
-    service = OpenService(scm, "TermService", SC_MANAGER_ALL_ACCESS);
-    ok(service != NULL, "Failed to open TermService\n");
+    service = OpenService(scm, "Spooler", SC_MANAGER_ALL_ACCESS);
+    if (!service && GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
+    {
+        win_skip("The 'Spooler' service does not exist\n");
+        CloseServiceHandle(scm);
+        return;
+    }
+    ok(service != NULL, "Failed to open Spooler\n");
 
     ret = StartService(service, 0, NULL);
     if (!ret && (error = GetLastError()) != ERROR_SERVICE_ALREADY_RUNNING)
@@ -7499,7 +7510,7 @@ static void test_start_services(void)
         SERVICE_STATUS status;
 
         scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-        service = OpenService(scm, "TermService", SC_MANAGER_ALL_ACCESS);
+        service = OpenService(scm, "Spooler", SC_MANAGER_ALL_ACCESS);
 
         ret = ControlService(service, SERVICE_CONTROL_STOP, &status);
         ok(ret, "ControlService failed %u\n", GetLastError());
