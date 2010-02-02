@@ -2980,6 +2980,7 @@ static void test_mouse_input(HWND hwnd)
         if (msg.message == WM_TIMER || ignore_message(msg.message)) continue;
         ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE,
            "hwnd %p message %04x\n", msg.hwnd, msg.message);
+        DispatchMessage(&msg);
     }
     ret = peek_message(&msg);
     ok( !ret, "message %04x available\n", msg.message);
