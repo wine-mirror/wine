@@ -18,6 +18,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+import "oledb.idl";
+
+[
+    object,
+    uuid(38248178-cf6d-11de-abe5-000c2916d865),
+    pointer_default(unique)
+]
+interface IWineRowServer : IUnknown
+{
+    [local] HRESULT SetInnerUnk([in] IUnknown *unknown);
+
+    [local] HRESULT GetMarshal([out] IMarshal **marshal);
+}
+
 [
     uuid(38248178-cf6d-11de-abe5-000c2916d865)
 ]

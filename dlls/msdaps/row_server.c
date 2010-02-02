@@ -39,18 +39,134 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
+
+typedef struct
+{
+    const IWineRowServerVtbl *vtbl;
+
+    LONG ref;
+
+    CLSID class;
+    IMarshal *marshal;
+    IUnknown *inner_unk;
+} server;
+
+static inline server *impl_from_IWineRowServer(IWineRowServer *iface)
+{
+    return (server *)((char*)iface - FIELD_OFFSET(server, vtbl));
+}
+
+static HRESULT WINAPI server_QueryInterface(IWineRowServer *iface, REFIID riid, void **obj)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+       IsEqualIID(riid, &IID_IWineRowServer))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        if(!IsEqualIID(riid, &IID_IMarshal)) /* We use standard marshalling */
+            FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IWineRowServer_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI server_AddRef(IWineRowServer *iface)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    TRACE("(%p)\n", This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI server_Release(IWineRowServer *iface)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    LONG ref;
+
+    TRACE("(%p)\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if(ref == 0)
+    {
+        IMarshal_Release(This->marshal);
+        if(This->inner_unk) IUnknown_Release(This->inner_unk);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI server_SetInnerUnk(IWineRowServer *iface, IUnknown *inner)
+{
+    server *This = impl_from_IWineRowServer(iface);
+
+    if(This->inner_unk) IUnknown_Release(This->inner_unk);
+
+    if(inner) IUnknown_AddRef(inner);
+    This->inner_unk = inner;
+    return S_OK;
+}
+
+static HRESULT WINAPI server_GetMarshal(IWineRowServer *iface, IMarshal **marshal)
+{
+    server *This = impl_from_IWineRowServer(iface);
+
+    IMarshal_AddRef(This->marshal);
+    *marshal = This->marshal;
+    return S_OK;
+}
+
+static const IWineRowServerVtbl server_vtbl =
+{
+    server_QueryInterface,
+    server_AddRef,
+    server_Release,
+    server_SetInnerUnk,
+    server_GetMarshal
+};
+
+static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)
+{
+    server *server;
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(class), obj);
+
+    *obj = NULL;
+
+    server = HeapAlloc(GetProcessHeap(), 0, sizeof(*server));
+    if(!server) return E_OUTOFMEMORY;
+
+    server->vtbl = &server_vtbl;
+    server->ref = 1;
+    server->class = *class;
+    server->inner_unk = NULL;
+    if(IsEqualGUID(class, &CLSID_wine_row_server))
+        create_row_marshal((IUnknown*)server, (void**)&server->marshal);
+    else if(IsEqualGUID(class, &CLSID_wine_rowset_server))
+        create_rowset_marshal((IUnknown*)server, (void**)&server->marshal);
+    else
+        ERR("create_server called with class %s\n", debugstr_guid(class));
+
+    *obj = server;
+    return S_OK;
+}
+
 HRESULT create_row_server(IUnknown *outer, void **obj)
 {
-    FIXME("(%p, %p): stub\n", outer, obj);
-    *obj = NULL;
-    return E_NOTIMPL;
+    return create_server(outer, &CLSID_wine_row_server, obj);
 }
 
 HRESULT create_rowset_server(IUnknown *outer, void **obj)
 {
-    FIXME("(%p, %p): stub\n", outer, obj);
-    *obj = NULL;
-    return E_NOTIMPL;
+    return create_server(outer, &CLSID_wine_rowset_server, obj);
 }
 
 /* Marshal impl */
