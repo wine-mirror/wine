@@ -197,6 +197,12 @@ static void test_create_env(void)
     r = get_env(env[3], "WINE_XYZZY", &st);
     expect(TRUE, r);
     if (r) HeapFree(GetProcessHeap(), 0, st);
+
+    for (i = 0; i < sizeof(env) / sizeof(env[0]); i++)
+    {
+        r = DestroyEnvironmentBlock(env[i]);
+        expect(TRUE, r);
+    }
 }
 
 START_TEST(userenv)

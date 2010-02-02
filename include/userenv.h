@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 BOOL WINAPI CreateEnvironmentBlock(LPVOID*,HANDLE,BOOL);
+BOOL WINAPI DestroyEnvironmentBlock(LPVOID);
 BOOL WINAPI ExpandEnvironmentStringsForUserA(HANDLE,LPCSTR,LPSTR,DWORD);
 BOOL WINAPI ExpandEnvironmentStringsForUserW(HANDLE,LPCWSTR,LPWSTR,DWORD);
 #define     ExpandEnvironmentStringsForUser WINELIB_NAME_AW(ExpandEnvironmentStringsForUser)
