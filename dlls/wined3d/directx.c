@@ -1645,6 +1645,16 @@ static const struct fragment_pipeline *select_fragment_implementation(struct win
     else return &ffp_fragment_pipeline;
 }
 
+static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter)
+{
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
+    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) return &glsl_shader_backend;
+    if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) return &arb_program_shader_backend;
+    return &none_shader_backend;
+}
+
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
 {
@@ -2084,6 +2094,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     LEAVE_GL();
 
     adapter->fragment_pipe = select_fragment_implementation(adapter);
+    adapter->shader_backend = select_shader_backend(adapter);
 
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
@@ -2990,7 +3001,6 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const shader_backend_t *shader_backend;
 
     switch (format_desc->format)
     {
@@ -3068,8 +3078,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
             /* Ask the shader backend if it can deal with the conversion. If
              * we've got a GL extension giving native support this will be an
              * identity conversion. */
-            shader_backend = select_shader_backend(adapter, DeviceType);
-            if (shader_backend->shader_color_fixup_supported(format_desc->color_fixup))
+            if (adapter->shader_backend->shader_color_fixup_supported(format_desc->color_fixup))
             {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -3185,8 +3194,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
             if (gl_info->supported[ATI_TEXTURE_COMPRESSION_3DC]
                     || gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
             {
-                shader_backend = select_shader_backend(adapter, DeviceType);
-                if (shader_backend->shader_color_fixup_supported(format_desc->color_fixup)
+                if (adapter->shader_backend->shader_color_fixup_supported(format_desc->color_fixup)
                         && adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup))
                 {
                     TRACE_(d3d_caps)("[OK]\n");
@@ -3826,7 +3834,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     int ps_selected_mode;
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
-    const shader_backend_t *shader_backend;
     DWORD ckey_caps, blit_caps, fx_caps;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
@@ -4203,8 +4210,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->VertexTextureFilterCaps           = 0;
 
     memset(&shader_caps, 0, sizeof(shader_caps));
-    shader_backend = select_shader_backend(adapter, DeviceType);
-    shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
+    adapter->shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
 
     memset(&fragment_caps, 0, sizeof(fragment_caps));
     adapter->fragment_pipe->get_caps(DeviceType, &adapter->gl_info, &fragment_caps);

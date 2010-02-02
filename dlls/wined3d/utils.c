@@ -2841,16 +2841,6 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
     else *ps_selected = SHADER_NONE;
 }
 
-const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
-{
-    int vs_selected_mode, ps_selected_mode;
-
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) return &glsl_shader_backend;
-    if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) return &arb_program_shader_backend;
-    return &none_shader_backend;
-}
-
 const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;

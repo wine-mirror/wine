@@ -6924,7 +6924,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
 
     select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
-    device->shader_backend = select_shader_backend(adapter, device_type);
+    device->shader_backend = adapter->shader_backend;
 
     memset(&shader_caps, 0, sizeof(shader_caps));
     device->shader_backend->shader_get_caps(device_type, &adapter->gl_info, &shader_caps);
