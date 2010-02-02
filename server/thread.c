@@ -222,6 +222,7 @@ struct thread *create_thread( int fd, struct process *process )
 
     thread->process = (struct process *)grab_object( process );
     thread->desktop = process->desktop;
+    thread->affinity = process->affinity;
     if (!current) current = thread;
 
     list_add_head( &thread_list, &thread->entry );
