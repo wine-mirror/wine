@@ -407,13 +407,9 @@ struct thread *get_thread_from_pid( int pid )
     return NULL;
 }
 
-void set_thread_affinity( struct thread *thread, affinity_t affinity )
+int set_thread_affinity( struct thread *thread, affinity_t affinity )
 {
-    if ((affinity & thread->process->affinity) != affinity)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
+    int ret = 0;
 #ifdef HAVE_SCHED_SETAFFINITY
     if (thread->unix_tid != -1)
     {
@@ -425,15 +421,11 @@ void set_thread_affinity( struct thread *thread, affinity_t affinity )
         for (i = 0, mask = 1; mask; i++, mask <<= 1)
             if (affinity & mask) CPU_SET( i, &set );
 
-        if (!sched_setaffinity( thread->unix_tid, sizeof(set), &set ))
-            thread->affinity = affinity;
-        else
-            file_set_error();
+        ret = sched_setaffinity( thread->unix_tid, sizeof(set), &set );
     }
-    else set_error( STATUS_ACCESS_DENIED );
-#else
-    thread->affinity = affinity;
 #endif
+    if (!ret) thread->affinity = affinity;
+    return ret;
 }
 
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
@@ -460,7 +452,14 @@ static void set_thread_info( struct thread *thread,
             set_error( STATUS_INVALID_PARAMETER );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
-        set_thread_affinity( thread, req->affinity );
+    {
+        if ((req->affinity & thread->process->affinity) != req->affinity)
+            set_error( STATUS_INVALID_PARAMETER );
+        else if (thread->state == TERMINATED)
+            set_error( STATUS_ACCESS_DENIED );
+        else if (set_thread_affinity( thread, req->affinity ))
+            file_set_error();
+    }
     if (req->mask & SET_THREAD_INFO_TOKEN)
         security_set_thread_token( thread, req->token );
 }
@@ -1158,6 +1157,7 @@ DECL_HANDLER(init_thread)
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
     }
     debug_level = max( debug_level, req->debug_level );
+    set_thread_affinity( current, current->affinity );
 
     reply->pid     = get_process_id( process );
     reply->tid     = get_thread_id( current );
