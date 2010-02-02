@@ -877,7 +877,6 @@ static void test_hfont_lifetime(void)
 
         /* put_Size doesn't cause the new font to be realized */
         obj_type = GetObjectType(last_hfont);
-todo_wine
         ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
 
         hr = IFont_get_hFont(font, &hfont);
@@ -939,7 +938,6 @@ todo_wine
 
         /* put_Size doesn't cause the new font to be realized */
         obj_type = GetObjectType(last_hfont);
-todo_wine
         ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
 
         hr = IFont_get_hFont(font, &hfont);
