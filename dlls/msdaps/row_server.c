@@ -289,12 +289,155 @@ static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
     return S_OK;
 }
 
+typedef struct
+{
+    const IRowsetVtbl *rowset_vtbl;
+
+    LONG ref;
+
+    IWineRowServer *server;
+} rowset_proxy;
+
+static inline rowset_proxy *impl_from_IRowset(IRowset *iface)
+{
+    return (rowset_proxy *)((char*)iface - FIELD_OFFSET(rowset_proxy, rowset_vtbl));
+}
+
+static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID iid, void **obj)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(iid), obj);
+
+    *obj = NULL;
+
+    if(IsEqualIID(iid, &IID_IUnknown) ||
+       IsEqualIID(iid, &IID_IRowset))
+    {
+        *obj = &This->rowset_vtbl;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IRowset_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI rowset_AddRef(IRowset *iface)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+    TRACE("(%p)\n", This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI rowset_Release(IRowset *iface)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+    LONG ref;
+
+    TRACE("(%p)\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if(ref == 0)
+    {
+        if(This->server) IWineRowServer_Release(This->server);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI rowset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+                                        DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+
+    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+
+    FIXME("(%p)->(%lx, %lx, %p): stub\n", This, hRow, hAccessor, pData);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+                                         DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+
+    FIXME("(%p)->(%08lx, %d, %d, %p, %p): stub\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+                                         DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+
+    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_RestartPosition(IRowset* iface, HCHAPTER hReserved)
+{
+    rowset_proxy *This = impl_from_IRowset(iface);
+
+    FIXME("(%p)->(%lx): stub\n", This, hReserved);
+
+    return E_NOTIMPL;
+}
+
+static const IRowsetVtbl rowset_vtbl =
+{
+    rowset_QueryInterface,
+    rowset_AddRef,
+    rowset_Release,
+    rowset_AddRefRows,
+    rowset_GetData,
+    rowset_GetNextRows,
+    rowset_ReleaseRows,
+    rowset_RestartPosition
+};
+
+HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
+{
+    rowset_proxy *proxy;
+
+    TRACE("(%p, %p)\n", server, obj);
+    *obj = NULL;
+
+    proxy = HeapAlloc(GetProcessHeap(), 0, sizeof(*proxy));
+    if(!proxy) return E_OUTOFMEMORY;
+
+    proxy->rowset_vtbl = &rowset_vtbl;
+    proxy->ref = 1;
+    IWineRowServer_AddRef(server);
+    proxy->server = server;
+
+    *obj = (IUnknown *)&proxy->rowset_vtbl;
+    TRACE("returing %p\n", *obj);
+    return S_OK;
+}
+
 static HRESULT create_proxy(IWineRowServer *server, const CLSID *class, IUnknown **obj)
 {
     *obj = NULL;
 
     if(IsEqualGUID(class, &CLSID_wine_row_proxy))
         return create_row_proxy(server, obj);
+    else if(IsEqualGUID(class, &CLSID_wine_rowset_proxy))
+        return create_rowset_proxy(server, obj);
     else
         FIXME("Unhandled proxy class %s\n", debugstr_guid(class));
     return E_NOTIMPL;
