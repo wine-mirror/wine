@@ -6910,7 +6910,7 @@ static const struct message WmShiftF10Seq[] = {
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F10, 1 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, VK_F10, 1 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_F10, 0x00000001 },
-    { WM_CONTEXTMENU, sent|defwinproc|lparam, /*hwnd*/0, MAKELPARAM(-1, -1) },
+    { WM_CONTEXTMENU, sent|defwinproc|lparam, /*hwnd*/0, -1 },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F10, 0xc0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, VK_F10, 0xc0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, VK_F10, 0xc0000001 },
