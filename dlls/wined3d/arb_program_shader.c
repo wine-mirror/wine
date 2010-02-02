@@ -41,6 +41,45 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+/* Extract a line. Note that this modifies the source string. */
+static char *get_line(char **ptr)
+{
+    char *p, *q;
+
+    p = *ptr;
+    if (!(q = strstr(p, "\n")))
+    {
+        if (!*p) return NULL;
+        *ptr += strlen(p);
+        return p;
+    }
+    *q = '\0';
+    *ptr = q + 1;
+
+    return p;
+}
+
+static void shader_arb_dump_program_source(const char *source)
+{
+    unsigned long source_size;
+    char *ptr, *line, *tmp;
+
+    source_size = strlen(source) + 1;
+    tmp = HeapAlloc(GetProcessHeap(), 0, source_size);
+    if (!tmp)
+    {
+        ERR("Failed to allocate %lu bytes for shader source.\n", source_size);
+        return;
+    }
+    memcpy(tmp, source, source_size);
+
+    ptr = tmp;
+    while ((line = get_line(&ptr))) FIXME("    %s\n", line);
+    FIXME("\n");
+
+    HeapFree(GetProcessHeap(), 0, tmp);
+}
+
 /* GL locking for state handlers is done by the caller. */
 static BOOL need_mova_const(IWineD3DBaseShader *shader, const struct wined3d_gl_info *gl_info)
 {
@@ -3047,8 +3086,9 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
     if (pos != -1)
     {
-        FIXME("Vertex program error at position %d: %s\n", pos,
+        FIXME("Vertex program error at position %d: %s\n\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(blt_vprogram);
     }
     else
     {
@@ -3109,8 +3149,9 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
     if (pos != -1)
     {
-        FIXME("Fragment program error at position %d: %s\n", pos,
+        FIXME("Fragment program error at position %d: %s\n\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(blt_fprograms[tex_type]);
     }
     else
     {
@@ -3565,8 +3606,9 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
     if (errPos != -1)
     {
-        FIXME("HW PixelShader Error at position %d: %s\n",
+        FIXME("HW PixelShader Error at position %d: %s\n\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer->buffer);
         retval = 0;
     }
     else
@@ -3975,8 +4017,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
     if (errPos != -1)
     {
-        FIXME("HW VertexShader Error at position %d: %s\n",
+        FIXME("HW VertexShader Error at position %d: %s\n\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer->buffer);
         ret = -1;
     }
     else
@@ -5864,8 +5907,9 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
     if (pos != -1)
     {
-        FIXME("Fragment program error at position %d: %s\n", pos,
+        FIXME("Fragment program error at position %d: %s\n\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer.buffer);
     }
     else
     {
@@ -6568,8 +6612,9 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
     if (pos != -1)
     {
-        FIXME("Fragment program error at position %d: %s\n", pos,
+        FIXME("Fragment program error at position %d: %s\n\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer.buffer);
     }
     else
     {
