@@ -1039,7 +1039,7 @@ static void test_RtlThreadErrorMode(void)
 
     if (!pRtlGetThreadErrorMode || !pRtlSetThreadErrorMode)
     {
-        skip("RtlGetThreadErrorMode and/or RtlSetThreadErrorMode not available\n");
+        win_skip("RtlGetThreadErrorMode and/or RtlSetThreadErrorMode not available\n");
         return;
     }
 

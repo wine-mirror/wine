@@ -1165,3 +1165,26 @@ NTSTATUS WINAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR Uncompresse
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *  RtlSetThreadErrorMode 	[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlSetThreadErrorMode( DWORD mode, LPDWORD oldmode )
+{
+    if (mode & ~0x70)
+        return STATUS_INVALID_PARAMETER_1;
+
+    if (oldmode)
+        *oldmode = NtCurrentTeb()->HardErrorDisabled;
+
+    NtCurrentTeb()->HardErrorDisabled = mode;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *  RtlGetThreadErrorMode 	[NTDLL.@]
+ */
+DWORD WINAPI RtlGetThreadErrorMode( void )
+{
+    return NtCurrentTeb()->HardErrorDisabled;
+}

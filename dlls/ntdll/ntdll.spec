@@ -643,6 +643,7 @@
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 # @ stub RtlGetSecurityDescriptorRMControl
 # @ stub RtlGetSetBootStatusData
+@ stdcall RtlGetThreadErrorMode()
 # @ stub RtlGetUnloadEventTrace
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlGetVersion(ptr)
@@ -842,6 +843,7 @@
 # @ stub RtlSetSecurityDescriptorRMControl
 @ stub RtlSetSecurityObject
 # @ stub RtlSetSecurityObjectEx
+@ stdcall RtlSetThreadErrorMode(long ptr)
 # @ stub RtlSetThreadIsCritical
 # @ stub RtlSetThreadPoolStartFunc
 @ stdcall RtlSetTimeZoneInformation(ptr)
