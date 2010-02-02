@@ -289,6 +289,16 @@ static int free_icon_handle( HICON16 handle )
     return GlobalFree16( handle );
 }
 
+HICON get_icon_32( HICON16 icon16 )
+{
+    return (HICON)(ULONG_PTR)icon16;
+}
+
+HICON16 get_icon_16( HICON icon )
+{
+    return LOWORD( icon );
+}
+
 static void add_shared_icon( HINSTANCE16 inst, HRSRC16 rsrc, HRSRC16 group, HICON16 icon )
 {
     struct cache_entry *cache = HeapAlloc( GetProcessHeap(), 0, sizeof(*cache) );
@@ -471,7 +481,7 @@ BOOL16 WINAPI AnyPopup16(void)
  */
 HCURSOR16 WINAPI SetCursor16(HCURSOR16 hCursor)
 {
-  return HCURSOR_16(SetCursor(HCURSOR_32(hCursor)));
+  return get_icon_16( SetCursor( get_icon_32(hCursor) ));
 }
 
 
@@ -673,7 +683,7 @@ INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
  */
 BOOL16 WINAPI DrawIcon16(HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon)
 {
-  return DrawIcon(HDC_32(hdc), x, y, HICON_32(hIcon));
+  return DrawIcon(HDC_32(hdc), x, y, get_icon_32(hIcon) );
 }
 
 
@@ -1453,7 +1463,7 @@ BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
  */
 HCURSOR16 WINAPI GetCursor16(void)
 {
-  return HCURSOR_16(GetCursor());
+  return get_icon_16( GetCursor() );
 }
 
 
@@ -1986,7 +1996,12 @@ HANDLE16 WINAPI LoadImage16(HINSTANCE16 hinst, LPCSTR name, UINT16 type, INT16 c
     HRSRC16 hRsrc, hGroupRsrc;
 
     if (!hinst || (flags & LR_LOADFROMFILE))
-        return HICON_16( LoadImageA( 0, name, type, cx, cy, flags ));
+    {
+        if (type == IMAGE_BITMAP)
+            return HBITMAP_16( LoadImageA( 0, name, type, cx, cy, flags ));
+        else
+            return get_icon_16( LoadImageA( 0, name, type, cx, cy, flags ));
+    }
 
     hinst = GetExePtr( hinst );
 
@@ -2110,7 +2125,7 @@ BOOL16 WINAPI DrawIconEx16(HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 			   INT16 cxWidth, INT16 cyWidth, UINT16 istep,
 			   HBRUSH16 hbr, UINT16 flags)
 {
-  return DrawIconEx(HDC_32(hdc), xLeft, yTop, HICON_32(hIcon), cxWidth, cyWidth,
+  return DrawIconEx(HDC_32(hdc), xLeft, yTop, get_icon_32(hIcon), cxWidth, cyWidth,
 		    istep, HBRUSH_32(hbr), flags);
 }
 
@@ -2563,8 +2578,7 @@ HICON16 WINAPI CreateIconFromResourceEx16(LPBYTE bits, UINT16 cbSize,
 					  INT16 width, INT16 height,
 					  UINT16 cFlag)
 {
-  return HICON_16(CreateIconFromResourceEx(bits, cbSize, bIcon, dwVersion,
-					   width, height, cFlag));
+    return get_icon_16( CreateIconFromResourceEx( bits, cbSize, bIcon, dwVersion, width, height, cFlag ));
 }
 
 
@@ -2722,7 +2736,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     MSG	msg;
     LPDRAGINFO16 lpDragInfo;
     SEGPTR	spDragInfo;
-    HCURSOR 	hOldCursor=0, hBummer=0;
+    HCURSOR 	hOldCursor=0, hBummer=0, hCursor32;
     HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO16));
     HCURSOR	hCurrentCursor = 0;
     HWND16	hCurrentWnd = 0;
@@ -2738,7 +2752,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
         return 0L;
     }
 
-    if(hCursor) hOldCursor = SetCursor(HCURSOR_32(hCursor));
+    if ((hCursor32 = get_icon_32( hCursor ))) SetCursor( hCursor32 );
 
     lpDragInfo->hWnd   = hWnd;
     lpDragInfo->hScope = 0;
@@ -2761,7 +2775,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
 	/* update DRAGINFO struct */
 	if( DRAG_QueryUpdate16(WIN_Handle32(hwndScope), spDragInfo) > 0 )
-	    hCurrentCursor = HCURSOR_32(hCursor);
+	    hCurrentCursor = hCursor32;
 	else
         {
             hCurrentCursor = hBummer;

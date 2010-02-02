@@ -2619,7 +2619,7 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                 HICON16 icon = LoadIcon16( HINSTANCE_16(cs->hInstance), cs->lpszName );
                 if (!icon) icon = LoadCursor16( HINSTANCE_16(cs->hInstance), cs->lpszName );
                 if (icon) wow_handlers32.static_proc( hwnd, STM_SETIMAGE, IMAGE_ICON,
-                                                      (LPARAM)HICON_32(icon), FALSE );
+                                                      (LPARAM)get_icon_32(icon), FALSE );
                 break;
             }
         case SS_BITMAP:
@@ -2633,10 +2633,10 @@ static LRESULT static_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         return ret;
     }
     case STM_SETICON16:
-        wParam = (WPARAM)HICON_32( (HICON16)wParam );
+        wParam = (WPARAM)get_icon_32( (HICON16)wParam );
         return wow_handlers32.static_proc( hwnd, STM_SETICON, wParam, lParam, FALSE );
     case STM_GETICON16:
-        return HICON_16( wow_handlers32.static_proc( hwnd, STM_GETICON, wParam, lParam, FALSE ));
+        return get_icon_16( (HICON)wow_handlers32.static_proc( hwnd, STM_GETICON, wParam, lParam, FALSE ));
     default:
         return wow_handlers32.static_proc( hwnd, msg, wParam, lParam, unicode );
     }
@@ -2678,22 +2678,22 @@ static HICON alloc_icon_handle( unsigned int size )
 {
     HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
     FarSetOwner16( handle, 0 );
-    return HICON_32( handle );
+    return (HICON)(ULONG_PTR)handle;
 }
 
 static struct tagCURSORICONINFO *get_icon_ptr( HICON handle )
 {
-    return GlobalLock16( HICON_16(handle) );
+    return GlobalLock16( LOWORD(handle) );
 }
 
 static void release_icon_ptr( HICON handle, struct tagCURSORICONINFO *ptr )
 {
-    GlobalUnlock16( HICON_16(handle) );
+    GlobalUnlock16( LOWORD(handle) );
 }
 
 static int free_icon_handle( HICON handle )
 {
-    return GlobalFree16( HICON_16(handle) );
+    return GlobalFree16( LOWORD(handle) );
 }
 
 

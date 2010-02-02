@@ -117,14 +117,11 @@ typedef struct tagDIALOGINFO
 #define DF_OWNERENABLED 0x0002
 
 /* HANDLE16 <-> HANDLE conversions */
-#define HCURSOR_16(h32)    (LOWORD(h32))
-#define HICON_16(h32)      (LOWORD(h32))
 #define HINSTANCE_16(h32)  (LOWORD(h32))
-
-#define HCURSOR_32(h16)    ((HCURSOR)(ULONG_PTR)(h16))
-#define HICON_32(h16)      ((HICON)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
-#define HMODULE_32(h16)    ((HMODULE)(ULONG_PTR)(h16))
+
+extern HICON16 get_icon_16( HICON icon ) DECLSPEC_HIDDEN;
+extern HICON get_icon_32( HICON16 icon16 ) DECLSPEC_HIDDEN;
 
 extern DWORD USER16_AlertableWait DECLSPEC_HIDDEN;
 extern WORD USER_HeapSel DECLSPEC_HIDDEN;
