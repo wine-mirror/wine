@@ -20,6 +20,9 @@
 
 #include "wspool.h"
 
+/*UTF-8*/
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 FILENAME_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 6, 18, 245, 47
@@ -36,6 +39,6 @@ END
 STRINGTABLE DISCARDABLE
 {
     IDS_CAPTION "Porta Locale"
-    IDS_FILE_EXISTS "Il file in uscita esiste gi‡.  Clicca su OK per sovrascriverlo."
+    IDS_FILE_EXISTS "Il file in uscita esiste gi√†.  Clicca su OK per sovrascriverlo."
     IDS_CANNOT_OPEN "Impossibile creare il file in uscita."
 }
