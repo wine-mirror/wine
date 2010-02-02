@@ -1833,7 +1833,8 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
     } else {
-	lpMidiHdr->dwFlags |= MHDR_ISSTRM;
+	lpMidiHdr->dwFlags |= MHDR_ISSTRM | MHDR_INQUEUE;
+	lpMidiHdr->dwFlags &= ~MHDR_DONE;
 	if (!PostThreadMessageA(lpMidiStrm->dwThreadID,
                                 WINE_MSM_HEADER, cbMidiHdr,
                                 (LPARAM)lpMidiHdr)) {
