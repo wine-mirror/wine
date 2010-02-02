@@ -5621,6 +5621,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         if(Swapchain->backBuffer[0]) {
             IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], (IWineD3DBase *) Swapchain);
             ((IWineD3DSurfaceImpl *)Swapchain->backBuffer[0])->Flags |= SFLAG_SWAPCHAIN;
+            Swapchain->presentParms.BackBufferWidth = BackImpl->currentDesc.Width;
+            Swapchain->presentParms.BackBufferHeight = BackImpl->currentDesc.Height;
+            Swapchain->presentParms.BackBufferFormat = BackImpl->resource.format_desc->format;
         } else {
             HeapFree(GetProcessHeap(), 0, Swapchain->backBuffer);
             Swapchain->backBuffer = NULL;
