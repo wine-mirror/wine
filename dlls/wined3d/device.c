@@ -596,7 +596,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
     IWineD3DSurfaceImpl *object;
     HRESULT hr;
 
-    TRACE("(%p) Create surface\n",This);
+    TRACE("iface %p, width %u, height %u, format %s (%#x), lockable %#x, discard %#x, level %u\n",
+            iface, Width, Height, debug_d3dformat(Format), Format, Lockable, Discard, Level);
+    TRACE("surface %p, usage %s (%#x), pool %s (%#x), multisample_type %#x, multisample_quality %u\n",
+            ppSurface, debug_d3dusage(Usage), Usage, debug_d3dpool(Pool), Pool, MultiSample, MultisampleQuality);
+    TRACE("surface_type %#x, parent %p, parent_ops %p.\n", Impl, parent, parent_ops);
 
     if (Impl == SURFACE_OPENGL && !This->adapter)
     {
