@@ -563,7 +563,7 @@ static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
 
 static void V4l_GetFrame(Capture * capBox, unsigned char ** pInput)
 {
-    if (capBox->pmap)
+    if (capBox->mmap)
     {
         if (xioctl(capBox->fd, VIDIOCSYNC, &capBox->grab_buf[capBox->curframe]) == -1)
             WARN("Syncing ioctl failed: %d\n", errno);
