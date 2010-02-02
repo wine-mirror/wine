@@ -169,6 +169,13 @@ HRESULT create_rowset_server(IUnknown *outer, void **obj)
     return create_server(outer, &CLSID_wine_rowset_server, obj);
 }
 
+HRESULT create_proxy(IWineRowServer *server, const CLSID *class, IUnknown **obj)
+{
+    FIXME("stub\n");
+    *obj = NULL;
+    return E_NOTIMPL;
+}
+
 /* Marshal impl */
 
 typedef struct
@@ -234,10 +241,11 @@ static HRESULT WINAPI marshal_GetUnmarshalClass(IMarshal *iface, REFIID iid, voi
                                                 DWORD mshlflags, CLSID *clsid)
 {
     marshal *This = impl_from_IMarshal(iface);
-    FIXME("(%p)->(%s, %p, %08x, %p, %08x, %p): stub\n", This, debugstr_guid(iid), obj, dwDestContext,
+    TRACE("(%p)->(%s, %p, %08x, %p, %08x, %p)\n", This, debugstr_guid(iid), obj, dwDestContext,
           pvDestContext, mshlflags, clsid);
 
-    return E_NOTIMPL;
+    *clsid = This->unmarshal_class;
+    return S_OK;
 }
 
 static HRESULT WINAPI marshal_GetMarshalSizeMax(IMarshal *iface, REFIID iid, void *obj,
@@ -245,10 +253,11 @@ static HRESULT WINAPI marshal_GetMarshalSizeMax(IMarshal *iface, REFIID iid, voi
                                                 DWORD mshlflags, DWORD *size)
 {
     marshal *This = impl_from_IMarshal(iface);
-    FIXME("(%p)->(%s, %p, %08x, %p, %08x, %p): stub\n", This, debugstr_guid(iid), obj, dwDestContext,
+    TRACE("(%p)->(%s, %p, %08x, %p, %08x, %p)\n", This, debugstr_guid(iid), obj, dwDestContext,
           pvDestContext, mshlflags, size);
 
-    return E_NOTIMPL;
+    return CoGetMarshalSizeMax(size, &IID_IWineRowServer, This->outer, dwDestContext, pvDestContext,
+                               mshlflags);
 }
 
 static HRESULT WINAPI marshal_MarshalInterface(IMarshal *iface, IStream *stream, REFIID iid,
@@ -256,28 +265,44 @@ static HRESULT WINAPI marshal_MarshalInterface(IMarshal *iface, IStream *stream,
                                                DWORD mshlflags)
 {
     marshal *This = impl_from_IMarshal(iface);
-    FIXME("(%p)->(%p, %s, %p, %08x, %p, %08x): stub\n", This, stream, debugstr_guid(iid), obj, dwDestContext,
+    TRACE("(%p)->(%p, %s, %p, %08x, %p, %08x)\n", This, stream, debugstr_guid(iid), obj, dwDestContext,
           pvDestContext, mshlflags);
 
-    return E_NOTIMPL;
+    return CoMarshalInterface(stream, &IID_IWineRowServer, This->outer, dwDestContext, pvDestContext, mshlflags);
 }
 
 static HRESULT WINAPI marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
                                                  REFIID iid, void **obj)
 {
     marshal *This = impl_from_IMarshal(iface);
-    FIXME("(%p)->(%p, %s, %p): stub\n", This, stream, debugstr_guid(iid), obj);
+    HRESULT hr;
+    IWineRowServer *server;
+    IUnknown *proxy;
+
+    TRACE("(%p)->(%p, %s, %p)\n", This, stream, debugstr_guid(iid), obj);
     *obj = NULL;
 
-    return E_NOTIMPL;
+    hr = CoUnmarshalInterface(stream, &IID_IWineRowServer, (void**)&server);
+    if(SUCCEEDED(hr))
+    {
+        hr = create_proxy(server, &This->unmarshal_class, &proxy);
+        if(SUCCEEDED(hr))
+        {
+            hr = IUnknown_QueryInterface(proxy, iid, obj);
+            IUnknown_Release(proxy);
+        }
+        IWineRowServer_Release(server);
+    }
+
+    TRACE("returing %p\n", *obj);
+    return hr;
 }
 
 static HRESULT WINAPI marshal_ReleaseMarshalData(IMarshal *iface, IStream *stream)
 {
     marshal *This = impl_from_IMarshal(iface);
-    FIXME("(%p)->(%p): stub\n", This, stream);
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, stream);
+    return CoReleaseMarshalData(stream);
 }
 
 static HRESULT WINAPI marshal_DisconnectObject(IMarshal *iface, DWORD dwReserved)
