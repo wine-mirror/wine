@@ -53,6 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define FONTPERSIST_UNDERLINE     0x04
 #define FONTPERSIST_STRIKETHROUGH 0x08
 
+static HDC olefont_hdc;
 
 /***********************************************************************
  * List of the HFONTs it has given out, with each one having a separate
@@ -90,6 +91,28 @@ static CRITICAL_SECTION_DEBUG OLEFontImpl_csHFONTLIST_debug =
     0, 0, { (DWORD_PTR)(__FILE__ ": OLEFontImpl_csHFONTLIST") }
 };
 static CRITICAL_SECTION OLEFontImpl_csHFONTLIST = { &OLEFontImpl_csHFONTLIST_debug, -1, 0, 0, 0, 0 };
+
+static HDC get_dc(void)
+{
+    HDC hdc;
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+    if(!olefont_hdc)
+        olefont_hdc = CreateCompatibleDC(NULL);
+    hdc = olefont_hdc;
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+    return hdc;
+}
+
+static void delete_dc(void)
+{
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+    if(olefont_hdc)
+    {
+        DeleteDC(olefont_hdc);
+        olefont_hdc = NULL;
+    }
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+}
 
 static void HFONTItem_Delete(PHFONTItem item)
 {
@@ -202,6 +225,17 @@ static HRESULT dec_ext_ref(HFONT hfont)
     LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
 
     return hr;
+}
+
+static WCHAR *strdupW(const WCHAR* str)
+{
+    WCHAR *ret;
+    DWORD size = (strlenW(str) + 1) * sizeof(WCHAR);
+
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if(ret)
+        memcpy(ret, str, size);
+    return ret;
 }
 
 /***********************************************************************
@@ -531,6 +565,7 @@ static ULONG WINAPI OLEFontImpl_Release(
       LIST_FOR_EACH_ENTRY_SAFE(item, cursor2, &OLEFontImpl_hFontList, HFONTItem, entry)
         HFONTItem_Delete(item);
       LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+      delete_dc();
     }
     else
     {
@@ -542,31 +577,77 @@ static ULONG WINAPI OLEFontImpl_Release(
   return ret;
 }
 
+typedef struct
+{
+    short orig_cs;
+    short avail_cs;
+} enum_data;
+
+static int CALLBACK font_enum_proc(const LOGFONTW *elf, const TEXTMETRICW *ntm, DWORD type, LPARAM lp)
+{
+    enum_data *data = (enum_data*)lp;
+
+    if(elf->lfCharSet == data->orig_cs)
+    {
+        data->avail_cs = data->orig_cs;
+        return 0;
+    }
+    if(data->avail_cs == -1) data->avail_cs = elf->lfCharSet;
+    return 1;
+}
+
 static void realize_font(OLEFontImpl *This)
 {
     if (This->dirty)
     {
         LOGFONTW logFont;
         INT fontHeight;
+        WCHAR text_face[LF_FACESIZE];
+        HDC hdc = get_dc();
+        HFONT old_font;
+        TEXTMETRICW tm;
+
+        text_face[0] = 0;
 
         if(This->gdiFont)
         {
+            old_font = SelectObject(hdc, This->gdiFont);
+            GetTextFaceW(hdc, sizeof(text_face) / sizeof(text_face[0]), text_face);
+            SelectObject(hdc, old_font);
             dec_int_ref(This->gdiFont);
             This->gdiFont = 0;
         }
+
+        memset(&logFont, 0, sizeof(LOGFONTW));
+
+        lstrcpynW(logFont.lfFaceName, This->description.lpstrName, LF_FACESIZE);
+        logFont.lfCharSet         = This->description.sCharset;
+
+        /* If the font name has been changed then enumerate all charsets
+           and pick one that'll result in the font specified being selected */
+        if(text_face[0] && lstrcmpiW(text_face, This->description.lpstrName))
+        {
+            enum_data data;
+            data.orig_cs = This->description.sCharset;
+            data.avail_cs = -1;
+            logFont.lfCharSet = DEFAULT_CHARSET;
+            EnumFontFamiliesExW(get_dc(), &logFont, font_enum_proc, (LPARAM)&data, 0);
+            if(data.avail_cs != -1) logFont.lfCharSet = data.avail_cs;
+        }
+
 
         /*
          * The height of the font returned by the get_Size property is the
          * height of the font in points multiplied by 10000... Using some
          * simple conversions and the ratio given by the application, it can
          * be converted to a height in pixels.
+         *
+         * Standard ratio is 72 / 2540, or 18 / 635 in lowest terms.
+         * Ratio is applied here relative to the standard.
          */
 
-        /* Standard ratio is 72 / 2540, or 18 / 635 in lowest terms. */
-        /* Ratio is applied here relative to the standard. */
         fontHeight = MulDiv( This->description.cySize.s.Lo, This->cyLogical*635, This->cyHimetric*18 );
 
-        memset(&logFont, 0, sizeof(LOGFONTW));
 
         logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L) - 1 :
                                                                   (-fontHeight/10000L);
@@ -574,17 +655,28 @@ static void realize_font(OLEFontImpl *This)
         logFont.lfUnderline       = This->description.fUnderline;
         logFont.lfStrikeOut       = This->description.fStrikethrough;
         logFont.lfWeight          = This->description.sWeight;
-        logFont.lfCharSet         = This->description.sCharset;
         logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
         logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
         logFont.lfQuality         = DEFAULT_QUALITY;
         logFont.lfPitchAndFamily  = DEFAULT_PITCH;
-        lstrcpynW(logFont.lfFaceName, This->description.lpstrName, LF_FACESIZE);
 
         This->gdiFont = CreateFontIndirectW(&logFont);
         This->dirty = FALSE;
 
         add_hfontitem(This->gdiFont);
+
+        /* Fixup the name and charset properties so that they match the
+           selected font */
+        old_font = SelectObject(get_dc(), This->gdiFont);
+        GetTextFaceW(hdc, sizeof(text_face) / sizeof(text_face[0]), text_face);
+        if(lstrcmpiW(text_face, This->description.lpstrName))
+        {
+            HeapFree(GetProcessHeap(), 0, This->description.lpstrName);
+            This->description.lpstrName = strdupW(text_face);
+        }
+        GetTextMetricsW(hdc, &tm);
+        This->description.sCharset = tm.tmCharSet;
+        SelectObject(hdc, old_font);
     }
 }
 

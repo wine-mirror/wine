@@ -45,6 +45,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 static WCHAR MSSansSerif_font[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
 static WCHAR arial_font[] = { 'A','r','i','a','l',0 };
+static WCHAR marlett_font[] = { 'M','a','r','l','e','t','t',0 };
 
 static HMODULE hOleaut32;
 
@@ -1018,6 +1019,62 @@ todo_wine
     ok(obj_type == 0, "got obj type %d\n", obj_type);
 }
 
+static void test_realization(void)
+{
+    IFont *font;
+    FONTDESC fontdesc;
+    HRESULT hr;
+    BSTR name;
+    SHORT cs;
+
+    /* Try to create a symbol only font (marlett) with charset
+       set to ANSI.  This will result in another, ANSI, font
+       being selected */
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = marlett_font;
+    fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
+    fontdesc.sWeight = FW_NORMAL;
+    fontdesc.sCharset = ANSI_CHARSET;
+    fontdesc.fItalic = FALSE;
+    fontdesc.fUnderline = FALSE;
+    fontdesc.fStrikethrough = FALSE;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_get_Charset(font, &cs);
+    ok_ole_success(hr, "get_Charset");
+    ok(cs == ANSI_CHARSET, "got charset %d\n", cs);
+
+    IFont_Release(font);
+
+    /* Now create an ANSI font and change the name to marlett */
+
+    fontdesc.lpstrName = arial_font;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&font);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_get_Charset(font, &cs);
+    ok_ole_success(hr, "get_Charset");
+    ok(cs == ANSI_CHARSET, "got charset %d\n", cs);
+
+    name = SysAllocString(marlett_font);
+    hr = IFont_put_Name(font, name);
+    ok_ole_success(hr, "put_Name");
+    SysFreeString(name);
+
+    hr = IFont_get_Name(font, &name);
+    ok_ole_success(hr, "get_Name");
+    ok(!lstrcmpiW(name, marlett_font), "got name %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
+
+    hr = IFont_get_Charset(font, &cs);
+    ok_ole_success(hr, "get_Charset");
+    ok(cs == SYMBOL_CHARSET, "got charset %d\n", cs);
+
+    IFont_Release(font);
+}
 
 START_TEST(olefont)
 {
@@ -1053,4 +1110,5 @@ START_TEST(olefont)
 	test_AddRefHfont();
 	test_returns();
         test_hfont_lifetime();
+        test_realization();
 }
