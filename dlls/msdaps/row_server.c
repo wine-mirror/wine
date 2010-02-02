@@ -169,10 +169,134 @@ HRESULT create_rowset_server(IUnknown *outer, void **obj)
     return create_server(outer, &CLSID_wine_rowset_server, obj);
 }
 
-HRESULT create_proxy(IWineRowServer *server, const CLSID *class, IUnknown **obj)
+typedef struct
 {
-    FIXME("stub\n");
+    const IRowVtbl *row_vtbl;
+
+    LONG ref;
+
+    IWineRowServer *server;
+} row_proxy;
+
+static inline row_proxy *impl_from_IRow(IRow *iface)
+{
+    return (row_proxy *)((char*)iface - FIELD_OFFSET(row_proxy, row_vtbl));
+}
+
+static HRESULT WINAPI row_QueryInterface(IRow *iface, REFIID iid, void **obj)
+{
+    row_proxy *This = impl_from_IRow(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(iid), obj);
+
+    if(IsEqualIID(iid, &IID_IUnknown) ||
+       IsEqualIID(iid, &IID_IRow))
+    {
+        *obj = &This->row_vtbl;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IRow_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI row_AddRef(IRow *iface)
+{
+    row_proxy *This = impl_from_IRow(iface);
+    TRACE("(%p)\n", This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI row_Release(IRow *iface)
+{
+    row_proxy *This = impl_from_IRow(iface);
+    LONG ref;
+
+    TRACE("(%p)\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if(ref == 0)
+    {
+        if(This->server) IWineRowServer_Release(This->server);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI row_GetColumns(IRow* iface, DBORDINAL cColumns, DBCOLUMNACCESS rgColumns[])
+{
+    row_proxy *This = impl_from_IRow(iface);
+
+    FIXME("(%p)->(%d, %p): stub\n", This, cColumns, rgColumns);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI row_GetSourceRowset(IRow* iface, REFIID riid, IUnknown **ppRowset,
+                                          HROW *phRow)
+{
+    row_proxy *This = impl_from_IRow(iface);
+
+    FIXME("(%p)->(%s, %p, %p): stub\n", This, debugstr_guid(riid), ppRowset, phRow);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI row_Open(IRow* iface, IUnknown *pUnkOuter,
+                               DBID *pColumnID, REFGUID rguidColumnType,
+                               DWORD dwBindFlags, REFIID riid, IUnknown **ppUnk)
+{
+    row_proxy *This = impl_from_IRow(iface);
+
+    FIXME("(%p)->(%p, %p, %s, %08x, %s, %p): stub\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
+          dwBindFlags, debugstr_guid(riid), ppUnk);
+
+    return E_NOTIMPL;
+}
+
+static const IRowVtbl row_vtbl =
+{
+    row_QueryInterface,
+    row_AddRef,
+    row_Release,
+    row_GetColumns,
+    row_GetSourceRowset,
+    row_Open
+};
+
+static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
+{
+    row_proxy *proxy;
+
+    TRACE("(%p, %p)\n", server, obj);
     *obj = NULL;
+
+    proxy = HeapAlloc(GetProcessHeap(), 0, sizeof(*proxy));
+    if(!proxy) return E_OUTOFMEMORY;
+
+    proxy->row_vtbl = &row_vtbl;
+    proxy->ref = 1;
+    IWineRowServer_AddRef(server);
+    proxy->server = server;
+
+    *obj = (IUnknown*)&proxy->row_vtbl;
+    TRACE("returing %p\n", *obj);
+    return S_OK;
+}
+
+static HRESULT create_proxy(IWineRowServer *server, const CLSID *class, IUnknown **obj)
+{
+    *obj = NULL;
+
+    if(IsEqualGUID(class, &CLSID_wine_row_proxy))
+        return create_row_proxy(server, obj);
+    else
+        FIXME("Unhandled proxy class %s\n", debugstr_guid(class));
     return E_NOTIMPL;
 }
 
