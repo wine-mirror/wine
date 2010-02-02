@@ -1277,6 +1277,7 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
   static const WCHAR defdW[]   = {'d','e','f','i','n','e','d','\0'};
   static const WCHAR eqeqW[]   = {'=','=','\0'};
+  static const WCHAR parmI[]   = {'/','I','\0'};
 
   if (!lstrcmpiW (param1, notW)) {
     negate = 1;
@@ -1305,7 +1306,12 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   }
   else if ((s = strstrW (p, eqeqW))) {
     s += 2;
-    if (!lstrcmpiW (condition, WCMD_parameter (s, 0, NULL))) test = 1;
+    if (strstrW (quals, parmI) == NULL) {
+        if (!lstrcmpW (condition, WCMD_parameter (s, 0, NULL))) test = 1;
+    }
+    else {
+        if (!lstrcmpiW (condition, WCMD_parameter (s, 0, NULL))) test = 1;
+    }
     WCMD_parameter (s, 1, &command);
   }
   else {
