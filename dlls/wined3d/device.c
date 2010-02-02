@@ -6933,7 +6933,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->vs_clipping = shader_caps.VSClipping;
 
     memset(&ffp_caps, 0, sizeof(ffp_caps));
-    fragment_pipeline = select_fragment_implementation(adapter, device_type);
+    fragment_pipeline = adapter->fragment_pipe;
     device->frag_pipe = fragment_pipeline;
     fragment_pipeline->get_caps(device_type, &adapter->gl_info, &ffp_caps);
     device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;

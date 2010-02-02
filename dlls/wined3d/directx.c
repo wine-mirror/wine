@@ -1630,9 +1630,26 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
     }
 }
 
-/* Context activation is done by the caller. */
-static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, struct wined3d_gl_info *gl_info)
+static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter)
 {
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
+    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
+            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_fragment_pipeline;
+    else if (ps_selected_mode == SHADER_ATI) return &atifs_fragment_pipeline;
+    else if (gl_info->supported[NV_REGISTER_COMBINERS]
+            && gl_info->supported[NV_TEXTURE_SHADER2]) return &nvts_fragment_pipeline;
+    else if (gl_info->supported[NV_REGISTER_COMBINERS]) return &nvrc_fragment_pipeline;
+    else return &ffp_fragment_pipeline;
+}
+
+/* Context activation is done by the caller. */
+static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
+{
+    struct wined3d_driver_info *driver_info = &adapter->driver_info;
+    struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
@@ -2065,6 +2082,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_driver_info *driver_info, str
     checkGLcall("extension detection");
 
     LEAVE_GL();
+
+    adapter->fragment_pipe = select_fragment_implementation(adapter);
 
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
@@ -2771,8 +2790,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
-    const struct fragment_pipeline *fp;
-
     switch(format_desc->format)
     {
         case WINED3DFMT_R8G8_SNORM:
@@ -2783,8 +2800,7 @@ static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
             /* Ask the fixed function pipeline implementation if it can deal
              * with the conversion. If we've got a GL extension giving native
              * support this will be an identity conversion. */
-            fp = select_fragment_implementation(adapter, DeviceType);
-            if (fp->color_fixup_supported(format_desc->color_fixup))
+            if (adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup))
             {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2975,7 +2991,6 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const shader_backend_t *shader_backend;
-    const struct fragment_pipeline *fp;
 
     switch (format_desc->format)
     {
@@ -3171,9 +3186,8 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
                     || gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
             {
                 shader_backend = select_shader_backend(adapter, DeviceType);
-                fp = select_fragment_implementation(adapter, DeviceType);
                 if (shader_backend->shader_color_fixup_supported(format_desc->color_fixup)
-                        && fp->color_fixup_supported(format_desc->color_fixup))
+                        && adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup))
                 {
                     TRACE_(d3d_caps)("[OK]\n");
                     return TRUE;
@@ -3813,7 +3827,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
     const shader_backend_t *shader_backend;
-    const struct fragment_pipeline *frag_pipeline = NULL;
     DWORD ckey_caps, blit_caps, fx_caps;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
@@ -4194,8 +4207,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
 
     memset(&fragment_caps, 0, sizeof(fragment_caps));
-    frag_pipeline = select_fragment_implementation(adapter, DeviceType);
-    frag_pipeline->get_caps(DeviceType, &adapter->gl_info, &fragment_caps);
+    adapter->fragment_pipe->get_caps(DeviceType, &adapter->gl_info, &fragment_caps);
 
     /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
     pCaps->PrimitiveMiscCaps |= fragment_caps.PrimitiveMiscCaps;
@@ -4720,7 +4732,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
             goto nogl_adapter;
         }
 
-        ret = IWineD3DImpl_FillGLCaps(&adapter->driver_info, &adapter->gl_info);
+        ret = IWineD3DImpl_FillGLCaps(adapter);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);

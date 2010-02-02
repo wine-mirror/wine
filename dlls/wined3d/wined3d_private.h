@@ -1362,6 +1362,8 @@ struct wined3d_adapter
     unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
     unsigned int            UsedTextureRam;
     LUID luid;
+
+    const struct fragment_pipeline *fragment_pipe;
 };
 
 BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor) DECLSPEC_HIDDEN;
@@ -2567,8 +2569,6 @@ UINT wined3d_log2i(UINT32 x) DECLSPEC_HIDDEN;
 unsigned int count_bits(unsigned int mask) DECLSPEC_HIDDEN;
 
 const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
-const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
 const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;

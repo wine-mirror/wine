@@ -2851,22 +2851,6 @@ const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter, W
     return &none_shader_backend;
 }
 
-const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE device_type)
-{
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    int vs_selected_mode, ps_selected_mode;
-
-    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_fragment_pipeline;
-    else if (ps_selected_mode == SHADER_ATI) return &atifs_fragment_pipeline;
-    else if (gl_info->supported[NV_REGISTER_COMBINERS]
-            && gl_info->supported[NV_TEXTURE_SHADER2]) return &nvts_fragment_pipeline;
-    else if (gl_info->supported[NV_REGISTER_COMBINERS]) return &nvrc_fragment_pipeline;
-    else return &ffp_fragment_pipeline;
-}
-
 const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
