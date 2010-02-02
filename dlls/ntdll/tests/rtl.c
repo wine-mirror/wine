@@ -67,6 +67,11 @@ static RTL_HANDLE * (WINAPI * pRtlAllocateHandle)(RTL_HANDLE_TABLE *, ULONG *);
 static BOOLEAN   (WINAPI * pRtlFreeHandle)(RTL_HANDLE_TABLE *, RTL_HANDLE *);
 static NTSTATUS  (WINAPI *pRtlAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID*);
 static NTSTATUS  (WINAPI *pRtlFreeSid)(PSID);
+static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
+static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
+static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
+static HMODULE hkernel32 = 0;
+static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 #define LEN 16
 static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
 static ULONG src_aligned_block[4];
@@ -99,6 +104,14 @@ static void InitFunctionPtrs(void)
 	pRtlFreeHandle = (void *)GetProcAddress(hntdll, "RtlFreeHandle");
         pRtlAllocateAndInitializeSid = (void *)GetProcAddress(hntdll, "RtlAllocateAndInitializeSid");
         pRtlFreeSid = (void *)GetProcAddress(hntdll, "RtlFreeSid");
+        pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
+        pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
+        pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
+    }
+    hkernel32 = LoadLibraryA("kernel32.dll");
+    ok(hkernel32 != 0, "LoadLibrary failed\n");
+    if (hkernel32) {
+        pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
     }
     strcpy((char*)src_aligned_block, src_src);
     ok(strlen(src) == 15, "Source must be 16 bytes long!\n");
@@ -1017,6 +1030,70 @@ static void test_RtlDeleteTimer(void)
        "expected STATUS_INVALID_PARAMETER_1 or STATUS_INVALID_PARAMETER, got %x\n", ret);
 }
 
+static void test_RtlThreadErrorMode(void)
+{
+    DWORD oldmode;
+    BOOL is_wow64;
+    DWORD mode;
+    NTSTATUS status;
+
+    if (!pRtlGetThreadErrorMode || !pRtlSetThreadErrorMode)
+    {
+        skip("RtlGetThreadErrorMode and/or RtlSetThreadErrorMode not available\n");
+        return;
+    }
+
+    if (!pIsWow64Process || !pIsWow64Process(GetCurrentProcess(), &is_wow64))
+        is_wow64 = FALSE;
+
+    oldmode = pRtlGetThreadErrorMode();
+
+    status = pRtlSetThreadErrorMode(0x70, &mode);
+    ok(status == STATUS_SUCCESS ||
+       status == STATUS_WAIT_1, /* Vista */
+       "RtlSetThreadErrorMode failed with error 0x%08x\n", status);
+    ok(mode == oldmode,
+       "RtlSetThreadErrorMode returned mode 0x%x, expected 0x%x\n",
+       mode, oldmode);
+    ok(pRtlGetThreadErrorMode() == 0x70,
+       "RtlGetThreadErrorMode returned 0x%x, expected 0x%x\n", mode, 0x70);
+    if (!is_wow64 && pNtCurrentTeb)
+        ok(pNtCurrentTeb()->HardErrorDisabled == 0x70,
+           "The TEB contains 0x%x, expected 0x%x\n",
+           pNtCurrentTeb()->HardErrorDisabled, 0x70);
+
+    status = pRtlSetThreadErrorMode(0, &mode);
+    ok(status == STATUS_SUCCESS ||
+       status == STATUS_WAIT_1, /* Vista */
+       "RtlSetThreadErrorMode failed with error 0x%08x\n", status);
+    ok(mode == 0x70,
+       "RtlSetThreadErrorMode returned mode 0x%x, expected 0x%x\n",
+       mode, 0x70);
+    ok(pRtlGetThreadErrorMode() == 0,
+       "RtlGetThreadErrorMode returned 0x%x, expected 0x%x\n", mode, 0);
+    if (!is_wow64 && pNtCurrentTeb)
+        ok(pNtCurrentTeb()->HardErrorDisabled == 0,
+           "The TEB contains 0x%x, expected 0x%x\n",
+           pNtCurrentTeb()->HardErrorDisabled, 0);
+
+    for (mode = 1; mode; mode <<= 1)
+    {
+        status = pRtlSetThreadErrorMode(mode, NULL);
+        if (mode & 0x70)
+            ok(status == STATUS_SUCCESS ||
+               status == STATUS_WAIT_1, /* Vista */
+               "RtlSetThreadErrorMode(%x,NULL) failed with error 0x%08x\n",
+               mode, status);
+        else
+            ok(status == STATUS_INVALID_PARAMETER_1,
+               "RtlSetThreadErrorMode(%x,NULL) returns 0x%08x, "
+               "expected STATUS_INVALID_PARAMETER_1\n",
+               mode, status);
+    }
+
+    pRtlSetThreadErrorMode(oldmode, NULL);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -1036,4 +1113,5 @@ START_TEST(rtl)
     test_HandleTables();
     test_RtlAllocateAndInitializeSid();
     test_RtlDeleteTimer();
+    test_RtlThreadErrorMode();
 }
