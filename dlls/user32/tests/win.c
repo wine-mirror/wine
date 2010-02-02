@@ -445,6 +445,12 @@ static void test_parent_owner(void)
     ret = SetParent( test, child );
     ok( ret == desktop, "SetParent return value %p expected %p\n", ret, desktop );
     check_parents( test, child, child, 0, 0, hwndMain, test );
+
+    ShowWindow( test, SW_SHOW );
+    ret = SetParent( test, test );
+    ok( ret == NULL, "SetParent return value %p expected %p\n", ret, NULL );
+    ok( GetWindowLongA( test, GWL_STYLE ) & WS_VISIBLE, "window is not visible after SetParent\n" );
+    check_parents( test, child, child, 0, 0, hwndMain, test );
     DestroyWindow( test );
 
     /* owned popup */
