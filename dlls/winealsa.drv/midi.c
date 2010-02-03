@@ -172,8 +172,8 @@ static	int 	MIDI_AlsaToWindowsDeviceType(unsigned int type)
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
  */
-static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
-			       DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
+			      DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD 		dwCallBack;
     UINT 		uFlags;
@@ -188,8 +188,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
-	if (wDevID > MODM_NumDevs)
-	    return MMSYSERR_BADDEVICEID;
+	if (wDevID > MODM_NumDevs) return;
 
 	dwCallBack = MidiOutDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiOutDev[wDevID].wFlags;
@@ -204,8 +203,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MIM_ERROR:
     case MIM_LONGERROR:
     case MIM_MOREDATA:
-	if (wDevID > MIDM_NumDevs)
-	    return MMSYSERR_BADDEVICEID;
+	if (wDevID > MIDM_NumDevs) return;
 
 	dwCallBack = MidiInDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiInDev[wDevID].wFlags;
@@ -213,12 +211,11 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	dwInstance = MidiInDev[wDevID].midiDesc.dwInstance;
 	break;
     default:
-	WARN("Unsupported MSW-MIDI message %u\n", wMsg);
-	return MMSYSERR_ERROR;
+	ERR("Unsupported MSW-MIDI message %u\n", wMsg);
+	return;
     }
 
-    return DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2) ?
-	0 : MMSYSERR_ERROR;
+    DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
 static int midi_warn = 1;
@@ -394,8 +391,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 				    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 				    lpMidiHdr->dwFlags |= MHDR_DONE;
                                     MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
-				    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
-					WARN("Couldn't notify client\n");
+				    MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
 				}
 			    } else {
 				FIXME("Sysex data received but no buffer to store it!\n");
@@ -414,9 +410,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		}
 		if (toSend != 0) {
                     TRACE("Sending event %08x (from %d %d)\n", toSend, ev->source.client, ev->source.port);
-		    if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime) != MMSYSERR_NOERROR) {
-			WARN("Couldn't notify client\n");
-		    }
+		    MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime);
 		}
 	    }
 	    snd_seq_free_event(ev);
@@ -512,10 +506,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiInDev[wDevID].incLen = 0;
     MidiInDev[wDevID].startTime = 0;
 
-    if (MIDI_NotifyClient(wDevID, MIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN("can't notify client !\n");
-	return MMSYSERR_INVALPARAM;
-    }
+    MIDI_NotifyClient(wDevID, MIM_OPEN, 0L, 0L);
     return MMSYSERR_NOERROR;
 }
 
@@ -558,10 +549,7 @@ static DWORD midClose(WORD wDevID)
     midiCloseSeq();
 
     MidiInDev[wDevID].bufsize = 0;
-    if (MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN("can't notify client !\n");
-	ret = MMSYSERR_INVALPARAM;
-    }
+    MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
     MidiInDev[wDevID].midiDesc.hMidi = 0;
 
     return ret;
@@ -660,10 +648,8 @@ static DWORD midReset(WORD wDevID)
 	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
 	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
 	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
-	if (MIDI_NotifyClient(wDevID, MIM_LONGDATA,
-			      (DWORD_PTR)MidiInDev[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
-	    WARN("Couldn't notify client\n");
-	}
+	MIDI_NotifyClient(wDevID, MIM_LONGDATA,
+			  (DWORD_PTR)MidiInDev[wDevID].lpQueueHdr, dwTime);
         MidiInDev[wDevID].lpQueueHdr = MidiInDev[wDevID].lpQueueHdr->lpNext;
     }
     LeaveCriticalSection(&crit_sect);
@@ -773,10 +759,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     if (snd_seq_connect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port) < 0)
 	return MMSYSERR_NOTENABLED;
     
-    if (MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN("can't notify client !\n");
-	return MMSYSERR_INVALPARAM;
-    }
+    MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
     TRACE("Successful !\n");
     return MMSYSERR_NOERROR;
 }
@@ -820,10 +803,7 @@ static DWORD modClose(WORD wDevID)
     MidiOutDev[wDevID].lpExtra = 0;
  
     MidiOutDev[wDevID].bufsize = 0;
-    if (MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN("can't notify client !\n");
-	ret = MMSYSERR_INVALPARAM;
-    }
+    MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L);
     MidiOutDev[wDevID].midiDesc.hMidi = 0;
     return ret;
 }
@@ -1032,10 +1012,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
     lpMidiHdr->dwFlags |= MHDR_DONE;
-    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
-	WARN("can't notify client !\n");
-	return MMSYSERR_INVALPARAM;
-    }
+    MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L);
     return MMSYSERR_NOERROR;
 }
 
