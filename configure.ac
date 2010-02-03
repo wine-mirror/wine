@@ -2114,6 +2114,7 @@ AH_TOP([#define __WINE_CONFIG_H])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 
+WINE_CONFIG_SYMLINK(dlls/wineps.drv/generic.ppd)
 WINE_CONFIG_SYMLINK(fonts/marlett.ttf)
 WINE_CONFIG_SYMLINK(fonts/symbol.ttf)
 WINE_CONFIG_SYMLINK(fonts/tahoma.ttf)

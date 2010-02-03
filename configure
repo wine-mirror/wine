@@ -13685,6 +13685,9 @@ ALL_PROGRAM_BIN_INSTALL_DIRS=""
 ac_config_commands="$ac_config_commands include/stamp-h"
 
 
+ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	dlls/wineps.drv/generic.ppd"
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
 ALL_SYMLINKS="$ALL_SYMLINKS \\
 	fonts/marlett.ttf"
@@ -19619,6 +19622,7 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
+    "dlls/wineps.drv/generic.ppd") CONFIG_LINKS="$CONFIG_LINKS dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd" ;;
     "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
     "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
