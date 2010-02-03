@@ -1205,6 +1205,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	long	imm64;
 	int	len;
 	struct i_addr	address;
+        db_addr_t addr;
 
 	get_value_inc(inst, loc, 1, FALSE);
 	short_addr = FALSE;
@@ -1528,19 +1529,19 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 
 		case Db:
 		    get_value_inc(displ, loc, 1, TRUE);
-		    displ += loc;
+		    addr = loc + (LONG64)displ;
 		    if (size == WORD)
-			displ &= 0xFFFF;
-		    db_printsym((db_addr_t)displ, DB_STGY_XTRN);
+			addr &= 0xFFFF;
+		    db_printsym(addr, DB_STGY_XTRN);
 		    break;
 
 		case Dl:
 		    len = db_lengths[(size == LONG && (rex & REX_W)) ? QUAD : size];
 		    get_value_inc(displ, loc, len, FALSE);
-		    displ += loc;
+		    addr = loc + (LONG64)displ;
 		    if (size == WORD)
-			displ &= 0xFFFF;
-		    db_printsym((db_addr_t)displ, DB_STGY_XTRN);
+			addr &= 0xFFFF;
+		    db_printsym(addr, DB_STGY_XTRN);
 		    break;
 
 		case o1:
