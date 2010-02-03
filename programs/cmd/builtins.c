@@ -319,7 +319,7 @@ static BOOL create_full_path(WCHAR* path)
     WCHAR *new_path;
     BOOL ret = TRUE;
 
-    new_path = HeapAlloc(GetProcessHeap(),0,(strlenW(path) * sizeof(WCHAR))+1);
+    new_path = HeapAlloc(GetProcessHeap(),0,(strlenW(path)+1) * sizeof(WCHAR));
     strcpyW(new_path,path);
 
     while ((len = strlenW(new_path)) && new_path[len - 1] == '\\')
