@@ -39,7 +39,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
