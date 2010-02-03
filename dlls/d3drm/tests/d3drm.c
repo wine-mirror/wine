@@ -62,7 +62,7 @@ char data_bad[] =
 "1; 2; 3;\n"
 "}\n";
 
-void Test(void)
+static void MeshBuilderTest(void)
 {
     HRESULT hr;
     LPDIRECT3DRM pD3DRM;
@@ -95,7 +95,7 @@ START_TEST(d3drm)
     if (!InitFunctionPtrs())
         return;
 
-    Test();
+    MeshBuilderTest();
 
     FreeLibrary(d3drm_handle);
 }
