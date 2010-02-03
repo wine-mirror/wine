@@ -43,7 +43,7 @@ HKCR,"CLSID\%CLSID_ITSProtocol%\InProcServer32",,,"itss.dll"
 HKCR,"CLSID\%CLSID_ITSProtocol%\InProcServer32","ThreadingModel",,"Both"
 HKCR,"CLSID\%CLSID_ITSProtocol%\NotInsertable",,,""
 HKCR,"CLSID\%CLSID_ITSProtocol%\ProgID",,,"MSITFS1.0"
-HKCR,"CLSID\%CLSID_ITSProtocol%%\VersionIndependentProgID",,,"MSITFS"
+HKCR,"CLSID\%CLSID_ITSProtocol%\VersionIndependentProgID",,,"MSITFS"
 
 HKCR,"ITSProtocol","Microsoft InfoTech Protocols for IE 4.0"
 HKCR,"ITSProtocol\CLSID",,,"%CLSID_ITSProtocol%"
