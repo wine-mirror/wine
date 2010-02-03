@@ -1365,6 +1365,7 @@ struct wined3d_adapter
 
     const struct fragment_pipeline *fragment_pipe;
     const shader_backend_t *shader_backend;
+    const struct blit_shader *blitter;
 };
 
 BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor) DECLSPEC_HIDDEN;
@@ -2569,8 +2570,6 @@ void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED
 UINT wined3d_log2i(UINT32 x) DECLSPEC_HIDDEN;
 unsigned int count_bits(unsigned int mask) DECLSPEC_HIDDEN;
 
-const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
 void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected) DECLSPEC_HIDDEN;
 
 typedef struct local_constant {

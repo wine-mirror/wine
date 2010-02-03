@@ -2840,14 +2840,3 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
     else if (gl_info->supported[ATI_FRAGMENT_SHADER]) *ps_selected = SHADER_ATI;
     else *ps_selected = SHADER_NONE;
 }
-
-const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter, WINED3DDEVTYPE device_type)
-{
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    int vs_selected_mode, ps_selected_mode;
-
-    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_blit;
-    else return &ffp_blit;
-}

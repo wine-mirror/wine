@@ -1655,6 +1655,17 @@ static const shader_backend_t *select_shader_backend(struct wined3d_adapter *ada
     return &none_shader_backend;
 }
 
+static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter)
+{
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    int vs_selected_mode, ps_selected_mode;
+
+    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
+    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
+            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_blit;
+    else return &ffp_blit;
+}
+
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
 {
@@ -2095,6 +2106,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
 
     adapter->fragment_pipe = select_fragment_implementation(adapter);
     adapter->shader_backend = select_shader_backend(adapter);
+    adapter->blitter = select_blit_implementation(adapter);
 
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
@@ -3231,8 +3243,6 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
 static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *adapter_format_desc,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *check_format_desc, WINED3DSURFTYPE SurfaceType)
 {
-    const struct blit_shader *blitter;
-
     if(SurfaceType == SURFACE_GDI) {
         switch(check_format_desc->format)
         {
@@ -3268,8 +3278,7 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter, const struct
     if (CheckDepthStencilCapability(adapter, adapter_format_desc, check_format_desc)) return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
-    blitter = select_blit_implementation(adapter, DeviceType);
-    if (blitter->color_fixup_supported(check_format_desc->color_fixup))
+    if (adapter->blitter->color_fixup_supported(check_format_desc->color_fixup))
     {
         TRACE_(d3d_caps)("[OK]\n");
         return TRUE;

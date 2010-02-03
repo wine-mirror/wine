@@ -6948,7 +6948,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
         return hr;
     }
 
-    device->blitter = select_blit_implementation(adapter, device_type);
+    device->blitter = adapter->blitter;
 
     return WINED3D_OK;
 }
