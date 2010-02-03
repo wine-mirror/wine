@@ -2700,7 +2700,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb) {
     /* TODO: check for locks */
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
     IWineD3DBaseTexture *baseTexture = NULL;
 
     TRACE("(%p)Checking to see if the container is a base texture\n", This);
@@ -2711,13 +2710,11 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
     }
     else
     {
-        struct wined3d_context *context = NULL;
         GLuint *name;
 
         TRACE("(%p) : Binding surface\n", This);
 
         name = srgb ? &This->texture_name_srgb : &This->texture_name;
-        if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
         ENTER_GL();
 
@@ -2751,8 +2748,6 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
         checkGLcall("glBindTexture");
 
         LEAVE_GL();
-
-        if (context) context_release(context);
     }
 }
 
