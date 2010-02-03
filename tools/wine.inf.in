@@ -2404,6 +2404,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msisip.dll,1
 11,,mstask.dll,1
 11,,msxml3.dll,1
+11,,msxml4.dll,1
 11,,objsel.dll,1
 11,,oledb32.dll,1
 11,,qcap.dll,1

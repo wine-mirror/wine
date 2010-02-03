@@ -1,4 +1,4 @@
 @ stdcall -private DllCanUnloadNow()
-@ stub -private DllGetClassObject
-@ stub -private DllRegisterServer
-@ stub -private DllUnregisterServer
+@ stdcall -private DllGetClassObject(ptr ptr ptr) msxml3.DllGetClassObject
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
