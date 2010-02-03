@@ -1154,63 +1154,33 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
   iMinute = iMinute % 60;
   iDay    += (iHour - (iHour % 24)) / 24;
   iHour   = iHour % 24;
-  /* FIXME: Roll Days */
   iYear    += (iMonth - (iMonth % 12)) / 12;
   iMonth   = iMonth % 12;
+  if (iMonth<=0) {iMonth+=12; iYear--;}
+  while (iDay > days[iMonth])
+  {
+    if (iMonth == 2 && IsLeapYear(iYear))
+      iDay -= 29;
+    else
+      iDay -= days[iMonth];
+    iMonth++;
+    iYear += (iMonth - (iMonth % 12)) / 12;
+    iMonth = iMonth % 12;
+  }
+  while (iDay <= 0)
+  {
+    iMonth--;
+    if (iMonth<=0) {iMonth+=12; iYear--;}
+    if (iMonth == 2 && IsLeapYear(iYear))
+      iDay += 29;
+    else
+      iDay += days[iMonth];
+  }
 
   if (iSecond<0){iSecond+=60; iMinute--;}
   if (iMinute<0){iMinute+=60; iHour--;}
   if (iHour<0)  {iHour+=24; iDay--;}
-  if (iDay<0)
-  {
-      iDay+=days[iMonth];
-      iMonth--;
-      if (iMonth == 2 && IsLeapYear(iYear))
-        iDay++;
-  }
-  if (iMonth<=0) {iMonth+=12; iYear--;}
   if (iYear<0)  iYear+=2000;
-
-  if (!lpUd->st.wDay)
-  {
-    /* Roll back the date one day */
-    if (lpUd->st.wMonth == 1)
-    {
-      /* Roll back to December 31 of the previous year */
-      lpUd->st.wDay   = 31;
-      lpUd->st.wMonth = 12;
-      lpUd->st.wYear--;
-    }
-    else
-    {
-      lpUd->st.wMonth--; /* Previous month */
-      if (lpUd->st.wMonth == 2 && IsLeapYear(lpUd->st.wYear))
-        lpUd->st.wDay = 29; /* February has 29 days on leap years */
-      else
-        lpUd->st.wDay = days[lpUd->st.wMonth]; /* Last day of the month */
-    }
-  }
-  else if (lpUd->st.wDay > 28)
-  {
-    int rollForward = 0;
-
-    /* Possibly need to roll the date forward */
-    if (iMonth == 2 && IsLeapYear(iYear))
-      rollForward = iDay - 29; /* February has 29 days on leap years */
-    else
-      rollForward = iDay - days[iMonth];
-
-    if (rollForward > 0)
-    {
-      iDay = rollForward;
-      iMonth++;
-      if (iMonth > 12)
-      {
-        iMonth = 1; /* Roll forward into January of the next year */
-        iYear++;
-      }
-    }
-  }
 
   lpUd->st.wYear   = iYear;
   lpUd->st.wMonth  = iMonth;

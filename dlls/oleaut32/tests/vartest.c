@@ -1652,17 +1652,20 @@ static void test_VarDateFromUdate(void)
   UD2T(30,12,1899,0,0,0,999,0,0,0,S_OK,0.0); /* Ignore milliseconds  */
 
   UD2T(1,1,1980,18,1,16,0,2,1,0,S_OK,29221.75087962963);             /* 6:18:02 PM */
+  UD2T(1,300,1980,18,1,16,0,2,1,0,S_OK,38322.75087962963);           /* Test fwdrolled month */
+  UD2T(300,1,1980,18,1,16,0,2,1,0,S_OK,29520.75087962963);           /* Test fwdrolled days */
   UD2T(0,1,1980,42,1,16,0,2,1,0,S_OK,29221.75087962963);             /* Test fwdrolled hours */
   UD2T(1,1,1980,17,61,16,0,2,1,0,S_OK,29221.75087962963);            /* Test fwdrolled minutes */
   UD2T(1,1,1980,18,0,76,0,2,1,0,S_OK,29221.75087962963);             /* Test fwdrolled seconds */
+  UD2T(1,-300,1980,18,1,16,0,2,1,0,S_OK,20059.75087962963);          /* Test backrolled month */
+  UD2T(-300,1,1980,18,1,16,0,2,1,0,S_OK,28920.75087962963);          /* Test backrolled days */
   UD2T(3,1,1980,-30,1,16,0,2,1,0,S_OK,29221.75087962963);            /* Test backrolled hours */
   UD2T(1,1,1980,20,-119,16,0,2,1,0,S_OK,29221.75087962963);          /* Test backrolled minutes */
   UD2T(1,1,1980,18,3,-104,0,2,1,0,S_OK,29221.75087962963);           /* Test backrolled seconds */
   UD2T(1,12001,-1020,18,1,16,0,0,0,0,S_OK,29221.75087962963);        /* Test rolled year and month */
   UD2T(1,-23,1982,18,1,16,0,0,0,0,S_OK,29221.75087962963);           /* Test backrolled month */
-  todo_wine UD2T(-59,3,1980,18,1,16,0,0,0,0,S_OK,29221.75087962963); /* Test backrolled days */
+  UD2T(-59,3,1980,18,1,16,0,0,0,0,S_OK,29221.75087962963);           /* Test backrolled days */
   todo_wine UD2T(1,1,0,0,0,0,0,0,0,0,S_OK,36526);                    /* Test zero year */
-
   UD2T(0,0,1980,0,0,0,0,0,0,0,S_OK,29189);                           /* Test zero day and month */
   UD2T(0,1,1980,0,0,0,0,2,1,0,S_OK,29220.0);                         /* Test zero day = LastDayOfMonth */
   UD2T(-1,1,1980,18,1,16,0,0,0,0,S_OK,29219.75087962963);            /* Test day -1 = LastDayOfMonth - 1 */
