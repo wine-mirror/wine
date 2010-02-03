@@ -1254,7 +1254,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 }
 
 /* Context activation is done by the caller. */
-static void surface_prepare_texture(IWineD3DSurfaceImpl *surface, BOOL srgb)
+void surface_prepare_texture(IWineD3DSurfaceImpl *surface, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
     GLenum format, internal, type;
