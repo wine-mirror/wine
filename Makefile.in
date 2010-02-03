@@ -141,7 +141,7 @@ distclean:: clean
 ALL_MAKERULES = @ALL_MAKERULES@
 ALL_MAKEFILES = @ALL_MAKEFILES@
 
-Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES): config.status
+Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES):
 	@./config.status $@
 .INIT: Makefile
 .BEGIN: Makefile
