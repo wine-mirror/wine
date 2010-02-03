@@ -149,6 +149,7 @@
 #include "iphlpapi.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "wine/unicode.h"
 
 #ifdef HAVE_IPX
@@ -1796,13 +1797,6 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
 
     TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, *namelen);
 
-    /* Check if what we've received is valid. Should we use IsBadReadPtr? */
-    if( (name == NULL) || (namelen == NULL) )
-    {
-        SetLastError( WSAEFAULT );
-        return SOCKET_ERROR;
-    }
-
     fd = get_sock_fd( s, 0, NULL );
     res = SOCKET_ERROR;
 
@@ -1811,19 +1805,18 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
         union generic_unix_sockaddr uaddr;
         unsigned int uaddrlen = sizeof(uaddr);
 
-        if (getpeername(fd, &uaddr.addr, &uaddrlen) != 0)
+        if (getpeername(fd, &uaddr.addr, &uaddrlen) == 0)
         {
-            SetLastError(wsaErrno());
-        }
-        else if (ws_sockaddr_u2ws(&uaddr.addr, name, namelen) != 0)
-        {
-            /* The buffer was too small */
-            SetLastError(WSAEFAULT);
+            if (!name || !namelen)
+                SetLastError(WSAEFAULT);
+            else if (ws_sockaddr_u2ws(&uaddr.addr, name, namelen) != 0)
+                /* The buffer was too small */
+                SetLastError(WSAEFAULT);
+            else
+                res = 0;
         }
         else
-        {
-            res=0;
-        }
+            SetLastError(wsaErrno());
         release_sock_fd( s, fd );
     }
     return res;

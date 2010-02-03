@@ -3257,6 +3257,81 @@ end:
         closesocket(connector2);
 }
 
+static void test_getpeername(void)
+{
+    SOCKET sock;
+    struct sockaddr_in sa, sa_out;
+    int sa_len;
+    const char buf[] = "hello world";
+    int ret;
+
+    /* Test the parameter validation order. */
+    ret = getpeername(INVALID_SOCKET, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK,
+       "Expected WSAGetLastError() to return WSAENOTSOCK, got %d\n", WSAGetLastError());
+
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+    ok(sock != INVALID_SOCKET, "Expected socket to return a valid socket\n");
+    if (sock == INVALID_SOCKET)
+    {
+        skip("Socket creation failed with %d\n", WSAGetLastError());
+        return;
+    }
+
+    ret = getpeername(sock, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTCONN,
+       "Expected WSAGetLastError() to return WSAENOTCONN, got %d\n", WSAGetLastError());
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(139);
+    sa.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    /* sendto does not change a socket's connection state. */
+    ret = sendto(sock, buf, sizeof(buf), 0, (struct sockaddr*)&sa, sizeof(sa));
+    ok(ret != SOCKET_ERROR,
+       "Expected sendto to succeed, WSAGetLastError() = %d\n", WSAGetLastError());
+
+    ret = getpeername(sock, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTCONN,
+       "Expected WSAGetLastError() to return WSAENOTCONN, got %d\n", WSAGetLastError());
+
+    ret = connect(sock, (struct sockaddr*)&sa, sizeof(sa));
+    ok(ret == 0,
+       "Expected connect to succeed, WSAGetLastError() = %d\n", WSAGetLastError());
+
+    ret = getpeername(sock, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT,
+       "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
+
+    /* Test crashes on Wine. */
+    if (0)
+    {
+        ret = getpeername(sock, (void*)0xdeadbeef, (void*)0xcafebabe);
+        ok(ret == SOCKET_ERROR, "Expected getpeername to return SOCKET_ERROR, got %d\n", ret);
+        ok(WSAGetLastError() == WSAEFAULT,
+           "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
+    }
+
+    sa_len = 0;
+    ret = getpeername(sock, (struct sockaddr*)&sa_out, &sa_len);
+    ok(ret == SOCKET_ERROR, "Expected getpeername to return 0, got %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT,
+       "Expected WSAGetLastError() to return WSAEFAULT, got %d\n", WSAGetLastError());
+
+    sa_len = sizeof(sa_out);
+    ret = getpeername(sock, (struct sockaddr*)&sa_out, &sa_len);
+    ok(ret == 0, "Expected getpeername to return 0, got %d\n", ret);
+    ok(!memcmp(&sa, &sa_out, sizeof(sa)),
+       "Expected the returned structure to be identical to the connect structure\n");
+
+    closesocket(sock);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -3294,6 +3369,7 @@ START_TEST( sock )
 
     test_select();
     test_accept();
+    test_getpeername();
     test_getsockname();
     test_inet_addr();
     test_addr_to_print();
