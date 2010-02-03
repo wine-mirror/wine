@@ -33,6 +33,8 @@
 #include "oleauto.h"
 #include "oledb.h"
 
+#include "row_server.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
@@ -482,6 +484,12 @@ HRESULT CALLBACK ICreateRow_CreateRow_Proxy(ICreateRow* This, IUnknown *pUnkOute
     TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pImplSession, pdwBindStatus, ppwszNewURL, ppUnk);
 
+    if(pUnkOuter)
+    {
+        FIXME("Aggregation not supported\n");
+        return CLASS_E_NOAGGREGATION;
+    }
+
     hr = ICreateRow_RemoteCreateRow_Proxy(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
                                           pImplSession ? pImplSession->pUnkOuter : NULL, pImplSession ? pImplSession->piid : NULL,
                                           pImplSession ? &pImplSession->pSession : NULL, pdwBindStatus, ppwszNewURL, ppUnk);
@@ -495,17 +503,38 @@ HRESULT __RPC_STUB ICreateRow_CreateRow_Stub(ICreateRow* This, IUnknown *pUnkOut
 {
     HRESULT hr;
     DBIMPLICITSESSION impl_session;
+    IWineRowServer *row_server;
+    IMarshal *marshal;
+    IUnknown *obj;
 
     TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pSessionUnkOuter, piid, ppSession, pdwBindStatus, ppwszNewURL,
           ppUnk);
 
+    *ppUnk = NULL;
+
+    hr = CoCreateInstance(&CLSID_wine_row_server, NULL, CLSCTX_INPROC_SERVER, &IID_IWineRowServer, (void**)&row_server);
+    if(FAILED(hr)) return hr;
+
     impl_session.pUnkOuter = pSessionUnkOuter;
     impl_session.piid = piid;
     impl_session.pSession = NULL;
 
-    hr = ICreateRow_CreateRow(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
-                              ppSession ? &impl_session : NULL, pdwBindStatus, ppwszNewURL, ppUnk);
+    IWineRowServer_GetMarshal(row_server, &marshal);
+
+    hr = ICreateRow_CreateRow(This, (IUnknown*) marshal, pwszURL, dwBindURLFlags, rguid, &IID_IUnknown, pAuthenticate,
+                              ppSession ? &impl_session : NULL, pdwBindStatus, ppwszNewURL, &obj);
+    IMarshal_Release(marshal);
+
+    if(FAILED(hr))
+    {
+        IWineRowServer_Release(row_server);
+        return hr;
+    }
+
+    IWineRowServer_SetInnerUnk(row_server, obj);
+    hr = IUnknown_QueryInterface(obj, riid, (void**)ppUnk);
+    IUnknown_Release(obj);
 
     if(ppSession) *ppSession = impl_session.pSession;
     return hr;
