@@ -5387,6 +5387,9 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct wined3d_context *context;
 
+    if (rect) IWineD3DSurface_LoadLocation(surface, SFLAG_INDRAWABLE, NULL);
+    IWineD3DSurface_ModifyLocation(surface, SFLAG_INDRAWABLE, TRUE);
+
     if (!surface_is_offscreen(surface))
     {
         TRACE("Surface %p is onscreen\n", surface);
