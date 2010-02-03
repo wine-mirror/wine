@@ -726,7 +726,7 @@ static int be_i386_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
 static int be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, 
                                long double* ret)
 {
-    char        tmp[12];
+    char        tmp[sizeof(long double)];
 
     /* FIXME: this assumes that debuggee and debugger use the same 
      * representation for reals
