@@ -4222,7 +4222,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     adapter->shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
 
     memset(&fragment_caps, 0, sizeof(fragment_caps));
-    adapter->fragment_pipe->get_caps(DeviceType, &adapter->gl_info, &fragment_caps);
+    adapter->fragment_pipe->get_caps(&adapter->gl_info, &fragment_caps);
 
     /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
     pCaps->PrimitiveMiscCaps |= fragment_caps.PrimitiveMiscCaps;

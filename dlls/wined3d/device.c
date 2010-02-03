@@ -7052,7 +7052,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     memset(&ffp_caps, 0, sizeof(ffp_caps));
     fragment_pipeline = adapter->fragment_pipe;
     device->frag_pipe = fragment_pipeline;
-    fragment_pipeline->get_caps(device_type, &adapter->gl_info, &ffp_caps);
+    fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
     device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
     device->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
 
