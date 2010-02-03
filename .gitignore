@@ -67,6 +67,7 @@ dlls/msdaps/msdaps_i.c
 dlls/msdaps/msdaps_p.c
 dlls/msdaps/row_server.h
 dlls/msdaps/row_server_i.c
+dlls/msdaps/row_server_p.c
 dlls/mshtml.tlb/mshtml_tlb.tlb
 dlls/mshtml/nsiface.h
 dlls/msi/cond.tab.c

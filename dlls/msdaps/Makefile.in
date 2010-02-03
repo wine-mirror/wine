@@ -20,7 +20,8 @@ IDL_I_SRCS = \
 	row_server.idl
 
 IDL_P_SRCS = \
-	msdaps.idl
+	msdaps.idl \
+	row_server.idl
 
 @MAKE_DLL_RULES@
 

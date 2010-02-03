@@ -39,6 +39,39 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
+static inline DBLENGTH db_type_size(DBTYPE type, DBLENGTH var_len)
+{
+    switch(type)
+    {
+    case DBTYPE_I1:
+    case DBTYPE_UI1:
+        return 1;
+    case DBTYPE_I2:
+    case DBTYPE_UI2:
+        return 2;
+    case DBTYPE_I4:
+    case DBTYPE_UI4:
+    case DBTYPE_R4:
+        return 4;
+    case DBTYPE_I8:
+    case DBTYPE_UI8:
+    case DBTYPE_R8:
+        return 8;
+    case DBTYPE_CY:
+        return sizeof(CY);
+    case DBTYPE_FILETIME:
+        return sizeof(FILETIME);
+    case DBTYPE_BSTR:
+        return sizeof(BSTR);
+    case DBTYPE_GUID:
+        return sizeof(GUID);
+    case DBTYPE_WSTR:
+        return var_len;
+    default:
+        FIXME("Unhandled type %04x\n", type);
+        return 0;
+    }
+}
 
 typedef struct
 {
@@ -125,13 +158,83 @@ static HRESULT WINAPI server_GetMarshal(IWineRowServer *iface, IMarshal **marsha
     return S_OK;
 }
 
+static HRESULT WINAPI server_GetColumns(IWineRowServer* iface, DBORDINAL num_cols,
+                                        wine_getcolumns_in *in_data, wine_getcolumns_out *out_data)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    HRESULT hr;
+    DBORDINAL i;
+    DBCOLUMNACCESS *cols;
+    IRow *row;
+
+    TRACE("(%p)->(%d, %p, %p)\n", This, num_cols, in_data, out_data);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRow, (void**)&row);
+    if(FAILED(hr)) return hr;
+
+    cols = CoTaskMemAlloc(num_cols * sizeof(cols[0]));
+
+    for(i = 0; i < num_cols; i++)
+    {
+        TRACE("%d:\tmax_len %d type %04x\n", i, in_data[i].max_len, in_data[i].type);
+        cols[i].pData        = CoTaskMemAlloc(db_type_size(in_data[i].type, in_data[i].max_len));
+        cols[i].columnid     = in_data[i].columnid;
+        cols[i].cbMaxLen     = in_data[i].max_len;
+        cols[i].wType        = in_data[i].type;
+        cols[i].bPrecision   = in_data[i].precision;
+        cols[i].bScale       = in_data[i].scale;
+    }
+
+    hr = IRow_GetColumns(row, num_cols, cols);
+    IRow_Release(row);
+
+    for(i = 0; i < num_cols; i++)
+    {
+        VariantInit(&out_data[i].v);
+        if(cols[i].dwStatus == DBSTATUS_S_OK)
+        {
+            V_VT(&out_data[i].v) = in_data[i].type;
+            memcpy(&V_I1(&out_data[i].v), cols[i].pData, cols[i].cbDataLen);
+        }
+        CoTaskMemFree(cols[i].pData);
+        out_data[i].data_len = cols[i].cbDataLen;
+        out_data[i].status   = cols[i].dwStatus;
+    }
+
+    CoTaskMemFree(cols);
+
+    return hr;
+}
+
+static HRESULT WINAPI server_GetSourceRowset(IWineRowServer* iface, REFIID riid, IUnknown **ppRowset,
+                                             HROW *phRow)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_Open(IWineRowServer* iface, IUnknown *pUnkOuter, DBID *pColumnID,
+                                  REFGUID rguidColumnType, DWORD dwBindFlags, REFIID riid,
+                                  IUnknown **ppUnk)
+{
+    server *This = impl_from_IWineRowServer(iface);
+
+    FIXME("(%p)->(%p, %p, %s, %08x, %s, %p): stub\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
+          dwBindFlags, debugstr_guid(riid), ppUnk);
+    return E_NOTIMPL;
+}
+
 static const IWineRowServerVtbl server_vtbl =
 {
     server_QueryInterface,
     server_AddRef,
     server_Release,
     server_SetInnerUnk,
-    server_GetMarshal
+    server_GetMarshal,
+    server_GetColumns,
+    server_GetSourceRowset,
+    server_Open
 };
 
 static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)
@@ -231,10 +334,40 @@ static ULONG WINAPI row_Release(IRow *iface)
 static HRESULT WINAPI row_GetColumns(IRow* iface, DBORDINAL cColumns, DBCOLUMNACCESS rgColumns[])
 {
     row_proxy *This = impl_from_IRow(iface);
+    DBORDINAL i;
+    wine_getcolumns_in *in_data;
+    wine_getcolumns_out *out_data;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d, %p): stub\n", This, cColumns, rgColumns);
+    TRACE("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
 
-    return E_NOTIMPL;
+    in_data = CoTaskMemAlloc(cColumns * sizeof(in_data[0]));
+    out_data = CoTaskMemAlloc(cColumns * sizeof(out_data[0]));
+
+    for(i = 0; i < cColumns; i++)
+    {
+        TRACE("%d:\tdata %p data_len %d status %08x max_len %d type %04x\n", i, rgColumns[i].pData,
+              rgColumns[i].cbDataLen, rgColumns[i].dwStatus, rgColumns[i].cbMaxLen, rgColumns[i].wType);
+        in_data[i].columnid     = rgColumns[i].columnid;
+        in_data[i].max_len      = rgColumns[i].cbMaxLen;
+        in_data[i].type         = rgColumns[i].wType;
+        in_data[i].precision    = rgColumns[i].bPrecision;
+        in_data[i].scale        = rgColumns[i].bScale;
+    }
+
+    hr = IWineRowServer_GetColumns(This->server, cColumns, in_data, out_data);
+
+    for(i = 0; i < cColumns; i++)
+    {
+        rgColumns[i].cbDataLen = out_data[i].data_len;
+        rgColumns[i].dwStatus  = out_data[i].status;
+        if(rgColumns[i].dwStatus == DBSTATUS_S_OK)
+            memcpy(rgColumns[i].pData, &V_I1(&out_data[i].v), out_data[i].data_len);
+    }
+
+    CoTaskMemFree(out_data);
+    CoTaskMemFree(in_data);
+    return hr;
 }
 
 static HRESULT WINAPI row_GetSourceRowset(IRow* iface, REFIID riid, IUnknown **ppRowset,

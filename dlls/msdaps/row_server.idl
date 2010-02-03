@@ -30,6 +30,42 @@ interface IWineRowServer : IUnknown
     [local] HRESULT SetInnerUnk([in] IUnknown *unknown);
 
     [local] HRESULT GetMarshal([out] IMarshal **marshal);
+
+
+    /* IRow */
+
+typedef struct
+{
+    DBID columnid;
+    DBLENGTH max_len;
+    DBTYPE type;
+    BYTE precision;
+    BYTE scale;
+} wine_getcolumns_in;
+
+typedef struct
+{
+    VARIANT v;
+    DBLENGTH data_len;
+    DBSTATUS status;
+} wine_getcolumns_out;
+
+    HRESULT GetColumns([in] DBORDINAL num_cols,
+                       [in, size_is(num_cols)] wine_getcolumns_in *in_data,
+                       [out, size_is(num_cols)] wine_getcolumns_out *out_cols);
+
+    HRESULT GetSourceRowset([in] REFIID riid,
+                            [out, iid_is(riid)] IUnknown **ppRowset,
+                            [out] HROW *phRow);
+
+    HRESULT Open([in, unique] IUnknown *pUnkOuter,
+                 [in] DBID *pColumnID,
+                 [in] REFGUID rguidColumnType,
+                 [in] DWORD dwBindFlags,
+                 [in] REFIID riid,
+                 [out, iid_is(riid)] IUnknown **ppUnk);
+
+
 }
 
 [
