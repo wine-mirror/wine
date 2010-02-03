@@ -5791,6 +5791,12 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
             break;
     }
 
+    /* Make sure the drawables are up-to-date. Note that loading the
+     * destination surface isn't strictly required if we overwrite the
+     * entire surface. */
+    IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
+    IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
+
     /* Attach src surface to src fbo */
     src_swapchain = get_swapchain(src_surface);
     dst_swapchain = get_swapchain(dst_surface);
@@ -5806,9 +5812,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         GLenum buffer = surface_get_gl_buffer(src_surface);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
-        /* Make sure the drawable is up to date. In the offscreen case
-         * attach_surface_fbo() implicitly takes care of this. */
-        IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
 
         if(buffer == GL_FRONT) {
             RECT windowsize;
@@ -5845,9 +5848,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         GLenum buffer = surface_get_gl_buffer(dst_surface);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
-        /* Make sure the drawable is up to date. In the offscreen case
-         * attach_surface_fbo() implicitly takes care of this. */
-        IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
 
         if(buffer == GL_FRONT) {
             RECT windowsize;
