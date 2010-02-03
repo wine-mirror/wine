@@ -13685,6 +13685,18 @@ ALL_PROGRAM_BIN_INSTALL_DIRS=""
 ac_config_commands="$ac_config_commands include/stamp-h"
 
 
+ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	fonts/marlett.ttf"
+ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	fonts/symbol.ttf"
+ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	fonts/tahoma.ttf"
+ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	fonts/tahomabd.ttf"
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 ALL_SYMLINKS="$ALL_SYMLINKS \\
 	wine"
@@ -19607,6 +19619,10 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
+    "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
+    "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
+    "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
+    "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
     "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;
