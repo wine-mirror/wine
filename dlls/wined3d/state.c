@@ -4438,87 +4438,11 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     loadTexCoords(context, stateblock, si, &curVBO);
 }
 
-static inline void drawPrimitiveTraceDataLocations(const struct wined3d_stream_info *dataLocations)
-{
-    /* Dump out what parts we have supplied */
-    TRACE("Strided Data:\n");
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_POSITION);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_BLENDWEIGHT);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_BLENDINDICES);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_NORMAL);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_PSIZE);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_DIFFUSE);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_SPECULAR);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD0);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD1);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD2);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD3);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD4);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD5);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD6);
-    TRACE_STRIDED((dataLocations), WINED3D_FFP_TEXCOORD7);
-}
-
 static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *device = stateblock->device;
-    BOOL fixup = FALSE;
-    struct wined3d_stream_info *dataLocations = &device->strided_streams;
-    BOOL useVertexShaderFunction;
-    BOOL load_numbered = FALSE;
-    BOOL load_named = FALSE;
-
-    useVertexShaderFunction = (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader) ? TRUE : FALSE;
-
-    if(device->up_strided) {
-        /* Note: this is a ddraw fixed-function code path */
-        TRACE("================ Strided Input ===================\n");
-        device_stream_info_from_strided(gl_info, device->up_strided, dataLocations);
-
-        if(TRACE_ON(d3d)) {
-            drawPrimitiveTraceDataLocations(dataLocations);
-        }
-    } else {
-        /* Note: This is a fixed function or shader codepath.
-         * This means it must handle both types of strided data.
-         * Shaders must go through here to zero the strided data, even if they
-         * don't set any declaration at all
-         */
-        TRACE("================ Vertex Declaration  ===================\n");
-        device_stream_info_from_declaration(device, useVertexShaderFunction, dataLocations, &fixup);
-    }
-
-    if (dataLocations->position_transformed) useVertexShaderFunction = FALSE;
-
-    if(useVertexShaderFunction) {
-        if(((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->half_float_conv_needed && !fixup) {
-            TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion\n");
-            device->useDrawStridedSlow = TRUE;
-        } else {
-            load_numbered = TRUE;
-            device->useDrawStridedSlow = FALSE;
-        }
-    }
-    else
-    {
-        WORD slow_mask = (1 << WINED3D_FFP_PSIZE);
-        slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
-
-        if (fixup || (!dataLocations->position_transformed
-                && !(dataLocations->use_map & slow_mask)))
-        {
-            /* Load the vertex data using named arrays */
-            load_named = TRUE;
-            device->useDrawStridedSlow = FALSE;
-        }
-        else
-        {
-            TRACE("Not loading vertex data\n");
-            device->useDrawStridedSlow = TRUE;
-        }
-    }
+    BOOL load_numbered = use_vs(stateblock) && !device->useDrawStridedSlow;
+    BOOL load_named = !use_vs(stateblock) && !device->useDrawStridedSlow;
 
     if (context->numberedArraysLoaded && !load_numbered)
     {
@@ -4535,13 +4459,13 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     if (load_numbered)
     {
         TRACE("Loading numbered arrays\n");
-        loadNumberedArrays(stateblock, dataLocations, context);
+        loadNumberedArrays(stateblock, &device->strided_streams, context);
         context->numberedArraysLoaded = TRUE;
     }
     else if (load_named)
     {
         TRACE("Loading vertex data\n");
-        loadVertexData(context, stateblock, dataLocations);
+        loadVertexData(context, stateblock, &device->strided_streams);
         context->namedArraysLoaded = TRUE;
     }
 }

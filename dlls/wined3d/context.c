@@ -2215,6 +2215,8 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
 
             IWineD3DDeviceImpl_FindTexUnitMap(device);
             device_preload_textures(device);
+            if (isStateDirty(context, STATE_VDECL))
+                device_update_stream_info(device, context->gl_info);
 
             ENTER_GL();
             for (i = 0; i < context->numDirtyEntries; ++i)

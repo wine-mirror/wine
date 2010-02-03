@@ -332,7 +332,7 @@ static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_in
     e->buffer_object = 0;
 }
 
-void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
+static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DVertexStridedData *strided, struct wined3d_stream_info *stream_info)
 {
     unsigned int i;
@@ -367,6 +367,76 @@ void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
             stream_info->swizzle_map |= 1 << i;
         }
         stream_info->use_map |= 1 << i;
+    }
+}
+
+static void device_trace_strided_stream_info(const struct wined3d_stream_info *stream_info)
+{
+    TRACE("Strided Data:\n");
+    TRACE_STRIDED(stream_info, WINED3D_FFP_POSITION);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_BLENDWEIGHT);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_BLENDINDICES);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_NORMAL);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_PSIZE);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_DIFFUSE);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_SPECULAR);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD0);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD1);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD2);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD3);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD4);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD5);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD6);
+    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD7);
+}
+
+/* Context activation is done by the caller. */
+void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_gl_info *gl_info)
+{
+    struct wined3d_stream_info *stream_info = &device->strided_streams;
+    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
+    BOOL vs = stateblock->vertexShader && device->vs_selected_mode != SHADER_NONE;
+    BOOL fixup = FALSE;
+
+    if (device->up_strided)
+    {
+        /* Note: this is a ddraw fixed-function code path. */
+        TRACE("=============================== Strided Input ================================\n");
+        device_stream_info_from_strided(gl_info, device->up_strided, stream_info);
+        if (TRACE_ON(d3d)) device_trace_strided_stream_info(stream_info);
+    }
+    else
+    {
+        TRACE("============================= Vertex Declaration =============================\n");
+        device_stream_info_from_declaration(device, vs, stream_info, &fixup);
+    }
+
+    if (vs && !stream_info->position_transformed)
+    {
+        if (((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_conv_needed && !fixup)
+        {
+            TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion.\n");
+            device->useDrawStridedSlow = TRUE;
+        }
+        else
+        {
+            device->useDrawStridedSlow = FALSE;
+        }
+    }
+    else
+    {
+        WORD slow_mask = (1 << WINED3D_FFP_PSIZE);
+        slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
+                & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
+
+        if ((stream_info->position_transformed || (stream_info->use_map & slow_mask)) && !fixup)
+        {
+            device->useDrawStridedSlow = TRUE;
+        }
+        else
+        {
+            device->useDrawStridedSlow = FALSE;
+        }
     }
 }
 
