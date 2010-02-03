@@ -186,10 +186,7 @@ static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
     return FALSE;
 }
 
-static void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display)
-{
-    dbg_printf("Disasm NIY\n");
-}
+extern void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define DR7_CONTROL_SHIFT	16
 #define DR7_CONTROL_SIZE 	4

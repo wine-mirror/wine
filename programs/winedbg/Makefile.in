@@ -17,6 +17,7 @@ C_SRCS = \
 	break.c \
 	crashdlg.c \
 	db_disasm.c \
+	db_disasm64.c \
 	display.c \
 	expr.c \
 	gdbproxy.c \
