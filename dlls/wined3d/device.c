@@ -370,6 +370,50 @@ void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
     }
 }
 
+static void device_preload_texture(IWineD3DStateBlockImpl *stateblock, unsigned int idx)
+{
+    IWineD3DBaseTextureImpl *texture;
+    enum WINED3DSRGB srgb;
+
+    if (!(texture = (IWineD3DBaseTextureImpl *)stateblock->textures[idx])) return;
+    srgb = stateblock->samplerState[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
+    texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
+}
+
+void device_preload_textures(IWineD3DDeviceImpl *device)
+{
+    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
+    unsigned int i;
+
+    if (use_vs(stateblock))
+    {
+        for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
+        {
+            if (((IWineD3DBaseShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.sampler_type[i])
+                device_preload_texture(stateblock, MAX_FRAGMENT_SAMPLERS + i);
+        }
+    }
+
+    if (use_ps(stateblock))
+    {
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+        {
+            if (((IWineD3DBaseShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.sampler_type[i])
+                device_preload_texture(stateblock, i);
+        }
+    }
+    else
+    {
+        WORD ffu_map = device->fixed_function_usage_map;
+
+        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        {
+            if (ffu_map & 1)
+                device_preload_texture(stateblock, i);
+        }
+    }
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/

@@ -3527,7 +3527,6 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     if(stateblock->textures[sampler]) {
         BOOL srgb = stateblock->samplerState[sampler][WINED3DSAMP_SRGBTEXTURE];
         IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
-        tex_impl->baseTexture.internal_preload(stateblock->textures[sampler], srgb ? SRGB_SRGB : SRGB_RGB);
         IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
         basetexture_apply_state_changes(stateblock->textures[sampler],
                 stateblock->textureState[sampler], stateblock->samplerState[sampler], gl_info);
