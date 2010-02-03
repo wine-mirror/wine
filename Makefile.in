@@ -51,8 +51,6 @@ all: Make.rules $(PROGRAMS)
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
 
-INSTALLDIRS = $(DESTDIR)$(datadir)/aclocal
-
 @MAKE_RULES@
 
 $(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
@@ -75,15 +73,8 @@ wine: $(WINEWRAPPER)
 
 # Installation rules
 
-install-aclocal: $(DESTDIR)$(datadir)/aclocal dummy
-
-.PHONY: install-aclocal
-
-@WOW64_DISABLE@ install install-dev:: install-aclocal
-
 uninstall::
-	$(RM) $(DESTDIR)$(datadir)/aclocal/wine.m4
-	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(datadir)/aclocal
+	-rmdir $(DESTDIR)$(datadir)/wine
 
 # Dependencies between directories
 
