@@ -95,7 +95,7 @@ static void dump(const void* ptr, unsigned len)
  * Process CodeView type information.
  */
 
-#define MAX_BUILTIN_TYPES	0x0480
+#define MAX_BUILTIN_TYPES	0x0604
 #define FIRST_DEFINABLE_TYPE    0x1000
 
 static struct symt*     cv_basic_types[MAX_BUILTIN_TYPES];
@@ -113,6 +113,7 @@ static struct cv_defined_module*cv_current_module;
 
 static void codeview_init_basic_types(struct module* module)
 {
+    struct symt_udt*    udt;
     /*
      * These are the common builtin types that are used by VC++.
      */
@@ -169,6 +170,12 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_32PINT8]   = &symt_new_pointer(module, cv_basic_types[T_INT8])->symt;
     cv_basic_types[T_32PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8])->symt;
     cv_basic_types[T_32PHRESULT]= &symt_new_pointer(module, cv_basic_types[T_HRESULT])->symt;
+
+    /* The .pdb file can refer to 64 bit pointers values even on 32 bits applications. */
+    udt = symt_new_udt(module, "PVOID64", 8, UdtStruct);
+    symt_add_udt_element(module, udt, "ptr64_low", cv_basic_types[T_LONG], 0, 32);
+    symt_add_udt_element(module, udt, "ptr64_high", cv_basic_types[T_LONG], 32, 32);
+    cv_basic_types[0x603]= &udt->symt;
 }
 
 static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
