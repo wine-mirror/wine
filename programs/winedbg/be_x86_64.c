@@ -164,8 +164,61 @@ static const struct dbg_internal_var* be_x86_64_init_registers(CONTEXT* ctx)
 
 static unsigned be_x86_64_is_step_over_insn(const void* insn)
 {
-    dbg_printf("not done step_over_insn\n");
-    return FALSE;
+    BYTE	ch;
+
+    for (;;)
+    {
+        if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+
+        switch (ch)
+        {
+        /* Skip all prefixes */
+        case 0x2e:  /* cs: */
+        case 0x36:  /* ss: */
+        case 0x3e:  /* ds: */
+        case 0x26:  /* es: */
+        case 0x64:  /* fs: */
+        case 0x65:  /* gs: */
+        case 0x66:  /* opcode size prefix */
+        case 0x67:  /* addr size prefix */
+        case 0xf0:  /* lock */
+        case 0xf2:  /* repne */
+        case 0xf3:  /* repe */
+            insn = (const char*)insn + 1;
+            continue;
+
+        /* Handle call instructions */
+        case 0xcd:  /* int <intno> */
+        case 0xe8:  /* call <offset> */
+        case 0x9a:  /* lcall <seg>:<off> */
+            return TRUE;
+
+        case 0xff:  /* call <regmodrm> */
+	    if (!dbg_read_memory((const char*)insn + 1, &ch, sizeof(ch)))
+                return FALSE;
+	    return (((ch & 0x38) == 0x10) || ((ch & 0x38) == 0x18));
+
+        /* Handle string instructions */
+        case 0x6c:  /* insb */
+        case 0x6d:  /* insw */
+        case 0x6e:  /* outsb */
+        case 0x6f:  /* outsw */
+        case 0xa4:  /* movsb */
+        case 0xa5:  /* movsw */
+        case 0xa6:  /* cmpsb */
+        case 0xa7:  /* cmpsw */
+        case 0xaa:  /* stosb */
+        case 0xab:  /* stosw */
+        case 0xac:  /* lodsb */
+        case 0xad:  /* lodsw */
+        case 0xae:  /* scasb */
+        case 0xaf:  /* scasw */
+            return TRUE;
+
+        default:
+            return FALSE;
+        }
+    }
 }
 
 static unsigned be_x86_64_is_function_return(const void* insn)
