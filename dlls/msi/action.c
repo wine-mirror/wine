@@ -6081,6 +6081,12 @@ static UINT ACTION_RemoveShortcuts( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "RemoveShortcuts", table );
 }
 
+static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'D','i','r','e','c','t','o','r','y',0 };
+    return msi_unimplemented_action_stub( package, "SetODBCFolders", table );
+}
+
 static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t',0 };
@@ -6185,7 +6191,7 @@ StandardActions[] =
     { szScheduleReboot, NULL },
     { szSelfRegModules, ACTION_SelfRegModules },
     { szSelfUnregModules, ACTION_SelfUnregModules },
-    { szSetODBCFolders, NULL },
+    { szSetODBCFolders, ACTION_SetODBCFolders },
     { szStartServices, ACTION_StartServices },
     { szStopServices, ACTION_StopServices },
     { szUnpublishComponents, ACTION_UnpublishComponents },
