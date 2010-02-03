@@ -118,6 +118,7 @@ void      WCMD_execute (WCHAR *orig_command, WCHAR *redirects, WCHAR *parameter,
 typedef struct {
   WCHAR *command;	/* The command which invoked the batch file */
   HANDLE h;             /* Handle to the open batch file */
+  WCHAR *batchfileW;    /* Name of same */
   int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
   void *prev_context;	/* Pointer to the previous context block */
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */

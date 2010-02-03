@@ -91,6 +91,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
   prev_context = context;
   context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
+  context->batchfileW = WCMD_strdupW(string);
   context -> command = command;
   memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
   context -> prev_context = prev_context;
@@ -122,6 +123,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  *	to the caller's caller.
  */
 
+  HeapFree(GetProcessHeap(), 0, context->batchfileW);
   LocalFree (context);
   if ((prev_context != NULL) && (!called)) {
     prev_context -> skip_rest = TRUE;
@@ -382,7 +384,9 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
   if (lastModifier == firstModifier) return; /* Invalid syntax */
 
   /* Extract the parameter to play with */
-  if ((*lastModifier >= '0' && *lastModifier <= '9')) {
+  if (*lastModifier == '0') {
+    strcpyW(outputparam, context->batchfileW);
+  } else if ((*lastModifier >= '1' && *lastModifier <= '9')) {
     strcpyW(outputparam, WCMD_parameter (context -> command,
                  *lastModifier-'0' + context -> shift_count[*lastModifier-'0'], NULL));
   } else {
