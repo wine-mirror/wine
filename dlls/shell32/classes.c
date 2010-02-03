@@ -426,7 +426,7 @@ BOOL HCR_GetFolderAttributes(LPCITEMIDLIST pidlFolder, LPDWORD pdwAttributes)
     if (!_ILIsPidlSimple(pidlFolder)) { 
         static int firstHit = 1;
         if (firstHit) {
-            ERR("HCR_GetFolderAttributes should be called for simple PIDL's only!\n");
+            ERR("should be called for simple PIDL's only!\n");
             firstHit = 0;
         }
         return FALSE;
