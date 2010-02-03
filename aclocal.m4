@@ -118,23 +118,6 @@ LIBS="$LIBS $2"
 AC_CHECK_FUNCS([$1],[$3],[$4])
 LIBS="$ac_wine_check_funcs_save_LIBS"])
 
-dnl **** Check for ln ****
-dnl
-dnl Usage: WINE_PROG_LN
-dnl
-AC_DEFUN([WINE_PROG_LN],
-[AC_MSG_CHECKING([whether ln works])
-rm -f conf$$ conf$$.file
-echo >conf$$.file
-if ln conf$$.file conf$$ 2>/dev/null; then
-  AC_SUBST(LN,ln)
-  AC_MSG_RESULT([yes])
-else
-  AC_SUBST(LN,["cp -p"])
-  AC_MSG_RESULT([no, using $LN])
-fi
-rm -f conf$$ conf$$.file])
-
 dnl **** Check for a mingw program, trying the various mingw prefixes ****
 dnl
 dnl Usage: WINE_CHECK_MINGW_PROG(variable,prog,[value-if-not-found],[path])

@@ -694,7 +694,6 @@ INSTALL_PROGRAM
 LDCONFIG
 EGREP
 GREP
-LN
 LN_S
 STRIP
 RANLIB
@@ -4572,22 +4571,6 @@ else
 $as_echo "no, using $LN_S" >&6; }
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ln works" >&5
-$as_echo_n "checking whether ln works... " >&6; }
-rm -f conf$$ conf$$.file
-echo >conf$$.file
-if ln conf$$.file conf$$ 2>/dev/null; then
-  LN=ln
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  LN="cp -p"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, using $LN" >&5
-$as_echo "no, using $LN" >&6; }
-fi
-rm -f conf$$ conf$$.file
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for grep that handles long lines and -e" >&5
 $as_echo_n "checking for grep that handles long lines and -e... " >&6; }
 if test "${ac_cv_path_GREP+set}" = set; then :

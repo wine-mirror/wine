@@ -20,25 +20,16 @@ wineapploader: wineapploader.in
 
 # Rules for installation
 
-.PHONY: install-apploader install-progs install-progs.so $(INSTALLPROGS:%=%/__installprog__)
+.PHONY: install-progs install-progs.so $(INSTALLPROGS:%=%/__installprog__)
 
-install-apploader: wineapploader $(INSTALLDIRS) dummy
-	$(INSTALL_SCRIPT) wineapploader $(DESTDIR)$(bindir)/wineapploader
-
-$(INSTALLPROGS:%=%/__installprog__): install-apploader
-	$(RM) $(DESTDIR)$(bindir)/`dirname $@` && $(LN) $(DESTDIR)$(bindir)/wineapploader $(DESTDIR)$(bindir)/`dirname $@`
+$(INSTALLPROGS:%=%/__installprog__): wineapploader $(INSTALLDIRS) dummy
+	$(RM) $(DESTDIR)$(bindir)/`dirname $@` && $(INSTALL_SCRIPT) wineapploader $(DESTDIR)$(bindir)/`dirname $@`
 
 install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
-	$(RM) $(DESTDIR)$(bindir)/wineapploader
-
 install-progs: # nothing to do here
 
 @WOW64_DISABLE@ install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
 
 uninstall::
-	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)
+	-cd $(DESTDIR)$(bindir) && $(RM) $(INSTALLPROGS)
 	-rmdir $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
-
-# Rules for testing
-
-check test:: $(SUBDIRS:%=%/__test__)

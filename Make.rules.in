@@ -40,7 +40,6 @@ AR        = @AR@
 ARFLAGS   = @ARFLAGS@
 RANLIB    = @RANLIB@
 STRIP     = @STRIP@
-LN        = @LN@
 LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
 LDFLAGS   = @LDFLAGS@
