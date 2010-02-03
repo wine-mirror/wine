@@ -155,6 +155,11 @@ static void db_printsym(db_addr_t addr, unsigned unused)
 #define	Ril	36			/* long register in instruction */
 #define	Iba	37			/* byte immediate, don't print if 0xa */
 #define	EL	38			/* address, explicitly long size */
+/* Wine extensions */
+#define	MX	39			/* special register (MMX reg %mm0-7) */
+#define	EMX	40			/* special register (MMX reg %mm0-7) */
+#define	XMM	41			/* special register (floating point reg %xmm0-7) */
+#define	EXMM	42			/* special register (floating point reg %xmm0-7) */
 
 struct inst {
 	const char *	i_name;		/* name */
@@ -322,6 +327,66 @@ static const struct inst db_inst_0f4x[] = {
 /*4f*/	{ "cmovnle",TRUE, NONE,  op2(E, R),   0 },
 };
 
+static const struct inst db_inst_0f5x[] = {
+/*50*/	{ "movmskps",TRUE, NONE, op2(E, XMM), 0 },
+/*51*/	{ "sqrtps",  TRUE, NONE, op2(XMM, EXMM), 0 },
+/*52*/	{ "rsqrtps", TRUE, NONE, op2(XMM, EXMM), 0 },
+/*53*/	{ "rcpps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*54*/	{ "andps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*55*/	{ "andnps",  TRUE, NONE, op2(XMM, EXMM), 0 },
+/*56*/	{ "orps",    TRUE, NONE, op2(XMM, EXMM), 0 },
+/*57*/	{ "xorps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+
+/*58*/	{ "addps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*59*/	{ "mulps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5a*/	{ "(bad)",   FALSE, NONE,  0,   0 },
+/*5b*/	{ "(bad)",   FALSE, NONE,  0,   0 },
+/*5c*/	{ "subps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5d*/	{ "minps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5e*/	{ "divps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5f*/	{ "maxps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+};
+
+static const struct inst db_inst_0f6x[] = {
+/*60*/	{ "punpcklbw", TRUE, NONE,  op2(E, MX), 0 },
+/*61*/	{ "punpcklwd", TRUE, NONE,  op2(E, MX),	0 },
+/*62*/	{ "punpckldq", TRUE, NONE,  op2(E, MX), 0 },
+/*63*/	{ "packsswb",  TRUE, NONE,  op2(E, MX),	0 },
+/*64*/	{ "pcmpgtb",   TRUE, NONE,  op2(E, MX), 0 },
+/*65*/	{ "pcmpgtw",   TRUE, NONE,  op2(E, MX), 0 },
+/*66*/	{ "pcmpgtd",   TRUE, NONE,  op2(E, MX), 0 },
+/*67*/	{ "packuswb",  TRUE, NONE,  op2(E, MX), 0 },
+
+/*68*/	{ "punpckhbw", TRUE, NONE,  op2(E, MX), 0 },
+/*69*/	{ "punpckhwd", TRUE, NONE,  op2(E, MX), 0 },
+/*6a*/	{ "punpckhdq", TRUE, NONE,  op2(E, MX), 0 },
+/*6b*/	{ "packssdw",  TRUE, NONE,  op2(E, MX), 0 },
+/*6c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*6d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*6e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
+/*6f*/	{ "movq",      TRUE, NONE,  op2(E, MX), 0 },
+};
+
+static const struct inst db_inst_0f7x[] = {
+/*70*/	{ "pshufw",    TRUE, NONE,  op2(MX, EMX), 0 },
+/*71*/	{ "(bad)",     TRUE, NONE,  0, 0 }, /* FIXME: grp 12 */
+/*72*/	{ "(bad)",     TRUE, NONE,  0, 0 }, /* FIXME: grp 13 */
+/*73*/	{ "(bad)",     TRUE, NONE,  0, 0 }, /* FIXME: grp 14 */
+/*74*/	{ "pcmpeqb",   TRUE, NONE,  op2(E, MX), 0 },
+/*75*/	{ "pcmpeqw",   TRUE, NONE,  op2(E, MX), 0 },
+/*76*/	{ "pcmpeqd",   TRUE, NONE,  op2(E, MX), 0 },
+/*77*/	{ "emms",      FALSE,NONE,  0, 0 },
+
+/*78*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*79*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7a*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7b*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
+/*7f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 },
+};
+
 static const struct inst db_inst_0f8x[] = {
 /*80*/	{ "jo",    FALSE, NONE,  op1(Dl),     0 },
 /*81*/	{ "jno",   FALSE, NONE,  op1(Dl),     0 },
@@ -427,9 +492,9 @@ static const struct inst * const db_inst_0f[] = {
 	db_inst_0f2x,
 	db_inst_0f3x,
 	db_inst_0f4x,
-	0,
-	0,
-	0,
+	db_inst_0f5x,
+	db_inst_0f6x,
+	db_inst_0f7x,
 	db_inst_0f8x,
 	db_inst_0f9x,
 	db_inst_0fax,
@@ -1557,6 +1622,18 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		    get_value_inc(imm, loc, len, FALSE);	/* offset */
 		    get_value_inc(imm2, loc, 2, FALSE);	/* segment */
 		    db_printf("$%#x,%#x", imm2, imm);
+		    break;
+		case MX:
+                    db_printf("%%mm%d", f_reg(rex, regmodrm));
+		    break;
+		case EMX:
+                    db_printf("%%mm%d", f_rm(rex, regmodrm));
+		    break;
+		case XMM:
+                    db_printf("%%xmm%d", f_reg(rex, regmodrm));
+		    break;
+		case EXMM:
+                    db_printf("%%xmm%d", f_rm(rex, regmodrm));
 		    break;
 	    }
 	}
