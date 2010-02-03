@@ -747,6 +747,16 @@ void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
  */
 WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
 {
+    HICON icon;
+
+    switch (offset)
+    {
+    case GCLP_HCURSOR:
+    case GCLP_HICON:
+    case GCLP_HICONSM:
+        icon = (HICON)GetClassLongPtrW( WIN_Handle32(hwnd), offset );
+        return get_icon_16( icon );
+    }
     return GetClassWord( WIN_Handle32(hwnd), offset );
 }
 
@@ -756,6 +766,16 @@ WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
  */
 WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 {
+    HICON icon;
+
+    switch (offset)
+    {
+    case GCLP_HCURSOR:
+    case GCLP_HICON:
+    case GCLP_HICONSM:
+        icon = (HICON)SetClassLongPtrW( WIN_Handle32(hwnd), offset, (ULONG_PTR)get_icon_32(newval) );
+        return get_icon_16( icon );
+    }
     return SetClassWord( WIN_Handle32(hwnd), offset, newval );
 }
 
@@ -773,6 +793,10 @@ LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
         return (LONG_PTR)WINPROC_GetProc16( (WNDPROC)ret, FALSE );
     case GCLP_MENUNAME:
         return MapLS( (void *)ret );  /* leak */
+    case GCLP_HCURSOR:
+    case GCLP_HICON:
+    case GCLP_HICONSM:
+        return get_icon_16( (HICON)ret );
     default:
         return ret;
     }
@@ -784,8 +808,15 @@ LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
  */
 LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
 {
+    HICON icon;
+
     switch( offset )
     {
+    case GCLP_HCURSOR:
+    case GCLP_HICON:
+    case GCLP_HICONSM:
+        icon = (HICON)SetClassLongPtrW( WIN_Handle32(hwnd16), offset, (ULONG_PTR)get_icon_32(newval) );
+        return get_icon_16( icon );
     case GCLP_WNDPROC:
         {
             WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
