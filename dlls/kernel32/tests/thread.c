@@ -1221,7 +1221,7 @@ static void test_ThreadErrorMode(void)
 
     if (!pSetThreadErrorMode || !pGetThreadErrorMode)
     {
-        skip("SetThreadErrorMode and/or GetThreadErrorMode unavailable (added in Windows 7)\n");
+        win_skip("SetThreadErrorMode and/or GetThreadErrorMode unavailable (added in Windows 7)\n");
         return;
     }
 

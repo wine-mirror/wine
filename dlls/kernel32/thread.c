@@ -651,3 +651,64 @@ DWORD WINAPI GetCurrentThreadId(void)
 }
 
 #endif  /* __i386__ */
+
+/*************************************************************************
+ *              rtlmode_to_win32mode
+ */
+static DWORD rtlmode_to_win32mode( DWORD rtlmode )
+{
+    DWORD win32mode = 0;
+
+    if (rtlmode & 0x10)
+        win32mode |= SEM_FAILCRITICALERRORS;
+    if (rtlmode & 0x20)
+        win32mode |= SEM_NOGPFAULTERRORBOX;
+    if (rtlmode & 0x40)
+        win32mode |= SEM_NOOPENFILEERRORBOX;
+
+    return win32mode;
+}
+
+/***********************************************************************
+ *              SetThreadErrorMode (KERNEL32.@)
+ */
+BOOL WINAPI SetThreadErrorMode( DWORD mode, LPDWORD oldmode )
+{
+    NTSTATUS status;
+    DWORD tmp = 0;
+
+    if (mode & ~(SEM_FAILCRITICALERRORS |
+                 SEM_NOGPFAULTERRORBOX |
+                 SEM_NOOPENFILEERRORBOX))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (mode & SEM_FAILCRITICALERRORS)
+        tmp |= 0x10;
+    if (mode & SEM_NOGPFAULTERRORBOX)
+        tmp |= 0x20;
+    if (mode & SEM_NOOPENFILEERRORBOX)
+        tmp |= 0x40;
+
+    status = RtlSetThreadErrorMode( tmp, oldmode );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    if (oldmode)
+        *oldmode = rtlmode_to_win32mode(*oldmode);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              GetThreadErrorMode (KERNEL32.@)
+ */
+DWORD WINAPI GetThreadErrorMode( void )
+{
+    return rtlmode_to_win32mode( RtlGetThreadErrorMode() );
+}
