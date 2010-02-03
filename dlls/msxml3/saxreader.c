@@ -166,13 +166,13 @@ static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 
     dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
     if(len != -1) dLen++;
-    str = HeapAlloc(GetProcessHeap(), 0, dLen * sizeof (WCHAR));
+    str = heap_alloc(dLen * sizeof (WCHAR));
     if (!str)
         return NULL;
     MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, dLen);
     if(len != -1) str[dLen-1] = '\0';
     bstr = SysAllocString(str);
-    HeapFree(GetProcessHeap(), 0, str);
+    heap_free(str);
 
     return bstr;
 }
@@ -190,7 +190,7 @@ static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
 
     dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, NULL, 0)
         + MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, NULL, 0);
-    str = HeapAlloc(GetProcessHeap(), 0, dLen * sizeof(WCHAR));
+    str = heap_alloc(dLen * sizeof(WCHAR));
     if(!str)
         return NULL;
 
@@ -199,7 +199,7 @@ static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
     MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, &str[dLast], dLen-dLast);
     bstr = SysAllocString(str);
 
-    HeapFree(GetProcessHeap(), 0, str);
+    heap_free(str);
 
     return bstr;
 }
@@ -629,12 +629,12 @@ static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
             SysFreeString(This->szQName[index]);
         }
 
-        HeapFree(GetProcessHeap(), 0, This->szLocalname);
-        HeapFree(GetProcessHeap(), 0, This->szURI);
-        HeapFree(GetProcessHeap(), 0, This->szValue);
-        HeapFree(GetProcessHeap(), 0, This->szQName);
+        heap_free(This->szLocalname);
+        heap_free(This->szURI);
+        heap_free(This->szValue);
+        heap_free(This->szQName);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -919,7 +919,7 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
     int index;
     static const xmlChar xmlns[] = "xmlns";
 
-    attributes = HeapAlloc(GetProcessHeap(), 0, sizeof(*attributes));
+    attributes = heap_alloc(sizeof(*attributes));
     if(!attributes)
         return E_OUTOFMEMORY;
 
@@ -929,23 +929,19 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
 
     attributes->nb_attributes = nb_namespaces+nb_attributes;
 
-    attributes->szLocalname =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
-    attributes->szURI =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
-    attributes->szValue =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
-    attributes->szQName =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
+    attributes->szLocalname = heap_alloc(sizeof(BSTR)*attributes->nb_attributes);
+    attributes->szURI = heap_alloc(sizeof(BSTR)*attributes->nb_attributes);
+    attributes->szValue = heap_alloc(sizeof(BSTR)*attributes->nb_attributes);
+    attributes->szQName = heap_alloc(sizeof(BSTR)*attributes->nb_attributes);
 
     if(!attributes->szLocalname || !attributes->szURI
             || !attributes->szValue || !attributes->szQName)
     {
-        HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
-        HeapFree(GetProcessHeap(), 0, attributes->szURI);
-        HeapFree(GetProcessHeap(), 0, attributes->szValue);
-        HeapFree(GetProcessHeap(), 0, attributes->szQName);
-        HeapFree(GetProcessHeap(), 0, attributes);
+        heap_free(attributes->szLocalname);
+        heap_free(attributes->szURI);
+        heap_free(attributes->szValue);
+        heap_free(attributes->szQName);
+        heap_free(attributes);
         return E_FAIL;
     }
 
@@ -1319,7 +1315,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     va_end(args);
 
     len = MultiByteToWideChar(CP_UNIXCP, 0, message, -1, NULL, 0);
-    wszError = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+    wszError = heap_alloc(sizeof(WCHAR)*len);
     if(wszError)
         MultiByteToWideChar(CP_UNIXCP, 0, message, -1, wszError, len);
 
@@ -1333,7 +1329,7 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
         ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
                 (ISAXLocator*)&This->lpSAXLocatorVtbl, wszError, E_FAIL);
 
-    HeapFree(GetProcessHeap(), 0, wszError);
+    heap_free(wszError);
 
     xmlStopParser(This->pParserCtxt);
     This->ret = E_FAIL;
@@ -1643,10 +1639,10 @@ static ULONG WINAPI isaxlocator_Release(
     {
         SysFreeString(This->publicId);
         SysFreeString(This->systemId);
-        HeapFree(GetProcessHeap(), 0, This->nsStack);
+        heap_free(This->nsStack);
 
         ISAXXMLReader_Release((ISAXXMLReader*)&This->saxreader->lpSAXXMLReaderVtbl);
-        HeapFree( GetProcessHeap(), 0, This );
+        heap_free( This );
     }
 
     return ref;
@@ -1732,7 +1728,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
 {
     saxlocator *locator;
 
-    locator = HeapAlloc( GetProcessHeap(), 0, sizeof (*locator) );
+    locator = heap_alloc( sizeof (*locator) );
     if( !locator )
         return E_OUTOFMEMORY;
 
@@ -1753,11 +1749,11 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->ret = S_OK;
     locator->nsStackSize = 8;
     locator->nsStackLast = 0;
-    locator->nsStack = HeapAlloc(GetProcessHeap(), 0, locator->nsStackSize);
+    locator->nsStack = heap_alloc(locator->nsStackSize);
     if(!locator->nsStack)
     {
         ISAXXMLReader_Release((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
-        HeapFree(GetProcessHeap(), 0, locator);
+        heap_free(locator);
         return E_OUTOFMEMORY;
     }
 
@@ -2314,7 +2310,7 @@ static ULONG WINAPI saxxmlreader_Release(
         if(This->vbdeclHandler)
             IVBSAXDeclHandler_Release(This->vbdeclHandler);
 
-        HeapFree( GetProcessHeap(), 0, This );
+        heap_free( This );
     }
 
     return ref;
@@ -2809,7 +2805,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    reader = HeapAlloc( GetProcessHeap(), 0, sizeof (*reader) );
+    reader = heap_alloc( sizeof (*reader) );
     if( !reader )
         return E_OUTOFMEMORY;
 

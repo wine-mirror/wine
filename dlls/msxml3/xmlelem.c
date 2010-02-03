@@ -96,7 +96,7 @@ static ULONG WINAPI xmlelem_Release(IXMLElement *iface)
     if (ref == 0)
     {
         if (This->own) xmlFreeNode(This->node);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -233,8 +233,8 @@ static HRESULT WINAPI xmlelem_setAttribute(IXMLElement *iface, BSTR strPropertyN
     value = xmlChar_from_wchar(V_BSTR(&PropertyValue));
     attr = xmlSetProp(This->node, name, value);
 
-    HeapFree(GetProcessHeap(), 0, name);
-    HeapFree(GetProcessHeap(), 0, value);
+    heap_free(name);
+    heap_free(value);
     return (attr) ? S_OK : S_FALSE;
 }
 
@@ -275,7 +275,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR strPropertyN
         V_BSTR(PropertyValue) = bstr_from_xmlChar(val);
     }
 
-    HeapFree(GetProcessHeap(), 0, name);
+    heap_free(name);
     xmlFree(val);
     TRACE("returning %s\n", debugstr_w(V_BSTR(PropertyValue)));
     return (val) ? S_OK : S_FALSE;
@@ -305,7 +305,7 @@ static HRESULT WINAPI xmlelem_removeAttribute(IXMLElement *iface, BSTR strProper
         hr = S_OK;
 
 done:
-    HeapFree(GetProcessHeap(), 0, name);
+    heap_free(name);
     return hr;
 }
 
@@ -390,7 +390,7 @@ static HRESULT WINAPI xmlelem_put_text(IXMLElement *iface, BSTR p)
     content = xmlChar_from_wchar(p);
     xmlNodeSetContent(This->node, content);
 
-    HeapFree( GetProcessHeap(), 0, content);
+    heap_free(content);
 
     return S_OK;
 }
@@ -470,7 +470,7 @@ HRESULT XMLElement_create(IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, B
 
     *ppObj = NULL;
 
-    elem = HeapAlloc(GetProcessHeap(), 0, sizeof (*elem));
+    elem = heap_alloc(sizeof (*elem));
     if(!elem)
         return E_OUTOFMEMORY;
 
@@ -566,7 +566,7 @@ static ULONG WINAPI xmlelem_collection_Release(IXMLElementCollection *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -767,7 +767,7 @@ static HRESULT XMLElementCollection_create(IUnknown *pUnkOuter, xmlNodePtr node,
     if (!node->children)
         return S_FALSE;
 
-    collection = HeapAlloc(GetProcessHeap(), 0, sizeof (*collection));
+    collection = heap_alloc(sizeof (*collection));
     if(!collection)
         return E_OUTOFMEMORY;
 

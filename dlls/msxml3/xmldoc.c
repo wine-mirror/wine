@@ -117,7 +117,7 @@ static ULONG WINAPI xmldoc_Release(IXMLDocument *iface)
     {
         xmlFreeDoc(This->xmldoc);
         if (This->stream) IStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -698,7 +698,7 @@ HRESULT XMLDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    doc = HeapAlloc(GetProcessHeap(), 0, sizeof (*doc));
+    doc = heap_alloc(sizeof (*doc));
     if(!doc)
         return E_OUTOFMEMORY;
 

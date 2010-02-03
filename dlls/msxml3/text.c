@@ -103,7 +103,7 @@ static ULONG WINAPI domtext_Release(
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);
-        HeapFree( GetProcessHeap(), 0, This );
+        heap_free( This );
     }
 
     return ref;
@@ -605,7 +605,7 @@ static HRESULT WINAPI domtext_appendData(
             hr = S_OK;
         else
             hr = E_FAIL;
-        HeapFree( GetProcessHeap(), 0, pContent );
+        heap_free( pContent );
     }
     else
         hr = E_FAIL;
@@ -669,7 +669,7 @@ static HRESULT WINAPI domtext_insertData(
                 xmlNodeSetContent(This->node.node, str);
                 hr = S_OK;
             }
-            HeapFree(GetProcessHeap(), 0, str);
+            heap_free(str);
 
             SysFreeString(sNewString);
         }
@@ -806,7 +806,7 @@ IUnknown* create_text( xmlNodePtr text )
 {
     domtext *This;
 
-    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    This = heap_alloc( sizeof *This );
     if ( !This )
         return NULL;
 
