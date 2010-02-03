@@ -272,6 +272,7 @@
 @ cdecl _ftime32(ptr) MSVCRT__ftime32
 @ cdecl _ftime64(ptr) MSVCRT__ftime64
 @ cdecl -ret64 _ftol() ntdll._ftol
+@ cdecl -ret64 _ftol2() ntdll._ftol
 @ cdecl -ret64 _ftol2_sse() ntdll._ftol #FIXME: SSE variant should be implemented
 @ cdecl _fullpath(ptr str long)
 @ cdecl _futime(long ptr)
