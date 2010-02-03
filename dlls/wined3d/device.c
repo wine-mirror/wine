@@ -7044,7 +7044,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->shader_backend = adapter->shader_backend;
 
     memset(&shader_caps, 0, sizeof(shader_caps));
-    device->shader_backend->shader_get_caps(device_type, &adapter->gl_info, &shader_caps);
+    device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
     device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
     device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
     device->vs_clipping = shader_caps.VSClipping;
