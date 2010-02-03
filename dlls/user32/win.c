@@ -143,6 +143,7 @@ void *get_user_handle_ptr( HANDLE handle, enum user_obj_type type )
  */
 void release_user_handle_ptr( void *ptr )
 {
+    assert( ptr && ptr != OBJ_OTHER_PROCESS );
     USER_Unlock();
 }
 
