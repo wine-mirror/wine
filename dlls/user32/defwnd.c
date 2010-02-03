@@ -835,7 +835,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
             /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
              * may have child window IDs instead of window name */
-            if (HIWORD(cs->lpszName))
+            if (!IS_INTRESOURCE(cs->lpszName))
                 DEFWND_SetTextA( hwnd, cs->lpszName );
             result = 1;
         }
@@ -982,7 +982,7 @@ LRESULT WINAPI DefWindowProcW(
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
             /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
              * may have child window IDs instead of window name */
-            if (HIWORD(cs->lpszName))
+            if (!IS_INTRESOURCE(cs->lpszName))
                 DEFWND_SetTextW( hwnd, cs->lpszName );
             result = 1;
         }
