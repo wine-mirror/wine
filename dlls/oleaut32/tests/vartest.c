@@ -1665,7 +1665,7 @@ static void test_VarDateFromUdate(void)
   UD2T(1,12001,-1020,18,1,16,0,0,0,0,S_OK,29221.75087962963);        /* Test rolled year and month */
   UD2T(1,-23,1982,18,1,16,0,0,0,0,S_OK,29221.75087962963);           /* Test backrolled month */
   UD2T(-59,3,1980,18,1,16,0,0,0,0,S_OK,29221.75087962963);           /* Test backrolled days */
-  todo_wine UD2T(1,1,0,0,0,0,0,0,0,0,S_OK,36526);                    /* Test zero year */
+  UD2T(1,1,0,0,0,0,0,0,0,0,S_OK,36526);                              /* Test zero year */
   UD2T(0,0,1980,0,0,0,0,0,0,0,S_OK,29189);                           /* Test zero day and month */
   UD2T(0,1,1980,0,0,0,0,2,1,0,S_OK,29220.0);                         /* Test zero day = LastDayOfMonth */
   UD2T(-1,1,1980,18,1,16,0,0,0,0,S_OK,29219.75087962963);            /* Test day -1 = LastDayOfMonth - 1 */

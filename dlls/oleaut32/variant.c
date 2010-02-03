@@ -1145,7 +1145,7 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
   if (iYear > 9999 || iYear < -9999)
     return E_INVALIDARG; /* Invalid value */
   /* Years < 100 are treated as 1900 + year */
-  if (iYear >= 0 && iYear < 100)
+  if (iYear > 0 && iYear < 100)
     iYear += 1900;
 
   iMinute += (iSecond - (iSecond % 60)) / 60;
@@ -1180,7 +1180,7 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
   if (iSecond<0){iSecond+=60; iMinute--;}
   if (iMinute<0){iMinute+=60; iHour--;}
   if (iHour<0)  {iHour+=24; iDay--;}
-  if (iYear<0)  iYear+=2000;
+  if (iYear<=0)  iYear+=2000;
 
   lpUd->st.wYear   = iYear;
   lpUd->st.wMonth  = iMonth;
