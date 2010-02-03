@@ -16222,6 +16222,14 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msxml3/tests/Makefile"
 
+ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/msxml4/Makefile"
+test "x$enable_msxml4" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	msxml4"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msxml4/Makefile: dlls/msxml4/Makefile.in dlls/Makedll.rules config.status"
+ac_config_files="$ac_config_files dlls/msxml4/Makefile"
+
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
 	nddeapi/libnddeapi.$IMPLIBEXT"
 ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
@@ -19896,6 +19904,7 @@ do
     "dlls/mswsock/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mswsock/Makefile" ;;
     "dlls/msxml3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/Makefile" ;;
     "dlls/msxml3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/tests/Makefile" ;;
+    "dlls/msxml4/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml4/Makefile" ;;
     "dlls/nddeapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/nddeapi/Makefile" ;;
     "dlls/netapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/netapi32/Makefile" ;;
     "dlls/netapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/netapi32/tests/Makefile" ;;
