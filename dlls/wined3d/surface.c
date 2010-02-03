@@ -1253,6 +1253,34 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     TRACE("Updated target %d\n", This->texture_target);
 }
 
+/* Context activation is done by the caller. */
+static void surface_prepare_texture(IWineD3DSurfaceImpl *surface, BOOL srgb)
+{
+    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
+    GLenum format, internal, type;
+    GLsizei width, height;
+    CONVERT_TYPES convert;
+    int bpp;
+
+    if (surface->Flags & alloc_flag) return;
+
+    d3dfmt_get_conv(surface, TRUE, TRUE, &format, &internal, &type, &convert, &bpp, srgb);
+    if ((surface->Flags & SFLAG_NONPOW2) && !(surface->Flags & SFLAG_OVERSIZE))
+    {
+        width = surface->pow2Width;
+        height = surface->pow2Height;
+    }
+    else
+    {
+        width = surface->glRect.right - surface->glRect.left;
+        height = surface->glRect.bottom - surface->glRect.top;
+    }
+
+    surface_bind_and_dirtify(surface, srgb);
+    surface_allocate_surface(surface, internal, width, height, format, type);
+    surface->Flags |= alloc_flag;
+}
+
 static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
@@ -4971,7 +4999,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         {
             /* Upload from system memory */
             BOOL srgb = flag == SFLAG_INSRGBTEX;
-            DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
             struct wined3d_context *context = NULL;
 
             d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */,
@@ -4998,6 +5025,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             }
 
             if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+
+            surface_prepare_texture(This, srgb);
             surface_bind_and_dirtify(This, srgb);
 
             if(This->CKeyFlags & WINEDDSD_CKSRCBLT) {
@@ -5052,10 +5081,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
                 TRACE("non power of two support\n");
-                if(!(This->Flags & alloc_flag)) {
-                    surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
-                    This->Flags |= alloc_flag;
-                }
                 if (mem || (This->Flags & SFLAG_PBO)) {
                     surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
                 }
@@ -5063,10 +5088,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
                  * changed. So also keep track of memory changes. In this case the texture has to be reallocated
                  */
-                if(!(This->Flags & alloc_flag)) {
-                    surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
-                    This->Flags |= alloc_flag;
-                }
                 if (mem || (This->Flags & SFLAG_PBO)) {
                     surface_upload_data(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
                 }
