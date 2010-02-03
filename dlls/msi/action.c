@@ -5920,6 +5920,13 @@ done:
     return r;
 }
 
+static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )
+{
+    TRACE("\n");
+    package->need_reboot = 1;
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -6188,7 +6195,7 @@ StandardActions[] =
     { szRemoveShortcuts, ACTION_RemoveShortcuts },
     { szResolveSource, ACTION_ResolveSource },
     { szRMCCPSearch, ACTION_RMCCPSearch },
-    { szScheduleReboot, NULL },
+    { szScheduleReboot, ACTION_ScheduleReboot },
     { szSelfRegModules, ACTION_SelfRegModules },
     { szSelfUnregModules, ACTION_SelfUnregModules },
     { szSetODBCFolders, ACTION_SetODBCFolders },
