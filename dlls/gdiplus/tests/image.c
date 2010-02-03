@@ -30,6 +30,18 @@
 #define expect(expected, got) ok((UINT)(got) == (UINT)(expected), "Expected %.8x, got %.8x\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
 
+static BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
+{
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    return TRUE;
+}
+
 static void expect_guid(REFGUID expected, REFGUID got, int line, BOOL todo)
 {
     WCHAR bufferW[39];
@@ -1468,7 +1480,7 @@ static void test_gamma(void)
 
     stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff20ffff, color);
+    todo_wine ok(color_match(0xff20ffff, color, 1), "Expected ff20ffff, got %.8x\n", color);
 
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap1);
