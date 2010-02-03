@@ -3310,7 +3310,7 @@ BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
  */
 BOOL WINAPI SwitchDesktop( HDESK hDesktop)
 {
-    FIXME("SwitchDesktop(hwnd %p) stub!\n", hDesktop);
+    FIXME("(hwnd %p) stub!\n", hDesktop);
     return TRUE;
 }
 
