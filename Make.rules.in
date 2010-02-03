@@ -65,7 +65,6 @@ TARGETFLAGS  = @TARGETFLAGS@
 WINEBUILDFLAGS = $(TARGETFLAGS) $(DLLFLAGS)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi/winapi_check
-WINEWRAPPER  = $(TOPSRCDIR)/tools/winewrapper
 C2MAN        = $(TOPSRCDIR)/tools/c2man.pl
 RUNTEST      = $(TOPSRCDIR)/tools/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)

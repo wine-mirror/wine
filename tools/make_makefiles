@@ -86,6 +86,7 @@ my @ignores = (
     "/configure.lineno",
     "/TAGS",
     "/tags",
+    "/wine",
     "Makefile",
     "dlldata.c",
     "dlls/*/*.def",

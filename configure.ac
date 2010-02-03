@@ -2096,6 +2096,7 @@ Makefile: dummy
 
 AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_MAKEFILES,"")
+AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies"])
 
 AC_SUBST(ALL_TOP_DIRS,"")
@@ -2112,6 +2113,8 @@ AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 AH_TOP([#define __WINE_CONFIG_H])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
+
+WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/mfdrv)

@@ -26,7 +26,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
-PROGRAMS  = wine
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
@@ -46,7 +45,7 @@ INSTALLSUBDIRS = @ALL_TOP_DIRS@
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
 
-all: Make.rules $(PROGRAMS)
+all: wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -67,9 +66,6 @@ config.status: configure
 include/config.h: include/stamp-h
 include/stamp-h: include/config.h.in config.status
 	@./config.status include/config.h include/stamp-h
-
-wine: $(WINEWRAPPER)
-	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
 # Installation rules
 
@@ -138,10 +134,10 @@ distclean:: clean
 
 # Makefile rules
 
-ALL_MAKERULES = @ALL_MAKERULES@
 ALL_MAKEFILES = @ALL_MAKEFILES@
+ALL_CONFIGS   = Makefile $(ALL_MAKEFILES) @ALL_MAKERULES@ @ALL_SYMLINKS@
 
-Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES):
+$(ALL_CONFIGS):
 	@./config.status $@
 .INIT: Makefile
 .BEGIN: Makefile
@@ -150,6 +146,6 @@ Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES):
 $(RECURSE_TARGETS) $(MAKEDEP): $(ALL_MAKEFILES)
 
 distclean::
-	$(RM) Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES)
+	$(RM) $(ALL_CONFIGS)
 
 @ALL_MAKEFILE_DEPENDS@

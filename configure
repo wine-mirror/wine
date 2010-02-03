@@ -608,6 +608,7 @@ ALL_IMPLIB_DIRS
 ALL_DLL_DIRS
 ALL_TOP_DIRS
 ALL_MAKEFILE_DEPENDS
+ALL_SYMLINKS
 ALL_MAKEFILES
 ALL_MAKERULES
 DEPENDENCIES
@@ -13653,6 +13654,8 @@ ALL_MAKERULES=""
 
 ALL_MAKEFILES=""
 
+ALL_SYMLINKS=""
+
 ALL_MAKEFILE_DEPENDS="# Makefile dependencies"
 
 
@@ -13681,6 +13684,10 @@ ALL_PROGRAM_BIN_INSTALL_DIRS=""
 
 ac_config_commands="$ac_config_commands include/stamp-h"
 
+
+ac_config_links="$ac_config_links wine:tools/winewrapper"
+ALL_SYMLINKS="$ALL_SYMLINKS \\
+	wine"
 
 ac_config_commands="$ac_config_commands dlls/gdi32/enhmfdrv"
 
@@ -19438,6 +19445,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
 config_headers="$ac_config_headers"
+config_links="$ac_config_links"
 config_commands="$ac_config_commands"
 
 _ACEOF
@@ -19467,6 +19475,9 @@ $config_files
 
 Configuration headers:
 $config_headers
+
+Configuration links:
+$config_links
 
 Configuration commands:
 $config_commands
@@ -19596,6 +19607,7 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
+    "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
     "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;
     "dlls/kernel32/nls") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel32/nls" ;;
@@ -20159,6 +20171,7 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
+  test "${CONFIG_LINKS+set}" = set || CONFIG_LINKS=$config_links
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -20480,7 +20493,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_HEADERS"
 
 
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    :C $CONFIG_COMMANDS"
+eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS  :L $CONFIG_LINKS  :C $CONFIG_COMMANDS"
 shift
 for ac_tag
 do
@@ -20721,7 +20734,38 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
       || as_fn_error "could not create -" "$LINENO" 5
   fi
  ;;
+  :L)
+  #
+  # CONFIG_LINK
+  #
 
+  if test "$ac_source" = "$ac_file" && test "$srcdir" = '.'; then
+    :
+  else
+    # Prefer the file from the source tree if names are identical.
+    if test "$ac_source" = "$ac_file" || test ! -r "$ac_source"; then
+      ac_source=$srcdir/$ac_source
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: linking $ac_source to $ac_file" >&5
+$as_echo "$as_me: linking $ac_source to $ac_file" >&6;}
+
+    if test ! -r "$ac_source"; then
+      as_fn_error "$ac_source: file not found" "$LINENO" 5
+    fi
+    rm -f "$ac_file"
+
+    # Try a relative symlink, then a hard link, then a copy.
+    case $srcdir in
+    [\\/$]* | ?:[\\/]* ) ac_rel_source=$ac_source ;;
+	*) ac_rel_source=$ac_top_build_prefix$ac_source ;;
+    esac
+    ln -s "$ac_rel_source" "$ac_file" 2>/dev/null ||
+      ln "$ac_source" "$ac_file" 2>/dev/null ||
+      cp -p "$ac_source" "$ac_file" ||
+      as_fn_error "cannot link or copy $ac_source to $ac_file" "$LINENO" 5
+  fi
+ ;;
   :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
 $as_echo "$as_me: executing $ac_file commands" >&6;}
  ;;
