@@ -2314,7 +2314,7 @@ HRESULT WINAPI UrlCreateFromPathW(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUr
  */
 HRESULT WINAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags)
 {
-  FIXME("SHAutoComplete stub\n");
+  FIXME("stub\n");
   return S_FALSE;
 }
 
