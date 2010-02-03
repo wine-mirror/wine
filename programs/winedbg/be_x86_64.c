@@ -170,8 +170,8 @@ static unsigned be_x86_64_is_step_over_insn(const void* insn)
 
 static unsigned be_x86_64_is_function_return(const void* insn)
 {
-    dbg_printf("not done is_function_return\n");
-    return FALSE;
+    BYTE c;
+    return dbg_read_memory(insn, &c, sizeof(c)) && ((c == 0xC2) || (c == 0xC3));
 }
 
 static unsigned be_x86_64_is_break_insn(const void* insn)
