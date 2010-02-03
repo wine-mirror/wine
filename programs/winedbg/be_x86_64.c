@@ -162,6 +162,10 @@ static const struct dbg_internal_var* be_x86_64_init_registers(CONTEXT* ctx)
     return be_x86_64_ctx;
 }
 
+#define	f_mod(b)	((b)>>6)
+#define	f_reg(b)	(((b)>>3)&0x7)
+#define	f_rm(b)		((b)&0x7)
+
 static unsigned be_x86_64_is_step_over_insn(const void* insn)
 {
     BYTE	ch;
@@ -233,10 +237,119 @@ static unsigned be_x86_64_is_break_insn(const void* insn)
     return dbg_read_memory(insn, &c, sizeof(c)) && c == 0xCC;
 }
 
+static BOOL fetch_value(const char* addr, unsigned sz, int* value)
+{
+    char        value8;
+    short       value16;
+
+    switch (sz)
+    {
+    case 8:
+        if (!dbg_read_memory(addr, &value8, sizeof(value8))) return FALSE;
+        *value = value8;
+        break;
+    case 16:
+        if (!dbg_read_memory(addr, &value16, sizeof(value16))) return FALSE;
+        *value = value16;
+    case 32:
+        if (!dbg_read_memory(addr, value, sizeof(*value))) return FALSE;
+        break;
+    default: return FALSE;
+    }
+    return TRUE;
+}
+
 static unsigned be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
 {
-    dbg_printf("not done is_func_call\n");
-    return FALSE;
+    BYTE                ch;
+    LONG                delta;
+    short               segment;
+    unsigned            op_size = 32, rex = 0;
+    DWORD64             dst;
+
+    /* we assume 64bit mode all over the place */
+    for (;;)
+    {
+        if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+        if (ch == 0x66) op_size = 16;
+        else if (ch == 0x67) WINE_FIXME("prefix not supported %x\n", ch);
+        else if (ch >= 0x40 && ch <= 0x4f) rex = ch & 0xf;
+        else break;
+        insn = (const char*)insn + 1;
+    } while (0);
+
+    /* that's the only mode we support anyway */
+    callee->Mode = AddrModeFlat;
+    callee->Segment = dbg_context.SegCs;
+
+    switch (ch)
+    {
+    case 0xe8: /* relative near call */
+        assert(op_size == 32);
+        if (!fetch_value((const char*)insn + 1, sizeof(delta), &delta))
+            return FALSE;
+        callee->Offset = (DWORD_PTR)insn + 1 + 4 + delta;
+        return TRUE;
+
+    case 0xff:
+        if (!dbg_read_memory((const char*)insn + 1, &ch, sizeof(ch)))
+            return FALSE;
+        WINE_TRACE("Got 0xFF %x (&C7=%x) with rex=%x\n", ch, ch & 0xC7, rex);
+        /* keep only the CALL and LCALL insn:s */
+        switch (f_reg(ch))
+        {
+        case 0x02:
+            segment = dbg_context.SegCs;
+            break;
+        default: return FALSE;
+        }
+        if (rex == 0) switch (ch & 0xC7) /* keep Mod R/M only (skip reg) */
+        {
+        case 0x04:
+        case 0x44:
+        case 0x84:
+            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (SIB bytes) at %p\n", ch, insn);
+            return FALSE;
+        case 0x05: /* addr32 */
+            if (f_reg(ch) == 0x2)
+            {
+                /* rip-relative to next insn */
+                if (!dbg_read_memory((const char*)insn + 2, &delta, sizeof(delta)) ||
+                    !dbg_read_memory((const char*)insn + 6 + delta, &dst, sizeof(dst)))
+                    return FALSE;
+
+                callee->Offset = dst;
+                return TRUE;
+            }
+            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) at %p\n", ch, insn);
+            return FALSE;
+        default:
+            switch (f_rm(ch))
+            {
+            case 0x00: dst = dbg_context.Rax; break;
+            case 0x01: dst = dbg_context.Rcx; break;
+            case 0x02: dst = dbg_context.Rdx; break;
+            case 0x03: dst = dbg_context.Rbx; break;
+            case 0x04: dst = dbg_context.Rsp; break;
+            case 0x05: dst = dbg_context.Rbp; break;
+            case 0x06: dst = dbg_context.Rsi; break;
+            case 0x07: dst = dbg_context.Rdi; break;
+            }
+            if (f_mod(ch) != 0x03)
+                WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) at %p\n", ch, insn);
+            else
+            {
+                callee->Offset = dst;
+            }
+            break;
+        }
+        else
+            WINE_FIXME("Unsupported yet call insn (rex=0x%02x 0xFF 0x%02x) at %p\n", rex, ch, insn);
+        return FALSE;
+
+    default:
+        return FALSE;
+    }
 }
 
 extern void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display);
