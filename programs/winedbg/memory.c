@@ -347,6 +347,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     DWORD               tag, size, count, bt;
     struct dbg_type     type = lvalue->type;
     struct dbg_type     sub_type;
+    struct dbg_lvalue   sub_lvalue;
 
     if (!types_get_real_type(&type, &tag)) return;
 
@@ -383,6 +384,11 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         print_char:
             if (size == 1 && (val_int < 0x20 || val_int > 0x80))
                 dbg_printf("%d", (int)val_int);
+            else if (size == 2)
+            {
+                WCHAR   wch = (WCHAR)val_int;
+                dbg_outputW(&wch, 1);
+            }
             else
                 dbg_printf("'%c'", (char)val_int);
             break;
@@ -396,32 +402,31 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         }
         break;
     case SymTagPointerType:
-        if (!memory_read_value(lvalue, sizeof(void*), &val_ptr)) return;
-
-        sub_type.module = lvalue->type.module;
-        if (!types_get_info(&type, TI_GET_TYPE, &sub_type.id) ||
-            sub_type.id == dbg_itype_none)
+        if (!types_deref(lvalue, &sub_lvalue))
         {
-            dbg_printf("Internal symbol error: unable to access memory location %p", val_ptr);
+            dbg_printf("Internal symbol error: unable to access memory location %p",
+                       memory_to_linear_addr(&lvalue->addr));
             break;
         }
-        if (!types_get_real_type(&sub_type, &tag)) return;
-
-        if (types_get_info(&sub_type, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
-            types_get_info(&sub_type, TI_GET_BASETYPE, &bt) && (bt == btChar || bt == btInt) &&
-            types_get_info(&sub_type, TI_GET_LENGTH, &size64) && size64 == 1)
+        val_ptr = memory_to_linear_addr(&sub_lvalue.addr);
+        if (types_get_real_type(&sub_lvalue.type, &tag) && tag == SymTagBaseType &&
+            types_get_info(&sub_lvalue.type, TI_GET_BASETYPE, &bt) &&
+            types_get_info(&sub_lvalue.type, TI_GET_LENGTH, &size64))
         {
             char    buffer[1024];
 
             if (!val_ptr) dbg_printf("0x0");
-            else if (memory_get_string(dbg_curr_process, val_ptr, 
-                                       lvalue->cookie == DLV_TARGET,
-                                       size64 == 2, buffer, sizeof(buffer)))
-                dbg_printf("\"%s\"", buffer);
-            else
-                dbg_printf("*** invalid address %p ***", val_ptr);
+            else if (((bt == btChar || bt == btInt) && size64 == 1) || (bt == btUInt && size64 == 2))
+            {
+                if (memory_get_string(dbg_curr_process, val_ptr, sub_lvalue.cookie == DLV_TARGET,
+                                      size64 == 2, buffer, sizeof(buffer)))
+                    dbg_printf("\"%s\"", buffer);
+                else
+                    dbg_printf("*** invalid address %p ***", val_ptr);
+                break;
+            }
         }
-        else dbg_printf("%p", val_ptr);
+        dbg_printf("%p", val_ptr);
         break;
     case SymTagArrayType:
     case SymTagUDT:
