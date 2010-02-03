@@ -191,8 +191,8 @@ LONG CoreAudio_MIDIInit(void)
         destinations[i].caps.wPid = 0x0001;
         destinations[i].caps.vDriverVersion = 0x0001;
         destinations[i].caps.dwSupport = 0;
-        destinations[i].caps.wVoices = 16;
-        destinations[i].caps.wNotes = 16;
+        destinations[i].caps.wVoices = 0;
+        destinations[i].caps.wNotes = 0;
     }
     return DRV_SUCCESS;
 }
