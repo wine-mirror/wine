@@ -62,6 +62,9 @@ static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
 static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
 static BOOL (WINAPI *pUnregisterWait)(HANDLE);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
+static BOOL (WINAPI *pSetThreadErrorMode)(DWORD,PDWORD);
+static DWORD (WINAPI *pGetThreadErrorMode)(void);
+static DWORD (WINAPI *pRtlGetThreadErrorMode)(void);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -1209,9 +1212,103 @@ static void test_TLS(void)
   cleanup_thread_sync_helpers();
 }
 
+static void test_ThreadErrorMode(void)
+{
+    DWORD oldmode;
+    DWORD mode;
+    DWORD rtlmode;
+    BOOL ret;
+
+    if (!pSetThreadErrorMode || !pGetThreadErrorMode)
+    {
+        skip("SetThreadErrorMode and/or GetThreadErrorMode unavailable (added in Windows 7)\n");
+        return;
+    }
+
+    if (!pRtlGetThreadErrorMode) {
+        win_skip("RtlGetThreadErrorMode not available\n");
+        return;
+    }
+
+    oldmode = pGetThreadErrorMode();
+
+    ret = pSetThreadErrorMode(0, &mode);
+    ok(ret, "SetThreadErrorMode failed\n");
+    ok(mode == oldmode,
+       "SetThreadErrorMode returned old mode 0x%x, expected 0x%x\n",
+       mode, oldmode);
+    mode = pGetThreadErrorMode();
+    ok(mode == 0, "GetThreadErrorMode returned mode 0x%x, expected 0\n", mode);
+    rtlmode = pRtlGetThreadErrorMode();
+    ok(rtlmode == 0,
+       "RtlGetThreadErrorMode returned mode 0x%x, expected 0\n", mode);
+
+    ret = pSetThreadErrorMode(SEM_FAILCRITICALERRORS, &mode);
+    ok(ret, "SetThreadErrorMode failed\n");
+    ok(mode == 0,
+       "SetThreadErrorMode returned old mode 0x%x, expected 0\n", mode);
+    mode = pGetThreadErrorMode();
+    ok(mode == SEM_FAILCRITICALERRORS,
+       "GetThreadErrorMode returned mode 0x%x, expected SEM_FAILCRITICALERRORS\n",
+       mode);
+    rtlmode = pRtlGetThreadErrorMode();
+    ok(rtlmode == 0x10,
+       "RtlGetThreadErrorMode returned mode 0x%x, expected 0x10\n", mode);
+
+    ret = pSetThreadErrorMode(SEM_NOGPFAULTERRORBOX, &mode);
+    ok(ret, "SetThreadErrorMode failed\n");
+    ok(mode == SEM_FAILCRITICALERRORS,
+       "SetThreadErrorMode returned old mode 0x%x, expected SEM_FAILCRITICALERRORS\n",
+       mode);
+    mode = pGetThreadErrorMode();
+    ok(mode == SEM_NOGPFAULTERRORBOX,
+       "GetThreadErrorMode returned mode 0x%x, expected SEM_NOGPFAULTERRORBOX\n",
+       mode);
+    rtlmode = pRtlGetThreadErrorMode();
+    ok(rtlmode == 0x20,
+       "RtlGetThreadErrorMode returned mode 0x%x, expected 0x20\n", mode);
+
+    ret = pSetThreadErrorMode(SEM_NOOPENFILEERRORBOX, NULL);
+    ok(ret, "SetThreadErrorMode failed\n");
+    mode = pGetThreadErrorMode();
+    ok(mode == SEM_NOOPENFILEERRORBOX,
+       "GetThreadErrorMode returned mode 0x%x, expected SEM_NOOPENFILEERRORBOX\n",
+       mode);
+    rtlmode = pRtlGetThreadErrorMode();
+    ok(rtlmode == 0x40,
+       "RtlGetThreadErrorMode returned mode 0x%x, expected 0x40\n", rtlmode);
+
+    for (mode = 1; mode; mode <<= 1)
+    {
+        ret = pSetThreadErrorMode(mode, NULL);
+        if (mode & (SEM_FAILCRITICALERRORS |
+                    SEM_NOGPFAULTERRORBOX |
+                    SEM_NOOPENFILEERRORBOX))
+        {
+            ok(ret,
+               "SetThreadErrorMode(0x%x,NULL) failed with error %d\n",
+               mode, GetLastError());
+        }
+        else
+        {
+            DWORD GLE = GetLastError();
+            ok(!ret,
+               "SetThreadErrorMode(0x%x,NULL) succeeded, expected failure\n",
+               mode);
+            ok(GLE == ERROR_INVALID_PARAMETER,
+               "SetThreadErrorMode(0x%x,NULL) failed with %d, "
+               "expected ERROR_INVALID_PARAMETER\n",
+               mode, GLE);
+        }
+    }
+
+    pSetThreadErrorMode(oldmode, NULL);
+}
+
 START_TEST(thread)
 {
    HINSTANCE lib;
+   HINSTANCE ntdll;
    int argc;
    char **argv;
    argc = winetest_get_mainargs( &argv );
@@ -1228,6 +1325,14 @@ START_TEST(thread)
    pRegisterWaitForSingleObject=(void *)GetProcAddress(lib,"RegisterWaitForSingleObject");
    pUnregisterWait=(void *)GetProcAddress(lib,"UnregisterWait");
    pIsWow64Process=(void *)GetProcAddress(lib,"IsWow64Process");
+   pSetThreadErrorMode=(void *)GetProcAddress(lib,"SetThreadErrorMode");
+   pGetThreadErrorMode=(void *)GetProcAddress(lib,"GetThreadErrorMode");
+
+   ntdll=GetModuleHandleA("ntdll.dll");
+   if (ntdll)
+   {
+       pRtlGetThreadErrorMode=(void *)GetProcAddress(ntdll,"RtlGetThreadErrorMode");
+   }
 
    if (argc >= 3)
    {
@@ -1271,4 +1376,5 @@ START_TEST(thread)
    test_QueueUserWorkItem();
    test_RegisterWaitForSingleObject();
    test_TLS();
+   test_ThreadErrorMode();
 }
