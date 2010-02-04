@@ -217,6 +217,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     unsigned int sync;
     int retval;
 
+    IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
+
     context = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
@@ -273,11 +275,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     }
 
     TRACE("presetting HDC %p\n", This->context[0]->hdc);
-
-    /* Don't call checkGLcall, as glGetError is not applicable here */
-    if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
-        IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
-    }
 
     render_to_fbo = This->render_to_fbo;
 
@@ -522,7 +519,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
     WINED3DLOCKED_RECT r;
     BYTE *mem;
 
-    if(window == This->win_handle) return WINED3D_OK;
+    if (!window || window == This->win_handle) return WINED3D_OK;
 
     TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, window);
     if (This->context[0] == This->device->contexts[0])
