@@ -182,6 +182,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     }
 
     encname = encode_streamname(FALSE, name);
+    IStorage_DestroyElement(sv->db->storage, encname);
 
     r = write_stream_data(sv->db->storage, name, data, count, FALSE);
     if (r != ERROR_SUCCESS)
