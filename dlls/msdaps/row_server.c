@@ -371,6 +371,40 @@ static HRESULT WINAPI server_GetSpecification(IWineRowServer* iface, REFIID riid
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI server_AddRefAccessor(IWineRowServer* iface, HACCESSOR hAccessor,
+                                            DBREFCOUNT *pcRefCount)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_CreateAccessor(IWineRowServer* iface, DBACCESSORFLAGS dwAccessorFlags,
+                                            DBCOUNTITEM cBindings, const DBBINDING *rgBindings, DBLENGTH cbRowSize,
+                                            HACCESSOR *phAccessor, DBBINDSTATUS *rgStatus)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetBindings(IWineRowServer* iface, HACCESSOR hAccessor,
+                                         DBACCESSORFLAGS *pdwAccessorFlags, DBCOUNTITEM *pcBindings,
+                                         DBBINDING **prgBindings)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08lx, %p, %p, %p): stub\n", This, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_ReleaseAccessor(IWineRowServer* iface, HACCESSOR hAccessor,
+                                             DBREFCOUNT *pcRefCount)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08lx, %p): stub\n", This, hAccessor, pcRefCount);
+    return E_NOTIMPL;
+}
+
 static const IWineRowServerVtbl server_vtbl =
 {
     server_QueryInterface,
@@ -393,7 +427,11 @@ static const IWineRowServerVtbl server_vtbl =
     server_Hash,
     server_GetProperties,
     server_GetReferencedRowset,
-    server_GetSpecification
+    server_GetSpecification,
+    server_AddRefAccessor,
+    server_CreateAccessor,
+    server_GetBindings,
+    server_ReleaseAccessor
 };
 
 static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)

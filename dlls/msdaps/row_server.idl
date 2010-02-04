@@ -153,7 +153,25 @@ typedef struct
     HRESULT GetSpecification([in] REFIID riid,
                              [out, iid_is(riid)] IUnknown **ppSpecification);
 
+    /* IAccessor */
 
+    HRESULT AddRefAccessor([in] HACCESSOR hAccessor,
+                           [in, out, unique, annotation("__out_opt")] DBREFCOUNT *pcRefCount);
+
+    HRESULT CreateAccessor([in] DBACCESSORFLAGS dwAccessorFlags,
+                           [in] DBCOUNTITEM cBindings,
+                           [in, unique, size_is(cBindings)] const DBBINDING *rgBindings,
+                           [in] DBLENGTH cbRowSize,
+                           [out] HACCESSOR *phAccessor,
+                           [in, out, unique, size_is(cBindings)] DBBINDSTATUS *rgStatus);
+
+    HRESULT GetBindings([in] HACCESSOR hAccessor,
+                        [out] DBACCESSORFLAGS *pdwAccessorFlags,
+                        [in, out] DBCOUNTITEM *pcBindings,
+                        [out, size_is(,*pcBindings)] DBBINDING **prgBindings);
+
+    HRESULT ReleaseAccessor([in] HACCESSOR hAccessor,
+                            [in, out, unique] DBREFCOUNT *pcRefCount);
 }
 
 [
