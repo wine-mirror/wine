@@ -332,11 +332,23 @@ static HRESULT WINAPI server_GetRowsAt(IWineRowServer *iface, HWATCHREGION hRese
                                        DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained, HROW **prghRows)
 {
     server *This = impl_from_IWineRowServer(iface);
+    IRowsetLocate *rowsetlocate;
+    HRESULT hr;
 
-    FIXME("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p): stub\n", This, hReserved1, hReserved2, cbBookmark, pBookmark,
-          lRowsOffset, cRows, pcRowsObtained, prghRows);
+    TRACE("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
+          pcRowsObtained, prghRows);
 
-    return E_NOTIMPL;
+    *prghRows = NULL;
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowsetLocate, (void**)&rowsetlocate);
+    if(FAILED(hr)) return hr;
+
+    hr = IRowsetLocate_GetRowsAt(rowsetlocate, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset,
+                                 cRows, pcRowsObtained, prghRows);
+    IRowsetLocate_Release(rowsetlocate);
+
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_GetRowsByBookmark(IWineRowServer *iface, HCHAPTER hReserved, DBCOUNTITEM cRows,
@@ -1006,8 +1018,23 @@ static HRESULT WINAPI rowsetlocate_GetRowsAt(IRowsetLocate *iface, HWATCHREGION 
                                              HROW **prghRows)
 {
     rowset_proxy *This = impl_from_IRowsetLocate(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    HROW *rows = NULL;
+
+    TRACE("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p\n", This, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows,
+          pcRowsObtained, prghRows);
+
+    hr = IWineRowServer_GetRowsAt(This->server, hReserved1, hReserved2, cbBookmark, pBookmark, lRowsOffset, cRows, pcRowsObtained, &rows);
+
+    if(*prghRows)
+    {
+        memcpy(*prghRows, rows, *pcRowsObtained * sizeof(rows[0]));
+        CoTaskMemFree(rows);
+    }
+    else
+        *prghRows = rows;
+
+    return hr;
 }
 
 static HRESULT WINAPI rowsetlocate_GetRowsByBookmark(IRowsetLocate *iface, HCHAPTER hReserved, DBCOUNTITEM cRows, const DBBKMARK rgcbBookmarks[],
