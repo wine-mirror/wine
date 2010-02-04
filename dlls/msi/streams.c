@@ -124,9 +124,9 @@ static UINT STREAMS_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec 
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
 
-    FIXME("%p %d %p\n", sv, row, rec);
+    TRACE("%p %d %p\n", sv, row, rec);
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return msi_view_get_row( sv->db, view, row, rec );
 }
 
 static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask)
