@@ -404,8 +404,19 @@ static HRESULT WINAPI server_GetBindings(IWineRowServer* iface, HACCESSOR hAcces
                                          DBBINDING **prgBindings)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%08lx, %p, %p, %p): stub\n", This, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IAccessor *accessor;
+
+    TRACE("(%p)->(%08lx, %p, %p, %p)\n", This, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IAccessor, (void**)&accessor);
+    if(FAILED(hr)) return hr;
+
+    hr = IAccessor_GetBindings(accessor, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
+    IAccessor_Release(accessor);
+
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_ReleaseAccessor(IWineRowServer* iface, HACCESSOR hAccessor,
@@ -1077,8 +1088,13 @@ static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor
                                            DBCOUNTITEM *pcBindings, DBBINDING **prgBindings)
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx, %p, %p, %p)\n", This, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
+
+    hr = IWineRowServer_GetBindings(This->server, hAccessor, pdwAccessorFlags, pcBindings, prgBindings);
+
+    return hr;
 }
 
 static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
