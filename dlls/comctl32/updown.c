@@ -461,7 +461,7 @@ static LRESULT UPDOWN_Paint (const UPDOWN_INFO *infoPtr, HDC hdc)
  */
 static LRESULT UPDOWN_KeyPressed(UPDOWN_INFO *infoPtr, int key)
 {
-    int arrow;
+    int arrow, accel;
 
     if (key == VK_UP) arrow = FLAG_INCR;
     else if (key == VK_DOWN) arrow = FLAG_DECR;
@@ -472,7 +472,8 @@ static LRESULT UPDOWN_KeyPressed(UPDOWN_INFO *infoPtr, int key)
     infoPtr->Flags |= FLAG_PRESSED | arrow;
     InvalidateRect (infoPtr->Self, NULL, FALSE);
     SetTimer(infoPtr->Self, TIMER_AUTOPRESS, AUTOPRESS_DELAY, 0);
-    UPDOWN_DoAction (infoPtr, 1, arrow);
+    accel = (infoPtr->AccelCount && infoPtr->AccelVect) ? infoPtr->AccelVect[0].nInc : 1;
+    UPDOWN_DoAction (infoPtr, accel, arrow);
     return 0;
 }
 
@@ -929,18 +930,18 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 
 	   /* if initial timer, kill it and start the repeat timer */
   	   if(wParam == TIMER_AUTOREPEAT) {
-		int temp;
+		INT delay;
 
 		KillTimer(hwnd, TIMER_AUTOREPEAT);
 		/* if no accel info given, used default timer */
 		if(infoPtr->AccelCount==0 || infoPtr->AccelVect==0) {
 		    infoPtr->AccelIndex = -1;
-		    temp = REPEAT_DELAY;
+		    delay = REPEAT_DELAY;
 		} else {
 		    infoPtr->AccelIndex = 0; /* otherwise, use it */
-		    temp = infoPtr->AccelVect[infoPtr->AccelIndex].nSec * 1000 + 1;
+		    delay = infoPtr->AccelVect[infoPtr->AccelIndex].nSec * 1000 + 1;
 		}
-		SetTimer(hwnd, TIMER_ACCEL, temp, 0);
+		SetTimer(hwnd, TIMER_ACCEL, delay, 0);
       	    }
 
 	    /* now, if the mouse is above us, do the thing...*/
@@ -1010,8 +1011,6 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 
 	case UDM_SETACCEL:
 	{
-	    unsigned temp;
-
 	    TRACE("UDM_SETACCEL\n");
 
 	    if(infoPtr->AccelVect) {
@@ -1025,8 +1024,14 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    memcpy(infoPtr->AccelVect, (void*)lParam, wParam*sizeof(UDACCEL));
             infoPtr->AccelCount = wParam;
 
-            for (temp = 0; temp < wParam; temp++)
-                TRACE("%d: nSec %u nInc %u\n", temp, infoPtr->AccelVect[temp].nSec, infoPtr->AccelVect[temp].nInc);
+            if (TRACE_ON(updown))
+            {
+                INT i;
+
+                for (i = 0; i < wParam; i++)
+                    TRACE("%d: nSec %u nInc %u\n", i,
+                        infoPtr->AccelVect[i].nSec, infoPtr->AccelVect[i].nInc);
+            }
 
     	    return TRUE;
 	}
