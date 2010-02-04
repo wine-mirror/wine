@@ -1923,7 +1923,9 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         {
             GLint tmp;
             glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
+            gl_info->limits.general_combiners = tmp;
             gl_info->limits.texture_stages = min(MAX_TEXTURES, tmp);
+            TRACE_(d3d_caps)("Max general combiners: %d.\n", tmp);
         }
         else
         {

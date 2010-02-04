@@ -4619,6 +4619,7 @@ struct wined3d_gl_limits
     UINT fragment_samplers;
     UINT vertex_samplers;
     UINT combined_samplers;
+    UINT general_combiners;
     UINT sampler_stages;
     UINT clipplanes;
     UINT texture_size;

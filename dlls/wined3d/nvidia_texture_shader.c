@@ -670,7 +670,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
             WINED3DTEXOPCAPS_PREMODULATE */
 #endif
 
-    pCaps->MaxTextureBlendStages = gl_info->limits.texture_stages;
+    pCaps->MaxTextureBlendStages = min(MAX_TEXTURES, gl_info->limits.general_combiners);
     pCaps->MaxSimultaneousTextures = gl_info->limits.textures;
 
     pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
