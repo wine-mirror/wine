@@ -218,6 +218,7 @@ done:
 static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary)
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
+    UINT i;
 
     TRACE("(%p, %p, %d, %d)\n", view, rec, row, temporary);
 
@@ -227,7 +228,11 @@ static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row
     if (row == -1)
         row = sv->num_rows - 1;
 
-    /* FIXME have to readjust rows */
+    /* shift the rows to make room for the new row */
+    for (i = sv->num_rows - 1; i > row; i--)
+    {
+        sv->streams[i] = sv->streams[i - 1];
+    }
 
     return STREAMS_set_row(view, row, rec, 0);
 }
