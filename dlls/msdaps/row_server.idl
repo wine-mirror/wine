@@ -139,6 +139,21 @@ typedef struct
                  [out, size_is(cBookmarks)] DBHASHVALUE rgHashedValues[],
                  [out, size_is(cBookmarks)] DBROWSTATUS rgBookmarkStatus[]);
 
+    /* IRowsetInfo */
+
+    HRESULT GetProperties([in] ULONG cPropertyIDSets,
+                          [in, unique, size_is(cPropertyIDSets)] const DBPROPIDSET *rgPropertyIDSets,
+                          [in, out] ULONG *pcPropertySets,
+                          [out, size_is(,*pcPropertySets)] DBPROPSET **prgPropertySets);
+
+    HRESULT GetReferencedRowset([in] DBORDINAL iOrdinal,
+                                [in] REFIID riid,
+                                [out, iid_is(riid)] IUnknown **ppReferencedRowset);
+
+    HRESULT GetSpecification([in] REFIID riid,
+                             [out, iid_is(riid)] IUnknown **ppSpecification);
+
+
 }
 
 [

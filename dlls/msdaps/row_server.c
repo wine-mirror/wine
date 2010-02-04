@@ -346,6 +346,31 @@ static HRESULT WINAPI server_Hash(IWineRowServer *iface, HCHAPTER hReserved, DBB
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI server_GetProperties(IWineRowServer* iface, ULONG cPropertyIDSets,
+                                           const DBPROPIDSET *rgPropertyIDSets, ULONG *pcPropertySets,
+                                           DBPROPSET **prgPropertySets)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetReferencedRowset(IWineRowServer* iface, DBORDINAL iOrdinal,
+                                                 REFIID riid, IUnknown **ppReferencedRowset)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetSpecification(IWineRowServer* iface, REFIID riid,
+                                               IUnknown **ppSpecification)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
 static const IWineRowServerVtbl server_vtbl =
 {
     server_QueryInterface,
@@ -365,7 +390,10 @@ static const IWineRowServerVtbl server_vtbl =
     server_Compare,
     server_GetRowsAt,
     server_GetRowsByBookmark,
-    server_Hash
+    server_Hash,
+    server_GetProperties,
+    server_GetReferencedRowset,
+    server_GetSpecification
 };
 
 static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)
