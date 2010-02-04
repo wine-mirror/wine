@@ -1795,7 +1795,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, *namelen);
+    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen?*namelen:0);
 
     fd = get_sock_fd( s, 0, NULL );
     res = SOCKET_ERROR;
