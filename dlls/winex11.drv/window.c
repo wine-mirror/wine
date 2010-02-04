@@ -1326,6 +1326,15 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
     data->configure_serial = NextRequest( display );
     XReconfigureWMWindow( display, data->whole_window,
                           DefaultScreen(display), mask, &changes );
+#ifdef HAVE_LIBXSHAPE
+    if (data->shaped)
+    {
+        int x_offset = old_whole_rect->left - data->whole_rect.left;
+        int y_offset = old_whole_rect->top - data->whole_rect.top;
+        if (x_offset || y_offset)
+            XShapeOffsetShape( display, data->whole_window, ShapeBounding, x_offset, y_offset );
+    }
+#endif
     wine_tsx11_unlock();
 
     TRACE( "win %p/%lx pos %d,%d,%dx%d after %lx changes=%x serial=%lu\n",
