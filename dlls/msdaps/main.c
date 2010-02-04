@@ -31,6 +31,7 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "oleauto.h"
+#define DBINITCONSTANTS
 #include "oledb.h"
 
 #include "row_server.h"

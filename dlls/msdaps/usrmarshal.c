@@ -448,6 +448,12 @@ HRESULT CALLBACK IBindResource_Bind_Proxy(IBindResource* This, IUnknown *pUnkOut
     TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pImplSession, pdwBindStatus, ppUnk);
 
+    if(pUnkOuter)
+    {
+        FIXME("Aggregation not supported\n");
+        return CLASS_E_NOAGGREGATION;
+    }
+
     hr = IBindResource_RemoteBind_Proxy(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
                                         pImplSession ? pImplSession->pUnkOuter : NULL, pImplSession ? pImplSession->piid : NULL,
                                         pImplSession ? &pImplSession->pSession : NULL, pdwBindStatus, ppUnk);
@@ -460,16 +466,46 @@ HRESULT __RPC_STUB IBindResource_Bind_Stub(IBindResource* This, IUnknown *pUnkOu
 {
     HRESULT hr;
     DBIMPLICITSESSION impl_session;
+    IWineRowServer *server;
+    IMarshal *marshal;
+    IUnknown *obj;
 
     TRACE("(%p, %p, %s, %08x, %s, %s, %p, %p, %p, %p, %p, %p)\n", This, pUnkOuter, debugstr_w(pwszURL), dwBindURLFlags,
           debugstr_guid(rguid), debugstr_guid(riid), pAuthenticate, pSessionUnkOuter, piid, ppSession, pdwBindStatus, ppUnk);
+
+    *ppUnk = NULL;
+
+    if(IsEqualGUID(rguid, &DBGUID_ROWSET))
+        hr = CoCreateInstance(&CLSID_wine_rowset_server, NULL, CLSCTX_INPROC_SERVER, &IID_IWineRowServer, (void**)&server);
+    else if(IsEqualGUID(rguid, &DBGUID_ROW))
+        hr = CoCreateInstance(&CLSID_wine_row_server, NULL, CLSCTX_INPROC_SERVER, &IID_IWineRowServer, (void**)&server);
+    else
+    {
+        hr = E_NOTIMPL;
+        FIXME("Unhandled object %s\n", debugstr_guid(rguid));
+    }
+
+    if(FAILED(hr)) return hr;
 
     impl_session.pUnkOuter = pSessionUnkOuter;
     impl_session.piid = piid;
     impl_session.pSession = NULL;
 
-    hr = IBindResource_Bind(This, pUnkOuter, pwszURL, dwBindURLFlags, rguid, riid, pAuthenticate,
-                            ppSession ? &impl_session : NULL, pdwBindStatus, ppUnk);
+    IWineRowServer_GetMarshal(server, &marshal);
+
+    hr = IBindResource_Bind(This, (IUnknown*)marshal, pwszURL, dwBindURLFlags, rguid, &IID_IUnknown, pAuthenticate,
+                            ppSession ? &impl_session : NULL, pdwBindStatus, &obj);
+
+    IMarshal_Release(marshal);
+    if(FAILED(hr))
+    {
+        IWineRowServer_Release(server);
+        return hr;
+    }
+
+    IWineRowServer_SetInnerUnk(server, obj);
+    hr = IUnknown_QueryInterface(obj, riid, (void**)ppUnk);
+    IUnknown_Release(obj);
 
     if(ppSession) *ppSession = impl_session.pSession;
     return hr;
