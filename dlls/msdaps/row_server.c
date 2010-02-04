@@ -412,8 +412,18 @@ static HRESULT WINAPI server_ReleaseAccessor(IWineRowServer* iface, HACCESSOR hA
                                              DBREFCOUNT *pcRefCount)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%08lx, %p): stub\n", This, hAccessor, pcRefCount);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IAccessor *accessor;
+
+    TRACE("(%p)->(%08lx, %p)\n", This, hAccessor, pcRefCount);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IAccessor, (void**)&accessor);
+    if(FAILED(hr)) return hr;
+
+    hr = IAccessor_ReleaseAccessor(accessor, hAccessor, pcRefCount);
+    IAccessor_Release(accessor);
+
+    return hr;
 }
 
 static const IWineRowServerVtbl server_vtbl =
@@ -1074,8 +1084,14 @@ static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor
 static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    DBREFCOUNT ref;
+
+    TRACE("(%p)->(%08lx, %p)\n", This, hAccessor, pcRefCount);
+
+    hr = IWineRowServer_ReleaseAccessor(This->server, hAccessor, &ref);
+    if(pcRefCount) *pcRefCount = ref;
+    return hr;
 }
 
 static const IAccessorVtbl accessor_vtbl =
