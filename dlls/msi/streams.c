@@ -41,7 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 typedef struct tabSTREAM
 {
     UINT str_index;
-    LPWSTR name;
     IStream *stream;
 } STREAM;
 
@@ -72,7 +71,6 @@ static STREAM *create_stream(MSISTREAMSVIEW *sv, LPWSTR name, BOOL encoded, IStr
 {
     STREAM *stream;
     WCHAR decoded[MAX_STREAM_NAME_LEN];
-    LPWSTR ptr = name;
 
     stream = msi_alloc(sizeof(STREAM));
     if (!stream)
@@ -81,18 +79,11 @@ static STREAM *create_stream(MSISTREAMSVIEW *sv, LPWSTR name, BOOL encoded, IStr
     if (encoded)
     {
         decode_streamname(name, decoded);
-        ptr = decoded;
         TRACE("stream -> %s %s\n", debugstr_w(name), debugstr_w(decoded));
+        name = decoded;
     }
 
-    stream->name = strdupW(ptr);
-    if (!stream->name)
-    {
-        msi_free(stream);
-        return NULL;
-    }
-
-    stream->str_index = msi_addstringW(sv->db->strings, 0, stream->name, -1, 1, StringNonPersistent);
+    stream->str_index = msi_addstringW(sv->db->strings, 0, name, -1, 1, StringNonPersistent);
     stream->stream = stm;
     return stream;
 }
@@ -404,8 +395,6 @@ static UINT STREAMS_delete(struct tagMSIVIEW *view)
         {
             if (sv->streams[i]->stream)
                 IStream_Release(sv->streams[i]->stream);
-
-            msi_free(sv->streams[i]->name);
             msi_free(sv->streams[i]);
         }
     }
