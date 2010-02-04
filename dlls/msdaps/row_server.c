@@ -265,8 +265,20 @@ static HRESULT WINAPI server_GetNextRows(IWineRowServer* iface, HCHAPTER hReserv
                                          DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%08lx, %d, %d, %p, %p): stub\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
-    return E_NOTIMPL;
+    IRowset *rowset;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx, %d, %d, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
+    if(FAILED(hr)) return hr;
+
+    *prghRows = NULL;
+
+    hr = IRowset_GetNextRows(rowset, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+    IRowset_Release(rowset);
+    TRACE("returning %08x, got %d rows\n", hr, *pcRowObtained);
+    return hr;
 }
 
 static HRESULT WINAPI server_ReleaseRows(IWineRowServer* iface, DBCOUNTITEM cRows, const HROW rghRows[],
@@ -627,10 +639,21 @@ static HRESULT WINAPI rowset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBR
                                          DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
 {
     rowset_proxy *This = impl_from_IRowset(iface);
+    HRESULT hr;
+    HROW *rows = NULL;
 
-    FIXME("(%p)->(%08lx, %d, %d, %p, %p): stub\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+    TRACE("(%p)->(%08lx, %d, %d, %p, %p)\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
 
-    return E_NOTIMPL;
+    hr = IWineRowServer_GetNextRows(This->server, hReserved, lRowsOffset, cRows, pcRowObtained, &rows);
+    if(*prghRows)
+    {
+        memcpy(*prghRows, rows, *pcRowObtained * sizeof(rows[0]));
+        CoTaskMemFree(rows);
+    }
+    else
+        *prghRows = rows;
+
+    return hr;
 }
 
 static HRESULT WINAPI rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
