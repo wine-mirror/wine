@@ -351,8 +351,19 @@ static HRESULT WINAPI server_GetProperties(IWineRowServer* iface, ULONG cPropert
                                            DBPROPSET **prgPropertySets)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
-    return E_NOTIMPL;
+    IRowsetInfo *rowsetinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowsetInfo, (void**)&rowsetinfo);
+    if(FAILED(hr)) return hr;
+
+    hr = IRowsetInfo_GetProperties(rowsetinfo, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    IRowsetInfo_Release(rowsetinfo);
+
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_GetReferencedRowset(IWineRowServer* iface, DBORDINAL iOrdinal,
@@ -1010,8 +1021,13 @@ static HRESULT WINAPI rowsetinfo_GetProperties(IRowsetInfo *iface, const ULONG c
                                                DBPROPSET **prgPropertySets)
 {
     rowset_proxy *This = impl_from_IRowsetInfo(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    hr = IWineRowServer_GetProperties(This->server, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    return hr;
 }
 
 static HRESULT WINAPI rowsetinfo_GetReferencedRowset(IRowsetInfo *iface, DBORDINAL iOrdinal, REFIID riid,
