@@ -1515,7 +1515,7 @@ struct IWineD3DDeviceImpl
     const struct fragment_pipeline *frag_pipe;
     const struct blit_shader *blitter;
 
-    unsigned int max_ffp_textures, max_ffp_texture_stages;
+    unsigned int max_ffp_textures;
     DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
     DWORD vs_clipping;
 

@@ -3101,15 +3101,17 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
     }
 }
 
-static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
+static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info)
+{
     unsigned int i, tex;
     WORD ffu_map;
 
     device_update_fixed_function_usage_map(This);
     ffu_map = This->fixed_function_usage_map;
 
-    if (This->max_ffp_textures == This->max_ffp_texture_stages ||
-            This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
+    if (This->max_ffp_textures == gl_info->limits.texture_stages
+            || This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures)
+    {
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {
             if (!(ffu_map & 1)) continue;
@@ -3139,10 +3141,10 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     }
 }
 
-static void device_map_psamplers(IWineD3DDeviceImpl *This) {
+static void device_map_psamplers(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info)
+{
     const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
             ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.sampler_type;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
@@ -3182,11 +3184,12 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshad
     return !vshader_sampler_tokens[current_mapping - MAX_FRAGMENT_SAMPLERS];
 }
 
-static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
+static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct wined3d_gl_info *gl_info)
+{
     const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
             ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.sampler_type;
     const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
-    int start = min(MAX_COMBINED_SAMPLERS, This->adapter->gl_info.limits.combined_samplers) - 1;
+    int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
 
     if (ps) {
@@ -3223,7 +3226,9 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     }
 }
 
-void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
+void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
+{
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     BOOL vs = use_vs(This->stateBlock);
     BOOL ps = use_ps(This->stateBlock);
     /*
@@ -3233,15 +3238,10 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
      * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
      * to be reset. Because of that try to work with a 1:1 mapping as much as possible
      */
-    if (ps) {
-        device_map_psamplers(This);
-    } else {
-        device_map_fixed_function_samplers(This);
-    }
+    if (ps) device_map_psamplers(This, gl_info);
+    else device_map_fixed_function_samplers(This, gl_info);
 
-    if (vs) {
-        device_map_vsamplers(This, ps);
-    }
+    if (vs) device_map_vsamplers(This, ps, gl_info);
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
@@ -7054,7 +7054,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->frag_pipe = fragment_pipeline;
     fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
     device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
-    device->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
 
     hr = compile_state_table(device->StateTable, device->multistate_funcs, &adapter->gl_info,
             ffp_vertexstate_template, fragment_pipeline, misc_state_template);
