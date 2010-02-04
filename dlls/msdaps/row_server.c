@@ -285,8 +285,19 @@ static HRESULT WINAPI server_ReleaseRows(IWineRowServer* iface, DBCOUNTITEM cRow
                                          DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
-    return E_NOTIMPL;
+    IRowset *rowset;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
+    if(FAILED(hr)) return hr;
+
+    hr = IRowset_ReleaseRows(rowset, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+    IRowset_Release(rowset);
+
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_RestartPosition(IWineRowServer* iface, HCHAPTER hReserved)
@@ -660,10 +671,28 @@ static HRESULT WINAPI rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, cons
                                          DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
     rowset_proxy *This = impl_from_IRowset(iface);
+    HRESULT hr;
+    DBROWOPTIONS *options = rgRowOptions;
+    DBREFCOUNT *refs = rgRefCounts;
+    DBROWSTATUS *status = rgRowStatus;
 
-    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%d, %p, %p, %p, %p)\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
 
-    return E_NOTIMPL;
+    if(!options)
+    {
+        options = CoTaskMemAlloc(cRows * sizeof(options[0]));
+        memset(options, 0, cRows * sizeof(options[0]));
+    }
+    if(!refs) refs = CoTaskMemAlloc(cRows * sizeof(refs[0]));
+    if(!status) status = CoTaskMemAlloc(cRows * sizeof(status[0]));
+
+    hr = IWineRowServer_ReleaseRows(This->server, cRows, rghRows, options, refs, status);
+
+    if(status != rgRowStatus) CoTaskMemFree(status);
+    if(refs != rgRefCounts) CoTaskMemFree(refs);
+    if(options != rgRowOptions) CoTaskMemFree(options);
+
+    return hr;
 }
 
 static HRESULT WINAPI rowset_RestartPosition(IRowset* iface, HCHAPTER hReserved)
