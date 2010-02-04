@@ -766,11 +766,34 @@ HRESULT __RPC_STUB ICommand_Cancel_Stub(ICommand* This, IErrorInfo **ppErrorInfo
 HRESULT CALLBACK ICommand_Execute_Proxy(ICommand* This, IUnknown *pUnkOuter, REFIID riid,
                                         DBPARAMS *pParams, DBROWCOUNT *pcRowsAffected, IUnknown **ppRowset)
 {
-    FIXME("(%p)->(%p, %s, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid), pParams,
-          pcRowsAffected, ppRowset);
-    if(pParams) TRACE("params {%p, %d, %08lx}\n", pParams->pData, pParams->cParamSets, pParams->hAccessor);
+    HRESULT hr;
+    DBROWCOUNT affected;
 
-    return E_NOTIMPL;
+    *ppRowset = NULL;
+
+    TRACE("(%p)->(%p, %s, %p, %p, %p)\n", This, pUnkOuter, debugstr_guid(riid), pParams,
+          pcRowsAffected, ppRowset);
+
+    if(pParams)
+    {
+        FIXME("Unhandled params {%p, %d, %08lx}\n", pParams->pData, pParams->cParamSets, pParams->hAccessor);
+        return E_NOTIMPL;
+    }
+
+    if(pUnkOuter)
+    {
+        FIXME("Aggregation not supported\n");
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    hr = ICommand_RemoteExecute_Proxy(This, pUnkOuter, riid, 0, 0, NULL, 0, NULL, NULL, 0, NULL, NULL, &affected,
+                                      ppRowset);
+
+    TRACE("Execute returns %08x\n", hr);
+
+    if(pcRowsAffected) *pcRowsAffected = affected;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, REFIID riid, HACCESSOR hAccessor,
@@ -778,10 +801,37 @@ HRESULT __RPC_STUB ICommand_Execute_Stub(ICommand* This, IUnknown *pUnkOuter, RE
                                          RMTPACK *pOutputParams, DBCOUNTITEM cBindings, DBBINDING *rgBindings,
                                          DBSTATUS *rgStatus, DBROWCOUNT *pcRowsAffected, IUnknown **ppRowset)
 {
-    FIXME("(%p)->(%p, %s, %08lx, %d, %p, %d, %p, %p, %d, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
+    IWineRowServer *rowset_server;
+    IMarshal *marshal;
+    IUnknown *obj = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %s, %08lx, %d, %p, %d, %p, %p, %d, %p, %p, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(riid),
           hAccessor, cParamSets, pGuid, ulGuidOffset, pInputParams, pOutputParams, cBindings, rgBindings, rgStatus,
           pcRowsAffected, ppRowset);
-    return E_NOTIMPL;
+
+    *ppRowset = NULL;
+
+    hr = CoCreateInstance(&CLSID_wine_rowset_server, NULL, CLSCTX_INPROC_SERVER, &IID_IWineRowServer, (void**)&rowset_server);
+    if(FAILED(hr)) return hr;
+
+    IWineRowServer_GetMarshal(rowset_server, &marshal);
+
+    hr = ICommand_Execute(This, (IUnknown*)marshal, &IID_IUnknown, NULL, pcRowsAffected, &obj);
+
+    IMarshal_Release(marshal);
+
+    if(FAILED(hr))
+    {
+        IWineRowServer_Release(rowset_server);
+        return hr;
+    }
+
+    IWineRowServer_SetInnerUnk(rowset_server, obj);
+    hr = IUnknown_QueryInterface(obj, riid, (void**)ppRowset);
+    IUnknown_Release(obj);
+
+    return hr;
 }
 
 HRESULT CALLBACK ICommand_GetDBSession_Proxy(ICommand* This, REFIID riid, IUnknown **ppSession)
