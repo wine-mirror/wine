@@ -667,6 +667,9 @@ static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
 typedef struct
 {
     const IRowsetVtbl *rowset_vtbl;
+    const IRowsetLocateVtbl *rowsetlocate_vtbl;
+    const IRowsetInfoVtbl *rowsetinfo_vtbl;
+    const IAccessorVtbl *accessor_vtbl;
 
     LONG ref;
 
@@ -676,6 +679,21 @@ typedef struct
 static inline rowset_proxy *impl_from_IRowset(IRowset *iface)
 {
     return (rowset_proxy *)((char*)iface - FIELD_OFFSET(rowset_proxy, rowset_vtbl));
+}
+
+static inline rowset_proxy *impl_from_IRowsetLocate(IRowsetLocate *iface)
+{
+    return (rowset_proxy *)((char*)iface - FIELD_OFFSET(rowset_proxy, rowsetlocate_vtbl));
+}
+
+static inline rowset_proxy *impl_from_IRowsetInfo(IRowsetInfo *iface)
+{
+    return (rowset_proxy *)((char*)iface - FIELD_OFFSET(rowset_proxy, rowsetinfo_vtbl));
+}
+
+static inline rowset_proxy *impl_from_IAccessor(IAccessor *iface)
+{
+    return (rowset_proxy *)((char*)iface - FIELD_OFFSET(rowset_proxy, accessor_vtbl));
 }
 
 static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID iid, void **obj)
@@ -689,6 +707,18 @@ static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID iid, void **o
        IsEqualIID(iid, &IID_IRowset))
     {
         *obj = &This->rowset_vtbl;
+    }
+    else if(IsEqualIID(iid, &IID_IRowsetLocate))
+    {
+        *obj = &This->rowsetlocate_vtbl;
+    }
+    else if(IsEqualIID(iid, &IID_IRowsetInfo))
+    {
+        *obj = &This->rowsetinfo_vtbl;
+    }
+    else if(IsEqualIID(iid, &IID_IAccessor))
+    {
+        *obj = &This->accessor_vtbl;
     }
     else
     {
@@ -825,6 +855,218 @@ static const IRowsetVtbl rowset_vtbl =
     rowset_RestartPosition
 };
 
+static HRESULT WINAPI rowsetlocate_QueryInterface(IRowsetLocate *iface, REFIID iid, void **obj)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+}
+
+static ULONG WINAPI rowsetlocate_AddRef(IRowsetLocate *iface)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI rowsetlocate_Release(IRowsetLocate *iface)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static HRESULT WINAPI rowsetlocate_AddRefRows(IRowsetLocate *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+                                              DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IRowset_AddRefRows((IRowset*)This, cRows, rghRows, rgRefCounts, rgRowStatus);
+}
+
+static HRESULT WINAPI rowsetlocate_GetData(IRowsetLocate *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IRowset_GetData((IRowset*)This, hRow, hAccessor, pData);
+}
+
+static HRESULT WINAPI rowsetlocate_GetNextRows(IRowsetLocate *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+                                               DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IRowset_GetNextRows((IRowset*)This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+}
+
+static HRESULT WINAPI rowsetlocate_ReleaseRows(IRowsetLocate *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+                                               DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IRowset_ReleaseRows((IRowset*)This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+}
+
+static HRESULT WINAPI rowsetlocate_RestartPosition(IRowsetLocate *iface, HCHAPTER hReserved)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    return IRowset_RestartPosition((IRowset*)This, hReserved);
+}
+
+static HRESULT WINAPI rowsetlocate_Compare(IRowsetLocate *iface, HCHAPTER hReserved, DBBKMARK cbBookmark1, const BYTE *pBookmark1,
+                                           DBBKMARK cbBookmark2, const BYTE *pBookmark2, DBCOMPARE *pComparison)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowsetlocate_GetRowsAt(IRowsetLocate *iface, HWATCHREGION hReserved1, HCHAPTER hReserved2, DBBKMARK cbBookmark,
+                                             const BYTE *pBookmark, DBROWOFFSET lRowsOffset, DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained,
+                                             HROW **prghRows)
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowsetlocate_GetRowsByBookmark(IRowsetLocate *iface, HCHAPTER hReserved, DBCOUNTITEM cRows, const DBBKMARK rgcbBookmarks[],
+                                                     const BYTE * rgpBookmarks[], HROW rghRows[], DBROWSTATUS rgRowStatus[])
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowsetlocate_Hash(IRowsetLocate *iface, HCHAPTER hReserved, DBBKMARK cBookmarks, const DBBKMARK rgcbBookmarks[],
+                                        const BYTE * rgpBookmarks[], DBHASHVALUE rgHashedValues[], DBROWSTATUS rgBookmarkStatus[])
+{
+    rowset_proxy *This = impl_from_IRowsetLocate(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IRowsetLocateVtbl rowsetlocate_vtbl =
+{
+    rowsetlocate_QueryInterface,
+    rowsetlocate_AddRef,
+    rowsetlocate_Release,
+    rowsetlocate_AddRefRows,
+    rowsetlocate_GetData,
+    rowsetlocate_GetNextRows,
+    rowsetlocate_ReleaseRows,
+    rowsetlocate_RestartPosition,
+    rowsetlocate_Compare,
+    rowsetlocate_GetRowsAt,
+    rowsetlocate_GetRowsByBookmark,
+    rowsetlocate_Hash
+};
+
+static HRESULT WINAPI rowsetinfo_QueryInterface(IRowsetInfo *iface, REFIID iid, void **obj)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+}
+
+static ULONG WINAPI rowsetinfo_AddRef(IRowsetInfo *iface)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI rowsetinfo_Release(IRowsetInfo *iface)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static HRESULT WINAPI rowsetinfo_GetProperties(IRowsetInfo *iface, const ULONG cPropertyIDSets,
+                                               const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets,
+                                               DBPROPSET **prgPropertySets)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowsetinfo_GetReferencedRowset(IRowsetInfo *iface, DBORDINAL iOrdinal, REFIID riid,
+                                                     IUnknown **ppReferencedRowset)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowsetinfo_GetSpecification(IRowsetInfo *iface, REFIID riid, IUnknown **ppSpecification)
+{
+    rowset_proxy *This = impl_from_IRowsetInfo(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IRowsetInfoVtbl rowsetinfo_vtbl =
+{
+    rowsetinfo_QueryInterface,
+    rowsetinfo_AddRef,
+    rowsetinfo_Release,
+    rowsetinfo_GetProperties,
+    rowsetinfo_GetReferencedRowset,
+    rowsetinfo_GetSpecification
+};
+
+static HRESULT WINAPI accessor_QueryInterface(IAccessor *iface, REFIID iid, void **obj)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+}
+
+static ULONG WINAPI accessor_AddRef(IAccessor *iface)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI accessor_Release(IAccessor *iface)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS dwAccessorFlags, DBCOUNTITEM cBindings,
+                                              const DBBINDING rgBindings[], DBLENGTH cbRowSize, HACCESSOR *phAccessor,
+                                              DBBINDSTATUS rgStatus[])
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor, DBACCESSORFLAGS *pdwAccessorFlags,
+                                           DBCOUNTITEM *pcBindings, DBBINDING **prgBindings)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    rowset_proxy *This = impl_from_IAccessor(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IAccessorVtbl accessor_vtbl =
+{
+    accessor_QueryInterface,
+    accessor_AddRef,
+    accessor_Release,
+    accessor_AddRefAccessor,
+    accessor_CreateAccessor,
+    accessor_GetBindings,
+    accessor_ReleaseAccessor
+};
+
 HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
 {
     rowset_proxy *proxy;
@@ -836,6 +1078,9 @@ HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
     if(!proxy) return E_OUTOFMEMORY;
 
     proxy->rowset_vtbl = &rowset_vtbl;
+    proxy->rowsetlocate_vtbl = &rowsetlocate_vtbl;
+    proxy->rowsetinfo_vtbl = &rowsetinfo_vtbl;
+    proxy->accessor_vtbl = &accessor_vtbl;
     proxy->ref = 1;
     IWineRowServer_AddRef(server);
     proxy->server = server;
