@@ -193,9 +193,11 @@ int wpp_parse( const char *input, FILE *output )
 
     ret = ppy_parse();
     /* If there were errors during processing, return an error code */
-    if(!ret && pp_status.state) ret = pp_status.state;
+    if (!ret && pp_status.state) ret = pp_status.state;
 
     if (input) wpp_callbacks->close(pp_status.file);
+    /* Clean if_stack, it could remain dirty on errors */
+    while (pp_get_if_depth()) pp_pop_if();
     pp_pop_define_state();
     return ret;
 }
