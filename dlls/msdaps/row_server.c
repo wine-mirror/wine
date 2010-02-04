@@ -219,10 +219,51 @@ static HRESULT WINAPI server_Open(IWineRowServer* iface, IUnknown *pUnkOuter, DB
                                   IUnknown **ppUnk)
 {
     server *This = impl_from_IWineRowServer(iface);
+    IRow *row;
+    HRESULT hr;
+    IWineRowServer *new_server;
+    IMarshal *marshal;
+    IUnknown *obj;
 
-    FIXME("(%p)->(%p, %p, %s, %08x, %s, %p): stub\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
+    TRACE("(%p)->(%p, %p, %s, %08x, %s, %p)\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
           dwBindFlags, debugstr_guid(riid), ppUnk);
-    return E_NOTIMPL;
+
+    *ppUnk = NULL;
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRow, (void**)&row);
+    if(FAILED(hr)) return hr;
+
+    if(IsEqualGUID(rguidColumnType, &DBGUID_ROWSET))
+        hr = CoCreateInstance(&CLSID_wine_rowset_server, NULL, CLSCTX_INPROC_SERVER, &IID_IWineRowServer, (void**)&new_server);
+    else
+    {
+        FIXME("Unhandled object %s\n", debugstr_guid(rguidColumnType));
+        hr = E_NOTIMPL;
+    }
+
+    if(FAILED(hr))
+    {
+        IRow_Release(row);
+        return hr;
+    }
+
+    IWineRowServer_GetMarshal(new_server, &marshal);
+    hr = IRow_Open(row, (IUnknown*)marshal, pColumnID, rguidColumnType, dwBindFlags, &IID_IUnknown, &obj);
+    IMarshal_Release(marshal);
+    IRow_Release(row);
+
+    if(FAILED(hr))
+    {
+        IWineRowServer_Release(new_server);
+        return hr;
+    }
+
+    IWineRowServer_SetInnerUnk(new_server, obj);
+    hr = IUnknown_QueryInterface(obj, riid, (void**)ppUnk);
+    IUnknown_Release(obj);
+
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_SetColumns(IWineRowServer* iface, DBORDINAL num_cols,
@@ -659,10 +700,15 @@ static HRESULT WINAPI row_Open(IRow* iface, IUnknown *pUnkOuter,
 {
     row_proxy *This = impl_from_IRow(iface);
 
-    FIXME("(%p)->(%p, %p, %s, %08x, %s, %p): stub\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
+    TRACE("(%p)->(%p, %p, %s, %08x, %s, %p)\n", This, pUnkOuter, pColumnID, debugstr_guid(rguidColumnType),
           dwBindFlags, debugstr_guid(riid), ppUnk);
+    if(pUnkOuter)
+    {
+        FIXME("Aggregation not supported\n");
+        return CLASS_E_NOAGGREGATION;
+    }
 
-    return E_NOTIMPL;
+    return IWineRowServer_Open(This->server, pUnkOuter, pColumnID, rguidColumnType, dwBindFlags, riid, ppUnk);
 }
 
 static const IRowVtbl row_vtbl =
