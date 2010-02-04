@@ -384,8 +384,19 @@ static HRESULT WINAPI server_CreateAccessor(IWineRowServer* iface, DBACCESSORFLA
                                             HACCESSOR *phAccessor, DBBINDSTATUS *rgStatus)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%08x, %d, %p, %d, %p, %p): stub\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IAccessor *accessor;
+
+    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IAccessor, (void**)&accessor);
+    if(FAILED(hr)) return hr;
+
+    hr = IAccessor_CreateAccessor(accessor, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+    IAccessor_Release(accessor);
+
+    TRACE("returning %08x, accessor %08lx\n", hr, *phAccessor);
+    return hr;
 }
 
 static HRESULT WINAPI server_GetBindings(IWineRowServer* iface, HACCESSOR hAccessor,
@@ -1037,8 +1048,19 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
                                               DBBINDSTATUS rgStatus[])
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    DBBINDSTATUS *status;
+
+    TRACE("(%p)->(%08x, %d, %p, %d, %p, %p)\n", This, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, rgStatus);
+
+    if(!rgStatus) status = CoTaskMemAlloc(cBindings * sizeof(status[0]));
+    else status = rgStatus;
+
+    hr = IWineRowServer_CreateAccessor(This->server, dwAccessorFlags, cBindings, rgBindings, cbRowSize, phAccessor, status);
+
+    if(!rgStatus) CoTaskMemFree(status);
+
+    return hr;
 }
 
 static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor, DBACCESSORFLAGS *pdwAccessorFlags,
