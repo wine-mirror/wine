@@ -7475,6 +7475,7 @@ static void test_start_services(void)
     }
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     ok(scm != NULL, "Failed to open the SC Manager\n");
+    if (!scm) return;
 
     service = OpenService(scm, "Spooler", SC_MANAGER_ALL_ACCESS);
     if (!service && GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
@@ -7483,7 +7484,11 @@ static void test_start_services(void)
         CloseServiceHandle(scm);
         return;
     }
-    ok(service != NULL, "Failed to open Spooler\n");
+    ok(service != NULL, "Failed to open Spooler, error %d\n", GetLastError());
+    if (!service) {
+        CloseServiceHandle(scm);
+        return;
+    }
 
     ret = StartService(service, 0, NULL);
     if (!ret && (error = GetLastError()) != ERROR_SERVICE_ALREADY_RUNNING)
