@@ -307,6 +307,45 @@ static HRESULT WINAPI server_RestartPosition(IWineRowServer* iface, HCHAPTER hRe
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI server_Compare(IWineRowServer *iface, HCHAPTER hReserved, DBBKMARK cbBookmark1,
+                                     const BYTE *pBookmark1, DBBKMARK cbBookmark2, const BYTE *pBookmark2,
+                                     DBCOMPARE *pComparison)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetRowsAt(IWineRowServer *iface, HWATCHREGION hReserved1, HCHAPTER hReserved2,
+                                       DBBKMARK cbBookmark, const BYTE *pBookmark, DBROWOFFSET lRowsOffset,
+                                       DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained, HROW **prghRows)
+{
+    server *This = impl_from_IWineRowServer(iface);
+
+    FIXME("(%p)->(%08lx, %08lx, %d, %p, %d, %d, %p, %p): stub\n", This, hReserved1, hReserved2, cbBookmark, pBookmark,
+          lRowsOffset, cRows, pcRowsObtained, prghRows);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetRowsByBookmark(IWineRowServer *iface, HCHAPTER hReserved, DBCOUNTITEM cRows,
+                                               const DBBKMARK rgcbBookmarks[], const BYTE * rgpBookmarks[],
+                                               HROW rghRows[], DBROWSTATUS rgRowStatus[])
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_Hash(IWineRowServer *iface, HCHAPTER hReserved, DBBKMARK cBookmarks,
+                                  const DBBKMARK rgcbBookmarks[], const BYTE * rgpBookmarks[],
+                                  DBHASHVALUE rgHashedValues[], DBROWSTATUS rgBookmarkStatus[])
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
 static const IWineRowServerVtbl server_vtbl =
 {
     server_QueryInterface,
@@ -322,7 +361,11 @@ static const IWineRowServerVtbl server_vtbl =
     server_GetData,
     server_GetNextRows,
     server_ReleaseRows,
-    server_RestartPosition
+    server_RestartPosition,
+    server_Compare,
+    server_GetRowsAt,
+    server_GetRowsByBookmark,
+    server_Hash
 };
 
 static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)

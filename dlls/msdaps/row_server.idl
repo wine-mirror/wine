@@ -107,6 +107,38 @@ typedef struct
 
     HRESULT RestartPosition([in] HCHAPTER hReserved);
 
+    /* IRowsetLocate */
+
+    HRESULT Compare([in] HCHAPTER hReserved,
+                    [in] DBBKMARK cbBookmark1,
+                    [in, size_is(cbBookmark1)] const BYTE *pBookmark1,
+                    [in] DBBKMARK cbBookmark2,
+                    [in, size_is(cbBookmark2)] const BYTE *pBookmark2,
+                    [out] DBCOMPARE *pComparison);
+
+    HRESULT GetRowsAt([in] HWATCHREGION hReserved1,
+                      [in] HCHAPTER hReserved2,
+                      [in] DBBKMARK cbBookmark,
+                      [in, size_is(cbBookmark)] const BYTE *pBookmark,
+                      [in] DBROWOFFSET lRowsOffset,
+                      [in] DBROWCOUNT cRows,
+                      [out] DBCOUNTITEM *pcRowsObtained,
+                      [out, size_is(,cRows)] HROW **prghRows);
+
+    HRESULT GetRowsByBookmark([in] HCHAPTER hReserved,
+                              [in] DBCOUNTITEM cRows,
+                              [in, size_is(cRows)] const DBBKMARK rgcbBookmarks[],
+                              [in, size_is(cRows)] const BYTE *rgpBookmarks[],
+                              [out, size_is(cRows)] HROW rghRows[],
+                              [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+
+    HRESULT Hash([in] HCHAPTER hReserved,
+                 [in] DBBKMARK cBookmarks,
+                 [in, size_is(cBookmarks)] const DBBKMARK rgcbBookmarks[],
+                 [in, size_is(cBookmarks)] const BYTE *rgpBookmarks[],
+                 [out, size_is(cBookmarks)] DBHASHVALUE rgHashedValues[],
+                 [out, size_is(cBookmarks)] DBROWSTATUS rgBookmarkStatus[]);
+
 }
 
 [
