@@ -580,7 +580,6 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   ME_DisplayItem *item;
   ME_Context c;
   BOOL bModified = FALSE;
-  int yStart = -1;
   int totalWidth = 0;
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
@@ -598,11 +597,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     ME_WrapTextParagraph(&c, item);
 
     if (bRedraw)
-    {
       item->member.para.nFlags |= MEPF_REPAINT;
-      if (yStart == -1)
-        yStart = c.pt.y;
-    }
 
     bModified = bModified | bRedraw;
 
