@@ -238,8 +238,19 @@ static HRESULT WINAPI server_AddRefRows(IWineRowServer* iface, DBCOUNTITEM cRows
                                         DBROWSTATUS rgRowStatus[])
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
-    return E_NOTIMPL;
+    IRowset *rowset;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
+    if(FAILED(hr)) return hr;
+
+    hr = IRowset_AddRefRows(rowset, cRows, rghRows, rgRefCounts, rgRowStatus);
+
+    IRowset_Release(rowset);
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_GetData(IWineRowServer* iface, HROW hRow,
@@ -586,10 +597,21 @@ static HRESULT WINAPI rowset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows, const
                                         DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
     rowset_proxy *This = impl_from_IRowset(iface);
+    HRESULT hr;
+    DBREFCOUNT *refs = rgRefCounts;
+    DBSTATUS *stats = rgRowStatus;
 
-    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+    TRACE("(%p)->(%d, %p, %p, %p)\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
 
-    return E_NOTIMPL;
+    if(!refs) refs = CoTaskMemAlloc(cRows * sizeof(refs[0]));
+    if(!stats) stats = CoTaskMemAlloc(cRows * sizeof(stats[0]));
+
+    hr = IWineRowServer_AddRefRows(This->server, cRows, rghRows, refs, stats);
+
+    if(refs != rgRefCounts) CoTaskMemFree(refs);
+    if(stats != rgRowStatus) CoTaskMemFree(stats);
+
+    return hr;
 }
 
 static HRESULT WINAPI rowset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
