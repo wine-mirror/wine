@@ -236,7 +236,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame)
                 tmp.Offset  = OFFSETOF(next_switch);
                 p = sw_xlat_addr(csw, &tmp);
 
-                if (!sw_read_mem(csw->hProcess, p, &frame16, sizeof(frame16)))
+                if (!sw_read_mem(csw, p, &frame16, sizeof(frame16)))
                 {
                     WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
