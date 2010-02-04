@@ -274,7 +274,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DSurface_BltFast(This->backBuffer[0], 0, 0, This->device->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
     }
 
-    TRACE("presetting HDC %p\n", This->context[0]->hdc);
+    TRACE("Presenting HDC %p.\n", context->hdc);
 
     render_to_fbo = This->render_to_fbo;
 
@@ -341,7 +341,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     }
 
     if (This->num_contexts > 1) wglFinish();
-    SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
+    SwapBuffers(context->hdc); /* TODO: cycle through the swapchain buffers */
 
     TRACE("SwapBuffers called, Starting new frame\n");
     /* FPS support */
