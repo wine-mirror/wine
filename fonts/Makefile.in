@@ -1,6 +1,7 @@
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
+VPATH     = @srcdir@
 MODULE    = none
 fontdir   = $(datadir)/wine/fonts
 INSTALLDIRS = $(DESTDIR)$(fontdir)
@@ -58,135 +59,122 @@ all: $(FONTS)
 
 @MAKE_RULES@
 
-coure.fon: $(SRCDIR)/courier.ttf
+coure.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1252,8
 
-couree.fon: $(SRCDIR)/courier.ttf
+couree.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1250,8
 
-courer.fon: $(SRCDIR)/courier.ttf
+courer.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1251,8
 
-coureg.fon: $(SRCDIR)/courier.ttf
+coureg.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1253,8
 
-couret.fon: $(SRCDIR)/courier.ttf
+couret.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1254,8
 
-coue1255.fon: $(SRCDIR)/courier.ttf
+coue1255.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1255,8
 
-coue1256.fon: $(SRCDIR)/courier.ttf
+coue1256.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1256,8
 
-coue1257.fon: $(SRCDIR)/courier.ttf
+coue1257.fon: courier.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/courier.ttf 13,1257,8
 
-sserife.fon: $(SRCDIR)/ms_sans_serif.ttf
+sserife.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1252,5 16,1252,7 20,1252,8
 
-sserifee.fon: $(SRCDIR)/ms_sans_serif.ttf
+sserifee.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1250,5 16,1250,7
 
-sserifer.fon: $(SRCDIR)/ms_sans_serif.ttf
+sserifer.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1251,5 16,1251,7 20,1251,8
 
-sserifeg.fon: $(SRCDIR)/ms_sans_serif.ttf
+sserifeg.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1253,5 16,1253,7 20,1253,8
 
-sserifet.fon: $(SRCDIR)/ms_sans_serif.ttf
+sserifet.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1254,5 16,1254,7 20,1254,8
 
-ssee1255.fon: $(SRCDIR)/ms_sans_serif.ttf
+ssee1255.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1255,5 16,1255,7 20,1255,8
 
-ssee1256.fon: $(SRCDIR)/ms_sans_serif.ttf
+ssee1256.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1256,5 16,1256,7 20,1256,8
 
-ssee1257.fon: $(SRCDIR)/ms_sans_serif.ttf
+ssee1257.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,1257,5 16,1257,7 20,1257,8
 
-ssee874.fon: $(SRCDIR)/ms_sans_serif.ttf
+ssee874.fon: ms_sans_serif.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 $(SRCDIR)/ms_sans_serif.ttf 13,874,5 16,874,7 20,874,8
 
-smalle.fon: $(SRCDIR)/small_fonts.ttf
+smalle.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1252,5
 
-smallee.fon: $(SRCDIR)/small_fonts.ttf
+smallee.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1250,5
 
-smaller.fon: $(SRCDIR)/small_fonts.ttf
+smaller.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1251,5
 
-smalleg.fon: $(SRCDIR)/small_fonts.ttf
+smalleg.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1253,5
 
-smallet.fon: $(SRCDIR)/small_fonts.ttf
+smallet.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1254,5
 
-smae1255.fon: $(SRCDIR)/small_fonts.ttf
+smae1255.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1255,5
 
-smae1256.fon: $(SRCDIR)/small_fonts.ttf
+smae1256.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1256,5
 
-smae1257.fon: $(SRCDIR)/small_fonts.ttf
+smae1257.fon: small_fonts.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts.ttf 11,1257,5
 
-jsmalle.fon: $(SRCDIR)/small_fonts_jp.ttf
+jsmalle.fon: small_fonts_jp.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/small_fonts_jp.ttf 11,932,7
 
-vgasys.fon: $(SRCDIR)/system.ttf
+vgasys.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1252,7
 
-vgasyse.fon: $(SRCDIR)/system.ttf
+vgasyse.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1250,7
 
-vgasysr.fon: $(SRCDIR)/system.ttf
+vgasysr.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1251,7
 
-vgasysg.fon: $(SRCDIR)/system.ttf
+vgasysg.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1253,7
 
-vgasyst.fon: $(SRCDIR)/system.ttf
+vgasyst.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1254,7
 
-vgas1255.fon: $(SRCDIR)/system.ttf
+vgas1255.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1255,7
 
-vgas1256.fon: $(SRCDIR)/system.ttf
+vgas1256.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1256,7
 
-vgas1257.fon: $(SRCDIR)/system.ttf
+vgas1257.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,1257,7
 
-vgas874.fon: $(SRCDIR)/system.ttf
+vgas874.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,874,7
 
-jvgasys.fon: $(SRCDIR)/system.ttf
+jvgasys.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 18,932,8
 
-svgasys.fon: $(SRCDIR)/system.ttf
+svgasys.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,936,7 16,1252,7
 
-hvgasys.fon: $(SRCDIR)/system.ttf
+hvgasys.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,949,7
 
-cvgasys.fon: $(SRCDIR)/system.ttf
+cvgasys.fon: system.ttf
 	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 $(SRCDIR)/system.ttf 16,950,7 16,1252,7
-
-# Use $(TOPSRCDIR)/fonts instead of $(SRCDIR) to confuse make when building in the source tree
-marlett.ttf: $(TOPSRCDIR)/fonts/marlett.ttf
-	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/marlett.ttf $@)
-
-symbol.ttf: $(TOPSRCDIR)/fonts/symbol.ttf
-	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/symbol.ttf $@)
-
-tahoma.ttf: $(TOPSRCDIR)/fonts/tahoma.ttf
-	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/tahoma.ttf $@)
-
-tahomabd.ttf: $(TOPSRCDIR)/fonts/tahomabd.ttf
-	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/tahomabd.ttf $@)
 
 $(BITMAP_FONTS): $(SFNT2FNT)
 
@@ -200,4 +188,3 @@ uninstall::
 
 clean::
 	$(RM) $(BITMAP_FONTS)
-	[ $(SRCDIR) = . ] || $(RM) $(TRUETYPE_FONTS)
