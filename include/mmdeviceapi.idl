@@ -174,7 +174,7 @@ interface IMMDeviceCollection : IUnknown
     nonextensible,
     pointer_default(unique)
 ]
-interface IMMEndPoint : IUnknown
+interface IMMEndpoint : IUnknown
 {
     [id(1)] HRESULT GetDataFlow(
         [out] EDataFlow *pDataFlow
