@@ -135,7 +135,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     STREAM *stream;
     IStream *stm;
     STATSTG stat;
-    LPWSTR name = NULL;
+    LPWSTR encname = NULL, name = NULL;
     USHORT *data = NULL;
     HRESULT hr;
     ULONG count;
@@ -181,6 +181,8 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
         goto done;
     }
 
+    encname = encode_streamname(FALSE, name);
+
     r = write_stream_data(sv->db->storage, name, data, count, FALSE);
     if (r != ERROR_SUCCESS)
     {
@@ -192,7 +194,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     if (!stream)
         goto done;
 
-    hr = IStorage_OpenStream(sv->db->storage, name, 0,
+    hr = IStorage_OpenStream(sv->db->storage, encname, 0,
                              STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
     if (FAILED(hr))
     {
@@ -205,6 +207,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
 done:
     msi_free(name);
     msi_free(data);
+    msi_free(encname);
 
     IStream_Release(stm);
 
