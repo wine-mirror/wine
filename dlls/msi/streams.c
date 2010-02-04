@@ -287,7 +287,7 @@ static UINT STREAMS_get_column_info(struct tagMSIVIEW *view, UINT n,
     {
     case 1:
         name_ptr = Name;
-        if (type) *type = MSITYPE_STRING | MAX_STREAM_NAME_LEN;
+        if (type) *type = MSITYPE_STRING | MSITYPE_VALID | MAX_STREAM_NAME_LEN;
         break;
 
     case 2:
