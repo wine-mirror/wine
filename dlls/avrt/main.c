@@ -90,3 +90,9 @@ BOOL WINAPI AvRevertMmThreadCharacteristics(HANDLE AvrtHandle)
     FIXME("(%p): stub\n", AvrtHandle);
     return 1;
 }
+
+BOOL WINAPI AvSetMmThreadPriority(HANDLE AvrtHandle, AVRT_PRIORITY prio)
+{
+    FIXME("(%p)->(%u) stub\n", AvrtHandle, prio);
+    return 1;
+}

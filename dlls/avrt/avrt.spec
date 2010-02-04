@@ -11,4 +11,4 @@
 @ stub AvSetMmMaxThreadCharacteristicsW
 @ stdcall AvSetMmThreadCharacteristicsA(str ptr)
 @ stdcall AvSetMmThreadCharacteristicsW(wstr ptr)
-@ stub AvSetMmThreadPriority
+@ stdcall AvSetMmThreadPriority(ptr long)
