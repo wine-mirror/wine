@@ -450,7 +450,8 @@ static UINT STREAMS_find_matching_rows(struct tagMSIVIEW *view, UINT col,
     }
 
     *handle = UlongToPtr(++index);
-    if (index >= sv->num_rows)
+
+    if (index > sv->num_rows)
         return ERROR_NO_MORE_ITEMS;
 
     return ERROR_SUCCESS;
