@@ -39,8 +39,15 @@ typedef struct {
     LONG ref;
 } IDirect3DRMMeshBuilderImpl;
 
+typedef struct {
+    WORD major;
+    WORD minor;
+    DWORD flags;
+} Header;
+
 static const struct IDirect3DRMMeshBuilderVtbl Direct3DRMMeshBuilder_Vtbl;
 
+static const GUID GUID_Header = { 0x3D82AB43, 0x62DA, 0x11CF, { 0xAB, 0x39, 0x00, 0x20, 0xAF, 0x71, 0xE4, 0x33 } };
 static const GUID GUID_Mesh = { 0x3D82AB44, 0x62DA, 0x11CF, { 0xAB, 0x39, 0x00, 0x20, 0xAF, 0x71, 0xE4, 0x33 } };
 
 static char templates[] = {
@@ -408,6 +415,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilderImpl_Load(IDirect3DRMMeshBuilder* if
     LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
     LPDIRECTXFILEDATA pData = NULL;
     const GUID* pGuid;
+    DWORD size;
+    Header* pHeader;
     HRESULT hr;
     HRESULT ret = D3DRMERR_BADOBJECT;
 
@@ -431,7 +440,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilderImpl_Load(IDirect3DRMMeshBuilder* if
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, sizeof(templates));
+    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, strlen(templates));
     if (hr != DXFILE_OK)
         goto end;
 
@@ -449,9 +458,44 @@ static HRESULT WINAPI IDirect3DRMMeshBuilderImpl_Load(IDirect3DRMMeshBuilder* if
 
     TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
 
-    if (!IsEqualGUID(pGuid, &GUID_Mesh))
+    if (!IsEqualGUID(pGuid, &GUID_Header))
     {
         ret = D3DRMERR_BADFILE;
+        goto end;
+    }
+
+    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&pHeader);
+    if ((hr != DXFILE_OK) || (size != sizeof(Header)))
+        goto end;
+
+    TRACE("Version is %d %d %d\n", pHeader->major, pHeader->minor, pHeader->flags);
+
+    /* Version must be 1.0.x */
+    if ((pHeader->major != 1) || (pHeader->minor != 0))
+    {
+        ret = D3DRMERR_BADFILE;
+        goto end;
+    }
+
+    IDirectXFileData_Release(pData);
+    pData = NULL;
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    if (hr != DXFILE_OK)
+    {
+        ret = D3DRMERR_NOTFOUND;
+        goto end;
+    }
+
+    hr = IDirectXFileData_GetType(pData, &pGuid);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+
+    if (!IsEqualGUID(pGuid, &GUID_Mesh))
+    {
+        ret = D3DRMERR_NOTFOUND;
         goto end;
     }
 

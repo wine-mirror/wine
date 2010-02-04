@@ -47,19 +47,30 @@ static BOOL InitFunctionPtrs(void)
     return TRUE;
 }
 
-char data_ok[] =
-"xof 0302txt 0064\n"
-"Mesh Object\n"
-"{\n"
-"0;\n"
-"0;\n"
-"}\n";
-
-char data_bad[] =
+char data_bad_version[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"
 "1; 2; 3;\n"
+"}\n";
+
+char data_no_mesh[] =
+"xof 0302txt 0064\n"
+"Header Object\n"
+"{\n"
+"1; 0; 1;\n"
+"}\n";
+
+char data_ok[] =
+"xof 0302txt 0064\n"
+"Header Object\n"
+"{\n"
+"1; 0; 1;\n"
+"}\n"
+"Mesh Object\n"
+"{\n"
+"0;\n"
+"0;\n"
 "}\n";
 
 static void MeshBuilderTest(void)
@@ -75,13 +86,18 @@ static void MeshBuilderTest(void)
     hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
 
-    info.lpMemory = data_bad;
-    info.dSize = sizeof(data_bad);
+    info.lpMemory = data_bad_version;
+    info.dSize = strlen(data_bad_version);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRMERR_BADFILE, "Sould have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
 
+    info.lpMemory = data_no_mesh;
+    info.dSize = strlen(data_no_mesh);
+    hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    ok(hr == D3DRMERR_NOTFOUND, "Sould have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
+
     info.lpMemory = data_ok;
-    info.dSize = sizeof(data_ok);
+    info.dSize = strlen(data_ok);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
 
