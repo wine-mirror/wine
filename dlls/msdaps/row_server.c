@@ -257,8 +257,19 @@ static HRESULT WINAPI server_GetData(IWineRowServer* iface, HROW hRow,
                                      HACCESSOR hAccessor, BYTE *pData, DWORD size)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%08lx, %08lx, %p, %d): stub\n", This, hRow, hAccessor, pData, size);
-    return E_NOTIMPL;
+    IRowset *rowset;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx, %08lx, %p, %d)\n", This, hRow, hAccessor, pData, size);
+
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowset, (void**)&rowset);
+    if(FAILED(hr)) return hr;
+
+    hr = IRowset_GetData(rowset, hRow, hAccessor, pData);
+
+    IRowset_Release(rowset);
+    TRACE("returning %08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI server_GetNextRows(IWineRowServer* iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
@@ -822,10 +833,43 @@ static HRESULT WINAPI rowset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows, const
 static HRESULT WINAPI rowset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
 {
     rowset_proxy *This = impl_from_IRowset(iface);
+    HRESULT hr;
+    IAccessor *accessor;
+    DBACCESSORFLAGS flags;
+    DBCOUNTITEM count, i;
+    DBBINDING *bindings;
+    DWORD max_len = 0;
 
-    FIXME("(%p)->(%lx, %lx, %p): stub\n", This, hRow, hAccessor, pData);
+    TRACE("(%p)->(%lx, %lx, %p)\n", This, hRow, hAccessor, pData);
 
-    return E_NOTIMPL;
+    hr = IRowset_QueryInterface(iface, &IID_IAccessor, (void**)&accessor);
+    if(FAILED(hr)) return hr;
+
+    hr = IAccessor_GetBindings(accessor, hAccessor, &flags, &count, &bindings);
+    IAccessor_Release(accessor);
+    if(FAILED(hr)) return hr;
+
+    TRACE("got %d bindings\n", count);
+    for(i = 0; i < count; i++)
+    {
+        TRACE("%d\tord %d offs: val %d len %d stat %d, part %x, max len %d type %04x\n",
+              i, bindings[i].iOrdinal, bindings[i].obValue, bindings[i].obLength, bindings[i].obStatus,
+              bindings[i].dwPart, bindings[i].cbMaxLen, bindings[i].wType);
+        if(bindings[i].dwPart & DBPART_LENGTH && bindings[i].obLength >= max_len)
+            max_len = bindings[i].obLength + sizeof(DBLENGTH);
+        if(bindings[i].dwPart & DBPART_STATUS && bindings[i].obStatus >= max_len)
+            max_len = bindings[i].obStatus + sizeof(DWORD);
+        if(bindings[i].dwPart & DBPART_VALUE && bindings[i].obValue >= max_len)
+            max_len = bindings[i].obValue + db_type_size(bindings[i].wType, bindings[i].cbMaxLen);
+
+    }
+    TRACE("max_len %d\n", max_len);
+
+    CoTaskMemFree(bindings);
+
+    hr = IWineRowServer_GetData(This->server, hRow, hAccessor, pData, max_len);
+
+    return hr;
 }
 
 static HRESULT WINAPI rowset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
