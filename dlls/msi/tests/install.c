@@ -367,6 +367,7 @@ static const CHAR sss_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "WriteEnvironmentStrings\t\t4550\n"
                                                "CreateShortcuts\t\t4600\n"
                                                "StartServices\t\t5000\n"
+                                               "DeleteServices\t\t5500\n"
                                                "InstallFinalize\t\t6600\n"
                                                "InstallInitialize\t\t1500\n"
                                                "InstallValidate\t\t1400\n"
@@ -1845,6 +1846,19 @@ static const msi_table sss_tables[] =
     ADD_TABLE(file),
     ADD_TABLE(sss_install_exec_seq),
     ADD_TABLE(sss_service_control),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table sds_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(sss_install_exec_seq),
+    ADD_TABLE(service_control),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -7521,6 +7535,34 @@ static void test_start_services(void)
     }
 }
 
+static void test_delete_services(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, sds_tables, sizeof(sds_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7614,6 +7656,7 @@ START_TEST(install)
     test_feature_override();
     test_create_folder();
     test_start_services();
+    test_delete_services();
 
     DeleteFileA(log_file);
 

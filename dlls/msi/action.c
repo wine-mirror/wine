@@ -4570,26 +4570,12 @@ error:
     return FALSE;
 }
 
-static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
+static UINT stop_service( LPCWSTR name )
 {
-    MSIPACKAGE *package = param;
-    MSICOMPONENT *comp;
+    SC_HANDLE scm = NULL, service = NULL;
     SERVICE_STATUS status;
     SERVICE_STATUS_PROCESS ssp;
-    SC_HANDLE scm = NULL, service = NULL;
-    LPWSTR name, args;
-    DWORD event, needed;
-
-    event = MSI_RecordGetInteger(rec, 3);
-    if (!(event & msidbServiceControlEventStop))
-        return ERROR_SUCCESS;
-
-    comp = get_loaded_component(package, MSI_RecordGetString(rec, 6));
-    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
-        return ERROR_SUCCESS;
-
-    deformat_string(package, MSI_RecordGetString(rec, 2), &name);
-    deformat_string(package, MSI_RecordGetString(rec, 4), &args);
+    DWORD needed;
 
     scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!scm)
@@ -4604,16 +4590,14 @@ static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
                            SERVICE_ENUMERATE_DEPENDENTS);
     if (!service)
     {
-        WARN("Failed to open service (%s): %d\n",
-              debugstr_w(name), GetLastError());
+        WARN("Failed to open service (%s): %d\n", debugstr_w(name), GetLastError());
         goto done;
     }
 
     if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp,
                               sizeof(SERVICE_STATUS_PROCESS), &needed))
     {
-        WARN("Failed to query service status (%s): %d\n",
-             debugstr_w(name), GetLastError());
+        WARN("Failed to query service status (%s): %d\n", debugstr_w(name), GetLastError());
         goto done;
     }
 
@@ -4628,8 +4612,28 @@ static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
 done:
     CloseServiceHandle(service);
     CloseServiceHandle(scm);
-    msi_free(name);
-    msi_free(args);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
+    LPWSTR name;
+    DWORD event;
+
+    event = MSI_RecordGetInteger( rec, 3 );
+    if (!(event & msidbServiceControlEventStop))
+        return ERROR_SUCCESS;
+
+    comp = get_loaded_component( package, MSI_RecordGetString( rec, 6 ) );
+    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+        return ERROR_SUCCESS;
+
+    deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
+    stop_service( name );
+    msi_free( name );
 
     return ERROR_SUCCESS;
 }
@@ -4649,6 +4653,69 @@ static UINT ACTION_StopServices( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_StopService, package);
     msiobj_release(&view->hdr);
+
+    return rc;
+}
+
+static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    MSICOMPONENT *comp;
+    LPWSTR name = NULL;
+    DWORD event;
+    SC_HANDLE scm = NULL, service = NULL;
+
+    event = MSI_RecordGetInteger( rec, 3 );
+    if (!(event & msidbServiceControlEventDelete))
+        return ERROR_SUCCESS;
+
+    comp = get_loaded_component( package, MSI_RecordGetString(rec, 6) );
+    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+        return ERROR_SUCCESS;
+
+    deformat_string( package, MSI_RecordGetString(rec, 2), &name );
+    stop_service( name );
+
+    scm = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS );
+    if (!scm)
+    {
+        WARN("Failed to open the SCM: %d\n", GetLastError());
+        goto done;
+    }
+
+    service = OpenServiceW( scm, name, DELETE );
+    if (!service)
+    {
+        WARN("Failed to open service (%s): %u\n", debugstr_w(name), GetLastError());
+        goto done;
+    }
+
+    if (!DeleteService( service ))
+        WARN("Failed to delete service (%s): %u\n", debugstr_w(name), GetLastError());
+
+done:
+    CloseServiceHandle( service );
+    CloseServiceHandle( scm );
+    msi_free( name );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_DeleteServices( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_DeleteService, package );
+    msiobj_release( &view->hdr );
 
     return rc;
 }
@@ -5995,12 +6062,6 @@ static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
 }
 
-static UINT ACTION_DeleteServices( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
-    return msi_unimplemented_action_stub( package, "DeleteServices", table );
-}
 static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
 {
 	static const WCHAR table[] = {
