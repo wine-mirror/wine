@@ -65,6 +65,47 @@ typedef struct
                  [in] REFIID riid,
                  [out, iid_is(riid)] IUnknown **ppUnk);
 
+    /* IRowChange */
+typedef struct
+{
+    VARIANT v;
+    DBID columnid;
+    DBLENGTH data_len;
+    DBSTATUS status;
+    DBLENGTH max_len;
+    DBTYPE type;
+    BYTE precision;
+    BYTE scale;
+} wine_setcolumns_in;
+
+    HRESULT SetColumns([in] DBORDINAL num_cols,
+                       [in, size_is(num_cols)] wine_setcolumns_in *in_data,
+                       [out, size_is(num_cols)] DBSTATUS *status);
+
+    /* IRowset */
+    HRESULT AddRefRows([in] DBCOUNTITEM cRows,
+                       [in, size_is(cRows)] const HROW rghRows[],
+                       [out, size_is(cRows)] DBREFCOUNT rgRefCounts[],
+                       [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+
+    HRESULT GetData([in] HROW hRow,
+                    [in] HACCESSOR hAccessor,
+                    [in, out, size_is(size)] BYTE *pData,
+                    [in] DWORD size);
+
+    HRESULT GetNextRows([in] HCHAPTER hReserved,
+                        [in] DBROWOFFSET lRowsOffset,
+                        [in] DBROWCOUNT cRows,
+                        [out] DBCOUNTITEM *pcRowObtained,
+                        [out, size_is(,cRows)] HROW **prghRows);
+
+    HRESULT ReleaseRows([in] DBCOUNTITEM cRows,
+                        [in, size_is(cRows)] const HROW rghRows[],
+                        [in, size_is(cRows)] DBROWOPTIONS rgRowOptions[],
+                        [out, size_is(cRows)] DBREFCOUNT rgRefCounts[],
+                        [out, size_is(cRows)] DBROWSTATUS rgRowStatus[]);
+
+    HRESULT RestartPosition([in] HCHAPTER hReserved);
 
 }
 

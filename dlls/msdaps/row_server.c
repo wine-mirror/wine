@@ -225,6 +225,54 @@ static HRESULT WINAPI server_Open(IWineRowServer* iface, IUnknown *pUnkOuter, DB
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI server_SetColumns(IWineRowServer* iface, DBORDINAL num_cols,
+                                        wine_setcolumns_in *in_data, DBSTATUS *status)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%d, %p, %p): stub\n", This, num_cols, in_data, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_AddRefRows(IWineRowServer* iface, DBCOUNTITEM cRows,
+                                        const HROW rghRows[], DBREFCOUNT rgRefCounts[],
+                                        DBROWSTATUS rgRowStatus[])
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%d, %p, %p, %p): stub\n", This, cRows, rghRows, rgRefCounts, rgRowStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetData(IWineRowServer* iface, HROW hRow,
+                                     HACCESSOR hAccessor, BYTE *pData, DWORD size)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08lx, %08lx, %p, %d): stub\n", This, hRow, hAccessor, pData, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_GetNextRows(IWineRowServer* iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+                                         DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08lx, %d, %d, %p, %p): stub\n", This, hReserved, lRowsOffset, cRows, pcRowObtained, prghRows);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_ReleaseRows(IWineRowServer* iface, DBCOUNTITEM cRows, const HROW rghRows[],
+                                         DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%d, %p, %p, %p, %p): stub\n", This, cRows, rghRows, rgRowOptions, rgRefCounts, rgRowStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI server_RestartPosition(IWineRowServer* iface, HCHAPTER hReserved)
+{
+    server *This = impl_from_IWineRowServer(iface);
+    FIXME("(%p)->(%08lx): stub\n", This, hReserved);
+    return E_NOTIMPL;
+}
+
 static const IWineRowServerVtbl server_vtbl =
 {
     server_QueryInterface,
@@ -234,7 +282,13 @@ static const IWineRowServerVtbl server_vtbl =
     server_GetMarshal,
     server_GetColumns,
     server_GetSourceRowset,
-    server_Open
+    server_Open,
+    server_SetColumns,
+    server_AddRefRows,
+    server_GetData,
+    server_GetNextRows,
+    server_ReleaseRows,
+    server_RestartPosition
 };
 
 static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)
@@ -275,6 +329,7 @@ HRESULT create_rowset_server(IUnknown *outer, void **obj)
 typedef struct
 {
     const IRowVtbl *row_vtbl;
+    const IRowChangeVtbl *row_change_vtbl;
 
     LONG ref;
 
@@ -286,6 +341,11 @@ static inline row_proxy *impl_from_IRow(IRow *iface)
     return (row_proxy *)((char*)iface - FIELD_OFFSET(row_proxy, row_vtbl));
 }
 
+static inline row_proxy *impl_from_IRowChange(IRowChange *iface)
+{
+    return (row_proxy *)((char*)iface - FIELD_OFFSET(row_proxy, row_change_vtbl));
+}
+
 static HRESULT WINAPI row_QueryInterface(IRow *iface, REFIID iid, void **obj)
 {
     row_proxy *This = impl_from_IRow(iface);
@@ -295,6 +355,10 @@ static HRESULT WINAPI row_QueryInterface(IRow *iface, REFIID iid, void **obj)
        IsEqualIID(iid, &IID_IRow))
     {
         *obj = &This->row_vtbl;
+    }
+    else if(IsEqualIID(iid, &IID_IRowChange))
+    {
+        *obj = &This->row_change_vtbl;
     }
     else
     {
@@ -402,6 +466,40 @@ static const IRowVtbl row_vtbl =
     row_Open
 };
 
+static HRESULT WINAPI row_change_QueryInterface(IRowChange *iface, REFIID iid, void **obj)
+{
+    row_proxy *This = impl_from_IRowChange(iface);
+    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+}
+
+static ULONG WINAPI row_change_AddRef(IRowChange *iface)
+{
+    row_proxy *This = impl_from_IRowChange(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI row_change_Release(IRowChange *iface)
+{
+    row_proxy *This = impl_from_IRowChange(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI row_change_SetColumns(IRowChange *iface, DBORDINAL cColumns,
+                                            DBCOLUMNACCESS rgColumns[])
+{
+    row_proxy *This = impl_from_IRowChange(iface);
+    FIXME("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
+    return E_NOTIMPL;
+}
+
+static const IRowChangeVtbl row_change_vtbl =
+{
+    row_change_QueryInterface,
+    row_change_AddRef,
+    row_change_Release,
+    row_change_SetColumns
+};
+
 static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
 {
     row_proxy *proxy;
@@ -413,6 +511,7 @@ static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
     if(!proxy) return E_OUTOFMEMORY;
 
     proxy->row_vtbl = &row_vtbl;
+    proxy->row_change_vtbl = &row_change_vtbl;
     proxy->ref = 1;
     IWineRowServer_AddRef(server);
     proxy->server = server;
