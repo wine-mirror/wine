@@ -1674,6 +1674,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
+    struct fragment_caps fragment_caps;
     enum wined3d_pci_vendor vendor;
     enum wined3d_pci_device device;
     GLint       gl_max;
@@ -1739,7 +1740,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     memset(gl_info->supported, 0, sizeof(gl_info->supported));
     gl_info->limits.buffers = 1;
     gl_info->limits.textures = 1;
-    gl_info->limits.texture_stages = 1;
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
@@ -1907,6 +1907,13 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
             gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
         }
     }
+
+    if (gl_info->supported[NV_REGISTER_COMBINERS])
+    {
+        glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);
+        gl_info->limits.general_combiners = gl_max;
+        TRACE_(d3d_caps)("Max general combiners: %d.\n", gl_max);
+    }
     if (gl_info->supported[ARB_DRAW_BUFFERS])
     {
         glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
@@ -1918,20 +1925,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
         gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
         TRACE_(d3d_caps)("Max textures: %d.\n", gl_info->limits.textures);
-
-        if (gl_info->supported[NV_REGISTER_COMBINERS])
-        {
-            GLint tmp;
-            glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
-            gl_info->limits.general_combiners = tmp;
-            gl_info->limits.texture_stages = min(MAX_TEXTURES, tmp);
-            TRACE_(d3d_caps)("Max general combiners: %d.\n", tmp);
-        }
-        else
-        {
-            gl_info->limits.texture_stages = min(MAX_TEXTURES, gl_max);
-        }
-        TRACE_(d3d_caps)("Max texture stages: %d.\n", gl_info->limits.texture_stages);
 
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         {
@@ -2109,6 +2102,10 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     adapter->fragment_pipe = select_fragment_implementation(adapter);
     adapter->shader_backend = select_shader_backend(adapter);
     adapter->blitter = select_blit_implementation(adapter);
+
+    adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
+    gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;
+    TRACE_(d3d_caps)("Max texture stages: %u.\n", gl_info->limits.texture_stages);
 
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
