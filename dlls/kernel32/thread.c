@@ -671,6 +671,17 @@ static DWORD rtlmode_to_win32mode( DWORD rtlmode )
 
 /***********************************************************************
  *              SetThreadErrorMode (KERNEL32.@)
+ *
+ * Set the thread local error mode.
+ *
+ * PARAMS
+ *  mode    [I] The new error mode, a bitwise or of SEM_FAILCRITICALERRORS,
+ *              SEM_NOGPFAULTERRORBOX and SEM_NOOPENFILEERRORBOX.
+ *  oldmode [O] Destination of the old error mode (may be NULL)
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE, check GetLastError
  */
 BOOL WINAPI SetThreadErrorMode( DWORD mode, LPDWORD oldmode )
 {
@@ -707,6 +718,14 @@ BOOL WINAPI SetThreadErrorMode( DWORD mode, LPDWORD oldmode )
 
 /***********************************************************************
  *              GetThreadErrorMode (KERNEL32.@)
+ *
+ * Get the thread local error mode.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current thread local error mode.
  */
 DWORD WINAPI GetThreadErrorMode( void )
 {
