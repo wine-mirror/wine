@@ -141,7 +141,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     ULONG count;
     UINT r = ERROR_FUNCTION_FAILED;
 
-    TRACE("(%p, %p)\n", view, rec);
+    TRACE("(%p, %d, %p, %08x)\n", view, row, rec, mask);
 
     if (row > sv->num_rows)
         return ERROR_FUNCTION_FAILED;
@@ -158,7 +158,10 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     }
 
     if (stat.cbSize.QuadPart >> 32)
+    {
+        WARN("stream too large\n");
         goto done;
+    }
 
     data = msi_alloc(stat.cbSize.QuadPart);
     if (!data)
@@ -173,7 +176,10 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
 
     name = strdupW(MSI_RecordGetString(rec, 1));
     if (!name)
+    {
+        WARN("failed to retrieve stream name\n");
         goto done;
+    }
 
     r = write_stream_data(sv->db->storage, name, data, count, FALSE);
     if (r != ERROR_SUCCESS)
@@ -186,8 +192,13 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     if (!stream)
         goto done;
 
-    IStorage_OpenStream(sv->db->storage, name, 0,
-                        STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
+    hr = IStorage_OpenStream(sv->db->storage, name, 0,
+                             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
+    if (FAILED(hr))
+    {
+        WARN("failed to open stream: %08x\n", hr);
+        goto done;
+    }
 
     sv->streams[row] = stream;
 
@@ -203,6 +214,8 @@ done:
 static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary)
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
+
+    TRACE("(%p, %p, %d, %d)\n", view, rec, row, temporary);
 
     if (!streams_set_table_size(sv, ++sv->num_rows))
         return ERROR_FUNCTION_FAILED;
@@ -411,7 +424,7 @@ static UINT STREAMS_find_matching_rows(struct tagMSIVIEW *view, UINT col,
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
     UINT index = PtrToUlong(*handle);
 
-    TRACE("(%d, %d): %d\n", *row, col, val);
+    TRACE("(%p, %d, %d, %p, %p)\n", view, col, val, row, handle);
 
     if (col == 0 || col > NUM_STREAMS_COLS)
         return ERROR_INVALID_PARAMETER;
@@ -499,9 +512,16 @@ static INT add_streams_to_table(MSISTREAMSVIEW *sv)
             break;
         }
 
-        IStorage_OpenStream(sv->db->storage, stat.pwcsName, 0,
-                            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
+        hr = IStorage_OpenStream(sv->db->storage, stat.pwcsName, 0,
+                                 STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
         CoTaskMemFree(stat.pwcsName);
+
+        if (FAILED(hr))
+        {
+            WARN("failed to open stream: %08x\n", hr);
+            count = -1;
+            break;
+        }
 
         if (!streams_set_table_size(sv, ++count))
         {
