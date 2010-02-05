@@ -160,7 +160,7 @@ static HRESULT find_prop_name(DispatchEx *This, const WCHAR *name, dispex_prop_t
     return S_OK;
 }
 
-static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, BOOL alloc, dispex_prop_t **ret)
+static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, dispex_prop_t **ret)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -174,7 +174,7 @@ static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, BOOL all
     }
 
     if(This->prototype) {
-        hres = find_prop_name_prot(This->prototype, name, FALSE, &prop);
+        hres = find_prop_name_prot(This->prototype, name, &prop);
         if(FAILED(hres))
             return hres;
         if(prop) {
@@ -186,17 +186,27 @@ static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, BOOL all
         }
     }
 
-    if(alloc) {
+    *ret = prop;
+    return S_OK;
+}
+
+static HRESULT ensure_prop_name(DispatchEx *This, const WCHAR *name, DWORD create_flags, dispex_prop_t **ret)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name_prot(This, name, &prop);
+    if(SUCCEEDED(hres) && !prop) {
         TRACE("creating prop %s\n", debugstr_w(name));
 
-        prop = alloc_prop(This, name, PROP_VARIANT, PROPF_ENUM);
+        prop = alloc_prop(This, name, PROP_VARIANT, create_flags);
         if(!prop)
             return E_OUTOFMEMORY;
         VariantInit(&prop->u.var);
     }
 
     *ret = prop;
-    return S_OK;
+    return hres;
 }
 
 static HRESULT set_this(DISPPARAMS *dp, DISPPARAMS *olddp, IDispatch *jsthis)
@@ -789,7 +799,7 @@ HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const bui
 
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
-    hres = find_prop_name_prot(constr, prototypeW, FALSE, &prop);
+    hres = find_prop_name_prot(constr, prototypeW, &prop);
     if(SUCCEEDED(hres) && prop) {
         jsexcept_t jsexcept;
         VARIANT var;
@@ -831,7 +841,10 @@ HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(jsdisp, name, (flags&fdexNameEnsure) != 0, &prop);
+    if(flags & fdexNameEnsure)
+        hres = ensure_prop_name(jsdisp, name, PROPF_ENUM, &prop);
+    else
+        hres = find_prop_name_prot(jsdisp, name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -878,7 +891,7 @@ HRESULT jsdisp_call_name(DispatchEx *disp, const WCHAR *name, WORD flags, DISPPA
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(disp, name, FALSE, &prop);
+    hres = find_prop_name_prot(disp, name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -933,7 +946,7 @@ HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, VARIANT *val, js
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(obj, name, TRUE, &prop);
+    hres = ensure_prop_name(obj, name, PROPF_ENUM, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -992,7 +1005,7 @@ HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, VARIANT *var, js
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(obj, name, FALSE, &prop);
+    hres = find_prop_name_prot(obj, name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -1014,7 +1027,7 @@ HRESULT jsdisp_get_idx(DispatchEx *obj, DWORD idx, VARIANT *var, jsexcept_t *ei,
 
     sprintfW(name, formatW, idx);
 
-    hres = find_prop_name_prot(obj, name, FALSE, &prop);
+    hres = find_prop_name_prot(obj, name, &prop);
     if(FAILED(hres))
         return hres;
 
