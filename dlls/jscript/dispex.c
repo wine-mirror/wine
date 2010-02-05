@@ -350,19 +350,19 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
     return hres;
 }
 
-static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
+static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, VARIANT *val,
         jsexcept_t *ei, IServiceProvider *caller)
 {
-    DWORD i;
     HRESULT hres;
 
     switch(prop->type) {
     case PROP_BUILTIN:
         if(!(prop->flags & PROPF_METHOD)) {
+            DISPPARAMS dp = {val, NULL, 1, 0};
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, &dp, NULL, ei, caller);
             vdisp_release(&vthis);
             return hres;
         }
@@ -379,24 +379,14 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, DISPPARAMS *dp,
         return E_FAIL;
     }
 
-    for(i=0; i < dp->cNamedArgs; i++) {
-        if(dp->rgdispidNamedArgs[i] == DISPID_PROPERTYPUT)
-            break;
-    }
-
-    if(i == dp->cNamedArgs) {
-        TRACE("no value to set\n");
-        return DISP_E_PARAMNOTOPTIONAL;
-    }
-
-    hres = VariantCopy(&prop->u.var, dp->rgvarg+i);
+    hres = VariantCopy(&prop->u.var, val);
     if(FAILED(hres))
         return hres;
 
     if(This->builtin_info->on_put)
         This->builtin_info->on_put(This, prop->name);
 
-    TRACE("%s = %s\n", debugstr_w(prop->name), debugstr_variant(dp->rgvarg+i));
+    TRACE("%s = %s\n", debugstr_w(prop->name), debugstr_variant(val));
     return S_OK;
 }
 
@@ -589,9 +579,22 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_PROPERTYGET:
         hres = prop_get(This, prop, pdp, pvarRes, &jsexcept, pspCaller);
         break;
-    case DISPATCH_PROPERTYPUT:
-        hres = prop_put(This, prop, pdp, &jsexcept, pspCaller);
+    case DISPATCH_PROPERTYPUT: {
+        DWORD i;
+
+        for(i=0; i < pdp->cNamedArgs; i++) {
+            if(pdp->rgdispidNamedArgs[i] == DISPID_PROPERTYPUT)
+                break;
+        }
+
+        if(i == pdp->cNamedArgs) {
+            TRACE("no value to set\n");
+            return DISP_E_PARAMNOTOPTIONAL;
+        }
+
+        hres = prop_put(This, prop, pdp->rgvarg+i, &jsexcept, pspCaller);
         break;
+    }
     default:
         FIXME("Unimplemented flags %x\n", wFlags);
         return E_INVALIDARG;
@@ -941,8 +944,6 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
 
 HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DISPID named_arg = DISPID_PROPERTYPUT;
-    DISPPARAMS dp = {val, &named_arg, 1, 1};
     dispex_prop_t *prop;
     HRESULT hres;
 
@@ -950,7 +951,7 @@ HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, VARIANT *val, js
     if(FAILED(hres))
         return hres;
 
-    return prop_put(obj, prop, &dp, ei, caller);
+    return prop_put(obj, prop, val, ei, caller);
 }
 
 HRESULT jsdisp_propput_idx(DispatchEx *obj, DWORD idx, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
@@ -965,9 +966,6 @@ HRESULT jsdisp_propput_idx(DispatchEx *obj, DWORD idx, VARIANT *val, jsexcept_t 
 
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DISPID dispid = DISPID_PROPERTYPUT;
-    DISPPARAMS dp  = {val, &dispid, 1, 1};
-    IDispatchEx *dispex;
     DispatchEx *jsdisp;
     HRESULT hres;
 
@@ -977,25 +975,28 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = prop_put(jsdisp, prop, &dp, ei, caller);
+            hres = prop_put(jsdisp, prop, val, ei, caller);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
         jsdisp_release(jsdisp);
-        return hres;
+    }else {
+        DISPID dispid = DISPID_PROPERTYPUT;
+        DISPPARAMS dp  = {val, &dispid, 1, 1};
+        IDispatchEx *dispex;
+
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, caller);
+            IDispatchEx_Release(dispex);
+        }else {
+            ULONG err = 0;
+
+            TRACE("using IDispatch\n");
+            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, &err);
+        }
     }
 
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
-        ULONG err = 0;
-
-        TRACE("using IDispatch\n");
-        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, &err);
-    }
-
-    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei->ei, caller);
-
-    IDispatchEx_Release(dispex);
     return hres;
 }
 
