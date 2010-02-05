@@ -456,8 +456,8 @@
 @ stdcall SetupIterateCabinetW(wstr long ptr ptr)
 @ stub SetupLogErrorA
 @ stdcall SetupLogErrorW(wstr long)
-@ stub SetupLogFileA
-@ stub SetupLogFileW
+@ stdcall SetupLogFileA(ptr str str str long str str str long)
+@ stdcall SetupLogFileW(ptr wstr wstr wstr long wstr wstr wstr long)
 @ stdcall SetupOpenAppendInfFileA(str long ptr)
 @ stdcall SetupOpenAppendInfFileW(wstr long ptr)
 @ stdcall SetupOpenFileQueue()
