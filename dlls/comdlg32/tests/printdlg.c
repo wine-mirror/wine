@@ -353,25 +353,19 @@ static void test_abort_proc(void)
         goto end;
     }
 
-    ok(abort_proc_called, "AbortProc didn't get called by StartDoc.\n");
-    abort_proc_called = FALSE;
+    /* StartDoc may or may not call abort proc */
 
+    abort_proc_called = FALSE;
     ok(StartPage(print_dc) > 0, "StartPage failed\n");
     ok(!abort_proc_called, "AbortProc got called unexpectedly by StartPage.\n");
     abort_proc_called = FALSE;
 
+    /* following functions sometimes call abort proc too */
     ok(FillRect(print_dc, &rect, (HBRUSH)(COLOR_BACKGROUND + 1)), "FillRect failed\n");
-    ok(!abort_proc_called, "AbortProc got called unexpectedly by StretchBlt.\n");
-    abort_proc_called = FALSE;
-
     ok(EndPage(print_dc) > 0, "EndPage failed\n");
-    ok(!abort_proc_called, "AbortProc got called unexpectedly by EndPage.\n");
-    abort_proc_called = FALSE;
-
     ok(EndDoc(print_dc) > 0, "EndDoc failed\n");
-    ok(!abort_proc_called, "AbortProc got called unexpectedly by EndDoc.\n");
-    abort_proc_called = FALSE;
 
+    abort_proc_called = FALSE;
     ok(DeleteDC(print_dc), "DeleteDC failed\n");
     ok(!abort_proc_called, "AbortProc got called unexpectedly by DeleteDC.\n");
     abort_proc_called = FALSE;
