@@ -100,6 +100,7 @@ m = "abcabc".match(re = /ca/);
 ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 1, "m.length is not 1");
 ok(m["0"] === "ca", "m[0] is not \"ca\"");
+ok(m.constructor === Array, "unexpected m.constructor");
 ok(re.lastIndex === 4, "re.lastIndex = " + re.lastIndex);
 
 m = "abcabc".match(/ab/);

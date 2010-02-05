@@ -803,6 +803,7 @@ HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const bui
     dispex_prop_t *prop;
     HRESULT hres;
 
+    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r'};
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
     hres = find_prop_name_prot(constr, prototypeW, &prop);
@@ -827,6 +828,22 @@ HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const bui
 
     if(prot)
         jsdisp_release(prot);
+    if(FAILED(hres))
+        return hres;
+
+    hres = ensure_prop_name(dispex, constructorW, FALSE, 0, &prop);
+    if(SUCCEEDED(hres)) {
+        jsexcept_t jsexcept;
+        VARIANT var;
+
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(constr);
+        memset(&jsexcept, 0, sizeof(jsexcept));
+        hres = prop_put(dispex, prop, &var, &jsexcept, NULL/*FIXME*/);
+    }
+    if(FAILED(hres))
+        jsdisp_release(dispex);
+
     return hres;
 }
 

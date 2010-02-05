@@ -116,6 +116,7 @@ ok(tmp === 1, "tmp = " + tmp);
 
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");
+ok(obj1.constructor === Object, "unexpected obj1.constructor");
 obj1.test = true;
 obj1.func = function () {
     ok(this === obj1, "this is not obj1");
@@ -144,6 +145,7 @@ testConstr1.prototype.pvar = 1;
 
 var obj2 = new testConstr1(true);
 ok(typeof(obj2) === "object", "typeof(obj2) is not object");
+ok(obj2.constructor === testConstr1, "unexpected obj2.constructor");
 ok(obj2.pvar === 1, "obj2.pvar is not 1");
 
 testConstr1.prototype.pvar = 2;
@@ -209,6 +211,7 @@ if(false) {
 var obj3 = { prop1: 1,  prop2: typeof(false) };
 ok(obj3.prop1 === 1, "obj3.prop1 is not 1");
 ok(obj3.prop2 === "boolean", "obj3.prop2 is not \"boolean\"");
+ok(obj3.constructor === Object, "unexpected obj3.constructor");
 
 {
     var blockVar = 1;
@@ -422,8 +425,10 @@ ok(+"3e3" === 3000, "+'3e3' !== 3000");
 
 tmp = new Number(1);
 ok(+tmp === 1, "+(new Number(1)) = " + (+tmp));
+ok(tmp.constructor === Number, "unexpected tmp.constructor");
 tmp = new String("1");
 ok(+tmp === 1, "+(new String('1')) = " + (+tmp));
+ok(tmp.constructor === String, "unexpected tmp.constructor");
 
 ok("" + 0 === "0", "\"\" + 0 !== \"0\"");
 ok("" + 123 === "123", "\"\" + 123 !== \"123\"");
