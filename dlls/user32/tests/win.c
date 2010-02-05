@@ -2720,11 +2720,17 @@ static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, 
 
             /* check that re-setting the capture for the menu fails */
             set_cap_wnd = SetCapture(cap_wnd);
-            ok(!set_cap_wnd, "SetCapture should have failed!\n");
+            ok(!set_cap_wnd || broken(set_cap_wnd == cap_wnd), /* nt4 */
+               "SetCapture should have failed!\n");
+            if (set_cap_wnd)
+            {
+                DestroyWindow(hWnd);
+                break;
+            }
 
             /* check that SetCapture fails for another window and that it does not touch the error code */
             set_cap_wnd = SetCapture(hWnd);
-            ok(!set_cap_wnd, "ReleaseCapture should have failed!\n");
+            ok(!set_cap_wnd, "SetCapture should have failed!\n");
 
             /* check that ReleaseCapture fails and does not touch the error code */
             status = ReleaseCapture();
@@ -2764,8 +2770,10 @@ static void test_capture_4(void)
     HINSTANCE hInstance = GetModuleHandleA( NULL );
 
     if (!pGetGUIThreadInfo)
+    {
         win_skip("GetGUIThreadInfo is not available\n");
-
+        return;
+    }
     wclass.lpszClassName = "TestCapture4Class";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = test_capture_4_proc;
