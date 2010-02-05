@@ -726,6 +726,7 @@
 @ stdcall InitializeCriticalSectionEx(ptr long long)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
+@ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr double double) ntdll.RtlInterlockedCompareExchange64
 @ stdcall -arch=i386 InterlockedDecrement(ptr)
 @ stdcall -arch=i386 InterlockedExchange(ptr long)
 @ stdcall -arch=i386 InterlockedExchangeAdd (ptr long )

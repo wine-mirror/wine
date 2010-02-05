@@ -2376,6 +2376,8 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVO
     return (PVOID)InterlockedExchange( (LONG volatile*)dest, (LONG)val );
 }
 
+WINBASEAPI LONGLONG WINAPI InterlockedCompareExchange64(LONGLONG volatile*,LONGLONG,LONGLONG);
+
 #else  /* __i386__ */
 
 static inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
@@ -2401,6 +2403,19 @@ static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *de
 #else
     extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
     return interlocked_cmpxchg_ptr( (void **)dest, xchg, compare );
+#endif
+}
+
+static inline LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+    LONGLONG ret;
+    __asm__ __volatile__( "lock; cmpxchgq %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+#else
+    extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
+    return interlocked_cmpxchg64( (__int64 *)dest, xchg, compare );
 #endif
 }
 
