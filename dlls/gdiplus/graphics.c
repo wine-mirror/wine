@@ -1926,12 +1926,16 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        if (bitmap->format == PixelFormat32bppARGB)
+        if (!(bitmap->format == PixelFormat16bppRGB555 ||
+              bitmap->format == PixelFormat24bppRGB ||
+              bitmap->format == PixelFormat32bppRGB ||
+              bitmap->format == PixelFormat32bppPARGB))
         {
             BITMAPINFOHEADER bih;
             BYTE *temp_bits;
+            PixelFormat dst_format;
 
-            /* we need a bitmap with premultiplied alpha */
+            /* we can't draw a bitmap of this format directly */
             hdc = CreateCompatibleDC(0);
             temp_hdc = 1;
             temp_bitmap = 1;
@@ -1951,8 +1955,14 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
                 (void**)&temp_bits, NULL, 0);
 
-            convert_32bppARGB_to_32bppPARGB(bitmap->width, bitmap->height,
-                temp_bits, bitmap->width*4, bitmap->bits, bitmap->stride);
+            if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
+                dst_format = PixelFormat32bppPARGB;
+            else
+                dst_format = PixelFormat32bppRGB;
+
+            convert_pixels(bitmap->width, bitmap->height,
+                bitmap->width*4, temp_bits, dst_format,
+                bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
         }
         else
         {
@@ -1967,7 +1977,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             old_hbm = SelectObject(hdc, hbitmap);
         }
 
-        if (bitmap->format == PixelFormat32bppARGB || bitmap->format == PixelFormat32bppPARGB)
+        if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
         {
             BLENDFUNCTION bf;
 
