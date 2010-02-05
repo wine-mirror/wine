@@ -442,6 +442,412 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
+GpStatus convert_pixels(UINT width, UINT height,
+    INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
+    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette)
+{
+    UINT x, y;
+
+    if (src_format == dst_format ||
+        (dst_format == PixelFormat32bppRGB && PIXELFORMATBPP(src_format) == 32))
+    {
+        UINT widthbytes = PIXELFORMATBPP(src_format) * width / 8;
+        for (y=0; y<height; y++)
+            memcpy(dst_bits+dst_stride*y, src_bits+src_stride*y, widthbytes);
+        return Ok;
+    }
+
+#define convert_indexed_to_rgb(getpixel_function, setpixel_function) do { \
+    for (x=0; x<width; x++) \
+        for (y=0; y<height; y++) { \
+            BYTE index; \
+            BYTE *color; \
+            getpixel_function(&index, src_bits+src_stride*y, x); \
+            color = (BYTE*)(&src_palette[index]); \
+            setpixel_function(color[2], color[1], color[0], color[3], dst_bits+dst_stride*y, x); \
+        } \
+    return Ok; \
+} while (0);
+
+#define convert_rgb_to_rgb(getpixel_function, setpixel_function) do { \
+    for (x=0; x<width; x++) \
+        for (y=0; y<height; y++) { \
+            BYTE r, g, b, a; \
+            getpixel_function(&r, &g, &b, &a, src_bits+src_stride*y, x); \
+            setpixel_function(r, g, b, a, dst_bits+dst_stride*y, x); \
+        } \
+    return Ok; \
+} while (0);
+
+    switch (src_format)
+    {
+    case PixelFormat1bppIndexed:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat4bppIndexed:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat8bppIndexed:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat16bppGrayScale:
+        switch (dst_format)
+        {
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppGrayScale, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat16bppRGB555:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB555, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat16bppRGB565:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_16bppRGB555);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppRGB565, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat16bppARGB1555:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_16bppRGB565);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_16bppARGB1555, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat24bppRGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_16bppARGB1555);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_24bppRGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat32bppRGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_24bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_32bppRGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat32bppARGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_24bppRGB);
+        case PixelFormat32bppPARGB:
+            convert_32bppARGB_to_32bppPARGB(width, height, dst_bits, dst_stride, src_bits, src_stride);
+            return Ok;
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_32bppARGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat32bppPARGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_32bppARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_32bppPARGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat48bppRGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_32bppPARGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_48bppRGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat64bppARGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppARGB, setpixel_48bppRGB);
+        default:
+            break;
+        }
+        break;
+    case PixelFormat64bppPARGB:
+        switch (dst_format)
+        {
+        case PixelFormat16bppGrayScale:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_16bppGrayScale);
+        case PixelFormat16bppRGB555:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_16bppRGB555);
+        case PixelFormat16bppRGB565:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_16bppRGB565);
+        case PixelFormat16bppARGB1555:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_16bppARGB1555);
+        case PixelFormat24bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_24bppRGB);
+        case PixelFormat32bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_32bppRGB);
+        case PixelFormat32bppARGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_32bppARGB);
+        case PixelFormat32bppPARGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_32bppPARGB);
+        case PixelFormat48bppRGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_48bppRGB);
+        case PixelFormat64bppARGB:
+            convert_rgb_to_rgb(getpixel_64bppPARGB, setpixel_64bppARGB);
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+
+#undef convert_indexed_to_rgb
+#undef convert_rgb_to_rgb
+
+    return NotImplemented;
+}
+
 /* This function returns a pointer to an array of pixels that represents the
  * bitmap. The *entire* bitmap is locked according to the lock mode specified by
  * flags.  It is correct behavior that a user who calls this function with write
@@ -451,14 +857,11 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
 GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     UINT flags, PixelFormat format, BitmapData* lockeddata)
 {
-    BOOL bm_is_selected;
     INT stride, bitspp = PIXELFORMATBPP(format);
-    HDC hdc;
-    HBITMAP hbm, old = NULL;
-    BITMAPINFO *pbmi;
     BYTE *buff = NULL;
     UINT abs_height;
     GpRect act_rect; /* actual rect to be used */
+    GpStatus stat;
 
     TRACE("%p %p %d 0x%x %p\n", bitmap, rect, flags, format, lockeddata);
 
@@ -479,10 +882,17 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     }
 
     if(flags & ImageLockModeUserInputBuf)
+    {
+        static int fixme=0;
+        if (!fixme++) FIXME("ImageLockModeUserInputBuf not implemented\n");
         return NotImplemented;
+    }
 
     if(bitmap->lockmode)
+    {
+        WARN("bitmap is already locked and cannot be locked again\n");
         return WrongState;
+    }
 
     if (bitmap->bits && bitmap->format == format)
     {
@@ -501,66 +911,55 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         return Ok;
     }
 
-    hbm = bitmap->hbitmap;
-    hdc = bitmap->hdc;
-    bm_is_selected = (hdc != 0);
-
-    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-    if (!pbmi)
-        return OutOfMemory;
-    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    pbmi->bmiHeader.biBitCount = 0;
-
-    if(!bm_is_selected){
-        hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, hbm);
+    /* Make sure we can convert to the requested format. */
+    stat = convert_pixels(0, 0, 0, NULL, format, 0, NULL, bitmap->format, NULL);
+    if (stat == NotImplemented)
+    {
+        FIXME("cannot read bitmap from %x to %x\n", bitmap->format, format);
+        return NotImplemented;
     }
 
-    /* fill out bmi */
-    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+    /* If we're opening for writing, make sure we'll be able to write back in
+     * the original format. */
+    if (flags & ImageLockModeWrite)
+    {
+        stat = convert_pixels(0, 0, 0, NULL, bitmap->format, 0, NULL, format, NULL);
+        if (stat == NotImplemented)
+        {
+            FIXME("cannot write bitmap from %x to %x\n", format, bitmap->format);
+            return NotImplemented;
+        }
+    }
 
-    abs_height = abs(pbmi->bmiHeader.biHeight);
-    stride = pbmi->bmiHeader.biWidth * bitspp / 8;
+    abs_height = bitmap->height;
+    stride = (bitmap->width * bitspp + 7) / 8;
     stride = (stride + 3) & ~3;
 
     buff = GdipAlloc(stride * abs_height);
 
-    pbmi->bmiHeader.biBitCount = bitspp;
+    if (!buff) return OutOfMemory;
 
-    if(buff)
-        GetDIBits(hdc, hbm, 0, abs_height, buff, pbmi, DIB_RGB_COLORS);
+    stat = convert_pixels(bitmap->width, bitmap->height,
+        stride, buff, format,
+        bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
 
-    if(!bm_is_selected){
-        SelectObject(hdc, old);
-        DeleteDC(hdc);
-    }
-
-    if(!buff){
-        GdipFree(pbmi);
-        return OutOfMemory;
+    if (stat != Ok)
+    {
+        GdipFree(buff);
+        return stat;
     }
 
     lockeddata->Width  = act_rect.Width;
     lockeddata->Height = act_rect.Height;
     lockeddata->PixelFormat = format;
     lockeddata->Reserved = flags;
-
-    if(pbmi->bmiHeader.biHeight > 0){
-        lockeddata->Stride = -stride;
-        lockeddata->Scan0  = buff + (bitspp / 8) * act_rect.X +
-                             stride * (abs_height - 1 - act_rect.Y);
-    }
-    else{
-        lockeddata->Stride = stride;
-        lockeddata->Scan0  = buff + (bitspp / 8) * act_rect.X + stride * act_rect.Y;
-    }
+    lockeddata->Stride = stride;
+    lockeddata->Scan0  = buff + (bitspp / 8) * act_rect.X + stride * act_rect.Y;
 
     bitmap->lockmode = flags;
     bitmap->numlocks++;
-
     bitmap->bitmapbits = buff;
 
-    GdipFree(pbmi);
     return Ok;
 }
 
@@ -580,10 +979,7 @@ GpStatus WINGDIPAPI GdipBitmapSetResolution(GpBitmap* bitmap, REAL xdpi, REAL yd
 GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     BitmapData* lockeddata)
 {
-    HDC hdc;
-    HBITMAP hbm, old = NULL;
-    BOOL bm_is_selected;
-    BITMAPINFO *pbmi;
+    GpStatus stat;
 
     TRACE("(%p,%p)\n", bitmap, lockeddata);
 
@@ -613,36 +1009,21 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         return Ok;
     }
 
-    hbm = bitmap->hbitmap;
-    hdc = bitmap->hdc;
-    bm_is_selected = (hdc != 0);
+    stat = convert_pixels(bitmap->width, bitmap->height,
+        bitmap->stride, bitmap->bits, bitmap->format,
+        lockeddata->Stride, bitmap->bitmapbits, lockeddata->PixelFormat, NULL);
 
-    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    pbmi->bmiHeader.biBitCount = 0;
-
-    if(!bm_is_selected){
-        hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, hbm);
+    if (stat != Ok)
+    {
+        ERR("failed to convert pixels; this should never happen\n");
     }
 
-    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
-    pbmi->bmiHeader.biBitCount = PIXELFORMATBPP(lockeddata->PixelFormat);
-    SetDIBits(hdc, hbm, 0, abs(pbmi->bmiHeader.biHeight),
-              bitmap->bitmapbits, pbmi, DIB_RGB_COLORS);
-
-    if(!bm_is_selected){
-        SelectObject(hdc, old);
-        DeleteDC(hdc);
-    }
-
-    GdipFree(pbmi);
     GdipFree(bitmap->bitmapbits);
     bitmap->bitmapbits = NULL;
     bitmap->lockmode = 0;
     bitmap->numlocks = 0;
 
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
