@@ -800,10 +800,16 @@ static void test_find_first_file(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     hSearch = FtpFindFirstFileA(hFtp, "welcome.msg", &findData, 0, 0);
     error = GetLastError();
-    ok ( hSearch == NULL, "Expected FtpFindFirstFileA to fail\n" );
-    ok ( error == ERROR_FTP_TRANSFER_IN_PROGRESS || broken(error == ERROR_INTERNET_EXTENDED_ERROR),
-        "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", error );
-    InternetCloseHandle(hSearch); /* Just in case */
+    ok ( hSearch == NULL || broken(hSearch != NULL), /* win2k */
+         "Expected FtpFindFirstFileA to fail\n" );
+    if (!hSearch)
+        ok ( error == ERROR_FTP_TRANSFER_IN_PROGRESS || broken(error == ERROR_INTERNET_EXTENDED_ERROR),
+             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", error );
+    else
+    {
+        ok( error == ERROR_SUCCESS, "wrong error %u on success\n", GetLastError() );
+        InternetCloseHandle(hSearch);
+    }
 
     InternetCloseHandle(hOpenFile);
 
