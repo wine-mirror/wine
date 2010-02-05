@@ -980,6 +980,61 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
     return rc;
 }
 
+static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR dir;
+    LPWSTR full_path;
+    MSIRECORD *uirow;
+    MSIFOLDER *folder;
+
+    dir = MSI_RecordGetString( row, 1 );
+    if (!dir)
+    {
+        ERR("Unable to get folder id\n");
+        return ERROR_SUCCESS;
+    }
+
+    full_path = resolve_folder( package, dir, FALSE, FALSE, TRUE, &folder );
+    if (!full_path)
+    {
+        ERR("Unable to resolve folder id %s\n", debugstr_w(dir));
+        return ERROR_SUCCESS;
+    }
+
+    TRACE("folder is %s\n", debugstr_w(full_path));
+
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetStringW( uirow, 1, full_path );
+    ui_actiondata( package, szRemoveFolders, uirow );
+    msiobj_release( &uirow->hdr );
+
+    RemoveDirectoryW( full_path );
+    folder->State = 0;
+
+    msi_free( full_path );
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveFolders( MSIPACKAGE *package )
+{
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ', '`','D','i','r','e','c','t','o','r','y','_','`',
+         ' ','F','R','O','M',' ', '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
+
+    MSIQUERY *view;
+    UINT rc;
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveFolders, package );
+    msiobj_release( &view->hdr );
+
+    return rc;
+}
+
 static UINT load_component( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
@@ -6123,12 +6178,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_RemoveFolders( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'C','r','e','a','t','e','F','o','l','d','e','r',0 };
-    return msi_unimplemented_action_stub( package, "RemoveFolders", table );
 }
 
 static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
