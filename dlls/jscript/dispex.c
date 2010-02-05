@@ -190,12 +190,15 @@ static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, dispex_p
     return S_OK;
 }
 
-static HRESULT ensure_prop_name(DispatchEx *This, const WCHAR *name, DWORD create_flags, dispex_prop_t **ret)
+static HRESULT ensure_prop_name(DispatchEx *This, const WCHAR *name, BOOL search_prot, DWORD create_flags, dispex_prop_t **ret)
 {
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(This, name, &prop);
+    if(search_prot)
+        hres = find_prop_name_prot(This, name, &prop);
+    else
+        hres = find_prop_name(This, name, &prop);
     if(SUCCEEDED(hres) && !prop) {
         TRACE("creating prop %s\n", debugstr_w(name));
 
@@ -845,7 +848,7 @@ HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID
     HRESULT hres;
 
     if(flags & fdexNameEnsure)
-        hres = ensure_prop_name(jsdisp, name, PROPF_ENUM, &prop);
+        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM, &prop);
     else
         hres = find_prop_name_prot(jsdisp, name, &prop);
     if(FAILED(hres))
@@ -947,7 +950,7 @@ HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, VARIANT *val, js
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = ensure_prop_name(obj, name, PROPF_ENUM, &prop);
+    hres = ensure_prop_name(obj, name, FALSE, PROPF_ENUM, &prop);
     if(FAILED(hres))
         return hres;
 
