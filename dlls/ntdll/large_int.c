@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -373,6 +376,15 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
     } else {
 	return -result;
     } /* if */
+}
+
+
+/*************************************************************************
+ *        RtlInterlockedCompareExchange64   (NTDLL.@)
+ */
+LONGLONG WINAPI RtlInterlockedCompareExchange64( LONGLONG *dest, LONGLONG xchg, LONGLONG compare )
+{
+    return interlocked_cmpxchg64( dest, xchg, compare );
 }
 
 #endif  /* _WIN64 */
