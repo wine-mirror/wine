@@ -188,8 +188,10 @@ static void *libpng_handle;
 MAKE_FUNCPTR(png_create_info_struct);
 MAKE_FUNCPTR(png_create_write_struct);
 MAKE_FUNCPTR(png_destroy_write_struct);
+MAKE_FUNCPTR(png_get_error_ptr);
 MAKE_FUNCPTR(png_init_io);
 MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_error_fn);
 MAKE_FUNCPTR(png_set_text);
 MAKE_FUNCPTR(png_set_IHDR);
 MAKE_FUNCPTR(png_write_end);
@@ -209,8 +211,10 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_create_info_struct);
         LOAD_FUNCPTR(png_create_write_struct);
         LOAD_FUNCPTR(png_destroy_write_struct);
+        LOAD_FUNCPTR(png_get_error_ptr);
         LOAD_FUNCPTR(png_init_io);
         LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_error_fn);
         LOAD_FUNCPTR(png_set_IHDR);
         LOAD_FUNCPTR(png_set_text);
         LOAD_FUNCPTR(png_write_end);
@@ -219,6 +223,23 @@ static void *load_libpng(void)
 #undef LOAD_FUNCPTR
     }
     return libpng_handle;
+}
+
+static void user_error_fn(png_structp png_ptr, png_const_charp error_message)
+{
+    jmp_buf *pjmpbuf;
+
+    /* This uses setjmp/longjmp just like the default. We can't use the
+     * default because there's no way to access the jmp buffer in the png_struct
+     * that works in 1.2 and 1.4 and allows us to dynamically load libpng. */
+    WINE_ERR("PNG error: %s\n", wine_dbgstr_an(error_message, -1));
+    pjmpbuf = ppng_get_error_ptr(png_ptr);
+    longjmp(*pjmpbuf, 1);
+}
+
+static void user_warning_fn(png_structp png_ptr, png_const_charp warning_message)
+{
+    WINE_WARN("PNG warning: %s\n", wine_dbgstr_an(warning_message, -1));
 }
 
 static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
@@ -234,6 +255,7 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     int nWidth  = pIcon->bmiHeader.biWidth;
     int nHeight = pIcon->bmiHeader.biHeight;
     int nBpp    = pIcon->bmiHeader.biBitCount;
+    jmp_buf jmpbuf;
 
     switch (nBpp)
     {
@@ -306,12 +328,12 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
         !(info_ptr = ppng_create_info_struct(png_ptr)))
         goto error;
 
-    if (setjmp(png_jmpbuf(png_ptr)))
+    if (setjmp(jmpbuf))
     {
         /* All future errors jump here */
-        WINE_ERR("png error\n");
         goto error;
     }
+    ppng_set_error_fn(png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
 
     ppng_init_io(png_ptr, fp);
     ppng_set_IHDR(png_ptr, info_ptr, nWidth, nHeight, 8,
