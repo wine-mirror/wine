@@ -1145,6 +1145,30 @@ static const CHAR rf_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "InstallValidate\t\t1400\n"
                                               "LaunchConditions\t\t100\n";
 
+
+static const CHAR sr_selfreg_dat[] = "File_\tCost\n"
+                                     "s72\tI2\n"
+                                     "SelfReg\tFile_\n"
+                                     "one.txt\t1\n";
+
+static const CHAR sr_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "ResolveSource\t\t950\n"
+                                              "MoveFiles\t\t1700\n"
+                                              "SelfUnregModules\t\t3900\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "DuplicateFiles\t\t4500\n"
+                                              "WriteEnvironmentStrings\t\t4550\n"
+                                              "CreateShortcuts\t\t4600\n"
+                                              "InstallFinalize\t\t6600\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "LaunchConditions\t\t100\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1898,6 +1922,19 @@ static const msi_table sds_tables[] =
     ADD_TABLE(file),
     ADD_TABLE(sss_install_exec_seq),
     ADD_TABLE(service_control),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table sr_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(sr_selfreg),
+    ADD_TABLE(sr_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -7635,6 +7672,34 @@ static void test_delete_services(void)
     delete_test_files();
 }
 
+static void test_self_registration(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, sr_tables, sizeof(sr_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7730,6 +7795,7 @@ START_TEST(install)
     test_remove_folder();
     test_start_services();
     test_delete_services();
+    test_self_registration();
 
     DeleteFileA(log_file);
 

@@ -3705,6 +3705,89 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
+{
+    static const WCHAR regsvr32[] =
+        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','u',' ','\"',0};
+    static const WCHAR close[] =  {'\"',0};
+    MSIPACKAGE *package = param;
+    LPCWSTR filename;
+    LPWSTR cmdline;
+    MSIFILE *file;
+    DWORD len;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+    MSIRECORD *uirow;
+    LPWSTR uipath, p;
+
+    memset( &si, 0, sizeof(STARTUPINFOW) );
+
+    filename = MSI_RecordGetString( row, 1 );
+    file = get_loaded_file( package, filename );
+
+    if (!file)
+    {
+        ERR("Unable to find file id %s\n", debugstr_w(filename));
+        return ERROR_SUCCESS;
+    }
+
+    len = strlenW( regsvr32 ) + strlenW( file->TargetPath ) + 2;
+
+    cmdline = msi_alloc( len * sizeof(WCHAR) );
+    strcpyW( cmdline, regsvr32 );
+    strcatW( cmdline, file->TargetPath );
+    strcatW( cmdline, close );
+
+    TRACE("Unregistering %s\n", debugstr_w(cmdline));
+
+    ret = CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, c_colon, &si, &pi );
+    if (ret)
+    {
+        CloseHandle( pi.hThread );
+        msi_dialog_check_messages( pi.hProcess );
+        CloseHandle( pi.hProcess );
+    }
+
+    msi_free( cmdline );
+
+    uirow = MSI_CreateRecord( 2 );
+    uipath = strdupW( file->TargetPath );
+    if ((p = strrchrW( uipath, '\\' )))
+    {
+        *p = 0;
+        MSI_RecordSetStringW( uirow, 1, ++p );
+    }
+    MSI_RecordSetStringW( uirow, 2, uipath );
+    ui_actiondata( package, szSelfUnregModules, uirow );
+    msiobj_release( &uirow->hdr );
+    msi_free( uipath );
+    /* FIXME call ui_progress? */
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','S','e','l','f','R','e','g','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+    {
+        TRACE("no SelfReg table\n");
+        return ERROR_SUCCESS;
+    }
+
+    MSI_IterateRecords( view, NULL, ITERATE_SelfUnregModules, package );
+    msiobj_release( &view->hdr );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -6109,12 +6192,6 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "MigrateFeatureStates", table );
-}
-
-static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'S','e','l','f','R','e','g',0 };
-    return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
 }
 
 static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
