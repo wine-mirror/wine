@@ -270,8 +270,43 @@ static HRESULT WINAPI server_SetColumns(IWineRowServer* iface, DBORDINAL num_col
                                         wine_setcolumns_in *in_data, DBSTATUS *status)
 {
     server *This = impl_from_IWineRowServer(iface);
-    FIXME("(%p)->(%d, %p, %p): stub\n", This, num_cols, in_data, status);
-    return E_NOTIMPL;
+    HRESULT hr;
+    DBORDINAL i;
+    DBCOLUMNACCESS *cols;
+    IRowChange *row_change;
+
+    TRACE("(%p)->(%d, %p, %p)\n", This, num_cols, in_data, status);
+    hr = IUnknown_QueryInterface(This->inner_unk, &IID_IRowChange, (void**)&row_change);
+    if(FAILED(hr)) return hr;
+
+    cols = CoTaskMemAlloc(num_cols * sizeof(cols[0]));
+
+    for(i = 0; i < num_cols; i++)
+    {
+        TRACE("%d:\ttype %04x\n", i, in_data[i].type);
+        cols[i].pData        = CoTaskMemAlloc(db_type_size(in_data[i].type, in_data[i].max_len));
+        memcpy(cols[i].pData, &V_I1(&in_data[i].v), db_type_size(in_data[i].type, in_data[i].max_len));
+        cols[i].columnid     = in_data[i].columnid;
+        cols[i].cbDataLen    = in_data[i].data_len;
+        cols[i].dwStatus     = in_data[i].status;
+        cols[i].cbMaxLen     = in_data[i].max_len;
+        cols[i].wType        = in_data[i].type;
+        cols[i].bPrecision   = in_data[i].precision;
+        cols[i].bScale       = in_data[i].scale;
+    }
+
+    hr = IRowChange_SetColumns(row_change, num_cols, cols);
+    IRowChange_Release(row_change);
+
+    for(i = 0; i < num_cols; i++)
+    {
+        CoTaskMemFree(cols[i].pData);
+        status[i] = cols[i].dwStatus;
+    }
+
+    CoTaskMemFree(cols);
+
+    return hr;
 }
 
 static HRESULT WINAPI server_AddRefRows(IWineRowServer* iface, DBCOUNTITEM cRows,
@@ -743,8 +778,39 @@ static HRESULT WINAPI row_change_SetColumns(IRowChange *iface, DBORDINAL cColumn
                                             DBCOLUMNACCESS rgColumns[])
 {
     row_proxy *This = impl_from_IRowChange(iface);
-    FIXME("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
-    return E_NOTIMPL;
+    HRESULT hr;
+    wine_setcolumns_in *in_data;
+    DBSTATUS *status;
+    DBORDINAL i;
+
+    TRACE("(%p)->(%d, %p)\n", This, cColumns, rgColumns);
+
+    in_data = CoTaskMemAlloc(cColumns * sizeof(in_data[0]));
+    status = CoTaskMemAlloc(cColumns * sizeof(status[0]));
+
+    for(i = 0; i < cColumns; i++)
+    {
+        TRACE("%d: wtype %04x max %08x len %08x\n", i, rgColumns[i].wType, rgColumns[i].cbMaxLen, rgColumns[i].cbDataLen);
+        V_VT(&in_data[i].v) = rgColumns[i].wType;
+        memcpy(&V_I1(&in_data[i].v), rgColumns[i].pData, db_type_size(rgColumns[i].wType, rgColumns[i].cbDataLen));
+        in_data[i].columnid = rgColumns[i].columnid;
+        in_data[i].data_len = rgColumns[i].cbDataLen;
+        in_data[i].status = rgColumns[i].dwStatus;
+        in_data[i].max_len = rgColumns[i].cbMaxLen;
+        in_data[i].type = rgColumns[i].wType;
+        in_data[i].precision = rgColumns[i].bPrecision;
+        in_data[i].scale = rgColumns[i].bScale;
+    }
+
+    hr = IWineRowServer_SetColumns(This->server, cColumns, in_data, status);
+
+    for(i = 0; i < cColumns; i++)
+        rgColumns[i].dwStatus = status[i];
+
+    CoTaskMemFree(status);
+    CoTaskMemFree(in_data);
+
+    return hr;
 }
 
 static const IRowChangeVtbl row_change_vtbl =
