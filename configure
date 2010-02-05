@@ -13686,19 +13686,19 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 
 
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+test "$srcdir" = "." || ALL_SYMLINKS="$ALL_SYMLINKS \\
 	dlls/wineps.drv/generic.ppd"
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+test "$srcdir" = "." || ALL_SYMLINKS="$ALL_SYMLINKS \\
 	fonts/marlett.ttf"
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+test "$srcdir" = "." || ALL_SYMLINKS="$ALL_SYMLINKS \\
 	fonts/symbol.ttf"
 ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+test "$srcdir" = "." || ALL_SYMLINKS="$ALL_SYMLINKS \\
 	fonts/tahoma.ttf"
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+test "$srcdir" = "." || ALL_SYMLINKS="$ALL_SYMLINKS \\
 	fonts/tahomabd.ttf"
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 ALL_SYMLINKS="$ALL_SYMLINKS \\

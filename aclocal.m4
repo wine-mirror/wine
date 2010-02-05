@@ -147,7 +147,7 @@ dnl
 dnl Usage: WINE_CONFIG_SYMLINK(name,target)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_CONFIG_LINKS([$1:]m4_default([$2],[$1]))dnl
-ALL_SYMLINKS="$ALL_SYMLINKS \\
+m4_if([$2],,[test "$srcdir" = "." || ])ALL_SYMLINKS="$ALL_SYMLINKS \\
 	$1"])
 
 dnl **** Create a make rules file from config.status ****
