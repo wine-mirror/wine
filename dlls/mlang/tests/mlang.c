@@ -1946,7 +1946,8 @@ static void test_IsCodePageInstallable(IMultiLanguage2 *ml2)
          * up an installation dialog on some platforms, even when specifying CPIOD_PEEK.
          */
         if (IsValidCodePage(i))
-            ok(hr == S_OK, "code page %u is valid but not installable 0x%08x\n", i, hr);
+            ok(hr == S_OK || broken(hr == E_INVALIDARG),  /* win2k */
+               "code page %u is valid but not installable 0x%08x\n", i, hr);
     }
 }
 
