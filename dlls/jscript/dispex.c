@@ -878,7 +878,7 @@ HRESULT jsdisp_call_name(DispatchEx *disp, const WCHAR *name, WORD flags, DISPPA
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(disp, name, TRUE, &prop);
+    hres = find_prop_name_prot(disp, name, FALSE, &prop);
     if(FAILED(hres))
         return hres;
 
