@@ -115,6 +115,22 @@ static DWORD access_denied_reported = 0;
 
 /* ################################ */
 
+static BOOL on_win9x = FALSE;
+
+static BOOL check_win9x(void)
+{
+    if (pGetPrinterW)
+    {
+        SetLastError(0xdeadbeef);
+        pGetPrinterW(NULL, 0, NULL, 0, NULL);
+        return (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED);
+    }
+    else
+    {
+        return TRUE;
+    }
+}
+
 static void find_default_printer(VOID)
 {
     static  char    buffer[DEFAULT_PRINTER_SIZE];
@@ -1156,7 +1172,7 @@ static void test_EnumPrinterDrivers(void)
         }
 
         /* EnumPrinterDriversA returns the same number of bytes as EnumPrinterDriversW */
-        if (pEnumPrinterDriversW)
+        if (!on_win9x && pEnumPrinterDriversW)
         {
             DWORD double_needed;
             DWORD double_returned;
@@ -2266,7 +2282,7 @@ static void test_GetPrinter(void)
         ok(needed > 0,"not expected needed buffer size %d\n", needed);
 
         /* GetPrinterA returns the same number of bytes as GetPrinterW */
-        if (! ret && pGetPrinterW && level != 6 && level != 7)
+        if (!on_win9x && !ret && pGetPrinterW && level != 6 && level != 7)
         {
             DWORD double_needed;
             ret = pGetPrinterW(hprn, level, NULL, 0, &double_needed);
@@ -2351,7 +2367,7 @@ static void test_GetPrinterDriver(void)
         }
 
         /* GetPrinterDriverA returns the same number of bytes as GetPrinterDriverW */
-        if (! ret && pGetPrinterDriverW)
+        if (!on_win9x && !ret && pGetPrinterDriverW)
         {
             DWORD double_needed;
             ret = pGetPrinterDriverW(hprn, NULL, level, NULL, 0, &double_needed);
@@ -2667,6 +2683,10 @@ START_TEST(info)
     pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
+
+    on_win9x = check_win9x();
+    if (on_win9x)
+        win_skip("Several W-functions are not available on Win9x/WinMe\n");
 
     find_default_printer();
     find_local_server();
