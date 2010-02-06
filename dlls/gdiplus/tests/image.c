@@ -530,6 +530,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
         GdipDisposeImage((GpImage*)gpbm);
     DeleteObject(hbm);
 
+    memset(buff, 0, sizeof(buff));
     hbm = CreateBitmap(WIDTH2, HEIGHT2, 1, 1, &buff);
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
     expect(Ok, stat);
