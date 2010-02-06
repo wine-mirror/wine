@@ -468,20 +468,74 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
 
 /******************************************************************************
  * GdipCreateLineBrushFromRectWithAngle [GDIPLUS.@]
- *
- * FIXME: angle value completely ignored. Don't know how to use it since native
- *        always set Brush rectangle to rect (independetly of this angle).
- *        Maybe it's used only on drawing.
  */
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect,
     ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
     GpLineGradient **line)
 {
+    GpStatus stat;
+    LinearGradientMode mode;
+    REAL width, height, exofs, eyofs;
+    REAL sin_angle, cos_angle, sin_cos_angle;
+
     TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
-    return GdipCreateLineBrushFromRect(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
-                                       wrap, line);
+    sin_angle = sinf(deg2rad(angle));
+    cos_angle = cosf(deg2rad(angle));
+    sin_cos_angle = sin_angle * cos_angle;
+
+    if (isAngleScalable)
+    {
+        width = height = 1.0;
+    }
+    else
+    {
+        width = rect->Width;
+        height = rect->Height;
+    }
+
+    if (sin_cos_angle >= 0)
+        mode = LinearGradientModeForwardDiagonal;
+    else
+        mode = LinearGradientModeBackwardDiagonal;
+
+    stat = GdipCreateLineBrushFromRect(rect, startcolor, endcolor, mode, wrap, line);
+
+    if (stat == Ok)
+    {
+        if (sin_cos_angle >= 0)
+        {
+            exofs = width * sin_cos_angle + height * cos_angle * cos_angle;
+            eyofs = width * sin_angle * sin_angle + height * sin_cos_angle;
+        }
+        else
+        {
+            exofs = width * sin_angle * sin_angle + height * sin_cos_angle;
+            eyofs = -width * sin_cos_angle + height * sin_angle * sin_angle;
+        }
+
+        if (isAngleScalable)
+        {
+            exofs = exofs * rect->Width;
+            eyofs = eyofs * rect->Height;
+        }
+
+        if (sin_angle >= 0)
+        {
+            (*line)->endpoint.X = rect->X + exofs;
+            (*line)->endpoint.Y = rect->Y + eyofs;
+        }
+        else
+        {
+            (*line)->endpoint.X = (*line)->startpoint.X;
+            (*line)->endpoint.Y = (*line)->startpoint.Y;
+            (*line)->startpoint.X = rect->X + exofs;
+            (*line)->startpoint.Y = rect->Y + eyofs;
+        }
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect,
