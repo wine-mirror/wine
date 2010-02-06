@@ -300,16 +300,24 @@ static const char* get_test_source_file(const char* test, const char* subtest)
 	{ 0, 0 }
     };
     static char buffer[MAX_PATH];
-    int i;
+    int i, len = strlen(test);
+
+    if (len > 4 && !strcmp( test + len - 4, ".exe" ))
+    {
+        len = sprintf(buffer, "programs/%s", test) - 4;
+        buffer[len] = 0;
+    }
+    else len = sprintf(buffer, "dlls/%s", test);
 
     for (i = 0; special_dirs[i][0]; i++) {
 	if (strcmp(test, special_dirs[i][0]) == 0) {
-	    test = special_dirs[i][1];
+            strcpy( buffer, special_dirs[i][1] );
+            len = strlen(buffer);
 	    break;
 	}
     }
 
-    snprintf(buffer, sizeof(buffer), "dlls/%s/tests/%s.c", test, subtest);
+    sprintf(buffer + len, "/tests/%s.c", subtest);
     return buffer;
 }
 
