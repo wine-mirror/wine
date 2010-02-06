@@ -361,6 +361,39 @@ guiAskTag (void)
                       dialog, AskTagProc);
 }
 
+static INT_PTR CALLBACK
+AskEmailProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    int len;
+
+    switch (msg)
+    {
+    case WM_COMMAND:
+        switch (LOWORD (wParam)) {
+        case IDOK:
+	    len = GetWindowTextLengthA (GetDlgItem (hwnd, IDC_EMAIL));
+	    if(!len) {
+               report (R_WARNING, "You must enter an email address to continue");
+               return FALSE;
+            }
+            email = heap_alloc (len+1);
+            GetDlgItemTextA (hwnd, IDC_EMAIL, email, len+1);
+            EndDialog (hwnd, IDOK);
+            return TRUE;
+        case IDABORT:
+            EndDialog (hwnd, IDABORT);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+int
+guiAskEmail (void)
+{
+    return DialogBox (GetModuleHandle (NULL), MAKEINTRESOURCE (IDD_EMAIL), dialog, AskEmailProc);
+}
+
 /* Quiet functions */
 static int
 qNoOp (va_list ap)

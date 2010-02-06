@@ -35,6 +35,17 @@ BEGIN
     PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
 END
 
+IDD_EMAIL DIALOG 0, 0, 150, 65
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "No email supplied"
+BEGIN
+    CTEXT "Please supply an email address to enable developers to contact you about your report."
+        IDC_STATIC, 10, 5, 130, 30
+    EDITTEXT IDC_EMAIL, 10, 30, 130, 10, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "Start", IDOK, 25, 45, 40, 14
+    PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
+END
+
 IDD_STATUS DIALOG 0, 0, 160, 150
 STYLE WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "Wine Test Shell"

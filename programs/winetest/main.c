@@ -48,6 +48,7 @@ struct wine_test
 };
 
 char *tag = NULL;
+char *email = NULL;
 static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
 static int nr_native_dlls;
@@ -221,6 +222,7 @@ static void print_version (void)
     xprintf ("    Platform=%s%s\n", platform, wow64 ? " (WOW64)" : "");
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
+    xprintf ("    Submitter=%s\n", email );
     xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
              "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
@@ -921,6 +923,7 @@ usage (void)
 " -d DIR    Use DIR as temp directory (default: %%TEMP%%\\wct)\n"
 " -e        preserve the environment\n"
 " -h        print this message and exit\n"
+" -m MAIL   an email address to enable developers to contact you\n"
 " -p        shutdown when the tests are done\n"
 " -q        quiet mode, no output at all\n"
 " -o FILE   put report into FILE, do not submit\n"
@@ -971,6 +974,13 @@ int main( int argc, char *argv[] )
         case '?':
             usage ();
             exit (0);
+        case 'm':
+            if (!(email = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
+            break;
         case 'p':
             poweroff = 1;
             break;
@@ -1055,6 +1065,13 @@ int main( int argc, char *argv[] )
                 if (guiAskTag () == IDABORT) exit (1);
             }
             report (R_TAG);
+
+            while (!email) {
+                if (!interactive)
+                    report (R_FATAL, "Please specify an email address (-m option) to enable developers\n"
+                            "    to contact you about your report if necessary.");
+                if (guiAskEmail () == IDABORT) exit (1);
+            }
 
             if (!build_id[0])
                 report( R_WARNING, "You won't be able to submit results without a valid build id.\n"

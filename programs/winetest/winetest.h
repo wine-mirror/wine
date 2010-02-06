@@ -68,7 +68,9 @@ enum report_type {
 
 #define MAXTAGLEN 20
 extern char *tag;
+extern char *email;
 int guiAskTag (void);
+int guiAskEmail (void);
 int report (enum report_type t, ...);
 
 #endif /* __WINETESTS_H */

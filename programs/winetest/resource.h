@@ -23,6 +23,7 @@
 #define IDD_STATUS 100
 #define IDD_ABOUT  101
 #define IDD_TAG    102
+#define IDD_EMAIL  103
 
 #define IDC_STATIC -1
 
@@ -36,6 +37,7 @@
 #define IDC_DIR 2000
 #define IDC_OUT 2001
 #define IDC_TAG 2002
+#define IDC_EMAIL 2002
 
 #define IDC_SB  3000
 
