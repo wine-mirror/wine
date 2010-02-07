@@ -26,6 +26,7 @@
 #include "dshow.h"
 #include "initguid.h"
 #include "dsound.h"
+#include "amaudio.h"
 
 #define QI_SUCCEED(iface, riid, ppv) hr = IUnknown_QueryInterface(iface, &riid, (LPVOID*)&ppv); \
     ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr); \
@@ -124,6 +125,7 @@ static void test_query_interface(void)
     IPersistPropertyBag *ppb = NULL;
     IDirectSound3DBuffer *ds3dbuf = NULL;
     IReferenceClock *clock = NULL;
+    IAMDirectSound *pAMDirectSound = NULL;
 
     QI_SUCCEED(pDSRender, IID_IBaseFilter, pBaseFilter);
     RELEASE_EXPECT(pBaseFilter, 1);
@@ -148,6 +150,8 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pMediaPosition, 1);
     QI_SUCCEED(pDSRender, IID_IQualityControl, pQualityControl);
     RELEASE_EXPECT(pQualityControl, 1);
+    QI_SUCCEED(pDSRender, IID_IAMDirectSound, pAMDirectSound);
+    RELEASE_EXPECT( pAMDirectSound, 1);
     }
 }
 
