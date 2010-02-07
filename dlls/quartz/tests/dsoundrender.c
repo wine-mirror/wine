@@ -135,6 +135,8 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pMediaSeeking, 1);
     QI_SUCCEED(pDSRender, IID_IReferenceClock, clock);
     RELEASE_EXPECT(clock, 1);
+    QI_SUCCEED(pDSRender, IID_IAMDirectSound, pAMDirectSound);
+    RELEASE_EXPECT( pAMDirectSound, 1);
     todo_wine {
     QI_SUCCEED(pDSRender, IID_IDirectSound3DBuffer, ds3dbuf);
     RELEASE_EXPECT(ds3dbuf, 1);
@@ -150,8 +152,6 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pMediaPosition, 1);
     QI_SUCCEED(pDSRender, IID_IQualityControl, pQualityControl);
     RELEASE_EXPECT(pQualityControl, 1);
-    QI_SUCCEED(pDSRender, IID_IAMDirectSound, pAMDirectSound);
-    RELEASE_EXPECT( pAMDirectSound, 1);
     }
 }
 
