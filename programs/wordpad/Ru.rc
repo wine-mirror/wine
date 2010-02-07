@@ -221,8 +221,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Предыдущая страница"
     STRING_PREVIEW_TWOPAGES,         "Две страницы"
     STRING_PREVIEW_ONEPAGE,          "Одна страница"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_ZOOMIN,           "Приблизить"
+    STRING_PREVIEW_ZOOMOUT,          "Отдалить"
     STRING_PREVIEW_CLOSE,            "Закрыть"
 END
 
