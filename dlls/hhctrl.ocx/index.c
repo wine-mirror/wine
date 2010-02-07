@@ -36,6 +36,12 @@ static void fill_index_tree(HWND hwnd, IndexItem *item)
     while(item) {
         TRACE("tree debug: %s\n", debugstr_w(item->keyword));
 
+        if(!item->keyword)
+        {
+            FIXME("HTML Help index item has no keyword.\n");
+            item = item->next;
+            continue;
+        }
         memset(&lvi, 0, sizeof(lvi));
         lvi.iItem = index++;
         lvi.mask = LVIF_TEXT|LVIF_PARAM;
@@ -78,6 +84,12 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text)
         item->itemFlags = 0x00;
     }
     if(!strncasecmp("keyword", ptr, len)) {
+        param = &item->keyword;
+    }else if(!item->keyword && !strncasecmp("name", ptr, len)) {
+        /* Some HTML Help index files use an additional "name" parameter
+         * rather than the "keyword" parameter.  In this case, the first
+         * occurance of the "name" parameter is the keyword.
+         */
         param = &item->keyword;
     }else if(!strncasecmp("name", ptr, len)) {
         item->itemFlags |= 0x01;
