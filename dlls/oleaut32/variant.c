@@ -1148,13 +1148,13 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
   if (iYear > 0 && iYear < 100)
     iYear += 1900;
 
-  iMinute += (iSecond - (iSecond % 60)) / 60;
-  iSecond = iSecond % 60;
-  iHour   += (iMinute - (iMinute % 60)) / 60;
-  iMinute = iMinute % 60;
-  iDay    += (iHour - (iHour % 24)) / 24;
-  iHour   = iHour % 24;
-  iYear    += (iMonth - (iMonth % 12)) / 12;
+  iMinute += iSecond / 60;
+  iSecond  = iSecond % 60;
+  iHour   += iMinute / 60;
+  iMinute  = iMinute % 60;
+  iDay    += iHour / 24;
+  iHour    = iHour % 24;
+  iYear   += iMonth / 12;
   iMonth   = iMonth % 12;
   if (iMonth<=0) {iMonth+=12; iYear--;}
   while (iDay > days[iMonth])
@@ -1164,7 +1164,7 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
     else
       iDay -= days[iMonth];
     iMonth++;
-    iYear += (iMonth - (iMonth % 12)) / 12;
+    iYear += iMonth / 12;
     iMonth = iMonth % 12;
   }
   while (iDay <= 0)
