@@ -410,8 +410,13 @@ static HRESULT WINAPI ClOleCommandTarget_QueryStatus(IOleCommandTarget *iface,
         const GUID *pguidCmdGroup, ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
 {
     DocHost *This = OLECMD_THIS(iface);
+    ULONG i= 0;
     FIXME("(%p)->(%s %u %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds,
           pCmdText);
+    while (prgCmds && (cCmds > i)) {
+        FIXME("command_%u: %u, 0x%x\n", i, prgCmds[i].cmdID, prgCmds[i].cmdf);
+        i++;
+    }
     return E_NOTIMPL;
 }
 
