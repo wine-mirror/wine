@@ -41,6 +41,7 @@ void strbuf_append(strbuf_t *buf, const char *data, int len);
 void stream_init(stream_t *stream, IStream *str);
 BOOL stream_chr(stream_t *stream, strbuf_t *buf, char c);
 void get_node_name(strbuf_t *node, strbuf_t *name);
+BOOL next_content(stream_t *stream, strbuf_t *buf);
 BOOL next_node(stream_t *stream, strbuf_t *buf);
 const char *get_attr(const char *node, const char *name, int *len);
 

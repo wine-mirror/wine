@@ -98,6 +98,18 @@ void get_node_name(strbuf_t *node, strbuf_t *name)
     strbuf_append(name, "", 1);
 }
 
+/* Return the stream content up to the next HTML tag.
+ *
+ * Note: the first returned character is the end of the last tag (>).
+ */
+BOOL next_content(stream_t *stream, strbuf_t *buf)
+{
+    if(!stream_chr(stream, buf, '<'))
+        return FALSE;
+
+    return TRUE;
+}
+
 BOOL next_node(stream_t *stream, strbuf_t *buf)
 {
     if(!stream_chr(stream, NULL, '<'))

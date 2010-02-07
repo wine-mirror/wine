@@ -389,7 +389,6 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
         WARN("Could not open storage: %08x\n", hres);
         return CloseCHM(ret);
     }
-
     hres = IStorage_OpenStream(ret->pStorage, wszSTRINGS, NULL, STGM_READ, 0,
             &ret->strings_stream);
     if(FAILED(hres)) {

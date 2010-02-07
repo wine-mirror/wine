@@ -83,6 +83,14 @@ typedef struct IndexItem {
     IndexSubItem *items;
 } IndexItem;
 
+typedef struct SearchItem {
+    struct SearchItem *next;
+
+    HTREEITEM id;
+    LPWSTR title;
+    LPWSTR filename;
+} SearchItem;
+
 typedef struct CHMInfo
 {
     IITStorage *pITStorage;
@@ -115,6 +123,7 @@ typedef struct {
 } IndexPopup;
 
 typedef struct {
+    SearchItem *root;
     HWND hwndEdit;
     HWND hwndList;
     HWND hwndContainer;
@@ -174,6 +183,9 @@ HHInfo *CreateHelpViewer(LPCWSTR);
 void ReleaseHelpViewer(HHInfo*);
 BOOL NavigateToUrl(HHInfo*,LPCWSTR);
 BOOL NavigateToChm(HHInfo*,LPCWSTR,LPCWSTR);
+
+void InitSearch(HHInfo *info, const char *needle);
+void ReleaseSearch(HHInfo *info);
 
 /* memory allocation functions */
 

@@ -421,6 +421,7 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
 {
     LPCWSTR chmfile = NULL, name = NULL, local = NULL;
     ContentItem *citer;
+    SearchItem *siter;
     IndexItem *iiter;
 
     if(!user_data || !info)
@@ -471,6 +472,12 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
         name = iiter->items[0].name;
         local = iiter->items[0].local;
         chmfile = iiter->merge.chm_file;
+        break;
+    case TAB_SEARCH:
+        siter = (SearchItem *) user_data;
+        name = siter->filename;
+        local = siter->filename;
+        chmfile = info->pCHMInfo->szFile;
         break;
     default:
         FIXME("Unhandled operation for this tab!\n");
@@ -523,8 +530,16 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case TVN_SELCHANGEDW:
             return OnTopicChange(info, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
         case NM_DBLCLK:
-            if(info && info->current_tab == TAB_INDEX)
+            if(!info)
+                return 0;
+            switch(info->current_tab)
+            {
+            case TAB_INDEX:
                 return OnTopicChange(info, (void*)((NMITEMACTIVATE *)lParam)->lParam);
+            case TAB_SEARCH:
+                return OnTopicChange(info, (void*)((NMITEMACTIVATE *)lParam)->lParam);
+            }
+            break;
         case NM_RETURN:
             if(!info)
                 return 0;
@@ -540,11 +555,34 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
                 return 0;
             }
             case TAB_SEARCH: {
-                WCHAR needle[100];
+                if(nmhdr->hwndFrom == info->search.hwndEdit) {
+                    char needle[100];
+                    DWORD i, len;
 
-                GetWindowTextW(info->search.hwndEdit, needle, sizeof(needle)/sizeof(WCHAR));
-                FIXME("Search for text: %s\n", debugstr_w(needle));
-                return 0;
+                    len = GetWindowTextA(info->search.hwndEdit, needle, sizeof(needle));
+                    if(!len)
+                    {
+                        FIXME("Unable to get search text.\n");
+                        return 0;
+                    }
+                    /* Convert the requested text for comparison later against the
+                     * lower case version of HTML file contents.
+                     */
+                    for(i=0;i<len;i++)
+                        needle[i] = tolower(needle[i]);
+                    InitSearch(info, needle);
+                    return 0;
+                }else if(nmhdr->hwndFrom == info->search.hwndList) {
+                    HWND hwndList = info->search.hwndList;
+                    LVITEMW lvItem;
+
+                    lvItem.iItem = (int) SendMessageW(hwndList, LVM_GETSELECTIONMARK, 0, 0);
+                    lvItem.mask = TVIF_PARAM;
+                    ListView_GetItemW(hwndList, &lvItem);
+                    OnTopicChange(info, (void*) lvItem.lParam);
+                    return 0;
+                }
+                break;
             }
             }
             break;
@@ -1376,6 +1414,7 @@ void ReleaseHelpViewer(HHInfo *info)
     ReleaseWebBrowser(info);
     ReleaseContent(info);
     ReleaseIndex(info);
+    ReleaseSearch(info);
 
     if(info->WinType.hwndHelp)
         DestroyWindow(info->WinType.hwndHelp);

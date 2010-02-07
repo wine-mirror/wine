@@ -12,6 +12,7 @@ C_SRCS = \
 	hhctrl.c \
 	index.c \
 	regsvr.c \
+	search.c \
 	stream.c \
 	webbrowser.c
 
