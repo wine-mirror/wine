@@ -448,11 +448,16 @@ static void test_parent_owner(void)
     ok( ret == desktop, "SetParent return value %p expected %p\n", ret, desktop );
     check_parents( test, child, child, 0, 0, hwndMain, test );
 
-    ShowWindow( test, SW_SHOW );
-    ret = SetParent( test, test );
-    ok( ret == NULL, "SetParent return value %p expected %p\n", ret, NULL );
-    ok( GetWindowLongA( test, GWL_STYLE ) & WS_VISIBLE, "window is not visible after SetParent\n" );
-    check_parents( test, child, child, 0, 0, hwndMain, test );
+    if (!is_win9x)
+    {
+        ShowWindow( test, SW_SHOW );
+        ret = SetParent( test, test );
+        ok( ret == NULL, "SetParent return value %p expected %p\n", ret, NULL );
+        ok( GetWindowLongA( test, GWL_STYLE ) & WS_VISIBLE, "window is not visible after SetParent\n" );
+        check_parents( test, child, child, 0, 0, hwndMain, test );
+    }
+    else
+        win_skip( "Test crashes on Win9x/WinMe\n" );
     DestroyWindow( test );
 
     /* owned popup */
