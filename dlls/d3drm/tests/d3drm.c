@@ -69,8 +69,15 @@ char data_ok[] =
 "}\n"
 "Mesh Object\n"
 "{\n"
-"0;\n"
-"0;\n"
+"4;\n"
+"1.0; 0.0; 0.0;,\n"
+"0.0; 1.0; 0.0;,\n"
+"0.0; 0.0; 1.0;,\n"
+"1.0; 1.0; 1.0;;\n"
+"3;\n"
+"3; 0, 1, 2;,\n"
+"3; 1, 2, 3;,\n"
+"3; 3, 1, 2;;\n"
 "}\n";
 
 static void MeshBuilderTest(void)
@@ -79,6 +86,8 @@ static void MeshBuilderTest(void)
     LPDIRECT3DRM pD3DRM;
     LPDIRECT3DRMMESHBUILDER pMeshBuilder;
     D3DRMLOADMEMORY info;
+    int val;
+    DWORD val1, val2, val3;
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -100,6 +109,18 @@ static void MeshBuilderTest(void)
     info.dSize = strlen(data_ok);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+
+    val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder);
+    ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);
+
+    val = IDirect3DRMMeshBuilder_GetFaceCount(pMeshBuilder);
+    ok(val == 3, "Wrong number of faces %d (must be 3)\n", val);
+
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, NULL, &val2, NULL, &val3, NULL);
+    ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+    ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
+    todo_wine ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
+    todo_wine ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
 
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
