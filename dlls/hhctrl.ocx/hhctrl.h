@@ -79,6 +79,7 @@ typedef struct IndexItem {
 
     int nItems;
     int itemFlags;
+    int indentLevel;
     IndexSubItem *items;
 } IndexItem;
 
