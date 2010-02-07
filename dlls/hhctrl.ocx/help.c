@@ -44,6 +44,7 @@ static LRESULT Help_OnSize(HWND hWnd);
 #define TAB_TOP_PADDING     8
 #define TAB_RIGHT_PADDING   4
 #define TAB_MARGIN  8
+#define EDIT_HEIGHT         20
 
 static const WCHAR szEmpty[] = {0};
 
@@ -341,9 +342,6 @@ static void ResizeTabChild(HHInfo *info, int tab)
     SetWindowPos(hwnd, NULL, rect.left, rect.top, width, height,
                  SWP_NOZORDER | SWP_NOACTIVATE);
 
-    /* Resize the tab widget column to perfectly fit the tab window and
-     * leave sufficient space for the scroll widget.
-     */
     switch (tab)
     {
     case TAB_INDEX: {
@@ -351,7 +349,29 @@ static void ResizeTabChild(HHInfo *info, int tab)
         int border_width = GetSystemMetrics(SM_CXBORDER);
         int edge_width = GetSystemMetrics(SM_CXEDGE);
 
+        /* Resize the tab widget column to perfectly fit the tab window and
+         * leave sufficient space for the scroll widget.
+         */
         SendMessageW(info->tabs[TAB_INDEX].hwnd, LVM_SETCOLUMNWIDTH, 0,
+                     width-scroll_width-2*border_width-2*edge_width);
+
+        break;
+    }
+    case TAB_SEARCH: {
+        int scroll_width = GetSystemMetrics(SM_CXVSCROLL);
+        int border_width = GetSystemMetrics(SM_CXBORDER);
+        int edge_width = GetSystemMetrics(SM_CXEDGE);
+        int top_pos = 0;
+
+        SetWindowPos(info->search.hwndEdit, NULL, 0, top_pos, width,
+                      EDIT_HEIGHT, SWP_NOZORDER | SWP_NOACTIVATE);
+        top_pos += EDIT_HEIGHT + TAB_MARGIN;
+        SetWindowPos(info->search.hwndList, NULL, 0, top_pos, width,
+                      height-top_pos, SWP_NOZORDER | SWP_NOACTIVATE);
+        /* Resize the tab widget column to perfectly fit the tab window and
+         * leave sufficient space for the scroll widget.
+         */
+        SendMessageW(info->search.hwndList, LVM_SETCOLUMNWIDTH, 0,
                      width-scroll_width-2*border_width-2*edge_width);
 
         break;
@@ -469,6 +489,22 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
     return 0;
 }
 
+/* Capture the Enter/Return key and send it up to Child_WndProc as an NM_RETURN message */
+static LRESULT CALLBACK EditChild_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC editWndProc = (WNDPROC)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
+    if(message == WM_KEYUP && wParam == VK_RETURN)
+    {
+        NMHDR nmhdr;
+
+        nmhdr.hwndFrom = hWnd;
+        nmhdr.code = NM_RETURN;
+        SendMessageW(GetParent(GetParent(hWnd)), WM_NOTIFY, wParam, (LPARAM)&nmhdr);
+    }
+    return editWndProc(hWnd, message, wParam, lParam);
+}
+
 static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -490,8 +526,10 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             if(info && info->current_tab == TAB_INDEX)
                 return OnTopicChange(info, (void*)((NMITEMACTIVATE *)lParam)->lParam);
         case NM_RETURN:
-            if(info && info->current_tab == TAB_INDEX)
-            {
+            if(!info)
+                return 0;
+            switch(info->current_tab) {
+            case TAB_INDEX: {
                 HWND hwndList = info->tabs[TAB_INDEX].hwnd;
                 LVITEMW lvItem;
 
@@ -499,8 +537,17 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
                 lvItem.mask = TVIF_PARAM;
                 ListView_GetItemW(hwndList, &lvItem);
                 OnTopicChange(info, (void*) lvItem.lParam);
+                return 0;
             }
-            return 0;
+            case TAB_SEARCH: {
+                WCHAR needle[100];
+
+                GetWindowTextW(info->search.hwndEdit, needle, sizeof(needle)/sizeof(WCHAR));
+                FIXME("Search for text: %s\n", debugstr_w(needle));
+                return 0;
+            }
+            }
+            break;
         }
         break;
     }
@@ -858,6 +905,69 @@ static BOOL AddIndexTab(HHInfo *info)
 
     ResizeTabChild(info, TAB_INDEX);
     ShowWindow(info->tabs[TAB_INDEX].hwnd, SW_HIDE);
+
+    return TRUE;
+}
+
+static BOOL AddSearchTab(HHInfo *info)
+{
+    HWND hwndList, hwndEdit, hwndContainer;
+    char hidden_column[] = "Column";
+    WNDPROC editWndProc;
+    LVCOLUMNA lvc;
+
+    if(info->tabs[TAB_SEARCH].id == -1)
+        return TRUE; /* No "Search" tab */
+    hwndContainer = CreateWindowExW(WS_EX_CONTROLPARENT, szChildClass, szEmpty,
+                                    WS_CHILD, 0, 0, 0, 0, info->WinType.hwndNavigation,
+                                    NULL, hhctrl_hinstance, NULL);
+    if(!hwndContainer) {
+        ERR("Could not create search window container control.\n");
+        return FALSE;
+    }
+    hwndEdit = CreateWindowExW(WS_EX_CLIENTEDGE, WC_EDITW, szEmpty, WS_CHILD
+                                | WS_VISIBLE | ES_LEFT | SS_NOTIFY, 0, 0, 0, 0,
+                               hwndContainer, NULL, hhctrl_hinstance, NULL);
+    if(!hwndEdit) {
+        ERR("Could not create search ListView control.\n");
+        return FALSE;
+    }
+    if(SendMessageW(hwndEdit, WM_SETFONT, (WPARAM) info->hFont, (LPARAM) FALSE) == -1)
+    {
+        ERR("Could not set font for edit control.\n");
+        return FALSE;
+    }
+    editWndProc = (WNDPROC) SetWindowLongPtrW(hwndEdit, GWLP_WNDPROC, (LONG_PTR)EditChild_WndProc);
+    if(!editWndProc) {
+        ERR("Could not redirect messages for edit control.\n");
+        return FALSE;
+    }
+    SetWindowLongPtrW(hwndEdit, GWLP_USERDATA, (LONG_PTR)editWndProc);
+    hwndList = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, szEmpty,
+                               WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL
+                                | LVS_REPORT | LVS_NOCOLUMNHEADER, 0, 0, 0, 0,
+                               hwndContainer, NULL, hhctrl_hinstance, NULL);
+    if(!hwndList) {
+        ERR("Could not create search ListView control.\n");
+        return FALSE;
+    }
+    memset(&lvc, 0, sizeof(lvc));
+    lvc.mask = LVCF_TEXT;
+    lvc.pszText = hidden_column;
+    if(SendMessageW(hwndList, LVM_INSERTCOLUMNA, 0, (LPARAM) &lvc) == -1)
+    {
+        ERR("Could not create ListView column\n");
+        return FALSE;
+    }
+
+    info->search.hwndEdit = hwndEdit;
+    info->search.hwndList = hwndList;
+    info->search.hwndContainer = hwndContainer;
+    info->tabs[TAB_SEARCH].hwnd = hwndContainer;
+
+    SetWindowLongPtrW(hwndContainer, GWLP_USERDATA, (LONG_PTR)info);
+
+    ResizeTabChild(info, TAB_SEARCH);
 
     return TRUE;
 }
@@ -1230,6 +1340,9 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
         return FALSE;
 
     if (!AddIndexPopup(pHHInfo))
+        return FALSE;
+
+    if (!AddSearchTab(pHHInfo))
         return FALSE;
 
     InitContent(pHHInfo);
