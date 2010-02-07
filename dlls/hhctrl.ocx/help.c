@@ -487,8 +487,20 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case TVN_SELCHANGEDW:
             return OnTopicChange(info, (void*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
         case NM_DBLCLK:
-            if(info->current_tab == TAB_INDEX)
+            if(info && info->current_tab == TAB_INDEX)
                 return OnTopicChange(info, (void*)((NMITEMACTIVATE *)lParam)->lParam);
+        case NM_RETURN:
+            if(info && info->current_tab == TAB_INDEX)
+            {
+                HWND hwndList = info->tabs[TAB_INDEX].hwnd;
+                LVITEMW lvItem;
+
+                lvItem.iItem = (int) SendMessageW(hwndList, LVM_GETSELECTIONMARK, 0, 0);
+                lvItem.mask = TVIF_PARAM;
+                ListView_GetItemW(hwndList, &lvItem);
+                OnTopicChange(info, (void*) lvItem.lParam);
+            }
+            return 0;
         }
         break;
     }
@@ -910,7 +922,9 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
     {
     case WM_NOTIFY: {
         NMHDR *nmhdr = (NMHDR*)lParam;
-        if(nmhdr->code == NM_DBLCLK) {
+        switch(nmhdr->code)
+        {
+        case NM_DBLCLK: {
             HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
             IndexSubItem *iter;
 
@@ -922,6 +936,23 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
             NavigateToChm(info, info->index->merge.chm_file, iter->local);
             ShowWindow(info->popup.hwndPopup, SW_HIDE);
             return 0;
+        }
+        case NM_RETURN: {
+            HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+            IndexSubItem *iter;
+            LVITEMW lvItem;
+
+            if(info == 0)
+                return 0;
+
+            lvItem.iItem = (int) SendMessageW(info->popup.hwndList, LVM_GETSELECTIONMARK, 0, 0);
+            lvItem.mask = TVIF_PARAM;
+            ListView_GetItemW(info->popup.hwndList, &lvItem);
+            iter = (IndexSubItem*) lvItem.lParam;
+            NavigateToChm(info, info->index->merge.chm_file, iter->local);
+            ShowWindow(info->popup.hwndPopup, SW_HIDE);
+            return 0;
+        }
         }
         break;
     }
