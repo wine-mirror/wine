@@ -34,11 +34,11 @@ DECLARE_INTERFACE_(IAMDirectSound,IUnknown)
 
     /*** IAMDirectSound methods ***/
     STDMETHOD(GetDirectSoundInterface)(THIS_ IDirectSound **ds) PURE;
-    STDMETHOD(GetPrimaryBufferInterface(THIS_ IDirectSoundBuffer **buf) PURE;
+    STDMETHOD(GetPrimaryBufferInterface)(THIS_ IDirectSoundBuffer **buf) PURE;
     STDMETHOD(GetSecondaryBufferInterface)(THIS_ IDirectSoundBuffer **buf) PURE;
-    STDMETHOD(ReleaseDirectSoundInterface(THIS_ IDirectSound *ds) PURE;
-    STDMETHOD(ReleasePrimaryBufferInterface(THIS_ IDirectSoundBuffer *buf) PURE;
-    STDMETHOD(ReleaseSecondaryBufferInterface(THIS_ IDirectSoundBuffer *buf) PURE;
+    STDMETHOD(ReleaseDirectSoundInterface)(THIS_ IDirectSound *ds) PURE;
+    STDMETHOD(ReleasePrimaryBufferInterface)(THIS_ IDirectSoundBuffer *buf) PURE;
+    STDMETHOD(ReleaseSecondaryBufferInterface)(THIS_ IDirectSoundBuffer *buf) PURE;
     STDMETHOD(SetFocusWindow)(THIS_ HWND hwnd, BOOL bgsilent) PURE;
     STDMETHOD(GetFocusWindow)(THIS_ HWND hwnd) PURE;
 };
