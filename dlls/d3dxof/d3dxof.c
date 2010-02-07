@@ -722,7 +722,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 
   if (This->from_ref && (This->level >= 1))
   {
-    /* Only 2 levels can enumerated if the object is obtained from a reference */
+    /* Only 2 levels can be enumerated if the object is obtained from a reference */
     return DXFILEERR_NOMOREOBJECTS;
   }
 
