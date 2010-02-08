@@ -91,5 +91,3 @@ RC_SRCS = \
 sql.tab.c: sql.tab.h   # for parallel makes
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
-
-tokenize.o: sql.tab.h
