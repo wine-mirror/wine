@@ -104,6 +104,7 @@ static void lock_flag_test(IDirect3DDevice8 *device)
 
         if(SUCCEEDED(hr))
         {
+            ok(data != NULL, "The data pointer returned by Lock is NULL\n");
             hr = IDirect3DVertexBuffer8_Unlock(buffer);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer8_Unlock failed, 0x%08x\n", hr);
         }

@@ -3216,6 +3216,7 @@ static void VertexBufferLockRest(void)
             test_data[i].debug_string, hr, test_data[i].result);
         if(SUCCEEDED(hr))
         {
+            ok(data != NULL, "The data pointer returned by Lock is NULL\n");
             hr = IDirect3DVertexBuffer7_Unlock(buffer);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer7_Unlock failed, 0x%08x\n", hr);
         }
