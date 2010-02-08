@@ -414,7 +414,6 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
             hres = S_OK;
             break;
         }
-        nsAString_Finish(&nsstr);
     }
     nsAString_Finish(&nsname);
     nsAString_Finish(&nsstr);
