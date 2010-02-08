@@ -13767,6 +13767,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_dlls" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	dlls"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/%) dlls: dlls/Makefile \$(MAKEDEP)
 dlls/Makefile: dlls/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files dlls/Makefile"
 
@@ -18302,6 +18303,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_documentation" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	documentation"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=documentation/%) documentation: documentation/Makefile \$(MAKEDEP)
 documentation/Makefile: documentation/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files documentation/Makefile"
 
@@ -18310,6 +18312,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_fonts" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	fonts"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=fonts/%) fonts: fonts/Makefile \$(MAKEDEP)
 fonts/Makefile: fonts/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files fonts/Makefile"
 
@@ -18318,6 +18321,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_include" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	include"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=include/%) include: include/Makefile \$(MAKEDEP)
 include/Makefile: include/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files include/Makefile"
 
@@ -18325,6 +18329,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	libs/port/Makefile"
 
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=libs/port/%) libs/port: libs/port/Makefile \$(MAKEDEP)
 libs/port/Makefile: libs/port/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files libs/port/Makefile"
 
@@ -18332,6 +18337,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	libs/wine/Makefile"
 
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=libs/wine/%) libs/wine: libs/wine/Makefile \$(MAKEDEP)
 libs/wine/Makefile: libs/wine/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files libs/wine/Makefile"
 
@@ -18339,6 +18345,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	libs/wpp/Makefile"
 
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=libs/wpp/%) libs/wpp: libs/wpp/Makefile \$(MAKEDEP)
 libs/wpp/Makefile: libs/wpp/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files libs/wpp/Makefile"
 
@@ -18347,6 +18354,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_loader" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	loader"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=loader/%) loader: loader/Makefile \$(MAKEDEP)
 loader/Makefile: loader/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files loader/Makefile"
 
@@ -18355,6 +18363,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_programs" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	programs"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=programs/%) programs: programs/Makefile \$(MAKEDEP)
 programs/Makefile: programs/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files programs/Makefile"
 
@@ -18857,6 +18866,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_server" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
 	server"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=server/%) server: server/Makefile \$(MAKEDEP)
 server/Makefile: server/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files server/Makefile"
 
@@ -18865,6 +18875,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/%) tools: tools/Makefile \$(MAKEDEP)
 tools/Makefile: tools/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/Makefile"
 
@@ -18873,6 +18884,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/widl"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/widl/%) tools/widl: tools/widl/Makefile \$(MAKEDEP)
 tools/widl/Makefile: tools/widl/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/widl/Makefile"
 
@@ -18881,6 +18893,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/winebuild"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/winebuild/%) tools/winebuild: tools/winebuild/Makefile \$(MAKEDEP)
 tools/winebuild/Makefile: tools/winebuild/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winebuild/Makefile"
 
@@ -18889,6 +18902,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/winedump"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/winedump/%) tools/winedump: tools/winedump/Makefile \$(MAKEDEP)
 tools/winedump/Makefile: tools/winedump/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winedump/Makefile"
 
@@ -18897,6 +18911,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/winegcc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/winegcc/%) tools/winegcc: tools/winegcc/Makefile \$(MAKEDEP)
 tools/winegcc/Makefile: tools/winegcc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winegcc/Makefile"
 
@@ -18905,6 +18920,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/wmc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/wmc/%) tools/wmc: tools/wmc/Makefile \$(MAKEDEP)
 tools/wmc/Makefile: tools/wmc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/wmc/Makefile"
 
@@ -18913,6 +18929,7 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools/wrc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=tools/wrc/%) tools/wrc: tools/wrc/Makefile \$(MAKEDEP)
 tools/wrc/Makefile: tools/wrc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/wrc/Makefile"
 

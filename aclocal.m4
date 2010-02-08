@@ -176,7 +176,8 @@ m4_ifval([$4],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$4],[ && ac_var="$
 	ac_dir"]))
 AS_VAR_POPDEF([ac_enable])dnl
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-[$1: ]m4_ifval([$2],[$1.in $2],[$1.in]) config.status"
+m4_ifval(ac_dir,m4_ifval([$3],,[\$(RECURSE_TARGETS:%=ac_dir/%) ac_dir: $1 \$(MAKEDEP)
+]))[$1: ]m4_ifval([$2],[$1.in $2],[$1.in]) config.status"
 AC_CONFIG_FILES([$1])dnl
 m4_popdef([ac_dir])])
 

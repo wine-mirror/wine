@@ -115,20 +115,19 @@ tools/wmc/__install__ tools/wmc/__install-dev__: tools/wmc
 tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
 
 RECURSE_TARGETS = \
-	$(SUBDIRS) \
-	$(SUBDIRS:%=%/__clean__) \
-	$(SUBDIRS:%=%/__depend__) \
-	$(SUBDIRS:%=%/__install-dev__) \
-	$(SUBDIRS:%=%/__install-lib__) \
-	$(SUBDIRS:%=%/__install__) \
-	$(SUBDIRS:%=%/__uninstall__) \
-	$(TESTSUBDIRS:%=%/__crosstest__) \
-	$(TESTSUBDIRS:%=%/__test__) \
-	$(TESTSUBDIRS:%=%/__testclean__)
+	__clean__ \
+	__depend__ \
+	__install__ \
+	__instal-dev__ \
+	__install-lib__ \
+	__uninstall__ \
+	__crosstest__
 
-depend $(RECURSE_TARGETS): $(MAKEDEP)
+dlls $(RECURSE_TARGETS:%=dlls/%): $(MAKEDEP)
+programs $(RECURSE_TARGETS:%=programs/%): $(MAKEDEP)
+depend: $(MAKEDEP)
 
-$(MAKEDEP): include/config.h
+$(MAKEDEP): include/config.h tools/Makefile
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
 
 # Test rules
@@ -166,7 +165,8 @@ $(ALL_CONFIGS):
 .BEGIN: Makefile
 .MAKEFILEDEPS:
 
-$(RECURSE_TARGETS) $(MAKEDEP): $(ALL_MAKEFILES)
+dlls $(RECURSE_TARGETS:%=dlls/%): $(ALL_MAKEFILES)
+programs $(RECURSE_TARGETS:%=programs/%): $(ALL_MAKEFILES)
 
 distclean::
 	$(RM) $(ALL_CONFIGS)
