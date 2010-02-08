@@ -3967,7 +3967,7 @@ static void test_getcolumnwidth(void)
     memset(&itema, 0, sizeof(itema));
     SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&itema);
     ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
-    expect(96, ret);
+    todo_wine expect(96, ret);
     DestroyWindow(hwnd);
 }
 

@@ -401,7 +401,7 @@ typedef struct tagLISTVIEW_INFO
 #define MAX_EMPTYTEXT_SELECT_WIDTH 80
 
 /* default column width for items in list display mode */
-#define DEFAULT_COLUMN_WIDTH 96
+#define DEFAULT_COLUMN_WIDTH 128
 
 /* Size of "line" scroll for V & H scrolls */
 #define LISTVIEW_SCROLL_ICON_LINE_SIZE 37
@@ -2808,7 +2808,6 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
     {
 	WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
 	LVITEMW lvItem;
-	BOOL empty;
 	INT i;
 
 	lvItem.mask = LVIF_TEXT;
@@ -2823,18 +2822,12 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
 		nItemWidth = max(LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE),
 				 nItemWidth);
 	}
-	empty = nItemWidth == 0;
 
         if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx; 
         if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx;
 
-	if (empty)
-	    nItemWidth  = max(nItemWidth, DEFAULT_COLUMN_WIDTH);
-	else
-	    nItemWidth += WIDTH_PADDING;
+        nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth + WIDTH_PADDING);
     }
-
-    TRACE("nItemWidth=%d\n", nItemWidth);
 
     return nItemWidth;
 }
@@ -7480,7 +7473,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
     if (nItem == -1) goto fail;
-    if (++infoPtr->nItemCount > 0) LISTVIEW_UpdateItemSize(infoPtr);
+    infoPtr->nItemCount++;
 
     /* shift indices first so they don't get tangled */
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
