@@ -1061,9 +1061,9 @@ static DWORD buffer_sanitize_flags(DWORD flags)
 
 static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
 {
-    GLbitfield ret = GL_MAP_FLUSH_EXPLICIT_BIT;
+    GLbitfield ret = 0;
 
-    if (!(d3d_flags & WINED3DLOCK_READONLY)) ret |= GL_MAP_WRITE_BIT;
+    if (!(d3d_flags & WINED3DLOCK_READONLY)) ret = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
 
     if (d3d_flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE))
     {
