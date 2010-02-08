@@ -160,6 +160,7 @@ MAKE_FUNCPTR(sk_value);
 #undef MAKE_FUNCPTR
 
 static CRITICAL_SECTION *ssl_locks;
+static unsigned int num_ssl_locks;
 
 static unsigned long ssl_thread_id(void)
 {
@@ -458,14 +459,14 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
 
         pCRYPTO_set_id_callback(ssl_thread_id);
-        ssl_locks = HeapAlloc(GetProcessHeap(), 0,
-                pCRYPTO_num_locks() * sizeof(CRITICAL_SECTION));
+        num_ssl_locks = pCRYPTO_num_locks();
+        ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
         if (!ssl_locks)
         {
             LeaveCriticalSection(&init_ssl_cs);
             return ERROR_OUTOFMEMORY;
         }
-        for (i = 0; i < pCRYPTO_num_locks(); i++)
+        for (i = 0; i < num_ssl_locks; i++)
             InitializeCriticalSection(&ssl_locks[i]);
         pCRYPTO_set_locking_callback(ssl_lock_callback);
         LeaveCriticalSection(&init_ssl_cs);
@@ -494,7 +495,7 @@ void NETCON_unload(void)
     if (ssl_locks)
     {
         int i;
-        for (i = 0; i < pCRYPTO_num_locks(); i++) DeleteCriticalSection(&ssl_locks[i]);
+        for (i = 0; i < num_ssl_locks; i++) DeleteCriticalSection(&ssl_locks[i]);
         HeapFree(GetProcessHeap(), 0, ssl_locks);
     }
 #endif
