@@ -1086,7 +1086,10 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
 
     flags = buffer_sanitize_flags(flags);
-    if (!buffer_add_dirty_area(This, offset, size)) return E_OUTOFMEMORY;
+    if (!(flags & WINED3DLOCK_READONLY))
+    {
+        if (!buffer_add_dirty_area(This, offset, size)) return E_OUTOFMEMORY;
+    }
 
     count = InterlockedIncrement(&This->lock_count);
 
