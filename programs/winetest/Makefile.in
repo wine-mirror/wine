@@ -18,9 +18,7 @@ RC_SRCS = \
 
 SVG_SRCS = winetest.svg
 
-ALL_TEST_DIRS = @ALL_TEST_DIRS@
-
-TESTBINS   = $(ALL_TEST_DIRS:%/tests=%_test.exe)
+TESTBINS   = @ALL_TEST_BINARIES@
 TESTRCS    = build.rc $(TESTBINS:.exe=.rc)
 EXTRA_OBJS = $(TESTRCS:.rc=.res)
 

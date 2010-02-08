@@ -599,6 +599,7 @@ LIBOBJS
 ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_PROGRAM_INSTALL_DIRS
 ALL_PROGRAM_DIRS
+ALL_TEST_BINARIES
 ALL_TEST_DIRS
 ALL_IMPORTLIB_RULES
 ALL_IMPORT_LIBS
@@ -13678,6 +13679,8 @@ ALL_IMPORTLIB_RULES=""
 
 ALL_TEST_DIRS=""
 
+ALL_TEST_BINARIES=""
+
 ALL_PROGRAM_DIRS=""
 
 ALL_PROGRAM_INSTALL_DIRS=""
@@ -13842,6 +13845,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advapi32/Makefile: dlls/advapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/advapi32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	advapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 advapi32_test.exe: \$(TOPOBJDIR)/dlls/advapi32/tests/advapi32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/advapi32/tests/advapi32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -13869,6 +13874,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advpack/Makefile: dlls/advpack/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/advpack/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	advpack_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 advpack_test.exe: \$(TOPOBJDIR)/dlls/advpack/tests/advpack_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/advpack/tests/advpack_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -13891,6 +13898,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/amstream/Makefile: dlls/amstream/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/amstream/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	amstream_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 amstream_test.exe: \$(TOPOBJDIR)/dlls/amstream/tests/amstream_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/amstream/tests/amstream_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -13960,6 +13969,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/avifil32/Makefile: dlls/avifil32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/avifil32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	avifil32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 avifil32_test.exe: \$(TOPOBJDIR)/dlls/avifil32/tests/avifil32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/avifil32/tests/avifil32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14011,6 +14022,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/browseui/Makefile: dlls/browseui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/browseui/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	browseui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 browseui_test.exe: \$(TOPOBJDIR)/dlls/browseui/tests/browseui_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/browseui/tests/browseui_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14038,6 +14051,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cabinet/Makefile: dlls/cabinet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cabinet/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	cabinet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 cabinet_test.exe: \$(TOPOBJDIR)/dlls/cabinet/tests/cabinet_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/cabinet/tests/cabinet_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14112,6 +14127,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comcat/Makefile: dlls/comcat/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comcat/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	comcat_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 comcat_test.exe: \$(TOPOBJDIR)/dlls/comcat/tests/comcat_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/comcat/tests/comcat_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14139,6 +14156,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comctl32/Makefile: dlls/comctl32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comctl32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	comctl32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 comctl32_test.exe: \$(TOPOBJDIR)/dlls/comctl32/tests/comctl32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/comctl32/tests/comctl32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14166,6 +14185,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comdlg32/Makefile: dlls/comdlg32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comdlg32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	comdlg32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 comdlg32_test.exe: \$(TOPOBJDIR)/dlls/comdlg32/tests/comdlg32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/comdlg32/tests/comdlg32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14230,6 +14251,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/credui/Makefile: dlls/credui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/credui/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	credui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 credui_test.exe: \$(TOPOBJDIR)/dlls/credui/tests/credui_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/credui/tests/credui_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14270,6 +14293,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/crypt32/Makefile: dlls/crypt32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/crypt32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	crypt32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 crypt32_test.exe: \$(TOPOBJDIR)/dlls/crypt32/tests/crypt32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/crypt32/tests/crypt32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14318,6 +14343,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptnet/Makefile: dlls/cryptnet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	cryptnet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 cryptnet_test.exe: \$(TOPOBJDIR)/dlls/cryptnet/tests/cryptnet_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/cryptnet/tests/cryptnet_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14345,6 +14372,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptui/Makefile: dlls/cryptui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptui/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	cryptui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 cryptui_test.exe: \$(TOPOBJDIR)/dlls/cryptui/tests/cryptui_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/cryptui/tests/cryptui_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14409,6 +14438,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10/Makefile: dlls/d3d10/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3d10_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3d10_test.exe: \$(TOPOBJDIR)/dlls/d3d10/tests/d3d10_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3d10/tests/d3d10_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14436,6 +14467,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10core/Makefile: dlls/d3d10core/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10core/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3d10core_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3d10core_test.exe: \$(TOPOBJDIR)/dlls/d3d10core/tests/d3d10core_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3d10core/tests/d3d10core_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14463,6 +14496,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d8/Makefile: dlls/d3d8/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d8/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3d8_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3d8_test.exe: \$(TOPOBJDIR)/dlls/d3d8/tests/d3d8_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3d8/tests/d3d8_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14490,6 +14525,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d9/Makefile: dlls/d3d9/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d9/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3d9_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3d9_test.exe: \$(TOPOBJDIR)/dlls/d3d9/tests/d3d9_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3d9/tests/d3d9_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14530,6 +14567,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3drm/Makefile: dlls/d3drm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3drm/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3drm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3drm_test.exe: \$(TOPOBJDIR)/dlls/d3drm/tests/d3drm_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3drm/tests/d3drm_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14662,6 +14701,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_36/Makefile: dlls/d3dx9_36/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dx9_36/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3dx9_36_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3dx9_36_test.exe: \$(TOPOBJDIR)/dlls/d3dx9_36/tests/d3dx9_36_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3dx9_36/tests/d3dx9_36_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14737,6 +14778,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dxof/Makefile: dlls/d3dxof/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	d3dxof_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 d3dxof_test.exe: \$(TOPOBJDIR)/dlls/d3dxof/tests/d3dxof_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/d3dxof/tests/d3dxof_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14798,6 +14841,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddraw/Makefile: dlls/ddraw/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ddraw/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ddraw_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ddraw_test.exe: \$(TOPOBJDIR)/dlls/ddraw/tests/ddraw_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ddraw/tests/ddraw_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14820,6 +14865,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddrawex/Makefile: dlls/ddrawex/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ddrawex/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ddrawex_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ddrawex_test.exe: \$(TOPOBJDIR)/dlls/ddrawex/tests/ddrawex_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ddrawex/tests/ddrawex_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14858,6 +14905,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dinput/Makefile: dlls/dinput/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dinput/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dinput_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dinput_test.exe: \$(TOPOBJDIR)/dlls/dinput/tests/dinput_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dinput/tests/dinput_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -14933,6 +14982,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dmloader/Makefile: dlls/dmloader/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dmloader/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dmloader_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dmloader_test.exe: \$(TOPOBJDIR)/dlls/dmloader/tests/dmloader_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dmloader/tests/dmloader_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15005,6 +15056,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dnsapi/Makefile: dlls/dnsapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dnsapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dnsapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dnsapi_test.exe: \$(TOPOBJDIR)/dlls/dnsapi/tests/dnsapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dnsapi/tests/dnsapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15045,6 +15098,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dplayx/Makefile: dlls/dplayx/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dplayx/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dplayx_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dplayx_test.exe: \$(TOPOBJDIR)/dlls/dplayx/tests/dplayx_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dplayx/tests/dplayx_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15125,6 +15180,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dsound/Makefile: dlls/dsound/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dsound/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dsound_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dsound_test.exe: \$(TOPOBJDIR)/dlls/dsound/tests/dsound_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dsound/tests/dsound_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15176,6 +15233,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxdiagn/Makefile: dlls/dxdiagn/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dxdiagn/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dxdiagn_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dxdiagn_test.exe: \$(TOPOBJDIR)/dlls/dxdiagn/tests/dxdiagn_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dxdiagn/tests/dxdiagn_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15231,6 +15290,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxgi/Makefile: dlls/dxgi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dxgi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	dxgi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 dxgi_test.exe: \$(TOPOBJDIR)/dlls/dxgi/tests/dxgi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/dxgi/tests/dxgi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15283,6 +15344,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/fusion/Makefile: dlls/fusion/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/fusion/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	fusion_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 fusion_test.exe: \$(TOPOBJDIR)/dlls/fusion/tests/fusion_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/fusion/tests/fusion_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15326,6 +15389,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdi32/Makefile: dlls/gdi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/gdi32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	gdi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 gdi32_test.exe: \$(TOPOBJDIR)/dlls/gdi32/tests/gdi32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/gdi32/tests/gdi32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15353,6 +15418,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdiplus/Makefile: dlls/gdiplus/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/gdiplus/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	gdiplus_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 gdiplus_test.exe: \$(TOPOBJDIR)/dlls/gdiplus/tests/gdiplus_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/gdiplus/tests/gdiplus_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15438,6 +15505,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/hlink/Makefile: dlls/hlink/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/hlink/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	hlink_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 hlink_test.exe: \$(TOPOBJDIR)/dlls/hlink/tests/hlink_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/hlink/tests/hlink_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15513,6 +15582,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imagehlp/Makefile: dlls/imagehlp/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/imagehlp/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	imagehlp_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 imagehlp_test.exe: \$(TOPOBJDIR)/dlls/imagehlp/tests/imagehlp_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/imagehlp/tests/imagehlp_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15548,6 +15619,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imm32/Makefile: dlls/imm32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/imm32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	imm32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 imm32_test.exe: \$(TOPOBJDIR)/dlls/imm32/tests/imm32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/imm32/tests/imm32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15575,6 +15648,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetcomm/Makefile: dlls/inetcomm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/inetcomm/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	inetcomm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 inetcomm_test.exe: \$(TOPOBJDIR)/dlls/inetcomm/tests/inetcomm_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/inetcomm/tests/inetcomm_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15597,6 +15672,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetmib1/Makefile: dlls/inetmib1/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/inetmib1/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	inetmib1_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 inetmib1_test.exe: \$(TOPOBJDIR)/dlls/inetmib1/tests/inetmib1_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/inetmib1/tests/inetmib1_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15619,6 +15696,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/infosoft/Makefile: dlls/infosoft/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/infosoft/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	infosoft_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 infosoft_test.exe: \$(TOPOBJDIR)/dlls/infosoft/tests/infosoft_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/infosoft/tests/infosoft_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15670,6 +15749,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/iphlpapi/Makefile: dlls/iphlpapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/iphlpapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	iphlpapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 iphlpapi_test.exe: \$(TOPOBJDIR)/dlls/iphlpapi/tests/iphlpapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/iphlpapi/tests/iphlpapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15700,6 +15781,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/itss/Makefile: dlls/itss/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/itss/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	itss_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 itss_test.exe: \$(TOPOBJDIR)/dlls/itss/tests/itss_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/itss/tests/itss_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15722,6 +15805,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/jscript/Makefile: dlls/jscript/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/jscript/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	jscript_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 jscript_test.exe: \$(TOPOBJDIR)/dlls/jscript/tests/jscript_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/jscript/tests/jscript_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15749,6 +15834,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/kernel32/Makefile: dlls/kernel32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/kernel32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	kernel32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 kernel32_test.exe: \$(TOPOBJDIR)/dlls/kernel32/tests/kernel32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/kernel32/tests/kernel32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15814,6 +15901,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localspl/Makefile: dlls/localspl/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/localspl/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	localspl_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 localspl_test.exe: \$(TOPOBJDIR)/dlls/localspl/tests/localspl_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/localspl/tests/localspl_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15836,6 +15925,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localui/Makefile: dlls/localui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/localui/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	localui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 localui_test.exe: \$(TOPOBJDIR)/dlls/localui/tests/localui_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/localui/tests/localui_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15863,6 +15954,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/lz32/Makefile: dlls/lz32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/lz32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	lz32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 lz32_test.exe: \$(TOPOBJDIR)/dlls/lz32/tests/lz32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/lz32/tests/lz32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15898,6 +15991,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mapi32/Makefile: dlls/mapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mapi32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mapi32_test.exe: \$(TOPOBJDIR)/dlls/mapi32/tests/mapi32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mapi32/tests/mapi32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -15981,6 +16076,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mlang/Makefile: dlls/mlang/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mlang/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mlang_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mlang_test.exe: \$(TOPOBJDIR)/dlls/mlang/tests/mlang_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mlang/tests/mlang_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16003,6 +16100,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mmdevapi/Makefile: dlls/mmdevapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mmdevapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mmdevapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mmdevapi_test.exe: \$(TOPOBJDIR)/dlls/mmdevapi/tests/mmdevapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mmdevapi/tests/mmdevapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16112,6 +16211,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msacm32/Makefile: dlls/msacm32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msacm32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msacm32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msacm32_test.exe: \$(TOPOBJDIR)/dlls/msacm32/tests/msacm32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msacm32/tests/msacm32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16155,6 +16256,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mscms/Makefile: dlls/mscms/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mscms/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mscms_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mscms_test.exe: \$(TOPOBJDIR)/dlls/mscms/tests/mscms_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mscms/tests/mscms_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16185,6 +16288,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msctf/Makefile: dlls/msctf/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msctf/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msctf_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msctf_test.exe: \$(TOPOBJDIR)/dlls/msctf/tests/msctf_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msctf/tests/msctf_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16265,6 +16370,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mshtml/Makefile: dlls/mshtml/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mshtml/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mshtml_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mshtml_test.exe: \$(TOPOBJDIR)/dlls/mshtml/tests/mshtml_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mshtml/tests/mshtml_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16292,6 +16399,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msi/Makefile: dlls/msi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msi_test.exe: \$(TOPOBJDIR)/dlls/msi/tests/msi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msi/tests/msi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16383,6 +16492,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mstask/Makefile: dlls/mstask/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mstask/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	mstask_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 mstask_test.exe: \$(TOPOBJDIR)/dlls/mstask/tests/mstask_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/mstask/tests/mstask_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16431,6 +16542,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt/Makefile: dlls/msvcrt/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrt/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msvcrt_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msvcrt_test.exe: \$(TOPOBJDIR)/dlls/msvcrt/tests/msvcrt_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msvcrt/tests/msvcrt_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16484,6 +16597,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrtd/Makefile: dlls/msvcrtd/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrtd/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msvcrtd_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msvcrtd_test.exe: \$(TOPOBJDIR)/dlls/msvcrtd/tests/msvcrtd_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msvcrtd/tests/msvcrtd_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16511,6 +16626,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvfw32/Makefile: dlls/msvfw32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvfw32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msvfw32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msvfw32_test.exe: \$(TOPOBJDIR)/dlls/msvfw32/tests/msvfw32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msvfw32/tests/msvfw32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16562,6 +16679,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msxml3/Makefile: dlls/msxml3/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msxml3/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	msxml3_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 msxml3_test.exe: \$(TOPOBJDIR)/dlls/msxml3/tests/msxml3_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/msxml3/tests/msxml3_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16610,6 +16729,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/netapi32/Makefile: dlls/netapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/netapi32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	netapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 netapi32_test.exe: \$(TOPOBJDIR)/dlls/netapi32/tests/netapi32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/netapi32/tests/netapi32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16650,6 +16771,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdll/Makefile: dlls/ntdll/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdll/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ntdll_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ntdll_test.exe: \$(TOPOBJDIR)/dlls/ntdll/tests/ntdll_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ntdll/tests/ntdll_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16677,6 +16800,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdsapi/Makefile: dlls/ntdsapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdsapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ntdsapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ntdsapi_test.exe: \$(TOPOBJDIR)/dlls/ntdsapi/tests/ntdsapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ntdsapi/tests/ntdsapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16712,6 +16837,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntprint/Makefile: dlls/ntprint/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntprint/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ntprint_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ntprint_test.exe: \$(TOPOBJDIR)/dlls/ntprint/tests/ntprint_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ntprint/tests/ntprint_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16760,6 +16887,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/odbccp32/Makefile: dlls/odbccp32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/odbccp32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	odbccp32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 odbccp32_test.exe: \$(TOPOBJDIR)/dlls/odbccp32/tests/odbccp32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/odbccp32/tests/odbccp32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16835,6 +16964,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole32/Makefile: dlls/ole32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ole32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ole32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ole32_test.exe: \$(TOPOBJDIR)/dlls/ole32/tests/ole32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ole32/tests/ole32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16862,6 +16993,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleacc/Makefile: dlls/oleacc/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oleacc/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	oleacc_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 oleacc_test.exe: \$(TOPOBJDIR)/dlls/oleacc/tests/oleacc_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/oleacc/tests/oleacc_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16889,6 +17022,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleaut32/Makefile: dlls/oleaut32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oleaut32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	oleaut32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 oleaut32_test.exe: \$(TOPOBJDIR)/dlls/oleaut32/tests/oleaut32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/oleaut32/tests/oleaut32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -16932,6 +17067,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oledb32/Makefile: dlls/oledb32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oledb32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	oledb32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 oledb32_test.exe: \$(TOPOBJDIR)/dlls/oledb32/tests/oledb32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/oledb32/tests/oledb32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17022,6 +17159,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/opengl32/Makefile: dlls/opengl32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/opengl32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	opengl32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 opengl32_test.exe: \$(TOPOBJDIR)/dlls/opengl32/tests/opengl32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/opengl32/tests/opengl32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17049,6 +17188,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/pdh/Makefile: dlls/pdh/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/pdh/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	pdh_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 pdh_test.exe: \$(TOPOBJDIR)/dlls/pdh/tests/pdh_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/pdh/tests/pdh_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17113,6 +17254,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/psapi/Makefile: dlls/psapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/psapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	psapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 psapi_test.exe: \$(TOPOBJDIR)/dlls/psapi/tests/psapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/psapi/tests/psapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17151,6 +17294,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qedit/Makefile: dlls/qedit/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/qedit/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	qedit_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 qedit_test.exe: \$(TOPOBJDIR)/dlls/qedit/tests/qedit_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/qedit/tests/qedit_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17173,6 +17318,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qmgr/Makefile: dlls/qmgr/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/qmgr/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	qmgr_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 qmgr_test.exe: \$(TOPOBJDIR)/dlls/qmgr/tests/qmgr_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/qmgr/tests/qmgr_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17208,6 +17355,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/quartz/Makefile: dlls/quartz/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/quartz/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	quartz_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 quartz_test.exe: \$(TOPOBJDIR)/dlls/quartz/tests/quartz_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/quartz/tests/quartz_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17251,6 +17400,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasapi32/Makefile: dlls/rasapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rasapi32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	rasapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 rasapi32_test.exe: \$(TOPOBJDIR)/dlls/rasapi32/tests/rasapi32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/rasapi32/tests/rasapi32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17304,6 +17455,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched20/Makefile: dlls/riched20/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/riched20/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	riched20_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 riched20_test.exe: \$(TOPOBJDIR)/dlls/riched20/tests/riched20_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/riched20/tests/riched20_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17326,6 +17479,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched32/Makefile: dlls/riched32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/riched32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	riched32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 riched32_test.exe: \$(TOPOBJDIR)/dlls/riched32/tests/riched32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/riched32/tests/riched32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17353,6 +17508,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rpcrt4/Makefile: dlls/rpcrt4/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rpcrt4/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	rpcrt4_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 rpcrt4_test.exe: \$(TOPOBJDIR)/dlls/rpcrt4/tests/rpcrt4_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/rpcrt4/tests/rpcrt4_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17388,6 +17545,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rsaenh/Makefile: dlls/rsaenh/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rsaenh/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	rsaenh_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 rsaenh_test.exe: \$(TOPOBJDIR)/dlls/rsaenh/tests/rsaenh_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/rsaenh/tests/rsaenh_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17439,6 +17598,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/schannel/Makefile: dlls/schannel/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/schannel/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	schannel_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 schannel_test.exe: \$(TOPOBJDIR)/dlls/schannel/tests/schannel_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/schannel/tests/schannel_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17466,6 +17627,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/secur32/Makefile: dlls/secur32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/secur32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	secur32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 secur32_test.exe: \$(TOPOBJDIR)/dlls/secur32/tests/secur32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/secur32/tests/secur32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17514,6 +17677,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/serialui/Makefile: dlls/serialui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/serialui/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	serialui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 serialui_test.exe: \$(TOPOBJDIR)/dlls/serialui/tests/serialui_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/serialui/tests/serialui_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17541,6 +17706,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/setupapi/Makefile: dlls/setupapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/setupapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	setupapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 setupapi_test.exe: \$(TOPOBJDIR)/dlls/setupapi/tests/setupapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/setupapi/tests/setupapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17610,6 +17777,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shdocvw/Makefile: dlls/shdocvw/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shdocvw/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	shdocvw_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 shdocvw_test.exe: \$(TOPOBJDIR)/dlls/shdocvw/tests/shdocvw_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/shdocvw/tests/shdocvw_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17645,6 +17814,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shell32/Makefile: dlls/shell32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shell32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	shell32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 shell32_test.exe: \$(TOPOBJDIR)/dlls/shell32/tests/shell32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/shell32/tests/shell32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17685,6 +17856,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shlwapi/Makefile: dlls/shlwapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shlwapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	shlwapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 shlwapi_test.exe: \$(TOPOBJDIR)/dlls/shlwapi/tests/shlwapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/shlwapi/tests/shlwapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17733,6 +17906,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/snmpapi/Makefile: dlls/snmpapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/snmpapi/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	snmpapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 snmpapi_test.exe: \$(TOPOBJDIR)/dlls/snmpapi/tests/snmpapi_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/snmpapi/tests/snmpapi_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17776,6 +17951,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/spoolss/Makefile: dlls/spoolss/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/spoolss/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	spoolss_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 spoolss_test.exe: \$(TOPOBJDIR)/dlls/spoolss/tests/spoolss_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/spoolss/tests/spoolss_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17819,6 +17996,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/sti/Makefile: dlls/sti/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/sti/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	sti_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 sti_test.exe: \$(TOPOBJDIR)/dlls/sti/tests/sti_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/sti/tests/sti_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -17940,6 +18119,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/twain_32/Makefile: dlls/twain_32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/twain_32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	twain_32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 twain_32_test.exe: \$(TOPOBJDIR)/dlls/twain_32/tests/twain_32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/twain_32/tests/twain_32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18009,6 +18190,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/urlmon/Makefile: dlls/urlmon/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/urlmon/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	urlmon_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 urlmon_test.exe: \$(TOPOBJDIR)/dlls/urlmon/tests/urlmon_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/urlmon/tests/urlmon_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18044,6 +18227,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/user32/Makefile: dlls/user32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/user32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	user32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 user32_test.exe: \$(TOPOBJDIR)/dlls/user32/tests/user32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/user32/tests/user32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18071,6 +18256,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/userenv/Makefile: dlls/userenv/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/userenv/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	userenv_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 userenv_test.exe: \$(TOPOBJDIR)/dlls/userenv/tests/userenv_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/userenv/tests/userenv_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18098,6 +18285,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/usp10/Makefile: dlls/usp10/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/usp10/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	usp10_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 usp10_test.exe: \$(TOPOBJDIR)/dlls/usp10/tests/usp10_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/usp10/tests/usp10_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18139,6 +18328,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/uxtheme/Makefile: dlls/uxtheme/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/uxtheme/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	uxtheme_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 uxtheme_test.exe: \$(TOPOBJDIR)/dlls/uxtheme/tests/uxtheme_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/uxtheme/tests/uxtheme_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18195,6 +18386,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/version/Makefile: dlls/version/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/version/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	version_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 version_test.exe: \$(TOPOBJDIR)/dlls/version/tests/version_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/version/tests/version_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18326,6 +18519,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/windowscodecs/Makefile: dlls/windowscodecs/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/windowscodecs/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	windowscodecs_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 windowscodecs_test.exe: \$(TOPOBJDIR)/dlls/windowscodecs/tests/windowscodecs_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/windowscodecs/tests/windowscodecs_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18508,6 +18703,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winhttp/Makefile: dlls/winhttp/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winhttp/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	winhttp_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 winhttp_test.exe: \$(TOPOBJDIR)/dlls/winhttp/tests/winhttp_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/winhttp/tests/winhttp_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18535,6 +18732,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wininet/Makefile: dlls/wininet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wininet/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	wininet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 wininet_test.exe: \$(TOPOBJDIR)/dlls/wininet/tests/wininet_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/wininet/tests/wininet_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18562,6 +18761,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winmm/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	winmm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 winmm_test.exe: \$(TOPOBJDIR)/dlls/winmm/tests/winmm_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/winmm/tests/winmm_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18640,6 +18841,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winspool.drv/Makefile: dlls/winspool.drv/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winspool.drv/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	winspool.drv_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 winspool.drv_test.exe: \$(TOPOBJDIR)/dlls/winspool.drv/tests/winspool.drv_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/winspool.drv/tests/winspool.drv_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18675,6 +18878,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintab32/Makefile: dlls/wintab32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wintab32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	wintab32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 wintab32_test.exe: \$(TOPOBJDIR)/dlls/wintab32/tests/wintab32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/wintab32/tests/wintab32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18702,6 +18907,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintrust/Makefile: dlls/wintrust/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wintrust/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	wintrust_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 wintrust_test.exe: \$(TOPOBJDIR)/dlls/wintrust/tests/wintrust_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/wintrust/tests/wintrust_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18729,6 +18936,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wldap32/Makefile: dlls/wldap32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wldap32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	wldap32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 wldap32_test.exe: \$(TOPOBJDIR)/dlls/wldap32/tests/wldap32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/wldap32/tests/wldap32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18798,6 +19007,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ws2_32/Makefile: dlls/ws2_32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ws2_32/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ws2_32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ws2_32_test.exe: \$(TOPOBJDIR)/dlls/ws2_32/tests/ws2_32_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/ws2_32/tests/ws2_32_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18892,6 +19103,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xinput1_3/Makefile: dlls/xinput1_3/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/xinput1_3/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	xinput1_3_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 xinput1_3_test.exe: \$(TOPOBJDIR)/dlls/xinput1_3/tests/xinput1_3_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/xinput1_3/tests/xinput1_3_test.exe$DLLEXT \$@ && \$(STRIP) \$@
@@ -18922,6 +19135,8 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xmllite/Makefile: dlls/xmllite/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/xmllite/Makefile"
 
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	xmllite_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 xmllite_test.exe: \$(TOPOBJDIR)/dlls/xmllite/tests/xmllite_test.exe$DLLEXT
 	cp \$(TOPOBJDIR)/dlls/xmllite/tests/xmllite_test.exe$DLLEXT \$@ && \$(STRIP) \$@

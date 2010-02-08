@@ -223,6 +223,8 @@ dnl Usage: WINE_CONFIG_TEST(dir)
 dnl
 AC_DEFUN([WINE_CONFIG_TEST],
 [m4_pushdef([ac_name],m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1_test]))dnl
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	ac_name.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 ac_name.exe: \$(TOPOBJDIR)/$1/ac_name.exe$DLLEXT
 	cp \$(TOPOBJDIR)/$1/ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
