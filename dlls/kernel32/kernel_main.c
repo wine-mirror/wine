@@ -146,7 +146,6 @@ static BOOL process_attach( HMODULE module )
      * TBD when not using wineserver handles for console handles
      */
 
-    LoadLibraryA( "krnl386.exe16" );
     return TRUE;
 }
 
