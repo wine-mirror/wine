@@ -269,7 +269,10 @@ static const WORD ICON_HOTSPOT = 0x4242;
 
 static HICON16 alloc_icon_handle( unsigned int size )
 {
-    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
+    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size + sizeof(ULONG_PTR) );
+    char *ptr = GlobalLock16( handle );
+    memset( ptr + size, 0, sizeof(ULONG_PTR) );
+    GlobalUnlock16( handle );
     FarSetOwner16( handle, 0 );
     return handle;
 }
@@ -284,19 +287,125 @@ static void release_icon_ptr( HICON16 handle, CURSORICONINFO *ptr )
     GlobalUnlock16( handle );
 }
 
+static HICON store_icon_32( HICON16 icon16, HICON icon )
+{
+    HICON ret = 0;
+    CURSORICONINFO *ptr = get_icon_ptr( icon16 );
+
+    if (ptr)
+    {
+        unsigned int and_size = ptr->nHeight * get_bitmap_width_bytes( ptr->nWidth, 1 );
+        unsigned int xor_size = ptr->nHeight * get_bitmap_width_bytes( ptr->nWidth, ptr->bBitsPerPixel );
+        if (GlobalSize16( icon16 ) >= sizeof(*ptr) + sizeof(ULONG_PTR) + and_size + xor_size )
+        {
+            memcpy( &ret, (char *)(ptr + 1) + and_size + xor_size, sizeof(ret) );
+            memcpy( (char *)(ptr + 1) + and_size + xor_size, &icon, sizeof(icon) );
+            wow_handlers32.set_icon_param( icon, icon16 );
+        }
+        release_icon_ptr( icon16, ptr );
+    }
+    return ret;
+}
+
 static int free_icon_handle( HICON16 handle )
 {
+    HICON icon32;
+
+    if ((icon32 = store_icon_32( handle, 0 ))) DestroyIcon( icon32 );
     return GlobalFree16( handle );
 }
 
+/* retrieve the 32-bit counterpart of a 16-bit icon, creating it if needed */
 HICON get_icon_32( HICON16 icon16 )
 {
-    return (HICON)(ULONG_PTR)icon16;
+    HICON ret = 0;
+    CURSORICONINFO *ptr = get_icon_ptr( icon16 );
+
+    if (ptr)
+    {
+        unsigned int and_size = ptr->nHeight * get_bitmap_width_bytes( ptr->nWidth, 1 );
+        unsigned int xor_size = ptr->nHeight * get_bitmap_width_bytes( ptr->nWidth, ptr->bBitsPerPixel );
+        if (GlobalSize16( icon16 ) >= sizeof(*ptr) + sizeof(ULONG_PTR) + xor_size + and_size )
+        {
+            memcpy( &ret, (char *)(ptr + 1) + xor_size + and_size, sizeof(ret) );
+            if (!ret)
+            {
+                ICONINFO iinfo;
+
+                iinfo.fIcon = (ptr->ptHotSpot.x == ICON_HOTSPOT) && (ptr->ptHotSpot.y == ICON_HOTSPOT);
+                iinfo.xHotspot = ptr->ptHotSpot.x;
+                iinfo.yHotspot = ptr->ptHotSpot.y;
+                iinfo.hbmMask  = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
+                iinfo.hbmColor = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes, ptr->bBitsPerPixel,
+                                               (char *)(ptr + 1) + and_size );
+                ret = CreateIconIndirect( &iinfo );
+                DeleteObject( iinfo.hbmMask );
+                DeleteObject( iinfo.hbmColor );
+                memcpy( (char *)(ptr + 1) + xor_size + and_size, &ret, sizeof(ret) );
+                wow_handlers32.set_icon_param( ret, icon16 );
+            }
+        }
+        release_icon_ptr( icon16, ptr );
+    }
+    return ret;
 }
 
+/* retrieve the 16-bit counterpart of a 32-bit icon, creating it if needed */
 HICON16 get_icon_16( HICON icon )
 {
-    return LOWORD( icon );
+    HICON16 ret = wow_handlers32.get_icon_param( icon );
+
+    if (!ret)
+    {
+        ICONINFO info;
+        BITMAP bm;
+        UINT and_size, xor_size;
+        void *xor_bits = NULL, *and_bits;
+        CURSORICONINFO cinfo;
+
+        if (!(GetIconInfo( icon, &info ))) return 0;
+        GetObjectW( info.hbmMask, sizeof(bm), &bm );
+        and_size = bm.bmHeight * bm.bmWidthBytes;
+        if (!(and_bits = HeapAlloc( GetProcessHeap(), 0, and_size ))) goto done;
+        GetBitmapBits( info.hbmMask, and_size, and_bits );
+        if (info.hbmColor)
+        {
+            GetObjectW( info.hbmColor, sizeof(bm), &bm );
+            xor_size = bm.bmHeight * bm.bmWidthBytes;
+            if (!(xor_bits = HeapAlloc( GetProcessHeap(), 0, xor_size ))) goto done;
+            GetBitmapBits( info.hbmColor, xor_size, xor_bits );
+        }
+        else
+        {
+            bm.bmHeight /= 2;
+            xor_bits = (char *)and_bits + and_size / 2;
+        }
+        if (!info.fIcon)
+        {
+            cinfo.ptHotSpot.x = info.xHotspot;
+            cinfo.ptHotSpot.y = info.yHotspot;
+        }
+        else cinfo.ptHotSpot.x = cinfo.ptHotSpot.y = ICON_HOTSPOT;
+
+        cinfo.nWidth        = bm.bmWidth;
+        cinfo.nHeight       = bm.bmHeight;
+        cinfo.nWidthBytes   = bm.bmWidthBytes;
+        cinfo.bPlanes       = bm.bmPlanes;
+        cinfo.bBitsPerPixel = bm.bmBitsPixel;
+
+        if ((ret = CreateCursorIconIndirect16( 0, &cinfo, and_bits, xor_bits )))
+            store_icon_32( ret, icon );
+
+    done:
+        if (info.hbmColor)
+        {
+            HeapFree( GetProcessHeap(), 0, xor_bits );
+            DeleteObject( info.hbmColor );
+        }
+        HeapFree( GetProcessHeap(), 0, and_bits );
+        DeleteObject( info.hbmMask );
+    }
+    return ret;
 }
 
 static void add_shared_icon( HINSTANCE16 inst, HRSRC16 rsrc, HRSRC16 group, HICON16 icon )

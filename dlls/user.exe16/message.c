@@ -2671,29 +2671,11 @@ HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, 
 
 
 /***********************************************************************
- * cursor/icon handles
+ *           free_icon_param
  */
-
-static HICON alloc_icon_handle( unsigned int size )
+static void free_icon_param( ULONG_PTR param )
 {
-    HGLOBAL16 handle = GlobalAlloc16( GMEM_MOVEABLE, size );
-    FarSetOwner16( handle, 0 );
-    return (HICON)(ULONG_PTR)handle;
-}
-
-static struct tagCURSORICONINFO *get_icon_ptr( HICON handle )
-{
-    return GlobalLock16( LOWORD(handle) );
-}
-
-static void release_icon_ptr( HICON handle, struct tagCURSORICONINFO *ptr )
-{
-    GlobalUnlock16( LOWORD(handle) );
-}
-
-static int free_icon_handle( HICON handle )
-{
-    return GlobalFree16( LOWORD(handle) );
+    GlobalFree16( LOWORD(param) );
 }
 
 
@@ -2712,10 +2694,7 @@ void register_wow_handlers(void)
         create_window16,
         call_window_proc_Ato16,
         call_dialog_proc_Ato16,
-        alloc_icon_handle,
-        get_icon_ptr,
-        release_icon_ptr,
-        free_icon_handle
+        free_icon_param
     };
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
