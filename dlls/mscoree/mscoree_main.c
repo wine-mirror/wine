@@ -345,6 +345,18 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
+
 HRESULT WINAPI DllCanUnloadNow(VOID)
 {
     return S_OK;
