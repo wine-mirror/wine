@@ -5908,6 +5908,9 @@ static void test_create_elems(IHTMLDocument2 *doc)
             ok(type == 8, "type=%d, expected 8\n", type);
 
             test_node_get_value_str((IUnknown*)comment, "testing");
+            test_elem_title((IUnknown*)comment, NULL);
+            test_elem_set_title((IUnknown*)comment, "comment title");
+            test_elem_title((IUnknown*)comment, "comment title");
 
             IHTMLDOMNode_Release(comment);
         }

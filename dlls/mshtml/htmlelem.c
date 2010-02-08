@@ -593,6 +593,8 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
     return S_OK;
 }
 
+static const WCHAR titleW[] = {'t','i','t','l','e',0};
+
 static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
@@ -600,6 +602,20 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
     nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->nselem) {
+        VARIANT *var;
+        HRESULT hres;
+
+        hres = dispex_get_dprop_ref(&This->node.dispex, titleW, TRUE, &var);
+        if(FAILED(hres))
+            return hres;
+
+        VariantClear(var);
+        V_VT(var) = VT_BSTR;
+        V_BSTR(var) = v ? SysAllocString(v) : NULL;
+        return S_OK;
+    }
 
     nsAString_InitDepend(&title_str, v);
     nsres = nsIDOMHTMLElement_SetTitle(This->nselem, &title_str);
@@ -617,6 +633,23 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nselem) {
+        VARIANT *var;
+        HRESULT hres;
+
+        hres = dispex_get_dprop_ref(&This->node.dispex, titleW, FALSE, &var);
+        if(hres == DISP_E_UNKNOWNNAME) {
+            *p = NULL;
+        }else if(V_VT(var) != VT_BSTR) {
+            FIXME("title = %s\n", debugstr_variant(var));
+            return E_FAIL;
+        }else {
+            *p = V_BSTR(var) ? SysAllocString(V_BSTR(var)) : NULL;
+        }
+
+        return S_OK;
+    }
 
     nsAString_Init(&title_str, NULL);
     nsres = nsIDOMHTMLElement_GetTitle(This->nselem, &title_str);
