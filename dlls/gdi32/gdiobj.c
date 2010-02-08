@@ -578,8 +578,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( inst );
-    LoadLibraryA( "gdi.exe16" );
-
     WineEngInit();
 
     /* create stock objects */
