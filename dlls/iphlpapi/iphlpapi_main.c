@@ -66,16 +66,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 #define INADDR_NONE ~0UL
 #endif
 
-static int resolver_initialised;
-
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
+/* Call once per thread on systems that have per-thread _res. */
+/* FIXME: should do same fix in dnsapi (or use dnsapi here?) */
 static void initialise_resolver(void)
 {
-    if (!resolver_initialised)
-    {
+    if ((_res.options & RES_INIT) == 0)
         res_init();
-        resolver_initialised = 1;
-    }
 }
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

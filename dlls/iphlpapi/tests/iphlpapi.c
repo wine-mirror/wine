@@ -765,11 +765,12 @@ GetBestRoute
 IpReleaseAddress
 IpRenewAddress
 */
-static void testWin98Functions(void)
+static DWORD CALLBACK testWin98Functions(void *p)
 {
   testGetInterfaceInfo();
   testGetAdaptersInfo();
   testGetNetworkParams();
+  return 0;
 }
 
 static void testGetPerAdapterInfo(void)
@@ -885,9 +886,16 @@ START_TEST(iphlpapi)
 
   loadIPHlpApi();
   if (hLibrary) {
+    HANDLE thread;
+
     testWin98OnlyFunctions();
     testWinNT4Functions();
-    testWin98Functions();
+
+    /* run testGetXXXX in two threads at once to make sure we don't crash in that case */
+    thread = CreateThread(NULL, 0, testWin98Functions, NULL, 0, NULL);
+    testWin98Functions(NULL);
+    WaitForSingleObject(thread, INFINITE);
+
     testWin2KFunctions();
     test_GetAdaptersAddresses();
     freeIPHlpApi();
