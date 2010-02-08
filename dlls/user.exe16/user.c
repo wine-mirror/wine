@@ -509,16 +509,6 @@ static void free_clipboard_formats(void)
 
 
 /**********************************************************************
- *		DllMain
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    if (reason == DLL_PROCESS_ATTACH) LoadLibrary16( "user.exe" );
-    return TRUE;
-}
-
-
-/**********************************************************************
  *		InitApp (USER.5)
  */
 INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
