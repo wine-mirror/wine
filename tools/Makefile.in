@@ -30,16 +30,6 @@ C_SRCS = \
 	relpath.c \
 	sfnt2fnt.c
 
-INSTALLSUBDIRS = \
-	widl \
-	winebuild \
-	winedump \
-	winegcc \
-	wmc \
-	wrc
-
-SUBDIRS = $(INSTALLSUBDIRS)
-
 EXTRASUBDIRS = winapi
 
 INSTALLDIRS = \
@@ -50,7 +40,7 @@ INSTALLDIRS = \
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
-all: $(PROGRAMS) $(MANPAGES) $(SUBDIRS)
+all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
@@ -93,8 +83,6 @@ install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
-
-wmc wrc: relpath$(EXEEXT)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
 

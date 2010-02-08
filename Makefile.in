@@ -27,6 +27,8 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
 
+ALL_TOOL_DIRS = @ALL_TOOL_DIRS@
+
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
 	dlls \
@@ -39,10 +41,10 @@ SUBDIRS = \
 	loader \
 	programs \
 	server \
-	tools
+	$(ALL_TOOL_DIRS)
 
 # Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = libs/wine @ALL_TOP_DIRS@
+INSTALLSUBDIRS = libs/wine $(ALL_TOOL_DIRS) @ALL_TOP_DIRS@
 
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
@@ -81,15 +83,22 @@ uninstall::
 
 all: $(INSTALLSUBDIRS)
 
-dlls programs: libs/port libs/wine libs/wpp tools include
-loader server: libs/port libs/wine tools
-fonts include: tools
-programs: dlls
-tools: libs/port libs/wine libs/wpp
-libs/wine: libs/port
+# dependencies needed to build any dll or program
+__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include
+.PHONY: __builddeps__
 
-dlls/__install__ dlls/__install-lib__ dlls/__install-dev__: libs/port libs/wine libs/wpp tools include
-programs/__install__ programs/__install-lib__: libs/port libs/wine libs/wpp tools include
+dlls programs: __builddeps__
+loader server: libs/port libs/wine tools
+fonts: tools
+include: tools/widl
+programs: dlls
+libs/wine $(ALL_TOOL_DIRS): libs/port
+tools/wmc tools/wrc: tools
+tools tools/wmc tools/wrc: libs/wine
+tools/widl tools/wmc tools/wrc: libs/wpp
+
+dlls/__install__ dlls/__install-lib__ dlls/__install-dev__: __builddeps__
+programs/__install__ programs/__install-lib__: __builddeps__
 fonts/__install__ fonts/__install-lib__: tools
 include/__install__ include/__install-dev__: include
 libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
@@ -98,6 +107,12 @@ server/__install__ server/__install-lib__: libs/port libs/wine tools
 programs/__install__: dlls/__install__
 programs/__install-lib__: dlls/__install-lib__
 tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
+tools/widl/__install__ tools/widl/__install-dev__: tools/widl
+tools/winebuild/__install__ tools/winebuild/__install-dev__: tools/winebuild
+tools/winedump/__install__ tools/winedump/__install-dev__: tools/winedump
+tools/winegcc/__install__ tools/winegcc/__install-dev__: tools/winegcc
+tools/wmc/__install__ tools/wmc/__install-dev__: tools/wmc
+tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
 
 RECURSE_TARGETS = \
 	$(SUBDIRS) \
@@ -119,7 +134,7 @@ $(MAKEDEP): include/config.h
 # Test rules
 
 $(TESTSUBDIRS:%=%/__test__): wine
-$(TESTSUBDIRS:%=%/__crosstest__): tools include
+$(TESTSUBDIRS:%=%/__crosstest__): __builddeps__
 
 # Misc rules
 

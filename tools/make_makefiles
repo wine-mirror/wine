@@ -389,6 +389,10 @@ sub update_makefiles(@)
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
             push @lines, "WINE_CONFIG_LIB($name)\n";
         }
+        elsif ($file =~ /^tools.*\/Makefile$/)
+        {
+            push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules],[],[ALL_TOOL_DIRS],[enable_tools])\n";
+        }
         elsif ($file =~ /^[^\/]*\/Makefile$/)
         {
             push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules],[],[ALL_TOP_DIRS])\n";

@@ -605,6 +605,7 @@ ALL_IMPORTLIB_RULES
 ALL_IMPORT_LIBS
 ALL_STATIC_LIBS
 ALL_IMPLIB_DIRS
+ALL_TOOL_DIRS
 ALL_DLL_DIRS
 ALL_TOP_DIRS
 ALL_MAKEFILE_DEPENDS
@@ -13663,6 +13664,8 @@ ALL_TOP_DIRS=""
 
 ALL_DLL_DIRS=""
 
+ALL_TOOL_DIRS=""
+
 ALL_IMPLIB_DIRS=""
 
 ALL_STATIC_LIBS=""
@@ -18859,7 +18862,7 @@ ac_config_files="$ac_config_files server/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/Makefile"
-test "x$enable_tools" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
 	tools"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/Makefile: tools/Makefile.in Make.rules config.status"
@@ -18867,42 +18870,48 @@ ac_config_files="$ac_config_files tools/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/widl/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/widl"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/widl/Makefile: tools/widl/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/widl/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/winebuild/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/winebuild"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/winebuild/Makefile: tools/winebuild/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winebuild/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/winedump/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/winedump"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/winedump/Makefile: tools/winedump/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winedump/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/winegcc/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/winegcc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/winegcc/Makefile: tools/winegcc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/winegcc/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/wmc/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/wmc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/wmc/Makefile: tools/wmc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/wmc/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/wrc/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOOL_DIRS="$ALL_TOOL_DIRS \\
+	tools/wrc"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/wrc/Makefile: tools/wrc/Makefile.in Make.rules config.status"
 ac_config_files="$ac_config_files tools/wrc/Makefile"
