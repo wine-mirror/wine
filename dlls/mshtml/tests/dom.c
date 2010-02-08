@@ -1145,8 +1145,8 @@ static void _test_img_width(unsigned line, IHTMLImgElement *img, const long exp)
     HRESULT hres;
 
     hres = IHTMLImgElement_get_width(img, &found);
-    todo_wine ok_(__FILE__,line) (hres == S_OK, "get_width failed: %08x\n", hres);
-    todo_wine ok_(__FILE__,line) (found == exp, "width=%d\n", found);
+    ok_(__FILE__,line) (hres == S_OK, "get_width failed: %08x\n", hres);
+    ok_(__FILE__,line) (found == exp, "width=%d\n", found);
 }
 
 #define test_img_put_width(o,w) _test_img_put_width(__LINE__,o,w)
@@ -1155,7 +1155,7 @@ static void _test_img_put_width(unsigned line, IHTMLImgElement *img, const long 
     HRESULT hres;
 
     hres = IHTMLImgElement_put_width(img, width);
-    todo_wine ok(hres == S_OK, "put_width failed: %08x\n", hres);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
 
     _test_img_width(line, img, width);
 }

@@ -460,15 +460,35 @@ static HRESULT WINAPI HTMLImgElement_get_name(IHTMLImgElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLImgElement_put_width(IHTMLImgElement *iface, LONG v)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    nsres = nsIDOMHTMLImageElement_SetWidth(This->nsimg, v);
+    if(NS_FAILED(nsres)) {
+        ERR("SetWidth failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_get_width(IHTMLImgElement *iface, LONG *p)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 width;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLImageElement_GetWidth(This->nsimg, &width);
+    if(NS_FAILED(nsres)) {
+        ERR("GetWidth failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = width;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_put_height(IHTMLImgElement *iface, LONG v)
