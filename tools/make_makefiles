@@ -417,8 +417,8 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "RC_SRCS" );
     }
 
-    push @lines, "\ndnl Build dependencies for test files compiled into winetest\n";
-    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^dnl Build dependencies for test files compiled into winetest$', @lines);
+    push @lines, "dnl End of auto-generated output commands\n";
+    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^dnl End of auto-generated output commands\n$', @lines);
 }
 
 

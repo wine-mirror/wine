@@ -2098,6 +2098,7 @@ AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_MAKEFILES,"")
 AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies"])
+AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 
 AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_DLL_DIRS,"")
@@ -2674,24 +2675,7 @@ WINE_CONFIG_MAKEFILE([tools/winedump/Makefile],[Make.rules],[],[ALL_TOOL_DIRS],[
 WINE_CONFIG_MAKEFILE([tools/winegcc/Makefile],[Make.rules],[],[ALL_TOOL_DIRS],[enable_tools])
 WINE_CONFIG_MAKEFILE([tools/wmc/Makefile],[Make.rules],[],[ALL_TOOL_DIRS],[enable_tools])
 WINE_CONFIG_MAKEFILE([tools/wrc/Makefile],[Make.rules],[],[ALL_TOOL_DIRS],[enable_tools])
-
-dnl Build dependencies for test files compiled into winetest
-
-AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
-for dir in $ALL_TEST_DIRS
-do
-    if test "$dir" != "\\"
-    then
-        testname=`expr $dir : '\(.*\)/tests'`_test
-        ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
-
-$testname.exe: \$(DLLDIR)/$dir/$testname.exe\$(DLLEXT)
-	cp \$(DLLDIR)/$dir/$testname.exe\$(DLLEXT) \$@ && \$(STRIP) \$@
-$testname.rc:
-	echo \"$testname.exe TESTRES \\\"$testname.exe\\\"\" >\$@ || (\$(RM) \$@ && false)
-$testname.res: $testname.rc $testname.exe"
-    fi
-done
+dnl End of auto-generated output commands
 
 dnl Don't install in bin dir for Windows build
 test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
