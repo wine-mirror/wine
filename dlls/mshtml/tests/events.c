@@ -675,6 +675,20 @@ static void _elem_attach_event(unsigned line, IUnknown *unk, const char *namea, 
     ok_(__FILE__,line)(res == VARIANT_TRUE, "attachEvent returned %x\n", res);
 }
 
+#define elem_detach_event(a,b,c) _elem_detach_event(__LINE__,a,b,c)
+static void _elem_detach_event(unsigned line, IUnknown *unk, const char *namea, IDispatch *disp)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    BSTR name;
+    HRESULT hres;
+
+    name = a2bstr(namea);
+    hres = IHTMLElement2_detachEvent(elem, name, disp);
+    IHTMLElement2_Release(elem);
+    SysFreeString(name);
+    ok_(__FILE__,line)(hres == S_OK, "detachEvent failed: %08x\n", hres);
+}
+
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1227,6 +1241,29 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(doccp_onclick);
 
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLElement_put_onclick(div, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    hres = IHTMLElement_get_onclick(div, &v);
+    ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_NULL, "get_onclick returned vt %d\n", V_VT(&v));
+
+    elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
+    elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
+    elem_detach_event((IUnknown*)div, "test", (IDispatch*)&div_onclick_disp);
+
+    SET_EXPECT(div_onclick_attached);
+    SET_EXPECT(body_onclick);
+    SET_EXPECT(document_onclick);
+
+    hres = IHTMLElement_click(div);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+
+    CHECK_CALLED(div_onclick_attached);
+    CHECK_CALLED(body_onclick);
+    CHECK_CALLED(document_onclick);
 
     IHTMLElement_Release(div);
     IHTMLElement_Release(body);

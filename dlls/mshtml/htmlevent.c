@@ -867,6 +867,9 @@ static void call_event_handlers(HTMLDocumentNode *doc, IHTMLEventObj *event_obj,
         for(cp = cp_container->cp_list; cp; cp = cp->next) {
             if(cp->sinks_size && is_cp_event(cp->data, event_info[eid].dispid)) {
                 for(i=0; i < cp->sinks_size; i++) {
+                    if(!cp->sinks[i].disp)
+                        continue;
+
                     TRACE("cp %s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
                     hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid);
                     if(hres == S_OK)
@@ -1125,6 +1128,34 @@ HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR 
     event_target->event_table[eid]->handlers[i] = disp;
 
     *res = VARIANT_TRUE;
+    return S_OK;
+}
+
+HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
+{
+    eventid_t eid;
+    DWORD i = 0;
+
+    if(!event_target)
+        return S_OK;
+
+    eid = attr_to_eid(name);
+    if(eid == EVENTID_LAST) {
+        WARN("Unknown event\n");
+        return S_OK;
+    }
+
+    if(!event_target->event_table[eid])
+        return S_OK;
+
+    while(i < event_target->event_table[eid]->handler_cnt) {
+        if(event_target->event_table[eid]->handlers[i] == disp) {
+            IDispatch_Release(event_target->event_table[eid]->handlers[i]);
+            event_target->event_table[eid]->handlers[i] = NULL;
+        }
+        i++;
+    }
+
     return S_OK;
 }
 
