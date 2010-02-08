@@ -244,6 +244,13 @@ static DWORD64 dwarf2_get_u8(const unsigned char* ptr)
     return *(const UINT64*)ptr;
 }
 
+static DWORD64 dwarf2_parse_u8(dwarf2_traverse_context_t* ctx)
+{
+    DWORD64 uvalue = dwarf2_get_u8(ctx->data);
+    ctx->data += 8;
+    return uvalue;
+}
+
 static unsigned long dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
 {
     unsigned long ret = 0;
@@ -669,7 +676,7 @@ static enum location_error
 compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                  HANDLE hproc, const struct location* frame)
 {
-    DWORD_PTR stack[64];
+    DWORD_PTR tmp, stack[64];
     unsigned stk;
     unsigned char op;
     BOOL piece_found = FALSE;
@@ -682,36 +689,11 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
     while (ctx->data < ctx->end_data)
     {
         op = dwarf2_parse_byte(ctx);
-        switch (op)
+
+        if (op >= DW_OP_lit0 && op <= DW_OP_lit31)
+            stack[++stk] = op - DW_OP_lit0;
+        else if (op >= DW_OP_reg0 && op <= DW_OP_reg31)
         {
-        case DW_OP_lit0:  case DW_OP_lit1:  case DW_OP_lit2:  case DW_OP_lit3:
-        case DW_OP_lit4:  case DW_OP_lit5:  case DW_OP_lit6:  case DW_OP_lit7:
-        case DW_OP_lit8:  case DW_OP_lit9:  case DW_OP_lit10: case DW_OP_lit11:
-        case DW_OP_lit12: case DW_OP_lit13: case DW_OP_lit14: case DW_OP_lit15:
-        case DW_OP_lit16: case DW_OP_lit17: case DW_OP_lit18: case DW_OP_lit19:
-        case DW_OP_lit20: case DW_OP_lit21: case DW_OP_lit22: case DW_OP_lit23:
-        case DW_OP_lit24: case DW_OP_lit25: case DW_OP_lit26: case DW_OP_lit27:
-        case DW_OP_lit28: case DW_OP_lit29: case DW_OP_lit30: case DW_OP_lit31:
-            stack[++stk] = op - DW_OP_lit0; break;
-        case DW_OP_addr:    stack[++stk] = dwarf2_parse_addr(ctx); break;
-        case DW_OP_const1u: stack[++stk] = dwarf2_parse_byte(ctx); break;
-        case DW_OP_const1s: stack[++stk] = (long)(signed char)dwarf2_parse_byte(ctx); break;
-        case DW_OP_const2u: stack[++stk] = dwarf2_parse_u2(ctx); break;
-        case DW_OP_const2s: stack[++stk] = (long)(short)dwarf2_parse_u2(ctx); break;
-        case DW_OP_const4u: stack[++stk] = dwarf2_parse_u4(ctx); break;
-        case DW_OP_const4s: stack[++stk] = dwarf2_parse_u4(ctx); break;
-        case DW_OP_constu:  stack[++stk] = dwarf2_leb128_as_unsigned(ctx); break;
-        case DW_OP_consts:  stack[++stk] = dwarf2_leb128_as_signed(ctx); break;
-        case DW_OP_plus_uconst:
-            stack[stk] += dwarf2_leb128_as_unsigned(ctx); break;
-        case DW_OP_reg0:  case DW_OP_reg1:  case DW_OP_reg2:  case DW_OP_reg3:
-        case DW_OP_reg4:  case DW_OP_reg5:  case DW_OP_reg6:  case DW_OP_reg7:
-        case DW_OP_reg8:  case DW_OP_reg9:  case DW_OP_reg10: case DW_OP_reg11:
-        case DW_OP_reg12: case DW_OP_reg13: case DW_OP_reg14: case DW_OP_reg15:
-        case DW_OP_reg16: case DW_OP_reg17: case DW_OP_reg18: case DW_OP_reg19:
-        case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
-        case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
-        case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
             /* dbghelp APIs don't know how to cope with this anyway
              * (for example 'long long' stored in two registers)
              * FIXME: We should tell winedbg how to deal with it (sigh)
@@ -724,15 +706,9 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                 loc->reg = dwarf2_map_register(op - DW_OP_reg0);
             }
             loc->kind = loc_register;
-            break;
-        case DW_OP_breg0:  case DW_OP_breg1:  case DW_OP_breg2:  case DW_OP_breg3:
-        case DW_OP_breg4:  case DW_OP_breg5:  case DW_OP_breg6:  case DW_OP_breg7:
-        case DW_OP_breg8:  case DW_OP_breg9:  case DW_OP_breg10: case DW_OP_breg11:
-        case DW_OP_breg12: case DW_OP_breg13: case DW_OP_breg14: case DW_OP_breg15:
-        case DW_OP_breg16: case DW_OP_breg17: case DW_OP_breg18: case DW_OP_breg19:
-        case DW_OP_breg20: case DW_OP_breg21: case DW_OP_breg22: case DW_OP_breg23:
-        case DW_OP_breg24: case DW_OP_breg25: case DW_OP_breg26: case DW_OP_breg27:
-        case DW_OP_breg28: case DW_OP_breg29: case DW_OP_breg30: case DW_OP_breg31:
+        }
+        else if (op >= DW_OP_breg0 && op <= DW_OP_breg31)
+        {
             /* dbghelp APIs don't know how to cope with this anyway
              * (for example 'long long' stored in two registers)
              * FIXME: We should tell winedbg how to deal with it (sigh)
@@ -740,12 +716,70 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             if (!piece_found)
             {
                 if (loc->reg != Wine_DW_no_register)
-                    FIXME("Only supporting one reg (%d -> %d)\n",
+                    FIXME("Only supporting one breg (%d -> %d)\n",
                           loc->reg, dwarf2_map_register(op - DW_OP_breg0));
                 loc->reg = dwarf2_map_register(op - DW_OP_breg0);
             }
             stack[++stk] = dwarf2_leb128_as_signed(ctx);
             loc->kind = loc_regrel;
+            break;
+        }
+        else switch (op)
+        {
+        case DW_OP_nop:         break;
+        case DW_OP_addr:        stack[++stk] = dwarf2_parse_addr(ctx); break;
+        case DW_OP_const1u:     stack[++stk] = dwarf2_parse_byte(ctx); break;
+        case DW_OP_const1s:     stack[++stk] = dwarf2_parse_byte(ctx); break;
+        case DW_OP_const2u:     stack[++stk] = dwarf2_parse_u2(ctx); break;
+        case DW_OP_const2s:     stack[++stk] = dwarf2_parse_u2(ctx); break;
+        case DW_OP_const4u:     stack[++stk] = dwarf2_parse_u4(ctx); break;
+        case DW_OP_const4s:     stack[++stk] = dwarf2_parse_u4(ctx); break;
+        case DW_OP_const8u:     stack[++stk] = dwarf2_parse_u8(ctx); break;
+        case DW_OP_const8s:     stack[++stk] = dwarf2_parse_u8(ctx); break;
+        case DW_OP_constu:      stack[++stk] = dwarf2_leb128_as_unsigned(ctx); break;
+        case DW_OP_consts:      stack[++stk] = dwarf2_leb128_as_signed(ctx); break;
+        case DW_OP_dup:         stack[stk + 1] = stack[stk]; stk++; break;
+        case DW_OP_drop:        stk--; break;
+        case DW_OP_over:        stack[stk + 1] = stack[stk - 1]; stk++; break;
+        case DW_OP_pick:        stack[stk + 1] = stack[stk - dwarf2_parse_byte(ctx)]; stk++; break;
+        case DW_OP_swap:        tmp = stack[stk]; stack[stk] = stack[stk-1]; stack[stk-1] = tmp; break;
+        case DW_OP_rot:         tmp = stack[stk]; stack[stk] = stack[stk-1]; stack[stk-1] = stack[stk-2]; stack[stk-2] = tmp; break;
+        case DW_OP_abs:         stack[stk] = labs(stack[stk]); break;
+        case DW_OP_neg:         stack[stk] = -stack[stk]; break;
+        case DW_OP_not:         stack[stk] = ~stack[stk]; break;
+        case DW_OP_and:         stack[stk-1] &= stack[stk]; stk--; break;
+        case DW_OP_or:          stack[stk-1] |= stack[stk]; stk--; break;
+        case DW_OP_minus:       stack[stk-1] -= stack[stk]; stk--; break;
+        case DW_OP_mul:         stack[stk-1] *= stack[stk]; stk--; break;
+        case DW_OP_plus:        stack[stk-1] += stack[stk]; stk--; break;
+        case DW_OP_xor:         stack[stk-1] ^= stack[stk]; stk--; break;
+        case DW_OP_shl:         stack[stk-1] <<= stack[stk]; stk--; break;
+        case DW_OP_shr:         stack[stk-1] >>= stack[stk]; stk--; break;
+        case DW_OP_plus_uconst: stack[stk] += dwarf2_leb128_as_unsigned(ctx); break;
+        case DW_OP_shra:        stack[stk-1] = stack[stk-1] / (1 << stack[stk]); stk--; break;
+        case DW_OP_div:         stack[stk-1] = stack[stk-1] / stack[stk]; stk--; break;
+        case DW_OP_mod:         stack[stk-1] = stack[stk-1] % stack[stk]; stk--; break;
+        case DW_OP_ge:          stack[stk-1] = (stack[stk-1] >= stack[stk]); stk--; break;
+        case DW_OP_gt:          stack[stk-1] = (stack[stk-1] >  stack[stk]); stk--; break;
+        case DW_OP_le:          stack[stk-1] = (stack[stk-1] <= stack[stk]); stk--; break;
+        case DW_OP_lt:          stack[stk-1] = (stack[stk-1] <  stack[stk]); stk--; break;
+        case DW_OP_eq:          stack[stk-1] = (stack[stk-1] == stack[stk]); stk--; break;
+        case DW_OP_ne:          stack[stk-1] = (stack[stk-1] != stack[stk]); stk--; break;
+        case DW_OP_skip:        tmp = dwarf2_parse_u2(ctx); ctx->data += tmp; break;
+        case DW_OP_bra:         tmp = dwarf2_parse_u2(ctx); if (!stack[stk--]) ctx->data += tmp; break;
+        case DW_OP_regx:
+            if (loc->reg != Wine_DW_no_register)
+                FIXME("Only supporting one regx\n");
+            loc->reg = dwarf2_map_register(dwarf2_leb128_as_unsigned(ctx));
+            loc->kind = loc_register;
+            break;
+        case DW_OP_bregx:
+            tmp = dwarf2_leb128_as_unsigned(ctx);
+            ctx->data++;
+            if (loc->reg != Wine_DW_no_register)
+                FIXME("Only supporting one regx\n");
+            loc->reg = dwarf2_map_register(tmp) + dwarf2_leb128_as_signed(ctx);
+            loc->kind = loc_register;
             break;
         case DW_OP_fbreg:
             if (loc->reg != Wine_DW_no_register)
@@ -800,6 +834,42 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                     return loc_err_cant_read;
                 }
                 stack[++stk] = deref;
+            }
+            else
+            {
+               loc->kind = loc_dwarf2_block;
+            }
+            break;
+        case DW_OP_deref_size:
+            if (!stk)
+            {
+                FIXME("Unexpected empty stack\n");
+                return loc_err_internal;
+            }
+            if (loc->reg != Wine_DW_no_register)
+            {
+                WARN("Too complex expression for deref\n");
+                return loc_err_too_complex;
+            }
+            if (hproc)
+            {
+                DWORD_PTR addr = stack[stk--];
+                BYTE derefsize = dwarf2_parse_byte(ctx);
+                DWORD64 deref;
+
+                if (!ReadProcessMemory(hproc, (void*)addr, &deref, derefsize, NULL))
+                {
+                    WARN("Couldn't read memory at %lx\n", addr);
+                       return loc_err_cant_read;
+                }
+
+                switch (derefsize)
+                {
+                   case 1: stack[++stk] = *(unsigned char*)&deref; break;
+                   case 2: stack[++stk] = *(unsigned short*)&deref; break;
+                   case 4: stack[++stk] = *(DWORD*)&deref; break;
+                   case 8: if (ctx->word_size >= derefsize) stack[++stk] = deref; break;
+                }
             }
             else
             {
