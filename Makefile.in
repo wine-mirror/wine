@@ -33,17 +33,22 @@ SUBDIRS = \
 	documentation \
 	fonts \
 	include \
-	libs \
+	libs/port \
+	libs/wine \
+	libs/wpp \
 	loader \
 	programs \
 	server \
 	tools
 
 # Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = @ALL_TOP_DIRS@
+INSTALLSUBDIRS = libs/wine @ALL_TOP_DIRS@
 
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
+
+# Sub-directories that don't have a makefile
+EXTRASUBDIRS = libs
 
 all: wine
 	@echo "Wine build complete."
@@ -75,20 +80,23 @@ uninstall::
 # Dependencies between directories
 
 all: $(INSTALLSUBDIRS)
-dlls: include libs tools
-fonts loader server: libs tools
-programs: dlls include libs tools
-include: libs tools
-tools: libs
 
-dlls/__install__ dlls/__install-lib__ dlls/__install-dev__: libs tools include
-fonts/__install__ fonts/__install-lib__: libs tools
-include/__install__ include/__install-dev__: include libs tools
-libs/__install__ libs/__install-lib__ libs/__install-dev__: libs
-loader/__install__ loader/__install-lib__: libs tools
-server/__install__ server/__install-lib__: libs tools
-programs/__install__: libs tools include dlls/__install__
-programs/__install-lib__: libs tools include dlls/__install-lib__
+dlls programs: libs/port libs/wine libs/wpp tools include
+loader server: libs/port libs/wine tools
+fonts include: tools
+programs: dlls
+tools: libs/port libs/wine libs/wpp
+libs/wine: libs/port
+
+dlls/__install__ dlls/__install-lib__ dlls/__install-dev__: libs/port libs/wine libs/wpp tools include
+programs/__install__ programs/__install-lib__: libs/port libs/wine libs/wpp tools include
+fonts/__install__ fonts/__install-lib__: tools
+include/__install__ include/__install-dev__: include
+libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
+loader/__install__ loader/__install-lib__: libs/port libs/wine tools
+server/__install__ server/__install-lib__: libs/port libs/wine tools
+programs/__install__: dlls/__install__
+programs/__install-lib__: dlls/__install-lib__
 tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
 
 RECURSE_TARGETS = \
