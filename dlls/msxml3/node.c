@@ -1738,6 +1738,9 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     case XML_CDATA_SECTION_NODE:
         pUnk = create_cdata( node );
         break;
+    case XML_ENTITY_REF_NODE:
+        pUnk = create_doc_entity_ref( node );
+        break;
     case XML_PI_NODE:
         pUnk = create_pi( node );
         break;
