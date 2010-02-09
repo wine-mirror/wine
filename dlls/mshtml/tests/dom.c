@@ -684,6 +684,17 @@ static IHTMLDOMTextNode *_get_text_iface(unsigned line, IUnknown *unk)
     return text;
 }
 
+#define get_comment_iface(u) _get_comment_iface(__LINE__,u)
+static IHTMLCommentElement *_get_comment_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLCommentElement *comment;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLCommentElement, (void**)&comment);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLCommentElement: %08x\n", hres);
+    return comment;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -1100,6 +1111,22 @@ static void _test_option_put_value(unsigned line, IHTMLOptionElement *option, co
     ok(hres == S_OK, "put_value failed: %08x\n", hres);
 
     _test_option_value(line, option, value);
+}
+
+#define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
+static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
+{
+    IHTMLCommentElement *comment = _get_comment_iface(__LINE__,unk);
+    BSTR text;
+    HRESULT hres;
+
+    text = a2bstr(extext);
+    hres = IHTMLCommentElement_get_text(comment, &text);
+    ok_(__FILE__,line)(hres == S_OK, "get_text failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(text, extext), "text = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), extext);
+
+    IHTMLCommentElement_Release(comment);
+    SysFreeString(text);
 }
 
 #define create_option_elem(d,t,v) _create_option_elem(__LINE__,d,t,v)
@@ -1649,6 +1676,21 @@ static void _test_elem_set_outerhtml(unsigned line, IUnknown *unk, const char *o
     html = a2bstr(outer_html);
     hres = IHTMLElement_put_outerHTML(elem, html);
     ok_(__FILE__,line)(hres == S_OK, "put_outerHTML failed: %08x\n", hres);
+
+    IHTMLElement_Release(elem);
+    SysFreeString(html);
+}
+
+#define test_elem_outerhtml(e,t) _test_elem_outerhtml(__LINE__,e,t)
+static void _test_elem_outerhtml(unsigned line, IUnknown *unk, const char *outer_html)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR html;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_outerHTML(elem, &html);
+    ok_(__FILE__,line)(hres == S_OK, "get_outerHTML failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(html, outer_html), "outerHTML = '%s', expected '%s'\n", wine_dbgstr_w(html), outer_html);
 
     IHTMLElement_Release(elem);
     SysFreeString(html);
@@ -5911,6 +5953,8 @@ static void test_create_elems(IHTMLDocument2 *doc)
             test_elem_title((IUnknown*)comment, NULL);
             test_elem_set_title((IUnknown*)comment, "comment title");
             test_elem_title((IUnknown*)comment, "comment title");
+            test_comment_text((IUnknown*)comment, "<!--testing-->");
+            test_elem_outerhtml((IUnknown*)comment, "<!--testing-->");
 
             IHTMLDOMNode_Release(comment);
         }
