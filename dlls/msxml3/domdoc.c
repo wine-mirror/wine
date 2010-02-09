@@ -49,6 +49,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #include <libxml/xmlsave.h>
 
+/* not defined in older versions */
+#define XML_SAVE_FORMAT     1
+#define XML_SAVE_NO_DECL    2
+#define XML_SAVE_NO_EMPTY   4
+#define XML_SAVE_NO_XHTML   8
+#define XML_SAVE_XHTML     16
+#define XML_SAVE_AS_XML    32
+#define XML_SAVE_AS_HTML   64
+
 static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
 static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
 static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
