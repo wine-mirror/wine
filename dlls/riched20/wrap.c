@@ -456,6 +456,29 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   return p->next;
 }
 
+static int ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
+{
+  int   sp = 0, ls = 0;
+  if (!(para->pFmt->dwMask & PFM_LINESPACING)) return 0;
+
+  /* FIXME: how to compute simply the line space in ls ??? */
+  /* FIXME: does line spacing include the line itself ??? */
+  switch (para->pFmt->bLineSpacingRule)
+  {
+  case 0:       sp = ls; break;
+  case 1:       sp = (3 * ls) / 2; break;
+  case 2:       sp = 2 * ls; break;
+  case 3:       sp = ME_twips2pointsY(c, para->pFmt->dyLineSpacing); if (sp < ls) sp = ls; break;
+  case 4:       sp = ME_twips2pointsY(c, para->pFmt->dyLineSpacing); break;
+  case 5:       sp = para->pFmt->dyLineSpacing / 20; break;
+  default: FIXME("Unsupported spacing rule value %d\n", para->pFmt->bLineSpacingRule);
+  }
+  if (c->editor->nZoomNumerator == 0)
+    return sp;
+  else
+    return sp * c->editor->nZoomNumerator / c->editor->nZoomDenominator;
+}
+
 static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 
 static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {

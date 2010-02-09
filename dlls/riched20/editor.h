@@ -230,7 +230,6 @@ void ME_UpdateScrollBar(ME_TextEditor *editor);
 
 /* other functions in paint.c */
 int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);
-int  ME_GetParaLineSpace(ME_Context *c, ME_Paragraph*);
 
 /* richole.c */
 LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
