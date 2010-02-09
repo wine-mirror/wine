@@ -4111,6 +4111,8 @@ esac
 
 enable_win16=${enable_win16:-no}
 
+enable_winetest=${enable_winetest:-$enable_tests}
+
 if test -n "$with_wine64"
 then
     if test "x$enable_win64" = "xyes"

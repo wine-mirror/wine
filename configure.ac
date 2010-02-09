@@ -170,6 +170,9 @@ esac
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
 enable_win16=${enable_win16:-no}
 
+dnl Disable winetest too if tests are disabled
+enable_winetest=${enable_winetest:-$enable_tests}
+
 dnl Some special cases for the wow64 build
 if test -n "$with_wine64"
 then
