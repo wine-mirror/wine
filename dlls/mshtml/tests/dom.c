@@ -5921,6 +5921,22 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(body);
 }
 
+static void test_null_write(IHTMLDocument2 *doc)
+{
+    HRESULT hres;
+
+    doc_write(doc, FALSE, NULL);
+    doc_write(doc, TRUE, NULL);
+
+    hres = IHTMLDocument2_write(doc, NULL);
+    ok(hres == S_OK,
+       "Expected IHTMLDocument2::write to return S_OK, got 0x%08x\n", hres);
+
+    hres = IHTMLDocument2_writeln(doc, NULL);
+    ok(hres == S_OK,
+       "Expected IHTMLDocument2::writeln to return S_OK, got 0x%08x\n", hres);
+}
+
 static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)
 {
     IOleCommandTarget *cmdtrg;
@@ -6395,6 +6411,7 @@ START_TEST(dom)
     run_domtest(elem_test2_str, test_elems2);
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
+    run_domtest(doc_blank, test_null_write);
     run_domtest(indent_test_str, test_indent);
     run_domtest(cond_comment_str, test_cond_comment);
     run_domtest(frameset_str, test_frameset);

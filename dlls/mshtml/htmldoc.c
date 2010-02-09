@@ -776,6 +776,9 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
         return E_UNEXPECTED;
     }
 
+    if (!psarray)
+        return S_OK;
+
     if(psarray->cDims != 1) {
         FIXME("cDims=%d\n", psarray->cDims);
         return E_INVALIDARG;
