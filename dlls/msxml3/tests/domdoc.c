@@ -982,6 +982,12 @@ static void test_domdoc( void )
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(nodeChild == NULL, "pLastChild not NULL\n");
 
+        /* baseName */
+        str = (BSTR)0xdeadbeef;
+        IXMLDOMComment_get_baseName(node_comment, &str);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok(str == NULL, "Expected NULL\n");
+
         IXMLDOMComment_Release( node_comment );
     }
 

@@ -1626,6 +1626,7 @@ static HRESULT WINAPI xmlnode_get_baseName(
         r = S_OK;
         break;
     case XML_TEXT_NODE:
+    case XML_COMMENT_NODE:
         break;
     default:
         ERR("Unhandled type %d\n", This->node->type );
