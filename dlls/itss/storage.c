@@ -399,6 +399,10 @@ static HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
     TRACE("%p %s %p %u %p %u %p\n", This, debugstr_w(pwcsName),
           pstgPriority, grfMode, snbExclude, reserved, ppstg);
 
+    chmfile = chm_dup( This->chmfile );
+    if( !chmfile )
+        return E_FAIL;
+
     len = strlenW( This->dir ) + strlenW( pwcsName ) + 1;
     path = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     strcpyW( path, This->dir );
@@ -423,9 +427,6 @@ static HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
 
     TRACE("Resolving %s\n", debugstr_w(path));
 
-    chmfile = chm_dup( This->chmfile );
-    if( !chmfile )
-        return E_FAIL;
     return ITSS_create_chm_storage(chmfile, path, ppstg);
 }
 
