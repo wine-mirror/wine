@@ -97,7 +97,6 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
     stream_init(&stream, temp_stream);
 
     /* Remove all HTML formatting and record the title */
-    buffer = heap_alloc(0);
     while(next_node(&stream, &node)) {
         get_node_name(&node, &node_name);
 
