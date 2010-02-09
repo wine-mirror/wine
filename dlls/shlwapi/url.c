@@ -2441,7 +2441,7 @@ HRESULT WINAPI UrlFixupW(LPCWSTR url, LPWSTR translatedUrl, DWORD maxChars)
     if (!url)
         return E_FAIL;
 
-    srcLen = lstrlenW(url);
+    srcLen = lstrlenW(url) + 1;
 
     /* For now just copy the URL directly */
     lstrcpynW(translatedUrl, url, (maxChars < srcLen) ? maxChars : srcLen);
