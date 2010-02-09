@@ -1,0 +1,21 @@
+
+@pwd@>rem Tests for echo@todo_space@
+
+@pwd@>echo word@todo_space@
+word
+
+@pwd@>echo 'singlequotedword'@todo_space@
+'singlequotedword'
+
+@pwd@>echo "doublequotedword"@todo_space@
+"doublequotedword"
+at-echoed-word
+
+@pwd@>echo "/?"@todo_space@
+"/?"
+
+@pwd@>echo.
+
+
+@pwd@>echo .@todo_space@
+.

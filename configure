@@ -19826,6 +19826,26 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/cmd/Makefile: programs/cmd/Makefile.in programs/Makeprog.rules config.status"
 ac_config_files="$ac_config_files programs/cmd/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/cmd/tests: __builddeps__
+programs/cmd/tests/__crosstest__: __buildcrossdeps__"
+ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
+	cmd.exe_test.exe"
+ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
+cmd.exe_test.exe: \$(TOPOBJDIR)/programs/cmd/tests/cmd.exe_test.exe$DLLEXT
+	cp \$(TOPOBJDIR)/programs/cmd/tests/cmd.exe_test.exe$DLLEXT \$@ && \$(STRIP) \$@
+cmd.exe_test.rc:
+	echo \"cmd.exe_test.exe TESTRES \\\"cmd.exe_test.exe\\\"\" >\$@ || (\$(RM) \$@ && false)
+cmd.exe_test.res: cmd.exe_test.rc cmd.exe_test.exe"
+ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/cmd/tests/Makefile"
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	programs/cmd/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=programs/cmd/tests/%) programs/cmd/tests: programs/cmd/tests/Makefile \$(MAKEDEP)
+programs/cmd/tests/Makefile: programs/cmd/tests/Makefile.in Maketest.rules config.status"
+ac_config_files="$ac_config_files programs/cmd/tests/Makefile"
+
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/cmdlgtst/Makefile"
 test "x$enable_cmdlgtst" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
@@ -21559,6 +21579,7 @@ do
     "programs/cacls/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cacls/Makefile" ;;
     "programs/clock/Makefile") CONFIG_FILES="$CONFIG_FILES programs/clock/Makefile" ;;
     "programs/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/Makefile" ;;
+    "programs/cmd/tests/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/tests/Makefile" ;;
     "programs/cmdlgtst/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmdlgtst/Makefile" ;;
     "programs/control/Makefile") CONFIG_FILES="$CONFIG_FILES programs/control/Makefile" ;;
     "programs/dxdiag/Makefile") CONFIG_FILES="$CONFIG_FILES programs/dxdiag/Makefile" ;;
