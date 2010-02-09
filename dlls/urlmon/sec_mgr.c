@@ -147,12 +147,18 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     DWORD size=0;
     HRESULT hres;
 
-    secur_url = heap_alloc(INTERNET_MAX_URL_LENGTH*sizeof(WCHAR));
     *zone = -1;
 
-    hres = CoInternetParseUrl(url, PARSE_SECURITY_URL, 0, secur_url, INTERNET_MAX_URL_LENGTH, &size, 0);
-    if(hres != S_OK)
-        strcpyW(secur_url, url);
+    hres = CoInternetGetSecurityUrl(url, &secur_url, PSU_SECURITY_URL_ONLY, 0);
+    if(hres != S_OK) {
+        size = strlenW(url)*sizeof(WCHAR);
+
+        secur_url = heap_alloc(size);
+        if(!secur_url)
+            return E_OUTOFMEMORY;
+
+        memcpy(secur_url, url, size);
+    }
 
     hres = CoInternetParseUrl(secur_url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(WCHAR), &size, 0);
     if(FAILED(hres) || !*schema) {
