@@ -780,7 +780,19 @@ static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD *pcchResult, DWORD dwReserved)
 {
-    CHECK_EXPECT(ParseUrl);
+    CHECK_EXPECT2(ParseUrl);
+
+    if(ParseAction == PARSE_SECURITY_URL) {
+        if(pcchResult)
+            *pcchResult = sizeof(url1)/sizeof(WCHAR);
+
+        if(cchResult<sizeof(url1)/sizeof(WCHAR))
+            return S_FALSE;
+
+        memcpy(pwzResult, url1, sizeof(url1));
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -825,7 +837,7 @@ static IClassFactory *expect_cf;
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
-        CHECK_EXPECT(QI_IInternetProtocolInfo);
+        CHECK_EXPECT2(QI_IInternetProtocolInfo);
         ok(iface == expect_cf, "unexpected iface\n");
         *ppv = &protocol_info;
         return qiret;
@@ -896,6 +908,7 @@ static void test_NameSpace(void)
 {
     IInternetSession *session;
     WCHAR buf[200];
+    LPWSTR sec_url;
     DWORD size;
     HRESULT hres;
 
@@ -939,6 +952,35 @@ static void test_NameSpace(void)
     hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_SECURITY_URL, 0, buf,
+            sizeof(buf)/sizeof(WCHAR), &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+    ok(size == sizeof(url1)/sizeof(WCHAR), "Size = %d, expected %d\n",
+            size, sizeof(url1)/sizeof(WCHAR));
+    if(size == sizeof(url1)/sizeof(WCHAR))
+        ok(!memcmp(buf, url1, sizeof(url1)), "Encoded url = %s\n", wine_dbgstr_w(buf));
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetGetSecurityUrl(url8, &sec_url, PSU_SECURITY_URL_ONLY, 0);
+    ok(hres == S_OK, "CoInternetGetSecurityUrl failed: %08x\n", hres);
+    if(hres == S_OK) {
+        ok(lstrlenW(sec_url)>sizeof(wszFile)/sizeof(WCHAR) &&
+                !memcmp(sec_url, wszFile, sizeof(wszFile)-sizeof(WCHAR)),
+                "Encoded url = %s\n", wine_dbgstr_w(sec_url));
+        CoTaskMemFree(sec_url);
+    }
 
     CHECK_CALLED(QI_IInternetProtocolInfo);
     CHECK_CALLED(ParseUrl);
