@@ -1216,8 +1216,19 @@ static void test_domnode( void )
         r = IXMLDOMElement_getAttributeNode( element, str, &attr);
         ok( r == S_OK, "GetAttributeNode ret %08x\n", r );
         ok( attr != NULL, "getAttributeNode returned NULL\n" );
-        if(attr)
+        if (attr)
+        {
+            r = IXMLDOMAttribute_get_parentNode( attr, NULL );
+            ok( r == E_INVALIDARG, "Expected E_INVALIDARG, ret %08x\n", r );
+
+            /* attribute doesn't have a parent in msxml interpretation */
+            node = (IXMLDOMNode*)0xdeadbeef;
+            r = IXMLDOMAttribute_get_parentNode( attr, &node );
+            ok( r == S_FALSE, "Expected S_FALSE, ret %08x\n", r );
+            ok( node == NULL, "Expected NULL, got %p\n", node );
+
             IXMLDOMAttribute_Release(attr);
+        }
 
         SysFreeString( str );
 
