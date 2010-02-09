@@ -550,7 +550,7 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
                 lvItem.iItem = (int) SendMessageW(hwndList, LVM_GETSELECTIONMARK, 0, 0);
                 lvItem.mask = TVIF_PARAM;
-                ListView_GetItemW(hwndList, &lvItem);
+                SendMessageW(hwndList, LVM_GETITEMW, 0, (LPARAM)&lvItem);
                 OnTopicChange(info, (void*) lvItem.lParam);
                 return 0;
             }
@@ -578,7 +578,7 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
                     lvItem.iItem = (int) SendMessageW(hwndList, LVM_GETSELECTIONMARK, 0, 0);
                     lvItem.mask = TVIF_PARAM;
-                    ListView_GetItemW(hwndList, &lvItem);
+                    SendMessageW(hwndList, LVM_GETITEMW, 0, (LPARAM)&lvItem);
                     OnTopicChange(info, (void*) lvItem.lParam);
                     return 0;
                 }
@@ -1095,7 +1095,7 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
 
             lvItem.iItem = (int) SendMessageW(info->popup.hwndList, LVM_GETSELECTIONMARK, 0, 0);
             lvItem.mask = TVIF_PARAM;
-            ListView_GetItemW(info->popup.hwndList, &lvItem);
+            SendMessageW(info->popup.hwndList, LVM_GETITEMW, 0, (LPARAM)&lvItem);
             iter = (IndexSubItem*) lvItem.lParam;
             NavigateToChm(info, info->index->merge.chm_file, iter->local);
             ShowWindow(info->popup.hwndPopup, SW_HIDE);
