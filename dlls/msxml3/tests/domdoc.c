@@ -3510,7 +3510,15 @@ static void test_xmlTypes(void)
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
-                IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;
+                IXMLDOMNode *node;
+
+                hr = IXMLDOMDocumentFragment_get_parentNode(pDocFrag, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                node = (IXMLDOMNode *)0x1;
+                hr = IXMLDOMDocumentFragment_get_parentNode(pDocFrag, &node);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok(node == NULL, "expected NULL, got %p\n", node);
 
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pDocFrag, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
@@ -3533,19 +3541,19 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMDocumentFragment_get_nextSibling(pDocFrag, NULL);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
-                pNextChild = (IXMLDOMNode *)0x1;
-                hr = IXMLDOMDocumentFragment_get_nextSibling(pDocFrag, &pNextChild);
+                node = (IXMLDOMNode *)0x1;
+                hr = IXMLDOMDocumentFragment_get_nextSibling(pDocFrag, &node);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
-                ok(pNextChild == NULL, "pNextChild not NULL\n");
+                ok(node == NULL, "next sibling not NULL\n");
 
                 /* test Previous Sibling*/
                 hr = IXMLDOMDocumentFragment_get_previousSibling(pDocFrag, NULL);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
-                pNextChild = (IXMLDOMNode *)0x1;
-                hr = IXMLDOMDocumentFragment_get_previousSibling(pDocFrag, &pNextChild);
+                node = (IXMLDOMNode *)0x1;
+                hr = IXMLDOMDocumentFragment_get_previousSibling(pDocFrag, &node);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
-                ok(pNextChild == NULL, "pNextChild not NULL\n");
+                ok(node == NULL, "previous sibling not NULL\n");
 
                 /* test get_dataType */
                 hr = IXMLDOMDocumentFragment_get_dataType(pDocFrag, NULL);
