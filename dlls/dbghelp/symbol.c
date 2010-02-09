@@ -2037,3 +2037,27 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     regfree(&re);
     return TRUE;
 }
+
+BOOL WINAPI SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName,
+                DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line)
+{
+    FIXME("(%p) (%s, %s, %d %p %p): stub\n", hProcess, ModuleName, FileName,
+                dwLineNumber, plDisplacement, Line);
+    return FALSE;
+}
+
+BOOL WINAPI SymGetLineFromName64(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName,
+                DWORD dwLineNumber, PLONG lpDisplacement, PIMAGEHLP_LINE64 Line)
+{
+    FIXME("(%p) (%s, %s, %d %p %p): stub\n", hProcess, ModuleName, FileName,
+                dwLineNumber, lpDisplacement, Line);
+    return FALSE;
+}
+
+BOOL WINAPI SymGetLineFromNameW64(HANDLE hProcess, PCWSTR ModuleName, PCWSTR FileName,
+                DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINEW64 Line)
+{
+    FIXME("(%p) (%s, %s, %d %p %p): stub\n", hProcess, debugstr_w(ModuleName), debugstr_w(FileName),
+                dwLineNumber, plDisplacement, Line);
+    return FALSE;
+}

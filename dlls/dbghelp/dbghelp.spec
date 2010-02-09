@@ -86,9 +86,9 @@
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long double ptr ptr)
 @ stdcall SymGetLineFromAddrW64(long double ptr ptr)
-@ stub SymGetLineFromName
-@ stub SymGetLineFromName64
-@ stub SymGetLineFromNameW64
+@ stdcall SymGetLineFromName(long str str long ptr ptr)
+@ stdcall SymGetLineFromName64(long str str long ptr ptr)
+@ stdcall SymGetLineFromNameW64(long wstr wstr long ptr ptr)
 @ stdcall SymGetLineNext(long ptr)
 @ stdcall SymGetLineNext64(long ptr)
 @ stub SymGetLineNextW64
