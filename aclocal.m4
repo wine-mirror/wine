@@ -223,7 +223,8 @@ dnl
 dnl Usage: WINE_CONFIG_TEST(dir)
 dnl
 AC_DEFUN([WINE_CONFIG_TEST],
-[m4_pushdef([ac_name],m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1_test]))dnl
+[m4_pushdef([ac_suffix],m4_if(m4_substr([$1],0,9),[programs/],[.exe_test],[_test]))dnl
+m4_pushdef([ac_name],[m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1])]ac_suffix)dnl
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 $1: __builddeps__
 $1/__crosstest__: __buildcrossdeps__"
@@ -236,6 +237,7 @@ ac_name.rc:
 	echo \"ac_name.exe TESTRES \\\"ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 ac_name.res: ac_name.rc ac_name.exe"
 WINE_CONFIG_MAKEFILE([$1/Makefile],[Maketest.rules],[],[ALL_TEST_DIRS],[enable_tests])dnl
+m4_popdef([ac_suffix])dnl
 m4_popdef([ac_name])])
 
 dnl **** Create a static lib makefile from config.status ****

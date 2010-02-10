@@ -4,6 +4,8 @@
 *.ok
 *.res
 *.so
+*/*/tests/*crosstest.exe
+*/*/tests/testlist.c
 /Make.rules
 /Maketest.rules
 /TAGS
@@ -17,8 +19,6 @@
 Makefile
 dlldata.c
 dlls/*/*.def
-dlls/*/tests/*crosstest.exe
-dlls/*/tests/testlist.c
 dlls/Makedll.rules
 dlls/Makeimplib.rules
 dlls/actxprxy/actxprxy_activscp.h
