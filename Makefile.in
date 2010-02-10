@@ -87,8 +87,9 @@ uninstall::
 # Import libraries
 
 STATIC_LIBS = @ALL_STATIC_LIBS@
+IMPORT_LIBS = @ALL_IMPORT_LIBS@
 
-implib: $(ALL_STATICLIB_DIRS)
+implib: $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
 .PHONY: implib
 
 # Dependencies between directories
@@ -96,8 +97,8 @@ implib: $(ALL_STATICLIB_DIRS)
 all: $(INSTALLSUBDIRS)
 
 # dependencies needed to build any dll or program
-__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS)
-__buildcrossdeps__: libs/port libs/wine $(ALL_TOOL_DIRS) include $(STATIC_LIBS:.a=.cross.a)
+__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
+__buildcrossdeps__: libs/port libs/wine $(ALL_TOOL_DIRS) include $(STATIC_LIBS:.a=.cross.a) $(IMPORT_LIBS:.def=.cross.a)
 .PHONY: __builddeps__ __buildcrossdeps__
 
 dlls programs: __builddeps__
@@ -117,8 +118,6 @@ include/__install__ include/__install-dev__: include
 libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
 loader/__install__ loader/__install-lib__: libs/port libs/wine tools
 server/__install__ server/__install-lib__: libs/port libs/wine tools
-programs/__install__: dlls/__install__
-programs/__install-lib__: dlls/__install-lib__
 tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
 tools/widl/__install__ tools/widl/__install-dev__: tools/widl
 tools/winebuild/__install__ tools/winebuild/__install-dev__: tools/winebuild

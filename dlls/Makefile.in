@@ -18,23 +18,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 
 all: $(BUILDSUBDIRS)
 
-# Import libraries
-
-IMPORT_LIBS = @ALL_IMPORT_LIBS@
-
-$(TESTSUBDIRS:%=%/__crosstest__): $(IMPORT_LIBS:.def=.cross.a)
-
-implib: $(IMPORT_LIBS)
-
-testsubdirs: $(TESTSUBDIRS)
-
-.PHONY: implib testsubdirs
-
-$(BUILDSUBDIRS): $(IMPORT_LIBS)
-$(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
-
-@ALL_IMPORTLIB_RULES@
-
 # Misc rules
 
 uninstall::

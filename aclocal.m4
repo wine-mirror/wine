@@ -187,26 +187,27 @@ dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],
 [m4_ifval([$3],[m4_ifval([$2],[test "x$[$2]" = xno || ])ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
-	$1/lib$3.$IMPLIBEXT[]dnl
+	dlls/$1/lib$3.$IMPLIBEXT[]dnl
 m4_if($1,$3,,[ \\
-	lib$3.$IMPLIBEXT])[]dnl
+	dlls/lib$3.$IMPLIBEXT])[]dnl
 m4_ifval([$4],[ \\
-	$1/lib$3.$STATIC_IMPLIBEXT])"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-m4_if($1,$3,,[lib$3.a: $1/lib$3.a
+	dlls/$1/lib$3.$STATIC_IMPLIBEXT])"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/$1/lib$3.$IMPLIBEXT m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT ])dlls/$1/lib$3.cross.a: tools/widl tools/winebuild tools/winegcc include
+m4_if($1,$3,,[dlls/lib$3.a: dlls/$1/lib$3.a
 	\$(RM) \$[@] && \$(LN_S) $1/lib$3.a \$[@]
-lib$3.cross.a: $1/lib$3.cross.a
+dlls/lib$3.cross.a: dlls/$1/lib$3.cross.a
 	\$(RM) \$[@] && \$(LN_S) $1/lib$3.cross.a \$[@]
-lib$3.def: $1/lib$3.def
+dlls/lib$3.def: dlls/$1/lib$3.def
 	\$(RM) \$[@] && \$(LN_S) $1/lib$3.def \$[@]
 clean::
-	\$(RM) lib$3.def
-])m4_ifval([$4],[$1/lib$3.def: $1/$1.spec \$(WINEBUILD)
-	@cd $1 && \$(MAKE) \`basename \$[@]\`
-$1/lib$3.$STATIC_IMPLIBEXT $1/lib$3.cross.a: dummy
-	@cd $1 && \$(MAKE) \`basename \$[@]\`],
-[$1/lib$3.def $1/lib$3.a $1/lib$3.cross.a: $1/$1.spec \$(WINEBUILD)
-	@cd $1 && \$(MAKE) \`basename \$[@]\`])"
+	\$(RM) dlls/lib$3.def
+])m4_ifval([$4],[dlls/$1/lib$3.def: dlls/$1/$1.spec dlls/$1/Makefile
+	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`
+dlls/$1/lib$3.$STATIC_IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/Makefile dummy
+	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`],
+[dlls/$1/lib$3.$IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/$1.spec dlls/$1/Makefile
+	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])"
 ])dnl
 WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[$2])])
 
