@@ -37,6 +37,7 @@
 #include "kernel_private.h"
 
 #define MAX_ATOM_LEN 255
+#define IS_INTATOM(x)   (((ULONG_PTR)(x) >> 16) == 0)
 
 /******************************************************************
  *		get_local_table
@@ -88,7 +89,7 @@ BOOL WINAPI InitAtomTable( DWORD entries )
  */
 static inline BOOL check_integral_atom( const void* ptr, ATOM* patom)
 {
-    if (HIWORD( ptr )) return FALSE;
+    if (!IS_INTATOM( ptr )) return FALSE;
     if ((*patom = LOWORD( ptr )) >= MAXINTATOM)
     {
         SetLastError( ERROR_INVALID_PARAMETER );

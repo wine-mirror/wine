@@ -1032,7 +1032,7 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 
     if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
 
-    if (HIWORD(function))
+    if ((ULONG_PTR)function >> 16)
     {
         ANSI_STRING     str;
 
