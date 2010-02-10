@@ -52,6 +52,7 @@ struct relay_descr  /* descriptor for a module */
 };
 
 #define RELAY_DESCR_MAGIC  ((void *)0xdeb90001)
+#define IS_INTARG(x)       (((ULONG_PTR)(x) >> 16) == 0)
 
 /* private data built at dll load time */
 
@@ -303,7 +304,7 @@ static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned i
 {
     while (nb_args--)
     {
-	if ((typemask & 3) && HIWORD(*args))
+        if ((typemask & 3) && !IS_INTARG(*args))
         {
 	    if (typemask & 2)
                 DPRINTF( "%08lx %s", *args, debugstr_w((LPCWSTR)*args) );
@@ -880,7 +881,7 @@ static void SNOOP_PrintArg(DWORD x)
     int i,nostring;
 
     DPRINTF("%08x",x);
-    if (!HIWORD(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
+    if (IS_INTARG(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
     __TRY
     {
         LPBYTE s=(LPBYTE)x;

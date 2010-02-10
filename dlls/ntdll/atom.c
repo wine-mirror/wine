@@ -39,7 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
-#define MAX_ATOM_LEN              255
+#define MAX_ATOM_LEN    255
+#define IS_INTATOM(x)   (((ULONG_PTR)(x) >> 16) == 0)
 
 /******************************************************************
  *		is_integral_atom
@@ -51,7 +52,7 @@ static NTSTATUS is_integral_atom( LPCWSTR atomstr, size_t len, RTL_ATOM* pAtom )
 {
     RTL_ATOM atom;
 
-    if (HIWORD( atomstr ))
+    if (!IS_INTATOM( atomstr ))
     {
         const WCHAR* ptr = atomstr;
         if (!len) return STATUS_OBJECT_NAME_INVALID;

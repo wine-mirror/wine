@@ -49,6 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 static LCID user_lcid, system_lcid;
 static LANGID user_ui_language, system_ui_language;
 
+#define IS_INTRESOURCE(x)       (((ULONG_PTR)(x) >> 16) == 0)
+
 /**********************************************************************
  *  is_data_file_module
  *
@@ -142,7 +144,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
     const IMAGE_RESOURCE_DIR_STRING_U *str;
     int min, max, res, pos, namelen;
 
-    if (!HIWORD(name)) return find_entry_by_id( dir, LOWORD(name), root, want_dir );
+    if (IS_INTRESOURCE(name)) return find_entry_by_id( dir, LOWORD(name), root, want_dir );
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
     namelen = strlenW(name);
     min = 0;
