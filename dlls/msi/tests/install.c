@@ -1220,6 +1220,46 @@ static const CHAR font_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                 "PublishProduct\t\t6400\n"
                                                 "InstallFinalize\t\t6600";
 
+static const CHAR vp_property_dat[] = "Property\tValue\n"
+                                      "s72\tl0\n"
+                                      "Property\tProperty\n"
+                                      "HASUIRUN\t0\n"
+                                      "INSTALLLEVEL\t3\n"
+                                      "InstallMode\tTypical\n"
+                                      "Manufacturer\tWine\n"
+                                      "PIDTemplate\t###-#######\n"
+                                      "ProductCode\t{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}\n"
+                                      "ProductLanguage\t1033\n"
+                                      "ProductName\tMSITEST\n"
+                                      "ProductVersion\t1.1.1\n"
+                                      "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n";
+
+static const CHAR vp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                           "s72\ti2\tS64\tS0\tS255\n"
+                                           "CustomAction\tAction\n"
+                                           "SetProductID1\t51\tProductID\t1\t\n"
+                                           "SetProductID2\t51\tProductID\t2\t\n"
+                                           "TestProductID1\t19\t\t\tHalts installation\n"
+                                           "TestProductID2\t19\t\t\tHalts installation\n";
+
+static const CHAR vp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "SetProductID1\tSET_PRODUCT_ID=1\t3000\n"
+                                              "SetProductID2\tSET_PRODUCT_ID=2\t3100\n"
+                                              "ValidateProductID\t\t3200\n"
+                                              "InstallExecute\t\t3300\n"
+                                              "TestProductID1\tProductID=1\t3400\n"
+                                              "TestProductID2\tProductID=\"123-1234567\"\t3500\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2001,6 +2041,19 @@ static const msi_table font_tables[] =
     ADD_TABLE(font_install_exec_seq),
     ADD_TABLE(font_media),
     ADD_TABLE(property)
+};
+
+static const msi_table vp_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(vp_custom_action),
+    ADD_TABLE(vp_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(vp_property)
 };
 
 /* cabinet definitions */
@@ -7811,6 +7864,43 @@ static void test_register_font(void)
     delete_test_files();
 }
 
+static void test_validate_product_id(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_database(msifile, vp_tables, sizeof(vp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "SET_PRODUCT_ID=1");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "SET_PRODUCT_ID=2");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "PIDKEY=123-1234567");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7908,6 +7998,7 @@ START_TEST(install)
     test_delete_services();
     test_self_registration();
     test_register_font();
+    test_validate_product_id();
 
     DeleteFileA(log_file);
 

@@ -6125,6 +6125,30 @@ done:
     return r;
 }
 
+static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
+{
+    LPWSTR key, template, id;
+    UINT r = ERROR_SUCCESS;
+
+    id = msi_dup_property( package, szProductID );
+    if (id)
+    {
+        msi_free( id );
+        return ERROR_SUCCESS;
+    }
+    template = msi_dup_property( package, szPIDTemplate );
+    key = msi_dup_property( package, szPIDKEY );
+
+    if (key && template)
+    {
+        FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
+        r = MSI_SetPropertyW( package, szProductID, key );
+    }
+    msi_free( template );
+    msi_free( key );
+    return r;
+}
+
 static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )
 {
     TRACE("\n");
@@ -6204,13 +6228,6 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "MigrateFeatureStates", table );
-}
-
-static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
-{
-	static const WCHAR table[] = {
-		'P','r','o','d','u','c','t','I','D',0 };
-	return msi_unimplemented_action_stub( package, "ValidateProductID", table );
 }
 
 static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
