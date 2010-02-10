@@ -2140,7 +2140,6 @@ WINE_CONFIG_MAKERULES([dlls/Makeimplib.rules],[MAKE_IMPLIB_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([programs/Makeprog.rules],[MAKE_PROG_RULES],[Make.rules])
 
 WINE_CONFIG_MAKEFILE([Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([dlls/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
 WINE_CONFIG_DLL(acledit)
 WINE_CONFIG_DLL(aclui,,[aclui])
 WINE_CONFIG_DLL(activeds,,[activeds])

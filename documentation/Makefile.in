@@ -9,16 +9,16 @@ INSTALLDIRS = man$(api_manext) html api-guide api-guide-xml $(DESTDIR)$(mandir)/
 @MAKE_RULES@
 
 manpages: man$(api_manext) dummy
-	@cd $(DLLDIR) && $(MAKE) man
+	@cd $(TOPOBJDIR) && $(MAKE) man
 
 htmlpages: html dummy
-	@cd $(DLLDIR) && $(MAKE) doc-html
+	@cd $(TOPOBJDIR) && $(MAKE) doc-html
 
 sgmlpages: api-guide dummy
-	@cd $(DLLDIR) && $(MAKE) doc-sgml
+	@cd $(TOPOBJDIR) && $(MAKE) doc-sgml
 
 xmlpages: api-guide-xml dummy
-	@cd $(DLLDIR) && $(MAKE) doc-xml
+	@cd $(TOPOBJDIR) && $(MAKE) doc-xml
 
 .PHONY: manpages htmlpages sgmlpages xmlpages install-man
 

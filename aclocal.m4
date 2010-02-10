@@ -192,8 +192,8 @@ m4_if($1,$3,,[ \\
 	dlls/lib$3.$IMPLIBEXT])[]dnl
 m4_ifval([$4],[ \\
 	dlls/$1/lib$3.$STATIC_IMPLIBEXT])"
-ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-dlls/$1/lib$3.$IMPLIBEXT m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT ])dlls/$1/lib$3.cross.a: tools/widl tools/winebuild tools/winegcc include
+])ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT ])dlls/$1/lib$3.cross.a: tools/widl tools/winebuild tools/winegcc include
 m4_if($1,$3,,[dlls/lib$3.a: dlls/$1/lib$3.a
 	\$(RM) \$[@] && \$(LN_S) $1/lib$3.a \$[@]
 dlls/lib$3.cross.a: dlls/$1/lib$3.cross.a
@@ -207,9 +207,9 @@ clean::
 dlls/$1/lib$3.$STATIC_IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/Makefile dummy
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`],
 [dlls/$1/lib$3.$IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/$1.spec dlls/$1/Makefile
-	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])"
-])dnl
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[$2])])
+	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])
+])dlls/$1 dlls/$1/__install__ dlls/$1/__install-lib__ dlls/$1/__install-dev__: __builddeps__"
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[],[ALL_DLL_DIRS],m4_default([$2],[enable_$1]))])
 
 dnl **** Create a program makefile from config.status ****
 dnl
