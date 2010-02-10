@@ -387,11 +387,11 @@ HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"LastID",,"5"
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
-HKLM,%CurrentVersion%\Uninstall,,,""
+HKLM,%CurrentVersion%\Uninstall,,16
 HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
 HKLM,%CurrentVersionNT%,"RegisteredOwner",2,""
 HKLM,%CurrentVersionNT%,"SystemRoot",,"%10%"
-HKLM,%CurrentVersionNT%\Fonts,,,""
+HKLM,%CurrentVersionNT%\Fonts,,16
 HKLM,%CurrentVersionNT%\Hotfix\Q246009,"Installed",,"1"
 
 [Debugger]
@@ -538,7 +538,7 @@ HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,90
 HKLM,Software\Clients\Mail,,2,"Native Mail Client"
 HKLM,Software\Clients\Mail\Native Mail Client,,2,"Native Mail Client"
 HKLM,Software\Clients\Mail\Native Mail Client,"DLLPath",2,"%11%\winemapi.dll"
-HKLM,Software\Microsoft\Advanced INF Setup,,,""
+HKLM,Software\Microsoft\Advanced INF Setup,,16
 HKLM,Software\Microsoft\Rpc\SecurityService,1,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,10,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,14,2,"schannel.dll"
@@ -546,9 +546,9 @@ HKLM,Software\Microsoft\Rpc\SecurityService,16,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,18,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,68,2,"netlogon.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,9,2,"secur32.dll"
-HKLM,System\CurrentControlSet\Control\VMM32Files,,,""
+HKLM,System\CurrentControlSet\Control\VMM32Files,,16
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
-HKCU,Software\Microsoft\Protected Storage System Provider,,,""
+HKCU,Software\Microsoft\Protected Storage System Provider,,16
 ; Some apps requires at least four subkeys of Active Setup\Installed Components
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},,2,"DirectDrawEx"
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},"ComponentID",2,"DirectDrawEx"
@@ -2855,7 +2855,7 @@ StartType=3
 ErrorControl=1
 
 [Services]
-HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,,""
+HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
 
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"5.1"
