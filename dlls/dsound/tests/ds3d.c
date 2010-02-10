@@ -1195,6 +1195,16 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                             winetest_interactive &&
                             !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,
                             listener,0,0,FALSE,0);
+
+                todo_wine {
+                    temp_buffer = NULL;
+                    rc=IDirectSound3DListener_QueryInterface(listener,
+                    &IID_IKsPropertySet,(LPVOID *)&temp_buffer);
+                    ok(rc==DS_OK && temp_buffer!=NULL,
+                    "IDirectSound3DListener_QueryInterface didn't handle IKsPropertySet: ret = %08x\n", rc);
+                    if(temp_buffer)
+                        IKsPropertySet_Release(temp_buffer);
+                }
             }
 
             /* Testing the reference counting */
