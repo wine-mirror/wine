@@ -536,6 +536,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
 
         Globals.hFont = CreateFontIndirectW(&Globals.lfFont);
         SendMessageW(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, FALSE);
+        SendMessageW(Globals.hEdit, EM_LIMITTEXT, 0, 0);
         break;
     }
 
