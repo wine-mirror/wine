@@ -1614,7 +1614,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
     SetEvent(lpMidiStrm->hEvent);
     TRACE("Ready to go 1\n");
     /* thread is started in paused mode */
-    SuspendThread(lpMidiStrm->hThread);
+    SuspendThread(GetCurrentThread());
     TRACE("Ready to go 2\n");
 
     lpMidiStrm->dwStartTicks = 0;
@@ -1738,8 +1738,8 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 
     midiStreamStop(hMidiStrm);
     MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WM_QUIT, 0, 0);
-    HeapFree(GetProcessHeap(), 0, lpMidiStrm);
     CloseHandle(lpMidiStrm->hEvent);
+    HeapFree(GetProcessHeap(), 0, lpMidiStrm);
 
     return midiOutClose((HMIDIOUT)hMidiStrm);
 }

@@ -341,8 +341,8 @@ static void test_midiStream(UINT udev, HWND hwnd)
          * but it will be set on all systems after the job is finished. */
 
         Sleep(90);
-        /* Wine starts playing immediately */
-      /*todo_wine test_notification(hwnd, "midiStream still paused", 0, WHATEVER);*/
+        /* Wine <1.1.39 started playing immediately */
+        test_notification(hwnd, "midiStream still paused", 0, WHATEVER);
 
     /* MSDN asks to use midiStreamRestart prior to midiStreamOut()
      * because the starting state is 'pause', but some apps seem to
