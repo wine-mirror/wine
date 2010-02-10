@@ -1032,6 +1032,13 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
         SysFreeString(str);
 
+        /* test baseName */
+        str = (BSTR)0x1;
+        r = IXMLDOMProcessingInstruction_get_baseName(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        SysFreeString(str);
+
         /* test Target */
         r = IXMLDOMProcessingInstruction_get_target(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );

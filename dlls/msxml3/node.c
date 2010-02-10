@@ -250,16 +250,16 @@ static HRESULT WINAPI xmlnode_get_nodeName(
         str = (const xmlChar*) "#document-fragment";
         break;
     case XML_TEXT_NODE:
-         str = (const xmlChar*) "#text";
-         break;
+        str = (const xmlChar*) "#text";
+        break;
     case XML_DOCUMENT_NODE:
-         str = (const xmlChar*) "#document";
-	    break;
-	case XML_ATTRIBUTE_NODE:
-	case XML_ELEMENT_NODE:
-	case XML_PI_NODE:
+        str = (const xmlChar*) "#document";
+        break;
+    case XML_ATTRIBUTE_NODE:
+    case XML_ELEMENT_NODE:
+    case XML_PI_NODE:
         str = This->node->name;
-	    break;
+        break;
     default:
         FIXME("nodeName not mapped correctly (%d)\n", This->node->type);
         str = This->node->name;
@@ -1622,6 +1622,7 @@ static HRESULT WINAPI xmlnode_get_baseName(
     {
     case XML_ELEMENT_NODE:
     case XML_ATTRIBUTE_NODE:
+    case XML_PI_NODE:
         str = bstr_from_xmlChar( This->node->name );
         r = S_OK;
         break;
