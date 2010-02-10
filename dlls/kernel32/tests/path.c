@@ -467,6 +467,16 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
   if (len) ok( !strcmp( buffer, origdir ), "wrong result %s\n", buffer );
   HeapFree( GetProcessHeap(), 0, buffer );
 
+/* Check for crash prevention on swapped args. Crashes all but Win9x.
+*/
+  if (0)
+  {
+    SetLastError( 0xdeadbeef );
+    len = GetCurrentDirectoryA( 42, (LPSTR)(MAX_PATH + 42) );
+    ok( len == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
+        "GetCurrentDirectoryA failed to fail %u err %u\n", len, GetLastError() );
+  }
+
 /* SetCurrentDirectoryA shouldn't care whether the string has a
    trailing '\\' or not
 */
