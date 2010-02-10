@@ -14919,14 +14919,12 @@ ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
 	dlls/libd3dx9.$IMPLIBEXT"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_36/libd3dx9.$IMPLIBEXT dlls/d3dx9_36/libd3dx9.cross.a: tools/widl tools/winebuild tools/winegcc include
-dlls/libd3dx9.a: dlls/d3dx9_36/libd3dx9.a
-	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.a \$@
+dlls/libd3dx9.$IMPLIBEXT: dlls/d3dx9_36/libd3dx9.$IMPLIBEXT
+	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.$IMPLIBEXT \$@
 dlls/libd3dx9.cross.a: dlls/d3dx9_36/libd3dx9.cross.a
 	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.cross.a \$@
-dlls/libd3dx9.def: dlls/d3dx9_36/libd3dx9.def
-	\$(RM) \$@ && \$(LN_S) d3dx9_36/libd3dx9.def \$@
 clean::
-	\$(RM) dlls/libd3dx9.def
+	\$(RM) dlls/libd3dx9.$IMPLIBEXT
 dlls/d3dx9_36/libd3dx9.$IMPLIBEXT dlls/d3dx9_36/libd3dx9.cross.a: dlls/d3dx9_36/d3dx9_36.spec dlls/d3dx9_36/Makefile
 	@cd dlls/d3dx9_36 && \$(MAKE) \`basename \$@\`
 dlls/d3dx9_36 dlls/d3dx9_36/__install__ dlls/d3dx9_36/__install-lib__ dlls/d3dx9_36/__install-dev__: __builddeps__"
@@ -16431,14 +16429,12 @@ test "x$enable_win16" = xno || ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
 	dlls/libkernel.$IMPLIBEXT"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/krnl386.exe16/libkernel.$IMPLIBEXT dlls/krnl386.exe16/libkernel.cross.a: tools/widl tools/winebuild tools/winegcc include
-dlls/libkernel.a: dlls/krnl386.exe16/libkernel.a
-	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.a \$@
+dlls/libkernel.$IMPLIBEXT: dlls/krnl386.exe16/libkernel.$IMPLIBEXT
+	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.$IMPLIBEXT \$@
 dlls/libkernel.cross.a: dlls/krnl386.exe16/libkernel.cross.a
 	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.cross.a \$@
-dlls/libkernel.def: dlls/krnl386.exe16/libkernel.def
-	\$(RM) \$@ && \$(LN_S) krnl386.exe16/libkernel.def \$@
 clean::
-	\$(RM) dlls/libkernel.def
+	\$(RM) dlls/libkernel.$IMPLIBEXT
 dlls/krnl386.exe16/libkernel.$IMPLIBEXT dlls/krnl386.exe16/libkernel.cross.a: dlls/krnl386.exe16/krnl386.exe16.spec dlls/krnl386.exe16/Makefile
 	@cd dlls/krnl386.exe16 && \$(MAKE) \`basename \$@\`
 dlls/krnl386.exe16 dlls/krnl386.exe16/__install__ dlls/krnl386.exe16/__install-lib__ dlls/krnl386.exe16/__install-dev__: __builddeps__"
@@ -20229,14 +20225,12 @@ ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
 	dlls/libwinspool.$IMPLIBEXT"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winspool.drv/libwinspool.$IMPLIBEXT dlls/winspool.drv/libwinspool.cross.a: tools/widl tools/winebuild tools/winegcc include
-dlls/libwinspool.a: dlls/winspool.drv/libwinspool.a
-	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.a \$@
+dlls/libwinspool.$IMPLIBEXT: dlls/winspool.drv/libwinspool.$IMPLIBEXT
+	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.$IMPLIBEXT \$@
 dlls/libwinspool.cross.a: dlls/winspool.drv/libwinspool.cross.a
 	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.cross.a \$@
-dlls/libwinspool.def: dlls/winspool.drv/libwinspool.def
-	\$(RM) \$@ && \$(LN_S) winspool.drv/libwinspool.def \$@
 clean::
-	\$(RM) dlls/libwinspool.def
+	\$(RM) dlls/libwinspool.$IMPLIBEXT
 dlls/winspool.drv/libwinspool.$IMPLIBEXT dlls/winspool.drv/libwinspool.cross.a: dlls/winspool.drv/winspool.drv.spec dlls/winspool.drv/Makefile
 	@cd dlls/winspool.drv && \$(MAKE) \`basename \$@\`
 dlls/winspool.drv dlls/winspool.drv/__install__ dlls/winspool.drv/__install-lib__ dlls/winspool.drv/__install-dev__: __builddeps__"
@@ -20559,14 +20553,12 @@ ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
 	dlls/libxinput.$IMPLIBEXT"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xinput1_3/libxinput.$IMPLIBEXT dlls/xinput1_3/libxinput.cross.a: tools/widl tools/winebuild tools/winegcc include
-dlls/libxinput.a: dlls/xinput1_3/libxinput.a
-	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.a \$@
+dlls/libxinput.$IMPLIBEXT: dlls/xinput1_3/libxinput.$IMPLIBEXT
+	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.$IMPLIBEXT \$@
 dlls/libxinput.cross.a: dlls/xinput1_3/libxinput.cross.a
 	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.cross.a \$@
-dlls/libxinput.def: dlls/xinput1_3/libxinput.def
-	\$(RM) \$@ && \$(LN_S) xinput1_3/libxinput.def \$@
 clean::
-	\$(RM) dlls/libxinput.def
+	\$(RM) dlls/libxinput.$IMPLIBEXT
 dlls/xinput1_3/libxinput.$IMPLIBEXT dlls/xinput1_3/libxinput.cross.a: dlls/xinput1_3/xinput1_3.spec dlls/xinput1_3/Makefile
 	@cd dlls/xinput1_3 && \$(MAKE) \`basename \$@\`
 dlls/xinput1_3 dlls/xinput1_3/__install__ dlls/xinput1_3/__install-lib__ dlls/xinput1_3/__install-dev__: __builddeps__"

@@ -188,30 +188,36 @@ dnl
 dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],
-[m4_ifval([$3],[m4_ifval([$2],[test "x$[$2]" = xno || ])ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
-	dlls/$1/lib$3.$IMPLIBEXT[]dnl
-m4_if($1,$3,,[ \\
-	dlls/lib$3.$IMPLIBEXT])[]dnl
-m4_ifval([$4],[ \\
-	dlls/$1/lib$3.$STATIC_IMPLIBEXT])"
+[m4_pushdef([ac_implib],m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT]))dnl
+m4_pushdef([ac_crosslib],m4_ifval([$3],[dlls/$1/lib$3.cross.a]))dnl
+m4_pushdef([ac_staticlib],m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT]))dnl
+m4_pushdef([ac_symlink],m4_if([$1],[$3],,[dlls/lib$3.$IMPLIBEXT]))dnl
+m4_ifval(ac_implib,[m4_ifval([$2],[test "x$[$2]" = xno || ])ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
+	ac_implib[]dnl
+m4_ifval(ac_symlink,[ \\
+	ac_symlink])[]dnl
+m4_ifval(ac_staticlib,[ \\
+	ac_staticlib])"
 ])ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT ])dlls/$1/lib$3.cross.a: tools/widl tools/winebuild tools/winegcc include
-m4_if($1,$3,,[dlls/lib$3.a: dlls/$1/lib$3.a
-	\$(RM) \$[@] && \$(LN_S) $1/lib$3.a \$[@]
-dlls/lib$3.cross.a: dlls/$1/lib$3.cross.a
+m4_ifval(ac_implib,[ac_implib m4_ifval(ac_staticlib,[ac_staticlib ])ac_crosslib: tools/widl tools/winebuild tools/winegcc include
+m4_ifval(ac_symlink,[ac_symlink: ac_implib
+	\$(RM) \$[@] && \$(LN_S) $1/lib$3.$IMPLIBEXT \$[@]
+dlls/lib$3.cross.a: ac_crosslib
 	\$(RM) \$[@] && \$(LN_S) $1/lib$3.cross.a \$[@]
-dlls/lib$3.def: dlls/$1/lib$3.def
-	\$(RM) \$[@] && \$(LN_S) $1/lib$3.def \$[@]
 clean::
-	\$(RM) dlls/lib$3.def
-])m4_ifval([$4],[dlls/$1/lib$3.def: dlls/$1/$1.spec dlls/$1/Makefile
+	\$(RM) ac_symlink
+])m4_ifval(ac_staticlib,[dlls/$1/lib$3.def: dlls/$1/$1.spec dlls/$1/Makefile
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`
-dlls/$1/lib$3.$STATIC_IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/Makefile dummy
+ac_staticlib ac_crosslib: dlls/$1/Makefile dummy
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`],
-[dlls/$1/lib$3.$IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/$1.spec dlls/$1/Makefile
+[ac_implib ac_crosslib: dlls/$1/$1.spec dlls/$1/Makefile
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])
 ])dlls/$1 dlls/$1/__install__ dlls/$1/__install-lib__ dlls/$1/__install-dev__: __builddeps__"
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[ALL_DLL_DIRS],[$2])])
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[ALL_DLL_DIRS],[$2])dnl
+m4_popdef([ac_implib])dnl
+m4_popdef([ac_crosslib])dnl
+m4_popdef([ac_staticlib])dnl
+m4_popdef([ac_symlink])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
