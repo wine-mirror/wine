@@ -1728,9 +1728,12 @@ static void test_copy(void)
     shfo.pTo = "\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == DE_OPCANCELLED), /* NT4 */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
+    if (retval == ERROR_SUCCESS)
+        ok(DeleteFileA("abcdefgh.abc"), "Expected file to exist\n");
     ok(DeleteFileA("dir\\abcdefgh.abc"), "Expected file to exist\n");
-    ok(DeleteFileA("abcdefgh.abc"), "Expected file to exist\n");
     ok(RemoveDirectoryA("dir"), "Expected dir to exist\n");
 }
 
