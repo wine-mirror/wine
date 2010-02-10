@@ -165,21 +165,23 @@ AC_CONFIG_FILES([$1])])
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,deps,prefix,var,enable)
+dnl Usage: WINE_CONFIG_MAKEFILE(file,deps,var,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],
-[m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\($3/?\(.*\)/\)?Makefile$],[\2]))dnl
+[m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\(\(.*\)/\)?Makefile$],[\2]))dnl
+m4_pushdef([ac_name],m4_bpatsubst(ac_dir,[.*/\(.*\)$],[\1]))dnl
 m4_ifval(ac_dir,[ALL_MAKEFILES="$ALL_MAKEFILES \\
 	$1"])
-AS_VAR_PUSHDEF([ac_enable],m4_default([$5],[enable_]ac_dir))dnl
-m4_ifval([$4],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$4],[ && ac_var="$ac_var \\
+AS_VAR_PUSHDEF([ac_enable],m4_default([$4],[enable_]ac_name))dnl
+m4_ifval([$3],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$3],[ && ac_var="$ac_var \\
 	ac_dir"]))
 AS_VAR_POPDEF([ac_enable])dnl
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-m4_ifval(ac_dir,m4_ifval([$3],,[\$(RECURSE_TARGETS:%=ac_dir/%) ac_dir: $1 \$(MAKEDEP)
-]))[$1: ]m4_ifval([$2],[$1.in $2],[$1.in]) config.status"
+m4_ifval(ac_dir,[\$(RECURSE_TARGETS:%=ac_dir/%) ac_dir: $1 \$(MAKEDEP)
+])[$1: ]m4_ifval([$2],[$1.in $2],[$1.in]) config.status"
 AC_CONFIG_FILES([$1])dnl
-m4_popdef([ac_dir])])
+m4_popdef([ac_dir])dnl
+m4_popdef([ac_name])])
 
 dnl **** Create a dll makefile from config.status ****
 dnl
@@ -209,7 +211,7 @@ dlls/$1/lib$3.$STATIC_IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/Makefile dummy
 [dlls/$1/lib$3.$IMPLIBEXT dlls/$1/lib$3.cross.a: dlls/$1/$1.spec dlls/$1/Makefile
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])
 ])dlls/$1 dlls/$1/__install__ dlls/$1/__install-lib__ dlls/$1/__install-dev__: __builddeps__"
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[],[ALL_DLL_DIRS],m4_default([$2],[enable_$1]))])
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[ALL_DLL_DIRS],[$2])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
@@ -218,7 +220,7 @@ dnl
 AC_DEFUN([WINE_CONFIG_PROGRAM],
 [ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/$1 programs/$1/__install__ programs/$1/__install-lib__: __builddeps__"
-WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[],[$2],m4_default([$3],[enable_$1]))])
+WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[$2],[$3])])
 
 dnl **** Create a test makefile from config.status ****
 dnl
@@ -238,7 +240,7 @@ ac_name.exe: \$(TOPOBJDIR)/$1/ac_name.exe$DLLEXT
 ac_name.rc:
 	echo \"ac_name.exe TESTRES \\\"ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 ac_name.res: ac_name.rc ac_name.exe"
-WINE_CONFIG_MAKEFILE([$1/Makefile],[Maketest.rules],[],[ALL_TEST_DIRS],[enable_tests])dnl
+WINE_CONFIG_MAKEFILE([$1/Makefile],[Maketest.rules],[ALL_TEST_DIRS],[enable_tests])dnl
 m4_popdef([ac_suffix])dnl
 m4_popdef([ac_name])])
 
@@ -254,7 +256,7 @@ dlls/$1: tools/widl tools/winebuild tools/winegcc include
 dlls/$1/__install__ dlls/$1/__install-dev__: dlls/$1
 dlls/$1/lib$1.cross.a: dlls/$1/Makefile tools/widl tools/winebuild tools/winegcc include dummy
 	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`"
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[],[ALL_STATICLIB_DIRS],[enable_$1])])
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[ALL_STATICLIB_DIRS])])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
