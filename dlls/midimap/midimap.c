@@ -448,18 +448,16 @@ static DWORD modSetVolume(MIDIMAPDATA* mom, DWORD dwVolume)
 
 static DWORD modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiCaps, DWORD_PTR size)
 {
-    static const WCHAR name[] = {'W','i','n','e',' ','m','i','d','i',' ','m','a','p','p','e','r',0};
-    lpMidiCaps->wMid = 0x00FF;
-    lpMidiCaps->wPid = 0x0001;
-    lpMidiCaps->vDriverVersion = 0x0100;
-    lstrcpyW(lpMidiCaps->szPname, name);
-    lpMidiCaps->wTechnology = MOD_MAPPER;
-    lpMidiCaps->wVoices = 0;
-    lpMidiCaps->wNotes = 0;
-    lpMidiCaps->wChannelMask = 0xFFFF;
-    /* Native returns volume caps of underlying device | MIDICAPS_STREAM */
-    lpMidiCaps->dwSupport = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+    static const MIDIOUTCAPSW mappercaps = {
+	0x00FF, 0x0001, 0x0100, /* Manufacturer and Product ID */
+	{'W','i','n','e',' ','m','i','d','i',' ','m','a','p','p','e','r',0},
+	MOD_MAPPER, 0, 0, 0xFFFF,
+	/* Native returns volume caps of underlying device + MIDICAPS_STREAM */
+	MIDICAPS_VOLUME|MIDICAPS_LRVOLUME
+    };
+    if (lpMidiCaps == NULL) return MMSYSERR_INVALPARAM;
 
+    memcpy(lpMidiCaps, &mappercaps, min(size, sizeof(*lpMidiCaps)));
     return MMSYSERR_NOERROR;
 }
 
