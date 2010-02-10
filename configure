@@ -604,7 +604,7 @@ ALL_TEST_DIRS
 ALL_IMPORTLIB_RULES
 ALL_IMPORT_LIBS
 ALL_STATIC_LIBS
-ALL_IMPLIB_DIRS
+ALL_STATICLIB_DIRS
 ALL_TOOL_DIRS
 ALL_DLL_DIRS
 ALL_TOP_DIRS
@@ -13669,7 +13669,7 @@ ALL_DLL_DIRS=""
 
 ALL_TOOL_DIRS=""
 
-ALL_IMPLIB_DIRS=""
+ALL_STATICLIB_DIRS=""
 
 ALL_STATIC_LIBS=""
 
@@ -13819,16 +13819,18 @@ dlls/actxprxy/Makefile: dlls/actxprxy/Makefile.in dlls/Makedll.rules config.stat
 ac_config_files="$ac_config_files dlls/actxprxy/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	adsiid/libadsiid.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-adsiid/libadsiid.a: adsiid
-adsiid/libadsiid.cross.a: dummy
-	@cd adsiid && \$(MAKE) libadsiid.cross.a"
+	dlls/adsiid/libadsiid.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/adsiid: tools/widl tools/winebuild tools/winegcc include
+dlls/adsiid/__install__ dlls/adsiid/__install-dev__: dlls/adsiid
+dlls/adsiid/libadsiid.cross.a: dlls/adsiid/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/adsiid && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/adsiid/Makefile"
-test "x$enable_adsiid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	adsiid"
+test "x$enable_adsiid" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/adsiid"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/adsiid/%) dlls/adsiid: dlls/adsiid/Makefile \$(MAKEDEP)
 dlls/adsiid/Makefile: dlls/adsiid/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/adsiid/Makefile"
 
@@ -15250,30 +15252,34 @@ dlls/dxdiagn/tests/Makefile: dlls/dxdiagn/tests/Makefile.in dlls/Maketest.rules 
 ac_config_files="$ac_config_files dlls/dxdiagn/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	dxerr8/libdxerr8.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-dxerr8/libdxerr8.a: dxerr8
-dxerr8/libdxerr8.cross.a: dummy
-	@cd dxerr8 && \$(MAKE) libdxerr8.cross.a"
+	dlls/dxerr8/libdxerr8.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxerr8: tools/widl tools/winebuild tools/winegcc include
+dlls/dxerr8/__install__ dlls/dxerr8/__install-dev__: dlls/dxerr8
+dlls/dxerr8/libdxerr8.cross.a: dlls/dxerr8/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/dxerr8 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxerr8/Makefile"
-test "x$enable_dxerr8" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	dxerr8"
+test "x$enable_dxerr8" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/dxerr8"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dxerr8/%) dlls/dxerr8: dlls/dxerr8/Makefile \$(MAKEDEP)
 dlls/dxerr8/Makefile: dlls/dxerr8/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/dxerr8/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	dxerr9/libdxerr9.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-dxerr9/libdxerr9.a: dxerr9
-dxerr9/libdxerr9.cross.a: dummy
-	@cd dxerr9 && \$(MAKE) libdxerr9.cross.a"
+	dlls/dxerr9/libdxerr9.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxerr9: tools/widl tools/winebuild tools/winegcc include
+dlls/dxerr9/__install__ dlls/dxerr9/__install-dev__: dlls/dxerr9
+dlls/dxerr9/libdxerr9.cross.a: dlls/dxerr9/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/dxerr9 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxerr9/Makefile"
-test "x$enable_dxerr9" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	dxerr9"
+test "x$enable_dxerr9" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/dxerr9"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dxerr9/%) dlls/dxerr9: dlls/dxerr9/Makefile \$(MAKEDEP)
 dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/dxerr9/Makefile"
 
@@ -15307,16 +15313,18 @@ dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules config
 ac_config_files="$ac_config_files dlls/dxgi/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	dxguid/libdxguid.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-dxguid/libdxguid.a: dxguid
-dxguid/libdxguid.cross.a: dummy
-	@cd dxguid && \$(MAKE) libdxguid.cross.a"
+	dlls/dxguid/libdxguid.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxguid: tools/widl tools/winebuild tools/winegcc include
+dlls/dxguid/__install__ dlls/dxguid/__install-dev__: dlls/dxguid
+dlls/dxguid/libdxguid.cross.a: dlls/dxguid/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/dxguid && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxguid/Makefile"
-test "x$enable_dxguid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	dxguid"
+test "x$enable_dxguid" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/dxguid"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dxguid/%) dlls/dxguid: dlls/dxguid/Makefile \$(MAKEDEP)
 dlls/dxguid/Makefile: dlls/dxguid/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/dxguid/Makefile"
 
@@ -18029,16 +18037,18 @@ dlls/stress.dll16/Makefile: dlls/stress.dll16/Makefile.in dlls/Makedll.rules con
 ac_config_files="$ac_config_files dlls/stress.dll16/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	strmiids/libstrmiids.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-strmiids/libstrmiids.a: strmiids
-strmiids/libstrmiids.cross.a: dummy
-	@cd strmiids && \$(MAKE) libstrmiids.cross.a"
+	dlls/strmiids/libstrmiids.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/strmiids: tools/widl tools/winebuild tools/winegcc include
+dlls/strmiids/__install__ dlls/strmiids/__install-dev__: dlls/strmiids
+dlls/strmiids/libstrmiids.cross.a: dlls/strmiids/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/strmiids && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/strmiids/Makefile"
-test "x$enable_strmiids" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	strmiids"
+test "x$enable_strmiids" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/strmiids"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/strmiids/%) dlls/strmiids: dlls/strmiids/Makefile \$(MAKEDEP)
 dlls/strmiids/Makefile: dlls/strmiids/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/strmiids/Makefile"
 
@@ -18302,16 +18312,18 @@ dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules conf
 ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	uuid/libuuid.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-uuid/libuuid.a: uuid
-uuid/libuuid.cross.a: dummy
-	@cd uuid && \$(MAKE) libuuid.cross.a"
+	dlls/uuid/libuuid.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/uuid: tools/widl tools/winebuild tools/winegcc include
+dlls/uuid/__install__ dlls/uuid/__install-dev__: dlls/uuid
+dlls/uuid/libuuid.cross.a: dlls/uuid/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/uuid && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/uuid/Makefile"
-test "x$enable_uuid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	uuid"
+test "x$enable_uuid" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/uuid"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/uuid/%) dlls/uuid: dlls/uuid/Makefile \$(MAKEDEP)
 dlls/uuid/Makefile: dlls/uuid/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/uuid/Makefile"
 
@@ -18560,16 +18572,18 @@ dlls/winecoreaudio.drv/Makefile: dlls/winecoreaudio.drv/Makefile.in dlls/Makedll
 ac_config_files="$ac_config_files dlls/winecoreaudio.drv/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	winecrt0/libwinecrt0.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-winecrt0/libwinecrt0.a: winecrt0
-winecrt0/libwinecrt0.cross.a: dummy
-	@cd winecrt0 && \$(MAKE) libwinecrt0.cross.a"
+	dlls/winecrt0/libwinecrt0.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winecrt0: tools/widl tools/winebuild tools/winegcc include
+dlls/winecrt0/__install__ dlls/winecrt0/__install-dev__: dlls/winecrt0
+dlls/winecrt0/libwinecrt0.cross.a: dlls/winecrt0/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/winecrt0 && \$(MAKE) \`basename \$@\`"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winecrt0/Makefile"
-test "x$enable_winecrt0" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
-	winecrt0"
+test "x$enable_winecrt0" != xno && ALL_STATICLIB_DIRS="$ALL_STATICLIB_DIRS \\
+	dlls/winecrt0"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/winecrt0/%) dlls/winecrt0: dlls/winecrt0/Makefile \$(MAKEDEP)
 dlls/winecrt0/Makefile: dlls/winecrt0/Makefile.in dlls/Makeimplib.rules config.status"
 ac_config_files="$ac_config_files dlls/winecrt0/Makefile"
 

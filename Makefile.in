@@ -27,7 +27,8 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
 
-ALL_TOOL_DIRS = @ALL_TOOL_DIRS@
+ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
+ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
@@ -41,10 +42,14 @@ SUBDIRS = \
 	loader \
 	programs \
 	server \
-	$(ALL_TOOL_DIRS)
+	$(ALL_TOOL_DIRS) \
+	$(ALL_STATICLIB_DIRS)
 
 # Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = libs/wine $(ALL_TOOL_DIRS) @ALL_TOP_DIRS@
+INSTALLSUBDIRS = @ALL_TOP_DIRS@ \
+	libs/wine \
+	$(ALL_TOOL_DIRS) \
+	$(ALL_STATICLIB_DIRS)
 
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
@@ -79,13 +84,21 @@ include/stamp-h: include/config.h.in config.status
 uninstall::
 	-rmdir $(DESTDIR)$(datadir)/wine
 
+# Import libraries
+
+STATIC_LIBS = @ALL_STATIC_LIBS@
+
+implib: $(ALL_STATICLIB_DIRS)
+.PHONY: implib
+
 # Dependencies between directories
 
 all: $(INSTALLSUBDIRS)
 
 # dependencies needed to build any dll or program
-__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include
-.PHONY: __builddeps__
+__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS)
+__buildcrossdeps__: libs/port libs/wine $(ALL_TOOL_DIRS) include $(STATIC_LIBS:.a=.cross.a)
+.PHONY: __builddeps__ __buildcrossdeps__
 
 dlls programs: __builddeps__
 loader server: libs/port libs/wine tools
@@ -133,7 +146,7 @@ $(MAKEDEP): include/config.h tools/Makefile
 # Test rules
 
 $(TESTSUBDIRS:%=%/__test__): wine
-$(TESTSUBDIRS:%=%/__crosstest__): __builddeps__
+$(TESTSUBDIRS:%=%/__crosstest__): __buildcrossdeps__
 
 # Misc rules
 

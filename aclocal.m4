@@ -240,12 +240,13 @@ dnl Usage: WINE_CONFIG_LIB(name)
 dnl
 AC_DEFUN([WINE_CONFIG_LIB],
 [ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
-	$1/lib$1.a"
-ALL_IMPORTLIB_RULES="$ALL_IMPORTLIB_RULES
-$1/lib$1.a: $1
-$1/lib$1.cross.a: dummy
-	@cd $1 && \$(MAKE) lib$1.cross.a"
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])])
+	dlls/$1/lib$1.a"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/$1: tools/widl tools/winebuild tools/winegcc include
+dlls/$1/__install__ dlls/$1/__install-dev__: dlls/$1
+dlls/$1/lib$1.cross.a: dlls/$1/Makefile tools/widl tools/winebuild tools/winegcc include dummy
+	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`"
+WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[],[ALL_STATICLIB_DIRS],[enable_$1])])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
