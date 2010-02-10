@@ -5,6 +5,7 @@
 *.res
 *.so
 /Make.rules
+/Maketest.rules
 /TAGS
 /autom4te.cache
 /config.cache
@@ -20,7 +21,6 @@ dlls/*/tests/*crosstest.exe
 dlls/*/tests/testlist.c
 dlls/Makedll.rules
 dlls/Makeimplib.rules
-dlls/Maketest.rules
 dlls/actxprxy/actxprxy_activscp.h
 dlls/actxprxy/actxprxy_activscp_p.c
 dlls/actxprxy/actxprxy_comcat.h

@@ -2134,9 +2134,9 @@ WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 
 WINE_CONFIG_MAKERULES([Make.rules],[MAKE_RULES])
+WINE_CONFIG_MAKERULES([Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([dlls/Makedll.rules],[MAKE_DLL_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([dlls/Makeimplib.rules],[MAKE_IMPLIB_RULES],[Make.rules])
-WINE_CONFIG_MAKERULES([dlls/Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([programs/Makeprog.rules],[MAKE_PROG_RULES],[Make.rules])
 
 WINE_CONFIG_MAKEFILE([Makefile],[Make.rules])

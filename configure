@@ -767,9 +767,9 @@ PACKAGE_NAME
 PATH_SEPARATOR
 SHELL'
 ac_subst_files='MAKE_RULES
+MAKE_TEST_RULES
 MAKE_DLL_RULES
 MAKE_IMPLIB_RULES
-MAKE_TEST_RULES
 MAKE_PROG_RULES'
 ac_user_opts='
 enable_option_checking
@@ -13732,6 +13732,13 @@ MAKE_RULES=Make.rules
 ac_config_files="$ac_config_files Make.rules"
 
 ALL_MAKERULES="$ALL_MAKERULES \\
+	Maketest.rules"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+Maketest.rules: Maketest.rules.in Make.rules config.status"
+MAKE_TEST_RULES=Maketest.rules
+ac_config_files="$ac_config_files Maketest.rules"
+
+ALL_MAKERULES="$ALL_MAKERULES \\
 	dlls/Makedll.rules"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/Makedll.rules: dlls/Makedll.rules.in Make.rules config.status"
@@ -13744,13 +13751,6 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/Makeimplib.rules: dlls/Makeimplib.rules.in Make.rules config.status"
 MAKE_IMPLIB_RULES=dlls/Makeimplib.rules
 ac_config_files="$ac_config_files dlls/Makeimplib.rules"
-
-ALL_MAKERULES="$ALL_MAKERULES \\
-	dlls/Maketest.rules"
-ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
-dlls/Maketest.rules: dlls/Maketest.rules.in Make.rules config.status"
-MAKE_TEST_RULES=dlls/Maketest.rules
-ac_config_files="$ac_config_files dlls/Maketest.rules"
 
 ALL_MAKERULES="$ALL_MAKERULES \\
 	programs/Makeprog.rules"
@@ -13866,7 +13866,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/advapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/advapi32/tests/%) dlls/advapi32/tests: dlls/advapi32/tests/Makefile \$(MAKEDEP)
-dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/advapi32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -13900,7 +13900,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/advpack/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/advpack/tests/%) dlls/advpack/tests: dlls/advpack/tests/Makefile \$(MAKEDEP)
-dlls/advpack/tests/Makefile: dlls/advpack/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/advpack/tests/Makefile: dlls/advpack/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/advpack/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -13928,7 +13928,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/amstream/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/amstream/tests/%) dlls/amstream/tests: dlls/amstream/tests/Makefile \$(MAKEDEP)
-dlls/amstream/tests/Makefile: dlls/amstream/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/amstream/tests/Makefile: dlls/amstream/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/amstream/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14006,7 +14006,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/avifil32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/avifil32/tests/%) dlls/avifil32/tests: dlls/avifil32/tests/Makefile \$(MAKEDEP)
-dlls/avifil32/tests/Makefile: dlls/avifil32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/avifil32/tests/Makefile: dlls/avifil32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/avifil32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14064,7 +14064,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/browseui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/browseui/tests/%) dlls/browseui/tests: dlls/browseui/tests/Makefile \$(MAKEDEP)
-dlls/browseui/tests/Makefile: dlls/browseui/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/browseui/tests/Makefile: dlls/browseui/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/browseui/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14098,7 +14098,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/cabinet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/cabinet/tests/%) dlls/cabinet/tests: dlls/cabinet/tests/Makefile \$(MAKEDEP)
-dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cabinet/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14182,7 +14182,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/comcat/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/comcat/tests/%) dlls/comcat/tests: dlls/comcat/tests/Makefile \$(MAKEDEP)
-dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comcat/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14216,7 +14216,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/comctl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/comctl32/tests/%) dlls/comctl32/tests: dlls/comctl32/tests/Makefile \$(MAKEDEP)
-dlls/comctl32/tests/Makefile: dlls/comctl32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/comctl32/tests/Makefile: dlls/comctl32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comctl32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14250,7 +14250,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/comdlg32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/comdlg32/tests/%) dlls/comdlg32/tests: dlls/comdlg32/tests/Makefile \$(MAKEDEP)
-dlls/comdlg32/tests/Makefile: dlls/comdlg32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/comdlg32/tests/Makefile: dlls/comdlg32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comdlg32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14322,7 +14322,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/credui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/credui/tests/%) dlls/credui/tests: dlls/credui/tests/Makefile \$(MAKEDEP)
-dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/credui/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14370,7 +14370,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/crypt32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/crypt32/tests/%) dlls/crypt32/tests: dlls/crypt32/tests/Makefile \$(MAKEDEP)
-dlls/crypt32/tests/Makefile: dlls/crypt32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/crypt32/tests/Makefile: dlls/crypt32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/crypt32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14426,7 +14426,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/cryptnet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/cryptnet/tests/%) dlls/cryptnet/tests: dlls/cryptnet/tests/Makefile \$(MAKEDEP)
-dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptnet/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14460,7 +14460,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/cryptui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/cryptui/tests/%) dlls/cryptui/tests: dlls/cryptui/tests/Makefile \$(MAKEDEP)
-dlls/cryptui/tests/Makefile: dlls/cryptui/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/cryptui/tests/Makefile: dlls/cryptui/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptui/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14532,7 +14532,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3d10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3d10/tests/%) dlls/d3d10/tests: dlls/d3d10/tests/Makefile \$(MAKEDEP)
-dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14566,7 +14566,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3d10core/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3d10core/tests/%) dlls/d3d10core/tests: dlls/d3d10core/tests/Makefile \$(MAKEDEP)
-dlls/d3d10core/tests/Makefile: dlls/d3d10core/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3d10core/tests/Makefile: dlls/d3d10core/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10core/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14600,7 +14600,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3d8/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3d8/tests/%) dlls/d3d8/tests: dlls/d3d8/tests/Makefile \$(MAKEDEP)
-dlls/d3d8/tests/Makefile: dlls/d3d8/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3d8/tests/Makefile: dlls/d3d8/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d8/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14634,7 +14634,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3d9/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3d9/tests/%) dlls/d3d9/tests: dlls/d3d9/tests/Makefile \$(MAKEDEP)
-dlls/d3d9/tests/Makefile: dlls/d3d9/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3d9/tests/Makefile: dlls/d3d9/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d9/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14682,7 +14682,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3drm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3drm/tests/%) dlls/d3drm/tests: dlls/d3drm/tests/Makefile \$(MAKEDEP)
-dlls/d3drm/tests/Makefile: dlls/d3drm/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3drm/tests/Makefile: dlls/d3drm/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3drm/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14821,7 +14821,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3dx9_36/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3dx9_36/tests/%) dlls/d3dx9_36/tests: dlls/d3dx9_36/tests/Makefile \$(MAKEDEP)
-dlls/d3dx9_36/tests/Makefile: dlls/d3dx9_36/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3dx9_36/tests/Makefile: dlls/d3dx9_36/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dx9_36/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -14903,7 +14903,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/d3dxof/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/d3dxof/tests/%) dlls/d3dxof/tests: dlls/d3dxof/tests/Makefile \$(MAKEDEP)
-dlls/d3dxof/tests/Makefile: dlls/d3dxof/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/d3dxof/tests/Makefile: dlls/d3dxof/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dxof/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -14973,7 +14973,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ddraw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ddraw/tests/%) dlls/ddraw/tests: dlls/ddraw/tests/Makefile \$(MAKEDEP)
-dlls/ddraw/tests/Makefile: dlls/ddraw/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ddraw/tests/Makefile: dlls/ddraw/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ddraw/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15001,7 +15001,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ddrawex/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ddrawex/tests/%) dlls/ddrawex/tests: dlls/ddrawex/tests/Makefile \$(MAKEDEP)
-dlls/ddrawex/tests/Makefile: dlls/ddrawex/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ddrawex/tests/Makefile: dlls/ddrawex/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ddrawex/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15046,7 +15046,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dinput/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dinput/tests/%) dlls/dinput/tests: dlls/dinput/tests/Makefile \$(MAKEDEP)
-dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dinput/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -15128,7 +15128,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dmloader/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dmloader/tests/%) dlls/dmloader/tests: dlls/dmloader/tests/Makefile \$(MAKEDEP)
-dlls/dmloader/tests/Makefile: dlls/dmloader/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dmloader/tests/Makefile: dlls/dmloader/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dmloader/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15208,7 +15208,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dnsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dnsapi/tests/%) dlls/dnsapi/tests: dlls/dnsapi/tests/Makefile \$(MAKEDEP)
-dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dnsapi/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -15256,7 +15256,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dplayx/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dplayx/tests/%) dlls/dplayx/tests: dlls/dplayx/tests/Makefile \$(MAKEDEP)
-dlls/dplayx/tests/Makefile: dlls/dplayx/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dplayx/tests/Makefile: dlls/dplayx/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dplayx/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15344,7 +15344,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dsound/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dsound/tests/%) dlls/dsound/tests: dlls/dsound/tests/Makefile \$(MAKEDEP)
-dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dsound/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15402,7 +15402,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dxdiagn/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dxdiagn/tests/%) dlls/dxdiagn/tests: dlls/dxdiagn/tests/Makefile \$(MAKEDEP)
-dlls/dxdiagn/tests/Makefile: dlls/dxdiagn/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dxdiagn/tests/Makefile: dlls/dxdiagn/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dxdiagn/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
@@ -15468,7 +15468,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/dxgi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/dxgi/tests/%) dlls/dxgi/tests: dlls/dxgi/tests/Makefile \$(MAKEDEP)
-dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dxgi/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
@@ -15528,7 +15528,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/fusion/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/fusion/tests/%) dlls/fusion/tests: dlls/fusion/tests/Makefile \$(MAKEDEP)
-dlls/fusion/tests/Makefile: dlls/fusion/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/fusion/tests/Makefile: dlls/fusion/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/fusion/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15578,7 +15578,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/gdi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/gdi32/tests/%) dlls/gdi32/tests: dlls/gdi32/tests/Makefile \$(MAKEDEP)
-dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -15612,7 +15612,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/gdiplus/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/gdiplus/tests/%) dlls/gdiplus/tests: dlls/gdiplus/tests/Makefile \$(MAKEDEP)
-dlls/gdiplus/tests/Makefile: dlls/gdiplus/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/gdiplus/tests/Makefile: dlls/gdiplus/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/gdiplus/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -15706,7 +15706,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/hlink/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/hlink/tests/%) dlls/hlink/tests: dlls/hlink/tests/Makefile \$(MAKEDEP)
-dlls/hlink/tests/Makefile: dlls/hlink/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/hlink/tests/Makefile: dlls/hlink/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/hlink/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15788,7 +15788,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/imagehlp/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/imagehlp/tests/%) dlls/imagehlp/tests: dlls/imagehlp/tests/Makefile \$(MAKEDEP)
-dlls/imagehlp/tests/Makefile: dlls/imagehlp/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/imagehlp/tests/Makefile: dlls/imagehlp/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/imagehlp/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15830,7 +15830,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/imm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/imm32/tests/%) dlls/imm32/tests: dlls/imm32/tests/Makefile \$(MAKEDEP)
-dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/imm32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -15864,7 +15864,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/inetcomm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/inetcomm/tests/%) dlls/inetcomm/tests: dlls/inetcomm/tests/Makefile \$(MAKEDEP)
-dlls/inetcomm/tests/Makefile: dlls/inetcomm/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/inetcomm/tests/Makefile: dlls/inetcomm/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/inetcomm/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15892,7 +15892,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/inetmib1/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/inetmib1/tests/%) dlls/inetmib1/tests: dlls/inetmib1/tests/Makefile \$(MAKEDEP)
-dlls/inetmib1/tests/Makefile: dlls/inetmib1/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/inetmib1/tests/Makefile: dlls/inetmib1/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/inetmib1/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15920,7 +15920,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/infosoft/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/infosoft/tests/%) dlls/infosoft/tests: dlls/infosoft/tests/Makefile \$(MAKEDEP)
-dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/infosoft/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -15978,7 +15978,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/iphlpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/iphlpapi/tests/%) dlls/iphlpapi/tests: dlls/iphlpapi/tests/Makefile \$(MAKEDEP)
-dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/iphlpapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16014,7 +16014,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/itss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/itss/tests/%) dlls/itss/tests: dlls/itss/tests/Makefile \$(MAKEDEP)
-dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/itss/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16042,7 +16042,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/jscript/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/jscript/tests/%) dlls/jscript/tests: dlls/jscript/tests/Makefile \$(MAKEDEP)
-dlls/jscript/tests/Makefile: dlls/jscript/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/jscript/tests/Makefile: dlls/jscript/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/jscript/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16076,7 +16076,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/kernel32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/kernel32/tests/%) dlls/kernel32/tests: dlls/kernel32/tests/Makefile \$(MAKEDEP)
-dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16149,7 +16149,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/localspl/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/localspl/tests/%) dlls/localspl/tests: dlls/localspl/tests/Makefile \$(MAKEDEP)
-dlls/localspl/tests/Makefile: dlls/localspl/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/localspl/tests/Makefile: dlls/localspl/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/localspl/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16177,7 +16177,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/localui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/localui/tests/%) dlls/localui/tests: dlls/localui/tests/Makefile \$(MAKEDEP)
-dlls/localui/tests/Makefile: dlls/localui/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/localui/tests/Makefile: dlls/localui/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/localui/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16211,7 +16211,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/lz32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/lz32/tests/%) dlls/lz32/tests: dlls/lz32/tests/Makefile \$(MAKEDEP)
-dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16253,7 +16253,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mapi32/tests/%) dlls/mapi32/tests: dlls/mapi32/tests/Makefile \$(MAKEDEP)
-dlls/mapi32/tests/Makefile: dlls/mapi32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mapi32/tests/Makefile: dlls/mapi32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mapi32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16343,7 +16343,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mlang/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mlang/tests/%) dlls/mlang/tests: dlls/mlang/tests/Makefile \$(MAKEDEP)
-dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mlang/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16371,7 +16371,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mmdevapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mmdevapi/tests/%) dlls/mmdevapi/tests: dlls/mmdevapi/tests/Makefile \$(MAKEDEP)
-dlls/mmdevapi/tests/Makefile: dlls/mmdevapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mmdevapi/tests/Makefile: dlls/mmdevapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mmdevapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16489,7 +16489,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msacm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msacm32/tests/%) dlls/msacm32/tests: dlls/msacm32/tests/Makefile \$(MAKEDEP)
-dlls/msacm32/tests/Makefile: dlls/msacm32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msacm32/tests/Makefile: dlls/msacm32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msacm32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16539,7 +16539,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mscms/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mscms/tests/%) dlls/mscms/tests: dlls/mscms/tests/Makefile \$(MAKEDEP)
-dlls/mscms/tests/Makefile: dlls/mscms/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mscms/tests/Makefile: dlls/mscms/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mscms/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16575,7 +16575,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msctf/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msctf/tests/%) dlls/msctf/tests: dlls/msctf/tests/Makefile \$(MAKEDEP)
-dlls/msctf/tests/Makefile: dlls/msctf/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msctf/tests/Makefile: dlls/msctf/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msctf/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16663,7 +16663,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mshtml/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mshtml/tests/%) dlls/mshtml/tests: dlls/mshtml/tests/Makefile \$(MAKEDEP)
-dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mshtml/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16697,7 +16697,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msi/tests/%) dlls/msi/tests: dlls/msi/tests/Makefile \$(MAKEDEP)
-dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msi/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16795,7 +16795,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/mstask/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/mstask/tests/%) dlls/mstask/tests: dlls/mstask/tests/Makefile \$(MAKEDEP)
-dlls/mstask/tests/Makefile: dlls/mstask/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/mstask/tests/Makefile: dlls/mstask/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mstask/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -16851,7 +16851,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msvcrt/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msvcrt/tests/%) dlls/msvcrt/tests: dlls/msvcrt/tests/Makefile \$(MAKEDEP)
-dlls/msvcrt/tests/Makefile: dlls/msvcrt/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msvcrt/tests/Makefile: dlls/msvcrt/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrt/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16913,7 +16913,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msvcrtd/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msvcrtd/tests/%) dlls/msvcrtd/tests: dlls/msvcrtd/tests/Makefile \$(MAKEDEP)
-dlls/msvcrtd/tests/Makefile: dlls/msvcrtd/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msvcrtd/tests/Makefile: dlls/msvcrtd/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrtd/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -16947,7 +16947,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msvfw32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msvfw32/tests/%) dlls/msvfw32/tests: dlls/msvfw32/tests/Makefile \$(MAKEDEP)
-dlls/msvfw32/tests/Makefile: dlls/msvfw32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msvfw32/tests/Makefile: dlls/msvfw32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvfw32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17005,7 +17005,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/msxml3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/msxml3/tests/%) dlls/msxml3/tests: dlls/msxml3/tests/Makefile \$(MAKEDEP)
-dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msxml3/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17061,7 +17061,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/netapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/netapi32/tests/%) dlls/netapi32/tests: dlls/netapi32/tests/Makefile \$(MAKEDEP)
-dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/netapi32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17109,7 +17109,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ntdll/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ntdll/tests/%) dlls/ntdll/tests: dlls/ntdll/tests/Makefile \$(MAKEDEP)
-dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdll/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17143,7 +17143,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ntdsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ntdsapi/tests/%) dlls/ntdsapi/tests: dlls/ntdsapi/tests/Makefile \$(MAKEDEP)
-dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdsapi/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17185,7 +17185,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ntprint/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ntprint/tests/%) dlls/ntprint/tests: dlls/ntprint/tests/Makefile \$(MAKEDEP)
-dlls/ntprint/tests/Makefile: dlls/ntprint/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ntprint/tests/Makefile: dlls/ntprint/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntprint/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17241,7 +17241,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/odbccp32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/odbccp32/tests/%) dlls/odbccp32/tests: dlls/odbccp32/tests/Makefile \$(MAKEDEP)
-dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/odbccp32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17323,7 +17323,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ole32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ole32/tests/%) dlls/ole32/tests: dlls/ole32/tests/Makefile \$(MAKEDEP)
-dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ole32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17357,7 +17357,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/oleacc/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/oleacc/tests/%) dlls/oleacc/tests: dlls/oleacc/tests/Makefile \$(MAKEDEP)
-dlls/oleacc/tests/Makefile: dlls/oleacc/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/oleacc/tests/Makefile: dlls/oleacc/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oleacc/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17391,7 +17391,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/oleaut32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/oleaut32/tests/%) dlls/oleaut32/tests: dlls/oleaut32/tests/Makefile \$(MAKEDEP)
-dlls/oleaut32/tests/Makefile: dlls/oleaut32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/oleaut32/tests/Makefile: dlls/oleaut32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oleaut32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17441,7 +17441,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/oledb32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/oledb32/tests/%) dlls/oledb32/tests: dlls/oledb32/tests/Makefile \$(MAKEDEP)
-dlls/oledb32/tests/Makefile: dlls/oledb32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/oledb32/tests/Makefile: dlls/oledb32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oledb32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17541,7 +17541,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/opengl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/opengl32/tests/%) dlls/opengl32/tests: dlls/opengl32/tests/Makefile \$(MAKEDEP)
-dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/opengl32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17575,7 +17575,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/pdh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/pdh/tests/%) dlls/pdh/tests: dlls/pdh/tests/Makefile \$(MAKEDEP)
-dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/pdh/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17647,7 +17647,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/psapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/psapi/tests/%) dlls/psapi/tests: dlls/psapi/tests/Makefile \$(MAKEDEP)
-dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/psapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17691,7 +17691,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/qedit/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/qedit/tests/%) dlls/qedit/tests: dlls/qedit/tests/Makefile \$(MAKEDEP)
-dlls/qedit/tests/Makefile: dlls/qedit/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/qedit/tests/Makefile: dlls/qedit/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/qedit/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17719,7 +17719,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/qmgr/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/qmgr/tests/%) dlls/qmgr/tests: dlls/qmgr/tests/Makefile \$(MAKEDEP)
-dlls/qmgr/tests/Makefile: dlls/qmgr/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/qmgr/tests/Makefile: dlls/qmgr/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/qmgr/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17761,7 +17761,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/quartz/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/quartz/tests/%) dlls/quartz/tests: dlls/quartz/tests/Makefile \$(MAKEDEP)
-dlls/quartz/tests/Makefile: dlls/quartz/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/quartz/tests/Makefile: dlls/quartz/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/quartz/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17811,7 +17811,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/rasapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/rasapi32/tests/%) dlls/rasapi32/tests: dlls/rasapi32/tests/Makefile \$(MAKEDEP)
-dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rasapi32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17873,7 +17873,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/riched20/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/riched20/tests/%) dlls/riched20/tests: dlls/riched20/tests/Makefile \$(MAKEDEP)
-dlls/riched20/tests/Makefile: dlls/riched20/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/riched20/tests/Makefile: dlls/riched20/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/riched20/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17901,7 +17901,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/riched32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/riched32/tests/%) dlls/riched32/tests: dlls/riched32/tests/Makefile \$(MAKEDEP)
-dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/riched32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -17935,7 +17935,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/rpcrt4/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/rpcrt4/tests/%) dlls/rpcrt4/tests: dlls/rpcrt4/tests/Makefile \$(MAKEDEP)
-dlls/rpcrt4/tests/Makefile: dlls/rpcrt4/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/rpcrt4/tests/Makefile: dlls/rpcrt4/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rpcrt4/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -17977,7 +17977,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/rsaenh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/rsaenh/tests/%) dlls/rsaenh/tests: dlls/rsaenh/tests/Makefile \$(MAKEDEP)
-dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18035,7 +18035,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/schannel/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/schannel/tests/%) dlls/schannel/tests: dlls/schannel/tests/Makefile \$(MAKEDEP)
-dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/schannel/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18069,7 +18069,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/secur32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/secur32/tests/%) dlls/secur32/tests: dlls/secur32/tests/Makefile \$(MAKEDEP)
-dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/secur32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18125,7 +18125,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/serialui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/serialui/tests/%) dlls/serialui/tests: dlls/serialui/tests/Makefile \$(MAKEDEP)
-dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/serialui/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18159,7 +18159,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/setupapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/setupapi/tests/%) dlls/setupapi/tests: dlls/setupapi/tests/Makefile \$(MAKEDEP)
-dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/setupapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18237,7 +18237,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/shdocvw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/shdocvw/tests/%) dlls/shdocvw/tests: dlls/shdocvw/tests/Makefile \$(MAKEDEP)
-dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shdocvw/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18279,7 +18279,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/shell32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/shell32/tests/%) dlls/shell32/tests: dlls/shell32/tests/Makefile \$(MAKEDEP)
-dlls/shell32/tests/Makefile: dlls/shell32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/shell32/tests/Makefile: dlls/shell32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shell32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18327,7 +18327,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/shlwapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/shlwapi/tests/%) dlls/shlwapi/tests: dlls/shlwapi/tests/Makefile \$(MAKEDEP)
-dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shlwapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18383,7 +18383,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/snmpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/snmpapi/tests/%) dlls/snmpapi/tests: dlls/snmpapi/tests/Makefile \$(MAKEDEP)
-dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/snmpapi/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18433,7 +18433,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/spoolss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/spoolss/tests/%) dlls/spoolss/tests: dlls/spoolss/tests/Makefile \$(MAKEDEP)
-dlls/spoolss/tests/Makefile: dlls/spoolss/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/spoolss/tests/Makefile: dlls/spoolss/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/spoolss/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18483,7 +18483,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/sti/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/sti/tests/%) dlls/sti/tests: dlls/sti/tests/Makefile \$(MAKEDEP)
-dlls/sti/tests/Makefile: dlls/sti/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/sti/tests/Makefile: dlls/sti/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/sti/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18613,7 +18613,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/twain_32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/twain_32/tests/%) dlls/twain_32/tests: dlls/twain_32/tests/Makefile \$(MAKEDEP)
-dlls/twain_32/tests/Makefile: dlls/twain_32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/twain_32/tests/Makefile: dlls/twain_32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/twain_32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18691,7 +18691,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/urlmon/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/urlmon/tests/%) dlls/urlmon/tests: dlls/urlmon/tests/Makefile \$(MAKEDEP)
-dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/urlmon/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18733,7 +18733,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/user32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/user32/tests/%) dlls/user32/tests: dlls/user32/tests/Makefile \$(MAKEDEP)
-dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/user32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18767,7 +18767,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/userenv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/userenv/tests/%) dlls/userenv/tests: dlls/userenv/tests/Makefile \$(MAKEDEP)
-dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/userenv/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -18801,7 +18801,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/usp10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/usp10/tests/%) dlls/usp10/tests: dlls/usp10/tests/Makefile \$(MAKEDEP)
-dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
 
 ALL_STATIC_LIBS="$ALL_STATIC_LIBS \\
@@ -18851,7 +18851,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/uxtheme/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/uxtheme/tests/%) dlls/uxtheme/tests: dlls/uxtheme/tests/Makefile \$(MAKEDEP)
-dlls/uxtheme/tests/Makefile: dlls/uxtheme/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/uxtheme/tests/Makefile: dlls/uxtheme/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/uxtheme/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -18915,7 +18915,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/version/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/version/tests/%) dlls/version/tests: dlls/version/tests/Makefile \$(MAKEDEP)
-dlls/version/tests/Makefile: dlls/version/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/version/tests/Makefile: dlls/version/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/version/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19053,7 +19053,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/windowscodecs/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/windowscodecs/tests/%) dlls/windowscodecs/tests: dlls/windowscodecs/tests/Makefile \$(MAKEDEP)
-dlls/windowscodecs/tests/Makefile: dlls/windowscodecs/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/windowscodecs/tests/Makefile: dlls/windowscodecs/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/windowscodecs/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19245,7 +19245,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/winhttp/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/winhttp/tests/%) dlls/winhttp/tests: dlls/winhttp/tests/Makefile \$(MAKEDEP)
-dlls/winhttp/tests/Makefile: dlls/winhttp/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/winhttp/tests/Makefile: dlls/winhttp/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winhttp/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -19279,7 +19279,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/wininet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/wininet/tests/%) dlls/wininet/tests: dlls/wininet/tests/Makefile \$(MAKEDEP)
-dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wininet/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -19313,7 +19313,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/winmm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/winmm/tests/%) dlls/winmm/tests: dlls/winmm/tests/Makefile \$(MAKEDEP)
-dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winmm/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19400,7 +19400,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/winspool.drv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/winspool.drv/tests/%) dlls/winspool.drv/tests: dlls/winspool.drv/tests/Makefile \$(MAKEDEP)
-dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winspool.drv/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19442,7 +19442,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/wintab32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/wintab32/tests/%) dlls/wintab32/tests: dlls/wintab32/tests/Makefile \$(MAKEDEP)
-dlls/wintab32/tests/Makefile: dlls/wintab32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/wintab32/tests/Makefile: dlls/wintab32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wintab32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -19476,7 +19476,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/wintrust/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/wintrust/tests/%) dlls/wintrust/tests: dlls/wintrust/tests/Makefile \$(MAKEDEP)
-dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wintrust/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -19510,7 +19510,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/wldap32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/wldap32/tests/%) dlls/wldap32/tests: dlls/wldap32/tests/Makefile \$(MAKEDEP)
-dlls/wldap32/tests/Makefile: dlls/wldap32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/wldap32/tests/Makefile: dlls/wldap32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wldap32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19588,7 +19588,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/ws2_32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/ws2_32/tests/%) dlls/ws2_32/tests: dlls/ws2_32/tests/Makefile \$(MAKEDEP)
-dlls/ws2_32/tests/Makefile: dlls/ws2_32/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/ws2_32/tests/Makefile: dlls/ws2_32/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ws2_32/tests/Makefile"
 
 ALL_IMPORT_LIBS="$ALL_IMPORT_LIBS \\
@@ -19691,7 +19691,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/xinput1_3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/xinput1_3/tests/%) dlls/xinput1_3/tests: dlls/xinput1_3/tests/Makefile \$(MAKEDEP)
-dlls/xinput1_3/tests/Makefile: dlls/xinput1_3/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/xinput1_3/tests/Makefile: dlls/xinput1_3/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/xinput1_3/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -19727,7 +19727,7 @@ test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dlls/xmllite/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 \$(RECURSE_TARGETS:%=dlls/xmllite/tests/%) dlls/xmllite/tests: dlls/xmllite/tests/Makefile \$(MAKEDEP)
-dlls/xmllite/tests/Makefile: dlls/xmllite/tests/Makefile.in dlls/Maketest.rules config.status"
+dlls/xmllite/tests/Makefile: dlls/xmllite/tests/Makefile.in Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/xmllite/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
@@ -21075,9 +21075,9 @@ do
     "dlls/wineps.drv/data") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps.drv/data" ;;
     "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
+    "Maketest.rules") CONFIG_FILES="$CONFIG_FILES Maketest.rules" ;;
     "dlls/Makedll.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
     "dlls/Makeimplib.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makeimplib.rules" ;;
-    "dlls/Maketest.rules") CONFIG_FILES="$CONFIG_FILES dlls/Maketest.rules" ;;
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "dlls/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/Makefile" ;;

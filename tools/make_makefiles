@@ -27,7 +27,7 @@ my %makerules =
  "MAKE_RULES" => "Make.rules",
  "MAKE_DLL_RULES" => "dlls/Makedll.rules",
  "MAKE_IMPLIB_RULES" => "dlls/Makeimplib.rules",
- "MAKE_TEST_RULES" => "dlls/Maketest.rules",
+ "MAKE_TEST_RULES" => "Maketest.rules",
  "MAKE_PROG_RULES" => "programs/Makeprog.rules",
 );
 

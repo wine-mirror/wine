@@ -235,7 +235,7 @@ ac_name.exe: \$(TOPOBJDIR)/$1/ac_name.exe$DLLEXT
 ac_name.rc:
 	echo \"ac_name.exe TESTRES \\\"ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 ac_name.res: ac_name.rc ac_name.exe"
-WINE_CONFIG_MAKEFILE([$1/Makefile],[dlls/Maketest.rules],[],[ALL_TEST_DIRS],[enable_tests])dnl
+WINE_CONFIG_MAKEFILE([$1/Makefile],[Maketest.rules],[],[ALL_TEST_DIRS],[enable_tests])dnl
 m4_popdef([ac_name])])
 
 dnl **** Create a static lib makefile from config.status ****
