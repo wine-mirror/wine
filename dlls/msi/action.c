@@ -6227,12 +6227,6 @@ static UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "MsiUnpublishAssemblies", table );
 }
 
-static UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'F','o','n','t',0 };
-    return msi_unimplemented_action_stub( package, "UnregisterFonts", table );
-}
-
 static UINT ACTION_RMCCPSearch( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };

@@ -1169,6 +1169,57 @@ static const CHAR sr_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "InstallValidate\t\t1400\n"
                                               "LaunchConditions\t\t100\n";
 
+static const CHAR font_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                     "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                     "Media\tDiskId\n"
+                                     "1\t3\t\t\tDISK1\t\n";
+
+static const CHAR font_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                    "File\tFile\n"
+                                    "font.ttf\tfonts\tfont.ttf\t1000\t\t\t8192\t1\n";
+
+static const CHAR font_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                       "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                       "Feature\tFeature\n"
+                                       "fonts\t\t\tfont feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR font_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                         "Component\tComponent\n"
+                                         "fonts\t{F5920ED0-1183-4B8F-9330-86CE56557C05}\tMSITESTDIR\t0\t\tfont.ttf\n";
+
+static const CHAR font_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                            "s38\ts72\n"
+                                            "FeatureComponents\tFeature_\tComponent_\n"
+                                            "fonts\tfonts\n";
+
+static const CHAR font_dat[] = "File_\tFontTitle\n"
+                               "s72\tS128\n"
+                               "Font\tFile_\n"
+                               "font.ttf\tmsi test font\n";
+
+static const CHAR font_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                                "s72\tS255\tI2\n"
+                                                "InstallExecuteSequence\tAction\n"
+                                                "ValidateProductID\t\t700\n"
+                                                "CostInitialize\t\t800\n"
+                                                "FileCost\t\t900\n"
+                                                "CostFinalize\t\t1000\n"
+                                                "InstallValidate\t\t1400\n"
+                                                "InstallInitialize\t\t1500\n"
+                                                "ProcessComponents\t\t1600\n"
+                                                "UnpublishFeatures\t\t1800\n"
+                                                "RemoveFiles\t\t3500\n"
+                                                "InstallFiles\t\t4000\n"
+                                                "RegisterFonts\t\t4100\n"
+                                                "UnregisterFonts\t\t4200\n"
+                                                "RegisterUser\t\t6000\n"
+                                                "RegisterProduct\t\t6100\n"
+                                                "PublishFeatures\t\t6300\n"
+                                                "PublishProduct\t\t6400\n"
+                                                "InstallFinalize\t\t6600";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1936,6 +1987,19 @@ static const msi_table sr_tables[] =
     ADD_TABLE(sr_selfreg),
     ADD_TABLE(sr_install_exec_seq),
     ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table font_tables[] =
+{
+    ADD_TABLE(font_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(font_feature),
+    ADD_TABLE(font_feature_comp),
+    ADD_TABLE(font_file),
+    ADD_TABLE(font),
+    ADD_TABLE(font_install_exec_seq),
+    ADD_TABLE(font_media),
     ADD_TABLE(property)
 };
 
@@ -7700,6 +7764,53 @@ static void test_self_registration(void)
     delete_test_files();
 }
 
+static void test_register_font(void)
+{
+    static const WCHAR regfont1[] =
+        {'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s',' ','N','T','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'F','o','n','t','s',0};
+    static const WCHAR regfont2[] =
+        {'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'F','o','n','t','s',0};
+    LONG ret;
+    HKEY key;
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\font.ttf", 1000);
+    create_database(msifile, font_tables, sizeof(font_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, regfont1, &key);
+    if (ret)
+        ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, regfont2, &key);
+
+    ret = RegQueryValueExA(key, "msi test font", NULL, NULL, NULL, NULL);
+    ok(ret != ERROR_FILE_NOT_FOUND, "unexpected result %d\n", ret);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    ret = RegQueryValueExA(key, "msi test font", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_FILE_NOT_FOUND, "unexpected result %d\n", ret);
+
+    RegDeleteValueA(key, "msi test font");
+    RegCloseKey(key);
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -7796,6 +7907,7 @@ START_TEST(install)
     test_start_services();
     test_delete_services();
     test_self_registration();
+    test_register_font();
 
     DeleteFileA(log_file);
 
