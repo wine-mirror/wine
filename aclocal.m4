@@ -170,8 +170,8 @@ dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],
 [m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\(\(.*\)/\)?Makefile$],[\2]))dnl
 m4_pushdef([ac_name],m4_bpatsubst(ac_dir,[.*/\(.*\)$],[\1]))dnl
-m4_ifval(ac_dir,[ALL_MAKEFILES="$ALL_MAKEFILES \\
-	$1"])
+m4_ifval(ac_dir,[ALL_DIRS="$ALL_DIRS \\
+	ac_dir"])
 AS_VAR_PUSHDEF([ac_enable],m4_default([$4],[enable_]ac_name))dnl
 m4_ifval([$3],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$3],[ && ac_var="$ac_var \\
 	ac_dir"]))

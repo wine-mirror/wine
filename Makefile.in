@@ -27,6 +27,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
 
+ALL_DIRS           = @ALL_DIRS@
 ALL_DLL_DIRS       = @ALL_DLL_DIRS@
 ALL_INSTALL_DIRS   = @ALL_INSTALL_DIRS@
 ALL_PROGRAM_DIRS   = @ALL_PROGRAM_DIRS@
@@ -36,21 +37,7 @@ ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
 # Sub-directories to run make depend/clean into
-SUBDIRS = \
-	documentation \
-	fonts \
-	include \
-	libs/port \
-	libs/wine \
-	libs/wpp \
-	loader \
-	programs \
-	server \
-	$(ALL_TOOL_DIRS) \
-	$(ALL_STATICLIB_DIRS) \
-	$(ALL_DLL_DIRS) \
-	$(ALL_PROGRAM_DIRS) \
-	$(ALL_TEST_DIRS)
+SUBDIRS = $(ALL_DIRS)
 
 # Sub-directories to run make all into
 BUILDSUBDIRS = \
@@ -181,8 +168,7 @@ distclean:: clean
 
 # Makefile rules
 
-ALL_MAKEFILES = @ALL_MAKEFILES@
-ALL_CONFIGS   = Makefile $(ALL_MAKEFILES) @ALL_MAKERULES@ @ALL_SYMLINKS@
+ALL_CONFIGS = Makefile $(ALL_DIRS:%=%/Makefile) @ALL_MAKERULES@ @ALL_SYMLINKS@
 
 $(ALL_CONFIGS):
 	@./config.status $@
