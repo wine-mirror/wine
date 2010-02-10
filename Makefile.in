@@ -28,6 +28,8 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 
 ALL_DLL_DIRS       = @ALL_DLL_DIRS@
+ALL_INSTALL_DIRS   = @ALL_INSTALL_DIRS@
+ALL_PROGRAM_DIRS   = @ALL_PROGRAM_DIRS@
 ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
 ALL_TEST_DIRS      = @ALL_TEST_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
@@ -47,6 +49,7 @@ SUBDIRS = \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
 	$(ALL_DLL_DIRS) \
+	$(ALL_PROGRAM_DIRS) \
 	$(ALL_TEST_DIRS)
 
 # Sub-directories to run make all into
@@ -56,6 +59,7 @@ BUILDSUBDIRS = \
 	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
 	$(ALL_DLL_DIRS) \
+	$(ALL_PROGRAM_DIRS) \
 	$(ALL_TEST_DIRS)
 
 # Sub-directories to run make install/uninstall into
@@ -64,7 +68,8 @@ INSTALLSUBDIRS = \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
-	$(ALL_DLL_DIRS)
+	$(ALL_DLL_DIRS) \
+	$(ALL_INSTALL_DIRS)
 
 # Sub-directories to run make test into
 TESTSUBDIRS = $(ALL_TEST_DIRS)
@@ -119,17 +124,15 @@ __builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATI
 __buildcrossdeps__: libs/port libs/wine $(ALL_TOOL_DIRS) include $(STATIC_LIBS:.a=.cross.a) $(IMPORT_LIBS:.def=.cross.a)
 .PHONY: __builddeps__ __buildcrossdeps__
 
-programs: __builddeps__
 loader server: libs/port libs/wine tools
 fonts: tools
 include: tools/widl
-programs: $(ALL_TEST_DIRS)
+programs/winetest: $(ALL_TEST_DIRS)
 libs/wine $(ALL_TOOL_DIRS): libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
 
-programs/__install__ programs/__install-lib__: __builddeps__
 fonts/__install__ fonts/__install-lib__: tools
 include/__install__ include/__install-dev__: include
 libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
@@ -152,7 +155,6 @@ RECURSE_TARGETS = \
 	__uninstall__ \
 	__crosstest__
 
-programs $(RECURSE_TARGETS:%=programs/%): $(MAKEDEP)
 depend: $(MAKEDEP)
 
 $(MAKEDEP): include/config.h tools/Makefile
@@ -187,8 +189,6 @@ $(ALL_CONFIGS):
 .INIT: Makefile
 .BEGIN: Makefile
 .MAKEFILEDEPS:
-
-programs $(RECURSE_TARGETS:%=programs/%): $(ALL_MAKEFILES)
 
 distclean::
 	$(RM) $(ALL_CONFIGS)

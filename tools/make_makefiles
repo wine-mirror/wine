@@ -373,7 +373,7 @@ sub update_makefiles(@)
         {
             (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
             $args = ",[ALL_PROGRAM_DIRS";
-            $args .= ",ALL_PROGRAM_INSTALL_DIRS" unless $dont_install{$name};
+            $args .= ",ALL_INSTALL_DIRS" unless $dont_install{$name};
             $args .= ",ALL_PROGRAM_BIN_INSTALL_DIRS" if $bin_install{$name};
             $args .= "]";
             $args .= ",enable_win16" if $is_win16;

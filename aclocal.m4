@@ -216,7 +216,9 @@ dnl
 dnl Usage: WINE_CONFIG_PROGRAM(name,var,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_PROGRAM],
-[WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[programs],[$2],[$3])])
+[ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/$1 programs/$1/__install__ programs/$1/__install-lib__: __builddeps__"
+WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[],[$2],m4_default([$3],[enable_$1]))])
 
 dnl **** Create a test makefile from config.status ****
 dnl
