@@ -6132,6 +6132,24 @@ static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
+{
+    TRACE("%p\n", package);
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_DisableRollback( MSIPACKAGE *package )
+{
+    FIXME("%p\n", package);
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_InstallAdminPackage( MSIPACKAGE *package )
+{
+    FIXME("%p\n", package);
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -6153,12 +6171,6 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
         FIXME("%s -> %u ignored %s table values\n",
               action, count, debugstr_w(table));
 
-    return ERROR_SUCCESS;
-}
-
-static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
-{
-    TRACE("%p\n", package);
     return ERROR_SUCCESS;
 }
 
@@ -6335,13 +6347,13 @@ StandardActions[] =
     { szCreateFolders, ACTION_CreateFolders },
     { szCreateShortcuts, ACTION_CreateShortcuts },
     { szDeleteServices, ACTION_DeleteServices },
-    { szDisableRollback, NULL },
+    { szDisableRollback, ACTION_DisableRollback },
     { szDuplicateFiles, ACTION_DuplicateFiles },
     { szExecuteAction, ACTION_ExecuteAction },
     { szFileCost, ACTION_FileCost },
     { szFindRelatedProducts, ACTION_FindRelatedProducts },
     { szForceReboot, ACTION_ForceReboot },
-    { szInstallAdminPackage, NULL },
+    { szInstallAdminPackage, ACTION_InstallAdminPackage },
     { szInstallExecute, ACTION_InstallExecute },
     { szInstallExecuteAgain, ACTION_InstallExecute },
     { szInstallFiles, ACTION_InstallFiles},
