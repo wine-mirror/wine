@@ -31,6 +31,8 @@ all: $(TESTPROGRAM)
 $(MODULE) $(MODULE).so: $(OBJS) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
 
+.PHONY: check test testclean crosstest
+
 # Rules for building test list
 
 testlist.c: Makefile.in $(MAKECTESTS)

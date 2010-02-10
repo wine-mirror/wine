@@ -13,9 +13,7 @@
 # EXTRA_OBJS   : extra object files
 # IMPORTS      : dlls to import
 # DELAYIMPORTS : dlls to import in delayed mode
-# SUBDIRS      : subdirectories that contain a Makefile
 # EXTRASUBDIRS : subdirectories that do not contain a Makefile
-# INSTALLSUBDIRS : subdirectories to run make install/uninstall into
 # MODCFLAGS    : extra CFLAGS for this module
 
 # First some useful definitions
@@ -229,92 +227,29 @@ DEPEND_SRCS = $(C_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
-$(SUBDIRS:%=%/__depend__): dummy
-	@cd `dirname $@` && $(MAKE) depend
-
-depend: $(SUBDIRS:%=%/__depend__) dummy
+depend: dummy
 	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
 
-.PHONY: depend $(SUBDIRS:%=%/__depend__)
+.PHONY: depend
 
 # Rules for cleaning
-
-$(SUBDIRS:%=%/__clean__): dummy
-	@cd `dirname $@` && $(MAKE) clean
 
 $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
-clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
+clean:: $(EXTRASUBDIRS:%=%/__clean__)
 	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(MANPAGES)
 
-.PHONY: clean $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
+.PHONY: clean $(EXTRASUBDIRS:%=%/__clean__)
 
 # Rules for installing
-
-$(SUBDIRS:%=%/__install__): dummy
-	@cd `dirname $@` && $(MAKE) install
-
-$(SUBDIRS:%=%/__install-lib__): dummy
-	@cd `dirname $@` && $(MAKE) install-lib
-
-$(SUBDIRS:%=%/__install-dev__): dummy
-	@cd `dirname $@` && $(MAKE) install-dev
-
-$(SUBDIRS:%=%/__uninstall__): dummy
-	@cd `dirname $@` && $(MAKE) uninstall
-
-install:: $(INSTALLSUBDIRS:%=%/__install__) dummy
-install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__) dummy
-install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__) dummy
-uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
 
 $(INSTALLDIRS):
 	$(MKINSTALLDIRS) $@
 
-.PHONY: install install-lib install-dev uninstall \
-	$(SUBDIRS:%=%/__install__) $(SUBDIRS:%=%/__uninstall__) \
-	$(SUBDIRS:%=%/__install-lib__) $(SUBDIRS:%=%/__install-dev__)
+install install-lib install-dev uninstall::
 
-# Rules for testing
-
-$(TESTSUBDIRS:%=%/__test__): dummy
-	@cd `dirname $@` && $(MAKE) test
-
-$(TESTSUBDIRS:%=%/__crosstest__): dummy
-	@cd `dirname $@` && $(MAKE) crosstest
-
-$(TESTSUBDIRS:%=%/__testclean__): dummy
-	@cd `dirname $@` && $(MAKE) testclean
-
-check test:: $(TESTSUBDIRS:%=%/__test__) dummy
-
-crosstest:: $(TESTSUBDIRS:%=%/__crosstest__) dummy
-
-testclean:: $(TESTSUBDIRS:%=%/__testclean__) dummy
-
-.PHONY: check test testclean crosstest $(TESTSUBDIRS:%=%/__test__) $(TESTSUBDIRS:%=%/__crosstest__) $(TESTSUBDIRS:%=%/__testclean__) 
-
-# Rules for auto documentation
-
-$(DOCSUBDIRS:%=%/__man__): dummy
-	@cd `dirname $@` && $(MAKE) man
-
-$(DOCSUBDIRS:%=%/__doc_html__): dummy
-	@cd `dirname $@` && $(MAKE) doc-html
-
-$(DOCSUBDIRS:%=%/__doc_sgml__): dummy
-	@cd `dirname $@` && $(MAKE) doc-sgml
-
-$(DOCSUBDIRS:%=%/__doc_xml__): dummy
-	@cd `dirname $@` && $(MAKE) doc-xml
-
-man: $(DOCSUBDIRS:%=%/__man__)
-doc-html: $(DOCSUBDIRS:%=%/__doc_html__)
-doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
-doc-xml: $(DOCSUBDIRS:%=%/__doc_xml__)
-
-.PHONY: man doc-html doc-sgml doc-xml $(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__) $(DOCSUBDIRS:%=%/__doc_xml__)
+.PHONY: install install-lib install-dev uninstall
 
 # Misc. rules
 
@@ -324,11 +259,8 @@ $(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
 
 $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res): $(WRC)
 
-$(SUBDIRS): dummy
-	@cd $@ && $(MAKE)
-
 dummy:
 
-.PHONY: dummy $(SUBDIRS)
+.PHONY: dummy
 
 # End of global rules

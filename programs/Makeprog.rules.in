@@ -12,7 +12,6 @@
 DLLFLAGS    = @DLLFLAGS@
 DEFS        = -DWINE_STRICT_PROTOTYPES $(EXTRADEFS)
 ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
-RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 @MAKE_RULES@
@@ -21,12 +20,6 @@ all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
 $(MODULE) $(MODULE).so $(MODULE).fake: $(OBJS) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
-
-# Rules for testing
-
-check test:: $(SUBDIRS:%=%/__test__) dummy
-
-$(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Rules for installation
 

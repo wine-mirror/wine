@@ -21,7 +21,7 @@ INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(datadir)/w
 
 @MAKE_RULES@
 
-all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT) $(SUBDIRS)
+all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
 $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
 	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
@@ -30,9 +30,9 @@ $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
 
 IMPLIB_CROSSOBJS = $(IMPLIB_OBJS:.o=.cross.o)
 
-.PHONY: implib $(IMPLIB_SRCS:%=__static_implib__%)
+.PHONY: $(IMPLIB_SRCS:%=__static_implib__%)
 
-all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
+all: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
 
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
@@ -49,14 +49,6 @@ $(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_OBJS)
 
 $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_CROSSOBJS)
 	$(WINEBUILD) $(IMPLIBFLAGS) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_CROSSOBJS)
-
-$(SUBDIRS): implib
-
-# Rules for testing
-
-check test:: $(SUBDIRS:%=%/__test__) dummy
-
-crosstest:: $(SUBDIRS:%=%/__crosstest__) dummy
 
 # Rules for auto documentation
 

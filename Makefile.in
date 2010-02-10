@@ -36,9 +36,6 @@ ALL_TEST_DIRS      = @ALL_TEST_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
-# Sub-directories to run make depend/clean into
-SUBDIRS = $(ALL_DIRS)
-
 # Sub-directories to run make all into
 BUILDSUBDIRS = \
 	libs/wine \
@@ -58,12 +55,6 @@ INSTALLSUBDIRS = \
 	$(ALL_DLL_DIRS) \
 	$(ALL_INSTALL_DIRS)
 
-# Sub-directories to run make test into
-TESTSUBDIRS = $(ALL_TEST_DIRS)
-
-# Sub-directories that contain documentation
-DOCSUBDIRS = $(ALL_DLL_DIRS)
-
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
 
@@ -73,6 +64,10 @@ all: wine
 WINAPI_CHECK_EXTRA_FLAGS = --global
 
 @MAKE_RULES@
+
+# Rules for re-running configure
+
+ALL_CONFIGS = Makefile $(ALL_DIRS:%=%/Makefile) @ALL_MAKERULES@ @ALL_SYMLINKS@
 
 $(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
 	cd $(SRCDIR) && autoconf --warnings=all
@@ -89,12 +84,110 @@ include/config.h: include/stamp-h
 include/stamp-h: include/config.h.in config.status
 	@./config.status include/config.h include/stamp-h
 
-# Installation rules
+$(ALL_CONFIGS):
+	@./config.status $@
+
+# Rules for building
+
+all: $(BUILDSUBDIRS)
+
+$(ALL_DIRS): dummy
+	@cd $@ && $(MAKE)
+
+.PHONY: $(ALL_DIRS)
+
+# Rules for dependencies
+
+$(ALL_DIRS:%=%/__depend__): dummy
+	@cd `dirname $@` && $(MAKE) depend
+
+depend: $(MAKEDEP) $(ALL_DIRS:%=%/__depend__) dummy
+.PHONY: $(ALL_DIRS:%=%/__depend__)
+
+# Rules for cleaning
+
+$(ALL_DIRS:%=%/__clean__): dummy
+	@cd `dirname $@` && $(MAKE) clean
+
+clean:: $(ALL_DIRS:%=%/__clean__)
+
+distclean:: clean
+	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h $(ALL_CONFIGS)
+	$(RM) -r autom4te.cache
+
+.PHONY: distclean $(ALL_DIRS:%=%/__clean__)
+
+# Rules for installing
+
+$(INSTALLSUBDIRS:%=%/__install__): dummy
+	@cd `dirname $@` && $(MAKE) install
+
+$(INSTALLSUBDIRS:%=%/__install-lib__): dummy
+	@cd `dirname $@` && $(MAKE) install-lib
+
+$(INSTALLSUBDIRS:%=%/__install-dev__): dummy
+	@cd `dirname $@` && $(MAKE) install-dev
+
+$(INSTALLSUBDIRS:%=%/__uninstall__): dummy
+	@cd `dirname $@` && $(MAKE) uninstall
+
+install:: $(INSTALLSUBDIRS:%=%/__install__) dummy
+install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__) dummy
+install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__) dummy
+uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
+
+.PHONY: $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__) \
+	$(INSTALLSUBDIRS:%=%/__install-lib__) $(INSTALLSUBDIRS:%=%/__install-dev__)
 
 uninstall::
 	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
-# Import libraries
+# Rules for testing
+
+$(ALL_TEST_DIRS:%=%/__test__): dummy
+	@cd `dirname $@` && $(MAKE) test
+
+$(ALL_TEST_DIRS:%=%/__crosstest__): dummy
+	@cd `dirname $@` && $(MAKE) crosstest
+
+$(ALL_TEST_DIRS:%=%/__testclean__): dummy
+	@cd `dirname $@` && $(MAKE) testclean
+
+check test:: $(ALL_TEST_DIRS:%=%/__test__)
+crosstest:: $(ALL_TEST_DIRS:%=%/__crosstest__)
+testclean:: $(ALL_TEST_DIRS:%=%/__testclean__)
+
+.PHONY: check test testclean crosstest $(ALL_TEST_DIRS:%=%/__test__) \
+	$(ALL_TEST_DIRS:%=%/__crosstest__) $(ALL_TEST_DIRS:%=%/__testclean__)
+
+# Rules for auto documentation
+
+DOCSUBDIRS = $(ALL_DLL_DIRS)
+
+$(DOCSUBDIRS:%=%/__man__): dummy
+	@cd `dirname $@` && $(MAKE) man
+
+$(DOCSUBDIRS:%=%/__doc_html__): dummy
+	@cd `dirname $@` && $(MAKE) doc-html
+
+$(DOCSUBDIRS:%=%/__doc_sgml__): dummy
+	@cd `dirname $@` && $(MAKE) doc-sgml
+
+$(DOCSUBDIRS:%=%/__doc_xml__): dummy
+	@cd `dirname $@` && $(MAKE) doc-xml
+
+man: $(DOCSUBDIRS:%=%/__man__)
+doc-html: $(DOCSUBDIRS:%=%/__doc_html__)
+doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
+doc-xml: $(DOCSUBDIRS:%=%/__doc_xml__)
+
+manpages htmlpages sgmlpages xmlpages: dummy
+	@cd documentation && $(MAKE) $@
+
+.PHONY: man doc-html doc-sgml doc-xml manpages htmlpages sgmlpages xmlpages \
+	$(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__) $(DOCSUBDIRS:%=%/__doc_xml__)
+
+# Rules for import libraries
 
 STATIC_LIBS = @ALL_STATIC_LIBS@
 IMPORT_LIBS = @ALL_IMPORT_LIBS@
@@ -103,8 +196,6 @@ implib: $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
 .PHONY: implib
 
 # Dependencies between directories
-
-all: $(BUILDSUBDIRS)
 
 # dependencies needed to build any dll or program
 __builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
@@ -142,8 +233,6 @@ RECURSE_TARGETS = \
 	__uninstall__ \
 	__crosstest__
 
-depend: $(MAKEDEP)
-
 $(MAKEDEP): include/config.h tools/Makefile
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
 
@@ -157,26 +246,10 @@ tags ctags:
 	$(RM) tags
 	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
 
-manpages htmlpages sgmlpages xmlpages: dummy
-	@cd documentation && $(MAKE) $@
-
-distclean:: clean
-	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h
-	$(RM) -r autom4te.cache
-
-.PHONY: manpages htmlpages sgmlpages xmlpages distclean
-
 # Makefile rules
 
-ALL_CONFIGS = Makefile $(ALL_DIRS:%=%/Makefile) @ALL_MAKERULES@ @ALL_SYMLINKS@
-
-$(ALL_CONFIGS):
-	@./config.status $@
 .INIT: Makefile
 .BEGIN: Makefile
 .MAKEFILEDEPS:
-
-distclean::
-	$(RM) $(ALL_CONFIGS)
 
 @ALL_MAKEFILE_DEPENDS@
