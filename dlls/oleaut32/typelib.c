@@ -1013,7 +1013,7 @@ typedef struct tagTLBFuncDesc
     int helpcontext;
     int HelpStringContext;
     BSTR HelpString;
-    BSTR Entry;            /* if its Hiword==0, it numeric; -1 is not present*/
+    BSTR Entry;            /* if IS_INTRESOURCE true, it's numeric; if -1 it isn't present */
     int ctCustData;
     TLBCustData * pCustData;        /* linked list to cust data; */
     struct tagTLBFuncDesc * next;
@@ -1899,8 +1899,8 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 {
                     if ( pFuncRec->FKCCIC & 0x2000 )
                     {
-                       if (HIWORD(pFuncRec->OptAttr[2]) != 0)
-                           ERR("ordinal 0x%08x invalid, HIWORD != 0\n", pFuncRec->OptAttr[2]);
+                       if (!IS_INTRESOURCE(pFuncRec->OptAttr[2]))
+                           ERR("ordinal 0x%08x invalid, IS_INTRESOURCE is false\n", pFuncRec->OptAttr[2]);
                        (*pptfd)->Entry = (BSTR)pFuncRec->OptAttr[2];
                     }
                     else
@@ -2493,7 +2493,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     /* Find resource */
     typeInfo = (NE_TYPEINFO *)(resTab + 2);
 
-    if (HIWORD(typeid) != 0)  /* named type */
+    if (!IS_INTRESOURCE(typeid))  /* named type */
     {
         BYTE len = strlen( typeid );
         while (typeInfo->type_id)
@@ -2524,7 +2524,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
  found_type:
     nameInfo = (NE_NAMEINFO *)(typeInfo + 1);
 
-    if (HIWORD(resid) != 0)  /* named resource */
+    if (!IS_INTRESOURCE(resid))  /* named resource */
     {
         BYTE len = strlen( resid );
         for (count = typeInfo->count; count > 0; count--, nameInfo++)
@@ -4976,7 +4976,7 @@ static void ITypeInfo_fnDestroy(ITypeInfoImpl *This)
         TLB_Free(pFInfo->funcdesc.lprgelemdescParam);
         TLB_Free(pFInfo->pParamDesc);
         TLB_FreeCustData(pFInfo->pCustData);
-        if (HIWORD(pFInfo->Entry) != 0 && pFInfo->Entry != (BSTR)-1)
+        if (!IS_INTRESOURCE(pFInfo->Entry) && pFInfo->Entry != (BSTR)-1)
             SysFreeString(pFInfo->Entry);
         SysFreeString(pFInfo->HelpString);
         SysFreeString(pFInfo->Name);
@@ -6571,7 +6571,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
 	    if (pBstrDllName)
 		*pBstrDllName = SysAllocString(This->DllName);
 
-	    if (HIWORD(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
+            if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
 		if (pBstrName)
 		    *pBstrName = SysAllocString(pFDesc->Entry);
 		if (pwOrdinal)
