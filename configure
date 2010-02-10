@@ -13847,6 +13847,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advapi32/Makefile: dlls/advapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/advapi32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/advapi32/tests: __builddeps__
+dlls/advapi32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	advapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -13858,8 +13861,9 @@ advapi32_test.res: advapi32_test.rc advapi32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advapi32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	advapi32/tests"
+	dlls/advapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/advapi32/tests/%) dlls/advapi32/tests: dlls/advapi32/tests/Makefile \$(MAKEDEP)
 dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/advapi32/tests/Makefile"
 
@@ -13877,6 +13881,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advpack/Makefile: dlls/advpack/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/advpack/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/advpack/tests: __builddeps__
+dlls/advpack/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	advpack_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -13888,8 +13895,9 @@ advpack_test.res: advpack_test.rc advpack_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advpack/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	advpack/tests"
+	dlls/advpack/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/advpack/tests/%) dlls/advpack/tests: dlls/advpack/tests/Makefile \$(MAKEDEP)
 dlls/advpack/tests/Makefile: dlls/advpack/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/advpack/tests/Makefile"
 
@@ -13901,6 +13909,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/amstream/Makefile: dlls/amstream/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/amstream/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/amstream/tests: __builddeps__
+dlls/amstream/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	amstream_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -13912,8 +13923,9 @@ amstream_test.res: amstream_test.rc amstream_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/amstream/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	amstream/tests"
+	dlls/amstream/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/amstream/tests/%) dlls/amstream/tests: dlls/amstream/tests/Makefile \$(MAKEDEP)
 dlls/amstream/tests/Makefile: dlls/amstream/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/amstream/tests/Makefile"
 
@@ -13975,6 +13987,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/avifil32/Makefile: dlls/avifil32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/avifil32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/avifil32/tests: __builddeps__
+dlls/avifil32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	avifil32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -13986,8 +14001,9 @@ avifil32_test.res: avifil32_test.rc avifil32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/avifil32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	avifil32/tests"
+	dlls/avifil32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/avifil32/tests/%) dlls/avifil32/tests: dlls/avifil32/tests/Makefile \$(MAKEDEP)
 dlls/avifil32/tests/Makefile: dlls/avifil32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/avifil32/tests/Makefile"
 
@@ -14029,6 +14045,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/browseui/Makefile: dlls/browseui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/browseui/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/browseui/tests: __builddeps__
+dlls/browseui/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	browseui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14040,8 +14059,9 @@ browseui_test.res: browseui_test.rc browseui_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/browseui/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	browseui/tests"
+	dlls/browseui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/browseui/tests/%) dlls/browseui/tests: dlls/browseui/tests/Makefile \$(MAKEDEP)
 dlls/browseui/tests/Makefile: dlls/browseui/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/browseui/tests/Makefile"
 
@@ -14059,6 +14079,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cabinet/Makefile: dlls/cabinet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cabinet/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/cabinet/tests: __builddeps__
+dlls/cabinet/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	cabinet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14070,8 +14093,9 @@ cabinet_test.res: cabinet_test.rc cabinet_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cabinet/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	cabinet/tests"
+	dlls/cabinet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/cabinet/tests/%) dlls/cabinet/tests: dlls/cabinet/tests/Makefile \$(MAKEDEP)
 dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cabinet/tests/Makefile"
 
@@ -14139,6 +14163,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comcat/Makefile: dlls/comcat/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comcat/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/comcat/tests: __builddeps__
+dlls/comcat/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	comcat_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14150,8 +14177,9 @@ comcat_test.res: comcat_test.rc comcat_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comcat/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	comcat/tests"
+	dlls/comcat/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/comcat/tests/%) dlls/comcat/tests: dlls/comcat/tests/Makefile \$(MAKEDEP)
 dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comcat/tests/Makefile"
 
@@ -14169,6 +14197,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comctl32/Makefile: dlls/comctl32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comctl32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/comctl32/tests: __builddeps__
+dlls/comctl32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	comctl32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14180,8 +14211,9 @@ comctl32_test.res: comctl32_test.rc comctl32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comctl32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	comctl32/tests"
+	dlls/comctl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/comctl32/tests/%) dlls/comctl32/tests: dlls/comctl32/tests/Makefile \$(MAKEDEP)
 dlls/comctl32/tests/Makefile: dlls/comctl32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comctl32/tests/Makefile"
 
@@ -14199,6 +14231,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comdlg32/Makefile: dlls/comdlg32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/comdlg32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/comdlg32/tests: __builddeps__
+dlls/comdlg32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	comdlg32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14210,8 +14245,9 @@ comdlg32_test.res: comdlg32_test.rc comdlg32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comdlg32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	comdlg32/tests"
+	dlls/comdlg32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/comdlg32/tests/%) dlls/comdlg32/tests: dlls/comdlg32/tests/Makefile \$(MAKEDEP)
 dlls/comdlg32/tests/Makefile: dlls/comdlg32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/comdlg32/tests/Makefile"
 
@@ -14267,6 +14303,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/credui/Makefile: dlls/credui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/credui/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/credui/tests: __builddeps__
+dlls/credui/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	credui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14278,8 +14317,9 @@ credui_test.res: credui_test.rc credui_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/credui/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	credui/tests"
+	dlls/credui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/credui/tests/%) dlls/credui/tests: dlls/credui/tests/Makefile \$(MAKEDEP)
 dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/credui/tests/Makefile"
 
@@ -14311,6 +14351,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/crypt32/Makefile: dlls/crypt32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/crypt32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/crypt32/tests: __builddeps__
+dlls/crypt32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	crypt32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14322,8 +14365,9 @@ crypt32_test.res: crypt32_test.rc crypt32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/crypt32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	crypt32/tests"
+	dlls/crypt32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/crypt32/tests/%) dlls/crypt32/tests: dlls/crypt32/tests/Makefile \$(MAKEDEP)
 dlls/crypt32/tests/Makefile: dlls/crypt32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/crypt32/tests/Makefile"
 
@@ -14363,6 +14407,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptnet/Makefile: dlls/cryptnet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/cryptnet/tests: __builddeps__
+dlls/cryptnet/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	cryptnet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14374,8 +14421,9 @@ cryptnet_test.res: cryptnet_test.rc cryptnet_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptnet/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	cryptnet/tests"
+	dlls/cryptnet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/cryptnet/tests/%) dlls/cryptnet/tests: dlls/cryptnet/tests/Makefile \$(MAKEDEP)
 dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptnet/tests/Makefile"
 
@@ -14393,6 +14441,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptui/Makefile: dlls/cryptui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptui/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/cryptui/tests: __builddeps__
+dlls/cryptui/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	cryptui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14404,8 +14455,9 @@ cryptui_test.res: cryptui_test.rc cryptui_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptui/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	cryptui/tests"
+	dlls/cryptui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/cryptui/tests/%) dlls/cryptui/tests: dlls/cryptui/tests/Makefile \$(MAKEDEP)
 dlls/cryptui/tests/Makefile: dlls/cryptui/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/cryptui/tests/Makefile"
 
@@ -14461,6 +14513,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10/Makefile: dlls/d3d10/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3d10/tests: __builddeps__
+dlls/d3d10/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3d10_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14472,8 +14527,9 @@ d3d10_test.res: d3d10_test.rc d3d10_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3d10/tests"
+	dlls/d3d10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3d10/tests/%) dlls/d3d10/tests: dlls/d3d10/tests/Makefile \$(MAKEDEP)
 dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10/tests/Makefile"
 
@@ -14491,6 +14547,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10core/Makefile: dlls/d3d10core/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10core/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3d10core/tests: __builddeps__
+dlls/d3d10core/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3d10core_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14502,8 +14561,9 @@ d3d10core_test.res: d3d10core_test.rc d3d10core_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10core/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3d10core/tests"
+	dlls/d3d10core/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3d10core/tests/%) dlls/d3d10core/tests: dlls/d3d10core/tests/Makefile \$(MAKEDEP)
 dlls/d3d10core/tests/Makefile: dlls/d3d10core/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d10core/tests/Makefile"
 
@@ -14521,6 +14581,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d8/Makefile: dlls/d3d8/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d8/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3d8/tests: __builddeps__
+dlls/d3d8/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3d8_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14532,8 +14595,9 @@ d3d8_test.res: d3d8_test.rc d3d8_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d8/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3d8/tests"
+	dlls/d3d8/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3d8/tests/%) dlls/d3d8/tests: dlls/d3d8/tests/Makefile \$(MAKEDEP)
 dlls/d3d8/tests/Makefile: dlls/d3d8/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d8/tests/Makefile"
 
@@ -14551,6 +14615,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d9/Makefile: dlls/d3d9/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d9/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3d9/tests: __builddeps__
+dlls/d3d9/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3d9_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14562,8 +14629,9 @@ d3d9_test.res: d3d9_test.rc d3d9_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d9/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3d9/tests"
+	dlls/d3d9/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3d9/tests/%) dlls/d3d9/tests: dlls/d3d9/tests/Makefile \$(MAKEDEP)
 dlls/d3d9/tests/Makefile: dlls/d3d9/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3d9/tests/Makefile"
 
@@ -14595,6 +14663,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3drm/Makefile: dlls/d3drm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3drm/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3drm/tests: __builddeps__
+dlls/d3drm/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3drm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14606,8 +14677,9 @@ d3drm_test.res: d3drm_test.rc d3drm_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3drm/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3drm/tests"
+	dlls/d3drm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3drm/tests/%) dlls/d3drm/tests: dlls/d3drm/tests/Makefile \$(MAKEDEP)
 dlls/d3drm/tests/Makefile: dlls/d3drm/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3drm/tests/Makefile"
 
@@ -14730,6 +14802,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_36/Makefile: dlls/d3dx9_36/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dx9_36/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3dx9_36/tests: __builddeps__
+dlls/d3dx9_36/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3dx9_36_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14741,8 +14816,9 @@ d3dx9_36_test.res: d3dx9_36_test.rc d3dx9_36_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dx9_36/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3dx9_36/tests"
+	dlls/d3dx9_36/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3dx9_36/tests/%) dlls/d3dx9_36/tests: dlls/d3dx9_36/tests/Makefile \$(MAKEDEP)
 dlls/d3dx9_36/tests/Makefile: dlls/d3dx9_36/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dx9_36/tests/Makefile"
 
@@ -14808,6 +14884,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dxof/Makefile: dlls/d3dxof/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3dxof/tests: __builddeps__
+dlls/d3dxof/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	d3dxof_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14819,8 +14898,9 @@ d3dxof_test.res: d3dxof_test.rc d3dxof_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dxof/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	d3dxof/tests"
+	dlls/d3dxof/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/d3dxof/tests/%) dlls/d3dxof/tests: dlls/d3dxof/tests/Makefile \$(MAKEDEP)
 dlls/d3dxof/tests/Makefile: dlls/d3dxof/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/d3dxof/tests/Makefile"
 
@@ -14874,6 +14954,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddraw/Makefile: dlls/ddraw/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ddraw/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ddraw/tests: __builddeps__
+dlls/ddraw/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ddraw_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14885,8 +14968,9 @@ ddraw_test.res: ddraw_test.rc ddraw_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ddraw/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ddraw/tests"
+	dlls/ddraw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ddraw/tests/%) dlls/ddraw/tests: dlls/ddraw/tests/Makefile \$(MAKEDEP)
 dlls/ddraw/tests/Makefile: dlls/ddraw/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ddraw/tests/Makefile"
 
@@ -14898,6 +14982,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddrawex/Makefile: dlls/ddrawex/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ddrawex/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ddrawex/tests: __builddeps__
+dlls/ddrawex/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ddrawex_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14909,8 +14996,9 @@ ddrawex_test.res: ddrawex_test.rc ddrawex_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ddrawex/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ddrawex/tests"
+	dlls/ddrawex/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ddrawex/tests/%) dlls/ddrawex/tests: dlls/ddrawex/tests/Makefile \$(MAKEDEP)
 dlls/ddrawex/tests/Makefile: dlls/ddrawex/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ddrawex/tests/Makefile"
 
@@ -14939,6 +15027,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dinput/Makefile: dlls/dinput/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dinput/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dinput/tests: __builddeps__
+dlls/dinput/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dinput_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -14950,8 +15041,9 @@ dinput_test.res: dinput_test.rc dinput_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dinput/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dinput/tests"
+	dlls/dinput/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dinput/tests/%) dlls/dinput/tests: dlls/dinput/tests/Makefile \$(MAKEDEP)
 dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dinput/tests/Makefile"
 
@@ -15017,6 +15109,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dmloader/Makefile: dlls/dmloader/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dmloader/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dmloader/tests: __builddeps__
+dlls/dmloader/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dmloader_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15028,8 +15123,9 @@ dmloader_test.res: dmloader_test.rc dmloader_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dmloader/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dmloader/tests"
+	dlls/dmloader/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dmloader/tests/%) dlls/dmloader/tests: dlls/dmloader/tests/Makefile \$(MAKEDEP)
 dlls/dmloader/tests/Makefile: dlls/dmloader/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dmloader/tests/Makefile"
 
@@ -15093,6 +15189,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dnsapi/Makefile: dlls/dnsapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dnsapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dnsapi/tests: __builddeps__
+dlls/dnsapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dnsapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15104,8 +15203,9 @@ dnsapi_test.res: dnsapi_test.rc dnsapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dnsapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dnsapi/tests"
+	dlls/dnsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dnsapi/tests/%) dlls/dnsapi/tests: dlls/dnsapi/tests/Makefile \$(MAKEDEP)
 dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dnsapi/tests/Makefile"
 
@@ -15137,6 +15237,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dplayx/Makefile: dlls/dplayx/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dplayx/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dplayx/tests: __builddeps__
+dlls/dplayx/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dplayx_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15148,8 +15251,9 @@ dplayx_test.res: dplayx_test.rc dplayx_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dplayx/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dplayx/tests"
+	dlls/dplayx/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dplayx/tests/%) dlls/dplayx/tests: dlls/dplayx/tests/Makefile \$(MAKEDEP)
 dlls/dplayx/tests/Makefile: dlls/dplayx/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dplayx/tests/Makefile"
 
@@ -15221,6 +15325,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dsound/Makefile: dlls/dsound/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dsound/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dsound/tests: __builddeps__
+dlls/dsound/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dsound_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15232,8 +15339,9 @@ dsound_test.res: dsound_test.rc dsound_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dsound/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dsound/tests"
+	dlls/dsound/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dsound/tests/%) dlls/dsound/tests: dlls/dsound/tests/Makefile \$(MAKEDEP)
 dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dsound/tests/Makefile"
 
@@ -15275,6 +15383,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxdiagn/Makefile: dlls/dxdiagn/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dxdiagn/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxdiagn/tests: __builddeps__
+dlls/dxdiagn/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dxdiagn_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15286,8 +15397,9 @@ dxdiagn_test.res: dxdiagn_test.rc dxdiagn_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxdiagn/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dxdiagn/tests"
+	dlls/dxdiagn/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dxdiagn/tests/%) dlls/dxdiagn/tests: dlls/dxdiagn/tests/Makefile \$(MAKEDEP)
 dlls/dxdiagn/tests/Makefile: dlls/dxdiagn/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dxdiagn/tests/Makefile"
 
@@ -15337,6 +15449,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxgi/Makefile: dlls/dxgi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/dxgi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxgi/tests: __builddeps__
+dlls/dxgi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	dxgi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15348,8 +15463,9 @@ dxgi_test.res: dxgi_test.rc dxgi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxgi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	dxgi/tests"
+	dlls/dxgi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/dxgi/tests/%) dlls/dxgi/tests: dlls/dxgi/tests/Makefile \$(MAKEDEP)
 dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/dxgi/tests/Makefile"
 
@@ -15393,6 +15509,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/fusion/Makefile: dlls/fusion/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/fusion/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/fusion/tests: __builddeps__
+dlls/fusion/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	fusion_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15404,8 +15523,9 @@ fusion_test.res: fusion_test.rc fusion_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/fusion/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	fusion/tests"
+	dlls/fusion/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/fusion/tests/%) dlls/fusion/tests: dlls/fusion/tests/Makefile \$(MAKEDEP)
 dlls/fusion/tests/Makefile: dlls/fusion/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/fusion/tests/Makefile"
 
@@ -15439,6 +15559,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdi32/Makefile: dlls/gdi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/gdi32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/gdi32/tests: __builddeps__
+dlls/gdi32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	gdi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15450,8 +15573,9 @@ gdi32_test.res: gdi32_test.rc gdi32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdi32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	gdi32/tests"
+	dlls/gdi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/gdi32/tests/%) dlls/gdi32/tests: dlls/gdi32/tests/Makefile \$(MAKEDEP)
 dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
 
@@ -15469,6 +15593,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdiplus/Makefile: dlls/gdiplus/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/gdiplus/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/gdiplus/tests: __builddeps__
+dlls/gdiplus/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	gdiplus_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15480,8 +15607,9 @@ gdiplus_test.res: gdiplus_test.rc gdiplus_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdiplus/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	gdiplus/tests"
+	dlls/gdiplus/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/gdiplus/tests/%) dlls/gdiplus/tests: dlls/gdiplus/tests/Makefile \$(MAKEDEP)
 dlls/gdiplus/tests/Makefile: dlls/gdiplus/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/gdiplus/tests/Makefile"
 
@@ -15559,6 +15687,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/hlink/Makefile: dlls/hlink/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/hlink/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/hlink/tests: __builddeps__
+dlls/hlink/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	hlink_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15570,8 +15701,9 @@ hlink_test.res: hlink_test.rc hlink_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/hlink/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	hlink/tests"
+	dlls/hlink/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/hlink/tests/%) dlls/hlink/tests: dlls/hlink/tests/Makefile \$(MAKEDEP)
 dlls/hlink/tests/Makefile: dlls/hlink/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/hlink/tests/Makefile"
 
@@ -15637,6 +15769,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imagehlp/Makefile: dlls/imagehlp/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/imagehlp/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/imagehlp/tests: __builddeps__
+dlls/imagehlp/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	imagehlp_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15648,8 +15783,9 @@ imagehlp_test.res: imagehlp_test.rc imagehlp_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imagehlp/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	imagehlp/tests"
+	dlls/imagehlp/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/imagehlp/tests/%) dlls/imagehlp/tests: dlls/imagehlp/tests/Makefile \$(MAKEDEP)
 dlls/imagehlp/tests/Makefile: dlls/imagehlp/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/imagehlp/tests/Makefile"
 
@@ -15675,6 +15811,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imm32/Makefile: dlls/imm32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/imm32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/imm32/tests: __builddeps__
+dlls/imm32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	imm32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15686,8 +15825,9 @@ imm32_test.res: imm32_test.rc imm32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imm32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	imm32/tests"
+	dlls/imm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/imm32/tests/%) dlls/imm32/tests: dlls/imm32/tests/Makefile \$(MAKEDEP)
 dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/imm32/tests/Makefile"
 
@@ -15705,6 +15845,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetcomm/Makefile: dlls/inetcomm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/inetcomm/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/inetcomm/tests: __builddeps__
+dlls/inetcomm/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	inetcomm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15716,8 +15859,9 @@ inetcomm_test.res: inetcomm_test.rc inetcomm_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/inetcomm/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	inetcomm/tests"
+	dlls/inetcomm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/inetcomm/tests/%) dlls/inetcomm/tests: dlls/inetcomm/tests/Makefile \$(MAKEDEP)
 dlls/inetcomm/tests/Makefile: dlls/inetcomm/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/inetcomm/tests/Makefile"
 
@@ -15729,6 +15873,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetmib1/Makefile: dlls/inetmib1/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/inetmib1/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/inetmib1/tests: __builddeps__
+dlls/inetmib1/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	inetmib1_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15740,8 +15887,9 @@ inetmib1_test.res: inetmib1_test.rc inetmib1_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/inetmib1/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	inetmib1/tests"
+	dlls/inetmib1/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/inetmib1/tests/%) dlls/inetmib1/tests: dlls/inetmib1/tests/Makefile \$(MAKEDEP)
 dlls/inetmib1/tests/Makefile: dlls/inetmib1/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/inetmib1/tests/Makefile"
 
@@ -15753,6 +15901,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/infosoft/Makefile: dlls/infosoft/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/infosoft/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/infosoft/tests: __builddeps__
+dlls/infosoft/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	infosoft_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15764,8 +15915,9 @@ infosoft_test.res: infosoft_test.rc infosoft_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/infosoft/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	infosoft/tests"
+	dlls/infosoft/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/infosoft/tests/%) dlls/infosoft/tests: dlls/infosoft/tests/Makefile \$(MAKEDEP)
 dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/infosoft/tests/Makefile"
 
@@ -15807,6 +15959,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/iphlpapi/Makefile: dlls/iphlpapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/iphlpapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/iphlpapi/tests: __builddeps__
+dlls/iphlpapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	iphlpapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15818,8 +15973,9 @@ iphlpapi_test.res: iphlpapi_test.rc iphlpapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/iphlpapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	iphlpapi/tests"
+	dlls/iphlpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/iphlpapi/tests/%) dlls/iphlpapi/tests: dlls/iphlpapi/tests/Makefile \$(MAKEDEP)
 dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/iphlpapi/tests/Makefile"
 
@@ -15839,6 +15995,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/itss/Makefile: dlls/itss/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/itss/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/itss/tests: __builddeps__
+dlls/itss/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	itss_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15850,8 +16009,9 @@ itss_test.res: itss_test.rc itss_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/itss/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	itss/tests"
+	dlls/itss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/itss/tests/%) dlls/itss/tests: dlls/itss/tests/Makefile \$(MAKEDEP)
 dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/itss/tests/Makefile"
 
@@ -15863,6 +16023,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/jscript/Makefile: dlls/jscript/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/jscript/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/jscript/tests: __builddeps__
+dlls/jscript/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	jscript_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15874,8 +16037,9 @@ jscript_test.res: jscript_test.rc jscript_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/jscript/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	jscript/tests"
+	dlls/jscript/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/jscript/tests/%) dlls/jscript/tests: dlls/jscript/tests/Makefile \$(MAKEDEP)
 dlls/jscript/tests/Makefile: dlls/jscript/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/jscript/tests/Makefile"
 
@@ -15893,6 +16057,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/kernel32/Makefile: dlls/kernel32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/kernel32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/kernel32/tests: __builddeps__
+dlls/kernel32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	kernel32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15904,8 +16071,9 @@ kernel32_test.res: kernel32_test.rc kernel32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/kernel32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	kernel32/tests"
+	dlls/kernel32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/kernel32/tests/%) dlls/kernel32/tests: dlls/kernel32/tests/Makefile \$(MAKEDEP)
 dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
 
@@ -15962,6 +16130,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localspl/Makefile: dlls/localspl/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/localspl/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/localspl/tests: __builddeps__
+dlls/localspl/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	localspl_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15973,8 +16144,9 @@ localspl_test.res: localspl_test.rc localspl_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/localspl/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	localspl/tests"
+	dlls/localspl/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/localspl/tests/%) dlls/localspl/tests: dlls/localspl/tests/Makefile \$(MAKEDEP)
 dlls/localspl/tests/Makefile: dlls/localspl/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/localspl/tests/Makefile"
 
@@ -15986,6 +16158,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localui/Makefile: dlls/localui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/localui/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/localui/tests: __builddeps__
+dlls/localui/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	localui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -15997,8 +16172,9 @@ localui_test.res: localui_test.rc localui_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/localui/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	localui/tests"
+	dlls/localui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/localui/tests/%) dlls/localui/tests: dlls/localui/tests/Makefile \$(MAKEDEP)
 dlls/localui/tests/Makefile: dlls/localui/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/localui/tests/Makefile"
 
@@ -16016,6 +16192,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/lz32/Makefile: dlls/lz32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/lz32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/lz32/tests: __builddeps__
+dlls/lz32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	lz32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16027,8 +16206,9 @@ lz32_test.res: lz32_test.rc lz32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/lz32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	lz32/tests"
+	dlls/lz32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/lz32/tests/%) dlls/lz32/tests: dlls/lz32/tests/Makefile \$(MAKEDEP)
 dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
 
@@ -16054,6 +16234,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mapi32/Makefile: dlls/mapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mapi32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mapi32/tests: __builddeps__
+dlls/mapi32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16065,8 +16248,9 @@ mapi32_test.res: mapi32_test.rc mapi32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mapi32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mapi32/tests"
+	dlls/mapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mapi32/tests/%) dlls/mapi32/tests: dlls/mapi32/tests/Makefile \$(MAKEDEP)
 dlls/mapi32/tests/Makefile: dlls/mapi32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mapi32/tests/Makefile"
 
@@ -16140,6 +16324,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mlang/Makefile: dlls/mlang/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mlang/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mlang/tests: __builddeps__
+dlls/mlang/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mlang_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16151,8 +16338,9 @@ mlang_test.res: mlang_test.rc mlang_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mlang/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mlang/tests"
+	dlls/mlang/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mlang/tests/%) dlls/mlang/tests: dlls/mlang/tests/Makefile \$(MAKEDEP)
 dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mlang/tests/Makefile"
 
@@ -16164,6 +16352,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mmdevapi/Makefile: dlls/mmdevapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mmdevapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mmdevapi/tests: __builddeps__
+dlls/mmdevapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mmdevapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16175,8 +16366,9 @@ mmdevapi_test.res: mmdevapi_test.rc mmdevapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mmdevapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mmdevapi/tests"
+	dlls/mmdevapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mmdevapi/tests/%) dlls/mmdevapi/tests: dlls/mmdevapi/tests/Makefile \$(MAKEDEP)
 dlls/mmdevapi/tests/Makefile: dlls/mmdevapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mmdevapi/tests/Makefile"
 
@@ -16278,6 +16470,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msacm32/Makefile: dlls/msacm32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msacm32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msacm32/tests: __builddeps__
+dlls/msacm32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msacm32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16289,8 +16484,9 @@ msacm32_test.res: msacm32_test.rc msacm32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msacm32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msacm32/tests"
+	dlls/msacm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msacm32/tests/%) dlls/msacm32/tests: dlls/msacm32/tests/Makefile \$(MAKEDEP)
 dlls/msacm32/tests/Makefile: dlls/msacm32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msacm32/tests/Makefile"
 
@@ -16324,6 +16520,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mscms/Makefile: dlls/mscms/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mscms/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mscms/tests: __builddeps__
+dlls/mscms/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mscms_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16335,8 +16534,9 @@ mscms_test.res: mscms_test.rc mscms_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mscms/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mscms/tests"
+	dlls/mscms/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mscms/tests/%) dlls/mscms/tests: dlls/mscms/tests/Makefile \$(MAKEDEP)
 dlls/mscms/tests/Makefile: dlls/mscms/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mscms/tests/Makefile"
 
@@ -16356,6 +16556,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msctf/Makefile: dlls/msctf/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msctf/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msctf/tests: __builddeps__
+dlls/msctf/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msctf_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16367,8 +16570,9 @@ msctf_test.res: msctf_test.rc msctf_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msctf/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msctf/tests"
+	dlls/msctf/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msctf/tests/%) dlls/msctf/tests: dlls/msctf/tests/Makefile \$(MAKEDEP)
 dlls/msctf/tests/Makefile: dlls/msctf/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msctf/tests/Makefile"
 
@@ -16440,6 +16644,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mshtml/Makefile: dlls/mshtml/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mshtml/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mshtml/tests: __builddeps__
+dlls/mshtml/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mshtml_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16451,8 +16658,9 @@ mshtml_test.res: mshtml_test.rc mshtml_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mshtml/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mshtml/tests"
+	dlls/mshtml/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mshtml/tests/%) dlls/mshtml/tests: dlls/mshtml/tests/Makefile \$(MAKEDEP)
 dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mshtml/tests/Makefile"
 
@@ -16470,6 +16678,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msi/Makefile: dlls/msi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msi/tests: __builddeps__
+dlls/msi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16481,8 +16692,9 @@ msi_test.res: msi_test.rc msi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msi/tests"
+	dlls/msi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msi/tests/%) dlls/msi/tests: dlls/msi/tests/Makefile \$(MAKEDEP)
 dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msi/tests/Makefile"
 
@@ -16564,6 +16776,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mstask/Makefile: dlls/mstask/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/mstask/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mstask/tests: __builddeps__
+dlls/mstask/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	mstask_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16575,8 +16790,9 @@ mstask_test.res: mstask_test.rc mstask_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mstask/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	mstask/tests"
+	dlls/mstask/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/mstask/tests/%) dlls/mstask/tests: dlls/mstask/tests/Makefile \$(MAKEDEP)
 dlls/mstask/tests/Makefile: dlls/mstask/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/mstask/tests/Makefile"
 
@@ -16616,6 +16832,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt/Makefile: dlls/msvcrt/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrt/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msvcrt/tests: __builddeps__
+dlls/msvcrt/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msvcrt_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16627,8 +16846,9 @@ msvcrt_test.res: msvcrt_test.rc msvcrt_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrt/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msvcrt/tests"
+	dlls/msvcrt/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msvcrt/tests/%) dlls/msvcrt/tests: dlls/msvcrt/tests/Makefile \$(MAKEDEP)
 dlls/msvcrt/tests/Makefile: dlls/msvcrt/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrt/tests/Makefile"
 
@@ -16674,6 +16894,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrtd/Makefile: dlls/msvcrtd/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrtd/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msvcrtd/tests: __builddeps__
+dlls/msvcrtd/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msvcrtd_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16685,8 +16908,9 @@ msvcrtd_test.res: msvcrtd_test.rc msvcrtd_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrtd/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msvcrtd/tests"
+	dlls/msvcrtd/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msvcrtd/tests/%) dlls/msvcrtd/tests: dlls/msvcrtd/tests/Makefile \$(MAKEDEP)
 dlls/msvcrtd/tests/Makefile: dlls/msvcrtd/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvcrtd/tests/Makefile"
 
@@ -16704,6 +16928,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvfw32/Makefile: dlls/msvfw32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msvfw32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msvfw32/tests: __builddeps__
+dlls/msvfw32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msvfw32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16715,8 +16942,9 @@ msvfw32_test.res: msvfw32_test.rc msvfw32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvfw32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msvfw32/tests"
+	dlls/msvfw32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msvfw32/tests/%) dlls/msvfw32/tests: dlls/msvfw32/tests/Makefile \$(MAKEDEP)
 dlls/msvfw32/tests/Makefile: dlls/msvfw32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msvfw32/tests/Makefile"
 
@@ -16758,6 +16986,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msxml3/Makefile: dlls/msxml3/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/msxml3/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msxml3/tests: __builddeps__
+dlls/msxml3/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	msxml3_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16769,8 +17000,9 @@ msxml3_test.res: msxml3_test.rc msxml3_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msxml3/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	msxml3/tests"
+	dlls/msxml3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/msxml3/tests/%) dlls/msxml3/tests: dlls/msxml3/tests/Makefile \$(MAKEDEP)
 dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/msxml3/tests/Makefile"
 
@@ -16810,6 +17042,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/netapi32/Makefile: dlls/netapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/netapi32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/netapi32/tests: __builddeps__
+dlls/netapi32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	netapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16821,8 +17056,9 @@ netapi32_test.res: netapi32_test.rc netapi32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/netapi32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	netapi32/tests"
+	dlls/netapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/netapi32/tests/%) dlls/netapi32/tests: dlls/netapi32/tests/Makefile \$(MAKEDEP)
 dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/netapi32/tests/Makefile"
 
@@ -16854,6 +17090,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdll/Makefile: dlls/ntdll/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdll/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ntdll/tests: __builddeps__
+dlls/ntdll/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ntdll_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16865,8 +17104,9 @@ ntdll_test.res: ntdll_test.rc ntdll_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdll/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ntdll/tests"
+	dlls/ntdll/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ntdll/tests/%) dlls/ntdll/tests: dlls/ntdll/tests/Makefile \$(MAKEDEP)
 dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdll/tests/Makefile"
 
@@ -16884,6 +17124,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdsapi/Makefile: dlls/ntdsapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdsapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ntdsapi/tests: __builddeps__
+dlls/ntdsapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ntdsapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16895,8 +17138,9 @@ ntdsapi_test.res: ntdsapi_test.rc ntdsapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdsapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ntdsapi/tests"
+	dlls/ntdsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ntdsapi/tests/%) dlls/ntdsapi/tests: dlls/ntdsapi/tests/Makefile \$(MAKEDEP)
 dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntdsapi/tests/Makefile"
 
@@ -16922,6 +17166,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntprint/Makefile: dlls/ntprint/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ntprint/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ntprint/tests: __builddeps__
+dlls/ntprint/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ntprint_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16933,8 +17180,9 @@ ntprint_test.res: ntprint_test.rc ntprint_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntprint/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ntprint/tests"
+	dlls/ntprint/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ntprint/tests/%) dlls/ntprint/tests: dlls/ntprint/tests/Makefile \$(MAKEDEP)
 dlls/ntprint/tests/Makefile: dlls/ntprint/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ntprint/tests/Makefile"
 
@@ -16974,6 +17222,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/odbccp32/Makefile: dlls/odbccp32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/odbccp32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/odbccp32/tests: __builddeps__
+dlls/odbccp32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	odbccp32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -16985,8 +17236,9 @@ odbccp32_test.res: odbccp32_test.rc odbccp32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/odbccp32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	odbccp32/tests"
+	dlls/odbccp32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/odbccp32/tests/%) dlls/odbccp32/tests: dlls/odbccp32/tests/Makefile \$(MAKEDEP)
 dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/odbccp32/tests/Makefile"
 
@@ -17052,6 +17304,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole32/Makefile: dlls/ole32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ole32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ole32/tests: __builddeps__
+dlls/ole32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ole32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17063,8 +17318,9 @@ ole32_test.res: ole32_test.rc ole32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ole32/tests"
+	dlls/ole32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ole32/tests/%) dlls/ole32/tests: dlls/ole32/tests/Makefile \$(MAKEDEP)
 dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ole32/tests/Makefile"
 
@@ -17082,6 +17338,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleacc/Makefile: dlls/oleacc/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oleacc/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/oleacc/tests: __builddeps__
+dlls/oleacc/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	oleacc_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17093,8 +17352,9 @@ oleacc_test.res: oleacc_test.rc oleacc_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleacc/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	oleacc/tests"
+	dlls/oleacc/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/oleacc/tests/%) dlls/oleacc/tests: dlls/oleacc/tests/Makefile \$(MAKEDEP)
 dlls/oleacc/tests/Makefile: dlls/oleacc/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oleacc/tests/Makefile"
 
@@ -17112,6 +17372,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleaut32/Makefile: dlls/oleaut32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oleaut32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/oleaut32/tests: __builddeps__
+dlls/oleaut32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	oleaut32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17123,8 +17386,9 @@ oleaut32_test.res: oleaut32_test.rc oleaut32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleaut32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	oleaut32/tests"
+	dlls/oleaut32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/oleaut32/tests/%) dlls/oleaut32/tests: dlls/oleaut32/tests/Makefile \$(MAKEDEP)
 dlls/oleaut32/tests/Makefile: dlls/oleaut32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oleaut32/tests/Makefile"
 
@@ -17158,6 +17422,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oledb32/Makefile: dlls/oledb32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/oledb32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/oledb32/tests: __builddeps__
+dlls/oledb32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	oledb32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17169,8 +17436,9 @@ oledb32_test.res: oledb32_test.rc oledb32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oledb32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	oledb32/tests"
+	dlls/oledb32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/oledb32/tests/%) dlls/oledb32/tests: dlls/oledb32/tests/Makefile \$(MAKEDEP)
 dlls/oledb32/tests/Makefile: dlls/oledb32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/oledb32/tests/Makefile"
 
@@ -17254,6 +17522,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/opengl32/Makefile: dlls/opengl32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/opengl32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/opengl32/tests: __builddeps__
+dlls/opengl32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	opengl32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17265,8 +17536,9 @@ opengl32_test.res: opengl32_test.rc opengl32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/opengl32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	opengl32/tests"
+	dlls/opengl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/opengl32/tests/%) dlls/opengl32/tests: dlls/opengl32/tests/Makefile \$(MAKEDEP)
 dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/opengl32/tests/Makefile"
 
@@ -17284,6 +17556,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/pdh/Makefile: dlls/pdh/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/pdh/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/pdh/tests: __builddeps__
+dlls/pdh/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	pdh_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17295,8 +17570,9 @@ pdh_test.res: pdh_test.rc pdh_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/pdh/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	pdh/tests"
+	dlls/pdh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/pdh/tests/%) dlls/pdh/tests: dlls/pdh/tests/Makefile \$(MAKEDEP)
 dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/pdh/tests/Makefile"
 
@@ -17352,6 +17628,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/psapi/Makefile: dlls/psapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/psapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/psapi/tests: __builddeps__
+dlls/psapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	psapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17363,8 +17642,9 @@ psapi_test.res: psapi_test.rc psapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/psapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	psapi/tests"
+	dlls/psapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/psapi/tests/%) dlls/psapi/tests: dlls/psapi/tests/Makefile \$(MAKEDEP)
 dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/psapi/tests/Makefile"
 
@@ -17392,6 +17672,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qedit/Makefile: dlls/qedit/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/qedit/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/qedit/tests: __builddeps__
+dlls/qedit/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	qedit_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17403,8 +17686,9 @@ qedit_test.res: qedit_test.rc qedit_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/qedit/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	qedit/tests"
+	dlls/qedit/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/qedit/tests/%) dlls/qedit/tests: dlls/qedit/tests/Makefile \$(MAKEDEP)
 dlls/qedit/tests/Makefile: dlls/qedit/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/qedit/tests/Makefile"
 
@@ -17416,6 +17700,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qmgr/Makefile: dlls/qmgr/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/qmgr/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/qmgr/tests: __builddeps__
+dlls/qmgr/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	qmgr_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17427,8 +17714,9 @@ qmgr_test.res: qmgr_test.rc qmgr_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/qmgr/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	qmgr/tests"
+	dlls/qmgr/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/qmgr/tests/%) dlls/qmgr/tests: dlls/qmgr/tests/Makefile \$(MAKEDEP)
 dlls/qmgr/tests/Makefile: dlls/qmgr/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/qmgr/tests/Makefile"
 
@@ -17454,6 +17742,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/quartz/Makefile: dlls/quartz/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/quartz/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/quartz/tests: __builddeps__
+dlls/quartz/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	quartz_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17465,8 +17756,9 @@ quartz_test.res: quartz_test.rc quartz_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/quartz/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	quartz/tests"
+	dlls/quartz/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/quartz/tests/%) dlls/quartz/tests: dlls/quartz/tests/Makefile \$(MAKEDEP)
 dlls/quartz/tests/Makefile: dlls/quartz/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/quartz/tests/Makefile"
 
@@ -17500,6 +17792,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasapi32/Makefile: dlls/rasapi32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rasapi32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rasapi32/tests: __builddeps__
+dlls/rasapi32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	rasapi32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17511,8 +17806,9 @@ rasapi32_test.res: rasapi32_test.rc rasapi32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rasapi32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	rasapi32/tests"
+	dlls/rasapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/rasapi32/tests/%) dlls/rasapi32/tests: dlls/rasapi32/tests/Makefile \$(MAKEDEP)
 dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rasapi32/tests/Makefile"
 
@@ -17558,6 +17854,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched20/Makefile: dlls/riched20/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/riched20/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/riched20/tests: __builddeps__
+dlls/riched20/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	riched20_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17569,8 +17868,9 @@ riched20_test.res: riched20_test.rc riched20_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/riched20/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	riched20/tests"
+	dlls/riched20/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/riched20/tests/%) dlls/riched20/tests: dlls/riched20/tests/Makefile \$(MAKEDEP)
 dlls/riched20/tests/Makefile: dlls/riched20/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/riched20/tests/Makefile"
 
@@ -17582,6 +17882,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched32/Makefile: dlls/riched32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/riched32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/riched32/tests: __builddeps__
+dlls/riched32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	riched32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17593,8 +17896,9 @@ riched32_test.res: riched32_test.rc riched32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/riched32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	riched32/tests"
+	dlls/riched32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/riched32/tests/%) dlls/riched32/tests: dlls/riched32/tests/Makefile \$(MAKEDEP)
 dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/riched32/tests/Makefile"
 
@@ -17612,6 +17916,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rpcrt4/Makefile: dlls/rpcrt4/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rpcrt4/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rpcrt4/tests: __builddeps__
+dlls/rpcrt4/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	rpcrt4_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17623,8 +17930,9 @@ rpcrt4_test.res: rpcrt4_test.rc rpcrt4_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rpcrt4/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	rpcrt4/tests"
+	dlls/rpcrt4/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/rpcrt4/tests/%) dlls/rpcrt4/tests: dlls/rpcrt4/tests/Makefile \$(MAKEDEP)
 dlls/rpcrt4/tests/Makefile: dlls/rpcrt4/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rpcrt4/tests/Makefile"
 
@@ -17650,6 +17958,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rsaenh/Makefile: dlls/rsaenh/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/rsaenh/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rsaenh/tests: __builddeps__
+dlls/rsaenh/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	rsaenh_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17661,8 +17972,9 @@ rsaenh_test.res: rsaenh_test.rc rsaenh_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rsaenh/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	rsaenh/tests"
+	dlls/rsaenh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/rsaenh/tests/%) dlls/rsaenh/tests: dlls/rsaenh/tests/Makefile \$(MAKEDEP)
 dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
 
@@ -17704,6 +18016,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/schannel/Makefile: dlls/schannel/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/schannel/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/schannel/tests: __builddeps__
+dlls/schannel/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	schannel_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17715,8 +18030,9 @@ schannel_test.res: schannel_test.rc schannel_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/schannel/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	schannel/tests"
+	dlls/schannel/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/schannel/tests/%) dlls/schannel/tests: dlls/schannel/tests/Makefile \$(MAKEDEP)
 dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/schannel/tests/Makefile"
 
@@ -17734,6 +18050,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/secur32/Makefile: dlls/secur32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/secur32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/secur32/tests: __builddeps__
+dlls/secur32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	secur32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17745,8 +18064,9 @@ secur32_test.res: secur32_test.rc secur32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/secur32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	secur32/tests"
+	dlls/secur32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/secur32/tests/%) dlls/secur32/tests: dlls/secur32/tests/Makefile \$(MAKEDEP)
 dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/secur32/tests/Makefile"
 
@@ -17786,6 +18106,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/serialui/Makefile: dlls/serialui/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/serialui/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/serialui/tests: __builddeps__
+dlls/serialui/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	serialui_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17797,8 +18120,9 @@ serialui_test.res: serialui_test.rc serialui_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/serialui/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	serialui/tests"
+	dlls/serialui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/serialui/tests/%) dlls/serialui/tests: dlls/serialui/tests/Makefile \$(MAKEDEP)
 dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/serialui/tests/Makefile"
 
@@ -17816,6 +18140,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/setupapi/Makefile: dlls/setupapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/setupapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/setupapi/tests: __builddeps__
+dlls/setupapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	setupapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17827,8 +18154,9 @@ setupapi_test.res: setupapi_test.rc setupapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/setupapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	setupapi/tests"
+	dlls/setupapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/setupapi/tests/%) dlls/setupapi/tests: dlls/setupapi/tests/Makefile \$(MAKEDEP)
 dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/setupapi/tests/Makefile"
 
@@ -17890,6 +18218,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shdocvw/Makefile: dlls/shdocvw/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shdocvw/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/shdocvw/tests: __builddeps__
+dlls/shdocvw/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	shdocvw_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17901,8 +18232,9 @@ shdocvw_test.res: shdocvw_test.rc shdocvw_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shdocvw/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	shdocvw/tests"
+	dlls/shdocvw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/shdocvw/tests/%) dlls/shdocvw/tests: dlls/shdocvw/tests/Makefile \$(MAKEDEP)
 dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shdocvw/tests/Makefile"
 
@@ -17928,6 +18260,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shell32/Makefile: dlls/shell32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shell32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/shell32/tests: __builddeps__
+dlls/shell32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	shell32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17939,8 +18274,9 @@ shell32_test.res: shell32_test.rc shell32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shell32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	shell32/tests"
+	dlls/shell32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/shell32/tests/%) dlls/shell32/tests: dlls/shell32/tests/Makefile \$(MAKEDEP)
 dlls/shell32/tests/Makefile: dlls/shell32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shell32/tests/Makefile"
 
@@ -17972,6 +18308,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shlwapi/Makefile: dlls/shlwapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/shlwapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/shlwapi/tests: __builddeps__
+dlls/shlwapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	shlwapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -17983,8 +18322,9 @@ shlwapi_test.res: shlwapi_test.rc shlwapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shlwapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	shlwapi/tests"
+	dlls/shlwapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/shlwapi/tests/%) dlls/shlwapi/tests: dlls/shlwapi/tests/Makefile \$(MAKEDEP)
 dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/shlwapi/tests/Makefile"
 
@@ -18024,6 +18364,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/snmpapi/Makefile: dlls/snmpapi/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/snmpapi/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/snmpapi/tests: __builddeps__
+dlls/snmpapi/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	snmpapi_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18035,8 +18378,9 @@ snmpapi_test.res: snmpapi_test.rc snmpapi_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/snmpapi/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	snmpapi/tests"
+	dlls/snmpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/snmpapi/tests/%) dlls/snmpapi/tests: dlls/snmpapi/tests/Makefile \$(MAKEDEP)
 dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/snmpapi/tests/Makefile"
 
@@ -18070,6 +18414,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/spoolss/Makefile: dlls/spoolss/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/spoolss/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/spoolss/tests: __builddeps__
+dlls/spoolss/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	spoolss_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18081,8 +18428,9 @@ spoolss_test.res: spoolss_test.rc spoolss_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/spoolss/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	spoolss/tests"
+	dlls/spoolss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/spoolss/tests/%) dlls/spoolss/tests: dlls/spoolss/tests/Makefile \$(MAKEDEP)
 dlls/spoolss/tests/Makefile: dlls/spoolss/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/spoolss/tests/Makefile"
 
@@ -18116,6 +18464,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/sti/Makefile: dlls/sti/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/sti/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/sti/tests: __builddeps__
+dlls/sti/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	sti_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18127,8 +18478,9 @@ sti_test.res: sti_test.rc sti_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sti/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	sti/tests"
+	dlls/sti/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/sti/tests/%) dlls/sti/tests: dlls/sti/tests/Makefile \$(MAKEDEP)
 dlls/sti/tests/Makefile: dlls/sti/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/sti/tests/Makefile"
 
@@ -18242,6 +18594,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/twain_32/Makefile: dlls/twain_32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/twain_32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/twain_32/tests: __builddeps__
+dlls/twain_32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	twain_32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18253,8 +18608,9 @@ twain_32_test.res: twain_32_test.rc twain_32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/twain_32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	twain_32/tests"
+	dlls/twain_32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/twain_32/tests/%) dlls/twain_32/tests: dlls/twain_32/tests/Makefile \$(MAKEDEP)
 dlls/twain_32/tests/Makefile: dlls/twain_32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/twain_32/tests/Makefile"
 
@@ -18316,6 +18672,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/urlmon/Makefile: dlls/urlmon/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/urlmon/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/urlmon/tests: __builddeps__
+dlls/urlmon/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	urlmon_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18327,8 +18686,9 @@ urlmon_test.res: urlmon_test.rc urlmon_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/urlmon/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	urlmon/tests"
+	dlls/urlmon/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/urlmon/tests/%) dlls/urlmon/tests: dlls/urlmon/tests/Makefile \$(MAKEDEP)
 dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/urlmon/tests/Makefile"
 
@@ -18354,6 +18714,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/user32/Makefile: dlls/user32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/user32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/user32/tests: __builddeps__
+dlls/user32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	user32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18365,8 +18728,9 @@ user32_test.res: user32_test.rc user32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/user32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	user32/tests"
+	dlls/user32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/user32/tests/%) dlls/user32/tests: dlls/user32/tests/Makefile \$(MAKEDEP)
 dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/user32/tests/Makefile"
 
@@ -18384,6 +18748,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/userenv/Makefile: dlls/userenv/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/userenv/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/userenv/tests: __builddeps__
+dlls/userenv/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	userenv_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18395,8 +18762,9 @@ userenv_test.res: userenv_test.rc userenv_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/userenv/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	userenv/tests"
+	dlls/userenv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/userenv/tests/%) dlls/userenv/tests: dlls/userenv/tests/Makefile \$(MAKEDEP)
 dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/userenv/tests/Makefile"
 
@@ -18414,6 +18782,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/usp10/Makefile: dlls/usp10/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/usp10/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/usp10/tests: __builddeps__
+dlls/usp10/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	usp10_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18425,8 +18796,9 @@ usp10_test.res: usp10_test.rc usp10_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/usp10/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	usp10/tests"
+	dlls/usp10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/usp10/tests/%) dlls/usp10/tests: dlls/usp10/tests/Makefile \$(MAKEDEP)
 dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
 
@@ -18460,6 +18832,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/uxtheme/Makefile: dlls/uxtheme/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/uxtheme/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/uxtheme/tests: __builddeps__
+dlls/uxtheme/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	uxtheme_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18471,8 +18846,9 @@ uxtheme_test.res: uxtheme_test.rc uxtheme_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/uxtheme/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	uxtheme/tests"
+	dlls/uxtheme/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/uxtheme/tests/%) dlls/uxtheme/tests: dlls/uxtheme/tests/Makefile \$(MAKEDEP)
 dlls/uxtheme/tests/Makefile: dlls/uxtheme/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/uxtheme/tests/Makefile"
 
@@ -18520,6 +18896,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/version/Makefile: dlls/version/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/version/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/version/tests: __builddeps__
+dlls/version/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	version_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18531,8 +18910,9 @@ version_test.res: version_test.rc version_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/version/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	version/tests"
+	dlls/version/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/version/tests/%) dlls/version/tests: dlls/version/tests/Makefile \$(MAKEDEP)
 dlls/version/tests/Makefile: dlls/version/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/version/tests/Makefile"
 
@@ -18654,6 +19034,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/windowscodecs/Makefile: dlls/windowscodecs/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/windowscodecs/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/windowscodecs/tests: __builddeps__
+dlls/windowscodecs/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	windowscodecs_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18665,8 +19048,9 @@ windowscodecs_test.res: windowscodecs_test.rc windowscodecs_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/windowscodecs/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	windowscodecs/tests"
+	dlls/windowscodecs/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/windowscodecs/tests/%) dlls/windowscodecs/tests: dlls/windowscodecs/tests/Makefile \$(MAKEDEP)
 dlls/windowscodecs/tests/Makefile: dlls/windowscodecs/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/windowscodecs/tests/Makefile"
 
@@ -18842,6 +19226,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winhttp/Makefile: dlls/winhttp/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winhttp/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winhttp/tests: __builddeps__
+dlls/winhttp/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	winhttp_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18853,8 +19240,9 @@ winhttp_test.res: winhttp_test.rc winhttp_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winhttp/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	winhttp/tests"
+	dlls/winhttp/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/winhttp/tests/%) dlls/winhttp/tests: dlls/winhttp/tests/Makefile \$(MAKEDEP)
 dlls/winhttp/tests/Makefile: dlls/winhttp/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winhttp/tests/Makefile"
 
@@ -18872,6 +19260,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wininet/Makefile: dlls/wininet/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wininet/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wininet/tests: __builddeps__
+dlls/wininet/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	wininet_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18883,8 +19274,9 @@ wininet_test.res: wininet_test.rc wininet_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wininet/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	wininet/tests"
+	dlls/wininet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/wininet/tests/%) dlls/wininet/tests: dlls/wininet/tests/Makefile \$(MAKEDEP)
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wininet/tests/Makefile"
 
@@ -18902,6 +19294,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winmm/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winmm/tests: __builddeps__
+dlls/winmm/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	winmm_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18913,8 +19308,9 @@ winmm_test.res: winmm_test.rc winmm_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winmm/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	winmm/tests"
+	dlls/winmm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/winmm/tests/%) dlls/winmm/tests: dlls/winmm/tests/Makefile \$(MAKEDEP)
 dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winmm/tests/Makefile"
 
@@ -18985,6 +19381,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winspool.drv/Makefile: dlls/winspool.drv/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/winspool.drv/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winspool.drv/tests: __builddeps__
+dlls/winspool.drv/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	winspool.drv_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -18996,8 +19395,9 @@ winspool.drv_test.res: winspool.drv_test.rc winspool.drv_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winspool.drv/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	winspool.drv/tests"
+	dlls/winspool.drv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/winspool.drv/tests/%) dlls/winspool.drv/tests: dlls/winspool.drv/tests/Makefile \$(MAKEDEP)
 dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/winspool.drv/tests/Makefile"
 
@@ -19023,6 +19423,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintab32/Makefile: dlls/wintab32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wintab32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wintab32/tests: __builddeps__
+dlls/wintab32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	wintab32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19034,8 +19437,9 @@ wintab32_test.res: wintab32_test.rc wintab32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintab32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	wintab32/tests"
+	dlls/wintab32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/wintab32/tests/%) dlls/wintab32/tests: dlls/wintab32/tests/Makefile \$(MAKEDEP)
 dlls/wintab32/tests/Makefile: dlls/wintab32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wintab32/tests/Makefile"
 
@@ -19053,6 +19457,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintrust/Makefile: dlls/wintrust/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wintrust/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wintrust/tests: __builddeps__
+dlls/wintrust/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	wintrust_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19064,8 +19471,9 @@ wintrust_test.res: wintrust_test.rc wintrust_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintrust/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	wintrust/tests"
+	dlls/wintrust/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/wintrust/tests/%) dlls/wintrust/tests: dlls/wintrust/tests/Makefile \$(MAKEDEP)
 dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wintrust/tests/Makefile"
 
@@ -19083,6 +19491,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wldap32/Makefile: dlls/wldap32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/wldap32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wldap32/tests: __builddeps__
+dlls/wldap32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	wldap32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19094,8 +19505,9 @@ wldap32_test.res: wldap32_test.rc wldap32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wldap32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	wldap32/tests"
+	dlls/wldap32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/wldap32/tests/%) dlls/wldap32/tests: dlls/wldap32/tests/Makefile \$(MAKEDEP)
 dlls/wldap32/tests/Makefile: dlls/wldap32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/wldap32/tests/Makefile"
 
@@ -19157,6 +19569,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ws2_32/Makefile: dlls/ws2_32/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/ws2_32/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ws2_32/tests: __builddeps__
+dlls/ws2_32/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	ws2_32_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19168,8 +19583,9 @@ ws2_32_test.res: ws2_32_test.rc ws2_32_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ws2_32/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	ws2_32/tests"
+	dlls/ws2_32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/ws2_32/tests/%) dlls/ws2_32/tests: dlls/ws2_32/tests/Makefile \$(MAKEDEP)
 dlls/ws2_32/tests/Makefile: dlls/ws2_32/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/ws2_32/tests/Makefile"
 
@@ -19256,6 +19672,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xinput1_3/Makefile: dlls/xinput1_3/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/xinput1_3/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/xinput1_3/tests: __builddeps__
+dlls/xinput1_3/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	xinput1_3_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19267,8 +19686,9 @@ xinput1_3_test.res: xinput1_3_test.rc xinput1_3_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xinput1_3/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	xinput1_3/tests"
+	dlls/xinput1_3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/xinput1_3/tests/%) dlls/xinput1_3/tests: dlls/xinput1_3/tests/Makefile \$(MAKEDEP)
 dlls/xinput1_3/tests/Makefile: dlls/xinput1_3/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/xinput1_3/tests/Makefile"
 
@@ -19288,6 +19708,9 @@ ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xmllite/Makefile: dlls/xmllite/Makefile.in dlls/Makedll.rules config.status"
 ac_config_files="$ac_config_files dlls/xmllite/Makefile"
 
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/xmllite/tests: __builddeps__
+dlls/xmllite/tests/__crosstest__: __buildcrossdeps__"
 ALL_TEST_BINARIES="$ALL_TEST_BINARIES \\
 	xmllite_test.exe"
 ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
@@ -19299,8 +19722,9 @@ xmllite_test.res: xmllite_test.rc xmllite_test.exe"
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xmllite/tests/Makefile"
 test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
-	xmllite/tests"
+	dlls/xmllite/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+\$(RECURSE_TARGETS:%=dlls/xmllite/tests/%) dlls/xmllite/tests: dlls/xmllite/tests/Makefile \$(MAKEDEP)
 dlls/xmllite/tests/Makefile: dlls/xmllite/tests/Makefile.in dlls/Maketest.rules config.status"
 ac_config_files="$ac_config_files dlls/xmllite/tests/Makefile"
 

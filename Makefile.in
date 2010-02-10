@@ -28,7 +28,9 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 
 ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
+ALL_TEST_DIRS      = @ALL_TEST_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
+ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
@@ -43,16 +45,26 @@ SUBDIRS = \
 	programs \
 	server \
 	$(ALL_TOOL_DIRS) \
-	$(ALL_STATICLIB_DIRS)
+	$(ALL_STATICLIB_DIRS) \
+	$(ALL_TEST_DIRS)
 
-# Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = @ALL_TOP_DIRS@ \
+# Sub-directories to run make all into
+BUILDSUBDIRS = \
 	libs/wine \
 	$(ALL_TOOL_DIRS) \
+	$(ALL_TOP_DIRS) \
+	$(ALL_STATICLIB_DIRS) \
+	$(ALL_TEST_DIRS)
+
+# Sub-directories to run make install/uninstall into
+INSTALLSUBDIRS = \
+	libs/wine \
+	$(ALL_TOOL_DIRS) \
+	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS)
 
 # Sub-directories to run make test into
-TESTSUBDIRS = dlls
+TESTSUBDIRS = $(ALL_TEST_DIRS)
 
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = libs
@@ -94,7 +106,7 @@ implib: $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
 
 # Dependencies between directories
 
-all: $(INSTALLSUBDIRS)
+all: $(BUILDSUBDIRS)
 
 # dependencies needed to build any dll or program
 __builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
@@ -105,7 +117,7 @@ dlls programs: __builddeps__
 loader server: libs/port libs/wine tools
 fonts: tools
 include: tools/widl
-programs: dlls
+programs: $(ALL_TEST_DIRS)
 libs/wine $(ALL_TOOL_DIRS): libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
@@ -141,11 +153,6 @@ depend: $(MAKEDEP)
 
 $(MAKEDEP): include/config.h tools/Makefile
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
-
-# Test rules
-
-$(TESTSUBDIRS:%=%/__test__): wine
-$(TESTSUBDIRS:%=%/__crosstest__): __buildcrossdeps__
 
 # Misc rules
 
