@@ -2098,7 +2098,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_PRINT_QUICK:
-        print_quick(wszFileName);
+        print_quick(hMainWnd, wszFileName);
         target_device(hMainWnd, wordWrap[reg_formatindex(fileFormat)]);
         break;
 

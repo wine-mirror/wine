@@ -403,11 +403,12 @@ void get_default_printer_opts(void)
     devNames = pd.hDevNames;
 }
 
-void print_quick(LPWSTR wszFileName)
+void print_quick(HWND hMainWnd, LPWSTR wszFileName)
 {
     PRINTDLGW pd;
 
     ZeroMemory(&pd, sizeof(pd));
+    pd.hwndOwner = hMainWnd;
     pd.hDC = make_dc();
 
     print(&pd, wszFileName);
