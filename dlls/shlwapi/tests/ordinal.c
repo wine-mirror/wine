@@ -55,33 +55,21 @@ static void test_GetAcceptLanguagesA(void)
 
     buffersize = sizeof(buffer);
     memset(buffer, 0, sizeof(buffer));
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    if (!retval && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
-        win_skip("GetAcceptLanguagesA is not implemented\n");
-        return;
-    }
     trace("GetAcceptLanguagesA: retval %08x, size %08x, buffer (%s),"
 	" last error %u\n", retval, buffersize, buffer, GetLastError());
     if(retval != S_OK) {
 	trace("GetAcceptLanguagesA: skipping tests\n");
 	return;
     }
-    ok( (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()) || 
-	(ERROR_CLASS_DOES_NOT_EXIST == GetLastError()) ||
-	(ERROR_PROC_NOT_FOUND == GetLastError()) ||
-	(ERROR_SUCCESS == GetLastError()), "last error set to %u\n", GetLastError());
     exactsize = strlen(buffer);
 
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, NULL);
     ok(retval == E_FAIL ||
        retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = sizeof(buffer);
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, &buffersize);
     ok(retval == E_FAIL ||
        retval == E_INVALIDARG, /* w2k8 */
@@ -89,42 +77,30 @@ static void test_GetAcceptLanguagesA(void)
     ok(buffersize == sizeof(buffer) ||
        buffersize == 0, /* w2k8*/
        "buffersize was changed and is not 0; size (%d))\n", buffersize);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, NULL);
     ok(retval == E_FAIL ||
        retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = 0;
     memset(buffer, 0, sizeof(buffer));
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     ok(retval == E_FAIL ||
        retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == 0,
        "buffersize wrong(changed) got %08x; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     switch(retval) {
 	case 0L:
             if(buffersize == exactsize) {
-            ok( (ERROR_SUCCESS == GetLastError()) ||
-		(ERROR_PROC_NOT_FOUND == GetLastError()) || (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()),
-                "last error wrong: got %u; expected ERROR_SUCCESS(NT4)/"
-		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), exactsize);
             } else if((buffersize +1) == buffersize2) {
-                ok(ERROR_SUCCESS == GetLastError(),
-                    "last error wrong: got %u; expected ERROR_SUCCESS\n", GetLastError());
                 ok(buffersize == strlen(buffer),
                     "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize);
             } else
@@ -134,16 +110,12 @@ static void test_GetAcceptLanguagesA(void)
 	case E_INVALIDARG:
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
-            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
         case __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER): /* Win7 */
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
-            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             break;
         default:
             ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
@@ -153,12 +125,9 @@ static void test_GetAcceptLanguagesA(void)
 
     buffersize = buffersize2 = exactsize;
     memset(buffer, 0, sizeof(buffer));
-    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     switch(retval) {
 	case 0L:
-            ok(ERROR_SUCCESS == GetLastError(),
-                 "last error wrong: got %u; expected ERROR_SUCCESS\n", GetLastError());
             if((buffersize == exactsize) /* XP */ ||
                ((buffersize +1)== exactsize) /* 98 */)
                 ok(buffersize == strlen(buffer),
@@ -170,16 +139,12 @@ static void test_GetAcceptLanguagesA(void)
 	case E_INVALIDARG:
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
-            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
 	case __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER): /* Win 7 */
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
-            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             break;
         default:
             ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
