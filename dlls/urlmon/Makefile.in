@@ -28,6 +28,7 @@ C_SRCS = \
 	session.c \
 	umon.c \
 	umstream.c \
+	uri.c \
 	urlmon_main.c \
 	usrmarshal.c
 
