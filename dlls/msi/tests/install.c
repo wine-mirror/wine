@@ -1260,6 +1260,66 @@ static const CHAR vp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "InstallFiles\t\t4000\n"
                                               "InstallFinalize\t\t6000\n";
 
+static const CHAR odbc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                    "File\tFile\n"
+                                    "ODBCdriver.dll\todbc\tODBCdriver.dll\t1000\t\t\t8192\t1\n"
+                                    "ODBCdriver2.dll\todbc\tODBCdriver2.dll\t1000\t\t\t8192\t2\n"
+                                    "ODBCtranslator.dll\todbc\tODBCtranslator.dll\t1000\t\t\t8192\t3\n"
+                                    "ODBCtranslator2.dll\todbc\tODBCtranslator2.dll\t1000\t\t\t8192\t4\n"
+                                    "ODBCsetup.dll\todbc\tODBCsetup.dll\t1000\t\t\t8192\t5\n";
+
+static const CHAR odbc_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                       "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                       "Feature\tFeature\n"
+                                       "odbc\t\t\todbc feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR odbc_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                            "s38\ts72\n"
+                                            "FeatureComponents\tFeature_\tComponent_\n"
+                                            "odbc\todbc\n";
+
+static const CHAR odbc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                         "Component\tComponent\n"
+                                         "odbc\t{B6F3E4AE-35D1-4B72-9044-989F03E20A43}\tMSITESTDIR\t0\t\tODBCdriver.dll\n";
+
+static const CHAR odbc_driver_dat[] = "Driver\tComponent_\tDescription\tFile_\tFile_Setup\n"
+                                      "s72\ts72\ts255\ts72\tS72\n"
+                                      "ODBCDriver\tDriver\n"
+                                      "ODBC test driver\todbc\tODBC test driver\tODBCdriver.dll\t\n"
+                                      "ODBC test driver2\todbc\tODBC test driver2\tODBCdriver2.dll\tODBCsetup.dll\n";
+
+static const CHAR odbc_translator_dat[] = "Translator\tComponent_\tDescription\tFile_\tFile_Setup\n"
+                                          "s72\ts72\ts255\ts72\tS72\n"
+                                          "ODBCTranslator\tTranslator\n"
+                                          "ODBC test translator\todbc\tODBC test translator\tODBCtranslator.dll\t\n"
+                                          "ODBC test translator2\todbc\tODBC test translator2\tODBCtranslator2.dll\tODBCsetup.dll\n";
+
+static const CHAR odbc_datasource_dat[] = "DataSource\tComponent_\tDescription\tDriverDescription\tRegistration\n"
+                                          "s72\ts72\ts255\ts255\ti2\n"
+                                          "ODBCDataSource\tDataSource\n"
+                                          "ODBC data source\todbc\tODBC data source\tODBC driver\t0\n";
+
+static const CHAR odbc_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                                "s72\tS255\tI2\n"
+                                                "InstallExecuteSequence\tAction\n"
+                                                "LaunchConditions\t\t100\n"
+                                                "CostInitialize\t\t800\n"
+                                                "FileCost\t\t900\n"
+                                                "CostFinalize\t\t1000\n"
+                                                "InstallValidate\t\t1400\n"
+                                                "InstallInitialize\t\t1500\n"
+                                                "InstallODBC\t\t3000\n"
+                                                "RemoveODBC\t\t3100\n"
+                                                "InstallFiles\t\t4000\n"
+                                                "InstallFinalize\t\t6000\n";
+
+static const CHAR odbc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                     "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                     "Media\tDiskId\n"
+                                     "1\t5\t\t\tDISK1\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2054,6 +2114,21 @@ static const msi_table vp_tables[] =
     ADD_TABLE(vp_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(vp_property)
+};
+
+static const msi_table odbc_tables[] =
+{
+    ADD_TABLE(odbc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(odbc_feature),
+    ADD_TABLE(odbc_feature_comp),
+    ADD_TABLE(odbc_file),
+    ADD_TABLE(odbc_driver),
+    ADD_TABLE(odbc_translator),
+    ADD_TABLE(odbc_datasource),
+    ADD_TABLE(odbc_install_exec_seq),
+    ADD_TABLE(odbc_media),
+    ADD_TABLE(property)
 };
 
 /* cabinet definitions */
@@ -7920,6 +7995,33 @@ static void test_validate_product_id(void)
     delete_test_files();
 }
 
+static void test_install_remove_odbc(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\ODBCdriver.dll", 1000);
+    create_file("msitest\\ODBCdriver2.dll", 1000);
+    create_file("msitest\\ODBCtranslator.dll", 1000);
+    create_file("msitest\\ODBCtranslator2.dll", 1000);
+    create_file("msitest\\ODBCsetup.dll", 1000);
+    create_database(msifile, odbc_tables, sizeof(odbc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\ODBCdriver.dll", TRUE), "file not created\n");
+    ok(delete_pf("msitest\\ODBCdriver2.dll", TRUE), "file not created\n");
+    ok(delete_pf("msitest\\ODBCtranslator.dll", TRUE), "file not created\n");
+    ok(delete_pf("msitest\\ODBCtranslator2.dll", TRUE), "file not created\n");
+    ok(delete_pf("msitest\\ODBCsetup.dll", TRUE), "file not created\n");
+    ok(delete_pf("msitest", FALSE), "directory not created\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8018,6 +8120,7 @@ START_TEST(install)
     test_self_registration();
     test_register_font();
     test_validate_product_id();
+    test_install_remove_odbc();
 
     DeleteFileA(log_file);
 
