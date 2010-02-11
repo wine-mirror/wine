@@ -46,6 +46,7 @@
 #include "shlwapi.h"
 #include "shellapi.h"
 #include "commdlg.h"
+#include "mlang.h"
 #include "mshtmhst.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -450,14 +451,14 @@ RegisterDefaultAcceptHeaders_Exit:
  *
  * PARAMS
  *  langbuf [O] Destination for language string
- *  buflen  [I] Length of langbuf
+ *  buflen  [I] Length of langbuf in characters
  *          [0] Success: used length of langbuf
  *
  * RETURNS
  *  Success: S_OK.   langbuf is set to the language string found.
  *  Failure: E_FAIL, If any arguments are invalid, error occurred, or Explorer
  *           does not contain the setting.
- *           E_INVALIDARG, If the buffer is not big enough
+ *           HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), If the buffer is not big enough
  */
 HRESULT WINAPI GetAcceptLanguagesW( LPWSTR langbuf, LPDWORD buflen)
 {
@@ -468,49 +469,50 @@ HRESULT WINAPI GetAcceptLanguagesW( LPWSTR langbuf, LPDWORD buflen)
 	'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
     static const WCHAR valueW[] = {
 	'A','c','c','e','p','t','L','a','n','g','u','a','g','e',0};
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
     DWORD mystrlen, mytype;
+    DWORD len;
     HKEY mykey;
     HRESULT retval;
     LCID mylcid;
     WCHAR *mystr;
+    LONG lres;
+
+    TRACE("(%p, %p) *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
 
     if(!langbuf || !buflen || !*buflen)
 	return E_FAIL;
 
     mystrlen = (*buflen > 20) ? *buflen : 20 ;
-    mystr = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * mystrlen);
+    len = mystrlen * sizeof(WCHAR);
+    mystr = HeapAlloc(GetProcessHeap(), 0, len);
+    mystr[0] = 0;
     RegOpenKeyW(HKEY_CURRENT_USER, szkeyW, &mykey);
-    if(RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &mystrlen)) {
-        /* Did not find value */
-        mylcid = GetUserDefaultLCID();
-        /* somehow the mylcid translates into "en-us"
-         *  this is similar to "LOCALE_SABBREVLANGNAME"
-         *  which could be gotten via GetLocaleInfo.
-         *  The only problem is LOCALE_SABBREVLANGUAGE" is
-         *  a 3 char string (first 2 are country code and third is
-         *  letter for "sublanguage", which does not come close to
-         *  "en-us"
-         */
-        lstrcpyW(mystr, enusW);
-        mystrlen = lstrlenW(mystr);
-    } else {
-        /* handle returned string */
-        FIXME("missing code\n");
-    }
-    memcpy( langbuf, mystr, min(*buflen,strlenW(mystr)+1)*sizeof(WCHAR) );
-
-    if(*buflen > strlenW(mystr)) {
-	*buflen = strlenW(mystr);
-	retval = S_OK;
-    } else {
-	*buflen = 0;
-	retval = E_INVALIDARG;
-	SetLastError(ERROR_INSUFFICIENT_BUFFER);
-    }
+    lres = RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &len);
     RegCloseKey(mykey);
+    len = lstrlenW(mystr);
+
+    if (!lres && (*buflen > len)) {
+        lstrcpyW(langbuf, mystr);
+        *buflen = len;
+        HeapFree(GetProcessHeap(), 0, mystr);
+        return S_OK;
+    }
+
+    /* Did not find a value in the registry or the user buffer is to small */
+    mylcid = GetUserDefaultLCID();
+    retval = LcidToRfc1766W(mylcid, mystr, mystrlen);
+    len = lstrlenW(mystr);
+
+    memcpy( langbuf, mystr, min(*buflen, len+1)*sizeof(WCHAR) );
     HeapFree(GetProcessHeap(), 0, mystr);
-    return retval;
+
+    if (*buflen > len) {
+        *buflen = len;
+        return S_OK;
+    }
+
+    *buflen = 0;
+    return __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 }
 
 /*************************************************************************
