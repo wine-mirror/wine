@@ -1258,7 +1258,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */
 
     /* don't cache 16-bit instances (FIXME: should never get 16-bit instances in the first place) */
-    if (!HIWORD( hInstance )) loadflags &= ~LR_SHARED;
+    if ((ULONG_PTR)hInstance >> 16 == 0) loadflags &= ~LR_SHARED;
 
     /* Get directory resource ID */
 
