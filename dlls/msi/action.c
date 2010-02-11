@@ -4893,15 +4893,17 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     driver_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
     setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
 
-    if (!driver_file || !setup_file)
+    if (!driver_file)
     {
         ERR("ODBC Driver entry not found!\n");
         return ERROR_FUNCTION_FAILED;
     }
 
-    len = lstrlenW(desc) + lstrlenW(driver_fmt) + lstrlenW(driver_file->FileName) +
-          lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName) +
-          lstrlenW(usage_fmt) + 1;
+    len = lstrlenW(desc) + lstrlenW(driver_fmt) + lstrlenW(driver_file->FileName);
+    if (setup_file)
+        len += lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName);
+    len += lstrlenW(usage_fmt) + 1;
+
     driver = msi_alloc(len * sizeof(WCHAR));
     if (!driver)
         return ERROR_OUTOFMEMORY;
@@ -4913,8 +4915,11 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     sprintfW(ptr, driver_fmt, driver_file->FileName);
     ptr += lstrlenW(ptr) + 1;
 
-    sprintfW(ptr, setup_fmt, setup_file->FileName);
-    ptr += lstrlenW(ptr) + 1;
+    if (setup_file)
+    {
+        sprintfW(ptr, setup_fmt, setup_file->FileName);
+        ptr += lstrlenW(ptr) + 1;
+    }
 
     lstrcpyW(ptr, usage_fmt);
     ptr += lstrlenW(ptr) + 1;
@@ -4957,14 +4962,16 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     translator_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
     setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
 
-    if (!translator_file || !setup_file)
+    if (!translator_file)
     {
         ERR("ODBC Translator entry not found!\n");
         return ERROR_FUNCTION_FAILED;
     }
 
-    len = lstrlenW(desc) + lstrlenW(translator_fmt) + lstrlenW(translator_file->FileName) +
-          lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName) + 1;
+    len = lstrlenW(desc) + lstrlenW(translator_fmt) + lstrlenW(translator_file->FileName) + 1;
+    if (setup_file)
+        len += lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName);
+
     translator = msi_alloc(len * sizeof(WCHAR));
     if (!translator)
         return ERROR_OUTOFMEMORY;
@@ -4976,8 +4983,11 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     sprintfW(ptr, translator_fmt, translator_file->FileName);
     ptr += lstrlenW(ptr) + 1;
 
-    sprintfW(ptr, setup_fmt, setup_file->FileName);
-    ptr += lstrlenW(ptr) + 1;
+    if (setup_file)
+    {
+        sprintfW(ptr, setup_fmt, setup_file->FileName);
+        ptr += lstrlenW(ptr) + 1;
+    }
     *ptr = '\0';
 
     translator_path = strdupW(translator_file->TargetPath);
