@@ -1882,6 +1882,161 @@ static void test_conf_complex_struct(void)
     HeapFree(GetProcessHeap(), 0, memsrc);
 }
 
+
+static void test_conf_complex_array(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *ptr;
+    unsigned int i, j;
+    struct conf_complex
+    {
+        unsigned int dim1, dim2;
+        DWORD **array;
+    };
+    struct conf_complex memsrc;
+    struct conf_complex *mem;
+    DWORD *buf, expected_length;
+
+    static const unsigned char fmtstr_complex_array[] =
+    {
+
+/*  0 */        0x21,           /* FC_BOGUS_ARRAY */
+                0x3,            /* 3 */
+/*  2 */        NdrFcShort( 0x0 ),      /* 0 */
+/*  4 */        0x19, 0x0,      /* Corr desc:  field pointer, FC_ULONG */
+/*  6 */        NdrFcShort( 0x4 ),      /* 4 */
+/*  8 */        NdrFcLong( 0xffffffff ),        /* -1 */
+/* 12 */        0x8,            /* FC_LONG */
+                0x5b,           /* FC_END */
+/* 14 */
+                0x21,           /* FC_BOGUS_ARRAY */
+                0x3,            /* 3 */
+/* 16 */        NdrFcShort( 0x0 ),      /* 0 */
+/* 18 */        0x19,           /* Corr desc:  field pointer, FC_ULONG */
+                0x0,            /*  */
+/* 20 */        NdrFcShort( 0x0 ),      /* 0 */
+/* 22 */        NdrFcLong( 0xffffffff ),        /* -1 */
+/* 26 */        0x12, 0x0,      /* FC_UP */
+/* 28 */        NdrFcShort( 0xffe4 ),   /* Offset= -28 (0) */
+/* 30 */        0x5c,           /* FC_PAD */
+                0x5b,           /* FC_END */
+/* 32 */
+                0x16,           /* FC_PSTRUCT */
+                0x3,            /* 3 */
+/* 34 */        NdrFcShort( 0xc ),      /* 12 */
+/* 36 */        0x4b,           /* FC_PP */
+                0x5c,           /* FC_PAD */
+/* 38 */        0x46,           /* FC_NO_REPEAT */
+                0x5c,           /* FC_PAD */
+/* 40 */        NdrFcShort( 0x8 ),      /* 8 */
+/* 42 */        NdrFcShort( 0x8 ),      /* 8 */
+/* 44 */        0x12, 0x0,      /* FC_UP */
+/* 46 */        NdrFcShort( 0xffe0 ),   /* Offset= -32 (14) */
+/* 48 */        0x5b,           /* FC_END */
+                0x8,            /* FC_LONG */
+/* 50 */        0x8,            /* FC_LONG */
+                0x8,            /* FC_LONG */
+/* 52 */        0x5c,           /* FC_PAD */
+                0x5b,           /* FC_END */
+    };
+
+    memsrc.dim1 = 5;
+    memsrc.dim2 = 3;
+
+    memsrc.array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, memsrc.dim1 * sizeof(DWORD*));
+
+    for(i = 0; i < memsrc.dim1; i++)
+    {
+        memsrc.array[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, memsrc.dim2 * sizeof(DWORD));
+        for(j = 0; j < memsrc.dim2; j++)
+            memsrc.array[i][j] = i * memsrc.dim2 + j;
+    }
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr_complex_array;
+
+    NdrClientInitializeNew(
+                           &RpcMessage,
+                           &StubMsg,
+                           &StubDesc,
+                           0);
+
+    StubMsg.BufferLength = 0;
+    NdrSimpleStructBufferSize( &StubMsg,
+                                (unsigned char *)&memsrc,
+                                &fmtstr_complex_array[32] );
+
+    expected_length = (4 + memsrc.dim1 * (2 + memsrc.dim2)) * 4;
+todo_wine
+    ok(StubMsg.BufferLength >= expected_length, "length %d\n", StubMsg.BufferLength);
+
+    /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    ptr = NdrSimpleStructMarshall( &StubMsg, (unsigned char *)&memsrc,
+                                    &fmtstr_complex_array[32] );
+    ok(ptr == NULL, "ret %p\n", ptr);
+
+todo_wine
+    ok((char*)StubMsg.Buffer == (char*)StubMsg.BufferStart + expected_length, "not at expected length\n");
+
+    /* Skip tests on Wine until the todo_wine is removed */
+    if((char*)StubMsg.Buffer == (char*)StubMsg.BufferStart + expected_length)
+    {
+
+    buf = (DWORD *)StubMsg.BufferStart;
+
+    ok(*buf == memsrc.dim1, "dim1 should have been %d instead of %08x\n", memsrc.dim1, *buf);
+    buf++;
+    ok(*buf == memsrc.dim2, "dim2 should have been %d instead of %08x\n", memsrc.dim2, *buf);
+    buf++;
+    ok(*buf != 0, "pointer id should be non-zero\n");
+    buf++;
+    ok(*buf == memsrc.dim1, "Conformance should have been %d instead of %08x\n", memsrc.dim1, *buf);
+    buf++;
+    for(i = 0; i < memsrc.dim1; i++)
+    {
+        ok(*buf != 0, "pointer id[%d] should be non-zero\n", i);
+        buf++;
+    }
+    for(i = 0; i < memsrc.dim1; i++)
+    {
+        ok(*buf == memsrc.dim2, "Conformance should have been %d instead of %08x\n", memsrc.dim2, *buf);
+        buf++;
+        for(j = 0; j < memsrc.dim2; j++)
+        {
+            ok(*buf == i * memsrc.dim2 + j, "got %08x\n", *buf);
+            buf++;
+        }
+    }
+
+    ok((void*)buf == StubMsg.Buffer, "not at end of buffer\n");
+
+    /* Server */
+    my_alloc_called = 0;
+    StubMsg.IsClient = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, (unsigned char **)&mem, &fmtstr_complex_array[32], 0);
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem->dim1 == memsrc.dim1, "mem->dim1 wasn't unmarshalled correctly (%d)\n", mem->dim1);
+    ok(mem->dim2 == memsrc.dim2, "mem->dim2 wasn't unmarshalled correctly (%d)\n", mem->dim2);
+    ok(mem->array[1][0] == memsrc.dim2, "mem->array[1][0] wasn't unmarshalled correctly (%d)\n", mem->array[1][0]);
+
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrSimpleStructFree( &StubMsg, (unsigned char*)mem, &fmtstr_complex_array[32]);
+    }
+
+    HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
+
+    for(i = 0; i < memsrc.dim1; i++)
+        HeapFree(GetProcessHeap(), 0, memsrc.array[i]);
+    HeapFree(GetProcessHeap(), 0, memsrc.array);
+}
+
 static void test_ndr_buffer(void)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
@@ -2226,6 +2381,7 @@ START_TEST( ndr_marshall )
     test_conformant_string();
     test_nonconformant_string();
     test_conf_complex_struct();
+    test_conf_complex_array();
     test_ndr_buffer();
     test_NdrMapCommAndFaultStatus();
     test_NdrGetUserMarshalInfo();
