@@ -198,9 +198,10 @@ implib: $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
-__builddeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS) include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
-__buildcrossdeps__: libs/port libs/wine $(ALL_TOOL_DIRS) include $(STATIC_LIBS:.a=.cross.a) $(IMPORT_LIBS:.def=.cross.a)
-.PHONY: __builddeps__ __buildcrossdeps__
+__tooldeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS)
+__builddeps__: __tooldeps__ include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
+__buildcrossdeps__: __tooldeps__ include $(STATIC_LIBS:.a=.cross.a) $(IMPORT_LIBS:.def=.cross.a)
+.PHONY: __tooldeps__ __builddeps__ __buildcrossdeps__
 
 loader server: libs/port libs/wine tools
 fonts: tools
