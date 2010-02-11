@@ -2919,7 +2919,6 @@ REBAR_PushChevron(const REBAR_INFO *infoPtr, UINT uBand, LPARAM lParam)
 static LRESULT
 REBAR_LButtonDown (REBAR_INFO *infoPtr, LPARAM lParam)
 {
-    REBAR_BAND *lpBand;
     UINT htFlags;
     INT iHitBand;
     POINT ptMouseDown;
@@ -2927,7 +2926,6 @@ REBAR_LButtonDown (REBAR_INFO *infoPtr, LPARAM lParam)
     ptMouseDown.y = (short)HIWORD(lParam);
 
     REBAR_InternalHitTest(infoPtr, &ptMouseDown, &htFlags, &iHitBand);
-    lpBand = REBAR_GetBand(infoPtr, iHitBand);
 
     if (htFlags == RBHT_CHEVRON)
     {
@@ -2935,7 +2933,11 @@ REBAR_LButtonDown (REBAR_INFO *infoPtr, LPARAM lParam)
     }
     else if (htFlags == RBHT_GRABBER || htFlags == RBHT_CAPTION)
     {
+        REBAR_BAND *lpBand;
+
         TRACE("Starting drag\n");
+
+        lpBand = REBAR_GetBand(infoPtr, iHitBand);
 
         SetCapture (infoPtr->hwndSelf);
         infoPtr->iGrabbedBand = iHitBand;
