@@ -1664,6 +1664,11 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
 
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, NULL );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+
     V_VT(&var) = VT_R4;
     V_R4(&var) = NODE_ELEMENT;
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
@@ -3640,6 +3645,9 @@ static void test_nodeTypeTests( void )
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
     if( hr != S_OK )
         return;
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );

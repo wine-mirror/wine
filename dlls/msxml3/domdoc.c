@@ -1046,6 +1046,8 @@ static HRESULT WINAPI domdoc_createElement(
 
     TRACE("%p->(%s,%p)\n", iface, debugstr_w(tagname), element);
 
+    if (!element) return E_INVALIDARG;
+
     xml_name = xmlChar_from_wchar(tagname);
     xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
     xmldoc_add_orphan(xmlnode->doc, xmlnode);
@@ -1345,6 +1347,8 @@ static HRESULT WINAPI domdoc_createNode(
     HRESULT hr;
 
     TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
+
+    if(!node) return E_INVALIDARG;
 
     if(namespaceURI && namespaceURI[0])
         FIXME("nodes with namespaces currently not supported.\n");
