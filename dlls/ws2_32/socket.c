@@ -3303,7 +3303,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;
                 tval.tv_sec = *(const UINT32*)optval / 1000;
                 /* min of 500 milliseconds */
-                if (tval.tv_sec == 0 && tval.tv_usec < 500000)
+                if (tval.tv_sec == 0 && tval.tv_usec && tval.tv_usec < 500000)
                     tval.tv_usec = 500000;
                 optlen = sizeof(struct timeval);
                 optval = (char*)&tval;
