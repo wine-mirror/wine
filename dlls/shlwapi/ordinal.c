@@ -526,6 +526,8 @@ HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
     DWORD buflenW, convlen;
     HRESULT retval;
 
+    TRACE("(%p, %p) *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
+
     if(!langbuf || !buflen || !*buflen) return E_FAIL;
 
     buflenW = *buflen;
@@ -535,11 +537,20 @@ HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
     if (retval == S_OK)
     {
         convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, -1, langbuf, *buflen, NULL, NULL);
+        convlen--;  /* do not count the terminating 0 */
     }
     else  /* copy partial string anyway */
     {
         convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, *buflen, langbuf, *buflen, NULL, NULL);
-        if (convlen < *buflen) langbuf[convlen] = 0;
+        if (convlen < *buflen)
+        {
+            langbuf[convlen] = 0;
+            convlen--;  /* do not count the terminating 0 */
+        }
+        else
+        {
+            convlen = *buflen;
+        }
     }
     *buflen = buflenW ? convlen : 0;
 
