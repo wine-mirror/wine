@@ -42,6 +42,19 @@ static ID3D10Device *create_device(void)
     return NULL;
 }
 
+static inline HRESULT create_effect(DWORD *data, UINT flags, ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
+{
+    /*
+     * Don't use sizeof(data), use data[6] as size,
+     * because the DWORD data[] has only complete DWORDs and
+     * so it could happen that there are padded bytes at the end.
+     *
+     * The fx size (data[6]) could be up to 3 BYTEs smaller
+     * than the sizeof(data).
+     */
+    return D3D10CreateEffectFromMemory(data, data[6], flags, device, effect_pool, effect);
+}
+
 /*
  * test_effect_constant_buffer_type
  */
@@ -82,15 +95,7 @@ static void test_effect_constant_buffer_type(ID3D10Device *device)
     LPCSTR string;
     unsigned int i;
 
-    /*
-     * Don't use sizeof(fx_test_ecbt), use fx_test_ecbt[6] as size,
-     * because the DWORD fx_test_ecbt[] has only complete DWORDs and
-     * so it could happen that there are padded bytes at the end.
-     *
-     * The fx size (fx_test_ecbt[6]) could be up to 3 BYTEs smaller
-     * than the sizeof(fx_test_ecbt).
-     */
-    hr = D3D10CreateEffectFromMemory(fx_test_ecbt, fx_test_ecbt[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_ecbt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -252,7 +257,7 @@ static void test_effect_variable_type(ID3D10Device *device)
     LPCSTR string;
     unsigned int i;
 
-    hr = D3D10CreateEffectFromMemory(fx_test_evt, fx_test_evt[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_evt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -472,7 +477,7 @@ static void test_effect_variable_member(ID3D10Device *device)
     D3D10_EFFECT_VARIABLE_DESC desc;
     HRESULT hr;
 
-    hr = D3D10CreateEffectFromMemory(fx_test_evm, fx_test_evm[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_evm, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -662,7 +667,7 @@ static void test_effect_variable_element(ID3D10Device *device)
     D3D10_EFFECT_TYPE_DESC type_desc;
     HRESULT hr;
 
-    hr = D3D10CreateEffectFromMemory(fx_test_eve, fx_test_eve[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_eve, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -1347,7 +1352,7 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     HRESULT hr;
     unsigned int variable_nr = 0;
 
-    hr = D3D10CreateEffectFromMemory(fx_test_evtc, fx_test_evtc[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_evtc, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     /* get the null_constantbuffer, so that we can compare it to variables->GetParentConstantBuffer */
@@ -2359,7 +2364,7 @@ static void test_effect_constant_buffer_stride(ID3D10Device *device)
         {1, 0x10,  0x20,  0x20},
     };
 
-    hr = D3D10CreateEffectFromMemory(fx_test_ecbs, fx_test_ecbs[6], 0, device, NULL, &effect);
+    hr = create_effect(fx_test_ecbs, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
     for (i=0; i<sizeof(tv_ecbs)/sizeof(tv_ecbs[0]); i++)
