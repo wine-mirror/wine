@@ -1606,21 +1606,15 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	goto the_end;
 
     /* force thread's queue creation */
-    /* Used to be InitThreadInput16(0, 5); */
-    /* but following works also with hack in midiStreamOpen */
-    PeekMessageA(&msg, 0, 0, 0, 0);
-
-    /* FIXME: this next line must be called before midiStreamOut or midiStreamRestart are called */
-    SetEvent(lpMidiStrm->hEvent);
-    TRACE("Ready to go 1\n");
-    /* thread is started in paused mode */
-    SuspendThread(GetCurrentThread());
-    TRACE("Ready to go 2\n");
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
 
     lpMidiStrm->dwStartTicks = 0;
     lpMidiStrm->dwPulses = 0;
 
     lpMidiStrm->lpMidiHdr = 0;
+
+    /* midiStreamOpen is waiting for ack */
+    SetEvent(lpMidiStrm->hEvent);
 
     for (;;) {
 	lpMidiHdr = lpMidiStrm->lpMidiHdr;
@@ -1706,8 +1700,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
     }
 the_end:
     TRACE("End of thread\n");
-    ExitThread(0);
-    return 0;	/* for removing the warning, never executed */
+    return 0;
 }
 
 /**************************************************************************
@@ -1718,7 +1711,7 @@ static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD ms
     if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
         MsgWaitForMultipleObjects( 1, &lpMidiStrm->hEvent, FALSE, INFINITE, 0 );
     } else {
-	WARN("bad PostThreadMessageA\n");
+	ERR("bad PostThreadMessageA\n");
 	return FALSE;
     }
     return TRUE;
@@ -1805,6 +1798,8 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 
     /* wait for thread to have started, and for its queue to be created */
     WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
+    /* start in paused mode */
+    SuspendThread(lpMidiStrm->hThread);
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
@@ -1839,7 +1834,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 	if (!PostThreadMessageA(lpMidiStrm->dwThreadID,
                                 WINE_MSM_HEADER, cbMidiHdr,
                                 (LPARAM)lpMidiHdr)) {
-	    WARN("bad PostThreadMessageA\n");
+	    ERR("bad PostThreadMessageA\n");
 	    ret = MMSYSERR_ERROR;
 	}
     }
@@ -1860,7 +1855,7 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 	ret = MMSYSERR_INVALHANDLE;
     } else {
 	if (SuspendThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
-	    WARN("bad Suspend (%d)\n", GetLastError());
+	    ERR("bad Suspend (%d)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
 	}
     }
@@ -1963,13 +1958,13 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
 	DWORD	ret;
 
 	/* since we increase the thread suspend count on each midiStreamPause
-	 * there may be a need for several midiStreamResume
+	 * there may be a need for several ResumeThread
 	 */
 	do {
 	    ret = ResumeThread(lpMidiStrm->hThread);
-	} while (ret != 0xFFFFFFFF && ret != 0);
+	} while (ret != 0xFFFFFFFF && ret > 1);
 	if (ret == 0xFFFFFFFF) {
-	    WARN("bad Resume (%d)\n", GetLastError());
+	    ERR("bad Resume (%d)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
 	} else {
 	    lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
