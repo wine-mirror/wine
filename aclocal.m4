@@ -272,8 +272,8 @@ dnl Usage: WINE_WARNING(warning)
 dnl Usage: WINE_WARNING_WITH(with_flag, test, warning)
 dnl Usage: WINE_PRINT_MESSAGES
 dnl
-AC_DEFUN([WINE_NOTICE],[wine_notices="$wine_notices|$1"])
-AC_DEFUN([WINE_WARNING],[wine_warnings="$wine_warnings|$1"])
+AC_DEFUN([WINE_NOTICE],[AS_VAR_APPEND([wine_notices],["|$1"])])
+AC_DEFUN([WINE_WARNING],[AS_VAR_APPEND([wine_warnings],["|$1"])])
 
 AC_DEFUN([WINE_NOTICE_WITH],[AS_IF([$2],[case "x$with_$1" in
   x)   WINE_NOTICE([$3]) ;;
