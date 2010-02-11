@@ -1128,7 +1128,7 @@ HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR 
     event_target->event_table[eid]->handlers[i] = disp;
 
     *res = VARIANT_TRUE;
-    return S_OK;
+    return ensure_nsevent_handler(doc->doc_node, eid);
 }
 
 HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
