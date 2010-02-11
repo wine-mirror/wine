@@ -4522,8 +4522,8 @@ static void test_default_style(IHTMLStyle *style)
      */
     V_BSTR(&v) = NULL;
     hres = IHTMLStyle_get_borderTopColor(style, &v);
-    todo_wine ok(hres == S_OK, "get_borderTopColor failed: %08x\n", hres);
-    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(hres == S_OK, "get_borderTopColor failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_BSTR(&v) = NULL;
@@ -4556,8 +4556,8 @@ static void test_default_style(IHTMLStyle *style)
      */
     V_BSTR(&v) = NULL;
     hres = IHTMLStyle_get_borderBottomColor(style, &v);
-    todo_wine ok(hres == S_OK, "get_borderBottomColor failed: %08x\n", hres);
-    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(hres == S_OK, "get_borderBottomColor failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_BSTR(&v) = NULL;
@@ -4590,8 +4590,8 @@ static void test_default_style(IHTMLStyle *style)
      */
     V_BSTR(&v) = NULL;
     hres = IHTMLStyle_get_borderLeftColor(style, &v);
-    todo_wine ok(hres == S_OK, "get_borderLeftColor failed: %08x\n", hres);
-    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(hres == S_OK, "get_borderLeftColor failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_BSTR(&v) = NULL;
