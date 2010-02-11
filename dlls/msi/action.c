@@ -5031,8 +5031,8 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
     if (!attrs)
         return ERROR_OUTOFMEMORY;
 
-    sprintfW(attrs, attrs_fmt, desc);
-    attrs[len - 1] = '\0';
+    len = sprintfW(attrs, attrs_fmt, desc);
+    attrs[len + 1] = 0;
 
     if (!SQLConfigDataSourceW(NULL, request, driver, attrs))
     {
