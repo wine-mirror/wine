@@ -220,3 +220,20 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module,
     return D3DXAssembleShader(buffer, len, defines, include, flags,
                               shader, error_messages);
 }
+
+HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
+                                 UINT srcDataLen,
+                                 CONST D3DXMACRO* pDefines,
+                                 LPD3DXINCLUDE pInclude,
+                                 LPCSTR pFunctionName,
+                                 LPCSTR pProfile,
+                                 DWORD Flags,
+                                 LPD3DXBUFFER* ppShader,
+                                 LPD3DXBUFFER* ppErrorMsgs,
+                                 LPD3DXCONSTANTTABLE * ppConstantTable)
+{
+    FIXME("(%p, %d, %p, %p, %p, %p, %d, %p, %p, %p): stub\n",
+          pSrcData, srcDataLen, pDefines, pInclude, pFunctionName,
+          pProfile, Flags, ppShader, ppErrorMsgs, ppConstantTable);
+    return D3DERR_INVALIDCALL;
+}
