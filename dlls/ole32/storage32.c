@@ -6353,7 +6353,11 @@ HRESULT WINAPI StgCreateDocfile(
     fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
 
   if (STGM_SHARE_MODE(grfMode) && !(grfMode & STGM_SHARE_DENY_NONE))
+  {
+    static int fixme;
+    if (!fixme++)
       FIXME("Storage share mode not implemented.\n");
+  }
 
   *ppstgOpen = 0;
 
