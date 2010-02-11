@@ -60,13 +60,11 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             break;
         }
         case BrushTypeHatchFill:
-            *clone = GdipAlloc(sizeof(GpHatch));
-            if (!*clone) return OutOfMemory;
+        {
+            GpHatch *hatch = (GpHatch*)brush;
 
-            memcpy(*clone, brush, sizeof(GpHatch));
-
-            (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
-            break;
+            return GdipCreateHatchBrush(hatch->hatchstyle, hatch->forecol, hatch->backcol, (GpHatch**)clone);
+        }
         case BrushTypePathGradient:{
             GpPathGradient *src, *dest;
             INT count;
