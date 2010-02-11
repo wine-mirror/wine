@@ -160,13 +160,23 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             break;
         }
         case BrushTypeTextureFill:
-            *clone = GdipAlloc(sizeof(GpTexture));
-            if(!*clone)    return OutOfMemory;
+        {
+            GpStatus stat;
+            GpTexture *texture = (GpTexture*)brush;
+            GpTexture *new_texture;
 
-            memcpy(*clone, brush, sizeof(GpTexture));
+            stat = GdipCreateTexture(texture->image, texture->wrap, &new_texture);
 
-            (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
-            break;
+            if (stat == Ok)
+            {
+                memcpy(new_texture->transform, texture->transform, sizeof(GpMatrix));
+                *clone = (GpBrush*)new_texture;
+            }
+            else
+                *clone = NULL;
+
+            return stat;
+        }
         default:
             ERR("not implemented for brush type %d\n", brush->bt);
             return NotImplemented;
@@ -829,10 +839,9 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     (*texture)->brush.gdibrush = CreateBrushIndirect(&(*texture)->brush.lb);
     (*texture)->brush.bt = BrushTypeTextureFill;
     (*texture)->wrap = imageattr->wrap;
+    (*texture)->image = new_image;
 
 exit:
-    GdipDisposeImage(new_image);
-
     if (status == Ok)
     {
         TRACE("<-- %p\n", *texture);
@@ -845,6 +854,7 @@ exit:
             GdipFree(*texture);
             *texture = NULL;
         }
+        GdipDisposeImage(new_image);
         TRACE("<-- error %u\n", status);
     }
 
@@ -946,6 +956,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             break;
         case BrushTypeTextureFill:
             GdipDeleteMatrix(((GpTexture*)brush)->transform);
+            GdipDisposeImage(((GpTexture*)brush)->image);
             break;
         default:
             break;

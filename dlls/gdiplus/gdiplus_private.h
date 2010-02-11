@@ -180,6 +180,7 @@ struct GpLineGradient{
 struct GpTexture{
     GpBrush brush;
     GpMatrix *transform;
+    GpImage *image;
     WrapMode wrap;  /* not used yet */
 };
 
