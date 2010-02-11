@@ -23319,18 +23319,18 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
   case $ac_file$ac_mode in
     "include/stamp-h":C) echo timestamp > include/stamp-h ;;
-    "dlls/gdi32/enhmfdrv":C) test -d "dlls/gdi32/enhmfdrv" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/enhmfdrv" >&5
-$as_echo "$as_me: creating dlls/gdi32/enhmfdrv" >&6;} && mkdir "dlls/gdi32/enhmfdrv") ;;
-    "dlls/gdi32/mfdrv":C) test -d "dlls/gdi32/mfdrv" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/mfdrv" >&5
-$as_echo "$as_me: creating dlls/gdi32/mfdrv" >&6;} && mkdir "dlls/gdi32/mfdrv") ;;
-    "dlls/kernel32/nls":C) test -d "dlls/kernel32/nls" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/kernel32/nls" >&5
-$as_echo "$as_me: creating dlls/kernel32/nls" >&6;} && mkdir "dlls/kernel32/nls") ;;
-    "dlls/user32/resources":C) test -d "dlls/user32/resources" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/user32/resources" >&5
-$as_echo "$as_me: creating dlls/user32/resources" >&6;} && mkdir "dlls/user32/resources") ;;
-    "dlls/wineps.drv/data":C) test -d "dlls/wineps.drv/data" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/wineps.drv/data" >&5
-$as_echo "$as_me: creating dlls/wineps.drv/data" >&6;} && mkdir "dlls/wineps.drv/data") ;;
-    "include/wine":C) test -d "include/wine" || ({ $as_echo "$as_me:${as_lineno-$LINENO}: creating include/wine" >&5
-$as_echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
+    "dlls/gdi32/enhmfdrv":C) test -d "dlls/gdi32/enhmfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/enhmfdrv" >&5
+$as_echo "$as_me: creating dlls/gdi32/enhmfdrv" >&6;}; as_dir="dlls/gdi32/enhmfdrv"; as_fn_mkdir_p; } ;;
+    "dlls/gdi32/mfdrv":C) test -d "dlls/gdi32/mfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/mfdrv" >&5
+$as_echo "$as_me: creating dlls/gdi32/mfdrv" >&6;}; as_dir="dlls/gdi32/mfdrv"; as_fn_mkdir_p; } ;;
+    "dlls/kernel32/nls":C) test -d "dlls/kernel32/nls" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/kernel32/nls" >&5
+$as_echo "$as_me: creating dlls/kernel32/nls" >&6;}; as_dir="dlls/kernel32/nls"; as_fn_mkdir_p; } ;;
+    "dlls/user32/resources":C) test -d "dlls/user32/resources" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/user32/resources" >&5
+$as_echo "$as_me: creating dlls/user32/resources" >&6;}; as_dir="dlls/user32/resources"; as_fn_mkdir_p; } ;;
+    "dlls/wineps.drv/data":C) test -d "dlls/wineps.drv/data" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/wineps.drv/data" >&5
+$as_echo "$as_me: creating dlls/wineps.drv/data" >&6;}; as_dir="dlls/wineps.drv/data"; as_fn_mkdir_p; } ;;
+    "include/wine":C) test -d "include/wine" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating include/wine" >&5
+$as_echo "$as_me: creating include/wine" >&6;}; as_dir="include/wine"; as_fn_mkdir_p; } ;;
 
   esac
 done # for ac_tag
