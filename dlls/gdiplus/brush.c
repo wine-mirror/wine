@@ -784,17 +784,14 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
     REAL height, GpTexture **texture)
 {
-    HDC hdc;
-    HBITMAP hbm, old = NULL;
-    BITMAPINFO *pbmi;
-    BITMAPINFOHEADER *bmih;
-    INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
-    BOOL bm_is_selected;
-    BYTE *dibits, *buff, *textbits;
+    HBITMAP hbm;
     GpStatus status;
+    GpImage *new_image=NULL;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %p)\n", image, imageattr, x, y, width, height,
            texture);
+
+    *texture = NULL;
 
     if(!image || !texture || x < 0.0 || y < 0.0 || width < 0.0 || height < 0.0)
         return InvalidParameter;
@@ -804,121 +801,54 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
         return NotImplemented;
     }
 
-    n_x = roundr(x);
-    n_y = roundr(y);
-    n_width = roundr(width);
-    n_height = roundr(height);
+    status = GdipCloneBitmapArea(x, y, width, height, PixelFormatDontCare, (GpBitmap*)image, (GpBitmap**)&new_image);
+    if (status != Ok)
+        return status;
 
-    if(n_x + n_width > ((GpBitmap*)image)->width ||
-       n_y + n_height > ((GpBitmap*)image)->height)
-        return InvalidParameter;
-
-    hbm = ((GpBitmap*)image)->hbitmap;
-    if(!hbm)   return GenericError;
-    hdc = ((GpBitmap*)image)->hdc;
-    bm_is_selected = (hdc != 0);
-
-    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-    if (!pbmi)
-        return OutOfMemory;
-    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    pbmi->bmiHeader.biBitCount = 0;
-
-    if(!bm_is_selected){
-        hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, hbm);
+    hbm = ((GpBitmap*)new_image)->hbitmap;
+    if(!hbm)
+    {
+        status = GenericError;
+        goto exit;
     }
-
-    /* fill out bmi */
-    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
-
-    bytespp = pbmi->bmiHeader.biBitCount / 8;
-    abs_height = abs(pbmi->bmiHeader.biHeight);
-
-    if(n_x > pbmi->bmiHeader.biWidth || n_x + n_width > pbmi->bmiHeader.biWidth ||
-       n_y > abs_height || n_y + n_height > abs_height){
-        GdipFree(pbmi);
-        return InvalidParameter;
-    }
-
-    dibits = GdipAlloc(pbmi->bmiHeader.biSizeImage);
-
-    if(dibits)  /* this is not a good place to error out */
-        GetDIBits(hdc, hbm, 0, abs_height, dibits, pbmi, DIB_RGB_COLORS);
-
-    if(!bm_is_selected){
-        SelectObject(hdc, old);
-        DeleteDC(hdc);
-    }
-
-    if(!dibits){
-        GdipFree(pbmi);
-        return OutOfMemory;
-    }
-
-    image_stride = (pbmi->bmiHeader.biWidth * bytespp + 3) & ~3;
-    stride = (n_width * bytespp + 3) & ~3;
-    buff = GdipAlloc(sizeof(BITMAPINFOHEADER) + stride * n_height);
-    if(!buff){
-        GdipFree(pbmi);
-        GdipFree(dibits);
-        return OutOfMemory;
-    }
-
-    bmih = (BITMAPINFOHEADER*)buff;
-    textbits = (BYTE*) (bmih + 1);
-    bmih->biSize = sizeof(BITMAPINFOHEADER);
-    bmih->biWidth = n_width;
-    bmih->biHeight = n_height;
-    bmih->biCompression = BI_RGB;
-    bmih->biSizeImage = stride * n_height;
-    bmih->biBitCount = pbmi->bmiHeader.biBitCount;
-    bmih->biClrUsed = 0;
-    bmih->biPlanes = 1;
-
-    /* image is flipped */
-    if(pbmi->bmiHeader.biHeight > 0){
-        dibits += image_stride * (pbmi->bmiHeader.biHeight - 1);
-        image_stride *= -1;
-        textbits += stride * (n_height - 1);
-        stride *= -1;
-    }
-
-    GdipFree(pbmi);
-
-    for(i = 0; i < n_height; i++)
-        memcpy(&textbits[i * stride],
-               &dibits[n_x * bytespp + (n_y + i) * image_stride],
-               abs(stride));
 
     *texture = GdipAlloc(sizeof(GpTexture));
     if (!*texture){
-        GdipFree(dibits);
-        GdipFree(buff);
-        return OutOfMemory;
+        status = OutOfMemory;
+        goto exit;
     }
 
     if((status = GdipCreateMatrix(&(*texture)->transform)) != Ok){
-        GdipFree(*texture);
-        GdipFree(dibits);
-        GdipFree(buff);
-        return status;
+        goto exit;
     }
 
-    (*texture)->brush.lb.lbStyle = BS_DIBPATTERNPT;
-    (*texture)->brush.lb.lbColor = DIB_RGB_COLORS;
-    (*texture)->brush.lb.lbHatch = (ULONG_PTR)buff;
+    (*texture)->brush.lb.lbStyle = BS_PATTERN;
+    (*texture)->brush.lb.lbColor = 0;
+    (*texture)->brush.lb.lbHatch = (ULONG_PTR)hbm;
 
     (*texture)->brush.gdibrush = CreateBrushIndirect(&(*texture)->brush.lb);
     (*texture)->brush.bt = BrushTypeTextureFill;
     (*texture)->wrap = imageattr->wrap;
 
-    GdipFree(dibits);
-    GdipFree(buff);
+exit:
+    GdipDisposeImage(new_image);
 
-    TRACE("<-- %p\n", *texture);
+    if (status == Ok)
+    {
+        TRACE("<-- %p\n", *texture);
+    }
+    else
+    {
+        if (*texture)
+        {
+            GdipDeleteMatrix((*texture)->transform);
+            GdipFree(*texture);
+            *texture = NULL;
+        }
+        TRACE("<-- error %u\n", status);
+    }
 
-    return Ok;
+    return status;
 }
 
 /******************************************************************************
