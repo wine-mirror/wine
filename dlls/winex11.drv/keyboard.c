@@ -235,6 +235,8 @@ static const WORD main_key_vkey_dvorak[MAIN_LEN] =
 /* We recommend you write just what is guaranteed to be correct (i.e. what's
    written on the keycaps), not the bunch of special characters behind AltGr
    and Shift-AltGr if it can vary among different X servers */
+/* These tables serve to guess the keyboard type and scancode mapping.
+   Complete modeling is not important, identification/discrimination is. */
 /* Remember that your 102nd key (to the right of l-shift) should be on a
    separate line, see existing tables */
 /* If Wine fails to match your new table, use WINEDEBUG=+key to find out why */
@@ -309,33 +311,15 @@ static const char main_key_IS[MAIN_LEN][4] =
  * Others put the acute and grave accents on the key left of BACKSPACE.
  * More information on the fd.o bugtracker:
  * https://bugs.freedesktop.org/show_bug.cgi?id=11514
+ * Keys reachable via AltGr (@, [], ~, \, |, {}) differ completely
+ * among PC and Mac keyboards, so these are not listed.
  */
 
-/*** German Logitech Desktop Pro keyboard layout */
-static const char main_key_DE_logitech[MAIN_LEN][4] =
-{
- "^\xb0","1!","2\"","3\xa7","4$","5%","6&","7/{","8([","9)]","0=}","\xdf?\\","\0`",
- "qQ@","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xdc","+*~",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","#'",
- "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>|"
-};
-
-/*** German keyboard layout (setxkbmap de) */
+/*** German keyboard layout (setxkbmap de [-variant nodeadkeys|deadacute etc.]) */
 static const char main_key_DE[MAIN_LEN][4] =
 {
- "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","\0`",
+ "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","",
  "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
- "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>|"
-};
-
-/*** German keyboard layout without dead keys */
-static const char main_key_DE_nodead[MAIN_LEN][4] =
-{
- "^°","1!","2\"","3§","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
@@ -918,8 +902,6 @@ static const struct {
  {0x0409, "United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0809, "British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0407, "German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {0x0407, "German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {0x0407, "German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x0807, "Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x100c, "Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041d, "Swedish keyboard layout", &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty_v2},
