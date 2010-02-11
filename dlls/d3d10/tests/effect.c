@@ -2390,6 +2390,1057 @@ static void test_effect_constant_buffer_stride(ID3D10Device *device)
     effect->lpVtbl->Release(effect);
 }
 
+#if 0
+float4 VS( float4 Pos : POSITION ) : SV_POSITION { return Pos; }
+float4 VS2( int4 Pos : POSITION ) : SV_POSITION { return Pos; }
+float4 PS( float4 Pos : SV_POSITION ) : SV_Target { return float4( 1.0f, 1.0f, 0.0f, 1.0f ); }
+struct GS_OUT { float4 Pos : SV_POSITION; };
+[maxvertexcount(3)]
+void GS( triangle float4 Pos[3] : SV_POSITION, inout TriangleStream<GS_OUT> TriStream )
+{
+     GS_OUT out1;
+     out1.Pos = Pos[0];
+     TriStream.Append( out1 );
+     out1.Pos = Pos[1];
+     TriStream.Append( out1 );
+     out1.Pos = Pos[2];
+     TriStream.Append( out1 );
+     TriStream.RestartStrip();
+}
+VertexShader v0 = NULL;
+PixelShader p0 = NULL;
+GeometryShader g0 = NULL;
+VertexShader v[2] = { CompileShader( vs_4_0, VS() ), CompileShader( vs_4_0, VS2() ) };
+PixelShader p = CompileShader( ps_4_0, PS() );
+GeometryShader g = CompileShader( gs_4_0, GS() );
+technique10 Render
+{
+    pass P0 {}
+    pass P1
+    {
+        SetPixelShader( NULL );
+        SetVertexShader( NULL );
+        SetGeometryShader( NULL );
+    }
+    pass P2
+    {
+        SetPixelShader( NULL );
+        SetVertexShader( NULL );
+        SetGeometryShader( NULL );
+    }
+    pass P3
+    {
+        SetPixelShader( CompileShader( ps_4_0, PS() ) );
+        SetVertexShader( CompileShader( vs_4_0, VS() ) );
+        SetGeometryShader( CompileShader( gs_4_0, GS() ) );
+    }
+    pass P4
+    {
+        SetPixelShader( CompileShader( ps_4_0, PS() ) );
+        SetVertexShader( CompileShader( vs_4_0, VS2() ) );
+        SetGeometryShader( CompileShader( gs_4_0, GS() ) );
+    }
+    pass P5
+    {
+        SetPixelShader( p0 );
+        SetVertexShader( v0 );
+        SetGeometryShader( g0 );
+    }
+    pass P6
+    {
+        SetPixelShader( p );
+        SetVertexShader( v[0] );
+        SetGeometryShader( g );
+    }
+    pass P7
+    {
+        SetPixelShader( p );
+        SetVertexShader( v[1] );
+        SetGeometryShader( g );
+    }
+}
+#endif
+static DWORD fx_local_shader[] = {
+0x43425844, 0x95577e13, 0xab5facae, 0xd06d9eab, 0x8b127be0, 0x00000001, 0x00001652, 0x00000001,
+0x00000024, 0x30315846, 0x00001626, 0xfeff1001, 0x00000000, 0x00000000, 0x00000006, 0x00000000,
+0x00000000, 0x00000000, 0x00000001, 0x0000138a, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000d, 0x00000006, 0x00000000, 0x74726556,
+0x68537865, 0x72656461, 0x00000400, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000600, 0x00307600, 0x65786950, 0x6168536c, 0x00726564, 0x00000030, 0x00000002, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000005, 0x47003070, 0x656d6f65, 0x53797274, 0x65646168,
+0x005b0072, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00070000, 0x30670000,
+0x00000400, 0x00000200, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000600, 0xb4007600,
+0x44000001, 0x02434258, 0x5f11b96d, 0x31cdd883, 0xade81d9f, 0x014d6a2d, 0xb4000000, 0x05000001,
+0x34000000, 0x8c000000, 0xc0000000, 0xf4000000, 0x38000000, 0x52000001, 0x50464544, 0x00000000,
+0x00000000, 0x00000000, 0x1c000000, 0x00000000, 0x00fffe04, 0x1c000001, 0x4d000000, 0x6f726369,
+0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+0x392e3632, 0x322e3235, 0x00343438, 0x49ababab, 0x2c4e4753, 0x01000000, 0x08000000, 0x20000000,
+0x00000000, 0x00000000, 0x03000000, 0x00000000, 0x0f000000, 0x5000000f, 0x5449534f, 0x004e4f49,
+0x4fababab, 0x2c4e4753, 0x01000000, 0x08000000, 0x20000000, 0x00000000, 0x01000000, 0x03000000,
+0x00000000, 0x0f000000, 0x53000000, 0x4f505f56, 0x49544953, 0x53004e4f, 0x3c524448, 0x40000000,
+0x0f000100, 0x5f000000, 0xf2030000, 0x00001010, 0x67000000, 0xf2040000, 0x00001020, 0x01000000,
+0x36000000, 0xf2050000, 0x00001020, 0x46000000, 0x0000101e, 0x3e000000, 0x53010000, 0x74544154,
+0x02000000, 0x00000000, 0x00000000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x01000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x01000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xb4000000, 0x44000001, 0xa4434258,
+0x42e88ad3, 0xcc4b1ab5, 0x5f89bf37, 0x0139edfb, 0xb4000000, 0x05000001, 0x34000000, 0x8c000000,
+0xc0000000, 0xf4000000, 0x38000000, 0x52000001, 0x50464544, 0x00000000, 0x00000000, 0x00000000,
+0x1c000000, 0x00000000, 0x00fffe04, 0x1c000001, 0x4d000000, 0x6f726369, 0x74666f73, 0x29522820,
+0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3632, 0x322e3235,
+0x00343438, 0x49ababab, 0x2c4e4753, 0x01000000, 0x08000000, 0x20000000, 0x00000000, 0x00000000,
+0x02000000, 0x00000000, 0x0f000000, 0x5000000f, 0x5449534f, 0x004e4f49, 0x4fababab, 0x2c4e4753,
+0x01000000, 0x08000000, 0x20000000, 0x00000000, 0x01000000, 0x03000000, 0x00000000, 0x0f000000,
+0x53000000, 0x4f505f56, 0x49544953, 0x53004e4f, 0x3c524448, 0x40000000, 0x0f000100, 0x5f000000,
+0xf2030000, 0x00001010, 0x67000000, 0xf2040000, 0x00001020, 0x01000000, 0x2b000000, 0xf2050000,
+0x00001020, 0x46000000, 0x0000101e, 0x3e000000, 0x53010000, 0x74544154, 0x02000000, 0x00000000,
+0x00000000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x01000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x70000000, 0x0001b000, 0x42584400, 0xf9269a43, 0xf17ba57f,
+0x6d728d8a, 0x599e9d79, 0x000001ff, 0x0001b000, 0x00000500, 0x00003400, 0x00008c00, 0x0000c000,
+0x0000f400, 0x00013400, 0x45445200, 0x00005046, 0x00000000, 0x00000000, 0x00000000, 0x00001c00,
+0xff040000, 0x000100ff, 0x00001c00, 0x63694d00, 0x6f736f72, 0x28207466, 0x48202952, 0x204c534c,
+0x64616853, 0x43207265, 0x69706d6f, 0x2072656c, 0x36322e39, 0x3235392e, 0x3438322e, 0xabab0034,
+0x475349ab, 0x00002c4e, 0x00000100, 0x00000800, 0x00002000, 0x00000000, 0x00000100, 0x00000300,
+0x00000000, 0x00000f00, 0x5f565300, 0x49534f50, 0x4e4f4954, 0x47534f00, 0x00002c4e, 0x00000100,
+0x00000800, 0x00002000, 0x00000000, 0x00000000, 0x00000300, 0x00000000, 0x00000f00, 0x5f565300,
+0x67726154, 0xab007465, 0x444853ab, 0x00003852, 0x00004000, 0x00000e00, 0x00006500, 0x1020f203,
+0x00000000, 0x00003600, 0x1020f208, 0x00000000, 0x00400200, 0x80000000, 0x8000003f, 0x0000003f,
+0x80000000, 0x00003e3f, 0x41545301, 0x00007454, 0x00000200, 0x00000000, 0x00000000, 0x00000100,
+0x00000000, 0x00000000, 0x00000000, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000100,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x10006700, 0x44000002, 0x5c434258, 0x7482cd04, 0xb6d82978, 0xe48192f2, 0x01eec6be,
+0x10000000, 0x05000002, 0x34000000, 0x8c000000, 0xc0000000, 0xf4000000, 0x94000000, 0x52000001,
+0x50464544, 0x00000000, 0x00000000, 0x00000000, 0x1c000000, 0x00000000, 0x00475304, 0x1c000001,
+0x4d000000, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320,
+0x656c6970, 0x2e392072, 0x392e3632, 0x322e3235, 0x00343438, 0x49ababab, 0x2c4e4753, 0x01000000,
+0x08000000, 0x20000000, 0x00000000, 0x01000000, 0x03000000, 0x00000000, 0x0f000000, 0x5300000f,
+0x4f505f56, 0x49544953, 0x4f004e4f, 0x2c4e4753, 0x01000000, 0x08000000, 0x20000000, 0x00000000,
+0x01000000, 0x03000000, 0x00000000, 0x0f000000, 0x53000000, 0x4f505f56, 0x49544953, 0x53004e4f,
+0x98524448, 0x40000000, 0x26000200, 0x61000000, 0xf2050000, 0x03002010, 0x00000000, 0x01000000,
+0x5d000000, 0x5c010018, 0x67010028, 0xf2040000, 0x00001020, 0x01000000, 0x5e000000, 0x03020000,
+0x36000000, 0xf2060000, 0x00001020, 0x46000000, 0x0000201e, 0x00000000, 0x13000000, 0x36010000,
+0xf2060000, 0x00001020, 0x46000000, 0x0100201e, 0x00000000, 0x13000000, 0x36010000, 0xf2060000,
+0x00001020, 0x46000000, 0x0200201e, 0x00000000, 0x13000000, 0x09010000, 0x3e010000, 0x53010000,
+0x74544154, 0x08000000, 0x00000000, 0x00000000, 0x02000000, 0x00000000, 0x00000000, 0x00000000,
+0x01000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x01000000, 0x03000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x03000000, 0x05000000, 0x03000000, 0x00000000, 0x00000000, 0x00000000, 0x52000000, 0x65646e65,
+0x30500072, 0x00315000, 0x00000001, 0x00000002, 0x00000000, 0x00000001, 0x00000002, 0x00000000,
+0x00000001, 0x00000002, 0x00000000, 0x01003250, 0x02000000, 0x00000000, 0x01000000, 0x02000000,
+0x00000000, 0x01000000, 0x02000000, 0x00000000, 0x50000000, 0x01b00033, 0x58440000, 0x269a4342,
+0x7ba57ff9, 0x728d8af1, 0x9e9d796d, 0x0001ff59, 0x01b00000, 0x00050000, 0x00340000, 0x008c0000,
+0x00c00000, 0x00f40000, 0x01340000, 0x44520000, 0x00504645, 0x00000000, 0x00000000, 0x00000000,
+0x001c0000, 0x04000000, 0x0100ffff, 0x001c0000, 0x694d0000, 0x736f7263, 0x2074666f, 0x20295228,
+0x4c534c48, 0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e36, 0x38322e32,
+0xab003434, 0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00010000,
+0x00030000, 0x00000000, 0x000f0000, 0x56530000, 0x534f505f, 0x4f495449, 0x534f004e, 0x002c4e47,
+0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000, 0x00000000, 0x000f0000,
+0x56530000, 0x7261545f, 0x00746567, 0x4853abab, 0x00385244, 0x00400000, 0x000e0000, 0x00650000,
+0x20f20300, 0x00000010, 0x00360000, 0x20f20800, 0x00000010, 0x40020000, 0x00000000, 0x00003f80,
+0x00003f80, 0x00000000, 0x003e3f80, 0x54530100, 0x00745441, 0x00020000, 0x00000000, 0x00000000,
+0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x083e0000, 0x00000000, 0x01b40000, 0x58440000, 0x6d024342, 0x835f11b9,
+0x9f31cdd8, 0x2dade81d, 0x00014d6a, 0x01b40000, 0x00050000, 0x00340000, 0x008c0000, 0x00c00000,
+0x00f40000, 0x01380000, 0x44520000, 0x00504645, 0x00000000, 0x00000000, 0x00000000, 0x001c0000,
+0x04000000, 0x0100fffe, 0x001c0000, 0x694d0000, 0x736f7263, 0x2074666f, 0x20295228, 0x4c534c48,
+0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e36, 0x38322e32, 0xab003434,
+0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000,
+0x00000000, 0x0f0f0000, 0x4f500000, 0x49544953, 0xab004e4f, 0x534fabab, 0x002c4e47, 0x00010000,
+0x00080000, 0x00200000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x000f0000, 0x56530000,
+0x534f505f, 0x4f495449, 0x4853004e, 0x003c5244, 0x00400000, 0x000f0001, 0x005f0000, 0x10f20300,
+0x00000010, 0x00670000, 0x20f20400, 0x00000010, 0x00010000, 0x00360000, 0x20f20500, 0x00000010,
+0x1e460000, 0x00000010, 0x003e0000, 0x54530100, 0x00745441, 0x00020000, 0x00000000, 0x00000000,
+0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x09fa0000, 0x00000000, 0x02100000, 0x58440000, 0x045c4342, 0x787482cd,
+0xf2b6d829, 0xbee48192, 0x0001eec6, 0x02100000, 0x00050000, 0x00340000, 0x008c0000, 0x00c00000,
+0x00f40000, 0x01940000, 0x44520000, 0x00504645, 0x00000000, 0x00000000, 0x00000000, 0x001c0000,
+0x04000000, 0x01004753, 0x001c0000, 0x694d0000, 0x736f7263, 0x2074666f, 0x20295228, 0x4c534c48,
+0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e36, 0x38322e32, 0xab003434,
+0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00010000, 0x00030000,
+0x00000000, 0x0f0f0000, 0x56530000, 0x534f505f, 0x4f495449, 0x534f004e, 0x002c4e47, 0x00010000,
+0x00080000, 0x00200000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x000f0000, 0x56530000,
+0x534f505f, 0x4f495449, 0x4853004e, 0x00985244, 0x00400000, 0x00260002, 0x00610000, 0x10f20500,
+0x00030020, 0x00000000, 0x00010000, 0x185d0000, 0x285c0100, 0x00670100, 0x20f20400, 0x00000010,
+0x00010000, 0x005e0000, 0x00030200, 0x00360000, 0x20f20600, 0x00000010, 0x1e460000, 0x00000020,
+0x00000000, 0x00130000, 0x00360100, 0x20f20600, 0x00000010, 0x1e460000, 0x00010020, 0x00000000,
+0x00130000, 0x00360100, 0x20f20600, 0x00000010, 0x1e460000, 0x00020020, 0x00000000, 0x00130000,
+0x00090100, 0x003e0100, 0x54530100, 0x00745441, 0x00080000, 0x00000000, 0x00000000, 0x00020000,
+0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00010000, 0x00030000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00030000, 0x00050000, 0x00030000, 0x00000000, 0x00000000,
+0x00000000, 0x0bba0000, 0x00000000, 0x34500000, 0x0001b000, 0x42584400, 0xf9269a43, 0xf17ba57f,
+0x6d728d8a, 0x599e9d79, 0x000001ff, 0x0001b000, 0x00000500, 0x00003400, 0x00008c00, 0x0000c000,
+0x0000f400, 0x00013400, 0x45445200, 0x00005046, 0x00000000, 0x00000000, 0x00000000, 0x00001c00,
+0xff040000, 0x000100ff, 0x00001c00, 0x63694d00, 0x6f736f72, 0x28207466, 0x48202952, 0x204c534c,
+0x64616853, 0x43207265, 0x69706d6f, 0x2072656c, 0x36322e39, 0x3235392e, 0x3438322e, 0xabab0034,
+0x475349ab, 0x00002c4e, 0x00000100, 0x00000800, 0x00002000, 0x00000000, 0x00000100, 0x00000300,
+0x00000000, 0x00000f00, 0x5f565300, 0x49534f50, 0x4e4f4954, 0x47534f00, 0x00002c4e, 0x00000100,
+0x00000800, 0x00002000, 0x00000000, 0x00000000, 0x00000300, 0x00000000, 0x00000f00, 0x5f565300,
+0x67726154, 0xab007465, 0x444853ab, 0x00003852, 0x00004000, 0x00000e00, 0x00006500, 0x1020f203,
+0x00000000, 0x00003600, 0x1020f208, 0x00000000, 0x00400200, 0x80000000, 0x8000003f, 0x0000003f,
+0x80000000, 0x00003e3f, 0x41545301, 0x00007454, 0x00000200, 0x00000000, 0x00000000, 0x00000100,
+0x00000000, 0x00000000, 0x00000000, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000100,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x000dd900, 0x00000000, 0x0001b400, 0x42584400, 0x8ad3a443, 0x1ab542e8, 0xbf37cc4b,
+0xedfb5f89, 0x00000139, 0x0001b400, 0x00000500, 0x00003400, 0x00008c00, 0x0000c000, 0x0000f400,
+0x00013800, 0x45445200, 0x00005046, 0x00000000, 0x00000000, 0x00000000, 0x00001c00, 0xfe040000,
+0x000100ff, 0x00001c00, 0x63694d00, 0x6f736f72, 0x28207466, 0x48202952, 0x204c534c, 0x64616853,
+0x43207265, 0x69706d6f, 0x2072656c, 0x36322e39, 0x3235392e, 0x3438322e, 0xabab0034, 0x475349ab,
+0x00002c4e, 0x00000100, 0x00000800, 0x00002000, 0x00000000, 0x00000000, 0x00000200, 0x00000000,
+0x000f0f00, 0x534f5000, 0x4f495449, 0xabab004e, 0x47534fab, 0x00002c4e, 0x00000100, 0x00000800,
+0x00002000, 0x00000000, 0x00000100, 0x00000300, 0x00000000, 0x00000f00, 0x5f565300, 0x49534f50,
+0x4e4f4954, 0x44485300, 0x00003c52, 0x01004000, 0x00000f00, 0x00005f00, 0x1010f203, 0x00000000,
+0x00006700, 0x1020f204, 0x00000000, 0x00000100, 0x00002b00, 0x1020f205, 0x00000000, 0x101e4600,
+0x00000000, 0x00003e00, 0x41545301, 0x00007454, 0x00000200, 0x00000000, 0x00000000, 0x00000200,
+0x00000000, 0x00000000, 0x00000000, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x000f9500, 0x00000000, 0x00021000, 0x42584400, 0xcd045c43, 0x29787482, 0x92f2b6d8,
+0xc6bee481, 0x000001ee, 0x00021000, 0x00000500, 0x00003400, 0x00008c00, 0x0000c000, 0x0000f400,
+0x00019400, 0x45445200, 0x00005046, 0x00000000, 0x00000000, 0x00000000, 0x00001c00, 0x53040000,
+0x00010047, 0x00001c00, 0x63694d00, 0x6f736f72, 0x28207466, 0x48202952, 0x204c534c, 0x64616853,
+0x43207265, 0x69706d6f, 0x2072656c, 0x36322e39, 0x3235392e, 0x3438322e, 0xabab0034, 0x475349ab,
+0x00002c4e, 0x00000100, 0x00000800, 0x00002000, 0x00000000, 0x00000100, 0x00000300, 0x00000000,
+0x000f0f00, 0x5f565300, 0x49534f50, 0x4e4f4954, 0x47534f00, 0x00002c4e, 0x00000100, 0x00000800,
+0x00002000, 0x00000000, 0x00000100, 0x00000300, 0x00000000, 0x00000f00, 0x5f565300, 0x49534f50,
+0x4e4f4954, 0x44485300, 0x00009852, 0x02004000, 0x00002600, 0x00006100, 0x2010f205, 0x00000300,
+0x00000000, 0x00000100, 0x00185d00, 0x00285c01, 0x00006701, 0x1020f204, 0x00000000, 0x00000100,
+0x00005e00, 0x00000302, 0x00003600, 0x1020f206, 0x00000000, 0x201e4600, 0x00000000, 0x00000000,
+0x00001300, 0x00003601, 0x1020f206, 0x00000000, 0x201e4600, 0x00000100, 0x00000000, 0x00001300,
+0x00003601, 0x1020f206, 0x00000000, 0x201e4600, 0x00000200, 0x00000000, 0x00001300, 0x00000901,
+0x00003e01, 0x41545301, 0x00007454, 0x00000800, 0x00000000, 0x00000000, 0x00000200, 0x00000000,
+0x00000000, 0x00000000, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000100,
+0x00000300, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000300, 0x00000500, 0x00000300, 0x00000000, 0x00000000, 0x00000000,
+0x00115500, 0x00000000, 0x00355000, 0xa5003650, 0x00000000, 0x50000000, 0x00a50037, 0x00010000,
+0x002d0000, 0x00110000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00000000, 0x00580000, 0x003c0000,
+0x00000000, 0xffff0000, 0x0000ffff, 0x00000000, 0x00860000, 0x006a0000, 0x00000000, 0xffff0000,
+0x0000ffff, 0x00000000, 0x00a50000, 0x00890000, 0x00000000, 0xffff0000, 0x00a7ffff, 0x025f0000,
+0x00000000, 0x04170000, 0x003c0000, 0x00000000, 0xffff0000, 0x0419ffff, 0x00000000, 0x05cd0000,
+0x006a0000, 0x00000000, 0xffff0000, 0x05cfffff, 0x00000000, 0x07e30000, 0x00080000, 0x00000000,
+0x07ea0000, 0x00000000, 0x00000000, 0x07ed0000, 0x00030000, 0x00000000, 0x00070000, 0x00000000,
+0x00010000, 0x07f00000, 0x00060000, 0x00000000, 0x00010000, 0x07fc0000, 0x00080000, 0x00000000,
+0x00010000, 0x08080000, 0x08140000, 0x00030000, 0x00000000, 0x00070000, 0x00000000, 0x00010000,
+0x08170000, 0x00060000, 0x00000000, 0x00010000, 0x08230000, 0x00080000, 0x00000000, 0x00010000,
+0x082f0000, 0x083b0000, 0x00030000, 0x00000000, 0x00070000, 0x00000000, 0x00070000, 0x09f20000,
+0x00060000, 0x00000000, 0x00070000, 0x0bb20000, 0x00080000, 0x00000000, 0x00070000, 0x0dce0000,
+0x0dd60000, 0x00030000, 0x00000000, 0x00070000, 0x00000000, 0x00070000, 0x0f8d0000, 0x00060000,
+0x00000000, 0x00070000, 0x114d0000, 0x00080000, 0x00000000, 0x00070000, 0x13690000, 0x13710000,
+0x00030000, 0x00000000, 0x00070000, 0x00000000, 0x00020000, 0x00580000, 0x00060000, 0x00000000,
+0x00020000, 0x002d0000, 0x00080000, 0x00000000, 0x00020000, 0x00860000, 0x13740000, 0x00030000,
+0x00000000, 0x00070000, 0x00000000, 0x00020000, 0x04170000, 0x00060000, 0x00000000, 0x00030000,
+0x13770000, 0x00080000, 0x00000000, 0x00020000, 0x05cd0000, 0x137f0000, 0x00030000, 0x00000000,
+0x00070000, 0x00000000, 0x00020000, 0x04170000, 0x00060000, 0x00000000, 0x00030000, 0x13820000,
+0x00080000, 0x00000000, 0x00020000, 0x05cd0000, 0x00000000,
+};
+
+static void test_effect_local_shader(ID3D10Device *device)
+{
+    HRESULT hr;
+    BOOL ret;
+    ID3D10Effect* effect;
+    ID3D10EffectVariable* v;
+    ID3D10EffectPass *p, *null_pass;
+    ID3D10EffectTechnique *t;
+    D3D10_PASS_SHADER_DESC pdesc = {0};
+    D3D10_EFFECT_VARIABLE_DESC vdesc = {0};
+    ID3D10EffectType *type;
+    D3D10_EFFECT_TYPE_DESC typedesc;
+    ID3D10EffectShaderVariable *null_shader, *null_anon_vs, *null_anon_ps, *null_anon_gs,
+        *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs;
+
+    hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed!\n");
+
+    t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    null_pass = t->lpVtbl->GetPassByIndex(t, 10000);
+
+    /* check for invalid arguments */
+    hr = null_pass->lpVtbl->GetVertexShaderDesc(null_pass, NULL);
+    ok(hr == E_FAIL, "GetVertexShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    hr = null_pass->lpVtbl->GetVertexShaderDesc(null_pass, &pdesc);
+    ok(hr == E_FAIL, "GetVertexShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    hr = null_pass->lpVtbl->GetPixelShaderDesc(null_pass, NULL);
+    ok(hr == E_FAIL, "GetPixelShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    hr = null_pass->lpVtbl->GetPixelShaderDesc(null_pass, &pdesc);
+    ok(hr == E_FAIL, "GetPixelShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    hr = null_pass->lpVtbl->GetGeometryShaderDesc(null_pass, NULL);
+    ok(hr == E_FAIL, "GetGeometryShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    hr = null_pass->lpVtbl->GetGeometryShaderDesc(null_pass, &pdesc);
+    ok(hr == E_FAIL, "GetGeometryShaderDesc got %x, expected %x\n", hr, E_FAIL);
+
+    t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    p = t->lpVtbl->GetPassByIndex(t, 0);
+
+    hr = p->lpVtbl->GetVertexShaderDesc(p, NULL);
+    ok(hr == E_INVALIDARG, "GetVertexShaderDesc got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = p->lpVtbl->GetPixelShaderDesc(p, NULL);
+    ok(hr == E_INVALIDARG, "GetPixelShaderDesc got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, NULL);
+    ok(hr == E_INVALIDARG, "GetGeometryShaderDesc got %x, expected %x\n", hr, E_INVALIDARG);
+
+    /* get the null_shader_variable */
+    v = effect->lpVtbl->GetVariableByIndex(effect, 10000);
+    null_shader = v->lpVtbl->AsShader(v);
+
+    /* pass 0 */
+    p = t->lpVtbl->GetPassByIndex(t, 0);
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_shader, "Got %p, expected %p\n", pdesc.pShaderVariable, null_shader);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(hr == E_FAIL, "GetDesc failed (%x)\n", hr);
+
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_shader, "Got %p, expected %p\n", pdesc.pShaderVariable, null_shader);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(hr == E_FAIL, "GetDesc failed (%x)\n", hr);
+
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_shader, "Got %p, expected %p\n", pdesc.pShaderVariable, null_shader);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(hr == E_FAIL, "GetDesc failed (%x)\n", hr);
+
+    /* pass 1 */
+    p = t->lpVtbl->GetPassByIndex(t, 1);
+
+    /* pass 1 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    null_anon_vs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "vertexshader") == 0, "TypeName is \"%s\", expected \"vertexhader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 1 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    null_anon_ps = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "pixelshader") == 0, "TypeName is \"%s\", expected \"pixelshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 1 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    null_anon_gs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(hr == S_OK, "GetDesc failed (%x) expected %x\n", hr, S_OK);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "geometryshader") == 0, "TypeName is \"%s\", expected \"geometryshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 2 */
+    p = t->lpVtbl->GetPassByIndex(t, 2);
+
+    /* pass 2 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_anon_vs, "Got %p, expected %p\n", pdesc.pShaderVariable, null_anon_vs);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    /* pass 2 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_anon_ps, "Got %p, expected %p\n", pdesc.pShaderVariable, null_anon_ps);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    /* pass 2 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == null_anon_gs, "Got %p, expected %p\n", pdesc.pShaderVariable, null_anon_gs);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(hr == S_OK, "GetDesc failed (%x) expected %x\n", hr, S_OK);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    /* pass 3 */
+    p = t->lpVtbl->GetPassByIndex(t, 3);
+
+    /* pass 3 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    p3_anon_vs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "vertexshader") == 0, "TypeName is \"%s\", expected \"vertexshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 3 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    p3_anon_ps = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "pixelshader") == 0, "TypeName is \"%s\", expected \"pixelshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 3 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    p3_anon_gs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "geometryshader") == 0, "TypeName is \"%s\", expected \"geometryshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 4 */
+    p = t->lpVtbl->GetPassByIndex(t, 4);
+
+    /* pass 4 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable != p3_anon_vs, "Got %p, expected %p\n", pdesc.pShaderVariable, p3_anon_vs);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "vertexshader") == 0, "TypeName is \"%s\", expected \"vertexshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 4 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable != p3_anon_ps, "Got %p, expected %p\n", pdesc.pShaderVariable, p3_anon_ps);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "pixelshader") == 0, "TypeName is \"%s\", expected \"pixelshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 4 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable != p3_anon_gs, "Got %p, expected %p\n", pdesc.pShaderVariable, p3_anon_gs);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %x\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "$Anonymous") == 0, "Name is \"%s\", expected \"$Anonymous\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vdesc.ExplicitBindPoint);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "geometryshader") == 0, "TypeName is \"%s\", expected \"geometryshader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 5 */
+    p = t->lpVtbl->GetPassByIndex(t, 5);
+
+    /* pass 5 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "v0") == 0, "Name is \"%s\", expected \"v0\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "VertexShader") == 0, "TypeName is \"%s\", expected \"VertexShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 5 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "p0") == 0, "Name is \"%s\", expected \"p0\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "PixelShader") == 0, "TypeName is \"%s\", expected \"PixelShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 5 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "g0") == 0, "Name is \"%s\", expected \"g0\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "GeometryShader") == 0, "TypeName is \"%s\", expected \"GeometryShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 6 */
+    p = t->lpVtbl->GetPassByIndex(t, 6);
+
+    /* pass 6 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    p6_vs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "v") == 0, "Name is \"%s\", expected \"v\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "VertexShader") == 0, "TypeName is \"%s\", expected \"VertexShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 2, "Elements is %u, expected 2\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 6 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    p6_ps = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "p") == 0, "Name is \"%s\", expected \"p\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "PixelShader") == 0, "TypeName is \"%s\", expected \"PixelShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 6 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    p6_gs = pdesc.pShaderVariable;
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "g") == 0, "Name is \"%s\", expected \"g\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "GeometryShader") == 0, "TypeName is \"%s\", expected \"GeometryShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 7 */
+    p = t->lpVtbl->GetPassByIndex(t, 7);
+
+    /* pass 7 vertexshader */
+    hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == p6_vs, "Got %p, expected %p\n", pdesc.pShaderVariable, p6_vs);
+    ok(pdesc.ShaderIndex == 1, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 1);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "v") == 0, "Name is \"%s\", expected \"v\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "VertexShader") == 0, "TypeName is \"%s\", expected \"VertexShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_VERTEXSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_VERTEXSHADER);
+    ok(typedesc.Elements == 2, "Elements is %u, expected 2\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 7 pixelshader */
+    hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetPixelShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == p6_ps, "Got %p, expected %p\n", pdesc.pShaderVariable, p6_ps);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "p") == 0, "Name is \"%s\", expected \"p\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "PixelShader") == 0, "TypeName is \"%s\", expected \"PixelShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_PIXELSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_PIXELSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* pass 7 geometryshader */
+    hr = p->lpVtbl->GetGeometryShaderDesc(p, &pdesc);
+    ok(hr == S_OK, "GetGeometryShaderDesc got %x, expected %x\n", hr, S_OK);
+    ok(pdesc.pShaderVariable == p6_gs, "Got %p, expected %p\n", pdesc.pShaderVariable, p6_gs);
+    ok(pdesc.ShaderIndex == 0, "ShaderIndex is %u, expected %u\n", pdesc.ShaderIndex, 0);
+
+    hr = pdesc.pShaderVariable->lpVtbl->GetDesc(pdesc.pShaderVariable, &vdesc);
+    ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
+
+    ok(strcmp(vdesc.Name, "g") == 0, "Name is \"%s\", expected \"g\"\n", vdesc.Name);
+    ok(vdesc.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vdesc.Semantic);
+    ok(vdesc.Flags == 0, "Flags is %u, expected 0\n", vdesc.Flags);
+    ok(vdesc.Annotations == 0, "Annotations is %u, expected 0\n", vdesc.Annotations);
+    ok(vdesc.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vdesc.BufferOffset);
+    ok(vdesc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected %u\n", vdesc.ExplicitBindPoint, 0);
+
+    ret = pdesc.pShaderVariable->lpVtbl->IsValid(pdesc.pShaderVariable);
+    ok(ret, "IsValid() failed\n");
+
+    type = pdesc.pShaderVariable->lpVtbl->GetType(pdesc.pShaderVariable);
+    ret = type->lpVtbl->IsValid(type);
+    ok(ret, "IsValid() failed\n");
+
+    hr = type->lpVtbl->GetDesc(type, &typedesc);
+    ok(hr == S_OK, "GetDesc failed (%x)\n", hr);
+    ok(strcmp(typedesc.TypeName, "GeometryShader") == 0, "TypeName is \"%s\", expected \"GeometryShader\"\n", typedesc.TypeName);
+    ok(typedesc.Class == D3D10_SVC_OBJECT, "Class is %x, expected %x\n", typedesc.Class, D3D10_SVC_OBJECT);
+    ok(typedesc.Type == D3D10_SVT_GEOMETRYSHADER, "Type is %x, expected %x\n", typedesc.Type, D3D10_SVT_GEOMETRYSHADER);
+    ok(typedesc.Elements == 0, "Elements is %u, expected 0\n", typedesc.Elements);
+    ok(typedesc.Members == 0, "Members is %u, expected 0\n", typedesc.Members);
+    ok(typedesc.Rows == 0, "Rows is %u, expected 0\n", typedesc.Rows);
+    ok(typedesc.Columns == 0, "Columns is %u, expected 0\n", typedesc.Columns);
+    ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
+    ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
+    ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     ID3D10Device *device;
@@ -2408,6 +3459,7 @@ START_TEST(effect)
     test_effect_variable_element(device);
     test_effect_variable_type_class(device);
     test_effect_constant_buffer_stride(device);
+    test_effect_local_shader(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
