@@ -5086,6 +5086,120 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
     return rc;
 }
 
+static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
+{
+    DWORD usage;
+    LPCWSTR desc;
+
+    desc = MSI_RecordGetString( rec, 3 );
+    if (!SQLRemoveDriverW( desc, FALSE, &usage ))
+    {
+        WARN("Failed to remove ODBC driver\n");
+    }
+    else if (!usage)
+    {
+        FIXME("Usage count reached 0\n");
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
+{
+    DWORD usage;
+    LPCWSTR desc;
+
+    desc = MSI_RecordGetString( rec, 3 );
+    if (!SQLRemoveTranslatorW( desc, &usage ))
+    {
+        WARN("Failed to remove ODBC translator\n");
+    }
+    else if (!usage)
+    {
+        FIXME("Usage count reached 0\n");
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
+{
+    LPWSTR attrs;
+    LPCWSTR desc, driver;
+    WORD request = ODBC_REMOVE_SYS_DSN;
+    INT registration;
+    DWORD len;
+
+    static const WCHAR attrs_fmt[] = {
+        'D','S','N','=','%','s',0 };
+
+    desc = MSI_RecordGetString( rec, 3 );
+    driver = MSI_RecordGetString( rec, 4 );
+    registration = MSI_RecordGetInteger( rec, 5 );
+
+    if (registration == msidbODBCDataSourceRegistrationPerMachine) request = ODBC_REMOVE_SYS_DSN;
+    else if (registration == msidbODBCDataSourceRegistrationPerUser) request = ODBC_REMOVE_DSN;
+
+    len = strlenW( attrs_fmt ) + strlenW( desc ) + 1 + 1;
+    attrs = msi_alloc( len * sizeof(WCHAR) );
+    if (!attrs)
+        return ERROR_OUTOFMEMORY;
+
+    FIXME("Use ODBCSourceAttribute table\n");
+
+    len = sprintfW( attrs, attrs_fmt, desc );
+    attrs[len + 1] = 0;
+
+    if (!SQLConfigDataSourceW( NULL, request, driver, attrs ))
+    {
+        WARN("Failed to remove ODBC data source\n");
+    }
+    msi_free( attrs );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR driver_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','D','r','i','v','e','r',0 };
+
+    static const WCHAR translator_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
+
+    static const WCHAR source_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0 };
+
+    rc = MSI_DatabaseOpenViewW( package->db, driver_query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDriver, package );
+    msiobj_release( &view->hdr );
+
+    rc = MSI_DatabaseOpenViewW( package->db, translator_query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCTranslator, package );
+    msiobj_release( &view->hdr );
+
+    rc = MSI_DatabaseOpenViewW( package->db, source_query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDataSource, package );
+    msiobj_release( &view->hdr );
+
+    return rc;
+}
+
 #define ENV_ACT_SETALWAYS   0x1
 #define ENV_ACT_SETABSENT   0x2
 #define ENV_ACT_REMOVE      0x4
@@ -6288,12 +6402,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'O','D','B','C','D','r','i','v','e','r',0 };
-    return msi_unimplemented_action_stub( package, "RemoveODBC", table );
 }
 
 static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
