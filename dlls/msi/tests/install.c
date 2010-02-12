@@ -7970,18 +7970,8 @@ static void test_self_registration(void)
 
 static void test_register_font(void)
 {
-    static const WCHAR regfont1[] =
-        {'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s',' ','N','T','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'F','o','n','t','s',0};
-    static const WCHAR regfont2[] =
-        {'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'F','o','n','t','s',0};
+    static const char regfont1[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+    static const char regfont2[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Fonts";
     LONG ret;
     HKEY key;
     UINT r;
@@ -7995,9 +7985,9 @@ static void test_register_font(void)
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, regfont1, &key);
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, regfont1, &key);
     if (ret)
-        ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, regfont2, &key);
+        RegOpenKeyA(HKEY_LOCAL_MACHINE, regfont2, &key);
 
     ret = RegQueryValueExA(key, "msi test font", NULL, NULL, NULL, NULL);
     ok(ret != ERROR_FILE_NOT_FOUND, "unexpected result %d\n", ret);
