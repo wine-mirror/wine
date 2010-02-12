@@ -1922,6 +1922,21 @@ static void test_conf_complex_array(void)
 /* 28 */        NdrFcShort( 0xffe4 ),   /* Offset= -28 (0) */
 /* 30 */        0x5c,           /* FC_PAD */
                 0x5b,           /* FC_END */
+
+#ifdef _WIN64
+/* 32 */        0x1a,           /* FC_BOGUS_STRUCT */
+                0x3,            /* 3 */
+/* 34 */        NdrFcShort( 0x10 ),     /* 16 */
+/* 36 */        NdrFcShort( 0x0 ),      /* 0 */
+/* 38 */        NdrFcShort( 0x6 ),      /* Offset= 6 (44) */
+/* 40 */        0x8,            /* FC_LONG */
+                0x8,            /* FC_LONG */
+/* 42 */        0x36,           /* FC_POINTER */
+                0x5b,           /* FC_END */
+/* 44 */
+                0x12, 0x0,      /* FC_UP */
+/* 46 */        NdrFcShort( 0xffe0 ),   /* Offset= -32 (14) */
+#else
 /* 32 */
                 0x16,           /* FC_PSTRUCT */
                 0x3,            /* 3 */
@@ -1940,6 +1955,7 @@ static void test_conf_complex_array(void)
                 0x8,            /* FC_LONG */
 /* 52 */        0x5c,           /* FC_PAD */
                 0x5b,           /* FC_END */
+#endif
     };
 
     memsrc.dim1 = 5;
@@ -1964,9 +1980,16 @@ static void test_conf_complex_array(void)
                            0);
 
     StubMsg.BufferLength = 0;
+
+#ifdef _WIN64
+    NdrComplexStructBufferSize( &StubMsg,
+                                (unsigned char *)&memsrc,
+                                &fmtstr_complex_array[32] );
+#else
     NdrSimpleStructBufferSize( &StubMsg,
                                 (unsigned char *)&memsrc,
                                 &fmtstr_complex_array[32] );
+#endif
 
     expected_length = (4 + memsrc.dim1 * (2 + memsrc.dim2)) * 4;
     if (StubMsg.BufferLength == 96)
@@ -1981,10 +2004,15 @@ todo_wine
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
+#ifdef _WIN64
+    ptr = NdrComplexStructMarshall( &StubMsg, (unsigned char *)&memsrc,
+                                    &fmtstr_complex_array[32] );
+#else
     ptr = NdrSimpleStructMarshall( &StubMsg, (unsigned char *)&memsrc,
                                     &fmtstr_complex_array[32] );
-    ok(ptr == NULL, "ret %p\n", ptr);
+#endif
 
+    ok(ptr == NULL, "ret %p\n", ptr);
 todo_wine
     ok((char*)StubMsg.Buffer == (char*)StubMsg.BufferStart + expected_length, "not at expected length\n");
 
@@ -2025,14 +2053,22 @@ todo_wine
     StubMsg.IsClient = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
+#ifdef _WIN64
+    ptr = NdrComplexStructUnmarshall( &StubMsg, (unsigned char **)&mem, &fmtstr_complex_array[32], 0);
+#else
     ptr = NdrSimpleStructUnmarshall( &StubMsg, (unsigned char **)&mem, &fmtstr_complex_array[32], 0);
+#endif
     ok(ptr == NULL, "ret %p\n", ptr);
     ok(mem->dim1 == memsrc.dim1, "mem->dim1 wasn't unmarshalled correctly (%d)\n", mem->dim1);
     ok(mem->dim2 == memsrc.dim2, "mem->dim2 wasn't unmarshalled correctly (%d)\n", mem->dim2);
     ok(mem->array[1][0] == memsrc.dim2, "mem->array[1][0] wasn't unmarshalled correctly (%d)\n", mem->array[1][0]);
 
     StubMsg.Buffer = StubMsg.BufferStart;
+#ifdef _WIN64
+    NdrComplexStructFree( &StubMsg, (unsigned char*)mem, &fmtstr_complex_array[32]);
+#else
     NdrSimpleStructFree( &StubMsg, (unsigned char*)mem, &fmtstr_complex_array[32]);
+#endif
     }
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
