@@ -4657,7 +4657,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
-    SC_HANDLE scm, service = NULL;
+    SC_HANDLE scm = NULL, service = NULL;
     LPCWSTR *vector = NULL;
     LPWSTR name, args;
     DWORD event, numargs;
@@ -4672,7 +4672,10 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     event = MSI_RecordGetInteger(rec, 3);
 
     if (!(event & msidbServiceControlEventStart))
-        return ERROR_SUCCESS;
+    {
+        r = ERROR_SUCCESS;
+        goto done;
+    }
 
     scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
     if (!scm)
