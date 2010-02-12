@@ -45,8 +45,6 @@ BOOL ximInComposeMode=FALSE;
 static DWORD dwCompStringLength = 0;
 static LPBYTE CompositionString = NULL;
 static DWORD dwCompStringSize = 0;
-static LPBYTE ResultString = NULL;
-static DWORD dwResultStringSize = 0;
 
 #define STYLE_OFFTHESPOT (XIMPreeditArea | XIMStatusArea)
 #define STYLE_OVERTHESPOT (XIMPreeditPosition | XIMStatusNothing)
@@ -159,14 +157,8 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
     }
     else if ((dwIndex == GCS_RESULTSTR) && (lpComp) && (dwCompLen))
     {
-        if (dwResultStringSize)
-            HeapFree(GetProcessHeap(),0,ResultString);
-        dwResultStringSize= byte_length;
-        ResultString= HeapAlloc(GetProcessHeap(),0,byte_length);
-        memcpy(ResultString,lpComp,byte_length);
-
-        rc = IME_SetCompositionString(SCS_SETSTR, ResultString,
-                                     dwResultStringSize, NULL, 0);
+        rc = IME_SetCompositionString(SCS_SETSTR, lpComp,
+                                      byte_length, NULL, 0);
 
         IME_NotifyIME( NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
     }
@@ -203,12 +195,6 @@ static void X11DRV_ImmSetOpenStatus(BOOL fOpen)
         dwCompStringSize = 0;
         dwCompStringLength = 0;
         CompositionString = NULL;
-
-        if (dwResultStringSize)
-            HeapFree(GetProcessHeap(),0,ResultString);
-
-        dwResultStringSize = 0;
-        ResultString = NULL;
     }
 
     IME_SetOpenStatus(fOpen);
