@@ -1342,11 +1342,11 @@ static HRESULT WINAPI domdoc_createNode(
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
     DOMNodeType node_type;
-    xmlNodePtr xmlnode = NULL;
+    xmlNodePtr xmlnode;
     xmlChar *xml_name;
     HRESULT hr;
 
-    TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
+    TRACE("(%p)->(%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
 
     if(!node) return E_INVALIDARG;
 
@@ -1354,8 +1354,7 @@ static HRESULT WINAPI domdoc_createNode(
         FIXME("nodes with namespaces currently not supported.\n");
 
     hr = get_node_type(Type, &node_type);
-    if(FAILED(hr))
-        return hr;
+    if(FAILED(hr)) return hr;
 
     TRACE("node_type %d\n", node_type);
 
@@ -1365,30 +1364,49 @@ static HRESULT WINAPI domdoc_createNode(
     {
     case NODE_ELEMENT:
         xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
-        *node = create_node(xmlnode);
-        TRACE("created %p\n", xmlnode);
         break;
     case NODE_ATTRIBUTE:
-        xmlnode = (xmlNode *)xmlNewProp(NULL, xml_name, NULL);
-        if(xmlnode)
-        {
-            xmlnode->doc = get_doc( This );
-
-            *node = (IXMLDOMNode*)create_attribute(xmlnode);
-        }
-
-        TRACE("created %p\n", xmlnode);
+        xmlnode = (xmlNodePtr)xmlNewDocProp(get_doc(This), xml_name, NULL);
         break;
-
+    case NODE_TEXT:
+        xmlnode = (xmlNodePtr)xmlNewDocText(get_doc(This), NULL);
+        break;
+    case NODE_CDATA_SECTION:
+        xmlnode = xmlNewCDataBlock(get_doc(This), NULL, 0);
+        break;
+    case NODE_PROCESSING_INSTRUCTION:
+#ifdef HAVE_XMLNEWDOCPI
+        xmlnode = xmlNewDocPI(get_doc(This), xml_name, NULL);
+#else
+        FIXME("xmlNewDocPI() not supported, use libxml2 2.6.15 or greater\n");
+        xmlnode = NULL;
+#endif
+        break;
+    case NODE_COMMENT:
+        xmlnode = xmlNewDocComment(get_doc(This), NULL);
+        break;
+    case NODE_DOCUMENT_FRAGMENT:
+        xmlnode = xmlNewDocFragment(get_doc(This));
+        break;
+    /* unsupported types */
+    case NODE_DOCUMENT:
+    case NODE_DOCUMENT_TYPE:
+    case NODE_ENTITY:
+    case NODE_NOTATION:
+        heap_free(xml_name);
+        return E_INVALIDARG;
     default:
         FIXME("unhandled node type %d\n", node_type);
+        xmlnode = NULL;
         break;
     }
 
+    *node = create_node(xmlnode);
     heap_free(xml_name);
 
-    if(xmlnode && *node)
+    if(*node)
     {
+        TRACE("created node (%d, %p, %p)\n", node_type, *node, xmlnode);
         xmldoc_add_orphan(xmlnode->doc, xmlnode);
         return S_OK;
     }

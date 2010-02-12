@@ -1657,6 +1657,35 @@ static void test_create(void)
     if( r != S_OK )
         return;
 
+    /* types not supported for creation */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_DOCUMENT;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_DOCUMENT_TYPE;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ENTITY;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_NOTATION;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
     str = SysAllocString( szlc );
