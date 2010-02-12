@@ -1969,6 +1969,11 @@ static void test_conf_complex_array(void)
                                 &fmtstr_complex_array[32] );
 
     expected_length = (4 + memsrc.dim1 * (2 + memsrc.dim2)) * 4;
+    if (StubMsg.BufferLength == 96)
+    {
+        win_skip("Tests crash on Win9x, WinMe and NT4\n");
+        goto cleanup;
+    }
 todo_wine
     ok(StubMsg.BufferLength >= expected_length, "length %d\n", StubMsg.BufferLength);
 
@@ -2032,6 +2037,7 @@ todo_wine
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 
+cleanup:
     for(i = 0; i < memsrc.dim1; i++)
         HeapFree(GetProcessHeap(), 0, memsrc.array[i]);
     HeapFree(GetProcessHeap(), 0, memsrc.array);
