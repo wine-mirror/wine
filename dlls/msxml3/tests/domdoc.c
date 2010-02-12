@@ -1864,6 +1864,29 @@ static void test_create(void)
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMCDATASection_Release(cdata);
 
+    /* NODE_ATTRIBUTE */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    str = SysAllocString( szlc );
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+
     /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
@@ -2965,7 +2988,7 @@ static void test_xmlTypes(void)
     HRESULT hr;
     IXMLDOMComment *pComment;
     IXMLDOMElement *pElement;
-    IXMLDOMAttribute *pAttrubute;
+    IXMLDOMAttribute *pAttribute;
     IXMLDOMNamedNodeMap *pAttribs;
     IXMLDOMCDATASection *pCDataSec;
     IXMLDOMImplementation *pIXMLDOMImplementation = NULL;
@@ -3369,41 +3392,51 @@ static void test_xmlTypes(void)
                 VariantClear(&v);
 
                 /* Attribute */
+                pAttribute = (IXMLDOMAttribute*)0x1;
+                hr = IXMLDOMDocument_createAttribute(doc, NULL, &pAttribute);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+                ok(pAttribute == (void*)0x1, "Expect same ptr, got %p\n", pAttribute);
+
+                pAttribute = (IXMLDOMAttribute*)0x1;
+                hr = IXMLDOMDocument_createAttribute(doc, _bstr_(""), &pAttribute);
+                ok(hr == E_FAIL, "ret %08x\n", hr );
+                ok(pAttribute == (void*)0x1, "Expect same ptr, got %p\n", pAttribute);
+
                 str = SysAllocString(szAttribute);
-                hr = IXMLDOMDocument_createAttribute(doc, str, &pAttrubute);
+                hr = IXMLDOMDocument_createAttribute(doc, str, &pAttribute);
                 SysFreeString(str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 if(hr == S_OK)
                 {
                     IXMLDOMNode *pNewChild = (IXMLDOMNode *)0x1;
 
-                    hr = IXMLDOMAttribute_get_nextSibling(pAttrubute, NULL);
+                    hr = IXMLDOMAttribute_get_nextSibling(pAttribute, NULL);
                     ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
                     pNextChild = (IXMLDOMNode *)0x1;
-                    hr = IXMLDOMAttribute_get_nextSibling(pAttrubute, &pNextChild);
+                    hr = IXMLDOMAttribute_get_nextSibling(pAttribute, &pNextChild);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok(pNextChild == NULL, "pNextChild not NULL\n");
 
                     /* test Previous Sibling*/
-                    hr = IXMLDOMAttribute_get_previousSibling(pAttrubute, NULL);
+                    hr = IXMLDOMAttribute_get_previousSibling(pAttribute, NULL);
                     ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
                     pNextChild = (IXMLDOMNode *)0x1;
-                    hr = IXMLDOMAttribute_get_previousSibling(pAttrubute, &pNextChild);
+                    hr = IXMLDOMAttribute_get_previousSibling(pAttribute, &pNextChild);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok(pNextChild == NULL, "pNextChild not NULL\n");
 
                     /* test get_attributes */
-                    hr = IXMLDOMAttribute_get_attributes( pAttrubute, NULL );
+                    hr = IXMLDOMAttribute_get_attributes( pAttribute, NULL );
                     ok( hr == E_INVALIDARG, "get_attributes returned wrong code\n");
 
                     pAttribs = (IXMLDOMNamedNodeMap*)0x1;
-                    hr = IXMLDOMAttribute_get_attributes( pAttrubute, &pAttribs);
+                    hr = IXMLDOMAttribute_get_attributes( pAttribute, &pAttribs);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok( pAttribs == NULL, "pAttribs not NULL\n");
 
-                    hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttrubute, &pNewChild);
+                    hr = IXMLDOMElement_appendChild(pElement, (IXMLDOMNode*)pAttribute, &pNewChild);
                     ok(hr == E_FAIL, "ret %08x\n", hr );
                     ok(pNewChild == NULL, "pNewChild not NULL\n");
 
@@ -3411,46 +3444,46 @@ static void test_xmlTypes(void)
                     ok(hr == S_OK, "ret %08x\n", hr );
                     if ( hr == S_OK )
                     {
-                        hr = IXMLDOMNamedNodeMap_setNamedItem(pAttribs, (IXMLDOMNode*)pAttrubute, NULL );
+                        hr = IXMLDOMNamedNodeMap_setNamedItem(pAttribs, (IXMLDOMNode*)pAttribute, NULL );
                         ok(hr == S_OK, "ret %08x\n", hr );
 
                         IXMLDOMNamedNodeMap_Release(pAttribs);
                     }
 
-                    hr = IXMLDOMAttribute_get_nodeName(pAttrubute, &str);
+                    hr = IXMLDOMAttribute_get_nodeName(pAttribute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttribute ), "incorrect attribute node Name\n");
                     SysFreeString(str);
 
                     /* test nodeTypeString */
-                    hr = IXMLDOMAttribute_get_nodeTypeString(pAttrubute, &str);
+                    hr = IXMLDOMAttribute_get_nodeTypeString(pAttribute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, _bstr_("attribute") ), "incorrect nodeTypeString string\n");
                     SysFreeString(str);
 
                     /* test nodeName */
-                    hr = IXMLDOMAttribute_get_nodeName(pAttrubute, &str);
+                    hr = IXMLDOMAttribute_get_nodeName(pAttribute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttribute ), "incorrect nodeName string\n");
                     SysFreeString(str);
 
                     /* test name property */
-                    hr = IXMLDOMAttribute_get_name(pAttrubute, &str);
+                    hr = IXMLDOMAttribute_get_name(pAttribute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttribute ), "incorrect name string\n");
                     SysFreeString(str);
 
-                    hr = IXMLDOMAttribute_get_xml(pAttrubute, &str);
+                    hr = IXMLDOMAttribute_get_xml(pAttribute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttributeXML ), "incorrect attribute xml\n");
                     SysFreeString(str);
 
-                    hr = IXMLDOMAttribute_get_dataType(pAttrubute, &v);
+                    hr = IXMLDOMAttribute_get_dataType(pAttribute, &v);
                     ok(hr == S_FALSE, "ret %08x\n", hr );
                     ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
                     VariantClear(&v);
 
-                    IXMLDOMAttribute_Release(pAttrubute);
+                    IXMLDOMAttribute_Release(pAttribute);
 
                     /* Check Element again with the Add Attribute*/
                     hr = IXMLDOMElement_get_xml(pElement, &str);

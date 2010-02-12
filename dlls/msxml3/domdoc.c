@@ -1227,29 +1227,25 @@ static HRESULT WINAPI domdoc_createAttribute(
     IXMLDOMAttribute** attribute )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
-    xmlChar *xml_name;
+    IXMLDOMNode *node;
+    VARIANT type;
+    HRESULT hr;
 
-    TRACE("%p->(%s %p)\n", iface, debugstr_w(name), attribute);
+    TRACE("%p->(%s %p)\n", This, debugstr_w(name), attribute);
 
-    if(!attribute)
-        return E_INVALIDARG;
+    if (!attribute || !name) return E_INVALIDARG;
 
-    *attribute = NULL;
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_ATTRIBUTE;
 
-    xml_name = xmlChar_from_wchar(name);
-    xmlnode = (xmlNode *)xmlNewProp(NULL, xml_name, NULL);
-    heap_free(xml_name);
+    hr = IXMLDOMDocument_createNode(iface, type, name, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMAttribute, (void**)attribute);
+        IXMLDOMNode_Release(node);
+    }
 
-    if(!xmlnode)
-        return E_FAIL;
-
-    xmlnode->doc = get_doc( This );
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-
-    *attribute = (IXMLDOMAttribute*)create_attribute(xmlnode);
-
-    return S_OK;
+    return hr;
 }
 
 
@@ -1356,8 +1352,16 @@ static HRESULT WINAPI domdoc_createNode(
 
     TRACE("node_type %d\n", node_type);
 
-    if ((!name || SysStringLen(name) == 0) && (node_type == NODE_ELEMENT))
-        return E_FAIL;
+    /* exit earlier for types that need name */
+    switch(node_type)
+    {
+    case NODE_ELEMENT:
+    case NODE_ATTRIBUTE:
+    case NODE_PROCESSING_INSTRUCTION:
+        if (!name || SysStringLen(name) == 0) return E_FAIL;
+    default:
+        break;
+    }
 
     xml_name = xmlChar_from_wchar(name);
 
