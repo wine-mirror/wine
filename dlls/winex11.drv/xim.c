@@ -122,25 +122,10 @@ void X11DRV_XIMLookupChars( const char *str, DWORD count )
     HeapFree(GetProcessHeap(), 0, wcOutput);
 }
 
-static void X11DRV_ImmSetOpenStatus(BOOL fOpen)
-{
-    if (fOpen == FALSE)
-    {
-        if (dwCompStringSize)
-            HeapFree(GetProcessHeap(),0,CompositionString);
-
-        dwCompStringSize = 0;
-        dwCompStringLength = 0;
-        CompositionString = NULL;
-    }
-
-    IME_SetOpenStatus(fOpen);
-}
-
 static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
     TRACE("PreEditStartCallback %p\n",ic);
-    X11DRV_ImmSetOpenStatus(TRUE);
+    IME_SetOpenStatus(TRUE);
     ximInComposeMode = TRUE;
     return -1;
 }
@@ -149,7 +134,12 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
 {
     TRACE("PreeditDoneCallback %p\n",ic);
     ximInComposeMode = FALSE;
-    X11DRV_ImmSetOpenStatus(FALSE);
+    if (dwCompStringSize)
+        HeapFree(GetProcessHeap(), 0, CompositionString);
+    dwCompStringSize = 0;
+    dwCompStringLength = 0;
+    CompositionString = NULL;
+    IME_SetOpenStatus(FALSE);
 }
 
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
