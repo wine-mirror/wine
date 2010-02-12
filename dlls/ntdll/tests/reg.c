@@ -116,6 +116,7 @@ typedef enum _KEY_VALUE_INFORMATION_CLASS {
 #endif
 
 static NTSTATUS (WINAPI * pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
+static void     (WINAPI * pRtlInitUnicodeString)(PUNICODE_STRING,PCWSTR);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS (WINAPI * pNtDeleteValueKey)(IN HANDLE, IN PUNICODE_STRING);
 static NTSTATUS (WINAPI * pRtlQueryRegistryValues)(IN ULONG, IN PCWSTR,IN PRTL_QUERY_REGISTRY_TABLE, IN PVOID,IN PVOID);
@@ -161,6 +162,7 @@ static BOOL InitFunctionPtrs(void)
         trace("Could not load ntdll.dll\n");
         return FALSE;
     }
+    NTDLL_GET_PROC(RtlInitUnicodeString)
     NTDLL_GET_PROC(RtlCreateUnicodeStringFromAsciiz)
     NTDLL_GET_PROC(RtlCreateUnicodeString)
     NTDLL_GET_PROC(RtlFreeUnicodeString)
@@ -593,6 +595,161 @@ static void test_RtlpNtQueryValueKey(void)
     ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08x\n", status);
 }
 
+static void test_symlinks(void)
+{
+    static const WCHAR linkW[] = {'l','i','n','k',0};
+    static const WCHAR valueW[] = {'v','a','l','u','e',0};
+    static const WCHAR symlinkW[] = {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
+    static const WCHAR targetW[] = {'\\','t','a','r','g','e','t',0};
+    char buffer[1024];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    WCHAR *target;
+    UNICODE_STRING symlink_str, link_str, target_str, value_str;
+    HANDLE root, key, link;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    DWORD target_len, len, dw;
+
+    pRtlInitUnicodeString( &link_str, linkW );
+    pRtlInitUnicodeString( &symlink_str, symlinkW );
+    pRtlInitUnicodeString( &target_str, targetW + 1 );
+    pRtlInitUnicodeString( &value_str, valueW );
+
+    target_len = winetestpath.Length + sizeof(targetW);
+    target = pRtlAllocateHeap( GetProcessHeap(), 0, target_len );
+    memcpy( target, winetestpath.Buffer, winetestpath.Length );
+    memcpy( target + winetestpath.Length/sizeof(WCHAR), targetW, sizeof(targetW) );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = 0;
+    attr.ObjectName = &winetestpath;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = pNtCreateKey( &root, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    attr.RootDirectory = root;
+    attr.ObjectName = &link_str;
+    status = pNtCreateKey( &link, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    /* REG_SZ is not allowed */
+    status = pNtSetValueKey( link, &symlink_str, 0, REG_SZ, target, target_len );
+    todo_wine
+    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
+    status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    /* other values are not allowed */
+    status = pNtSetValueKey( link, &link_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
+    todo_wine
+    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
+
+    /* try opening the target through the link */
+
+    attr.ObjectName = &link_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    if (!status) pNtClose( key );
+
+    attr.ObjectName = &target_str;
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    dw = 0xbeef;
+    status = pNtSetValueKey( key, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    pNtClose( key );
+
+    attr.ObjectName = &link_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
+    }
+
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+
+    /* REG_LINK can be created in non-link keys */
+    status = pNtSetValueKey( key, &symlink_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+        "wrong len %u\n", len );
+    status = pNtDeleteValueKey( key, &symlink_str );
+    ok( status == STATUS_SUCCESS, "NtDeleteValueKey failed: 0x%08x\n", status );
+
+    pNtClose( key );
+
+    /* now open the symlink itself */
+
+    attr.RootDirectory = root;
+    attr.Attributes = OBJ_OPENLINK;
+    attr.ObjectName = &link_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+        "wrong len %u\n", len );
+    }
+    pNtClose( key );
+
+    /* target with terminating null doesn't work */
+    status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    attr.Attributes = 0;
+    attr.ObjectName = &link_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    if (!status) pNtClose( key );
+
+    /* relative symlink, works only on win2k */
+    status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, targetW+1, sizeof(targetW)-2*sizeof(WCHAR) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    attr.ObjectName = &link_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS || status == STATUS_OBJECT_NAME_NOT_FOUND,
+        "NtOpenKey wrong status 0x%08x\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_COLLISION, "NtCreateKey failed: 0x%08x\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtDeleteKey( link );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    pNtClose( link );
+
+    attr.ObjectName = &target_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    status = pNtDeleteKey( key );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    pNtClose( key );
+
+    status = pNtDeleteKey( root );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    pNtClose( root );
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -615,6 +772,7 @@ START_TEST(reg)
     test_NtFlushKey();
     test_NtQueryValueKey();
     test_NtDeleteKey();
+    test_symlinks();
 
     pRtlFreeUnicodeString(&winetestpath);
 
