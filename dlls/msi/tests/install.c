@@ -1320,6 +1320,50 @@ static const CHAR odbc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\
                                      "Media\tDiskId\n"
                                      "1\t5\t\t\tDISK1\t\n";
 
+static const CHAR tl_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "typelib.dll\ttypelib\ttypelib.dll\t1000\t\t\t8192\t1\n";
+
+static const CHAR tl_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "typelib\t\t\ttypelib feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR tl_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "typelib\ttypelib\n";
+
+static const CHAR tl_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "typelib\t{BB4C26FD-89D8-4E49-AF1C-DB4DCB5BF1B0}\tMSITESTDIR\t0\t\ttypelib.dll\n";
+
+static const CHAR tl_typelib_dat[] = "LibID\tLanguage\tComponent_\tVersion\tDescription\tDirectory_\tFeature_\tCost\n"
+                                     "s38\ti2\ts72\tI4\tL128\tS72\ts38\tI4\n"
+                                     "TypeLib\tLibID\tLanguage\tComponent_\n"
+                                     "{EAC5166A-9734-4D91-878F-1DD02304C66C}\t0\ttypelib\t1793\t\tMSITESTDIR\ttypelib\t\n";
+
+static const CHAR tl_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "ProcessComponents\t\t1600\n"
+                                              "RemoveFiles\t\t1700\n"
+                                              "InstallFiles\t\t2000\n"
+                                              "RegisterTypeLibraries\tREGISTER_TYPELIB=1\t3000\n"
+                                              "UnregisterTypeLibraries\t\t3100\n"
+                                              "RegisterProduct\t\t5100\n"
+                                              "PublishFeatures\t\t5200\n"
+                                              "PublishProduct\t\t5300\n"
+                                              "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2128,6 +2172,19 @@ static const msi_table odbc_tables[] =
     ADD_TABLE(odbc_datasource),
     ADD_TABLE(odbc_install_exec_seq),
     ADD_TABLE(odbc_media),
+    ADD_TABLE(property)
+};
+
+static const msi_table tl_tables[] =
+{
+    ADD_TABLE(tl_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(tl_feature),
+    ADD_TABLE(tl_feature_comp),
+    ADD_TABLE(tl_file),
+    ADD_TABLE(tl_typelib),
+    ADD_TABLE(tl_install_exec_seq),
+    ADD_TABLE(media),
     ADD_TABLE(property)
 };
 
@@ -8022,6 +8079,31 @@ static void test_install_remove_odbc(void)
     delete_test_files();
 }
 
+static void test_register_typelib(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\typelib.dll", 1000);
+    create_database(msifile, tl_tables, sizeof(tl_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "REGISTER_TYPELIB=1");
+    todo_wine ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\typelib.dll", TRUE), "file not removed\n");
+    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8121,6 +8203,7 @@ START_TEST(install)
     test_register_font();
     test_validate_product_id();
     test_install_remove_odbc();
+    test_register_typelib();
 
     DeleteFileA(log_file);
 

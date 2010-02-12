@@ -1075,6 +1075,7 @@ static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
 static const WCHAR szProductID[] = {'P','r','o','d','u','c','t','I','D',0};
 static const WCHAR szPIDTemplate[] = {'P','I','D','T','e','m','p','l','a','t','e',0};
 static const WCHAR szPIDKEY[] = {'P','I','D','K','E','Y',0};
+static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

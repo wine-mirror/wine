@@ -2862,8 +2862,6 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     HMODULE module;
     HRESULT hr;
 
-    static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
-
     component = MSI_RecordGetString(row,3);
     comp = get_loaded_component(package,component);
     if (!comp)
@@ -2964,6 +2962,68 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_RegisterTypeLibraries, package);
     msiobj_release(&view->hdr);
+    return rc;
+}
+
+static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR component, guid;
+    MSICOMPONENT *comp;
+    GUID libid;
+    UINT version;
+    LCID language;
+    SYSKIND syskind;
+    HRESULT hr;
+
+    component = MSI_RecordGetString( row, 3 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT ))
+    {
+        TRACE("Skipping, component is not scheduled for uninstall\n");
+
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
+
+    guid = MSI_RecordGetString( row, 1 );
+    CLSIDFromString( (LPWSTR)guid, &libid );
+    version = MSI_RecordGetInteger( row, 4 );
+    language = MSI_RecordGetInteger( row, 2 );
+
+#ifdef _WIN64
+    syskind = SYS_WIN64;
+#else
+    syskind = SYS_WIN32;
+#endif
+
+    hr = UnRegisterTypeLib( &libid, (version >> 8) & 0xffff, version & 0xff, language, syskind );
+    if (FAILED(hr))
+    {
+        WARN("Failed to unregister typelib: %08x\n", hr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','T','y','p','e','L','i','b','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_UnregisterTypeLibraries, package );
+    msiobj_release( &view->hdr );
     return rc;
 }
 
@@ -6450,12 +6510,6 @@ static UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'P','r','o','g','I','d',0 };
     return msi_unimplemented_action_stub( package, "UnregisterProgIdInfo", table );
-}
-
-static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'T','y','p','e','L','i','b',0 };
-    return msi_unimplemented_action_stub( package, "UnregisterTypeLibraries", table );
 }
 
 typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
