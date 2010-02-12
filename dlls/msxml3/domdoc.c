@@ -1057,13 +1057,27 @@ static HRESULT WINAPI domdoc_createDocumentFragment(
     IXMLDOMDocumentFragment** frag )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    IXMLDOMNode *node;
     VARIANT type;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, frag);
 
+    if (!frag) return E_INVALIDARG;
+
+    *frag = NULL;
+
     V_VT(&type) = VT_I1;
     V_I1(&type) = NODE_DOCUMENT_FRAGMENT;
-    return IXMLDOMDocument_createNode(iface, type, NULL, NULL, (IXMLDOMNode**)frag);
+
+    hr = IXMLDOMDocument_createNode(iface, type, NULL, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocumentFragment, (void**)frag);
+        IXMLDOMNode_Release(node);
+    }
+
+    return hr;
 }
 
 
