@@ -2933,7 +2933,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
         if (FAILED(hr))
         {
             ERR("Failed to load type library: %08x\n", hr);
-            return ERROR_FUNCTION_FAILED;
+            return ERROR_INSTALL_FAILURE;
         }
 
         ITypeLib_Release(tlib);

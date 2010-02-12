@@ -8090,7 +8090,7 @@ static void test_register_typelib(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "REGISTER_TYPELIB=1");
-    todo_wine ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
