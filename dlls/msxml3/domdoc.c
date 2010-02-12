@@ -1065,27 +1065,16 @@ static HRESULT WINAPI domdoc_createElement(
 
 static HRESULT WINAPI domdoc_createDocumentFragment(
     IXMLDOMDocument2 *iface,
-    IXMLDOMDocumentFragment** docFrag )
+    IXMLDOMDocumentFragment** frag )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
+    VARIANT type;
 
-    TRACE("%p\n", iface);
+    TRACE("(%p)->(%p)\n", This, frag);
 
-    if(!docFrag)
-        return E_INVALIDARG;
-
-    *docFrag = NULL;
-
-    xmlnode = xmlNewDocFragment(get_doc( This ) );
-
-    if(!xmlnode)
-        return E_FAIL;
-
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-    *docFrag = (IXMLDOMDocumentFragment*)create_doc_fragment(xmlnode);
-
-    return S_OK;
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_DOCUMENT_FRAGMENT;
+    return IXMLDOMDocument_createNode(iface, type, NULL, NULL, (IXMLDOMNode**)frag);
 }
 
 
