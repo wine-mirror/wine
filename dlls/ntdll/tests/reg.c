@@ -605,8 +605,8 @@ START_TEST(reg)
 
     pRtlAppendUnicodeToString(&winetestpath, winetest);
 
-    test_NtOpenKey();
     test_NtCreateKey();
+    test_NtOpenKey();
     test_NtSetValueKey();
     test_RtlCheckRegistryKey();
     test_RtlOpenCurrentUser();
