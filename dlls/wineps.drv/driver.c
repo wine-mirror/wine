@@ -327,7 +327,7 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
   if(!pi) return -1;
 
   TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
-  lpszDriver, hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, dwMode);
+  lpszDriver, hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, debugstr_a(lpszProfile), dwMode);
 
   /* If dwMode == 0, return size of DEVMODE structure */
   if(!dwMode)

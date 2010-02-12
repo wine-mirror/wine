@@ -1015,8 +1015,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	for(slot = ppd->InputSlots; slot; slot = slot->next)
 	    TRACE("INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
-		  slot->Name, slot->FullName, slot->WinBin,
-		  slot->InvocationString);
+		  debugstr_a(slot->Name), slot->FullName, slot->WinBin,
+		  debugstr_a(slot->InvocationString));
     }
 
     fclose(fp);
