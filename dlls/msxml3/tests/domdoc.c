@@ -969,7 +969,9 @@ static void test_domdoc( void )
     /* test Create Comment */
     r = IXMLDOMDocument_createComment(doc, NULL, NULL);
     ok( r == E_INVALIDARG, "returns %08x\n", r );
-    r = IXMLDOMDocument_createComment(doc, szComment, &node_comment);
+    str = SysAllocString(szComment);
+    r = IXMLDOMDocument_createComment(doc, str, &node_comment);
+    SysFreeString(str);
     ok( r == S_OK, "returns %08x\n", r );
     if(node_comment)
     {
@@ -992,11 +994,13 @@ static void test_domdoc( void )
     }
 
     /* test Create Attribute */
+    str = SysAllocString(szAttribute);
     r = IXMLDOMDocument_createAttribute(doc, NULL, NULL);
     ok( r == E_INVALIDARG, "returns %08x\n", r );
-    r = IXMLDOMDocument_createAttribute(doc, szAttribute, &node_attr);
+    r = IXMLDOMDocument_createAttribute(doc, str, &node_attr);
     ok( r == S_OK, "returns %08x\n", r );
     IXMLDOMText_Release( node_attr);
+    SysFreeString(str);
 
     /* test Processing Instruction */
     str = SysAllocStringLen(NULL, 0);
@@ -1432,10 +1436,15 @@ todo_wine
         ole_check(IXMLDOMNodeList_reset(list));
 
         node = (void*)0xdeadbeef;
-        r = IXMLDOMNode_selectSingleNode( element, szdl, &node );
+        str = SysAllocString(szdl);
+        r = IXMLDOMNode_selectSingleNode( element, str, &node );
+        SysFreeString(str);
         ok( r == S_FALSE, "ret %08x\n", r );
         ok( node == NULL, "node %p\n", node );
-        r = IXMLDOMNode_selectSingleNode( element, szbs, &node );
+
+        str = SysAllocString(szbs);
+        r = IXMLDOMNode_selectSingleNode( element, str, &node );
+        SysFreeString(str);
         ok( r == S_OK, "ret %08x\n", r );
         r = IXMLDOMNode_Release( node );
         ok( r == 0, "ret %08x\n", r );
@@ -2370,7 +2379,7 @@ static void test_XMLHTTP(void)
         'p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
     IXMLHttpRequest *pXMLHttpRequest;
-    BSTR bstrResponse;
+    BSTR bstrResponse, str1, str2;
     VARIANT dummy;
     VARIANT varfalse;
     VARIANT varbody;
@@ -2390,8 +2399,12 @@ static void test_XMLHTTP(void)
     V_VT(&varbody) = VT_BSTR;
     V_BSTR(&varbody) = SysAllocString(wszBody);
 
-    hr = IXMLHttpRequest_open(pXMLHttpRequest, wszPOST, wszUrl, varfalse, dummy, dummy);
+    str1 = SysAllocString(wszPOST);
+    str2 = SysAllocString(wszUrl);
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, str1, str2, varfalse, dummy, dummy);
     todo_wine ok(hr == S_OK, "IXMLHttpRequest_open should have succeeded instead of failing with 0x%08x\n", hr);
+    SysFreeString(str1);
+    SysFreeString(str2);
 
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
     todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
@@ -2883,7 +2896,9 @@ static void test_xmlTypes(void)
         if(hr == S_OK)
         {
             /* Comment */
+            str = SysAllocString(szComment);
             hr = IXMLDOMDocument_createComment(doc, szComment, &pComment);
+            SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
@@ -3130,7 +3145,9 @@ static void test_xmlTypes(void)
             }
 
             /* Element */
+            str = SysAllocString(szElement);
             hr = IXMLDOMDocument_createElement(doc, szElement, &pElement);
+            SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
@@ -3158,8 +3175,10 @@ static void test_xmlTypes(void)
                 ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
                 VariantClear(&v);
 
-                 /* Attribute */
+                /* Attribute */
+                str = SysAllocString(szAttribute);
                 hr = IXMLDOMDocument_createAttribute(doc, szAttribute, &pAttrubute);
+                SysFreeString(str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 if(hr == S_OK)
                 {
@@ -3275,10 +3294,12 @@ static void test_xmlTypes(void)
             }
 
             /* CData Section */
-            hr = IXMLDOMDocument_createCDATASection(doc, szCData, NULL);
+            str = SysAllocString(szCData);
+            hr = IXMLDOMDocument_createCDATASection(doc, str, NULL);
             ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
-            hr = IXMLDOMDocument_createCDATASection(doc, szCData, &pCDataSec);
+            hr = IXMLDOMDocument_createCDATASection(doc, str, &pCDataSec);
+            SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
@@ -3615,10 +3636,12 @@ static void test_xmlTypes(void)
             }
 
             /* Entity References */
-            hr = IXMLDOMDocument_createEntityReference(doc, szEntityRef, NULL);
+            str = SysAllocString(szEntityRef);
+            hr = IXMLDOMDocument_createEntityReference(doc, str, NULL);
             ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
-            hr = IXMLDOMDocument_createEntityReference(doc, szEntityRef, &pEntityRef);
+            hr = IXMLDOMDocument_createEntityReference(doc, str, &pEntityRef);
+            SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
