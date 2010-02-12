@@ -969,6 +969,27 @@ static void test_domdoc( void )
     /* test Create Comment */
     r = IXMLDOMDocument_createComment(doc, NULL, NULL);
     ok( r == E_INVALIDARG, "returns %08x\n", r );
+    node_comment = (IXMLDOMComment*)0x1;
+
+    /* empty comment */
+    r = IXMLDOMDocument_createComment(doc, _bstr_(""), &node_comment);
+    ok( r == S_OK, "returns %08x\n", r );
+    str = (BSTR)0x1;
+    r = IXMLDOMComment_get_data(node_comment, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty string data\n");
+    IXMLDOMComment_Release(node_comment);
+    SysFreeString(str);
+
+    r = IXMLDOMDocument_createComment(doc, NULL, &node_comment);
+    ok( r == S_OK, "returns %08x\n", r );
+    str = (BSTR)0x1;
+    r = IXMLDOMComment_get_data(node_comment, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && (SysStringLen(str) == 0), "expected empty string data\n");
+    IXMLDOMComment_Release(node_comment);
+    SysFreeString(str);
+
     str = SysAllocString(szComment);
     r = IXMLDOMDocument_createComment(doc, str, &node_comment);
     SysFreeString(str);
@@ -1655,6 +1676,7 @@ static void test_create(void)
     BSTR str, name;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
+    IXMLDOMComment *comment;
     IXMLDOMNode *root, *node, *child;
     IXMLDOMNamedNodeMap *attr_map;
     IUnknown *unk;
@@ -1695,6 +1717,54 @@ static void test_create(void)
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
 
+    /* NODE_COMMENT */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_COMMENT;
+    node = NULL;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( node != NULL, "\n");
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMComment, (void**)&comment);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMComment_get_data(comment, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMComment_Release(comment);
+    SysFreeString(str);
+
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMComment, (void**)&comment);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMComment_get_data(comment, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMComment_Release(comment);
+
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_("blah"), NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMComment, (void**)&comment);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMComment_get_data(comment, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMComment_Release(comment);
+
+    /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
     str = SysAllocString( szlc );
@@ -2920,7 +2990,7 @@ static void test_xmlTypes(void)
         {
             /* Comment */
             str = SysAllocString(szComment);
-            hr = IXMLDOMDocument_createComment(doc, szComment, &pComment);
+            hr = IXMLDOMDocument_createComment(doc, str, &pComment);
             SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
@@ -3200,7 +3270,7 @@ static void test_xmlTypes(void)
 
                 /* Attribute */
                 str = SysAllocString(szAttribute);
-                hr = IXMLDOMDocument_createAttribute(doc, szAttribute, &pAttrubute);
+                hr = IXMLDOMDocument_createAttribute(doc, str, &pAttrubute);
                 SysFreeString(str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 if(hr == S_OK)

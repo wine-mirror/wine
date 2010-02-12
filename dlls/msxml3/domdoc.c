@@ -1105,29 +1105,28 @@ static HRESULT WINAPI domdoc_createComment(
     IXMLDOMComment** comment )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
-    xmlChar *xml_content;
+    VARIANT type;
+    HRESULT hr;
+    IXMLDOMNode *node;
 
-    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), comment);
+    TRACE("%p->(%s %p)\n", This, debugstr_w(data), comment);
 
-    if(!comment)
-        return E_INVALIDARG;
+    if (!comment) return E_INVALIDARG;
 
     *comment = NULL;
 
-    xml_content = xmlChar_from_wchar(data);
-    xmlnode = xmlNewComment(xml_content);
-    heap_free(xml_content);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_COMMENT;
 
-    if(!xmlnode)
-        return E_FAIL;
+    hr = IXMLDOMDocument2_createNode(iface, type, NULL, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMComment, (void**)comment);
+        IXMLDOMNode_Release(node);
+        hr = IXMLDOMComment_put_data(*comment, data);
+    }
 
-    xmlnode->doc = get_doc( This );
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-
-    *comment = (IXMLDOMComment*)create_comment(xmlnode);
-
-    return S_OK;
+    return hr;
 }
 
 
