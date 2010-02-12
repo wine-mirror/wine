@@ -1189,35 +1189,36 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     BSTR data,
     IXMLDOMProcessingInstruction** pi )
 {
-#ifdef HAVE_XMLNEWDOCPI
-    xmlNodePtr xmlnode;
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlChar *xml_target, *xml_content;
+    IXMLDOMNode *node;
+    VARIANT type;
+    HRESULT hr;
 
-    TRACE("%p->(%s %s %p)\n", iface, debugstr_w(target), debugstr_w(data), pi);
+    TRACE("%p->(%s %s %p)\n", This, debugstr_w(target), debugstr_w(data), pi);
 
-    if(!pi)
-        return E_INVALIDARG;
+    if (!pi) return E_INVALIDARG;
 
-    if(!target || lstrlenW(target) == 0)
-        return E_FAIL;
+    *pi = NULL;
 
-    xml_target = xmlChar_from_wchar(target);
-    xml_content = xmlChar_from_wchar(data);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_PROCESSING_INSTRUCTION;
 
-    xmlnode = xmlNewDocPI(get_doc(This), xml_target, xml_content);
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-    TRACE("created xmlptr %p\n", xmlnode);
-    *pi = (IXMLDOMProcessingInstruction*)create_pi(xmlnode);
+    hr = IXMLDOMDocument2_createNode(iface, type, target, NULL, &node);
+    if (hr == S_OK)
+    {
+        VARIANT v_data;
 
-    heap_free(xml_content);
-    heap_free(xml_target);
+        /* this is to bypass check in ::put_data() that blocks "<?xml" PIs */
+        V_VT(&v_data)   = VT_BSTR;
+        V_BSTR(&v_data) = data;
 
-    return S_OK;
-#else
-    FIXME("Libxml 2.6.15 or greater required.\n");
-    return E_NOTIMPL;
-#endif
+        hr = IXMLDOMNode_put_nodeValue( node, v_data );
+
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void**)pi);
+        IXMLDOMNode_Release(node);
+    }
+
+    return hr;
 }
 
 

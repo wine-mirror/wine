@@ -1887,6 +1887,26 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
 
+    /* NODE_PROCESSING_INSTRUCTION */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_PROCESSING_INSTRUCTION;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_PROCESSING_INSTRUCTION;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_PROCESSING_INSTRUCTION;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_("pi"), NULL, NULL );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+
     /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
