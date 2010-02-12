@@ -1158,29 +1158,28 @@ static HRESULT WINAPI domdoc_createCDATASection(
     IXMLDOMCDATASection** cdata )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
-    xmlChar *xml_content;
+    IXMLDOMNode *node;
+    VARIANT type;
+    HRESULT hr;
 
-    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), cdata);
+    TRACE("%p->(%s %p)\n", This, debugstr_w(data), cdata);
 
-    if(!cdata)
-        return E_INVALIDARG;
+    if (!cdata) return E_INVALIDARG;
 
     *cdata = NULL;
 
-    xml_content = xmlChar_from_wchar(data);
-    xmlnode = xmlNewCDataBlock(get_doc( This ), xml_content, strlen( (char*)xml_content) );
-    heap_free(xml_content);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_CDATA_SECTION;
 
-    if(!xmlnode)
-        return E_FAIL;
+    hr = IXMLDOMDocument2_createNode(iface, type, NULL, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMCDATASection, (void**)cdata);
+        IXMLDOMNode_Release(node);
+        hr = IXMLDOMCDATASection_put_data(*cdata, data);
+    }
 
-    xmlnode->doc = get_doc( This );
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-
-    *cdata = (IXMLDOMCDATASection*)create_cdata(xmlnode);
-
-    return S_OK;
+    return hr;
 }
 
 
