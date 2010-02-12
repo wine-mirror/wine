@@ -5000,6 +5000,73 @@ static void test_TransformWithLoadingLocalFile(void)
     free_bstrs();
 }
 
+static void test_put_nodeValue(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMEntityReference *entityref;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    VARIANT data, type;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    /* test for unsupported types */
+    /* NODE_DOCUMENT */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMNode, (void**)&node);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("one two three");
+    hr = IXMLDOMNode_put_nodeValue(node, data);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+    IXMLDOMNode_Release(node);
+
+    /* NODE_DOCUMENT_FRAGMENT */
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_DOCUMENT_FRAGMENT;
+    hr = IXMLDOMDocument_createNode(doc, type, _bstr_("test"), NULL, &node);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("one two three");
+    hr = IXMLDOMNode_put_nodeValue(node, data);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+    IXMLDOMNode_Release(node);
+
+    /* NODE_ELEMENT */
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_ELEMENT;
+    hr = IXMLDOMDocument_createNode(doc, type, _bstr_("test"), NULL, &node);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("one two three");
+    hr = IXMLDOMNode_put_nodeValue(node, data);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+    IXMLDOMNode_Release(node);
+
+    /* NODE_ENTITY_REFERENCE */
+    hr = IXMLDOMDocument_createEntityReference(doc, _bstr_("ref"), &entityref);
+    ok(hr == S_OK, "ret %08x\n", hr );
+
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("one two three");
+    hr = IXMLDOMEntityReference_put_nodeValue(node, data);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+
+    hr = IXMLDOMEntityReference_QueryInterface(entityref, &IID_IXMLDOMNode, (void**)&node);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&data) = VT_BSTR;
+    V_BSTR(&data) = _bstr_("one two three");
+    hr = IXMLDOMNode_put_nodeValue(node, data);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+    IXMLDOMNode_Release(node);
+    IXMLDOMEntityReference_Release(entityref);
+
+    free_bstrs();
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -5030,6 +5097,7 @@ START_TEST(domdoc)
     test_FormattingXML();
     test_NodeTypeValue();
     test_TransformWithLoadingLocalFile();
+    test_put_nodeValue();
 
     CoUninitialize();
 }

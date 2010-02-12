@@ -327,23 +327,11 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     HRESULT hr;
-    xmlChar *str = NULL;
-    VARIANT string_value;
 
     TRACE("%p type(%d)\n", This, This->node->type);
 
-    VariantInit(&string_value);
-    hr = VariantChangeType(&string_value, &value, 0, VT_BSTR);
-    if(FAILED(hr))
-    {
-        VariantClear(&string_value);
-        WARN("Couldn't convert to VT_BSTR\n");
-        return hr;
-    }
-
-    hr = S_FALSE;
     /* Document, Document Fragment, Document Type, Element,
-        Entity, Entity Reference, Notation aren't supported. */
+       Entity, Entity Reference, Notation aren't supported. */
     switch ( This->node->type )
     {
     case XML_ATTRIBUTE_NODE:
@@ -351,19 +339,32 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     case XML_COMMENT_NODE:
     case XML_PI_NODE:
     case XML_TEXT_NODE:
-      {
+    {
+        VARIANT string_value;
+        xmlChar *str;
+
+        VariantInit(&string_value);
+        hr = VariantChangeType(&string_value, &value, 0, VT_BSTR);
+        if(FAILED(hr))
+        {
+            VariantClear(&string_value);
+            WARN("Couldn't convert to VT_BSTR\n");
+            return hr;
+        }
+
         str = xmlChar_from_wchar(V_BSTR(&string_value));
+        VariantClear(&string_value);
+
         xmlNodeSetContent(This->node, str);
         heap_free(str);
         hr = S_OK;
         break;
-      }
+    }
     default:
         /* Do nothing for unsupported types. */
+        hr = E_FAIL;
         break;
     }
-
-    VariantClear(&string_value);
 
     return hr;
 }
