@@ -1039,7 +1039,9 @@ static HRESULT WINAPI domdoc_createElement(
     IXMLDOMElement** element )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    IXMLDOMNode *node;
     VARIANT type;
+    HRESULT hr;
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_w(tagname), element);
 
@@ -1048,7 +1050,14 @@ static HRESULT WINAPI domdoc_createElement(
     V_VT(&type) = VT_I1;
     V_I1(&type) = NODE_ELEMENT;
 
-    return IXMLDOMDocument_createNode(iface, type, tagname, NULL, (IXMLDOMNode**)element);
+    hr = IXMLDOMDocument_createNode(iface, type, tagname, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)element);
+        IXMLDOMNode_Release(node);
+    }
+
+    return hr;
 }
 
 
