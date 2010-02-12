@@ -1253,32 +1253,30 @@ static HRESULT WINAPI domdoc_createAttribute(
 static HRESULT WINAPI domdoc_createEntityReference(
     IXMLDOMDocument2 *iface,
     BSTR name,
-    IXMLDOMEntityReference** entityRef )
+    IXMLDOMEntityReference** entityref )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
-    xmlChar *xml_name;
+    IXMLDOMNode *node;
+    VARIANT type;
+    HRESULT hr;
 
-    TRACE("%p\n", iface);
+    TRACE("%p->(%s %p)\n", This, debugstr_w(name), entityref);
 
-    if(!entityRef)
-        return E_INVALIDARG;
+    if (!entityref) return E_INVALIDARG;
 
-    *entityRef = NULL;
+    *entityref = NULL;
 
-    xml_name = xmlChar_from_wchar(name);
-    xmlnode = xmlNewReference(get_doc( This ), xml_name );
-    heap_free(xml_name);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_ENTITY_REFERENCE;
 
-    if(!xmlnode)
-        return E_FAIL;
+    hr = IXMLDOMDocument2_createNode(iface, type, name, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMEntityReference, (void**)entityref);
+        IXMLDOMNode_Release(node);
+    }
 
-    xmlnode->doc = get_doc( This );
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-
-    *entityRef = (IXMLDOMEntityReference*)create_doc_entity_ref(xmlnode);
-
-    return S_OK;
+    return hr;
 }
 
 
@@ -1358,6 +1356,7 @@ static HRESULT WINAPI domdoc_createNode(
     {
     case NODE_ELEMENT:
     case NODE_ATTRIBUTE:
+    case NODE_ENTITY_REFERENCE:
     case NODE_PROCESSING_INSTRUCTION:
         if (!name || SysStringLen(name) == 0) return E_FAIL;
     default:
@@ -1379,6 +1378,9 @@ static HRESULT WINAPI domdoc_createNode(
         break;
     case NODE_CDATA_SECTION:
         xmlnode = xmlNewCDataBlock(get_doc(This), NULL, 0);
+        break;
+    case NODE_ENTITY_REFERENCE:
+        xmlnode = xmlNewReference(get_doc(This), xml_name);
         break;
     case NODE_PROCESSING_INSTRUCTION:
 #ifdef HAVE_XMLNEWDOCPI

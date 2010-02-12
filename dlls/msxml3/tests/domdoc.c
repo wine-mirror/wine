@@ -1907,6 +1907,22 @@ static void test_create(void)
     r = IXMLDOMDocument_createNode( doc, var, _bstr_("pi"), NULL, NULL );
     ok( r == E_INVALIDARG, "returns %08x\n", r );
 
+    /* NODE_ENTITY_REFERENCE */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ENTITY_REFERENCE;
+    str = SysAllocString( szlc );
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ENTITY_REFERENCE;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
     /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
@@ -3882,6 +3898,11 @@ static void test_xmlTypes(void)
             }
 
             /* Entity References */
+            hr = IXMLDOMDocument_createEntityReference(doc, NULL, &pEntityRef);
+            ok(hr == E_FAIL, "ret %08x\n", hr );
+            hr = IXMLDOMDocument_createEntityReference(doc, _bstr_(""), &pEntityRef);
+            ok(hr == E_FAIL, "ret %08x\n", hr );
+
             str = SysAllocString(szEntityRef);
             hr = IXMLDOMDocument_createEntityReference(doc, str, NULL);
             ok(hr == E_INVALIDARG, "ret %08x\n", hr );
