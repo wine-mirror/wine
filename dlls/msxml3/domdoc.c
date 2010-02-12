@@ -1087,29 +1087,28 @@ static HRESULT WINAPI domdoc_createTextNode(
     IXMLDOMText** text )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlNodePtr xmlnode;
-    xmlChar *xml_content;
+    IXMLDOMNode *node;
+    VARIANT type;
+    HRESULT hr;
 
-    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), text);
+    TRACE("%p->(%s %p)\n", This, debugstr_w(data), text);
 
-    if(!text)
-        return E_INVALIDARG;
+    if (!text) return E_INVALIDARG;
 
     *text = NULL;
 
-    xml_content = xmlChar_from_wchar(data);
-    xmlnode = xmlNewText(xml_content);
-    heap_free(xml_content);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_TEXT;
 
-    if(!xmlnode)
-        return E_FAIL;
+    hr = IXMLDOMDocument2_createNode(iface, type, NULL, NULL, &node);
+    if (hr == S_OK)
+    {
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)text);
+        IXMLDOMNode_Release(node);
+        hr = IXMLDOMText_put_data(*text, data);
+    }
 
-    xmlnode->doc = get_doc( This );
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
-
-    *text = (IXMLDOMText*)create_text(xmlnode);
-
-    return S_OK;
+    return hr;
 }
 
 

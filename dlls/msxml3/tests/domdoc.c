@@ -692,7 +692,11 @@ static void test_domdoc( void )
     ok( code == 0, "code %d\n", code );
     IXMLDOMParseError_Release( error );
 
-     /* test createTextNode */
+    /* test createTextNode */
+    r = IXMLDOMDocument_createTextNode(doc, _bstr_(""), &nodetext);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMText_Release(nodetext);
+
     str = SysAllocString( szOpen );
     r = IXMLDOMDocument_createTextNode(doc, str, NULL);
     ok( r == E_INVALIDARG, "returns %08x\n", r );
@@ -1677,6 +1681,7 @@ static void test_create(void)
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
     IXMLDOMComment *comment;
+    IXMLDOMText *text;
     IXMLDOMNode *root, *node, *child;
     IXMLDOMNamedNodeMap *attr_map;
     IUnknown *unk;
@@ -1763,6 +1768,53 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMComment_Release(comment);
+
+    /* NODE_TEXT */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_TEXT;
+    node = NULL;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( node != NULL, "\n");
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMText_get_data(text, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMText_Release(comment);
+    SysFreeString(str);
+
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMText_get_data(text, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMText_Release(text);
+
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_("blah"), NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+    ok( r == S_OK, "returns %08x\n", r );
+    IXMLDOMNode_Release(node);
+
+    str = NULL;
+    r = IXMLDOMText_get_data(text, &str);
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
+    IXMLDOMText_Release(text);
 
     /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
