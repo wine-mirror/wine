@@ -1038,28 +1038,17 @@ static HRESULT WINAPI domdoc_createElement(
     BSTR tagname,
     IXMLDOMElement** element )
 {
-    xmlNodePtr xmlnode;
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlChar *xml_name;
-    IUnknown *elem_unk;
-    HRESULT hr;
+    VARIANT type;
 
-    TRACE("%p->(%s,%p)\n", iface, debugstr_w(tagname), element);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(tagname), element);
 
-    if (!element) return E_INVALIDARG;
+    if (!element || !tagname) return E_INVALIDARG;
 
-    xml_name = xmlChar_from_wchar(tagname);
-    xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
-    xmldoc_add_orphan(xmlnode->doc, xmlnode);
+    V_VT(&type) = VT_I1;
+    V_I1(&type) = NODE_ELEMENT;
 
-    TRACE("created xmlptr %p\n", xmlnode);
-    elem_unk = create_element(xmlnode);
-    heap_free(xml_name);
-
-    hr = IUnknown_QueryInterface(elem_unk, &IID_IXMLDOMElement, (void **)element);
-    IUnknown_Release(elem_unk);
-    TRACE("returning %p\n", *element);
-    return hr;
+    return IXMLDOMDocument_createNode(iface, type, tagname, NULL, (IXMLDOMNode**)element);
 }
 
 
@@ -1346,6 +1335,9 @@ static HRESULT WINAPI domdoc_createNode(
     if(FAILED(hr)) return hr;
 
     TRACE("node_type %d\n", node_type);
+
+    if ((!name || SysStringLen(name) == 0) && (node_type == NODE_ELEMENT))
+        return E_FAIL;
 
     xml_name = xmlChar_from_wchar(name);
 

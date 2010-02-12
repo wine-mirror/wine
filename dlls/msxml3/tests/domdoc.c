@@ -1698,6 +1698,21 @@ static void test_create(void)
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
     str = SysAllocString( szlc );
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, _bstr_(""), NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    str = SysAllocString( szlc );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
@@ -2885,7 +2900,15 @@ static void test_xmlTypes(void)
         IXMLDOMImplementation_Release(pIXMLDOMImplementation);
     }
 
+    pRoot = (IXMLDOMElement*)0x1;
+    hr = IXMLDOMDocument_createElement(doc, NULL, &pRoot);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+    ok(pRoot == (void*)0x1, "Expect same ptr, got %p\n", pRoot);
 
+    pRoot = (IXMLDOMElement*)0x1;
+    hr = IXMLDOMDocument_createElement(doc, _bstr_(""), &pRoot);
+    ok(hr == E_FAIL, "ret %08x\n", hr );
+    ok(pRoot == (void*)0x1, "Expect same ptr, got %p\n", pRoot);
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
     ok(hr == S_OK, "ret %08x\n", hr );
@@ -3146,7 +3169,7 @@ static void test_xmlTypes(void)
 
             /* Element */
             str = SysAllocString(szElement);
-            hr = IXMLDOMDocument_createElement(doc, szElement, &pElement);
+            hr = IXMLDOMDocument_createElement(doc, str, &pElement);
             SysFreeString(str);
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)

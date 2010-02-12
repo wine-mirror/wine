@@ -1,5 +1,5 @@
 /*
- *    MSXML Class Factory
+ *    Common definitions
  *
  * Copyright 2005 Mike McCormack
  *
