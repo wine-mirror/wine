@@ -54,6 +54,7 @@ typedef struct _SG_Impl {
     LONG refCount;
     FILTER_INFO info;
     FILTER_STATE state;
+    AM_MEDIA_TYPE mtype;
     SG_Pin pin_in;
     SG_Pin pin_out;
     IMemAllocator *allocator;
@@ -101,6 +102,8 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IMemInputPin_Release(This->memOutput);
     if (This->grabberIface)
         ISampleGrabberCB_Release(This->grabberIface);
+    if (This->mtype.pbFormat)
+        CoTaskMemFree(This->mtype.pbFormat);
 }
 
 /* Common helper AddRef called from all interfaces */
@@ -419,10 +422,24 @@ static HRESULT WINAPI
 SampleGrabber_ISampleGrabber_SetMediaType(ISampleGrabber *iface, const AM_MEDIA_TYPE *type)
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
-    FIXME("(%p)->(%p): stub\n", This, type);
+    TRACE("(%p)->(%p)\n", This, type);
     if (!type)
         return E_POINTER;
-    return E_NOTIMPL;
+    TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
+	debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
+	type->lSampleSize,
+	debugstr_guid(&type->formattype), type->cbFormat);
+    if (This->mtype.pbFormat)
+        CoTaskMemFree(This->mtype.pbFormat);
+    This->mtype = *type;
+    This->mtype.pUnk = NULL;
+    if (type->cbFormat) {
+        This->mtype.pbFormat = CoTaskMemAlloc(type->cbFormat);
+        CopyMemory(This->mtype.pbFormat, type->pbFormat, type->cbFormat);
+    }
+    else
+        This->mtype.pbFormat = NULL;
+    return S_OK;
 }
 
 /* ISampleGrabber */
@@ -430,10 +447,17 @@ static HRESULT WINAPI
 SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MEDIA_TYPE *type)
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
-    FIXME("(%p)->(%p): stub\n", This, type);
+    TRACE("(%p)->(%p)\n", This, type);
     if (!type)
         return E_POINTER;
-    return E_NOTIMPL;
+    if (!This->pin_in.pair)
+        return VFW_E_NOT_CONNECTED;
+    *type = This->mtype;
+    if (type->cbFormat) {
+        type->pbFormat = CoTaskMemAlloc(type->cbFormat);
+        CopyMemory(type->pbFormat, This->mtype.pbFormat, type->cbFormat);
+    }
+    return S_OK;
 }
 
 /* ISampleGrabber */
@@ -658,7 +682,30 @@ SampleGrabber_Out_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE 
         return VFW_E_ALREADY_CONNECTED;
     if (This->sg->state != State_Stopped)
         return VFW_E_NOT_STOPPED;
-    return VFW_E_TYPE_NOT_ACCEPTED;
+    if (type) {
+	TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
+	    debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
+	    type->lSampleSize,
+	    debugstr_guid(&type->formattype), type->cbFormat);
+	if (!IsEqualGUID(&This->sg->mtype.majortype,&GUID_NULL) &&
+	    !IsEqualGUID(&This->sg->mtype.majortype,&type->majortype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+	if (!IsEqualGUID(&This->sg->mtype.subtype,&MEDIASUBTYPE_None) &&
+	    !IsEqualGUID(&This->sg->mtype.subtype,&type->subtype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+	if (!IsEqualGUID(&This->sg->mtype.formattype,&GUID_NULL) &&
+	    !IsEqualGUID(&This->sg->mtype.formattype,&FORMAT_None) &&
+	    !IsEqualGUID(&This->sg->mtype.formattype,&type->formattype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+    }
+    This->pair = receiver;
+    if (This->sg->memOutput) {
+        IMemInputPin_Release(This->sg->memOutput);
+        This->sg->memOutput = NULL;
+    }
+    if (SUCCEEDED(IPin_QueryInterface(receiver,&IID_IMemInputPin,(void **)&(This->sg->memOutput))))
+        TRACE("pair IMemInputPin %p\n", This->sg->memOutput);
+    return S_OK;
 }
 
 /* IPin - input pin */
@@ -673,7 +720,34 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
         return VFW_E_ALREADY_CONNECTED;
     if (This->sg->state != State_Stopped)
         return VFW_E_NOT_STOPPED;
-    return VFW_E_TYPE_NOT_ACCEPTED;
+    if (type) {
+	TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
+	    debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
+	    type->lSampleSize,
+	    debugstr_guid(&type->formattype), type->cbFormat);
+	if (!IsEqualGUID(&This->sg->mtype.majortype,&GUID_NULL) &&
+	    !IsEqualGUID(&This->sg->mtype.majortype,&type->majortype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+	if (!IsEqualGUID(&This->sg->mtype.subtype,&MEDIASUBTYPE_None) &&
+	    !IsEqualGUID(&This->sg->mtype.subtype,&type->subtype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+	if (!IsEqualGUID(&This->sg->mtype.formattype,&GUID_NULL) &&
+	    !IsEqualGUID(&This->sg->mtype.formattype,&FORMAT_None) &&
+	    !IsEqualGUID(&This->sg->mtype.formattype,&type->formattype))
+	    return VFW_E_TYPE_NOT_ACCEPTED;
+        if (This->sg->mtype.pbFormat)
+            CoTaskMemFree(This->sg->mtype.pbFormat);
+        This->sg->mtype = *type;
+        This->sg->mtype.pUnk = NULL;
+        if (type->cbFormat) {
+            This->sg->mtype.pbFormat = CoTaskMemAlloc(type->cbFormat);
+            CopyMemory(This->sg->mtype.pbFormat, type->pbFormat, type->cbFormat);
+        }
+        else
+            This->sg->mtype.pbFormat = NULL;
+    }
+    This->pair = connector;
+    return S_OK;
 }
 
 /* IPin - output pin */
@@ -742,7 +816,14 @@ SampleGrabber_IPin_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *mtype)
     TRACE("(%p)->(%p)\n", This, mtype);
     if (!mtype)
         return E_POINTER;
-    return VFW_E_NOT_CONNECTED;
+    if (!This->pair)
+        return VFW_E_NOT_CONNECTED;
+    *mtype = This->sg->mtype;
+    if (mtype->cbFormat) {
+        mtype->pbFormat = CoTaskMemAlloc(mtype->cbFormat);
+        CopyMemory(mtype->pbFormat, This->sg->mtype.pbFormat, mtype->cbFormat);
+    }
+    return S_OK;
 }
 
 /* IPin */
@@ -994,6 +1075,9 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     obj->info.achName[0] = 0;
     obj->info.pGraph = NULL;
     obj->state = State_Stopped;
+    obj->mtype.majortype = GUID_NULL;
+    obj->mtype.subtype = MEDIASUBTYPE_None;
+    obj->mtype.formattype = FORMAT_None;
     obj->allocator = NULL;
     obj->refClock = NULL;
     obj->memOutput = NULL;
