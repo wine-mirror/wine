@@ -748,6 +748,8 @@ static void test_symlinks(void)
     status = pNtDeleteKey( root );
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
     pNtClose( root );
+
+    pRtlFreeHeap(GetProcessHeap(), 0, target);
 }
 
 START_TEST(reg)
