@@ -345,6 +345,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Msxml2.DOMDocument",
 	"4.0"
     },
+    {   &CLSID_SAXXMLReader40,
+	"SAX XML Reader 4.0",
+	NULL,
+	"msxml4.dll",
+	"Both",
+	"Msxml2.SAXXMLReader",
+	"4.0"
+    },
     { NULL }			/* list terminator */
 };
 
@@ -355,6 +363,11 @@ static struct progid const progid_list[] = {
     {   "Msxml2.DOMDocument.4.0",
 	"XML DOM Document 4.0",
 	&CLSID_DOMDocument40,
+	NULL
+    },
+    {   "Msxml2.SAXXMLReader.4.0",
+	"SAX XML Reader 4.0",
+	&CLSID_SAXXMLReader40,
 	NULL
     },
     { NULL }			/* list terminator */
