@@ -834,6 +834,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgStreamImpl*    newStream;
   DirEntry          currentEntry, newStreamEntry;
   DirRef            currentEntryRef, newStreamEntryRef;
+  HRESULT hr;
 
   TRACE("(%p, %s, %x, %d, %d, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -933,14 +934,22 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   /*
    * Create an entry with the new data
    */
-  StorageBaseImpl_CreateDirEntry(This, &newStreamEntry, &newStreamEntryRef);
+  hr = StorageBaseImpl_CreateDirEntry(This, &newStreamEntry, &newStreamEntryRef);
+  if (FAILED(hr))
+    return hr;
+
   /*
    * Insert the new entry in the parent storage's tree.
    */
-  insertIntoTree(
+  hr = insertIntoTree(
     This,
     This->storageDirEntry,
     newStreamEntryRef);
+  if (FAILED(hr))
+  {
+    StorageBaseImpl_DestroyDirEntry(This, newStreamEntryRef);
+    return hr;
+  }
 
   /*
    * Open the stream to return it.
