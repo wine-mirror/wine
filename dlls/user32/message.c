@@ -2998,7 +2998,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
     if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
 
-    TRACE_(key)("Translating key %s (%04lx), scancode %04x\n",
+    TRACE_(key)("Translating key %s (%04lX), scancode %04x\n",
                 SPY_GetVKeyName(msg->wParam), msg->wParam, HIWORD(msg->lParam));
 
     switch (msg->wParam)
