@@ -1132,15 +1132,22 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
   /*
    * Create a new directory entry for the storage
    */
-  StorageBaseImpl_CreateDirEntry(This, &newEntry, &newEntryRef);
+  hr = StorageBaseImpl_CreateDirEntry(This, &newEntry, &newEntryRef);
+  if (FAILED(hr))
+    return hr;
 
   /*
    * Insert the new directory entry into the parent storage's tree
    */
-  insertIntoTree(
+  hr = insertIntoTree(
     This,
     This->storageDirEntry,
     newEntryRef);
+  if (FAILED(hr))
+  {
+    StorageBaseImpl_DestroyDirEntry(This, newEntryRef);
+    return hr;
+  }
 
   /*
    * Open it to get a pointer to return.
