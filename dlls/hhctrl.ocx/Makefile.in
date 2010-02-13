@@ -22,6 +22,7 @@ RC_SRCS = \
 	De.rc \
 	El.rc \
 	En.rc \
+	Es.rc \
 	Fi.rc \
 	Fr.rc \
 	Hu.rc \
