@@ -1754,6 +1754,7 @@ void X11DRV_InitKeyboard( Display *display )
 
     e2.display = display;
     e2.state = 0;
+    e2.type = KeyPress;
 
     memset(keyc2vkey, 0, sizeof(keyc2vkey));
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
@@ -2268,6 +2269,7 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 			e.display = display;
 			e.state = 0;
 			e.keycode = 0;
+			e.type = KeyPress;
 
                         wine_tsx11_lock();
 
