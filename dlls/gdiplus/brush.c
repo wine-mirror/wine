@@ -1190,6 +1190,19 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
 }
 
 /******************************************************************************
+ * GdipGetTextureImage [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetTextureImage(GpTexture *brush, GpImage **image)
+{
+    TRACE("(%p, %p)\n", brush, image);
+
+    if(!brush || !image)
+        return InvalidParameter;
+
+    return GdipCloneImage(brush->image, image);
+}
+
+/******************************************************************************
  * GdipGetTextureTransform [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture *brush, GpMatrix *matrix)

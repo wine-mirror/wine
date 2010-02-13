@@ -397,7 +397,7 @@
 @ stdcall GdipGetStringFormatTrimming(ptr ptr)
 @ stdcall GdipGetTextContrast(ptr ptr)
 @ stdcall GdipGetTextRenderingHint(ptr ptr)
-@ stub GdipGetTextureImage
+@ stdcall GdipGetTextureImage(ptr ptr)
 @ stdcall GdipGetTextureTransform(ptr ptr)
 @ stdcall GdipGetTextureWrapMode(ptr ptr)
 @ stdcall GdipGetVisibleClipBounds(ptr ptr)
