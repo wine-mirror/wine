@@ -1158,13 +1158,12 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
        "to create a 3D primary buffer: %08x\n",rc);
     if (rc==DS_OK && primary!=NULL) {
         LPDIRECTSOUND3DLISTENER listener=NULL;
+        LPDIRECTSOUNDBUFFER temp_buffer=NULL;
         rc=IDirectSoundBuffer_QueryInterface(primary,
             &IID_IDirectSound3DListener,(void **)&listener);
         ok(rc==DS_OK && listener!=NULL,"IDirectSoundBuffer_QueryInterface() "
            "failed to get a 3D listener: %08x\n",rc);
         if (rc==DS_OK && listener!=NULL) {
-            LPDIRECTSOUNDBUFFER temp_buffer=NULL;
-
             /* Checking the COM interface */
             rc=IDirectSoundBuffer_QueryInterface(primary,
                 &IID_IDirectSoundBuffer,(LPVOID *)&temp_buffer);
@@ -1211,6 +1210,16 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
             ref=IDirectSound3DListener_Release(listener);
             ok(ref==0,"IDirectSound3DListener_Release() listener has %d "
                "references, should have 0\n",ref);
+        }
+
+        todo_wine {
+            temp_buffer = NULL;
+            rc=IDirectSoundBuffer_QueryInterface(primary,
+            &IID_IKsPropertySet,(LPVOID *)&temp_buffer);
+            ok(rc==DS_OK && temp_buffer!=NULL,
+            "IDirectSoundBuffer_QueryInterface didn't handle IKsPropertySet on primary buffer: ret = %08x\n", rc);
+            if(temp_buffer)
+                IKsPropertySet_Release(temp_buffer);
         }
 
         /* Testing the reference counting */
