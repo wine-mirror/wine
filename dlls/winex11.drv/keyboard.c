@@ -1023,8 +1023,8 @@ static const WORD nonchar_key_vkey[256] =
     /* function keys */
     VK_F1, VK_F2,
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
-    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16, 0, 0,       /* FFC8 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD0 */
+    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16, VK_F17, VK_F18, /* FFC8 */
+    VK_F19, VK_F20, VK_F21, VK_F22, VK_F23, VK_F24, 0, 0,       /* FFD0 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD8 */
     /* modifier keys */
     0, VK_LSHIFT, VK_RSHIFT, VK_LCONTROL,                       /* FFE0 */
@@ -1069,7 +1069,7 @@ static const WORD nonchar_key_scan[256] =
     /* function keys */
     0x3B, 0x3C,
     0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,              /* FFC0 */
-    0x57, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFC8 */
+    0x57, 0x58, 0x5B, 0x5C, 0x5D, 0x00, 0x00, 0x00,              /* FFC8 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD0 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD8 */
     /* modifier keys */
