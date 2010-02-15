@@ -190,6 +190,7 @@ LSTATUS WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR 
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
+    if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
     RtlInitUnicodeString( &nameW, name );
     RtlInitUnicodeString( &classW, class );
 
@@ -244,6 +245,7 @@ LSTATUS WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR cl
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
+    if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
     RtlInitAnsiString( &nameA, name );
     RtlInitAnsiString( &classA, class );
 
@@ -301,7 +303,7 @@ LSTATUS WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
  * 
  * See RegOpenKeyExA.
  */
-LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
+LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM access, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -317,6 +319,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM ac
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
+    if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
     RtlInitUnicodeString( &nameW, name );
     return RtlNtStatusToDosError( NtOpenKey( (PHANDLE)retkey, access, &attr ) );
 }
@@ -330,7 +333,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM ac
  * PARAMS
  *  hkey       [I] Handle of open key
  *  name       [I] Name of subkey to open
- *  reserved   [I] Reserved - must be zero
+ *  options    [I] Open options (can be set to REG_OPTION_OPEN_LINK)
  *  access     [I] Security access mask
  *  retkey     [O] Handle to open key
  *
@@ -342,7 +345,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM ac
  *  Unlike RegCreateKeyExA(), this function will not create the key if it
  *  does not exist.
  */
-LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
+LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM access, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     STRING nameA;
@@ -363,6 +366,7 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acc
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
+    if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
 
     RtlInitAnsiString( &nameA, name );
     if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
