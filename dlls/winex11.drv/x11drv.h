@@ -491,7 +491,7 @@ extern BOOL X11DRV_IsSolidColor(COLORREF color);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel);
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
-extern int X11DRV_PALETTE_LookupPixel(COLORREF color);
+extern int X11DRV_PALETTE_LookupPixel(ColorShifts *shifts, COLORREF color);
 extern void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask);
 
 extern unsigned int depth_to_bpp( unsigned int depth );
