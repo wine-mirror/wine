@@ -705,8 +705,17 @@ static HRESULT WINAPI domcdata_replaceData(
     IXMLDOMCDATASection *iface,
     LONG offset, LONG count, BSTR p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    HRESULT hr;
+
+    TRACE("%p %d %d %s\n", This, offset, count, debugstr_w(p));
+
+    hr = IXMLDOMCDATASection_deleteData(iface, offset, count);
+
+    if (hr == S_OK)
+       hr = IXMLDOMCDATASection_insertData(iface, offset, p);
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_splitText(

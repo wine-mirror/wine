@@ -713,8 +713,17 @@ static HRESULT WINAPI domcomment_replaceData(
     IXMLDOMComment *iface,
     LONG offset, LONG count, BSTR p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcomment *This = impl_from_IXMLDOMComment( iface );
+    HRESULT hr;
+
+    TRACE("%p %d %d %s\n", This, offset, count, debugstr_w(p));
+
+    hr = IXMLDOMComment_deleteData(iface, offset, count);
+
+    if (hr == S_OK)
+       hr = IXMLDOMComment_insertData(iface, offset, p);
+
+    return hr;
 }
 
 static const struct IXMLDOMCommentVtbl domcomment_vtbl =

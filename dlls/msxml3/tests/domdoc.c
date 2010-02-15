@@ -967,6 +967,77 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("99") ), "incorrect get_text string\n");
         SysFreeString(str);
 
+        /* ::replaceData() */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(szstr1);
+        r = IXMLDOMText_put_nodeValue(nodetext, var);
+        ok(r == S_OK, "ret %08x\n", r );
+        VariantClear(&var);
+
+        r = IXMLDOMText_replaceData(nodetext, 6, 0, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        r = IXMLDOMText_replaceData(nodetext, 0, 0, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* NULL pointer means delete */
+        r = IXMLDOMText_replaceData(nodetext, 0, 1, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* empty string means delete */
+        r = IXMLDOMText_replaceData(nodetext, 0, 1, _bstr_(""));
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* zero count means insert */
+        r = IXMLDOMText_replaceData(nodetext, 0, 0, _bstr_("a"));
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        r = IXMLDOMText_replaceData(nodetext, 0, 2, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 0, _bstr_("m"));
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* nonempty string, count greater than its length */
+        r = IXMLDOMText_replaceData(nodetext, 0, 2, _bstr_("a1.2"));
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* nonempty string, count less than its length */
+        r = IXMLDOMText_replaceData(nodetext, 0, 1, _bstr_("wine"));
+        ok(r == S_OK, "ret %08x\n", r );
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
 
@@ -3393,6 +3464,77 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMComment_deleteData(pComment, 0, len);
                 ok(hr == S_OK, "ret %08x\n", hr );
 
+                /* ::replaceData() */
+                V_VT(&v) = VT_BSTR;
+                V_BSTR(&v) = SysAllocString(szstr1);
+                hr = IXMLDOMComment_put_nodeValue(pComment, v);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                VariantClear(&v);
+
+                hr = IXMLDOMComment_replaceData(pComment, 6, 0, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMComment_replaceData(pComment, 0, 0, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* NULL pointer means delete */
+                hr = IXMLDOMComment_replaceData(pComment, 0, 1, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* empty string means delete */
+                hr = IXMLDOMComment_replaceData(pComment, 0, 1, _bstr_(""));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* zero count means insert */
+                hr = IXMLDOMComment_replaceData(pComment, 0, 0, _bstr_("a"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMComment_replaceData(pComment, 0, 2, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 0, _bstr_("m"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* nonempty string, count greater than its length */
+                hr = IXMLDOMComment_replaceData(pComment, 0, 2, _bstr_("a1.2"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* nonempty string, count less than its length */
+                hr = IXMLDOMComment_replaceData(pComment, 0, 1, _bstr_("wine"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
                 IXMLDOMComment_Release(pComment);
             }
 
@@ -3822,6 +3964,77 @@ static void test_xmlTypes(void)
                 /* ... and try again with empty string */
                 hr = IXMLDOMCDATASection_deleteData(pCDataSec, 0, len);
                 ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* ::replaceData() */
+                V_VT(&v) = VT_BSTR;
+                V_BSTR(&v) = SysAllocString(szstr1);
+                hr = IXMLDOMCDATASection_put_nodeValue(pCDataSec, v);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                VariantClear(&v);
+
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 6, 0, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 0, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* NULL pointer means delete */
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 1, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* empty string means delete */
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 1, _bstr_(""));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* zero count means insert */
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 0, _bstr_("a"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 2, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 0, _bstr_("m"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* nonempty string, count greater than its length */
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 2, _bstr_("a1.2"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
+                /* nonempty string, count less than its length */
+                hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 1, _bstr_("wine"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+                SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
             }

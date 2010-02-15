@@ -706,8 +706,17 @@ static HRESULT WINAPI domtext_replaceData(
     IXMLDOMText *iface,
     LONG offset, LONG count, BSTR p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domtext *This = impl_from_IXMLDOMText( iface );
+    HRESULT hr;
+
+    TRACE("%p %d %d %s\n", This, offset, count, debugstr_w(p));
+
+    hr = IXMLDOMText_deleteData(iface, offset, count);
+
+    if (hr == S_OK)
+       hr = IXMLDOMText_insertData(iface, offset, p);
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_splitText(
