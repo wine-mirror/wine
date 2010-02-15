@@ -576,40 +576,30 @@ static HRESULT WINAPI domcomment_appendData(
     BSTR p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    xmlChar *pContent;
-    HRESULT hr = S_FALSE;
+    HRESULT hr;
+    BSTR data;
+    LONG p_len;
 
-    TRACE("%p\n", iface);
+    TRACE("%p %s\n", This, debugstr_w(p));
 
     /* Nothing to do if NULL or an Empty string passed in. */
-    if(p == NULL || SysStringLen(p) == 0)
-        return S_OK;
+    if((p_len = SysStringLen(p)) == 0) return S_OK;
 
-    pContent = xmlChar_from_wchar( p );
-    if(pContent)
+    hr = IXMLDOMComment_get_data(iface, &data);
+    if(hr == S_OK)
     {
-        /* Older versions of libxml < 2.6.27 didn't correctly support
-           xmlTextConcat on Comment nodes. Fallback to setting the
-           contents directly if xmlTextConcat fails.
-         */
-        if(xmlTextConcat(This->node.node, pContent, SysStringLen(p) ) == 0)
-            hr = S_OK;
-        else
-        {
-            xmlChar *pNew;
-            pNew = xmlStrcat(xmlNodeGetContent(This->node.node), pContent);
-            if(pNew)
-            {
-                xmlNodeSetContent(This->node.node, pNew);
-                hr = S_OK;
-            }
-            else
-                hr = E_FAIL;
-        }
-        HeapFree( GetProcessHeap(), 0, pContent );
+        LONG len = SysStringLen(data);
+        BSTR str = SysAllocStringLen(NULL, p_len + len);
+
+        memcpy(str, data, len*sizeof(WCHAR));
+        memcpy(&str[len], p, p_len*sizeof(WCHAR));
+        str[len+p_len] = 0;
+
+        hr = IXMLDOMComment_put_data(iface, str);
+
+        SysFreeString(str);
+        SysFreeString(data);
     }
-    else
-        hr = E_FAIL;
 
     return hr;
 }

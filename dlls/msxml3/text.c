@@ -584,25 +584,30 @@ static HRESULT WINAPI domtext_appendData(
     BSTR p)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    xmlChar *pContent;
-    HRESULT hr = S_FALSE;
+    HRESULT hr;
+    BSTR data;
+    LONG p_len;
 
-    TRACE("%p\n", iface);
+    TRACE("%p %s\n", This, debugstr_w(p));
 
     /* Nothing to do if NULL or an Empty string passed in. */
-    if(SysStringLen(p) == 0) return S_OK;
+    if((p_len = SysStringLen(p)) == 0) return S_OK;
 
-    pContent = xmlChar_from_wchar( p );
-    if(pContent)
+    hr = IXMLDOMText_get_data(iface, &data);
+    if(hr == S_OK)
     {
-        if(xmlTextConcat(This->node.node, pContent, SysStringLen(p)) == 0)
-            hr = S_OK;
-        else
-            hr = E_FAIL;
-        heap_free( pContent );
+        LONG len = SysStringLen(data);
+        BSTR str = SysAllocStringLen(NULL, p_len + len);
+
+        memcpy(str, data, len*sizeof(WCHAR));
+        memcpy(&str[len], p, p_len*sizeof(WCHAR));
+        str[len+p_len] = 0;
+
+        hr = IXMLDOMText_put_data(iface, str);
+
+        SysFreeString(str);
+        SysFreeString(data);
     }
-    else
-        hr = E_FAIL;
 
     return hr;
 }
