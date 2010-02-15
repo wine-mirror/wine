@@ -638,22 +638,18 @@ static void test_symlinks(void)
 
     /* REG_SZ is not allowed */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_SZ, target, target_len );
-    todo_wine
     ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
     /* other values are not allowed */
     status = pNtSetValueKey( link, &link_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
-    todo_wine
     ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
 
     /* try opening the target through the link */
 
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
-    if (!status) pNtClose( key );
 
     attr.ObjectName = &target_str;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
@@ -670,14 +666,10 @@ static void test_symlinks(void)
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
-    }
 
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
 
     /* REG_LINK can be created in non-link keys */
@@ -699,11 +691,8 @@ static void test_symlinks(void)
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
-    }
 
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
@@ -719,24 +708,18 @@ static void test_symlinks(void)
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
         "wrong len %u\n", len );
-    }
     pNtClose( key );
 
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
         "wrong len %u\n", len );
-    }
     pNtClose( key );
 
     /* reopen the link from itself */
@@ -748,24 +731,18 @@ static void test_symlinks(void)
     ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
         "wrong len %u\n", len );
-    }
     pNtClose( key );
 
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    todo_wine
-    {
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
         "wrong len %u\n", len );
-    }
     pNtClose( key );
 
     if (0)  /* crashes the Windows kernel in most versions */
@@ -793,9 +770,7 @@ static void test_symlinks(void)
     attr.Attributes = 0;
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
-    if (!status) pNtClose( key );
 
     /* relative symlink, works only on win2k */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, targetW+1, sizeof(targetW)-2*sizeof(WCHAR) );
@@ -804,12 +779,9 @@ static void test_symlinks(void)
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_SUCCESS || status == STATUS_OBJECT_NAME_NOT_FOUND,
         "NtOpenKey wrong status 0x%08x\n", status );
-    if (!status) pNtClose( key );
 
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_COLLISION, "NtCreateKey failed: 0x%08x\n", status );
-    if (!status) pNtClose( key );
 
     status = pNtDeleteKey( link );
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
@@ -832,10 +804,8 @@ static void test_symlinks(void)
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
 
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NAME_TOO_LONG,
         "NtOpenKey failed: 0x%08x\n", status );
-    if (!status) pNtClose( key );
 
     attr.Attributes = OBJ_OPENLINK;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
