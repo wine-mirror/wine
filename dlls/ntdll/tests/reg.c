@@ -350,7 +350,7 @@ static void test_NtOpenKey(void)
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
 
     /* NULL key */
-    status = pNtOpenKey(NULL, 0, &attr);
+    status = pNtOpenKey(NULL, am, &attr);
     todo_wine
         ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
 
