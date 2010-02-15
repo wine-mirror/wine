@@ -1028,6 +1028,172 @@ static void D3D1_releaseObjects(void)
     if (DirectDraw1) IDirectDraw_Release(DirectDraw1);
 }
 
+static void ViewportTest(void)
+{
+    HRESULT hr;
+    LPDIRECT3DVIEWPORT2 Viewport2;
+    D3DVIEWPORT vp1_data, ret_vp1_data;
+    D3DVIEWPORT2 vp2_data, ret_vp2_data;
+    float infinity;
+
+    *(DWORD*)&infinity = 0x7f800000;
+
+    hr = IDirect3DDevice_AddViewport(Direct3DDevice1, Viewport);
+    ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
+
+    hr = IDirect3DViewport_QueryInterface(Viewport, &IID_IDirect3DViewport2, (void**) &Viewport2);
+    ok(hr==D3D_OK, "QueryInterface returned: %x\n", hr);
+
+    vp1_data.dwSize = sizeof(vp1_data);
+    vp1_data.dwX = 0;
+    vp1_data.dwY = 1;
+    vp1_data.dwWidth = 256;
+    vp1_data.dwHeight = 257;
+    vp1_data.dvMaxX = 0;
+    vp1_data.dvMaxY = 0;
+    vp1_data.dvScaleX = 0;
+    vp1_data.dvScaleY = 0;
+    vp1_data.dvMinZ = 0.25;
+    vp1_data.dvMaxZ = 0.75;
+
+    vp2_data.dwSize = sizeof(vp2_data);
+    vp2_data.dwX = 2;
+    vp2_data.dwY = 3;
+    vp2_data.dwWidth = 258;
+    vp2_data.dwHeight = 259;
+    vp2_data.dvClipX = 0;
+    vp2_data.dvClipY = 0;
+    vp2_data.dvClipWidth = 0;
+    vp2_data.dvClipHeight = 0;
+    vp2_data.dvMinZ = 0.1;
+    vp2_data.dvMaxZ = 0.9;
+
+    hr = IDirect3DViewport2_SetViewport(Viewport2, &vp1_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_SetViewport returned %08x\n", hr);
+
+    memset(&ret_vp1_data, 0xff, sizeof(ret_vp1_data));
+    ret_vp1_data.dwSize = sizeof(vp1_data);
+
+    hr = IDirect3DViewport2_GetViewport(Viewport2, &ret_vp1_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport returned %08x\n", hr);
+
+    ok(ret_vp1_data.dwX == vp1_data.dwX, "dwX is %u, expected %u\n", ret_vp1_data.dwX, vp1_data.dwX);
+    ok(ret_vp1_data.dwY == vp1_data.dwY, "dwY is %u, expected %u\n", ret_vp1_data.dwY, vp1_data.dwY);
+    ok(ret_vp1_data.dwWidth == vp1_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp1_data.dwWidth, vp1_data.dwWidth);
+    ok(ret_vp1_data.dwHeight == vp1_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp1_data.dwHeight, vp1_data.dwHeight);
+    ok(ret_vp1_data.dvMaxX == vp1_data.dvMaxX, "dvMaxX is %f, expected %f\n", ret_vp1_data.dvMaxX, vp1_data.dvMaxX);
+    ok(ret_vp1_data.dvMaxY == vp1_data.dvMaxY, "dvMaxY is %f, expected %f\n", ret_vp1_data.dvMaxY, vp1_data.dvMaxY);
+    todo_wine ok(ret_vp1_data.dvScaleX == infinity, "dvScaleX is %f, expected %f\n", ret_vp1_data.dvScaleX, infinity);
+    todo_wine ok(ret_vp1_data.dvScaleY == infinity, "dvScaleY is %f, expected %f\n", ret_vp1_data.dvScaleY, infinity);
+    ok(ret_vp1_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp1_data.dvMinZ);
+    ok(ret_vp1_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp1_data.dvMaxZ);
+
+    hr = IDirect3DViewport2_SetViewport2(Viewport2, &vp2_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_SetViewport2 returned %08x\n", hr);
+
+    memset(&ret_vp2_data, 0xff, sizeof(ret_vp2_data));
+    ret_vp2_data.dwSize = sizeof(vp2_data);
+
+    hr = IDirect3DViewport2_GetViewport2(Viewport2, &ret_vp2_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport2 returned %08x\n", hr);
+
+    ok(ret_vp2_data.dwX == vp2_data.dwX, "dwX is %u, expected %u\n", ret_vp2_data.dwX, vp2_data.dwX);
+    ok(ret_vp2_data.dwY == vp2_data.dwY, "dwY is %u, expected %u\n", ret_vp2_data.dwY, vp2_data.dwY);
+    ok(ret_vp2_data.dwWidth == vp2_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp2_data.dwWidth, vp2_data.dwWidth);
+    ok(ret_vp2_data.dwHeight == vp2_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp2_data.dwHeight, vp2_data.dwHeight);
+    ok(ret_vp2_data.dvClipX == vp2_data.dvClipX, "dvClipX is %f, expected %f\n", ret_vp2_data.dvClipX, vp2_data.dvClipX);
+    ok(ret_vp2_data.dvClipY == vp2_data.dvClipY, "dvClipY is %f, expected %f\n", ret_vp2_data.dvClipY, vp2_data.dvClipY);
+    ok(ret_vp2_data.dvClipWidth == vp2_data.dvClipWidth, "dvClipWidth is %f, expected %f\n",
+        ret_vp2_data.dvClipWidth, vp2_data.dvClipWidth);
+    ok(ret_vp2_data.dvClipHeight == vp2_data.dvClipHeight, "dvClipHeight is %f, expected %f\n",
+        ret_vp2_data.dvClipHeight, vp2_data.dvClipHeight);
+    ok(ret_vp2_data.dvMinZ == vp2_data.dvMinZ, "dvMinZ is %f, expected %f\n", ret_vp2_data.dvMinZ, vp2_data.dvMinZ);
+    ok(ret_vp2_data.dvMaxZ == vp2_data.dvMaxZ, "dvMaxZ is %f, expected %f\n", ret_vp2_data.dvMaxZ, vp2_data.dvMaxZ);
+
+    memset(&ret_vp1_data, 0xff, sizeof(ret_vp1_data));
+    ret_vp1_data.dwSize = sizeof(vp1_data);
+
+    hr = IDirect3DViewport2_GetViewport(Viewport2, &ret_vp1_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport returned %08x\n", hr);
+
+    ok(ret_vp1_data.dwX == vp2_data.dwX, "dwX is %u, expected %u\n", ret_vp1_data.dwX, vp2_data.dwX);
+    ok(ret_vp1_data.dwY == vp2_data.dwY, "dwY is %u, expected %u\n", ret_vp1_data.dwY, vp2_data.dwY);
+    ok(ret_vp1_data.dwWidth == vp2_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp1_data.dwWidth, vp2_data.dwWidth);
+    ok(ret_vp1_data.dwHeight == vp2_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp1_data.dwHeight, vp2_data.dwHeight);
+    ok(ret_vp1_data.dvMaxX == vp1_data.dvMaxX, "dvMaxX is %f, expected %f\n", ret_vp1_data.dvMaxX, vp1_data.dvMaxX);
+    ok(ret_vp1_data.dvMaxY == vp1_data.dvMaxY, "dvMaxY is %f, expected %f\n", ret_vp1_data.dvMaxY, vp1_data.dvMaxY);
+    todo_wine ok(ret_vp1_data.dvScaleX == infinity, "dvScaleX is %f, expected %f\n", ret_vp1_data.dvScaleX, infinity);
+    todo_wine ok(ret_vp1_data.dvScaleY == infinity, "dvScaleY is %f, expected %f\n", ret_vp1_data.dvScaleY, infinity);
+    todo_wine ok(ret_vp1_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp1_data.dvMinZ);
+    todo_wine ok(ret_vp1_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp1_data.dvMaxZ);
+
+    hr = IDirect3DViewport2_SetViewport2(Viewport2, &vp2_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_SetViewport2 returned %08x\n", hr);
+
+    memset(&ret_vp2_data, 0xff, sizeof(ret_vp2_data));
+    ret_vp2_data.dwSize = sizeof(vp2_data);
+
+    hr = IDirect3DViewport2_GetViewport2(Viewport2, &ret_vp2_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport2 returned %08x\n", hr);
+
+    ok(ret_vp2_data.dwX == vp2_data.dwX, "dwX is %u, expected %u\n", ret_vp2_data.dwX, vp2_data.dwX);
+    ok(ret_vp2_data.dwY == vp2_data.dwY, "dwY is %u, expected %u\n", ret_vp2_data.dwY, vp2_data.dwY);
+    ok(ret_vp2_data.dwWidth == vp2_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp2_data.dwWidth, vp2_data.dwWidth);
+    ok(ret_vp2_data.dwHeight == vp2_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp2_data.dwHeight, vp2_data.dwHeight);
+    ok(ret_vp2_data.dvClipX == vp2_data.dvClipX, "dvClipX is %f, expected %f\n", ret_vp2_data.dvClipX, vp2_data.dvClipX);
+    ok(ret_vp2_data.dvClipY == vp2_data.dvClipY, "dvClipY is %f, expected %f\n", ret_vp2_data.dvClipY, vp2_data.dvClipY);
+    ok(ret_vp2_data.dvClipWidth == vp2_data.dvClipWidth, "dvClipWidth is %f, expected %f\n",
+        ret_vp2_data.dvClipWidth, vp2_data.dvClipWidth);
+    ok(ret_vp2_data.dvClipHeight == vp2_data.dvClipHeight, "dvClipHeight is %f, expected %f\n",
+        ret_vp2_data.dvClipHeight, vp2_data.dvClipHeight);
+    ok(ret_vp2_data.dvMinZ == vp2_data.dvMinZ, "dvMinZ is %f, expected %f\n", ret_vp2_data.dvMinZ, vp2_data.dvMinZ);
+    ok(ret_vp2_data.dvMaxZ == vp2_data.dvMaxZ, "dvMaxZ is %f, expected %f\n", ret_vp2_data.dvMaxZ, vp2_data.dvMaxZ);
+
+    hr = IDirect3DViewport2_SetViewport(Viewport2, &vp1_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_SetViewport returned %08x\n", hr);
+
+    memset(&ret_vp1_data, 0xff, sizeof(ret_vp1_data));
+    ret_vp1_data.dwSize = sizeof(vp1_data);
+
+    hr = IDirect3DViewport2_GetViewport(Viewport2, &ret_vp1_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport returned %08x\n", hr);
+
+    ok(ret_vp1_data.dwX == vp1_data.dwX, "dwX is %u, expected %u\n", ret_vp1_data.dwX, vp1_data.dwX);
+    ok(ret_vp1_data.dwY == vp1_data.dwY, "dwY is %u, expected %u\n", ret_vp1_data.dwY, vp1_data.dwY);
+    ok(ret_vp1_data.dwWidth == vp1_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp1_data.dwWidth, vp1_data.dwWidth);
+    ok(ret_vp1_data.dwHeight == vp1_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp1_data.dwHeight, vp1_data.dwHeight);
+    ok(ret_vp1_data.dvMaxX == vp1_data.dvMaxX, "dvMaxX is %f, expected %f\n", ret_vp1_data.dvMaxX, vp1_data.dvMaxX);
+    ok(ret_vp1_data.dvMaxY == vp1_data.dvMaxY, "dvMaxY is %f, expected %f\n", ret_vp1_data.dvMaxY, vp1_data.dvMaxY);
+    todo_wine ok(ret_vp1_data.dvScaleX == infinity, "dvScaleX is %f, expected %f\n", ret_vp1_data.dvScaleX, infinity);
+    todo_wine ok(ret_vp1_data.dvScaleY == infinity, "dvScaleY is %f, expected %f\n", ret_vp1_data.dvScaleY, infinity);
+    ok(ret_vp1_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp1_data.dvMinZ);
+    ok(ret_vp1_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp1_data.dvMaxZ);
+
+    memset(&ret_vp2_data, 0xff, sizeof(ret_vp2_data));
+    ret_vp2_data.dwSize = sizeof(vp2_data);
+
+    hr = IDirect3DViewport2_GetViewport2(Viewport2, &ret_vp2_data);
+    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport2 returned %08x\n", hr);
+
+    ok(ret_vp2_data.dwX == vp1_data.dwX, "dwX is %u, expected %u\n", ret_vp2_data.dwX, vp1_data.dwX);
+    ok(ret_vp2_data.dwY == vp1_data.dwY, "dwY is %u, expected %u\n", ret_vp2_data.dwY, vp1_data.dwY);
+    ok(ret_vp2_data.dwWidth == vp1_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp2_data.dwWidth, vp1_data.dwWidth);
+    ok(ret_vp2_data.dwHeight == vp1_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp2_data.dwHeight, vp1_data.dwHeight);
+    ok(ret_vp2_data.dvClipX == vp2_data.dvClipX, "dvClipX is %f, expected %f\n", ret_vp2_data.dvClipX, vp2_data.dvClipX);
+    ok(ret_vp2_data.dvClipY == vp2_data.dvClipY, "dvClipY is %f, expected %f\n", ret_vp2_data.dvClipY, vp2_data.dvClipY);
+    ok(ret_vp2_data.dvClipWidth == vp2_data.dvClipWidth, "dvClipWidth is %f, expected %f\n",
+        ret_vp2_data.dvClipWidth, vp2_data.dvClipWidth);
+    ok(ret_vp2_data.dvClipHeight == vp2_data.dvClipHeight, "dvClipHeight is %f, expected %f\n",
+        ret_vp2_data.dvClipHeight, vp2_data.dvClipHeight);
+    ok(ret_vp2_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp2_data.dvMinZ);
+    ok(ret_vp2_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp2_data.dvMaxZ);
+
+    IDirect3DViewport2_Release(Viewport2);
+
+    hr = IDirect3DDevice_DeleteViewport(Direct3DDevice1, Viewport);
+    ok(hr == D3D_OK, "IDirect3DDevice_DeleteViewport returned %08x\n", hr);
+}
+
 #define SET_VP_DATA(vp_data) \
     vp_data.dwSize = sizeof(vp_data); \
     vp_data.dwX = 0; \
@@ -3258,6 +3424,7 @@ START_TEST(d3d)
     } else {
         Direct3D1Test();
         TextureLoadTest();
+        ViewportTest();
         D3D1_releaseObjects();
     }
 
