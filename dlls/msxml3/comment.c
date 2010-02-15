@@ -532,11 +532,10 @@ static HRESULT WINAPI domcomment_substringData(
     LONG offset, LONG count, BSTR *p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    xmlChar *pContent;
-    LONG nLength = 0;
-    HRESULT hr = S_FALSE;
+    HRESULT hr;
+    BSTR data;
 
-    TRACE("%p %d %d %p\n", iface, offset, count, p);
+    TRACE("%p %d %d %p\n", This, offset, count, p);
 
     if(!p)
         return E_INVALIDARG;
@@ -548,24 +547,22 @@ static HRESULT WINAPI domcomment_substringData(
     if(count == 0)
         return S_FALSE;
 
-    pContent = xmlNodeGetContent(This->node.node);
-    if(pContent)
+    hr = IXMLDOMComment_get_data(iface, &data);
+    if(hr == S_OK)
     {
-        nLength = xmlStrlen(pContent);
+        LONG len = SysStringLen(data);
 
-        if( offset < nLength)
+        if(offset < len)
         {
-            BSTR sContent = bstr_from_xmlChar(pContent);
-            if(offset + count > nLength)
-                *p = SysAllocString(&sContent[offset]);
+            if(offset + count > len)
+                *p = SysAllocString(&data[offset]);
             else
-                *p = SysAllocStringLen(&sContent[offset], count);
-
-            SysFreeString(sContent);
-            hr = S_OK;
+                *p = SysAllocStringLen(&data[offset], count);
         }
+        else
+            hr = S_FALSE;
 
-        xmlFree(pContent);
+        SysFreeString(data);
     }
 
     return hr;
