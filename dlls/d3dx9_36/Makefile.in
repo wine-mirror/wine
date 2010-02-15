@@ -15,6 +15,7 @@ C_SRCS = \
 	shader.c \
 	sprite.c \
 	surface.c \
+	texture.c \
 	util.c
 
 RC_SRCS = version.rc
