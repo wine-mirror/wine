@@ -380,6 +380,7 @@ struct HTMLDocumentObj {
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
+    IAdviseSink *view_sink;
 
     DOCHOSTUIINFO hostinfo;
 

@@ -236,6 +236,9 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
 
     if(doc == doc_obj->basedoc.doc_node) {
+        if(doc_obj->view_sink)
+            IAdviseSink_OnViewChange(doc_obj->view_sink, DVASPECT_CONTENT, -1);
+
         if(doc_obj->frame) {
             static const WCHAR wszDone[] = {'D','o','n','e',0};
             IOleInPlaceFrame_SetStatusText(doc_obj->frame, wszDone);

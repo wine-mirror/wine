@@ -1992,6 +1992,8 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
         if(This->basedoc.advise_holder)
             IOleAdviseHolder_Release(This->basedoc.advise_holder);
 
+        if(This->view_sink)
+            IAdviseSink_Release(This->view_sink);
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(&This->basedoc), NULL);
         if(This->in_place_active)
