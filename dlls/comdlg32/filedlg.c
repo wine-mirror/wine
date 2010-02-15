@@ -1989,15 +1989,15 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
   TRACE("hwnd=%p\n", hwnd);
 
+  /* try to browse the selected item */
+  if(BrowseSelectedFolder(hwnd))
+      return FALSE;
+
   /* get the files from the edit control */
   nFileCount = FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed);
 
-  /* try if the user selected a folder in the shellview */
   if(nFileCount == 0)
-  {
-      BrowseSelectedFolder(hwnd);
       return FALSE;
-  }
 
   if(nFileCount > 1)
   {
