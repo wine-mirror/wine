@@ -2797,7 +2797,9 @@ static void depth_clamp_test(IDirect3DDevice7 *device)
     color = getPixelColor(device, 75, 75);
     ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 150, 150);
-    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ffffff, 1) ||
+       broken(color == 0x00f91414), /* Reference rasterizer */
+       "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 330);
