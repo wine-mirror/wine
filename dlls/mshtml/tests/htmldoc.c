@@ -112,6 +112,7 @@ DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
 DEFINE_EXPECT(Exec_MSHTML_PARSECOMPLETE);
 DEFINE_EXPECT(Exec_Explorer_69);
+DEFINE_EXPECT(Exec_DOCCANNAVIGATE);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -186,6 +187,8 @@ static const WCHAR http_urlW[] =
 
 static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
 static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+#define DOCHOST_DOCCANNAVIGATE 0
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_MSHTML_QueryStatus(IHTMLDocument2*,DWORD);
@@ -2496,8 +2499,19 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         };
     }
 
-    if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup))
-        return E_FAIL; /* TODO */
+    if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case DOCHOST_DOCCANNAVIGATE:
+            CHECK_EXPECT(Exec_DOCCANNAVIGATE);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
+            ok(V_VT(pvaIn) == VT_UNKNOWN, "V_VT(pvaIn) != VT_UNKNOWN\n");
+            /* FIXME: test V_UNKNOWN(pvaIn) == window */
+            return S_OK;
+        default:
+            return E_FAIL; /* TODO */
+        }
+    }
 
     if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
         ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
@@ -2990,6 +3004,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(GetOptionKeyPath);
         SET_EXPECT(GetOverrideKeyPath);
         SET_EXPECT(GetWindow);
+        SET_EXPECT(Exec_DOCCANNAVIGATE);
         SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
         SET_EXPECT(Exec_SETPROGRESSMAX);
         SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -3030,6 +3045,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(GetOptionKeyPath);
         CHECK_CALLED(GetOverrideKeyPath);
         CHECK_CALLED(GetWindow);
+        todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
         CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         CHECK_CALLED(Exec_SETPROGRESSMAX);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -3670,6 +3686,8 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
             SET_EXPECT(GetOverrideKeyPath);
         }
         SET_EXPECT(GetWindow);
+        if(flags & CLIENTSITE_EXPECTPATH)
+            SET_EXPECT(Exec_DOCCANNAVIGATE);
         SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
         SET_EXPECT(Exec_SETPROGRESSMAX);
         SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -3689,6 +3707,8 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
             CHECK_CALLED(GetOverrideKeyPath);
         }
         CHECK_CALLED(GetWindow);
+        if(flags & CLIENTSITE_EXPECTPATH)
+            todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
         CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         CHECK_CALLED(Exec_SETPROGRESSMAX);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -4773,6 +4793,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     SET_EXPECT(GetOptionKeyPath);
     SET_EXPECT(GetOverrideKeyPath);
     SET_EXPECT(GetWindow);
+    SET_EXPECT(Exec_DOCCANNAVIGATE);
     SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -4790,6 +4811,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverrideKeyPath);
     CHECK_CALLED(GetWindow);
+    todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
