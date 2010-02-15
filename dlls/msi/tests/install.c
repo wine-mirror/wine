@@ -1364,6 +1364,50 @@ static const CHAR tl_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\t\t5300\n"
                                               "InstallFinalize\t\t6000\n";
 
+static const CHAR crs_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "target.txt\tshortcut\ttarget.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR crs_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "shortcut\t\t\tshortcut feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR crs_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "shortcut\tshortcut\n";
+
+static const CHAR crs_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "shortcut\t{5D20E3C6-7206-498F-AC28-87AF2F9AD4CC}\tMSITESTDIR\t0\t\ttarget.txt\n";
+
+static const CHAR crs_shortcut_dat[] = "Shortcut\tDirectory_\tName\tComponent_\tTarget\tArguments\tDescription\tHotkey\tIcon_\tIconIndex\tShowCmd\tWkDir\n"
+                                       "s72\ts72\tl128\ts72\ts72\tL255\tL255\tI2\tS72\tI2\tI2\tS72\n"
+                                       "Shortcut\tShortcut\n"
+                                       "shortcut\tMSITESTDIR\tshortcut\tshortcut\t[MSITESTDIR]target.txt\t\t\t\t\t\t\t\n";
+
+static const CHAR crs_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "RemoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t2000\n"
+                                               "RemoveShortcuts\t\t3000\n"
+                                               "CreateShortcuts\t\t3100\n"
+                                               "RegisterProduct\t\t5000\n"
+                                               "PublishFeatures\t\t5100\n"
+                                               "PublishProduct\t\t5200\n"
+                                               "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2184,6 +2228,19 @@ static const msi_table tl_tables[] =
     ADD_TABLE(tl_file),
     ADD_TABLE(tl_typelib),
     ADD_TABLE(tl_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table crs_tables[] =
+{
+    ADD_TABLE(crs_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(crs_feature),
+    ADD_TABLE(crs_feature_comp),
+    ADD_TABLE(crs_file),
+    ADD_TABLE(crs_shortcut),
+    ADD_TABLE(crs_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -8094,6 +8151,32 @@ static void test_register_typelib(void)
     delete_test_files();
 }
 
+static void test_create_remove_shortcut(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\target.txt", 1000);
+    create_database(msifile, crs_tables, sizeof(crs_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(pf_exists("msitest\\target.txt"), "file not created\n");
+    ok(pf_exists("msitest\\shortcut.lnk"), "file not created\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\shortcut.lnk", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest\\target.txt", TRUE), "file not removed\n");
+    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8194,6 +8277,7 @@ START_TEST(install)
     test_validate_product_id();
     test_install_remove_odbc();
     test_register_typelib();
+    test_create_remove_shortcut();
 
     DeleteFileA(log_file);
 
