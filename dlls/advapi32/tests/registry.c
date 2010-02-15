@@ -24,6 +24,7 @@
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "winsvc.h"
 #include "winerror.h"
@@ -34,10 +35,10 @@ static DWORD GLE;
 static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static const char * sTestpath2 = "%FOO%\\subdir1";
 
-static HMODULE hadvapi32;
 static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
 static DWORD (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
-
+static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
+static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
 
 
 /* Debugging functions from wine/libs/wine/debug.c */
@@ -112,16 +113,19 @@ static const char *wine_debugstr_an( const char *str, int n )
 }
 
 #define ADVAPI32_GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(hadvapi32, #func);
-
+    p ## func = (void*)GetProcAddress(hadvapi32, #func)
 
 static void InitFunctionPtrs(void)
 {
-    hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
     /* This function was introduced with Windows 2003 SP1 */
-    ADVAPI32_GET_PROC(RegGetValueA)
-    ADVAPI32_GET_PROC(RegDeleteTreeA)
+    ADVAPI32_GET_PROC(RegGetValueA);
+    ADVAPI32_GET_PROC(RegDeleteTreeA);
+
+    pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
+    pNtDeleteKey = (void *)GetProcAddress( hntdll, "NtDeleteKey" );
 }
 
 /* delete key and all its subkeys */
@@ -1503,6 +1507,134 @@ static void test_rw_order(void)
     ok(!RegDeleteKey(HKEY_CURRENT_USER, keyname), "Failed to delete key\n");
 }
 
+static void test_symlinks(void)
+{
+    static const WCHAR targetW[] = {'\\','S','o','f','t','w','a','r','e','\\','W','i','n','e',
+                                    '\\','T','e','s','t','\\','t','a','r','g','e','t',0};
+    BYTE buffer[1024];
+    UNICODE_STRING target_str;
+    WCHAR *target;
+    HKEY key, link;
+    NTSTATUS status;
+    DWORD target_len, type, len, dw, err;
+
+    if (!pRtlFormatCurrentUserKeyPath || !pNtDeleteKey)
+    {
+        win_skip( "Can't perform symlink tests\n" );
+        return;
+    }
+
+    pRtlFormatCurrentUserKeyPath( &target_str );
+
+    target_len = target_str.Length + sizeof(targetW);
+    target = HeapAlloc( GetProcessHeap(), 0, target_len );
+    memcpy( target, target_str.Buffer, target_str.Length );
+    memcpy( target + target_str.Length/sizeof(WCHAR), targetW, sizeof(targetW) );
+
+    err = RegCreateKeyExA( hkey_main, "link", 0, NULL, REG_OPTION_CREATE_LINK,
+                           KEY_ALL_ACCESS, NULL, &link, NULL );
+    ok( err == ERROR_SUCCESS, "RegCreateKeyEx failed: %u\n", err );
+
+    /* REG_SZ is not allowed */
+    err = RegSetValueExA( link, "SymbolicLinkValue", 0, REG_SZ, (BYTE *)"foobar", sizeof("foobar") );
+    ok( err == ERROR_ACCESS_DENIED, "RegSetValueEx wrong error %u\n", err );
+    err = RegSetValueExA( link, "SymbolicLinkValue", 0, REG_LINK,
+                          (BYTE *)target, target_len - sizeof(WCHAR) );
+    ok( err == ERROR_SUCCESS, "RegSetValueEx failed error %u\n", err );
+    /* other values are not allowed */
+    err = RegSetValueExA( link, "link", 0, REG_LINK, (BYTE *)target, target_len - sizeof(WCHAR) );
+    ok( err == ERROR_ACCESS_DENIED, "RegSetValueEx wrong error %u\n", err );
+
+    /* try opening the target through the link */
+
+    err = RegOpenKeyA( hkey_main, "link", &key );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegOpenKey wrong error %u\n", err );
+
+    err = RegCreateKeyExA( hkey_main, "target", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+    ok( err == ERROR_SUCCESS, "RegCreateKeyEx failed error %u\n", err );
+
+    dw = 0xbeef;
+    err = RegSetValueExA( key, "value", 0, REG_DWORD, (BYTE *)&dw, sizeof(dw) );
+    ok( err == ERROR_SUCCESS, "RegSetValueEx failed error %u\n", err );
+    RegCloseKey( key );
+
+    err = RegOpenKeyA( hkey_main, "link", &key );
+    ok( err == ERROR_SUCCESS, "RegOpenKey failed error %u\n", err );
+
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "value", NULL, &type, buffer, &len );
+    ok( err == ERROR_SUCCESS, "RegOpenKey failed error %u\n", err );
+    ok( len == sizeof(DWORD), "wrong len %u\n", len );
+
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "SymbolicLinkValue", NULL, &type, buffer, &len );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegQueryValueEx wrong error %u\n", err );
+
+    /* REG_LINK can be created in non-link keys */
+    err = RegSetValueExA( key, "SymbolicLinkValue", 0, REG_LINK,
+                          (BYTE *)target, target_len - sizeof(WCHAR) );
+    ok( err == ERROR_SUCCESS, "RegSetValueEx failed error %u\n", err );
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "SymbolicLinkValue", NULL, &type, buffer, &len );
+    ok( err == ERROR_SUCCESS, "RegQueryValueEx failed error %u\n", err );
+    ok( len == target_len - sizeof(WCHAR), "wrong len %u\n", len );
+    err = RegDeleteValueA( key, "SymbolicLinkValue" );
+    ok( err == ERROR_SUCCESS, "RegDeleteValue failed error %u\n", err );
+
+    RegCloseKey( key );
+
+    err = RegCreateKeyExA( hkey_main, "link", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+    ok( err == ERROR_SUCCESS, "RegCreateKeyEx failed error %u\n", err );
+
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "value", NULL, &type, buffer, &len );
+    ok( err == ERROR_SUCCESS, "RegQueryValueEx failed error %u\n", err );
+    ok( len == sizeof(DWORD), "wrong len %u\n", len );
+
+    err = RegQueryValueExA( key, "SymbolicLinkValue", NULL, &type, buffer, &len );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegQueryValueEx wrong error %u\n", err );
+    RegCloseKey( key );
+
+    /* now open the symlink itself */
+
+    err = RegOpenKeyExA( hkey_main, "link", REG_OPTION_OPEN_LINK, KEY_ALL_ACCESS, &key );
+    ok( err == ERROR_SUCCESS, "RegOpenKeyEx failed error %u\n", err );
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "SymbolicLinkValue", NULL, &type, buffer, &len );
+    ok( err == ERROR_SUCCESS, "RegQueryValueEx failed error %u\n", err );
+    ok( len == target_len - sizeof(WCHAR), "wrong len %u\n", len );
+    RegCloseKey( key );
+
+    err = RegCreateKeyExA( hkey_main, "link", 0, NULL, REG_OPTION_OPEN_LINK,
+                           KEY_ALL_ACCESS, NULL, &key, NULL );
+    ok( err == ERROR_SUCCESS, "RegCreateKeyEx failed error %u\n", err );
+    len = sizeof(buffer);
+    err = RegQueryValueExA( key, "SymbolicLinkValue", NULL, &type, buffer, &len );
+    ok( err == ERROR_SUCCESS, "RegQueryValueEx failed error %u\n", err );
+    ok( len == target_len - sizeof(WCHAR), "wrong len %u\n", len );
+    RegCloseKey( key );
+
+    err = RegCreateKeyExA( hkey_main, "link", 0, NULL, REG_OPTION_CREATE_LINK,
+                           KEY_ALL_ACCESS, NULL, &key, NULL );
+    ok( err == ERROR_ALREADY_EXISTS, "RegCreateKeyEx wrong error %u\n", err );
+
+    err = RegCreateKeyExA( hkey_main, "link", 0, NULL, REG_OPTION_CREATE_LINK | REG_OPTION_OPEN_LINK,
+                           KEY_ALL_ACCESS, NULL, &key, NULL );
+    ok( err == ERROR_ALREADY_EXISTS, "RegCreateKeyEx wrong error %u\n", err );
+
+    err = RegDeleteKey( hkey_main, "target" );
+    ok( err == ERROR_SUCCESS, "RegDeleteKey failed error %u\n", err );
+
+    err = RegDeleteKey( hkey_main, "link" );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegDeleteKey wrong error %u\n", err );
+
+    status = pNtDeleteKey( link );
+    ok( !status, "NtDeleteKey failed: 0x%08x\n", status );
+    RegCloseKey( link );
+
+    HeapFree( GetProcessHeap(), 0, target );
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -1520,6 +1652,7 @@ START_TEST(registry)
     test_reg_delete_key();
     test_reg_query_value();
     test_string_termination();
+    test_symlinks();
 
     /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
     if (set_privileges(SE_BACKUP_NAME, TRUE) &&
