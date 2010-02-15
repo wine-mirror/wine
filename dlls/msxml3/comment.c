@@ -619,16 +619,14 @@ static HRESULT WINAPI domcomment_insertData(
     LONG offset, BSTR p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    xmlChar *pXmlContent;
-    BSTR sNewString;
-    HRESULT hr = S_FALSE;
-    LONG nLength = 0, nLengthP = 0;
-    xmlChar *str = NULL;
+    HRESULT hr;
+    BSTR data;
+    LONG p_len;
 
-    TRACE("%p %d %p\n", iface, offset, p);
+    TRACE("%p %d %s\n", This, offset, debugstr_w(p));
 
     /* If have a NULL or empty string, don't do anything. */
-    if(SysStringLen(p) == 0)
+    if((p_len = SysStringLen(p)) == 0)
         return S_OK;
 
     if(offset < 0)
@@ -636,48 +634,29 @@ static HRESULT WINAPI domcomment_insertData(
         return E_INVALIDARG;
     }
 
-    pXmlContent = xmlNodeGetContent(This->node.node);
-    if(pXmlContent)
+    hr = IXMLDOMComment_get_data(iface, &data);
+    if(hr == S_OK)
     {
-        BSTR sContent = bstr_from_xmlChar( pXmlContent );
-        nLength = SysStringLen(sContent);
-        nLengthP = SysStringLen(p);
+        LONG len = SysStringLen(data);
+        BSTR str;
 
-        if(nLength < offset)
+        if(len < offset)
         {
-            SysFreeString(sContent);
-            xmlFree(pXmlContent);
-
+            SysFreeString(data);
             return E_INVALIDARG;
         }
 
-        sNewString = SysAllocStringLen(NULL, nLength + nLengthP + 1);
-        if(sNewString)
-        {
-            if(offset > 0)
-                memcpy(sNewString, sContent, offset * sizeof(WCHAR));
+        str = SysAllocStringLen(NULL, len + p_len);
+        /* start part, supplied string and end part */
+        memcpy(str, data, offset*sizeof(WCHAR));
+        memcpy(&str[offset], p, p_len*sizeof(WCHAR));
+        memcpy(&str[offset+p_len], &data[offset], (len-offset)*sizeof(WCHAR));
+        str[len+p_len] = 0;
 
-            memcpy(&sNewString[offset], p, nLengthP * sizeof(WCHAR));
+        hr = IXMLDOMComment_put_data(iface, str);
 
-            if(offset+nLengthP < nLength)
-                memcpy(&sNewString[offset+nLengthP], &sContent[offset], (nLength-offset) * sizeof(WCHAR));
-
-            sNewString[nLengthP + nLength] = 0;
-
-            str = xmlChar_from_wchar(sNewString);
-            if(str)
-            {
-                xmlNodeSetContent(This->node.node, str);
-                hr = S_OK;
-            }
-            HeapFree( GetProcessHeap(), 0, str );
-
-            SysFreeString(sNewString);
-        }
-
-        SysFreeString(sContent);
-
-        xmlFree(pXmlContent);
+        SysFreeString(str);
+        SysFreeString(data);
     }
 
     return hr;
