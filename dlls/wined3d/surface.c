@@ -1265,6 +1265,9 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, BOOL srgb)
     if (surface->Flags & alloc_flag) return;
 
     d3dfmt_get_conv(surface, TRUE, TRUE, &format, &internal, &type, &convert, &bpp, srgb);
+    if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
+    else surface->Flags &= ~SFLAG_CONVERTED;
+
     if ((surface->Flags & SFLAG_NONPOW2) && !(surface->Flags & SFLAG_OVERSIZE))
     {
         width = surface->pow2Width;
@@ -5060,17 +5063,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                     return WINED3DERR_OUTOFVIDEOMEMORY;
                 }
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
-
-                This->Flags |= SFLAG_CONVERTED;
             }
             else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
                     && (gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM]))
             {
                 d3dfmt_p8_upload_palette(iface, convert);
-                This->Flags &= ~SFLAG_CONVERTED;
                 mem = This->resource.allocatedMemory;
             } else {
-                This->Flags &= ~SFLAG_CONVERTED;
                 mem = This->resource.allocatedMemory;
             }
 
