@@ -142,7 +142,7 @@ HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
                                   LPD3DXBUFFER* shader,
                                   LPD3DXBUFFER* error_messages)
 {
-    FIXME("stub\n");
+    FIXME("(%p, %d, %p, %p, %x, %p, %p): stub\n", data, data_len, defines, include, flags, shader, error_messages);
     return D3DERR_INVALIDCALL;
 }
 
@@ -177,7 +177,7 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
                                            LPD3DXBUFFER* shader,
                                            LPD3DXBUFFER* error_messages)
 {
-    FIXME("stub\n");
+    FIXME("(%s, %p, %p, %x, %p, %p): stub\n", debugstr_w(filename), defines, include, flags, shader, error_messages);
     return D3DERR_INVALIDCALL;
 }
 
