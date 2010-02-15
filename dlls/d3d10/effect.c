@@ -1951,7 +1951,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             for (i = 0; i < This->anonymous_shader_count; ++i)
             {
                 d3d10_effect_variable_destroy(&This->anonymous_shaders[i].shader);
-                HeapFree(GetProcessHeap(), 0, &This->anonymous_shaders[i].type.name);
+                HeapFree(GetProcessHeap(), 0, This->anonymous_shaders[i].type.name);
             }
             HeapFree(GetProcessHeap(), 0, This->anonymous_shaders);
         }
