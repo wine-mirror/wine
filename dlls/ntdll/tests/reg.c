@@ -601,6 +601,7 @@ static void test_symlinks(void)
     static const WCHAR valueW[] = {'v','a','l','u','e',0};
     static const WCHAR symlinkW[] = {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
     static const WCHAR targetW[] = {'\\','t','a','r','g','e','t',0};
+    static UNICODE_STRING null_str;
     char buffer[1024];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     WCHAR *target;
@@ -616,7 +617,7 @@ static void test_symlinks(void)
     pRtlInitUnicodeString( &value_str, valueW );
 
     target_len = winetestpath.Length + sizeof(targetW);
-    target = pRtlAllocateHeap( GetProcessHeap(), 0, target_len );
+    target = pRtlAllocateHeap( GetProcessHeap(), 0, target_len + sizeof(targetW) /*for loop test*/ );
     memcpy( target, winetestpath.Buffer, winetestpath.Length );
     memcpy( target + winetestpath.Length/sizeof(WCHAR), targetW, sizeof(targetW) );
 
@@ -692,6 +693,22 @@ static void test_symlinks(void)
 
     pNtClose( key );
 
+    attr.Attributes = 0;
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
+    }
+
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+    pNtClose( key );
+
     /* now open the symlink itself */
 
     attr.RootDirectory = root;
@@ -710,9 +727,69 @@ static void test_symlinks(void)
     }
     pNtClose( key );
 
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+        "wrong len %u\n", len );
+    }
+    pNtClose( key );
+
+    /* reopen the link from itself */
+
+    attr.RootDirectory = link;
+    attr.Attributes = OBJ_OPENLINK;
+    attr.ObjectName = &null_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+        "wrong len %u\n", len );
+    }
+    pNtClose( key );
+
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+    todo_wine
+    {
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+        "wrong len %u\n", len );
+    }
+    pNtClose( key );
+
+    if (0)  /* crashes the Windows kernel in most versions */
+    {
+        attr.Attributes = 0;
+        status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        pNtClose( key );
+
+        status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        pNtClose( key );
+    }
+
     /* target with terminating null doesn't work */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len );
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    attr.RootDirectory = root;
     attr.Attributes = 0;
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
@@ -744,6 +821,30 @@ static void test_symlinks(void)
     status = pNtDeleteKey( key );
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
     pNtClose( key );
+
+    /* symlink loop */
+
+    status = pNtCreateKey( &link, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    memcpy( target + target_len/sizeof(WCHAR) - 1, targetW, sizeof(targetW) );
+    status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK,
+        target, target_len + sizeof(targetW) - sizeof(WCHAR) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NAME_TOO_LONG,
+        "NtOpenKey failed: 0x%08x\n", status );
+    if (!status) pNtClose( key );
+
+    attr.Attributes = OBJ_OPENLINK;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    pNtClose( key );
+
+    status = pNtDeleteKey( link );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    pNtClose( link );
 
     status = pNtDeleteKey( root );
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
