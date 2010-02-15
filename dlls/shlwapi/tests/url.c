@@ -570,6 +570,7 @@ static void test_UrlGetPart(void)
 {
   const char* file_url = "file://h o s t/c:/windows/file";
   const char* http_url = "http://user:pass 123@www.wine hq.org";
+  const char* about_url = "about:blank";
 
   CHAR szPart[INTERNET_MAX_URL_LENGTH];
   DWORD dwSize;
@@ -606,6 +607,12 @@ static void test_UrlGetPart(void)
 
   test_url_part(http_url, URL_PART_HOSTNAME, 0, "www.wine hq.org");
   test_url_part(http_url, URL_PART_PASSWORD, 0, "pass 123");
+
+  test_url_part(about_url, URL_PART_SCHEME, 0, "about");
+
+  dwSize = sizeof(szPart);
+  res = pUrlGetPartA(about_url, szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  ok(res==E_FAIL, "returned %08x\n", res);
 
   dwSize = sizeof(szPart);
   res = pUrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
