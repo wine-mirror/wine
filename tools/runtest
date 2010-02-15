@@ -91,14 +91,22 @@ done
 if [ -z "$program" ]; then
     # try to autodetect the test program name based on the working directory
     working_path=`pwd`
-    working_basename=`basename "$working_path"`
-    if [ "$working_basename" = "tests" ]; then
-        parent_path=`dirname "$working_path"`
-        parent_basename=`basename "$parent_path"`
-        program="${parent_basename}_test.exe.so"
-    elif [ -d "tests" ]; then
-        program="tests/${working_basename}_test.exe.so"
-    fi
+    case $working_path in
+        */dlls/*/tests)
+          parent_path=`dirname "$working_path"`
+          program=`basename "$parent_path"`_test.exe.so
+          ;;
+        */dlls/*)
+          program=tests/`basename "$working_path"`_test.exe.so
+          ;;
+        */programs/*/tests)
+          parent_path=`dirname "$working_path"`
+          program=`basename "$parent_path"`.exe_test.exe.so
+          ;;
+        */programs/*)
+          program=tests/`basename "$working_path"`.exe_test.exe.so
+          ;;
+    esac
 fi
 if [ ! -f "$program" ]; then
     echo "Can't find the test program, use the -p argument to specify one" 1>&2
