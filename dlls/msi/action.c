@@ -3027,19 +3027,47 @@ static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
     return rc;
 }
 
+static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
+{
+    static const WCHAR szlnk[] = {'.','l','n','k',0};
+    LPCWSTR directory, extension;
+    LPWSTR link_folder, link_file, filename;
+
+    directory = MSI_RecordGetString( row, 2 );
+    link_folder = resolve_folder( package, directory, FALSE, FALSE, TRUE, NULL );
+
+    /* may be needed because of a bug somewhere else */
+    create_full_pathW( link_folder );
+
+    filename = msi_dup_record_field( row, 3 );
+    reduce_to_longfilename( filename );
+
+    extension = strchrW( filename, '.' );
+    if (!extension || strcmpiW( extension, szlnk ))
+    {
+        int len = strlenW( filename );
+        filename = msi_realloc( filename, len * sizeof(WCHAR) + sizeof(szlnk) );
+        memcpy( filename + len, szlnk, sizeof(szlnk) );
+    }
+    link_file = build_directory_name( 2, link_folder, filename );
+    msi_free( link_folder );
+    msi_free( filename );
+
+    return link_file;
+}
+
 static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPWSTR target_file, target_folder, filename;
-    LPCWSTR buffer, extension;
+    LPWSTR link_file, deformated, path;
+    LPCWSTR component, target;
     MSICOMPONENT *comp;
-    static const WCHAR szlnk[]={'.','l','n','k',0};
     IShellLinkW *sl = NULL;
     IPersistFile *pf = NULL;
     HRESULT res;
 
-    buffer = MSI_RecordGetString(row,4);
-    comp = get_loaded_component(package,buffer);
+    component = MSI_RecordGetString(row, 4);
+    comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
 
@@ -3048,10 +3076,8 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
         TRACE("Skipping shortcut creation due to disabled component\n");
 
         comp->Action = comp->Installed;
-
         return ERROR_SUCCESS;
     }
-
     comp->Action = INSTALLSTATE_LOCAL;
 
     ui_actiondata(package,szCreateShortcuts,row);
@@ -3072,31 +3098,10 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
         goto err;
     }
 
-    buffer = MSI_RecordGetString(row,2);
-    target_folder = resolve_folder(package, buffer,FALSE,FALSE,TRUE,NULL);
-
-    /* may be needed because of a bug somewhere else */
-    create_full_pathW(target_folder);
-
-    filename = msi_dup_record_field( row, 3 );
-    reduce_to_longfilename(filename);
-
-    extension = strchrW(filename,'.');
-    if (!extension || strcmpiW(extension,szlnk))
+    target = MSI_RecordGetString(row, 5);
+    if (strchrW(target, '['))
     {
-        int len = strlenW(filename);
-        filename = msi_realloc(filename, len * sizeof(WCHAR) + sizeof(szlnk));
-        memcpy(filename + len, szlnk, sizeof(szlnk));
-    }
-    target_file = build_directory_name(2, target_folder, filename);
-    msi_free(target_folder);
-    msi_free(filename);
-
-    buffer = MSI_RecordGetString(row,5);
-    if (strchrW(buffer,'['))
-    {
-        LPWSTR deformated;
-        deformat_string(package,buffer,&deformated);
+        deformat_string(package, target, &deformated);
         IShellLinkW_SetPath(sl,deformated);
         msi_free(deformated);
     }
@@ -3108,17 +3113,16 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     if (!MSI_RecordIsNull(row,6))
     {
-        LPWSTR deformated;
-        buffer = MSI_RecordGetString(row,6);
-        deformat_string(package,buffer,&deformated);
+        LPCWSTR arguments = MSI_RecordGetString(row, 6);
+        deformat_string(package, arguments, &deformated);
         IShellLinkW_SetArguments(sl,deformated);
         msi_free(deformated);
     }
 
     if (!MSI_RecordIsNull(row,7))
     {
-        buffer = MSI_RecordGetString(row,7);
-        IShellLinkW_SetDescription(sl,buffer);
+        LPCWSTR description = MSI_RecordGetString(row, 7);
+        IShellLinkW_SetDescription(sl, description);
     }
 
     if (!MSI_RecordIsNull(row,8))
@@ -3126,20 +3130,18 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     if (!MSI_RecordIsNull(row,9))
     {
-        LPWSTR Path;
         INT index; 
+        LPCWSTR icon = MSI_RecordGetString(row, 9);
 
-        buffer = MSI_RecordGetString(row,9);
-
-        Path = build_icon_path(package,buffer);
+        path = build_icon_path(package, icon);
         index = MSI_RecordGetInteger(row,10);
 
         /* no value means 0 */
         if (index == MSI_NULL_INTEGER)
             index = 0;
 
-        IShellLinkW_SetIconLocation(sl,Path,index);
-        msi_free(Path);
+        IShellLinkW_SetIconLocation(sl, path, index);
+        msi_free(path);
     }
 
     if (!MSI_RecordIsNull(row,11))
@@ -3147,18 +3149,19 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     if (!MSI_RecordIsNull(row,12))
     {
-        LPWSTR Path;
-        buffer = MSI_RecordGetString(row,12);
-        Path = resolve_folder(package, buffer, FALSE, FALSE, TRUE, NULL);
-        if (Path)
-            IShellLinkW_SetWorkingDirectory(sl,Path);
-        msi_free(Path);
+        LPCWSTR wkdir = MSI_RecordGetString(row, 12);
+        path = resolve_folder(package, wkdir, FALSE, FALSE, TRUE, NULL);
+        if (path)
+            IShellLinkW_SetWorkingDirectory(sl, path);
+        msi_free(path);
     }
 
-    TRACE("Writing shortcut to %s\n",debugstr_w(target_file));
-    IPersistFile_Save(pf,target_file,FALSE);
+    link_file = get_link_file(package, row);
 
-    msi_free(target_file);    
+    TRACE("Writing shortcut to %s\n", debugstr_w(link_file));
+    IPersistFile_Save(pf, link_file, FALSE);
+
+    msi_free(link_file);
 
 err:
     if (pf)
@@ -3189,6 +3192,59 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
 
     if (SUCCEEDED(res))
         CoUninitialize();
+
+    return rc;
+}
+
+static UINT ITERATE_RemoveShortcuts( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPWSTR link_file;
+    LPCWSTR component;
+    MSICOMPONENT *comp;
+
+    component = MSI_RecordGetString( row, 4 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT ))
+    {
+        TRACE("Skipping, component not scheduled for uninstall\n");
+
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
+
+    ui_actiondata( package, szRemoveShortcuts, row );
+
+    link_file = get_link_file( package, row );
+
+    TRACE("Removing shortcut file %s\n", debugstr_w( link_file ));
+    if (!DeleteFileW( link_file ))
+    {
+        WARN("Failed to remove shortcut file %u\n", GetLastError());
+    }
+    msi_free( link_file );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveShortcuts( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','S','h','o','r','t','c','u','t','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveShortcuts, package );
+    msiobj_release( &view->hdr );
 
     return rc;
 }
@@ -6471,12 +6527,6 @@ static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'R','e','m','o','v','e','R','e','g','i','s','t','r','y',0 };
     return msi_unimplemented_action_stub( package, "RemoveRegistryValues", table );
-}
-
-static UINT ACTION_RemoveShortcuts( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'S','h','o','r','t','c','u','t',0 };
-    return msi_unimplemented_action_stub( package, "RemoveShortcuts", table );
 }
 
 static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
