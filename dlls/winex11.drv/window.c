@@ -1956,6 +1956,7 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.drawable_rect = virtual_screen_rect;
     SetRect( &escape.dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
+    OffsetRect( &escape.dc_rect, -escape.drawable_rect.left, -escape.drawable_rect.top );
     escape.fbconfig_id = 0;
     escape.gl_drawable = 0;
     escape.pixmap = 0;
