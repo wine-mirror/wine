@@ -201,10 +201,9 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
-    /* check to make sure that component is installed */
-    if (!ACTION_VerifyComponentForAction( file->Component, INSTALLSTATE_LOCAL))
+    if (file->Component->ActionRequest != INSTALLSTATE_LOCAL)
     {
-        TRACE("Skipping: Component not scheduled for install\n");
+        TRACE("Component not scheduled for installation\n");
         return ERROR_SUCCESS;
     }
 
@@ -280,10 +279,9 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
         return ERROR_SUCCESS;
     }
 
-    /* check to make sure that component is uninstalled */
-    if (!ACTION_VerifyComponentForAction( file->Component, INSTALLSTATE_ABSENT ))
+    if (file->Component->ActionRequest != INSTALLSTATE_ABSENT)
     {
-        TRACE("Skipping: Component not scheduled for uninstall\n");
+        TRACE("Component not scheduled for removal\n");
         return ERROR_SUCCESS;
     }
 

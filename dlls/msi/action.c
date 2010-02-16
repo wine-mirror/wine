@@ -951,7 +951,7 @@ UINT msi_create_component_directories( MSIPACKAGE *package )
     /* create all the folders required by the components are going to install */
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+        if (comp->ActionRequest != INSTALLSTATE_LOCAL)
             continue;
         msi_create_directory( package, comp->Directory );
     }
@@ -2231,16 +2231,12 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
-        TRACE("Skipping write due to disabled component %s\n",
-                        debugstr_w(component));
-
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
-
         return ERROR_SUCCESS;
     }
-
     comp->Action = INSTALLSTATE_LOCAL;
 
     name = MSI_RecordGetString(row, 4);
@@ -2704,8 +2700,8 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                             debugstr_w(comp->FullKeypath),
                             comp->RefCount);
 
-        if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL) ||
-            ACTION_VerifyComponentForAction( comp, INSTALLSTATE_SOURCE))
+        if (comp->ActionRequest == INSTALLSTATE_LOCAL ||
+            comp->ActionRequest == INSTALLSTATE_SOURCE)
         {
             if (!comp->FullKeypath)
                 continue;
@@ -2771,7 +2767,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             }
             RegCloseKey(hkey);
         }
-        else if (ACTION_VerifyComponentForAction(comp, INSTALLSTATE_ABSENT))
+        else if (comp->ActionRequest == INSTALLSTATE_ABSENT)
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
                 MSIREG_DeleteUserDataComponentKey(comp->ComponentId, szLocalSid);
@@ -2867,15 +2863,12 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
-        TRACE("Skipping typelib reg due to disabled component\n");
-
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
-
         return ERROR_SUCCESS;
     }
-
     comp->Action = INSTALLSTATE_LOCAL;
 
     file = get_loaded_file( package, comp->KeyPath ); 
@@ -2979,10 +2972,9 @@ static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT ))
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
-        TRACE("Skipping, component is not scheduled for uninstall\n");
-
+        TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
@@ -3071,10 +3063,9 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL ))
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
-        TRACE("Skipping shortcut creation due to disabled component\n");
-
+        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
@@ -3208,10 +3199,9 @@ static UINT ITERATE_RemoveShortcuts( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT ))
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
-        TRACE("Skipping, component not scheduled for uninstall\n");
-
+        TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
@@ -3626,17 +3616,15 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
 
     component = MSI_RecordGetString(row, 8);
     comp = get_loaded_component(package,component);
+    if (!comp)
+        return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
-        TRACE("Skipping ini file due to disabled component %s\n",
-                        debugstr_w(component));
-
+        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
         comp->Action = comp->Installed;
-
         return ERROR_SUCCESS;
     }
-
     comp->Action = INSTALLSTATE_LOCAL;
 
     identifier = MSI_RecordGetString(row,1); 
@@ -4490,14 +4478,15 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
 
     component = MSI_RecordGetString(rec,3);
     comp = get_loaded_component(package,component);
+    if (!comp)
+        return ERROR_SUCCESS;
 
-    if (!ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL ) && 
-       !ACTION_VerifyComponentForAction( comp, INSTALLSTATE_SOURCE ) &&
-       !ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ADVERTISED ))
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL &&
+        comp->ActionRequest != INSTALLSTATE_SOURCE &&
+        comp->ActionRequest != INSTALLSTATE_ADVERTISED)
     {
-        TRACE("Skipping: Component %s not scheduled for install\n",
-                        debugstr_w(component));
-
+        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
 
