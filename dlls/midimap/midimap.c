@@ -425,7 +425,7 @@ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
 static DWORD modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwSize)
 {
     if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE))
 	return MMSYSERR_INVALPARAM;
 

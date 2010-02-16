@@ -567,7 +567,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
     if (lpMidiHdr == NULL)	return MMSYSERR_INVALPARAM;
-    if (sizeof(MIDIHDR) > dwSize) return MMSYSERR_INVALPARAM;
+    if (dwSize < offsetof(MIDIHDR,dwOffset)) return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwBufferLength == 0) return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
@@ -598,7 +598,7 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
 
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0)
 	return MMSYSERR_INVALPARAM;
 
@@ -619,7 +619,7 @@ static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
 
@@ -1032,7 +1032,7 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * asks to prepare MIDIHDR which dwFlags != 0.
      * So at least check for the inqueue flag
      */
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
 	WARN("%p %p %08x %d\n", lpMidiHdr, lpMidiHdr ? lpMidiHdr->lpData : NULL,
              lpMidiHdr ? lpMidiHdr->dwFlags : 0, dwSize);
@@ -1057,7 +1057,7 @@ static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MMSYSERR_NOTENABLED;
     }
 
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0)
 	return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;

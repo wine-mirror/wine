@@ -964,7 +964,7 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
-    if (lpMidiOutHdr == NULL || uSize < sizeof (MIDIHDR))
+    if (lpMidiOutHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
 	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
@@ -984,7 +984,7 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
-    if (lpMidiOutHdr == NULL || uSize < sizeof (MIDIHDR))
+    if (lpMidiOutHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
 	return MMSYSERR_INVALPARAM;
 
     if (!(lpMidiOutHdr->dwFlags & MHDR_PREPARED)) {
@@ -1258,7 +1258,7 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
 
-    if (lpMidiInHdr == NULL || uSize < sizeof (MIDIHDR))
+    if (lpMidiInHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
 	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
@@ -1277,7 +1277,7 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
 
-    if (lpMidiInHdr == NULL || uSize < sizeof (MIDIHDR))
+    if (lpMidiInHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
 	return MMSYSERR_INVALPARAM;
 
     if (!(lpMidiInHdr->dwFlags & MHDR_PREPARED)) {
@@ -1819,7 +1819,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 
     TRACE("(%p, %p, %u)!\n", hMidiStrm, lpMidiHdr, cbMidiHdr);
 
-    if (cbMidiHdr < sizeof(MIDIHDR) || !lpMidiHdr || !lpMidiHdr->lpData
+    if (cbMidiHdr < offsetof(MIDIHDR,dwOffset) || !lpMidiHdr || !lpMidiHdr->lpData
 	|| lpMidiHdr->dwBufferLength < lpMidiHdr->dwBytesRecorded)
 	return MMSYSERR_INVALPARAM;
     /* FIXME: Native additionaly checks if the MIDIEVENTs in lpData

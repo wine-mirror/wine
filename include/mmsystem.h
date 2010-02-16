@@ -718,6 +718,7 @@ typedef struct midihdr_tag {
     DWORD	dwFlags;
     struct midihdr_tag *lpNext;
     DWORD_PTR	reserved;
+    /* Win 32 extended the structure with these 2 fields */
     DWORD	dwOffset;
     DWORD_PTR	dwReserved[8];
 } MIDIHDR, *LPMIDIHDR;

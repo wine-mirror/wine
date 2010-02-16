@@ -463,10 +463,10 @@ static DWORD MIDIOut_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * asks to prepare MIDIHDR which dwFlags != 0.
      * So at least check for the inqueue flag
      */
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
 	WARN("%p %p %08x %lu/%d\n", lpMidiHdr, lpMidiHdr->lpData,
-	           lpMidiHdr->dwFlags, sizeof(MIDIHDR), dwSize);
+	           lpMidiHdr->dwFlags, offsetof(MIDIHDR,dwOffset), dwSize);
 	return MMSYSERR_INVALPARAM;
     }
 
@@ -487,7 +487,7 @@ static DWORD MIDIOut_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
         WARN("bad device ID : %d\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0)
 	return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;
@@ -666,7 +666,7 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	WARN("Invalid Parameter\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (sizeof(MIDIHDR) > dwSize) {
+    if (dwSize < offsetof(MIDIHDR,dwOffset)) {
 	WARN("Invalid Parameter\n");
 	return MMSYSERR_INVALPARAM;
     }
@@ -714,7 +714,7 @@ static DWORD MIDIIn_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * asks to prepare MIDIHDR which dwFlags != 0.
      * So at least check for the inqueue flag
      */
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
 	WARN("Invalid parameter %p %p %08x %d\n", lpMidiHdr, lpMidiHdr->lpData,
 	           lpMidiHdr->dwFlags, dwSize);
@@ -734,7 +734,7 @@ static DWORD MIDIIn_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
         WARN("bad device ID : %d\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
-    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0) {
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0) {
 	WARN("Invalid Parameter\n");
 	return MMSYSERR_INVALPARAM;
     }
