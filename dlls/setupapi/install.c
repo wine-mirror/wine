@@ -370,6 +370,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
             {
                 if (!(str = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
                 SetupGetStringFieldW( context, 5, str, size, NULL );
+                if (type == REG_LINK) size--;  /* no terminating null for symlinks */
             }
         }
 
@@ -421,6 +422,7 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
 
     for (; ok; ok = SetupFindNextLine( &context, &context ))
     {
+        DWORD options = 0;
         WCHAR buffer[MAX_INF_STRING_LENGTH];
         INT flags;
 
@@ -446,15 +448,26 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
             if (!flags) flags = FLG_ADDREG_DELREG_BIT;
             else if (!(flags & FLG_ADDREG_DELREG_BIT)) continue;  /* ignore this entry */
         }
+        /* Wine extension: magic support for symlinks */
+        if (flags >> 16 == REG_LINK) options = REG_OPTION_OPEN_LINK | REG_OPTION_CREATE_LINK;
 
         if (info->delete || (flags & FLG_ADDREG_OVERWRITEONLY))
         {
-            if (RegOpenKeyW( root_key, buffer, &hkey )) continue;  /* ignore if it doesn't exist */
+            if (RegOpenKeyExW( root_key, buffer, options, MAXIMUM_ALLOWED, &hkey ))
+                continue;  /* ignore if it doesn't exist */
         }
-        else if (RegCreateKeyW( root_key, buffer, &hkey ))
+        else
         {
-            ERR( "could not create key %p %s\n", root_key, debugstr_w(buffer) );
-            continue;
+            DWORD res = RegCreateKeyExW( root_key, buffer, 0, NULL, options,
+                                         MAXIMUM_ALLOWED, NULL, &hkey, NULL );
+            if (res == ERROR_ALREADY_EXISTS && (options & REG_OPTION_CREATE_LINK))
+                res = RegCreateKeyExW( root_key, buffer, 0, NULL, REG_OPTION_OPEN_LINK,
+                                       MAXIMUM_ALLOWED, NULL, &hkey, NULL );
+            if (res)
+            {
+                ERR( "could not create key %p %s\n", root_key, debugstr_w(buffer) );
+                continue;
+            }
         }
         TRACE( "key %p %s\n", root_key, debugstr_w(buffer) );
 
