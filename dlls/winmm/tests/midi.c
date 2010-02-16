@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <stddef.h>
 #include "windows.h"
 #include "mmsystem.h"
 #include "wine/test.h"
@@ -120,6 +121,10 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %d bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
+        rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
+        ok(rc==MMSYSERR_INVALPARAM, "midiInPrepare tiny rc=%s\n", mmsys_error(rc));
+        rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiInPrepare old size rc=%s\n", mmsys_error(rc));
         rc = midiInPrepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
         rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
@@ -209,7 +214,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     test_notification(hwnd, "midiOutOpen", MOM_OPEN, 0);
 
     rc = midiOutGetVolume(hm, &ovolume);
-    ok(rc==((capsA.dwSupport & MIDICAPS_VOLUME) ? MMSYSERR_NOERROR : MMSYSERR_NOTSUPPORTED), "midiOutGetVolume rc=%s\n", mmsys_error(rc));
+    ok((capsA.dwSupport & MIDICAPS_VOLUME) ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED, "midiOutGetVolume rc=%s\n", mmsys_error(rc));
     /* The native mapper responds with FFFFFFFF initially,
      * real devices with the volume GUI SW-synth settings. */
     if (!rc) trace("Current volume %x on device %d\n", ovolume, udev);
@@ -247,7 +252,8 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     }
 
     mhdr.dwFlags = 0;
-    mhdr.dwUser = 0x56FA552C;
+    mhdr.dwUser   = 0x56FA552C;
+    mhdr.dwOffset = 0xDEADBEEF;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
     mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %d bytes of memory!\n", mhdr.dwBufferLength);
@@ -256,6 +262,10 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         ok(rc==MIDIERR_UNPREPARED, "midiOutLongMsg unprepared rc=%s\n", mmsys_error(rc));
         test_notification(hwnd, "midiOutLong unprepared", 0, WHATEVER);
 
+        rc = midiOutPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
+        ok(rc==MMSYSERR_INVALPARAM, "midiOutPrepare tiny rc=%s\n", mmsys_error(rc));
+        rc = midiOutPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiOutPrepare old size rc=%s\n", mmsys_error(rc));
         rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
         rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
@@ -265,6 +275,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         HeapFree(GetProcessHeap(), 0, mhdr.lpData);
     }
     ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %lx\n", mhdr.dwUser);
+    ok(mhdr.dwOffset==0xDEADBEEF, "MIDIHDR.dwOffset changed to %x\n", mhdr.dwOffset);
 
     rc = midiOutReset(hm); /* Quiet everything */
     ok(!rc, "midiOutReset rc=%s\n", mmsys_error(rc));
@@ -296,6 +307,7 @@ static void test_position(HMIDISTRM hm, UINT typein, UINT typeout)
     }
 }
 
+/* Native crashes on a second run with the const qualifier set on this data! */
 static BYTE strmEvents[] = { /* A set of variable-sized MIDIEVENT structs */
     0, 0, 0, 0,  0, 0, 0, 0, /* dwDeltaTime and dwStreamID */
     0, 0, 0, MEVT_NOP | 0x40, /* with MEVT_F_CALLBACK */
@@ -303,11 +315,33 @@ static BYTE strmEvents[] = { /* A set of variable-sized MIDIEVENT structs */
     0x93, 0x48, 0x6F, MEVT_SHORTMSG,
 };
 
+static BYTE strmNops[] = { /* Test callback + dwOffset */
+    0, 0, 0, 0,  0, 0, 0, 0,
+    0, 0, 0, MEVT_NOP | 0x40, /* with MEVT_F_CALLBACK */
+    0, 0, 0, 0,  0, 0, 0, 0,
+    0, 0, 0, MEVT_NOP | 0x40, /* with MEVT_F_CALLBACK */
+};
+
+static MMRESULT playStream(HMIDISTRM hm, LPMIDIHDR lpMidiHdr)
+{
+    MMRESULT rc = midiStreamOut(hm, lpMidiHdr, sizeof(MIDIHDR));
+    /* virtual machines may return MIDIERR_STILLPLAYING from the next request
+     * even after MHDR_DONE is set. It's still too early, so add MHDR_INQUEUE. */
+    if (!rc) while (!(lpMidiHdr->dwFlags & MHDR_DONE) || (lpMidiHdr->dwFlags & MHDR_INQUEUE)) { Sleep(100); }
+    return rc;
+}
+
 static void test_midiStream(UINT udev, HWND hwnd)
 {
     HMIDISTRM hm;
     MMRESULT rc, rc2;
     MIDIHDR mhdr;
+    union {
+        MIDIPROPTEMPO tempo;
+        MIDIPROPTIMEDIV tdiv;
+    } midiprop;
+    BYTE * const evt1 = &strmNops[1*offsetof(MIDIEVENT,dwParms)-1];
+    BYTE * const evt2 = &strmNops[2*offsetof(MIDIEVENT,dwParms)-1];
 
     if (hwnd)
         rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
@@ -318,23 +352,36 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     test_notification(hwnd, "midiStreamOpen", MOM_OPEN, 0);
 
+    midiprop.tempo.cbStruct = sizeof(midiprop.tempo);
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET|MIDIPROP_TEMPO);
+    ok(!rc, "midiStreamProperty TEMPO rc=%s\n", mmsys_error(rc));
+    ok(midiprop.tempo.dwTempo=500000, "default stream tempo %u microsec per quarter note\n", midiprop.tempo.dwTempo);
+
+    midiprop.tdiv.cbStruct = sizeof(midiprop.tdiv);
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET|MIDIPROP_TIMEDIV);
+    ok(!rc, "midiStreamProperty TIMEDIV rc=%s\n", mmsys_error(rc));
+    todo_wine ok(24==LOWORD(midiprop.tdiv.dwTimeDiv), "default stream time division %u\n", midiprop.tdiv.dwTimeDiv);
+
     mhdr.dwFlags = 0;
-    mhdr.dwUser = 0x56FA552C;
+    mhdr.dwUser   = 0x56FA552C;
+    mhdr.dwOffset = 1234567890;
     mhdr.dwBufferLength = sizeof(strmEvents) * sizeof(strmEvents[0]);
-    mhdr.dwBytesRecorded = mhdr.dwBufferLength; /* unused? */
+    mhdr.dwBytesRecorded = mhdr.dwBufferLength;
     mhdr.lpData = (LPSTR)&strmEvents[0];
     if (mhdr.lpData) {
         rc = midiOutLongMsg((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(rc==MIDIERR_UNPREPARED, "midiOutLongMsg unprepared rc=%s\n", mmsys_error(rc));
         test_notification(hwnd, "midiOutLong unprepared", 0, WHATEVER);
 
-        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
-        ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
+        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
+        ok(rc==MMSYSERR_INVALPARAM, "midiOutPrepare tiny rc=%s\n", mmsys_error(rc));
+        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiOutPrepare old size rc=%s\n", mmsys_error(rc));
         ok(mhdr.dwFlags & MHDR_PREPARED, "MHDR.dwFlags when prepared %x\n", mhdr.dwFlags);
 
         /* The device is still in paused mode and should queue the message. */
-        rc = midiStreamOut(hm, &mhdr, sizeof(mhdr));
-        ok(!rc, "midiStreamOut rc=%s\n", mmsys_error(rc));
+        rc = midiStreamOut(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiStreamOut old size rc=%s\n", mmsys_error(rc));
         rc2 = rc;
         trace("MIDIHDR flags=%x when submitted\n", mhdr.dwFlags);
         /* w9X/me does not set MHDR_ISSTRM when StreamOut exits,
@@ -368,9 +415,12 @@ static void test_midiStream(UINT udev, HWND hwnd)
         test_notification(hwnd, "midiStream callback", MOM_POSITIONCB, (DWORD_PTR)&mhdr);
         test_notification(hwnd, "midiStreamOut", MOM_DONE, (DWORD_PTR)&mhdr);
 
-        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        /* Native fills dwOffset regardless of the cbMidiHdr size argument to midiStreamOut */
+        ok(1234567890!=mhdr.dwOffset, "play left MIDIHDR.dwOffset at %u\n", mhdr.dwOffset);
+
+        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
-        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiOutUnprepare #2 rc=%s\n", mmsys_error(rc));
 
         trace("MIDIHDR stream flags=%x when finished\n", mhdr.dwFlags);
@@ -390,18 +440,96 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
         mhdr.dwFlags |= MHDR_ISSTRM; /* just in case */
         /* Preset flags (e.g. MHDR_ISSTRM) do not disturb. */
-        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiOutPrepare used flags %x rc=%s\n", mhdr.dwFlags, mmsys_error(rc));
-        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiOutUnprepare used flags %x rc=%s\n", mhdr.dwFlags, mmsys_error(rc));
 
         rc = midiStreamRestart(hm);
         ok(!rc, "midiStreamRestart #3 rc=%s\n", mmsys_error(rc));
     }
     ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %lx\n", mhdr.dwUser);
+    trace("dwStreamID set to %x\n", ((LPMIDIEVENT)&strmEvents[0])->dwStreamID);
+
+    /* dwBytesRecorded controls how much is played, not dwBufferLength
+     * allowing to immediately forward packets from midiIn to midiOut */
+    mhdr.dwOffset = 1234123123;
+    mhdr.dwBufferLength = sizeof(strmNops) * sizeof(strmNops[0]);
+    mhdr.dwBytesRecorded = 0;
+    mhdr.lpData = (LPSTR)&strmNops[0];
+    *evt1 |= 0x40; /* MEVT_CALLBACK flag */
+    *evt2 |= 0x40;
+
+    rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
+
+    rc = playStream(hm, &mhdr);
+    ok(!rc, "midiStreamOut 0 bytes recorded rc=%s\n", mmsys_error(rc));
+
+    test_notification(hwnd, "midiStreamOut", MOM_DONE, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "0 bytes recorded", 0, WHATEVER);
+
+    /* FIXME: check dwOffset within callback
+     * instead of the unspecified value afterwards */
+    ok(1234123123==mhdr.dwOffset || broken(0==mhdr.dwOffset), "play 0 set MIDIHDR.dwOffset to %u\n", mhdr.dwOffset);
+    /* w2k and later only set dwOffset when processing MEVT_T_CALLBACK,
+     * while w9X/me/nt always sets it.  Have Wine behave like w2k because the
+     * dwOffset slot does not exist in the small size MIDIHDR. */
+
+    mhdr.dwOffset = 1234123123;
+    mhdr.dwBytesRecorded = offsetof(MIDIEVENT,dwParms);
+
+    rc = playStream(hm, &mhdr);
+    ok(!rc, "midiStreamOut 1 event out of 2 rc=%s\n", mmsys_error(rc));
+
+    test_notification(hwnd, "1 of 2 events", MOM_POSITIONCB, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "1 of 2 events", MOM_DONE, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "1 of 2 events", 0, WHATEVER);
+    ok(0==mhdr.dwOffset, "MIDIHDR.dwOffset 1/2 changed to %u\n", mhdr.dwOffset);
+    trace("MIDIHDR.dwOffset left at %u\n", mhdr.dwOffset);
+
+    mhdr.dwOffset = 1234123123;
+    mhdr.dwBytesRecorded = 2*offsetof(MIDIEVENT,dwParms);
+
+    rc = playStream(hm, &mhdr);
+    ok(!rc, "midiStreamOut 1 event out of 2 rc=%s\n", mmsys_error(rc));
+
+    test_notification(hwnd, "2 of 2 events", MOM_POSITIONCB, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "2 of 2 events", MOM_POSITIONCB, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "2 of 2 events", MOM_DONE, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "2 of 2 events", 0, WHATEVER);
+    ok(3*sizeof(DWORD)==mhdr.dwOffset, "MIDIHDR.dwOffset 2/2 changed to %u\n", mhdr.dwOffset);
+    trace("MIDIHDR.dwOffset left at %u\n", mhdr.dwOffset);
+
+    *evt1 &= ~0x40; /* MEVT_CALLBACK flag */
+    *evt2 &= ~0x40;
+    mhdr.dwOffset = 1234123123;
+    rc = playStream(hm, &mhdr);
+    ok(!rc, "midiStreamOut 1 event out of 2 rc=%s\n", mmsys_error(rc));
+
+    test_notification(hwnd, "0 CB in 2 events", MOM_DONE, (DWORD_PTR)&mhdr);
+    test_notification(hwnd, "0 CB in 2 events", 0, WHATEVER);
+    /* w9X/me/nt set dwOffset to the position played last */
+    ok(1234123123==mhdr.dwOffset || broken(3*sizeof(DWORD)==mhdr.dwOffset), "MIDIHDR.dwOffset nocb changed to %u\n", mhdr.dwOffset);
+
+    mhdr.dwBytesRecorded = mhdr.dwBufferLength-1;
+    rc = playStream(hm, &mhdr);
+    todo_wine ok(rc==MMSYSERR_INVALPARAM,"midiStreamOut dwBytesRecorded/MIDIEVENT rc=%s\n", mmsys_error(rc));
+    if (!rc) {
+         test_notification(hwnd, "2 of 2 events", MOM_DONE, (DWORD_PTR)&mhdr);
+    }
+
+    mhdr.dwBytesRecorded = mhdr.dwBufferLength+1;
+    rc = playStream(hm, &mhdr);
+    ok(rc==MMSYSERR_INVALPARAM,"midiStreamOut dwBufferLength<dwBytesRecorded rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "past MIDIHDR tests", 0, WHATEVER);
 
     rc = midiStreamStop(hm);
     ok(!rc, "midiStreamStop rc=%s\n", mmsys_error(rc));
+    ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %lx\n", mhdr.dwUser);
+
+    rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
 
     mhdr.dwBufferLength = 70000; /* > 64KB! */
     mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
