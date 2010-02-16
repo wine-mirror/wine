@@ -982,7 +982,6 @@ extern void msi_free_action_script(MSIPACKAGE *package, UINT script);
 extern LPWSTR build_icon_path(MSIPACKAGE *, LPCWSTR);
 extern LPWSTR build_directory_name(DWORD , ...);
 extern BOOL create_full_pathW(const WCHAR *path);
-extern BOOL ACTION_VerifyFeatureForAction(const MSIFEATURE*, INSTALLSTATE);
 extern void reduce_to_longfilename(WCHAR*);
 extern LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR);
 extern void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);

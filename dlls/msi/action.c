@@ -2619,7 +2619,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     {
         ComponentList *cl;
 
-        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ))
+        if (feature->ActionRequest != INSTALLSTATE_LOCAL)
             continue;
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
@@ -2634,7 +2634,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     {
         ComponentList *cl;
 
-        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ABSENT ))
+        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
             continue;
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
@@ -3922,10 +3922,9 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         BOOL absent = FALSE;
         MSIRECORD *uirow;
 
-        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ) &&
-            !ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_SOURCE ) &&
-            !ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED ))
-            absent = TRUE;
+        if (feature->ActionRequest != INSTALLSTATE_LOCAL &&
+            feature->ActionRequest != INSTALLSTATE_SOURCE &&
+            feature->ActionRequest != INSTALLSTATE_ADVERTISED) absent = TRUE;
 
         size = 1;
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
