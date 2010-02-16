@@ -1,21 +1,11 @@
 
-@pwd@>rem Tests for echo@todo_space@
-
-@pwd@>echo word@todo_space@
+@pwd@>echo Tests for cmd's builtin commands@todo_space@
+Tests for cmd's builtin commands
+------------ Testing 'echo' --------------
 word
-
-@pwd@>echo 'singlequotedword'@todo_space@
 'singlequotedword'
-
-@pwd@>echo "doublequotedword"@todo_space@
 "doublequotedword"
 at-echoed-word
-
-@pwd@>echo "/?"@todo_space@
 "/?"
 
-@pwd@>echo.
-
-
-@pwd@>echo .@todo_space@
 .
