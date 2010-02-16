@@ -801,10 +801,10 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %p)\n", image, imageattr, x, y, width, height,
            texture);
 
-    *texture = NULL;
-
     if(!image || !texture || x < 0.0 || y < 0.0 || width < 0.0 || height < 0.0)
         return InvalidParameter;
+
+    *texture = NULL;
 
     if(image->type != ImageTypeBitmap){
         FIXME("not implemented for image type %d\n", image->type);
