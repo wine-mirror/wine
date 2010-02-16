@@ -2410,19 +2410,19 @@ static void test_GetPrinterDriver(void)
             trace("pConfigFile %s\n", di_2->pConfigFile);
             calculated += strlen(di_2->pConfigFile) + 1;
 
-            hf = CreateFileA(di_2->pDriverPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            hf = CreateFileA(di_2->pDriverPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hf != INVALID_HANDLE_VALUE)
                 CloseHandle(hf);
             todo_wine
             ok(hf != INVALID_HANDLE_VALUE, "Could not open %s\n", di_2->pDriverPath);
 
-            hf = CreateFileA(di_2->pDataFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            hf = CreateFileA(di_2->pDataFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hf != INVALID_HANDLE_VALUE)
                 CloseHandle(hf);
             todo_wine
             ok(hf != INVALID_HANDLE_VALUE, "Could not open %s\n", di_2->pDataFile);
 
-            hf = CreateFileA(di_2->pConfigFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            hf = CreateFileA(di_2->pConfigFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hf != INVALID_HANDLE_VALUE)
                 CloseHandle(hf);
             todo_wine
