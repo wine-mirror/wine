@@ -338,6 +338,20 @@ static void dbg_print_longlong(LONGLONG sv, BOOL is_signed)
     dbg_printf("%s", ptr);
 }
 
+static void dbg_print_hex(ULONGLONG sv)
+{
+    if (!sv)
+    {
+        dbg_printf("0");
+        return;
+    }
+
+    if (sv >> 32)
+        dbg_printf("0x%lx%08lx", (unsigned long)(sv >> 32), (unsigned long)sv);
+    else
+        dbg_printf("0x%04lx", (unsigned long)sv);
+}
+
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
 {
     LONGLONG            val_int;
@@ -367,12 +381,12 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btLong:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             if (size == 1) goto print_char;
-            dbg_print_longlong(val_int, TRUE);
+            dbg_print_hex(val_int);
             break;
         case btUInt:
         case btULong:
             if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
-            dbg_print_longlong(val_int, FALSE);
+            dbg_print_hex(val_int);
             break;
         case btFloat:
             if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
