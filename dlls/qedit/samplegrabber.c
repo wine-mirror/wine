@@ -988,6 +988,7 @@ static HRESULT WINAPI
 SampleGrabber_Out_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE *type)
 {
     SG_Pin *This = (SG_Pin *)iface;
+    HRESULT hr;
     TRACE("(%p)->(%p, %p)\n", This, receiver, type);
     if (!receiver)
         return E_POINTER;
@@ -1011,6 +1012,11 @@ SampleGrabber_Out_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE 
 	    !IsEqualGUID(&This->sg->mtype.formattype,&type->formattype))
 	    return VFW_E_TYPE_NOT_ACCEPTED;
     }
+    else
+	type = &This->sg->mtype;
+    hr = IPin_ReceiveConnection(receiver,(IPin*)&This->lpVtbl,type);
+    if (FAILED(hr))
+	return hr;
     This->pair = receiver;
     if (This->sg->memOutput) {
         IMemInputPin_Release(This->sg->memOutput);
