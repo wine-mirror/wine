@@ -2882,6 +2882,8 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     if (!file)
         return ERROR_SUCCESS;
 
+    ui_actiondata( package, szRegisterTypeLibraries, row );
+
     module = LoadLibraryExW( file->TargetPath, NULL, LOAD_LIBRARY_AS_DATAFILE );
     if (module)
     {
@@ -2911,11 +2913,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
                 ERR("Failed to register type library %s\n",
                         debugstr_w(tl_struct.path));
             else
-            {
-                ui_actiondata(package,szRegisterTypeLibraries,row);
-
                 TRACE("Registered %s\n", debugstr_w(tl_struct.path));
-            }
 
             ITypeLib_Release(tl_struct.ptLib);
             msi_free(tl_struct.path);
@@ -2989,6 +2987,8 @@ static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
         return ERROR_SUCCESS;
     }
     comp->Action = INSTALLSTATE_ABSENT;
+
+    ui_actiondata( package, szUnregisterTypeLibraries, row );
 
     guid = MSI_RecordGetString( row, 1 );
     CLSIDFromString( (LPWSTR)guid, &libid );
