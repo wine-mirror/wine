@@ -9,3 +9,6 @@ at-echoed-word
 "/?"
 
 .
+------------ Testing 'set' --------------
+set "FOO=bar" should not include the quotes in the variable value
+bar

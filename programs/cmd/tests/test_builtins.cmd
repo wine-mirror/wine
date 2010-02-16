@@ -9,3 +9,8 @@ echo "doublequotedword"
 echo "/?"
 echo.
 echo .
+
+echo ------------ Testing 'set' --------------
+echo set "FOO=bar" should not include the quotes in the variable value
+set "FOO=bar"
+echo %FOO%
