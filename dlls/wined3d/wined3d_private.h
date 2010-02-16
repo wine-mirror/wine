@@ -1337,6 +1337,85 @@ enum wined3d_pci_device
     CARD_INTEL_X3100                = 0x2a02, /* Found in Macs. Same as GMA 965? */
 };
 
+struct wined3d_fbo_ops
+{
+    PGLFNGLISRENDERBUFFERPROC                       glIsRenderbuffer;
+    PGLFNGLBINDRENDERBUFFERPROC                     glBindRenderbuffer;
+    PGLFNGLDELETERENDERBUFFERSPROC                  glDeleteRenderbuffers;
+    PGLFNGLGENRENDERBUFFERSPROC                     glGenRenderbuffers;
+    PGLFNGLRENDERBUFFERSTORAGEPROC                  glRenderbufferStorage;
+    PGLFNRENDERBUFFERSTORAGEMULTISAMPLEPROC         glRenderbufferStorageMultisample;
+    PGLFNGLGETRENDERBUFFERPARAMETERIVPROC           glGetRenderbufferParameteriv;
+    PGLFNGLISFRAMEBUFFERPROC                        glIsFramebuffer;
+    PGLFNGLBINDFRAMEBUFFERPROC                      glBindFramebuffer;
+    PGLFNGLDELETEFRAMEBUFFERSPROC                   glDeleteFramebuffers;
+    PGLFNGLGENFRAMEBUFFERSPROC                      glGenFramebuffers;
+    PGLFNGLCHECKFRAMEBUFFERSTATUSPROC               glCheckFramebufferStatus;
+    PGLFNGLFRAMEBUFFERTEXTURE1DPROC                 glFramebufferTexture1D;
+    PGLFNGLFRAMEBUFFERTEXTURE2DPROC                 glFramebufferTexture2D;
+    PGLFNGLFRAMEBUFFERTEXTURE3DPROC                 glFramebufferTexture3D;
+    PGLFNGLFRAMEBUFFERRENDERBUFFERPROC              glFramebufferRenderbuffer;
+    PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC  glGetFramebufferAttachmentParameteriv;
+    PGLFNGLBLITFRAMEBUFFERPROC                      glBlitFramebuffer;
+    PGLFNGLGENERATEMIPMAPPROC                       glGenerateMipmap;
+};
+
+struct wined3d_gl_limits
+{
+    UINT buffers;
+    UINT lights;
+    UINT textures;
+    UINT texture_stages;
+    UINT fragment_samplers;
+    UINT vertex_samplers;
+    UINT combined_samplers;
+    UINT general_combiners;
+    UINT sampler_stages;
+    UINT clipplanes;
+    UINT texture_size;
+    UINT texture3d_size;
+    float pointsize_max;
+    float pointsize_min;
+    UINT point_sprite_units;
+    UINT blends;
+    UINT anisotropy;
+    float shininess;
+
+    UINT glsl_varyings;
+    UINT glsl_vs_float_constants;
+    UINT glsl_ps_float_constants;
+
+    UINT arb_vs_float_constants;
+    UINT arb_vs_native_constants;
+    UINT arb_vs_instructions;
+    UINT arb_vs_temps;
+    UINT arb_ps_float_constants;
+    UINT arb_ps_local_constants;
+    UINT arb_ps_native_constants;
+    UINT arb_ps_instructions;
+    UINT arb_ps_temps;
+};
+
+struct wined3d_gl_info
+{
+    UINT vidmem;
+    struct wined3d_gl_limits limits;
+    DWORD reserved_glsl_constants;
+    DWORD quirks;
+    BOOL supported[WINED3D_GL_EXT_COUNT];
+    GLint wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP + 1];
+
+    struct wined3d_fbo_ops fbo_ops;
+#define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
+    /* GL function pointers */
+    GL_EXT_FUNCS_GEN
+    /* WGL function pointers */
+    WGL_EXT_FUNCS_GEN
+#undef USE_GL_FUNC
+
+    struct GlPixelFormatDesc *gl_formats;
+};
+
 struct wined3d_driver_info
 {
     enum wined3d_pci_vendor vendor;
