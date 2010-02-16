@@ -2664,8 +2664,9 @@ static void test_DeviceCapabilities(void)
     fields = DeviceCapabilities(device, port, DC_FIELDS, NULL, NULL);
     ok(fields != (DWORD)-1, "DeviceCapabilities DC_FIELDS failed\n");
     todo_wine
-    ok(fields == (dm->dmFields | DM_FORMNAME),
-        "fields %x != (dm->dmFields | DM_FORMNAME) %x\n", fields, dm->dmFields);
+    ok(fields == (dm->dmFields | DM_FORMNAME) ||
+        broken(fields == dm->dmFields), /* Win9x/WinMe */
+        "fields %x != (dm->dmFields | DM_FORMNAME) %lx\n", fields, (dm->dmFields | DM_FORMNAME));
 
     GlobalUnlock(prn_dlg.hDevMode);
     GlobalFree(prn_dlg.hDevMode);
