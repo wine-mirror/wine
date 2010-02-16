@@ -962,8 +962,7 @@ static void test_NameSpace(void)
     hres = CoInternetParseUrl(url8, PARSE_SECURITY_URL, 0, buf,
             sizeof(buf)/sizeof(WCHAR), &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
-    ok(size == sizeof(url1)/sizeof(WCHAR), "Size = %d, expected %d\n",
-            size, sizeof(url1)/sizeof(WCHAR));
+    ok(size == sizeof(url1)/sizeof(WCHAR), "Size = %d\n", size);
     if(size == sizeof(url1)/sizeof(WCHAR))
         ok(!memcmp(buf, url1, sizeof(url1)), "Encoded url = %s\n", wine_dbgstr_w(buf));
 
