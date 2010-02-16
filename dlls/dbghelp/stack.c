@@ -65,7 +65,7 @@ static BOOL CALLBACK read_mem(HANDLE hProcess, DWORD addr, void* buffer,
                               DWORD size, LPDWORD nread)
 {
     SIZE_T      r;
-    if (!ReadProcessMemory(hProcess, (void*)addr, buffer, size, &r)) return FALSE;
+    if (!ReadProcessMemory(hProcess, (void*)(DWORD_PTR)addr, buffer, size, &r)) return FALSE;
     if (nread) *nread = r;
     return TRUE;
 }
