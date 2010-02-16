@@ -1790,7 +1790,6 @@ typedef enum wined3d_gl_extension
     EXT_GPU_SHADER4,
     EXT_PACKED_DEPTH_STENCIL,
     EXT_PALETTED_TEXTURE,
-    EXT_PIXEL_BUFFER_OBJECT,
     EXT_POINT_PARAMETERS,
     EXT_PROVOKING_VERTEX,
     EXT_SECONDARY_COLOR,
@@ -1803,12 +1802,9 @@ typedef enum wined3d_gl_extension
     EXT_TEXTURE_ENV_COMBINE,
     EXT_TEXTURE_ENV_DOT3,
     EXT_TEXTURE_FILTER_ANISOTROPIC,
-    EXT_TEXTURE_LOD,
     EXT_TEXTURE_LOD_BIAS,
     EXT_TEXTURE_SRGB,
-    EXT_TEXTURE_SWIZZLE,
     EXT_VERTEX_ARRAY_BGRA,
-    EXT_VERTEX_SHADER,
     /* NVIDIA */
     NV_DEPTH_CLAMP,
     NV_FENCE,
@@ -1824,7 +1820,6 @@ typedef enum wined3d_gl_extension
     NV_TEXTURE_ENV_COMBINE4,
     NV_TEXTURE_SHADER,
     NV_TEXTURE_SHADER2,
-    NV_TEXTURE_SHADER3,
     NV_VERTEX_PROGRAM,
     NV_VERTEX_PROGRAM1_1,
     NV_VERTEX_PROGRAM2,
@@ -3236,54 +3231,6 @@ typedef void (WINE_GLAPI *PGLFNACTIVESTENCILFACEEXTPROC)(GLenum face);
 #define GL_DECR_WRAP_EXT                                    0x8508
 #endif
 
-/* GL_EXT_texture */
-#ifndef GL_EXT_texture
-#define GL_EXT_texture 1
-#define GL_ALPHA4_EXT                                       0x803b
-#define GL_ALPHA8_EXT                                       0x803c
-#define GL_ALPHA12_EXT                                      0x803d
-#define GL_ALPHA16_EXT                                      0x803e
-#define GL_LUMINANCE4_EXT                                   0x803f
-#define GL_LUMINANCE8_EXT                                   0x8040
-#define GL_LUMINANCE12_EXT                                  0x8041
-#define GL_LUMINANCE16_EXT                                  0x8042
-#define GL_LUMINANCE4_ALPHA4_EXT                            0x8043
-#define GL_LUMINANCE6_ALPHA2_EXT                            0x8044
-#define GL_LUMINANCE8_ALPHA8_EXT                            0x8045
-#define GL_LUMINANCE12_ALPHA4_EXT                           0x8046
-#define GL_LUMINANCE12_ALPHA12_EXT                          0x8047
-#define GL_LUMINANCE16_ALPHA16_EXT                          0x8048
-#define GL_INTENSITY_EXT                                    0x8049
-#define GL_INTENSITY4_EXT                                   0x804a
-#define GL_INTENSITY8_EXT                                   0x804b
-#define GL_INTENSITY12_EXT                                  0x804c
-#define GL_INTENSITY16_EXT                                  0x804d
-#define GL_RGB2_EXT                                         0x804e
-#define GL_RGB4_EXT                                         0x804f
-#define GL_RGB5_EXT                                         0x8050
-#define GL_RGB8_EXT                                         0x8051
-#define GL_RGB10_EXT                                        0x8052
-#define GL_RGB12_EXT                                        0x8053
-#define GL_RGB16_EXT                                        0x8054
-#define GL_RGBA2_EXT                                        0x8055
-#define GL_RGBA4_EXT                                        0x8056
-#define GL_RGB5_A1_EXT                                      0x8057
-#define GL_RGBA8_EXT                                        0x8058
-#define GL_RGB10_A2_EXT                                     0x8059
-#define GL_RGBA12_EXT                                       0x805a
-#define GL_RGBA16_EXT                                       0x805b
-#define GL_TEXTURE_RED_SIZE_EXT                             0x805c
-#define GL_TEXTURE_GREEN_SIZE_EXT                           0x805d
-#define GL_TEXTURE_BLUE_SIZE_EXT                            0x805e
-#define GL_TEXTURE_ALPHA_SIZE_EXT                           0x805f
-#define GL_TEXTURE_LUMINANCE_SIZE_EXT                       0x8060
-#define GL_TEXTURE_INTENSITY_SIZE_EXT                       0x8061
-#define GL_REPLACE_EXT                                      0x8062
-#define GL_PROXY_TEXTURE_1D_EXT                             0x8063
-#define GL_PROXY_TEXTURE_2D_EXT                             0x8064
-#define GL_TEXTURE_TOO_LARGE_EXT                            0x8065
-#endif
-
 /* GL_EXT_texture3D */
 #ifndef GL_EXT_texture3D
 #define GL_EXT_texture3D 1
@@ -3422,16 +3369,6 @@ typedef void (WINE_GLAPI *PGLFNGETCOMPRESSEDTEXIMAGEPROC)(GLenum target, GLint l
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT              0x8c4d
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT              0x8c4e
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT              0x8c4f
-#endif
-
-/* GL_EXT_texture_swizzle */
-#ifndef GL_EXT_texture_swizzle
-#define GL_EXT_texture_swizzle 1
-#define GL_TEXTURE_SWIZZLE_R_EXT                            0x8e42
-#define GL_TEXTURE_SWIZZLE_G_EXT                            0x8e43
-#define GL_TEXTURE_SWIZZLE_B_EXT                            0x8e44
-#define GL_TEXTURE_SWIZZLE_A_EXT                            0x8e45
-#define GL_TEXTURE_SWIZZLE_RGBA_EXT                         0x8e46
 #endif
 
 /* GL_NV_depth_clamp */
@@ -3715,28 +3652,6 @@ typedef void (WINE_GLAPI *PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC)(GLenum stage, 
 #define GL_DOT_PRODUCT_TEXTURE_3D_NV                        0x86ef
 #endif
 
-/* GL_NV_texture_shader3 */
-#ifndef GL_NV_texture_shader3
-#define GL_NV_texture_shader3 1
-#define GL_OFFSET_PROJECTIVE_TEXTURE_2D_NV                  0x8850
-#define GL_OFFSET_PROJECTIVE_TEXTURE_2D_SCALE_NV            0x8851
-#define GL_OFFSET_PROJECTIVE_TEXTURE_RECTANGLE_NV           0x8852
-#define GL_OFFSET_PROJECTIVE_TEXTURE_RECTANGLE_SCALE_NV     0x8853
-#define GL_OFFSET_HILO_TEXTURE_2D_NV                        0x8854
-#define GL_OFFSET_HILO_TEXTURE_RECTANGLE_NV                 0x8855
-#define GL_OFFSET_HILO_PROJECTIVE_TEXTURE_2D_NV             0x8856
-#define GL_OFFSET_HILO_PROJECTIVE_TEXTURE_RECTANGLE_NV      0x8857
-#define GL_DEPENDENT_HILO_TEXTURE_2D_NV                     0x8858
-#define GL_DEPENDENT_RGB_TEXTURE_3D_NV                      0x8859
-#define GL_DEPENDENT_RGB_TEXTURE_CUBE_MAP_NV                0x885a
-#define GL_DOT_PRODUCT_PASS_THROUGH_NV                      0x885b
-#define GL_DOT_PRODUCT_TEXTURE_1D_NV                        0x885c
-#define GL_DOT_PRODUCT_AFFINE_DEPTH_REPLACE_NV              0x885d
-#define GL_HILO8_NV                                         0x885e
-#define GL_SIGNED_HILO8_NV                                  0x885f
-#define GL_FORCE_BLUE_TO_ONE_NV                             0x8860
-#endif
-
 /* GL_NV_vertex_program2_option */
 #ifndef GL_NV_vertex_program2_option
 #define GL_NV_vertex_program2_option 1
@@ -3757,10 +3672,6 @@ typedef int (WINE_GLAPI *PGLXFNWAITVIDEOSYNCSGIPROC)(int, int, unsigned int *);
 
 /* WGL_ARB_extensions_string */
 typedef const char *(WINAPI *WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
-
-/* WGL_ARB_make_current_read */
-typedef BOOL (WINAPI *WINED3D_PFNWGLMAKECONTEXTCURRENTARBPROC)(HDC hDrawDC, HDC hReadDC, HGLRC hglrc);
-typedef HDC (WINAPI *WINED3D_PFNWGLGETCURRENTREADDCARBPROC)(void);
 
 /* WGL_ARB_multisample */
 #ifndef WGL_ARB_multisample
@@ -4578,8 +4489,6 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
     USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBIVARBPROC,    wglGetPixelFormatAttribivARB,   0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBFVARBPROC,    wglGetPixelFormatAttribfvARB,   0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC,         wglChoosePixelFormatARB,        0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLMAKECONTEXTCURRENTARBPROC,        wglMakeContextCurrentARB,       0, NULL) \
-    USE_GL_FUNC(WINED3D_PFNWGLGETCURRENTREADDCARBPROC,          wglGetCurrentReadDCARB,         0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLCREATEPBUFFERARBPROC,             wglCreatePbufferARB,            0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLGETPBUFFERDCARBPROC,              wglGetPbufferDCARB,             0, NULL) \
     USE_GL_FUNC(WINED3D_PFNWGLRELEASEPBUFFERDCARBPROC,          wglReleasePbufferDCARB,         0, NULL) \

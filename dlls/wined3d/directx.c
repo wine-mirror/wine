@@ -124,12 +124,9 @@ static const struct {
     {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE,        0                           },
     {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3,           0                           },
     {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC, 0                           },
-    {"GL_EXT_texture_lod",                  EXT_TEXTURE_LOD,                0                           },
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS,           0                           },
     {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB,               0                           },
-    {"GL_EXT_texture_swizzle",              EXT_TEXTURE_SWIZZLE,            0                           },
     {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA,          0                           },
-    {"GL_EXT_vertex_shader",                EXT_VERTEX_SHADER,              0                           },
 
     /* NV */
     {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP,                 0                           },
@@ -146,7 +143,6 @@ static const struct {
     {"GL_NV_texture_env_combine4",          NV_TEXTURE_ENV_COMBINE4,        0                           },
     {"GL_NV_texture_shader",                NV_TEXTURE_SHADER,              0                           },
     {"GL_NV_texture_shader2",               NV_TEXTURE_SHADER2,             0                           },
-    {"GL_NV_texture_shader3",               NV_TEXTURE_SHADER3,             0                           },
     {"GL_NV_vertex_program",                NV_VERTEX_PROGRAM,              0                           },
     {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1,           0                           },
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2,             0                           },
@@ -799,7 +795,6 @@ static void quirk_apple_nvts(struct wined3d_gl_info *gl_info)
 {
     gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
     gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
-    gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
 }
 
 static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
@@ -2080,7 +2075,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         gl_info->supported[NV_REGISTER_COMBINERS2] = FALSE;
         gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
         gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
-        gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
     }
     if (gl_info->supported[NV_HALF_FLOAT])
     {
