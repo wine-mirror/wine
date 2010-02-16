@@ -190,7 +190,7 @@ static void run_from_file(char *file_name)
         return;
     }
 
-    sprintf(out_name, "%s.out", file_name);
+    sprintf(out_name, "%s.exp", file_name);
     out_size = map_file(out_name, &out_data);
     if(!out_size) {
         ok(0, "Could not map file %s: %u\n", out_name, GetLastError());
@@ -236,7 +236,7 @@ static BOOL WINAPI test_enum_proc(HMODULE module, LPCTSTR type, LPSTR name, LONG
     if(!cmd_size)
         return TRUE;
 
-    sprintf(res_name, "%s.out", name);
+    sprintf(res_name, "%s.exp", name);
     out_size = load_resource(res_name, "TESTOUT", &out_data);
     if(!out_size)
         return TRUE;

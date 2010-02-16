@@ -19,5 +19,5 @@
 /* @makedep: test_builtins.cmd */
 test_builtins.cmd TESTCMD "test_builtins.cmd"
 
-/* @makedep: test_builtins.cmd.out */
-test_builtins.cmd.out TESTOUT "test_builtins.cmd.out"
+/* @makedep: test_builtins.cmd.exp */
+test_builtins.cmd.exp TESTOUT "test_builtins.cmd.exp"
