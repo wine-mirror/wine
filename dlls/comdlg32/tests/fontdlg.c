@@ -53,7 +53,7 @@ static void test_ChooseFontA(void)
     memset(&lfa, 0, sizeof(LOGFONTA));
     lfa.lfHeight = -16;
     lfa.lfWeight = FW_NORMAL;
-    strcpy(lfa.lfFaceName, "Tahoma");
+    strcpy(lfa.lfFaceName, "Symbol");
 
     memset(&cfa, 0, sizeof(CHOOSEFONTA));
     cfa.lStructSize = sizeof(cfa);
@@ -66,7 +66,7 @@ static void test_ChooseFontA(void)
     ok(ret == TRUE, "ChooseFontA returned FALSE\n");
     ok(lfa.lfHeight == -16, "Expected -16, got %i\n", lfa.lfHeight);
     ok(lfa.lfWeight == FW_NORMAL, "Expected FW_NORMAL, got %i\n", lfa.lfWeight);
-    ok(strcmp(lfa.lfFaceName, "Tahoma") == 0, "Expected Arial, got %s\n", lfa.lfFaceName);
+    ok(strcmp(lfa.lfFaceName, "Symbol") == 0, "Expected Symbol, got %s\n", lfa.lfFaceName);
 }
 
 START_TEST(fontdlg)
