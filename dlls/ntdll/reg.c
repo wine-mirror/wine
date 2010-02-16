@@ -116,13 +116,13 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     NTSTATUS ret;
     DWORD len;
 
-    if (!attr) return STATUS_ACCESS_VIOLATION;
+    if (!retkey || !attr) return STATUS_ACCESS_VIOLATION;
+    if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
     len = attr->ObjectName->Length;
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
 
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
-    if (!retkey) return STATUS_INVALID_PARAMETER;
 
     SERVER_START_REQ( open_key )
     {

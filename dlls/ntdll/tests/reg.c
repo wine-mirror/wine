@@ -351,14 +351,12 @@ static void test_NtOpenKey(void)
 
     /* NULL key */
     status = pNtOpenKey(NULL, am, &attr);
-    todo_wine
-        ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
 
     /* Length > sizeof(OBJECT_ATTRIBUTES) */
     attr.Length *= 2;
     status = pNtOpenKey(&key, am, &attr);
-    todo_wine
-        ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
 }
 
 static void test_NtCreateKey(void)

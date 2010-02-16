@@ -311,6 +311,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
     /* NT+ allows beginning backslash for HKEY_CLASSES_ROOT */
     if (hkey == HKEY_CLASSES_ROOT && name && *name == '\\') name++;
 
+    if (!retkey) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
