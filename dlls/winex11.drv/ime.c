@@ -87,7 +87,6 @@ static UINT WM_MSIME_DOCUMENTFEED;
 
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
-static void UpdateDataInDefaultIMEWindow(HIMC hHIMC, HWND hwnd, BOOL showable);
 
 static HIMC RealIMC(HIMC hIMC)
 {
@@ -933,8 +932,6 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
         }
     }
 
-    UpdateDataInDefaultIMEWindow(hIMC, myPrivate->hwndDefault,FALSE);
-
     GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
     ImmUnlockIMCC(lpIMC->hPrivate);
     UnlockRealIMC(hIMC);
@@ -1199,7 +1196,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
     UnlockRealIMC(hIMC);
 }
 
-static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
+static void UpdateDefaultIMEWindow(HIMC hIMC, HWND hwnd)
 {
     LPCOMPOSITIONSTRING compstr;
     LPINPUTCONTEXT lpIMC;
@@ -1215,14 +1212,16 @@ static void UpdateDataInDefaultIMEWindow(HIMC hIMC, HWND hwnd, BOOL showable)
 
     if (compstr == NULL || compstr->dwCompStrLen == 0)
         ShowWindow(hwnd,SW_HIDE);
-    else if (showable)
+    else
+    {
         ShowWindow(hwnd,SW_SHOWNOACTIVATE);
-
-    RedrawWindow(hwnd,NULL,NULL,RDW_ERASENOW|RDW_INVALIDATE);
+        RedrawWindow(hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE);
+    }
 
     if (compstr != NULL)
         ImmUnlockIMCC(lpIMC->hCompStr);
 
+    lpIMC->hWnd = GetFocus();
     UnlockRealIMC(hIMC);
 }
 
@@ -1255,21 +1254,13 @@ static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
         UnlockRealIMC(hIMC);
     }
     else
-         UpdateDataInDefaultIMEWindow(hIMC,hwnd,TRUE);
+        UpdateDefaultIMEWindow(hIMC, hwnd);
 }
 
 static void DefaultIMEStartComposition(HIMC hIMC, HWND hwnd )
 {
-    LPINPUTCONTEXT lpIMC;
-
-    lpIMC = LockRealIMC(hIMC);
-    if (lpIMC == NULL)
-        return;
-
     TRACE("IME message WM_IME_STARTCOMPOSITION\n");
-    lpIMC->hWnd = GetFocus();
-    ShowWindow(hwnd,SW_SHOWNOACTIVATE);
-    UnlockRealIMC(hIMC);
+    UpdateDefaultIMEWindow(hIMC, hwnd);
 }
 
 static LRESULT ImeHandleNotify(HIMC hIMC, HWND hwnd, UINT msg, WPARAM wParam,
