@@ -1049,9 +1049,22 @@ BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
                                     lpRead, dwReadLen);
 }
 
-BOOL IME_NotifyIME(DWORD dwAction, DWORD dwIndex, DWORD dwValue)
+void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
 {
-    return NotifyIME(FROM_X11, dwAction, dwIndex, dwValue);
+    LPINPUTCONTEXT lpIMC;
+    HIMCC newCompStr;
+
+    lpIMC = LockRealIMC(FROM_X11);
+    if (lpIMC == NULL)
+        return;
+
+    newCompStr = updateResultStr(lpIMC->hCompStr, lpResult, dwResultLen);
+    ImmDestroyIMCC(lpIMC->hCompStr);
+    lpIMC->hCompStr = newCompStr;
+
+    GenerateIMEMessage(FROM_X11, WM_IME_COMPOSITION, 0, GCS_RESULTSTR);
+
+    UnlockRealIMC(FROM_X11);
 }
 
 /*****

@@ -307,7 +307,7 @@ extern void IME_UpdateAssociation(HWND focus);
 extern BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp,
                                      DWORD dwCompLen, LPCVOID lpRead,
                                      DWORD dwReadLen);
-extern BOOL IME_NotifyIME(DWORD dwAction, DWORD dwIndex, DWORD dwValue);
+extern void IME_SetResultString(LPWSTR lpResult, DWORD dwResultlen);
 
 extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event );
 extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event );

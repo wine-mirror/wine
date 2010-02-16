@@ -116,9 +116,7 @@ void X11DRV_XIMLookupChars( const char *str, DWORD count )
     if ((focus = GetFocus()))
         IME_UpdateAssociation(focus);
 
-    IME_SetCompositionString(SCS_SETSTR, wcOutput,
-                             sizeof (WCHAR) * dwOutput, NULL, 0);
-    IME_NotifyIME(NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+    IME_SetResultString(wcOutput, dwOutput);
     HeapFree(GetProcessHeap(), 0, wcOutput);
 }
 
