@@ -477,7 +477,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 {
     NTSTATUS ret;
     UCHAR *data_ptr;
-    unsigned int fixed_size = 0;
+    unsigned int fixed_size = 0, min_size = 0;
 
     TRACE( "(%p,%s,%d,%p,%d)\n", handle, debugstr_us(name), info_class, info, length );
 
@@ -489,30 +489,26 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     case KeyValueBasicInformation:
     {
         KEY_VALUE_BASIC_INFORMATION *basic_info = info;
-        if (FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) < length)
-        {
-            memcpy(basic_info->Name, name->Buffer,
-                   min(length - FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name), name->Length));
-        }
-        fixed_size = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) + name->Length;
+        min_size = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name);
+        fixed_size = min_size + name->Length;
+        if (min_size < length)
+            memcpy(basic_info->Name, name->Buffer, min(length - min_size, name->Length));
         data_ptr = NULL;
         break;
     }
     case KeyValueFullInformation:
     {
         KEY_VALUE_FULL_INFORMATION *full_info = info;
-        if (FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) < length)
-        {
-            memcpy(full_info->Name, name->Buffer,
-                   min(length - FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name), name->Length));
-        }
+        min_size = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name);
+        fixed_size = min_size + name->Length;
+        if (min_size < length)
+            memcpy(full_info->Name, name->Buffer, min(length - min_size, name->Length));
         data_ptr = (UCHAR *)full_info->Name + name->Length;
-        fixed_size = (char *)data_ptr - (char *)info;
         break;
     }
     case KeyValuePartialInformation:
+        min_size = fixed_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
         data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
-        fixed_size = (char *)data_ptr - (char *)info;
         break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );
@@ -529,7 +525,8 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
             copy_key_value_info( info_class, info, length, reply->type,
                                  name->Length, reply->total );
             *result_len = fixed_size + (info_class == KeyValueBasicInformation ? 0 : reply->total);
-            if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
+            if (length < min_size) ret = STATUS_BUFFER_TOO_SMALL;
+            else if (length < *result_len) ret = STATUS_BUFFER_OVERFLOW;
         }
     }
     SERVER_END_REQ;

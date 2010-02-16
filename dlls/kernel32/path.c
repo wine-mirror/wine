@@ -182,7 +182,7 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
 
     /* First we check if the key exists and if so how many bytes it already contains. */
     if (NtQueryValueKey( Reboot, &nameW, KeyValuePartialInformation,
-                         NULL, 0, &DataSize ) == STATUS_BUFFER_OVERFLOW)
+                         NULL, 0, &DataSize ) == STATUS_BUFFER_TOO_SMALL)
     {
         if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) )))
             goto Quit;

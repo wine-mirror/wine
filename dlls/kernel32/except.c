@@ -220,7 +220,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 
         RtlInitUnicodeString( &nameW, DebuggerW );
         if (NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
-                             NULL, 0, &format_size ) == STATUS_BUFFER_OVERFLOW)
+                             NULL, 0, &format_size ) == STATUS_BUFFER_TOO_SMALL)
         {
             char *data = HeapAlloc(GetProcessHeap(), 0, format_size);
             NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
