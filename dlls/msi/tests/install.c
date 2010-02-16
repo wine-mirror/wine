@@ -1091,7 +1091,7 @@ static const CHAR aup_custom_action_dat[] = "Action\tType\tSource\tTarget\tISCom
 static const CHAR cf_create_folders_dat[] = "Directory_\tComponent_\n"
                                             "s72\ts72\n"
                                             "CreateFolder\tDirectory_\tComponent_\n"
-                                            "MSITESTDIR\tOne\n";
+                                            "FIRSTDIR\tOne\n";
 
 static const CHAR cf_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "s72\tS255\tI2\n"
@@ -7857,7 +7857,23 @@ static void test_create_folder(void)
     ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
     ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
     ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
-    todo_wine ok(!delete_pf("msitest", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest", FALSE), "Directory created\n");
+
+    r = MsiInstallProductA(msifile, "LOCAL=Two");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "Directory created\n");
 
     delete_test_files();
 }
@@ -7872,6 +7888,22 @@ static void test_remove_folder(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
+    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "Directory created\n");
+
+    r = MsiInstallProductA(msifile, "LOCAL=Two");
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
     ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");

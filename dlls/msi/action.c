@@ -886,10 +886,24 @@ static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
 static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPCWSTR dir;
+    LPCWSTR dir, component;
     LPWSTR full_path;
     MSIRECORD *uirow;
     MSIFOLDER *folder;
+    MSICOMPONENT *comp;
+
+    component = MSI_RecordGetString(row, 2);
+    comp = get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+    {
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_LOCAL;
 
     dir = MSI_RecordGetString(row,1);
     if (!dir)
@@ -983,10 +997,24 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
-    LPCWSTR dir;
+    LPCWSTR dir, component;
     LPWSTR full_path;
     MSIRECORD *uirow;
     MSIFOLDER *folder;
+    MSICOMPONENT *comp;
+
+    component = MSI_RecordGetString(row, 2);
+    comp = get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
 
     dir = MSI_RecordGetString( row, 1 );
     if (!dir)
