@@ -1530,9 +1530,9 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	 */
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
 	lpData = (LPBYTE)lpMidiHdr->lpData;
-	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBufferLength=%u/%u dwFlags=0x%08x size=%lu]\n",
+	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%u/%u dwFlags=0x%08x size=%lu]\n",
 	      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
-	      lpMidiHdr, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded,
+	      lpMidiHdr, lpMidiHdr->dwBytesRecorded, lpMidiHdr->dwBufferLength,
 	      lpMidiHdr->dwFlags, msg->wParam);
 #if 0
 	/* dumps content of lpMidiHdr->lpData
@@ -1686,7 +1686,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	lpMidiHdr->dwOffset += sizeof(MIDIEVENT) - sizeof(me->dwParms);
 	if (me->dwEvent & MEVT_F_LONG)
 	    lpMidiHdr->dwOffset += (MEVT_EVENTPARM(me->dwEvent) + 3) & ~3;
-	if (lpMidiHdr->dwOffset >= lpMidiHdr->dwBufferLength) {
+	if (lpMidiHdr->dwOffset >= lpMidiHdr->dwBytesRecorded) {
 	    /* done with this header */
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
@@ -1817,8 +1817,11 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 
     TRACE("(%p, %p, %u)!\n", hMidiStrm, lpMidiHdr, cbMidiHdr);
 
-    if (cbMidiHdr < sizeof(MIDIHDR) || !lpMidiHdr || !lpMidiHdr->lpData)
+    if (cbMidiHdr < sizeof(MIDIHDR) || !lpMidiHdr || !lpMidiHdr->lpData
+	|| lpMidiHdr->dwBufferLength < lpMidiHdr->dwBytesRecorded)
 	return MMSYSERR_INVALPARAM;
+    /* FIXME: Native additionaly checks if the MIDIEVENTs in lpData
+     * exactly fit dwBytesRecorded. */
 
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
 	return MIDIERR_UNPREPARED;
