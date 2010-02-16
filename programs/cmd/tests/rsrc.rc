@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* @makedep: test_echo.cmd */
-test_echo.cmd TESTCMD "test_echo.cmd"
+/* @makedep: test_builtins.cmd */
+test_builtins.cmd TESTCMD "test_builtins.cmd"
 
-/* @makedep: test_echo.cmd.out */
-test_echo.cmd.out TESTOUT "test_echo.cmd.out"
+/* @makedep: test_builtins.cmd.out */
+test_builtins.cmd.out TESTOUT "test_builtins.cmd.out"
