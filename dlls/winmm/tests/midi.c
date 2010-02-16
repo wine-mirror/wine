@@ -234,9 +234,9 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
             ok(!rc, "midiOutSetVolume restore rc=%s\n", mmsys_error(rc));
         }
     }
-    rc = midiOutGetDevCapsA((UINT)hm, &capsA, sizeof(capsA));
+    rc = midiOutGetDevCapsA((UINT_PTR)hm, &capsA, sizeof(capsA));
     ok(!rc, "midiOutGetDevCaps(dev=%d) by handle rc=%s\n", udev, mmsys_error(rc));
-    rc = midiInGetDevCapsA((UINT)hm, (LPMIDIINCAPSA)&capsA, sizeof(DWORD));
+    rc = midiInGetDevCapsA((UINT_PTR)hm, (LPMIDIINCAPSA)&capsA, sizeof(DWORD));
     ok(rc==MMSYSERR_BADDEVICEID, "midiInGetDevCaps(dev=%d) by out handle rc=%s\n", udev, mmsys_error(rc));
 
     {   DWORD e = 0x006F4893; /* velocity, note (#69 would be 440Hz) channel */
@@ -365,8 +365,8 @@ static void test_midiStream(UINT udev, HWND hwnd)
             Sleep(100);
         }
         ok(mhdr.dwFlags & MHDR_DONE, "MHDR.dwFlags %x not DONE when out of queue\n", mhdr.dwFlags);
-        test_notification(hwnd, "midiStream callback", MOM_POSITIONCB, (DWORD)&mhdr);
-        test_notification(hwnd, "midiStreamOut", MOM_DONE, (DWORD)&mhdr);
+        test_notification(hwnd, "midiStream callback", MOM_POSITIONCB, (DWORD_PTR)&mhdr);
+        test_notification(hwnd, "midiStreamOut", MOM_DONE, (DWORD_PTR)&mhdr);
 
         rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
