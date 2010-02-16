@@ -2828,6 +2828,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Display",,"Asia/Yakuts
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Dlt",,"Yakutsk Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Std",,"Yakutsk Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"TZI",1,e4,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersion%\Time Zones,"SymbolicLinkValue",0x60000,"\Registry\Machine\%CurrentVersionNT%\Time Zones"
 
 [MountMgrService]
 Description="Device mounting service"
