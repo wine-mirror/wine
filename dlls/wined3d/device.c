@@ -179,8 +179,6 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 {
     /* We need to deal with frequency data! */
     IWineD3DVertexDeclarationImpl *declaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
-    UINT stream_count = This->stateBlock->streamIsUP ? 0 : declaration->num_streams;
-    const DWORD *streams = declaration->streams;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -307,17 +305,29 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         }
     }
 
-    /* Now call PreLoad on all the vertex buffers. In the very rare case
-     * that the buffers stopps converting PreLoad will dirtify the VDECL again.
-     * The vertex buffer can now use the strided structure in the device instead of finding its
-     * own again.
-     *
-     * NULL streams won't be recorded in the array, UP streams won't be either. A stream is only
-     * once in there. */
-    for (i = 0; i < stream_count; ++i)
+    if (!This->stateBlock->streamIsUP)
     {
-        IWineD3DBuffer *vb = This->stateBlock->streamSource[streams[i]];
-        if (vb) IWineD3DBuffer_PreLoad(vb);
+        WORD map = stream_info->use_map;
+
+        /* PreLoad all the vertex buffers. */
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            struct wined3d_stream_info_element *element;
+            struct wined3d_buffer *buffer;
+
+            if (!(map & 1)) continue;
+
+            element = &stream_info->elements[i];
+            buffer = (struct wined3d_buffer *)This->stateBlock->streamSource[element->stream_idx];
+            IWineD3DBuffer_PreLoad((IWineD3DBuffer *)buffer);
+
+            /* If PreLoad dropped the buffer object, update the stream info. */
+            if (buffer->buffer_object != element->buffer_object)
+            {
+                element->buffer_object = 0;
+                element->data = buffer_get_sysmem(buffer) + (ptrdiff_t)element->data;
+            }
+        }
     }
 }
 
