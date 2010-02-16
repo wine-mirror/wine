@@ -1485,13 +1485,15 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	/* this is not quite what MS doc says... */
 	midiOutReset(lpMidiStrm->hDevice);
 	/* empty list of already submitted buffers */
-	for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; lpMidiHdr = lpMidiHdr->lpNext) {
-	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+	for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; ) {
+	    LPMIDIHDR lphdr = lpMidiHdr;
+	    lpMidiHdr = lpMidiHdr->lpNext;
+	    lphdr->dwFlags |= MHDR_DONE;
+	    lphdr->dwFlags &= ~MHDR_INQUEUE;
 
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
+			   lpwm->mod.dwInstance, (DWORD_PTR)lphdr, 0);
 	}
 	lpMidiStrm->lpMidiHdr = 0;
 	SetEvent(lpMidiStrm->hEvent);
