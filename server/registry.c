@@ -246,13 +246,19 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
     int i;
 
     if (key->flags & KEY_VOLATILE) return;
-    /* save key if it has either some values or no subkeys */
+    /* save key if it has either some values or no subkeys, or needs special options */
     /* keys with no values but subkeys are saved implicitly by saving the subkeys */
-    if ((key->last_value >= 0) || (key->last_subkey == -1))
+    if ((key->last_value >= 0) || (key->last_subkey == -1) || key->class)
     {
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
         fprintf( f, "] %u\n", (unsigned int)((key->modif - ticks_1601_to_1970) / TICKS_PER_SEC) );
+        if (key->class)
+        {
+            fprintf( f, "#class=\"" );
+            dump_strW( key->class, key->classlen / sizeof(WCHAR), f, "\"\"" );
+            fprintf( f, "\"\n" );
+        }
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
     for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
@@ -1224,6 +1230,27 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
     return create_key( base, &name, NULL, flags, 0, 0, modif, &res );
 }
 
+/* load a key option from the input file */
+static int load_key_option( struct key *key, const char *buffer, struct file_load_info *info )
+{
+    const char *p;
+    data_size_t len;
+
+    if (!strncmp( buffer, "#class=", 7 ))
+    {
+        p = buffer + 7;
+        if (*p++ != '"') return 0;
+        if (!get_file_tmp_space( info, strlen(p) * sizeof(WCHAR) )) return 0;
+        len = info->tmplen;
+        if (parse_strW( info->tmp, &len, p, '\"' ) == -1) return 0;
+        free( key->class );
+        if (!(key->class = memdup( info->tmp, len ))) len = 0;
+        key->classlen = len;
+    }
+    /* ignore unknown options */
+    return 1;
+}
+
 /* parse a comma-separated list of hex digits */
 static int parse_hex( unsigned char *dest, data_size_t *len, const char *buffer )
 {
@@ -1420,7 +1447,9 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
             if (subkey) load_value( subkey, p, &info );
             else file_read_error( "Value without key", &info );
             break;
-        case '#':   /* comment */
+        case '#':   /* option */
+            if (subkey) load_key_option( subkey, p, &info );
+            break;
         case ';':   /* comment */
         case 0:     /* empty line */
             break;
