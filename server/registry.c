@@ -248,7 +248,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
     if (key->flags & KEY_VOLATILE) return;
     /* save key if it has either some values or no subkeys, or needs special options */
     /* keys with no values but subkeys are saved implicitly by saving the subkeys */
-    if ((key->last_value >= 0) || (key->last_subkey == -1) || key->class)
+    if ((key->last_value >= 0) || (key->last_subkey == -1) || key->class || (key->flags & KEY_SYMLINK))
     {
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
@@ -259,6 +259,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
             dump_strW( key->class, key->classlen / sizeof(WCHAR), f, "\"\"" );
             fprintf( f, "\"\n" );
         }
+        if (key->flags & KEY_SYMLINK) fputs( "#link\n", f );
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
     for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
@@ -723,8 +724,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
             return NULL;
         }
     }
-    /* FIXME: no saving of symlinks yet */
-    if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK | KEY_VOLATILE;
+    if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
 
  done:
     if (debug_level > 1) dump_operation( key, NULL, "Create" );
@@ -1247,6 +1247,7 @@ static int load_key_option( struct key *key, const char *buffer, struct file_loa
         if (!(key->class = memdup( info->tmp, len ))) len = 0;
         key->classlen = len;
     }
+    if (!strncmp( buffer, "#link", 5 )) key->flags |= KEY_SYMLINK;
     /* ignore unknown options */
     return 1;
 }
