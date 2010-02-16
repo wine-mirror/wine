@@ -9,6 +9,7 @@ RC_SRCS = \
 	jscript_De.rc \
 	jscript_En.rc \
 	jscript_Fr.rc \
+	jscript_Ko.rc \
 	jscript_Lt.rc \
 	jscript_Nl.rc \
 	jscript_Pt.rc \
