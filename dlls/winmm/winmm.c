@@ -1577,7 +1577,6 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	lpMidiHdr->lpNext = 0;
 	lpMidiHdr->dwFlags |= MHDR_INQUEUE;
 	lpMidiHdr->dwFlags &= ~MHDR_DONE;
-	lpMidiHdr->dwOffset = 0;
 
 	break;
     default:
@@ -1598,8 +1597,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
     DWORD		dwToGo;
     DWORD		dwCurrTC;
     LPMIDIHDR		lpMidiHdr;
-    LPMIDIEVENT 	me;
-    LPBYTE		lpData = 0;
+    DWORD		dwOffset;
 
     TRACE("(%p)!\n", lpMidiStrm);
 
@@ -1618,23 +1616,21 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
     /* midiStreamOpen is waiting for ack */
     SetEvent(lpMidiStrm->hEvent);
 
-    for (;;) {
-	lpMidiHdr = lpMidiStrm->lpMidiHdr;
-	if (!lpMidiHdr) {
-	    /* for first message, block until one arrives, then process all that are available */
-	    GetMessageA(&msg, 0, 0, 0);
-	    do {
-		if (!MMSYSTEM_MidiStream_MessageHandler(lpMidiStrm, lpwm, &msg))
-		    goto the_end;
-	    } while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE));
-	    lpData = 0;
-	    continue;
-	}
+start_header:
+    lpMidiHdr = lpMidiStrm->lpMidiHdr;
+    if (!lpMidiHdr) {
+	/* for first message, block until one arrives, then process all that are available */
+	GetMessageA(&msg, 0, 0, 0);
+	do {
+	    if (!MMSYSTEM_MidiStream_MessageHandler(lpMidiStrm, lpwm, &msg))
+		goto the_end;
+	} while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE));
+	goto start_header;
+    }
 
-	if (!lpData)
-	    lpData = (LPBYTE)lpMidiHdr->lpData;
-
-	me = (LPMIDIEVENT)(lpData + lpMidiHdr->dwOffset);
+    dwOffset = 0;
+    while (dwOffset + offsetof(MIDIEVENT,dwParms) <= lpMidiHdr->dwBytesRecorded) {
+	LPMIDIEVENT me = (LPMIDIEVENT)(lpMidiHdr->lpData+dwOffset);
 
 	/* do we have to wait ? */
 	if (me->dwDeltaTime) {
@@ -1650,8 +1646,11 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 		    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
 			if (!MMSYSTEM_MidiStream_MessageHandler(lpMidiStrm, lpwm, &msg))
 			    goto the_end;
+			/* is lpMidiHdr still current? */
+			if (lpMidiHdr != lpMidiStrm->lpMidiHdr) {
+			    goto start_header;
+			}
 		    }
-		    lpData = 0;
 		} else {
 		    /* timeout, so me->dwDeltaTime is elapsed, can break the while loop */
 		    break;
@@ -1681,25 +1680,26 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    break;
 	}
 	if (me->dwEvent & MEVT_F_CALLBACK) {
+	    /* native fills dwOffset regardless of the cbMidiHdr size argument to midiStreamOut */
+	    lpMidiHdr->dwOffset = dwOffset;
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_POSITIONCB,
 			   lpwm->mod.dwInstance, (LPARAM)lpMidiHdr, 0L);
 	}
-	lpMidiHdr->dwOffset += sizeof(MIDIEVENT) - sizeof(me->dwParms);
+	dwOffset += offsetof(MIDIEVENT,dwParms);
 	if (me->dwEvent & MEVT_F_LONG)
-	    lpMidiHdr->dwOffset += (MEVT_EVENTPARM(me->dwEvent) + 3) & ~3;
-	if (lpMidiHdr->dwOffset >= lpMidiHdr->dwBytesRecorded) {
-	    /* done with this header */
-	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-
-	    lpMidiStrm->lpMidiHdr = lpMidiHdr->lpNext;
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
-			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
-	    lpData = 0;
-	}
+	    dwOffset += (MEVT_EVENTPARM(me->dwEvent) + 3) & ~3;
     }
+    /* done with this header */
+    lpMidiStrm->lpMidiHdr = lpMidiHdr->lpNext;
+    lpMidiHdr->dwFlags |= MHDR_DONE;
+    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+
+    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+		   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+		   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
+    goto start_header;
+
 the_end:
     TRACE("End of thread\n");
     return 0;
