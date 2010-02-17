@@ -1022,8 +1022,8 @@ SampleGrabber_Out_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE 
         IMemInputPin_Release(This->sg->memOutput);
         This->sg->memOutput = NULL;
     }
-    if (SUCCEEDED(IPin_QueryInterface(receiver,&IID_IMemInputPin,(void **)&(This->sg->memOutput))))
-        TRACE("pair IMemInputPin %p\n", This->sg->memOutput);
+    IPin_QueryInterface(receiver,&IID_IMemInputPin,(void **)&(This->sg->memOutput));
+    TRACE("(%p) Accepted IPin %p, IMemInputPin %p\n", This, receiver, This->sg->memOutput);
     return S_OK;
 }
 
@@ -1066,6 +1066,7 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
             This->sg->mtype.pbFormat = NULL;
     }
     This->pair = connector;
+    TRACE("(%p) Accepted IPin %p\n", This, connector);
     return S_OK;
 }
 
