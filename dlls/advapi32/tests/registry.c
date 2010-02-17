@@ -39,6 +39,7 @@ static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDW
 static DWORD (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
+static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
 
 
 /* Debugging functions from wine/libs/wine/debug.c */
@@ -125,6 +126,7 @@ static void InitFunctionPtrs(void)
     ADVAPI32_GET_PROC(RegDeleteTreeA);
 
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
+    pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pNtDeleteKey = (void *)GetProcAddress( hntdll, "NtDeleteKey" );
 }
 
@@ -1633,6 +1635,7 @@ static void test_symlinks(void)
     RegCloseKey( link );
 
     HeapFree( GetProcessHeap(), 0, target );
+    pRtlFreeUnicodeString( &target_str );
 }
 
 START_TEST(registry)
