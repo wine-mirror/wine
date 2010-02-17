@@ -2277,7 +2277,12 @@ static void test_GetPrinter(void)
         ret = GetPrinter(hprn, level, NULL, 0, &needed);
         ok(!ret, "level %d: GetPrinter should fail\n", level);
         /* Not all levels are supported on all Windows-Versions */
-        if(GetLastError() == ERROR_INVALID_LEVEL) continue;
+        if (GetLastError() == ERROR_INVALID_LEVEL ||
+            GetLastError() == ERROR_NOT_SUPPORTED /* Win9x/WinMe */)
+        {
+            skip("Level %d not supported\n", level);
+            continue;
+        }
         ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %d\n", GetLastError());
         ok(needed > 0,"not expected needed buffer size %d\n", needed);
 
