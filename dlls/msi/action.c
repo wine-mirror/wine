@@ -4490,32 +4490,33 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPCWSTR compgroupid=NULL;
-    LPCWSTR feature=NULL;
-    LPCWSTR text = NULL;
-    LPCWSTR qualifier = NULL;
-    LPCWSTR component = NULL;
-    LPWSTR advertise = NULL;
-    LPWSTR output = NULL;
+    LPCWSTR compgroupid, component, feature, qualifier, text;
+    LPWSTR advertise = NULL, output = NULL;
     HKEY hkey;
-    UINT rc = ERROR_SUCCESS;
+    UINT rc;
     MSICOMPONENT *comp;
-    DWORD sz = 0;
+    MSIFEATURE *feat;
+    DWORD sz;
     MSIRECORD *uirow;
 
-    component = MSI_RecordGetString(rec,3);
-    comp = get_loaded_component(package,component);
-    if (!comp)
+    feature = MSI_RecordGetString(rec, 5);
+    feat = get_loaded_feature(package, feature);
+    if (!feat)
         return ERROR_SUCCESS;
 
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL &&
-        comp->ActionRequest != INSTALLSTATE_SOURCE &&
-        comp->ActionRequest != INSTALLSTATE_ADVERTISED)
+    if (feat->ActionRequest != INSTALLSTATE_LOCAL &&
+        feat->ActionRequest != INSTALLSTATE_SOURCE &&
+        feat->ActionRequest != INSTALLSTATE_ADVERTISED)
     {
-        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
+        TRACE("Feature %s not scheduled for installation\n", debugstr_w(feature));
+        feat->Action = feat->Installed;
         return ERROR_SUCCESS;
     }
+
+    component = MSI_RecordGetString(rec, 3);
+    comp = get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
 
     compgroupid = MSI_RecordGetString(rec,1);
     qualifier = MSI_RecordGetString(rec,2);
@@ -4525,8 +4526,6 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
         goto end;
     
     text = MSI_RecordGetString(rec,4);
-    feature = MSI_RecordGetString(rec,5);
-  
     advertise = create_component_advertise_string(package, comp, feature);
 
     sz = strlenW(advertise);
