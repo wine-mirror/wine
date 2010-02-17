@@ -2166,7 +2166,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     }
 
     /* mono -> color */
-    if(physDevSrc->depth == 1)
+    if(physDevSrc->depth == 1 && physDevDst->depth > 1)
     {
         XRenderColor col;
         get_xrender_color(dst_format, physDevDst->textPixel, &col);
@@ -2189,7 +2189,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         wine_tsx11_unlock();
         LeaveCriticalSection( &xrender_cs );
     }
-    else /* color -> color but with different depths */
+    else /* color -> color (can be at different depths) or mono -> mono */
     {
         src_pict = get_xrender_picture_source(physDevSrc);
 
