@@ -552,7 +552,9 @@ HRESULT WINAPI RegisterTypeLib(
         LPOLESTR doc;
 
         /* Set the human-readable name of the typelib */
-        if (SUCCEEDED(ITypeLib_GetDocumentation(ptlib, -1, NULL, &doc, NULL, NULL)))
+        if (FAILED(ITypeLib_GetDocumentation(ptlib, -1, NULL, &doc, NULL, NULL)))
+            res = E_FAIL;
+        else if (doc)
         {
             if (RegSetValueExW(key, NULL, 0, REG_SZ,
                 (BYTE *)doc, (lstrlenW(doc)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS)
@@ -560,8 +562,6 @@ HRESULT WINAPI RegisterTypeLib(
 
             SysFreeString(doc);
         }
-        else
-            res = E_FAIL;
 
         /* Make up the name of the typelib path subkey */
         if (!get_lcid_subkey( attr->lcid, attr->syskind, tmp )) res = E_FAIL;

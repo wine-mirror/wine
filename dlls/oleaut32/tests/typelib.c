@@ -968,6 +968,33 @@ if(use_midl_tlb) {
     return;
 }
 
+static void test_CreateTypeLib(void) {
+    char filename[MAX_PATH];
+    WCHAR filenameW[MAX_PATH];
+    ICreateTypeLib2 *createtl;
+    ITypeLib *tl;
+    HRESULT hres;
+
+    trace("CreateTypeLib tests\n");
+
+    GetTempFileNameA(".", "tlb", 0, filename);
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, MAX_PATH);
+
+    hres = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ICreateTypeLib2_Release(createtl);
+
+    hres = LoadTypeLib(filenameW,  &tl);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ITypeLib_Release(tl);
+
+    DeleteFileA(filename);
+}
+
 #if 0       /* use this to generate more tests */
 
 #define OLE_CHECK(x) { HRESULT hr = x; if (FAILED(hr)) { printf(#x "failed - %x\n", hr); return; } }
@@ -1480,6 +1507,7 @@ START_TEST(typelib)
     test_TypeInfo();
     test_QueryPathOfRegTypeLib();
     test_inheritance();
+    test_CreateTypeLib();
 
     if ((filename = create_test_typelib()))
     {
