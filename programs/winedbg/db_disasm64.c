@@ -1495,11 +1495,11 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		    break;
 
 		case S:
-		    db_printf("%s", db_seg_reg[f_reg(rex, regmodrm)]);
+		    db_printf("%s", db_seg_reg[f_reg(0, regmodrm)]);
 		    break;
 
 		case Si:
-		    db_printf("%s", db_seg_reg[f_reg(rex, inst)]);
+		    db_printf("%s", db_seg_reg[f_reg(0, inst)]);
 		    break;
 
 		case A:
