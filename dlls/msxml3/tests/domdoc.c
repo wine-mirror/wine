@@ -1826,6 +1826,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMComment_Release(comment);
+    SysFreeString(str);
 
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, _bstr_("blah"), NULL, &node );
@@ -1840,6 +1841,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMComment_Release(comment);
+    SysFreeString(str);
 
     /* NODE_TEXT */
     V_VT(&var) = VT_I1;
@@ -1857,7 +1859,7 @@ static void test_create(void)
     r = IXMLDOMText_get_data(text, &str);
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
-    IXMLDOMText_Release(comment);
+    IXMLDOMText_Release(text);
     SysFreeString(str);
 
     node = (IXMLDOMNode*)0x1;
@@ -1873,6 +1875,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMText_Release(text);
+    SysFreeString(str);
 
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, _bstr_("blah"), NULL, &node );
@@ -1887,6 +1890,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMText_Release(text);
+    SysFreeString(str);
 
     /* NODE_CDATA_SECTION */
     V_VT(&var) = VT_I1;
@@ -1920,12 +1924,13 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMCDATASection_Release(cdata);
+    SysFreeString(str);
 
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, _bstr_("blah"), NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
 
-    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMCDATASection, (void**)&text);
+    r = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMCDATASection, (void**)&cdata);
     ok( r == S_OK, "returns %08x\n", r );
     IXMLDOMNode_Release(node);
 
@@ -1934,11 +1939,11 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty comment, %p\n", str);
     IXMLDOMCDATASection_Release(cdata);
+    SysFreeString(str);
 
     /* NODE_ATTRIBUTE */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ATTRIBUTE;
-    str = SysAllocString( szlc );
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
     ok( r == E_FAIL, "returns %08x\n", r );
@@ -1957,6 +1962,7 @@ static void test_create(void)
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+    SysFreeString(str);
 
     /* NODE_PROCESSING_INSTRUCTION */
     V_VT(&var) = VT_I1;
@@ -1981,7 +1987,6 @@ static void test_create(void)
     /* NODE_ENTITY_REFERENCE */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ENTITY_REFERENCE;
-    str = SysAllocString( szlc );
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
     ok( r == E_FAIL, "returns %08x\n", r );
@@ -1997,7 +2002,6 @@ static void test_create(void)
     /* NODE_ELEMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_ELEMENT;
-    str = SysAllocString( szlc );
     node = (IXMLDOMNode*)0x1;
     r = IXMLDOMDocument_createNode( doc, var, NULL, NULL, &node );
     ok( r == E_FAIL, "returns %08x\n", r );
@@ -5263,7 +5267,7 @@ static void test_put_nodeValue(void)
 
     V_VT(&data) = VT_BSTR;
     V_BSTR(&data) = _bstr_("one two three");
-    hr = IXMLDOMEntityReference_put_nodeValue(node, data);
+    hr = IXMLDOMEntityReference_put_nodeValue(entityref, data);
     ok(hr == E_FAIL, "ret %08x\n", hr );
 
     hr = IXMLDOMEntityReference_QueryInterface(entityref, &IID_IXMLDOMNode, (void**)&node);
