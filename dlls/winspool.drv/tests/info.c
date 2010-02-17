@@ -2275,6 +2275,13 @@ static void test_GetPrinter(void)
         SetLastError(0xdeadbeef);
         needed = (DWORD)-1;
         ret = GetPrinter(hprn, level, NULL, 0, &needed);
+        if (ret)
+        {
+            win_skip("Level %d is not supported on Win9x/WinMe\n", level);
+            ok(GetLastError() == ERROR_SUCCESS, "wrong error %d\n", GetLastError());
+            ok(needed == 0,"Expected 0, got %d\n", needed);
+            continue;
+        }
         ok(!ret, "level %d: GetPrinter should fail\n", level);
         /* Not all levels are supported on all Windows-Versions */
         if (GetLastError() == ERROR_INVALID_LEVEL ||
