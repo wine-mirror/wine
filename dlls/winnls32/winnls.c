@@ -39,17 +39,17 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 /***********************************************************************
- *		WINNLSGetEnableStatus (WINNLS32.2)
+ *		WINNLS32GetEnableStatus (WINNLS32.2)
  */
-BOOL WINAPI WINNLSGetEnableStatus(HWND hWnd)
+BOOL WINAPI WINNLS32GetEnableStatus(HWND hWnd)
 {
     return FALSE;
 }
 
 /***********************************************************************
- *		WINNLSEnableIME (WINNLS32.1)
+ *		WINNLS32EnableIME (WINNLS32.1)
  */
-BOOL WINAPI WINNLSEnableIME(HWND hWnd, BOOL fEnable)
+BOOL WINAPI WINNLS32EnableIME(HWND hWnd, BOOL fEnable)
 {
     /* fake return of previous status. is this what this function should do ? */
     return !fEnable;

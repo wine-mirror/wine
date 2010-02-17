@@ -24,12 +24,15 @@
 #include "wownt32.h"
 #include "wine/winuser16.h"
 
+BOOL WINAPI WINNLS32EnableIME(HWND hWnd, BOOL fEnable);
+BOOL WINAPI WINNLS32GetEnableStatus(HWND hWnd);
+
 /***********************************************************************
  *		WINNLSEnableIME (WINNLS.16)
  */
 BOOL WINAPI WINNLSEnableIME16( HWND16 hwnd, BOOL enable )
 {
-    return WINNLSEnableIME( HWND_32(hwnd), enable );
+    return WINNLS32EnableIME( HWND_32(hwnd), enable );
 }
 
 /***********************************************************************
@@ -37,5 +40,5 @@ BOOL WINAPI WINNLSEnableIME16( HWND16 hwnd, BOOL enable )
  */
 BOOL WINAPI WINNLSGetEnableStatus16( HWND16 hwnd )
 {
-    return WINNLSGetEnableStatus( HWND_32(hwnd) );
+    return WINNLS32GetEnableStatus( HWND_32(hwnd) );
 }
