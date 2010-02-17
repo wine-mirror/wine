@@ -11,6 +11,7 @@ C_SRCS = \
 	context.c \
 	documentmgr.c \
 	inputprocessor.c \
+	langbarmgr.c \
 	msctf.c \
 	range.c \
 	regsvr.c \

@@ -87,6 +87,7 @@ static const struct {
     {&CLSID_TF_ThreadMgr, ThreadMgr_Constructor},
     {&CLSID_TF_InputProcessorProfiles, InputProcessorProfiles_Constructor},
     {&CLSID_TF_CategoryMgr, CategoryMgr_Constructor},
+    {&CLSID_TF_LangBarMgr, LangBarMgr_Constructor},
     {NULL, NULL}
 };
 
@@ -616,4 +617,13 @@ HRESULT WINAPI TF_InvalidAssemblyListCacheIfExist(void)
 {
     FIXME("Stub\n");
     return S_OK;
+}
+
+/***********************************************************************
+ *              TF_CreateLangBarMgr (MSCTF.@)
+ */
+HRESULT WINAPI TF_CreateLangBarMgr(ITfLangBarMgr **pppbm)
+{
+    TRACE("\n");
+    return LangBarMgr_Constructor(NULL,(IUnknown**)pppbm);
 }

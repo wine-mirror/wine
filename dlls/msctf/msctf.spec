@@ -13,7 +13,7 @@
 @ stub TF_CreateDisplayAttributeMgr
 @ stdcall TF_CreateInputProcessorProfiles(ptr)
 @ stub TF_CreateLangBarItemMgr
-@ stub TF_CreateLangBarMgr
+@ stdcall TF_CreateLangBarMgr(ptr)
 @ stdcall TF_CreateThreadMgr(ptr)
 @ stub TF_DllDetachInOther
 @ stub TF_GetGlobalCompartment
