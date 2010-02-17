@@ -554,7 +554,8 @@ static void test_heap_checks( DWORD flags )
             ok( p2 == NULL, "HeapReAlloc succeeded\n" );
 
             ret = HeapFree( GetProcessHeap(), 0, p );
-            ok( !ret, "HeapFree succeeded\n" );
+            ok( !ret || broken(sizeof(void*) == 8), /* not caught on xp64 */
+                "HeapFree succeeded\n" );
         }
 
         p[17] = old;
