@@ -723,6 +723,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
             return FALSE;
 
           pRun = ME_FindItemBack(pPara, diRun);
+          pPara = pPara->member.para.prev_para;
         }
         break;
       }
