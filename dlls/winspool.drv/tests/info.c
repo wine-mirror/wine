@@ -2448,7 +2448,9 @@ static void test_GetPrinterDriver(void)
             {
                 ret = GetPrinterDriver(hprn, NULL, level, buf, needed - 2, &filled);
                 ok(!ret, "level %d: GetPrinterDriver succeeded with less buffer than it should\n", level);
-                ok(di_2->pDataFile == NULL, "Even on failure, GetPrinterDriver clears the buffer to zeros\n");
+                ok(di_2->pDataFile == NULL ||
+                   broken(di_2->pDataFile != NULL), /* Win9x/WinMe */
+                   "Even on failure, GetPrinterDriver clears the buffer to zeros\n");
             }
         }
 
