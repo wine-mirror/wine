@@ -874,13 +874,11 @@ static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float r
 
 }
 
-static void draw_preview(HWND hEditorWnd, FORMATRANGE* lpFr, int bmWidth, int bmHeight, RECT* paper, int page)
+static void draw_preview(HWND hEditorWnd, FORMATRANGE* lpFr, RECT* paper, int page)
 {
-    HBITMAP hBitmapCapture = CreateCompatibleBitmap(lpFr->hdc, bmWidth, bmHeight);
     int bottom;
 
     char_from_pagenum(hEditorWnd, lpFr, page);
-    SelectObject(lpFr->hdc, hBitmapCapture);
     FillRect(lpFr->hdc, paper, GetStockObject(WHITE_BRUSH));
     bottom = lpFr->rc.bottom;
     SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)lpFr);
@@ -926,6 +924,7 @@ LRESULT print_preview(HWND hwndPreview)
         GETTEXTLENGTHEX gt;
         RECT paper;
         HWND hEditorWnd = GetDlgItem(hMainWnd, IDC_EDITOR);
+        HBITMAP hBitmapCapture;
 
         preview.hdc = CreateCompatibleDC(hdc);
 
@@ -947,12 +946,16 @@ LRESULT print_preview(HWND hwndPreview)
         paper.bottom = preview.bmSize.cy;
 
         fr.hdc = preview.hdc;
-        draw_preview(hEditorWnd, &fr, preview.bmSize.cx, preview.bmSize.cy, &paper, preview.page);
+        hBitmapCapture = CreateCompatibleBitmap(hdc, preview.bmSize.cx, preview.bmSize.cy);
+        SelectObject(fr.hdc, hBitmapCapture);
+        draw_preview(hEditorWnd, &fr, &paper, preview.page);
 
         if(preview.hdc2)
         {
             fr.hdc = preview.hdc2;
-            draw_preview(hEditorWnd, &fr, preview.bmSize.cx, preview.bmSize.cy, &fr.rcPage, preview.page + 1);
+            hBitmapCapture = CreateCompatibleBitmap(hdc, preview.bmSize.cx, preview.bmSize.cy);
+            SelectObject(fr.hdc, hBitmapCapture);
+            draw_preview(hEditorWnd, &fr, &fr.rcPage, preview.page + 1);
         }
 
         update_preview_buttons(hMainWnd);
