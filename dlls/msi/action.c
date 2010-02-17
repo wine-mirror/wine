@@ -4583,6 +4583,80 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
     return rc;
 }
 
+static UINT ITERATE_UnpublishComponent( MSIRECORD *rec, LPVOID param )
+{
+    static const WCHAR szInstallerComponents[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'I','n','s','t','a','l','l','e','r','\\',
+        'C','o','m','p','o','n','e','n','t','s','\\',0};
+
+    MSIPACKAGE *package = param;
+    LPCWSTR compgroupid, component, feature, qualifier;
+    MSICOMPONENT *comp;
+    MSIFEATURE *feat;
+    MSIRECORD *uirow;
+    WCHAR squashed[GUID_SIZE], keypath[MAX_PATH];
+    LONG res;
+
+    feature = MSI_RecordGetString( rec, 5 );
+    feat = get_loaded_feature( package, feature );
+    if (!feat)
+        return ERROR_SUCCESS;
+
+    if (feat->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Feature %s not scheduled for removal\n", debugstr_w(feature));
+        feat->Action = feat->Installed;
+        return ERROR_SUCCESS;
+    }
+
+    component = MSI_RecordGetString( rec, 3 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    compgroupid = MSI_RecordGetString( rec, 1 );
+    qualifier = MSI_RecordGetString( rec, 2 );
+
+    squash_guid( compgroupid, squashed );
+    strcpyW( keypath, szInstallerComponents );
+    strcatW( keypath, squashed );
+
+    res = RegDeleteKeyW( HKEY_CURRENT_USER, keypath );
+    if (res != ERROR_SUCCESS)
+    {
+        WARN("Unable to delete component key %d\n", res);
+    }
+
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, compgroupid );
+    MSI_RecordSetStringW( uirow, 2, qualifier );
+    ui_actiondata( package, szUnpublishComponents, uirow );
+    msiobj_release( &uirow->hdr );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','P','u','b','l','i','s','h',
+         'C','o','m','p','o','n','e','n','t','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_UnpublishComponent, package );
+    msiobj_release( &view->hdr );
+
+    return rc;
+}
+
 static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -6548,12 +6622,6 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'D','i','r','e','c','t','o','r','y',0 };
     return msi_unimplemented_action_stub( package, "SetODBCFolders", table );
-}
-
-static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t',0 };
-    return msi_unimplemented_action_stub( package, "UnpublishComponents", table );
 }
 
 static UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
