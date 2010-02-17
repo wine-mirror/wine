@@ -88,7 +88,10 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
         }
     }
     if (status_ok) info->index++;
-    if (status & WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS) SetEvent( info->wait );
+    if (status & (WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING))
+    {
+        SetEvent( info->wait );
+    }
 }
 
 static const struct notification cache_test[] =
@@ -380,6 +383,8 @@ static void test_async( void )
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
+
+    WaitForSingleObject( info.wait, INFINITE );
     CloseHandle( info.wait );
 }
 
