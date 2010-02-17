@@ -55,7 +55,7 @@ static HRESULT WINAPI domcdata_QueryInterface(
     void** ppvObject )
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMCDATASection ) ||
          IsEqualGUID( riid, &IID_IXMLDOMCharacterData) ||
@@ -502,7 +502,7 @@ static HRESULT WINAPI domcdata_put_data(
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     VARIANT val;
 
-    TRACE("%p %s\n", This, debugstr_w(data) );
+    TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
 
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
@@ -518,7 +518,7 @@ static HRESULT WINAPI domcdata_get_length(
     HRESULT hr;
     BSTR data;
 
-    TRACE("%p %p\n", This, len);
+    TRACE("(%p)->(%p)\n", This, len);
 
     if(!len)
         return E_INVALIDARG;
@@ -541,7 +541,7 @@ static HRESULT WINAPI domcdata_substringData(
     HRESULT hr;
     BSTR data;
 
-    TRACE("%p %d %d %p\n", This, offset, count, p);
+    TRACE("(%p)->(%d %d %p)\n", This, offset, count, p);
 
     if(!p)
         return E_INVALIDARG;
@@ -583,7 +583,7 @@ static HRESULT WINAPI domcdata_appendData(
     BSTR data;
     LONG p_len;
 
-    TRACE("%p %p\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     /* Nothing to do if NULL or an Empty string passed in. */
     if((p_len = SysStringLen(p)) == 0) return S_OK;
@@ -616,7 +616,7 @@ static HRESULT WINAPI domcdata_insertData(
     BSTR data;
     LONG p_len;
 
-    TRACE("%p %d %s\n", This, offset, debugstr_w(p));
+    TRACE("(%p)->(%d %s)\n", This, offset, debugstr_w(p));
 
     /* If have a NULL or empty string, don't do anything. */
     if((p_len = SysStringLen(p)) == 0)
@@ -659,11 +659,12 @@ static HRESULT WINAPI domcdata_deleteData(
     IXMLDOMCDATASection *iface,
     LONG offset, LONG count)
 {
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     HRESULT hr;
     LONG len = -1;
     BSTR str;
 
-    TRACE("%p %d %d\n", iface, offset, count);
+    TRACE("(%p)->(%d %d)\n", This, offset, count);
 
     hr = IXMLDOMCDATASection_get_length(iface, &len);
     if(hr != S_OK) return hr;
@@ -709,7 +710,7 @@ static HRESULT WINAPI domcdata_replaceData(
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     HRESULT hr;
 
-    TRACE("%p %d %d %s\n", This, offset, count, debugstr_w(p));
+    TRACE("(%p)->(%d %d %s)\n", This, offset, count, debugstr_w(p));
 
     hr = IXMLDOMCDATASection_deleteData(iface, offset, count);
 
@@ -723,7 +724,8 @@ static HRESULT WINAPI domcdata_splitText(
     IXMLDOMCDATASection *iface,
     LONG offset, IXMLDOMText **txtNode)
 {
-    FIXME("\n");
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    FIXME("(%p)->(%d %p)\n", This, offset, txtNode);
     return E_NOTIMPL;
 }
 

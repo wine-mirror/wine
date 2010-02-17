@@ -55,7 +55,7 @@ static HRESULT WINAPI domcomment_QueryInterface(
     void** ppvObject )
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMComment ) ||
          IsEqualGUID( riid, &IID_IXMLDOMCharacterData) ||
@@ -477,6 +477,8 @@ static HRESULT WINAPI domcomment_get_data(
     HRESULT hr;
     VARIANT vRet;
 
+    TRACE("(%p)->(%p)\n", This, p);
+
     if(!p)
         return E_INVALIDARG;
 
@@ -496,7 +498,7 @@ static HRESULT WINAPI domcomment_put_data(
     domcomment *This = impl_from_IXMLDOMComment( iface );
     VARIANT val;
 
-    TRACE("%p %s\n", This, debugstr_w(data) );
+    TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
 
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
@@ -512,7 +514,7 @@ static HRESULT WINAPI domcomment_get_length(
     HRESULT hr;
     BSTR data;
 
-    TRACE("%p %p\n", This, len);
+    TRACE("(%p)->(%p)\n", This, len);
 
     if(!len)
         return E_INVALIDARG;
@@ -535,7 +537,7 @@ static HRESULT WINAPI domcomment_substringData(
     HRESULT hr;
     BSTR data;
 
-    TRACE("%p %d %d %p\n", This, offset, count, p);
+    TRACE("(%p)->(%d %d %p)\n", This, offset, count, p);
 
     if(!p)
         return E_INVALIDARG;
@@ -577,7 +579,7 @@ static HRESULT WINAPI domcomment_appendData(
     BSTR data;
     LONG p_len;
 
-    TRACE("%p %s\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     /* Nothing to do if NULL or an Empty string passed in. */
     if((p_len = SysStringLen(p)) == 0) return S_OK;
@@ -610,7 +612,7 @@ static HRESULT WINAPI domcomment_insertData(
     BSTR data;
     LONG p_len;
 
-    TRACE("%p %d %s\n", This, offset, debugstr_w(p));
+    TRACE("(%p)->(%d %s)\n", This, offset, debugstr_w(p));
 
     /* If have a NULL or empty string, don't do anything. */
     if((p_len = SysStringLen(p)) == 0)
@@ -657,7 +659,7 @@ static HRESULT WINAPI domcomment_deleteData(
     LONG len = -1;
     BSTR str;
 
-    TRACE("%p %d %d\n", iface, offset, count);
+    TRACE("(%p)->(%d %d)\n", iface, offset, count);
 
     hr = IXMLDOMComment_get_length(iface, &len);
     if(hr != S_OK) return hr;
@@ -703,7 +705,7 @@ static HRESULT WINAPI domcomment_replaceData(
     domcomment *This = impl_from_IXMLDOMComment( iface );
     HRESULT hr;
 
-    TRACE("%p %d %d %s\n", This, offset, count, debugstr_w(p));
+    TRACE("(%p)->(%d %d %s)\n", This, offset, count, debugstr_w(p));
 
     hr = IXMLDOMComment_deleteData(iface, offset, count);
 
