@@ -672,7 +672,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     dlgInfo->hMenu       = hMenu;
     dlgInfo->xBaseUnit   = xBaseUnit;
     dlgInfo->yBaseUnit   = yBaseUnit;
-    dlgInfo->idResult    = IDOK;
     dlgInfo->flags       = flags;
 
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
