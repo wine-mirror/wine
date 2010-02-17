@@ -101,7 +101,11 @@ static int read_xx_header( HFILE lzfd )
     if ( sizeof(mzh) != LZRead( lzfd, (LPSTR)&mzh, sizeof(mzh) ) )
         return 0;
     if ( mzh.e_magic != IMAGE_DOS_SIGNATURE )
+    {
+        if (!memcmp( &mzh, "\177ELF", 4 )) return 1;  /* ELF */
+        if (*(UINT *)&mzh == 0xfeedface || *(UINT *)&mzh == 0xcefaedfe) return 1;  /* Mach-O */
         return 0;
+    }
 
     LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
     if ( 2 != LZRead( lzfd, magic, 2 ) )

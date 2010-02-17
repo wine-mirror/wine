@@ -238,7 +238,7 @@ typedef struct
  */
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
-    DWORD len, offset, magic = 0;
+    DWORD len, offset, magic = 1;
     HFILE lzfd;
     HMODULE hModule;
     OFSTRUCT ofs;
@@ -263,7 +263,8 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
         magic = find_version_resource( lzfd, &len, &offset );
         LZClose( lzfd );
     }
-    else if ((hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
+
+    if ((magic == 1) && (hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
         HRSRC hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
                                      MAKEINTRESOURCEW(VS_FILE_INFO) );
@@ -273,11 +274,6 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
             len = SizeofResource( hModule, hRsrc );
         }
         FreeLibrary( hModule );
-    }
-    else
-    {
-        SetLastError( ofs.nErrCode );
-        return 0;
     }
 
     switch (magic)
@@ -306,7 +302,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
         return (len * 2) + 4;
 
     default:
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        SetLastError( lzfd == HFILE_ERROR ? ofs.nErrCode : ERROR_RESOURCE_DATA_NOT_FOUND );
         return 0;
     }
 }
@@ -340,7 +336,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     static const char signature[4] = "FE2X";
-    DWORD len, offset, magic = 0;
+    DWORD len, offset, magic = 1;
     HFILE lzfd;
     OFSTRUCT ofs;
     HMODULE hModule;
@@ -357,14 +353,15 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
 
     if ((lzfd = LZOpenFileW( (LPWSTR)filename, &ofs, OF_READ )) != HFILE_ERROR)
     {
-        if ((magic = find_version_resource( lzfd, &len, &offset )))
+        if ((magic = find_version_resource( lzfd, &len, &offset )) > 1)
         {
             LZSeek( lzfd, offset, 0 /* SEEK_SET */ );
             len = LZRead( lzfd, data, min( len, datasize ) );
         }
         LZClose( lzfd );
     }
-    else if ((hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
+
+    if ((magic == 1) && (hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
         HRSRC hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
                                      MAKEINTRESOURCEW(VS_FILE_INFO) );
@@ -377,11 +374,6 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
             FreeResource( hMem );
         }
         FreeLibrary( hModule );
-    }
-    else
-    {
-        SetLastError( ofs.nErrCode );
-        return FALSE;
     }
 
     switch (magic)
@@ -407,7 +399,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
         return TRUE;
 
     default:
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        SetLastError( lzfd == HFILE_ERROR ? ofs.nErrCode : ERROR_RESOURCE_DATA_NOT_FOUND );
         return FALSE;
     }
 }
