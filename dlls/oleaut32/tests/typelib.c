@@ -969,9 +969,12 @@ if(use_midl_tlb) {
 }
 
 static void test_CreateTypeLib(void) {
+    static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
+
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *createtl;
+    ICreateTypeInfo *createti;
     ITypeLib *tl;
     HRESULT hres;
 
@@ -982,6 +985,13 @@ static void test_CreateTypeLib(void) {
 
     hres = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ICreateTypeInfo_Release(createti);
+
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    ok(hres == TYPE_E_NAMECONFLICT, "got %08x\n", hres);
 
     hres = ICreateTypeLib2_SaveAllChanges(createtl);
     ok(hres == S_OK, "got %08x\n", hres);

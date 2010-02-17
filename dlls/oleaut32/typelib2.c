@@ -3073,8 +3073,13 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(
 	ICreateTypeInfo **ppCTInfo)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
+    char *name;
 
     TRACE("(%p,%s,%d,%p)\n", iface, debugstr_w(szName), tkind, ppCTInfo);
+
+    ctl2_encode_name(This, szName, &name);
+    if(ctl2_find_name(This, name) != -1)
+        return TYPE_E_NAMECONFLICT;
 
     *ppCTInfo = (ICreateTypeInfo *)ICreateTypeInfo2_Constructor(This, szName, tkind);
 
