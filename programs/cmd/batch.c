@@ -47,35 +47,15 @@ extern DWORD errorlevel;
 
 void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HANDLE pgmHandle) {
 
-#define WCMD_BATCH_EXT_SIZE 5
-
   HANDLE h = INVALID_HANDLE_VALUE;
-  WCHAR string[MAXSTRING];
-  static const WCHAR extension_batch[][WCMD_BATCH_EXT_SIZE] = {{'.','b','a','t','\0'},
-                                                               {'.','c','m','d','\0'}};
-  static const WCHAR extension_exe[WCMD_BATCH_EXT_SIZE] = {'.','e','x','e','\0'};
-  unsigned int  i;
   BATCH_CONTEXT *prev_context;
 
   if (startLabel == NULL) {
-    for(i=0; (i<sizeof(extension_batch)/(WCMD_BATCH_EXT_SIZE * sizeof(WCHAR))) &&
-             (h == INVALID_HANDLE_VALUE); i++) {
-      strcpyW (string, file);
-      CharLowerW (string);
-      if (strstrW (string, extension_batch[i]) == NULL) strcatW (string, extension_batch[i]);
-      h = CreateFileW (string, GENERIC_READ, FILE_SHARE_READ,
-                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    }
+    h = CreateFileW (file, GENERIC_READ, FILE_SHARE_READ,
+                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE) {
-      strcpyW (string, file);
-      CharLowerW (string);
-      if (strstrW (string, extension_exe) == NULL) strcatW (string, extension_exe);
-      if (GetFileAttributesW (string) != INVALID_FILE_ATTRIBUTES) {
-        WCMD_run_program (command, 0);
-      } else {
-        SetLastError (ERROR_FILE_NOT_FOUND);
-        WCMD_print_error ();
-      }
+      SetLastError (ERROR_FILE_NOT_FOUND);
+      WCMD_print_error ();
       return;
     }
   } else {
@@ -91,7 +71,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
   prev_context = context;
   context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
-  context->batchfileW = WCMD_strdupW(string);
+  context->batchfileW = WCMD_strdupW(file);
   context -> command = command;
   memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
   context -> prev_context = prev_context;
