@@ -478,12 +478,12 @@ NTSTATUS WINAPI RtlCopySecurityDescriptor(PSECURITY_DESCRIPTOR pSourceSD, PSECUR
             length = RtlLengthSid( Group );
             RtlCopySid(length, SELF_RELATIVE_FIELD( dst, Group ), Group);
         }
-        if (src->Control & SE_SACL_PRESENT)
+        if ((src->Control & SE_SACL_PRESENT) && src->Sacl)
         {
             Sacl = (PACL)SELF_RELATIVE_FIELD( src, Sacl );
             copy_acl(Sacl->AclSize, (PACL)SELF_RELATIVE_FIELD( dst, Sacl ), Sacl);
         }
-        if (src->Control & SE_DACL_PRESENT)
+        if ((src->Control & SE_DACL_PRESENT) && src->Dacl)
         {
             Dacl = (PACL)SELF_RELATIVE_FIELD( src, Dacl );
             copy_acl(Dacl->AclSize, (PACL)SELF_RELATIVE_FIELD( dst, Dacl ), Dacl);
@@ -604,7 +604,7 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 
 	if ( (*lpbDaclPresent = (SE_DACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ( SE_SELF_RELATIVE & lpsd->Control)
+	  if ((SE_SELF_RELATIVE & lpsd->Control) && lpsd->Dacl)
             *pDacl = (PACL)SELF_RELATIVE_FIELD( lpsd, Dacl );
 	  else
 	    *pDacl = lpsd->Dacl;
@@ -673,7 +673,7 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 
 	if ( (*lpbSaclPresent = (SE_SACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if (SE_SELF_RELATIVE & lpsd->Control)
+	  if ((SE_SELF_RELATIVE & lpsd->Control) && lpsd->Sacl)
             *pSacl = (PACL)SELF_RELATIVE_FIELD( lpsd, Sacl );
 	  else
 	    *pSacl = lpsd->Sacl;
@@ -944,14 +944,14 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
         status = STATUS_BUFFER_TOO_SMALL;
     }
 
-    if (pRel->Control & SE_DACL_PRESENT &&
+    if ((pRel->Control & SE_DACL_PRESENT) && pRel->Dacl &&
         *lpdwDaclSize  < ((PACL)SELF_RELATIVE_FIELD(pRel,Dacl))->AclSize)
     {
         *lpdwDaclSize = ((PACL)SELF_RELATIVE_FIELD(pRel,Dacl))->AclSize;
         status = STATUS_BUFFER_TOO_SMALL;
     }
 
-    if (pRel->Control & SE_SACL_PRESENT &&
+    if ((pRel->Control & SE_SACL_PRESENT) && pRel->Sacl &&
         *lpdwSaclSize  < ((PACL)SELF_RELATIVE_FIELD(pRel,Sacl))->AclSize)
     {
         *lpdwSaclSize = ((PACL)SELF_RELATIVE_FIELD(pRel,Sacl))->AclSize;
@@ -983,7 +983,7 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
     pAbs->Owner = NULL;
     pAbs->Group = NULL;
 
-    if (pRel->Control & SE_SACL_PRESENT)
+    if ((pRel->Control & SE_SACL_PRESENT) && pRel->Sacl)
     {
         PACL pAcl = (PACL)SELF_RELATIVE_FIELD( pRel, Sacl );
 
@@ -991,7 +991,7 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
         pAbs->Sacl = pSacl;
     }
 
-    if (pRel->Control & SE_DACL_PRESENT)
+    if ((pRel->Control & SE_DACL_PRESENT) && pRel->Dacl)
     {
         PACL pAcl = (PACL)SELF_RELATIVE_FIELD( pRel, Dacl );
         memcpy(pDacl, pAcl, pAcl->AclSize);
