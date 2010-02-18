@@ -116,6 +116,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
 
 /*================== Implementation Structures ===================================*/
 
+/* Used for storing cyclic list. Tail address is kept */
+typedef struct tagCyclicList {
+    struct tagCyclicList *next;
+    union {
+        int val;
+        int *data;
+    }u;
+} CyclicList;
+
 enum MSFT_segment_index {
     MSFT_SEG_TYPEINFO = 0,  /* type information */
     MSFT_SEG_IMPORTINFO,    /* import information */
@@ -181,9 +190,7 @@ typedef struct tagICreateTypeInfo2Impl
     ICreateTypeLib2Impl *typelib;
     MSFT_TypeInfoBase *typeinfo;
 
-    INT *typedata;
-    int typedata_allocated;
-    int typedata_length;
+    struct tagCyclicList *typedata; /* tail of cyclic list */
 
     int indices[42];
     int names[42];
@@ -1376,6 +1383,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
+    CyclicList *insert;
     int offset;
     int *typedata;
     int i;
@@ -1387,14 +1395,31 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 /*     return E_OUTOFMEMORY; */
     
     if (!This->typedata) {
-	This->typedata = HeapAlloc(GetProcessHeap(), 0, 0x2000);
-	This->typedata[0] = 0;
+	This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+        if(!This->typedata)
+            return E_OUTOFMEMORY;
+
+        This->typedata->next = This->typedata;
+	This->typedata->u.val = 0;
     }
 
     /* allocate type data space for us */
-    offset = This->typedata[0];
-    This->typedata[0] += 0x18 + (pFuncDesc->cParams * 12);
-    typedata = This->typedata + (offset >> 2) + 1;
+    insert = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+    if(!insert)
+        return E_OUTOFMEMORY;
+    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[6])+sizeof(int[3])*pFuncDesc->cParams);
+    if(!insert->u.data) {
+        HeapFree(GetProcessHeap(), 0, insert);
+        return E_OUTOFMEMORY;
+    }
+
+    insert->next = This->typedata->next;
+    This->typedata->next = insert;
+    This->typedata = insert;
+
+    offset = This->typedata->next->u.val;
+    This->typedata->next->u.val += 0x18 + (pFuncDesc->cParams * 12);
+    typedata = This->typedata->u.data;
 
     /* fill out the basic type information */
     typedata[0] = (0x18 + (pFuncDesc->cParams * 12)) | (index << 16);
@@ -1614,6 +1639,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
         VARDESC* pVarDesc)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+
+    CyclicList *insert;
     int offset;
     INT *typedata;
     int var_datawidth;
@@ -1633,14 +1660,31 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     }
 
     if (!This->typedata) {
-	This->typedata = HeapAlloc(GetProcessHeap(), 0, 0x2000);
-	This->typedata[0] = 0;
+        This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+        if(!This->typedata)
+            return E_OUTOFMEMORY;
+
+        This->typedata->next = This->typedata;
+        This->typedata->u.val = 0;
     }
 
     /* allocate type data space for us */
-    offset = This->typedata[0];
-    This->typedata[0] += 0x14;
-    typedata = This->typedata + (offset >> 2) + 1;
+    insert = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+    if(!insert)
+        return E_OUTOFMEMORY;
+    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[5]));
+    if(!insert->u.data) {
+        HeapFree(GetProcessHeap(), 0, insert);
+        return E_OUTOFMEMORY;
+    }
+
+    insert->next = This->typedata->next;
+    This->typedata->next = insert;
+    This->typedata = insert;
+
+    offset = This->typedata->next->u.val;
+    This->typedata->next->u.val += 0x14;
+    typedata = This->typedata->u.data;
 
     /* fill out the basic type information */
     typedata[0] = 0x14 | (index << 16);
@@ -1708,6 +1752,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
+    CyclicList *iter;
     UINT i;
     int offset;
     char *namedata;
@@ -1723,12 +1768,14 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
 	*((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
     }
 
+    iter = This->typedata->next->next;
+    for(i=0; i<index; i++)
+        iter = iter->next;
+
     for (i = 1; i < cNames; i++) {
 	/* FIXME: Almost certainly easy to break */
-	int *paramdata = &This->typedata[This->offsets[index] >> 2];
-
 	offset = ctl2_alloc_name(This->typelib, rgszNames[i]);
-	paramdata[(i * 3) + 5] = offset;
+	iter->u.data[(i * 3) + 5] = offset;
     }
 
     return S_OK;
@@ -3049,7 +3096,21 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 	while (This->typeinfos) {
 	    ICreateTypeInfo2Impl *typeinfo = This->typeinfos;
 	    This->typeinfos = typeinfo->next_typeinfo;
-            HeapFree(GetProcessHeap(), 0, typeinfo->typedata);
+            if(typeinfo->typedata) {
+                CyclicList *iter, *rem;
+
+                rem = typeinfo->typedata->next;
+                typeinfo->typedata->next = NULL;
+                iter = rem->next;
+                HeapFree(GetProcessHeap(), 0, rem);
+
+                while(iter) {
+                    rem = iter;
+                    iter = iter->next;
+                    HeapFree(GetProcessHeap(), 0, rem->u.data);
+                    HeapFree(GetProcessHeap(), 0, rem);
+                }
+            }
 	    HeapFree(GetProcessHeap(), 0, typeinfo);
 	}
 
@@ -3273,7 +3334,7 @@ static void ctl2_finalize_typeinfos(ICreateTypeLib2Impl *This, int filesize)
 	typeinfo->typeinfo->memoffset = filesize;
 	if (typeinfo->typedata) {
 	    ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
-	    filesize += typeinfo->typedata[0] + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
+	    filesize += typeinfo->typedata->next->u.val + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
 	}
     }
 }
@@ -3294,9 +3355,15 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
     ICreateTypeInfo2Impl *typeinfo;
 
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
+        CyclicList *iter;
+
 	if (!typeinfo->typedata) continue;
 
-	ctl2_write_chunk(hFile, typeinfo->typedata, typeinfo->typedata[0] + 4);
+        iter = typeinfo->typedata->next;
+        ctl2_write_chunk(hFile, &iter->u.val, sizeof(int));
+        for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next)
+            ctl2_write_chunk(hFile, iter->u.data, iter->u.data[0] & 0xffff);
+
 	ctl2_write_chunk(hFile, typeinfo->indices, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
 	ctl2_write_chunk(hFile, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
 	ctl2_write_chunk(hFile, typeinfo->offsets, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
