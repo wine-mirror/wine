@@ -120,6 +120,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
 typedef struct tagCyclicList {
     struct tagCyclicList *next;
     int indice;
+    int name;
 
     union {
         int val;
@@ -193,8 +194,6 @@ typedef struct tagICreateTypeInfo2Impl
     MSFT_TypeInfoBase *typeinfo;
 
     struct tagCyclicList *typedata; /* tail of cyclic list */
-
-    int names[42];
 
     int datawidth;
 
@@ -1447,7 +1446,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     /* update the index data */
     insert->indice = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
-    This->names[index] = -1;
+    insert->name = -1;
 
     /* ??? */
     if (!This->typeinfo->res2) This->typeinfo->res2 = 0x20;
@@ -1688,7 +1687,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 
     /* update the index data */
     insert->indice = 0x40000000 + index;
-    This->names[index] = -1;
+    insert->name = -1;
 
     /* figure out type widths and whatnot */
     ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
@@ -1754,7 +1753,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     FIXME("(%p,%d,%s,%d), stub!\n", iface, index, debugstr_w(*rgszNames), cNames);
 
     offset = ctl2_alloc_name(This->typelib, rgszNames[0]);
-    This->names[index] = offset;
 
     namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
     namedata[9] &= ~0x10;
@@ -1765,6 +1763,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     iter = This->typedata->next->next;
     for(i=0; i<index; i++)
         iter = iter->next;
+
+    iter->name = offset;
 
     for (i = 1; i < cNames; i++) {
 	/* FIXME: Almost certainly easy to break */
@@ -1786,7 +1786,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
         LPOLESTR szName)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
-    int offset;
+    CyclicList *iter;
+    int offset, i;
     char *namedata;
 
     TRACE("(%p,%d,%s), stub!\n", iface, index, debugstr_w(szName));
@@ -1807,8 +1808,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
     if ((This->typeinfo->typekind & 15) == TKIND_ENUM) {
 	namedata[9] |= 0x20;
     }
-    This->names[index] = offset;
 
+    iter = This->typedata->next->next;
+    for(i=0; i<index; i++)
+        iter = iter->next;
+
+    iter->name = offset;
     return S_OK;
 }
 
@@ -3362,7 +3367,8 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
             ctl2_write_chunk(hFile, &iter->indice, sizeof(int));
 
-	ctl2_write_chunk(hFile, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+        for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
+            ctl2_write_chunk(hFile, &iter->name, sizeof(int));
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next) {
             ctl2_write_chunk(hFile, &offset, sizeof(int));
