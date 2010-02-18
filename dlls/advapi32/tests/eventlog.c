@@ -776,21 +776,21 @@ static void test_readwrite(void)
 
         /* Needed to catch earlier Vista (with no ServicePack for example) */
         buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
-        ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
-                      0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
+        if (ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                          0, buf, sizeof(EVENTLOGRECORD), &read, &needed))
+        {
+            buf = HeapReAlloc(GetProcessHeap(), 0, buf, needed);
+            ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
+                          0, buf, needed, &read, &needed);
 
-        buf = HeapReAlloc(GetProcessHeap(), 0, buf, needed);
-        ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
-                      0, buf, needed, &read, &needed);
+            record = (EVENTLOGRECORD *)buf;
 
-        record = (EVENTLOGRECORD *)buf;
-
-        /* Vista and W2K8 return EVENTLOG_SUCCESS, Windows versions before return
-         * the written eventtype (0x20 in this case).
-         */
-        if (record->EventType == EVENTLOG_SUCCESS)
-            on_vista = TRUE;
-
+            /* Vista and W2K8 return EVENTLOG_SUCCESS, Windows versions before return
+             * the written eventtype (0x20 in this case).
+             */
+            if (record->EventType == EVENTLOG_SUCCESS)
+                on_vista = TRUE;
+        }
         HeapFree(GetProcessHeap(), 0, buf);
     }
     ok(ret, "Expected success : %d\n", GetLastError());
