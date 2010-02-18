@@ -931,11 +931,9 @@ LSTATUS WINAPI RegCloseKey( HKEY hkey )
 
 
 /******************************************************************************
- * RegDeleteKeyW   [ADVAPI32.@]
- *
- * See RegDeleteKeyA.
+ * RegDeleteKeyExW   [ADVAPI32.@]
  */
-LSTATUS WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
+LSTATUS WINAPI RegDeleteKeyExW( HKEY hkey, LPCWSTR name, REGSAM access, DWORD reserved )
 {
     DWORD ret;
     HKEY tmp;
@@ -944,12 +942,57 @@ LSTATUS WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (!(ret = RegOpenKeyExW( hkey, name, 0, DELETE, &tmp )))
+    access &= KEY_WOW64_64KEY | KEY_WOW64_32KEY;
+    if (!(ret = RegOpenKeyExW( hkey, name, 0, access | DELETE, &tmp )))
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
         RegCloseKey( tmp );
     }
     TRACE("%s ret=%08x\n", debugstr_w(name), ret);
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegDeleteKeyW   [ADVAPI32.@]
+ *
+ * See RegDeleteKeyA.
+ */
+LSTATUS WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
+{
+    return RegDeleteKeyExW( hkey, name, 0, 0 );
+}
+
+
+/******************************************************************************
+ * RegDeleteKeyExA   [ADVAPI32.@]
+ */
+LSTATUS WINAPI RegDeleteKeyExA( HKEY hkey, LPCSTR name, REGSAM access, DWORD reserved )
+{
+    DWORD ret;
+    HKEY tmp;
+
+    if (!name) return ERROR_INVALID_PARAMETER;
+
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
+    access &= KEY_WOW64_64KEY | KEY_WOW64_32KEY;
+    if (!(ret = RegOpenKeyExA( hkey, name, 0, access | DELETE, &tmp )))
+    {
+        if (!is_version_nt()) /* win95 does recursive key deletes */
+        {
+            CHAR name[MAX_PATH];
+
+            while(!RegEnumKeyA(tmp, 0, name, sizeof(name)))
+            {
+                if(RegDeleteKeyExA(tmp, name, access, reserved))  /* recurse */
+                    break;
+            }
+        }
+        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
+        RegCloseKey( tmp );
+    }
+    TRACE("%s ret=%08x\n", debugstr_a(name), ret);
     return ret;
 }
 
@@ -974,30 +1017,7 @@ LSTATUS WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
  */
 LSTATUS WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 {
-    DWORD ret;
-    HKEY tmp;
-
-    if (!name) return ERROR_INVALID_PARAMETER;
-
-    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
-
-    if (!(ret = RegOpenKeyExA( hkey, name, 0, DELETE, &tmp )))
-    {
-        if (!is_version_nt()) /* win95 does recursive key deletes */
-        {
-            CHAR name[MAX_PATH];
-
-            while(!RegEnumKeyA(tmp, 0, name, sizeof(name)))
-            {
-                if(RegDeleteKeyA(tmp, name))  /* recurse */
-                    break;
-            }
-        }
-        ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
-        RegCloseKey( tmp );
-    }
-    TRACE("%s ret=%08x\n", debugstr_a(name), ret);
-    return ret;
+    return RegDeleteKeyExA( hkey, name, 0, 0 );
 }
 
 

@@ -472,6 +472,8 @@
 @ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)
 @ stdcall RegCreateKeyW(long wstr ptr)
 @ stdcall RegDeleteKeyA(long str)
+@ stdcall RegDeleteKeyExA(long str long long)
+@ stdcall RegDeleteKeyExW(long wstr long long)
 @ stdcall RegDeleteKeyW(long wstr)
 @ stdcall RegDeleteTreeA(long str)
 @ stdcall RegDeleteTreeW(long wstr)
