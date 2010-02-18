@@ -437,7 +437,13 @@ static void test_midi_outfns(HWND hwnd)
         ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
     }
     if (!ndevs) {
+        MIDIOUTCAPSA capsA;
         skip("Found no MIDI out device\n");
+
+        rc = midiOutGetDevCapsA(MIDIMAPPER, &capsA, sizeof(capsA));
+        /* GetDevCaps and Open must return compatible results */
+        ok(rc==MMSYSERR_BADDEVICEID || broken(rc==MMSYSERR_NODRIVER /*nt,w2k*/), "midiOutGetDevCaps MAPPER with no MIDI rc=%s\n", mmsys_error(rc));
+
         rc = midiOutOpen(&hm, MIDIMAPPER, 0, 0, CALLBACK_NULL);
         if (rc==MIDIERR_INVALIDSETUP) todo_wine /* Wine without snd-seq */
         ok(rc==MMSYSERR_BADDEVICEID || broken(rc==MMSYSERR_NODRIVER /*w2k*/), "midiOutOpen MAPPER with no MIDI rc=%s\n", mmsys_error(rc));

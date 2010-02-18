@@ -470,6 +470,7 @@ static DWORD modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiC
 	MIDICAPS_VOLUME|MIDICAPS_LRVOLUME
     };
     if (lpMidiCaps == NULL) return MMSYSERR_INVALPARAM;
+    if (!numMidiOutPorts) return MMSYSERR_BADDEVICEID;
 
     memcpy(lpMidiCaps, &mappercaps, min(size, sizeof(*lpMidiCaps)));
     return MMSYSERR_NOERROR;
