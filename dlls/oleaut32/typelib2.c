@@ -119,6 +119,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
 /* Used for storing cyclic list. Tail address is kept */
 typedef struct tagCyclicList {
     struct tagCyclicList *next;
+    int indice;
+
     union {
         int val;
         int *data;
@@ -192,7 +194,6 @@ typedef struct tagICreateTypeInfo2Impl
 
     struct tagCyclicList *typedata; /* tail of cyclic list */
 
-    int indices[42];
     int names[42];
 
     int datawidth;
@@ -1445,7 +1446,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     /* update the index data */
-    This->indices[index] = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
+    insert->indice = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
     This->names[index] = -1;
 
     /* ??? */
@@ -1686,7 +1687,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     typedata[3] = (sizeof(VARDESC) << 16) | 0;
 
     /* update the index data */
-    This->indices[index] = 0x40000000 + index;
+    insert->indice = 0x40000000 + index;
     This->names[index] = -1;
 
     /* figure out type widths and whatnot */
@@ -3358,7 +3359,9 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
         for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next)
             ctl2_write_chunk(hFile, iter->u.data, iter->u.data[0] & 0xffff);
 
-	ctl2_write_chunk(hFile, typeinfo->indices, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+        for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
+            ctl2_write_chunk(hFile, &iter->indice, sizeof(int));
+
 	ctl2_write_chunk(hFile, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next) {
