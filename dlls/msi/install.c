@@ -719,8 +719,52 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
  */
 UINT WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
 {
-    FIXME("%d %d %d\n", hInstall, iRunMode, fState);
-    return ERROR_SUCCESS;
+    MSIPACKAGE *package;
+    UINT r;
+
+    TRACE("%d %d %d\n", hInstall, iRunMode, fState);
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if (!package)
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (!remote_package)
+            return FALSE;
+
+        hr = IWineMsiRemotePackage_SetMode( remote_package, iRunMode, fState );
+        IWineMsiRemotePackage_Release( remote_package );
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return ERROR_SUCCESS;
+    }
+
+    switch (iRunMode)
+    {
+    case MSIRUNMODE_REBOOTATEND:
+        package->need_reboot = 1;
+        r = ERROR_SUCCESS;
+        break;
+
+    case MSIRUNMODE_REBOOTNOW:
+        FIXME("unimplemented run mode\n");
+        r = ERROR_FUNCTION_FAILED;
+        break;
+
+    default:
+        r = ERROR_ACCESS_DENIED;
+    }
+
+    return r;
 }
 
 /***********************************************************************
