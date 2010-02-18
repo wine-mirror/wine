@@ -23,3 +23,16 @@ cd dummydir
 echo %~dp0
 cd ..
 rmdir dummydir
+
+echo ------------ Testing if/else --------------
+echo if/else should work with blocks
+if 0 == 0 (
+  echo if seems to work
+) else (
+  echo if seems to be broken
+)
+if 1 == 0 (
+  echo else seems to be broken
+) else (
+  echo else seems to work
+)
