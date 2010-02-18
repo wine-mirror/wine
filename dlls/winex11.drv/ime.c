@@ -717,30 +717,36 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     }
                     break;
                 case IMC_SETOPENSTATUS:
-                {
-                    LPIMEPRIVATE myPrivate;
                     TRACE("IMC_SETOPENSTATUS\n");
 
-                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-                    if (lpIMC->fOpen != myPrivate->bInternalState &&
-                        myPrivate->bInComposition)
+                    /* Indirectly called from XIM callbacks */
+                    if (ImmGetIMCCLockCount(lpIMC->hPrivate) > 0)
                     {
-                        if(lpIMC->fOpen == FALSE)
+                        bRet = TRUE;
+                        break;
+                    }
+
+                    bRet = X11DRV_SetPreeditState(lpIMC->hWnd, lpIMC->fOpen);
+                    if (bRet)
+                    {
+                        if (!lpIMC->fOpen)
                         {
-                            X11DRV_ForceXIMReset(lpIMC->hWnd);
-                            GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION,0,0);
-                            myPrivate->bInComposition = FALSE;
-                        }
-                        else
-                        {
-                            GenerateIMEMessage(hIMC,WM_IME_STARTCOMPOSITION,0,0);
-                            GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, 0, 0);
+                            LPIMEPRIVATE myPrivate;
+
+                            myPrivate = ImmLockIMCC(lpIMC->hPrivate);
+                            if (myPrivate->bInComposition)
+                            {
+                                X11DRV_ForceXIMReset(lpIMC->hWnd);
+                                GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
+                                myPrivate->bInComposition = FALSE;
+                            }
+                            ImmUnlockIMCC(lpIMC->hPrivate);
                         }
                     }
-                    myPrivate->bInternalState = lpIMC->fOpen;
-                    bRet = TRUE;
-                }
-                break;
+                    else
+                        lpIMC->fOpen = !lpIMC->fOpen;
+
+                    break;
                 default: FIXME("Unknown\n"); break;
             }
             break;
@@ -951,35 +957,36 @@ DWORD WINAPI ImeGetImeMenuItems(HIMC hIMC,  DWORD dwFlags,  DWORD dwType,
 
 /* Interfaces to XIM and other parts of winex11drv */
 
-void IME_SetOpenStatus(BOOL fOpen)
+void IME_SetOpenStatus(BOOL fOpen, BOOL force)
 {
+    HIMC imc;
     LPINPUTCONTEXT lpIMC;
     LPIMEPRIVATE myPrivate;
 
-    lpIMC = LockRealIMC(FROM_X11);
+    imc = RealIMC(FROM_X11);
+    lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
         return;
 
     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
-    if (myPrivate->bInternalState && fOpen == FALSE)
+    if (!fOpen && myPrivate->bInComposition)
     {
         ShowWindow(myPrivate->hwndDefault, SW_HIDE);
         ImmDestroyIMCC(lpIMC->hCompStr);
         lpIMC->hCompStr = ImeCreateBlankCompStr();
+        myPrivate->bInComposition = FALSE;
+        GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
     }
+
+    if (lpIMC->fOpen && fOpen)
+        ImmSetOpenStatus(imc, FALSE);
+
+    if (fOpen || force)
+        ImmSetOpenStatus(imc, fOpen);
 
     ImmUnlockIMCC(lpIMC->hPrivate);
-    UnlockRealIMC(FROM_X11);
-
-    if (myPrivate->bInComposition && fOpen == FALSE)
-    {
-        GenerateIMEMessage(FROM_X11, WM_IME_ENDCOMPOSITION, 0, 0);
-        myPrivate->bInComposition = FALSE;
-    }
-
-    if (!myPrivate->bInternalState && fOpen == TRUE)
-        ImmSetOpenStatus(RealIMC(FROM_X11), fOpen);
+    ImmUnlockIMC(imc);
 }
 
 INT IME_GetCursorPos(void)

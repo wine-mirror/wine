@@ -300,7 +300,7 @@ extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 
 /* IME support */
 extern void IME_UnregisterClasses(void);
-extern void IME_SetOpenStatus(BOOL fOpen);
+extern void IME_SetOpenStatus(BOOL fOpen, BOOL force);
 extern INT IME_GetCursorPos(void);
 extern void IME_SetCursorPos(DWORD pos);
 extern void IME_UpdateAssociation(HWND focus);
@@ -809,6 +809,7 @@ extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data) DECLSPEC_HIDDE
 extern void X11DRV_SetupXIM(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count ) DECLSPEC_HIDDEN;
 extern void X11DRV_ForceXIMReset(HWND hwnd) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen);
 
 /* FIXME: private functions imported from user32 */
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
