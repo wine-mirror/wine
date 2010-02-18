@@ -194,7 +194,6 @@ typedef struct tagICreateTypeInfo2Impl
 
     int indices[42];
     int names[42];
-    int offsets[42];
 
     int datawidth;
 
@@ -1384,7 +1383,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
     CyclicList *insert;
-    int offset;
     int *typedata;
     int i;
     int decoded_size;
@@ -1417,7 +1415,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     This->typedata->next = insert;
     This->typedata = insert;
 
-    offset = This->typedata->next->u.val;
     This->typedata->next->u.val += 0x18 + (pFuncDesc->cParams * 12);
     typedata = This->typedata->u.data;
 
@@ -1450,7 +1447,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     /* update the index data */
     This->indices[index] = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
     This->names[index] = -1;
-    This->offsets[index] = offset;
 
     /* ??? */
     if (!This->typeinfo->res2) This->typeinfo->res2 = 0x20;
@@ -1641,7 +1637,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
     CyclicList *insert;
-    int offset;
     INT *typedata;
     int var_datawidth;
     int var_alignment;
@@ -1682,7 +1677,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     This->typedata->next = insert;
     This->typedata = insert;
 
-    offset = This->typedata->next->u.val;
     This->typedata->next->u.val += 0x14;
     typedata = This->typedata->u.data;
 
@@ -1694,7 +1688,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     /* update the index data */
     This->indices[index] = 0x40000000 + index;
     This->names[index] = -1;
-    This->offsets[index] = offset;
 
     /* figure out type widths and whatnot */
     ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
@@ -3356,6 +3349,7 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
         CyclicList *iter;
+        int offset = 0;
 
 	if (!typeinfo->typedata) continue;
 
@@ -3366,7 +3360,11 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 
 	ctl2_write_chunk(hFile, typeinfo->indices, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
 	ctl2_write_chunk(hFile, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
-	ctl2_write_chunk(hFile, typeinfo->offsets, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+
+        for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next) {
+            ctl2_write_chunk(hFile, &offset, sizeof(int));
+            offset += iter->u.data[0] & 0xffff;
+        }
     }
 }
 
