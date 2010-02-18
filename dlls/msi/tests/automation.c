@@ -1863,11 +1863,11 @@ static void test_Session(IDispatch *pSession)
     /* Session::Mode, get */
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
     ok(hr == S_OK, "Session_ModeGet failed, hresult 0x%08x\n", hr);
-    todo_wine ok(!bool, "Reboot at end session mode is %d\n", bool);
+    ok(!bool, "Reboot at end session mode is %d\n", bool);
 
     hr = Session_ModeGet(pSession, MSIRUNMODE_MAINTENANCE, &bool);
     ok(hr == S_OK, "Session_ModeGet failed, hresult 0x%08x\n", hr);
-    todo_wine ok(!bool, "Maintenance mode is %d\n", bool);
+    ok(!bool, "Maintenance mode is %d\n", bool);
 
     /* Session::Mode, put */
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, TRUE);

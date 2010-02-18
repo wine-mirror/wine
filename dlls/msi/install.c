@@ -661,6 +661,8 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
     MSIPACKAGE *package;
     BOOL r = FALSE;
 
+    TRACE("%d %d\n", hInstall, iRunMode);
+
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
     {
@@ -706,8 +708,16 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         r = package->commit_action_running;
         break;
 
+    case MSIRUNMODE_MAINTENANCE:
+        r = msi_get_property_int( package, szInstalled, 0 ) != 0;
+        break;
+
+    case MSIRUNMODE_REBOOTATEND:
+        r = package->need_reboot;
+        break;
+
     default:
-        FIXME("%d %d\n", hInstall, iRunMode);
+        FIXME("unimplemented run mode\n");
         r = TRUE;
     }
 
