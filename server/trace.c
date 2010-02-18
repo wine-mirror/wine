@@ -822,7 +822,7 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
     {
         if (size < sizeof(ACL))
         {
-            fprintf( stderr, "<invalid acl>}\n" );
+            fprintf( stderr, "<invalid acl>}" );
             return;
         }
         size -= sizeof(ACL);
@@ -832,10 +832,7 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
             const SID *sid = NULL;
             data_size_t sid_size = 0;
 
-            if (size < sizeof(ACE_HEADER))
-                return;
-            if (size < ace->AceSize)
-                return;
+            if (size < sizeof(ACE_HEADER) || size < ace->AceSize) break;
             size -= ace->AceSize;
             if (i != 0) fputc( ',', stderr );
             fprintf( stderr, "{AceType=" );
