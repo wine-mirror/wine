@@ -753,25 +753,37 @@ static int get_ansi_notification(UINT unicodeNotificationCode)
 {
     switch (unicodeNotificationCode)
     {
+    case LVN_BEGINLABELEDITA:
     case LVN_BEGINLABELEDITW: return LVN_BEGINLABELEDITA;
+    case LVN_ENDLABELEDITA:
     case LVN_ENDLABELEDITW: return LVN_ENDLABELEDITA;
+    case LVN_GETDISPINFOA:
     case LVN_GETDISPINFOW: return LVN_GETDISPINFOA;
+    case LVN_SETDISPINFOA:
     case LVN_SETDISPINFOW: return LVN_SETDISPINFOA;
+    case LVN_ODFINDITEMA:
     case LVN_ODFINDITEMW: return LVN_ODFINDITEMA;
+    case LVN_GETINFOTIPA:
     case LVN_GETINFOTIPW: return LVN_GETINFOTIPA;
     /* header forwards */
+    case HDN_TRACKA:
     case HDN_TRACKW: return HDN_TRACKA;
+    case HDN_ENDTRACKA:
     case HDN_ENDTRACKW: return HDN_ENDTRACKA;
     case HDN_BEGINDRAG: return HDN_BEGINDRAG;
     case HDN_ENDDRAG: return HDN_ENDDRAG;
+    case HDN_ITEMCHANGINGA:
     case HDN_ITEMCHANGINGW: return HDN_ITEMCHANGINGA;
+    case HDN_ITEMCHANGEDA:
     case HDN_ITEMCHANGEDW: return HDN_ITEMCHANGEDA;
+    case HDN_ITEMCLICKA:
     case HDN_ITEMCLICKW: return HDN_ITEMCLICKA;
+    case HDN_DIVIDERDBLCLICKA:
     case HDN_DIVIDERDBLCLICKW: return HDN_DIVIDERDBLCLICKA;
+    default: break;
     }
-    ERR("unknown notification %x\n", unicodeNotificationCode);
-    assert(FALSE);
-    return 0;
+    FIXME("unknown notification %x\n", unicodeNotificationCode);
+    return unicodeNotificationCode;
 }
 
 /* forwards header notifications to listview parent */

@@ -4290,6 +4290,45 @@ static void test_destroynotify(void)
     ok_sequence(sequences, COMBINED_SEQ_INDEX, listview_destroy, "check destroy order", FALSE);
 }
 
+static void test_header_notification(void)
+{
+    HWND list, header;
+    HDITEMA item;
+    NMHEADER nmh;
+    LVCOLUMNA col;
+    LRESULT ret;
+
+    list = create_listview_control(LVS_REPORT);
+    ok(list != 0, "failed to create listview window\n");
+
+    memset(&col, 0, sizeof(col));
+    col.mask = LVCF_WIDTH;
+    col.cx = 100;
+    ret = SendMessage(list, LVM_INSERTCOLUMNA, 0, (LPARAM)&col);
+    ok(!ret, "expected 0, got %ld\n", ret);
+
+    header = subclass_header(list);
+
+    ret = SendMessage(header, HDM_GETITEMCOUNT, 0, 0);
+    ok(ret == 1, "expected header item count 1, got %ld\n", ret);
+
+    ret = SendMessage(header, HDM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret, "HDM_GETITEM failed\n");
+
+    nmh.hdr.hwndFrom = header;
+    nmh.hdr.idFrom = GetWindowLongPtr(header, GWLP_ID);
+    nmh.hdr.code = HDN_ITEMCHANGEDA;
+    nmh.iItem = 0;
+    nmh.iButton = 0;
+    item.mask = HDI_WIDTH;
+    item.cxy = 50;
+    nmh.pitem = &item;
+    ret = SendMessage(list, WM_NOTIFY, 0, (LPARAM)&nmh);
+    ok(!ret, "WM_NOTIFY/HDN_ITEMCHANGED failed\n");
+
+    DestroyWindow(list);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4318,6 +4357,7 @@ START_TEST(listview)
 
     g_is_below_5 = is_below_comctl_5();
 
+    test_header_notification();
     test_images();
     test_checkboxes();
     test_items();
