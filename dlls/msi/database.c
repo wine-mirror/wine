@@ -125,20 +125,14 @@ static UINT clone_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
 
 UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 {
-    LPWSTR encname;
     HRESULT r;
 
-    encname = encode_streamname(FALSE, stname);
+    TRACE("%s\n", debugstr_w(stname));
 
-    TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
-
-    if (clone_open_stream( db, encname, stm ) == ERROR_SUCCESS)
-    {
-        msi_free( encname );
+    if (clone_open_stream( db, stname, stm ) == ERROR_SUCCESS)
         return ERROR_SUCCESS;
-    }
 
-    r = IStorage_OpenStream( db->storage, encname, NULL,
+    r = IStorage_OpenStream( db->storage, stname, NULL,
                              STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
     if( FAILED( r ) )
     {
@@ -147,14 +141,12 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
         LIST_FOR_EACH_ENTRY( transform, &db->transforms, MSITRANSFORM, entry )
         {
             TRACE("looking for %s in transform storage\n", debugstr_w(stname) );
-            r = IStorage_OpenStream( transform->stg, encname, NULL,
+            r = IStorage_OpenStream( transform->stg, stname, NULL,
                                      STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
             if (SUCCEEDED(r))
                 break;
         }
     }
-
-    msi_free( encname );
 
     if( SUCCEEDED(r) )
     {
@@ -181,10 +173,15 @@ UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
     ULONG sz, count;
     IStream *stm = NULL;
     STATSTG stat;
+    LPWSTR encname;
 
-    r = db_get_raw_stream( db, stname, &stm );
+    encname = encode_streamname( FALSE, stname );
+    r = db_get_raw_stream( db, encname, &stm );
+    msi_free( encname );
+
     if( r != ERROR_SUCCESS)
         return ret;
+
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
     if( FAILED( r ) )
     {
