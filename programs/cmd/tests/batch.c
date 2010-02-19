@@ -110,7 +110,9 @@ static const char *compare_line(const char *out_line, const char *out_end, const
             if(exp_ptr+sizeof(pwd_cmd) <= exp_end
                     && !memcmp(exp_ptr, pwd_cmd, sizeof(pwd_cmd))) {
                 exp_ptr += sizeof(pwd_cmd);
-                if(out_end-out_ptr < workdir_len || memcmp(out_ptr, workdir, workdir_len))
+                if(out_end-out_ptr < workdir_len
+                        || (CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, out_ptr, workdir_len,
+                            workdir, workdir_len) != CSTR_EQUAL))
                     return out_ptr;
                 out_ptr += workdir_len;
                 continue;
