@@ -20,3 +20,7 @@ bar
 if/else should work with blocks
 if seems to work
 else seems to work
+Testing case sensitivity with and without /i option
+if seems to default to case sensitivity
+if /i seems to work
+if /I seems to work

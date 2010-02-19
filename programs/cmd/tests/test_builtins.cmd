@@ -36,3 +36,10 @@ if 1 == 0 (
 ) else (
   echo else seems to work
 )
+echo Testing case sensitivity with and without /i option
+if bar==BAR echo if does not default to case sensitivity
+if not bar==BAR echo if seems to default to case sensitivity
+if /i foo==FOO echo if /i seems to work
+if /i not foo==FOO echo if /i seems to be broken
+if /I foo==FOO echo if /I seems to work
+if /I not foo==FOO echo if /I seems to be broken
