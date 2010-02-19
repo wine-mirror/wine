@@ -456,6 +456,21 @@ static inline HDC CFn_GetDC(const CHOOSEFONTW *lpcf)
 }
 
 /*************************************************************************
+ *              GetScreenDPI                           [internal]
+ */
+static inline int GetScreenDPI(void)
+{
+    HDC hdc;
+    int result;
+
+    hdc = GetDC(0);
+    result = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+
+    return result;
+}
+
+/*************************************************************************
  *              CFn_ReleaseDC                           [internal]
  */
 static inline void CFn_ReleaseDC(const CHOOSEFONTW *lpcf, HDC hdc)
@@ -486,10 +501,8 @@ static INT AddFontStyle( const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *
     if (nFontType & RASTER_FONTTYPE)
     {
         INT points;
-        if(!(hdc = CFn_GetDC(lpcf))) return 0;
         points = MulDiv( lpNTM->ntmTm.tmHeight - lpNTM->ntmTm.tmInternalLeading,
-                72, GetDeviceCaps(hdc, LOGPIXELSY));
-        CFn_ReleaseDC(lpcf, hdc);
+                72, GetScreenDPI());
         i = AddFontSizeToCombo3(hcmb3, points, lpcf);
         if(i) return 0;
     } else if (SetFontSizesToCombo3(hcmb3, lpcf)) return 0;
@@ -705,7 +718,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOS
                 lpxx->lfHeight;
             INT points;
             int charset = lpxx->lfCharSet;
-            points = MulDiv( height, 72, GetDeviceCaps(hdc, LOGPIXELSY));
+            points = MulDiv( height, 72, GetScreenDPI());
             pstyle = MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:
                     FW_NORMAL,lpxx->lfItalic !=0);
             SendDlgItemMessageW(hDlg, cmb1, CB_SETCURSEL, j, 0);
@@ -982,14 +995,8 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
                             CB_GETITEMDATA , i, 0));
             else
                 lpcf->iPointSize = 100;
-            hdc = CFn_GetDC(lpcf);
-            if( hdc)
-            {
-                lpxx->lfHeight = - MulDiv( lpcf->iPointSize ,
-                        GetDeviceCaps(hdc, LOGPIXELSY), 720);
-                CFn_ReleaseDC(lpcf, hdc);
-            } else
-                lpxx->lfHeight = -lpcf->iPointSize / 10;
+            lpxx->lfHeight = - MulDiv( lpcf->iPointSize ,
+                    GetScreenDPI(), 720);
             i=SendDlgItemMessageW(hDlg, cmb5, CB_GETCURSEL, 0, 0);
             if (i!=CB_ERR)
                 lpxx->lfCharSet=SendDlgItemMessageW(hDlg, cmb5, CB_GETITEMDATA, i, 0);
