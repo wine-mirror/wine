@@ -2159,7 +2159,7 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
         /*trace("skipping next %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDNEXT);
     }
-    ok_(file, line)(next == test, "expected next %p, got %p\n", next, test);
+    ok_(file, line)(next == test, "%p: expected next %p, got %p\n", hwnd, next, test);
 
     test = GetWindow(hwnd, GW_HWNDPREV);
     /* skip foreign windows */
@@ -2171,13 +2171,14 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
         /*trace("skipping prev %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDPREV);
     }
-    ok_(file, line)(prev == test, "expected prev %p, got %p\n", prev, test);
+    ok_(file, line)(prev == test, "%p: expected prev %p, got %p\n", hwnd, prev, test);
 
     test = GetWindow(hwnd, GW_OWNER);
-    ok_(file, line)(owner == test, "expected owner %p, got %p\n", owner, test);
+    ok_(file, line)(owner == test, "%p: expected owner %p, got %p\n", hwnd, owner, test);
 
     ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
-    ok_(file, line)(!(ex_style & WS_EX_TOPMOST) == !topmost, "expected %stopmost\n", topmost ? "" : "NOT ");
+    ok_(file, line)(!(ex_style & WS_EX_TOPMOST) == !topmost, "%p: expected %stopmost\n",
+                    hwnd, topmost ? "" : "NOT ");
 }
 
 static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
@@ -2257,6 +2258,20 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
     check_z_order(hwnd_D, hwnd_E, hwnd_A, 0, FALSE);
     check_z_order(hwnd_A, hwnd_D, 0, 0, TRUE);
 #endif
+
+    /* make hwnd_C owned by a topmost window */
+    DestroyWindow( hwnd_C );
+    hwnd_C = CreateWindowEx(0, "MainWindowClass", NULL,
+                            WS_POPUP,
+                            100, 100, 100, 100,
+                            hwnd_A, 0, GetModuleHandle(0), NULL);
+    trace("hwnd_C %p\n", hwnd_C);
+    check_z_order(hwnd_E, 0, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_F, 0, FALSE);
+    check_z_order(hwnd_F, hwnd_D, hwnd_B, 0, FALSE);
+    check_z_order(hwnd_B, hwnd_F, hwnd_A, hwnd_F, TRUE);
+    check_z_order(hwnd_A, hwnd_B, hwnd_C, 0, TRUE);
+    check_z_order(hwnd_C, hwnd_A, 0, hwnd_A, TRUE);
 
     DestroyWindow(hwnd_A);
     DestroyWindow(hwnd_B);
