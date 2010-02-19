@@ -717,7 +717,7 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         break;
 
     default:
-        FIXME("unimplemented run mode\n");
+        FIXME("unimplemented run mode: %d\n", iRunMode);
         r = TRUE;
     }
 
@@ -766,7 +766,7 @@ UINT WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
         break;
 
     case MSIRUNMODE_REBOOTNOW:
-        FIXME("unimplemented run mode\n");
+        FIXME("unimplemented run mode: %d\n", iRunMode);
         r = ERROR_FUNCTION_FAILED;
         break;
 
