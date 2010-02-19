@@ -947,8 +947,6 @@ static HRESULT WINAPI xmlnode_get_definition(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_dataType(IXMLDOMNode*, VARIANT*);
-
 static inline BYTE hex_to_byte(xmlChar c)
 {
     if(c <= '9') return c-'0';
@@ -1149,10 +1147,10 @@ static HRESULT WINAPI xmlnode_get_nodeTypedValue(
     if(This->node->type == XML_ELEMENT_NODE ||
             This->node->type == XML_TEXT_NODE ||
             This->node->type == XML_ENTITY_REF_NODE)
-        hres = xmlnode_get_dataType(iface, &type);
+        hres = IXMLDOMNode_get_dataType(iface, &type);
 
     if(hres != S_OK && This->node->type != XML_ELEMENT_NODE)
-        return xmlnode_get_nodeValue(iface, typedValue);
+        return IXMLDOMNode_get_nodeValue(iface, typedValue);
 
     content = xmlNodeGetContent(This->node);
     hres = VARIANT_from_xmlChar(content, typedValue,
