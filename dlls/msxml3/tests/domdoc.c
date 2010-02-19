@@ -639,6 +639,9 @@ static void test_domdoc( void )
         r = IXMLDOMElement_QueryInterface( element, &IID_IObjectIdentity, (LPVOID*)&ident );
         ok( r == E_NOINTERFACE, "ret %08x\n", r);
 
+        r = IXMLDOMElement_get_tagName( element, NULL );
+        ok( r == E_INVALIDARG, "ret %08x\n", r);
+
         /* check if the tag is correct */
         r = IXMLDOMElement_get_tagName( element, &tag );
         ok( r == S_OK, "couldn't get tag name\n");
