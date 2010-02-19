@@ -505,7 +505,10 @@ static INT add_streams_to_table(MSISTREAMSVIEW *sv)
             break;
 
         if (stat.type != STGTY_STREAM)
+        {
+            CoTaskMemFree(stat.pwcsName);
             continue;
+        }
 
         /* table streams are not in the _Streams table */
         if (*stat.pwcsName == 0x4840)
