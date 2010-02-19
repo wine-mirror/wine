@@ -471,6 +471,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     {
         *ppvObject = &(This->lpvtblIObjectWithSite);
     }
+    else if (IsEqualGUID(&IID_IObjectSafety, riid))
+    {
+        *ppvObject = &(This->lpvtblIObjectSafety);
+    }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
         *ppvObject = &This->lpvtblISupportErrorInfo;
@@ -2210,7 +2214,7 @@ static ULONG WINAPI xmldoc_Safety_Release(IObjectSafety *iface)
     return IXMLDocument_Release((IXMLDocument *)This);
 }
 
-#define SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
+#define SAFETY_SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA)
 
 static HRESULT WINAPI xmldoc_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
@@ -2222,7 +2226,7 @@ static HRESULT WINAPI xmldoc_Safety_GetInterfaceSafetyOptions(IObjectSafety *ifa
     if(!pdwSupportedOptions || !pdwEnabledOptions)
         return E_POINTER;
 
-    *pdwSupportedOptions = SUPPORTED_OPTIONS;
+    *pdwSupportedOptions = SAFETY_SUPPORTED_OPTIONS;
     *pdwEnabledOptions = This->safeopt;
 
     return S_OK;
@@ -2232,13 +2236,9 @@ static HRESULT WINAPI xmldoc_Safety_SetInterfaceSafetyOptions(IObjectSafety *ifa
         DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-
     TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
 
-    if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
-        return E_FAIL;
-
-    This->safeopt = dwEnabledOptions & dwEnabledOptions;
+    This->safeopt = dwEnabledOptions & dwOptionSetMask & SAFETY_SUPPORTED_OPTIONS;
     return S_OK;
 }
 

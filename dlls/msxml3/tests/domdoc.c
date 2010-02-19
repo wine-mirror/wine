@@ -24,6 +24,7 @@
 
 #include "windows.h"
 #include "ole2.h"
+#include "objsafe.h"
 #include "xmldom.h"
 #include "msxml2.h"
 #include "msxml2did.h"
@@ -32,6 +33,10 @@
 #include <assert.h>
 
 #include "wine/test.h"
+
+#include "initguid.h"
+
+DEFINE_GUID(IID_IObjectSafety, 0xcb5bdc81, 0x93c1, 0x11cf, 0x8f,0x20, 0x00,0x80,0x5f,0x2c,0xd0,0x64);
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -5284,6 +5289,69 @@ static void test_put_nodeValue(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_document_IObjectSafety(void)
+{
+    IXMLDOMDocument *doc;
+    IObjectSafety *safety;
+    DWORD enabled = 0, supported = 0;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IObjectSafety, (void**)&safety);
+    ok(hr == S_OK, "ret %08x\n", hr );
+
+    /* get */
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, NULL, &enabled);
+    ok(hr == E_POINTER, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, NULL);
+    ok(hr == E_POINTER, "ret %08x\n", hr );
+
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA),
+        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA),"
+             "got %08x\n", supported);
+    ok(enabled == 0, "Expected 0, got %08x\n", enabled);
+    /* set */
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(enabled == INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+        "Expected INTERFACESAFE_FOR_UNTRUSTED_CALLER, got %08x\n", enabled);
+    /* set unsupported */
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACE_USES_SECURITY_MANAGER |
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+                                                         INTERFACE_USES_SECURITY_MANAGER);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(enabled == 0, "Expected 0, got %08x\n", enabled);
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(enabled == INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        "Expected INTERFACESAFE_FOR_UNTRUSTED_DATA, got %08x\n", enabled);
+
+    IObjectSafety_Release(safety);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -5315,6 +5383,7 @@ START_TEST(domdoc)
     test_NodeTypeValue();
     test_TransformWithLoadingLocalFile();
     test_put_nodeValue();
+    test_document_IObjectSafety();
 
     CoUninitialize();
 }
