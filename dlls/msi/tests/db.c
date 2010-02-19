@@ -1411,7 +1411,7 @@ static void create_file_data(LPCSTR name, LPCSTR data, DWORD size)
  
 static void test_streamtable(void)
 {
-    MSIHANDLE hdb = 0, rec, view;
+    MSIHANDLE hdb = 0, rec, view, hsi;
     char file[MAX_PATH];
     char buf[MAX_PATH];
     DWORD size;
@@ -1455,6 +1455,46 @@ static void test_streamtable(void)
     ok( check_record( rec, 2, "Data"), "wrong record type\n");
 
     MsiCloseHandle( rec );
+
+    r = MsiDatabaseOpenView( hdb,
+            "SELECT * FROM `_Streams` WHERE `Name` = '\5SummaryInformation'", &view );
+    ok( r == ERROR_SUCCESS, "Failed to open database view: %u\n", r );
+
+    r = MsiViewExecute( view, 0 );
+    ok( r == ERROR_SUCCESS, "Failed to execute view: %u\n", r );
+
+    r = MsiViewFetch( view, &rec );
+    ok( r == ERROR_NO_MORE_ITEMS, "Unexpected result: %u\n", r );
+
+    MsiCloseHandle( rec );
+    MsiViewClose( view );
+    MsiCloseHandle( view );
+
+    /* create a summary information stream */
+    r = MsiGetSummaryInformationA( hdb, NULL, 1, &hsi );
+    ok( r == ERROR_SUCCESS, "Failed to get summary information handle: %u\n", r );
+
+    r = MsiSummaryInfoSetPropertyA( hsi, PID_SECURITY, VT_I4, 2, NULL, NULL );
+    ok( r == ERROR_SUCCESS, "Failed to set property: %u\n", r );
+
+    r = MsiSummaryInfoPersist( hsi );
+    ok( r == ERROR_SUCCESS, "Failed to save summary information: %u\n", r );
+
+    MsiCloseHandle( hsi );
+
+    r = MsiDatabaseOpenView( hdb,
+            "SELECT * FROM `_Streams` WHERE `Name` = '\5SummaryInformation'", &view );
+    ok( r == ERROR_SUCCESS, "Failed to open database view: %u\n", r );
+
+    r = MsiViewExecute( view, 0 );
+    ok( r == ERROR_SUCCESS, "Failed to execute view: %u\n", r );
+
+    r = MsiViewFetch( view, &rec );
+    ok( r == ERROR_SUCCESS, "Unexpected result: %u\n", r );
+
+    MsiCloseHandle( rec );
+    MsiViewClose( view );
+    MsiCloseHandle( view );
 
     /* insert a file into the _Streams table */
     create_file( "test.txt" );
