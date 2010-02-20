@@ -927,11 +927,28 @@ static void test_affinity(void)
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( tbi.AffinityMask == 1, "Unexpected thread affinity\n" );
 
+    /* NOTE: Pre-Vista does not recognize the "all processors" flag (all bits set) */
+    thread_affinity = ~0UL;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( broken(status == STATUS_INVALID_PARAMETER) || status == STATUS_SUCCESS,
+        "Expected STATUS_SUCCESS, got %08x\n", status);
+
     if (si.dwNumberOfProcessors <= 1)
     {
         skip("only one processor, skipping affinity testing\n");
         return;
     }
+
+    /* Test thread affinity mask resulting from "all processors" flag */
+    if (status == STATUS_SUCCESS)
+    {
+        status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        ok( broken(tbi.AffinityMask == 1) || tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
+            "Unexpected thread affinity\n" );
+    }
+    else
+        skip("Cannot test thread affinity mask for 'all processors' flag\n");
+
     proc_affinity = 2;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);

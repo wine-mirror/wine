@@ -1134,14 +1134,17 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadAffinityMask:
         {
             const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
-            const ULONG_PTR *paff = data;
+            ULONG_PTR req_aff;
+
             if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
-            if (*paff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
-            if (!*paff) return STATUS_INVALID_PARAMETER;
+            req_aff = *(const ULONG_PTR *)data;
+            if (req_aff == ~0UL) req_aff = affinity_mask;
+            else if (req_aff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
+            else if (!req_aff) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
             {
                 req->handle   = wine_server_obj_handle( handle );
-                req->affinity = *paff;
+                req->affinity = req_aff;
                 req->mask     = SET_THREAD_INFO_AFFINITY;
                 status = wine_server_call( req );
             }
