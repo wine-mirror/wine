@@ -11,6 +11,10 @@ AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
+dnl autoconf versions before 2.63b don't have AS_VAR_APPEND
+m4_ifdef([AS_VAR_APPEND],,[as_fn_append () { eval $[1]=\$$[1]\$[2]; }
+AC_DEFUN([AS_VAR_APPEND],[as_fn_append $1 $2])])dnl
+
 dnl **** Command-line arguments ****
 
 AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
