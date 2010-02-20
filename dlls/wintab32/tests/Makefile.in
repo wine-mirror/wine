@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = wintab32.dll
 IMPORTS   = kernel32 user32
 
-CTESTS = \
+C_SRCS = \
 	context.c
 
 @MAKE_TEST_RULES@

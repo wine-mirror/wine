@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = dsound.dll
 IMPORTS   = ole32 version user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	capture.c \
 	ds3d.c \
 	ds3d8.c \

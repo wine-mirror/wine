@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mshtml.dll
 IMPORTS   = ole32 oleaut32 wininet user32 urlmon gdi32 advapi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	dom.c \
 	events.c \
 	htmldoc.c \

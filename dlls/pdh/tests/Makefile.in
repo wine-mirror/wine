@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = pdh.dll
 IMPORTS   = pdh kernel32
 
-CTESTS = \
+C_SRCS = \
 	pdh.c
 
 @MAKE_TEST_RULES@

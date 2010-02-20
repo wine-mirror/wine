@@ -5,7 +5,8 @@ VPATH     = @srcdir@
 TESTDLL   = cmd.exe
 IMPORTS   = kernel32
 
-CTESTS    = batch.c
+C_SRCS = \
+	batch.c
 
 RC_SRCS   = rsrc.rc
 

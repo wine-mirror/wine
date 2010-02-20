@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = credui.dll
 IMPORTS   = credui kernel32
 
-CTESTS = \
+C_SRCS = \
 	credui.c
 
 @MAKE_TEST_RULES@

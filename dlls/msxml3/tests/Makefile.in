@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = msxml3.dll
 IMPORTS   = oleaut32 ole32 user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	domdoc.c \
 	saxreader.c \
 	schema.c \

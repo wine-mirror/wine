@@ -9,7 +9,7 @@ EXTRAIDLFLAGS = --prefix-server=s_
 IDL_C_SRCS = server.idl
 IDL_S_SRCS = server.idl
 
-CTESTS = \
+C_SRCS = \
 	cstub.c \
 	generated.c \
 	ndr_marshall.c \

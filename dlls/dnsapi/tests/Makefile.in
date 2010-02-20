@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = dnsapi.dll
 IMPORTS   = dnsapi kernel32
 
-CTESTS = \
+C_SRCS = \
 	name.c \
 	record.c
 

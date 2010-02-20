@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = serialui.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	confdlg.c
 
 @MAKE_TEST_RULES@

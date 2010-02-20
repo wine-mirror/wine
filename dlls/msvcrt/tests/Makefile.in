@@ -8,7 +8,7 @@ IMPORTS   = kernel32
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
 
-CTESTS = \
+C_SRCS = \
 	cpp.c \
 	data.c \
 	dir.c \

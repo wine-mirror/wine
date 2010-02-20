@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = xmllite.dll
 IMPORTS   = kernel32 ole32
 
-CTESTS = \
+C_SRCS = \
 	reader.c
 
 @MAKE_TEST_RULES@

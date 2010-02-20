@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = uxtheme.dll
 IMPORTS   = user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	system.c
 
 @MAKE_TEST_RULES@

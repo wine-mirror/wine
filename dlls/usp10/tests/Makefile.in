@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = usp10.dll
 IMPORTS   = usp10 user32 gdi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	usp10.c
 
 @MAKE_TEST_RULES@

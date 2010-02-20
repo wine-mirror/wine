@@ -5,11 +5,11 @@ VPATH     = @srcdir@
 TESTDLL   = windowscodecs.dll
 IMPORTS   = kernel32 ole32 windowscodecs
 
-CTESTS = \
-       bmpformat.c \
-       converter.c \
-       palette.c \
-       stream.c
+C_SRCS = \
+	bmpformat.c \
+	converter.c \
+	palette.c \
+	stream.c
 
 @MAKE_TEST_RULES@
 

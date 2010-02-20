@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = localspl.dll
 IMPORTS   = kernel32 advapi32
 
-CTESTS = \
+C_SRCS = \
 	localmon.c
 
 @MAKE_TEST_RULES@

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = snmpapi.dll
 IMPORTS   = snmpapi kernel32
 
-CTESTS = \
+C_SRCS = \
 	util.c
 
 @MAKE_TEST_RULES@

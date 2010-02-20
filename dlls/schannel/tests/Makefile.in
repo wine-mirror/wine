@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = schannel.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	main.c
 
 @MAKE_TEST_RULES@

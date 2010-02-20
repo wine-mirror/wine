@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = ddraw.dll
 IMPORTS   = ddraw user32 gdi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	d3d.c \
 	ddrawmodes.c \
 	dsurface.c \

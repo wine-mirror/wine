@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = avifil32.dll
 IMPORTS   = avifil32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	api.c
 
 @MAKE_TEST_RULES@

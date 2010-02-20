@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = winhttp.dll
 IMPORTS   = winhttp crypt32 advapi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	notification.c \
 	url.c \
 	winhttp.c

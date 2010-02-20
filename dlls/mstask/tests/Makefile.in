@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mstask.dll
 IMPORTS   = ole32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	task.c \
 	task_scheduler.c \
 	task_trigger.c

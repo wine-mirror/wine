@@ -7,7 +7,7 @@ TESTDLL   = sti.dll
 IMPORTS   = ole32 kernel32
 EXTRALIBS = -luuid
 
-CTESTS = \
+C_SRCS = \
 	sti.c
 
 @MAKE_TEST_RULES@

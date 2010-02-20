@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = msacm32.dll
 IMPORTS   = msacm32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	msacm.c
 
 @MAKE_TEST_RULES@

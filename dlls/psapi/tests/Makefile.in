@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = psapi.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	psapi_main.c
 
 @MAKE_TEST_RULES@

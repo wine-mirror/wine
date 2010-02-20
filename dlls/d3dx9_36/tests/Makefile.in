@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = d3dx9_36.dll
 IMPORTS   = d3dx9 d3d9 user32 gdi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	asm.c \
 	core.c \
 	math.c \

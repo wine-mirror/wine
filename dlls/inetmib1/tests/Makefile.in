@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = inetmib1.dll
 IMPORTS   = snmpapi kernel32
 
-CTESTS = \
+C_SRCS = \
 	main.c
 
 @MAKE_TEST_RULES@

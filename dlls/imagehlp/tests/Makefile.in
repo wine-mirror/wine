@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = imagehlp.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	integrity.c
 
 @MAKE_TEST_RULES@

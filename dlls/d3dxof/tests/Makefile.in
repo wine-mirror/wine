@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = d3dxof.dll
 IMPORTS   = d3dxof kernel32
 
-CTESTS = \
+C_SRCS = \
 	d3dxof.c
 
 @MAKE_TEST_RULES@

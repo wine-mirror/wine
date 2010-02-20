@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = rasapi32.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	rasapi.c
 
 @MAKE_TEST_RULES@

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = localui.dll
 IMPORTS   = kernel32 winspool
 
-CTESTS = \
+C_SRCS = \
 	localui.c
 
 @MAKE_TEST_RULES@

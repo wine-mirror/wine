@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = iphlpapi.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	iphlpapi.c
 
 @MAKE_TEST_RULES@

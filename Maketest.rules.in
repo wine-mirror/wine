@@ -2,7 +2,7 @@
 #
 # Each individual makefile should define the following variables:
 # TESTDLL      : the dll to test
-# CTESTS       : list of C test programs
+# C_SRCS       : list of C test programs
 # EXTRALIBS    : extra libraries to link in (optional)
 # EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
 #
@@ -13,11 +13,10 @@ DLLFLAGS     = @DLLFLAGS@
 DEFS         = -DWINE_STRICT_PROTOTYPES $(EXTRADEFS)
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
-TESTRESULTS  = $(CTESTS:.c=.ok)
+TESTRESULTS  = $(C_SRCS:.c=.ok)
 TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
-C_SRCS       = $(CTESTS)
 ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 EXTRA_OBJS   = testlist.o
 
@@ -36,7 +35,7 @@ $(MODULE) $(MODULE).so: $(OBJS) Makefile.in
 # Rules for building test list
 
 testlist.c: Makefile.in $(MAKECTESTS)
-	$(MAKECTESTS) -o $@ $(CTESTS)
+	$(MAKECTESTS) -o $@ $(C_SRCS)
 
 testlist.o: testlist.c $(TOPSRCDIR)/include/wine/test.h
 

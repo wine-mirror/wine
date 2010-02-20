@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mscms.dll
 IMPORTS   = advapi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	profile.c
 
 @MAKE_TEST_RULES@

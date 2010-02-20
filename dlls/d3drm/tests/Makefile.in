@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = d3drm.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	d3drm.c \
 	vector.c
 

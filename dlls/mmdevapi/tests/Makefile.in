@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = mmdevapi.dll
 IMPORTS   = ole32 version user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	dependency.c \
 	mmdevenum.c \
 	propstore.c

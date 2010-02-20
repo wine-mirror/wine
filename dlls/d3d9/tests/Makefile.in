@@ -5,9 +5,9 @@ VPATH     = @srcdir@
 TESTDLL   = d3d9.dll
 IMPORTS   = user32 kernel32
 
-CTESTS = \
-	d3d9ex.c \
+C_SRCS = \
 	buffer.c \
+	d3d9ex.c \
 	device.c \
 	query.c \
 	shader.c \

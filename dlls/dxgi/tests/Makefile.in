@@ -5,8 +5,8 @@ VPATH     = @srcdir@
 TESTDLL   = dxgi.dll
 IMPORTS   = dxgi kernel32
 
-CTESTS = \
-	device.c \
+C_SRCS = \
+	device.c
 
 @MAKE_TEST_RULES@
 

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = oleacc.dll
 IMPORTS   = kernel32 oleacc
 
-CTESTS = \
+C_SRCS = \
 	main.c
 
 @MAKE_TEST_RULES@

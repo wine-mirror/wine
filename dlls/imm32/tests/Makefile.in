@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = imm32.dll
 IMPORTS   = imm32 user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	imm32.c
 
 @MAKE_TEST_RULES@

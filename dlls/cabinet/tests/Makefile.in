@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = cabinet.dll
 IMPORTS   = cabinet kernel32
 
-CTESTS = \
+C_SRCS = \
 	extract.c \
 	fdi.c
 

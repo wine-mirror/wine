@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = dmloader.dll
 IMPORTS   = ole32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	loader.c
 
 @MAKE_TEST_RULES@

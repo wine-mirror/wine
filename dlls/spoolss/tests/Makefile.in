@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = spoolss.dll
 IMPORTS   = kernel32
 
-CTESTS = \
+C_SRCS = \
 	spoolss.c
 
 @MAKE_TEST_RULES@

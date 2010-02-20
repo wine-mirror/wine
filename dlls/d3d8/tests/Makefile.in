@@ -5,9 +5,9 @@ VPATH     = @srcdir@
 TESTDLL   = d3d8.dll
 IMPORTS   = user32 kernel32
 
-CTESTS = \
-	d3d8_main.c \
+C_SRCS = \
 	buffer.c \
+	d3d8_main.c \
 	device.c \
 	stateblock.c \
 	surface.c \

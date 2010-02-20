@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = rsaenh.dll
 IMPORTS   = advapi32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	rsaenh.c
 
 @MAKE_TEST_RULES@

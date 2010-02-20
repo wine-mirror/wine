@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = msctf.dll
 IMPORTS   = ole32 user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	inputprocessor.c
 
 @MAKE_TEST_RULES@

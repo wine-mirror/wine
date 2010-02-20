@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = ntdsapi.dll
 IMPORTS   = ntdsapi kernel32
 
-CTESTS = \
+C_SRCS = \
 	ntdsapi.c
 
 @MAKE_TEST_RULES@

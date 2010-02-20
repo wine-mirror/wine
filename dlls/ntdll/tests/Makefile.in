@@ -5,17 +5,17 @@ VPATH     = @srcdir@
 TESTDLL   = ntdll.dll
 IMPORTS   = user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	atom.c \
 	change.c \
 	directory.c \
 	env.c \
 	error.c \
 	exception.c \
+	file.c \
 	generated.c \
 	info.c \
 	large_int.c \
-	file.c \
 	om.c \
 	path.c \
 	port.c \

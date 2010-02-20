@@ -8,7 +8,7 @@ IMPORTS   = kernel32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 MODCFLAGS = @BUILTINFLAG@
 
-CTESTS = \
+C_SRCS = \
 	debug.c
 
 @MAKE_TEST_RULES@

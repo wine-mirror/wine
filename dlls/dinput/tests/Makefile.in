@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 TESTDLL   = dinput.dll
 IMPORTS   = dinput ole32 version user32 kernel32
 
-CTESTS = \
+C_SRCS = \
 	device.c \
 	joystick.c \
 	keyboard.c \
