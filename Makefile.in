@@ -67,7 +67,7 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 # Rules for re-running configure
 
-ALL_CONFIGS = Makefile $(ALL_DIRS:%=%/Makefile) @ALL_MAKERULES@ @ALL_SYMLINKS@
+ALL_CONFIGS = Makefile @ALL_MAKERULES@ @ALL_SYMLINKS@
 
 $(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
 	cd $(SRCDIR) && autoconf --warnings=all
@@ -98,10 +98,7 @@ $(ALL_DIRS): dummy
 
 # Rules for dependencies
 
-$(ALL_DIRS:%=%/__depend__): dummy
-	@cd `dirname $@` && $(MAKE) depend
-
-depend: $(MAKEDEP) $(ALL_DIRS:%=%/__depend__) dummy
+depend: $(ALL_DIRS:%=%/__depend__) dummy
 .PHONY: $(ALL_DIRS:%=%/__depend__)
 
 # Rules for cleaning
@@ -110,6 +107,7 @@ $(ALL_DIRS:%=%/__clean__): dummy
 	@cd `dirname $@` && $(MAKE) clean
 
 clean:: $(ALL_DIRS:%=%/__clean__)
+	$(RM) $(ALL_DIRS:%=%/Makefile)
 
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h $(ALL_CONFIGS)
@@ -227,7 +225,6 @@ tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
 
 RECURSE_TARGETS = \
 	__clean__ \
-	__depend__ \
 	__install__ \
 	__instal-dev__ \
 	__install-lib__ \
