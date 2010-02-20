@@ -64,6 +64,8 @@ typedef int Status;
 #define MAX_PIXELFORMATS 8
 #define MAX_DASHLEN 16
 
+#define WINE_XDND_VERSION 4
+
 struct tagCURSORICONINFO;
 
 extern void CDECL wine_tsx11_lock(void);

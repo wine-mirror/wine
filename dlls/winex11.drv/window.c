@@ -917,7 +917,7 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 {
     long i;
     Atom protocols[3];
-    Atom dndVersion = 4;
+    Atom dndVersion = WINE_XDND_VERSION;
     XClassHint *class_hints;
     char *process_name = get_process_name();
 
