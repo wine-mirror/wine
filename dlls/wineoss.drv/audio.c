@@ -2806,15 +2806,15 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		widRecorder_ReadHeaders(wwi);
 
 		/* return all buffers to the app */
-		for (lpWaveHdr = wwi->lpQueuePtr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
+		while (wwi->lpQueuePtr) {
+		    lpWaveHdr = wwi->lpQueuePtr;
 		    TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
+		    wwi->lpQueuePtr = lpWaveHdr->lpNext;
 		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		    lpWaveHdr->dwFlags |= WHDR_DONE;
-                    wwi->lpQueuePtr = lpWaveHdr->lpNext;
 		    widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 		}
 
-		wwi->lpQueuePtr = NULL;
 		SetEvent(ev);
 		break;
 	    case WINE_WM_UPDATE:
