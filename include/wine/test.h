@@ -65,6 +65,14 @@ extern void winetest_wait_child_process( HANDLE process );
 extern const char *wine_dbgstr_wn( const WCHAR *str, int n );
 static inline const char *wine_dbgstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
 
+/* strcmpW is avaiable for tests compiled under Wine, but not in standalone
+ * builds under Windows, so we reimplement it under a different name. */
+static inline int winetest_strcmpW( const WCHAR *str1, const WCHAR *str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
 #ifdef STANDALONE
 #define START_TEST(name) \
   static void func_##name(void); \
