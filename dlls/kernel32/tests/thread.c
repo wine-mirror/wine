@@ -780,7 +780,7 @@ static VOID test_GetThreadTimes(void)
 static VOID test_thread_processor(void)
 {
    HANDLE curthread,curproc;
-   DWORD_PTR processMask,systemMask;
+   DWORD_PTR processMask,systemMask,retMask;
    SYSTEM_INFO sysInfo;
    int error=0;
    BOOL is_wow64;
@@ -803,6 +803,10 @@ static VOID test_thread_processor(void)
       "SetThreadAffinityMask failed\n");
    ok(SetThreadAffinityMask(curthread,processMask+1)==0,
       "SetThreadAffinityMask passed for an illegal processor\n");
+/* NOTE: Pre-Vista does not recognize the "all processors" flag (all bits set) */
+   retMask = SetThreadAffinityMask(curthread,~0UL);
+   ok(broken(retMask==0) || retMask==processMask,
+      "SetThreadAffinityMask(thread,-1) failed to request all processors.\n");
 /* NOTE: This only works on WinNT/2000/XP) */
    if (pSetThreadIdealProcessor) {
      SetLastError(0xdeadbeef);
