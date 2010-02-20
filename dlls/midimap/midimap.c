@@ -446,7 +446,6 @@ static DWORD modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwPar
 
 static DWORD modGetVolume(MIDIMAPDATA* mom, DWORD* lpdwVolume)
 {
-    if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
     if (!lpdwVolume) return MMSYSERR_INVALPARAM;
     *lpdwVolume = 0xFFFFFFFF; /* tests show this initial value */
     return MMSYSERR_NOERROR;

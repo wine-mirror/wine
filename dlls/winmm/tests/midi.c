@@ -230,6 +230,11 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
      * real devices with the volume GUI SW-synth settings. */
     if (!rc) trace("Current volume %x on device %d\n", ovolume, udev);
 
+    /* The W95 ESFM Synthesis device reports NOTENABLED although
+     * GetVolume by handle works and music plays. */
+    rc = midiOutGetVolume((HMIDIOUT)udev, &ovolume);
+    ok((capsA.dwSupport & MIDICAPS_VOLUME) ? rc==MMSYSERR_NOERROR || broken(rc==MMSYSERR_NOTENABLED) : rc==MMSYSERR_NOTSUPPORTED, "midiOutGetVolume(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
     /* Tests with midiOutSetvolume show that the midi mapper forwards
      * the value to the real device, but Get initially always reports
      * FFFFFFFF.  Therefore, a Get+SetVolume pair with the mapper is
