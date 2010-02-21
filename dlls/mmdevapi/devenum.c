@@ -468,20 +468,45 @@ static ULONG WINAPI MMDevCol_Release(IMMDeviceCollection *iface)
 static HRESULT WINAPI MMDevCol_GetCount(IMMDeviceCollection *iface, UINT *numdevs)
 {
     MMDevColImpl *This = (MMDevColImpl*)iface;
+    DWORD i;
 
     TRACE("(%p)->(%p)\n", This, numdevs);
     if (!numdevs)
         return E_POINTER;
+
     *numdevs = 0;
+    for (i = 0; i < MMDevice_count; ++i)
+    {
+        MMDevice *cur = MMDevice_head[i];
+        if ((cur->flow == This->flow || This->flow == eAll)
+            && (cur->state & This->state))
+            ++(*numdevs);
+    }
     return S_OK;
 }
 
-static HRESULT WINAPI MMDevCol_Item(IMMDeviceCollection *iface, UINT i, IMMDevice **dev)
+static HRESULT WINAPI MMDevCol_Item(IMMDeviceCollection *iface, UINT n, IMMDevice **dev)
 {
     MMDevColImpl *This = (MMDevColImpl*)iface;
-    TRACE("(%p)->(%u, %p)\n", This, i, dev);
+    DWORD i = 0, j = 0;
+
+    TRACE("(%p)->(%u, %p)\n", This, n, dev);
     if (!dev)
         return E_POINTER;
+
+    for (j = 0; j < MMDevice_count; ++j)
+    {
+        MMDevice *cur = MMDevice_head[j];
+        if ((cur->flow == This->flow || This->flow == eAll)
+            && (cur->state & This->state)
+            && i++ == n)
+        {
+            *dev = (IMMDevice *)cur;
+            IMMDevice_AddRef(*dev);
+            return S_OK;
+        }
+    }
+    WARN("Could not obtain item %u\n", n);
     *dev = NULL;
     return E_INVALIDARG;
 }
