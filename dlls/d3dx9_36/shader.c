@@ -237,3 +237,23 @@ HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
           pProfile, Flags, ppShader, ppErrorMsgs, ppConstantTable);
     return D3DERR_INVALIDCALL;
 }
+
+HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
+                                            DWORD flags,
+                                            LPD3DXCONSTANTTABLE* ppConstantTable)
+{
+    FIXME("(%p, %x, %p): stub\n", pFunction, flags, ppConstantTable);
+
+    if (!pFunction || !ppConstantTable)
+        return D3DERR_INVALIDCALL;
+
+    return D3DXERR_INVALIDDATA;
+}
+
+HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* pFunction,
+                                          LPD3DXCONSTANTTABLE* ppConstantTable)
+{
+    TRACE("(%p, %p): Forwarded to D3DXGetShaderConstantTableEx\n", pFunction, ppConstantTable);
+
+    return D3DXGetShaderConstantTableEx(pFunction, 0, ppConstantTable);
+}

@@ -157,8 +157,8 @@
 @ stdcall D3DXGetImageInfoFromResourceA(long str ptr)
 @ stdcall D3DXGetImageInfoFromResourceW(long wstr ptr)
 @ stdcall D3DXGetPixelShaderProfile(ptr)
-@ stub D3DXGetShaderConstantTable
-@ stub D3DXGetShaderConstantTableEx
+@ stdcall D3DXGetShaderConstantTable(ptr ptr)
+@ stdcall D3DXGetShaderConstantTableEx(ptr long ptr)
 @ stub D3DXGetShaderInputSemantics
 @ stub D3DXGetShaderOutputSemantics
 @ stub D3DXGetShaderSamplers
