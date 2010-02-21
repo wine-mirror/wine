@@ -19,6 +19,9 @@
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
 extern void MMDevEnum_Free(void);
 
+extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv);
+extern HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, REFPROPVARIANT pv);
+
 typedef struct MMDevice {
     const IMMDeviceVtbl *lpVtbl;
     LONG ref;

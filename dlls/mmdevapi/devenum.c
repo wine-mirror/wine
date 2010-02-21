@@ -62,6 +62,14 @@ static const WCHAR reg_properties[] =
 static HKEY key_render;
 static HKEY key_capture;
 
+typedef struct MMDevPropStoreImpl
+{
+    const IPropertyStoreVtbl *lpVtbl;
+    LONG ref;
+    MMDevice *parent;
+    DWORD access;
+} MMDevPropStore;
+
 typedef struct MMDevEnumImpl
 {
     const IMMDeviceEnumeratorVtbl *lpVtbl;
@@ -75,6 +83,8 @@ static DWORD MMDevice_count;
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
 static const IMMDeviceCollectionVtbl MMDevColVtbl;
 static const IMMDeviceVtbl MMDeviceVtbl;
+static const IPropertyStoreVtbl MMDevPropVtbl;
+
 
 typedef struct MMDevColImpl
 {
@@ -83,6 +93,8 @@ typedef struct MMDevColImpl
     EDataFlow flow;
     DWORD state;
 } MMDevColImpl;
+
+static HRESULT MMDevPropStore_Create(MMDevice *This, DWORD access, IPropertyStore **ppv);
 
 /* Creates or updates the state of a device
  * If GUID is null, a random guid will be assigned
@@ -148,6 +160,11 @@ static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, 
         RegSetValueExW(key, reg_devicestate, 0, REG_DWORD, (const BYTE*)&state, sizeof(DWORD));
         if (!RegCreateKeyExW(key, reg_properties, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &keyprop, NULL))
         {
+            PROPVARIANT pv;
+            pv.vt = VT_LPWSTR;
+            pv.u.pwszVal = name;
+            MMDevice_SetPropValue(id, flow, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
+            MMDevice_SetPropValue(id, flow, (PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv);
             RegCloseKey(keyprop);
         }
         RegCloseKey(key);
@@ -249,8 +266,7 @@ static HRESULT WINAPI MMDevice_OpenPropertyStore(IMMDevice *iface, DWORD access,
 
     if (!ppv)
         return E_POINTER;
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    return MMDevPropStore_Create(This, access, ppv);
 }
 
 static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
@@ -373,6 +389,139 @@ static const IMMDeviceCollectionVtbl MMDevColVtbl =
     MMDevCol_Item
 };
 
+static const WCHAR propkey_formatW[] = {
+    '{','%','0','8','X','-','%','0','4','X','-',
+    '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
+    '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
+    '%','0','2','X','%','0','2','X','}',',','%','d',0 };
+
+static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *propkey)
+{
+    WCHAR buffer[39];
+    LONG ret;
+    HKEY key;
+    StringFromGUID2(guid, buffer, 39);
+    if ((ret = RegOpenKeyExW(flow == eRender ? key_render : key_capture, buffer, 0, KEY_READ|KEY_WRITE, &key)) != ERROR_SUCCESS)
+    {
+        WARN("Opening key %s failed with %u\n", debugstr_w(buffer), ret);
+        return E_FAIL;
+    }
+    ret = RegOpenKeyExW(key, reg_properties, 0, KEY_READ|KEY_WRITE, propkey);
+    RegCloseKey(key);
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("Opening key %s failed with %u\n", debugstr_w(reg_properties), ret);
+        return E_FAIL;
+    }
+    return S_OK;
+}
+
+HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv)
+{
+    WCHAR buffer[80];
+    const GUID *id = &key->fmtid;
+    DWORD type, size;
+    HRESULT hr = S_OK;
+    HKEY regkey;
+    LONG ret;
+
+    hr = MMDevPropStore_OpenPropKey(devguid, flow, &regkey);
+    if (FAILED(hr))
+        return hr;
+    wsprintfW( buffer, propkey_formatW, id->Data1, id->Data2, id->Data3,
+               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7], key->pid );
+    ret = RegGetValueW(regkey, NULL, buffer, RRF_RT_ANY, &type, NULL, &size);
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("Reading %s returned %d\n", debugstr_w(buffer), ret);
+        RegCloseKey(regkey);
+        PropVariantClear(pv);
+        return S_OK;
+    }
+
+    switch (type)
+    {
+        case REG_SZ:
+        {
+            pv->vt = VT_LPWSTR;
+            pv->u.pwszVal = CoTaskMemAlloc(size);
+            if (!pv->u.pwszVal)
+                hr = E_OUTOFMEMORY;
+            else
+                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_SZ, NULL, (BYTE*)pv->u.pwszVal, &size);
+            break;
+        }
+        case REG_DWORD:
+        {
+            pv->vt = VT_UI4;
+            RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_DWORD, NULL, (BYTE*)&pv->u.ulVal, &size);
+            break;
+        }
+        case REG_BINARY:
+        {
+            pv->vt = VT_BLOB;
+            pv->u.blob.cbSize = size;
+            pv->u.blob.pBlobData = CoTaskMemAlloc(size);
+            if (!pv->u.blob.pBlobData)
+                hr = E_OUTOFMEMORY;
+            else
+                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_BINARY, NULL, (BYTE*)pv->u.blob.pBlobData, &size);
+            break;
+        }
+        default:
+            ERR("Unknown/unhandled type: %u\n", type);
+            PropVariantClear(pv);
+            break;
+    }
+    RegCloseKey(regkey);
+    return hr;
+}
+
+HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, REFPROPVARIANT pv)
+{
+    WCHAR buffer[80];
+    const GUID *id = &key->fmtid;
+    HRESULT hr;
+    HKEY regkey;
+    LONG ret;
+
+    hr = MMDevPropStore_OpenPropKey(devguid, flow, &regkey);
+    if (FAILED(hr))
+        return hr;
+    wsprintfW( buffer, propkey_formatW, id->Data1, id->Data2, id->Data3,
+               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7], key->pid );
+    switch (pv->vt)
+    {
+        case VT_UI4:
+        {
+            ret = RegSetValueExW(regkey, buffer, 0, REG_DWORD, (BYTE*)&pv->u.ulVal, sizeof(DWORD));
+            break;
+        }
+        case VT_BLOB:
+        {
+            ret = RegSetValueExW(regkey, buffer, 0, REG_BINARY, pv->u.blob.pBlobData, pv->u.blob.cbSize);
+            TRACE("Blob %p %u\n", pv->u.blob.pBlobData, pv->u.blob.cbSize);
+
+            break;
+        }
+        case VT_LPWSTR:
+        {
+            ret = RegSetValueExW(regkey, buffer, 0, REG_SZ, (BYTE*)pv->u.pwszVal, sizeof(WCHAR)*(1+lstrlenW(pv->u.pwszVal)));
+            break;
+        }
+        default:
+            ret = 0;
+            FIXME("Unhandled type %u\n", pv->vt);
+            hr = E_INVALIDARG;
+            break;
+    }
+    RegCloseKey(regkey);
+    TRACE("Writing %s returned %u\n", debugstr_w(buffer), ret);
+    return hr;
+}
+
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = MMDevEnumerator;
@@ -411,6 +560,7 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             WCHAR guidvalue[39];
             GUID guid;
             DWORD len;
+            PROPVARIANT pv = { VT_EMPTY };
 
             len = sizeof(guidvalue);
             ret = RegEnumKeyExW(cur, i++, guidvalue, &len, NULL, NULL, NULL, NULL);
@@ -427,10 +577,14 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             }
             if (ret != ERROR_SUCCESS)
                 continue;
-            if (SUCCEEDED(CLSIDFromString(guidvalue, &guid)))
-                /* Using guid as friendly name till property store works */
-                MMDevice_Create(guidvalue, &guid, curflow,
+            if (SUCCEEDED(CLSIDFromString(guidvalue, &guid))
+                && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
+                && pv.vt == VT_LPWSTR)
+            {
+                MMDevice_Create(pv.u.pwszVal, &guid, curflow,
                                 DEVICE_STATE_NOTPRESENT, FALSE);
+                CoTaskMemFree(pv.u.pwszVal);
+            }
         } while (1);
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
@@ -555,4 +709,176 @@ static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
     MMDevEnum_GetDevice,
     MMDevEnum_RegisterEndpointNotificationCallback,
     MMDevEnum_UnregisterEndpointNotificationCallback
+};
+
+static HRESULT MMDevPropStore_Create(MMDevice *parent, DWORD access, IPropertyStore **ppv)
+{
+    MMDevPropStore *This;
+    if (access != STGM_READ
+        && access != STGM_WRITE
+        && access != STGM_READWRITE)
+    {
+        WARN("Invalid access %08x\n", access);
+        return E_INVALIDARG;
+    }
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    *ppv = (IPropertyStore*)This;
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &MMDevPropVtbl;
+    This->ref = 1;
+    This->parent = parent;
+    This->access = access;
+    return S_OK;
+}
+
+static void MMDevPropStore_Destroy(MMDevPropStore *This)
+{
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI MMDevPropStore_QueryInterface(IPropertyStore *iface, REFIID riid, void **ppv)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+
+    if (!ppv)
+        return E_POINTER;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IPropertyStore))
+        *ppv = This;
+    else
+        *ppv = NULL;
+    if (!*ppv)
+        return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI MMDevPropStore_AddRef(IPropertyStore *iface)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI MMDevPropStore_Release(IPropertyStore *iface)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        MMDevPropStore_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI MMDevPropStore_GetCount(IPropertyStore *iface, DWORD *nprops)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+    WCHAR buffer[50];
+    DWORD i = 0;
+    HKEY propkey;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", iface, nprops);
+    if (!nprops)
+        return E_POINTER;
+    hr = MMDevPropStore_OpenPropKey(&This->parent->devguid, This->parent->flow, &propkey);
+    if (FAILED(hr))
+        return hr;
+    *nprops = 0;
+    do {
+        DWORD len = sizeof(buffer)/sizeof(*buffer);
+        if (RegEnumKeyExW(propkey, i, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
+            break;
+        i++;
+    } while (0);
+    RegCloseKey(propkey);
+    TRACE("Returning %i\n", i);
+    *nprops = i;
+    return S_OK;
+}
+
+static HRESULT WINAPI MMDevPropStore_GetAt(IPropertyStore *iface, DWORD prop, PROPERTYKEY *key)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+    WCHAR buffer[50];
+    DWORD len = sizeof(buffer)/sizeof(*buffer);
+    HRESULT hr;
+    HKEY propkey;
+
+    TRACE("(%p)->(%u,%p)\n", iface, prop, key);
+    if (!key)
+        return E_POINTER;
+
+    hr = MMDevPropStore_OpenPropKey(&This->parent->devguid, This->parent->flow, &propkey);
+    if (FAILED(hr))
+        return hr;
+
+    if (RegEnumKeyExW(propkey, prop, buffer, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS
+        || len <= 40)
+    {
+        WARN("GetAt %u failed\n", prop);
+        return E_INVALIDARG;
+    }
+    RegCloseKey(propkey);
+    buffer[39] = 0;
+    CLSIDFromString(buffer, &key->fmtid);
+    key->pid = atoiW(&buffer[40]);
+    return S_OK;
+}
+
+static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *pv)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+    TRACE("(%p)->(\"%s,%u\", %p\n", This, debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
+
+    if (!key || !pv)
+        return E_POINTER;
+    if (This->access != STGM_READ
+        && This->access != STGM_READWRITE)
+        return STG_E_ACCESSDENIED;
+
+    /* Special case */
+    if (IsEqualPropertyKey(*key, PKEY_AudioEndpoint_GUID))
+    {
+        pv->u.pwszVal = CoTaskMemAlloc(39 * sizeof(WCHAR));
+        if (!pv->u.pwszVal)
+            return E_OUTOFMEMORY;
+        StringFromGUID2(&This->parent->devguid, pv->u.pwszVal, 39);
+        return S_OK;
+    }
+
+    return MMDevice_GetPropValue(&This->parent->devguid, This->parent->flow, key, pv);
+}
+
+static HRESULT WINAPI MMDevPropStore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT pv)
+{
+    MMDevPropStore *This = (MMDevPropStore*)iface;
+
+    if (!key || !pv)
+        return E_POINTER;
+
+    if (This->access != STGM_WRITE
+        && This->access != STGM_READWRITE)
+        return STG_E_ACCESSDENIED;
+    return MMDevice_SetPropValue(&This->parent->devguid, This->parent->flow, key, pv);
+}
+
+static HRESULT WINAPI MMDevPropStore_Commit(IPropertyStore *iface)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static const IPropertyStoreVtbl MMDevPropVtbl =
+{
+    MMDevPropStore_QueryInterface,
+    MMDevPropStore_AddRef,
+    MMDevPropStore_Release,
+    MMDevPropStore_GetCount,
+    MMDevPropStore_GetAt,
+    MMDevPropStore_GetValue,
+    MMDevPropStore_SetValue,
+    MMDevPropStore_Commit
 };
