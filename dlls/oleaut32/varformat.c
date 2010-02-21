@@ -1285,12 +1285,21 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
         have_frac = -pad;
         pad = 0;
       }
+      if(exponent < 0 && exponent > (-256 + have_int + have_frac))
+      {
+        /* Remove exponent notation */
+        memmove(rgbDig - exponent, rgbDig, have_int + have_frac);
+        ZeroMemory(rgbDig, -exponent);
+        have_frac -= exponent;
+        exponent = 0;
+      }
     }
 
     /* Rounding the number */
     if (have_frac > need_frac)
     {
-      prgbDig = &rgbDig[have_int + need_frac];
+      prgbDig = &rgbDig[have_int + need_frac ? need_frac + 1 : 0];
+      if (*prgbDig < 5) prgbDig--;
       have_frac = need_frac;
       if (*prgbDig >= 5)
       {
