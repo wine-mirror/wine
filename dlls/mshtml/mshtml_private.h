@@ -434,6 +434,10 @@ struct NSContainer {
     HWND reset_focus; /* hack */
 };
 
+typedef struct nsWineURI nsWineURI;
+
+HRESULT set_wine_url(nsWineURI*,LPCWSTR);
+
 typedef struct {
     const nsIHttpChannelVtbl *lpHttpChannelVtbl;
     const nsIUploadChannelVtbl *lpUploadChannelVtbl;
@@ -441,7 +445,7 @@ typedef struct {
 
     LONG ref;
 
-    nsIWineURI *uri;
+    nsWineURI *uri;
     nsIInputStream *post_data_stream;
     nsILoadGroup *load_group;
     nsIInterfaceRequestor *notif_callback;

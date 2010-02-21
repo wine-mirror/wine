@@ -49,7 +49,7 @@ static nsINetUtil *net_util;
 
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
-typedef struct {
+struct  nsWineURI {
     const nsIWineURIVtbl *lpWineURIVtbl;
 
     LONG ref;
@@ -62,7 +62,7 @@ typedef struct {
     LPWSTR wine_url;
     PRBool is_doc_uri;
     BOOL use_wine_url;
-} nsWineURI;
+};
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
 #define NSWINEURI(x)     ((nsIWineURI*)        &(x)->lpWineURIVtbl)
@@ -129,14 +129,7 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
     HTMLDocumentObj *doc = container->doc;
     DWORD hlnf = 0;
-    LPCWSTR uri;
     HRESULT hres;
-
-    nsIWineURI_GetWineURL(channel->uri, &uri);
-    if(!uri) {
-        ERR("GetWineURL returned NULL\n");
-        return TRUE;
-    }
 
     if(!doc) {
         NSContainer *container_iter = container;
@@ -150,11 +143,17 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     if(!doc->client)
         return TRUE;
 
-    if(!hlnf && !exec_shldocvw_67(doc, uri))
+    if(!hlnf && !exec_shldocvw_67(doc, channel->uri->wine_url))
         return FALSE;
 
-    hres = hlink_frame_navigate(&doc->basedoc, uri, channel->post_data_stream, hlnf);
+    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel->post_data_stream, hlnf);
     return hres != S_OK;
+}
+
+HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
+{
+    nsIWineURI_SetWineURL(NSWINEURI(This), url);
+    return S_OK;
 }
 
 static inline BOOL is_http_channel(nsChannel *This)
@@ -215,7 +214,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        nsIWineURI_Release(This->uri);
+        nsIURI_Release(NSURI(This->uri));
         if(This->owner)
             nsISupports_Release(This->owner);
         if(This->post_data_stream)
@@ -369,7 +368,7 @@ static nsresult NSAPI nsChannel_GetURI(nsIHttpChannel *iface, nsIURI **aURI)
 
     TRACE("(%p)->(%p)\n", This, aURI);
 
-    nsIWineURI_AddRef(This->uri);
+    nsIURI_AddRef(NSURI(This->uri));
     *aURI = (nsIURI*)This->uri;
 
     return NS_OK;
@@ -720,51 +719,36 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
     HTMLWindow *window = NULL;
-    PRBool is_doc_uri;
     BOOL open = TRUE;
     nsresult nsres = NS_OK;
 
-    TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
+    TRACE("(%p)->(%p %p) opening %s\n", This, aListener, aContext, debugstr_w(This->uri->wine_url));
 
-    if(TRACE_ON(mshtml)) {
-        LPCWSTR url;
-
-        nsIWineURI_GetWineURL(This->uri, &url);
-        TRACE("opening %s\n", debugstr_w(url));
-    }
-
-    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
-    if(is_doc_uri) {
+    if(This->uri->is_doc_uri) {
         window = get_channel_window(This);
         if(window) {
-            nsIWineURI_SetWindow(This->uri, window);
-        }else {
-            NSContainer *nscontainer;
+            nsIWineURI_SetWindow(NSWINEURI(This->uri), window);
+        }else if(This->uri->container) {
+            BOOL b;
 
-            nsIWineURI_GetNSContainer(This->uri, &nscontainer);
-            if(nscontainer) {
-                BOOL b;
+            /* nscontainer->doc should be NULL which means navigation to a new window */
+            if(This->uri->container->doc)
+                FIXME("nscontainer->doc = %p\n", This->uri->container->doc);
 
-                /* nscontainer->doc should be NULL which means navigation to a new window */
-                if(nscontainer->doc)
-                    FIXME("nscontainer->doc = %p\n", nscontainer->doc);
-
-                b = before_async_open(This, nscontainer);
-                nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
-                if(b)
-                    FIXME("Navigation not cancelled\n");
-                return NS_ERROR_UNEXPECTED;
-            }
+            b = before_async_open(This, This->uri->container);
+            if(b)
+                FIXME("Navigation not cancelled\n");
+            return NS_ERROR_UNEXPECTED;
         }
     }
 
     if(!window) {
-        nsIWineURI_GetWindow(This->uri, &window);
+        nsIWineURI_GetWindow(NSWINEURI(This->uri), &window);
 
         if(!window && This->load_group) {
             window = get_window_from_load_group(This);
             if(window)
-                nsIWineURI_SetWindow(This->uri, window);
+                nsIWineURI_SetWindow(NSWINEURI(This->uri), window);
         }
     }
 
@@ -773,13 +757,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_UNEXPECTED;
     }
 
-    if(is_doc_uri && window == window->doc_obj->basedoc.window) {
-        nsChannelBSC *channel_bsc;
-
-        nsIWineURI_GetChannelBSC(This->uri, &channel_bsc);
-        if(channel_bsc) {
-            channelbsc_set_channel(channel_bsc, This, aListener, aContext);
-            IUnknown_Release((IUnknown*)channel_bsc);
+    if(This->uri->is_doc_uri && window == window->doc_obj->basedoc.window) {
+        if(This->uri->channel_bsc) {
+            channelbsc_set_channel(This->uri->channel_bsc, This, aListener, aContext);
 
             if(window->doc_obj->mime) {
                 heap_free(This->content_type);
@@ -797,7 +777,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     if(open)
-        nsres = async_open(This, window, is_doc_uri, aListener, aContext);
+        nsres = async_open(This, window, This->uri->is_doc_uri, aListener, aContext);
 
     IHTMLWindow2_Release(HTMLWINDOW2(window));
     return nsres;
@@ -2556,8 +2536,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 {
     PARSEDURLW parsed_url = {sizeof(PARSEDURLW)};
     nsChannel *ret;
-    nsIWineURI *wine_uri;
-    const WCHAR *url;
+    nsWineURI *wine_uri;
     nsresult nsres;
 
     TRACE("(%p %p)\n", aURI, _retval);
@@ -2578,9 +2557,8 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
-
-    nsIWineURI_GetWineURL(wine_uri, &url);
-    ret->url_scheme = url && SUCCEEDED(ParseURLW(url, &parsed_url)) ? parsed_url.nScheme : URL_SCHEME_UNKNOWN;
+    ret->url_scheme = wine_uri->wine_url && SUCCEEDED(ParseURLW(wine_uri->wine_url, &parsed_url))
+        ? parsed_url.nScheme : URL_SCHEME_UNKNOWN;
 
     *_retval = NSCHANNEL(ret);
     return NS_OK;

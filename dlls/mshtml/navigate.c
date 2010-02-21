@@ -1087,7 +1087,7 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
         TRACE("redirect to %s\n", debugstr_w(status_text));
 
         /* FIXME: We should find a better way to handle this */
-        nsIWineURI_SetWineURL(This->nschannel->uri, status_text);
+        set_wine_url(This->nschannel->uri, status_text);
     }
 
     return S_OK;
