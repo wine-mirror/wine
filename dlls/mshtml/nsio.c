@@ -235,7 +235,36 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retva
 
 HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
 {
-    nsIWineURI_SetWineURL(NSWINEURI(This), url);
+    static const WCHAR wszFtp[]   = {'f','t','p',':'};
+    static const WCHAR wszHttp[]  = {'h','t','t','p',':'};
+    static const WCHAR wszHttps[] = {'h','t','t','p','s',':'};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(url));
+
+    if(url) {
+        WCHAR *new_url;
+
+        new_url = heap_strdupW(url);
+        if(!new_url)
+            return E_OUTOFMEMORY;
+        heap_free(This->wine_url);
+        This->wine_url = new_url;
+
+        if(This->uri) {
+            /* FIXME: Always use wine url */
+            This->use_wine_url =
+                   strncmpW(url, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
+                && strncmpW(url, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
+                && strncmpW(url, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
+        }else {
+            This->use_wine_url = TRUE;
+        }
+    }else {
+        heap_free(This->wine_url);
+        This->wine_url = NULL;
+        This->use_wine_url = FALSE;
+    }
+
     return S_OK;
 }
 
@@ -613,8 +642,7 @@ static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_re
 
 static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
 {
-    nsIWineURI *wine_uri;
-    LPCWSTR wine_url;
+    nsWineURI *wine_uri;
     nsresult nsres;
     HRESULT hres;
 
@@ -629,16 +657,16 @@ static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
         return E_FAIL;
     }
 
-    nsIWineURI_GetWineURL(wine_uri, &wine_url);
-    nsIWineURI_Release(wine_uri);
-    if(!wine_url) {
+    if(wine_uri->wine_url) {
+        hres = CreateURLMoniker(NULL, wine_uri->wine_url, mon);
+        if(FAILED(hres))
+            WARN("CreateURLMoniker failed: %08x\n", hres);
+    }else {
         TRACE("wine_url == NULL\n");
-        return E_FAIL;
+        hres = E_FAIL;
     }
 
-    hres = CreateURLMoniker(NULL, wine_url, mon);
-    if(FAILED(hres))
-        WARN("CreateURLMoniker failed: %08x\n", hres);
+    nsIURI_Release(NSURI(wine_uri));
 
     return hres;
 }
@@ -1623,7 +1651,7 @@ static nsresult NSAPI nsURI_SetPath(nsIWineURI *iface, const nsACString *aPath)
         hres = UrlCombineW(This->wine_url, pathw, new_url, &size, 0);
         heap_free(pathw);
         if(SUCCEEDED(hres))
-            nsIWineURI_SetWineURL(NSWINEURI(This), new_url);
+            set_wine_url(This, new_url);
         else
             WARN("UrlCombine failed: %08x\n", hres);
     }
@@ -1637,8 +1665,7 @@ static nsresult NSAPI nsURI_SetPath(nsIWineURI *iface, const nsACString *aPath)
 static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    nsIWineURI *wine_uri;
-    LPCWSTR other_url = NULL;
+    nsWineURI *wine_uri;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, other, _retval);
@@ -1653,9 +1680,8 @@ static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_re
         return NS_OK;
     }
 
-    nsIWineURI_GetWineURL(wine_uri, &other_url);
-    *_retval = other_url && !UrlCompareW(This->wine_url, other_url, TRUE);
-    nsIWineURI_Release(wine_uri);
+    *_retval = wine_uri->wine_url && !UrlCompareW(This->wine_url, wine_uri->wine_url, TRUE);
+    nsIURI_Release(NSURI(wine_uri));
 
     return NS_OK;
 }
@@ -1706,8 +1732,10 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
         return nsres;
     }
 
+    set_wine_url(wine_uri, This->wine_url);
+
     *_retval = NSURI(wine_uri);
-    return nsIWineURI_SetWineURL(NSWINEURI(wine_uri), This->wine_url);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_Resolve(nsIWineURI *iface, const nsACString *arelativePath,
@@ -2120,96 +2148,6 @@ static nsresult NSAPI nsURI_SetWindow(nsIWineURI *iface, HTMLWindow *aHTMLWindow
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetChannelBSC(nsIWineURI *iface, nsChannelBSC **aChannelBSC)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aChannelBSC);
-
-    if(This->channel_bsc)
-        IUnknown_AddRef((IUnknown*)This->channel_bsc);
-    *aChannelBSC = This->channel_bsc;
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetChannelBSC(nsIWineURI *iface, nsChannelBSC *aChannelBSC)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aChannelBSC);
-
-    if(This->channel_bsc)
-        IUnknown_Release((IUnknown*)This->channel_bsc);
-    if(aChannelBSC)
-        IUnknown_AddRef((IUnknown*)aChannelBSC);
-    This->channel_bsc = aChannelBSC;
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_GetIsDocumentURI(nsIWineURI *iface, PRBool *aIsDocumentURI)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aIsDocumentURI);
-
-    *aIsDocumentURI = This->is_doc_uri;
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetIsDocumentURI(nsIWineURI *iface, PRBool aIsDocumentURI)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%x)\n", This, aIsDocumentURI);
-
-    This->is_doc_uri = aIsDocumentURI;
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_GetWineURL(nsIWineURI *iface, LPCWSTR *aURL)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aURL);
-
-    *aURL = This->wine_url;
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    static const WCHAR wszFtp[]   = {'f','t','p',':'};
-    static const WCHAR wszHttp[]  = {'h','t','t','p',':'};
-    static const WCHAR wszHttps[] = {'h','t','t','p','s',':'};
-
-    TRACE("(%p)->(%s)\n", This, debugstr_w(aURL));
-
-    heap_free(This->wine_url);
-
-    if(aURL) {
-        int len = strlenW(aURL)+1;
-        This->wine_url = heap_alloc(len*sizeof(WCHAR));
-        memcpy(This->wine_url, aURL, len*sizeof(WCHAR));
-
-        if(This->uri) {
-            /* FIXME: Always use wine url */
-            This->use_wine_url =
-                   strncmpW(aURL, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
-                && strncmpW(aURL, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
-                && strncmpW(aURL, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
-        }else {
-            This->use_wine_url = TRUE;
-        }
-    }else {
-        This->wine_url = NULL;
-        This->use_wine_url = FALSE;
-    }
-
-    return NS_OK;
-}
-
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -2264,12 +2202,6 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_SetNSContainer,
     nsURI_GetWindow,
     nsURI_SetWindow,
-    nsURI_GetChannelBSC,
-    nsURI_SetChannelBSC,
-    nsURI_GetIsDocumentURI,
-    nsURI_SetIsDocumentURI,
-    nsURI_GetWineURL,
-    nsURI_SetWineURL
 };
 
 static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
@@ -2302,7 +2234,7 @@ HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    nsIWineURI_SetWineURL(NSWINEURI(uri), url);
+    set_wine_url(uri, url);
     uri->is_doc_uri = TRUE;
 
     *ret = uri;
@@ -2533,12 +2465,11 @@ static BOOL is_gecko_special_uri(const char *spec)
 static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *aSpec,
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
+    nsWineURI *wine_uri, *base_wine_uri = NULL;
     const char *spec = NULL;
     HTMLWindow *window = NULL;
     nsIURI *uri = NULL;
     LPCWSTR base_wine_url = NULL;
-    nsIWineURI *base_wine_uri = NULL;
-    nsWineURI *wine_uri;
     BOOL is_wine_uri = FALSE;
     nsresult nsres;
 
@@ -2560,8 +2491,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
-            nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
-            nsIWineURI_GetWindow(base_wine_uri, &window);
+            base_wine_url = base_wine_uri->wine_url;
+            nsIWineURI_GetWindow(NSWINEURI(base_wine_uri), &window);
             TRACE("base url: %s window: %p\n", debugstr_w(base_wine_url), window);
         }else if(FAILED(ParseURLA(spec, &parsed_url))) {
             TRACE("not wraping\n");
@@ -2603,7 +2534,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     }
 
     if(base_wine_uri)
-        nsIWineURI_Release(base_wine_uri);
+        nsIURI_Release(NSURI(base_wine_uri));
 
     return nsres;
 }

@@ -226,6 +226,8 @@ typedef struct {
     LONG ref;
 }  windowref_t;
 
+typedef struct nsChannelBSC nsChannelBSC;
+
 struct HTMLWindow {
     DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;

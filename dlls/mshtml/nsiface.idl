@@ -2836,16 +2836,9 @@ interface nsIWineURI : nsIURL
 {
     typedef struct NSContainer NSContainer;
     typedef struct HTMLWindow HTMLWindow;
-    typedef struct nsChannelBSC nsChannelBSC;
 
     nsresult GetNSContainer(NSContainer **aNSContainer);
     nsresult SetNSContainer(NSContainer *aNSContainer);
     nsresult GetWindow(HTMLWindow **aHTMLWindow);
     nsresult SetWindow(HTMLWindow *aHTMLWindow);
-    nsresult GetChannelBSC(nsChannelBSC **aChannelBSC);
-    nsresult SetChannelBSC(nsChannelBSC *aChannelBSC);
-    nsresult GetIsDocumentURI(PRBool *aIsDocumentURI);
-    nsresult SetIsDocumentURI(PRBool aIsDocumentURI);
-    nsresult GetWineURL(LPCWSTR *aURL);
-    nsresult SetWineURL(LPCWSTR aURL);
 }
