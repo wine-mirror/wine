@@ -106,7 +106,7 @@ static HRESULT MMDevPropStore_Create(MMDevice *This, DWORD access, IPropertyStor
  * If GUID is null, a random guid will be assigned
  * and the device will be created
  */
-static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
+static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
 {
     HKEY key, root;
     MMDevice *cur;
@@ -190,6 +190,8 @@ done:
         else
             MMDevice_def_rec = cur;
     }
+    if (dev)
+        *dev = cur;
 }
 
 static void MMDevice_Destroy(MMDevice *This)
@@ -679,6 +681,113 @@ HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY ke
     return hr;
 }
 
+#ifdef HAVE_OPENAL
+
+static void openal_setformat(MMDevice *This, DWORD freq)
+{
+    HRESULT hr;
+    PROPVARIANT pv = { VT_EMPTY };
+
+    hr = MMDevice_GetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
+    if (SUCCEEDED(hr) && pv.vt == VT_BLOB)
+    {
+        WAVEFORMATEX *pwfx;
+        pwfx = (WAVEFORMATEX*)pv.u.blob.pBlobData;
+        if (pwfx->nSamplesPerSec != freq)
+        {
+            pwfx->nSamplesPerSec = freq;
+            pwfx->nAvgBytesPerSec = freq * pwfx->nBlockAlign;
+            MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
+        }
+        CoTaskMemFree(pwfx);
+    }
+    else
+    {
+        WAVEFORMATEXTENSIBLE wfxe;
+
+        wfxe.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfxe.Format.nChannels = 2;
+        wfxe.Format.wBitsPerSample = 32;
+        wfxe.Format.nBlockAlign = wfxe.Format.nChannels * wfxe.Format.wBitsPerSample/8;
+        wfxe.Format.nSamplesPerSec = freq;
+        wfxe.Format.nAvgBytesPerSec = wfxe.Format.nSamplesPerSec * wfxe.Format.nBlockAlign;
+        wfxe.Format.cbSize = sizeof(wfxe)-sizeof(WAVEFORMATEX);
+        wfxe.Samples.wValidBitsPerSample = 32;
+        wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+        wfxe.dwChannelMask = SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT;
+
+        pv.vt = VT_BLOB;
+        pv.u.blob.cbSize = sizeof(wfxe);
+        pv.u.blob.pBlobData = (BYTE*)&wfxe;
+        MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
+        MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_OEMFormat, &pv);
+    }
+}
+
+static void openal_scanrender(void)
+{
+    WCHAR name[MAX_PATH];
+    ALCdevice *dev;
+    const ALCchar *devstr, *defaultstr;
+    EnterCriticalSection(&openal_crst);
+    if (palcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT")) {
+        defaultstr = palcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+        devstr = palcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+    } else {
+        defaultstr = palcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+        devstr = palcGetString(NULL, ALC_DEVICE_SPECIFIER);
+    }
+    if (devstr && *devstr)
+        do {
+            MMDevice *mmdev;
+            MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
+                                 name, sizeof(name)/sizeof(*name)-1 );
+            name[sizeof(name)/sizeof(*name)-1] = 0;
+            TRACE("Adding %s\n", devstr);
+            dev = palcOpenDevice(devstr);
+            MMDevice_Create(&mmdev, name, NULL, eRender, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
+            if (dev)
+            {
+                ALint freq = 44100;
+                palcGetIntegerv(dev, ALC_FREQUENCY, 1, &freq);
+                openal_setformat(mmdev, freq);
+                palcCloseDevice(dev);
+            }
+            else
+                WARN("Could not open device: %04x\n", palcGetError(NULL));
+            devstr += strlen(devstr)+1;
+        } while (*devstr);
+    LeaveCriticalSection(&openal_crst);
+}
+
+static void openal_scancapture(void)
+{
+    WCHAR name[MAX_PATH];
+    ALCdevice *dev;
+    const ALCchar *devstr, *defaultstr;
+
+    EnterCriticalSection(&openal_crst);
+    devstr = palcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
+    defaultstr = palcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
+    if (devstr && *devstr)
+        do {
+            ALint freq = 44100;
+            MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
+                                 name, sizeof(name)/sizeof(*name)-1 );
+            name[sizeof(name)/sizeof(*name)-1] = 0;
+            TRACE("Adding %s\n", devstr);
+            dev = palcCaptureOpenDevice(devstr, freq, AL_FORMAT_MONO16, 65536);
+            MMDevice_Create(NULL, name, NULL, eCapture, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
+            if (dev)
+                palcCaptureCloseDevice(dev);
+            else
+                WARN("Could not open device: %04x\n", palcGetError(NULL));
+            devstr += strlen(devstr)+1;
+        } while (*devstr);
+    LeaveCriticalSection(&openal_crst);
+}
+#endif /*HAVE_OPENAL*/
+
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = MMDevEnumerator;
@@ -738,11 +847,18 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
                 && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
                 && pv.vt == VT_LPWSTR)
             {
-                MMDevice_Create(pv.u.pwszVal, &guid, curflow,
+                MMDevice_Create(NULL, pv.u.pwszVal, &guid, curflow,
                                 DEVICE_STATE_NOTPRESENT, FALSE);
                 CoTaskMemFree(pv.u.pwszVal);
             }
         } while (1);
+#ifdef HAVE_OPENAL
+        if (openal_loaded)
+        {
+            openal_scanrender();
+            openal_scancapture();
+        }
+#endif /*HAVE_OPENAL*/
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
