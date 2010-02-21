@@ -1862,7 +1862,7 @@ static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, 
     if(xscale != 1.0 || yscale != 1.0)
     {
         if(mask_pict)
-            set_xrender_transformation(mask_pict, xscale, yscale, x_offset, y_offset);
+            set_xrender_transformation(mask_pict, xscale, yscale, x_src + x_offset, y_src + y_offset);
         else
             set_xrender_transformation(src_pict, xscale, yscale, x_src + x_offset, y_src + y_offset);
 
