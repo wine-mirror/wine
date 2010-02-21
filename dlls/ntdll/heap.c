@@ -596,7 +596,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
     {
         DWORD *pNext = (DWORD *)((char *)ptr + size);
         *pNext |= ARENA_FLAG_PREV_FREE;
-        mark_block_initialized( pNext - 1, sizeof( ARENA_FREE * ) );
+        mark_block_initialized( (ARENA_FREE **)pNext - 1, sizeof( ARENA_FREE * ) );
         *((ARENA_FREE **)pNext - 1) = pFree;
     }
 
