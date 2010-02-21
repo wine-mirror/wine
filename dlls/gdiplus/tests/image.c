@@ -1625,6 +1625,126 @@ static void test_multiframegif(void)
     IStream_Release(stream);
 }
 
+static void test_rotateflip(void)
+{
+    GpImage *bitmap;
+    GpStatus stat;
+    BYTE bits[24];
+    static const BYTE orig_bits[24] = {
+        0,0,0xff,    0,0xff,0,    0xff,0,0,    23,23,23,
+        0xff,0xff,0, 0xff,0,0xff, 0,0xff,0xff, 23,23,23};
+    UINT width, height;
+    ARGB color;
+
+    memcpy(bits, orig_bits, sizeof(bits));
+    stat = GdipCreateBitmapFromScan0(3, 2, 12, PixelFormat24bppRGB, bits, (GpBitmap**)&bitmap);
+    expect(Ok, stat);
+
+    stat = GdipImageRotateFlip(bitmap, Rotate90FlipNone);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipGetImageWidth(bitmap, &width);
+    expect(Ok, stat);
+    stat = GdipGetImageHeight(bitmap, &height);
+    expect(Ok, stat);
+    todo_wine expect(2, width);
+    todo_wine expect(3, height);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff00ffff, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 1, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 2, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xffffff00, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 1, 2, &color);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    expect(0, bits[0]);
+    expect(0, bits[1]);
+    expect(0xff, bits[2]);
+
+    GdipDisposeImage(bitmap);
+
+    memcpy(bits, orig_bits, sizeof(bits));
+    stat = GdipCreateBitmapFromScan0(3, 2, 12, PixelFormat24bppRGB, bits, (GpBitmap**)&bitmap);
+    expect(Ok, stat);
+
+    stat = GdipImageRotateFlip(bitmap, RotateNoneFlipX);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipGetImageWidth(bitmap, &width);
+    expect(Ok, stat);
+    stat = GdipGetImageHeight(bitmap, &height);
+    expect(Ok, stat);
+    expect(3, width);
+    expect(2, height);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 1, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffffff00, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 1, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff00ffff, color);
+
+    expect(0, bits[0]);
+    expect(0, bits[1]);
+    expect(0xff, bits[2]);
+
+    GdipDisposeImage(bitmap);
+
+    memcpy(bits, orig_bits, sizeof(bits));
+    stat = GdipCreateBitmapFromScan0(3, 2, 12, PixelFormat24bppRGB, bits, (GpBitmap**)&bitmap);
+    expect(Ok, stat);
+
+    stat = GdipImageRotateFlip(bitmap, RotateNoneFlipY);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipGetImageWidth(bitmap, &width);
+    expect(Ok, stat);
+    stat = GdipGetImageHeight(bitmap, &height);
+    expect(Ok, stat);
+    expect(3, width);
+    expect(2, height);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff00ffff, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 0, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffffff00, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 1, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 1, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    expect(0, bits[0]);
+    expect(0, bits[1]);
+    expect(0xff, bits[2]);
+
+    GdipDisposeImage(bitmap);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1659,6 +1779,7 @@ START_TEST(image)
     test_colormatrix();
     test_gamma();
     test_multiframegif();
+    test_rotateflip();
 
     GdiplusShutdown(gdiplusToken);
 }
