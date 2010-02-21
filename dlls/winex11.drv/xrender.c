@@ -1871,11 +1871,16 @@ static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, 
     else
     {
         if(mask_pict)
+        {
             set_xrender_transformation(mask_pict, 1, 1, 0, 0);
+            /* Note since the 'source data' is in the mask picture, we have to pass x_src / y_src using mask_x / mask_y */
+            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, 0, 0, x_src, y_src, 0, 0, width, height);
+        }
         else
+        {
             set_xrender_transformation(src_pict, 1, 1, 0, 0);
-
-        pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0, 0, 0, width, height);
+            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0, 0, 0, width, height);
+        }
     }
 }
 
