@@ -150,6 +150,56 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     return hres != S_OK;
 }
 
+static BOOL translate_url(HTMLDocumentObj *doc, nsWineURI *uri)
+{
+    OLECHAR *new_url = NULL, *url;
+    BOOL ret = FALSE;
+    HRESULT hres;
+
+    if(!doc->hostui)
+        return FALSE;
+
+    url = heap_strdupW(uri->wine_url);
+    hres = IDocHostUIHandler_TranslateUrl(doc->hostui, 0, url, &new_url);
+    heap_free(url);
+    if(hres != S_OK || !new_url)
+        return FALSE;
+
+    if(strcmpW(url, new_url)) {
+        FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(url), debugstr_w(new_url));
+        ret = TRUE;
+    }
+
+    CoTaskMemFree(new_url);
+    return ret;
+}
+
+nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retval)
+{
+    nsWineURI *wine_uri;
+    nsresult nsres;
+
+    *_retval = FALSE;
+
+    nsres = nsIURI_QueryInterface(uri, &IID_nsIWineURI, (void**)&wine_uri);
+    if(NS_FAILED(nsres)) {
+        WARN("Could not get nsWineURI: %08x\n", nsres);
+        return NS_ERROR_NOT_IMPLEMENTED;
+    }
+
+    if(!wine_uri->is_doc_uri) {
+        if(!wine_uri->container) {
+            nsIWebBrowserChrome_AddRef(NSWBCHROME(nscontainer));
+            wine_uri->container = nscontainer;
+        }
+
+        wine_uri->is_doc_uri = TRUE;
+        *_retval = translate_url(nscontainer->doc->basedoc.doc_obj, wine_uri);
+    }
+
+    nsIURI_Release(NSURI(wine_uri));
+    return NS_OK;
+}
 HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
 {
     nsIWineURI_SetWineURL(NSWINEURI(This), url);

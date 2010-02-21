@@ -437,6 +437,7 @@ struct NSContainer {
 typedef struct nsWineURI nsWineURI;
 
 HRESULT set_wine_url(nsWineURI*,LPCWSTR);
+nsresult on_start_uri_open(NSContainer*,nsIURI*,PRBool*);
 
 typedef struct {
     const nsIHttpChannelVtbl *lpHttpChannelVtbl;
