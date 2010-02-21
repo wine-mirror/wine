@@ -2820,18 +2820,3 @@ interface nsIDocumentObserver : nsIMutationObserver
     void BindToDocument(nsIDocument *aDocument, nsIContent *aContent);
     void DoneAddingChildren(nsIContent *aContent, PRBool aHaveNotified);
 }
-
-/*
- * NOTE:
- * This is a private Wine interface that is implemented by our implementation
- * of nsIURI to store its owner.
- */
-[
-    object,
-    uuid(5088272e-900b-11da-c687-000fea57f21a),
-    local
-    /* INTERNAL */
-]
-interface nsIWineURI : nsIURL
-{
-}
