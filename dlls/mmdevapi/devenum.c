@@ -94,6 +94,12 @@ typedef struct MMDevColImpl
     DWORD state;
 } MMDevColImpl;
 
+typedef struct IPropertyBagImpl {
+    const IPropertyBagVtbl *lpVtbl;
+    GUID devguid;
+} IPropertyBagImpl;
+static const IPropertyBagVtbl PB_Vtbl;
+
 static HRESULT MMDevPropStore_Create(MMDevice *This, DWORD access, IPropertyStore **ppv);
 
 /* Creates or updates the state of a device
@@ -275,6 +281,26 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
             hr = CoCreateInstance(&CLSID_DSoundRender, NULL, clsctx, riid, ppv);
         else
             ERR("Not supported for recording?\n");
+        if (SUCCEEDED(hr))
+        {
+            IPersistPropertyBag *ppb;
+            hr = IUnknown_QueryInterface((IUnknown*)*ppv, &IID_IPersistPropertyBag, (void*)&ppb);
+            if (SUCCEEDED(hr))
+            {
+                /* ::Load cannot assume the interface stays alive after the function returns,
+                 * so just create the interface on the stack, saves a lot of complicated code */
+                IPropertyBagImpl bag = { &PB_Vtbl, This->devguid };
+                hr = IPersistPropertyBag_Load(ppb, (IPropertyBag*)&bag, NULL);
+                IPersistPropertyBag_Release(ppb);
+                if (FAILED(hr))
+                    IBaseFilter_Release((IBaseFilter*)*ppv);
+            }
+            else
+            {
+                FIXME("Wine doesn't support IPersistPropertyBag on DSoundRender yet, ignoring..\n");
+                hr = S_OK;
+            }
+        }
     }
     else if (IsEqualIID(riid, &IID_IDeviceTopology))
     {
@@ -1034,4 +1060,57 @@ static const IPropertyStoreVtbl MMDevPropVtbl =
     MMDevPropStore_GetValue,
     MMDevPropStore_SetValue,
     MMDevPropStore_Commit
+};
+
+
+/* Property bag for IBaseFilter activation */
+static HRESULT WINAPI PB_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
+{
+    ERR("Should not be called\n");
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI PB_AddRef(IPropertyBag *iface)
+{
+    ERR("Should not be called\n");
+    return 2;
+}
+
+static ULONG WINAPI PB_Release(IPropertyBag *iface)
+{
+    ERR("Should not be called\n");
+    return 1;
+}
+
+static HRESULT WINAPI PB_Read(IPropertyBag *iface, LPCOLESTR name, VARIANT *var, IErrorLog *log)
+{
+    static const WCHAR dsguid[] = { 'D','S','G','u','i','d', 0 };
+    IPropertyBagImpl *This = (IPropertyBagImpl*)iface;
+    TRACE("Trying to read %s, type %u\n", debugstr_w(name), var->n1.n2.vt);
+    if (!lstrcmpW(name, dsguid))
+    {
+        WCHAR guidstr[39];
+        StringFromGUID2(&This->devguid, guidstr,sizeof(guidstr)/sizeof(*guidstr));
+        var->n1.n2.vt = VT_BSTR;
+        var->n1.n2.n3.bstrVal = SysAllocString(guidstr);
+        return S_OK;
+    }
+    ERR("Unknown property '%s' queried\n", debugstr_w(name));
+    return E_FAIL;
+}
+
+static HRESULT WINAPI PB_Write(IPropertyBag *iface, LPCOLESTR name, VARIANT *var)
+{
+    ERR("Should not be called\n");
+    return E_FAIL;
+}
+
+static const IPropertyBagVtbl PB_Vtbl =
+{
+    PB_QueryInterface,
+    PB_AddRef,
+    PB_Release,
+    PB_Read,
+    PB_Write
 };
