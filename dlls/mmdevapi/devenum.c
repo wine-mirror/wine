@@ -84,7 +84,7 @@ static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
 static const IMMDeviceCollectionVtbl MMDevColVtbl;
 static const IMMDeviceVtbl MMDeviceVtbl;
 static const IPropertyStoreVtbl MMDevPropVtbl;
-
+static const IMMEndpointVtbl MMEndpointVtbl;
 
 typedef struct MMDevColImpl
 {
@@ -138,6 +138,7 @@ static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, 
     }
     lstrcpyW(cur->alname, name);
     cur->lpVtbl = &MMDeviceVtbl;
+    cur->lpEndpointVtbl = &MMEndpointVtbl;
     cur->ref = 0;
     InitializeCriticalSection(&cur->crst);
     cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
@@ -215,6 +216,8 @@ static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, voi
     if (IsEqualIID(riid, &IID_IUnknown)
         || IsEqualIID(riid, &IID_IMMDevice))
         *ppv = This;
+    else if (IsEqualIID(riid, &IID_IMMEndpoint))
+        *ppv = &This->lpEndpointVtbl;
     if (*ppv)
     {
         IUnknown_AddRef((IUnknown*)*ppv);
@@ -301,6 +304,46 @@ static const IMMDeviceVtbl MMDeviceVtbl =
     MMDevice_OpenPropertyStore,
     MMDevice_GetId,
     MMDevice_GetState
+};
+
+static MMDevice *get_this_from_endpoint(IMMEndpoint *iface)
+{
+    return (MMDevice*)((char*)iface - offsetof(MMDevice,lpEndpointVtbl));
+}
+
+static HRESULT WINAPI MMEndpoint_QueryInterface(IMMEndpoint *iface, REFIID riid, void **ppv)
+{
+    MMDevice *This = get_this_from_endpoint(iface);
+    return IMMDevice_QueryInterface((IMMDevice*)This, riid, ppv);
+}
+
+static ULONG WINAPI MMEndpoint_AddRef(IMMEndpoint *iface)
+{
+    MMDevice *This = get_this_from_endpoint(iface);
+    return IMMDevice_AddRef((IMMDevice*)This);
+}
+
+static ULONG WINAPI MMEndpoint_Release(IMMEndpoint *iface)
+{
+    MMDevice *This = get_this_from_endpoint(iface);
+    return IMMDevice_Release((IMMDevice*)This);
+}
+
+static HRESULT WINAPI MMEndpoint_GetDataFlow(IMMEndpoint *iface, EDataFlow *flow)
+{
+    MMDevice *This = get_this_from_endpoint(iface);
+    if (!flow)
+        return E_POINTER;
+    *flow = This->flow;
+    return S_OK;
+}
+
+static const IMMEndpointVtbl MMEndpointVtbl =
+{
+    MMEndpoint_QueryInterface,
+    MMEndpoint_AddRef,
+    MMEndpoint_Release,
+    MMEndpoint_GetDataFlow
 };
 
 static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD state)
