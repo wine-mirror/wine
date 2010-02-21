@@ -268,6 +268,26 @@ HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
     return S_OK;
 }
 
+static void set_uri_window(nsWineURI *This, HTMLWindow *window)
+{
+    if(This->window_ref) {
+        if(This->window_ref->window == window)
+            return;
+        TRACE("Changing %p -> %p\n", This->window_ref->window, window);
+        windowref_release(This->window_ref);
+    }
+
+    if(window) {
+        windowref_addref(window->window_ref);
+        This->window_ref = window->window_ref;
+
+        if(window->doc_obj)
+            nsIWineURI_SetNSContainer(NSWINEURI(This), window->doc_obj->nscontainer);
+    }else {
+        This->window_ref = NULL;
+    }
+}
+
 static inline BOOL is_http_channel(nsChannel *This)
 {
     return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTP;
@@ -676,7 +696,7 @@ static HTMLWindow *get_window_from_load_group(nsChannel *This)
     HTMLWindow *window;
     nsIChannel *channel;
     nsIRequest *req;
-    nsIWineURI *wine_uri;
+    nsWineURI *wine_uri;
     nsIURI *uri;
     nsresult nsres;
 
@@ -710,8 +730,10 @@ static HTMLWindow *get_window_from_load_group(nsChannel *This)
         return NULL;
     }
 
-    nsIWineURI_GetWindow(wine_uri, &window);
-    nsIWineURI_Release(wine_uri);
+    window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
+    if(window)
+        IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+    nsIURI_Release(NSURI(wine_uri));
 
     return window;
 }
@@ -838,7 +860,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(This->uri->is_doc_uri) {
         window = get_channel_window(This);
         if(window) {
-            nsIWineURI_SetWindow(NSWINEURI(This->uri), window);
+            set_uri_window(This->uri, window);
         }else if(This->uri->container) {
             BOOL b;
 
@@ -854,12 +876,13 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     if(!window) {
-        nsIWineURI_GetWindow(NSWINEURI(This->uri), &window);
-
-        if(!window && This->load_group) {
+        if(This->uri->window_ref && This->uri->window_ref->window) {
+            window = This->uri->window_ref->window;
+            IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+        }else if(This->load_group) {
             window = get_window_from_load_group(This);
             if(window)
-                nsIWineURI_SetWindow(NSWINEURI(This->uri), window);
+                set_uri_window(This->uri, window);
         }
     }
 
@@ -2106,48 +2129,6 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetWindow(nsIWineURI *iface, HTMLWindow **aHTMLWindow)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aHTMLWindow);
-
-    if(This->window_ref && This->window_ref->window) {
-        IHTMLWindow2_AddRef(HTMLWINDOW2(This->window_ref->window));
-        *aHTMLWindow = This->window_ref->window;
-    }else {
-        *aHTMLWindow = NULL;
-    }
-
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetWindow(nsIWineURI *iface, HTMLWindow *aHTMLWindow)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aHTMLWindow);
-
-    if(This->window_ref) {
-        if(This->window_ref->window == aHTMLWindow)
-            return NS_OK;
-        TRACE("Changing %p -> %p\n", This->window_ref->window, aHTMLWindow);
-        windowref_release(This->window_ref);
-    }
-
-    if(aHTMLWindow) {
-        windowref_addref(aHTMLWindow->window_ref);
-        This->window_ref = aHTMLWindow->window_ref;
-
-        if(aHTMLWindow->doc_obj)
-            nsIWineURI_SetNSContainer(NSWINEURI(This), aHTMLWindow->doc_obj->nscontainer);
-    }else {
-        This->window_ref = NULL;
-    }
-
-    return NS_OK;
-}
-
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -2200,8 +2181,6 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURL_GetRelativeSpec,
     nsURI_GetNSContainer,
     nsURI_SetNSContainer,
-    nsURI_GetWindow,
-    nsURI_SetWindow,
 };
 
 static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
@@ -2213,7 +2192,7 @@ static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *contain
     ret->uri = uri;
 
     nsIWineURI_SetNSContainer(NSWINEURI(ret), container);
-    nsIWineURI_SetWindow(NSWINEURI(ret), window);
+    set_uri_window(ret, window);
 
     if(uri)
         nsIURI_QueryInterface(uri, &IID_nsIURL, (void**)&ret->nsurl);
@@ -2492,7 +2471,10 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
             base_wine_url = base_wine_uri->wine_url;
-            nsIWineURI_GetWindow(NSWINEURI(base_wine_uri), &window);
+            if(base_wine_uri->window_ref && base_wine_uri->window_ref->window) {
+                window = base_wine_uri->window_ref->window;
+                IHTMLWindow2_AddRef(HTMLWINDOW2(window));
+            }
             TRACE("base url: %s window: %p\n", debugstr_w(base_wine_url), window);
         }else if(FAILED(ParseURLA(spec, &parsed_url))) {
             TRACE("not wraping\n");

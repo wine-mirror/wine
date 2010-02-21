@@ -2835,10 +2835,7 @@ interface nsIDocumentObserver : nsIMutationObserver
 interface nsIWineURI : nsIURL
 {
     typedef struct NSContainer NSContainer;
-    typedef struct HTMLWindow HTMLWindow;
 
     nsresult GetNSContainer(NSContainer **aNSContainer);
     nsresult SetNSContainer(NSContainer *aNSContainer);
-    nsresult GetWindow(HTMLWindow **aHTMLWindow);
-    nsresult SetWindow(HTMLWindow *aHTMLWindow);
 }
