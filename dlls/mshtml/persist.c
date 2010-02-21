@@ -172,7 +172,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     LPOLESTR url = NULL;
     docobj_task_t *task;
     download_proc_task_t *download_task;
-    nsIWineURI *nsuri;
+    nsWineURI *nsuri;
     HRESULT hres;
 
     if(pibc) {
@@ -261,9 +261,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     bscallback = create_channelbsc(mon);
 
-    nsIWineURI_SetChannelBSC(nsuri, bscallback);
-    hres = load_nsuri(This->window, nsuri, LOAD_INITIAL_DOCUMENT_URI);
-    nsIWineURI_SetChannelBSC(nsuri, NULL);
+    hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
+    nsISupports_Release((nsISupports*)nsuri); /* FIXME */
     if(SUCCEEDED(hres))
         set_window_bscallback(This->window, bscallback);
     IUnknown_Release((IUnknown*)bscallback);

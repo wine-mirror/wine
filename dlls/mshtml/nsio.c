@@ -67,7 +67,7 @@ struct  nsWineURI {
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
 #define NSWINEURI(x)     ((nsIWineURI*)        &(x)->lpWineURIVtbl)
 
-static nsresult create_uri(nsIURI*,HTMLWindow*,NSContainer*,nsIWineURI**);
+static nsresult create_uri(nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -150,6 +150,38 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     return hres != S_OK;
 }
 
+HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
+{
+    nsIWebNavigation *web_navigation;
+    nsIDocShell *doc_shell;
+    nsresult nsres;
+
+    nsres = get_nsinterface((nsISupports*)window->nswindow, &IID_nsIWebNavigation, (void**)&web_navigation);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIWebNavigation_QueryInterface(web_navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    nsIWebNavigation_Release(web_navigation);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDocShell: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+
+    uri->channel_bsc = channelbsc;
+    nsres = nsIDocShell_LoadURI(doc_shell, NSURI(uri), NULL, flags, FALSE);
+    uri->channel_bsc = NULL;
+    nsIDocShell_Release(doc_shell);
+    if(NS_FAILED(nsres)) {
+        WARN("LoadURI failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static BOOL translate_url(HTMLDocumentObj *doc, nsWineURI *uri)
 {
     OLECHAR *new_url = NULL, *url;
@@ -200,6 +232,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retva
     nsIURI_Release(NSURI(wine_uri));
     return NS_OK;
 }
+
 HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
 {
     nsIWineURI_SetWineURL(NSWINEURI(This), url);
@@ -1654,7 +1687,7 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
     nsIURI *nsuri = NULL;
-    nsIWineURI *wine_uri;
+    nsWineURI *wine_uri;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, _retval);
@@ -1673,8 +1706,8 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
         return nsres;
     }
 
-    *_retval = (nsIURI*)wine_uri;
-    return nsIWineURI_SetWineURL(wine_uri, This->wine_url);
+    *_retval = NSURI(wine_uri);
+    return nsIWineURI_SetWineURL(NSWINEURI(wine_uri), This->wine_url);
 }
 
 static nsresult NSAPI nsURI_Resolve(nsIWineURI *iface, const nsACString *arelativePath,
@@ -2239,7 +2272,7 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_SetWineURL
 };
 
-static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsIWineURI **_retval)
+static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
@@ -2256,21 +2289,21 @@ static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *contain
         ret->nsurl = NULL;
 
     TRACE("retval=%p\n", ret);
-    *_retval = NSWINEURI(ret);
+    *_retval = ret;
     return NS_OK;
 }
 
-HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsIWineURI **ret)
+HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
 {
-    nsIWineURI *uri;
+    nsWineURI *uri;
     nsresult nsres;
 
     nsres = create_uri(NULL, window, window->doc_obj->nscontainer, &uri);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    nsIWineURI_SetWineURL(uri, url);
-    nsIWineURI_SetIsDocumentURI(uri, TRUE);
+    nsIWineURI_SetWineURL(NSWINEURI(uri), url);
+    uri->is_doc_uri = TRUE;
 
     *ret = uri;
     return S_OK;
@@ -2504,7 +2537,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     HTMLWindow *window = NULL;
     nsIURI *uri = NULL;
     LPCWSTR base_wine_url = NULL;
-    nsIWineURI *base_wine_uri = NULL, *wine_uri;
+    nsIWineURI *base_wine_uri = NULL;
+    nsWineURI *wine_uri;
     BOOL is_wine_uri = FALSE;
     nsresult nsres;
 
@@ -2558,14 +2592,14 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
                                     URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
                                     url, sizeof(url)/sizeof(WCHAR), &len, 0);
         if(SUCCEEDED(hres))
-            nsIWineURI_SetWineURL(wine_uri, url);
+            set_wine_url(wine_uri, url);
         else
              WARN("CoCombineUrl failed: %08x\n", hres);
     }else if(is_wine_uri) {
         WCHAR url[INTERNET_MAX_URL_LENGTH];
 
         MultiByteToWideChar(CP_ACP, 0, spec, -1, url, sizeof(url)/sizeof(WCHAR));
-        nsIWineURI_SetWineURL(wine_uri, url);
+        set_wine_url(wine_uri, url);
     }
 
     if(base_wine_uri)

@@ -1253,39 +1253,10 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     return hres;
 }
 
-HRESULT load_nsuri(HTMLWindow *window, nsIWineURI *uri, DWORD flags)
-{
-    nsIWebNavigation *web_navigation;
-    nsIDocShell *doc_shell;
-    nsresult nsres;
-
-    nsres = get_nsinterface((nsISupports*)window->nswindow, &IID_nsIWebNavigation, (void**)&web_navigation);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIWebNavigation_QueryInterface(web_navigation, &IID_nsIDocShell, (void**)&doc_shell);
-    nsIWebNavigation_Release(web_navigation);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDocShell: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)uri, NULL, flags, FALSE);
-    nsIDocShell_Release(doc_shell);
-    if(NS_FAILED(nsres)) {
-        WARN("LoadURI failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
 HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base_url)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
-    nsIWineURI *uri;
+    nsWineURI *uri;
     HRESULT hres;
 
     if(!new_url) {
@@ -1323,7 +1294,7 @@ HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base
     if(FAILED(hres))
         return hres;
 
-    hres = load_nsuri(window, uri, LOAD_FLAGS_NONE);
-    nsIWineURI_Release(uri);
+    hres = load_nsuri(window, uri, NULL, LOAD_FLAGS_NONE);
+    nsISupports_Release((nsISupports*)uri);
     return hres;
 }

@@ -701,12 +701,12 @@ void release_nsio(void);
 BOOL install_wine_gecko(BOOL);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
-HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsIWineURI**);
+HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**);
+HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD);
 
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*);
-HRESULT load_nsuri(HTMLWindow*,nsIWineURI*,DWORD);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);
