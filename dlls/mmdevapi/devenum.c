@@ -256,8 +256,60 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     if (!ppv)
         return E_POINTER;
 
-    FIXME("stub\n");
-    hr = E_NOTIMPL;
+    if (IsEqualIID(riid, &IID_IAudioClient))
+    {
+        FIXME("IID_IAudioClient unsupported\n");
+    }
+    else if (IsEqualIID(riid, &IID_IAudioEndpointVolume))
+    {
+        FIXME("IID_IAudioEndpointVolume unsupported\n");
+    }
+    else if (IsEqualIID(riid, &IID_IAudioSessionManager)
+             || IsEqualIID(riid, &IID_IAudioSessionManager2))
+    {
+        FIXME("IID_IAudioSessionManager unsupported\n");
+    }
+    else if (IsEqualIID(riid, &IID_IBaseFilter))
+    {
+        if (This->flow == eRender)
+            hr = CoCreateInstance(&CLSID_DSoundRender, NULL, clsctx, riid, ppv);
+        else
+            ERR("Not supported for recording?\n");
+    }
+    else if (IsEqualIID(riid, &IID_IDeviceTopology))
+    {
+        FIXME("IID_IDeviceTopology unsupported\n");
+    }
+    else if (IsEqualIID(riid, &IID_IDirectSound)
+             || IsEqualIID(riid, &IID_IDirectSound8))
+    {
+        if (This->flow == eRender)
+            hr = CoCreateInstance(&CLSID_DirectSound8, NULL, clsctx, riid, ppv);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectSound_Initialize((IDirectSound*)*ppv, &This->devguid);
+            if (FAILED(hr))
+                IDirectSound_Release((IDirectSound*)*ppv);
+        }
+    }
+    else if (IsEqualIID(riid, &IID_IDirectSoundCapture)
+             || IsEqualIID(riid, &IID_IDirectSoundCapture8))
+    {
+        if (This->flow == eCapture)
+            hr = CoCreateInstance(&CLSID_DirectSoundCapture8, NULL, clsctx, riid, ppv);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectSoundCapture_Initialize((IDirectSoundCapture*)*ppv, &This->devguid);
+            if (FAILED(hr))
+                IDirectSoundCapture_Release((IDirectSoundCapture*)*ppv);
+        }
+    }
+    else
+        ERR("Invalid/unknown iid %s\n", debugstr_guid(riid));
+
+    if (FAILED(hr))
+        *ppv = NULL;
+
     TRACE("Returning %08x\n", hr);
     return hr;
 }
@@ -275,13 +327,24 @@ static HRESULT WINAPI MMDevice_OpenPropertyStore(IMMDevice *iface, DWORD access,
 static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
 {
     MMDevice *This = (MMDevice *)iface;
+    WCHAR *str;
+    GUID *id = &This->devguid;
+    static const WCHAR formatW[] = { '{','0','.','0','.','0','.','0','0','0','0','0','0','0','0','}','.',
+                                     '{','%','0','8','X','-','%','0','4','X','-',
+                                     '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
+                                     '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
+                                     '%','0','2','X','%','0','2','X','}',0 };
 
     TRACE("(%p)->(%p)\n", This, itemid);
     if (!itemid)
         return E_POINTER;
-    *itemid = NULL;
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    *itemid = str = CoTaskMemAlloc(56 * sizeof(WCHAR));
+    if (!str)
+        return E_OUTOFMEMORY;
+    wsprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
+               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    return S_OK;
 }
 
 static HRESULT WINAPI MMDevice_GetState(IMMDevice *iface, DWORD *state)
