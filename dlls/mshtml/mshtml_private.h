@@ -176,6 +176,7 @@ typedef struct HTMLWindow HTMLWindow;
 typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
 typedef struct HTMLFrameBase HTMLFrameBase;
+typedef struct NSContainer NSContainer;
 
 typedef enum {
     SCRIPTMODE_GECKO,

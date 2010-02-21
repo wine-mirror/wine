@@ -2834,8 +2834,4 @@ interface nsIDocumentObserver : nsIMutationObserver
 ]
 interface nsIWineURI : nsIURL
 {
-    typedef struct NSContainer NSContainer;
-
-    nsresult GetNSContainer(NSContainer **aNSContainer);
-    nsresult SetNSContainer(NSContainer *aNSContainer);
 }

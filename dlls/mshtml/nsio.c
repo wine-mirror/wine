@@ -268,6 +268,20 @@ HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
     return S_OK;
 }
 
+static void set_uri_nscontainer(nsWineURI *This, NSContainer *nscontainer)
+{
+    if(This->container) {
+        if(This->container == nscontainer)
+            return;
+        TRACE("Changing %p -> %p\n", This->container, nscontainer);
+        nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
+    }
+
+    if(nscontainer)
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(nscontainer));
+    This->container = nscontainer;
+}
+
 static void set_uri_window(nsWineURI *This, HTMLWindow *window)
 {
     if(This->window_ref) {
@@ -282,7 +296,7 @@ static void set_uri_window(nsWineURI *This, HTMLWindow *window)
         This->window_ref = window->window_ref;
 
         if(window->doc_obj)
-            nsIWineURI_SetNSContainer(NSWINEURI(This), window->doc_obj->nscontainer);
+            set_uri_nscontainer(This, window->doc_obj->nscontainer);
     }else {
         This->window_ref = NULL;
     }
@@ -2096,39 +2110,6 @@ static nsresult NSAPI nsURL_GetRelativeSpec(nsIWineURI *iface, nsIURI *aURIToCom
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsURI_GetNSContainer(nsIWineURI *iface, NSContainer **aContainer)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aContainer);
-
-    if(This->container)
-        nsIWebBrowserChrome_AddRef(NSWBCHROME(This->container));
-    *aContainer = This->container;
-
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aContainer)
-{
-    nsWineURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aContainer);
-
-    if(This->container) {
-        if(This->container == aContainer)
-            return NS_OK;
-        TRACE("Changing %p -> %p\n", This->container, aContainer);
-        nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
-    }
-
-    if(aContainer)
-        nsIWebBrowserChrome_AddRef(NSWBCHROME(aContainer));
-    This->container = aContainer;
-
-    return NS_OK;
-}
-
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -2178,9 +2159,7 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURL_GetFileExtension,
     nsURL_SetFileExtension,
     nsURL_GetCommonBaseSpec,
-    nsURL_GetRelativeSpec,
-    nsURI_GetNSContainer,
-    nsURI_SetNSContainer,
+    nsURL_GetRelativeSpec
 };
 
 static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
@@ -2191,7 +2170,7 @@ static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *contain
     ret->ref = 1;
     ret->uri = uri;
 
-    nsIWineURI_SetNSContainer(NSWINEURI(ret), container);
+    set_uri_nscontainer(ret, container);
     set_uri_window(ret, window);
 
     if(uri)
