@@ -809,9 +809,31 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
 static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHAR *name, IMMDevice **device)
 {
     MMDevEnumImpl *This = (MMDevEnumImpl*)iface;
+    DWORD i=0;
+    IMMDevice *dev = NULL;
+
     TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), device);
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    for (i = 0; i < MMDevice_count; ++i)
+    {
+        WCHAR *str;
+        dev = (IMMDevice*)MMDevice_head[i];
+        IMMDevice_GetId(dev, &str);
+
+        if (str && !lstrcmpW(str, name))
+        {
+            CoTaskMemFree(str);
+            break;
+        }
+        CoTaskMemFree(str);
+    }
+    if (dev)
+    {
+        IUnknown_AddRef(dev);
+        *device = dev;
+        return S_OK;
+    }
+    WARN("Could not find device %s\n", debugstr_w(name));
+    return E_NOTFOUND;
 }
 
 static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
