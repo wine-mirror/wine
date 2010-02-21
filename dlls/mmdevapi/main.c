@@ -24,11 +24,18 @@
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "wine/debug.h"
 
 #include "initguid.h"
 #include "ole2.h"
 #include "mmdeviceapi.h"
+#include "dshow.h"
+#include "dsound.h"
+#include "audioclient.h"
+#include "endpointvolume.h"
+#include "audiopolicy.h"
+#include "devpkey.h"
 
 #include "mmdevapi.h"
 

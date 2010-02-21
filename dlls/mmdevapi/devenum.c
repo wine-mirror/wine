@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
 #include "config.h"
 
 #include <stdarg.h>
@@ -27,11 +28,18 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "ole2.h"
 #include "mmdeviceapi.h"
+#include "dshow.h"
+#include "dsound.h"
+#include "audioclient.h"
+#include "endpointvolume.h"
+#include "audiopolicy.h"
 
 #include "mmdevapi.h"
+#include "devpkey.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
@@ -48,10 +56,11 @@ static const WCHAR reg_capture[] =
     { 'C','a','p','t','u','r','e',0 };
 static const WCHAR reg_devicestate[] =
     { 'D','e','v','i','c','e','S','t','a','t','e',0 };
-static const WCHAR reg_alname[] =
-    { 'A','L','N','a','m','e',0 };
 static const WCHAR reg_properties[] =
     { 'P','r','o','p','e','r','t','i','e','s',0 };
+
+static HKEY key_render;
+static HKEY key_capture;
 
 typedef struct MMDevEnumImpl
 {
@@ -60,8 +69,12 @@ typedef struct MMDevEnumImpl
 } MMDevEnumImpl;
 
 static MMDevEnumImpl *MMDevEnumerator;
+static MMDevice **MMDevice_head;
+static MMDevice *MMDevice_def_rec, *MMDevice_def_play;
+static DWORD MMDevice_count;
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
 static const IMMDeviceCollectionVtbl MMDevColVtbl;
+static const IMMDeviceVtbl MMDeviceVtbl;
 
 typedef struct MMDevColImpl
 {
@@ -75,10 +88,204 @@ typedef struct MMDevColImpl
  * If GUID is null, a random guid will be assigned
  * and the device will be created
  */
-static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state)
+static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
 {
-    FIXME("stub\n");
+    HKEY key, root;
+    MMDevice *cur;
+    WCHAR guidstr[39];
+    DWORD i;
+
+    for (i = 0; i < MMDevice_count; ++i)
+    {
+        cur = MMDevice_head[i];
+        if (cur->flow == flow && !lstrcmpW(cur->alname, name))
+        {
+            LONG ret;
+            /* Same device, update state */
+            cur->state = state;
+            StringFromGUID2(&cur->devguid, guidstr, sizeof(guidstr)/sizeof(*guidstr));
+            ret = RegOpenKeyExW(flow == eRender ? key_render : key_capture, guidstr, 0, KEY_WRITE, &key);
+            if (ret == ERROR_SUCCESS)
+            {
+                RegSetValueExW(key, reg_devicestate, 0, REG_DWORD, (const BYTE*)&state, sizeof(DWORD));
+                RegCloseKey(key);
+            }
+            goto done;
+        }
+    }
+
+    /* No device found, allocate new one */
+    cur = HeapAlloc(GetProcessHeap(), 0, sizeof(*cur));
+    if (!cur)
+        return;
+    cur->alname = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name)+1)*sizeof(WCHAR));
+    if (!cur->alname)
+    {
+        HeapFree(GetProcessHeap(), 0, cur);
+        return;
+    }
+    lstrcpyW(cur->alname, name);
+    cur->lpVtbl = &MMDeviceVtbl;
+    cur->ref = 0;
+    InitializeCriticalSection(&cur->crst);
+    cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
+    cur->flow = flow;
+    cur->state = state;
+    if (!id)
+    {
+        id = &cur->devguid;
+        CoCreateGuid(id);
+    }
+    cur->devguid = *id;
+    StringFromGUID2(id, guidstr, sizeof(guidstr)/sizeof(*guidstr));
+    if (flow == eRender)
+        root = key_render;
+    else
+        root = key_capture;
+    if (!RegCreateKeyExW(root, guidstr, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &key, NULL))
+    {
+        HKEY keyprop;
+        RegSetValueExW(key, reg_devicestate, 0, REG_DWORD, (const BYTE*)&state, sizeof(DWORD));
+        if (!RegCreateKeyExW(key, reg_properties, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &keyprop, NULL))
+        {
+            RegCloseKey(keyprop);
+        }
+        RegCloseKey(key);
+    }
+    if (!MMDevice_head)
+        MMDevice_head = HeapAlloc(GetProcessHeap(), 0, sizeof(*MMDevice_head));
+    else
+        MMDevice_head = HeapReAlloc(GetProcessHeap(), 0, MMDevice_head, sizeof(*MMDevice_head)*(1+MMDevice_count));
+    MMDevice_head[MMDevice_count++] = cur;
+
+done:
+    if (setdefault)
+    {
+        if (flow == eRender)
+            MMDevice_def_play = cur;
+        else
+            MMDevice_def_rec = cur;
+    }
 }
+
+static void MMDevice_Destroy(MMDevice *This)
+{
+    DWORD i;
+    TRACE("Freeing %s\n", debugstr_w(This->alname));
+    /* Since this function is called at destruction time, reordering of the list is unimportant */
+    for (i = 0; i < MMDevice_count; ++i)
+    {
+        if (MMDevice_head[i] == This)
+        {
+            MMDevice_head[i] = MMDevice_head[--MMDevice_count];
+            break;
+        }
+    }
+    This->crst.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->crst);
+    HeapFree(GetProcessHeap(), 0, This->alname);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, void **ppv)
+{
+    MMDevice *This = (MMDevice *)iface;
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IMMDevice))
+        *ppv = This;
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MMDevice_AddRef(IMMDevice *iface)
+{
+    MMDevice *This = (MMDevice *)iface;
+    LONG ref;
+
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI MMDevice_Release(IMMDevice *iface)
+{
+    MMDevice *This = (MMDevice *)iface;
+    LONG ref;
+
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD clsctx, PROPVARIANT *params, void **ppv)
+{
+    MMDevice *This = (MMDevice *)iface;
+    HRESULT hr = E_NOINTERFACE;
+    TRACE("(%p)->(%p,%x,%p,%p)\n", This, riid, clsctx, params, ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    FIXME("stub\n");
+    hr = E_NOTIMPL;
+    TRACE("Returning %08x\n", hr);
+    return hr;
+}
+
+static HRESULT WINAPI MMDevice_OpenPropertyStore(IMMDevice *iface, DWORD access, IPropertyStore **ppv)
+{
+    MMDevice *This = (MMDevice *)iface;
+    TRACE("(%p)->(%x,%p)\n", This, access, ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
+{
+    MMDevice *This = (MMDevice *)iface;
+
+    TRACE("(%p)->(%p)\n", This, itemid);
+    if (!itemid)
+        return E_POINTER;
+    *itemid = NULL;
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MMDevice_GetState(IMMDevice *iface, DWORD *state)
+{
+    MMDevice *This = (MMDevice *)iface;
+    TRACE("(%p)->(%p)\n", iface, state);
+
+    if (!state)
+        return E_POINTER;
+    *state = This->state;
+    return S_OK;
+}
+
+static const IMMDeviceVtbl MMDeviceVtbl =
+{
+    MMDevice_QueryInterface,
+    MMDevice_AddRef,
+    MMDevice_Release,
+    MMDevice_Activate,
+    MMDevice_OpenPropertyStore,
+    MMDevice_GetId,
+    MMDevice_GetState
+};
 
 static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD state)
 {
@@ -139,6 +346,7 @@ static ULONG WINAPI MMDevCol_Release(IMMDeviceCollection *iface)
 static HRESULT WINAPI MMDevCol_GetCount(IMMDeviceCollection *iface, UINT *numdevs)
 {
     MMDevColImpl *This = (MMDevColImpl*)iface;
+
     TRACE("(%p)->(%p)\n", This, numdevs);
     if (!numdevs)
         return E_POINTER;
@@ -172,8 +380,9 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
     if (!This)
     {
         DWORD i = 0;
-        HKEY root, cur, key_capture = NULL, key_render = NULL;
+        HKEY root, cur;
         LONG ret;
+        DWORD curflow;
 
         This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
         *ppv = NULL;
@@ -183,21 +392,23 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
         This->lpVtbl = &MMDevEnumVtbl;
         MMDevEnumerator = This;
 
-        ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, KEY_READ, &root);
+        ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &root, NULL);
         if (ret == ERROR_SUCCESS)
-            ret = RegOpenKeyExW(root, reg_capture, 0, KEY_READ, &key_capture);
+            ret = RegCreateKeyExW(root, reg_capture, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_capture, NULL);
         if (ret == ERROR_SUCCESS)
-            ret = RegOpenKeyExW(root, reg_render, 0, KEY_READ, &key_render);
+            ret = RegCreateKeyExW(root, reg_render, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_render, NULL);
+        RegCloseKey(root);
         cur = key_capture;
+        curflow = eCapture;
         if (ret != ERROR_SUCCESS)
         {
             RegCloseKey(key_capture);
-            RegCloseKey(key_render);
-            TRACE("Couldn't open key: %u\n", ret);
+            key_render = key_capture = NULL;
+            WARN("Couldn't create key: %u\n", ret);
+            return E_FAIL;
         }
         else do {
             WCHAR guidvalue[39];
-            WCHAR alname[128];
             GUID guid;
             DWORD len;
 
@@ -208,6 +419,7 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
                 if (cur == key_capture)
                 {
                     cur = key_render;
+                    curflow = eRender;
                     i = 0;
                     continue;
                 }
@@ -215,20 +427,22 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             }
             if (ret != ERROR_SUCCESS)
                 continue;
-            len = sizeof(alname);
-            RegGetValueW(cur, guidvalue, reg_alname, RRF_RT_REG_SZ, NULL, alname, &len);
             if (SUCCEEDED(CLSIDFromString(guidvalue, &guid)))
-                MMDevice_Create(alname, &guid,
-                                cur == key_capture ? eCapture : eRender,
-                                DEVICE_STATE_NOTPRESENT);
+                /* Using guid as friendly name till property store works */
+                MMDevice_Create(guidvalue, &guid, curflow,
+                                DEVICE_STATE_NOTPRESENT, FALSE);
         } while (1);
-        RegCloseKey(root);
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
 
 void MMDevEnum_Free(void)
 {
+    while (MMDevice_count)
+        MMDevice_Destroy(MMDevice_head[0]);
+    RegCloseKey(key_render);
+    RegCloseKey(key_capture);
+    key_render = key_capture = NULL;
     HeapFree(GetProcessHeap(), 0, MMDevEnumerator);
     MMDevEnumerator = NULL;
 }
@@ -286,8 +500,25 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
 {
     MMDevEnumImpl *This = (MMDevEnumImpl*)iface;
     TRACE("(%p)->(%u,%u,%p)\n", This, flow, role, device);
-    FIXME("stub\n");
-    return E_NOTFOUND;
+
+    if (!device)
+        return E_POINTER;
+    *device = NULL;
+
+    if (flow == eRender)
+        *device = (IMMDevice*)MMDevice_def_play;
+    else if (flow == eCapture)
+        *device = (IMMDevice*)MMDevice_def_rec;
+    else
+    {
+        WARN("Unknown flow %u\n", flow);
+        return E_INVALIDARG;
+    }
+
+    if (!*device)
+        return E_NOTFOUND;
+    IMMDevice_AddRef(*device);
+    return S_OK;
 }
 
 static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHAR *name, IMMDevice **device)

@@ -18,3 +18,15 @@
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
 extern void MMDevEnum_Free(void);
+
+typedef struct MMDevice {
+    const IMMDeviceVtbl *lpVtbl;
+    LONG ref;
+
+    CRITICAL_SECTION crst;
+
+    EDataFlow flow;
+    DWORD state;
+    GUID devguid;
+    WCHAR *alname;
+} MMDevice;
