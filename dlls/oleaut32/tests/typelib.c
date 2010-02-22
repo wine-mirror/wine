@@ -1041,6 +1041,10 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    funcdesc.memid = MEMBERID_NIL;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);

@@ -1994,8 +1994,25 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
     i = 0;
     This->typeinfo->cbSizeVft = 0;
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
-        if(iter->indice == MEMBERID_NIL)
-            FIXME("MEMBERID_NIL handling not yet implemented\n");
+        /* Assign MEMBERID if MEMBERID_NIL was specified */
+        if(iter->indice == MEMBERID_NIL) {
+            iter->indice = 0x60000000 + i;
+
+            for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
+                if(iter == iter2) continue;
+                if(iter2->indice == iter->indice) {
+                    iter->indice = 0x5fffffff + This->typeinfo->cElement + i;
+
+                    for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
+                        if(iter == iter2) continue;
+                        if(iter2->indice == iter->indice)
+                            return E_ACCESSDENIED;
+                    }
+
+                    break;
+                }
+            }
+        }
 
         typedata[i] = iter;
 
