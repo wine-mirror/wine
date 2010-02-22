@@ -43,6 +43,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winuser.h"
 
 #include "wine/unicode.h"
@@ -707,6 +708,7 @@ static int ctl2_alloc_importinfo(
 static int ctl2_alloc_importfile(
 	ICreateTypeLib2Impl *This, /* [I] The type library to allocate in. */
 	int guidoffset,            /* [I] The offset to the GUID for the imported library. */
+        LCID lcid,                 /* [I] The LCID of imported library. */
 	int major_version,         /* [I] The major version number of the imported library. */
 	int minor_version,         /* [I] The minor version number of the imported library. */
 	const WCHAR *filename)     /* [I] The filename of the imported library. */
@@ -732,7 +734,7 @@ static int ctl2_alloc_importfile(
 
     importfile = (MSFT_ImpFile *)&This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset];
     importfile->guid = guidoffset;
-    importfile->lcid = This->typelib_header.lcid2;
+    importfile->lcid = lcid;
     importfile->version = major_version | (minor_version << 16);
     memcpy(importfile->filename, encoded_string, length);
 
@@ -1370,7 +1372,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
 	if (guidoffset == -1) return E_OUTOFMEMORY;
 
-	fileoffset =  ctl2_alloc_importfile(This->typelib, guidoffset, 2, 0, stdole2tlb);
+	fileoffset =  ctl2_alloc_importfile(This->typelib, guidoffset,
+                This->typelib->typelib_header.lcid2, 2, 0, stdole2tlb);
 	if (fileoffset == -1) return E_OUTOFMEMORY;
 
 	foo.guid = IID_IDispatch;
@@ -1471,10 +1474,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
 
     TRACE("(%p,%p,%p)\n", iface, pTInfo, phRefType);
 
+    if(!pTInfo || !phRefType)
+        return E_INVALIDARG;
+
     /*
-     * If this is one of ours, we set *phRefType to the TYPEINFO offset of
-     * the referred TypeInfo. Otherwise, we presumably have more magic to do.
-     *
      * Unfortunately, we can't rely on the passed-in TypeInfo even having the
      * same internal structure as one of ours. It could be from another
      * implementation of ITypeInfo. So we need to do the following...
@@ -1486,9 +1489,86 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
     }
 
     if (container == (ITypeLib *)&This->typelib->lpVtblTypeLib2) {
+        /* Process locally defined TypeInfo */
 	*phRefType = This->typelib->typelib_typeinfo_offsets[index];
     } else {
-	FIXME("(%p,%p,%p), pTInfo from different typelib.\n", iface, pTInfo, phRefType);
+        static const WCHAR regkey[] = {'T','y','p','e','L','i','b','\\','{',
+            '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%',
+            '0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
+            '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
+            '}','\\','%','d','.','%','d','\\','0','\\','w','i','n','3','2',0};
+
+        WCHAR name[MAX_PATH], *p;
+        TLIBATTR *tlibattr;
+        TYPEATTR *typeattr;
+        MSFT_GuidEntry guid;
+        MSFT_ImpInfo impinfo;
+        int guid_offset, import_offset;
+        DWORD len;
+        HRESULT hres;
+
+        /* Allocate container GUID */
+        hres = ITypeLib_GetLibAttr(container, &tlibattr);
+        if(FAILED(hres))
+            return hres;
+
+        guid.guid = tlibattr->guid;
+        guid.hreftype = 2;
+        guid.next_hash = -1;
+
+        guid_offset = ctl2_alloc_guid(This->typelib, &guid);
+        if(guid_offset == -1) {
+            ITypeLib_ReleaseTLibAttr(container, tlibattr);
+            return E_OUTOFMEMORY;
+        }
+
+        /* Get import file name */
+        /* Check HKEY_CLASSES_ROOT\TypeLib\{GUID}\{Ver}\0\win32 */
+        len = MAX_PATH;
+        sprintfW(name, regkey, guid.guid.Data1, guid.guid.Data2,
+                guid.guid.Data3, guid.guid.Data4[0], guid.guid.Data4[1],
+                guid.guid.Data4[2], guid.guid.Data4[3], guid.guid.Data4[4],
+                guid.guid.Data4[5], guid.guid.Data4[6], guid.guid.Data4[7],
+                tlibattr->wMajorVerNum, tlibattr->wMinorVerNum);
+
+        if(RegGetValueW(HKEY_CLASSES_ROOT, name, NULL, RRF_RT_REG_SZ, NULL, name, &len)!=ERROR_SUCCESS
+            || (p=strrchrW(name, '\\'))==NULL) {
+            ERR("Error guessing typelib filename\n");
+            ITypeLib_ReleaseTLibAttr(container, tlibattr);
+            return E_NOTIMPL;
+        }
+        memmove(name, p+1, strlenW(p)*sizeof(WCHAR));
+
+        /* Import file */
+        import_offset = ctl2_alloc_importfile(This->typelib, guid_offset,
+                tlibattr->lcid, tlibattr->wMajorVerNum, tlibattr->wMinorVerNum, name);
+        ITypeLib_ReleaseTLibAttr(container, tlibattr);
+
+        if(import_offset == -1)
+            return E_OUTOFMEMORY;
+
+        /* Allocate referenced guid */
+        hres = ITypeInfo_GetTypeAttr(pTInfo, &typeattr);
+        if(FAILED(hres))
+            return hres;
+
+        guid.guid = typeattr->guid;
+        guid.hreftype = 1;
+        guid.next_hash = -1;
+        ITypeInfo_ReleaseTypeAttr(pTInfo, typeattr);
+
+        guid_offset = ctl2_alloc_guid(This->typelib, &guid);
+        if(guid_offset == -1)
+            return E_OUTOFMEMORY;
+
+        /* Allocate importinfo */
+        impinfo.flags = ((This->typeinfo->typekind&0xf)<<24) | MSFT_IMPINFO_OFFSET_IS_GUID;
+        impinfo.oImpFile = import_offset;
+        impinfo.oGuid = guid_offset;
+        *phRefType = ctl2_alloc_importinfo(This->typelib, &impinfo)+1;
+
+        if(!memcmp(&guid.guid, &IID_IDispatch, sizeof(GUID)))
+            This->typelib->typelib_header.dispatchpos = *phRefType;
     }
 
     ITypeLib_Release(container);
@@ -1613,7 +1693,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     /* update the index data */
-    insert->indice = (This->typeinfo->cImplTypes << 16) | pFuncDesc->memid;
+    insert->indice = pFuncDesc->memid;
     insert->name = -1;
 
     /* insert type data to list */

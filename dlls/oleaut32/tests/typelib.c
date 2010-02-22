@@ -969,6 +969,7 @@ if(use_midl_tlb) {
 }
 
 static void test_CreateTypeLib(void) {
+    static const WCHAR stdoleW[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
     static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
@@ -982,14 +983,22 @@ static void test_CreateTypeLib(void) {
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *createtl;
     ICreateTypeInfo *createti;
-    ITypeLib *tl;
+    ITypeLib *tl, *stdole;
+    ITypeInfo *unknown;
     FUNCDESC funcdesc;
     ELEMDESC elemdesc[5];
     PARAMDESCEX paramdescex;
     TYPEDESC typedesc1, typedesc2;
+    HREFTYPE hreftype;
     HRESULT hres;
 
     trace("CreateTypeLib tests\n");
+
+    hres = LoadTypeLib(stdoleW, &stdole);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IUnknown, &unknown);
+    ok(hres == S_OK, "got %08x\n", hres);
 
     GetTempFileNameA(".", "tlb", 0, filename);
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, MAX_PATH);
@@ -1001,6 +1010,15 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_LayOut(createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddRefTypeInfo(createti, NULL, &hreftype);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, &hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
     memset(&funcdesc, 0, sizeof(FUNCDESC));
@@ -1135,7 +1153,10 @@ static void test_CreateTypeLib(void) {
     hres = LoadTypeLib(filenameW,  &tl);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    ITypeInfo_Release(unknown);
+
     ITypeLib_Release(tl);
+    ITypeLib_Release(stdole);
 
     DeleteFileA(filename);
 }
