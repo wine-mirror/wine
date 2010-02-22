@@ -971,6 +971,7 @@ if(use_midl_tlb) {
 static void test_CreateTypeLib(void) {
     static const WCHAR stdoleW[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
+    static OLECHAR interface2W[] = {'i','n','t','e','r','f','a','c','e','2',0};
     static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
     static OLECHAR func2W[] = {'f','u','n','c','2',0};
@@ -982,9 +983,9 @@ static void test_CreateTypeLib(void) {
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *createtl;
-    ICreateTypeInfo *createti;
+    ICreateTypeInfo *createti, *createti2;
     ITypeLib *tl, *stdole;
-    ITypeInfo *unknown;
+    ITypeInfo *interface1, *interface2, *unknown, *ti;
     FUNCDESC funcdesc;
     ELEMDESC elemdesc[5];
     PARAMDESCEX paramdescex;
@@ -1009,6 +1010,15 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetRefTypeInfo(interface1, 0, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetRefTypeInfo(interface1, 16, &ti);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+
     hres = ICreateTypeInfo_LayOut(createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
@@ -1019,6 +1029,12 @@ static void test_CreateTypeLib(void) {
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddImplType(createti, 1, hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
     memset(&funcdesc, 0, sizeof(FUNCDESC));
@@ -1146,6 +1162,26 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == TYPE_E_NAMECONFLICT, "got %08x\n", hres);
 
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, interface2W, TKIND_INTERFACE, &createti2);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_QueryInterface(createti2, &IID_ITypeInfo, (void**)&interface2);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddRefTypeInfo(createti2, interface1, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetRefTypeInfo(interface2, 0, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(ti == interface1, "Received and added interfaces are different\n");
+
+    ITypeInfo_Release(ti);
+
+    hres = ICreateTypeInfo_AddImplType(createti2, 0, hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ICreateTypeInfo_Release(createti2);
+
     hres = ICreateTypeLib2_SaveAllChanges(createtl);
     ok(hres == S_OK, "got %08x\n", hres);
     ICreateTypeLib2_Release(createtl);
@@ -1153,6 +1189,8 @@ static void test_CreateTypeLib(void) {
     hres = LoadTypeLib(filenameW,  &tl);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    ITypeInfo_Release(interface2);
+    ITypeInfo_Release(interface1);
     ITypeInfo_Release(unknown);
 
     ITypeLib_Release(tl);
