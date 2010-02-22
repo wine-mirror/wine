@@ -5110,7 +5110,7 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     len = lstrlenW(desc) + lstrlenW(driver_fmt) + lstrlenW(driver_file->FileName);
     if (setup_file)
         len += lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName);
-    len += lstrlenW(usage_fmt) + 1;
+    len += lstrlenW(usage_fmt) + 2; /* \0\0 */
 
     driver = msi_alloc(len * sizeof(WCHAR));
     if (!driver)
@@ -5120,13 +5120,13 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     lstrcpyW(ptr, desc);
     ptr += lstrlenW(ptr) + 1;
 
-    sprintfW(ptr, driver_fmt, driver_file->FileName);
-    ptr += lstrlenW(ptr) + 1;
+    len = sprintfW(ptr, driver_fmt, driver_file->FileName);
+    ptr += len + 1;
 
     if (setup_file)
     {
-        sprintfW(ptr, setup_fmt, setup_file->FileName);
-        ptr += lstrlenW(ptr) + 1;
+        len = sprintfW(ptr, setup_fmt, setup_file->FileName);
+        ptr += len + 1;
     }
 
     lstrcpyW(ptr, usage_fmt);
@@ -5176,7 +5176,7 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
         return ERROR_FUNCTION_FAILED;
     }
 
-    len = lstrlenW(desc) + lstrlenW(translator_fmt) + lstrlenW(translator_file->FileName) + 1;
+    len = lstrlenW(desc) + lstrlenW(translator_fmt) + lstrlenW(translator_file->FileName) + 2; /* \0\0 */
     if (setup_file)
         len += lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName);
 
@@ -5188,13 +5188,13 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     lstrcpyW(ptr, desc);
     ptr += lstrlenW(ptr) + 1;
 
-    sprintfW(ptr, translator_fmt, translator_file->FileName);
-    ptr += lstrlenW(ptr) + 1;
+    len = sprintfW(ptr, translator_fmt, translator_file->FileName);
+    ptr += len + 1;
 
     if (setup_file)
     {
-        sprintfW(ptr, setup_fmt, setup_file->FileName);
-        ptr += lstrlenW(ptr) + 1;
+        len = sprintfW(ptr, setup_fmt, setup_file->FileName);
+        ptr += len + 1;
     }
     *ptr = '\0';
 
@@ -5234,7 +5234,7 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
     if (registration == msidbODBCDataSourceRegistrationPerMachine) request = ODBC_ADD_SYS_DSN;
     else if (registration == msidbODBCDataSourceRegistrationPerUser) request = ODBC_ADD_DSN;
 
-    len = lstrlenW(attrs_fmt) + lstrlenW(desc) + 1 + 1;
+    len = lstrlenW(attrs_fmt) + lstrlenW(desc) + 2; /* \0\0 */
     attrs = msi_alloc(len * sizeof(WCHAR));
     if (!attrs)
         return ERROR_OUTOFMEMORY;
@@ -5348,7 +5348,7 @@ static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
     if (registration == msidbODBCDataSourceRegistrationPerMachine) request = ODBC_REMOVE_SYS_DSN;
     else if (registration == msidbODBCDataSourceRegistrationPerUser) request = ODBC_REMOVE_DSN;
 
-    len = strlenW( attrs_fmt ) + strlenW( desc ) + 1 + 1;
+    len = strlenW( attrs_fmt ) + strlenW( desc ) + 2; /* \0\0 */
     attrs = msi_alloc( len * sizeof(WCHAR) );
     if (!attrs)
         return ERROR_OUTOFMEMORY;
