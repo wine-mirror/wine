@@ -986,6 +986,7 @@ static void test_CreateTypeLib(void) {
     FUNCDESC funcdesc;
     ELEMDESC elemdesc[5];
     PARAMDESCEX paramdescex;
+    TYPEDESC typedesc1, typedesc2;
     HRESULT hres;
 
     trace("CreateTypeLib tests\n");
@@ -1053,13 +1054,25 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    elemdesc[0].tdesc.vt = VT_PTR;
+    elemdesc[0].tdesc.lptdesc = &typedesc1;
+    typedesc1.vt = VT_BSTR;
+    funcdesc.cParams = 1;
+    funcdesc.lprgelemdescParam = elemdesc;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 4, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    elemdesc[0].tdesc.lptdesc = &typedesc2;
+    typedesc2.vt = VT_PTR;
+    typedesc2.lptdesc = &typedesc1;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 4, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     elemdesc[0].tdesc.vt = VT_INT;
     elemdesc[0].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
     elemdesc[0].paramdesc.pparamdescex = &paramdescex;
     V_VT(&paramdescex.varDefaultValue) = VT_INT;
     V_INT(&paramdescex.varDefaultValue) = 0x123;
-    funcdesc.lprgelemdescParam = elemdesc;
-    funcdesc.cParams = 1;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
