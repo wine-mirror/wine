@@ -412,6 +412,7 @@ void print_quick(HWND hMainWnd, LPWSTR wszFileName)
     pd.hDC = make_dc();
 
     print(&pd, wszFileName);
+    DeleteDC(pd.hDC);
 }
 
 void dialog_print(HWND hMainWnd, LPWSTR wszFileName)
@@ -596,6 +597,8 @@ LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
             preview.pages = get_num_pages(hEditorWnd, fr);
             DeleteDC(fr.hdc);
+            DeleteDC(hdcTarget);
+            ReleaseDC(hWnd, hdc);
 
             update_preview_sizes(hWnd, TRUE);
             break;
@@ -845,7 +848,7 @@ LRESULT CALLBACK ruler_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float ratio, int bmNewWidth, int bmNewHeight, int bmWidth, int bmHeight)
 {
     HBITMAP hBitmapScaled = CreateCompatibleBitmap(hdc, bmNewWidth, bmNewHeight);
-    HPEN hPen;
+    HPEN hPen, oldPen;
     int TopMargin = (int)((float)twips_to_pixels(lpFr->rc.top, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
     int BottomMargin = (int)((float)twips_to_pixels(lpFr->rc.bottom, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
     int LeftMargin = (int)((float)twips_to_pixels(lpFr->rc.left, GetDeviceCaps(hdc, LOGPIXELSY)) * ratio);
@@ -860,7 +863,7 @@ static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float r
 
     /* Draw margin lines */
     hPen = CreatePen(PS_DOT, 1, RGB(0,0,0));
-    SelectObject(*hdcSized, hPen);
+    oldPen = SelectObject(*hdcSized, hPen);
 
     MoveToEx(*hdcSized, 0, TopMargin, NULL);
     LineTo(*hdcSized, bmNewWidth, TopMargin);
@@ -872,6 +875,8 @@ static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float r
     MoveToEx(*hdcSized, RightMargin, 0, NULL);
     LineTo(*hdcSized, RightMargin, bmNewHeight);
 
+    SelectObject(*hdcSized, oldPen);
+    DeleteObject(hPen);
 }
 
 static void draw_preview(HWND hEditorWnd, FORMATRANGE* lpFr, RECT* paper, int page)
