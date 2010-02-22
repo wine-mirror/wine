@@ -1978,7 +1978,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 	ICreateTypeInfo2* iface)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
-    CyclicList *iter, *iter2;
+    CyclicList *iter, *iter2, **typedata;
     int i;
 
     TRACE("(%p)\n", iface);
@@ -1986,12 +1986,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
     if(!This->typedata)
         return S_OK;
 
+    typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList*)*This->typeinfo->cElement);
+    if(!typedata)
+        return E_OUTOFMEMORY;
+
     /* Assign IDs and VTBL entries */
     i = 0;
     This->typeinfo->cbSizeVft = 0;
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
         if(iter->indice == MEMBERID_NIL)
             FIXME("MEMBERID_NIL handling not yet implemented\n");
+
+        typedata[i] = iter;
 
         iter->u.data[0] = (iter->u.data[0]&0xffff) | (i<<16);
 
@@ -2018,7 +2024,33 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         i++;
     }
 
-    FIXME("Typeinfo validation not implemented\n");
+    for(i=0; i<This->typeinfo->cElement; i++) {
+        if(typedata[i]->u.data[4]>>16 > i) {
+            int inv;
+
+            inv = (typedata[i]->u.data[4]>>3) & 0xf;
+            i = typedata[i]->u.data[4] >> 16;
+
+            while(i > typedata[i]->u.data[4]>>16) {
+                int invkind = (typedata[i]->u.data[4]>>3) & 0xf;
+
+                if(inv & invkind) {
+                    HeapFree(GetProcessHeap(), 0, typedata);
+                    return TYPE_E_DUPLICATEID;
+                }
+
+                i = typedata[i]->u.data[4] >> 16;
+                inv |= invkind;
+            }
+
+            if(inv & INVOKE_FUNC) {
+                HeapFree(GetProcessHeap(), 0, typedata);
+                return TYPE_E_INCONSISTENTPROPFUNCS;
+            }
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, typedata);
     return S_OK;
 }
 
@@ -3384,17 +3416,23 @@ static int ctl2_write_segment(ICreateTypeLib2Impl *This, HANDLE hFile, int segme
     return -1;
 }
 
-static void ctl2_finalize_typeinfos(ICreateTypeLib2Impl *This, int filesize)
+static HRESULT ctl2_finalize_typeinfos(ICreateTypeLib2Impl *This, int filesize)
 {
     ICreateTypeInfo2Impl *typeinfo;
+    HRESULT hres;
 
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
 	typeinfo->typeinfo->memoffset = filesize;
 	if (typeinfo->typedata) {
-	    ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
+	    hres = ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
+            if(FAILED(hres))
+                return hres;
+
 	    filesize += typeinfo->typedata->next->u.val + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
 	}
     }
+
+    return S_OK;
 }
 
 static int ctl2_finalize_segment(ICreateTypeLib2Impl *This, int filepos, int segment)
@@ -3448,6 +3486,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     int retval;
     int filepos;
     HANDLE hFile;
+    HRESULT hres;
 
     TRACE("(%p)\n", iface);
 
@@ -3473,7 +3512,11 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_CUSTDATA);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_CUSTDATAGUID);
 
-    ctl2_finalize_typeinfos(This, filepos);
+    hres = ctl2_finalize_typeinfos(This, filepos);
+    if(FAILED(hres)) {
+        CloseHandle(hFile);
+        return hres;
+    }
 
     if (!ctl2_write_chunk(hFile, &This->typelib_header, sizeof(This->typelib_header))) return retval;
     if (This->typelib_header.varflags & HELPDLLFLAG)
@@ -3498,8 +3541,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
 
     if (!CloseHandle(hFile)) return retval;
 
-    retval = S_OK;
-    return retval;
+    return S_OK;
 }
 
 
