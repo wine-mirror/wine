@@ -625,7 +625,7 @@ struct wined3d_shader_frontend
     void (*shader_read_dst_param)(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
             struct wined3d_shader_src_param *dst_rel_addr);
     void (*shader_read_semantic)(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
-    void (*shader_read_comment)(const DWORD **ptr, const char **comment);
+    void (*shader_read_comment)(const DWORD **ptr, const char **comment, UINT *comment_size);
     BOOL (*shader_is_end)(void *data, const DWORD **ptr);
 };
 

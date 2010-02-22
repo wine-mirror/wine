@@ -406,9 +406,9 @@ static void shader_sm4_read_semantic(const DWORD **ptr, struct wined3d_shader_se
     FIXME("ptr %p, semantic %p stub!\n", ptr, semantic);
 }
 
-static void shader_sm4_read_comment(const DWORD **ptr, const char **comment)
+static void shader_sm4_read_comment(const DWORD **ptr, const char **comment, UINT *comment_size)
 {
-    FIXME("ptr %p, comment %p stub!\n", ptr, comment);
+    FIXME("ptr %p, comment %p, comment_size %p stub!\n", ptr, comment, comment_size);
     *comment = NULL;
 }
 

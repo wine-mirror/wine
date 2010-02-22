@@ -467,10 +467,11 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
     {
         struct wined3d_shader_instruction ins;
         const char *comment;
+        UINT comment_size;
         UINT param_size;
 
         /* Skip comments. */
-        fe->shader_read_comment(&ptr, &comment);
+        fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment) continue;
 
         /* Fetch opcode. */
@@ -1115,10 +1116,11 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     while (!fe->shader_is_end(fe_data, &ptr))
     {
         const char *comment;
+        UINT comment_size;
         UINT param_size;
 
         /* Skip comment tokens. */
-        fe->shader_read_comment(&ptr, &comment);
+        fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment) continue;
 
         /* Read opcode. */
@@ -1222,10 +1224,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
     {
         struct wined3d_shader_instruction ins;
         const char *comment;
+        UINT comment_size;
         UINT param_size;
 
         /* comment */
-        fe->shader_read_comment(&ptr, &comment);
+        fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment)
         {
             TRACE("//%s\n", comment);
