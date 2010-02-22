@@ -28,6 +28,7 @@ typedef struct _previewinfo
 {
     int page;
     int pages;
+    int *pageEnds, pageCapacity;
     HDC hdc;
     HDC hdc2;
     HDC hdcSized;
@@ -249,12 +250,30 @@ static int get_num_pages(HWND hEditorWnd, FORMATRANGE fr)
     int page = 0;
     fr.chrg.cpMin = 0;
 
+    if (!preview.pageEnds)
+    {
+        preview.pageCapacity = 32;
+        preview.pageEnds = HeapAlloc(GetProcessHeap(), 0,
+                                    sizeof(int) * preview.pageCapacity);
+        if (!preview.pageEnds) return 0;
+    }
+
     do
     {
         int bottom = fr.rc.bottom;
-        page++;
         fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE,
                                      (LPARAM)&fr);
+        if (page >= preview.pageCapacity)
+        {
+            int *new_buffer;
+            new_buffer = HeapReAlloc(GetProcessHeap(), 0, preview.pageEnds,
+                                     sizeof(int) * preview.pageCapacity * 2);
+            if (!new_buffer) return page;
+            preview.pageCapacity *= 2;
+            preview.pageEnds = new_buffer;
+        }
+        preview.pageEnds[page] = fr.chrg.cpMin;
+        page++;
         fr.rc.bottom = bottom;
     }
     while(fr.chrg.cpMin && fr.chrg.cpMin < fr.chrg.cpMax);
@@ -696,6 +715,9 @@ void close_preview(HWND hMainWnd)
     preview.window.bottom = 0;
     preview.page = 0;
     preview.pages = 0;
+    HeapFree(GetProcessHeap(), 0, preview.pageEnds);
+    preview.pageEnds = NULL;
+    preview.pageCapacity = 0;
 
     preview_bar_show(hMainWnd, FALSE);
     DestroyWindow(hwndPreview);
@@ -883,7 +905,7 @@ static void draw_preview(HWND hEditorWnd, FORMATRANGE* lpFr, RECT* paper, int pa
 {
     int bottom;
 
-    char_from_pagenum(hEditorWnd, lpFr, page);
+    lpFr->chrg.cpMin = page <= 1 ? 0 : preview.pageEnds[page-2];
     FillRect(lpFr->hdc, paper, GetStockObject(WHITE_BRUSH));
     bottom = lpFr->rc.bottom;
     SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)lpFr);
