@@ -431,6 +431,29 @@ static int ctl2_encode_string(
 }
 
 /****************************************************************************
+ *      ctl2_decode_string
+ *
+ * Converts string stored in typelib data to unicode.
+ */
+static void ctl2_decode_string(
+        char *data,         /* [I] String to be decoded */
+        WCHAR **string)     /* [O] Decoded string */
+{
+    int i, length;
+    static WCHAR converted_string[0x104];
+
+    length = data[0] + (data[1]<<8);
+    if(length & 1)
+        length >>= 2;
+
+    for(i=0; i<length; i++)
+        converted_string[i] = data[i+2];
+    converted_string[length] = '\0';
+
+    *string = converted_string;
+}
+
+/****************************************************************************
  *	ctl2_alloc_segment
  *
  *  Allocates memory from a segment in a type library.
@@ -2813,8 +2836,54 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
         HREFTYPE hRefType,
         ITypeInfo** ppTInfo)
 {
-    FIXME("(%p,%d,%p), stub!\n", iface, hRefType, ppTInfo);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+
+    TRACE("(%p,%d,%p)\n", iface, hRefType, ppTInfo);
+
+    if(!ppTInfo)
+        return E_INVALIDARG;
+
+    if(hRefType&1) {
+        ITypeLib *tl;
+        MSFT_ImpInfo *impinfo;
+        MSFT_ImpFile *impfile;
+        MSFT_GuidEntry *guid;
+        WCHAR *filename;
+        HRESULT hres;
+
+        if(hRefType-1 >= This->typelib->typelib_segdir[MSFT_SEG_IMPORTINFO].length)
+            return E_FAIL;
+
+        impinfo = (MSFT_ImpInfo*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTINFO][hRefType-1];
+        impfile = (MSFT_ImpFile*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][impinfo->oImpFile];
+        guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo->oGuid];
+
+        ctl2_decode_string(impfile->filename, &filename);
+
+        hres = LoadTypeLib(filename, &tl);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(tl, &guid->guid, ppTInfo);
+
+        ITypeLib_Release(tl);
+        return hres;
+    } else {
+        ICreateTypeInfo2Impl *iter;
+        int i = 0;
+
+        for(iter=This->typelib->typeinfos; iter; iter=iter->next_typeinfo) {
+            if(This->typelib->typelib_typeinfo_offsets[i] == hRefType) {
+                *ppTInfo = (ITypeInfo*)&iter->lpVtblTypeInfo2;
+
+                ITypeLib_AddRef(*ppTInfo);
+                return S_OK;
+            }
+            i++;
+        }
+    }
+
+    return E_FAIL;
 }
 
 /******************************************************************************
