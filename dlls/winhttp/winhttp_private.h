@@ -96,6 +96,7 @@ typedef struct
     object_header_t hdr;
     LPWSTR agent;
     DWORD access;
+    int resolve_timeout;
     int connect_timeout;
     int send_timeout;
     int recv_timeout;
@@ -145,6 +146,7 @@ typedef struct
     LPWSTR version;
     LPWSTR raw_headers;
     netconn_t netconn;
+    int resolve_timeout;
     int connect_timeout;
     int send_timeout;
     int recv_timeout;
@@ -221,7 +223,7 @@ BOOL netconn_init( netconn_t *, BOOL );
 void netconn_unload( void );
 BOOL netconn_query_data_available( netconn_t *, DWORD * );
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
-BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr *, socklen_t * );
+BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr *, socklen_t *, int );
 BOOL netconn_secure_connect( netconn_t *, WCHAR * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
 DWORD netconn_set_timeout( netconn_t *, BOOL, int );

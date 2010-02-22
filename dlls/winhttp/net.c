@@ -867,7 +867,7 @@ DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
     return ERROR_SUCCESS;
 }
 
-BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len )
+static DWORD resolve_hostname( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len )
 {
     char *hostname;
 #ifdef HAVE_GETADDRINFO
@@ -878,7 +878,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 #endif
 
-    if (!(hostname = strdupWA( hostnameW ))) return FALSE;
+    if (!(hostname = strdupWA( hostnameW ))) return ERROR_OUTOFMEMORY;
 
 #ifdef HAVE_GETADDRINFO
     memset( &hints, 0, sizeof(struct addrinfo) );
@@ -897,7 +897,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
         {
             TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
             heap_free( hostname );
-            return FALSE;
+            return ERROR_WINHTTP_NAME_NOT_RESOLVED;
         }
     }
     heap_free( hostname );
@@ -905,7 +905,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     {
         WARN("address too small\n");
         freeaddrinfo( res );
-        return FALSE;
+        return ERROR_WINHTTP_NAME_NOT_RESOLVED;
     }
     *sa_len = res->ai_addrlen;
     memcpy( sa, res->ai_addr, res->ai_addrlen );
@@ -921,7 +921,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     }
 
     freeaddrinfo( res );
-    return TRUE;
+    return ERROR_SUCCESS;
 #else
     EnterCriticalSection( &cs_gethostbyname );
 
@@ -931,13 +931,13 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     {
         TRACE("failed to get address of %s (%d)\n", debugstr_w(hostnameW), h_errno);
         LeaveCriticalSection( &cs_gethostbyname );
-        return FALSE;
+        return ERROR_WINHTTP_NAME_NOT_RESOLVED;
     }
     if (*sa_len < sizeof(struct sockaddr_in))
     {
         WARN("address too small\n");
         LeaveCriticalSection( &cs_gethostbyname );
-        return FALSE;
+        return ERROR_WINHTTP_NAME_NOT_RESOLVED;
     }
     *sa_len = sizeof(struct sockaddr_in);
     memset( sa, 0, sizeof(struct sockaddr_in) );
@@ -946,8 +946,55 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     sin->sin_port = htons( port );
 
     LeaveCriticalSection( &cs_gethostbyname );
-    return TRUE;
+    return ERROR_SUCCESS;
 #endif
+}
+
+struct resolve_args
+{
+    WCHAR           *hostname;
+    INTERNET_PORT    port;
+    struct sockaddr *sa;
+    socklen_t       *sa_len;
+};
+
+static DWORD CALLBACK resolve_proc( LPVOID arg )
+{
+    struct resolve_args *ra = arg;
+    return resolve_hostname( ra->hostname, ra->port, ra->sa, ra->sa_len );
+}
+
+BOOL netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len, int timeout )
+{
+    DWORD ret;
+
+    if (timeout)
+    {
+        DWORD status;
+        HANDLE thread;
+        struct resolve_args ra;
+
+        ra.hostname = hostname;
+        ra.port     = port;
+        ra.sa       = sa;
+        ra.sa_len   = sa_len;
+
+        thread = CreateThread( NULL, 0, resolve_proc, &ra, 0, NULL );
+        if (!thread) return FALSE;
+
+        status = WaitForSingleObject( thread, timeout );
+        if (status == WAIT_OBJECT_0) GetExitCodeThread( thread, &ret );
+        else ret = ERROR_WINHTTP_TIMEOUT;
+        CloseHandle( thread );
+    }
+    else ret = resolve_hostname( hostname, port, sa, sa_len );
+
+    if (ret)
+    {
+        set_last_error( ret );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 const void *netconn_get_certificate( netconn_t *conn )

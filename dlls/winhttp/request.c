@@ -911,7 +911,7 @@ static BOOL open_connection( request_t *request )
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
 
     slen = sizeof(connect->sockaddr);
-    if (!netconn_resolve( connect->servername, port, (struct sockaddr *)&connect->sockaddr, &slen )) return FALSE;
+    if (!netconn_resolve( connect->servername, port, (struct sockaddr *)&connect->sockaddr, &slen, request->resolve_timeout )) return FALSE;
     switch (connect->sockaddr.ss_family)
     {
     case AF_INET:
