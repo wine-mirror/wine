@@ -4312,8 +4312,11 @@ static void test_header_notification(void)
     ret = SendMessage(header, HDM_GETITEMCOUNT, 0, 0);
     ok(ret == 1, "expected header item count 1, got %ld\n", ret);
 
+    memset(&item, 0, sizeof(item));
+    item.mask = HDI_WIDTH;
     ret = SendMessage(header, HDM_GETITEMA, 0, (LPARAM)&item);
     ok(ret, "HDM_GETITEM failed\n");
+    ok(item.cxy == 100, "expected 100, got %d\n", item.cxy);
 
     nmh.hdr.hwndFrom = header;
     nmh.hdr.idFrom = GetWindowLongPtr(header, GWLP_ID);
