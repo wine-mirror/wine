@@ -514,7 +514,7 @@ static int ctl2_alloc_typeinfo(
     typeinfo->typekind = (This->typelib_header.nrtypeinfos - 1) << 16;
     typeinfo->memoffset = -1; /* should be EOF if no elements */
     typeinfo->res2 = 0;
-    typeinfo->res3 = -1;
+    typeinfo->res3 = 0;
     typeinfo->res4 = 3;
     typeinfo->res5 = 0;
     typeinfo->cElement = 0;
@@ -1382,16 +1382,43 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
-    CyclicList *insert;
+    CyclicList *iter, *insert;
     int *typedata;
     int i;
     int decoded_size;
 
-    FIXME("(%p,%d,%p), stub!\n", iface, index, pFuncDesc);
-    FIXME("{%d,%p,%p,%d,%d,%d,%d,%d,%d,%d,{%d},%d}\n", pFuncDesc->memid, pFuncDesc->lprgscode, pFuncDesc->lprgelemdescParam, pFuncDesc->funckind, pFuncDesc->invkind, pFuncDesc->callconv, pFuncDesc->cParams, pFuncDesc->cParamsOpt, pFuncDesc->oVft, pFuncDesc->cScodes, pFuncDesc->elemdescFunc.tdesc.vt, pFuncDesc->wFuncFlags);
-/*     FIXME("{%d, %d}\n", pFuncDesc->lprgelemdescParam[0].tdesc.vt, pFuncDesc->lprgelemdescParam[1].tdesc.vt); */
-/*     return E_OUTOFMEMORY; */
-    
+    TRACE("(%p,%d,%p)\n", iface, index, pFuncDesc);
+
+    if(!pFuncDesc || (pFuncDesc->memid>0x7fffffff && pFuncDesc->memid!=MEMBERID_NIL))
+        return E_INVALIDARG;
+
+    TRACE("{%d,%p,%p,%d,%d,%d,%d,%d,%d,%d,{%d},%d}\n", pFuncDesc->memid,
+            pFuncDesc->lprgscode, pFuncDesc->lprgelemdescParam, pFuncDesc->funckind,
+            pFuncDesc->invkind, pFuncDesc->callconv, pFuncDesc->cParams,
+            pFuncDesc->cParamsOpt, pFuncDesc->oVft, pFuncDesc->cScodes,
+            pFuncDesc->elemdescFunc.tdesc.vt, pFuncDesc->wFuncFlags);
+
+    switch(This->typeinfo->typekind&0xf) {
+    case TKIND_MODULE:
+        if(pFuncDesc->funckind != FUNC_STATIC)
+            return TYPE_E_BADMODULEKIND;
+        break;
+    case TKIND_DISPATCH:
+        if(pFuncDesc->funckind != FUNC_DISPATCH)
+            return TYPE_E_BADMODULEKIND;
+        break;
+    default:
+        if(pFuncDesc->funckind != FUNC_PUREVIRTUAL)
+            return TYPE_E_BADMODULEKIND;
+    }
+
+    if(This->typeinfo->cElement<index)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if((pFuncDesc->invkind&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) &&
+        !pFuncDesc->cParams)
+        return TYPE_E_INCONSISTENTPROPFUNCS;
+
     if (!This->typedata) {
 	This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
         if(!This->typedata)
@@ -1411,19 +1438,30 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
         return E_OUTOFMEMORY;
     }
 
-    insert->next = This->typedata->next;
-    This->typedata->next = insert;
-    This->typedata = insert;
+    /* insert type data to list */
+    if(index == This->typeinfo->cElement) {
+        insert->next = This->typedata->next;
+        This->typedata->next = insert;
+        This->typedata = insert;
+    } else {
+        iter = This->typedata->next;
+        for(i=0; i<index; i++)
+            iter = iter->next;
 
+        insert->next = iter->next;
+        iter->next = insert;
+    }
+
+    /* update type data size */
     This->typedata->next->u.val += 0x18 + (pFuncDesc->cParams * 12);
-    typedata = This->typedata->u.data;
 
     /* fill out the basic type information */
-    typedata[0] = (0x18 + (pFuncDesc->cParams * 12)) | (index << 16);
+    typedata = insert->u.data;
+    typedata[0] = 0x18 + pFuncDesc->cParams * 12;
     ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = pFuncDesc->wFuncFlags;
     typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | This->typeinfo->cbSizeVft;
-    typedata[4] = (index << 16) | (pFuncDesc->callconv << 8) | 9;
+    typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
     typedata[5] = pFuncDesc->cParams;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
@@ -1436,32 +1474,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 	typedata[8+(i*3)] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
 	typedata[3] += decoded_size << 16;
 
-#if 0
-	/* FIXME: Doesn't work. Doesn't even come up with usable VTs for varDefaultValue. */
-	if (pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
-	    ctl2_alloc_custdata(This->typelib, &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
-	}
-#endif
+        if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            FIXME("default values not implemented\n");
     }
 
     /* update the index data */
-    insert->indice = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
+    insert->indice = (This->typeinfo->cImplTypes << 16) | pFuncDesc->memid;
     insert->name = -1;
-
-    /* ??? */
-    if (!This->typeinfo->res2) This->typeinfo->res2 = 0x20;
-    This->typeinfo->res2 <<= 1;
-
-    /* ??? */
-    if (This->typeinfo->res3 == -1) This->typeinfo->res3 = 0;
-    This->typeinfo->res3 += 0x38;
-
-    /* ??? */
-    if (index < 2) This->typeinfo->res2 += pFuncDesc->cParams << 4;
-    This->typeinfo->res3 += pFuncDesc->cParams << 4;
-
-    /* adjust size of VTBL */
-    This->typeinfo->cbSizeVft += 4;
 
     /* Increment the number of function elements */
     This->typeinfo->cElement += 1;

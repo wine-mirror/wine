@@ -976,6 +976,8 @@ static void test_CreateTypeLib(void) {
     ICreateTypeLib2 *createtl;
     ICreateTypeInfo *createti;
     ITypeLib *tl;
+    FUNCDESC funcdesc;
+    ELEMDESC elemdesc;
     HRESULT hres;
 
     trace("CreateTypeLib tests\n");
@@ -988,6 +990,57 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_LayOut(createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    memset(&funcdesc, 0, sizeof(FUNCDESC));
+    funcdesc.funckind = FUNC_PUREVIRTUAL;
+    funcdesc.invkind = INVOKE_PROPERTYGET;
+    funcdesc.callconv = CC_STDCALL;
+    funcdesc.elemdescFunc.tdesc.vt = VT_BSTR;
+    funcdesc.elemdescFunc.idldesc.wIDLFlags = IDLFLAG_NONE;
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    funcdesc.invkind = INVOKE_PROPERTYPUT;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == TYPE_E_INCONSISTENTPROPFUNCS, "got %08x\n", hres);
+
+    funcdesc.invkind = INVOKE_PROPERTYPUTREF;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == TYPE_E_INCONSISTENTPROPFUNCS, "got %08x\n", hres);
+
+    elemdesc.tdesc.vt = VT_BSTR;
+    elemdesc.idldesc.dwReserved = 0;
+    elemdesc.idldesc.wIDLFlags = IDLFLAG_FIN;
+
+    funcdesc.lprgelemdescParam = &elemdesc;
+    funcdesc.invkind = INVOKE_PROPERTYPUT;
+    funcdesc.cParams = 1;
+    funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    funcdesc.invkind = INVOKE_PROPERTYPUTREF;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    funcdesc.memid = 1;
+    funcdesc.lprgelemdescParam = NULL;
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.cParams = 0;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
