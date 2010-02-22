@@ -970,6 +970,7 @@ if(use_midl_tlb) {
 
 static void test_CreateTypeLib(void) {
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
+    static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
 
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
@@ -1072,6 +1073,13 @@ static void test_CreateTypeLib(void) {
     elemdesc[1].tdesc.vt = VT_INT;
     V_VT(&paramdescex.varDefaultValue) = VT_INT;
     V_INT(&paramdescex.varDefaultValue) = 0xffffffff;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    elemdesc[0].tdesc.vt = VT_BSTR;
+    elemdesc[1].tdesc.vt = VT_BSTR;
+    V_VT(&paramdescex.varDefaultValue) = VT_BSTR;
+    V_BSTR(&paramdescex.varDefaultValue) = SysAllocString(defaultW);
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 

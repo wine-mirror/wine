@@ -1190,6 +1190,44 @@ static HRESULT ctl2_add_default_value(
         memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8);
         return S_OK;
     }
+    case VT_BSTR: {
+        /* Construct the data */
+        int i, len = (6+SysStringLen(V_BSTR(&v))+3) & ~0x3;
+        char *data = HeapAlloc(GetProcessHeap(), 0, len);
+
+        if(!data)
+            return E_OUTOFMEMORY;
+
+        *((unsigned short*)data) = arg_type;
+        *((unsigned*)(data+2)) = SysStringLen(V_BSTR(&v));
+        for(i=0; i<SysStringLen(V_BSTR(&v)); i++) {
+            if(V_BSTR(&v)[i] <= 0x7f)
+                data[i+6] = V_BSTR(&v)[i];
+            else
+                data[i+6] = '?';
+        }
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], len-6, NULL, NULL);
+        for(i=6+SysStringLen(V_BSTR(&v)); i<len; i++)
+            data[i] = 0x57;
+
+        /* Check if the data was already allocated */
+        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-len; *encoded_value+=4)
+            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len)) {
+                HeapFree(GetProcessHeap(), 0, data);
+                return S_OK;
+            }
+
+        /* Allocate the data */
+        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, len, 0);
+        if(*encoded_value == -1) {
+            HeapFree(GetProcessHeap(), 0, data);
+            return E_OUTOFMEMORY;
+        }
+
+        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len);
+        HeapFree(GetProcessHeap(), 0, data);
+        return S_OK;
+    }
     default:
         FIXME("Argument type not yet handled\n");
         return E_NOTIMPL;
