@@ -2174,6 +2174,7 @@ void WCMD_free_commands(CMD_LIST *cmds) {
       CMD_LIST *thisCmd = cmds;
       cmds = cmds->nextcommand;
       HeapFree(GetProcessHeap(), 0, thisCmd->command);
+      HeapFree(GetProcessHeap(), 0, thisCmd->redirects);
       HeapFree(GetProcessHeap(), 0, thisCmd);
     }
 }
