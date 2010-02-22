@@ -4314,6 +4314,11 @@ static void test_QueryInterface(IHTMLDocument2 *doc)
     hres = IUnknown_QueryInterface(doc, &IID_IExternalConnection, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(qi == NULL, "qi=%p, expected NULL\n", qi);
+
+    qi = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(doc, &IID_IStdMarshalInfo, (void**)&qi);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(qi == NULL, "qi=%p, expected NULL\n", qi);
 }
 
 static void init_test(enum load_state_t ls) {
