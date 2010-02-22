@@ -2696,10 +2696,20 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       safe_copy_to_buffer(pStubMsg, pMemory, 4);
       pMemory += 4;
       break;
+    case RPC_FC_FLOAT:
+      TRACE("float=%f <= %p\n", *(float*)pMemory, pMemory);
+      safe_copy_to_buffer(pStubMsg, pMemory, sizeof(float));
+      pMemory += sizeof(float);
+      break;
     case RPC_FC_HYPER:
       TRACE("longlong=%s <= %p\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory), pMemory);
       safe_copy_to_buffer(pStubMsg, pMemory, 8);
       pMemory += 8;
+      break;
+    case RPC_FC_DOUBLE:
+      TRACE("double=%f <= %p\n", *(double*)pMemory, pMemory);
+      safe_copy_to_buffer(pStubMsg, pMemory, sizeof(double));
+      pMemory += sizeof(double);
       break;
     case RPC_FC_POINTER:
     {
@@ -2825,10 +2835,20 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("long=%d => %p\n", *(DWORD*)pMemory, pMemory);
       pMemory += 4;
       break;
+    case RPC_FC_FLOAT:
+      safe_copy_from_buffer(pStubMsg, pMemory, sizeof(float));
+      TRACE("float=%f => %p\n", *(float*)pMemory, pMemory);
+      pMemory += sizeof(float);
+      break;
     case RPC_FC_HYPER:
       safe_copy_from_buffer(pStubMsg, pMemory, 8);
       TRACE("longlong=%s => %p\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory), pMemory);
       pMemory += 8;
+      break;
+    case RPC_FC_DOUBLE:
+      safe_copy_from_buffer(pStubMsg, pMemory, sizeof(double));
+      TRACE("double=%f => %p\n", *(double*)pMemory, pMemory);
+      pMemory += sizeof(double);
       break;
     case RPC_FC_POINTER:
     {
@@ -2950,10 +2970,12 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
+    case RPC_FC_FLOAT:
       safe_buffer_length_increment(pStubMsg, 4);
       pMemory += 4;
       break;
     case RPC_FC_HYPER:
+    case RPC_FC_DOUBLE:
       safe_buffer_length_increment(pStubMsg, 8);
       pMemory += 8;
       break;
@@ -3053,9 +3075,11 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ULONG:
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
+    case RPC_FC_FLOAT:
       pMemory += 4;
       break;
     case RPC_FC_HYPER:
+    case RPC_FC_DOUBLE:
       pMemory += 8;
       break;
     case RPC_FC_POINTER:
@@ -3141,10 +3165,12 @@ static ULONG ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
+    case RPC_FC_FLOAT:
       size += 4;
       safe_buffer_increment(pStubMsg, 4);
       break;
     case RPC_FC_HYPER:
+    case RPC_FC_DOUBLE:
       size += 8;
       safe_buffer_increment(pStubMsg, 8);
       break;
@@ -3236,9 +3262,11 @@ ULONG ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
     case RPC_FC_ULONG:
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
+    case RPC_FC_FLOAT:
       size += 4;
       break;
     case RPC_FC_HYPER:
+    case RPC_FC_DOUBLE:
       size += 8;
       break;
     case RPC_FC_POINTER:
