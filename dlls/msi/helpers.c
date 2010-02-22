@@ -156,25 +156,6 @@ MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir )
     return NULL;
 }
 
-void msi_reset_folders( MSIPACKAGE *package, BOOL source )
-{
-    MSIFOLDER *folder;
-
-    LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
-    {
-        if ( source )
-        {
-            msi_free( folder->ResolvedSource );
-            folder->ResolvedSource = NULL;
-        }
-        else
-        {
-            msi_free( folder->ResolvedTarget );
-            folder->ResolvedTarget = NULL;
-        }
-    }
-}
-
 static LPWSTR get_source_root( MSIPACKAGE *package )
 {
     LPWSTR path, p;

@@ -975,7 +975,6 @@ extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Componen
 extern MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature );
 extern MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file );
 extern MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir );
-extern void msi_reset_folders( MSIPACKAGE *package, BOOL source );
 extern int track_tempfile(MSIPACKAGE *package, LPCWSTR path);
 extern UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 extern void msi_free_action_script(MSIPACKAGE *package, UINT script);
