@@ -1808,6 +1808,7 @@ static void test_Session(IDispatch *pSession)
     static WCHAR szEmpty[] = { 0 };
     static WCHAR szEquals[] = { '=',0 };
     static WCHAR szPropertyName[] = { 'P','r','o','p','e','r','t','y',',','N','a','m','e',0 };
+    static WCHAR szModeFlag[] = { 'M','o','d','e',',','F','l','a','g',0 };
     WCHAR stringw[MAX_PATH];
     CHAR string[MAX_PATH];
     UINT len;
@@ -1880,14 +1881,19 @@ static void test_Session(IDispatch *pSession)
 
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTNOW, TRUE);
     todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
+    if (hr == DISP_E_EXCEPTION) ok_exception(hr, szModeFlag);
+
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTNOW, &bool);
     ok(hr == S_OK, "Session_ModeGet failed, hresult 0x%08x\n", hr);
     ok(bool, "Reboot now mode is %d, expected 1\n", bool);
+
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTNOW, FALSE);  /* set it again so we don't reboot */
     todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
+    if (hr == DISP_E_EXCEPTION) ok_exception(hr, szModeFlag);
 
     hr = Session_ModePut(pSession, MSIRUNMODE_MAINTENANCE, TRUE);
     ok(hr == DISP_E_EXCEPTION, "Session_ModePut failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szModeFlag);
 
     /* Session::Database, get */
     hr = Session_Database(pSession, &pDatabase);
