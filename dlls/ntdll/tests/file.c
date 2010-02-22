@@ -155,6 +155,8 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
 
 static void create_file_test(void)
 {
+    static const WCHAR systemrootW[] = {'\\','S','y','s','t','e','m','R','o','o','t',
+                                        '\\','f','a','i','l','i','n','g',0};
     NTSTATUS status;
     HANDLE dir;
     WCHAR path[MAX_PATH];
@@ -230,6 +232,21 @@ static void create_file_test(void)
     ok( status == STATUS_OBJECT_NAME_COLLISION || status == STATUS_ACCESS_DENIED,
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
 
+    pRtlFreeUnicodeString( &nameW );
+
+    pRtlInitUnicodeString( &nameW, systemrootW );
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = NULL;
+    attr.ObjectName = &nameW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    dir = NULL;
+    status = pNtCreateFile( &dir, FILE_APPEND_DATA, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL, 0,
+                            FILE_OPEN_IF, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    todo_wine
+    ok( status == STATUS_INVALID_PARAMETER,
+        "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     pRtlFreeUnicodeString( &nameW );
 }
 
