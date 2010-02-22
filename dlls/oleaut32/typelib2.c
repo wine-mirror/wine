@@ -1326,7 +1326,8 @@ static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
     if (!ref) {
 	if (This->typelib) {
 	    ICreateTypeLib2_fnRelease((ICreateTypeLib2 *)This->typelib);
-	    This->typelib = NULL;
+            /* Keep This->typelib reference to make stored ICreateTypeInfo structure valid */
+            /* This->typelib = NULL; */
 	}
 
 	/* ICreateTypeLib2 frees all ICreateTypeInfos when it releases. */
@@ -1791,18 +1792,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
     } else if ((This->typeinfo->typekind & 15) == TKIND_DISPATCH) {
 	FIXME("dispatch case unhandled.\n");
     } else if ((This->typeinfo->typekind & 15) == TKIND_INTERFACE) {
-	if (This->typeinfo->cImplTypes) {
-	    return (index == 1)? TYPE_E_BADMODULEKIND: TYPE_E_ELEMENTNOTFOUND;
-	}
+        if (This->typeinfo->cImplTypes && index==1)
+            return TYPE_E_BADMODULEKIND;
 
-	if (index != 0)  return TYPE_E_ELEMENTNOTFOUND;
+        if( index != 0)  return TYPE_E_ELEMENTNOTFOUND;
 
-	This->typeinfo->cImplTypes++;
-
-	/* hacked values for IDispatch only, and maybe only for stdole. */
-	This->typeinfo->cbSizeVft += 0x0c; /* hack */
-	This->typeinfo->datatype1 = hRefType;
-	This->typeinfo->datatype2 = (3 << 16) | 1; /* ? */
+        This->typeinfo->datatype1 = hRefType;
+        This->typeinfo->cImplTypes++;
     } else {
 	FIXME("AddImplType unsupported on typekind %d\n", This->typeinfo->typekind & 15);
 	return E_OUTOFMEMORY;
@@ -2251,29 +2247,87 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
     CyclicList *iter, *iter2, **typedata;
+    HREFTYPE hreftype;
+    HRESULT hres;
     int i;
 
     TRACE("(%p)\n", iface);
 
+    /* Validate inheritance */
+    This->typeinfo->datatype2 = 0;
+    hreftype = This->typeinfo->datatype1;
+
+    /* Process internally defined interfaces */
+    for(i=0; i<This->typelib->typelib_header.nrtypeinfos; i++) {
+        MSFT_TypeInfoBase *header;
+
+        if(hreftype&1)
+            break;
+
+        header = (MSFT_TypeInfoBase*)&(This->typelib->typelib_segment_data[MSFT_SEG_TYPEINFO][hreftype]);
+        This->typeinfo->datatype2 += (header->cElement<<16) + 1;
+        hreftype = header->datatype1;
+    }
+    if(i == This->typelib->typelib_header.nrtypeinfos)
+        return TYPE_E_CIRCULARTYPE;
+
+    /* Process externally defined interfaces */
+    if(hreftype != -1) {
+        ITypeInfo *cur, *next;
+        TYPEATTR *typeattr;
+
+        hres = ICreateTypeInfo_QueryInterface(iface, &IID_ITypeInfo, (void**)&next);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ITypeInfo_GetRefTypeInfo(next, hreftype, &cur);
+        if(FAILED(hres))
+            return hres;
+
+        ITypeInfo_Release(next);
+
+        while(1) {
+            hres = ITypeInfo_GetTypeAttr(cur, &typeattr);
+            if(FAILED(hres))
+                return hres;
+
+            This->typeinfo->datatype2 += (typeattr->cFuncs<<16) + 1;
+            ITypeInfo_ReleaseTypeAttr(cur, typeattr);
+
+            hres = ITypeInfo_GetRefTypeOfImplType(cur, 0, &hreftype);
+            if(hres == TYPE_E_ELEMENTNOTFOUND)
+                break;
+            if(FAILED(hres))
+                return hres;
+
+            hres = ITypeInfo_GetRefTypeInfo(cur, hreftype, &next);
+            if(FAILED(hres))
+                return hres;
+
+            ITypeInfo_Release(cur);
+            cur = next;
+        }
+    }
+
+    This->typeinfo->cbSizeVft = (This->typeinfo->datatype2>>16) * 4;
     if(!This->typedata)
         return S_OK;
 
-    typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList*)*This->typeinfo->cElement);
+    typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList*)*(This->typeinfo->cElement&0xffff));
     if(!typedata)
         return E_OUTOFMEMORY;
 
     /* Assign IDs and VTBL entries */
     i = 0;
-    This->typeinfo->cbSizeVft = 0;
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
         /* Assign MEMBERID if MEMBERID_NIL was specified */
         if(iter->indice == MEMBERID_NIL) {
-            iter->indice = 0x60000000 + i;
+            iter->indice = 0x60000000 + i + (This->typeinfo->datatype2<<16);
 
             for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
                 if(iter == iter2) continue;
                 if(iter2->indice == iter->indice) {
-                    iter->indice = 0x5fffffff + This->typeinfo->cElement + i;
+                    iter->indice = 0x5fffffff + This->typeinfo->cElement + i + (This->typeinfo->datatype2<<16);
 
                     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
                         if(iter == iter2) continue;
@@ -2313,7 +2367,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         i++;
     }
 
-    for(i=0; i<This->typeinfo->cElement; i++) {
+    for(i=0; i<(This->typeinfo->cElement&0xffff); i++) {
         if(typedata[i]->u.data[4]>>16 > i) {
             int inv;
 
@@ -3757,14 +3811,16 @@ static HRESULT ctl2_finalize_typeinfos(ICreateTypeLib2Impl *This, int filesize)
     HRESULT hres;
 
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
-	typeinfo->typeinfo->memoffset = filesize;
-	if (typeinfo->typedata) {
-	    hres = ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
-            if(FAILED(hres))
-                return hres;
+        typeinfo->typeinfo->memoffset = filesize;
 
-	    filesize += typeinfo->typedata->next->u.val + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
-	}
+        hres = ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
+        if(FAILED(hres))
+            return hres;
+
+	if (typeinfo->typedata)
+	    filesize += typeinfo->typedata->next->u.val
+                + ((typeinfo->typeinfo->cElement >> 16) * 12)
+                + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
     }
 
     return S_OK;

@@ -155,6 +155,7 @@ typedef struct tagMSFT_TypeInfoBase {
         INT     datatype2;      /* if 0x8000, entry above is valid */
                                 /* actually dunno */
                                 /* else it is zero? */
+                                /* if interface: inheritance level | no of inherited funcs */
         INT     res18;          /* always? 0 */
 /*060*/ INT     res19;          /* always? -1 */
 } MSFT_TypeInfoBase;
