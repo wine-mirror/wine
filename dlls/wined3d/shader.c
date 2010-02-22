@@ -1231,7 +1231,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         fe->shader_read_comment(&ptr, &comment, &comment_size);
         if (comment)
         {
-            TRACE("//%s\n", comment);
+            TRACE("// %s\n", debugstr_an(comment, comment_size));
             continue;
         }
 
