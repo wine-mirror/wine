@@ -27,7 +27,6 @@
 typedef struct _previewinfo
 {
     int page;
-    int pages;
     int pages_shown;
     int *pageEnds, pageCapacity;
     int textlength;
@@ -245,42 +244,6 @@ static LPWSTR dialog_print_to_file(HWND hMainWnd)
         return file;
     else
         return FALSE;
-}
-
-static int get_num_pages(HWND hEditorWnd, FORMATRANGE fr)
-{
-    int page = 0;
-    fr.chrg.cpMin = 0;
-
-    if (!preview.pageEnds)
-    {
-        preview.pageCapacity = 32;
-        preview.pageEnds = HeapAlloc(GetProcessHeap(), 0,
-                                    sizeof(int) * preview.pageCapacity);
-        if (!preview.pageEnds) return 0;
-    }
-
-    do
-    {
-        int bottom = fr.rc.bottom;
-        fr.chrg.cpMin = SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE,
-                                     (LPARAM)&fr);
-        if (page >= preview.pageCapacity)
-        {
-            int *new_buffer;
-            new_buffer = HeapReAlloc(GetProcessHeap(), 0, preview.pageEnds,
-                                     sizeof(int) * preview.pageCapacity * 2);
-            if (!new_buffer) return page;
-            preview.pageCapacity *= 2;
-            preview.pageEnds = new_buffer;
-        }
-        preview.pageEnds[page] = fr.chrg.cpMin;
-        page++;
-        fr.rc.bottom = bottom;
-    }
-    while(fr.chrg.cpMin && fr.chrg.cpMin < fr.chrg.cpMax);
-
-    return page;
 }
 
 static void char_from_pagenum(HWND hEditorWnd, FORMATRANGE *fr, int page)
@@ -645,7 +608,6 @@ LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             fr.hdcTarget = hdcTarget;
             fr.chrg.cpMin = 0;
             fr.chrg.cpMax = preview.textlength;
-            preview.pages = get_num_pages(hEditorWnd, fr);
             DeleteDC(fr.hdc);
             DeleteDC(hdcTarget);
             ReleaseDC(hWnd, hdc);
@@ -747,7 +709,6 @@ void close_preview(HWND hMainWnd)
     preview.window.right = 0;
     preview.window.bottom = 0;
     preview.page = 0;
-    preview.pages = 0;
     HeapFree(GetProcessHeap(), 0, preview.pageEnds);
     preview.pageEnds = NULL;
     preview.pageCapacity = 0;
@@ -966,14 +927,35 @@ static void draw_preview(HWND hEditorWnd, FORMATRANGE* lpFr, RECT* paper, int pa
 {
     int bottom;
 
+    if (!preview.pageEnds)
+    {
+        preview.pageCapacity = 32;
+        preview.pageEnds = HeapAlloc(GetProcessHeap(), 0,
+                                    sizeof(int) * preview.pageCapacity);
+        if (!preview.pageEnds) return;
+    } else if (page >= preview.pageCapacity) {
+        int *new_buffer;
+        new_buffer = HeapReAlloc(GetProcessHeap(), 0, preview.pageEnds,
+                                 sizeof(int) * preview.pageCapacity * 2);
+        if (!new_buffer) return;
+        preview.pageCapacity *= 2;
+        preview.pageEnds = new_buffer;
+    }
+
     lpFr->chrg.cpMin = page <= 1 ? 0 : preview.pageEnds[page-2];
     FillRect(lpFr->hdc, paper, GetStockObject(WHITE_BRUSH));
     bottom = lpFr->rc.bottom;
-    SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)lpFr);
+    preview.pageEnds[page-1] = SendMessageW(hEditorWnd, EM_FORMATRANGE, TRUE, (LPARAM)lpFr);
+
     /* EM_FORMATRANGE sets fr.rc.bottom to indicate the area printed in,
      * but we want to keep the original for drawing margins */
     lpFr->rc.bottom = bottom;
     SendMessageW(hEditorWnd, EM_FORMATRANGE, FALSE, 0);
+}
+
+static BOOL is_last_preview_page(int page)
+{
+    return preview.pageEnds[page - 1] >= preview.textlength;
 }
 
 static void update_preview_buttons(HWND hMainWnd)
@@ -981,8 +963,9 @@ static void update_preview_buttons(HWND hMainWnd)
     HWND hReBar = GetDlgItem(hMainWnd, IDC_REBAR);
     EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_PREVPAGE), preview.page > 1);
     EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_NEXTPAGE),
-                 preview.page + preview.pages_shown - 1 < preview.pages);
-    EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_NUMPAGES), preview.pages > 1 && preview.zoomlevel == 0);
+                 !is_last_preview_page(preview.page + preview.pages_shown - 1));
+    EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_NUMPAGES),
+                 !is_last_preview_page(1) && preview.zoomlevel == 0);
     EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_ZOOMIN), preview.zoomlevel < 2);
     EnableWindow(GetDlgItem(hReBar, ID_PREVIEW_ZOOMOUT), preview.zoomlevel > 0);
 }
@@ -1100,7 +1083,7 @@ static void toggle_num_pages(HWND hMainWnd)
     {
         preview.pages_shown = 1;
     } else {
-        if(preview.page == preview.pages)
+        if(is_last_preview_page(preview.page))
             preview.page--;
         preview.pages_shown = 2;
     }
