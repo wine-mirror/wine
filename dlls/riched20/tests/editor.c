@@ -4812,9 +4812,10 @@ static void test_WM_PASTE(void)
 
 static void test_EM_FORMATRANGE(void)
 {
-  int i, tpp_x, tpp_y;
+  int r, i, tpp_x, tpp_y;
   HDC hdc;
   HWND hwndRichEdit = new_richedit(NULL);
+  FORMATRANGE fr;
   static const struct {
     const char *string; /* The string */
     int first;          /* First 'pagebreak', 0 for don't care */
@@ -4834,14 +4835,29 @@ static void test_EM_FORMATRANGE(void)
   tpp_x = 1440 / GetDeviceCaps(hdc, LOGPIXELSX);
   tpp_y = 1440 / GetDeviceCaps(hdc, LOGPIXELSY);
 
+  /* Test the simple case where all the text fits in the page rect. */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
+  fr.hdc = fr.hdcTarget = hdc;
+  fr.rc.top = fr.rcPage.top = fr.rc.left = fr.rcPage.left = 0;
+  fr.rc.right = fr.rcPage.right = 500 * tpp_x;
+  fr.rc.bottom = fr.rcPage.bottom = 500 * tpp_y;
+  fr.chrg.cpMin = 0;
+  fr.chrg.cpMax = -1;
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, FALSE, (LPARAM)&fr);
+  todo_wine ok(r == 2, "r=%d expected r=2\n", r);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"ab");
+  fr.rc.bottom = fr.rcPage.bottom;
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, FALSE, (LPARAM)&fr);
+  todo_wine ok(r == 3, "r=%d expected r=3\n", r);
+
   SendMessage(hwndRichEdit, EM_FORMATRANGE, FALSE, 0);
 
   for (i = 0; i < sizeof(fmtstrings)/sizeof(fmtstrings[0]); i++)
   {
-    FORMATRANGE fr;
     GETTEXTLENGTHEX gtl;
     SIZE stringsize;
-    int r, len;
+    int len;
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) fmtstrings[i].string);
 
