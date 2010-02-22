@@ -1958,8 +1958,48 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 	ICreateTypeInfo2* iface)
 {
-    TRACE("(%p), stub!\n", iface);
-/*     return E_OUTOFMEMORY; */
+    ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    CyclicList *iter, *iter2;
+    int i;
+
+    TRACE("(%p)\n", iface);
+
+    if(!This->typedata)
+        return S_OK;
+
+    /* Assign IDs and VTBL entries */
+    i = 0;
+    This->typeinfo->cbSizeVft = 0;
+    for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
+        if(iter->indice == MEMBERID_NIL)
+            FIXME("MEMBERID_NIL handling not yet implemented\n");
+
+        iter->u.data[0] = (iter->u.data[0]&0xffff) | (i<<16);
+
+        if((This->typeinfo->typekind&0xf) != TKIND_MODULE) {
+            iter->u.data[3] = (iter->u.data[3]&0xffff0000) | This->typeinfo->cbSizeVft;
+            This->typeinfo->cbSizeVft += 4;
+        }
+
+        /* Construct a list of elements with the same memberid */
+        iter->u.data[4] = (iter->u.data[4]&0xffff) | (i<<16);
+        for(iter2=This->typedata->next->next; iter2!=iter; iter2=iter2->next) {
+            if(iter->indice == iter2->indice) {
+                int v1, v2;
+
+                v1 = iter->u.data[4] >> 16;
+                v2 = iter2->u.data[4] >> 16;
+
+                iter->u.data[4] = (iter->u.data[4]&0xffff) | (v2<<16);
+                iter2->u.data[4] = (iter2->u.data[4]&0xffff) | (v1<<16);
+                break;
+            }
+        }
+
+        i++;
+    }
+
+    FIXME("Typeinfo validation not implemented\n");
     return S_OK;
 }
 
