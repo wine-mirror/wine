@@ -927,16 +927,20 @@ LRESULT CALLBACK ruler_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float ratio, int bmNewWidth, int bmNewHeight, int bmWidth, int bmHeight)
 {
     HBITMAP hBitmapScaled = CreateCompatibleBitmap(hdc, bmNewWidth, bmNewHeight);
+    HBITMAP oldbm;
     HPEN hPen, oldPen;
     int TopMargin = (int)((float)twips_to_pixels(lpFr->rc.top, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
     int BottomMargin = (int)((float)twips_to_pixels(lpFr->rc.bottom, GetDeviceCaps(hdc, LOGPIXELSX)) * ratio);
     int LeftMargin = (int)((float)twips_to_pixels(lpFr->rc.left, GetDeviceCaps(hdc, LOGPIXELSY)) * ratio);
     int RightMargin = (int)((float)twips_to_pixels(lpFr->rc.right, GetDeviceCaps(hdc, LOGPIXELSY)) * ratio);
 
-    if(*hdcSized)
-        DeleteDC(*hdcSized);
-    *hdcSized = CreateCompatibleDC(hdc);
-    SelectObject(*hdcSized, hBitmapScaled);
+    if(*hdcSized) {
+        oldbm = SelectObject(*hdcSized, hBitmapScaled);
+        DeleteObject(oldbm);
+    } else {
+        *hdcSized = CreateCompatibleDC(hdc);
+        SelectObject(*hdcSized, hBitmapScaled);
+    }
 
     StretchBlt(*hdcSized, 0, 0, bmNewWidth, bmNewHeight, hdc, 0, 0, bmWidth, bmHeight, SRCCOPY);
 
