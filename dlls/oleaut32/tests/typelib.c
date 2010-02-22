@@ -971,6 +971,12 @@ if(use_midl_tlb) {
 static void test_CreateTypeLib(void) {
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
     static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
+    static OLECHAR func1W[] = {'f','u','n','c','1',0};
+    static OLECHAR func2W[] = {'f','u','n','c','2',0};
+    static OLECHAR param1W[] = {'p','a','r','a','m','1',0};
+    static OLECHAR param2W[] = {'p','a','r','a','m','2',0};
+    static OLECHAR *names1[] = {func1W, param1W, param2W};
+    static OLECHAR *names2[] = {func2W, param1W, param2W};
 
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
@@ -1082,6 +1088,27 @@ static void test_CreateTypeLib(void) {
     V_BSTR(&paramdescex.varDefaultValue) = SysAllocString(defaultW);
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 1000, NULL, 1);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 1000, names1, 1);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, names1, 2);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, names2, 1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, names1, 1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 3, names2, 3);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 3, names1, 3);
+    ok(hres == TYPE_E_AMBIGUOUSNAME, "got %08x\n", hres);
 
     ICreateTypeInfo_Release(createti);
 

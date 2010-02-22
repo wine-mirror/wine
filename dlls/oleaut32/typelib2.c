@@ -1914,32 +1914,50 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
         UINT cNames)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
-
-    CyclicList *iter;
-    UINT i;
-    int offset;
+    CyclicList *iter = NULL, *iter2;
+    int offset, len, i=0;
     char *namedata;
 
-    FIXME("(%p,%d,%s,%d), stub!\n", iface, index, debugstr_w(*rgszNames), cNames);
+    TRACE("(%p %d %p %d)\n", iface, index, rgszNames, cNames);
 
-    offset = ctl2_alloc_name(This->typelib, rgszNames[0]);
+    if(!rgszNames)
+        return E_INVALIDARG;
 
-    namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    namedata[9] &= ~0x10;
-    if (*((INT *)namedata) == -1) {
-	*((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+    if(index >= This->typeinfo->cElement || !cNames)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    len = ctl2_encode_name(This->typelib, rgszNames[0], &namedata);
+    for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
+        if(i == index)
+            iter = iter2;
+        else if(iter2->name!=-1 && !memcmp(namedata,
+                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len))
+            return TYPE_E_AMBIGUOUSNAME;
+
+        i++;
     }
 
-    iter = This->typedata->next->next;
-    for(i=0; i<index; i++)
-        iter = iter->next;
+    /* cNames == cParams for put or putref accessor, cParams+1 otherwise */
+    if(cNames != iter->u.data[5] + ((iter->u.data[4]>>3)&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    offset = ctl2_alloc_name(This->typelib, rgszNames[0]);
+    if(offset == -1)
+        return E_OUTOFMEMORY;
 
     iter->name = offset;
 
+    namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
+    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+
+    if(iter->u.data[4]&0x1000)
+        len = iter->u.data[5];
+    else
+        len = 0;
+
     for (i = 1; i < cNames; i++) {
-	/* FIXME: Almost certainly easy to break */
 	offset = ctl2_alloc_name(This->typelib, rgszNames[i]);
-	iter->u.data[(i * 3) + 5] = offset;
+	iter->u.data[(i*3) + 4 + len] = offset;
     }
 
     return S_OK;
