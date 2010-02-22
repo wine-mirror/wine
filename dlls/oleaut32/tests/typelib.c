@@ -1067,6 +1067,14 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    elemdesc[0].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    elemdesc[0].paramdesc.pparamdescex = &paramdescex;
+    elemdesc[1].tdesc.vt = VT_INT;
+    V_VT(&paramdescex.varDefaultValue) = VT_INT;
+    V_INT(&paramdescex.varDefaultValue) = 0xffffffff;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);

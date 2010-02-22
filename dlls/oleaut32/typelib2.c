@@ -1163,8 +1163,37 @@ static HRESULT ctl2_add_default_value(
         return S_OK;
     }
 
-    FIXME("default values not implemented\n");
-    return S_OK;
+    switch(arg_type) {
+    case VT_I4:
+    case VT_R4:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+    case VT_PTR: {
+        /* Construct the data to be allocated */
+        int data[2];
+        data[0] = arg_type + (V_UI4(&v)<<16);
+        data[1] = (V_UI4(&v)>>16) + 0x57570000;
+
+        /* Check if the data was already allocated */
+        /* Currently the structures doesn't allow to do it in a nice way */
+        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-8; *encoded_value+=4)
+            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8))
+                return S_OK;
+
+        /* Allocate the data */
+        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
+        if(*encoded_value == -1)
+            return E_OUTOFMEMORY;
+
+        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8);
+        return S_OK;
+    }
+    default:
+        FIXME("Argument type not yet handled\n");
+        return E_NOTIMPL;
+    }
 }
 
 /*================== ICreateTypeInfo2 Implementation ===================================*/
