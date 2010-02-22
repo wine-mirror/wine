@@ -1264,13 +1264,11 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       /* Exponent format: length of the integral number part is fixed and
          specified by the format. */
       pad = need_int - have_int;
-      if (pad >= 0)
-        exponent -= pad;
-      else
+      exponent -= pad;
+      if (pad < 0)
       {
         have_int = need_int;
         have_frac -= pad;
-        exponent -= pad;
         pad = 0;
       }
     }
