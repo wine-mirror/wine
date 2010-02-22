@@ -50,6 +50,10 @@
 #include "ntdll_misc.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 struct _DISPATCHER_CONTEXT;
@@ -1679,6 +1683,11 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     }
 
     stack--;  /* push the stack_layout structure */
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
+#endif
     stack->rec.ExceptionRecord  = NULL;
     stack->rec.ExceptionCode    = exception_code;
     stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
