@@ -30,6 +30,7 @@ typedef struct _previewinfo
     int pages;
     int pages_shown;
     int *pageEnds, pageCapacity;
+    int textlength;
     HDC hdc;
     HDC hdc2;
     HDC hdcSized;
@@ -638,10 +639,12 @@ LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             preview.bmSize.cx = twips_to_pixels(preview.rcPage.right, GetDeviceCaps(hdc, LOGPIXELSX));
             preview.bmSize.cy = twips_to_pixels(preview.rcPage.bottom, GetDeviceCaps(hdc, LOGPIXELSY));
 
+            preview.textlength = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+
             fr.hdc = CreateCompatibleDC(hdc);
             fr.hdcTarget = hdcTarget;
             fr.chrg.cpMin = 0;
-            fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+            fr.chrg.cpMax = preview.textlength;
             preview.pages = get_num_pages(hEditorWnd, fr);
             DeleteDC(fr.hdc);
             DeleteDC(hdcTarget);
@@ -1031,7 +1034,6 @@ LRESULT print_preview(HWND hwndPreview)
 /* Update for page changes. */
 static void update_preview(HWND hMainWnd)
 {
-    GETTEXTLENGTHEX gt;
     RECT paper;
     HWND hEditorWnd = GetDlgItem(hMainWnd, IDC_EDITOR);
     HWND hwndPreview = GetDlgItem(hMainWnd, IDC_PREVIEW);
@@ -1046,10 +1048,8 @@ static void update_preview(HWND hMainWnd)
     fr.rc.bottom -= margins.bottom;
     fr.rc.right -= margins.right;
 
-    gt.flags = GTL_DEFAULT;
-    gt.codepage = 1200;
     fr.chrg.cpMin = 0;
-    fr.chrg.cpMax = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+    fr.chrg.cpMax = preview.textlength;
 
     paper.left = 0;
     paper.right = preview.bmSize.cx;
