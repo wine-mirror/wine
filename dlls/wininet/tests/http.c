@@ -2290,22 +2290,22 @@ static void test_response_without_headers(int port)
     size = sizeof(buffer);
     SetLastError(0xdeadbeef);
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &size, NULL );
-    todo_wine ok(r, "HttpQueryInfo failed %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "OK"), "expected OK got: \"%s\"\n", buffer);
+    ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(!strcmp(buffer, "OK"), "expected OK got: \"%s\"\n", buffer);
 
     buffer[0] = 0;
     size = sizeof(buffer);
     SetLastError(0xdeadbeef);
     r = HttpQueryInfo(hr, HTTP_QUERY_VERSION, buffer, &size, NULL);
     ok(r, "HttpQueryInfo failed %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "HTTP/1.0"), "expected HTTP/1.0 got: \"%s\"\n", buffer);
+    ok(!strcmp(buffer, "HTTP/1.0"), "expected HTTP/1.0 got: \"%s\"\n", buffer);
 
     buffer[0] = 0;
     size = sizeof(buffer);
     SetLastError(0xdeadbeef);
     r = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS, buffer, &size, NULL);
     ok(r, "HttpQueryInfo failed %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "HTTP/1.0 200 OK"), "raw headers wrong: \"%s\"\n", buffer);
+    ok(!strcmp(buffer, "HTTP/1.0 200 OK"), "raw headers wrong: \"%s\"\n", buffer);
 
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);

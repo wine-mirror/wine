@@ -73,6 +73,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 static const WCHAR g_szHttp1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR g_szHttp1_1[] = {'H','T','T','P','/','1','.','1',0};
+static const WCHAR szOK[] = {'O','K',0};
+static const WCHAR szDefaultHeader[] = {'H','T','T','P','/','1','.','0',' ','2','0','0',' ','O','K',0};
 static const WCHAR hostW[] = { 'H','o','s','t',0 };
 static const WCHAR szAuthorization[] = { 'A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
@@ -4474,7 +4476,18 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
         }
         else if (!codeHundred)
         {
-            FIXME("Non status line at head of response (%s)\n",debugstr_w(buffer));
+            WARN("No status line at head of response (%s)\n", debugstr_w(buffer));
+
+            HeapFree(GetProcessHeap(), 0, lpwhr->lpszVersion);
+            HeapFree(GetProcessHeap(), 0, lpwhr->lpszStatusText);
+
+            lpwhr->lpszVersion = heap_strdupW(g_szHttp1_0);
+            lpwhr->lpszStatusText = heap_strdupW(szOK);
+
+            HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
+            lpwhr->lpszRawHeaders = heap_strdupW(szDefaultHeader);
+
+            bSuccess = TRUE;
             goto lend;
         }
     } while (codeHundred);
