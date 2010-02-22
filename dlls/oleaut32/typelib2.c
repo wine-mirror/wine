@@ -1109,6 +1109,64 @@ static HRESULT ctl2_find_typeinfo_from_offset(
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
+/****************************************************************************
+ *      ctl2_add_default_value
+ *
+ *  Adds default value of an argument
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: Error code from winerror.h
+ */
+static HRESULT ctl2_add_default_value(
+        ICreateTypeLib2Impl *This, /* [I] The typelib to allocate data in */
+        int *encoded_value,        /* [O] The encoded default value or data offset */
+        VARIANT *value,            /* [I] Default value to be encoded */
+        VARTYPE arg_type)          /* [I] Argument type */
+{
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%p %d %d\n", This, V_VT(value), arg_type);
+
+    if(arg_type == VT_INT)
+        arg_type = VT_I4;
+    if(arg_type == VT_UINT)
+        arg_type = VT_UI4;
+
+    v = *value;
+    if(V_VT(value) != arg_type) {
+        hres = VariantChangeType(&v, value, 0, arg_type);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    /* Check if default value can be stored in encoded_value */
+    switch(arg_type) {
+    int mask = 0;
+    case VT_I4:
+    case VT_UI4:
+        mask = 0x3ffffff;
+        if(V_UI4(&v)>0x3ffffff)
+            break;
+    case VT_I1:
+    case VT_UI1:
+    case VT_BOOL:
+         if(!mask)
+             mask = 0xff;
+    case VT_I2:
+    case VT_UI2:
+        if(!mask)
+            mask = 0xffff;
+        *encoded_value = (V_UI4(&v)&mask) | ((0x80+0x4*arg_type)<<24);
+        return S_OK;
+    }
+
+    FIXME("default values not implemented\n");
+    return S_OK;
+}
+
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
 /******************************************************************************
@@ -1384,8 +1442,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     CyclicList *iter, *insert;
     int *typedata;
-    int i;
+    int i, num_defaults = 0;
     int decoded_size;
+    HRESULT hres;
 
     TRACE("(%p,%d,%p)\n", iface, index, pFuncDesc);
 
@@ -1419,6 +1478,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
         !pFuncDesc->cParams)
         return TYPE_E_INCONSISTENTPROPFUNCS;
 
+    /* get number of arguments with default values specified */
+    for (i = 0; i < pFuncDesc->cParams; i++)
+        if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            num_defaults++;
+
     if (!This->typedata) {
 	This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
         if(!This->typedata)
@@ -1432,11 +1496,58 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     insert = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
     if(!insert)
         return E_OUTOFMEMORY;
-    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[6])+sizeof(int[3])*pFuncDesc->cParams);
+    insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[6])+sizeof(int[(num_defaults?4:3)])*pFuncDesc->cParams);
     if(!insert->u.data) {
         HeapFree(GetProcessHeap(), 0, insert);
         return E_OUTOFMEMORY;
     }
+
+    /* fill out the basic type information */
+    typedata = insert->u.data;
+    typedata[0] = 0x18 + pFuncDesc->cParams*(num_defaults?16:12);
+    ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
+    typedata[2] = pFuncDesc->wFuncFlags;
+    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | This->typeinfo->cbSizeVft;
+    typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
+    if(num_defaults) typedata[4] |= 0x1000;
+    typedata[5] = pFuncDesc->cParams;
+
+    /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
+    /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
+    typedata[3] += (sizeof(ELEMDESC) * pFuncDesc->cParams) << 16;
+    typedata[3] += (sizeof(PARAMDESCEX) * num_defaults) << 16;
+
+    /* add default values */
+    if(num_defaults) {
+        for (i = 0; i < pFuncDesc->cParams; i++)
+            if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
+                hres = ctl2_add_default_value(This->typelib, typedata+6+i,
+                        &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue,
+                        pFuncDesc->lprgelemdescParam[i].tdesc.vt);
+
+                if(FAILED(hres)) {
+                    HeapFree(GetProcessHeap(), 0, insert->u.data);
+                    HeapFree(GetProcessHeap(), 0, insert);
+                    return hres;
+                }
+            } else
+                typedata[6+i] = 0xffffffff;
+
+        num_defaults = pFuncDesc->cParams;
+    }
+
+    /* add arguments */
+    for (i = 0; i < pFuncDesc->cParams; i++) {
+	ctl2_encode_typedesc(This->typelib, &pFuncDesc->lprgelemdescParam[i].tdesc,
+                &typedata[6+num_defaults+(i*3)], NULL, NULL, &decoded_size);
+	typedata[7+num_defaults+(i*3)] = -1;
+	typedata[8+num_defaults+(i*3)] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+	typedata[3] += decoded_size << 16;
+    }
+
+    /* update the index data */
+    insert->indice = (This->typeinfo->cImplTypes << 16) | pFuncDesc->memid;
+    insert->name = -1;
 
     /* insert type data to list */
     if(index == This->typeinfo->cElement) {
@@ -1453,34 +1564,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     /* update type data size */
-    This->typedata->next->u.val += 0x18 + (pFuncDesc->cParams * 12);
-
-    /* fill out the basic type information */
-    typedata = insert->u.data;
-    typedata[0] = 0x18 + pFuncDesc->cParams * 12;
-    ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
-    typedata[2] = pFuncDesc->wFuncFlags;
-    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | This->typeinfo->cbSizeVft;
-    typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
-    typedata[5] = pFuncDesc->cParams;
-
-    /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
-    /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
-    typedata[3] += (sizeof(ELEMDESC) * pFuncDesc->cParams) << 16;
-
-    for (i = 0; i < pFuncDesc->cParams; i++) {
-	ctl2_encode_typedesc(This->typelib, &pFuncDesc->lprgelemdescParam[i].tdesc, &typedata[6+(i*3)], NULL, NULL, &decoded_size);
-	typedata[7+(i*3)] = -1;
-	typedata[8+(i*3)] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
-	typedata[3] += decoded_size << 16;
-
-        if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-            FIXME("default values not implemented\n");
-    }
-
-    /* update the index data */
-    insert->indice = (This->typeinfo->cImplTypes << 16) | pFuncDesc->memid;
-    insert->name = -1;
+    This->typedata->next->u.val += 0x18 + pFuncDesc->cParams*(num_defaults?16:12);
 
     /* Increment the number of function elements */
     This->typeinfo->cElement += 1;

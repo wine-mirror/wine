@@ -977,7 +977,8 @@ static void test_CreateTypeLib(void) {
     ICreateTypeInfo *createti;
     ITypeLib *tl;
     FUNCDESC funcdesc;
-    ELEMDESC elemdesc;
+    ELEMDESC elemdesc[5];
+    PARAMDESCEX paramdescex;
     HRESULT hres;
 
     trace("CreateTypeLib tests\n");
@@ -1018,11 +1019,11 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == TYPE_E_INCONSISTENTPROPFUNCS, "got %08x\n", hres);
 
-    elemdesc.tdesc.vt = VT_BSTR;
-    elemdesc.idldesc.dwReserved = 0;
-    elemdesc.idldesc.wIDLFlags = IDLFLAG_FIN;
+    elemdesc[0].tdesc.vt = VT_BSTR;
+    elemdesc[0].idldesc.dwReserved = 0;
+    elemdesc[0].idldesc.wIDLFlags = IDLFLAG_FIN;
 
-    funcdesc.lprgelemdescParam = &elemdesc;
+    funcdesc.lprgelemdescParam = elemdesc;
     funcdesc.invkind = INVOKE_PROPERTYPUT;
     funcdesc.cParams = 1;
     funcdesc.elemdescFunc.tdesc.vt = VT_VOID;
@@ -1043,6 +1044,27 @@ static void test_CreateTypeLib(void) {
 
     funcdesc.memid = MEMBERID_NIL;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    elemdesc[0].tdesc.vt = VT_INT;
+    elemdesc[0].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    elemdesc[0].paramdesc.pparamdescex = &paramdescex;
+    V_VT(&paramdescex.varDefaultValue) = VT_INT;
+    V_INT(&paramdescex.varDefaultValue) = 0x123;
+    funcdesc.lprgelemdescParam = elemdesc;
+    funcdesc.cParams = 1;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    elemdesc[0].idldesc.dwReserved = 0;
+    elemdesc[0].idldesc.wIDLFlags = IDLFLAG_FIN;
+    elemdesc[1].tdesc.vt = VT_UI2;
+    elemdesc[1].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    elemdesc[1].paramdesc.pparamdescex = &paramdescex;
+    V_VT(&paramdescex.varDefaultValue) = VT_UI2;
+    V_UI2(&paramdescex.varDefaultValue) = 0xffff;
+    funcdesc.cParams = 2;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
     ICreateTypeInfo_Release(createti);
