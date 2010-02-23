@@ -922,9 +922,11 @@ static void test_reg_open_key(void)
 
     /*  beginning backslash character */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "\\Software\\Wine\\Test", &hkResult);
-       ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
-           ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
-           , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
+       ret == ERROR_FILE_NOT_FOUND || /* Win9x,ME */
+       broken(ret == ERROR_SUCCESS),  /* wow64 */
+       "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    if (!ret) RegCloseKey(hkResult);
 
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, "\\clsid", 0, KEY_QUERY_VALUE, &hkResult);
