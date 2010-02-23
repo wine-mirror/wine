@@ -4431,7 +4431,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code = NULL, status_text = NULL;
     DWORD cchMaxRawHeaders = 1024;
-    LPWSTR lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    LPWSTR lpszRawHeaders = NULL;
     LPWSTR temp;
     DWORD cchRawHeaders = 0;
     BOOL codeHundred = FALSE;
@@ -4507,6 +4507,9 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
     *(status_text-1) = ' ';
 
     /* regenerate raw headers */
+    lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
+    if (!lpszRawHeaders) goto lend;
+
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
         cchMaxRawHeaders *= 2;
     temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
