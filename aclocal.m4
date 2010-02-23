@@ -194,7 +194,7 @@ dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],
 [m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\(\(.*\)/\)?Makefile$],[\2]))dnl
 m4_pushdef([ac_name],m4_bpatsubst(ac_dir,[.*/\(.*\)$],[\1]))dnl
-m4_ifval(ac_dir,WINE_APPEND_FILE(ALL_DIRS,ac_dir))
+m4_if(ac_dir,,AC_CONFIG_FILES([$1]),WINE_APPEND_FILE(ALL_DIRS,ac_dir))
 AS_VAR_PUSHDEF([ac_enable],m4_default([$4],[enable_]ac_name))dnl
 m4_ifval([$3],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$3],[ && WINE_APPEND_FILE(ac_var,ac_dir)]))
 AS_VAR_POPDEF([ac_enable])dnl
@@ -202,7 +202,6 @@ WINE_APPEND_RULE(ALL_MAKEFILE_DEPENDS,[m4_if(ac_dir,,[$1: $1.in $2 config.status
 [\$(RECURSE_TARGETS:%=ac_dir/%) ac_dir: $1
 $1 ac_dir/__depend__: $1.in $2 config.status]m4_if(ac_dir,tools,,[ \$(MAKEDEP)])[
 	@./config.status --file $1 && cd ac_dir && \$(MAKE) Makefile])])
-AC_CONFIG_FILES([$1])dnl
 m4_popdef([ac_dir])dnl
 m4_popdef([ac_name])])
 

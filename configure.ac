@@ -2697,7 +2697,7 @@ fi
 WINE_PRINT_MESSAGES
 
 echo "
-$as_me: Finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine.
+$as_me: Finished.  Do '${ac_make}' to compile Wine.
 " >&AS_MESSAGE_FD
 
 dnl Local Variables:
