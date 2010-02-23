@@ -956,6 +956,7 @@ extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 extern UINT ACTION_InstallFiles(MSIPACKAGE *package);
 extern UINT ACTION_RemoveFiles(MSIPACKAGE *package);
 extern UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
+extern UINT ACTION_RemoveDuplicateFiles(MSIPACKAGE *package);
 extern UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
@@ -1063,6 +1064,7 @@ static const WCHAR szRegisterProgIdInfo[] = {'R','e','g','i','s','t','e','r','P'
 static const WCHAR szRegisterExtensionInfo[] = {'R','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
 static const WCHAR szRegisterMIMEInfo[] = {'R','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 static const WCHAR szDuplicateFiles[] = {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
+static const WCHAR szRemoveDuplicateFiles[] = {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szInstallFiles[] = {'I','n','s','t','a','l','l','F','i','l','e','s',0};
 static const WCHAR szRemoveFiles[] = {'R','e','m','o','v','e','F','i','l','e','s',0};
 static const WCHAR szFindRelatedProducts[] = {'F','i','n','d','R','e','l','a','t','e','d','P','r','o','d','u','c','t','s',0};

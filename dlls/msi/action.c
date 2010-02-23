@@ -134,8 +134,6 @@ static const WCHAR szRegisterFonts[] =
     {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
 static const WCHAR szRegisterUser[] =
     {'R','e','g','i','s','t','e','r','U','s','e','r',0};
-static const WCHAR szRemoveDuplicateFiles[] =
-    {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szRemoveEnvironmentStrings[] =
     {'R','e','m','o','v','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 static const WCHAR szRemoveExistingProducts[] =
@@ -6598,12 +6596,6 @@ static UINT ACTION_InstallSFPCatalogFile( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'S','F','P','C','a','t','a','l','o','g',0 };
     return msi_unimplemented_action_stub( package, "InstallSFPCatalogFile", table );
-}
-
-static UINT ACTION_RemoveDuplicateFiles( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'D','u','p','l','i','c','a','t','e','F','i','l','e',0 };
-    return msi_unimplemented_action_stub( package, "RemoveDuplicateFiles", table );
 }
 
 static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
