@@ -69,6 +69,17 @@ static void test_notification(HWND hwnd, const char* command, UINT m1, DWORD_PTR
         BOOL seen;
         do { seen = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE); }
         while(seen && spurious_message(&msg));
+        if (m1 && !seen) {
+          /* We observe transient delayed notification, mostly on native.
+           * Perhaps the OS preempts the player thread after setting MHDR_DONE
+           * or clearing MHDR_INQUEUE, before calling DriverCallback. */
+          DWORD rc;
+          trace("Waiting for delayed message %x from %s\n", m1, command);
+          SetLastError(0xDEADBEEF);
+          rc = MsgWaitForMultipleObjects(0, NULL, FALSE, 3000, QS_POSTMESSAGE);
+          ok(rc==WAIT_OBJECT_0, "Wait failed: %04x %d\n", rc, GetLastError());
+          seen = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE);
+        }
         if (seen) {
             trace("Message %x, wParam=%lx, lParam=%lx from %s\n",
                   msg.message, msg.wParam, msg.lParam, command);

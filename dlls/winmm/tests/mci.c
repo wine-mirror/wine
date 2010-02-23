@@ -135,33 +135,27 @@ static BOOL spurious_message(LPMSG msg)
   return FALSE;
 }
 
+/* A single ok() in each code path allows to prefix this with todo_wine */
 static void test_notification(HWND hwnd, const char* command, WPARAM type)
 {   /* Use type 0 as meaning no message */
     MSG msg;
     BOOL seen;
     do { seen = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE); }
     while(seen && spurious_message(&msg));
-    if(type==0)
-        ok(!seen, "Expect no message from command %s\n", command);
-    else
-        ok(seen, "PeekMessage should succeed for command %s\n", command);
-    if(seen) {
-        ok(msg.hwnd == hwnd, "Didn't get the handle to our test window\n");
-        ok(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY from command %s\n", msg.message, command);
-        ok(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
+    if(type && !seen) {
+      /* We observe transient delayed notification, mostly on native.
+       * Notification is not always present right when mciSend returns. */
+      trace("Waiting for delayed notification from %s\n", command);
+      MsgWaitForMultipleObjects(0, NULL, FALSE, 3000, QS_POSTMESSAGE);
+      seen = PeekMessageA(&msg, hwnd, MM_MCINOTIFY, MM_MCINOTIFY, PM_REMOVE);
     }
-}
-static void test_notification1(HWND hwnd, const char* command, WPARAM type)
-{   /* This version works with todo_wine prefix. */
-    MSG msg;
-    BOOL seen;
-    do { seen = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE); }
-    while(seen && spurious_message(&msg));
-    if(type==0)
-        ok(!seen, "Expect no message from command %s\n", command);
-    else if(seen)
-      ok(msg.message == MM_MCINOTIFY && msg.wParam == type,"got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
-    else ok(seen, "PeekMessage should succeed for command %s\n", command);
+    if(!seen)
+        ok(type==0, "Expect message %lx from %s\n", type, command);
+    else if(msg.hwnd != hwnd)
+        ok(msg.hwnd == hwnd, "Didn't get the handle to our test window\n");
+    else if(msg.message != MM_MCINOTIFY)
+        ok(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY from command %s\n", msg.message, command);
+    else ok(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
 }
 
 static void test_openCloseWAVE(HWND hwnd)
@@ -276,7 +270,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* In Wine, both MCI_Open and the individual drivers send notifications. */
     test_notification(hwnd, "open new", MCI_NOTIFY_SUCCESSFUL);
-    todo_wine test_notification1(hwnd, "open new no #2", 0);
+    todo_wine test_notification(hwnd, "open new no #2", 0);
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
@@ -423,7 +417,7 @@ static void test_playWAVE(HWND hwnd)
     err = mciSendString("cue mysound output notify", NULL, 0, hwnd);
     ok(!err,"mci cue output after open file returned %s\n", dbg_mcierr(err));
     /* Notification is delayed as a play thread is started. */
-    todo_wine test_notification1(hwnd, "cue immediate", 0);
+    todo_wine test_notification(hwnd, "cue immediate", 0);
 
     /* Cue pretends to put the MCI into paused state. */
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
@@ -438,14 +432,14 @@ static void test_playWAVE(HWND hwnd)
      * Guessed that from (flaky) status mode and late notification arrival. */
     err = mciSendString("play mysound from 0 to 0 notify", NULL, 0, hwnd);
     ok(!err,"mci play from 0 to 0 returned %s\n", dbg_mcierr(err));
-    todo_wine test_notification1(hwnd, "cue aborted by play", MCI_NOTIFY_ABORTED);
+    todo_wine test_notification(hwnd, "cue aborted by play", MCI_NOTIFY_ABORTED);
     /* play's own notification follows below */
 
     err = mciSendString("play mysound from 250 to 0", NULL, 0, NULL);
     ok(err==MCIERR_OUTOFRANGE,"mci play from 250 to 0 returned %s\n", dbg_mcierr(err));
 
     Sleep(50); /* Give play from 0 to 0 time to finish. */
-    todo_wine test_notification1(hwnd, "play from 0 to 0", MCI_NOTIFY_SUCCESSFUL);
+    todo_wine test_notification(hwnd, "play from 0 to 0", MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
@@ -505,7 +499,7 @@ static void test_playWAVE(HWND hwnd)
     /* Another play from == to testcase */
     err = mciSendString("play mysound to 250 wait notify", NULL, 0, hwnd);
     ok(!err,"mci play (from 250) to 250 returned %s\n", dbg_mcierr(err));
-    todo_wine test_notification1(hwnd,"play to 250 wait notify",MCI_NOTIFY_SUCCESSFUL);
+    todo_wine test_notification(hwnd,"play to 250 wait notify",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("cue mysound output", NULL, 0, NULL);
     ok(!err,"mci cue output after play returned %s\n", dbg_mcierr(err));
