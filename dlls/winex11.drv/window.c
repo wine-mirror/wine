@@ -142,6 +142,31 @@ static void remove_startup_notification(Display *display, Window window)
 }
 
 
+struct has_popup_result
+{
+    HWND hwnd;
+    BOOL found;
+};
+
+static BOOL CALLBACK has_popup( HWND hwnd, LPARAM lparam )
+{
+    struct has_popup_result *result = (struct has_popup_result *)lparam;
+
+    if (hwnd == result->hwnd) return FALSE;  /* popups are always above owner */
+    result->found = (GetWindow( hwnd, GW_OWNER ) == result->hwnd);
+    return !result->found;
+}
+
+static BOOL has_owned_popups( HWND hwnd )
+{
+    struct has_popup_result result;
+
+    result.hwnd = hwnd;
+    result.found = FALSE;
+    EnumWindows( has_popup, (LPARAM)&result );
+    return result.found;
+}
+
 /***********************************************************************
  *		is_window_managed
  *
@@ -181,6 +206,8 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
     /* application windows are managed */
     ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_APPWINDOW) return TRUE;
+    /* windows that own popups are managed */
+    if (has_owned_popups( hwnd )) return TRUE;
     /* default: not managed */
     return FALSE;
 }
