@@ -1008,6 +1008,12 @@ static Window get_owner_whole_window( HWND owner )
         if (!(data = X11DRV_create_win_data( owner )))
             return (Window)GetPropA( owner, whole_window_prop );
     }
+    else if (!data->managed)  /* make it managed */
+    {
+        SetWindowPos( owner, 0, 0, 0, 0, 0,
+                      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
+                      SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED );
+    }
     return data->whole_window;
 }
 
