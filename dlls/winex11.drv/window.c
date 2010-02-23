@@ -966,13 +966,34 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
+ *              get_owner_whole_window
+ *
+ * Retrieve an owner's window, creating it if necessary.
+ */
+static Window get_owner_whole_window( HWND owner )
+{
+    struct x11drv_win_data *data;
+
+    if (!owner) return 0;
+
+    if (!(data = X11DRV_get_win_data( owner )))
+    {
+        if (!(data = X11DRV_create_win_data( owner )))
+            return (Window)GetPropA( owner, whole_window_prop );
+    }
+    return data->whole_window;
+}
+
+
+/***********************************************************************
  *              set_wm_hints
  *
  * Set the window manager hints for a newly-created window
  */
 static void set_wm_hints( Display *display, struct x11drv_win_data *data )
 {
-    Window group_leader;
+    Window group_leader = data->whole_window;
+    Window owner_win = 0;
     Atom window_type;
     MwmHints mwm_hints;
     DWORD style, ex_style;
@@ -990,20 +1011,12 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
         style = GetWindowLongW( data->hwnd, GWL_STYLE );
         ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
         owner = get_window_owner( data->hwnd );
+        if ((owner_win = get_owner_whole_window( owner ))) group_leader = owner_win;
     }
-
-    /* transient for hint */
-    if (owner)
-    {
-        Window owner_win = X11DRV_get_whole_window( owner );
-        wine_tsx11_lock();
-        XSetTransientForHint( display, data->whole_window, owner_win );
-        wine_tsx11_unlock();
-        group_leader = owner_win;
-    }
-    else group_leader = data->whole_window;
 
     wine_tsx11_lock();
+
+    if (owner_win) XSetTransientForHint( display, data->whole_window, owner_win );
 
     /* size hints */
     set_size_hints( display, data, style );
