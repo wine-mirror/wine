@@ -366,7 +366,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     midiprop.tempo.cbStruct = sizeof(midiprop.tempo);
     rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET|MIDIPROP_TEMPO);
     ok(!rc, "midiStreamProperty TEMPO rc=%s\n", mmsys_error(rc));
-    ok(midiprop.tempo.dwTempo=500000, "default stream tempo %u microsec per quarter note\n", midiprop.tempo.dwTempo);
+    ok(midiprop.tempo.dwTempo==500000, "default stream tempo %u microsec per quarter note\n", midiprop.tempo.dwTempo);
 
     midiprop.tdiv.cbStruct = sizeof(midiprop.tdiv);
     rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET|MIDIPROP_TIMEDIV);
