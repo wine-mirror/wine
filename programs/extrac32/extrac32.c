@@ -22,11 +22,14 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <setupapi.h>
+#include <shlwapi.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(extrac32);
+
+static BOOL force_mode;
 
 static UINT WINAPI ExtCabCallback(PVOID Context, UINT Notification, UINT_PTR Param1, UINT_PTR Param2)
 {
@@ -52,6 +55,31 @@ static void extract(LPCWSTR cabfile, LPWSTR destdir)
 {
     if (!SetupIterateCabinetW(cabfile, 0, ExtCabCallback, destdir))
         WINE_ERR("Could not extract cab file %s\n", wine_dbgstr_w(cabfile));
+}
+
+static void copy_file(LPCWSTR source, LPCWSTR destination)
+{
+    WCHAR destfile[MAX_PATH];
+
+    /* append source filename if destination is a directory */
+    if (PathIsDirectoryW(destination))
+    {
+        PathCombineW(destfile, destination, PathFindFileNameW(source));
+        destination = destfile;
+    }
+
+    if (PathFileExistsW(destination) && !force_mode)
+    {
+        static const WCHAR overwriteMsg[] = {'O','v','e','r','w','r','i','t','e',' ','"','%','s','"','?',0};
+        static const WCHAR titleMsg[] = {'E','x','t','r','a','c','t',0};
+        WCHAR msg[MAX_PATH+100];
+        snprintfW(msg, sizeof(msg)/sizeof(msg[0]), overwriteMsg, destination);
+        if (MessageBoxW(NULL, msg, titleMsg, MB_YESNO | MB_ICONWARNING) != IDYES)
+            return;
+    }
+
+    WINE_TRACE("copying %s to %s\n", wine_dbgstr_w(source), wine_dbgstr_w(destination));
+    CopyFileW(source, destination, FALSE);
 }
 
 int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int show)
@@ -90,7 +118,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
                 WINE_FIXME("/A not implemented\n");
                 break;
             case 'Y':
-                WINE_FIXME("/Y not implemented\n");
+                force_mode = TRUE;
                 break;
             case 'L':
                 if ((i + 1) >= argc) return 0;
@@ -128,7 +156,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     {
         case 'C':
             /* Copy file */
-            WINE_FIXME("/C not implemented\n");
+            copy_file(cabfile, path);
             break;
         case 'E':
             /* Extract CAB archive */
