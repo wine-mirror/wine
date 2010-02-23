@@ -1452,6 +1452,54 @@ static const CHAR pub_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "PublishProduct\t\t5200\n"
                                                "InstallFinalize\t\t6000\n";
 
+static const CHAR rd_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "original.txt\tduplicate\toriginal.txt\t1000\t\t\t8192\t1\n"
+                                  "original2.txt\tduplicate\toriginal2.txt\t1000\t\t\t8192\t2\n"
+                                  "original3.txt\tduplicate2\toriginal3.txt\t1000\t\t\t8192\t3\n";
+
+static const CHAR rd_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "duplicate\t\t\tduplicate feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR rd_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "duplicate\tduplicate\n";
+
+static const CHAR rd_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "duplicate\t{EB45D06A-ADFE-44E3-8D41-B7DE150E41AD}\tMSITESTDIR\t0\t\toriginal.txt\n"
+                                       "duplicate2\t{B8BA60E0-B2E9-488E-9D0E-E60F25F04F97}\tMSITESTDIR\t0\tDUPLICATE2=1\toriginal3.txt\n";
+
+static const CHAR rd_duplicate_file_dat[] = "FileKey\tComponent_\tFile_\tDestName\tDestFolder\n"
+                                            "s72\ts72\ts72\tS255\tS72\n"
+                                            "DuplicateFile\tFileKey\n"
+                                            "duplicate\tduplicate\toriginal.txt\tduplicate.txt\t\n"
+                                            "duplicate2\tduplicate\toriginal2.txt\t\tMSITESTDIR\n"
+                                            "duplicate3\tduplicate2\toriginal3.txt\tduplicate2.txt\t\n";
+
+static const CHAR rd_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "ProcessComponents\t\t1600\n"
+                                              "RemoveDuplicateFiles\t\t1900\n"
+                                              "InstallFiles\t\t2000\n"
+                                              "DuplicateFiles\t\t2100\n"
+                                              "RegisterProduct\t\t5000\n"
+                                              "PublishFeatures\t\t5100\n"
+                                              "PublishProduct\t\t5200\n"
+                                              "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2298,6 +2346,19 @@ static const msi_table pub_tables[] =
     ADD_TABLE(pub_file),
     ADD_TABLE(pub_publish_component),
     ADD_TABLE(pub_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table rd_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(rd_component),
+    ADD_TABLE(rd_feature),
+    ADD_TABLE(rd_feature_comp),
+    ADD_TABLE(rd_file),
+    ADD_TABLE(rd_duplicate_file),
+    ADD_TABLE(rd_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -8302,6 +8363,39 @@ static void test_publish_components(void)
     delete_test_files();
 }
 
+static void test_remove_duplicate_files(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\original.txt", 1000);
+    create_file("msitest\\original2.txt", 1000);
+    create_file("msitest\\original3.txt", 1000);
+    create_database(msifile, rd_tables, sizeof(rd_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(pf_exists("msitest\\original.txt"), "file not created\n");
+    ok(pf_exists("msitest\\original2.txt"), "file not created\n");
+    ok(!pf_exists("msitest\\original3.txt"), "file created\n");
+    ok(pf_exists("msitest\\duplicate.txt"), "file not created\n");
+    ok(!pf_exists("msitest\\duplicate2.txt"), "file created\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\original.txt", TRUE), "file removed\n");
+    ok(!delete_pf("msitest\\original2.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest\\original3.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest\\duplicate.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest\\duplicate2.txt", TRUE), "file not removed\n");
+    ok(delete_pf("msitest", FALSE), "directory removed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8404,6 +8498,7 @@ START_TEST(install)
     test_register_typelib();
     test_create_remove_shortcut();
     test_publish_components();
+    test_remove_duplicate_files();
 
     DeleteFileA(log_file);
 
