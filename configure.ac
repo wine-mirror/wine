@@ -2088,13 +2088,6 @@ esac
 dnl **** Generate output files ****
 
 AC_SUBST(DEPENDENCIES,["### Dependencies:
-
-.INIT: Makefile
-.BEGIN: Makefile
-.MAKEFILEDEPS:
-Makefile: dummy
-	-\$(MAKEDEP) \$(MAKEDEPFLAGS) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)
-
 \$(OBJS) \$(CROSSOBJS): \$(IDL_GEN_HEADERS) \$(BISON_SRCS:.y=.tab.h)
 \$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
 \$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
