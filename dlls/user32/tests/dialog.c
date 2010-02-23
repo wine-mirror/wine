@@ -926,6 +926,21 @@ static INT_PTR CALLBACK DestroyOnCloseDlgWinProc (HWND hDlg, UINT uiMsg,
     return FALSE;
 }
 
+static INT_PTR CALLBACK TestInitDialogHandleProc (HWND hDlg, UINT uiMsg,
+        WPARAM wParam, LPARAM lParam)
+{
+    if (uiMsg == WM_INITDIALOG)
+    {
+        HWND expected = GetNextDlgTabItem(hDlg, NULL, FALSE);
+        ok(expected == (HWND)wParam,
+           "Expected wParam to be the handle to the first tabstop control (%p), got %p\n",
+           expected, (HWND)wParam);
+
+        EndDialog(hDlg, LOWORD(SendMessage(hDlg, DM_GETDEFID, 0, 0)));
+        return TRUE;
+    }
+    return FALSE;
+}
 
 static INT_PTR CALLBACK TestDefButtonDlgProc (HWND hDlg, UINT uiMsg,
                                               WPARAM wParam, LPARAM lParam)
@@ -977,6 +992,9 @@ static void test_DialogBoxParamA(void)
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "TEST_EMPTY_DIALOG", 0, TestInitDialogHandleProc, 0);
+    ok(ret == IDOK, "Expected IDOK\n");
 
     ret = DialogBoxParamA(GetModuleHandle(NULL), "TEST_EMPTY_DIALOG", 0, TestDefButtonDlgProc, 0);
     ok(ret == IDOK, "Expected IDOK\n");

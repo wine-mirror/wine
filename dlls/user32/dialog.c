@@ -690,11 +690,14 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
         if (dlgProc)
         {
-            if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ) &&
+            HWND focus = GetNextDlgTabItem( hwnd, 0, FALSE );
+            if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)focus, param ) &&
                 ((~template.style & DS_CONTROL) || (template.style & WS_VISIBLE)))
             {
-                /* By returning TRUE, app has requested a default focus assignment */
-                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
+                /* By returning TRUE, app has requested a default focus assignment.
+                 * WM_INITDIALOG may have changed the tab order, so find the first
+                 * tabstop control again. */
+                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
                 if( dlgInfo->hwndFocus )
                     SetFocus( dlgInfo->hwndFocus );
             }
