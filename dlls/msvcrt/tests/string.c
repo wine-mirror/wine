@@ -730,6 +730,81 @@ static void test_mbcjisjms(void)
     } while(jisjms[i++][0] != 0);
 }
 
+static void test_ismbclegal(void) {
+    unsigned int prev_cp = _getmbcp();
+    int ret, exp, err;
+    unsigned int i;
+
+    _setmbcp(932); /* Japanese */
+    err = 0;
+    for(i = 0; i < 0x10000; i++) {
+        ret = _ismbclegal(i);
+        exp = ((HIBYTE(i) >= 0x81 && HIBYTE(i) <= 0x9F) ||
+               (HIBYTE(i) >= 0xE0 && HIBYTE(i) <= 0xFC)) &&
+              ((LOBYTE(i) >= 0x40 && LOBYTE(i) <= 0x7E) ||
+               (LOBYTE(i) >= 0x80 && LOBYTE(i) <= 0xFC));
+        if(ret != exp) {
+            err = 1;
+            break;
+        }
+    }
+    ok(!err, "_ismbclegal (932) : Expected 0x%x, got 0x%x (0x%x)\n", exp, ret, i);
+    _setmbcp(936); /* Chinese (GBK) */
+    err = 0;
+    for(i = 0; i < 0x10000; i++) {
+        ret = _ismbclegal(i);
+        exp = HIBYTE(i) >= 0x81 && HIBYTE(i) <= 0xFE &&
+              LOBYTE(i) >= 0x40 && LOBYTE(i) <= 0xFE;
+        if(ret != exp) {
+            err = 1;
+            break;
+        }
+    }
+    ok(!err, "_ismbclegal (936) : Expected 0x%x, got 0x%x (0x%x)\n", exp, ret, i);
+    _setmbcp(949); /* Korean */
+    err = 0;
+    for(i = 0; i < 0x10000; i++) {
+        ret = _ismbclegal(i);
+        exp = HIBYTE(i) >= 0x81 && HIBYTE(i) <= 0xFE &&
+              LOBYTE(i) >= 0x41 && LOBYTE(i) <= 0xFE;
+        if(ret != exp) {
+            err = 1;
+            break;
+        }
+    }
+    ok(!err, "_ismbclegal (949) : Expected 0x%x, got 0x%x (0x%x)\n", exp, ret, i);
+    _setmbcp(950); /* Chinese (Big5) */
+    err = 0;
+    for(i = 0; i < 0x10000; i++) {
+        ret = _ismbclegal(i);
+        exp = HIBYTE(i) >= 0x81 && HIBYTE(i) <= 0xFE &&
+            ((LOBYTE(i) >= 0x40 && LOBYTE(i) <= 0x7E) ||
+             (LOBYTE(i) >= 0xA1 && LOBYTE(i) <= 0xFE));
+        if(ret != exp) {
+            err = 1;
+            break;
+        }
+    }
+    ok(!err, "_ismbclegal (950) : Expected 0x%x, got 0x%x (0x%x)\n", exp, ret, i);
+    _setmbcp(1361); /* Korean (Johab) */
+    err = 0;
+    for(i = 0; i < 0x10000; i++) {
+        ret = _ismbclegal(i);
+        exp = ((HIBYTE(i) >= 0x81 && HIBYTE(i) <= 0xD3) ||
+               (HIBYTE(i) >= 0xD8 && HIBYTE(i) <= 0xF9)) &&
+              ((LOBYTE(i) >= 0x31 && LOBYTE(i) <= 0x7E) ||
+               (LOBYTE(i) >= 0x81 && LOBYTE(i) <= 0xFE)) &&
+                HIBYTE(i) != 0xDF;
+        if(ret != exp) {
+            err = 1;
+            break;
+        }
+    }
+    todo_wine ok(!err, "_ismbclegal (1361) : Expected 0x%x, got 0x%x (0x%x)\n", exp, ret, i);
+
+    _setmbcp(prev_cp);
+}
+
 static const struct {
     const char* string;
     const char* delimiter;
@@ -856,6 +931,7 @@ START_TEST(string)
     test_strcat_s();
     test__mbsnbcpy_s();
     test_mbcjisjms();
+    test_ismbclegal();
     test_strtok();
     test_wcscpy_s();
     test__wcsupr_s();

@@ -1153,6 +1153,14 @@ int CDECL _ismbbtrail(unsigned int c)
 }
 
 /*********************************************************************
+ *              _ismbclegal(MSVCRT.@)
+ */
+int CDECL _ismbclegal(unsigned int c)
+{
+    return _ismbblead(HIBYTE(c)) && _ismbbtrail(LOBYTE(c));
+}
+
+/*********************************************************************
  *		_ismbslead(MSVCRT.@)
  */
 int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
