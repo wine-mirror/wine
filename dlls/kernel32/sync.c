@@ -614,16 +614,19 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
  */
 HANDLE WINAPI CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
 {
-    WCHAR buffer[MAX_PATH];
+    ANSI_STRING nameA;
+    NTSTATUS status;
 
     if (!name) return CreateMutexExW( sa, NULL, flags, access );
 
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    RtlInitAnsiString( &nameA, name );
+    status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString, &nameA, FALSE );
+    if (status != STATUS_SUCCESS)
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    return CreateMutexExW( sa, buffer, flags, access );
+    return CreateMutexExW( sa, NtCurrentTeb()->StaticUnicodeString.Buffer, flags, access );
 }
 
 
