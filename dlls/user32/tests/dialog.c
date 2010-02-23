@@ -852,8 +852,8 @@ static void InitialFocusTest (void)
     ok ((g_hwndInitialFocusT1 == g_hwndButton2),
        "Error in initial focus when WM_INITDIALOG returned TRUE: "
        "Expected the second button (%p), got %s (%p).\n",
-       g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
-       g_hwndInitialFocusT2);
+       g_hwndButton2, GetHwndString(g_hwndInitialFocusT1),
+       g_hwndInitialFocusT1);
 
     ok ((g_hwndInitialFocusT2 == g_hwndButton2),
        "Error after first SetFocus() when WM_INITDIALOG returned TRUE: "
