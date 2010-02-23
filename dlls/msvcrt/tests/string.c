@@ -345,6 +345,29 @@ static void test_mbcp(void)
     else
         skip("Current locale has double-byte charset - could leave to false positives\n");
 
+    _setmbcp(1361);
+    expect_eq(_ismbblead(0x80), 0, int, "%d");
+    todo_wine {
+      expect_eq(_ismbblead(0x81), 1, int, "%d");
+      expect_eq(_ismbblead(0x83), 1, int, "%d");
+    }
+    expect_eq(_ismbblead(0x84), 1, int, "%d");
+    expect_eq(_ismbblead(0xd3), 1, int, "%d");
+    expect_eq(_ismbblead(0xd7), 0, int, "%d");
+    todo_wine {
+      expect_eq(_ismbblead(0xd8), 1, int, "%d");
+    }
+    expect_eq(_ismbblead(0xd9), 1, int, "%d");
+
+    expect_eq(_ismbbtrail(0x30), 0, int, "%d");
+    expect_eq(_ismbbtrail(0x31), 1, int, "%d");
+    expect_eq(_ismbbtrail(0x7e), 1, int, "%d");
+    expect_eq(_ismbbtrail(0x7f), 0, int, "%d");
+    expect_eq(_ismbbtrail(0x80), 0, int, "%d");
+    expect_eq(_ismbbtrail(0x81), 1, int, "%d");
+    expect_eq(_ismbbtrail(0xfe), 1, int, "%d");
+    expect_eq(_ismbbtrail(0xff), 0, int, "%d");
+
     _setmbcp(curr_mbcp);
 }
 
