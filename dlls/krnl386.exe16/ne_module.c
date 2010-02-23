@@ -782,9 +782,12 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
+            /* special magic for gdi and user */
+            if (!NE_strcasecmp( buffer, "user" )) strcpy( buffer, "USER.EXE" );
+            else if (!NE_strcasecmp( buffer, "gdi" )) strcpy( buffer, "GDI.EXE" );
             /* Append .DLL to name if no extension present */
-            if (!(p = strrchr( buffer, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-                    strcat( buffer, ".DLL" );
+            else if (!(p = strrchr( buffer, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+                strcat( buffer, ".DLL" );
 
             if ((hDLL = MODULE_LoadModule16( buffer, TRUE, TRUE )) < 32)
             {
