@@ -624,8 +624,14 @@ static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
 static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bFailIfExists)
 {
 	BOOL ret;
+	DWORD attribs;
 
 	TRACE("(%s %s %s)\n", debugstr_w(src), debugstr_w(dest), bFailIfExists ? "failIfExists" : "");
+
+        /* Destination file may already exist with read only attribute */
+        attribs = GetFileAttributesW(dest);
+        if (IsAttrib(attribs, FILE_ATTRIBUTE_READONLY))
+          SetFileAttributesW(dest, attribs & ~FILE_ATTRIBUTE_READONLY);
 
 	ret = CopyFileW(src, dest, bFailIfExists);
 	if (ret)
@@ -1132,7 +1138,7 @@ static BOOL copy_file_to_file(FILE_OPERATION *op, const WCHAR *szFrom, const WCH
         if (!SHELL_ConfirmDialogW(op->req->hwnd, ASK_OVERWRITE_FILE, PathFindFileNameW(szTo), op))
             return 0;
     }
-    
+
     return SHNotifyCopyFileW(szFrom, szTo, FALSE) == 0;
 }
 
