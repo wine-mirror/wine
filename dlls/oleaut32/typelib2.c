@@ -2849,8 +2849,30 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeFlags(
         UINT index,
         INT* pImplTypeFlags)
 {
-    FIXME("(%p,%d,%p), stub!\n", iface, index, pImplTypeFlags);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    int offset;
+    MSFT_RefRecord *ref;
+
+    TRACE("(%p,%d,%p)\n", iface, index, pImplTypeFlags);
+
+    if(!pImplTypeFlags)
+        return E_INVALIDARG;
+
+    if(index >= This->typeinfo->cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if((This->typeinfo->typekind&0xf) != TKIND_COCLASS) {
+        *pImplTypeFlags = 0;
+        return S_OK;
+    }
+
+    offset = ctl2_find_nth_reference(This->typelib, This->typeinfo->datatype1, index);
+    if(offset == -1)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    ref = (MSFT_RefRecord *)&This->typelib->typelib_segment_data[MSFT_SEG_REFERENCES][offset];
+    *pImplTypeFlags = ref->flags;
+    return S_OK;
 }
 
 /******************************************************************************

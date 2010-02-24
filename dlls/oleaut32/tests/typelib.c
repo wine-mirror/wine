@@ -993,6 +993,7 @@ static void test_CreateTypeLib(void) {
     TYPEDESC typedesc1, typedesc2;
     TYPEATTR *typeattr;
     HREFTYPE hreftype;
+    int impltypeflags;
     HRESULT hres;
 
     trace("CreateTypeLib tests\n");
@@ -1179,6 +1180,16 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeInfo_SetImplTypeFlags(createti, 0, IMPLTYPEFLAG_FDEFAULT);
+    ok(hres == TYPE_E_BADMODULEKIND, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetImplTypeFlags(interface2, 0, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == 0, "impltypeflags = %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetImplTypeFlags(interface2, 1, &impltypeflags);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, coclassW, TKIND_COCLASS, &createti);
@@ -1204,6 +1215,32 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeInfo_AddImplType(createti, 2, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetImplTypeFlags(createti, 0, IMPLTYPEFLAG_FDEFAULT);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetImplTypeFlags(createti, 1, IMPLTYPEFLAG_FRESTRICTED);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 0, NULL);
+    ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 0, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == IMPLTYPEFLAG_FDEFAULT, "impltypeflags = %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 1, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == IMPLTYPEFLAG_FRESTRICTED, "impltypeflags = %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetImplTypeFlags(ti, 2, &impltypeflags);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(impltypeflags == 0, "impltypeflags = %x\n", impltypeflags);
+
+    ITypeInfo_Release(ti);
 
     ICreateTypeInfo_Release(createti);
 
