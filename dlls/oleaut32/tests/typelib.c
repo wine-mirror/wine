@@ -1018,9 +1018,6 @@ static void test_CreateTypeLib(void) {
     hres = ITypeInfo_GetRefTypeInfo(interface1, 0, NULL);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
-    hres = ITypeInfo_GetRefTypeInfo(interface1, 16, &ti);
-    ok(hres == E_FAIL, "got %08x\n", hres);
-
     hres = ICreateTypeInfo_LayOut(createti);
     ok(hres == S_OK, "got %08x\n", hres);
 
