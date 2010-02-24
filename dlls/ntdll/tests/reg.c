@@ -735,32 +735,37 @@ static void test_symlinks(void)
         "wrong len %u\n", len );
     pNtClose( key );
 
-    /* reopen the link from itself */
+    if (0)  /* crashes the Windows kernel on some Vista systems */
+    {
+        /* reopen the link from itself */
 
-    attr.RootDirectory = link;
-    attr.Attributes = OBJ_OPENLINK;
-    attr.ObjectName = &null_str;
-    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
-    len = sizeof(buffer);
-    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
-    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-        "wrong len %u\n", len );
-    pNtClose( key );
+        attr.RootDirectory = link;
+        attr.Attributes = OBJ_OPENLINK;
+        attr.ObjectName = &null_str;
+        status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+            "wrong len %u\n", len );
+        pNtClose( key );
 
-    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
-    len = sizeof(buffer);
-    status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
-    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-        "wrong len %u\n", len );
-    pNtClose( key );
+        status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+            "wrong len %u\n", len );
+        pNtClose( key );
+    }
 
     if (0)  /* crashes the Windows kernel in most versions */
     {
+        attr.RootDirectory = link;
         attr.Attributes = 0;
+        attr.ObjectName = &null_str;
         status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
         ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
         len = sizeof(buffer);
