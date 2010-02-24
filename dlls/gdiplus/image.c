@@ -1837,6 +1837,7 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     {
         GdipFree(((GpBitmap*)image)->bitmapbits);
         DeleteDC(((GpBitmap*)image)->hdc);
+        DeleteObject(((GpBitmap*)image)->hbitmap);
     }
     GdipFree(image->palette_entries);
     GdipFree(image);
