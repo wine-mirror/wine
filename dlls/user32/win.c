@@ -3398,14 +3398,15 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
 
     if (info->hdcSrc)
     {
-        HDC hdc = GetDCEx( hwnd, 0, DCX_CACHE );
+        HDC hdc = GetWindowDC( hwnd );
 
         if (hdc)
         {
             int x = 0, y = 0;
             RECT rect;
 
-            GetClientRect( hwnd, &rect );
+            GetWindowRect( hwnd, &rect );
+            OffsetRect( &rect, -rect.left, -rect.top);
             if (info->pptSrc)
             {
                 x = info->pptSrc->x;
