@@ -692,19 +692,20 @@ static int ctl2_alloc_string(
  *  Failure: -1 (this is invariably an out of memory condition).
  */
 static int ctl2_alloc_importinfo(
-	ICreateTypeLib2Impl *This, /* [I] The type library to allocate in. */
-	MSFT_ImpInfo *impinfo)     /* [I] The import information to store. */
+        ICreateTypeLib2Impl *This, /* [I] The type library to allocate in. */
+        MSFT_ImpInfo *impinfo)     /* [I] The import information to store. */
 {
     int offset;
     MSFT_ImpInfo *impinfo_space;
 
-    for (offset = 0;
-	 offset < This->typelib_segdir[MSFT_SEG_IMPORTINFO].length;
-	 offset += sizeof(MSFT_ImpInfo)) {
-	if (!memcmp(&(This->typelib_segment_data[MSFT_SEG_IMPORTINFO][offset]),
-		    impinfo, sizeof(MSFT_ImpInfo))) {
-	    return offset;
-	}
+    impinfo_space = (MSFT_ImpInfo*)&This->typelib_segment_data[MSFT_SEG_IMPORTINFO][0];
+    for (offset=0; offset<This->typelib_segdir[MSFT_SEG_IMPORTINFO].length;
+            offset+=sizeof(MSFT_ImpInfo)) {
+        if(impinfo_space->oImpFile == impinfo->oImpFile
+                && impinfo_space->oGuid == impinfo->oGuid)
+            return offset;
+
+        impinfo_space += 1;
     }
 
     impinfo->flags |= This->typelib_header.nimpinfos++;
