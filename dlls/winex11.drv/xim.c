@@ -32,7 +32,7 @@
 #include "imm.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
+WINE_DEFAULT_DEBUG_CHANNEL(xim);
 
 #ifndef HAVE_XICCALLBACK_CALLBACK
 #define XICCallback XIMCallback
