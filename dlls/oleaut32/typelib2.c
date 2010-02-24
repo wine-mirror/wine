@@ -1799,12 +1799,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
         if( index != 0)  return TYPE_E_ELEMENTNOTFOUND;
 
         This->typeinfo->datatype1 = hRefType;
-        This->typeinfo->cImplTypes++;
     } else {
 	FIXME("AddImplType unsupported on typekind %d\n", This->typeinfo->typekind & 15);
 	return E_OUTOFMEMORY;
     }
 
+    This->typeinfo->cImplTypes++;
     return S_OK;
 }
 
@@ -2253,6 +2253,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
     int i;
 
     TRACE("(%p)\n", iface);
+
+    if((This->typeinfo->typekind&0xf) == TKIND_COCLASS)
+        return S_OK;
 
     /* Validate inheritance */
     This->typeinfo->datatype2 = 0;
@@ -3933,9 +3936,9 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_TYPEINFO);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_GUIDHASH);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_GUID);
+    filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_REFERENCES);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_IMPORTINFO);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_IMPORTFILES);
-    filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_REFERENCES);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_NAMEHASH);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_NAME);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_STRING);
@@ -3958,9 +3961,9 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEINFO    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUIDHASH    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUID        )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_REFERENCES  )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTINFO  )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTFILES )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_REFERENCES  )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAMEHASH    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAME        )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_STRING      )) return retval;
