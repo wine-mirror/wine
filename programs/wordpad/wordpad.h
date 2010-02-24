@@ -249,6 +249,8 @@ LRESULT print_preview(HWND);
 void get_default_printer_opts(void);
 void registry_set_pagemargins(HKEY);
 void registry_read_pagemargins(HKEY);
+void registry_set_previewpages(HKEY hKey);
+void registry_read_previewpages(HKEY hKey);
 LRESULT CALLBACK ruler_proc(HWND, UINT, WPARAM, LPARAM);
 void redraw_ruler(HWND);
 
