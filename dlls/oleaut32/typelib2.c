@@ -2835,8 +2835,35 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
         UINT index,
         HREFTYPE* pRefType)
 {
-    FIXME("(%p,%d,%p), stub!\n", iface, index, pRefType);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    MSFT_RefRecord *ref;
+    int offset;
+
+    TRACE("(%p,%d,%p)\n", iface, index, pRefType);
+
+    if(!pRefType)
+        return E_INVALIDARG;
+
+    if(index == -1) {
+        FIXME("Dual interfaces not handled yet\n");
+        return E_NOTIMPL;
+    }
+
+    if(index >= This->typeinfo->cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if((This->typeinfo->typekind&0xf) == TKIND_INTERFACE) {
+        *pRefType = This->typeinfo->datatype1 + 2;
+        return S_OK;
+    }
+
+    offset = ctl2_find_nth_reference(This->typelib, This->typeinfo->datatype1, index);
+    if(offset == -1)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    ref = (MSFT_RefRecord *)&This->typelib->typelib_segment_data[MSFT_SEG_REFERENCES][offset];
+    *pRefType = ref->reftype;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -2968,10 +2995,10 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
         WCHAR *filename;
         HRESULT hres;
 
-        if(hRefType-1 >= This->typelib->typelib_segdir[MSFT_SEG_IMPORTINFO].length)
+        if((hRefType&(~0x3)) >= This->typelib->typelib_segdir[MSFT_SEG_IMPORTINFO].length)
             return E_FAIL;
 
-        impinfo = (MSFT_ImpInfo*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTINFO][hRefType-1];
+        impinfo = (MSFT_ImpInfo*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTINFO][hRefType&(~0x3)];
         impfile = (MSFT_ImpFile*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][impinfo->oImpFile];
         guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo->oGuid];
 
@@ -2990,7 +3017,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
         int i = 0;
 
         for(iter=This->typelib->typeinfos; iter; iter=iter->next_typeinfo) {
-            if(This->typelib->typelib_typeinfo_offsets[i] == hRefType) {
+            if(This->typelib->typelib_typeinfo_offsets[i] == (hRefType&(~0x3))) {
                 *ppTInfo = (ITypeInfo*)&iter->lpVtblTypeInfo2;
 
                 ITypeLib_AddRef(*ppTInfo);

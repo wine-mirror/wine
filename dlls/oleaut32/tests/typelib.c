@@ -1037,6 +1037,10 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ITypeInfo_GetRefTypeOfImplType(interface1, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 3, "hreftype = %d\n", hreftype);
+
     memset(&funcdesc, 0, sizeof(FUNCDESC));
     funcdesc.funckind = FUNC_PUREVIRTUAL;
     funcdesc.invkind = INVOKE_PROPERTYGET;
@@ -1168,6 +1172,9 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface2);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ITypeInfo_GetRefTypeOfImplType(interface2, 0, &hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, interface1, &hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
@@ -1179,6 +1186,10 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(interface2, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 2, "hreftype = %d\n", hreftype);
 
     hres = ICreateTypeInfo_SetImplTypeFlags(createti, 0, IMPLTYPEFLAG_FDEFAULT);
     ok(hres == TYPE_E_BADMODULEKIND, "got %08x\n", hres);
@@ -1239,6 +1250,18 @@ static void test_CreateTypeLib(void) {
     hres = ITypeInfo_GetImplTypeFlags(ti, 2, &impltypeflags);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(impltypeflags == 0, "impltypeflags = %x\n", impltypeflags);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 0, "hreftype = %d\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 1, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 1, "hreftype = %d\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, 2, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == 1, "hreftype = %d\n", hreftype);
 
     ITypeInfo_Release(ti);
 
