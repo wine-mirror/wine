@@ -1860,6 +1860,18 @@ GpStatus WINGDIPAPI GdipFindFirstImageItem(GpImage *image, ImageItemData* item)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetImageItemData(GpImage *image, ImageItemData *item)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", image, item);
+
+    if (!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
     GpUnit *srcUnit)
 {
