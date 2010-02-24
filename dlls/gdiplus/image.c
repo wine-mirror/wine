@@ -1831,6 +1831,37 @@ GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE hemf, UINT cbData16,
     return NotImplemented;
 }
 
+/* Internal utility function: Replace the image data of dst with that of src,
+ * and free src. */
+static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
+{
+    GdipFree(dst->bitmapbits);
+    DeleteDC(dst->hdc);
+    DeleteObject(dst->hbitmap);
+
+    if (clobber_palette)
+    {
+        GdipFree(dst->image.palette_entries);
+        dst->image.palette_flags = src->image.palette_flags;
+        dst->image.palette_count = src->image.palette_count;
+        dst->image.palette_entries = src->image.palette_entries;
+    }
+    else
+        GdipFree(src->image.palette_entries);
+
+    dst->image.xres = src->image.xres;
+    dst->image.yres = src->image.yres;
+    dst->width = src->width;
+    dst->height = src->height;
+    dst->format = src->format;
+    dst->hbitmap = src->hbitmap;
+    dst->hdc = src->hdc;
+    dst->bits = src->bits;
+    dst->stride = src->stride;
+
+    GdipFree(src);
+}
+
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
     TRACE("%p\n", image);
@@ -3438,6 +3469,112 @@ GpStatus WINGDIPAPI GdipGetImageThumbnail(GpImage *image, UINT width, UINT heigh
  */
 GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
 {
-    FIXME("(%p %u) stub\n", image, type);
-    return NotImplemented;
+    GpBitmap *new_bitmap;
+    GpBitmap *bitmap;
+    int bpp, bytesperpixel;
+    int rotate_90, flip_x, flip_y;
+    int src_x_offset, src_y_offset;
+    LPBYTE src_origin;
+    UINT x, y, width, height;
+    BitmapData src_lock, dst_lock;
+    GpStatus stat;
+
+    TRACE("(%p, %u)\n", image, type);
+
+    rotate_90 = type&1;
+    flip_x = (type&6) == 2 || (type&6) == 4;
+    flip_y = (type&3) == 1 || (type&3) == 2;
+
+    if (image->type != ImageTypeBitmap)
+    {
+        FIXME("Not implemented for type %i\n", image->type);
+        return NotImplemented;
+    }
+
+    bitmap = (GpBitmap*)image;
+    bpp = PIXELFORMATBPP(bitmap->format);
+
+    if (bpp < 8)
+    {
+        FIXME("Not implemented for %i bit images\n", bpp);
+        return NotImplemented;
+    }
+
+    if (rotate_90)
+    {
+        width = bitmap->height;
+        height = bitmap->width;
+    }
+    else
+    {
+        width = bitmap->width;
+        height = bitmap->height;
+    }
+
+    bytesperpixel = bpp/8;
+
+    stat = GdipCreateBitmapFromScan0(width, height, 0, bitmap->format, NULL, &new_bitmap);
+
+    if (stat != Ok)
+        return stat;
+
+    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, bitmap->format, &src_lock);
+
+    if (stat == Ok)
+    {
+        stat = GdipBitmapLockBits(new_bitmap, NULL, ImageLockModeWrite, bitmap->format, &dst_lock);
+
+        if (stat == Ok)
+        {
+            LPBYTE src_row, src_pixel;
+            LPBYTE dst_row, dst_pixel;
+
+            src_origin = src_lock.Scan0;
+            if (flip_x) src_origin += bytesperpixel * (bitmap->width - 1);
+            if (flip_y) src_origin += src_lock.Stride * (bitmap->height - 1);
+
+            if (rotate_90)
+            {
+                if (flip_y) src_x_offset = -src_lock.Stride;
+                else src_x_offset = src_lock.Stride;
+                if (flip_x) src_y_offset = -bytesperpixel;
+                else src_y_offset = bytesperpixel;
+            }
+            else
+            {
+                if (flip_x) src_x_offset = -bytesperpixel;
+                else src_x_offset = bytesperpixel;
+                if (flip_y) src_y_offset = -src_lock.Stride;
+                else src_y_offset = src_lock.Stride;
+            }
+
+            src_row = src_origin;
+            dst_row = dst_lock.Scan0;
+            for (y=0; y<height; y++)
+            {
+                src_pixel = src_row;
+                dst_pixel = dst_row;
+                for (x=0; x<width; x++)
+                {
+                    /* FIXME: This could probably be faster without memcpy. */
+                    memcpy(dst_pixel, src_pixel, bytesperpixel);
+                    dst_pixel += bytesperpixel;
+                    src_pixel += src_x_offset;
+                }
+                src_row += src_y_offset;
+                dst_row += dst_lock.Stride;
+            }
+
+            GdipBitmapUnlockBits(new_bitmap, &dst_lock);
+        }
+
+        GdipBitmapUnlockBits(bitmap, &src_lock);
+    }
+
+    if (stat == Ok)
+        move_bitmap(bitmap, new_bitmap, FALSE);
+    else
+        GdipDisposeImage((GpImage*)new_bitmap);
+
+    return stat;
 }

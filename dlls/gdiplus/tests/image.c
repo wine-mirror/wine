@@ -1719,30 +1719,30 @@ static void test_rotateflip(void)
     expect(Ok, stat);
 
     stat = GdipImageRotateFlip(bitmap, Rotate90FlipNone);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipGetImageWidth(bitmap, &width);
     expect(Ok, stat);
     stat = GdipGetImageHeight(bitmap, &height);
     expect(Ok, stat);
-    todo_wine expect(2, width);
-    todo_wine expect(3, height);
+    expect(2, width);
+    expect(3, height);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff00ffff, color);
+    expect(0xff00ffff, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 1, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 2, &color);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(0xffffff00, color);
+    expect(Ok, stat);
+    expect(0xffffff00, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 1, 2, &color);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
 
     expect(0, bits[0]);
     expect(0, bits[1]);
@@ -1755,7 +1755,7 @@ static void test_rotateflip(void)
     expect(Ok, stat);
 
     stat = GdipImageRotateFlip(bitmap, RotateNoneFlipX);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipGetImageWidth(bitmap, &width);
     expect(Ok, stat);
@@ -1766,19 +1766,19 @@ static void test_rotateflip(void)
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 1, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffffff00, color);
+    expect(0xffffff00, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 1, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff00ffff, color);
+    expect(0xff00ffff, color);
 
     expect(0, bits[0]);
     expect(0, bits[1]);
@@ -1791,7 +1791,7 @@ static void test_rotateflip(void)
     expect(Ok, stat);
 
     stat = GdipImageRotateFlip(bitmap, RotateNoneFlipY);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipGetImageWidth(bitmap, &width);
     expect(Ok, stat);
@@ -1802,19 +1802,19 @@ static void test_rotateflip(void)
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff00ffff, color);
+    expect(0xff00ffff, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffffff00, color);
+    expect(0xffffff00, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 0, 1, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel((GpBitmap*)bitmap, 2, 1, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     expect(0, bits[0]);
     expect(0, bits[1]);
