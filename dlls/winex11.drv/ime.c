@@ -1311,7 +1311,7 @@ static LRESULT ImeHandleNotify(HIMC hIMC, HWND hwnd, UINT msg, WPARAM wParam,
             FIXME("WM_IME_NOTIFY:IMN_SETSENTENCEMODE\n");
             break;
         case IMN_SETOPENSTATUS:
-            FIXME("WM_IME_NOTIFY:IMN_SETOPENSTATUS\n");
+            TRACE("WM_IME_NOTIFY:IMN_SETOPENSTATUS\n");
             break;
         case IMN_SETCANDIDATEPOS:
             FIXME("WM_IME_NOTIFY:IMN_SETCANDIDATEPOS\n");
