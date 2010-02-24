@@ -942,6 +942,7 @@ static int get_unix_tid(void)
     ret = pthread_self();
 #elif defined(__APPLE__)
     ret = mach_thread_self();
+    mach_port_deallocate(mach_task_self(), ret);
 #elif defined(__FreeBSD__)
     long lwpid;
     thr_self( &lwpid );
