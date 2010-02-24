@@ -144,7 +144,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     irp.AssociatedIrp.SystemBuffer = in_buff;
     irp.UserBuffer = out_buff;
     irp.MdlAddress = &mdl;
-    irp.Tail.Overlay.s.u.CurrentStackLocation = &irpsp;
+    irp.Tail.Overlay.s.u2.CurrentStackLocation = &irpsp;
     irp.UserIosb = NULL;
 
     irpsp.MajorFunction = IRP_MJ_DEVICE_CONTROL;
@@ -294,7 +294,7 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
     InitializeListHead( &irp->ThreadListEntry );
     irp->StackCount = stack_size;
     irp->CurrentLocation = stack_size + 1;
-    irp->Tail.Overlay.s.u.CurrentStackLocation =
+    irp->Tail.Overlay.s.u2.CurrentStackLocation =
             (PIO_STACK_LOCATION)(irp + 1) + stack_size;
 }
 
@@ -434,7 +434,7 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG IoControlCode,
     instance->irp = irp;
     list_add_tail( &Irps, &instance->entry );
 
-    irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation - 1;
+    irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation - 1;
     irpsp->MajorFunction = InternalDeviceIoControl ?
             IRP_MJ_INTERNAL_DEVICE_CONTROL : IRP_MJ_DEVICE_CONTROL;
     irpsp->Parameters.DeviceIoControl.IoControlCode = IoControlCode;
@@ -647,7 +647,7 @@ NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
     TRACE( "%p %p\n", device, irp );
 
     --irp->CurrentLocation;
-    irpsp = --irp->Tail.Overlay.s.u.CurrentStackLocation;
+    irpsp = --irp->Tail.Overlay.s.u2.CurrentStackLocation;
     dispatch = device->DriverObject->MajorFunction[irpsp->MajorFunction];
     status = dispatch( device, irp );
 
@@ -744,7 +744,7 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
     status = irp->IoStatus.u.Status;
     while (irp->CurrentLocation <= irp->StackCount)
     {
-        irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
+        irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation;
         routine = irpsp->CompletionRoutine;
         call_flag = 0;
         /* FIXME: add SL_INVOKE_ON_CANCEL support */
@@ -756,7 +756,7 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
                 call_flag = 1;
         }
         ++irp->CurrentLocation;
-        ++irp->Tail.Overlay.s.u.CurrentStackLocation;
+        ++irp->Tail.Overlay.s.u2.CurrentStackLocation;
         if (call_flag)
         {
             TRACE( "calling %p( %p, %p, %p )\n", routine,

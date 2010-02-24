@@ -423,7 +423,7 @@ typedef struct _IRP {
         struct {
           PVOID  DriverContext[4];
         } DUMMYSTRUCTNAME;
-      } DUMMYUNIONNAME;
+      } DUMMYUNIONNAME1;
       PETHREAD  Thread;
       PCHAR  AuxiliaryBuffer;
       struct {
@@ -431,7 +431,7 @@ typedef struct _IRP {
         union {
           struct _IO_STACK_LOCATION  *CurrentStackLocation;
           ULONG  PacketType;
-        } DUMMYUNIONNAME;
+        } DUMMYUNIONNAME2;
       } DUMMYSTRUCTNAME;
       struct _FILE_OBJECT  *OriginalFileObject;
     } Overlay;

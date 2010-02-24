@@ -858,7 +858,7 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, ch
 /* handler for ioctls on the harddisk device */
 static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
-    IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
+    IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation;
     struct disk_device *dev = device->DeviceExtension;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
