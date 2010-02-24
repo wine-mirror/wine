@@ -635,6 +635,50 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 static GDIOBJHDR *large_handles[MAX_LARGE_HANDLES];
 static int next_large_handle;
 
+static const char *gdi_obj_type( unsigned type )
+{
+    switch ( type )
+    {
+        case OBJ_PEN: return "OBJ_PEN";
+        case OBJ_BRUSH: return "OBJ_BRUSH";
+        case OBJ_DC: return "OBJ_DC";
+        case OBJ_METADC: return "OBJ_METADC";
+        case OBJ_PAL: return "OBJ_PAL";
+        case OBJ_FONT: return "OBJ_FONT";
+        case OBJ_BITMAP: return "OBJ_BITMAP";
+        case OBJ_REGION: return "OBJ_REGION";
+        case OBJ_METAFILE: return "OBJ_METAFILE";
+        case OBJ_MEMDC: return "OBJ_MEMDC";
+        case OBJ_EXTPEN: return "OBJ_EXTPEN";
+        case OBJ_ENHMETADC: return "OBJ_ENHMETADC";
+        case OBJ_ENHMETAFILE: return "OBJ_ENHMETAFILE";
+        case OBJ_COLORSPACE: return "OBJ_COLORSPACE";
+        default: return "UNKNOWN";
+    }
+}
+
+static void dump_gdi_objects( void )
+{
+    int i;
+
+    TRACE( "%u objects:\n", MAX_LARGE_HANDLES );
+
+    EnterCriticalSection( &gdi_section );
+    for (i = 0; i < MAX_LARGE_HANDLES; i++)
+    {
+        if (!large_handles[i])
+        {
+            TRACE( "index %d handle %p FREE\n", i, (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2) );
+            continue;
+        }
+        TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
+               (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2),
+               large_handles[i], gdi_obj_type( large_handles[i]->type ),
+               large_handles[i]->selcount, large_handles[i]->deleted );
+    }
+    LeaveCriticalSection( &gdi_section );
+}
+
 /***********************************************************************
  *           alloc_gdi_handle
  *
@@ -658,6 +702,9 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     for (i = 0; i <= next_large_handle; i++)
         if (!large_handles[i]) goto found;
     LeaveCriticalSection( &gdi_section );
+
+    ERR( "out of GDI object handles, expect a crash\n" );
+    if (TRACE_ON(gdi)) dump_gdi_objects();
     return 0;
 
  found:
