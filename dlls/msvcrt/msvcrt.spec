@@ -380,7 +380,7 @@
 @ stub _mbctohira #(long)
 @ stub _mbctokata #(long)
 @ cdecl _mbctolower(long)
-@ stub _mbctombb #(long)
+@ cdecl _mbctombb(long)
 @ cdecl _mbctoupper(long)
 @ extern _mbctype MSVCRT_mbctype
 @ cdecl _mbsbtype(str long)
