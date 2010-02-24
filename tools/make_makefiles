@@ -97,6 +97,7 @@ my @ignores = (
     "programs/winetest/*_test.exe",
     "programs/winetest/*_test.rc",
     "programs/winetest/build.rc",
+    "tools/makedep",
 );
 
 # Source files and their resulting target to ignore

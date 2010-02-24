@@ -12,7 +12,6 @@ PROGRAMS = \
 	fnt2bdf$(EXEEXT) \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
-	makedep$(EXEEXT) \
 	relpath$(EXEEXT) \
 	sfnt2fnt$(EXEEXT) \
 	wine.inf \
@@ -40,7 +39,7 @@ INSTALLDIRS = \
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
-all: $(PROGRAMS) $(MANPAGES)
+all: makedep$(EXEEXT) $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
