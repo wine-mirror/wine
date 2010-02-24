@@ -2723,8 +2723,45 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
         ITypeInfo2* iface,
         TYPEATTR** ppTypeAttr)
 {
-    FIXME("(%p,%p), stub!\n", iface, ppTypeAttr);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    HRESULT hres;
+
+    TRACE("(%p,%p)\n", iface, ppTypeAttr);
+
+    if(!ppTypeAttr)
+        return E_INVALIDARG;
+
+    hres = ICreateTypeInfo_LayOut((ICreateTypeInfo*)This);
+    if(FAILED(hres))
+        return hres;
+
+    *ppTypeAttr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TYPEATTR));
+    if(!*ppTypeAttr)
+        return E_OUTOFMEMORY;
+
+    if(This->typeinfo->posguid != -1) {
+        MSFT_GuidEntry *guid;
+
+        guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][This->typeinfo->posguid];
+        (*ppTypeAttr)->guid = guid->guid;
+    }
+
+    (*ppTypeAttr)->lcid = This->typelib->typelib_header.lcid;
+    (*ppTypeAttr)->cbSizeInstance = This->typeinfo->size;
+    (*ppTypeAttr)->typekind = This->typeinfo->typekind&0xf;
+    (*ppTypeAttr)->cFuncs = This->typeinfo->cElement&0xffff;
+    (*ppTypeAttr)->cVars = This->typeinfo->cElement>>16;
+    (*ppTypeAttr)->cImplTypes = This->typeinfo->cImplTypes;
+    (*ppTypeAttr)->cbSizeVft = This->typeinfo->cbSizeVft;
+    (*ppTypeAttr)->cbAlignment = (This->typeinfo->typekind>>11) & 0x1f;
+    (*ppTypeAttr)->wTypeFlags = This->typeinfo->flags;
+    (*ppTypeAttr)->wMajorVerNum = This->typeinfo->version&0xffff;
+    (*ppTypeAttr)->wMinorVerNum = This->typeinfo->version>>16;
+
+    if((*ppTypeAttr)->typekind == TKIND_ALIAS)
+        FIXME("TKIND_ALIAS handling not implemented\n");
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -3014,7 +3051,10 @@ static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
         ITypeInfo2* iface,
         TYPEATTR* pTypeAttr)
 {
-    FIXME("(%p,%p), stub!\n", iface, pTypeAttr);
+    TRACE("(%p,%p)\n", iface, pTypeAttr);
+
+    if(pTypeAttr)
+        HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
 /******************************************************************************
