@@ -1060,8 +1060,8 @@ START_TEST(treeview)
     hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 130, 105, NULL, NULL, GetModuleHandleA(NULL), 0);
 
-    if ( !ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n") )
-        return;
+    ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n");
+    if (!hMainWnd) return;
 
     test_fillroot();
     test_select();
