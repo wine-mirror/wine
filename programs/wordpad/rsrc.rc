@@ -60,3 +60,6 @@ IDI_WRI ICON "wri.ico"
 
 /* @makedep: txt.ico */
 IDI_TXT ICON "txt.ico"
+
+/* @makedep: zoom.cur */
+IDC_ZOOM CURSOR "zoom.cur"

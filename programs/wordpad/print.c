@@ -988,6 +988,29 @@ static void toggle_num_pages(HWND hMainWnd)
     update_preview(hMainWnd);
 }
 
+/* Returns the page shown that the point is in (1 or 2) or 0 if the point
+ * isn't inside either page */
+int preview_page_hittest(POINT pt)
+{
+    RECT rc;
+    rc.left = preview.spacing.cx;
+    rc.right = rc.left + preview.bmScaledSize.cx;
+    rc.top = preview.spacing.cy;
+    rc.bottom = rc.top + preview.bmScaledSize.cy;
+    if (PtInRect(&rc, pt))
+        return 1;
+
+    if (preview.pages_shown <= 1)
+        return 0;
+
+    rc.left += preview.bmScaledSize.cx + preview.spacing.cx;
+    rc.right += preview.bmScaledSize.cx + preview.spacing.cx;
+    if (PtInRect(&rc, pt))
+        return 2;
+
+    return 0;
+}
+
 LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
@@ -1084,6 +1107,84 @@ LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ScrollWindow(hWnd, amount, 0, NULL, NULL);
             }
             return 0;
+        }
+
+        case WM_SETCURSOR:
+        {
+            POINT pt;
+            RECT rc;
+            int bHittest = FALSE;
+            DWORD messagePos = GetMessagePos();
+            pt.x = (short)LOWORD(messagePos);
+            pt.y = (short)HIWORD(messagePos);
+            ScreenToClient(hWnd, &pt);
+
+            GetClientRect(hWnd, &rc);
+            if (PtInRect(&rc, pt))
+            {
+                pt.x += GetScrollPos(hWnd, SB_HORZ);
+                pt.y += GetScrollPos(hWnd, SB_VERT);
+                bHittest = preview_page_hittest(pt);
+            }
+
+            if (bHittest)
+                SetCursor(LoadCursorW(GetModuleHandleW(0),
+                                      MAKEINTRESOURCEW(IDC_ZOOM)));
+            else
+                SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+
+            return TRUE;
+        }
+
+        case WM_LBUTTONDOWN:
+        {
+            int page;
+            POINT pt;
+            pt.x = (short)LOWORD(lParam) + GetScrollPos(hWnd, SB_HORZ);
+            pt.y = (short)HIWORD(lParam) + GetScrollPos(hWnd, SB_VERT);
+            if ((page = preview_page_hittest(pt)) > 0)
+            {
+                HWND hMainWnd = GetParent(hWnd);
+
+                /* Convert point from client coordinate to unzoomed page
+                 * coordinate. */
+                pt.x -= preview.spacing.cx;
+                if (page > 1)
+                    pt.x -= preview.bmScaledSize.cx + preview.spacing.cx;
+                pt.y -= preview.spacing.cy;
+                pt.x /= preview.zoomratio;
+                pt.y /= preview.zoomratio;
+
+                preview.zoomlevel = (preview.zoomlevel + 1) % 3;
+                preview.zoomratio = 0;
+                if (preview.pages_shown > 1)
+                {
+                    if (page >= 2) preview.page++;
+                    toggle_num_pages(hMainWnd);
+                } else {
+                    update_preview_sizes(hWnd, TRUE);
+                    update_scaled_preview(hMainWnd);
+                    update_preview_buttons(hMainWnd);
+                }
+
+                if (preview.zoomlevel > 0) {
+                    SCROLLINFO si;
+                    /* Convert the coordinate back to client coordinate. */
+                    pt.x *= preview.zoomratio;
+                    pt.y *= preview.zoomratio;
+                    pt.x += preview.spacing.cx;
+                    pt.y += preview.spacing.cy;
+                    /* Scroll to center view at that point on the page */
+                    si.cbSize = sizeof(si);
+                    si.fMask = SIF_PAGE;
+                    GetScrollInfo(hWnd, SB_HORZ, &si);
+                    pt.x -= si.nPage / 2;
+                    SetScrollPos(hWnd, SB_HORZ, pt.x, TRUE);
+                    GetScrollInfo(hWnd, SB_VERT, &si);
+                    pt.y -= si.nPage / 2;
+                    SetScrollPos(hWnd, SB_VERT, pt.y, TRUE);
+                }
+            }
         }
 
         default:
