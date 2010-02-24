@@ -758,26 +758,30 @@ static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
                                       LPCOLESTR wszId, BOOL do_register,
                                       const struct _ATL_REGMAP_ENTRY* pMapEntries)
 {
+    IRegistrar *registrar;
     HRESULT hres;
     const struct _ATL_REGMAP_ENTRY *pMapEntry;
 
     static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
     static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
 
-    if (!pRegistrar)
-        Registrar_create(NULL, &IID_IRegistrar, (void**)&pRegistrar);
+    if (pRegistrar)
+        registrar = pRegistrar;
+    else
+        Registrar_create(NULL, &IID_IRegistrar, (void**)&registrar);
 
-    IRegistrar_AddReplacement(pRegistrar, wszModule, wszDll);
+    IRegistrar_AddReplacement(registrar, wszModule, wszDll);
 
     for (pMapEntry = pMapEntries; pMapEntry && pMapEntry->szKey; pMapEntry++)
-        IRegistrar_AddReplacement(pRegistrar, pMapEntry->szKey, pMapEntry->szData);
+        IRegistrar_AddReplacement(registrar, pMapEntry->szKey, pMapEntry->szData);
 
     if(do_register)
-        hres = IRegistrar_ResourceRegisterSz(pRegistrar, wszDll, wszId, wszRegistry);
+        hres = IRegistrar_ResourceRegisterSz(registrar, wszDll, wszId, wszRegistry);
     else
-        hres = IRegistrar_ResourceUnregisterSz(pRegistrar, wszDll, wszId, wszRegistry);
+        hres = IRegistrar_ResourceUnregisterSz(registrar, wszDll, wszId, wszRegistry);
 
-    IRegistrar_Release(pRegistrar);
+    if(registrar != pRegistrar)
+        IRegistrar_Release(registrar);
     return hres;
 }
 
