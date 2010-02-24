@@ -1055,10 +1055,14 @@ BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
 
 void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
 {
+    HIMC imc;
     LPINPUTCONTEXT lpIMC;
     HIMCC newCompStr;
+    LPIMEPRIVATE myPrivate;
+    BOOL fOpen;
 
-    lpIMC = LockRealIMC(FROM_X11);
+    imc = RealIMC(FROM_X11);
+    lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
         return;
 
@@ -1066,9 +1070,19 @@ void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
     ImmDestroyIMCC(lpIMC->hCompStr);
     lpIMC->hCompStr = newCompStr;
 
-    GenerateIMEMessage(FROM_X11, WM_IME_COMPOSITION, 0, GCS_RESULTSTR);
+    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
+    fOpen = lpIMC->fOpen;
+    ImmSetOpenStatus(imc, TRUE);
+    if (!myPrivate->bInComposition)
+        GenerateIMEMessage(imc, WM_IME_STARTCOMPOSITION, 0, 0);
+    GenerateIMEMessage(imc, WM_IME_COMPOSITION, 0, GCS_RESULTSTR);
+    if (!myPrivate->bInComposition)
+        GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
+    if (!fOpen)
+        ImmSetOpenStatus(imc, FALSE);
+    ImmUnlockIMCC(lpIMC->hPrivate);
 
-    UnlockRealIMC(FROM_X11);
+    ImmUnlockIMC(imc);
 }
 
 /*****
