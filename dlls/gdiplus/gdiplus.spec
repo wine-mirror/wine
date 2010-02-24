@@ -381,7 +381,7 @@
 @ stdcall GdipGetRegionDataSize(ptr ptr)
 @ stdcall GdipGetRegionHRgn(ptr ptr ptr)
 @ stub GdipGetRegionScans
-@ stub GdipGetRegionScansCount
+@ stdcall GdipGetRegionScansCount(ptr ptr ptr)
 @ stub GdipGetRegionScansI
 @ stub GdipGetRenderingOrigin
 @ stdcall GdipGetSmoothingMode(ptr ptr)
