@@ -256,20 +256,21 @@ static unsigned int get_type_alignment(ULONG *pFlags, VARTYPE vt)
 
 static unsigned interface_variant_size(const ULONG *pFlags, REFIID riid, IUnknown *punk)
 {
-  ULONG size;
-  HRESULT hr;
-  /* find the buffer size of the marshalled dispatch interface */
-  hr = CoGetMarshalSizeMax(&size, riid, punk, LOWORD(*pFlags), NULL, MSHLFLAGS_NORMAL);
-  if (FAILED(hr)) {
-    if (!punk)
-      WARN("NULL dispatch pointer\n");
-    else
-      ERR("Dispatch variant buffer size calculation failed, HRESULT=0x%x\n", hr);
-    return 0;
-  }
-  size += sizeof(ULONG); /* we have to store the buffersize in the stream */
-  TRACE("wire-size extra of dispatch variant is %d\n", size);
-  return size;
+    ULONG size = 0;
+    HRESULT hr;
+
+    if (punk)
+    {
+        hr = CoGetMarshalSizeMax(&size, riid, punk, LOWORD(*pFlags), NULL, MSHLFLAGS_NORMAL);
+        if (FAILED(hr))
+        {
+            ERR("interface variant buffer size calculation failed, HRESULT=0x%x\n", hr);
+            return 0;
+        }
+    }
+    size += sizeof(ULONG); /* we have to store the buffersize in the stream */
+    TRACE("wire-size extra of interface variant is %d\n", size);
+    return size;
 }
 
 static ULONG wire_extra_user_size(ULONG *pFlags, ULONG Start, VARIANT *pvar)
@@ -321,6 +322,12 @@ static unsigned char* interface_variant_marshal(const ULONG *pFlags, unsigned ch
   HRESULT hr;
   
   TRACE("pFlags=%d, Buffer=%p, pUnk=%p\n", *pFlags, Buffer, punk);
+
+  if(!punk)
+  {
+      memset(Buffer, 0, sizeof(ULONG));
+      return Buffer + sizeof(ULONG);
+  }
 
   oldpos = Buffer;
   
@@ -377,6 +384,12 @@ static unsigned char *interface_variant_unmarshal(const ULONG *pFlags, unsigned 
   /* get the buffersize */
   memcpy(&size, Buffer, sizeof(ULONG));
   TRACE("buffersize=%d\n", size);
+
+  if(!size)
+  {
+      *ppunk = NULL;
+      return Buffer + sizeof(ULONG);
+  }
 
   working_mem = GlobalAlloc(0, size);
   if (!working_mem) return oldpos;

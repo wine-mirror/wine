@@ -1427,6 +1427,30 @@ static void test_marshal_VARIANT(void)
     }
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
+    /*** NULL UNKNOWN ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = NULL;
+
+    rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(stubMsg.BufferLength >= 24, "size %d\n", stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
+    stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
+    memset(buffer, 0xcc, stubMsg.BufferLength);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    wirev = (DWORD*)buffer;
+    check_variant_header(wirev, &v, next - buffer);
+    wirev += 5;
+    ok(*wirev == 0, "wv[5] %08x\n", *wirev);
+
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_UNKNOWN(&v2) == NULL, "got %p expect NULL\n", V_UNKNOWN(&v2));
+    VARIANT_UserFree(&umcb.Flags, &v2);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
+
     /*** UNKNOWN BYREF ***/
     heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
     heap_unknown->lpVtbl = &HeapUnknown_Vtbl;
