@@ -2372,6 +2372,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,devenum.dll,1
 11,,dinput.dll,1
 11,,dinput8.dll,1
+11,,dispex.dll,1
 11,,dmband.dll,1
 11,,dmcompos.dll,1
 11,,dmime.dll,1
