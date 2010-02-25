@@ -248,8 +248,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Didinti"
     STRING_PREVIEW_ZOOMOUT,          "Mažinti"
     STRING_PREVIEW_CLOSE,            "Užverti"
-    STRING_PREVIEW_PAGE,             "Page"
-    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_PREVIEW_PAGE,             "Puslapis"
+    STRING_PREVIEW_PAGES,            "Puslapiai"
 END
 
 STRINGTABLE DISCARDABLE
