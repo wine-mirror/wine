@@ -244,6 +244,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Збільшити"
     STRING_PREVIEW_ZOOMOUT,          "Зменшити"
     STRING_PREVIEW_CLOSE,            "Закрити"
+    STRING_PREVIEW_PAGE,             "Page"
+    STRING_PREVIEW_PAGES,            "Pages"
     STRING_UNITS_CM,                 "cm"
 END
 

@@ -2117,7 +2117,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         {
             int index = reg_formatindex(fileFormat);
             DWORD tmp = barState[index];
-            barState[index] = 0;
+            barState[index] = 1 << BANDID_STATUSBAR;
             set_bar_states();
             barState[index] = tmp;
             ShowWindow(hEditorWnd, FALSE);

@@ -248,6 +248,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Zoom avant"
     STRING_PREVIEW_ZOOMOUT,          "Zoom arrière"
     STRING_PREVIEW_CLOSE,            "Fermer"
+    STRING_PREVIEW_PAGE,             "Page"
+    STRING_PREVIEW_PAGES,            "Pages"
 END
 
 STRINGTABLE DISCARDABLE

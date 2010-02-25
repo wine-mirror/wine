@@ -942,6 +942,27 @@ LRESULT print_preview(HWND hwndPreview)
     return 0;
 }
 
+static void update_preview_statusbar(HWND hMainWnd)
+{
+    HWND hStatusbar = GetDlgItem(hMainWnd, IDC_STATUSBAR);
+    HINSTANCE hInst = GetModuleHandleW(0);
+    WCHAR *p;
+    WCHAR wstr[MAX_STRING_LEN];
+
+    p = wstr;
+    if (preview.pages_shown < 2 || is_last_preview_page(preview.page))
+    {
+        static const WCHAR fmt[] = {' ','%','d','\0'};
+        p += LoadStringW(hInst, STRING_PREVIEW_PAGE, wstr, MAX_STRING_LEN);
+        wsprintfW(p, fmt, preview.page);
+    } else {
+        static const WCHAR fmt[] = {' ','%','d','-','%','d','\0'};
+        p += LoadStringW(hInst, STRING_PREVIEW_PAGES, wstr, MAX_STRING_LEN);
+        wsprintfW(p, fmt, preview.page, preview.page + 1);
+    }
+    SetWindowTextW(hStatusbar, wstr);
+}
+
 /* Update for page changes. */
 static void update_preview(HWND hMainWnd)
 {
@@ -995,6 +1016,7 @@ static void update_preview(HWND hMainWnd)
 
     update_scaled_preview(hMainWnd);
     update_preview_buttons(hMainWnd);
+    update_preview_statusbar(hMainWnd);
 }
 
 static void toggle_num_pages(HWND hMainWnd)

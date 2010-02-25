@@ -239,7 +239,9 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Zoom in"
     STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "´Ý±â"
-    STRING_UNITS_CM,             "cm"
+    STRING_PREVIEW_PAGE,             "Page"
+    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_UNITS_CM,                 "cm"
 END
 
 STRINGTABLE DISCARDABLE
