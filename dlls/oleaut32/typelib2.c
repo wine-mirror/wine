@@ -396,6 +396,27 @@ static int ctl2_encode_name(
 }
 
 /****************************************************************************
+ *      ctl2_decode_name
+ *
+ * Converts string stored in typelib data to unicode.
+ */
+static void ctl2_decode_name(
+        char *data,         /* [I] String to be decoded */
+        WCHAR **string)     /* [O] Decoded string */
+{
+    int i, length;
+    static WCHAR converted_string[0x104];
+
+    length = data[0];
+
+    for(i=0; i<length; i++)
+        converted_string[i] = data[i+4];
+    converted_string[length] = '\0';
+
+    *string = converted_string;
+}
+
+/****************************************************************************
  *	ctl2_encode_string
  *
  *  Encodes a string to a form suitable for storing into a type library or
@@ -443,7 +464,7 @@ static void ctl2_decode_string(
     static WCHAR converted_string[0x104];
 
     length = data[0] + (data[1]<<8);
-    if(length & 1)
+    if((length&0x3) == 1)
         length >>= 2;
 
     for(i=0; i<length; i++)
@@ -4314,10 +4335,71 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         BSTR* pBstrHelpFile)
 {
     ICreateTypeLib2Impl *This = impl_from_ITypeLib2(iface);
+    WCHAR *string;
 
-    FIXME("(%p,%d,%p,%p,%p,%p), stub!\n", This, index, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p,%d,%p,%p,%p,%p)\n", This, index, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 
-    return E_OUTOFMEMORY;
+    if(index != -1) {
+        ICreateTypeInfo2Impl *iter;
+
+        for(iter=This->typeinfos; iter!=NULL && index!=0; iter=iter->next_typeinfo)
+            index--;
+
+        if(!iter)
+            return TYPE_E_ELEMENTNOTFOUND;
+
+        return ITypeInfo_GetDocumentation((ITypeInfo*)iter->lpVtblTypeInfo2,
+                -1, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    }
+
+    if(pBstrName) {
+        if(This->typelib_header.NameOffset == -1)
+            *pBstrName = NULL;
+        else {
+            MSFT_NameIntro *name = (MSFT_NameIntro*)&This->
+                typelib_segment_data[MSFT_SEG_NAME][This->typelib_header.NameOffset];
+
+            ctl2_decode_name((char*)&name->namelen, &string);
+
+            *pBstrName = SysAllocString(string);
+            if(!*pBstrName)
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    if(pBstrDocString) {
+        if(This->typelib_header.helpstring == -1)
+            *pBstrDocString = NULL;
+        else {
+            ctl2_decode_string(&This->typelib_segment_data[MSFT_SEG_STRING][This->typelib_header.helpstring], &string);
+
+            *pBstrDocString = SysAllocString(string);
+            if(!*pBstrDocString) {
+                if(pBstrName) SysFreeString(*pBstrName);
+                return E_OUTOFMEMORY;
+            }
+        }
+    }
+
+    if(pdwHelpContext)
+        *pdwHelpContext = This->typelib_header.helpcontext;
+
+    if(pBstrHelpFile) {
+        if(This->typelib_header.helpfile == -1)
+            *pBstrHelpFile = NULL;
+        else {
+            ctl2_decode_string(&This->typelib_segment_data[MSFT_SEG_STRING][This->typelib_header.helpfile], &string);
+
+            *pBstrHelpFile = SysAllocString(string);
+            if(!*pBstrHelpFile) {
+                if(pBstrName) SysFreeString(*pBstrName);
+                if(pBstrDocString) SysFreeString(*pBstrDocString);
+                return E_OUTOFMEMORY;
+            }
+        }
+    }
+
+    return S_OK;
 }
 
 /******************************************************************************

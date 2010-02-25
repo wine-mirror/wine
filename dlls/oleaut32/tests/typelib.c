@@ -970,6 +970,7 @@ if(use_midl_tlb) {
 
 static void test_CreateTypeLib(void) {
     static const WCHAR stdoleW[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+    static OLECHAR typelibW[] = {'t','y','p','e','l','i','b',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
     static OLECHAR interface2W[] = {'i','n','t','e','r','f','a','c','e','2',0};
     static OLECHAR coclassW[] = {'c','o','c','l','a','s','s',0};
@@ -994,6 +995,8 @@ static void test_CreateTypeLib(void) {
     TYPEATTR *typeattr;
     TLIBATTR *libattr;
     HREFTYPE hreftype;
+    BSTR name, docstring, helpfile;
+    DWORD helpcontext;
     int impltypeflags;
     HRESULT hres;
 
@@ -1023,6 +1026,29 @@ static void test_CreateTypeLib(void) {
     ok(libattr->wLibFlags == 0, "wLibFlags = %d\n", libattr->wLibFlags);
 
     ITypeLib_ReleaseTLibAttr(tl, libattr);
+
+    name = (BSTR)0xdeadbeef;
+    hres = ITypeLib_GetDocumentation(tl, -1, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(name == NULL, "name != NULL\n");
+    ok(docstring == NULL, "docstring != NULL\n");
+    ok(helpcontext == 0, "helpcontext != 0\n");
+    ok(helpfile == NULL, "helpfile != NULL\n");
+
+    hres = ITypeLib_GetDocumentation(tl, 0, &name, NULL, NULL, NULL);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
+    hres = ICreateTypeLib_SetName(createtl, typelibW);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetDocumentation(tl, -1, NULL, NULL, NULL, NULL);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetDocumentation(tl, -1, &name, NULL, NULL, NULL);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(!memcmp(name, typelibW, sizeof(typelibW)), "name = %s\n", wine_dbgstr_w(name));
+
+    SysFreeString(name);
 
     ITypeLib_Release(tl);
 
