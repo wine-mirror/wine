@@ -347,7 +347,7 @@ static void test_DeleteDC(void)
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
@@ -356,7 +356,7 @@ static void test_DeleteDC(void)
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
@@ -371,7 +371,7 @@ static void test_DeleteDC(void)
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
@@ -380,7 +380,7 @@ static void test_DeleteDC(void)
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     /* CS_CLASSDC */
     memset(&cls, 0, sizeof(cls));
@@ -418,7 +418,7 @@ static void test_DeleteDC(void)
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
@@ -466,12 +466,9 @@ todo_wine
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
     ret = GetObjectType(hdc);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
-
-    ret = GetObjectType(hdc_test);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
 
     ret = UnregisterClassA("Wine own DC", GetModuleHandle(NULL));
     ok(ret, "UnregisterClassA failed\n");
