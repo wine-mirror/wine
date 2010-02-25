@@ -170,6 +170,9 @@ typedef struct tagICreateTypeLib2Impl
     char *typelib_segment_data[MSFT_SEG_MAX];
     int typelib_segment_block_length[MSFT_SEG_MAX];
 
+    int typelib_guids; /* Number of defined typelib guids */
+    int typeinfo_guids; /* Number of defined typeinfo guids */
+
     INT typelib_typeinfo_offsets[0x200]; /* Hope that's enough. */
 
     INT *typelib_namehash_segment;
@@ -1547,7 +1550,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         WCHAR name[MAX_PATH], *p;
         TLIBATTR *tlibattr;
         TYPEATTR *typeattr;
-        MSFT_GuidEntry guid;
+        MSFT_GuidEntry guid, *check_guid;
         MSFT_ImpInfo impinfo;
         int guid_offset, import_offset;
         DWORD len;
@@ -1559,7 +1562,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             return hres;
 
         guid.guid = tlibattr->guid;
-        guid.hreftype = 2;
+        guid.hreftype = This->typelib->typelib_guids*12+2;
         guid.next_hash = -1;
 
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
@@ -1567,6 +1570,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             ITypeLib_ReleaseTLibAttr(container, tlibattr);
             return E_OUTOFMEMORY;
         }
+
+        check_guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][guid_offset];
+        if(check_guid->hreftype == guid.hreftype)
+            This->typelib->typelib_guids++;
 
         /* Get import file name */
         /* Check HKEY_CLASSES_ROOT\TypeLib\{GUID}\{Ver}\0\win32 */
@@ -1599,13 +1606,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             return hres;
 
         guid.guid = typeattr->guid;
-        guid.hreftype = 1;
+        guid.hreftype = This->typelib->typeinfo_guids*12+1;
         guid.next_hash = -1;
         ITypeInfo_ReleaseTypeAttr(pTInfo, typeattr);
 
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
         if(guid_offset == -1)
             return E_OUTOFMEMORY;
+
+        check_guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][guid_offset];
+        if(check_guid->hreftype == guid.hreftype)
+            This->typelib->typeinfo_guids++;
 
         /* Allocate importinfo */
         impinfo.flags = ((This->typeinfo->typekind&0xf)<<24) | MSFT_IMPINFO_OFFSET_IS_GUID;
@@ -2315,6 +2326,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
             hres = ITypeInfo_GetTypeAttr(cur, &typeattr);
             if(FAILED(hres))
                 return hres;
+
+            if(!memcmp(&typeattr->guid, &IID_IDispatch, sizeof(IDispatch)))
+                This->typeinfo->flags |= TYPEFLAG_FDISPATCHABLE;
 
             This->typeinfo->datatype2 += (typeattr->cFuncs<<16) + 1;
             ITypeInfo_ReleaseTypeAttr(cur, typeattr);

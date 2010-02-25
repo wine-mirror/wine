@@ -973,6 +973,7 @@ static void test_CreateTypeLib(void) {
     static OLECHAR typelibW[] = {'t','y','p','e','l','i','b',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
     static OLECHAR interface2W[] = {'i','n','t','e','r','f','a','c','e','2',0};
+    static OLECHAR dualW[] = {'d','u','a','l',0};
     static OLECHAR coclassW[] = {'c','o','c','l','a','s','s',0};
     static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
@@ -987,7 +988,7 @@ static void test_CreateTypeLib(void) {
     ICreateTypeLib2 *createtl;
     ICreateTypeInfo *createti;
     ITypeLib *tl, *stdole;
-    ITypeInfo *interface1, *interface2, *unknown, *ti;
+    ITypeInfo *interface1, *interface2, *unknown, *dispatch, *ti;
     FUNCDESC funcdesc;
     ELEMDESC elemdesc[5];
     PARAMDESCEX paramdescex;
@@ -1006,6 +1007,9 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IUnknown, &unknown);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispatch);
     ok(hres == S_OK, "got %08x\n", hres);
 
     GetTempFileNameA(".", "tlb", 0, filename);
@@ -1309,6 +1313,37 @@ static void test_CreateTypeLib(void) {
 
     ICreateTypeInfo_Release(createti);
 
+    hres = ICreateTypeLib_CreateTypeInfo(createtl, dualW, TKIND_INTERFACE, &createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddRefTypeInfo(createti, dispatch, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 28, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    ITypeInfo_Release(ti);
+
+    ICreateTypeInfo_Release(createti);
+
     hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
@@ -1348,6 +1383,7 @@ static void test_CreateTypeLib(void) {
 
     ITypeInfo_Release(interface2);
     ITypeInfo_Release(interface1);
+    ITypeInfo_Release(dispatch);
     ITypeInfo_Release(unknown);
 
     ITypeLib_Release(tl);
