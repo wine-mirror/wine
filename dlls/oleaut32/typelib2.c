@@ -4260,9 +4260,28 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
 {
     ICreateTypeLib2Impl *This = impl_from_ITypeLib2(iface);
 
-    FIXME("(%p,%p), stub!\n", This, ppTLibAttr);
+    TRACE("(%p,%p)\n", This, ppTLibAttr);
 
-    return E_OUTOFMEMORY;
+    if(!ppTLibAttr)
+        return E_INVALIDARG;
+
+    *ppTLibAttr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TLIBATTR));
+    if(!*ppTLibAttr)
+        return E_OUTOFMEMORY;
+
+    if(This->typelib_header.posguid != -1) {
+        MSFT_GuidEntry *guid;
+
+        guid = (MSFT_GuidEntry*)&This->typelib_segment_data[MSFT_SEG_GUID][This->typelib_header.posguid];
+        (*ppTLibAttr)->guid = guid->guid;
+    }
+
+    (*ppTLibAttr)->lcid = This->typelib_header.lcid;
+    (*ppTLibAttr)->syskind = This->typelib_header.varflags&0x3;
+    (*ppTLibAttr)->wMajorVerNum = This->typelib_header.version&0xffff;
+    (*ppTLibAttr)->wMinorVerNum = This->typelib_header.version>>16;
+    (*ppTLibAttr)->wLibFlags = This->typelib_header.flags;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -4366,9 +4385,9 @@ static void WINAPI ITypeLib2_fnReleaseTLibAttr(
         ITypeLib2 * iface,
         TLIBATTR* pTLibAttr)
 {
-    ICreateTypeLib2Impl *This = impl_from_ITypeLib2(iface);
+    TRACE("(%p,%p)\n", iface, pTLibAttr);
 
-    FIXME("(%p,%p), stub!\n", This, pTLibAttr);
+    HeapFree(GetProcessHeap(), 0, pTLibAttr);
 }
 
 /******************************************************************************
