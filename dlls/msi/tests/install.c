@@ -1500,6 +1500,58 @@ static const CHAR rd_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\t\t5200\n"
                                               "InstallFinalize\t\t6000\n";
 
+static const CHAR rrv_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "registry.txt\tregistry\tregistry.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR rrv_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "registry\t\t\tregistry feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR rrv_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "registry\tregistry\n";
+
+static const CHAR rrv_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "registry\t{DA97585B-962D-45EB-AD32-DA15E60CA9EE}\tMSITESTDIR\t0\t\tregistry.txt\n";
+
+static const CHAR rrv_registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
+                                       "s72\ti2\tl255\tL255\tL0\ts72\n"
+                                       "Registry\tRegistry\n"
+                                       "reg1\t2\tSOFTWARE\\Wine\\keyA\t\tA\tregistry\n"
+                                       "reg2\t2\tSOFTWARE\\Wine\\keyA\tvalueA\tA\tregistry\n"
+                                       "reg3\t2\tSOFTWARE\\Wine\\key1\t-\t\tregistry\n";
+
+static const CHAR rrv_remove_registry_dat[] = "RemoveRegistry\tRoot\tKey\tName\tComponent_\n"
+                                              "s72\ti2\tl255\tL255\ts72\n"
+                                              "RemoveRegistry\tRemoveRegistry\n"
+                                              "reg1\t2\tSOFTWARE\\Wine\\keyB\t\tregistry\n"
+                                              "reg2\t2\tSOFTWARE\\Wine\\keyB\tValueB\tregistry\n"
+                                              "reg3\t2\tSOFTWARE\\Wine\\key2\t-\tregistry\n";
+
+static const CHAR rrv_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "RemoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t2000\n"
+                                               "RemoveRegistryValues\t\t3000\n"
+                                               "RegisterProduct\t\t5000\n"
+                                               "PublishFeatures\t\t5100\n"
+                                               "PublishProduct\t\t5200\n"
+                                               "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2359,6 +2411,20 @@ static const msi_table rd_tables[] =
     ADD_TABLE(rd_file),
     ADD_TABLE(rd_duplicate_file),
     ADD_TABLE(rd_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table rrv_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(rrv_component),
+    ADD_TABLE(rrv_feature),
+    ADD_TABLE(rrv_feature_comp),
+    ADD_TABLE(rrv_file),
+    ADD_TABLE(rrv_registry),
+    ADD_TABLE(rrv_remove_registry),
+    ADD_TABLE(rrv_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -8396,6 +8462,77 @@ static void test_remove_duplicate_files(void)
     delete_test_files();
 }
 
+static void test_remove_registry_values(void)
+{
+    UINT r;
+    LONG res;
+    HKEY key;
+
+    create_test_files();
+    create_file("msitest\\registry.txt", 1000);
+    create_database(msifile, rrv_tables, sizeof(rrv_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", &key);
+    RegSetValueExA(key, "value1", 0, REG_SZ, (const BYTE *)"1", 2);
+    RegCloseKey(key);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", &key);
+    RegSetValueExA(key, "value2", 0, REG_SZ, (const BYTE *)"2", 2);
+    RegCloseKey(key);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyA", &key);
+    RegSetValueExA(key, "", 0, REG_SZ, (const BYTE *)"default", 8);
+    RegSetValueExA(key, "valueA", 0, REG_SZ, (const BYTE *)"A", 2);
+    RegSetValueExA(key, "valueB", 0, REG_SZ, (const BYTE *)"B", 2);
+    RegCloseKey(key);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyB", &key);
+    RegSetValueExA(key, "", 0, REG_SZ, (const BYTE *)"default", 8);
+    RegSetValueExA(key, "valueB", 0, REG_SZ, (const BYTE *)"B", 2);
+    RegCloseKey(key);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", &key);
+    ok(res == ERROR_SUCCESS, "key removed\n");
+    RegCloseKey(key);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", &key);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", &key);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    RegCloseKey(key);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", &key);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", &key);
+    ok(res == ERROR_SUCCESS, "key removed\n");
+    RegCloseKey(key);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyA", &key);
+    ok(res == ERROR_SUCCESS, "key removed\n");
+    RegCloseKey(key);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyB", &key);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyA");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine");
+
+    ok(!delete_pf("msitest\\registry.txt", TRUE), "file not removed\n");
+    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8499,6 +8636,7 @@ START_TEST(install)
     test_create_remove_shortcut();
     test_publish_components();
     test_remove_duplicate_files();
+    test_remove_registry_values();
 
     DeleteFileA(log_file);
 
