@@ -5592,9 +5592,18 @@ static void test_elems(IHTMLDocument2 *doc)
         {
             VARIANT_BOOL vb;
 
+            hres = IHTMLScriptElement_put_type (script, NULL);
+            ok(hres == S_OK, "put_type failed: %08x\n", hres);
+            hres = IHTMLScriptElement_get_type(script, &type);
+            ok(hres == S_OK, "get_type failed: %08x\n", hres);
+            ok(type == NULL, "Unexpected type %s\n", wine_dbgstr_w(type));
+
+            hres = IHTMLScriptElement_put_type (script, a2bstr ("text/javascript"));
+            ok(hres == S_OK, "put_type failed: %08x\n", hres);
             hres = IHTMLScriptElement_get_type(script, &type);
             ok(hres == S_OK, "get_type failed: %08x\n", hres);
             ok(!strcmp_wa(type, "text/javascript"), "Unexpected type %s\n", wine_dbgstr_w(type));
+
             SysFreeString(type);
 
             /* test defer */
