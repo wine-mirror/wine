@@ -5,6 +5,7 @@
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *  Copyright 2002 Andriy Palamarchuk
  *  Copyright 2007 Rolf Kalbermatter
+ *  Copyright 2010 Vitaly Perov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -509,6 +510,26 @@ static ENCODING detect_encoding_of_file(LPCWSTR szFileName)
     }
 }
 
+static LPWSTR dialog_print_to_file(HWND hMainWnd)
+{
+    OPENFILENAMEW ofn;
+    static WCHAR file[MAX_PATH] = {'o','u','t','p','u','t','.','p','r','n',0};
+    static const WCHAR defExt[] = {'p','r','n',0};
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+    ofn.hwndOwner = hMainWnd;
+    ofn.lpstrFile = file;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = defExt;
+
+    if(GetSaveFileNameW(&ofn))
+        return file;
+    else
+        return FALSE;
+}
 static UINT_PTR CALLBACK OfnHookProc(HWND hdlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static HWND hEncCombo;
@@ -834,6 +855,13 @@ VOID DIALOG_FilePrint(VOID)
     di.lpszOutput = NULL;
     di.lpszDatatype = NULL;
     di.fwType = 0; 
+
+    if(printer.Flags & PD_PRINTTOFILE)
+    {
+        di.lpszOutput = dialog_print_to_file(printer.hwndOwner);
+        if(!di.lpszOutput)
+            return;
+    }
 
     /* Get the file text */
     size = GetWindowTextLengthW(Globals.hEdit) + 1;
