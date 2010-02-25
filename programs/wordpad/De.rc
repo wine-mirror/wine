@@ -247,8 +247,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Ver&größern"
     STRING_PREVIEW_ZOOMOUT,          "Ver&kleinern"
     STRING_PREVIEW_CLOSE,            "&Schließen"
-    STRING_PREVIEW_PAGE,             "Page"
-    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_PREVIEW_PAGE,             "Seite"
+    STRING_PREVIEW_PAGES,            "Seiten"
 END
 
 STRINGTABLE DISCARDABLE
