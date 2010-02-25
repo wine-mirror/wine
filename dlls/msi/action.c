@@ -2218,21 +2218,51 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
     return data;
 }
 
+static const WCHAR *get_root_key( MSIPACKAGE *package, INT root, HKEY *root_key )
+{
+    const WCHAR *ret;
+
+    switch (root)
+    {
+    case -1:
+        if (msi_get_property_int( package, szAllUsers, 0 ))
+        {
+            *root_key = HKEY_LOCAL_MACHINE;
+            ret = szHLM;
+        }
+        else
+        {
+            *root_key = HKEY_CURRENT_USER;
+            ret = szHCU;
+        }
+        break;
+    case 0:
+        *root_key = HKEY_CLASSES_ROOT;
+        ret = szHCR;
+        break;
+    case 1:
+        *root_key = HKEY_CURRENT_USER;
+        ret = szHCU;
+        break;
+    case 2:
+        *root_key = HKEY_LOCAL_MACHINE;
+        ret = szHLM;
+        break;
+    case 3:
+        *root_key = HKEY_USERS;
+        ret = szHU;
+        break;
+    default:
+        ERR("Unknown root %i\n", root);
+        return NULL;
+    }
+
+    return ret;
+}
+
 static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    static const WCHAR szHCR[] = 
-        {'H','K','E','Y','_','C','L','A','S','S','E','S','_',
-         'R','O','O','T','\\',0};
-    static const WCHAR szHCU[] =
-        {'H','K','E','Y','_','C','U','R','R','E','N','T','_',
-         'U','S','E','R','\\',0};
-    static const WCHAR szHLM[] =
-        {'H','K','E','Y','_','L','O','C','A','L','_',
-         'M','A','C','H','I','N','E','\\',0};
-    static const WCHAR szHU[] =
-        {'H','K','E','Y','_','U','S','E','R','S','\\',0};
-
     LPSTR value_data = NULL;
     HKEY  root_key, hkey;
     DWORD type,size;
@@ -2280,44 +2310,8 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     root = MSI_RecordGetInteger(row,2);
     key = MSI_RecordGetString(row, 3);
 
-    /* get the root key */
-    switch (root)
-    {
-        case -1: 
-            {
-                LPWSTR all_users = msi_dup_property( package, szAllUsers );
-                if (all_users && all_users[0] == '1')
-                {
-                    root_key = HKEY_LOCAL_MACHINE;
-                    szRoot = szHLM;
-                }
-                else
-                {
-                    root_key = HKEY_CURRENT_USER;
-                    szRoot = szHCU;
-                }
-                msi_free(all_users);
-            }
-                 break;
-        case 0:  root_key = HKEY_CLASSES_ROOT; 
-                 szRoot = szHCR;
-                 break;
-        case 1:  root_key = HKEY_CURRENT_USER;
-                 szRoot = szHCU;
-                 break;
-        case 2:  root_key = HKEY_LOCAL_MACHINE;
-                 szRoot = szHLM;
-                 break;
-        case 3:  root_key = HKEY_USERS; 
-                 szRoot = szHU;
-                 break;
-        default:
-                 ERR("Unknown root %i\n",root);
-                 root_key=NULL;
-                 szRoot = NULL;
-                 break;
-    }
-    if (!root_key)
+    szRoot = get_root_key( package, root, &root_key );
+    if (!szRoot)
         return ERROR_SUCCESS;
 
     deformat_string(package, key , &deformated);
@@ -2410,6 +2404,212 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
     msiobj_release(&view->hdr);
     return rc;
+}
+
+static void delete_reg_key_or_value( HKEY hkey_root, LPCWSTR key, LPCWSTR value, BOOL delete_key )
+{
+    LONG res;
+    HKEY hkey;
+    DWORD num_subkeys, num_values;
+
+    if (delete_key)
+    {
+        if ((res = RegDeleteTreeW( hkey_root, key )))
+        {
+            WARN("Failed to delete key %s (%d)\n", debugstr_w(key), res);
+        }
+        return;
+    }
+
+    if (!(res = RegOpenKeyW( hkey_root, key, &hkey )))
+    {
+        if ((res = RegDeleteValueW( hkey, value )))
+        {
+            WARN("Failed to delete value %s (%d)\n", debugstr_w(value), res);
+        }
+        res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, &num_subkeys, NULL, NULL, &num_values,
+                                NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+
+        if (!res && !num_subkeys && !num_values)
+        {
+            TRACE("Removing empty key %s\n", debugstr_w(key));
+            RegDeleteKeyW( hkey_root, key );
+        }
+        return;
+    }
+    WARN("Failed to open key %s (%d)\n", debugstr_w(key), res);
+}
+
+
+static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR component, name, key_str, root_key_str;
+    LPWSTR deformated_key, deformated_name, ui_key_str;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    BOOL delete_key = FALSE;
+    HKEY hkey_root;
+    UINT size;
+    INT root;
+
+    ui_progress( package, 2, 0, 0, 0 );
+
+    component = MSI_RecordGetString( row, 6 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
+
+    name = MSI_RecordGetString( row, 4 );
+    if (MSI_RecordIsNull( row, 5 ) && name )
+    {
+        if (name[0] == '+' && !name[1])
+            return ERROR_SUCCESS;
+        else if ((name[0] == '-' && !name[1]) || (name[0] == '*' && !name[1]))
+        {
+            delete_key = TRUE;
+            name = NULL;
+        }
+    }
+
+    root = MSI_RecordGetInteger( row, 2 );
+    key_str = MSI_RecordGetString( row, 3 );
+
+    root_key_str = get_root_key( package, root, &hkey_root );
+    if (!root_key_str)
+        return ERROR_SUCCESS;
+
+    deformat_string( package, key_str, &deformated_key );
+    size = strlenW( deformated_key ) + strlenW( root_key_str ) + 1;
+    ui_key_str = msi_alloc( size * sizeof(WCHAR) );
+    strcpyW( ui_key_str, root_key_str );
+    strcatW( ui_key_str, deformated_key );
+
+    deformat_string( package, name, &deformated_name );
+
+    delete_reg_key_or_value( hkey_root, deformated_key, deformated_name, delete_key );
+    msi_free( deformated_key );
+
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, ui_key_str );
+    MSI_RecordSetStringW( uirow, 2, deformated_name );
+
+    ui_actiondata( package, szRemoveRegistryValues, uirow );
+    msiobj_release( &uirow->hdr );
+
+    msi_free( ui_key_str );
+    msi_free( deformated_name );
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR component, name, key_str, root_key_str;
+    LPWSTR deformated_key, deformated_name, ui_key_str;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    BOOL delete_key = FALSE;
+    HKEY hkey_root;
+    UINT size;
+    INT root;
+
+    ui_progress( package, 2, 0, 0, 0 );
+
+    component = MSI_RecordGetString( row, 5 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+    {
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_LOCAL;
+
+    if ((name = MSI_RecordGetString( row, 4 )))
+    {
+        if (name[0] == '-' && !name[1])
+        {
+            delete_key = TRUE;
+            name = NULL;
+        }
+    }
+
+    root = MSI_RecordGetInteger( row, 2 );
+    key_str = MSI_RecordGetString( row, 3 );
+
+    root_key_str = get_root_key( package, root, &hkey_root );
+    if (!root_key_str)
+        return ERROR_SUCCESS;
+
+    deformat_string( package, key_str, &deformated_key );
+    size = strlenW( deformated_key ) + strlenW( root_key_str ) + 1;
+    ui_key_str = msi_alloc( size * sizeof(WCHAR) );
+    strcpyW( ui_key_str, root_key_str );
+    strcatW( ui_key_str, deformated_key );
+
+    deformat_string( package, name, &deformated_name );
+
+    delete_reg_key_or_value( hkey_root, deformated_key, deformated_name, delete_key );
+    msi_free( deformated_key );
+
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, ui_key_str );
+    MSI_RecordSetStringW( uirow, 2, deformated_name );
+
+    ui_actiondata( package, szRemoveRegistryValues, uirow );
+    msiobj_release( &uirow->hdr );
+
+    msi_free( ui_key_str );
+    msi_free( deformated_name );
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR registry_query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','R','e','g','i','s','t','r','y','`',0 };
+    static const WCHAR remove_registry_query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','R','e','m','o','v','e','R','e','g','i','s','t','r','y','`',0 };
+
+    /* increment progress bar each time action data is sent */
+    ui_progress( package, 1, REG_PROGRESS_VALUE, 1, 0 );
+
+    rc = MSI_DatabaseOpenViewW( package->db, registry_query, &view );
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveRegistryValuesOnUninstall, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+
+    rc = MSI_DatabaseOpenViewW( package->db, remove_registry_query, &view );
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveRegistryValuesOnInstall, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+
+    return ERROR_SUCCESS;
 }
 
 static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
@@ -6602,12 +6802,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'R','e','m','o','v','e','R','e','g','i','s','t','r','y',0 };
-    return msi_unimplemented_action_stub( package, "RemoveRegistryValues", table );
 }
 
 static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )

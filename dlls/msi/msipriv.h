@@ -1076,6 +1076,10 @@ static const WCHAR szPIDTemplate[] = {'P','I','D','T','e','m','p','l','a','t','e
 static const WCHAR szPIDKEY[] = {'P','I','D','K','E','Y',0};
 static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
 static const WCHAR szSumInfo[] = {5 ,'S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',0};
+static const WCHAR szHCR[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T','\\',0};
+static const WCHAR szHCU[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',0};
+static const WCHAR szHLM[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\',0};
+static const WCHAR szHU[] = {'H','K','E','Y','_','U','S','E','R','S','\\',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
