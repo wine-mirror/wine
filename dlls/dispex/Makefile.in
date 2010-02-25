@@ -1,0 +1,19 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dispex.dll
+IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32 kernel32 ntdll
+EXTRADEFS = -DREGISTER_PROXY_DLL -DPROXY_DELEGATION
+
+EXTRA_OBJS = dlldata.o
+
+C_SRCS = \
+	usrmarshal.c
+
+IDL_P_SRCS = \
+	disp_ex.idl
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

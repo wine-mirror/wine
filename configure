@@ -14331,6 +14331,10 @@ wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/dispdib.dll16 dlls/dispdib.dll16/
 wine_fn_config_makefile dlls/dispdib.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dispdib.dll16"
 
+wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/dispex dlls/dispex/__install__ dlls/dispex/__install-lib__ dlls/dispex/__install-dev__: __builddeps__"
+wine_fn_config_makefile dlls/dispex "dlls/Makedll.rules \$(MAKEDEP)"
+test "x$enable_dispex" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dispex"
+
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/display.drv16 dlls/display.drv16/__install__ dlls/display.drv16/__install-lib__ dlls/display.drv16/__install-dev__: __builddeps__"
 wine_fn_config_makefile dlls/display.drv16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/display.drv16"
@@ -17330,6 +17334,7 @@ do
     "dlls/dinput/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/tests/Makefile" ;;
     "dlls/dinput8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput8/Makefile" ;;
     "dlls/dispdib.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispdib.dll16/Makefile" ;;
+    "dlls/dispex/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispex/Makefile" ;;
     "dlls/display.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/display.drv16/Makefile" ;;
     "dlls/dmband/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmband/Makefile" ;;
     "dlls/dmcompos/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmcompos/Makefile" ;;
