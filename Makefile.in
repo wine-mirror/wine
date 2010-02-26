@@ -222,6 +222,7 @@ tools/winedump/__install__ tools/winedump/__install-dev__: tools/winedump
 tools/winegcc/__install__ tools/winegcc/__install-dev__: tools/winegcc
 tools/wmc/__install__ tools/wmc/__install-dev__: tools/wmc
 tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
+tools/__depend__: $(MAKEDEP)
 
 RECURSE_TARGETS = \
 	__clean__ \
