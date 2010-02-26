@@ -1197,9 +1197,6 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_RBUTTONDBLCLK:
         WCUSER_GenerateMouseInputRecord(data, WCUSER_GetCell(data, lParam), wParam, DOUBLE_CLICK);
         break;
-    case WM_MOUSEWHEEL:
-        WCUSER_GenerateMouseInputRecord(data,  WCUSER_GetCell(data, lParam), wParam, MOUSE_WHEELED);
-	break;
     case WM_SETFOCUS:
 	if (data->curcfg.cursor_visible)
 	{
@@ -1240,19 +1237,35 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
         }
 	break;
+    case WM_MOUSEWHEEL:
+        if (data->curcfg.sb_height <= data->curcfg.win_height)
+        {
+            WCUSER_GenerateMouseInputRecord(data,  WCUSER_GetCell(data, lParam), wParam, MOUSE_WHEELED);
+            break;
+        }
+        /* else fallthrough */
     case WM_VSCROLL:
         {
 	    int	pos = data->curcfg.win_pos.Y;
 
-	    switch (LOWORD(wParam))
-	    {
-            case SB_PAGEUP: 	pos -= 8; 		break;
-            case SB_PAGEDOWN: 	pos += 8; 		break;
-            case SB_LINEUP: 	pos--;			break;
-	    case SB_LINEDOWN: 	pos++;	 		break;
-            case SB_THUMBTRACK: pos = HIWORD(wParam);	break;
-            default: 					break;
-	    }
+            if (uMsg == WM_MOUSEWHEEL)
+            {
+                UINT scrollLines = 3;
+                SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &scrollLines, 0);
+                scrollLines *= -GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+                pos += scrollLines;
+            } else {
+                switch (LOWORD(wParam))
+                {
+                case SB_PAGEUP: 	pos -= 8; 		break;
+                case SB_PAGEDOWN: 	pos += 8; 		break;
+                case SB_LINEUP: 	pos--;			break;
+                case SB_LINEDOWN: 	pos++;	 		break;
+                case SB_THUMBTRACK: pos = HIWORD(wParam);	break;
+                default: 					break;
+                }
+            }
+
 	    if (pos < 0) pos = 0;
 	    if (pos > data->curcfg.sb_height - data->curcfg.win_height)
                 pos = data->curcfg.sb_height - data->curcfg.win_height;
@@ -1268,6 +1281,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    }
 
         }
+        break;
     case WM_SYSCOMMAND:
 	switch (wParam)
 	{
