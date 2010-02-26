@@ -6750,7 +6750,7 @@ static UINT ACTION_BindImage( MSIPACKAGE *package )
 static UINT ACTION_IsolateComponents( MSIPACKAGE *package )
 {
     static const WCHAR table[] = {
-        'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t',0 };
+        'I','s','o','l','a','t','e','d','C','o','m','p','o','n','e','n','t',0 };
     return msi_unimplemented_action_stub( package, "IsolateComponents", table );
 }
 
