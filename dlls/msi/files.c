@@ -597,11 +597,10 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
         goto done;
     }
 
-    lstrcpyW(path, dir);
-    PathAddBackslashW(path);
-
     if (filename)
     {
+        lstrcpyW(path, dir);
+        PathAddBackslashW(path);
         lstrcatW(path, filename);
 
         TRACE("Deleting misc file: %s\n", debugstr_w(path));
@@ -609,8 +608,8 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     }
     else
     {
-        TRACE("Removing misc directory: %s\n", debugstr_w(path));
-        RemoveDirectoryW(path);
+        TRACE("Removing misc directory: %s\n", debugstr_w(dir));
+        RemoveDirectoryW(dir);
     }
 
 done:
@@ -628,6 +627,9 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','R','e','m','o','v','e','F','i','l','e','`',0};
+    static const WCHAR folder_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
 
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
@@ -636,10 +638,14 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         msiobj_release(&view->hdr);
     }
 
+    r = MSI_DatabaseOpenViewW(package->db, folder_query, &view);
+    if (r == ERROR_SUCCESS)
+        msiobj_release(&view->hdr);
+
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         MSIRECORD *uirow;
-        LPWSTR uipath, p;
+        LPWSTR dir, uipath, p;
 
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
@@ -655,8 +661,17 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
             continue;
 
         TRACE("removing %s\n", debugstr_w(file->File) );
-        if ( !DeleteFileW( file->TargetPath ) )
-            TRACE("failed to delete %s\n",  debugstr_w(file->TargetPath));
+        if (!DeleteFileW( file->TargetPath ))
+        {
+            WARN("failed to delete %s\n",  debugstr_w(file->TargetPath));
+        }
+        /* FIXME: check persistence for each directory */
+        else if (r && (dir = strdupW( file->TargetPath )))
+        {
+            if ((p = strrchrW( dir, '\\' ))) *p = 0;
+            RemoveDirectoryW( dir );
+            msi_free( dir );
+        }
         file->state = msifs_missing;
 
         /* the UI chunk */

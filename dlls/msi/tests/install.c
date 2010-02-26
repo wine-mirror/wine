@@ -5139,11 +5139,8 @@ static void test_publish(void)
     /* no UnpublishFeatures */
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!pf_exists("msitest\\maximus"), "File deleted\n");
-    todo_wine
-    {
-        ok(!pf_exists("msitest"), "File deleted\n");
-    }
+    ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
+    ok(!pf_exists("msitest"), "Directory not deleted\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -5218,7 +5215,7 @@ static void test_publish(void)
     r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine ok(pf_exists("msitest\\maximus"), "File deleted\n");
-    ok(pf_exists("msitest"), "File deleted\n");
+    todo_wine ok(pf_exists("msitest"), "Directory deleted\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
@@ -5322,10 +5319,7 @@ static void test_publish(void)
     r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature,montecristo");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
-    todo_wine
-    {
-        ok(!pf_exists("msitest"), "File not deleted\n");
-    }
+    ok(!pf_exists("msitest"), "Directory not deleted\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -5400,10 +5394,7 @@ static void test_publish(void)
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
-    todo_wine
-    {
-        ok(!pf_exists("msitest"), "File not deleted\n");
-    }
+    ok(!pf_exists("msitest"), "Directory not deleted\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -5617,10 +5608,7 @@ static void test_publishsourcelist(void)
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
-    todo_wine
-    {
-        ok(!pf_exists("msitest"), "File not deleted\n");
-    }
+    ok(!pf_exists("msitest"), "Directory not deleted\n");
 
     /* make sure 'Program Files\msitest' is removed */
     delete_pfmsitest_files();
@@ -6977,10 +6965,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
     /* product has been removed */
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
@@ -7005,10 +6990,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
     /* product has been removed */
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
@@ -7035,10 +7017,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
     create_database(msifile, mcp_tables, sizeof(mcp_tables) / sizeof(msi_table));
 
@@ -7085,10 +7064,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
     /* install the product, machine */
     r = MsiInstallProductA(msifile, "ALLUSERS=1 INSTALLLEVEL=10 PROPVAR=42");
@@ -7149,10 +7125,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "File not removed\n");
 
     DeleteFileA(msifile);
     RegCloseKey(source);
@@ -7191,10 +7164,7 @@ static void test_missingcomponent(void)
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
     ok(!pf_exists("msitest\\beryllium"), "File installed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File not removed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
     DeleteFileA(msifile);
     DeleteFileA("msitest\\hydrogen");
@@ -8268,7 +8238,7 @@ static void test_register_font(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
     ret = RegQueryValueExA(key, "msi test font", NULL, NULL, NULL, NULL);
     ok(ret == ERROR_FILE_NOT_FOUND, "unexpected result %d\n", ret);
@@ -8362,7 +8332,7 @@ static void test_register_typelib(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(!delete_pf("msitest\\typelib.dll", TRUE), "file not removed\n");
-    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
     delete_test_files();
 }
@@ -8425,7 +8395,7 @@ static void test_publish_components(void)
     ok(res == ERROR_FILE_NOT_FOUND, "unexpected result %d\n", res);
 
     ok(!delete_pf("msitest\\english.txt", TRUE), "file not removed\n");
-    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
     delete_test_files();
 }
 
@@ -8529,7 +8499,7 @@ static void test_remove_registry_values(void)
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine");
 
     ok(!delete_pf("msitest\\registry.txt", TRUE), "file not removed\n");
-    todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
     delete_test_files();
 }
 
