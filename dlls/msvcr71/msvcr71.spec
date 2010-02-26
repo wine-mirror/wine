@@ -78,11 +78,11 @@
 @ cdecl __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindVecDtor
-@ stub __CxxDetectRethrow
+@ cdecl __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
 @ stub __CxxExceptionFilter
 @ cdecl -i386 __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
-@ stub __CxxQueryExceptionSize
+@ cdecl __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
 @ stub __CxxRegisterExceptionObject
 @ stub __CxxUnregisterExceptionObject
 @ stub __DestructExceptionObject
@@ -224,7 +224,7 @@
 @ stub _cputws
 @ cdecl _creat(str long) msvcrt._creat
 @ varargs _cscanf(str) msvcrt._cscanf
-@ stub _ctime64
+@ cdecl _ctime64(ptr) msvcrt._ctime64
 @ cdecl _cwait(ptr long long) msvcrt._cwait
 @ stub _cwprintf
 @ stub _cwscanf
@@ -281,11 +281,11 @@
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
 @ cdecl _fstati64(long ptr) msvcrt._fstati64
 @ cdecl _ftime(ptr) msvcrt._ftime
-@ stub _ftime64
+@ cdecl _ftime64(ptr) msvcrt._ftime64
 @ cdecl -ret64 _ftol() msvcrt._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime(long ptr) msvcrt._futime
-@ stub _futime64
+@ cdecl _futime64(long ptr) msvcrt._futime64
 @ cdecl _gcvt(double long str) msvcrt._gcvt
 @ stub _get_heap_handle
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
@@ -307,7 +307,7 @@
 @ stub _getwche
 @ cdecl _getws(ptr) msvcrt._getws
 @ cdecl _global_unwind2(ptr) msvcrt._global_unwind2
-@ stub _gmtime64
+@ cdecl _gmtime64(ptr) msvcrt._gmtime64
 @ cdecl _heapadd(ptr long) msvcrt._heapadd
 @ cdecl _heapchk() msvcrt._heapchk
 @ cdecl _heapmin() msvcrt._heapmin
@@ -544,7 +544,7 @@
 @ cdecl _unloaddll(long) msvcrt._unloaddll
 @ cdecl _unlock(long) msvcrt._unlock
 @ cdecl _utime(str ptr) msvcrt._utime
-@ stub _utime64
+@ cdecl _utime64(str ptr) msvcrt._utime64
 @ cdecl _vscprintf(str ptr) msvcrt._vscprintf
 @ cdecl _vscwprintf(wstr ptr) msvcrt._vscwprintf
 @ cdecl _vsnprintf(ptr long ptr ptr) msvcrt._vsnprintf
@@ -570,7 +570,7 @@
 @ stub _wcstoui64
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ cdecl _wctime(ptr) msvcrt._wctime
-@ stub _wctime64
+@ cdecl _wctime64(ptr) msvcrt._wctime64
 @ stub _wctype
 @ extern _wenviron msvcrt._wenviron
 @ varargs _wexecl(wstr wstr) msvcrt._wexecl
@@ -636,7 +636,7 @@
 @ cdecl _wtol(wstr) msvcrt._wtol
 @ cdecl _wunlink(wstr) msvcrt._wunlink
 @ cdecl _wutime(wstr ptr) msvcrt._wutime
-@ stub _wutime64
+@ cdecl _wutime64(wstr ptr) msvcrt._wutime64
 @ cdecl _y0(double) msvcrt._y0
 @ cdecl _y1(double) msvcrt._y1
 @ cdecl _yn(long double ) msvcrt._yn
