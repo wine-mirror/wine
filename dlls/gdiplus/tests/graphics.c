@@ -2299,7 +2299,7 @@ static void test_GdipGetNearestColor(void)
     if (status == Ok)
     {
         status = GdipGetNearestColor(graphics, &color);
-        todo_wine expect(Ok, status);
+        expect(Ok, status);
         expect(0xdeadbeef, color);
         GdipDeleteGraphics(graphics);
     }
@@ -2312,7 +2312,7 @@ static void test_GdipGetNearestColor(void)
     if (status == Ok)
     {
         status = GdipGetNearestColor(graphics, &color);
-        todo_wine expect(Ok, status);
+        expect(Ok, status);
         expect(0xdeadbeef, color);
         GdipDeleteGraphics(graphics);
     }
@@ -2325,7 +2325,7 @@ static void test_GdipGetNearestColor(void)
     if (status == Ok)
     {
         status = GdipGetNearestColor(graphics, &color);
-        todo_wine expect(Ok, status);
+        expect(Ok, status);
         expect(0xdeadbeef, color);
         GdipDeleteGraphics(graphics);
     }
@@ -2344,7 +2344,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2354,7 +2354,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2364,7 +2364,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2374,7 +2374,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2384,7 +2384,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2394,7 +2394,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     expect(0xdeadbeef, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2404,7 +2404,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     todo_wine expect(0xffa8bce8, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
@@ -2414,7 +2414,7 @@ static void test_GdipGetNearestColor(void)
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     todo_wine expect(0xffa8b8e8, color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
