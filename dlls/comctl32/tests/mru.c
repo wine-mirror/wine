@@ -385,7 +385,7 @@ static void test_MRUListA(void)
         /* check entry 0 */
         buffer[0] = 0;
         iRet = pEnumMRUList(hMRU, 0, buffer, 255);
-        todo_wine ok(iRet == lstrlen(checks[3]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[3]), iRet);
+        ok(iRet == lstrlen(checks[3]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[3]), iRet);
         ok(strcmp(buffer, checks[3]) == 0, "EnumMRUList expected %s, got %s\n", checks[3], buffer);
 
         /* check entry 0 with a too small buffer */
@@ -394,21 +394,21 @@ static void test_MRUListA(void)
         buffer[2] = 'A'; /* unchanged */
         buffer[3] = 0;   /* unchanged */
         iRet = pEnumMRUList(hMRU, 0, buffer, 2);
-        todo_wine ok(iRet == lstrlen(checks[3]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[3]), iRet);
-        todo_wine ok(strcmp(buffer, "T") == 0, "EnumMRUList expected %s, got %s\n", "T", buffer);
+        ok(iRet == lstrlen(checks[3]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[3]), iRet);
+        ok(strcmp(buffer, "T") == 0, "EnumMRUList expected %s, got %s\n", "T", buffer);
         /* make sure space after buffer has old values */
         ok(buffer[2] == 'A', "EnumMRUList expected %02x, got %02x\n", 'A', buffer[2]);
 
         /* check entry 1 */
         buffer[0] = 0;
         iRet = pEnumMRUList(hMRU, 1, buffer, 255);
-        todo_wine ok(iRet == lstrlen(checks[1]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[1]), iRet);
+        ok(iRet == lstrlen(checks[1]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[1]), iRet);
         ok(strcmp(buffer, checks[1]) == 0, "EnumMRUList expected %s, got %s\n", checks[1], buffer);
 
         /* check entry 2 */
         buffer[0] = 0;
         iRet = pEnumMRUList(hMRU, 2, buffer, 255);
-        todo_wine ok(iRet == lstrlen(checks[2]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[2]), iRet);
+        ok(iRet == lstrlen(checks[2]), "EnumMRUList expected %d, got %d\n", lstrlen(checks[2]), iRet);
         ok(strcmp(buffer, checks[2]) == 0, "EnumMRUList expected %s, got %s\n", checks[2], buffer);
 
         /* check out of bounds entry 3 */
