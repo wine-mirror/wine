@@ -797,6 +797,10 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     /* Change the name of the element */
     strcpyW(currentEntry.name, pwcsNewName);
 
+    /* Delete any sibling links */
+    currentEntry.leftChild = DIRENTRY_NULL;
+    currentEntry.rightChild = DIRENTRY_NULL;
+
     StorageBaseImpl_WriteDirEntry(This, currentEntryRef,
         &currentEntry);
 
