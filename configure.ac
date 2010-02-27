@@ -1420,6 +1420,9 @@ dnl **** Check for libpng ****
 if test "$ac_cv_header_png_h" = "yes"
 then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,-lm -lz,[[libpng[[0-9]]*]])
+    AC_CHECK_LIB(png,png_set_expand_gray_1_2_4_to_8,
+	[AC_DEFINE(HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8,1,[Define to 1 if libpng has the png_set_expand_gray_1_2_4_to_8 function.])]
+	,,-lm -lz)
 elif test -n "$X_CFLAGS" -a "x$with_png" != "xno"
 then
     dnl libpng is in the X directory on Mac OS X
@@ -1432,6 +1435,8 @@ then
     then
         AC_SUBST(PNGINCL,"$X_CFLAGS")
         WINE_CHECK_SONAME(png,png_create_read_struct,,,[$X_LIBS -lm -lz],[[libpng[[0-9]]*]])
+        AC_CHECK_LIB(png,png_set_expand_gray_1_2_4_to_8,
+		[AC_DEFINE(HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8,1)],,[$X_LIBS -lm -lz])
     fi
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
