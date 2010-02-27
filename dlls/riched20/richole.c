@@ -1729,6 +1729,11 @@ void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize)
   if (run->ole_obj->sizel.cx != 0 || run->ole_obj->sizel.cy != 0)
   {
     convert_sizel(c, &run->ole_obj->sizel, pSize);
+    if (c->editor->nZoomNumerator != 0)
+    {
+      pSize->cx = MulDiv(pSize->cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      pSize->cy = MulDiv(pSize->cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+    }
     return;
   }
 
@@ -1819,53 +1824,45 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
     hMemDC = CreateCompatibleDC(c->hDC);
     SelectObject(hMemDC, stgm.u.hBitmap);
-    if (!has_size && c->editor->nZoomNumerator == 0)
+    if (has_size)
     {
-      sz.cx = dibsect.dsBm.bmWidth;
-      sz.cy = dibsect.dsBm.bmHeight;
-      BitBlt(c->hDC, x, y - dibsect.dsBm.bmHeight,
+      convert_sizel(c, &run->ole_obj->sizel, &sz);
+    } else {
+      sz.cx = MulDiv(dibsect.dsBm.bmWidth, c->dpi.cx, 96);
+      sz.cy = MulDiv(dibsect.dsBm.bmHeight, c->dpi.cy, 96);
+    }
+    if (c->editor->nZoomNumerator != 0)
+    {
+      sz.cx = MulDiv(sz.cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      sz.cy = MulDiv(sz.cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+    }
+    if (sz.cx == dibsect.dsBm.bmWidth && sz.cy == dibsect.dsBm.bmHeight)
+    {
+      BitBlt(c->hDC, x, y - sz.cy,
              dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight,
              hMemDC, 0, 0, SRCCOPY);
-    }
-    else
-    {
-      if (has_size)
-      {
-        convert_sizel(c, &run->ole_obj->sizel, &sz);
-      }
-      else
-      {
-        sz.cx = MulDiv(dibsect.dsBm.bmWidth,
-                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-        sz.cy = MulDiv(dibsect.dsBm.bmHeight,
-                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-      }
+    } else {
       StretchBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy,
-                 hMemDC, 0, 0, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, SRCCOPY);
+                 hMemDC, 0, 0, dibsect.dsBm.bmWidth,
+                 dibsect.dsBm.bmHeight, SRCCOPY);
     }
     if (!stgm.pUnkForRelease) DeleteObject(stgm.u.hBitmap);
     break;
   case TYMED_ENHMF:
     GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
-    if (!has_size && c->editor->nZoomNumerator == 0)
+    if (has_size)
     {
-      sz.cy = emh.rclBounds.bottom - emh.rclBounds.top;
-      sz.cx = emh.rclBounds.right - emh.rclBounds.left;
+      convert_sizel(c, &run->ole_obj->sizel, &sz);
+    } else {
+      sz.cy = MulDiv(emh.rclBounds.bottom - emh.rclBounds.top, c->dpi.cx, 96);
+      sz.cx = MulDiv(emh.rclBounds.right - emh.rclBounds.left, c->dpi.cy, 96);
     }
-    else
+    if (c->editor->nZoomNumerator != 0)
     {
-      if (has_size)
-      {
-        convert_sizel(c, &run->ole_obj->sizel, &sz);
-      }
-      else
-      {
-        sz.cy = MulDiv(emh.rclBounds.bottom - emh.rclBounds.top,
-                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-        sz.cx = MulDiv(emh.rclBounds.right - emh.rclBounds.left,
-                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-      }
+      sz.cx = MulDiv(sz.cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      sz.cy = MulDiv(sz.cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
     }
+
     {
       RECT    rc;
 
