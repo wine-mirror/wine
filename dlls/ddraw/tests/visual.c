@@ -113,7 +113,7 @@ static BOOL createObjects(void)
     U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
     U1(U4(ddsd).ddpfPixelFormat).dwZBufferBitDepth = 32;
-    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0xffffffff;
+    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0x00ffffff;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &depth_buffer, NULL);
