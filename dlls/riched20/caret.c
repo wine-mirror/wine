@@ -91,8 +91,10 @@ int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how)
         && (how->flags & GTL_USECRLF)
         && !editor->bEmulateVersion10) /* Ignore GTL_USECRLF flag in 1.0 emulation */
     length += editor->nParagraphs - 1;
-  
-  if (how->flags & GTL_NUMBYTES)
+
+  if (how->flags & GTL_NUMBYTES ||
+      (how->flags & GTL_PRECISE &&     /* GTL_PRECISE seems to imply GTL_NUMBYTES */
+       !(how->flags & GTL_NUMCHARS)))  /* unless GTL_NUMCHARS is given */
   {
     CPINFO cpinfo;
     
