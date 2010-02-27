@@ -522,7 +522,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   if (!(pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE) &&
       pFmt->dwMask & PFM_BORDER)
   {
-    border = ME_GetParaBorderWidth(c->editor, tp->member.para.pFmt->wBorders);
+    border = ME_GetParaBorderWidth(c, tp->member.para.pFmt->wBorders);
     if (pFmt->wBorders & 1) {
       wc.nFirstMargin += border;
       wc.nLeftMargin += border;

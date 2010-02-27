@@ -461,19 +461,21 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   }
 }
 
-static const struct {unsigned width_num : 4, width_den : 4, pen_style : 4, dble : 1;} border_details[] = {
-  /* none */            {0, 1, PS_SOLID, FALSE},
-  /* 3/4 */             {3, 4, PS_SOLID, FALSE},
-  /* 1 1/2 */           {3, 2, PS_SOLID, FALSE},
-  /* 2 1/4 */           {9, 4, PS_SOLID, FALSE},
-  /* 3 */               {3, 1, PS_SOLID, FALSE},
-  /* 4 1/2 */           {9, 2, PS_SOLID, FALSE},
-  /* 6 */               {6, 1, PS_SOLID, FALSE},
-  /* 3/4 double */      {3, 4, PS_SOLID, TRUE},
-  /* 1 1/2 double */    {3, 2, PS_SOLID, TRUE},
-  /* 2 1/4 double */    {9, 4, PS_SOLID, TRUE},
-  /* 3/4 gray */        {3, 4, PS_DOT /* FIXME */, FALSE},
-  /* 1 1/2 dashed */    {3, 2, PS_DASH, FALSE},
+/* The documented widths are in points (72 dpi), but converting them to
+ * 96 dpi (standard display resolution) avoids dealing with fractions. */
+static const struct {unsigned width : 8, pen_style : 4, dble : 1;} border_details[] = {
+  /* none */            {0, PS_SOLID, FALSE},
+  /* 3/4 */             {1, PS_SOLID, FALSE},
+  /* 1 1/2 */           {2, PS_SOLID, FALSE},
+  /* 2 1/4 */           {3, PS_SOLID, FALSE},
+  /* 3 */               {4, PS_SOLID, FALSE},
+  /* 4 1/2 */           {6, PS_SOLID, FALSE},
+  /* 6 */               {8, PS_SOLID, FALSE},
+  /* 3/4 double */      {1, PS_SOLID, TRUE},
+  /* 1 1/2 double */    {2, PS_SOLID, TRUE},
+  /* 2 1/4 double */    {3, PS_SOLID, TRUE},
+  /* 3/4 gray */        {1, PS_DOT /* FIXME */, FALSE},
+  /* 1 1/2 dashed */    {2, PS_DASH, FALSE},
 };
 
 static const COLORREF pen_colors[16] = {
@@ -487,25 +489,20 @@ static const COLORREF pen_colors[16] = {
   /* Dark gray */       RGB(0x80, 0x80, 0x80),  /* Light gray */      RGB(0xc0, 0xc0, 0xc0),
 };
 
-static int ME_GetBorderPenWidth(ME_TextEditor* editor, int idx)
+static int ME_GetBorderPenWidth(ME_Context* c, int idx)
 {
-  int width;
+  int width = border_details[idx].width;
 
-  if (editor->nZoomNumerator == 0)
-  {
-      width = border_details[idx].width_num + border_details[idx].width_den / 2;
-      width /= border_details[idx].width_den;
-  }
-  else
-  {
-      width = border_details[idx].width_num * editor->nZoomNumerator;
-      width += border_details[idx].width_den * editor->nZoomNumerator / 2;
-      width /= border_details[idx].width_den * editor->nZoomDenominator;
-  }
+  if (c->dpi.cx != 96)
+    width = MulDiv(width, c->dpi.cx, 96);
+
+  if (c->editor->nZoomNumerator != 0)
+    width = MulDiv(width, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+
   return width;
 }
 
-int  ME_GetParaBorderWidth(ME_TextEditor* editor, int flags)
+int ME_GetParaBorderWidth(ME_Context* c, int flags)
 {
   int idx = (flags >> 8) & 0xF;
   int width;
@@ -515,7 +512,7 @@ int  ME_GetParaBorderWidth(ME_TextEditor* editor, int flags)
       FIXME("Unsupported border value %d\n", idx);
       return 0;
   }
-  width = ME_GetBorderPenWidth(editor, idx);
+  width = ME_GetBorderPenWidth(c, idx);
   if (border_details[idx].dble) width = width * 2 + 1;
   return width;
 }
@@ -565,7 +562,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
      */
     if (para->pFmt->wBorders & 0x00B0)
       FIXME("Unsupported border flags %x\n", para->pFmt->wBorders);
-    border_width = ME_GetParaBorderWidth(c->editor, para->pFmt->wBorders);
+    border_width = ME_GetParaBorderWidth(c, para->pFmt->wBorders);
     if (para->pFmt->wBorders & 4)       top_border = border_width;
     if (para->pFmt->wBorders & 8)       bottom_border = border_width;
   }
@@ -607,7 +604,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
     rightEdge = c->pt.x + max(c->editor->sizeWindow.cx,
                               c->editor->nTotalWidth);
 
-    pen_width = ME_GetBorderPenWidth(c->editor, idx);
+    pen_width = ME_GetBorderPenWidth(c, idx);
     pen = CreatePen(border_details[idx].pen_style, pen_width, pencr);
     oldpen = SelectObject(c->hDC, pen);
     MoveToEx(c->hDC, 0, 0, &pt);
