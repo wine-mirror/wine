@@ -1082,23 +1082,25 @@ HRESULT WINAPI IUnknown_Exec(IUnknown* lpUnknown, REFGUID pguidCmdGroup,
  * PARAMS
  *  hWnd   [I] Window to get value from
  *  offset [I] Offset of value
- *  wMask  [I] Mask for uiFlags
- *  wFlags [I] Bits to set in window value
+ *  mask   [I] Mask for flags
+ *  flags  [I] Bits to set in window value
  *
  * RETURNS
  *  The new value as it was set, or 0 if any parameter is invalid.
  *
  * NOTES
- *  Any bits set in uiMask are cleared from the value, then any bits set in
- *  uiFlags are set in the value.
+ *  Only bits specified in mask are affected - set if present in flags and
+ *  reset otherwise.
  */
-LONG WINAPI SHSetWindowBits(HWND hwnd, INT offset, UINT wMask, UINT wFlags)
+LONG WINAPI SHSetWindowBits(HWND hwnd, INT offset, UINT mask, UINT flags)
 {
-  LONG ret = GetWindowLongA(hwnd, offset);
-  LONG newFlags = (wFlags & wMask) | (ret & ~wFlags);
+  LONG ret = GetWindowLongW(hwnd, offset);
+  LONG new_flags = (flags & mask) | (ret & ~mask);
 
-  if (newFlags != ret)
-    ret = SetWindowLongA(hwnd, offset, newFlags);
+  TRACE("%p %d %x %x\n", hwnd, offset, mask, flags);
+
+  if (new_flags != ret)
+    ret = SetWindowLongW(hwnd, offset, new_flags);
   return ret;
 }
 

@@ -43,6 +43,7 @@ static HRESULT(WINAPI *pIConnectionPoint_SimpleInvoke)(IConnectionPoint*,DISPID,
 static HRESULT(WINAPI *pIConnectionPoint_InvokeWithCancel)(IConnectionPoint*,DISPID,DISPPARAMS*,DWORD,DWORD);
 static HRESULT(WINAPI *pConnectToConnectionPoint)(IUnknown*,REFIID,BOOL,IUnknown*, LPDWORD,IConnectionPoint **);
 static HRESULT(WINAPI *pSHPropertyBag_ReadLONG)(IPropertyBag *,LPCWSTR,LPLONG);
+static LONG   (WINAPI *pSHSetWindowBits)(HWND hwnd, INT offset, UINT wMask, UINT wFlags);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -1397,31 +1398,116 @@ static void test_SHPropertyBag_ReadLONG(void)
     IUnknown_Release((IUnknown*)pb);
 }
 
+
+
+static void test_SHSetWindowBits(void)
+{
+    HWND hwnd;
+    DWORD style, styleold;
+    WNDCLASSA clsA;
+
+    if(!pSHSetWindowBits)
+    {
+        win_skip("SHSetWindowBits is not available\n");
+        return;
+    }
+
+    clsA.style = 0;
+    clsA.lpfnWndProc = DefWindowProcA;
+    clsA.cbClsExtra = 0;
+    clsA.cbWndExtra = 0;
+    clsA.hInstance = GetModuleHandleA(NULL);
+    clsA.hIcon = 0;
+    clsA.hCursor = LoadCursorA(0, IDC_ARROW);
+    clsA.hbrBackground = NULL;
+    clsA.lpszMenuName = NULL;
+    clsA.lpszClassName = "Shlwapi test class";
+    RegisterClassA(&clsA);
+
+    hwnd = CreateWindowA("Shlwapi test class", "Test", WS_VISIBLE, 0, 0, 100, 100,
+                          NULL, NULL, GetModuleHandle(NULL), 0);
+    ok(IsWindow(hwnd), "failed to create window\n");
+
+    /* null window */
+    SetLastError(0xdeadbeef);
+    style = pSHSetWindowBits(NULL, GWL_STYLE, 0, 0);
+    ok(style == 0, "expected 0 retval, got %d\n", style);
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+              "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
+
+    /* zero mask, zero flags */
+    styleold = GetWindowLongA(hwnd, GWL_STYLE);
+    style = pSHSetWindowBits(hwnd, GWL_STYLE, 0, 0);
+    ok(styleold == style, "expected old style\n");
+    ok(styleold == GetWindowLongA(hwnd, GWL_STYLE), "expected to keep old style\n");
+
+    /* test mask */
+    styleold = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(styleold & WS_VISIBLE, "expected WS_VISIBLE\n");
+    style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, 0);
+
+    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
+
+    /* test mask, unset style bit used */
+    styleold = GetWindowLongA(hwnd, GWL_STYLE);
+    style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, 0);
+    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(styleold == GetWindowLongA(hwnd, GWL_STYLE), "expected to keep old style\n");
+
+    /* set back with flags */
+    styleold = GetWindowLongA(hwnd, GWL_STYLE);
+    style = pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, WS_VISIBLE);
+    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE, "expected updated style\n");
+
+    /* reset and try to set without a mask */
+    pSHSetWindowBits(hwnd, GWL_STYLE, WS_VISIBLE, 0);
+    ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
+    styleold = GetWindowLongA(hwnd, GWL_STYLE);
+    style = pSHSetWindowBits(hwnd, GWL_STYLE, 0, WS_VISIBLE);
+    ok(style == styleold, "expected previous style, got %x\n", style);
+    ok((GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE) == 0, "expected updated style\n");
+
+    DestroyWindow(hwnd);
+
+    UnregisterClassA("Shlwapi test class", GetModuleHandleA(NULL));
+}
+
+static void init_pointers(void)
+{
+#define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
+    MAKEFUNC(SHAllocShared, 7);
+    MAKEFUNC(SHLockShared, 8);
+    MAKEFUNC(SHUnlockShared, 9);
+    MAKEFUNC(SHFreeShared, 10);
+    MAKEFUNC(GetAcceptLanguagesA, 14);
+    MAKEFUNC(SHSetWindowBits, 165);
+    MAKEFUNC(ConnectToConnectionPoint, 168);
+    MAKEFUNC(SHSearchMapInt, 198);
+    MAKEFUNC(SHPackDispParams, 282);
+    MAKEFUNC(IConnectionPoint_InvokeWithCancel, 283);
+    MAKEFUNC(IConnectionPoint_SimpleInvoke, 284);
+    MAKEFUNC(SHPropertyBag_ReadLONG, 496);
+#undef MAKEFUNC
+}
+
 START_TEST(ordinal)
 {
-  hShlwapi = GetModuleHandleA("shlwapi.dll");
+    hShlwapi = GetModuleHandleA("shlwapi.dll");
 
-  pGetAcceptLanguagesA = (void*)GetProcAddress(hShlwapi, (LPSTR)14);
-  pSHSearchMapInt = (void*)GetProcAddress(hShlwapi, (LPSTR)198);
-  pSHAllocShared=(void*)GetProcAddress(hShlwapi,(char*)7);
-  pSHLockShared=(void*)GetProcAddress(hShlwapi,(char*)8);
-  pSHUnlockShared=(void*)GetProcAddress(hShlwapi,(char*)9);
-  pSHFreeShared=(void*)GetProcAddress(hShlwapi,(char*)10);
-  pSHPackDispParams=(void*)GetProcAddress(hShlwapi,(char*)282);
-  pIConnectionPoint_SimpleInvoke=(void*)GetProcAddress(hShlwapi,(char*)284);
-  pIConnectionPoint_InvokeWithCancel=(void*)GetProcAddress(hShlwapi,(char*)283);
-  pConnectToConnectionPoint=(void*)GetProcAddress(hShlwapi,(char*)168);
-  pSHPropertyBag_ReadLONG=(void*)GetProcAddress(hShlwapi,(char*)496);
+    init_pointers();
 
-  hmlang = LoadLibraryA("mlang.dll");
-  pLcidToRfc1766A = (void *)GetProcAddress(hmlang, "LcidToRfc1766A");
+    hmlang = LoadLibraryA("mlang.dll");
+    pLcidToRfc1766A = (void *)GetProcAddress(hmlang, "LcidToRfc1766A");
 
-  test_GetAcceptLanguagesA();
-  test_SHSearchMapInt();
-  test_alloc_shared();
-  test_fdsa();
-  test_GetShellSecurityDescriptor();
-  test_SHPackDispParams();
-  test_IConnectionPoint();
-  test_SHPropertyBag_ReadLONG();
+    test_GetAcceptLanguagesA();
+    test_SHSearchMapInt();
+    test_alloc_shared();
+    test_fdsa();
+    test_GetShellSecurityDescriptor();
+    test_SHPackDispParams();
+    test_IConnectionPoint();
+    test_SHPropertyBag_ReadLONG();
+    test_SHSetWindowBits();
 }
