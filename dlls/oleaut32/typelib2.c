@@ -3141,8 +3141,7 @@ static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
 {
     TRACE("(%p,%p)\n", iface, pTypeAttr);
 
-    if(pTypeAttr)
-        HeapFree(GetProcessHeap(), 0, pTypeAttr);
+    HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
 /******************************************************************************
