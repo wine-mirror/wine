@@ -1283,7 +1283,7 @@ static LRESULT check_printer_setup(HWND hDlg)
 /***********************************************************************
  *           PRINTDLG_WMInitDialog                      [internal]
  */
-static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
+static LRESULT PRINTDLG_WMInitDialog(HWND hDlg,
 				     PRINT_PTRA* PrintStructures)
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
@@ -1391,7 +1391,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
     return TRUE;
 }
 
-static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
+static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg,
 				     PRINT_PTRW* PrintStructures)
 {
     LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
@@ -1829,7 +1829,7 @@ static INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
             EndDialog(hDlg,FALSE);
             return FALSE;
         }
-	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
+	res = PRINTDLG_WMInitDialog(hDlg, PrintStructures);
 
 	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
 	    res = PrintStructures->lpPrintDlg->lpfnPrintHook(
@@ -1878,7 +1878,7 @@ static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
             EndDialog(hDlg,FALSE);
             return FALSE;
         }
-	res = PRINTDLG_WMInitDialogW(hDlg, wParam, PrintStructures);
+	res = PRINTDLG_WMInitDialogW(hDlg, PrintStructures);
 
 	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
 	    res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg, uMsg, wParam, (LPARAM)PrintStructures->lpPrintDlg);
