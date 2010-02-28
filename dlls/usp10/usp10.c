@@ -604,7 +604,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
      * checks the n+1 structure                                              */
     memset(&pItems[index+1].a, 0, sizeof(SCRIPT_ANALYSIS));
 
-    TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos = cnt);
+    TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos);
 
     /*  Set one SCRIPT_STATE item being returned  */
     if (pcItems) *pcItems = index + 1;
