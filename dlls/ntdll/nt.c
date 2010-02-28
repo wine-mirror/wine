@@ -1152,6 +1152,18 @@ void fill_cpu_info(void)
         get_cpuinfo( &cached_sci );
         NtCurrentTeb()->Peb->NumberOfProcessors = num;
     }
+#elif defined (__OpenBSD__)
+    {
+        int mib[2], num;
+        size_t len;
+
+        mib[0] = CTL_HW;
+        mib[1] = HW_NCPU;
+        len = sizeof(num);
+
+        num = sysctl(mib, 2, &num, &len, NULL, 0);
+        NtCurrentTeb()->Peb->NumberOfProcessors = num;
+    }
 #elif defined (__APPLE__)
     {
         size_t valSize;
