@@ -105,10 +105,14 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     for(i = 0; i < argc; i++)
     {
         /* Get cabfile */
-        if ((argv[i][0] != '/') && !cabfile)
+        if (argv[i][0] != '/')
         {
-            cabfile = argv[i];
-            continue;
+            if (!cabfile)
+            {
+                cabfile = argv[i];
+                continue;
+            } else
+                break;
         }
         /* Get parameters for commands */
         check = toupperW( argv[i][1] );
@@ -127,11 +131,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
                 break;
             case 'C':
                 if (cmd) return 0;
-                if ((i + 2) >= argc) return 0;
                 cmd = check;
-                cabfile = argv[++i];
-                if (!GetFullPathNameW(argv[++i], MAX_PATH, path, NULL))
-                    return 0;
                 break;
             case 'E':
             case 'D':
@@ -145,6 +145,13 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
 
     if (!cabfile)
         return 0;
+
+    if (cmd == 'C')
+    {
+        if ((i + 1) != argc) return 0;
+        if (!GetFullPathNameW(argv[i], MAX_PATH, path, NULL))
+            return 0;
+    }
 
     if (!path[0])
         GetCurrentDirectoryW(MAX_PATH, path);
