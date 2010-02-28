@@ -610,7 +610,7 @@ static INT WINAPI FontStyleEnumProc( const ENUMLOGFONTEXW *lpElfex,
 /***********************************************************************
  *           CFn_WMInitDialog                            [internal]
  */
-static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcf)
+static LRESULT CFn_WMInitDialog(HWND hDlg, LPARAM lParam, LPCHOOSEFONTW lpcf)
 {
     HDC hdc;
     int i,j,init=0;
@@ -1064,7 +1064,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
     return(FALSE);
 }
 
-static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcfw)
+static LRESULT CFn_WMDestroy(HWND hwnd, LPCHOOSEFONTW lpcfw)
 {
     LPCHOOSEFONTA lpcfa;
     LPSTR lpszStyle;
@@ -1179,7 +1179,7 @@ static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, 
             MultiByteToWideChar(CP_ACP, 0, lpcfa->lpszStyle, -1, lpcfw->lpszStyle, len);
         }
 
-        if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcfw))
+        if (!CFn_WMInitDialog(hDlg, lParam, lpcfw))
         {
             TRACE("CFn_WMInitDialog returned FALSE\n");
             return FALSE;
@@ -1196,7 +1196,7 @@ static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, 
     case WM_COMMAND:
         return CFn_WMCommand(hDlg, wParam, lParam, lpcfw);
     case WM_DESTROY:
-        return CFn_WMDestroy(hDlg, wParam, lParam, lpcfw);
+        return CFn_WMDestroy(hDlg, lpcfw);
     case WM_CHOOSEFONT_GETLOGFONT:
         TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
         FIXME("current logfont back to caller\n");
@@ -1228,7 +1228,7 @@ static INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, 
     else
     {
         lpcf=(LPCHOOSEFONTW)lParam;
-        if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf))
+        if (!CFn_WMInitDialog(hDlg, lParam, lpcf))
         {
             TRACE("CFn_WMInitDialog returned FALSE\n");
             return FALSE;
