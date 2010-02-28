@@ -756,7 +756,6 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
 
   if (NLS_IsUnicodeOnlyLcid(lcid))
   {
-GetDateTimeFormatA_InvalidParameter:
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -765,7 +764,11 @@ GetDateTimeFormatA_InvalidParameter:
   {
     const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
     if (!node)
-      goto GetDateTimeFormatA_InvalidParameter;
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+
     cp = node->dwCodePage;
   }
 
@@ -967,7 +970,6 @@ INT WINAPI GetNumberFormatA(LCID lcid, DWORD dwFlags,
 
   if (NLS_IsUnicodeOnlyLcid(lcid))
   {
-GetNumberFormatA_InvalidParameter:
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -976,7 +978,11 @@ GetNumberFormatA_InvalidParameter:
   {
     const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
     if (!node)
-      goto GetNumberFormatA_InvalidParameter;
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+
     cp = node->dwCodePage;
   }
 
@@ -1048,9 +1054,7 @@ INT WINAPI GetNumberFormatW(LCID lcid, DWORD dwFlags,
       !IsValidLocale(lcid, 0) ||
       (lpFormat && (dwFlags || !lpFormat->lpDecimalSep || !lpFormat->lpThousandSep)))
   {
-GetNumberFormatW_Error:
-    SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
-    return 0;
+    goto error;
   }
 
   if (!lpFormat)
@@ -1058,7 +1062,7 @@ GetNumberFormatW_Error:
     const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
 
     if (!node)
-      goto GetNumberFormatW_Error;
+      goto error;
     lpFormat = &node->fmt;
     lpszNegStart = lpszNeg = GetNegative(node);
   }
@@ -1089,23 +1093,23 @@ GetNumberFormatW_Error:
     else if (*szSrc == '-')
     {
       if (dwState)
-        goto GetNumberFormatW_Error; /* '-' not first character */
+        goto error; /* '-' not first character */
       dwState |= NF_ISNEGATIVE;
     }
     else if (*szSrc == '.')
     {
       if (dwState & NF_ISREAL)
-        goto GetNumberFormatW_Error; /* More than one '.' */
+        goto error; /* More than one '.' */
       dwState |= NF_ISREAL;
     }
     else
-      goto GetNumberFormatW_Error; /* Invalid char */
+      goto error; /* Invalid char */
     szSrc++;
   }
   szSrc--; /* Point to last character */
 
   if (!(dwState & NF_DIGITS))
-    goto GetNumberFormatW_Error; /* No digits */
+    goto error; /* No digits */
 
   /* Add any trailing negative sign */
   if (dwState & NF_ISNEGATIVE)
@@ -1263,6 +1267,10 @@ GetNumberFormatW_Error:
     }
   }
   return iRet;
+
+error:
+  SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
+  return 0;
 }
 
 /**************************************************************************
@@ -1307,7 +1315,6 @@ INT WINAPI GetCurrencyFormatA(LCID lcid, DWORD dwFlags,
 
   if (NLS_IsUnicodeOnlyLcid(lcid))
   {
-GetCurrencyFormatA_InvalidParameter:
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -1316,7 +1323,11 @@ GetCurrencyFormatA_InvalidParameter:
   {
     const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
     if (!node)
-      goto GetCurrencyFormatA_InvalidParameter;
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+
     cp = node->dwCodePage;
   }
 
@@ -1416,9 +1427,7 @@ INT WINAPI GetCurrencyFormatW(LCID lcid, DWORD dwFlags,
       !lpFormat->lpCurrencySymbol || lpFormat->NegativeOrder > 15 ||
       lpFormat->PositiveOrder > 3)))
   {
-GetCurrencyFormatW_Error:
-    SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
-    return 0;
+    goto error;
   }
 
   if (!lpFormat)
@@ -1426,7 +1435,8 @@ GetCurrencyFormatW_Error:
     const NLS_FORMAT_NODE *node = NLS_GetFormats(lcid, dwFlags);
 
     if (!node)
-      goto GetCurrencyFormatW_Error;
+      goto error;
+
     lpFormat = &node->cyfmt;
     lpszNegStart = lpszNeg = GetNegative(node);
   }
@@ -1459,23 +1469,23 @@ GetCurrencyFormatW_Error:
     else if (*szSrc == '-')
     {
       if (dwState)
-        goto GetCurrencyFormatW_Error; /* '-' not first character */
+        goto error; /* '-' not first character */
       dwState |= NF_ISNEGATIVE;
     }
     else if (*szSrc == '.')
     {
       if (dwState & NF_ISREAL)
-        goto GetCurrencyFormatW_Error; /* More than one '.' */
+        goto error; /* More than one '.' */
       dwState |= NF_ISREAL;
     }
     else
-      goto GetCurrencyFormatW_Error; /* Invalid char */
+      goto error; /* Invalid char */
     szSrc++;
   }
   szSrc--; /* Point to last character */
 
   if (!(dwState & NF_DIGITS))
-    goto GetCurrencyFormatW_Error; /* No digits */
+    goto error; /* No digits */
 
   if (dwState & NF_ISNEGATIVE)
     dwFmt = NLS_NegCyFormats[lpFormat->NegativeOrder];
@@ -1650,6 +1660,10 @@ GetCurrencyFormatW_Error:
     }
   }
   return iRet;
+
+error:
+  SetLastError(lpFormat && dwFlags ? ERROR_INVALID_FLAGS : ERROR_INVALID_PARAMETER);
+  return 0;
 }
 
 /* FIXME: Everything below here needs to move somewhere else along with the
@@ -1949,7 +1963,7 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
       if (opt == NULL)
       {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        goto NLS_EnumCalendarInfoAW_Cleanup;
+        goto cleanup;
       }
       if (GetLocaleInfoW(locale, LOCALE_IOPTIONALCALENDAR, opt, optSz))
         iter = opt;
@@ -1976,14 +1990,14 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
           if (bufSz >= newSz)
           {
             ERR("Buffer resizing disorder: was %d, requested %d.\n", bufSz, newSz);
-            goto NLS_EnumCalendarInfoAW_Cleanup;
+            goto cleanup;
           }
           bufSz = newSz;
           WARN("Buffer too small; resizing to %d bytes.\n", bufSz);
           buf = HeapReAlloc(GetProcessHeap(), 0, buf, bufSz);
           if (buf == NULL)
-            goto NLS_EnumCalendarInfoAW_Cleanup;
-        } else goto NLS_EnumCalendarInfoAW_Cleanup;
+            goto cleanup;
+        } else goto cleanup;
       }
     } while (!ret);
 
@@ -2017,7 +2031,7 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
     }
   }
 
-NLS_EnumCalendarInfoAW_Cleanup:
+cleanup:
   HeapFree(GetProcessHeap(), 0, opt);
   HeapFree(GetProcessHeap(), 0, buf);
   return ret;
