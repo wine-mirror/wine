@@ -1495,7 +1495,6 @@ static void test_item_moniker(void)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
 
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
@@ -1631,7 +1630,6 @@ static void test_generic_composite_moniker(void)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
 
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
@@ -1645,7 +1643,6 @@ static void test_generic_composite_moniker(void)
     todo_wine
     ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08x\n", hr);
 
-    todo_wine
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08x\n", hr);
 

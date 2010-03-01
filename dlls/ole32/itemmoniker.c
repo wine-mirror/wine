@@ -561,7 +561,7 @@ static HRESULT WINAPI ItemMonikerImpl_IsRunning(IMoniker* iface,
             return S_OK;
         else {
             if (pbc==NULL)
-                return E_POINTER;
+                return E_INVALIDARG;
 
             res=IBindCtx_GetRunningObjectTable(pbc,&rot);
 
