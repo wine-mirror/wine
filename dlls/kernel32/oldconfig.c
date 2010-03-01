@@ -90,6 +90,25 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE" ) ||
+        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create HARDWARE registry key\n" );
+        return;
+    }
+    NtClose( scsiKey );
+    RtlFreeUnicodeString( &nameW );
+    if (disp == REG_OPENED_EXISTING_KEY) return;
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP" ) ||
+        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, &disp ))
+    {
+        ERR("Cannot create DEVICEMAP registry key\n" );
+        return;
+    }
+    NtClose( scsiKey );
+    RtlFreeUnicodeString( &nameW );
+
     /* Ensure there is Scsi key */
     if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP\\Scsi" ) ||
         NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0,
