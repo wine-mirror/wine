@@ -1953,10 +1953,10 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
     /* If the source is a 1x1 bitmap, tiling is equivalent to stretching, but
         tiling is much faster. Therefore, we do no stretching in this case. */
-    repeat_src = dib.dsBmih.biWidth == 1 && abs(dib.dsBmih.biHeight) == 1;
+    repeat_src = dib.dsBmih.biWidth == 1 && dib.dsBmih.biHeight == 1;
 
     if (xSrc < 0 || ySrc < 0 || widthSrc < 0 || heightSrc < 0 || xSrc + widthSrc > dib.dsBmih.biWidth
-        || ySrc + heightSrc > abs(dib.dsBmih.biHeight))
+        || ySrc + heightSrc > dib.dsBmih.biHeight)
     {
         WARN("Invalid src coords: (%d,%d), size %dx%d\n", xSrc, ySrc, widthSrc, heightSrc);
         SetLastError(ERROR_INVALID_PARAMETER);
