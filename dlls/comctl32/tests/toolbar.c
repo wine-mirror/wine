@@ -33,12 +33,27 @@
 
 #include "wine/test.h"
 
+#include "msg.h"
+
+#define PARENT_SEQ_INDEX       0
+#define NUM_MSG_SEQUENCES      1
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
 static HWND hMainWnd;
 static BOOL g_fBlockHotItemChange;
 static BOOL g_fReceivedHotItemChange;
 static BOOL g_fExpectedHotItemOld;
 static BOOL g_fExpectedHotItemNew;
 static DWORD g_dwExpectedDispInfoMask;
+static BOOL g_ResetDispTextPtr;
+
+static const struct message ttgetdispinfo_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TBN_GETINFOTIPA },
+    /* next line is todo, currently TTN_GETDISPINFOW is raised here */
+    { WM_NOTIFY, sent|id, 0, 0, TTN_GETDISPINFOA },
+    { 0 }
+};
 
 #define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
 
@@ -56,7 +71,7 @@ static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->iString = nString;
 }
 
-static LRESULT MyWnd_Notify(LPARAM lParam)
+static LRESULT parent_wnd_notify(LPARAM lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
     NMTBHOTITEM *nmhi;
@@ -79,6 +94,17 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
             ok(FALSE, "TBN_GETDISPINFOA received\n");
             break;
 
+        case TBN_GETINFOTIPA:
+        {
+            NMTBGETINFOTIPA *tbgit = (NMTBGETINFOTIPA*)lParam;
+
+            if (g_ResetDispTextPtr)
+            {
+                tbgit->pszText = NULL;
+                return 0;
+            }
+            break;
+        }
         case TBN_GETDISPINFOW:
             nmdisp = (NMTBDISPINFOA *)lParam;
 
@@ -89,14 +115,44 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
     return 0;
 }
 
-static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg)
+    static LONG defwndproc_counter = 0;
+    struct message msg;
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    if (message == WM_NOTIFY && lParam) msg.id = ((NMHDR*)lParam)->code;
+
+    /* log system messages, except for painting */
+    if (message < WM_USER &&
+        message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("parent: %p, %04x, %08lx, %08lx\n", hWnd, message, wParam, lParam);
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
+    }
+
+    switch (message)
     {
         case WM_NOTIFY:
-            return MyWnd_Notify(lParam);
+            return parent_wnd_notify(lParam);
     }
-    return DefWindowProcA(hWnd, msg, wParam, lParam);
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hWnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static void basic_test(void)
@@ -1355,12 +1411,46 @@ static void test_getstring(void)
     DestroyWindow(hToolbar);
 }
 
+static void test_tooltip(void)
+{
+    HWND hToolbar = NULL;
+    const TBBUTTON buttons_disp[] = {
+        {-1, 20, TBSTATE_ENABLED, 0, {0, }, 0, -1},
+        {0,  21, TBSTATE_ENABLED, 0, {0, }, 0, -1},
+    };
+    NMTTDISPINFOW nmtti;
+
+    rebuild_toolbar(&hToolbar);
+
+    SendMessageA(hToolbar, TB_ADDBUTTONS, 2, (LPARAM)buttons_disp);
+
+    /* W used to get through toolbar code that assumes tooltip is always Unicode */
+    memset(&nmtti, 0, sizeof(nmtti));
+    nmtti.hdr.code = TTN_GETDISPINFOW;
+    nmtti.hdr.idFrom = 20;
+
+    SendMessageA(hToolbar, CCM_SETUNICODEFORMAT, FALSE, 0);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(hToolbar, WM_NOTIFY, 0, (LPARAM)&nmtti);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ttgetdispinfo_parent_seq,
+                "dispinfo from tooltip", TRUE);
+
+    g_ResetDispTextPtr = TRUE;
+    SendMessageA(hToolbar, WM_NOTIFY, 0, (LPARAM)&nmtti);
+    g_ResetDispTextPtr = FALSE;
+
+    DestroyWindow(hToolbar);
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
     MSG msg;
     RECT rc;
-  
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
+
     InitCommonControls();
   
     wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -1371,11 +1461,11 @@ START_TEST(toolbar)
     wc.hCursor = LoadCursorA(NULL, IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = "MyTestWnd";
-    wc.lpfnWndProc = MyWndProc;
+    wc.lpszClassName = "Toolbar test parent";
+    wc.lpfnWndProc = parent_wnd_proc;
     RegisterClassA(&wc);
     
-    hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW, 
+    hMainWnd = CreateWindowExA(0, "Toolbar test parent", "Blah", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
     GetClientRect(hMainWnd, &rc);
     ShowWindow(hMainWnd, SW_SHOW);
@@ -1391,6 +1481,7 @@ START_TEST(toolbar)
     test_dispinfo();
     test_setrows();
     test_getstring();
+    test_tooltip();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
