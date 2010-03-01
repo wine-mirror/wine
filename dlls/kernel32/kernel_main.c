@@ -123,13 +123,7 @@ static BOOL process_attach( HMODULE module )
         /* Securom checks for this one when version is NT */
         set_entry_point( module, "FT_Thunk", 0 );
     }
-#ifdef __i386__
-    else
-    {
-        /* create the shared heap for broken win95 native dlls */
-        HeapCreate( HEAP_SHARED, 0, 0 );
-    }
-#endif
+    else LoadLibraryA( "krnl386.exe16" );
 
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);

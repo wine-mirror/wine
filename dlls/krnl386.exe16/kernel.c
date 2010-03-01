@@ -95,6 +95,9 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
     if (done) return TRUE;
     done = 1;
 
+    /* create the shared heap for broken win95 native dlls */
+    HeapCreate( HEAP_SHARED, 0, 0 );
+
     /* setup emulation of protected instructions from 32-bit code */
     if (GetVersion() & 0x80000000) RtlAddVectoredExceptionHandler( TRUE, INSTR_vectored_handler );
 
