@@ -247,8 +247,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Zooma in"
     STRING_PREVIEW_ZOOMOUT,          "Zooma ut"
     STRING_PREVIEW_CLOSE,            "Stäng"
-    STRING_PREVIEW_PAGE,             "Page"
-    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_PREVIEW_PAGE,             "Sida"
+    STRING_PREVIEW_PAGES,            "Sidor"
 END
 
 STRINGTABLE DISCARDABLE
