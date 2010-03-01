@@ -4249,7 +4249,7 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
   descr.palentry    = NULL;
   descr.infoWidth   = dibSection.dsBmih.biWidth;
   descr.infoBpp     = dibSection.dsBmih.biBitCount;
-  descr.lines       = dibSection.dsBmih.biHeight;
+  descr.lines       = physBitmap->topdown ? -dibSection.dsBmih.biHeight : dibSection.dsBmih.biHeight;
   descr.image       = physBitmap->image;
   descr.colorMap    = colorMap;
   descr.nColorMap   = nColorMap;
