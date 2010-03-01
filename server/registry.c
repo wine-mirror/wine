@@ -656,9 +656,8 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
                                const struct unicode_str *class, unsigned int options,
                                unsigned int attributes, int *created )
 {
-    struct key *base;
     int index;
-    struct unicode_str token;
+    struct unicode_str token, next;
 
     if (key->flags & KEY_DELETED) /* we cannot create a subkey under a deleted key */
     {
@@ -676,16 +675,14 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         key = subkey;
         get_path_token( name, &token );
         if (!token.len) break;
-        if (!(subkey = follow_symlink( subkey, 0 )))
+        if (!(key = follow_symlink( key, 0 )))
         {
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
             return NULL;
         }
     }
 
-    /* create the remaining part */
-
-    if (!token.len)
+    if (!token.len)  /* the key already exists */
     {
         if (options & REG_OPTION_CREATE_LINK)
         {
@@ -697,8 +694,20 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
             return NULL;
         }
-        goto done;
+        if (debug_level > 1) dump_operation( key, NULL, "Open" );
+        grab_object( key );
+        return key;
     }
+
+    /* token must be the last path component at this point */
+    next = token;
+    get_path_token( name, &next );
+    if (next.len)
+    {
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        return NULL;
+    }
+
     if ((key->flags & KEY_VOLATILE) && !(options & REG_OPTION_VOLATILE))
     {
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
@@ -707,23 +716,11 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     *created = 1;
     make_dirty( key );
     if (!(key = alloc_subkey( key, &token, index, current_time ))) return NULL;
-    base = key;
-    for (;;)
-    {
-        if (options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
-        else key->flags |= KEY_DIRTY;
-        get_path_token( name, &token );
-        if (!token.len) break;
-        /* we know the index is always 0 in a new key */
-        if (!(key = alloc_subkey( key, &token, 0, current_time )))
-        {
-            free_subkey( base, index );
-            return NULL;
-        }
-    }
-    if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
 
- done:
+    if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
+    if (options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
+    else key->flags |= KEY_DIRTY;
+
     if (debug_level > 1) dump_operation( key, NULL, "Create" );
     if (class && class->len)
     {
