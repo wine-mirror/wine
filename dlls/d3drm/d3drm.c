@@ -68,7 +68,7 @@ static HRESULT WINAPI IDirect3DRMImpl_QueryInterface(IDirect3DRM* iface, REFIID 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IDirect3DRM))
     {
-        IClassFactory_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppvObject = This;
         return S_OK;
     }
