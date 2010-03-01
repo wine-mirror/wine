@@ -165,6 +165,7 @@ case $host in
     ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
+    CFLAGS="$CFLAGS -D_WIN32"
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
