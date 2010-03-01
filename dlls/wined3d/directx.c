@@ -1139,10 +1139,13 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl
         return GL_VENDOR_INTEL;
 
     if (strstr(gl_vendor_string, "Mesa")
+            || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
             || strstr(gl_vendor_string, "DRI R300 Project")
+            || strstr(gl_vendor_string, "X.Org R300 Project")
             || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
             || strstr(gl_vendor_string, "VMware, Inc.")
-            || strstr(gl_renderer, "Mesa"))
+            || strstr(gl_renderer, "Mesa")
+            || strstr(gl_renderer, "Gallium"))
         return GL_VENDOR_MESA;
 
     FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning GL_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
@@ -1156,6 +1159,7 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
         return HW_VENDOR_NVIDIA;
 
     if (strstr(gl_vendor_string, "ATI")
+            || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
             || strstr(gl_vendor_string, "DRI R300 Project"))
         return HW_VENDOR_ATI;
 
@@ -1602,6 +1606,234 @@ enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *g
 
 }
 
+enum wined3d_pci_device (select_card_ati_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+            unsigned int *vidmem )
+{
+    /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
+     *
+     * Beware: renderer string do not match exact card model,
+     * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
+    if (strstr(gl_renderer, "Gallium"))
+    {
+        /* Radeon R7xx HD4800 - highend */
+        if (strstr(gl_renderer, "R700")          /* Radeon R7xx HD48xx generic renderer string */
+                || strstr(gl_renderer, "RV770")  /* Radeon RV770 */
+                || strstr(gl_renderer, "RV790"))  /* Radeon RV790 */
+        {
+            *vidmem = 512; /* note: HD4890 cards use 1024MB */
+            return CARD_ATI_RADEON_HD4800;
+        }
+
+        /* Radeon R740 HD4700 - midend */
+        if (strstr(gl_renderer, "RV740"))          /* Radeon RV740 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4700;
+        }
+
+        /* Radeon R730 HD4600 - midend */
+        if (strstr(gl_renderer, "RV730"))        /* Radeon RV730 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4600;
+        }
+
+        /* Radeon R710 HD4500/HD4350 - lowend */
+        if (strstr(gl_renderer, "RV710"))          /* Radeon RV710 */
+        {
+            *vidmem = 256;
+            return CARD_ATI_RADEON_HD4350;
+        }
+
+        /* Radeon R6xx HD2900/HD3800 - highend */
+        if (strstr(gl_renderer, "R600")
+                || strstr(gl_renderer, "RV670")
+                || strstr(gl_renderer, "R680"))
+        {
+            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
+            return CARD_ATI_RADEON_HD2900;
+        }
+
+        /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
+        if (strstr(gl_renderer, "RV630")
+                || strstr(gl_renderer, "RV635"))
+        {
+            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
+            return CARD_ATI_RADEON_HD2600;
+        }
+
+        /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
+        if (strstr(gl_renderer, "RV610")
+                || strstr(gl_renderer, "RV620"))
+        {
+            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
+            return CARD_ATI_RADEON_HD2300;
+        }
+
+        /* Radeon R6xx/R7xx integrated */
+        if (strstr(gl_renderer, "RS780")
+                || strstr(gl_renderer, "RS880"))
+        {
+            *vidmem = 128; /* 128MB */
+            return CARD_ATI_RADEON_HD3200;
+        }
+
+        /* Radeon R5xx */
+        if (strstr(gl_renderer, "RV530")
+                || strstr(gl_renderer, "RV535")
+                || strstr(gl_renderer, "RV560")
+                || strstr(gl_renderer, "R520")
+                || strstr(gl_renderer, "RV570")
+                || strstr(gl_renderer, "R580"))
+        {
+            *vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
+            return CARD_ATI_RADEON_X1600;
+        }
+
+        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
+        if (strstr(gl_renderer, "R410")
+                || strstr(gl_renderer, "R420")
+                || strstr(gl_renderer, "R423")
+                || strstr(gl_renderer, "R430")
+                || strstr(gl_renderer, "R480")
+                || strstr(gl_renderer, "R481")
+                || strstr(gl_renderer, "RV410")
+                || strstr(gl_renderer, "RV515")
+                || strstr(gl_renderer, "RV516"))
+        {
+            *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
+            return CARD_ATI_RADEON_X700;
+        }
+
+        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
+        if (strstr(gl_renderer, "RS400")
+                || strstr(gl_renderer, "RS480")
+                || strstr(gl_renderer, "RS482")
+                || strstr(gl_renderer, "RS485")
+                || strstr(gl_renderer, "RS600")
+                || strstr(gl_renderer, "RS690")
+                || strstr(gl_renderer, "RS740"))
+        {
+            *vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
+            return CARD_ATI_RADEON_XPRESS_200M;
+        }
+
+        /* Radeon R3xx */
+        if (strstr(gl_renderer, "R300")
+                || strstr(gl_renderer, "RV350")
+                || strstr(gl_renderer, "RV351")
+                || strstr(gl_renderer, "RV360")
+                || strstr(gl_renderer, "RV370")
+                || strstr(gl_renderer, "R350")
+                || strstr(gl_renderer, "R360"))
+        {
+            *vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
+            return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
+        }
+    }
+
+    if (WINE_D3D9_CAPABLE(gl_info))
+    {
+        /* Radeon R7xx HD4800 - highend */
+        if (strstr(gl_renderer, "(R700")          /* Radeon R7xx HD48xx generic renderer string */
+                || strstr(gl_renderer, "(RV770")  /* Radeon RV770 */
+                || strstr(gl_renderer, "(RV790"))  /* Radeon RV790 */
+        {
+            *vidmem = 512; /* note: HD4890 cards use 1024MB */
+            return CARD_ATI_RADEON_HD4800;
+        }
+
+        /* Radeon R740 HD4700 - midend */
+        if (strstr(gl_renderer, "(RV740"))          /* Radeon RV740 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4700;
+        }
+
+        /* Radeon R730 HD4600 - midend */
+        if (strstr(gl_renderer, "(RV730"))        /* Radeon RV730 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4600;
+        }
+
+        /* Radeon R710 HD4500/HD4350 - lowend */
+        if (strstr(gl_renderer, "(RV710"))          /* Radeon RV710 */
+        {
+            *vidmem = 256;
+            return CARD_ATI_RADEON_HD4350;
+        }
+
+        /* Radeon R6xx HD2900/HD3800 - highend */
+        if (strstr(gl_renderer, "(R600")
+                || strstr(gl_renderer, "(RV670")
+                || strstr(gl_renderer, "(R680"))
+        {
+            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
+            return CARD_ATI_RADEON_HD2900;
+        }
+
+        /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
+        if (strstr(gl_renderer, "(RV630")
+                || strstr(gl_renderer, "(RV635"))
+        {
+            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
+            return CARD_ATI_RADEON_HD2600;
+        }
+
+        /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
+        if (strstr(gl_renderer, "(RV610")
+                || strstr(gl_renderer, "(RV620"))
+        {
+            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
+            return CARD_ATI_RADEON_HD2300;
+        }
+
+        /* Radeon R6xx/R7xx integrated */
+        if (strstr(gl_renderer, "(RS780")
+                || strstr(gl_renderer, "(RS880"))
+        {
+            *vidmem = 128; /* 128MB */
+            return CARD_ATI_RADEON_HD3200;
+        }
+    }
+
+    if (WINE_D3D8_CAPABLE(gl_info))
+    {
+        *vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
+        return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
+    }
+
+    if (WINE_D3D7_CAPABLE(gl_info))
+    {
+        *vidmem = 32; /* There are models with up to 64MB */
+        return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
+    }
+
+    *vidmem = 16; /* There are 16-32MB models */
+    return CARD_ATI_RAGE_128PRO;
+
+}
+
+enum wined3d_pci_device (select_card_nvidia_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+    unsigned int *vidmem )
+{
+    FIXME_(d3d_caps)("Card selection not handled for Mesa Nouveau driver\n");
+    if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
+    if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
+    if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
+    if (WINE_D3D6_CAPABLE(gl_info)) return CARD_NVIDIA_RIVA_TNT;
+    return CARD_NVIDIA_RIVA_128;
+}
+
+enum wined3d_pci_device (select_card_intel_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+    unsigned int *vidmem )
+{
+    FIXME_(d3d_caps)("Card selection not handled for Mesa Intel driver\n");
+    return CARD_INTEL_I915G;
+}
+
+
 struct vendor_card_selection
 {
     enum wined3d_gl_vendor gl_vendor;
@@ -1617,7 +1849,10 @@ static const struct vendor_card_selection vendor_card_select_table[] =
     {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_ATI,     "Apple OSX AMD/ATI binary driver",  select_card_ati_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel_binary},
-    {GL_VENDOR_ATI,    HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary}
+    {GL_VENDOR_ATI,    HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
+    {GL_VENDOR_MESA,   HW_VENDOR_ATI,     "Mesa AMD/ATI driver",      select_card_ati_mesa},
+    {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
+    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa}
 };
 
 
