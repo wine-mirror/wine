@@ -2702,7 +2702,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
                 continue;
             if(cfgs[i].blueSize != blueSize)
                 continue;
-            if(cfgs[i].alphaSize != alphaSize)
+            /* Not all drivers report alpha-less formats since they use 32-bit anyway, so accept alpha even if we didn't ask for it. */
+            if(alphaSize && cfgs[i].alphaSize != alphaSize)
+                continue;
+            if(cfgs[i].colorSize != (glDesc->byte_count << 3))
                 continue;
 
             TRACE("Found iPixelFormat=%d to support MultiSampleType=%d for format %s\n", cfgs[i].iPixelFormat, MultiSampleType, debug_d3dformat(SurfaceFormat));
@@ -4772,8 +4775,8 @@ BOOL InitAdapters(IWineD3DImpl *This)
         if (gl_info->supported[WGL_ARB_PIXEL_FORMAT])
         {
             int attribute;
-            int attribs[10];
-            int values[10];
+            int attribs[11];
+            int values[11];
             int nAttribs = 0;
 
             attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
@@ -4785,6 +4788,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
             attribs[nAttribs++] = WGL_GREEN_BITS_ARB;
             attribs[nAttribs++] = WGL_BLUE_BITS_ARB;
             attribs[nAttribs++] = WGL_ALPHA_BITS_ARB;
+            attribs[nAttribs++] = WGL_COLOR_BITS_ARB;
             attribs[nAttribs++] = WGL_DEPTH_BITS_ARB;
             attribs[nAttribs++] = WGL_STENCIL_BITS_ARB;
             attribs[nAttribs++] = WGL_DRAW_TO_WINDOW_ARB;
@@ -4805,12 +4809,13 @@ BOOL InitAdapters(IWineD3DImpl *This)
                 cfgs->greenSize = values[1];
                 cfgs->blueSize = values[2];
                 cfgs->alphaSize = values[3];
-                cfgs->depthSize = values[4];
-                cfgs->stencilSize = values[5];
-                cfgs->windowDrawable = values[6];
-                cfgs->iPixelType = values[7];
-                cfgs->doubleBuffer = values[8];
-                cfgs->auxBuffers = values[9];
+                cfgs->colorSize = values[4];
+                cfgs->depthSize = values[5];
+                cfgs->stencilSize = values[6];
+                cfgs->windowDrawable = values[7];
+                cfgs->iPixelType = values[8];
+                cfgs->doubleBuffer = values[9];
+                cfgs->auxBuffers = values[10];
 
                 cfgs->pbufferDrawable = FALSE;
                 /* Check for pbuffer support when it is around as
@@ -4837,7 +4842,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
                     }
                 }
 
-                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
+                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, samples=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->numSamples, cfgs->windowDrawable, cfgs->pbufferDrawable);
                 cfgs++;
             }
         }
@@ -4871,6 +4876,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
                 cfgs->greenSize = ppfd.cGreenBits;
                 cfgs->blueSize = ppfd.cBlueBits;
                 cfgs->alphaSize = ppfd.cAlphaBits;
+                cfgs->colorSize = ppfd.cColorBits;
                 cfgs->depthSize = ppfd.cDepthBits;
                 cfgs->stencilSize = ppfd.cStencilBits;
                 cfgs->pbufferDrawable = 0;

@@ -1238,7 +1238,7 @@ typedef struct WineD3D_PixelFormat
 {
     int iPixelFormat; /* WGL pixel format */
     int iPixelType; /* WGL pixel type e.g. WGL_TYPE_RGBA_ARB, WGL_TYPE_RGBA_FLOAT_ARB or WGL_TYPE_COLORINDEX_ARB */
-    int redSize, greenSize, blueSize, alphaSize;
+    int redSize, greenSize, blueSize, alphaSize, colorSize;
     int depthSize, stencilSize;
     BOOL windowDrawable;
     BOOL pbufferDrawable;
