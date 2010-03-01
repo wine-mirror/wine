@@ -3184,8 +3184,8 @@ static void SetRenderTargetTest(void)
     ok(vp.dwY == 10, "vp.dwY is %u, expected 10\n", vp.dwY);
     ok(vp.dwWidth == 246, "vp.dwWidth is %u, expected 246\n", vp.dwWidth);
     ok(vp.dwHeight == 246, "vp.dwHeight is %u, expected 246\n", vp.dwHeight);
-    ok(vp.dvMinZ == 0.25, "vp.dvMinZ is %f, expected 0.1\n", vp.dvMinZ);
-    ok(vp.dvMaxZ == 0.75, "vp.dvMaxZ is %f, expected 0.9\n", vp.dvMaxZ);
+    ok(vp.dvMinZ == 0.25, "vp.dvMinZ is %f, expected 0.25\n", vp.dvMinZ);
+    ok(vp.dvMaxZ == 0.75, "vp.dvMaxZ is %f, expected 0.75\n", vp.dvMaxZ);
 
     memset(&vp, 0, sizeof(vp));
     vp.dwX = 0;
