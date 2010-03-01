@@ -437,9 +437,9 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
 }
 
 static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (vendor != VENDOR_ATI) return FALSE;
+    if (card_vendor != HW_VENDOR_ATI) return FALSE;
     if (device == CARD_ATI_RADEON_9500) return TRUE;
     if (device == CARD_ATI_RADEON_X700) return TRUE;
     if (device == CARD_ATI_RADEON_X1600) return TRUE;
@@ -447,9 +447,9 @@ static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const c
 }
 
 static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (vendor == VENDOR_NVIDIA)
+    if (card_vendor == HW_VENDOR_NVIDIA)
     {
         if (device == CARD_NVIDIA_GEFORCEFX_5800 || device == CARD_NVIDIA_GEFORCEFX_5600)
         {
@@ -460,7 +460,7 @@ static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl
 }
 
 static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -556,31 +556,31 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 }
 
 static BOOL match_apple_intel(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    return vendor == VENDOR_INTEL && match_apple(gl_info, gl_renderer, vendor, device);
+    return card_vendor == HW_VENDOR_INTEL && match_apple(gl_info, gl_renderer, card_vendor, device);
 }
 
 static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (!match_apple(gl_info, gl_renderer, vendor, device)) return FALSE;
-    if (vendor != VENDOR_ATI) return FALSE;
+    if (!match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
+    if (card_vendor != HW_VENDOR_ATI) return FALSE;
     if (device == CARD_ATI_RADEON_X1600) return FALSE;
     return TRUE;
 }
 
 static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (vendor != VENDOR_ATI) return FALSE;
-    if (match_apple(gl_info, gl_renderer, vendor, device)) return FALSE;
+    if (card_vendor != HW_VENDOR_ATI) return FALSE;
+    if (match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
     if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers. */
     return TRUE;
 }
 
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
      * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
@@ -594,7 +594,7 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char
 
 /* A GL context is provided by the caller */
 static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLenum error;
     DWORD data[16];
@@ -621,15 +621,15 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
 }
 
 static BOOL match_apple_nvts(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (!match_apple(gl_info, gl_renderer, vendor, device)) return FALSE;
+    if (!match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
     return gl_info->supported[NV_TEXTURE_SHADER];
 }
 
 /* A GL context is provided by the caller */
 static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLuint prog;
     BOOL ret = FALSE;
@@ -805,7 +805,7 @@ static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-            enum wined3d_pci_vendor vendor, enum wined3d_pci_device device);
+            enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device);
     void (*apply)(struct wined3d_gl_info *gl_info);
     const char *description;
 };
@@ -909,7 +909,7 @@ static const struct driver_quirk quirk_table[] =
  */
 struct driver_version_information
 {
-    WORD vendor;                    /* reported PCI card vendor ID  */
+    WORD card_vendor;                    /* reported PCI card vendor ID  */
     WORD card;                      /* reported PCI card device ID  */
     const char *description;        /* Description of the card e.g. NVIDIA RIVA TNT */
     WORD d3d_level;                 /* driver hiword to report      */
@@ -924,57 +924,57 @@ static const struct driver_version_information driver_version_table[] =
      * TNT/Geforce1/2 up to 71.x - driver uses numbering 7.1.8.6 for 71.86
      *
      * All version numbers used below are from the Linux nvidia drivers. */
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          6,  10, 9371   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           15, 11, 7516   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          15, 11, 8585   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 8618   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  1,  8,  6      },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        1,  8,  6      },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               1,  8,  6      },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        6,  4,  3      },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 1,  8,  6      },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  6,  10, 9371   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           6,  10, 9371   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          6,  10, 9371   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           15, 11, 7516   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           15, 11, 7516   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           15, 11, 7516   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           15, 11, 8585   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           15, 11, 8585   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          15, 11, 8585   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 8618   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 8618   },
 
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
-    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        14, 10, 8681    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        14, 10, 8681    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        14, 10, 8681    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        14, 10, 8681    },
 
     /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
 };
 
 static void init_driver_info(struct wined3d_driver_info *driver_info,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     OSVERSIONINFOW os_version;
     WORD driver_os_version;
@@ -983,9 +983,9 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
     {
         TRACE_(d3d_caps)("Overriding PCI vendor ID with: %04x\n", wined3d_settings.pci_vendor_id);
-        vendor = wined3d_settings.pci_vendor_id;
+        card_vendor = wined3d_settings.pci_vendor_id;
     }
-    driver_info->vendor = vendor;
+    driver_info->vendor = card_vendor;
 
     if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
     {
@@ -994,18 +994,18 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
     driver_info->device = device;
 
-    switch (vendor)
+    switch (card_vendor)
     {
-        case VENDOR_ATI:
+        case HW_VENDOR_ATI:
             driver_info->name = "ati2dvag.dll";
             break;
 
-        case VENDOR_NVIDIA:
+        case HW_VENDOR_NVIDIA:
             driver_info->name = "nv4_disp.dll";
             break;
 
         default:
-            FIXME_(d3d_caps)("Unhandled vendor %04x.\n", vendor);
+            FIXME_(d3d_caps)("Unhandled card vendor %04x.\n", card_vendor);
             driver_info->name = "Display";
             break;
     }
@@ -1060,9 +1060,9 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
     for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
     {
-        if (vendor == driver_version_table[i].vendor && device == driver_version_table[i].card)
+        if (card_vendor == driver_version_table[i].card_vendor && device == driver_version_table[i].card)
         {
-            TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", vendor, device);
+            TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", card_vendor, device);
 
             driver_info->description = driver_version_table[i].description;
             driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_version_table[i].d3d_level);
@@ -1078,13 +1078,13 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     unsigned int i;
 
     for (i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); ++i)
     {
-        if (!quirk_table[i].match(gl_info, gl_renderer, vendor, device)) continue;
+        if (!quirk_table[i].match(gl_info, gl_renderer, card_vendor, device)) continue;
         TRACE_(d3d_caps)("Applying driver quirk \"%s\".\n", quirk_table[i].description);
         quirk_table[i].apply(gl_info);
     }
@@ -1111,33 +1111,33 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
     return MAKEDWORD_VERSION(major, minor);
 }
 
-static enum wined3d_pci_vendor wined3d_guess_vendor(const char *gl_vendor, const char *gl_renderer)
+static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_string, const char *gl_renderer)
 {
-    if (strstr(gl_vendor, "NVIDIA"))
-        return VENDOR_NVIDIA;
+    if (strstr(gl_vendor_string, "NVIDIA"))
+        return HW_VENDOR_NVIDIA;
 
-    if (strstr(gl_vendor, "ATI"))
-        return VENDOR_ATI;
+    if (strstr(gl_vendor_string, "ATI"))
+        return HW_VENDOR_ATI;
 
-    if (strstr(gl_vendor, "Intel(R)")
+    if (strstr(gl_vendor_string, "Intel(R)")
             || strstr(gl_renderer, "Intel(R)")
-            || strstr(gl_vendor, "Intel Inc."))
-        return VENDOR_INTEL;
+            || strstr(gl_vendor_string, "Intel Inc."))
+        return HW_VENDOR_INTEL;
 
-    if (strstr(gl_vendor, "Mesa")
-            || strstr(gl_vendor, "Advanced Micro Devices, Inc.")
-            || strstr(gl_vendor, "DRI R300 Project")
-            || strstr(gl_vendor, "Tungsten Graphics, Inc")
-            || strstr(gl_vendor, "VMware, Inc."))
-        return VENDOR_MESA;
+    if (strstr(gl_vendor_string, "Mesa")
+            || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
+            || strstr(gl_vendor_string, "DRI R300 Project")
+            || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
+            || strstr(gl_vendor_string, "VMware, Inc."))
+        return HW_VENDOR_MESA;
 
-    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning VENDOR_WINE.\n", debugstr_a(gl_vendor));
+    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning HW_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
 
-    return VENDOR_WINE;
+    return HW_VENDOR_WINE;
 }
 
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor *vendor, unsigned int *vidmem)
+        enum wined3d_pci_vendor *card_vendor, unsigned int *vidmem)
 {
     /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of
      * different GPUs with roughly the same features. In most cases GPUs from a
@@ -1194,9 +1194,9 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * memory behind our backs if really needed. Note that the amount of video
      * memory can be overruled using a registry setting. */
 
-    switch (*vendor)
+    switch (*card_vendor)
     {
-        case VENDOR_NVIDIA:
+        case HW_VENDOR_NVIDIA:
             /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
@@ -1436,7 +1436,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
             *vidmem = 16; /* Most TNT boards have 16MB, some rare models have 8MB */
             return CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
 
-        case VENDOR_ATI:
+        case HW_VENDOR_ATI:
             /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
              *
              * Beware: renderer string do not match exact card model,
@@ -1588,7 +1588,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
             *vidmem = 16; /* There are 16-32MB models */
             return CARD_ATI_RAGE_128PRO;
 
-        case VENDOR_INTEL:
+        case HW_VENDOR_INTEL:
             if (strstr(gl_renderer, "X3100"))
             {
                 /* MacOS calls the card GMA X3100, Google findings also suggest the name GM965 */
@@ -1610,13 +1610,13 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
             if (strstr(gl_renderer, "830G")) return CARD_INTEL_I830G;
             return CARD_INTEL_I915G;
 
-        case VENDOR_MESA:
-        case VENDOR_WINE:
+        case HW_VENDOR_MESA:
+        case HW_VENDOR_WINE:
         default:
             /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
              * for Nvidia was because the hardware and drivers they make are of good quality. This makes
              * them a good generic choice. */
-            *vendor = VENDOR_NVIDIA;
+            *card_vendor = HW_VENDOR_NVIDIA;
             if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
             if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
             if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
@@ -1670,7 +1670,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
     struct fragment_caps fragment_caps;
-    enum wined3d_pci_vendor vendor;
+    enum wined3d_pci_vendor card_vendor;
     enum wined3d_pci_device device;
     GLint       gl_max;
     GLfloat     gl_floatv[2];
@@ -1713,8 +1713,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
-    vendor = wined3d_guess_vendor(gl_string, gl_renderer);
-    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), vendor);
+    card_vendor = wined3d_guess_card_vendor(gl_string, gl_renderer);
+    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), card_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
     gl_string = (const char *)glGetString(GL_VERSION);
@@ -2171,8 +2171,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         gl_info->limits.buffers = 1;
     }
 
-    device = wined3d_guess_card(gl_info, gl_renderer, &vendor, &vidmem);
-    TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", vendor, device);
+    device = wined3d_guess_card(gl_info, gl_renderer, &card_vendor, &vidmem);
+    TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
 
     /* If we have an estimate use it, else default to 64MB;  */
     if(vidmem)
@@ -2234,8 +2234,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         }
     }
 
-    fixup_extensions(gl_info, gl_renderer, vendor, device);
-    init_driver_info(driver_info, vendor, device);
+    fixup_extensions(gl_info, gl_renderer, card_vendor, device);
+    init_driver_info(driver_info, card_vendor, device);
     add_gl_compat_wrappers(gl_info);
 
     HeapFree(GetProcessHeap(), 0, gl_renderer);

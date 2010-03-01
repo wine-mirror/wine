@@ -1250,11 +1250,11 @@ typedef struct WineD3D_PixelFormat
 
 enum wined3d_pci_vendor
 {
-    VENDOR_WINE                     = 0x0000,
-    VENDOR_MESA                     = 0x0001,
-    VENDOR_ATI                      = 0x1002,
-    VENDOR_NVIDIA                   = 0x10de,
-    VENDOR_INTEL                    = 0x8086,
+    HW_VENDOR_WINE                  = 0x0000,
+    HW_VENDOR_MESA                  = 0x0001,
+    HW_VENDOR_ATI                   = 0x1002,
+    HW_VENDOR_NVIDIA                = 0x10de,
+    HW_VENDOR_INTEL                 = 0x8086,
 };
 
 enum wined3d_pci_device
