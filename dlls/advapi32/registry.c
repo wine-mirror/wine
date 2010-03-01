@@ -91,15 +91,47 @@ static inline int is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+/* wrapper for NtCreateKey that creates the key recursively if necessary */
+static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                            const UNICODE_STRING *class, ULONG options, PULONG dispos )
+{
+    NTSTATUS status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class, options, dispos );
+
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        DWORD attrs, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+
+        while (i < len && attr->ObjectName->Buffer[i] != '\\') i++;
+        if (i == len) return status;
+        attrs = attr->Attributes;
+        attr->Attributes &= ~OBJ_OPENLINK;
+
+        while (i < len)
+        {
+            attr->ObjectName->Length = i * sizeof(WCHAR);
+            status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class,
+                                  options & ~REG_OPTION_CREATE_LINK, dispos );
+            if (status) return status;
+            NtClose( *retkey );
+            while (i < len && attr->ObjectName->Buffer[i] == '\\') i++;
+            while (i < len && attr->ObjectName->Buffer[i] != '\\') i++;
+        }
+        attr->Attributes = attrs;
+        attr->ObjectName->Length = len * sizeof(WCHAR);
+        status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, class, options, dispos );
+    }
+    return status;
+}
+
 /* create one of the HKEY_* special root keys */
-static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
+static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
 {
     HKEY ret = 0;
     int idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
 
     if (hkey == HKEY_CURRENT_USER)
     {
-        if (RtlOpenCurrentUser( access, &hkey )) return 0;
+        if (RtlOpenCurrentUser( access, (HANDLE *)&hkey )) return 0;
         TRACE( "HKEY_CURRENT_USER -> %p\n", hkey );
 
         /* don't cache the key in the table if caching is disabled */
@@ -118,7 +150,7 @@ static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &name, root_key_names[idx] );
-        if (NtCreateKey( &hkey, access, &attr, 0, NULL, 0, NULL )) return 0;
+        if (create_key( &hkey, access, &attr, NULL, 0, NULL )) return 0;
         TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
     }
 
@@ -194,8 +226,7 @@ LSTATUS WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR 
     RtlInitUnicodeString( &nameW, name );
     RtlInitUnicodeString( &classW, class );
 
-    return RtlNtStatusToDosError( NtCreateKey( (PHANDLE)retkey, access, &attr, 0,
-                                               &classW, options, dispos ) );
+    return RtlNtStatusToDosError( create_key( retkey, access, &attr, &classW, options, dispos ) );
 }
 
 
@@ -254,7 +285,7 @@ LSTATUS WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR cl
     {
         if (!(status = RtlAnsiStringToUnicodeString( &classW, &classA, TRUE )))
         {
-            status = NtCreateKey( (PHANDLE)retkey, access, &attr, 0, &classW, options, dispos );
+            status = create_key( retkey, access, &attr, &classW, options, dispos );
             RtlFreeUnicodeString( &classW );
         }
     }
