@@ -1969,7 +1969,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     }
     dstbits = data = HeapAlloc(GetProcessHeap(), 0, heightSrc * widthSrc * 4);
 
-    if(dib.dsBmih.biHeight < 0) { /* top-down dib */
+    if (devSrc->bitmap->topdown) { /* top-down dib */
         top_down = TRUE;
         dstbits += widthSrc * (heightSrc - 1);
         y2 = ySrc;
