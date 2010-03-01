@@ -1175,10 +1175,456 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
 }
 
 
+
+enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+            unsigned int *vidmem )
+{
+    /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
+     * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
+     */
+    if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
+    {
+        /* Geforce 200 - highend */
+        if (strstr(gl_renderer, "GTX 280")
+                || strstr(gl_renderer, "GTX 285")
+                || strstr(gl_renderer, "GTX 295"))
+        {
+            *vidmem = 1024;
+            return CARD_NVIDIA_GEFORCE_GTX280;
+        }
+
+        /* Geforce 200 - midend high */
+        if (strstr(gl_renderer, "GTX 275"))
+        {
+            *vidmem = 896;
+            return CARD_NVIDIA_GEFORCE_GTX275;
+        }
+
+        /* Geforce 200 - midend */
+        if (strstr(gl_renderer, "GTX 260"))
+        {
+            *vidmem = 1024;
+            return CARD_NVIDIA_GEFORCE_GTX260;
+        }
+        /* Geforce 200 - midend */
+        if (strstr(gl_renderer, "GT 240"))
+        {
+           *vidmem = 512;
+           return CARD_NVIDIA_GEFORCE_GT240;
+        }
+
+        /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
+        if (strstr(gl_renderer, "9800")
+                || strstr(gl_renderer, "GTS 150")
+                || strstr(gl_renderer, "GTS 250"))
+        {
+            *vidmem = 512;
+            return CARD_NVIDIA_GEFORCE_9800GT;
+        }
+
+        /* Geforce9 - midend */
+        if (strstr(gl_renderer, "9600"))
+        {
+            *vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
+            return CARD_NVIDIA_GEFORCE_9600GT;
+        }
+
+        /* Geforce9 - midend low / Geforce 200 - low */
+        if (strstr(gl_renderer, "9500")
+                || strstr(gl_renderer, "GT 120")
+                || strstr(gl_renderer, "GT 130"))
+        {
+            *vidmem = 256; /* The 9500GT has 256-1024MB */
+            return CARD_NVIDIA_GEFORCE_9500GT;
+        }
+
+        /* Geforce9 - lowend */
+        if (strstr(gl_renderer, "9400"))
+        {
+            *vidmem = 256; /* The 9400GT has 256-1024MB */
+            return CARD_NVIDIA_GEFORCE_9400GT;
+        }
+
+        /* Geforce9 - lowend low */
+        if (strstr(gl_renderer, "9100")
+                || strstr(gl_renderer, "9200")
+                || strstr(gl_renderer, "9300")
+                || strstr(gl_renderer, "G 100"))
+        {
+            *vidmem = 256; /* The 9100-9300 cards have 256MB */
+            return CARD_NVIDIA_GEFORCE_9200;
+        }
+
+        /* Geforce8 - highend */
+        if (strstr(gl_renderer, "8800"))
+        {
+            *vidmem = 320; /* The 8800GTS uses 320MB, a 8800GTX can have 768MB */
+            return CARD_NVIDIA_GEFORCE_8800GTS;
+        }
+
+        /* Geforce8 - midend mobile */
+        if (strstr(gl_renderer, "8600 M"))
+        {
+            *vidmem = 512;
+            return CARD_NVIDIA_GEFORCE_8600MGT;
+        }
+
+        /* Geforce8 - midend */
+        if (strstr(gl_renderer, "8600")
+                || strstr(gl_renderer, "8700"))
+        {
+            *vidmem = 256;
+            return CARD_NVIDIA_GEFORCE_8600GT;
+        }
+
+        /* Geforce8 - lowend */
+        if (strstr(gl_renderer, "8100")
+                || strstr(gl_renderer, "8200")
+                || strstr(gl_renderer, "8300")
+                || strstr(gl_renderer, "8400")
+                || strstr(gl_renderer, "8500"))
+        {
+            *vidmem = 128; /* 128-256MB for a 8300, 256-512MB for a 8400 */
+            return CARD_NVIDIA_GEFORCE_8300GS;
+        }
+
+        /* Geforce7 - highend */
+        if (strstr(gl_renderer, "7800")
+                || strstr(gl_renderer, "7900")
+                || strstr(gl_renderer, "7950")
+                || strstr(gl_renderer, "Quadro FX 4")
+                || strstr(gl_renderer, "Quadro FX 5"))
+        {
+            *vidmem = 256; /* A 7800GT uses 256MB while highend 7900 cards can use 512MB */
+            return CARD_NVIDIA_GEFORCE_7800GT;
+        }
+
+        /* Geforce7 midend */
+        if (strstr(gl_renderer, "7600")
+                || strstr(gl_renderer, "7700"))
+        {
+            *vidmem = 256; /* The 7600 uses 256-512MB */
+            return CARD_NVIDIA_GEFORCE_7600;
+        }
+
+        /* Geforce7 lower medium */
+        if (strstr(gl_renderer, "7400"))
+        {
+            *vidmem = 256; /* The 7400 uses 256-512MB */
+            return CARD_NVIDIA_GEFORCE_7400;
+        }
+
+        /* Geforce7 lowend */
+        if (strstr(gl_renderer, "7300"))
+        {
+            *vidmem = 256; /* Mac Pros with this card have 256 MB */
+            return CARD_NVIDIA_GEFORCE_7300;
+        }
+
+        /* Geforce6 highend */
+        if (strstr(gl_renderer, "6800"))
+        {
+            *vidmem = 128; /* The 6800 uses 128-256MB, the 7600 uses 256-512MB */
+            return CARD_NVIDIA_GEFORCE_6800;
+        }
+
+        /* Geforce6 - midend */
+        if (strstr(gl_renderer, "6600")
+                || strstr(gl_renderer, "6610")
+                || strstr(gl_renderer, "6700"))
+        {
+            *vidmem = 128; /* A 6600GT has 128-256MB */
+            return CARD_NVIDIA_GEFORCE_6600GT;
+        }
+
+        /* Geforce6/7 lowend */
+        *vidmem = 64; /* */
+        return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
+    }
+
+    if (WINE_D3D9_CAPABLE(gl_info))
+    {
+        /* GeforceFX - highend */
+        if (strstr(gl_renderer, "5800")
+                || strstr(gl_renderer, "5900")
+                || strstr(gl_renderer, "5950")
+                || strstr(gl_renderer, "Quadro FX"))
+        {
+            *vidmem = 256; /* 5800-5900 cards use 256MB */
+            return CARD_NVIDIA_GEFORCEFX_5800;
+        }
+
+        /* GeforceFX - midend */
+        if (strstr(gl_renderer, "5600")
+                || strstr(gl_renderer, "5650")
+                || strstr(gl_renderer, "5700")
+                || strstr(gl_renderer, "5750"))
+        {
+            *vidmem = 128; /* A 5600 uses 128-256MB */
+            return CARD_NVIDIA_GEFORCEFX_5600;
+        }
+
+        /* GeforceFX - lowend */
+        *vidmem = 64; /* Normal FX5200 cards use 64-256MB; laptop (non-standard) can have less */
+        return CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
+    }
+
+    if (WINE_D3D8_CAPABLE(gl_info))
+    {
+        if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
+        {
+            *vidmem = 64; /* Geforce4 Ti cards have 64-128MB */
+            return CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
+        }
+
+        *vidmem = 64; /* Geforce3 cards have 64-128MB */
+        return CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
+    }
+
+    if (WINE_D3D7_CAPABLE(gl_info))
+    {
+        if (strstr(gl_renderer, "GeForce4 MX"))
+        {
+            /* Most Geforce4MX GPUs have at least 64MB of memory, some
+             * early models had 32MB but most have 64MB or even 128MB. */
+            *vidmem = 64;
+            return CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
+        }
+
+        if (strstr(gl_renderer, "GeForce2 MX") || strstr(gl_renderer, "Quadro2 MXR"))
+        {
+            *vidmem = 32; /* Geforce2MX GPUs have 32-64MB of video memory */
+            return CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
+        }
+
+        if (strstr(gl_renderer, "GeForce2") || strstr(gl_renderer, "Quadro2"))
+        {
+            *vidmem = 32; /* Geforce2 GPUs have 32-64MB of video memory */
+            return CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
+        }
+
+        /* Most Geforce1 cards have 32MB, there are also some rare 16
+         * and 64MB (Dell) models. */
+        *vidmem = 32;
+        return CARD_NVIDIA_GEFORCE; /* Geforce 256/DDR, Quadro */
+    }
+
+    if (strstr(gl_renderer, "TNT2"))
+    {
+        *vidmem = 32; /* Most TNT2 boards have 32MB, though there are 16MB boards too */
+        return CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
+    }
+
+    *vidmem = 16; /* Most TNT boards have 16MB, some rare models have 8MB */
+    return CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
+
+}
+
+enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+    unsigned int *vidmem )
+{
+    /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
+     *
+     * Beware: renderer string do not match exact card model,
+     * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
+    if (WINE_D3D9_CAPABLE(gl_info))
+    {
+        /* Radeon EG CYPRESS XT / PRO HD5800 - highend */
+        if (strstr(gl_renderer, "HD 5800")          /* Radeon EG CYPRESS HD58xx generic renderer string */
+                || strstr(gl_renderer, "HD 5850")   /* Radeon EG CYPRESS XT */
+                || strstr(gl_renderer, "HD 5870"))  /* Radeon EG CYPRESS PRO */
+        {
+            *vidmem = 1024; /* note: HD58xx cards use 1024MB  */
+            return CARD_ATI_RADEON_HD5800;
+        }
+
+        /* Radeon EG JUNIPER XT / LE HD5700 - midend */
+        if (strstr(gl_renderer, "HD 5700")          /* Radeon EG JUNIPER HD57xx generic renderer string */
+                || strstr(gl_renderer, "HD 5750")   /* Radeon EG JUNIPER LE */
+                || strstr(gl_renderer, "HD 5770"))  /* Radeon EG JUNIPER XT */
+        {
+            *vidmem = 512; /* note: HD5770 cards use 1024MB and HD5750 cards use 512MB or 1024MB  */
+            return CARD_ATI_RADEON_HD5700;
+        }
+
+        /* Radeon R7xx HD4800 - highend */
+        if (strstr(gl_renderer, "HD 4800")          /* Radeon RV7xx HD48xx generic renderer string */
+                || strstr(gl_renderer, "HD 4830")   /* Radeon RV770 */
+                || strstr(gl_renderer, "HD 4850")   /* Radeon RV770 */
+                || strstr(gl_renderer, "HD 4870")   /* Radeon RV770 */
+                || strstr(gl_renderer, "HD 4890"))  /* Radeon RV790 */
+        {
+            *vidmem = 512; /* note: HD4890 cards use 1024MB */
+            return CARD_ATI_RADEON_HD4800;
+        }
+
+        /* Radeon R740 HD4700 - midend */
+        if (strstr(gl_renderer, "HD 4700")          /* Radeon RV770 */
+                || strstr(gl_renderer, "HD 4770"))  /* Radeon RV740 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4700;
+        }
+
+        /* Radeon R730 HD4600 - midend */
+        if (strstr(gl_renderer, "HD 4600")          /* Radeon RV730 */
+                || strstr(gl_renderer, "HD 4650")   /* Radeon RV730 */
+                || strstr(gl_renderer, "HD 4670"))  /* Radeon RV730 */
+        {
+            *vidmem = 512;
+            return CARD_ATI_RADEON_HD4600;
+        }
+
+        /* Radeon R710 HD4500/HD4350 - lowend */
+        if (strstr(gl_renderer, "HD 4350")          /* Radeon RV710 */
+                || strstr(gl_renderer, "HD 4550"))  /* Radeon RV710 */
+        {
+            *vidmem = 256;
+            return CARD_ATI_RADEON_HD4350;
+        }
+
+        /* Radeon R6xx HD2900/HD3800 - highend */
+        if (strstr(gl_renderer, "HD 2900")
+                || strstr(gl_renderer, "HD 3870")
+                || strstr(gl_renderer, "HD 3850"))
+        {
+            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
+            return CARD_ATI_RADEON_HD2900;
+        }
+
+        /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
+        if (strstr(gl_renderer, "HD 2600")
+                || strstr(gl_renderer, "HD 3830")
+                || strstr(gl_renderer, "HD 3690")
+                || strstr(gl_renderer, "HD 3650"))
+        {
+            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
+            return CARD_ATI_RADEON_HD2600;
+        }
+
+        /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
+        if (strstr(gl_renderer, "HD 2300")
+                || strstr(gl_renderer, "HD 2400")
+                || strstr(gl_renderer, "HD 3470")
+                || strstr(gl_renderer, "HD 3450")
+                || strstr(gl_renderer, "HD 3430")
+                || strstr(gl_renderer, "HD 3400"))
+        {
+            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
+            return CARD_ATI_RADEON_HD2300;
+        }
+
+        /* Radeon R6xx/R7xx integrated */
+        if (strstr(gl_renderer, "HD 3100")
+                || strstr(gl_renderer, "HD 3200")
+                || strstr(gl_renderer, "HD 3300"))
+        {
+            *vidmem = 128; /* 128MB */
+            return CARD_ATI_RADEON_HD3200;
+        }
+
+        /* Radeon R5xx */
+        if (strstr(gl_renderer, "X1600")
+                || strstr(gl_renderer, "X1650")
+                || strstr(gl_renderer, "X1800")
+                || strstr(gl_renderer, "X1900")
+                || strstr(gl_renderer, "X1950"))
+        {
+            *vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
+            return CARD_ATI_RADEON_X1600;
+        }
+
+        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
+        if (strstr(gl_renderer, "X700")
+                || strstr(gl_renderer, "X800")
+                || strstr(gl_renderer, "X850")
+                || strstr(gl_renderer, "X1300")
+                || strstr(gl_renderer, "X1400")
+                || strstr(gl_renderer, "X1450")
+                || strstr(gl_renderer, "X1550"))
+        {
+            *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
+            return CARD_ATI_RADEON_X700;
+        }
+
+        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
+        if (strstr(gl_renderer, "Radeon Xpress"))
+        {
+            *vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
+            return CARD_ATI_RADEON_XPRESS_200M;
+        }
+
+        /* Radeon R3xx */
+        *vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
+        return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
+    }
+
+    if (WINE_D3D8_CAPABLE(gl_info))
+    {
+        *vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
+        return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
+    }
+
+    if (WINE_D3D7_CAPABLE(gl_info))
+    {
+        *vidmem = 32; /* There are models with up to 64MB */
+        return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
+    }
+
+    *vidmem = 16; /* There are 16-32MB models */
+    return CARD_ATI_RAGE_128PRO;
+
+}
+
+enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+    unsigned int *vidmem )
+{
+    if (strstr(gl_renderer, "X3100"))
+    {
+        /* MacOS calls the card GMA X3100, Google findings also suggest the name GM965 */
+        *vidmem = 128;
+        return CARD_INTEL_X3100;
+    }
+
+    if (strstr(gl_renderer, "GMA 950") || strstr(gl_renderer, "945GM"))
+    {
+        /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
+        *vidmem = 64;
+        return CARD_INTEL_I945GM;
+    }
+
+    if (strstr(gl_renderer, "915GM")) return CARD_INTEL_I915GM;
+    if (strstr(gl_renderer, "915G")) return CARD_INTEL_I915G;
+    if (strstr(gl_renderer, "865G")) return CARD_INTEL_I865G;
+    if (strstr(gl_renderer, "855G")) return CARD_INTEL_I855G;
+    if (strstr(gl_renderer, "830G")) return CARD_INTEL_I830G;
+    return CARD_INTEL_I915G;
+
+}
+
+struct vendor_card_selection
+{
+    enum wined3d_gl_vendor gl_vendor;
+    enum wined3d_pci_vendor card_vendor;
+    const char *description;        /* Description of the card selector i.e. Apple OS/X Intel */
+    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+            unsigned int *vidmem );
+};
+
+static const struct vendor_card_selection vendor_card_select_table[] =
+{
+    {GL_VENDOR_NVIDIA, HW_VENDOR_NVIDIA,  "Nvidia binary driver",     select_card_nvidia_binary},
+    {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
+    {GL_VENDOR_APPLE,  HW_VENDOR_ATI,     "Apple OSX AMD/ATI binary driver",  select_card_ati_binary},
+    {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel_binary},
+    {GL_VENDOR_ATI,    HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary}
+};
+
+
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor, unsigned int *vidmem)
 {
-    /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of
+    /* Above is a list of Nvidia and ATI GPUs. Both vendors have dozens of
      * different GPUs with roughly the same features. In most cases GPUs from a
      * certain family differ in clockspeeds, the amount of video memory and the
      * number of shader pipelines.
@@ -1233,434 +1679,29 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * memory behind our backs if really needed. Note that the amount of video
      * memory can be overruled using a registry setting. */
 
-    switch (*card_vendor)
+    int i;
+
+    for (i = 0; i < (sizeof(vendor_card_select_table) / sizeof(*vendor_card_select_table)); ++i)
     {
-        case HW_VENDOR_NVIDIA:
-            /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
-             * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
-             */
-            if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
-            {
-                /* Geforce 200 - highend */
-                if (strstr(gl_renderer, "GTX 280")
-                        || strstr(gl_renderer, "GTX 285")
-                        || strstr(gl_renderer, "GTX 295"))
-                {
-                    *vidmem = 1024;
-                    return CARD_NVIDIA_GEFORCE_GTX280;
-                }
-
-                /* Geforce 200 - midend high */
-                if (strstr(gl_renderer, "GTX 275"))
-                {
-                    *vidmem = 896;
-                    return CARD_NVIDIA_GEFORCE_GTX275;
-                }
-
-                /* Geforce 200 - midend */
-                if (strstr(gl_renderer, "GTX 260"))
-                {
-                    *vidmem = 1024;
-                    return CARD_NVIDIA_GEFORCE_GTX260;
-                }
-                /* Geforce 200 - midend */
-                if (strstr(gl_renderer, "GT 240"))
-                {
-                   *vidmem = 512;
-                   return CARD_NVIDIA_GEFORCE_GT240;
-                }
-
-                /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
-                if (strstr(gl_renderer, "9800")
-                        || strstr(gl_renderer, "GTS 150")
-                        || strstr(gl_renderer, "GTS 250"))
-                {
-                    *vidmem = 512;
-                    return CARD_NVIDIA_GEFORCE_9800GT;
-                }
-
-                /* Geforce9 - midend */
-                if (strstr(gl_renderer, "9600"))
-                {
-                    *vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
-                    return CARD_NVIDIA_GEFORCE_9600GT;
-                }
-
-                /* Geforce9 - midend low / Geforce 200 - low */
-                if (strstr(gl_renderer, "9500")
-                        || strstr(gl_renderer, "GT 120")
-                        || strstr(gl_renderer, "GT 130"))
-                {
-                    *vidmem = 256; /* The 9500GT has 256-1024MB */
-                    return CARD_NVIDIA_GEFORCE_9500GT;
-                }
-
-                /* Geforce9 - lowend */
-                if (strstr(gl_renderer, "9400"))
-                {
-                    *vidmem = 256; /* The 9400GT has 256-1024MB */
-                    return CARD_NVIDIA_GEFORCE_9400GT;
-                }
-
-                /* Geforce9 - lowend low */
-                if (strstr(gl_renderer, "9100")
-                        || strstr(gl_renderer, "9200")
-                        || strstr(gl_renderer, "9300")
-                        || strstr(gl_renderer, "G 100"))
-                {
-                    *vidmem = 256; /* The 9100-9300 cards have 256MB */
-                    return CARD_NVIDIA_GEFORCE_9200;
-                }
-
-                /* Geforce8 - highend */
-                if (strstr(gl_renderer, "8800"))
-                {
-                    *vidmem = 320; /* The 8800GTS uses 320MB, a 8800GTX can have 768MB */
-                    return CARD_NVIDIA_GEFORCE_8800GTS;
-                }
-
-                /* Geforce8 - midend mobile */
-                if (strstr(gl_renderer, "8600 M"))
-                {
-                    *vidmem = 512;
-                    return CARD_NVIDIA_GEFORCE_8600MGT;
-                }
-
-                /* Geforce8 - midend */
-                if (strstr(gl_renderer, "8600")
-                        || strstr(gl_renderer, "8700"))
-                {
-                    *vidmem = 256;
-                    return CARD_NVIDIA_GEFORCE_8600GT;
-                }
-
-                /* Geforce8 - lowend */
-                if (strstr(gl_renderer, "8100")
-                        || strstr(gl_renderer, "8200")
-                        || strstr(gl_renderer, "8300")
-                        || strstr(gl_renderer, "8400")
-                        || strstr(gl_renderer, "8500"))
-                {
-                    *vidmem = 128; /* 128-256MB for a 8300, 256-512MB for a 8400 */
-                    return CARD_NVIDIA_GEFORCE_8300GS;
-                }
-
-                /* Geforce7 - highend */
-                if (strstr(gl_renderer, "7800")
-                        || strstr(gl_renderer, "7900")
-                        || strstr(gl_renderer, "7950")
-                        || strstr(gl_renderer, "Quadro FX 4")
-                        || strstr(gl_renderer, "Quadro FX 5"))
-                {
-                    *vidmem = 256; /* A 7800GT uses 256MB while highend 7900 cards can use 512MB */
-                    return CARD_NVIDIA_GEFORCE_7800GT;
-                }
-
-                /* Geforce7 midend */
-                if (strstr(gl_renderer, "7600")
-                        || strstr(gl_renderer, "7700"))
-                {
-                    *vidmem = 256; /* The 7600 uses 256-512MB */
-                    return CARD_NVIDIA_GEFORCE_7600;
-                }
-
-                /* Geforce7 lower medium */
-                if (strstr(gl_renderer, "7400"))
-                {
-                    *vidmem = 256; /* The 7400 uses 256-512MB */
-                    return CARD_NVIDIA_GEFORCE_7400;
-                }
-
-                /* Geforce7 lowend */
-                if (strstr(gl_renderer, "7300"))
-                {
-                    *vidmem = 256; /* Mac Pros with this card have 256 MB */
-                    return CARD_NVIDIA_GEFORCE_7300;
-                }
-
-                /* Geforce6 highend */
-                if (strstr(gl_renderer, "6800"))
-                {
-                    *vidmem = 128; /* The 6800 uses 128-256MB, the 7600 uses 256-512MB */
-                    return CARD_NVIDIA_GEFORCE_6800;
-                }
-
-                /* Geforce6 - midend */
-                if (strstr(gl_renderer, "6600")
-                        || strstr(gl_renderer, "6610")
-                        || strstr(gl_renderer, "6700"))
-                {
-                    *vidmem = 128; /* A 6600GT has 128-256MB */
-                    return CARD_NVIDIA_GEFORCE_6600GT;
-                }
-
-                /* Geforce6/7 lowend */
-                *vidmem = 64; /* */
-                return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
-            }
-
-            if (WINE_D3D9_CAPABLE(gl_info))
-            {
-                /* GeforceFX - highend */
-                if (strstr(gl_renderer, "5800")
-                        || strstr(gl_renderer, "5900")
-                        || strstr(gl_renderer, "5950")
-                        || strstr(gl_renderer, "Quadro FX"))
-                {
-                    *vidmem = 256; /* 5800-5900 cards use 256MB */
-                    return CARD_NVIDIA_GEFORCEFX_5800;
-                }
-
-                /* GeforceFX - midend */
-                if (strstr(gl_renderer, "5600")
-                        || strstr(gl_renderer, "5650")
-                        || strstr(gl_renderer, "5700")
-                        || strstr(gl_renderer, "5750"))
-                {
-                    *vidmem = 128; /* A 5600 uses 128-256MB */
-                    return CARD_NVIDIA_GEFORCEFX_5600;
-                }
-
-                /* GeforceFX - lowend */
-                *vidmem = 64; /* Normal FX5200 cards use 64-256MB; laptop (non-standard) can have less */
-                return CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
-            }
-
-            if (WINE_D3D8_CAPABLE(gl_info))
-            {
-                if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
-                {
-                    *vidmem = 64; /* Geforce4 Ti cards have 64-128MB */
-                    return CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
-                }
-
-                *vidmem = 64; /* Geforce3 cards have 64-128MB */
-                return CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
-            }
-
-            if (WINE_D3D7_CAPABLE(gl_info))
-            {
-                if (strstr(gl_renderer, "GeForce4 MX"))
-                {
-                    /* Most Geforce4MX GPUs have at least 64MB of memory, some
-                     * early models had 32MB but most have 64MB or even 128MB. */
-                    *vidmem = 64;
-                    return CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
-                }
-
-                if (strstr(gl_renderer, "GeForce2 MX") || strstr(gl_renderer, "Quadro2 MXR"))
-                {
-                    *vidmem = 32; /* Geforce2MX GPUs have 32-64MB of video memory */
-                    return CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
-                }
-
-                if (strstr(gl_renderer, "GeForce2") || strstr(gl_renderer, "Quadro2"))
-                {
-                    *vidmem = 32; /* Geforce2 GPUs have 32-64MB of video memory */
-                    return CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
-                }
-
-                /* Most Geforce1 cards have 32MB, there are also some rare 16
-                 * and 64MB (Dell) models. */
-                *vidmem = 32;
-                return CARD_NVIDIA_GEFORCE; /* Geforce 256/DDR, Quadro */
-            }
-
-            if (strstr(gl_renderer, "TNT2"))
-            {
-                *vidmem = 32; /* Most TNT2 boards have 32MB, though there are 16MB boards too */
-                return CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
-            }
-
-            *vidmem = 16; /* Most TNT boards have 16MB, some rare models have 8MB */
-            return CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
-
-        case HW_VENDOR_ATI:
-            /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
-             *
-             * Beware: renderer string do not match exact card model,
-             * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
-            if (WINE_D3D9_CAPABLE(gl_info))
-            {
-                /* Radeon EG CYPRESS XT / PRO HD5800 - highend */
-                if (strstr(gl_renderer, "HD 5800")          /* Radeon EG CYPRESS HD58xx generic renderer string */
-                        || strstr(gl_renderer, "HD 5850")   /* Radeon EG CYPRESS XT */
-                        || strstr(gl_renderer, "HD 5870"))  /* Radeon EG CYPRESS PRO */
-                {
-                    *vidmem = 1024; /* note: HD58xx cards use 1024MB  */
-                    return CARD_ATI_RADEON_HD5800;
-                }
-
-                /* Radeon EG JUNIPER XT / LE HD5700 - midend */
-                if (strstr(gl_renderer, "HD 5700")          /* Radeon EG JUNIPER HD57xx generic renderer string */
-                        || strstr(gl_renderer, "HD 5750")   /* Radeon EG JUNIPER LE */
-                        || strstr(gl_renderer, "HD 5770"))  /* Radeon EG JUNIPER XT */
-                {
-                    *vidmem = 512; /* note: HD5770 cards use 1024MB and HD5750 cards use 512MB or 1024MB  */
-                    return CARD_ATI_RADEON_HD5700;
-                }
-
-                /* Radeon R7xx HD4800 - highend */
-                if (strstr(gl_renderer, "HD 4800")          /* Radeon RV7xx HD48xx generic renderer string */
-                        || strstr(gl_renderer, "HD 4830")   /* Radeon RV770 */
-                        || strstr(gl_renderer, "HD 4850")   /* Radeon RV770 */
-                        || strstr(gl_renderer, "HD 4870")   /* Radeon RV770 */
-                        || strstr(gl_renderer, "HD 4890"))  /* Radeon RV790 */
-                {
-                    *vidmem = 512; /* note: HD4890 cards use 1024MB */
-                    return CARD_ATI_RADEON_HD4800;
-                }
-
-                /* Radeon R740 HD4700 - midend */
-                if (strstr(gl_renderer, "HD 4700")          /* Radeon RV770 */
-                        || strstr(gl_renderer, "HD 4770"))  /* Radeon RV740 */
-                {
-                    *vidmem = 512;
-                    return CARD_ATI_RADEON_HD4700;
-                }
-
-                /* Radeon R730 HD4600 - midend */
-                if (strstr(gl_renderer, "HD 4600")          /* Radeon RV730 */
-                        || strstr(gl_renderer, "HD 4650")   /* Radeon RV730 */
-                        || strstr(gl_renderer, "HD 4670"))  /* Radeon RV730 */
-                {
-                    *vidmem = 512;
-                    return CARD_ATI_RADEON_HD4600;
-                }
-
-                /* Radeon R710 HD4500/HD4350 - lowend */
-                if (strstr(gl_renderer, "HD 4350")          /* Radeon RV710 */
-                        || strstr(gl_renderer, "HD 4550"))  /* Radeon RV710 */
-                {
-                    *vidmem = 256;
-                    return CARD_ATI_RADEON_HD4350;
-                }
-
-                /* Radeon R6xx HD2900/HD3800 - highend */
-                if (strstr(gl_renderer, "HD 2900")
-                        || strstr(gl_renderer, "HD 3870")
-                        || strstr(gl_renderer, "HD 3850"))
-                {
-                    *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
-                    return CARD_ATI_RADEON_HD2900;
-                }
-
-                /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
-                if (strstr(gl_renderer, "HD 2600")
-                        || strstr(gl_renderer, "HD 3830")
-                        || strstr(gl_renderer, "HD 3690")
-                        || strstr(gl_renderer, "HD 3650"))
-                {
-                    *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
-                    return CARD_ATI_RADEON_HD2600;
-                }
-
-                /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
-                if (strstr(gl_renderer, "HD 2300")
-                        || strstr(gl_renderer, "HD 2400")
-                        || strstr(gl_renderer, "HD 3470")
-                        || strstr(gl_renderer, "HD 3450")
-                        || strstr(gl_renderer, "HD 3430")
-                        || strstr(gl_renderer, "HD 3400"))
-                {
-                    *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
-                    return CARD_ATI_RADEON_HD2300;
-                }
-
-                /* Radeon R6xx/R7xx integrated */
-                if (strstr(gl_renderer, "HD 3100")
-                        || strstr(gl_renderer, "HD 3200")
-                        || strstr(gl_renderer, "HD 3300"))
-                {
-                    *vidmem = 128; /* 128MB */
-                    return CARD_ATI_RADEON_HD3200;
-                }
-
-                /* Radeon R5xx */
-                if (strstr(gl_renderer, "X1600")
-                        || strstr(gl_renderer, "X1650")
-                        || strstr(gl_renderer, "X1800")
-                        || strstr(gl_renderer, "X1900")
-                        || strstr(gl_renderer, "X1950"))
-                {
-                    *vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
-                    return CARD_ATI_RADEON_X1600;
-                }
-
-                /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
-                if (strstr(gl_renderer, "X700")
-                        || strstr(gl_renderer, "X800")
-                        || strstr(gl_renderer, "X850")
-                        || strstr(gl_renderer, "X1300")
-                        || strstr(gl_renderer, "X1400")
-                        || strstr(gl_renderer, "X1450")
-                        || strstr(gl_renderer, "X1550"))
-                {
-                    *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
-                    return CARD_ATI_RADEON_X700;
-                }
-
-                /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
-                if (strstr(gl_renderer, "Radeon Xpress"))
-                {
-                    *vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
-                    return CARD_ATI_RADEON_XPRESS_200M;
-                }
-
-                /* Radeon R3xx */
-                *vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
-                return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
-            }
-
-            if (WINE_D3D8_CAPABLE(gl_info))
-            {
-                *vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
-                return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
-            }
-
-            if (WINE_D3D7_CAPABLE(gl_info))
-            {
-                *vidmem = 32; /* There are models with up to 64MB */
-                return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-            }
-
-            *vidmem = 16; /* There are 16-32MB models */
-            return CARD_ATI_RAGE_128PRO;
-
-        case HW_VENDOR_INTEL:
-            if (strstr(gl_renderer, "X3100"))
-            {
-                /* MacOS calls the card GMA X3100, Google findings also suggest the name GM965 */
-                *vidmem = 128;
-                return CARD_INTEL_X3100;
-            }
-
-            if (strstr(gl_renderer, "GMA 950") || strstr(gl_renderer, "945GM"))
-            {
-                /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
-                *vidmem = 64;
-                return CARD_INTEL_I945GM;
-            }
-
-            if (strstr(gl_renderer, "915GM")) return CARD_INTEL_I915GM;
-            if (strstr(gl_renderer, "915G")) return CARD_INTEL_I915G;
-            if (strstr(gl_renderer, "865G")) return CARD_INTEL_I865G;
-            if (strstr(gl_renderer, "855G")) return CARD_INTEL_I855G;
-            if (strstr(gl_renderer, "830G")) return CARD_INTEL_I830G;
-            return CARD_INTEL_I915G;
-
-        case HW_VENDOR_WINE:
-        default:
-            /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
-             * for Nvidia was because the hardware and drivers they make are of good quality. This makes
-             * them a good generic choice. */
-            *card_vendor = HW_VENDOR_NVIDIA;
-            if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
-            if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
-            if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
-            if (WINE_D3D6_CAPABLE(gl_info)) return CARD_NVIDIA_RIVA_TNT;
-            return CARD_NVIDIA_RIVA_128;
+        if ((vendor_card_select_table[i].gl_vendor != *gl_vendor)
+            || (vendor_card_select_table[i].card_vendor != *card_vendor))
+                continue;
+        TRACE_(d3d_caps)("Applying card_selector \"%s\".\n", vendor_card_select_table[i].description);
+        return vendor_card_select_table[i].select_card(gl_info, gl_renderer, vidmem);
     }
+
+    FIXME_(d3d_caps)("No card selector available for GL vendor %d and card vendor %04x.\n",
+                     *gl_vendor, *card_vendor);
+
+    /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
+     * for Nvidia was because the hardware and drivers they make are of good quality. This makes
+     * them a good generic choice. */
+    *card_vendor = HW_VENDOR_NVIDIA;
+    if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
+    if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
+    if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
+    if (WINE_D3D6_CAPABLE(gl_info)) return CARD_NVIDIA_RIVA_TNT;
+    return CARD_NVIDIA_RIVA_128;
 }
 
 static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter)
