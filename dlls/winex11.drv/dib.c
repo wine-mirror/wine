@@ -4726,12 +4726,17 @@ HBITMAP CDECL X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
 {
     X_PHYSBITMAP *physBitmap;
     DIBSECTION dib;
+    WORD bpp, compr;
+    LONG w, h;
 #ifdef HAVE_LIBXXSHM
     int major, minor;
     Bool pixmaps;
 #endif
 
+    DIB_GetBitmapInfo( &bmi->bmiHeader, &w, &h, &bpp, &compr );
+
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return 0;
+    if (h < 0) physBitmap->topdown = TRUE;
     physBitmap->status = DIB_Status_None;
 
     GetObjectW( hbitmap, sizeof(dib), &dib );

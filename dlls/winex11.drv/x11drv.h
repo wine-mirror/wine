@@ -127,6 +127,7 @@ typedef struct
     int         *colorMap;          /* color map info */
     int          nColorMap;
     BOOL         trueColor;
+    BOOL         topdown;
     CRITICAL_SECTION lock;          /* GDI access lock */
     enum x11drv_shm_mode shm_mode;
 #ifdef HAVE_LIBXXSHM
