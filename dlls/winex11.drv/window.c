@@ -1005,7 +1005,8 @@ static Window get_owner_whole_window( HWND owner )
 
     if (!(data = X11DRV_get_win_data( owner )))
     {
-        if (!(data = X11DRV_create_win_data( owner )))
+        if (GetWindowThreadProcessId( owner, NULL ) != GetCurrentThreadId() ||
+            !(data = X11DRV_create_win_data( owner )))
             return (Window)GetPropA( owner, whole_window_prop );
     }
     else if (!data->managed)  /* make it managed */
