@@ -277,6 +277,8 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
 typedef struct ID3DXConstantTableImpl {
     const ID3DXConstantTableVtbl *lpVtbl;
     LONG ref;
+    LPVOID ctab;
+    DWORD size;
 } ID3DXConstantTableImpl;
 
 /*** IUnknown methods ***/
@@ -316,7 +318,10 @@ static ULONG WINAPI ID3DXConstantTableImpl_Release(ID3DXConstantTable* iface)
     TRACE("(%p)->(): Release from %d\n", This, ref + 1);
 
     if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This->ctab);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -326,18 +331,18 @@ static LPVOID WINAPI ID3DXConstantTableImpl_GetBufferPointer(ID3DXConstantTable*
 {
     ID3DXConstantTableImpl *This = (ID3DXConstantTableImpl *)iface;
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("(%p)->()\n", This);
 
-    return NULL;
+    return This->ctab;
 }
 
 static DWORD WINAPI ID3DXConstantTableImpl_GetBufferSize(ID3DXConstantTable* iface)
 {
     ID3DXConstantTableImpl *This = (ID3DXConstantTableImpl *)iface;
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("(%p)->()\n", This);
 
-    return 0;
+    return This->size;
 }
 
 /*** ID3DXConstantTable methods ***/
@@ -583,11 +588,18 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
                                             LPD3DXCONSTANTTABLE* ppConstantTable)
 {
     ID3DXConstantTableImpl* object;
+    HRESULT hr;
+    LPCVOID data;
+    UINT size;
 
     FIXME("(%p, %x, %p): semi-stub\n", pFunction, flags, ppConstantTable);
 
     if (!pFunction || !ppConstantTable)
         return D3DERR_INVALIDCALL;
+
+    hr = D3DXFindShaderComment(pFunction, MAKEFOURCC('C','T','A','B'), &data, &size);
+    if (hr != D3D_OK)
+        return D3DXERR_INVALIDDATA;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXConstantTableImpl));
     if (!object)
@@ -598,6 +610,16 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
 
     object->lpVtbl = &ID3DXConstantTable_Vtbl;
     object->ref = 1;
+
+    object->ctab = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    if (!object->ctab)
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+    object->size = size;
+    memcpy(object->ctab, data, object->size);
 
     *ppConstantTable = (LPD3DXCONSTANTTABLE)object;
 

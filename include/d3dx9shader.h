@@ -288,6 +288,13 @@ HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
                                   LPD3DXBUFFER* shader,
                                   LPD3DXBUFFER* error_messages);
 
+HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
+                                            DWORD flags,
+                                            LPD3DXCONSTANTTABLE* constant_table);
+
+HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* byte_code,
+                                          LPD3DXCONSTANTTABLE* constant_table);
+
 #ifdef __cplusplus
 }
 #endif
