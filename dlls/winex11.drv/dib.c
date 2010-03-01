@@ -4054,7 +4054,7 @@ INT CDECL X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
       UINT y;
 
       TRACE("syncing compatible set bits to app bits\n");
-      if ((tmpheight < 0) ^ (ds.dsBmih.biHeight < 0))
+      if ((tmpheight < 0) ^ physBitmap->topdown)
       {
           dbits += dstwidthb * (lines-1);
           dstwidthb = -dstwidthb;
