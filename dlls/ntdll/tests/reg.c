@@ -367,9 +367,10 @@ static void test_NtCreateKey(void)
 {
     /*Create WineTest*/
     OBJECT_ATTRIBUTES attr;
-    HANDLE key;
+    HANDLE key, subkey;
     ACCESS_MASK am = GENERIC_ALL;
     NTSTATUS status;
+    UNICODE_STRING str;
 
     /* All NULL */
     status = pNtCreateKey(NULL, 0, NULL, 0, 0, 0, 0);
@@ -397,13 +398,50 @@ static void test_NtCreateKey(void)
     status = pNtCreateKey(NULL, 0, &attr, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
 
-    status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08x\n", status);
-
     /* Length > sizeof(OBJECT_ATTRIBUTES) */
     attr.Length *= 2;
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+
+    attr.Length = sizeof(attr);
+    status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08x\n", status);
+
+    attr.RootDirectory = key;
+    attr.ObjectName = &str;
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test\\sub\\key" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test\\subkey" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test\\subkey\\" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS || broken(status == STATUS_OBJECT_NAME_NOT_FOUND), /* nt4 */
+        "NtCreateKey failed: 0x%08x\n", status );
+    if (status == STATUS_SUCCESS)
+    {
+        pNtDeleteKey( subkey );
+        pNtClose( subkey );
+    }
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    pRtlFreeUnicodeString( &str );
+    pNtDeleteKey( subkey );
+    pNtClose( subkey );
 
     pNtClose(key);
 }
