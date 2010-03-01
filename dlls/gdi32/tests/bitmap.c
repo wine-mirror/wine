@@ -363,20 +363,20 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ds.dsBmih.biSizeImage = 0;
 
     ok(ds.dsBmih.biSize == bmih->biSize, "%u != %u\n", ds.dsBmih.biSize, bmih->biSize);
-    ok(ds.dsBmih.biWidth == bmih->biWidth, "%u != %u\n", ds.dsBmih.biWidth, bmih->biWidth);
-    ok(ds.dsBmih.biHeight == bmih->biHeight, "%u != %u\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBmih.biWidth == bmih->biWidth, "%d != %d\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBmih.biHeight == bmih->biHeight, "%d != %d\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBmih.biPlanes == bmih->biPlanes, "%u != %u\n", ds.dsBmih.biPlanes, bmih->biPlanes);
     ok(ds.dsBmih.biBitCount == bmih->biBitCount, "%u != %u\n", ds.dsBmih.biBitCount, bmih->biBitCount);
     ok(ds.dsBmih.biCompression == bmih->biCompression, "%u != %u\n", ds.dsBmih.biCompression, bmih->biCompression);
     ok(ds.dsBmih.biSizeImage == bmih->biSizeImage, "%u != %u\n", ds.dsBmih.biSizeImage, bmih->biSizeImage);
-    ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%u != %u\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
-    ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%u != %u\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
+    ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%d != %d\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
+    ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%d != %d\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
 
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(ds) - 4, &ds);
     ok(ret == sizeof(ds.dsBm) || broken(ret == (sizeof(ds) - 4) /* Win9x */), "wrong size %d\n", ret);
-    ok(ds.dsBm.bmWidth == bmih->biWidth, "%u != %u\n", ds.dsBmih.biWidth, bmih->biWidth);
-    ok(ds.dsBm.bmHeight == bmih->biHeight, "%u != %u\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBm.bmWidth == bmih->biWidth, "%d != %d\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBm.bmHeight == bmih->biHeight, "%d != %d\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
 
     ret = GetObject(hbm, 0, &ds);
