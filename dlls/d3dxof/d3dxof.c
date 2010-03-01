@@ -42,6 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 #define XOFFILE_FORMAT_VERSION_303   MAKEFOUR('0','3','0','3')
 #define XOFFILE_FORMAT_BINARY        MAKEFOUR('b','i','n',' ')
 #define XOFFILE_FORMAT_TEXT          MAKEFOUR('t','x','t',' ')
+#define XOFFILE_FORMAT_BINARY_MSZIP  MAKEFOUR('b','z','i','p')
+#define XOFFILE_FORMAT_TEXT_MSZIP    MAKEFOUR('t','z','i','p')
 #define XOFFILE_FORMAT_COMPRESSED    MAKEFOUR('c','m','p',' ')
 #define XOFFILE_FORMAT_FLOAT_BITS_32 MAKEFOUR('0','0','3','2')
 #define XOFFILE_FORMAT_FLOAT_BITS_64 MAKEFOUR('0','0','6','4')
@@ -57,6 +59,15 @@ static const struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
 static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
 static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
+
+/* FOURCC to string conversion for debug messages */
+const char *debugstr_fourcc(DWORD fourcc)
+{
+    if (!fourcc) return "'null'";
+    return wine_dbg_sprintf ("\'%c%c%c%c\'",
+		(char)(fourcc), (char)(fourcc >> 8),
+        (char)(fourcc >> 16), (char)(fourcc >> 24));
+}
 
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
@@ -247,16 +258,18 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
-  if ((header[2] != XOFFILE_FORMAT_BINARY) && (header[2] != XOFFILE_FORMAT_TEXT) && (header[2] != XOFFILE_FORMAT_COMPRESSED))
+  if ((header[2] != XOFFILE_FORMAT_BINARY) && (header[2] != XOFFILE_FORMAT_TEXT) &&
+      (header[2] != XOFFILE_FORMAT_BINARY_MSZIP) && (header[2] != XOFFILE_FORMAT_TEXT_MSZIP))
   {
+    WARN("File type %s unknown\n", debugstr_fourcc(header[2]));
     hr = DXFILEERR_BADFILETYPE;
     goto error;
   }
 
-  if (header[2] == XOFFILE_FORMAT_COMPRESSED)
+  if ((header[2] == XOFFILE_FORMAT_BINARY_MSZIP) || (header[2] == XOFFILE_FORMAT_TEXT_MSZIP))
   {
-    FIXME("Compressed formats not supported yet\n");
-    hr = DXFILEERR_BADVALUE;
+    FIXME("Compressed format %s not supported yet\n", debugstr_fourcc(header[2]));
+    hr = DXFILEERR_BADALLOC;
     goto error;
   }
 
@@ -381,19 +394,21 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   read_bytes(&buf, &token_header, 4);
 
-  if ((token_header != XOFFILE_FORMAT_BINARY) && (token_header != XOFFILE_FORMAT_TEXT) && (token_header != XOFFILE_FORMAT_COMPRESSED))
+  if ((token_header != XOFFILE_FORMAT_BINARY) && (token_header != XOFFILE_FORMAT_TEXT) &&
+      (token_header != XOFFILE_FORMAT_BINARY_MSZIP) && (token_header != XOFFILE_FORMAT_TEXT_MSZIP))
+  {
+    WARN("File type %s unknown\n", debugstr_fourcc(token_header));
     return DXFILEERR_BADFILETYPE;
+  }
+
+  if ((token_header == XOFFILE_FORMAT_BINARY_MSZIP) || (token_header == XOFFILE_FORMAT_TEXT_MSZIP))
+  {
+    FIXME("Compressed format %s not supported yet\n", debugstr_fourcc(token_header));
+    return DXFILEERR_BADALLOC;
+  }
 
   if (token_header == XOFFILE_FORMAT_TEXT)
-  {
     buf.txt = TRUE;
-  }
-
-  if (token_header == XOFFILE_FORMAT_COMPRESSED)
-  {
-    FIXME("Compressed formats not supported yet\n");
-    return DXFILEERR_BADVALUE;
-  }
 
   read_bytes(&buf, &token_header, 4);
 

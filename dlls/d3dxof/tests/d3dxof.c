@@ -53,6 +53,13 @@ char object[] =
 "1; 2; 3;\n"
 "}\n";
 
+char empty_txt_file[]  = "xof 0302txt 0064";
+char empty_bin_file[]  = "xof 0302bin 0064";
+char empty_tzip_file[] = "xof 0302tzip0064";
+char empty_bzip_file[] = "xof 0302bzip0064";
+char empty_cmp_file[]  = "xof 0302cmp 0064";
+char empty_xxxx_file[] = "xof 0302xxxx0064";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -188,6 +195,80 @@ static void test_CreateEnumObject(void)
 
     ref = IDirectXFileData_Release(lpdxfd);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+}
+
+static void test_file_types(void)
+{
+    HRESULT hr;
+    LPDIRECTXFILE dxfile = NULL;
+    LPDIRECTXFILEENUMOBJECT enum_object;
+    DXFILELOADMEMORY lminfo;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_txt_file, strlen(empty_txt_file));
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_bin_file, strlen(empty_bin_file));
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_tzip_file, strlen(empty_tzip_file));
+    ok(hr == DXFILEERR_BADALLOC, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_bzip_file, strlen(empty_bzip_file));
+    ok(hr == DXFILEERR_BADALLOC, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_cmp_file, strlen(empty_cmp_file));
+    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_xxxx_file, strlen(empty_xxxx_file));
+    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    lminfo.lpMemory = empty_txt_file;
+    lminfo.dSize = strlen(empty_txt_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
+
+    lminfo.lpMemory = empty_bin_file;
+    lminfo.dSize = strlen(empty_bin_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
+
+    lminfo.lpMemory = empty_tzip_file;
+    lminfo.dSize = strlen(empty_tzip_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILEERR_BADALLOC, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    lminfo.lpMemory = empty_bzip_file;
+    lminfo.dSize = strlen(empty_bzip_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILEERR_BADALLOC, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    lminfo.lpMemory = empty_cmp_file;
+    lminfo.dSize = strlen(empty_cmp_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    lminfo.lpMemory = empty_xxxx_file;
+    lminfo.dSize = strlen(empty_xxxx_file);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    IDirectXFile_Release(dxfile);
 }
 
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
@@ -364,6 +445,7 @@ START_TEST(d3dxof)
 
     test_refcount();
     test_CreateEnumObject();
+    test_file_types();
     test_dump();
 
     FreeLibrary(hd3dxof);
