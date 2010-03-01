@@ -614,11 +614,11 @@ static BOOL is_genitive_name_supported( LCTYPE lctype )
  */
 static inline HANDLE create_registry_key(void)
 {
-    static const WCHAR intlW[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
-                                  'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
+    static const WCHAR cplW[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l',0};
+    static const WCHAR intlW[] = {'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HANDLE hkey;
+    HANDLE cpl_key, hkey = 0;
 
     if (RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey ) != STATUS_SUCCESS) return 0;
 
@@ -628,9 +628,15 @@ static inline HANDLE create_registry_key(void)
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, intlW );
+    RtlInitUnicodeString( &nameW, cplW );
 
-    if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS) hkey = 0;
+    if (!NtCreateKey( &cpl_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+    {
+        NtClose( attr.RootDirectory );
+        attr.RootDirectory = cpl_key;
+        RtlInitUnicodeString( &nameW, intlW );
+        if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) hkey = 0;
+    }
     NtClose( attr.RootDirectory );
     return hkey;
 }
