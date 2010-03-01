@@ -97,7 +97,7 @@ static HRESULT WINAPI IDirectXFileImpl_QueryInterface(IDirectXFile* iface, REFII
   if (IsEqualGUID(riid, &IID_IUnknown)
       || IsEqualGUID(riid, &IID_IDirectXFile))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
@@ -482,7 +482,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* 
       || IsEqualGUID(riid, &IID_IDirectXFileObject)
       || IsEqualGUID(riid, &IID_IDirectXFileBinary))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
@@ -610,7 +610,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_QueryInterface(IDirectXFileData* ifac
       || IsEqualGUID(riid, &IID_IDirectXFileObject)
       || IsEqualGUID(riid, &IID_IDirectXFileData))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
@@ -853,7 +853,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_QueryInterface(IDirectXFileD
       || IsEqualGUID(riid, &IID_IDirectXFileObject)
       || IsEqualGUID(riid, &IID_IDirectXFileDataReference))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
@@ -985,7 +985,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_QueryInterface(IDirectXFileEnum
   if (IsEqualGUID(riid, &IID_IUnknown)
       || IsEqualGUID(riid, &IID_IDirectXFileEnumObject))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
@@ -1195,7 +1195,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_QueryInterface(IDirectXFileSave
   if (IsEqualGUID(riid, &IID_IUnknown)
       || IsEqualGUID(riid, &IID_IDirectXFileSaveObject))
   {
-    IClassFactory_AddRef(iface);
+    IUnknown_AddRef(iface);
     *ppvObject = This;
     return S_OK;
   }
