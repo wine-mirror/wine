@@ -233,6 +233,22 @@ static void create_hardware_registry_keys(void)
     RegCloseKey( system_key );
 }
 
+
+/* create the DynData registry keys */
+static void create_dynamic_registry_keys(void)
+{
+    static const WCHAR StatDataW[] = {'P','e','r','f','S','t','a','t','s','\\',
+                                      'S','t','a','t','D','a','t','a',0};
+    static const WCHAR ConfigManagerW[] = {'C','o','n','f','i','g',' ','M','a','n','a','g','e','r','\\',
+                                           'E','n','u','m',0};
+    HKEY key;
+
+    if (!RegCreateKeyExW( HKEY_DYN_DATA, StatDataW, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL ))
+        RegCloseKey( key );
+    if (!RegCreateKeyExW( HKEY_DYN_DATA, ConfigManagerW, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL ))
+        RegCloseKey( key );
+}
+
 /* create the platform-specific environment registry keys */
 static void create_environment_registry_keys( void )
 {
@@ -1049,6 +1065,7 @@ int main( int argc, char *argv[] )
     ResetEvent( event );  /* in case this is a restart */
 
     create_hardware_registry_keys();
+    create_dynamic_registry_keys();
     create_environment_registry_keys();
     wininit();
     pendingRename();

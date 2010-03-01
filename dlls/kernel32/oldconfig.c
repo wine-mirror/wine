@@ -55,39 +55,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-
-/* registry initialisation, allocates some default keys. */
-static ULONG allocate_default_keys(void)
-{
-    static const WCHAR StatDataW[] = {'D','y','n','D','a','t','a','\\',
-                                      'P','e','r','f','S','t','a','t','s','\\',
-                                      'S','t','a','t','D','a','t','a',0};
-    static const WCHAR ConfigManagerW[] = {'D','y','n','D','a','t','a','\\',
-                                           'C','o','n','f','i','g',' ','M','a','n','a','g','e','r','\\',
-                                            'E','n','u','m',0};
-    HANDLE hkey;
-    ULONG dispos;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    RtlInitUnicodeString( &nameW, StatDataW );
-    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &dispos )) NtClose( hkey );
-    if (dispos == REG_OPENED_EXISTING_KEY)
-        return dispos; /* someone else already loaded the registry */
-
-    RtlInitUnicodeString( &nameW, ConfigManagerW );
-    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
-
-    return dispos;
-}
-
 /******************************************************************
  *		create_scsi_entry
  *
@@ -459,9 +426,6 @@ static void create_hardware_branch(void)
  */
 void convert_old_config(void)
 {
-    if (allocate_default_keys() == REG_OPENED_EXISTING_KEY)
-        return; /* someone else already loaded the registry */
-
     /* create some hardware keys (FIXME: should not be done here) */
     create_hardware_branch();
 }
