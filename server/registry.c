@@ -653,8 +653,8 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
 
 /* create a subkey */
 static struct key *create_key( struct key *key, const struct unicode_str *name,
-                               const struct unicode_str *class, int flags, unsigned int options,
-                               unsigned int attributes, timeout_t modif, int *created )
+                               const struct unicode_str *class, unsigned int options,
+                               unsigned int attributes, int *created )
 {
     struct key *base;
     int index;
@@ -699,26 +699,23 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         }
         goto done;
     }
-    if (options & REG_OPTION_VOLATILE)
-    {
-        flags = (flags & ~KEY_DIRTY) | KEY_VOLATILE;
-    }
-    else if (key->flags & KEY_VOLATILE)
+    if ((key->flags & KEY_VOLATILE) && !(options & REG_OPTION_VOLATILE))
     {
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
     }
     *created = 1;
-    if (flags & KEY_DIRTY) make_dirty( key );
-    if (!(key = alloc_subkey( key, &token, index, modif ))) return NULL;
+    make_dirty( key );
+    if (!(key = alloc_subkey( key, &token, index, current_time ))) return NULL;
     base = key;
     for (;;)
     {
-        key->flags |= flags;
+        if (options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
+        else key->flags |= KEY_DIRTY;
         get_path_token( name, &token );
         if (!token.len) break;
         /* we know the index is always 0 in a new key */
-        if (!(key = alloc_subkey( key, &token, 0, modif )))
+        if (!(key = alloc_subkey( key, &token, 0, current_time )))
         {
             free_subkey( base, index );
             return NULL;
@@ -734,6 +731,49 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         free(key->class);
         if (!(key->class = memdup( class->str, key->classlen ))) key->classlen = 0;
     }
+    grab_object( key );
+    return key;
+}
+
+/* recursively create a subkey (for internal use only) */
+static struct key *create_key_recursive( struct key *key, const struct unicode_str *name, timeout_t modif )
+{
+    struct key *base;
+    int index;
+    struct unicode_str token;
+
+    token.str = NULL;
+    if (!get_path_token( name, &token )) return NULL;
+    while (token.len)
+    {
+        struct key *subkey;
+        if (!(subkey = find_subkey( key, &token, &index ))) break;
+        key = subkey;
+        if (!(key = follow_symlink( key, 0 )))
+        {
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+            return NULL;
+        }
+        get_path_token( name, &token );
+    }
+
+    if (token.len)
+    {
+        if (!(key = alloc_subkey( key, &token, index, modif ))) return NULL;
+        base = key;
+        for (;;)
+        {
+            get_path_token( name, &token );
+            if (!token.len) break;
+            /* we know the index is always 0 in a new key */
+            if (!(key = alloc_subkey( key, &token, 0, modif )))
+            {
+                free_subkey( base, index );
+                return NULL;
+            }
+        }
+    }
+
     grab_object( key );
     return key;
 }
@@ -1191,7 +1231,7 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 }
 
 /* load and create a key from the input file */
-static struct key *load_key( struct key *base, const char *buffer, int flags,
+static struct key *load_key( struct key *base, const char *buffer,
                              int prefix_len, struct file_load_info *info )
 {
     WCHAR *p;
@@ -1227,7 +1267,7 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
     }
     name.str = p;
     name.len = len - (p - info->tmp + 1) * sizeof(WCHAR);
-    return create_key( base, &name, NULL, flags, 0, 0, modif, &res );
+    return create_key_recursive( base, &name, modif );
 }
 
 /* load a key option from the input file */
@@ -1440,7 +1480,7 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
         case '[':   /* new key */
             if (subkey) release_object( subkey );
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, key->flags, prefix_len, &info )))
+            if (!(subkey = load_key( key, p + 1, prefix_len, &info )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
@@ -1544,9 +1584,7 @@ void init_registry(void)
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
-
     struct key *key;
-    int dummy;
 
     /* switch to the config dir */
 
@@ -1559,7 +1597,7 @@ void init_registry(void)
 
     /* load system.reg into Registry\Machine */
 
-    if (!(key = create_key( root_key, &HKLM_name, NULL, 0, 0, 0, current_time, &dummy )))
+    if (!(key = create_key_recursive( root_key, &HKLM_name, current_time )))
         fatal_error( "could not create Machine registry key\n" );
 
     load_init_registry_from_file( "system.reg", key );
@@ -1567,7 +1605,7 @@ void init_registry(void)
 
     /* load userdef.reg into Registry\User\.Default */
 
-    if (!(key = create_key( root_key, &HKU_name, NULL, 0, 0, 0, current_time, &dummy )))
+    if (!(key = create_key_recursive( root_key, &HKU_name, current_time )))
         fatal_error( "could not create User\\.Default registry key\n" );
 
     load_init_registry_from_file( "userdef.reg", key );
@@ -1578,7 +1616,7 @@ void init_registry(void)
     /* FIXME: match default user in token.c. should get from process token instead */
     current_user_path = format_user_registry_path( security_interactive_sid, &current_user_str );
     if (!current_user_path ||
-        !(key = create_key( root_key, &current_user_str, NULL, 0, 0, 0, current_time, &dummy )))
+        !(key = create_key_recursive( root_key, &current_user_str, current_time )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
     free( current_user_path );
     load_init_registry_from_file( "user.reg", key );
@@ -1771,8 +1809,7 @@ DECL_HANDLER(create_key)
     /* NOTE: no access rights are required from the parent handle to create a key */
     if ((parent = get_parent_hkey_obj( req->parent )))
     {
-        if ((key = create_key( parent, &name, &class, KEY_DIRTY, req->options,
-                               req->attributes, current_time, &reply->created )))
+        if ((key = create_key( parent, &name, &class, req->options, req->attributes, &reply->created )))
         {
             reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
@@ -1927,7 +1964,7 @@ DECL_HANDLER(load_registry)
     {
         int dummy;
         get_req_path( &name, !req->hkey );
-        if ((key = create_key( parent, &name, NULL, KEY_DIRTY, 0, 0, current_time, &dummy )))
+        if ((key = create_key( parent, &name, NULL, 0, 0, &dummy )))
         {
             load_registry( key, req->file );
             release_object( key );
