@@ -1034,6 +1034,23 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_NOMOREOBJECTS;
   }
 
+  /* Check if there are templates defined before the object */
+  while (This->buf.rem_bytes && is_template_available(&This->buf))
+  {
+    if (!parse_template(&This->buf))
+    {
+      TRACE("Template is not correct\n");
+      hr = DXFILEERR_BADVALUE;
+      goto error;
+    }
+    else
+    {
+      TRACE("Template successfully parsed:\n");
+      if (TRACE_ON(d3dxof))
+        dump_template(This->pDirectXFile->xtemplates, &This->pDirectXFile->xtemplates[This->pDirectXFile->nb_xtemplates - 1]);
+    }
+  }
+
   if (!This->buf.rem_bytes)
     return DXFILEERR_NOMOREOBJECTS;
 
