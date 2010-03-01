@@ -129,7 +129,7 @@
 @ stub D3DXFillVolumeTexture
 @ stub D3DXFillVolumeTextureTX
 @ stub D3DXFilterTexture
-@ stub D3DXFindShaderComment
+@ stdcall D3DXFindShaderComment(ptr long ptr ptr)
 @ stub D3DXFloat16To32Array
 @ stub D3DXFloat32To16Array
 @ stub D3DXFrameAppendChild

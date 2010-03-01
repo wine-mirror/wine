@@ -135,6 +135,39 @@ LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
     return NULL;
 }
 
+HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVOID* data, UINT* size)
+{
+    CONST DWORD *ptr = byte_code;
+
+    TRACE("(%p, %x, %p, %p)", byte_code, fourcc, data, size);
+
+    if (!byte_code)
+        return D3DERR_INVALIDCALL;
+
+    while (*++ptr != D3DSIO_END)
+    {
+        /* Check if it is a comment */
+        if ((*ptr & D3DSI_OPCODE_MASK) == D3DSIO_COMMENT)
+        {
+            DWORD comment_size = (*ptr & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+
+            /* Check if this is the comment we are looking for */
+            if (*(ptr + 1) == fourcc)
+            {
+                if (size)
+                    *size = (comment_size - 1) * sizeof(DWORD);
+                if (data)
+                    *data = ptr + 2;
+                TRACE("Returning comment data at %p with size %d\n", *data, *size);
+                return D3D_OK;
+            }
+            ptr += comment_size;
+        }
+    }
+
+    return S_FALSE;
+}
+
 HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
                                   UINT data_len,
                                   CONST D3DXMACRO* defines,
