@@ -1093,7 +1093,7 @@ static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha)
 
     *hasAlpha = TRUE;
     p = dib.dsBm.bmBits;
-    n = abs(dib.dsBmih.biHeight) * dib.dsBmih.biWidth;
+    n = dib.dsBmih.biHeight * dib.dsBmih.biWidth;
     /* AlphaBlend() wants premultiplied alpha, so do that now */
     while (n-- > 0)
     {
