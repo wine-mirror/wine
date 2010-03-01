@@ -74,12 +74,6 @@ static const WCHAR szLocaleKeyName[] = {
     'C','o','n','t','r','o','l','\\','N','l','s','\\','L','o','c','a','l','e',0
 };
 
-static const WCHAR szCodepageKeyName[] = {
-    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
-    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-    'C','o','n','t','r','o','l','\\','N','l','s','\\','C','o','d','e','p','a','g','e',0
-};
-
 static const WCHAR szLangGroupsKeyName[] = {
     'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -774,11 +768,26 @@ void LOCALE_InitRegistry(void)
 
     if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
     {
+        static const WCHAR codepageW[] =
+            {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+             'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+             'C','o','n','t','r','o','l','\\','N','l','s','\\','C','o','d','e','p','a','g','e',0};
+
         OBJECT_ATTRIBUTES attr;
         HANDLE nls_key;
+        DWORD len = 14;
 
-        RtlInitUnicodeString( &nameW, szCodepageKeyName );
+        RtlInitUnicodeString( &nameW, codepageW );
         InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+        while (codepageW[len])
+        {
+            nameW.Length = len * sizeof(WCHAR);
+            if (NtCreateKey( &nls_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) break;
+            NtClose( nls_key );
+            len++;
+            while (codepageW[len] && codepageW[len] != '\\') len++;
+        }
+        nameW.Length = len * sizeof(WCHAR);
         if (!NtCreateKey( &nls_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
         {
             for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
