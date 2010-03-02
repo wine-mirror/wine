@@ -127,7 +127,7 @@ BEGIN
         MENUITEM "자홍색"        ID_COLOR_FUCHSIA
         MENUITEM "물색"          ID_COLOR_AQUA
         MENUITEM "하양"          ID_COLOR_WHITE
-        MENUITEM "Automatic"     ID_COLOR_AUTOMATIC
+        MENUITEM "자동"     ID_COLOR_AUTOMATIC
     END
 END
 
@@ -236,11 +236,11 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "이전 페이지"
     STRING_PREVIEW_TWOPAGES,         "두 페이지"
     STRING_PREVIEW_ONEPAGE,          "한 페이지"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_ZOOMIN,           "확대"
+    STRING_PREVIEW_ZOOMOUT,          "축소"
     STRING_PREVIEW_CLOSE,            "닫기"
-    STRING_PREVIEW_PAGE,             "Page"
-    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_PREVIEW_PAGE,             "페이지"
+    STRING_PREVIEW_PAGES,            "페이지들"
     STRING_UNITS_CM,                 "cm"
 END
 
