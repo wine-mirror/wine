@@ -62,17 +62,23 @@ static void init_function_pointers(void)
     HRESULT hr;
 
     hmod = GetModuleHandleA("shell32.dll");
-    pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
-    pSHGetFolderPathA = (void*)GetProcAddress(hmod, "SHGetFolderPathA");
-    pSHGetFolderPathAndSubDirA = (void*)GetProcAddress(hmod, "SHGetFolderPathAndSubDirA");
-    pSHGetPathFromIDListW = (void*)GetProcAddress(hmod, "SHGetPathFromIDListW");
-    pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
-    pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
-    pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
-    pILFree = (void*)GetProcAddress(hmod, (LPSTR)155);
-    pILIsEqual = (void*)GetProcAddress(hmod, (LPSTR)21);
-    pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
-    pILCombine = (void*)GetProcAddress(hmod, (LPSTR)25);
+
+#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hmod, #f))
+    MAKEFUNC(SHBindToParent);
+    MAKEFUNC(SHCreateShellItem);
+    MAKEFUNC(SHGetFolderPathA);
+    MAKEFUNC(SHGetFolderPathAndSubDirA);
+    MAKEFUNC(SHGetPathFromIDListW);
+    MAKEFUNC(SHGetSpecialFolderPathA);
+    MAKEFUNC(SHGetSpecialFolderPathW);
+#undef MAKEFUNC
+
+#define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
+    MAKEFUNC_ORD(ILFindLastID, 16);
+    MAKEFUNC_ORD(ILIsEqual, 21);
+    MAKEFUNC_ORD(ILCombine, 25);
+    MAKEFUNC_ORD(ILFree, 155);
+#undef MAKEFUNC_ORD
 
     hmod = GetModuleHandleA("shlwapi.dll");
     pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
@@ -331,11 +337,12 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with empty pidl! hr = %08x\n", hr);
 
-#if 0
+if (0)
+{
     /* this call segfaults on 98SE */
     hr = IShellFolder_BindToObject(psfMyComputer, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with NULL pidl! hr = %08x\n", hr);
-#endif
+}
 
     cChars = GetSystemDirectoryA(szSystemDir, MAX_PATH);
     ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryA failed! LastError: %u\n", GetLastError());
@@ -361,13 +368,14 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfSystemDir, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, 
         "FileSystem ShellFolder's BindToObject should fail, when called with empty pidl! hr = %08x\n", hr);
-    
-#if 0
+
+if (0)
+{
     /* this call segfaults on 98SE */
     hr = IShellFolder_BindToObject(psfSystemDir, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
-    ok (hr == E_INVALIDARG, 
+    ok (hr == E_INVALIDARG,
         "FileSystem ShellFolder's BindToObject should fail, when called with NULL pidl! hr = %08x\n", hr);
-#endif
+}
 
     IShellFolder_Release(psfSystemDir);
 }
@@ -1564,7 +1572,7 @@ static void test_ITEMIDLIST_format(void) {
     IShellFolder_Release(psfPersonal);
 }
 
-static void testSHGetFolderPathAndSubDirA(void)
+static void test_SHGetFolderPathAndSubDirA(void)
 {
     HRESULT ret;
     BOOL delret;
@@ -1575,6 +1583,12 @@ static void testSHGetFolderPathAndSubDirA(void)
     static char appdata[MAX_PATH];
     static char testpath[MAX_PATH];
     static char toolongpath[MAX_PATH+1];
+
+    if(!pSHGetFolderPathAndSubDirA)
+    {
+        win_skip("SHGetFolderPathAndSubDirA not present!\n");
+        return;
+    }
 
     if(!pSHGetFolderPathA) {
         win_skip("SHGetFolderPathA not present!\n");
@@ -1797,6 +1811,12 @@ static void test_SHCreateShellItem(void)
 
     GetCurrentDirectoryA(MAX_PATH, curdirA);
 
+    if (!pSHCreateShellItem)
+    {
+        win_skip("SHCreateShellItem isn't available\n");
+        return;
+    }
+
     if (!lstrlenA(curdirA))
     {
         win_skip("GetCurrentDirectoryA returned empty string, skipping test_SHCreateShellItem\n");
@@ -1958,15 +1978,9 @@ START_TEST(shlfolder)
     test_CallForAttributes();
     test_FolderShortcut();
     test_ITEMIDLIST_format();
-    if(pSHGetFolderPathAndSubDirA)
-        testSHGetFolderPathAndSubDirA();
-    else
-        win_skip("SHGetFolderPathAndSubDirA not present\n");
+    test_SHGetFolderPathAndSubDirA();
     test_LocalizedNames();
-    if(pSHCreateShellItem)
-        test_SHCreateShellItem();
-    else
-        win_skip("SHCreateShellItem not present\n");
+    test_SHCreateShellItem();
 
     OleUninitialize();
 }
