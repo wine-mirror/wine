@@ -84,6 +84,7 @@ struct key
 #define KEY_DELETED  0x0002  /* key has been deleted */
 #define KEY_DIRTY    0x0004  /* key has been modified */
 #define KEY_SYMLINK  0x0008  /* key is a symbolic link */
+#define KEY_WOW64    0x0010  /* key contains a Wow6432Node subkey */
 
 /* a key value */
 struct key_value
@@ -109,6 +110,7 @@ static const timeout_t save_period = 30 * -TICKS_PER_SEC;  /* delay between peri
 static struct timeout_user *save_timeout_user;  /* saving timer */
 
 static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\' };
+static const WCHAR wow6432node[] = {'W','o','w','6','4','3','2','N','o','d','e'};
 static const WCHAR symlink_value[] = {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e'};
 static const struct unicode_str symlink_str = { symlink_value, sizeof(symlink_value) };
 
@@ -165,6 +167,12 @@ static const struct object_ops key_ops =
     key_destroy              /* destroy */
 };
 
+
+static inline int is_wow6432node( const WCHAR *name, unsigned int len )
+{
+    return (len == sizeof(wow6432node) &&
+            !memicmpW( name, wow6432node, sizeof(wow6432node)/sizeof(WCHAR) ));
+}
 
 /*
  * The registry text file format v2 used by this code is similar to the one
@@ -528,6 +536,7 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
         for (i = ++parent->last_subkey; i > index; i--)
             parent->subkeys[i] = parent->subkeys[i-1];
         parent->subkeys[index] = key;
+        if (is_wow6432node( key->name, key->namelen )) parent->flags |= KEY_WOW64;
     }
     return key;
 }
@@ -546,6 +555,7 @@ static void free_subkey( struct key *parent, int index )
     parent->last_subkey--;
     key->flags |= KEY_DELETED;
     key->parent = NULL;
+    if (is_wow6432node( key->name, key->namelen )) parent->flags &= ~KEY_WOW64;
     release_object( key );
 
     /* try to shrink the array */
@@ -587,6 +597,22 @@ static struct key *find_subkey( const struct key *key, const struct unicode_str 
     return NULL;
 }
 
+/* return the wow64 variant of the key, or the key itself if none */
+static struct key *find_wow64_subkey( struct key *key, const struct unicode_str *name )
+{
+    static const struct unicode_str wow6432node_str = { wow6432node, sizeof(wow6432node) };
+    int index;
+
+    if (!(key->flags & KEY_WOW64)) return key;
+    if (!is_wow6432node( name->str, name->len ))
+    {
+        key = find_subkey( key, &wow6432node_str, &index );
+        assert( key );  /* if KEY_WOW64 is set we must find it */
+    }
+    return key;
+}
+
+
 /* follow a symlink and return the resolved key */
 static struct key *follow_symlink( struct key *key, int iteration )
 {
@@ -618,13 +644,15 @@ static struct key *follow_symlink( struct key *key, int iteration )
 }
 
 /* open a subkey */
-static struct key *open_key( struct key *key, const struct unicode_str *name, unsigned int attributes )
+static struct key *open_key( struct key *key, const struct unicode_str *name, unsigned int access,
+                             unsigned int attributes )
 {
     int index;
     struct unicode_str token;
 
     token.str = NULL;
     if (!get_path_token( name, &token )) return NULL;
+    if (access & KEY_WOW64_32KEY) key = find_wow64_subkey( key, &token );
     while (token.len)
     {
         if (!(key = find_subkey( key, &token, &index )))
@@ -634,6 +662,7 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
         }
         get_path_token( name, &token );
         if (!token.len) break;
+        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
         if (!(key = follow_symlink( key, 0 )))
         {
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
@@ -641,6 +670,7 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
         }
     }
 
+    if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
     if (!(attributes & OBJ_OPENLINK) && !(key = follow_symlink( key, 0 )))
     {
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
@@ -654,7 +684,7 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
 /* create a subkey */
 static struct key *create_key( struct key *key, const struct unicode_str *name,
                                const struct unicode_str *class, unsigned int options,
-                               unsigned int attributes, int *created )
+                               unsigned int access, unsigned int attributes, int *created )
 {
     int index;
     struct unicode_str token, next;
@@ -668,6 +698,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     token.str = NULL;
     if (!get_path_token( name, &token )) return NULL;
     *created = 0;
+    if (access & KEY_WOW64_32KEY) key = find_wow64_subkey( key, &token );
     while (token.len)
     {
         struct key *subkey;
@@ -675,6 +706,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         key = subkey;
         get_path_token( name, &token );
         if (!token.len) break;
+        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
         if (!(key = follow_symlink( key, 0 )))
         {
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
@@ -684,6 +716,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
 
     if (!token.len)  /* the key already exists */
     {
+        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
         if (options & REG_OPTION_CREATE_LINK)
         {
             set_error( STATUS_OBJECT_NAME_COLLISION );
@@ -1786,6 +1819,8 @@ DECL_HANDLER(create_key)
     struct unicode_str name, class;
     unsigned int access = req->access;
 
+    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+
     reply->hkey = 0;
 
     if (req->namelen > get_req_data_size())
@@ -1806,7 +1841,8 @@ DECL_HANDLER(create_key)
     /* NOTE: no access rights are required from the parent handle to create a key */
     if ((parent = get_parent_hkey_obj( req->parent )))
     {
-        if ((key = create_key( parent, &name, &class, req->options, req->attributes, &reply->created )))
+        if ((key = create_key( parent, &name, &class, req->options, access,
+                               req->attributes, &reply->created )))
         {
             reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
@@ -1822,12 +1858,14 @@ DECL_HANDLER(open_key)
     struct unicode_str name;
     unsigned int access = req->access;
 
+    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+
     reply->hkey = 0;
     /* NOTE: no access rights are required to open the parent key, only the child key */
     if ((parent = get_parent_hkey_obj( req->parent )))
     {
         get_req_path( &name, !req->parent );
-        if ((key = open_key( parent, &name, req->attributes )))
+        if ((key = open_key( parent, &name, access, req->attributes )))
         {
             reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
@@ -1961,7 +1999,7 @@ DECL_HANDLER(load_registry)
     {
         int dummy;
         get_req_path( &name, !req->hkey );
-        if ((key = create_key( parent, &name, NULL, 0, 0, &dummy )))
+        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, &dummy )))
         {
             load_registry( key, req->file );
             release_object( key );

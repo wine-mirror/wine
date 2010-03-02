@@ -1157,7 +1157,8 @@ static void test_redirection(void)
         dw = get_key_value( key, "Winetest", 0 );
         ok( dw == 64 || broken(dw == 32) /* xp64 */, "wrong value %u\n", dw );
         check_key_value( key, "Winetest", KEY_WOW64_64KEY, 64 );
-        check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
+        dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
+        todo_wine ok( dw == 32, "wrong value %u\n", dw );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );

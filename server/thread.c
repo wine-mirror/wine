@@ -67,6 +67,7 @@ static const unsigned int supported_cpus = CPU_FLAG(CPU_SPARC);
 #else
 #error Unsupported CPU
 #endif
+#define CPU_64BIT_MASK CPU_FLAG(CPU_x86_64)
 
 /* thread queues */
 
@@ -406,6 +407,12 @@ struct thread *get_thread_from_pid( int pid )
         if (thread->unix_pid == pid) return thread;
     }
     return NULL;
+}
+
+/* determine if the thread is wow64 (32-bit client running on 64-bit server) */
+int is_wow64_thread( struct thread *thread )
+{
+    return (supported_cpus & CPU_64BIT_MASK) && !(CPU_FLAG(thread->process->cpu) & CPU_64BIT_MASK);
 }
 
 int set_thread_affinity( struct thread *thread, affinity_t affinity )
