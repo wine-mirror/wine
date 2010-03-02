@@ -5173,6 +5173,7 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
+    LPCWSTR component;
     LPWSTR name;
     DWORD event;
 
@@ -5180,9 +5181,18 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
     if (!(event & msidbServiceControlEventStop))
         return ERROR_SUCCESS;
 
-    comp = get_loaded_component( package, MSI_RecordGetString( rec, 6 ) );
-    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+    component = MSI_RecordGetString( rec, 6 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
         return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
 
     deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
     stop_service( name );
