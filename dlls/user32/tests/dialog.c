@@ -1157,6 +1157,55 @@ static void test_SaveRestoreFocus(void)
     DestroyWindow(hDlg);
 }
 
+static INT_PTR CALLBACK timer_message_dlg_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static int count;
+    BOOL visible;
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+            visible = GetWindowLong(wnd, GWL_STYLE) & WS_VISIBLE;
+            ok(!visible, "Dialog should not be visible.\n");
+            SetTimer(wnd, 1, 100, NULL);
+            Sleep(200);
+            return FALSE;
+
+        case WM_COMMAND:
+            if (LOWORD(wparam) != IDCANCEL) return FALSE;
+            EndDialog(wnd, LOWORD(wparam));
+            return TRUE;
+
+        case WM_TIMER:
+            if (wparam != 1) return FALSE;
+            visible = GetWindowLong(wnd, GWL_STYLE) & WS_VISIBLE;
+            if (!count++)
+            {
+                ok(!visible, "Dialog should not be visible.\n");
+                PostMessage(wnd, WM_USER, 0, 0);
+            }
+            else
+            {
+                ok(visible, "Dialog should be visible.\n");
+                PostMessage(wnd, WM_COMMAND, IDCANCEL, 0);
+            }
+            return TRUE;
+
+        case WM_USER:
+            visible = GetWindowLong(wnd, GWL_STYLE) & WS_VISIBLE;
+            ok(visible, "Dialog should be visible.\n");
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
+static void test_timer_message(void)
+{
+    DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, timer_message_dlg_proc);
+}
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -1172,4 +1221,5 @@ START_TEST(dialog)
     test_DisabledDialogTest();
     test_MessageBoxFontTest();
     test_SaveRestoreFocus();
+    test_timer_message();
 }

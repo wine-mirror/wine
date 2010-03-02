@@ -815,6 +815,12 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
                 DispatchMessageW( &msg );
             }
             if (dlgInfo->flags & DF_END) break;
+
+            if (bFirstEmpty && msg.message == WM_TIMER)
+            {
+                ShowWindow( hwnd, SW_SHOWNORMAL );
+                bFirstEmpty = FALSE;
+            }
         }
     }
     if (dlgInfo->flags & DF_OWNERENABLED) DIALOG_EnableOwner( owner );
