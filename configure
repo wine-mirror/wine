@@ -16106,6 +16106,10 @@ wine_fn_config_program oleview
 wine_fn_config_makefile programs/oleview "programs/Makeprog.rules \$(MAKEDEP)"
 test "x$enable_oleview" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/oleview" && wine_fn_append_file ALL_INSTALL_DIRS "programs/oleview"
 
+wine_fn_config_program ping
+wine_fn_config_makefile programs/ping "programs/Makeprog.rules \$(MAKEDEP)"
+test "x$enable_ping" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/ping" && wine_fn_append_file ALL_INSTALL_DIRS "programs/ping"
+
 wine_fn_config_program progman
 wine_fn_config_makefile programs/progman "programs/Makeprog.rules \$(MAKEDEP)"
 test "x$enable_progman" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/progman" && wine_fn_append_file ALL_INSTALL_DIRS "programs/progman"
@@ -17486,6 +17490,7 @@ do
     "programs/net/Makefile") CONFIG_FILES="$CONFIG_FILES programs/net/Makefile" ;;
     "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
     "programs/oleview/Makefile") CONFIG_FILES="$CONFIG_FILES programs/oleview/Makefile" ;;
+    "programs/ping/Makefile") CONFIG_FILES="$CONFIG_FILES programs/ping/Makefile" ;;
     "programs/progman/Makefile") CONFIG_FILES="$CONFIG_FILES programs/progman/Makefile" ;;
     "programs/reg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/reg/Makefile" ;;
     "programs/regedit/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regedit/Makefile" ;;
