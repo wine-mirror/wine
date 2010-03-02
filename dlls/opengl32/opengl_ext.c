@@ -731,6 +731,8 @@ enum extensions
     EXT_glMTexCoord2fvSGIS,
     EXT_glMakeBufferNonResidentNV,
     EXT_glMakeBufferResidentNV,
+    EXT_glMakeNamedBufferNonResidentNV,
+    EXT_glMakeNamedBufferResidentNV,
     EXT_glMapBuffer,
     EXT_glMapBufferARB,
     EXT_glMapBufferRange,
@@ -921,8 +923,6 @@ enum extensions
     EXT_glNamedFramebufferTextureEXT,
     EXT_glNamedFramebufferTextureFaceEXT,
     EXT_glNamedFramebufferTextureLayerEXT,
-    EXT_glNamedMakeBufferNonResidentNV,
-    EXT_glNamedMakeBufferResidentNV,
     EXT_glNamedProgramLocalParameter4dEXT,
     EXT_glNamedProgramLocalParameter4dvEXT,
     EXT_glNamedProgramLocalParameter4fEXT,
@@ -7570,6 +7570,22 @@ static void WINAPI wine_glMakeBufferResidentNV( GLenum target, GLenum access ) {
   LEAVE_GL();
 }
 
+static void WINAPI wine_glMakeNamedBufferNonResidentNV( GLuint buffer ) {
+  void (*func_glMakeNamedBufferNonResidentNV)( GLuint ) = extension_funcs[EXT_glMakeNamedBufferNonResidentNV];
+  TRACE("(%d)\n", buffer );
+  ENTER_GL();
+  func_glMakeNamedBufferNonResidentNV( buffer );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glMakeNamedBufferResidentNV( GLuint buffer, GLenum access ) {
+  void (*func_glMakeNamedBufferResidentNV)( GLuint, GLenum ) = extension_funcs[EXT_glMakeNamedBufferResidentNV];
+  TRACE("(%d, %d)\n", buffer, access );
+  ENTER_GL();
+  func_glMakeNamedBufferResidentNV( buffer, access );
+  LEAVE_GL();
+}
+
 static GLvoid* WINAPI wine_glMapBuffer( GLenum target, GLenum access ) {
   GLvoid* ret_value;
   GLvoid* (*func_glMapBuffer)( GLenum, GLenum ) = extension_funcs[EXT_glMapBuffer];
@@ -9097,22 +9113,6 @@ static void WINAPI wine_glNamedFramebufferTextureLayerEXT( GLuint framebuffer, G
   TRACE("(%d, %d, %d, %d, %d)\n", framebuffer, attachment, texture, level, layer );
   ENTER_GL();
   func_glNamedFramebufferTextureLayerEXT( framebuffer, attachment, texture, level, layer );
-  LEAVE_GL();
-}
-
-static void WINAPI wine_glNamedMakeBufferNonResidentNV( GLuint buffer ) {
-  void (*func_glNamedMakeBufferNonResidentNV)( GLuint ) = extension_funcs[EXT_glNamedMakeBufferNonResidentNV];
-  TRACE("(%d)\n", buffer );
-  ENTER_GL();
-  func_glNamedMakeBufferNonResidentNV( buffer );
-  LEAVE_GL();
-}
-
-static void WINAPI wine_glNamedMakeBufferResidentNV( GLuint buffer, GLenum access ) {
-  void (*func_glNamedMakeBufferResidentNV)( GLuint, GLenum ) = extension_funcs[EXT_glNamedMakeBufferResidentNV];
-  TRACE("(%d, %d)\n", buffer, access );
-  ENTER_GL();
-  func_glNamedMakeBufferResidentNV( buffer, access );
   LEAVE_GL();
 }
 
@@ -15755,6 +15755,8 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glMTexCoord2fvSGIS", "GL_SGIS_multitexture", wine_glMTexCoord2fvSGIS },
   { "glMakeBufferNonResidentNV", "GL_NV_shader_buffer_load", wine_glMakeBufferNonResidentNV },
   { "glMakeBufferResidentNV", "GL_NV_shader_buffer_load", wine_glMakeBufferResidentNV },
+  { "glMakeNamedBufferNonResidentNV", "GL_NV_shader_buffer_load", wine_glMakeNamedBufferNonResidentNV },
+  { "glMakeNamedBufferResidentNV", "GL_NV_shader_buffer_load", wine_glMakeNamedBufferResidentNV },
   { "glMapBuffer", "GL_VERSION_1_5", wine_glMapBuffer },
   { "glMapBufferARB", "GL_ARB_vertex_buffer_object", wine_glMapBufferARB },
   { "glMapBufferRange", "GL_ARB_map_buffer_range", wine_glMapBufferRange },
@@ -15945,8 +15947,6 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glNamedFramebufferTextureEXT", "GL_EXT_direct_state_access", wine_glNamedFramebufferTextureEXT },
   { "glNamedFramebufferTextureFaceEXT", "GL_EXT_direct_state_access", wine_glNamedFramebufferTextureFaceEXT },
   { "glNamedFramebufferTextureLayerEXT", "GL_EXT_direct_state_access", wine_glNamedFramebufferTextureLayerEXT },
-  { "glNamedMakeBufferNonResidentNV", "GL_NV_shader_buffer_load", wine_glNamedMakeBufferNonResidentNV },
-  { "glNamedMakeBufferResidentNV", "GL_NV_shader_buffer_load", wine_glNamedMakeBufferResidentNV },
   { "glNamedProgramLocalParameter4dEXT", "GL_EXT_direct_state_access", wine_glNamedProgramLocalParameter4dEXT },
   { "glNamedProgramLocalParameter4dvEXT", "GL_EXT_direct_state_access", wine_glNamedProgramLocalParameter4dvEXT },
   { "glNamedProgramLocalParameter4fEXT", "GL_EXT_direct_state_access", wine_glNamedProgramLocalParameter4fEXT },
