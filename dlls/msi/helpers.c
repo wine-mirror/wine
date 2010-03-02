@@ -713,7 +713,7 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
     if (!package->script)
         return FALSE;
 
-    TRACE("Registering Action %s as having fun\n",debugstr_w(action));
+    TRACE("Registering %s as unique action\n", debugstr_w(action));
     
     count = package->script->UniqueActionsCount;
     package->script->UniqueActionsCount++;
