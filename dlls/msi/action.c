@@ -6688,7 +6688,10 @@ static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )
 
 static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
 {
-    TRACE("%p\n", package);
+    static const WCHAR szAvailableFreeReg[] =
+        {'A','V','A','I','L','A','B','L','E','F','R','E','E','R','E','G',0};
+
+    TRACE("%p %d kilobytes\n", package, msi_get_property_int( package, szAvailableFreeReg, 0 ));
     return ERROR_SUCCESS;
 }
 
