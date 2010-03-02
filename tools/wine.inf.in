@@ -2427,6 +2427,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 
 [FakeDllsSection]
 ; create some directories first
+10,help,
 10,inf,
 10,temp,
 11,mui,
