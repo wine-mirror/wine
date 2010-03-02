@@ -61,15 +61,15 @@ enum fixup_channel_source
     CHANNEL_SOURCE_Y = 3,
     CHANNEL_SOURCE_Z = 4,
     CHANNEL_SOURCE_W = 5,
-    CHANNEL_SOURCE_YUV0 = 6,
-    CHANNEL_SOURCE_YUV1 = 7,
+    CHANNEL_SOURCE_COMPLEX0 = 6,
+    CHANNEL_SOURCE_COMPLEX1 = 7,
 };
 
-enum yuv_fixup
+enum complex_fixup
 {
-    YUV_FIXUP_YUY2 = 0,
-    YUV_FIXUP_UYVY = 1,
-    YUV_FIXUP_YV12 = 2,
+    COMPLEX_FIXUP_YUY2 = 0,
+    COMPLEX_FIXUP_UYVY = 1,
+    COMPLEX_FIXUP_YV12 = 2,
 };
 
 #include <pshpack2.h>
@@ -103,14 +103,14 @@ static inline struct color_fixup_desc create_color_fixup_desc(
     return fixup;
 }
 
-static inline struct color_fixup_desc create_yuv_fixup_desc(enum yuv_fixup yuv_fixup)
+static inline struct color_fixup_desc create_complex_fixup_desc(enum complex_fixup complex_fixup)
 {
     struct color_fixup_desc fixup =
     {
-        0, yuv_fixup & (1 << 0) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
-        0, yuv_fixup & (1 << 1) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
-        0, yuv_fixup & (1 << 2) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
-        0, yuv_fixup & (1 << 3) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
+        0, complex_fixup & (1 << 0) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0, complex_fixup & (1 << 1) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0, complex_fixup & (1 << 2) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0, complex_fixup & (1 << 3) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
     };
     return fixup;
 }
@@ -120,19 +120,19 @@ static inline BOOL is_identity_fixup(struct color_fixup_desc fixup)
     return !memcmp(&fixup, &COLOR_FIXUP_IDENTITY, sizeof(fixup));
 }
 
-static inline BOOL is_yuv_fixup(struct color_fixup_desc fixup)
+static inline BOOL is_complex_fixup(struct color_fixup_desc fixup)
 {
-    return fixup.x_source == CHANNEL_SOURCE_YUV0 || fixup.x_source == CHANNEL_SOURCE_YUV1;
+    return fixup.x_source == CHANNEL_SOURCE_COMPLEX0 || fixup.x_source == CHANNEL_SOURCE_COMPLEX1;
 }
 
-static inline enum yuv_fixup get_yuv_fixup(struct color_fixup_desc fixup)
+static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup)
 {
-    enum yuv_fixup yuv_fixup = 0;
-    if (fixup.x_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 0);
-    if (fixup.y_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 1);
-    if (fixup.z_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 2);
-    if (fixup.w_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 3);
-    return yuv_fixup;
+    enum complex_fixup complex_fixup = 0;
+    if (fixup.x_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 0);
+    if (fixup.y_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 1);
+    if (fixup.z_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 2);
+    if (fixup.w_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 3);
+    return complex_fixup;
 }
 
 void *wined3d_rb_alloc(size_t size) DECLSPEC_HIDDEN;

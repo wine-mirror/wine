@@ -1829,10 +1829,10 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
 
     if (!mask) return; /* Nothing to do */
 
-    if (is_yuv_fixup(fixup))
+    if (is_complex_fixup(fixup))
     {
-        enum yuv_fixup yuv_fixup = get_yuv_fixup(fixup);
-        FIXME("YUV fixup (%#x) not supported\n", yuv_fixup);
+        enum complex_fixup complex_fixup = get_complex_fixup(fixup);
+        FIXME("Complex fixup (%#x) not supported\n",complex_fixup);
         return;
     }
 
@@ -4907,7 +4907,7 @@ static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
     }
 
     /* We support everything except YUV conversions. */
-    if (!is_yuv_fixup(fixup))
+    if (!is_complex_fixup(fixup))
     {
         TRACE("[OK]\n");
         return TRUE;

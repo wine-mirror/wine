@@ -1407,7 +1407,7 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
     }
 
     /* Faked to make some apps happy. */
-    if (!is_yuv_fixup(fixup))
+    if (!is_complex_fixup(fixup))
     {
         TRACE("[OK]\n");
         return TRUE;

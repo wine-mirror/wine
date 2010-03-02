@@ -1088,15 +1088,15 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
     if (!gl_info->supported[APPLE_YCBCR_422])
     {
         idx = getFmtIdx(WINED3DFMT_YUY2);
-        gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YUY2);
+        gl_info->gl_formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YUY2);
 
         idx = getFmtIdx(WINED3DFMT_UYVY);
-        gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_UYVY);
+        gl_info->gl_formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_UYVY);
     }
 
     idx = getFmtIdx(WINED3DFMT_YV12);
     gl_info->gl_formats[idx].heightscale = 1.5f;
-    gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
+    gl_info->gl_formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
     if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
     {
@@ -1913,8 +1913,8 @@ static const char *debug_fixup_channel_source(enum fixup_channel_source source)
         WINED3D_TO_STR(CHANNEL_SOURCE_Y);
         WINED3D_TO_STR(CHANNEL_SOURCE_Z);
         WINED3D_TO_STR(CHANNEL_SOURCE_W);
-        WINED3D_TO_STR(CHANNEL_SOURCE_YUV0);
-        WINED3D_TO_STR(CHANNEL_SOURCE_YUV1);
+        WINED3D_TO_STR(CHANNEL_SOURCE_COMPLEX0);
+        WINED3D_TO_STR(CHANNEL_SOURCE_COMPLEX1);
 #undef WINED3D_TO_STR
         default:
             FIXME("Unrecognized fixup_channel_source %#x\n", source);
@@ -1922,26 +1922,26 @@ static const char *debug_fixup_channel_source(enum fixup_channel_source source)
     }
 }
 
-static const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup)
+static const char *debug_complex_fixup(enum complex_fixup fixup)
 {
-    switch(yuv_fixup)
+    switch(fixup)
     {
 #define WINED3D_TO_STR(x) case x: return #x
-        WINED3D_TO_STR(YUV_FIXUP_YUY2);
-        WINED3D_TO_STR(YUV_FIXUP_UYVY);
-        WINED3D_TO_STR(YUV_FIXUP_YV12);
+        WINED3D_TO_STR(COMPLEX_FIXUP_YUY2);
+        WINED3D_TO_STR(COMPLEX_FIXUP_UYVY);
+        WINED3D_TO_STR(COMPLEX_FIXUP_YV12);
 #undef WINED3D_TO_STR
         default:
-            FIXME("Unrecognized YUV fixup %#x\n", yuv_fixup);
+            FIXME("Unrecognized complex fixup %#x\n", fixup);
             return "unrecognized";
     }
 }
 
 void dump_color_fixup_desc(struct color_fixup_desc fixup)
 {
-    if (is_yuv_fixup(fixup))
+    if (is_complex_fixup(fixup))
     {
-        TRACE("\tYUV: %s\n", debug_yuv_fixup(get_yuv_fixup(fixup)));
+        TRACE("\tComplex: %s\n", debug_complex_fixup(get_complex_fixup(fixup)));
         return;
     }
 
