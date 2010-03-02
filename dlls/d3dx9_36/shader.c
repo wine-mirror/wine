@@ -611,7 +611,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
     object->lpVtbl = &ID3DXConstantTable_Vtbl;
     object->ref = 1;
 
-    object->ctab = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    object->ctab = HeapAlloc(GetProcessHeap(), 0, size);
     if (!object->ctab)
     {
         HeapFree(GetProcessHeap(), 0, object);
