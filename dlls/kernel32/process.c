@@ -2496,7 +2496,7 @@ BOOL WINAPI TlsFree( DWORD index )
     if (ret) NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
     else SetLastError( ERROR_INVALID_PARAMETER );
     RtlReleasePebLock();
-    return TRUE;
+    return ret;
 }
 
 

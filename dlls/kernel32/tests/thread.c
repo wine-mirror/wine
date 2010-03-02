@@ -421,7 +421,17 @@ static VOID test_CreateThread_basic(void)
          "Thread did not execute successfully\n");
     ok(CloseHandle(thread[i])!=0,"CloseHandle failed\n");
   }
-  ok(TlsFree(tlsIndex)!=0,"TlsFree failed\n");
+
+  SetLastError(0xCAFEF00D);
+  ok(TlsFree(tlsIndex)!=0,"TlsFree failed: %08x\n", GetLastError());
+  ok(GetLastError()==0xCAFEF00D,
+     "GetLastError: expected 0xCAFEF00D, got %08x\n", GetLastError());
+
+  /* Test freeing an already freed TLS index */
+  SetLastError(0xCAFEF00D);
+  ok(TlsFree(tlsIndex)==0,"TlsFree succeeded\n");
+  ok(GetLastError()==ERROR_INVALID_PARAMETER,
+     "GetLastError: expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
 
   /* Test how passing NULL as a pointer to threadid works */
   SetLastError(0xFACEaBAD);
