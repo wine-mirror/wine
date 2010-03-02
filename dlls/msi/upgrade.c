@@ -202,6 +202,12 @@ UINT ACTION_FindRelatedProducts(MSIPACKAGE *package)
     UINT rc = ERROR_SUCCESS;
     MSIQUERY *view;
 
+    if (msi_get_property_int(package, szInstalled, 0))
+    {
+        TRACE("Skipping FindRelatedProducts action: product already installed\n");
+        return ERROR_SUCCESS;
+    }
+
     if (check_unique_action(package,szFindRelatedProducts))
     {
         TRACE("Skipping FindRelatedProducts action: already done on client side\n");

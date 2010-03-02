@@ -1552,6 +1552,55 @@ static const CHAR rrv_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "PublishProduct\t\t5200\n"
                                                "InstallFinalize\t\t6000\n";
 
+static const CHAR frp_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "product.txt\tproduct\tproduct.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR frp_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "product\t\t\tproduct feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR frp_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "product\tproduct\n";
+
+static const CHAR frp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "product\t{44725EE0-EEA8-40BD-8162-A48224A2FEA1}\tMSITESTDIR\t0\t\tproduct.txt\n";
+
+static const CHAR frp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                            "s72\ti2\tS64\tS0\tS255\n"
+                                            "CustomAction\tAction\n"
+                                            "TestProp\t19\t\t\tPROP set\n";
+
+static const CHAR frp_upgrade_dat[] = "UpgradeCode\tVersionMin\tVersionMax\tLanguage\tAttributes\tRemove\tActionProperty\n"
+                                      "s38\tS20\tS20\tS255\ti4\tS255\ts72\n"
+                                      "Upgrade\tUpgradeCode\tVersionMin\tVersionMax\tLanguage\tAttributes\n"
+                                      "{4C0EAA15-0264-4E5A-8758-609EF142B92D}\t1.1.1\t2.2.2\t\t768\t\tPROP\n";
+
+static const CHAR frp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "FindRelatedProducts\t\t50\n"
+                                               "TestProp\tPROP AND NOT REMOVE\t51\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "RemoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t2000\n"
+                                               "RegisterProduct\t\t5000\n"
+                                               "PublishFeatures\t\t5100\n"
+                                               "PublishProduct\t\t5200\n"
+                                               "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2425,6 +2474,20 @@ static const msi_table rrv_tables[] =
     ADD_TABLE(rrv_registry),
     ADD_TABLE(rrv_remove_registry),
     ADD_TABLE(rrv_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table frp_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(frp_component),
+    ADD_TABLE(frp_feature),
+    ADD_TABLE(frp_feature_comp),
+    ADD_TABLE(frp_file),
+    ADD_TABLE(frp_upgrade),
+    ADD_TABLE(frp_custom_action),
+    ADD_TABLE(frp_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -8503,6 +8566,31 @@ static void test_remove_registry_values(void)
     delete_test_files();
 }
 
+static void test_find_related_products(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\product.txt", 1000);
+    create_database(msifile, frp_tables, sizeof(frp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* install again, so it finds the upgrade code */
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\product.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8607,6 +8695,7 @@ START_TEST(install)
     test_publish_components();
     test_remove_duplicate_files();
     test_remove_registry_values();
+    test_find_related_products();
 
     DeleteFileA(log_file);
 
