@@ -5001,14 +5001,23 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
     SC_HANDLE scm = NULL, service = NULL;
-    LPCWSTR *vector = NULL;
+    LPCWSTR component, *vector = NULL;
     LPWSTR name, args;
     DWORD event, numargs;
     UINT r = ERROR_FUNCTION_FAILED;
 
-    comp = get_loaded_component(package, MSI_RecordGetString(rec, 6));
-    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+    component = MSI_RecordGetString(rec, 6);
+    comp = get_loaded_component(package, component);
+    if (!comp)
         return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+    {
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_LOCAL;
 
     deformat_string(package, MSI_RecordGetString(rec, 2), &name);
     deformat_string(package, MSI_RecordGetString(rec, 4), &args);
