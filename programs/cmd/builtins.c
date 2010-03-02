@@ -1134,12 +1134,12 @@ void WCMD_give_help (WCHAR *command) {
   else {
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  param1, -1, inbuilt[i], -1) == 2) {
+	  command, -1, inbuilt[i], -1) == 2) {
 	WCMD_output_asis (WCMD_LoadMessage(i));
 	return;
       }
     }
-    WCMD_output (WCMD_LoadMessage(WCMD_NOCMDHELP), param1);
+    WCMD_output (WCMD_LoadMessage(WCMD_NOCMDHELP), command);
   }
   return;
 }
