@@ -1098,6 +1098,9 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
     gl_info->gl_formats[idx].heightscale = 1.5f;
     gl_info->gl_formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
+    idx = getFmtIdx(WINED3DFMT_P8_UINT);
+    gl_info->gl_formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_P8);
+
     if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
     {
         idx = getFmtIdx(WINED3DFMT_B8G8R8A8_UNORM);
@@ -1930,6 +1933,7 @@ static const char *debug_complex_fixup(enum complex_fixup fixup)
         WINED3D_TO_STR(COMPLEX_FIXUP_YUY2);
         WINED3D_TO_STR(COMPLEX_FIXUP_UYVY);
         WINED3D_TO_STR(COMPLEX_FIXUP_YV12);
+        WINED3D_TO_STR(COMPLEX_FIXUP_P8);
 #undef WINED3D_TO_STR
         default:
             FIXME("Unrecognized complex fixup %#x\n", fixup);

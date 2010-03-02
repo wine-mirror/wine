@@ -1853,7 +1853,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!(gl_info->supported[EXT_PALETTED_TEXTURE] || (gl_info->supported[ARB_FRAGMENT_PROGRAM]
+            if (!(gl_info->supported[EXT_PALETTED_TEXTURE] || (device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup)
                     && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
@@ -1867,7 +1867,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     *convert = CONVERT_PALETTED;
                 }
             }
-            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && gl_info->supported[ARB_FRAGMENT_PROGRAM])
+            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup))
             {
                 *format = GL_ALPHA;
                 *type = GL_UNSIGNED_BYTE;
@@ -2584,34 +2584,10 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
          * The 8bit pixel data will be used as an index in this palette texture to retrieve the final color. */
         TRACE("Using fragment shaders for emulating 8-bit paletted texture support\n");
 
+        device->blitter->set_shader((IWineD3DDevice *) device, This->resource.format_desc,
+                This->texture_target, This->pow2Width, This->pow2Height);
+
         ENTER_GL();
-
-        /* Create the fragment program if we don't have it */
-        if(!device->paletteConversionShader)
-        {
-            const char *fragment_palette_conversion =
-                "!!ARBfp1.0\n"
-                "TEMP index;\n"
-                /* { 255/256, 0.5/255*255/256, 0, 0 } */
-                "PARAM constants = { 0.996, 0.00195, 0, 0 };\n"
-                /* The alpha-component contains the palette index */
-                "TEX index, fragment.texcoord[0], texture[0], 2D;\n"
-                /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
-                "MAD index.a, index.a, constants.x, constants.y;\n"
-                /* Use the alpha-component as an index in the palette to get the final color */
-                "TEX result.color, index.a, texture[1], 1D;\n"
-                "END";
-
-            glEnable(GL_FRAGMENT_PROGRAM_ARB);
-            GL_EXTCALL(glGenProgramsARB(1, &device->paletteConversionShader));
-            GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, device->paletteConversionShader));
-            GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(fragment_palette_conversion), fragment_palette_conversion));
-            glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        }
-
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, device->paletteConversionShader));
-
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE1));
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -2625,7 +2601,6 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 
         /* Rebind the texture because it isn't bound anymore */
         glBindTexture(This->texture_target, This->texture_name);
-
         LEAVE_GL();
     }
 }
@@ -5065,7 +5040,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
             }
             else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
-                    && (gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM]))
+                    && (gl_info->supported[EXT_PALETTED_TEXTURE] || device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup)))
             {
                 d3dfmt_p8_upload_palette(iface, convert);
                 mem = This->resource.allocatedMemory;

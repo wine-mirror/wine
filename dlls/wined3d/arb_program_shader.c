@@ -6229,6 +6229,7 @@ struct arbfp_blit_priv {
     GLenum yuy2_rect_shader, yuy2_2d_shader;
     GLenum uyvy_rect_shader, uyvy_2d_shader;
     GLenum yv12_rect_shader, yv12_2d_shader;
+    GLenum p8_rect_shader, p8_2d_shader;
 };
 
 static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
@@ -6253,7 +6254,9 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_2d_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_rect_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_2d_shader));
-    checkGLcall("Delete yuv programs");
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->p8_rect_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->p8_2d_shader));
+    checkGLcall("Delete yuv and p8 programs");
     LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, device->blit_priv);
@@ -6494,6 +6497,72 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
     return TRUE;
 }
 
+static GLuint gen_p8_shader(IWineD3DDeviceImpl *device, GLenum textype)
+{
+    GLenum shader;
+    struct wined3d_shader_buffer buffer;
+    struct arbfp_blit_priv *priv = device->blit_priv;
+    GLint pos;
+
+    /* Shader header */
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
+
+    ENTER_GL();
+    GL_EXTCALL(glGenProgramsARB(1, &shader));
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
+    LEAVE_GL();
+    if(!shader) {
+        shader_buffer_free(&buffer);
+        return 0;
+    }
+
+    shader_addline(&buffer, "!!ARBfp1.0\n");
+    shader_addline(&buffer, "TEMP index;\n");
+
+    /* { 255/256, 0.5/255*255/256, 0, 0 } */
+    shader_addline(&buffer, "PARAM constants = { 0.996, 0.00195, 0, 0 };\n");
+
+    /* The alpha-component contains the palette index */
+    if(textype == GL_TEXTURE_RECTANGLE_ARB)
+        shader_addline(&buffer, "TXP index, fragment.texcoord[0], texture[0], RECT;\n");
+    else
+        shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], 2D;\n");
+
+    /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
+    shader_addline(&buffer, "MAD index.a, index.a, constants.x, constants.y;\n");
+
+    /* Use the alpha-component as an index in the palette to get the final color */
+    shader_addline(&buffer, "TEX result.color, index.a, texture[1], 1D;\n");
+    shader_addline(&buffer, "END\n");
+
+    ENTER_GL();
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(buffer.buffer), buffer.buffer));
+    checkGLcall("glProgramStringARB()");
+
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
+        FIXME("Fragment program error at position %d: %s\n\n", pos,
+              debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer.buffer);
+    }
+
+    if (textype == GL_TEXTURE_RECTANGLE_ARB)
+        priv->p8_rect_shader = shader;
+    else
+        priv->p8_2d_shader = shader;
+
+    shader_buffer_free(&buffer);
+    LEAVE_GL();
+
+    return shader;
+}
+
 /* Context activation is done by the caller. */
 static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_fixup, GLenum textype)
 {
@@ -6643,6 +6712,8 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_
             if (textype == GL_TEXTURE_RECTANGLE_ARB) priv->yv12_rect_shader = shader;
             else priv->yv12_2d_shader = shader;
             break;
+        default:
+            ERR("Unsupported complex fixup: %d\n", yuv_fixup);
     }
 
     return shader;
@@ -6686,8 +6757,13 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatD
             shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->yv12_rect_shader : priv->yv12_2d_shader;
             break;
 
+        case COMPLEX_FIXUP_P8:
+            shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->p8_rect_shader : priv->p8_2d_shader;
+            if (!shader) shader = gen_p8_shader(device, textype);
+            break;
+
         default:
-            FIXME("Unsupported YUV fixup %#x, not setting a shader\n", fixup);
+            FIXME("Unsupported complex fixup %#x, not setting a shader\n", fixup);
             ENTER_GL();
             glEnable(textype);
             checkGLcall("glEnable(textype)");
@@ -6761,6 +6837,7 @@ static BOOL arbfp_blit_color_fixup_supported(struct color_fixup_desc fixup)
         case COMPLEX_FIXUP_YUY2:
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YV12:
+        case COMPLEX_FIXUP_P8:
             TRACE("[OK]\n");
             return TRUE;
 

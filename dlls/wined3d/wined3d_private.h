@@ -70,6 +70,7 @@ enum complex_fixup
     COMPLEX_FIXUP_YUY2 = 0,
     COMPLEX_FIXUP_UYVY = 1,
     COMPLEX_FIXUP_YV12 = 2,
+    COMPLEX_FIXUP_P8   = 3,
 };
 
 #include <pshpack2.h>
@@ -1644,7 +1645,6 @@ struct IWineD3DDeviceImpl
     UINT                    NumberOfPalettes;
     PALETTEENTRY            **palettes;
     UINT                    currentPalette;
-    UINT                    paletteConversionShader;
 
     /* For rendering to a texture using glCopyTexImage */
     GLenum                  *draw_buffers;
