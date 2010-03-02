@@ -1,3 +1,5 @@
+138 stdcall @(long str str str str long str long long str str long) USERENV_138
+
 @ stdcall CreateEnvironmentBlock(ptr ptr long)
 @ stdcall DestroyEnvironmentBlock(ptr)
 @ stdcall ExpandEnvironmentStringsForUserA(ptr str ptr long)
