@@ -5702,13 +5702,14 @@ static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
 static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
-    LPCWSTR name, value;
+    LPCWSTR name, value, component;
     LPWSTR data = NULL, newval = NULL;
     LPWSTR deformatted = NULL, ptr;
     DWORD flags, type, size;
     LONG res;
     HKEY env = NULL, root;
     LPCWSTR environment;
+    MSICOMPONENT *comp;
 
     static const WCHAR user_env[] =
         {'E','n','v','i','r','o','n','m','e','n','t',0};
@@ -5718,6 +5719,19 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
          'C','o','n','t','r','o','l','\\',
          'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
          'E','n','v','i','r','o','n','m','e','n','t',0};
+
+    component = MSI_RecordGetString(rec, 4);
+    comp = get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+    {
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_LOCAL;
 
     name = MSI_RecordGetString(rec, 2);
     value = MSI_RecordGetString(rec, 3);
