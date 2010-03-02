@@ -3827,18 +3827,49 @@ end:
     return rc;
 }
 
+static WCHAR *get_ini_file_name( MSIPACKAGE *package, MSIRECORD *row )
+{
+    WCHAR *filename, *ptr, *folder, *ret;
+    const WCHAR *dirprop;
+
+    filename = msi_dup_record_field( row, 2 );
+    if (filename && (ptr = strchrW( filename, '|' )))
+        ptr++;
+    else
+        ptr = filename;
+
+    dirprop = MSI_RecordGetString( row, 3 );
+    if (dirprop)
+    {
+        folder = resolve_folder( package, dirprop, FALSE, FALSE, TRUE, NULL );
+        if (!folder)
+            folder = msi_dup_property( package, dirprop );
+    }
+    else
+        folder = msi_dup_property( package, szWindowsFolder );
+
+    if (!folder)
+    {
+        ERR("Unable to resolve folder %s\n", debugstr_w(dirprop));
+        msi_free( filename );
+        return NULL;
+    }
+
+    ret = build_directory_name( 2, folder, ptr );
+
+    msi_free( filename );
+    msi_free( folder );
+    return ret;
+}
+
 static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPCWSTR component, section, key, value, identifier, dirproperty;
-    LPWSTR deformated_section, deformated_key, deformated_value;
-    LPWSTR folder, filename, fullname = NULL;
-    LPCWSTR filenameptr;
+    LPCWSTR component, section, key, value, identifier;
+    LPWSTR deformated_section, deformated_key, deformated_value, fullname;
     MSIRECORD * uirow;
     INT action;
     MSICOMPONENT *comp;
-    static const WCHAR szWindowsFolder[] =
-          {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
     component = MSI_RecordGetString(row, 8);
     comp = get_loaded_component(package,component);
@@ -3854,7 +3885,6 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     comp->Action = INSTALLSTATE_LOCAL;
 
     identifier = MSI_RecordGetString(row,1); 
-    dirproperty = MSI_RecordGetString(row,3);
     section = MSI_RecordGetString(row,4);
     key = MSI_RecordGetString(row,5);
     value = MSI_RecordGetString(row,6);
@@ -3864,28 +3894,7 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     deformat_string(package,key,&deformated_key);
     deformat_string(package,value,&deformated_value);
 
-    filename = msi_dup_record_field(row, 2);
-    if (filename && (filenameptr = strchrW(filename, '|')))
-        filenameptr++;
-    else
-        filenameptr = filename;
-
-    if (dirproperty)
-    {
-        folder = resolve_folder(package, dirproperty, FALSE, FALSE, TRUE, NULL);
-        if (!folder)
-            folder = msi_dup_property( package, dirproperty );
-    }
-    else
-        folder = msi_dup_property( package, szWindowsFolder );
-
-    if (!folder)
-    {
-        ERR("Unable to resolve folder! (%s)\n",debugstr_w(dirproperty));
-        goto cleanup;
-    }
-
-    fullname = build_directory_name(2, folder, filenameptr);
+    fullname = get_ini_file_name(package, row);
 
     if (action == 0)
     {
@@ -3921,10 +3930,7 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     ui_actiondata(package,szWriteIniValues,uirow);
     msiobj_release( &uirow->hdr );
 
-cleanup:
-    msi_free(filename);
     msi_free(fullname);
-    msi_free(folder);
     msi_free(deformated_key);
     msi_free(deformated_value);
     msi_free(deformated_section);
@@ -3949,6 +3955,163 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
     rc = MSI_IterateRecords(view, NULL, ITERATE_WriteIniValues, package);
     msiobj_release(&view->hdr);
     return rc;
+}
+
+static UINT ITERATE_RemoveIniValuesOnUninstall( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR component, section, key, value, identifier;
+    LPWSTR deformated_section, deformated_key, deformated_value, filename;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    INT action;
+
+    component = MSI_RecordGetString( row, 8 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
+
+    identifier = MSI_RecordGetString( row, 1 );
+    section = MSI_RecordGetString( row, 4 );
+    key = MSI_RecordGetString( row, 5 );
+    value = MSI_RecordGetString( row, 6 );
+    action = MSI_RecordGetInteger( row, 7 );
+
+    deformat_string( package, section, &deformated_section );
+    deformat_string( package, key, &deformated_key );
+    deformat_string( package, value, &deformated_value );
+
+    if (action == msidbIniFileActionAddLine || action == msidbIniFileActionCreateLine)
+    {
+        filename = get_ini_file_name( package, row );
+
+        TRACE("Removing key %s from section %s in %s\n",
+               debugstr_w(deformated_key), debugstr_w(deformated_section), debugstr_w(filename));
+
+        if (!WritePrivateProfileStringW( deformated_section, deformated_key, NULL, filename ))
+        {
+            WARN("Unable to remove key %u\n", GetLastError());
+        }
+        msi_free( filename );
+    }
+    else
+        FIXME("Unsupported action %d\n", action);
+
+
+    uirow = MSI_CreateRecord( 4 );
+    MSI_RecordSetStringW( uirow, 1, identifier );
+    MSI_RecordSetStringW( uirow, 2, deformated_section );
+    MSI_RecordSetStringW( uirow, 3, deformated_key );
+    MSI_RecordSetStringW( uirow, 4, deformated_value );
+    ui_actiondata( package, szRemoveIniValues, uirow );
+    msiobj_release( &uirow->hdr );
+
+    msi_free( deformated_key );
+    msi_free( deformated_value );
+    msi_free( deformated_section );
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_RemoveIniValuesOnInstall( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR component, section, key, value, identifier;
+    LPWSTR deformated_section, deformated_key, deformated_value, filename;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    INT action;
+
+    component = MSI_RecordGetString( row, 8 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+    {
+        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_LOCAL;
+
+    identifier = MSI_RecordGetString( row, 1 );
+    section = MSI_RecordGetString( row, 4 );
+    key = MSI_RecordGetString( row, 5 );
+    value = MSI_RecordGetString( row, 6 );
+    action = MSI_RecordGetInteger( row, 7 );
+
+    deformat_string( package, section, &deformated_section );
+    deformat_string( package, key, &deformated_key );
+    deformat_string( package, value, &deformated_value );
+
+    if (action == msidbIniFileActionRemoveLine)
+    {
+        filename = get_ini_file_name( package, row );
+
+        TRACE("Removing key %s from section %s in %s\n",
+               debugstr_w(deformated_key), debugstr_w(deformated_section), debugstr_w(filename));
+
+        if (!WritePrivateProfileStringW( deformated_section, deformated_key, NULL, filename ))
+        {
+            WARN("Unable to remove key %u\n", GetLastError());
+        }
+        msi_free( filename );
+    }
+    else
+        FIXME("Unsupported action %d\n", action);
+
+    uirow = MSI_CreateRecord( 4 );
+    MSI_RecordSetStringW( uirow, 1, identifier );
+    MSI_RecordSetStringW( uirow, 2, deformated_section );
+    MSI_RecordSetStringW( uirow, 3, deformated_key );
+    MSI_RecordSetStringW( uirow, 4, deformated_value );
+    ui_actiondata( package, szRemoveIniValues, uirow );
+    msiobj_release( &uirow->hdr );
+
+    msi_free( deformated_key );
+    msi_free( deformated_value );
+    msi_free( deformated_section );
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','I','n','i','F','i','l','e','`',0};
+    static const WCHAR remove_query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','R','e','m','o','v','e','I','n','i','F','i','l','e','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveIniValuesOnUninstall, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+
+    rc = MSI_DatabaseOpenViewW( package->db, remove_query, &view );
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveIniValuesOnInstall, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+
+    return ERROR_SUCCESS;
 }
 
 static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
@@ -6782,13 +6945,6 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
               action, count, debugstr_w(table));
 
     return ERROR_SUCCESS;
-}
-
-static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
-{
-    static const WCHAR table[] =
-         {'R','e','m','o','v','e','I','n','i','F','i','l','e',0 };
-    return msi_unimplemented_action_stub( package, "RemoveIniValues", table );
 }
 
 static UINT ACTION_PatchFiles( MSIPACKAGE *package )

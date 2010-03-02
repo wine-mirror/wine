@@ -1080,6 +1080,7 @@ static const WCHAR szHCR[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_
 static const WCHAR szHCU[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',0};
 static const WCHAR szHLM[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\',0};
 static const WCHAR szHU[] = {'H','K','E','Y','_','U','S','E','R','S','\\',0};
+static const WCHAR szWindowsFolder[] = {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
