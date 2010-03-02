@@ -895,12 +895,18 @@ static BSTR WINAPI NonOleAutomation_BstrRet(INonOleAutomation *iface)
     return SysAllocString(wszTestString);
 }
 
+static HRESULT WINAPI NonOleAutomation_Error(INonOleAutomation *iface)
+{
+    return E_NOTIMPL;
+}
+
 static INonOleAutomationVtbl NonOleAutomation_VTable =
 {
     NonOleAutomation_QueryInterface,
     NonOleAutomation_AddRef,
     NonOleAutomation_Release,
     NonOleAutomation_BstrRet,
+    NonOleAutomation_Error
 };
 
 static INonOleAutomation NonOleAutomation = { &NonOleAutomation_VTable };
@@ -1239,6 +1245,19 @@ static void test_typelibmarshal(void)
     ok(V_BSTR(&varresult) != NULL, "V_BSTR(&varresult) should not be NULL\n");
 
     VariantClear(&varresult);
+
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+    hr = ITypeInfo_Invoke(pTypeInfo, &NonOleAutomation, DISPID_NOA_ERROR, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok(hr == DISP_E_EXCEPTION, "ITypeInfo_Invoke should have returned DISP_E_EXCEPTION instead of 0x%08x\n", hr);
+    ok(V_VT(&varresult) == VT_EMPTY, "V_VT(&varresult) should be VT_EMPTY instead of %d\n", V_VT(&varresult));
+    ok(excepinfo.wCode == 0x0 && excepinfo.scode == E_NOTIMPL,
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        excepinfo.wCode, excepinfo.scode);
+    VariantClear(&varresult);
+
     ITypeInfo_Release(pTypeInfo);
 
     /* tests call put_Name without named arg */

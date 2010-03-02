@@ -184,6 +184,9 @@ library TestTypelib
     {
         [id(DISPID_NOA_BSTRRET)]
         BSTR BstrRet();
+
+        [id(DISPID_NOA_ERROR)]
+        HRESULT Error();
     }
 
 
