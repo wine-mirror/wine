@@ -6115,7 +6115,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
-    LPCWSTR sourcename;
+    LPCWSTR sourcename, component;
     LPWSTR destname = NULL;
     LPWSTR sourcedir = NULL, destdir = NULL;
     LPWSTR source = NULL, dest = NULL;
@@ -6123,13 +6123,18 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     DWORD size;
     BOOL ret, wildcards;
 
-    comp = get_loaded_component(package, MSI_RecordGetString(rec, 2));
-    if (!comp || !comp->Enabled ||
-        !(comp->Action & (INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE)))
+    component = MSI_RecordGetString(rec, 2);
+    comp = get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL && comp->ActionRequest != INSTALLSTATE_SOURCE)
     {
-        TRACE("Component not set for install, not moving file\n");
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
+    comp->Action = comp->ActionRequest;
 
     sourcename = MSI_RecordGetString(rec, 3);
     options = MSI_RecordGetInteger(rec, 7);
