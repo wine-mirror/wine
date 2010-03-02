@@ -1601,6 +1601,54 @@ static const CHAR frp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "PublishProduct\t\t5200\n"
                                                "InstallFinalize\t\t6000\n";
 
+static const CHAR riv_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "inifile.txt\tinifile\tinifile.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR riv_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "inifile\t\t\tinifile feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR riv_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "inifile\tinifile\n";
+
+static const CHAR riv_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "inifile\t{A0F15705-4F57-4437-88C4-6C8B37ACC6DE}\tMSITESTDIR\t0\t\tinifile.txt\n";
+
+static const CHAR riv_ini_file_dat[] = "IniFile\tFileName\tDirProperty\tSection\tKey\tValue\tAction\tComponent_\n"
+                                       "s72\tl255\tS72\tl96\tl128\tl255\ti2\ts72\n"
+                                       "IniFile\tIniFile\n"
+                                       "inifile1\ttest.ini\tMSITESTDIR\tsection1\tkey1\tvalue1\t0\tinifile\n";
+
+static const CHAR riv_remove_ini_file_dat[] = "RemoveIniFile\tFileName\tDirProperty\tSection\tKey\tValue\tAction\tComponent_\n"
+                                              "s72\tl255\tS72\tl96\tl128\tL255\ti2\ts72\n"
+                                              "RemoveIniFile\tRemoveIniFile\n"
+                                              "inifile1\ttest.ini\tMSITESTDIR\tsectionA\tkeyA\tvalueA\t2\tinifile\n";
+
+static const CHAR riv_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "RemoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t2000\n"
+                                               "RemoveIniValues\t\t3000\n"
+                                               "RegisterProduct\t\t5000\n"
+                                               "PublishFeatures\t\t5100\n"
+                                               "PublishProduct\t\t5200\n"
+                                               "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2488,6 +2536,20 @@ static const msi_table frp_tables[] =
     ADD_TABLE(frp_upgrade),
     ADD_TABLE(frp_custom_action),
     ADD_TABLE(frp_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table riv_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(riv_component),
+    ADD_TABLE(riv_feature),
+    ADD_TABLE(riv_feature_comp),
+    ADD_TABLE(riv_file),
+    ADD_TABLE(riv_ini_file),
+    ADD_TABLE(riv_remove_ini_file),
+    ADD_TABLE(riv_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -8591,6 +8653,57 @@ static void test_find_related_products(void)
     delete_test_files();
 }
 
+static void test_remove_ini_values(void)
+{
+    UINT r;
+    DWORD len;
+    char inifile[MAX_PATH], buf[0x10];
+    HANDLE file;
+    BOOL ret;
+
+    create_test_files();
+    create_file("msitest\\inifile.txt", 1000);
+    create_database(msifile, riv_tables, sizeof(riv_tables) / sizeof(msi_table));
+
+    lstrcpyA(inifile, PROG_FILES_DIR);
+    lstrcatA(inifile, "\\msitest");
+    CreateDirectoryA(inifile, NULL);
+    lstrcatA(inifile, "\\test.ini");
+    file = CreateFileA(inifile, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    CloseHandle(file);
+
+    ret = WritePrivateProfileStringA("section1", "key1", "value1", inifile);
+    ok(ret, "failed to write profile string %u\n", GetLastError());
+
+    ret = WritePrivateProfileStringA("sectionA", "keyA", "valueA", inifile);
+    ok(ret, "failed to write profile string %u\n", GetLastError());
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    len = GetPrivateProfileStringA("section1", "key1", NULL, buf, sizeof(buf), inifile);
+    ok(len == 6, "got %u expected 6\n", len);
+
+    len = GetPrivateProfileStringA("sectionA", "keyA", NULL, buf, sizeof(buf), inifile);
+    ok(!len, "got %u expected 0\n", len);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    len = GetPrivateProfileStringA("section1", "key1", NULL, buf, sizeof(buf), inifile);
+    ok(!len, "got %u expected 0\n", len);
+
+    len = GetPrivateProfileStringA("sectionA", "keyA", NULL, buf, sizeof(buf), inifile);
+    ok(!len, "got %u expected 0\n", len);
+
+    todo_wine ok(!delete_pf("msitest\\test.ini", TRUE), "file removed\n");
+    ok(!delete_pf("msitest\\inifile.txt", TRUE), "file not removed\n");
+    ok(delete_pf("msitest", FALSE), "directory removed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -8696,6 +8809,7 @@ START_TEST(install)
     test_remove_duplicate_files();
     test_remove_registry_values();
     test_find_related_products();
+    test_remove_ini_values();
 
     DeleteFileA(log_file);
 
