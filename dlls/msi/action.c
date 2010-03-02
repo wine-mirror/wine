@@ -6481,20 +6481,25 @@ static UINT load_assembly(MSIRECORD *rec, LPVOID param)
 {
     ASSEMBLY_LIST *list = param;
     MSIASSEMBLY *assembly;
+    LPCWSTR component;
 
     assembly = msi_alloc_zero(sizeof(MSIASSEMBLY));
     if (!assembly)
         return ERROR_OUTOFMEMORY;
 
-    assembly->component = get_loaded_component(list->package, MSI_RecordGetString(rec, 1));
+    component = MSI_RecordGetString(rec, 1);
+    assembly->component = get_loaded_component(list->package, component);
+    if (!assembly->component)
+        return ERROR_SUCCESS;
 
-    if (!assembly->component || !assembly->component->Enabled ||
-        !(assembly->component->Action & (INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE)))
+    if (assembly->component->ActionRequest != INSTALLSTATE_LOCAL &&
+        assembly->component->ActionRequest != INSTALLSTATE_SOURCE)
     {
-        TRACE("Component not set for install, not publishing assembly\n");
-        msi_free(assembly);
+        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
+        assembly->component->Action = assembly->component->Installed;
         return ERROR_SUCCESS;
     }
+    assembly->component->Action = assembly->component->ActionRequest;
 
     assembly->feature = find_feature_by_name(list->package, MSI_RecordGetString(rec, 2));
     assembly->file = msi_find_file(list->package, assembly->component->KeyPath);
