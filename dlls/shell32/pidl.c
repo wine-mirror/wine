@@ -92,7 +92,7 @@ static BOOL ILGetDisplayNameExA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPSTR pat
     return ret;
 }
 
-BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWORD type)
+BOOL ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWORD type)
 {
     LPSHELLFOLDER psfParent, lsf = psf;
     HRESULT ret = NO_ERROR;
@@ -393,7 +393,7 @@ static HRESULT SHILCreateFromPathA(LPCSTR path, LPITEMIDLIST * ppidl, DWORD * at
     return SHILCreateFromPathW(lpszDisplayName, ppidl, attributes);
 }
 
-HRESULT WINAPI SHILCreateFromPathW(LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
+HRESULT SHILCreateFromPathW(LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
     LPSHELLFOLDER sf;
     DWORD pchEaten;
@@ -1050,7 +1050,7 @@ static HRESULT _ILParsePathW(LPCWSTR path, LPWIN32_FIND_DATAW lpFindFile,
  *  exists on disk.
  *  exported by ordinal.
  */
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathA(LPCSTR lpszPath)
+LPITEMIDLIST SHSimpleIDListFromPathA(LPCSTR lpszPath)
 {
     LPITEMIDLIST pidl = NULL;
     LPWSTR wPath = NULL;
@@ -1072,7 +1072,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathA(LPCSTR lpszPath)
     return pidl;
 }
 
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathW(LPCWSTR lpszPath)
+LPITEMIDLIST SHSimpleIDListFromPathW(LPCWSTR lpszPath)
 {
     LPITEMIDLIST pidl = NULL;
 
