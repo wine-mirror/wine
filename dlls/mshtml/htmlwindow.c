@@ -27,13 +27,14 @@
 #include "mshtmdid.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+#define HTMLPRIVWINDOW(x)  ((IHTMLPrivateWindow*)  &(x)->lpIHTMLPrivateWindowVtbl)
 
 static struct list window_list = LIST_INIT(window_list);
 
@@ -166,6 +167,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLWindow4, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow4 %p)\n", This, ppv);
         *ppv = HTMLWINDOW4(This);
+    }else if(IsEqualGUID(&IID_IHTMLPrivateWindow, riid)) {
+        TRACE("(%p)->(IID_IHTMLPrivateWindow %p)\n", This, ppv);
+        *ppv = HTMLPRIVWINDOW(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -1641,6 +1645,87 @@ static const IHTMLWindow4Vtbl HTMLWindow4Vtbl = {
     HTMLWindow4_get_frameElement
 };
 
+#define HTMLPRIVWINDOW_THIS(iface) DEFINE_THIS(HTMLWindow, IHTMLPrivateWindow, iface)
+
+static HRESULT WINAPI HTMLPrivateWindow_QueryInterface(IHTMLPrivateWindow *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+
+    return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
+}
+
+static ULONG WINAPI HTMLPrivateWindow_AddRef(IHTMLPrivateWindow *iface)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+
+    return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
+}
+
+static ULONG WINAPI HTMLPrivateWindow_Release(IHTMLPrivateWindow *iface)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+
+    return IHTMLWindow2_Release(HTMLWINDOW2(This));
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface, BSTR url, BSTR arg2, BSTR arg3,
+        BSTR arg4, VARIANT *post_data_var, VARIANT *headers_var, ULONG flags)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3),
+          debugstr_w(arg4), debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_GetPendingUrl(IHTMLPrivateWindow *iface, BSTR *url)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, url);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_SetPICSTarget(IHTMLPrivateWindow *iface, IOleCommandTarget *cmdtrg)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, cmdtrg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_PICSComplete(IHTMLPrivateWindow *iface, int arg)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, arg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_FindWindowByName(IHTMLPrivateWindow *iface, LPCWSTR name, IHTMLWindow2 **ret)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPrivateWindow_GetAddressBar(IHTMLPrivateWindow *iface, BSTR *url)
+{
+    HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, url);
+    return E_NOTIMPL;
+}
+
+#undef HTMLPRIVWINDOW_THIS
+
+static const IHTMLPrivateWindowVtbl HTMLPrivateWindowVtbl = {
+    HTMLPrivateWindow_QueryInterface,
+    HTMLPrivateWindow_AddRef,
+    HTMLPrivateWindow_Release,
+    HTMLPrivateWindow_SuperNavigate,
+    HTMLPrivateWindow_GetPendingUrl,
+    HTMLPrivateWindow_SetPICSTarget,
+    HTMLPrivateWindow_PICSComplete,
+    HTMLPrivateWindow_FindWindowByName,
+    HTMLPrivateWindow_GetAddressBar
+};
+
 #define DISPEX_THIS(iface) DEFINE_THIS(HTMLWindow, IDispatchEx, iface)
 
 static HRESULT WINAPI WindowDispEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -1954,6 +2039,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->lpHTMLWindow2Vtbl = &HTMLWindow2Vtbl;
     window->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
     window->lpHTMLWindow4Vtbl = &HTMLWindow4Vtbl;
+    window->lpIHTMLPrivateWindowVtbl = &HTMLPrivateWindowVtbl;
     window->lpIDispatchExVtbl = &WindowDispExVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;

@@ -235,6 +235,7 @@ struct HTMLWindow {
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
     const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
     const IHTMLWindow4Vtbl *lpHTMLWindow4Vtbl;
+    const IHTMLPrivateWindowVtbl *lpIHTMLPrivateWindowVtbl;
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     LONG ref;
