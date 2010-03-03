@@ -54,7 +54,7 @@ static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
-
+static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 
 static void init_function_pointers(void)
 {
@@ -71,6 +71,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHGetPathFromIDListW);
     MAKEFUNC(SHGetSpecialFolderPathA);
     MAKEFUNC(SHGetSpecialFolderPathW);
+    MAKEFUNC(SHParseDisplayName);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -102,6 +103,18 @@ static void test_ParseDisplayName(void)
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     if(hr != S_OK) return;
+
+    /* null name and pidl */
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+        NULL, NULL, NULL, NULL, NULL, 0);
+    ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+
+    /* null name */
+    newPIDL = (ITEMIDLIST*)0xdeadbeef;
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+        NULL, NULL, NULL, NULL, &newPIDL, 0);
+    ok(newPIDL == 0, "expected null, got %p\n", newPIDL);
+    ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, cInetTestA, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
@@ -1962,6 +1975,68 @@ static void test_SHCreateShellItem(void)
     IShellFolder_Release(desktopfolder);
 }
 
+static void test_SHParseDisplayName(void)
+{
+    static const WCHAR prefixW[] = {'w','t',0};
+    LPITEMIDLIST pidl1, pidl2;
+    IShellFolder *desktop;
+    WCHAR dirW[MAX_PATH];
+    WCHAR nameW[10];
+    HRESULT hr;
+    BOOL ret;
+
+    if (!pSHParseDisplayName)
+    {
+        win_skip("SHParseDisplayName isn't available\n");
+        return;
+    }
+
+if (0)
+{
+    /* crashes on native */
+    hr = pSHParseDisplayName(NULL, NULL, NULL, 0, NULL);
+    nameW[0] = 0;
+    hr = pSHParseDisplayName(nameW, NULL, NULL, 0, NULL);
+}
+
+    pidl1 = (LPITEMIDLIST)0xdeadbeef;
+    hr = pSHParseDisplayName(NULL, NULL, &pidl1, 0, NULL);
+    ok(hr == E_OUTOFMEMORY, "failed %08x\n", hr);
+    ok(pidl1 == 0, "expected null ptr, got %p\n", pidl1);
+
+    /* dummy name */
+    nameW[0] = 0;
+    hr = pSHParseDisplayName(nameW, NULL, &pidl1, 0, NULL);
+    ok(hr == S_OK, "failed %08x\n", hr);
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "failed %08x\n", hr);
+    hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, nameW, NULL, &pidl2, NULL);
+    ok(hr == S_OK, "failed %08x\n", hr);
+    ret = pILIsEqual(pidl1, pidl2);
+    ok(ret == TRUE, "expected equal idls\n");
+    pILFree(pidl1);
+    pILFree(pidl2);
+
+    /* with path */
+    GetTempPathW(sizeof(dirW)/sizeof(WCHAR), dirW);
+    GetTempFileNameW(dirW, prefixW, 0, dirW);
+    CreateFileW(dirW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+
+    hr = pSHParseDisplayName(dirW, NULL, &pidl1, 0, NULL);
+    ok(hr == S_OK, "failed %08x\n", hr);
+    hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, dirW, NULL, &pidl2, NULL);
+    ok(hr == S_OK, "failed %08x\n", hr);
+
+    ret = pILIsEqual(pidl1, pidl2);
+    ok(ret == TRUE, "expected equal idls\n");
+    pILFree(pidl1);
+    pILFree(pidl2);
+
+    DeleteFileW(dirW);
+
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -1970,6 +2045,7 @@ START_TEST(shlfolder)
     OleInitialize(NULL);
 
     test_ParseDisplayName();
+    test_SHParseDisplayName();
     test_BindToObject();
     test_EnumObjects_and_CompareIDs();
     test_GetDisplayName();

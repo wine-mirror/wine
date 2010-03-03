@@ -151,10 +151,10 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
            This, hwndOwner, pbc, lpszDisplayName, debugstr_w(lpszDisplayName),
            pchEaten, ppidl, pdwAttributes);
 
-    if (!lpszDisplayName || !ppidl)
-        return E_INVALIDARG;
-
+    if (!ppidl) return E_INVALIDARG;
     *ppidl = 0;
+
+    if (!lpszDisplayName) return E_INVALIDARG;
 
     if (pchEaten)
         *pchEaten = 0;        /* strange but like the original */
