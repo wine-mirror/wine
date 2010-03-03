@@ -1253,7 +1253,7 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
 }
 
 HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
-        nsIInputStream *post_data_stream, DWORD hlnf)
+        nsIInputStream *post_data_stream, DWORD hlnf, BOOL *cancel)
 {
     IHlinkFrame *hlink_frame;
     nsChannelBSC *callback;
@@ -1263,16 +1263,18 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     IHlink *hlink;
     HRESULT hres;
 
+    *cancel = FALSE;
+
     hres = IOleClientSite_QueryInterface(doc->doc_obj->client, &IID_IServiceProvider,
             (void**)&sp);
     if(FAILED(hres))
-        return hres;
+        return S_OK;
 
     hres = IServiceProvider_QueryService(sp, &IID_IHlinkFrame, &IID_IHlinkFrame,
             (void**)&hlink_frame);
     IServiceProvider_Release(sp);
     if(FAILED(hres))
-        return hres;
+        return S_OK;
 
     hres = create_channelbsc(NULL, NULL, NULL, 0, &callback);
     if(FAILED(hres)) {
@@ -1304,8 +1306,9 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
         }
 
         hres = IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(&callback->bsc), hlink);
-
         IMoniker_Release(mon);
+        *cancel = hres == S_OK;
+        hres = S_OK;
     }
 
     IHlinkFrame_Release(hlink_frame);
@@ -1339,16 +1342,23 @@ HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base
         hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, url,
                 &translated_url);
         if(hres == S_OK) {
+            TRACE("%08x %s -> %s\n", hres, debugstr_w(url), debugstr_w(translated_url));
             strcpyW(url, translated_url);
             CoTaskMemFree(translated_url);
         }
     }
 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
-        hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0);
-        if(SUCCEEDED(hres))
+        BOOL cancel;
+
+        hres = hlink_frame_navigate(&window->doc->basedoc, url, NULL, 0, &cancel);
+        if(FAILED(hres))
+            return hres;
+
+        if(cancel) {
+            TRACE("Navigation handled by hlink frame\n");
             return S_OK;
-        TRACE("hlink_frame_navigate failed: %08x\n", hres);
+        }
     }
 
     hres = create_doc_uri(window, url, &uri);

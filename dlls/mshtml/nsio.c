@@ -131,6 +131,7 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
     HTMLDocumentObj *doc = container->doc;
     DWORD hlnf = 0;
+    BOOL cancel;
     HRESULT hres;
 
     if(!doc) {
@@ -148,8 +149,8 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     if(!hlnf && !exec_shldocvw_67(doc, channel->uri->wine_url))
         return FALSE;
 
-    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel->post_data_stream, hlnf);
-    return hres != S_OK;
+    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel->post_data_stream, hlnf, &cancel);
+    return FAILED(hres) || cancel;
 }
 
 HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
