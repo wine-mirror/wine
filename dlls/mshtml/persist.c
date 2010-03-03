@@ -175,36 +175,6 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     nsWineURI *nsuri;
     HRESULT hres;
 
-    if(pibc) {
-        IUnknown *unk = NULL;
-
-        /* FIXME:
-         * Use params:
-         * "__PrecreatedObject"
-         * "BIND_CONTEXT_PARAM"
-         * "__HTMLLOADOPTIONS"
-         * "__DWNBINDINFO"
-         * "URL Context"
-         * "CBinding Context"
-         * "_ITransData_Object_"
-         * "_EnumFORMATETC_"
-         */
-
-        IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
-        if(unk) {
-            IOleClientSite *client = NULL;
-
-            hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
-            if(SUCCEEDED(hres)) {
-                TRACE("Got client site %p\n", client);
-                IOleObject_SetClientSite(OLEOBJ(This), client);
-                IOleClientSite_Release(client);
-            }
-
-            IUnknown_Release(unk);
-        }
-    }
-
     set_ready_state(This->window, READYSTATE_LOADING);
     update_doc(This, UPDATE_TITLE);
 
@@ -375,6 +345,35 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     HRESULT hres;
 
     TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
+
+    if(pibc) {
+        IUnknown *unk = NULL;
+
+        /* FIXME:
+         * Use params:
+         * "__PrecreatedObject"
+         * "BIND_CONTEXT_PARAM"
+         * "__HTMLLOADOPTIONS"
+         * "__DWNBINDINFO"
+         * "URL Context"
+         * "_ITransData_Object_"
+         * "_EnumFORMATETC_"
+         */
+
+        IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
+        if(unk) {
+            IOleClientSite *client = NULL;
+
+            hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
+            if(SUCCEEDED(hres)) {
+                TRACE("Got client site %p\n", client);
+                IOleObject_SetClientSite(OLEOBJ(This), client);
+                IOleClientSite_Release(client);
+            }
+
+            IUnknown_Release(unk);
+        }
+    }
 
     hres = set_moniker(This, pimkName, pibc, TRUE);
     if(FAILED(hres))
