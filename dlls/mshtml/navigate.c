@@ -1148,6 +1148,36 @@ void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
     }
 }
 
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    nsChannelBSC *bscallback;
+} start_doc_binding_task_t;
+
+static void start_doc_binding_proc(task_t *_task)
+{
+    start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
+
+    start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+    IBindStatusCallback_Release(STATUSCLB(&task->bscallback->bsc));
+}
+
+HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
+{
+    start_doc_binding_task_t *task;
+
+    task = heap_alloc(sizeof(start_doc_binding_task_t));
+    if(!task)
+        return E_OUTOFMEMORY;
+
+    task->window = window;
+    task->bscallback = bscallback;
+    IBindStatusCallback_AddRef(STATUSCLB(&bscallback->bsc));
+
+    push_task(&task->header, start_doc_binding_proc, window->task_magic);
+    return S_OK;
+}
+
 void abort_document_bindings(HTMLDocumentNode *doc)
 {
     BSCallback *iter;

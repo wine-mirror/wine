@@ -740,6 +740,7 @@ void add_nsevent_listener(HTMLDocumentNode*,LPCWSTR);
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*);
 void set_current_mon(HTMLWindow*,IMoniker*);
 HRESULT start_binding(HTMLWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*);
+HRESULT async_start_doc_binding(HTMLWindow*,nsChannelBSC*);
 void abort_document_bindings(HTMLDocumentNode*);
 
 HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*);

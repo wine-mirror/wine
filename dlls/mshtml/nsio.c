@@ -808,19 +808,7 @@ static void start_binding_proc(task_t *_task)
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
     start_binding(NULL, task->doc, (BSCallback*)task->bscallback, NULL);
-}
 
-typedef struct {
-    task_t header;
-    HTMLWindow *window;
-    nsChannelBSC *bscallback;
-} start_doc_binding_task_t;
-
-static void start_doc_binding_proc(task_t *_task)
-{
-    start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
-
-    start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
     IUnknown_Release((IUnknown*)task->bscallback);
 }
 
@@ -844,14 +832,9 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
     channelbsc_set_channel(bscallback, This, listener, context);
 
     if(is_doc_channel) {
-        start_doc_binding_task_t *task;
-
         set_window_bscallback(window, bscallback);
-
-        task = heap_alloc(sizeof(start_doc_binding_task_t));
-        task->window = window;
-        task->bscallback = bscallback;
-        push_task(&task->header, start_doc_binding_proc, window->task_magic);
+        async_start_doc_binding(window, bscallback);
+        IUnknown_Release((IUnknown*)bscallback);
     }else {
         start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
 
