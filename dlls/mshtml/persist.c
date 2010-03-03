@@ -683,44 +683,24 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
     IMoniker *mon;
-    HGLOBAL body;
-    LPSTREAM stream;
     HRESULT hres;
 
     static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-    static const WCHAR html_bodyW[] = {'<','H','T','M','L','>','<','/','H','T','M','L','>',0};
 
     TRACE("(%p)\n", This);
-
-    body = GlobalAlloc(0, sizeof(html_bodyW));
-    if(!body)
-        return E_OUTOFMEMORY;
-    memcpy(body, html_bodyW, sizeof(html_bodyW));
 
     hres = CreateURLMoniker(NULL, about_blankW, &mon);
     if(FAILED(hres)) {
         WARN("CreateURLMoniker failed: %08x\n", hres);
-        GlobalFree(body);
         return hres;
     }
 
     hres = set_moniker(This, mon, NULL, FALSE);
     IMoniker_Release(mon);
-    if(FAILED(hres)) {
-        GlobalFree(body);
+    if(FAILED(hres))
         return hres;
-    }
 
-    hres = CreateStreamOnHGlobal(body, TRUE, &stream);
-    if(FAILED(hres)) {
-        GlobalFree(body);
-        return hres;
-    }
-
-    hres = channelbsc_load_stream(This->window->bscallback, stream);
-
-    IStream_Release(stream);
-    return hres;
+    return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, NULL);
 }
 
 #undef PERSTRINIT_THIS
