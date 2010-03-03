@@ -1819,6 +1819,7 @@ DECL_HANDLER(get_message)
         return;
     }
 
+    if (get_win == -1 && current->process->idle_event) set_event( current->process->idle_event );
     queue->wake_mask = req->wake_mask;
     queue->changed_mask = req->changed_mask;
     set_error( STATUS_PENDING );  /* FIXME */
