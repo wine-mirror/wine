@@ -171,18 +171,13 @@ static void set_downloading_proc(task_t *_task)
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL set_download)
 {
-    nsChannelBSC *bscallback;
-    LPOLESTR url = NULL;
-    docobj_task_t *task;
     download_proc_task_t *download_task;
+    nsChannelBSC *bscallback;
+    docobj_task_t *task;
     nsWineURI *nsuri;
+    LPOLESTR url;
     HRESULT hres;
 
-    set_ready_state(This->window, READYSTATE_LOADING);
-    update_doc(This, UPDATE_TITLE);
-
-    HTMLDocument_LockContainer(This->doc_obj, TRUE);
-    
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
         WARN("GetDiaplayName failed: %08x\n", hres);
@@ -191,11 +186,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     TRACE("got url: %s\n", debugstr_w(url));
 
-    set_current_mon(This->window, mon);
-
     if(This->doc_obj->client) {
         VARIANT silent, offline;
-        IOleCommandTarget *cmdtrg = NULL;
 
         hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
         if(SUCCEEDED(hres)) {
@@ -213,6 +205,19 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
             else if(V_BOOL(&silent))
                 FIXME("offline == true\n");
         }
+    }
+
+    if(This->window->mon) {
+        update_doc(This, UPDATE_TITLE|UPDATE_UI);
+    }else {
+        update_doc(This, UPDATE_TITLE);
+        set_current_mon(This->window, mon);
+    }
+
+    set_ready_state(This->window, READYSTATE_LOADING);
+
+    if(This->doc_obj->client) {
+        IOleCommandTarget *cmdtrg = NULL;
 
         hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                 (void**)&cmdtrg);
@@ -243,6 +248,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     IUnknown_Release((IUnknown*)bscallback);
     if(FAILED(hres))
         return hres;
+
+    HTMLDocument_LockContainer(This->doc_obj, TRUE);
 
     if(This->doc_obj->frame) {
         task = heap_alloc(sizeof(docobj_task_t));
