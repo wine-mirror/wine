@@ -1113,13 +1113,37 @@ static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_on_response
 };
 
-nsChannelBSC *create_channelbsc(IMoniker *mon)
+HRESULT create_channelbsc(IMoniker *mon, WCHAR *headers, BYTE *post_data, DWORD post_data_size, nsChannelBSC **retval)
 {
-    nsChannelBSC *ret = heap_alloc_zero(sizeof(*ret));
+    nsChannelBSC *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     init_bscallback(&ret->bsc, &nsChannelBSCVtbl, mon, BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA);
 
-    return ret;
+    if(headers) {
+        ret->bsc.headers = heap_strdupW(headers);
+        if(!ret->bsc.headers) {
+            IBindStatusCallback_Release(STATUSCLB(&ret->bsc));
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    if(post_data) {
+        ret->bsc.post_data = GlobalAlloc(0, post_data_size);
+        if(!ret->bsc.headers) {
+            IBindStatusCallback_Release(STATUSCLB(&ret->bsc));
+            return E_OUTOFMEMORY;
+        }
+
+        memcpy(ret->bsc.post_data, post_data, post_data_size);
+        ret->bsc.post_data_len = post_data_size;
+    }
+
+    *retval = ret;
+    return S_OK;
 }
 
 IMoniker *get_channelbsc_mon(nsChannelBSC *This)
@@ -1229,8 +1253,8 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
         nsIInputStream *post_data_stream, DWORD hlnf)
 {
     IHlinkFrame *hlink_frame;
+    nsChannelBSC *callback;
     IServiceProvider *sp;
-    BSCallback *callback;
     IBindCtx *bindctx;
     IMoniker *mon;
     IHlink *hlink;
@@ -1247,16 +1271,20 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
     if(FAILED(hres))
         return hres;
 
-    callback = &create_channelbsc(NULL)->bsc;
-
-    if(post_data_stream) {
-        parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
-                        &callback->post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->headers),
-              debugstr_an(callback->post_data, callback->post_data_len));
+    hres = create_channelbsc(NULL, NULL, NULL, 0, &callback);
+    if(FAILED(hres)) {
+        IHlinkFrame_Release(hlink_frame);
+        return hres;
     }
 
-    hres = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
+    if(post_data_stream) {
+        parse_post_data(post_data_stream, &callback->bsc.headers, &callback->bsc.post_data,
+                        &callback->bsc.post_data_len);
+        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->bsc.headers),
+              debugstr_an(callback->bsc.post_data, callback->bsc.post_data_len));
+    }
+
+    hres = CreateAsyncBindCtx(0, STATUSCLB(&callback->bsc), NULL, &bindctx);
     if(SUCCEEDED(hres))
         hres = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IHlink, (LPVOID*)&hlink);
@@ -1272,14 +1300,14 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url,
             IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
         }
 
-        hres = IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
+        hres = IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(&callback->bsc), hlink);
 
         IMoniker_Release(mon);
     }
 
     IHlinkFrame_Release(hlink_frame);
     IBindCtx_Release(bindctx);
-    IBindStatusCallback_Release(STATUSCLB(callback));
+    IBindStatusCallback_Release(STATUSCLB(&callback->bsc));
     return hres;
 }
 

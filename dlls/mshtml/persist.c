@@ -259,7 +259,9 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     if(FAILED(hres))
         return hres;
 
-    bscallback = create_channelbsc(mon);
+    hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
+    if(FAILED(hres))
+        return hres;
 
     hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
     nsISupports_Release((nsISupports*)nsuri); /* FIXME */

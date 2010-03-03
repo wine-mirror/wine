@@ -826,8 +826,10 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
     if(is_doc_channel)
         set_current_mon(window, mon);
 
-    bscallback = create_channelbsc(mon);
+    hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
     IMoniker_Release(mon);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
 
     channelbsc_set_channel(bscallback, This, listener, context);
 
