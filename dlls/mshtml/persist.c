@@ -155,6 +155,9 @@ static void set_downloading_proc(task_t *_task)
         doc->download_state = 1;
     }
 
+    if(doc->view_sink)
+        IAdviseSink_OnViewChange(doc->view_sink, DVASPECT_CONTENT, -1);
+
     if(doc->hostui) {
         IDropTarget *drop_target = NULL;
 
