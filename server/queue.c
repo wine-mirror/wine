@@ -636,7 +636,7 @@ static void reply_message( struct msg_queue *queue, lparam_t result,
 static int match_window( user_handle_t win, user_handle_t msg_win )
 {
     if (!win) return 1;
-    if (win == (user_handle_t)-1) return !msg_win;
+    if (win == -1 || win == 1) return !msg_win;
     if (msg_win == win) return 1;
     return is_child_window( win, msg_win );
 }

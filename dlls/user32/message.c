@@ -2034,8 +2034,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
 
     if (!first && !last) last = ~0;
-    if (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST || hwnd == HWND_BOTTOM)
-        hwnd = (HWND)-1;
+    if (hwnd == HWND_BROADCAST) hwnd = HWND_TOPMOST;
 
     for (;;)
     {
