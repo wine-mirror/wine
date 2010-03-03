@@ -712,6 +712,7 @@ HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD);
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD,BOOL*);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*);
+HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);

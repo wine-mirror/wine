@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2010 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "mshtmdid.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -1672,9 +1673,84 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         BSTR arg4, VARIANT *post_data_var, VARIANT *headers_var, ULONG flags)
 {
     HTMLWindow *This = HTMLPRIVWINDOW_THIS(iface);
-    FIXME("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3),
-          debugstr_w(arg4), debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
-    return E_NOTIMPL;
+    DWORD post_data_size = 0;
+    BYTE *post_data = NULL;
+    WCHAR *headers = NULL;
+    nsChannelBSC *bsc;
+    IMoniker *mon;
+    BSTR new_url;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
+          debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
+
+    new_url = url;
+    if(This->doc_obj->hostui) {
+        OLECHAR *translated_url = NULL;
+
+        hres = IDocHostUIHandler_TranslateUrl(This->doc_obj->hostui, 0, url, &translated_url);
+        if(hres == S_OK && translated_url) {
+            new_url = SysAllocString(translated_url);
+            CoTaskMemFree(translated_url);
+        }
+    }
+
+    if(This->doc_obj->client) {
+        IOleCommandTarget *cmdtrg;
+
+        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            VARIANT in, out;
+
+            V_VT(&in) = VT_BSTR;
+            V_BSTR(&in) = new_url;
+            V_VT(&out) = VT_BOOL;
+            V_BOOL(&out) = VARIANT_TRUE;
+            hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &in, &out);
+            IOleCommandTarget_Release(cmdtrg);
+            if(SUCCEEDED(hres))
+                VariantClear(&out);
+        }
+    }
+
+    /* FIXME: Why not set_ready_state? */
+    This->readystate = READYSTATE_UNINITIALIZED;
+
+    hres = CreateURLMoniker(NULL, new_url, &mon);
+    if(new_url != url)
+        SysFreeString(new_url);
+    if(FAILED(hres))
+        return hres;
+
+    if(post_data_var) {
+        if(V_VT(post_data_var) == (VT_ARRAY|VT_UI1)) {
+            SafeArrayAccessData(V_ARRAY(post_data_var), (void**)&post_data);
+            post_data_size = V_ARRAY(post_data_var)->rgsabound[0].cElements;
+        }
+    }
+
+    if(headers_var && V_VT(headers_var) != VT_EMPTY && V_VT(headers_var) != VT_ERROR) {
+        if(V_VT(headers_var) != VT_BSTR)
+            return E_INVALIDARG;
+
+        headers = V_BSTR(headers_var);
+    }
+
+    hres = create_channelbsc(mon, headers, post_data, post_data_size, &bsc);
+    if(post_data)
+        SafeArrayUnaccessData(V_ARRAY(post_data_var));
+    if(FAILED(hres)) {
+        IMoniker_Release(mon);
+        return hres;
+    }
+
+    hres = set_moniker(&This->doc_obj->basedoc, mon, NULL, bsc, TRUE);
+    if(SUCCEEDED(hres))
+        hres = async_start_doc_binding(This, bsc);
+
+    IUnknown_Release((IUnknown*)bsc);
+    IMoniker_Release(mon);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLPrivateWindow_GetPendingUrl(IHTMLPrivateWindow *iface, BSTR *url)

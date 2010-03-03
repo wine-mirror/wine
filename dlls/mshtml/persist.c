@@ -169,11 +169,11 @@ static void set_downloading_proc(task_t *_task)
     }
 }
 
-static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL set_download)
+HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannelBSC *async_bsc, BOOL set_download)
 {
-    download_proc_task_t *download_task;
     nsChannelBSC *bscallback;
     docobj_task_t *task;
+    download_proc_task_t *download_task;
     nsWineURI *nsuri;
     LPOLESTR url;
     HRESULT hres;
@@ -222,11 +222,20 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                 (void**)&cmdtrg);
         if(SUCCEEDED(hres)) {
-            VARIANT var;
+            VARIANT var, out;
 
-            V_VT(&var) = VT_I4;
-            V_I4(&var) = 0;
-            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+            if(!async_bsc) {
+                V_VT(&var) = VT_I4;
+                V_I4(&var) = 0;
+                IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+            }else {
+                V_VT(&var) = VT_UNKNOWN;
+                V_UNKNOWN(&var) = (IUnknown*)HTMLWINDOW2(This->window);
+                V_VT(&out) = VT_EMPTY;
+                hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
+                if(SUCCEEDED(hres))
+                    VariantClear(&out);
+            }
 
             IOleCommandTarget_Release(cmdtrg);
         }
@@ -237,15 +246,20 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     if(FAILED(hres))
         return hres;
 
-    hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
-    if(FAILED(hres))
-        return hres;
+    if(async_bsc) {
+        bscallback = async_bsc;
+    }else {
+        hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
+        if(FAILED(hres))
+            return hres;
+    }
 
     hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
     nsISupports_Release((nsISupports*)nsuri); /* FIXME */
     if(SUCCEEDED(hres))
         set_window_bscallback(This->window, bscallback);
-    IUnknown_Release((IUnknown*)bscallback);
+    if(bscallback != async_bsc)
+        IUnknown_Release((IUnknown*)bscallback);
     if(FAILED(hres))
         return hres;
 
@@ -385,7 +399,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    hres = set_moniker(This, pimkName, pibc, TRUE);
+    hres = set_moniker(This, pimkName, pibc, NULL, TRUE);
     if(FAILED(hres))
         return hres;
 
@@ -646,7 +660,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
         return hres;
     }
 
-    hres = set_moniker(This, mon, NULL, TRUE);
+    hres = set_moniker(This, mon, NULL, NULL, TRUE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
@@ -704,7 +718,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
         return hres;
     }
 
-    hres = set_moniker(This, mon, NULL, FALSE);
+    hres = set_moniker(This, mon, NULL, NULL, FALSE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
