@@ -100,6 +100,57 @@ static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_e
     return ret;
 }
 
+static void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    if (query->context)
+    {
+        if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
+        {
+            context_free_event_query(query);
+            context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            context_alloc_event_query(context, query);
+        }
+        else
+        {
+            context = context_acquire(device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+        }
+    }
+    else
+    {
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context_alloc_event_query(context, query);
+    }
+
+    gl_info = context->gl_info;
+
+    ENTER_GL();
+
+    if (gl_info->supported[ARB_SYNC])
+    {
+        if (query->object.sync) GL_EXTCALL(glDeleteSync(query->object.sync));
+        checkGLcall("glDeleteSync");
+        query->object.sync = GL_EXTCALL(glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
+        checkGLcall("glFenceSync");
+    }
+    else if (gl_info->supported[APPLE_FENCE])
+    {
+        GL_EXTCALL(glSetFenceAPPLE(query->object.id));
+        checkGLcall("glSetFenceAPPLE");
+    }
+    else if (gl_info->supported[NV_FENCE])
+    {
+        GL_EXTCALL(glSetFenceNV(query->object.id, GL_ALL_COMPLETED_NV));
+        checkGLcall("glSetFenceNV");
+    }
+
+    LEAVE_GL();
+
+    context_release(context);
+}
+
 /*
  * Occlusion Queries:
  * http://www.gris.uni-tuebingen.de/~bartz/Publications/paper/hww98.pdf
@@ -306,7 +357,6 @@ static WINED3DQUERYTYPE  WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
     return This->type;
 }
 
-
 static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
 
@@ -314,53 +364,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
     if (dwIssueFlags & WINED3DISSUE_END)
     {
         struct wined3d_event_query *query = This->extendedData;
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
-
-        if (query->context)
-        {
-            if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
-            {
-                context_free_event_query(query);
-                context = context_acquire(This->device, NULL, CTXUSAGE_RESOURCELOAD);
-                context_alloc_event_query(context, query);
-            }
-            else
-            {
-                context = context_acquire(This->device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
-            }
-        }
-        else
-        {
-            context = context_acquire(This->device, NULL, CTXUSAGE_RESOURCELOAD);
-            context_alloc_event_query(context, query);
-        }
-
-        gl_info = context->gl_info;
-
-        ENTER_GL();
-
-        if (gl_info->supported[ARB_SYNC])
-        {
-            if (query->object.sync) GL_EXTCALL(glDeleteSync(query->object.sync));
-            checkGLcall("glDeleteSync");
-            query->object.sync = GL_EXTCALL(glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
-            checkGLcall("glFenceSync");
-        }
-        else if (gl_info->supported[APPLE_FENCE])
-        {
-            GL_EXTCALL(glSetFenceAPPLE(query->object.id));
-            checkGLcall("glSetFenceAPPLE");
-        }
-        else if (gl_info->supported[NV_FENCE])
-        {
-            GL_EXTCALL(glSetFenceNV(query->object.id, GL_ALL_COMPLETED_NV));
-            checkGLcall("glSetFenceNV");
-        }
-
-        LEAVE_GL();
-
-        context_release(context);
+        wined3d_event_query_issue(query, This->device);
     }
     else if(dwIssueFlags & WINED3DISSUE_BEGIN)
     {
