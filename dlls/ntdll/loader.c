@@ -1498,7 +1498,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     status = NtMapViewOfSection( mapping, NtCurrentProcess(),
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
     NtClose( mapping );
-    if (status != STATUS_SUCCESS) return status;
+    if (status < 0) return status;
 
     /* create the MODREF */
 

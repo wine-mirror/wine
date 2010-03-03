@@ -545,7 +545,7 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
     if (access & FILE_MAP_EXECUTE) protect <<= 4;
 
     if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), &addr, 0, 0, &offset,
-                                      &count, ViewShare, 0, protect )))
+                                      &count, ViewShare, 0, protect )) < 0)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         addr = NULL;

@@ -1296,6 +1296,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 #ifdef VALGRIND_LOAD_PDB_DEBUGINFO
     VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, delta);
 #endif
+    if (ptr != base) return STATUS_IMAGE_NOT_AT_BASE;
     return STATUS_SUCCESS;
 
  error:
@@ -2409,7 +2410,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = NTDLL_queue_process_apc( process, &call, &result );
         if (res != STATUS_SUCCESS) return res;
 
-        if (result.map_view.status == STATUS_SUCCESS)
+        if ((NTSTATUS)result.map_view.status >= 0)
         {
             *addr_ptr = wine_server_get_ptr( result.map_view.addr );
             *size_ptr = result.map_view.size;
@@ -2461,7 +2462,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                              -1, dup_mapping, addr_ptr );
         }
         if (needs_close) close( unix_handle );
-        if (!res) *size_ptr = size;
+        if (res >= 0) *size_ptr = size;
         return res;
     }
 
