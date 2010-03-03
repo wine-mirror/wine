@@ -6873,7 +6873,7 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 	return FALSE;
     }
 
-    OffsetRect(lprc, 0, Position.y);
+    OffsetRect(lprc, Position.x - REPORT_MARGINX, Position.y);
     return TRUE;
 }
 
