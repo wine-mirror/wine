@@ -62,7 +62,7 @@ struct  nsWineURI {
     windowref_t *window_ref;
     nsChannelBSC *channel_bsc;
     LPWSTR wine_url;
-    PRBool is_doc_uri;
+    BOOL is_doc_uri;
     BOOL use_wine_url;
 };
 
@@ -2162,8 +2162,6 @@ static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *contain
 
     if(uri)
         nsIURI_QueryInterface(uri, &IID_nsIURL, (void**)&ret->nsurl);
-    else
-        ret->nsurl = NULL;
 
     TRACE("retval=%p\n", ret);
     *_retval = ret;
