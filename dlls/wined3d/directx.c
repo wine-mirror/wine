@@ -483,7 +483,6 @@ static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_re
     return FALSE;
 }
 
-
 /* Context activation is done by the caller. */
 static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 {
@@ -556,13 +555,13 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 static BOOL match_apple_intel(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    return card_vendor == HW_VENDOR_INTEL && match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device);
+    return (card_vendor == HW_VENDOR_INTEL) && (gl_vendor == GL_VENDOR_APPLE);
 }
 
 static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (!match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
+    if (gl_vendor != GL_VENDOR_APPLE) return FALSE;
     if (card_vendor != HW_VENDOR_ATI) return FALSE;
     if (device == CARD_ATI_RADEON_X1600) return FALSE;
     return TRUE;
@@ -571,10 +570,8 @@ static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const 
 static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (card_vendor != HW_VENDOR_ATI) return FALSE;
-    if (match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
-    if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers. */
-    return TRUE;
+    return (gl_vendor == GL_VENDOR_ATI);
+
 }
 
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -907,7 +904,7 @@ static const struct driver_quirk quirk_table[] =
  */
 struct driver_version_information
 {
-    WORD card_vendor;                    /* reported PCI card vendor ID  */
+    WORD vendor;                    /* reported PCI card vendor ID  */
     WORD card;                      /* reported PCI card device ID  */
     const char *description;        /* Description of the card e.g. NVIDIA RIVA TNT */
     WORD d3d_level;                 /* driver hiword to report      */
@@ -972,7 +969,7 @@ static const struct driver_version_information driver_version_table[] =
 };
 
 static void init_driver_info(struct wined3d_driver_info *driver_info,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
 {
     OSVERSIONINFOW os_version;
     WORD driver_os_version;
@@ -981,9 +978,9 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
     {
         TRACE_(d3d_caps)("Overriding PCI vendor ID with: %04x\n", wined3d_settings.pci_vendor_id);
-        card_vendor = wined3d_settings.pci_vendor_id;
+        vendor = wined3d_settings.pci_vendor_id;
     }
-    driver_info->vendor = card_vendor;
+    driver_info->vendor = vendor;
 
     if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
     {
@@ -992,7 +989,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
     driver_info->device = device;
 
-    switch (card_vendor)
+    switch (vendor)
     {
         case HW_VENDOR_ATI:
             driver_info->name = "ati2dvag.dll";
@@ -1002,8 +999,9 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
             driver_info->name = "nv4_disp.dll";
             break;
 
+        case HW_VENDOR_INTEL:
         default:
-            FIXME_(d3d_caps)("Unhandled card vendor %04x.\n", card_vendor);
+            FIXME_(d3d_caps)("Unhandled vendor %04x.\n", vendor);
             driver_info->name = "Display";
             break;
     }
@@ -1058,9 +1056,9 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
     for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
     {
-        if (card_vendor == driver_version_table[i].card_vendor && device == driver_version_table[i].card)
+        if (vendor == driver_version_table[i].vendor && device == driver_version_table[i].card)
         {
-            TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", card_vendor, device);
+            TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", vendor, device);
 
             driver_info->description = driver_version_table[i].description;
             driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_version_table[i].d3d_level);
@@ -1171,13 +1169,14 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
             || strstr(gl_vendor_string, "VMware, Inc."))
         return HW_VENDOR_WINE;
 
-    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning HW_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
+    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning HW_VENDOR_NVIDIA.\n", debugstr_a(gl_vendor_string));
 
-    return HW_VENDOR_WINE;
+    return HW_VENDOR_NVIDIA;
 }
 
+
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor *card_vendor, unsigned int *vidmem)
+        enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor, unsigned int *vidmem)
 {
     /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of
      * different GPUs with roughly the same features. In most cases GPUs from a
@@ -2213,7 +2212,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     card_vendor = wined3d_guess_card_vendor(gl_string, gl_renderer);
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x/0x%04x)\n", debugstr_a(gl_string), gl_vendor, card_vendor);
 
-    device = wined3d_guess_card(gl_info, gl_renderer, &card_vendor, &vidmem);
+    device = wined3d_guess_card(gl_info, gl_renderer, &gl_vendor, &card_vendor, &vidmem);
     TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
 
     /* If we have an estimate use it, else default to 64MB;  */
