@@ -5810,7 +5810,7 @@ static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
 
 #define check_flag_combo(x, y) ((x) & ~(y)) == (y)
 
-static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
+static UINT env_parse_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
 {
     LPCWSTR cptr = *name;
 
@@ -5891,18 +5891,8 @@ static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
     return ERROR_SUCCESS;
 }
 
-static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
+static UINT open_env_key( DWORD flags, HKEY *key )
 {
-    MSIPACKAGE *package = param;
-    LPCWSTR name, value, component;
-    LPWSTR data = NULL, newval = NULL;
-    LPWSTR deformatted = NULL, ptr;
-    DWORD flags, type, size;
-    LONG res;
-    HKEY env = NULL, root;
-    LPCWSTR environment;
-    MSICOMPONENT *comp;
-
     static const WCHAR user_env[] =
         {'E','n','v','i','r','o','n','m','e','n','t',0};
     static const WCHAR machine_env[] =
@@ -5911,6 +5901,42 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
          'C','o','n','t','r','o','l','\\',
          'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
          'E','n','v','i','r','o','n','m','e','n','t',0};
+    const WCHAR *env;
+    HKEY root;
+    LONG res;
+
+    if (flags & ENV_MOD_MACHINE)
+    {
+        env = machine_env;
+        root = HKEY_LOCAL_MACHINE;
+    }
+    else
+    {
+        env = user_env;
+        root = HKEY_CURRENT_USER;
+    }
+
+    res = RegOpenKeyExW( root, env, 0, KEY_ALL_ACCESS, key );
+    if (res != ERROR_SUCCESS)
+    {
+        WARN("Failed to open key %s (%d)\n", debugstr_w(env), res);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR name, value, component;
+    LPWSTR data = NULL, newval = NULL, deformatted = NULL, ptr;
+    DWORD flags, type, size;
+    UINT res;
+    HKEY env;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    int action = 0;
 
     component = MSI_RecordGetString(rec, 4);
     comp = get_loaded_component(package, component);
@@ -5930,7 +5956,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
     TRACE("name %s value %s\n", debugstr_w(name), debugstr_w(value));
 
-    res = env_set_flags(&name, &value, &flags);
+    res = env_parse_flags(&name, &value, &flags);
     if (res != ERROR_SUCCESS || !value)
        goto done;
 
@@ -5942,24 +5968,12 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
     value = deformatted;
 
-    if (flags & ENV_MOD_MACHINE)
-    {
-        environment = machine_env;
-        root = HKEY_LOCAL_MACHINE;
-    }
-    else
-    {
-        environment = user_env;
-        root = HKEY_CURRENT_USER;
-    }
-
-    res = RegCreateKeyExW(root, environment, 0, NULL, 0,
-                          KEY_ALL_ACCESS, NULL, &env, NULL);
+    res = open_env_key( flags, &env );
     if (res != ERROR_SUCCESS)
         goto done;
 
-    if (flags & ENV_ACT_REMOVE)
-        FIXME("Not removing environment variable on uninstall!\n");
+    if (flags & ENV_MOD_MACHINE)
+        action |= 0x20000000;
 
     size = 0;
     type = REG_SZ;
@@ -5970,6 +5984,8 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
     if ((res == ERROR_FILE_NOT_FOUND || !(flags & ENV_MOD_MASK)))
     {
+        action = 0x2;
+
         /* Nothing to do. */
         if (!value)
         {
@@ -5990,6 +6006,8 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     }
     else
     {
+        action = 0x1;
+
         /* Contrary to MSDN, +-variable to [~];path works */
         if (flags & ENV_ACT_SETABSENT && !(flags & ENV_MOD_MASK))
         {
@@ -6010,7 +6028,10 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
         if (flags & ENV_ACT_REMOVEMATCH && (!value || !lstrcmpW(data, value)))
         {
-            res = RegDeleteKeyW(env, name);
+            action = 0x4;
+            res = RegDeleteValueW(env, name);
+            if (res != ERROR_SUCCESS)
+                WARN("Failed to remove value %s (%d)\n", debugstr_w(name), res);
             goto done;
         }
 
@@ -6037,6 +6058,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         {
             lstrcpyW(newval, value);
             ptr = newval + lstrlenW(value);
+            action |= 0x80000000;
         }
 
         lstrcpyW(ptr, data);
@@ -6044,12 +6066,24 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         if (flags & ENV_MOD_APPEND)
         {
             lstrcatW(newval, value);
+            action |= 0x40000000;
         }
     }
     TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(newval));
     res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
+    if (res)
+    {
+        WARN("Failed to set %s to %s (%d)\n",  debugstr_w(name), debugstr_w(newval), res);
+    }
 
 done:
+    uirow = MSI_CreateRecord( 3 );
+    MSI_RecordSetStringW( uirow, 1, name );
+    MSI_RecordSetStringW( uirow, 2, newval );
+    MSI_RecordSetInteger( uirow, 3, action );
+    ui_actiondata( package, szWriteEnvironmentStrings, uirow );
+    msiobj_release( &uirow->hdr );
+
     if (env) RegCloseKey(env);
     msi_free(deformatted);
     msi_free(data);
@@ -6070,6 +6104,102 @@ static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_WriteEnvironmentString, package);
     msiobj_release(&view->hdr);
+
+    return rc;
+}
+
+static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR name, value, component;
+    LPWSTR deformatted = NULL;
+    DWORD flags;
+    HKEY env;
+    MSICOMPONENT *comp;
+    MSIRECORD *uirow;
+    int action = 0;
+    LONG res;
+    UINT r;
+
+    component = MSI_RecordGetString( rec, 4 );
+    comp = get_loaded_component( package, component );
+    if (!comp)
+        return ERROR_SUCCESS;
+
+    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+    {
+        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+    comp->Action = INSTALLSTATE_ABSENT;
+
+    name = MSI_RecordGetString( rec, 2 );
+    value = MSI_RecordGetString( rec, 3 );
+
+    TRACE("name %s value %s\n", debugstr_w(name), debugstr_w(value));
+
+    r = env_parse_flags( &name, &value, &flags );
+    if (r != ERROR_SUCCESS)
+       return r;
+
+    if (!(flags & ENV_ACT_REMOVE))
+    {
+        TRACE("Environment variable %s not marked for removal\n", debugstr_w(name));
+        return ERROR_SUCCESS;
+    }
+
+    if (value && !deformat_string( package, value, &deformatted ))
+        return ERROR_OUTOFMEMORY;
+
+    value = deformatted;
+
+    r = open_env_key( flags, &env );
+    if (r != ERROR_SUCCESS)
+    {
+        r = ERROR_SUCCESS;
+        goto done;
+    }
+
+    if (flags & ENV_MOD_MACHINE)
+        action |= 0x20000000;
+
+    TRACE("Removing %s\n", debugstr_w(name));
+
+    res = RegDeleteValueW( env, name );
+    if (res != ERROR_SUCCESS)
+    {
+        WARN("Failed to delete value %s (%d)\n", debugstr_w(name), res);
+        r = ERROR_SUCCESS;
+    }
+
+done:
+    uirow = MSI_CreateRecord( 3 );
+    MSI_RecordSetStringW( uirow, 1, name );
+    MSI_RecordSetStringW( uirow, 2, value );
+    MSI_RecordSetInteger( uirow, 3, action );
+    ui_actiondata( package, szRemoveEnvironmentStrings, uirow );
+    msiobj_release( &uirow->hdr );
+
+    if (env) RegCloseKey( env );
+    msi_free( deformatted );
+    return r;
+}
+
+static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveEnvironmentString, package );
+    msiobj_release( &view->hdr );
 
     return rc;
 }
@@ -6970,13 +7100,6 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "MigrateFeatureStates", table );
-}
-
-static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'E','n','v','i','r','o','n','m','e','n','t',0 };
-    return msi_unimplemented_action_stub( package, "RemoveEnvironmentStrings", table );
 }
 
 static UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
