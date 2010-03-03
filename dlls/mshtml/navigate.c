@@ -717,8 +717,11 @@ HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bsc
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
-    if(window)
+    if(window) {
+        if(bscallback->mon != window->mon)
+            set_current_mon(window, bscallback->mon);
         call_docview_84(window->doc_obj);
+    }
 
     if(bctx) {
         RegisterBindStatusCallback(bctx, STATUSCLB(bscallback), NULL, 0);
