@@ -398,7 +398,7 @@ struct HTMLDocumentObj {
     BOOL in_place_active;
     BOOL ui_active;
     BOOL window_active;
-    BOOL has_key_path;
+    BOOL hostui_setup;
     BOOL container_locked;
     BOOL focus;
     INT download_state;

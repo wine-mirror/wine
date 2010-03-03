@@ -3142,7 +3142,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(GetOptionKeyPath);
         CHECK_CALLED(GetOverrideKeyPath);
         CHECK_CALLED(GetWindow);
-        todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
+        CHECK_CALLED(Exec_DOCCANNAVIGATE);
         CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         CHECK_CALLED(Exec_SETPROGRESSMAX);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -3865,7 +3865,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         }
         CHECK_CALLED(GetWindow);
         if(flags & CLIENTSITE_EXPECTPATH)
-            todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
+            CHECK_CALLED(Exec_DOCCANNAVIGATE);
         CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         CHECK_CALLED(Exec_SETPROGRESSMAX);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -4987,7 +4987,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverrideKeyPath);
     CHECK_CALLED(GetWindow);
-    todo_wine CHECK_CALLED(Exec_DOCCANNAVIGATE);
+    CHECK_CALLED(Exec_DOCCANNAVIGATE);
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
