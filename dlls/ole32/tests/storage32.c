@@ -2771,6 +2771,57 @@ static void test_copyto_locking(void)
     ok( r == TRUE, "deleted file\n");
 }
 
+static void test_copyto_recursive(void)
+{
+    IStorage *stg, *stg2, *stg3, *stg4;
+    HRESULT r;
+    static const WCHAR stgname[] = { 'S','T','G','1',0 };
+    static const WCHAR stgname2[] = { 'S','T','G','2',0 };
+
+    DeleteFileA(filenameA);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                            STGM_READWRITE, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* create a substorage */
+    r = IStorage_CreateStorage(stg, stgname, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg2);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    /* copy the parent to the child */
+    r = IStorage_CopyTo(stg, 0, NULL, NULL, stg2);
+    ok(r==STG_E_ACCESSDENIED, "IStorage->CopyTo failed, hr=%08x\n", r);
+
+    /* create a transacted substorage */
+    r = IStorage_CreateStorage(stg, stgname2, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, 0, &stg3);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    /* copy the parent to the transacted child */
+    r = IStorage_CopyTo(stg, 0, NULL, NULL, stg2);
+    ok(r==STG_E_ACCESSDENIED, "IStorage->CopyTo failed, hr=%08x\n", r);
+
+    /* create a transacted subsubstorage */
+    r = IStorage_CreateStorage(stg3, stgname2, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, 0, &stg4);
+    ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
+
+    /* copy the parent to the transacted child of the transacted child */
+    r = IStorage_CopyTo(stg, 0, NULL, NULL, stg4);
+    ok(r==STG_E_ACCESSDENIED, "IStorage->CopyTo failed, hr=%08x\n", r);
+
+    /* copy the parent but exclude storage objects */
+    r = IStorage_CopyTo(stg, 1, &IID_IStorage, NULL, stg4);
+    ok(r==S_OK, "IStorage->CopyTo failed, hr=%08x\n", r);
+
+    IStorage_Release(stg4);
+    IStorage_Release(stg3);
+    IStorage_Release(stg2);
+    IStorage_Release(stg);
+
+    r = DeleteFileA(filenameA);
+    ok( r == TRUE, "deleted file\n");
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -2811,4 +2862,5 @@ START_TEST(storage32)
     test_toplevel_stat();
     test_substorage_enum();
     test_copyto_locking();
+    test_copyto_recursive();
 }
