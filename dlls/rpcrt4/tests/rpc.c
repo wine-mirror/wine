@@ -804,6 +804,58 @@ static void test_UuidCreate(void)
     }
 }
 
+static void test_UuidCreateSequential(void)
+{
+    UUID guid1;
+    BYTE version;
+    RPC_STATUS (WINAPI *pUuidCreateSequential)(UUID *) = (void *)GetProcAddress(GetModuleHandle("rpcrt4.dll"), "UuidCreateSequential");
+    RPC_STATUS ret;
+
+    if (!pUuidCreateSequential)
+    {
+        skip("UuidCreateSequential not exported\n");
+        return;
+    }
+    ret = pUuidCreateSequential(&guid1);
+    ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
+       "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
+    version = (guid1.Data3 & 0xf000) >> 12;
+    todo_wine
+    ok(version == 1, "unexpected version %d\n", version);
+    if (version == 1)
+    {
+        UUID guid2;
+
+        if (!ret)
+        {
+            /* If the call succeeded, there's a valid (non-multicast) MAC
+             * address in the uuid:
+             */
+            ok(!(guid1.Data4[2] & 0x01),
+               "GUID does not appear to contain a MAC address\n");
+        }
+        else
+        {
+            /* Otherwise, there's a randomly generated multicast MAC address
+             * address in the uuid:
+             */
+            ok((guid1.Data4[2] & 0x01),
+               "GUID does not appear to contain a multicast MAC address\n");
+        }
+        /* Generate another GUID, and make sure its MAC address matches the
+         * first.
+         */
+        ret = pUuidCreateSequential(&guid2);
+        ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
+           "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
+        version = (guid2.Data3 & 0xf000) >> 12;
+        todo_wine
+        ok(version == 1, "unexpected version %d\n", version);
+        ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
+           "unexpected value in MAC address\n");
+    }
+}
+
 static void test_RpcBindingFree(void)
 {
     RPC_BINDING_HANDLE binding = NULL;
@@ -826,5 +878,6 @@ START_TEST( rpc )
     test_I_RpcExceptionFilter();
     test_RpcStringBindingFromBinding();
     test_UuidCreate();
+    test_UuidCreateSequential();
     test_RpcBindingFree();
 }
