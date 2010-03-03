@@ -3435,10 +3435,10 @@ static void test_VarDateFromStr(void)
   DFS("1-2-1970");        EXPECT_DBL(25570.0);
   /* Native fails "1999 January 3, 9AM". I consider that a bug in native */
 
-  /* test a none english data string */
+  /* test a non-english data string */
   DFS("02.01.1970 00:00:00"); EXPECT_MISMATCH;
   lcid = MAKELCID(MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN),SORT_DEFAULT);
-  DFS("02.01.1970"); todo_wine EXPECT_DBL(25570.0);
+  DFS("02.01.1970"); EXPECT_DBL(25570.0);
   DFS("02.01.1970 00:00:00"); todo_wine EXPECT_DBL(25570.0);
 }
 

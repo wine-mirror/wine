@@ -7607,6 +7607,14 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
       break;
 
     case 0x3: /* TTT TTTDD TTTDDD */
+      if (iDate && dp.dwCount == 3)
+        {
+          /* DDD */
+          if ((dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)) ||
+              (dp.dwFlags[2] & (DP_AM|DP_PM)))
+            hRet = DISP_E_TYPEMISMATCH;
+          break;
+        }
       if (dp.dwCount > 4 &&
           ((dp.dwFlags[3] & (DP_AM|DP_PM)) || (dp.dwFlags[4] & (DP_AM|DP_PM)) ||
           (dp.dwFlags[5] & (DP_AM|DP_PM))))
