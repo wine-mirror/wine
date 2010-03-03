@@ -2135,6 +2135,18 @@ todo_wine
     expect(100, rect.left);
     expect(250, rect.right);
 
+    ListView_Scroll(hwnd, 10, 0);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(90, rect.left);
+    expect(240, rect.right);
+
+    ListView_Scroll(hwnd, -10, 0);
+
     DestroyWindow(hwnd);
 
     /* try it for non LVS_REPORT style */
