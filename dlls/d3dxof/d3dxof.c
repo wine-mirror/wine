@@ -303,7 +303,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   {
     if (!parse_template(&object->buf))
     {
-      TRACE("Template is not correct\n");
+      WARN("Template is not correct\n");
       hr = DXFILEERR_BADVALUE;
       goto error;
     }
@@ -418,7 +418,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   {
     if (!parse_template(&buf))
     {
-      TRACE("Template is not correct\n");
+      WARN("Template is not correct\n");
       return DXFILEERR_BADVALUE;
     }
     else
@@ -1051,7 +1051,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   {
     if (!parse_template(&This->buf))
     {
-      TRACE("Template is not correct\n");
+      WARN("Template is not correct\n");
       hr = DXFILEERR_BADVALUE;
       goto error;
     }
@@ -1099,7 +1099,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   if (!parse_object(&This->buf))
   {
-    TRACE("Object is not correct\n");
+    WARN("Object is not correct\n");
     hr = DXFILEERR_PARSEERROR;
     goto error;
   }
