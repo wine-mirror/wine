@@ -1963,7 +1963,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
     if (FAILED(hRes))
       return hRes;
 
-    if (V_BSTR(pVarIn)[0] == '\0')
+    if (V_BSTR(&vStr)[0] == '\0')
       strHeader = (FMT_STRING_HEADER*)(rgbTok + FmtGetNegative(header));
     else
       strHeader = (FMT_STRING_HEADER*)(rgbTok + FmtGetPositive(header));
