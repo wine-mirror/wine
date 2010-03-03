@@ -424,7 +424,7 @@ static BOOL register_parent_wnd_class(BOOL Unicode)
 
 static HWND create_parent_window(BOOL Unicode)
 {
-    static const WCHAR nameW[] = {'t','e','s','t','p','a','r','e','n','t','n','a','m','e','W'};
+    static const WCHAR nameW[] = {'t','e','s','t','p','a','r','e','n','t','n','a','m','e','W',0};
     HWND hwnd;
 
     if (!register_parent_wnd_class(Unicode))
