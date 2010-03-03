@@ -1030,6 +1030,16 @@ struct wined3d_event_query
     struct wined3d_context *context;
 };
 
+enum wined3d_event_query_result
+{
+    WINED3D_EVENT_QUERY_OK,
+    WINED3D_EVENT_QUERY_WAITING,
+    WINED3D_EVENT_QUERY_NOT_STARTED,
+    WINED3D_EVENT_QUERY_WRONG_THREAD,
+    WINED3D_EVENT_QUERY_ERROR,
+    WINED3D_EVENT_QUERY_UNSUPPORTED
+};
+
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
