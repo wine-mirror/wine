@@ -820,7 +820,6 @@ static void test_UuidCreateSequential(void)
     ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
        "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
     version = (guid1.Data3 & 0xf000) >> 12;
-    todo_wine
     ok(version == 1, "unexpected version %d\n", version);
     if (version == 1)
     {
@@ -849,7 +848,6 @@ static void test_UuidCreateSequential(void)
         ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
            "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
         version = (guid2.Data3 & 0xf000) >> 12;
-        todo_wine
         ok(version == 1, "unexpected version %d\n", version);
         ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
            "unexpected value in MAC address\n");
