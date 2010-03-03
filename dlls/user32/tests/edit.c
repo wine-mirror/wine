@@ -1320,6 +1320,7 @@ static void test_edit_control_limittext(void)
 static void test_edit_control_scroll(void)
 {
     static const char *single_line_str = "a";
+    static const char *multiline_str = "Test\r\nText";
     HWND hwEdit;
     LONG ret;
 
@@ -1345,6 +1346,22 @@ static void test_edit_control_scroll(void)
     ok(!ret, "Returned %x, expected 0.\n", ret);
 
     ret = SendMessage(hwEdit, EM_SCROLL, SB_LINEDOWN, 0);
+    ok(!ret, "Returned %x, expected 0.\n", ret);
+
+    DestroyWindow (hwEdit);
+
+    /* SB_PAGEDOWN while at the beginning of a buffer with few lines
+       should not cause EM_SCROLL to return a negative value of
+       scrolled lines that would put us "before" the beginning. */
+    hwEdit = CreateWindow(
+                "EDIT",
+                multiline_str,
+                WS_VSCROLL | ES_MULTILINE,
+                0, 0, 100, 100,
+                NULL, NULL, hinst, NULL);
+    assert(hwEdit);
+
+    ret = SendMessage(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
     ok(!ret, "Returned %x, expected 0.\n", ret);
 
     DestroyWindow (hwEdit);
