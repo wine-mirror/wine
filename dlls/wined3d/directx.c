@@ -437,7 +437,7 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
 }
 
 static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (card_vendor != HW_VENDOR_ATI) return FALSE;
     if (device == CARD_ATI_RADEON_9500) return TRUE;
@@ -447,7 +447,7 @@ static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const c
 }
 
 static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (card_vendor == HW_VENDOR_NVIDIA)
     {
@@ -460,7 +460,7 @@ static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl
 }
 
 static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -472,19 +472,17 @@ static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_re
      * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
      * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
      * the chance that other implementations support them is rather small since Win32 QuickTime uses
-     * DirectDraw, not OpenGL. */
-    if (gl_info->supported[APPLE_FENCE]
-            && gl_info->supported[APPLE_CLIENT_STORAGE]
-            && gl_info->supported[APPLE_FLUSH_RENDER]
-            && gl_info->supported[APPLE_YCBCR_422])
+     * DirectDraw, not OpenGL.
+     *
+     * This test has been moved into wined3d_guess_gl_vendor()
+     */
+    if (gl_vendor == GL_VENDOR_APPLE)
     {
         return TRUE;
     }
-    else
-    {
-        return FALSE;
-    }
+    return FALSE;
 }
+
 
 /* Context activation is done by the caller. */
 static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
@@ -556,31 +554,31 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 }
 
 static BOOL match_apple_intel(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    return card_vendor == HW_VENDOR_INTEL && match_apple(gl_info, gl_renderer, card_vendor, device);
+    return card_vendor == HW_VENDOR_INTEL && match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device);
 }
 
 static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (!match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
+    if (!match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
     if (card_vendor != HW_VENDOR_ATI) return FALSE;
     if (device == CARD_ATI_RADEON_X1600) return FALSE;
     return TRUE;
 }
 
 static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (card_vendor != HW_VENDOR_ATI) return FALSE;
-    if (match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
+    if (match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
     if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers. */
     return TRUE;
 }
 
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
      * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
@@ -594,7 +592,7 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char
 
 /* A GL context is provided by the caller */
 static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLenum error;
     DWORD data[16];
@@ -621,15 +619,15 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
 }
 
 static BOOL match_apple_nvts(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (!match_apple(gl_info, gl_renderer, card_vendor, device)) return FALSE;
+    if (!match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
     return gl_info->supported[NV_TEXTURE_SHADER];
 }
 
 /* A GL context is provided by the caller */
 static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLuint prog;
     BOOL ret = FALSE;
@@ -805,7 +803,7 @@ static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-            enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device);
+            enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device);
     void (*apply)(struct wined3d_gl_info *gl_info);
     const char *description;
 };
@@ -1078,13 +1076,13 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     unsigned int i;
 
     for (i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); ++i)
     {
-        if (!quirk_table[i].match(gl_info, gl_renderer, card_vendor, device)) continue;
+        if (!quirk_table[i].match(gl_info, gl_renderer, gl_vendor, card_vendor, device)) continue;
         TRACE_(d3d_caps)("Applying driver quirk \"%s\".\n", quirk_table[i].description);
         quirk_table[i].apply(gl_info);
     }
@@ -1111,12 +1109,56 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
     return MAKEDWORD_VERSION(major, minor);
 }
 
+static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl_info, const char *gl_vendor_string, const char *gl_renderer)
+{
+
+    /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
+     * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
+     * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
+     *
+     * Detecting this isn't really easy. The vendor string doesn't mention Apple. Compile-time checks
+     * aren't sufficient either because a Linux binary may display on a macos X server via remote X11.
+     * So try to detect the GL implementation by looking at certain Apple extensions. Some extensions
+     * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
+     * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
+     * the chance that other implementations support them is rather small since Win32 QuickTime uses
+     * DirectDraw, not OpenGL. */
+    if (gl_info->supported[APPLE_FENCE]
+            && gl_info->supported[APPLE_CLIENT_STORAGE]
+            && gl_info->supported[APPLE_FLUSH_RENDER]
+            && gl_info->supported[APPLE_YCBCR_422])
+        return GL_VENDOR_APPLE;
+
+    if (strstr(gl_vendor_string, "NVIDIA"))
+        return GL_VENDOR_NVIDIA;
+
+    if (strstr(gl_vendor_string, "ATI"))
+        return GL_VENDOR_ATI;
+
+    if (strstr(gl_vendor_string, "Intel(R)")
+            || strstr(gl_renderer, "Intel(R)")
+            || strstr(gl_vendor_string, "Intel Inc."))
+        return GL_VENDOR_INTEL;
+
+    if (strstr(gl_vendor_string, "Mesa")
+            || strstr(gl_vendor_string, "DRI R300 Project")
+            || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
+            || strstr(gl_vendor_string, "VMware, Inc.")
+            || strstr(gl_renderer, "Mesa"))
+        return GL_VENDOR_MESA;
+
+    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning GL_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
+
+    return GL_VENDOR_WINE;
+}
+
 static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_string, const char *gl_renderer)
 {
     if (strstr(gl_vendor_string, "NVIDIA"))
         return HW_VENDOR_NVIDIA;
 
-    if (strstr(gl_vendor_string, "ATI"))
+    if (strstr(gl_vendor_string, "ATI")
+            || strstr(gl_vendor_string, "DRI R300 Project"))
         return HW_VENDOR_ATI;
 
     if (strstr(gl_vendor_string, "Intel(R)")
@@ -1125,11 +1167,9 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
         return HW_VENDOR_INTEL;
 
     if (strstr(gl_vendor_string, "Mesa")
-            || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
-            || strstr(gl_vendor_string, "DRI R300 Project")
             || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
             || strstr(gl_vendor_string, "VMware, Inc."))
-        return HW_VENDOR_MESA;
+        return HW_VENDOR_WINE;
 
     FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning HW_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
 
@@ -1610,7 +1650,6 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
             if (strstr(gl_renderer, "830G")) return CARD_INTEL_I830G;
             return CARD_INTEL_I915G;
 
-        case HW_VENDOR_MESA:
         case HW_VENDOR_WINE:
         default:
             /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
@@ -1670,6 +1709,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
     struct fragment_caps fragment_caps;
+    enum wined3d_gl_vendor gl_vendor;
     enum wined3d_pci_vendor card_vendor;
     enum wined3d_pci_device device;
     GLint       gl_max;
@@ -1713,8 +1753,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
-    card_vendor = wined3d_guess_card_vendor(gl_string, gl_renderer);
-    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), card_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
     gl_string = (const char *)glGetString(GL_VERSION);
@@ -2171,6 +2209,10 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         gl_info->limits.buffers = 1;
     }
 
+    gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_string, gl_renderer);
+    card_vendor = wined3d_guess_card_vendor(gl_string, gl_renderer);
+    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x/0x%04x)\n", debugstr_a(gl_string), gl_vendor, card_vendor);
+
     device = wined3d_guess_card(gl_info, gl_renderer, &card_vendor, &vidmem);
     TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
 
@@ -2234,7 +2276,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         }
     }
 
-    fixup_extensions(gl_info, gl_renderer, card_vendor, device);
+    fixup_extensions(gl_info, gl_renderer, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
     add_gl_compat_wrappers(gl_info);
 

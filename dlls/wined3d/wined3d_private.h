@@ -1248,13 +1248,23 @@ typedef struct WineD3D_PixelFormat
     int numSamples;
 } WineD3D_PixelFormat;
 
+enum wined3d_gl_vendor
+{
+    GL_VENDOR_WINE,
+    GL_VENDOR_APPLE,
+    GL_VENDOR_ATI,
+    GL_VENDOR_INTEL,
+    GL_VENDOR_MESA,
+    GL_VENDOR_NVIDIA,
+};
+
+
 enum wined3d_pci_vendor
 {
-    HW_VENDOR_WINE                  = 0x0000,
-    HW_VENDOR_MESA                  = 0x0001,
-    HW_VENDOR_ATI                   = 0x1002,
-    HW_VENDOR_NVIDIA                = 0x10de,
-    HW_VENDOR_INTEL                 = 0x8086,
+    HW_VENDOR_WINE                     = 0x0000,
+    HW_VENDOR_ATI                      = 0x1002,
+    HW_VENDOR_NVIDIA                   = 0x10de,
+    HW_VENDOR_INTEL                    = 0x8086,
 };
 
 enum wined3d_pci_device
