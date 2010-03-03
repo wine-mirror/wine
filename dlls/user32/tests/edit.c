@@ -1316,6 +1316,40 @@ static void test_edit_control_limittext(void)
     DestroyWindow(hwEdit);
 }
 
+/* Test EM_SCROLL */
+static void test_edit_control_scroll(void)
+{
+    static const char *single_line_str = "a";
+    HWND hwEdit;
+    LONG ret;
+
+    /* Check the return value when EM_SCROLL doesn't scroll
+     * anything. Should not return true unless any lines were actually
+     * scrolled. */
+    hwEdit = CreateWindow(
+              "EDIT",
+              single_line_str,
+              WS_VSCROLL | ES_MULTILINE,
+              1, 1, 100, 100,
+              NULL, NULL, hinst, NULL);
+
+    assert(hwEdit);
+
+    ret = SendMessage(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
+    ok(!ret, "Returned %x, expected 0.\n", ret);
+
+    ret = SendMessage(hwEdit, EM_SCROLL, SB_PAGEUP, 0);
+    ok(!ret, "Returned %x, expected 0.\n", ret);
+
+    ret = SendMessage(hwEdit, EM_SCROLL, SB_LINEUP, 0);
+    ok(!ret, "Returned %x, expected 0.\n", ret);
+
+    ret = SendMessage(hwEdit, EM_SCROLL, SB_LINEDOWN, 0);
+    ok(!ret, "Returned %x, expected 0.\n", ret);
+
+    DestroyWindow (hwEdit);
+}
+
 static void test_margins(void)
 {
     HWND hwEdit;
@@ -2319,6 +2353,7 @@ START_TEST(edit)
     test_edit_control_5();
     test_edit_control_6();
     test_edit_control_limittext();
+    test_edit_control_scroll();
     test_margins();
     test_margins_font_change();
     test_text_position();

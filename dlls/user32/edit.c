@@ -1635,10 +1635,13 @@ static LRESULT EDIT_EM_Scroll(EDITSTATE *es, INT action)
 		dy = es->line_count - vlc - es->y_offset;
 
 	    /* Notification is done in EDIT_EM_LineScroll */
-	    if(dy)
+	    if(dy) {
 		EDIT_EM_LineScroll(es, 0, dy);
+		return MAKELONG(dy, TRUE);
+	    }
+
 	}
-	return MAKELONG(dy, TRUE);
+	return (LRESULT)FALSE;
 }
 
 
