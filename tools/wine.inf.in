@@ -136,6 +136,7 @@ HKCR,chm.file\shell\open\command,,2,"%10%\hh.exe %1"
 HKCR,cplfile,,2,"Control Panel Item"
 HKCR,cplfile\shell\cplopen,,2,"Open with Control Panel"
 HKCR,cplfile\shell\cplopen\command,,2,"rundll32.exe shell32.dll,Control_RunDLL ""%1"",%*"
+HKCR,DirectShow,,16
 HKCR,exefile,,2,"Application"
 HKCR,exefile\DefaultIcon,,2,"%1"
 HKCR,exefile\shell\open\command,,2,"""%1"" %*"
@@ -160,6 +161,7 @@ HKCR,lnkfile,"IsShortcut",2,"yes"
 HKCR,lnkfile\CLSID,,2,"{00021401-0000-0000-C000-000000000046}"
 HKCR,lnkfile\shellex\IconHandler,,2,"{00021401-0000-0000-C000-000000000046}"
 HKCR,lnkfile\shellex\ContextMenuHandlers\{00021401-0000-0000-C000-000000000046},,0x10,
+HKCR,MediaFoundation,,16
 HKCR,Msi.Package,,2,"Windows Installer Package"
 HKCR,Msi.Package\DefaultIcon,,2,"msiexec.exe"
 HKCR,Msi.Package\shell\Open\command,,2,"msiexec /i ""%1"""
@@ -407,9 +409,17 @@ HKLM,%CurrentVersion%,"ProgramFilesDir",,"%16422%"
 HKLM,%CurrentVersion%,"ProgramFilesPath",0x20000,"%%ProgramFiles%%"
 HKLM,%CurrentVersion%,"RegisteredOrganization",2,""
 HKLM,%CurrentVersion%,"RegisteredOwner",2,""
+HKLM,%CurrentVersion%\App Paths,,16
+HKLM,%CurrentVersion%\Control Panel\Cursors\Schemes,,16
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMax",,"3600"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMin",,"3"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"LastID",,"5"
+HKLM,%CurrentVersion%\Explorer\AutoplayHandlers,,16
+HKLM,%CurrentVersion%\Explorer\DriveIcons,,16
+HKLM,%CurrentVersion%\Explorer\KindMap,,16
+HKLM,%CurrentVersion%\Group Policy,,16
+HKLM,%CurrentVersion%\Policies,,16
+HKLM,%CurrentVersion%\PreviewHandlers,,16
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
@@ -417,8 +427,21 @@ HKLM,%CurrentVersion%\Uninstall,,16
 HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
 HKLM,%CurrentVersionNT%,"RegisteredOwner",2,""
 HKLM,%CurrentVersionNT%,"SystemRoot",,"%10%"
+HKLM,%CurrentVersionNT%\Console,,16
+HKLM,%CurrentVersionNT%\FontDpi,,16
+HKLM,%CurrentVersionNT%\FontLink,,16
+HKLM,%CurrentVersionNT%\FontMapper,,16
 HKLM,%CurrentVersionNT%\Fonts,,16
+HKLM,%CurrentVersionNT%\FontSubstitutes,,16
+HKLM,%CurrentVersionNT%\Gre_Initialize,,16
 HKLM,%CurrentVersionNT%\Hotfix\Q246009,"Installed",,"1"
+HKLM,%CurrentVersionNT%\Image File Execution Options,,16
+HKLM,%CurrentVersionNT%\Language Pack,,16
+HKLM,%CurrentVersionNT%\NetworkCards,,16
+HKLM,%CurrentVersionNT%\Perflib,,16
+HKLM,%CurrentVersionNT%\Ports,,16
+HKLM,%CurrentVersionNT%\Print,,16
+HKLM,%CurrentVersionNT%\ProfileList,,16
 
 [Debugger]
 HKLM,%CurrentVersionNT%\AeDebug,"Debugger",2,"winedbg --auto %ld %ld"
@@ -565,6 +588,20 @@ HKLM,Software\Clients\Mail,,2,"Native Mail Client"
 HKLM,Software\Clients\Mail\Native Mail Client,,2,"Native Mail Client"
 HKLM,Software\Clients\Mail\Native Mail Client,"DLLPath",2,"%11%\winemapi.dll"
 HKLM,Software\Microsoft\Advanced INF Setup,,16
+HKLM,Software\Microsoft\Clients,,16
+HKLM,Software\Microsoft\Cryptography\Calais\Current,,16
+HKLM,Software\Microsoft\Cryptography\Calais\Readers,,16
+HKLM,Software\Microsoft\Cryptography\Services,,16
+HKLM,Software\Microsoft\CTF\SystemShared,,16
+HKLM,Software\Microsoft\CTF\TIP,,16
+HKLM,Software\Microsoft\DFS,,16
+HKLM,Software\Microsoft\Driver Signing,,16
+HKLM,Software\Microsoft\EnterpriseCertificates,,16
+HKLM,Software\Microsoft\EventSystem,,16
+HKLM,Software\Microsoft\MSMQ,,16
+HKLM,Software\Microsoft\Non-Driver Signing,,16
+HKLM,Software\Microsoft\Notepad\DefaultFonts,,16
+HKLM,Software\Microsoft\RAS,,16
 HKLM,Software\Microsoft\Rpc\SecurityService,1,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,10,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,14,2,"schannel.dll"
@@ -572,6 +609,12 @@ HKLM,Software\Microsoft\Rpc\SecurityService,16,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,18,2,"secur32.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,68,2,"netlogon.dll"
 HKLM,Software\Microsoft\Rpc\SecurityService,9,2,"secur32.dll"
+HKLM,Software\Microsoft\Shared Tools\MSInfo,,16
+HKLM,Software\Microsoft\SystemCertificates,,16
+HKLM,Software\Microsoft\TermServLicensing,,16
+HKLM,Software\Microsoft\Transaction Server,,16
+HKLM,Software\Policies,,16
+HKLM,Software\Registered Applications,,16
 HKLM,System\CurrentControlSet\Control\VMM32Files,,16
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
 HKCU,Software\Microsoft\Protected Storage System Provider,,16
@@ -935,6 +978,7 @@ HKLM,%CurrentVersionNT%\Ports,"COM4:",2,"9600,n,8,1"
 [Tapi]
 HKLM,%CurrentVersion%\Telephony,"Perf1",0x10001,0x5045524a
 HKLM,%CurrentVersion%\Telephony,"Perf2",0x10001,0x50455246
+HKLM,%CurrentVersion%\Telephony\Locations,,16
 
 HKLM,%CurrentVersion%\Telephony\Country List,"CountryListVersion",0x10001,0x00000019
 
