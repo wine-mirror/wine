@@ -592,8 +592,6 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                 pItems[index].a.s.uBidiLevel = 1;
 
             pItems[index].a.eScript = New_Script;
-            if  (New_Script == Script_Arabic)
-                pItems[index].a.s.uBidiLevel = 1;
 
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
         }
