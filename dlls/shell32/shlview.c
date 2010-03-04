@@ -2180,7 +2180,7 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryInterface(
 {
 	IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-	return IShellFolder_QueryInterface((IShellFolder*)This, iid, ppvObj);
+	return IShellView2_QueryInterface((IShellView2*)This, iid, ppvObj);
 }
 
 /**********************************************************
@@ -2191,7 +2191,7 @@ static ULONG WINAPI ISVOleCmdTarget_AddRef(
 {
 	IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-	return IShellFolder_AddRef((IShellFolder*)This);
+	return IShellView2_AddRef((IShellView2*)This);
 }
 
 /**********************************************************
@@ -2202,7 +2202,7 @@ static ULONG WINAPI ISVOleCmdTarget_Release(
 {
 	IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-	return IShellFolder_Release((IShellFolder*)This);
+	return IShellView2_Release((IShellView2*)This);
 }
 
 /**********************************************************
@@ -2283,7 +2283,7 @@ static HRESULT WINAPI ISVDropTarget_QueryInterface(
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
-	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+	return IShellView2_QueryInterface((IShellView2*)This, riid, ppvObj);
 }
 
 static ULONG WINAPI ISVDropTarget_AddRef( IDropTarget *iface)
@@ -2292,7 +2292,7 @@ static ULONG WINAPI ISVDropTarget_AddRef( IDropTarget *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_AddRef((IShellFolder*)This);
+	return IShellView2_AddRef((IShellView2*)This);
 }
 
 static ULONG WINAPI ISVDropTarget_Release( IDropTarget *iface)
@@ -2301,7 +2301,7 @@ static ULONG WINAPI ISVDropTarget_Release( IDropTarget *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_Release((IShellFolder*)This);
+	return IShellView2_Release((IShellView2*)This);
 }
 
 /******************************************************************************
@@ -2463,7 +2463,7 @@ static HRESULT WINAPI ISVDropSource_QueryInterface(
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
-	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+	return IShellView2_QueryInterface((IShellView2*)This, riid, ppvObj);
 }
 
 static ULONG WINAPI ISVDropSource_AddRef( IDropSource *iface)
@@ -2472,7 +2472,7 @@ static ULONG WINAPI ISVDropSource_AddRef( IDropSource *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_AddRef((IShellFolder*)This);
+	return IShellView2_AddRef((IShellView2*)This);
 }
 
 static ULONG WINAPI ISVDropSource_Release( IDropSource *iface)
@@ -2481,8 +2481,9 @@ static ULONG WINAPI ISVDropSource_Release( IDropSource *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_Release((IShellFolder*)This);
+	return IShellView2_Release((IShellView2*)This);
 }
+
 static HRESULT WINAPI ISVDropSource_QueryContinueDrag(
 	IDropSource *iface,
 	BOOL fEscapePressed,
@@ -2530,7 +2531,7 @@ static HRESULT WINAPI ISVViewObject_QueryInterface(
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
-	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+	return IShellView2_QueryInterface((IShellView2*)This, riid, ppvObj);
 }
 
 static ULONG WINAPI ISVViewObject_AddRef( IViewObject *iface)
@@ -2539,7 +2540,7 @@ static ULONG WINAPI ISVViewObject_AddRef( IViewObject *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_AddRef((IShellFolder*)This);
+	return IShellView2_AddRef((IShellView2*)This);
 }
 
 static ULONG WINAPI ISVViewObject_Release( IViewObject *iface)
@@ -2548,7 +2549,7 @@ static ULONG WINAPI ISVViewObject_Release( IViewObject *iface)
 
 	TRACE("(%p)->(count=%u)\n",This,This->ref);
 
-	return IShellFolder_Release((IShellFolder*)This);
+	return IShellView2_Release((IShellView2*)This);
 }
 
 static HRESULT WINAPI ISVViewObject_Draw(
