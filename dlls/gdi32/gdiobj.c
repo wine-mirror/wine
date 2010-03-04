@@ -89,7 +89,8 @@ static const LOGFONTW OEMFixedFont =
 
 static const LOGFONTW AnsiFixedFont =
 { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+  {'C','o','u','r','i','e','r','\0'} };
 
 static const LOGFONTW AnsiVarFont =
 { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
