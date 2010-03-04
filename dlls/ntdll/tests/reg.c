@@ -956,6 +956,17 @@ static void test_redirection(void)
                                    'S','o','f','t','w','a','r','e','\\',
                                    'W','o','w','6','4','3','2','N','o','d','e','\\',
                                    'W','i','n','e','\\', 'W','i','n','e','t','e','s','t',0};
+    static const WCHAR classes64W[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                       'M','a','c','h','i','n','e','\\',
+                                       'S','o','f','t','w','a','r','e','\\',
+                                       'C','l','a','s','s','e','s','\\',
+                                       'W','i','n','e',0};
+    static const WCHAR classes32W[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                       'M','a','c','h','i','n','e','\\',
+                                       'S','o','f','t','w','a','r','e','\\',
+                                       'C','l','a','s','s','e','s','\\',
+                                       'W','o','w','6','4','3','2','N','o','d','e','\\',
+                                       'W','i','n','e',0};
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
@@ -1181,6 +1192,49 @@ static void test_redirection(void)
     pNtClose( root32 );
     pNtDeleteKey( root64 );
     pNtClose( root64 );
+
+    /* Software\Classes is shared/reflected so behavior is different */
+
+    pRtlInitUnicodeString( &str, classes64W );
+    status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    pRtlInitUnicodeString( &str, classes32W );
+    status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+
+    dw = 64;
+    status = pNtSetValueKey( key64, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    pNtClose( key64 );
+
+    dw = 32;
+    status = pNtSetValueKey( key32, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    pNtClose( key32 );
+
+    pRtlInitUnicodeString( &str, classes64W );
+    status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    dw = *(DWORD *)info->Data;
+    ok( dw == ptr_size, "wrong value %u\n", dw );
+
+    pRtlInitUnicodeString( &str, classes32W );
+    status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key32, &value_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    dw = *(DWORD *)info->Data;
+    ok( dw == 32, "wrong value %u\n", dw );
+
+    pNtDeleteKey( key32 );
+    pNtClose( key32 );
+    pNtDeleteKey( key64 );
+    pNtClose( key64 );
 }
 
 START_TEST(reg)
