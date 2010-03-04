@@ -643,6 +643,31 @@ static struct key *follow_symlink( struct key *key, int iteration )
     return key;
 }
 
+/* open a key until we find an element that doesn't exist */
+/* helper for open_key and create_key */
+static struct key *open_key_prefix( struct key *key, const struct unicode_str *name,
+                                    unsigned int access, struct unicode_str *token, int *index )
+{
+    token->str = NULL;
+    if (!get_path_token( name, token )) return NULL;
+    if (access & KEY_WOW64_32KEY) key = find_wow64_subkey( key, token );
+    while (token->len)
+    {
+        struct key *subkey;
+        if (!(subkey = find_subkey( key, token, index ))) break;
+        key = subkey;
+        get_path_token( name, token );
+        if (!token->len) break;
+        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, token );
+        if (!(key = follow_symlink( key, 0 )))
+        {
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+            return NULL;
+        }
+    }
+    return key;
+}
+
 /* open a subkey */
 static struct key *open_key( struct key *key, const struct unicode_str *name, unsigned int access,
                              unsigned int attributes )
@@ -650,26 +675,13 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
     int index;
     struct unicode_str token;
 
-    token.str = NULL;
-    if (!get_path_token( name, &token )) return NULL;
-    if (access & KEY_WOW64_32KEY) key = find_wow64_subkey( key, &token );
-    while (token.len)
-    {
-        if (!(key = find_subkey( key, &token, &index )))
-        {
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-            return NULL;
-        }
-        get_path_token( name, &token );
-        if (!token.len) break;
-        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
-        if (!(key = follow_symlink( key, 0 )))
-        {
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-            return NULL;
-        }
-    }
+    if (!(key = open_key_prefix( key, name, access, &token, &index ))) return NULL;
 
+    if (token.len)
+    {
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        return NULL;
+    }
     if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
     if (!(attributes & OBJ_OPENLINK) && !(key = follow_symlink( key, 0 )))
     {
@@ -695,24 +707,8 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         return NULL;
     }
 
-    token.str = NULL;
-    if (!get_path_token( name, &token )) return NULL;
     *created = 0;
-    if (access & KEY_WOW64_32KEY) key = find_wow64_subkey( key, &token );
-    while (token.len)
-    {
-        struct key *subkey;
-        if (!(subkey = find_subkey( key, &token, &index ))) break;
-        key = subkey;
-        get_path_token( name, &token );
-        if (!token.len) break;
-        if (!(access & KEY_WOW64_64KEY)) key = find_wow64_subkey( key, &token );
-        if (!(key = follow_symlink( key, 0 )))
-        {
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-            return NULL;
-        }
-    }
+    if (!(key = open_key_prefix( key, name, access, &token, &index ))) return NULL;
 
     if (!token.len)  /* the key already exists */
     {
