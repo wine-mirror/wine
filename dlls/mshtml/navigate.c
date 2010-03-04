@@ -1136,7 +1136,8 @@ HRESULT create_channelbsc(IMoniker *mon, WCHAR *headers, BYTE *post_data, DWORD 
 
     if(post_data) {
         ret->bsc.post_data = GlobalAlloc(0, post_data_size);
-        if(!ret->bsc.headers) {
+        if(!ret->bsc.post_data) {
+            heap_free(ret->bsc.headers);
             IBindStatusCallback_Release(STATUSCLB(&ret->bsc));
             return E_OUTOFMEMORY;
         }
