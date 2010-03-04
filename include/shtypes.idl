@@ -34,6 +34,9 @@ typedef struct _ITEMIDLIST
     SHITEMID mkid; /* first itemid in list */
 } ITEMIDLIST,*LPITEMIDLIST;
 typedef const ITEMIDLIST *LPCITEMIDLIST;
+typedef LPITEMIDLIST PITEMID_CHILD;
+typedef LPCITEMIDLIST PCUITEMID_CHILD;
+typedef LPCITEMIDLIST *PCUITEMID_CHILD_ARRAY;
 cpp_quote("#include <poppack.h>")
 
 #ifndef MAX_PATH

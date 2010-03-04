@@ -57,6 +57,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "shlobj.h"
+#include "shobjidl.h"
 #include "undocshell.h"
 #include "shresdef.h"
 #include "wine/debug.h"
@@ -84,6 +85,7 @@ typedef struct
 	const IDropTargetVtbl*	lpvtblDropTarget;
 	const IDropSourceVtbl*	lpvtblDropSource;
 	const IViewObjectVtbl*	lpvtblViewObject;
+	const IFolderViewVtbl*  lpvtblFolderView;
 	IShellFolder*	pSFParent;
 	IShellFolder2*	pSF2Parent;
 	IShellBrowser*	pShellBrowser;
@@ -114,7 +116,7 @@ static const IOleCommandTargetVtbl ctvt;
 static const IDropTargetVtbl dtvt;
 static const IDropSourceVtbl dsvt;
 static const IViewObjectVtbl vovt;
-
+static const IFolderViewVtbl fviewvt;
 
 static inline IShellViewImpl *impl_from_IOleCommandTarget( IOleCommandTarget *iface )
 {
@@ -134,6 +136,11 @@ static inline IShellViewImpl *impl_from_IDropSource( IDropSource *iface )
 static inline IShellViewImpl *impl_from_IViewObject( IViewObject *iface )
 {
     return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblViewObject));
+}
+
+static inline IShellViewImpl *impl_from_IFolderView( IFolderView *iface )
+{
+    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblFolderView));
 }
 
 /* ListView Header ID's */
@@ -192,6 +199,7 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv->lpvtblDropTarget=&dtvt;
 	sv->lpvtblDropSource=&dsvt;
 	sv->lpvtblViewObject=&vovt;
+	sv->lpvtblFolderView=&fviewvt;
 
 	sv->pSFParent = pFolder;
 	if(pFolder) IShellFolder_AddRef(pFolder);
@@ -1692,6 +1700,10 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 * iface,REFIID rii
 	{
           *ppvObj = This;
 	}
+	else if(IsEqualIID(riid, &IID_IFolderView))
+	{
+	  *ppvObj = &This->lpvtblFolderView;
+	}
 	else if(IsEqualIID(riid, &IID_IOleCommandTarget))
 	{
           *ppvObj = &This->lpvtblOleCommandTarget;
@@ -2657,4 +2669,149 @@ static const IViewObjectVtbl vovt =
 	ISVViewObject_Unfreeze,
 	ISVViewObject_SetAdvise,
 	ISVViewObject_GetAdvise
+};
+
+/* IFolderView */
+static HRESULT WINAPI IFView_QueryInterface(
+	IFolderView *iface,
+	REFIID riid,
+	LPVOID *ppvObj)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	TRACE("(%p)->(IID:%s,%p)\n", This, debugstr_guid(riid), ppvObj);
+	return IShellView2_QueryInterface((IShellView2*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI IFView_AddRef( IFolderView *iface)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	TRACE("(%p)->(count=%u)\n", This, This->ref);
+	return IShellView2_AddRef((IShellView2*)This);
+}
+
+static ULONG WINAPI IFView_Release( IFolderView *iface)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	TRACE("(%p)->(count=%u)\n", This, This->ref);
+	return IShellView2_Release((IShellView2*)This);
+}
+
+static HRESULT WINAPI IFView_GetCurrentViewMode(IFolderView *iface, UINT *mode)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p), stub\n", This, mode);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_SetCurrentViewMode(IFolderView *iface, UINT mode)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%u), stub\n", This, mode);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetFolder(IFolderView *iface, REFIID riid, void **ppv)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%s, %p), stub\n", This, debugstr_guid(riid), ppv);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_Item(IFolderView *iface, int index, PITEMID_CHILD *ppidl)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%d %p), stub\n", This, index, ppidl);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_ItemCount(IFolderView *iface, UINT flags, int *items)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%u %p), stub\n", This, flags, items);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_Items(IFolderView *iface, UINT flags, REFIID riid, void **ppv)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%u %s %p), stub\n", This, flags, debugstr_guid(riid), ppv);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetSelectionMarkedItem(IFolderView *iface, int *item)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p), stub\n", This, item);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetFocusedItem(IFolderView *iface, int *item)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p), stub\n", This, item);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetItemPosition(IFolderView *iface, PCUITEMID_CHILD pidl, POINT *ppt)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p %p), stub\n", This, pidl, ppt);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetSpacing(IFolderView *iface, POINT *pt)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p), stub\n", This, pt);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetDefaultSpacing(IFolderView *iface, POINT *pt)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%p), stub\n", This, pt);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_GetAutoArrange(IFolderView *iface)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p), stub\n", This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_SelectItem(IFolderView *iface, int item, DWORD flags)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%d, %x), stub\n", This, item, flags);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFView_SelectAndPositionItems(IFolderView *iface, UINT cidl,
+                                     PCUITEMID_CHILD_ARRAY apidl, POINT *apt, DWORD flags)
+{
+	IShellViewImpl *This = impl_from_IFolderView(iface);
+	FIXME("(%p)->(%u %p %p %x), stub\n", This, cidl, apidl, apt, flags);
+	return E_NOTIMPL;
+}
+
+static const IFolderViewVtbl fviewvt =
+{
+	IFView_QueryInterface,
+	IFView_AddRef,
+	IFView_Release,
+	IFView_GetCurrentViewMode,
+	IFView_SetCurrentViewMode,
+	IFView_GetFolder,
+	IFView_Item,
+	IFView_ItemCount,
+	IFView_Items,
+	IFView_GetSelectionMarkedItem,
+	IFView_GetFocusedItem,
+	IFView_GetItemPosition,
+	IFView_GetSpacing,
+	IFView_GetDefaultSpacing,
+	IFView_GetAutoArrange,
+	IFView_SelectItem,
+	IFView_SelectAndPositionItems
 };

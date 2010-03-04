@@ -535,6 +535,52 @@ cpp_quote("#include <poppack.h>")
     );
 }
 
+/*****************************************************************************
+ * IFolderView interface
+ */
+[
+    uuid(cde725b0-ccc9-4519-917e-325d72fab4ce),
+    object,
+    pointer_default(unique)
+]
+interface IFolderView : IUnknown
+{
+    HRESULT GetCurrentViewMode( [out] UINT *mode );
+    HRESULT SetCurrentViewMode( [in] UINT mode );
+    HRESULT GetFolder( [in] REFIID riid, [out, iid_is(riid)] void **ppv );
+    HRESULT Item(
+        [in] int index,
+        [out] PITEMID_CHILD *ppidl
+    );
+    HRESULT ItemCount(
+        [in] UINT flags,
+        [out] int *items
+    );
+    HRESULT Items(
+        [in] UINT flags,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv
+    );
+    HRESULT GetSelectionMarkedItem( [out] int *item );
+    HRESULT GetFocusedItem( [out] int *item );
+    HRESULT GetItemPosition(
+        [in] PCUITEMID_CHILD pidl,
+        [out] POINT* ppt
+    );
+    HRESULT GetSpacing( [in, out, unique] POINT* pt );
+    HRESULT GetDefaultSpacing( [out] POINT* pt );
+    HRESULT GetAutoArrange();
+    HRESULT SelectItem(
+        [in] int item,
+        [in] DWORD flags
+    );
+    HRESULT SelectAndPositionItems(
+        [in] UINT cidl,
+        [in, size_is(cidl)] PCUITEMID_CHILD_ARRAY apidl,
+        [in, unique, size_is(cidl)] POINT* apt,
+        [in] DWORD flags
+    );
+}
 
 /*****************************************************************************
  * IShellBrowser interface
