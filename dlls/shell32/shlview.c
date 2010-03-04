@@ -2111,10 +2111,26 @@ static HRESULT WINAPI IShellView2_fnHandleRename(IShellView2* iface, LPCITEMIDLI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellView2_fnSelectAndPositionItem(IShellView2* iface, LPCITEMIDLIST item, UINT flags, POINT *point)
+static HRESULT WINAPI IShellView2_fnSelectAndPositionItem(
+    IShellView2* iface,
+    LPCITEMIDLIST item,
+    UINT flags,
+    POINT *point)
 {
-    FIXME("(%p)->(item %p, flags %#x, point %p) stub!\n", iface, item, flags, point);
-    return E_NOTIMPL;
+    IShellViewImpl *This = (IShellViewImpl *)iface;
+    IFolderView *view;
+    HRESULT hr;
+
+    TRACE("(%p)->(item %p, flags %#x, point %p)\n", This, item, flags, point);
+
+    hr = IShellView2_QueryInterface(iface, &IID_IFolderView, (void**)&view);
+    if (hr == S_OK)
+    {
+        hr = IFolderView_SelectAndPositionItems(view, 1, &item, point, flags);
+        IFolderView_Release(view);
+    }
+
+    return hr;
 }
 
 static const IShellView2Vtbl svvt =
