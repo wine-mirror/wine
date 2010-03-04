@@ -1982,7 +1982,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
-    const char *gl_string        = NULL;
+    const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
     struct fragment_caps fragment_caps;
     enum wined3d_gl_vendor gl_vendor;
     enum wined3d_pci_vendor card_vendor;
@@ -1992,7 +1992,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
-    char *gl_renderer;
     DWORD gl_version;
     size_t len;
 
@@ -2000,46 +1999,34 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
 
     ENTER_GL();
 
-    gl_string = (const char *)glGetString(GL_RENDERER);
-    TRACE_(d3d_caps)("GL_RENDERER: %s.\n", debugstr_a(gl_string));
-    if (!gl_string)
+    gl_renderer_str = (const char *)glGetString(GL_RENDERER);
+    TRACE_(d3d_caps)("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
+    if (!gl_renderer_str)
     {
         LEAVE_GL();
         ERR_(d3d_caps)("Received a NULL GL_RENDERER.\n");
         return FALSE;
     }
 
-    len = strlen(gl_string) + 1;
-    gl_renderer = HeapAlloc(GetProcessHeap(), 0, len);
-    if (!gl_renderer)
-    {
-        LEAVE_GL();
-        ERR_(d3d_caps)("Failed to allocate gl_renderer memory.\n");
-        return FALSE;
-    }
-    memcpy(gl_renderer, gl_string, len);
-
-    gl_string = (const char *)glGetString(GL_VENDOR);
-    TRACE_(d3d_caps)("GL_VENDOR: %s.\n", debugstr_a(gl_string));
-    if (!gl_string)
+    gl_vendor_str = (const char *)glGetString(GL_VENDOR);
+    TRACE_(d3d_caps)("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
+    if (!gl_vendor_str)
     {
         LEAVE_GL();
         ERR_(d3d_caps)("Received a NULL GL_VENDOR.\n");
-        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
 
     /* Parse the GL_VERSION field into major and minor information */
-    gl_string = (const char *)glGetString(GL_VERSION);
-    TRACE_(d3d_caps)("GL_VERSION: %s.\n", debugstr_a(gl_string));
-    if (!gl_string)
+    gl_version_str = (const char *)glGetString(GL_VERSION);
+    TRACE_(d3d_caps)("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
+    if (!gl_version_str)
     {
         LEAVE_GL();
         ERR_(d3d_caps)("Received a NULL GL_VERSION.\n");
-        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
-    gl_version = wined3d_parse_gl_version(gl_string);
+    gl_version = wined3d_parse_gl_version(gl_version_str);
 
     /*
      * Initialize openGL extension related variables
@@ -2087,7 +2074,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     {
         LEAVE_GL();
         ERR_(d3d_caps)("Received a NULL GL_EXTENSIONS.\n");
-        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
 
@@ -2484,11 +2470,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         gl_info->limits.buffers = 1;
     }
 
-    gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_string, gl_renderer);
-    card_vendor = wined3d_guess_card_vendor(gl_string, gl_renderer);
-    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x/0x%04x)\n", debugstr_a(gl_string), gl_vendor, card_vendor);
+    gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_vendor_str, gl_renderer_str);
+    card_vendor = wined3d_guess_card_vendor(gl_vendor_str, gl_renderer_str);
+    TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x/0x%04x)\n", debugstr_a(gl_vendor_str), gl_vendor, card_vendor);
 
-    device = wined3d_guess_card(gl_info, gl_renderer, &gl_vendor, &card_vendor, &vidmem);
+    device = wined3d_guess_card(gl_info, gl_renderer_str, &gl_vendor, &card_vendor, &vidmem);
     TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
 
     /* If we have an estimate use it, else default to 64MB;  */
@@ -2551,11 +2537,10 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         }
     }
 
-    fixup_extensions(gl_info, gl_renderer, gl_vendor, card_vendor, device);
+    fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
     add_gl_compat_wrappers(gl_info);
 
-    HeapFree(GetProcessHeap(), 0, gl_renderer);
     return TRUE;
 }
 
