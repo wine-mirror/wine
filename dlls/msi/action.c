@@ -4285,8 +4285,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
     UINT rc;
-    HKEY hkey;
-    HKEY userdata = NULL;
+    HKEY hkey = NULL, userdata = NULL;
 
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
@@ -4853,7 +4852,7 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     MSIPACKAGE *package = param;
     LPCWSTR compgroupid, component, feature, qualifier, text;
     LPWSTR advertise = NULL, output = NULL;
-    HKEY hkey;
+    HKEY hkey = NULL;
     UINT rc;
     MSICOMPONENT *comp;
     MSIFEATURE *feat;
@@ -5933,7 +5932,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     LPWSTR data = NULL, newval = NULL, deformatted = NULL, ptr;
     DWORD flags, type, size;
     UINT res;
-    HKEY env;
+    HKEY env = NULL;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
     int action = 0;
