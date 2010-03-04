@@ -2007,7 +2007,8 @@ if (0)
 
     pidl1 = (LPITEMIDLIST)0xdeadbeef;
     hr = pSHParseDisplayName(NULL, NULL, &pidl1, 0, NULL);
-    ok(hr == E_OUTOFMEMORY, "failed %08x\n", hr);
+    ok(broken(hr == E_OUTOFMEMORY) /* < Vista */ ||
+       hr == E_INVALIDARG, "failed %08x\n", hr);
     ok(pidl1 == 0, "expected null ptr, got %p\n", pidl1);
 
     /* dummy name */

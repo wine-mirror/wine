@@ -1333,7 +1333,7 @@ HRESULT WINAPI SHParseDisplayName(LPCWSTR name, IBindCtx *bindctx, LPITEMIDLIST 
 
     *pidlist = NULL;
 
-    if (!name) return E_OUTOFMEMORY;
+    if (!name) return E_INVALIDARG;
 
     hr = SHGetDesktopFolder(&desktop);
     if (hr != S_OK) return hr;
