@@ -1745,6 +1745,71 @@ static void test_rotateflip(void)
     GdipDisposeImage(bitmap);
 }
 
+static void test_remaptable(void)
+{
+    GpStatus stat;
+    GpImageAttributes *imageattr;
+    GpBitmap *bitmap1, *bitmap2;
+    GpGraphics *graphics;
+    ARGB color;
+    ColorMap *map;
+
+    map = GdipAlloc(sizeof(ColorMap));
+
+    map->oldColor.Argb = 0xff00ff00;
+    map->newColor.Argb = 0xffff00ff;
+
+    stat = GdipSetImageAttributesRemapTable(NULL, ColorAdjustTypeDefault, TRUE, 1, map);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipCreateImageAttributes(&imageattr);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeDefault, TRUE, 1, NULL);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeCount, TRUE, 1, map);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeAny, TRUE, 1, map);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeDefault, TRUE, 0, map);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeDefault, FALSE, 0, NULL);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetImageAttributesRemapTable(imageattr, ColorAdjustTypeDefault, TRUE, 1, map);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap2);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0xff00ff00);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap2, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipDrawImageRectRectI(graphics, (GpImage*)bitmap1, 0,0,1,1, 0,0,1,1,
+	UnitPixel, imageattr, NULL, NULL);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
+    expect(Ok, stat);
+    todo_wine ok(color_match(0xffff00ff, color, 1), "Expected ffff00ff, got %.8x\n", color);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap1);
+    GdipDisposeImage((GpImage*)bitmap2);
+    GdipDisposeImageAttributes(imageattr);
+    GdipFree(map);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1780,6 +1845,7 @@ START_TEST(image)
     test_gamma();
     test_multiframegif();
     test_rotateflip();
+    test_remaptable();
 
     GdiplusShutdown(gdiplusToken);
 }
