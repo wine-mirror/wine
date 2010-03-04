@@ -104,17 +104,23 @@ static void test_ParseDisplayName(void)
     hr = SHGetDesktopFolder(&IDesktopFolder);
     if(hr != S_OK) return;
 
-    /* null name and pidl */
-    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
-        NULL, NULL, NULL, NULL, NULL, 0);
-    ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+    /* Tests crash on W2K and below (SHCreateShellItem available as of XP) */
+    if (pSHCreateShellItem)
+    {
+        /* null name and pidl */
+        hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+            NULL, NULL, NULL, NULL, NULL, 0);
+        ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
 
-    /* null name */
-    newPIDL = (ITEMIDLIST*)0xdeadbeef;
-    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
-        NULL, NULL, NULL, NULL, &newPIDL, 0);
-    ok(newPIDL == 0, "expected null, got %p\n", newPIDL);
-    ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+        /* null name */
+        newPIDL = (ITEMIDLIST*)0xdeadbeef;
+        hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+            NULL, NULL, NULL, NULL, &newPIDL, 0);
+        ok(newPIDL == 0, "expected null, got %p\n", newPIDL);
+        ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+    }
+    else
+        win_skip("Tests would crash on W2K and below\n");
 
     MultiByteToWideChar(CP_ACP, 0, cInetTestA, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
