@@ -154,11 +154,13 @@ HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVO
             /* Check if this is the comment we are looking for */
             if (*(ptr + 1) == fourcc)
             {
+                UINT ctab_size = (comment_size - 1) * sizeof(DWORD);
+                LPCVOID ctab_data = ptr + 2;
                 if (size)
-                    *size = (comment_size - 1) * sizeof(DWORD);
+                    *size = ctab_size;
                 if (data)
-                    *data = ptr + 2;
-                TRACE("Returning comment data at %p with size %d\n", *data, *size);
+                    *data = ctab_data;
+                TRACE("Returning comment data at %p with size %d\n", ctab_data, ctab_size);
                 return D3D_OK;
             }
             ptr += comment_size;
