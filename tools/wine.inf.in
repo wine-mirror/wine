@@ -75,6 +75,32 @@ AddReg=\
     Timezones,\
     VersionInfo
 
+[DefaultInstall.ntamd64]
+RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsSection
+UpdateInis=SystemIni
+AddReg=\
+    Classes,\
+    ContentIndex,\
+    ControlClass,\
+    CurrentVersion,\
+    Debugger,\
+    Desktop,\
+    Metrics,\
+    DirectX,\
+    Fonts,\
+    MCI,\
+    Misc,\
+    Nls,\
+    OLE,\
+    Printing,\
+    Services, \
+    SessionMgr,\
+    Tapi,\
+    Timezones,\
+    VersionInfo,\
+    Wow64
+
 [DefaultInstall.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
@@ -2868,3 +2894,9 @@ HKLM,%CurrentVersionNT%,"CurrentType",2,"Uniprocessor Free"
 HKLM,%Control%\ProductOptions,"ProductType",2,"WinNT"
 HKLM,%Control%\Windows,"CSDVersion",0x10003,0x300
 HKLM,%Control%\Session Manager\Environment,"OS",2,"Windows_NT"
+
+[Wow64]
+HKLM,Software\Classes\Wow6432Node\AppId,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Classes\AppId"
+HKLM,Software\Classes\Wow6432Node\Protocols,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Classes\Protocols"
+HKLM,Software\Classes\Wow6432Node\TypeLib,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Classes\TypeLib"
+HKLM,Software\Wow6432Node\Classes,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Classes\Wow6432Node"
