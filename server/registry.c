@@ -85,6 +85,7 @@ struct key
 #define KEY_DIRTY    0x0004  /* key has been modified */
 #define KEY_SYMLINK  0x0008  /* key is a symbolic link */
 #define KEY_WOW64    0x0010  /* key contains a Wow6432Node subkey */
+#define KEY_WOWSHARE 0x0020  /* key is a Wow64 shared key (used for Software\Classes) */
 
 /* a key value */
 struct key_value
@@ -654,7 +655,16 @@ static struct key *open_key_prefix( struct key *key, const struct unicode_str *n
     while (token->len)
     {
         struct key *subkey;
-        if (!(subkey = find_subkey( key, token, index ))) break;
+        if (!(subkey = find_subkey( key, token, index )))
+        {
+            if ((key->flags & KEY_WOWSHARE) && !(access & KEY_WOW64_64KEY))
+            {
+                /* try in the 64-bit parent */
+                key = key->parent;
+                subkey = find_subkey( key, token, index );
+            }
+        }
+        if (!subkey) break;
         key = subkey;
         get_path_token( name, token );
         if (!token->len) break;
@@ -1604,13 +1614,17 @@ void init_registry(void)
 {
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
+    static const WCHAR classes[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'C','l','a','s','s','e','s','\\',
+                                    'W','o','w','6','4','3','2','N','o','d','e'};
     static const struct unicode_str root_name = { NULL, 0 };
     static const struct unicode_str HKLM_name = { HKLM, sizeof(HKLM) };
     static const struct unicode_str HKU_name = { HKU_default, sizeof(HKU_default) };
+    static const struct unicode_str classes_name = { classes, sizeof(classes) };
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
-    struct key *key;
+    struct key *key, *hklm, *hkcu;
 
     /* switch to the config dir */
 
@@ -1623,11 +1637,10 @@ void init_registry(void)
 
     /* load system.reg into Registry\Machine */
 
-    if (!(key = create_key_recursive( root_key, &HKLM_name, current_time )))
+    if (!(hklm = create_key_recursive( root_key, &HKLM_name, current_time )))
         fatal_error( "could not create Machine registry key\n" );
 
-    load_init_registry_from_file( "system.reg", key );
-    release_object( key );
+    load_init_registry_from_file( "system.reg", hklm );
 
     /* load userdef.reg into Registry\User\.Default */
 
@@ -1642,11 +1655,24 @@ void init_registry(void)
     /* FIXME: match default user in token.c. should get from process token instead */
     current_user_path = format_user_registry_path( security_interactive_sid, &current_user_str );
     if (!current_user_path ||
-        !(key = create_key_recursive( root_key, &current_user_str, current_time )))
+        !(hkcu = create_key_recursive( root_key, &current_user_str, current_time )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
     free( current_user_path );
-    load_init_registry_from_file( "user.reg", key );
-    release_object( key );
+    load_init_registry_from_file( "user.reg", hkcu );
+
+    /* set the shared flag on Software\Classes\Wow6432Node */
+    if (sizeof(void *) > sizeof(int))
+    {
+        if ((key = create_key_recursive( hklm, &classes_name, current_time )))
+        {
+            key->flags |= KEY_WOWSHARE;
+            release_object( key );
+        }
+        /* FIXME: handle HKCU too */
+    }
+
+    release_object( hklm );
+    release_object( hkcu );
 
     /* start the periodic save timer */
     set_periodic_save_timer();
