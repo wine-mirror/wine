@@ -1960,54 +1960,26 @@ static HRESULT WINAPI IShellView_fnSaveViewState(IShellView2 * iface)
 static HRESULT WINAPI IShellView_fnSelectItem(
 	IShellView2 * iface,
 	LPCITEMIDLIST pidl,
-	UINT uFlags)
+	UINT flags)
 {
-	IShellViewImpl *This = (IShellViewImpl *)iface;
-	int i;
+    IShellViewImpl *This = (IShellViewImpl *)iface;
+    IFolderView *view;
+    HRESULT hr;
+    int i;
 
-	TRACE("(%p)->(pidl=%p, 0x%08x) stub\n",This, pidl, uFlags);
+    TRACE("(%p)->(pidl=%p, 0x%08x)\n",This, pidl, flags);
 
-	i = LV_FindItemByPidl(This, pidl);
+    i = LV_FindItemByPidl(This, pidl);
+    if (i == -1) return S_OK;
 
-	if (i != -1)
-	{
-	  LVITEMW lvItem;
+    hr = IShellView2_QueryInterface(iface, &IID_IFolderView, (void**)&view);
+    if (hr == S_OK)
+    {
+        hr = IFolderView_SelectItem(view, i, flags);
+        IFolderView_Release(view);
+    }
 
-	  if(uFlags & SVSI_ENSUREVISIBLE)
-	    SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
-
-	  lvItem.mask = LVIF_STATE;
-	  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-	  lvItem.iItem = 0;
-	  lvItem.iSubItem = 0;
-
-          while(SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &lvItem))
-	  {
-	    if (lvItem.iItem == i)
-	    {
-	      if (uFlags & SVSI_SELECT)
-	        lvItem.state |= LVIS_SELECTED;
-	      else
-		lvItem.state &= ~LVIS_SELECTED;
-
-	      if(uFlags & SVSI_FOCUSED)
-	        lvItem.state &= ~LVIS_FOCUSED;
-	    }
-	    else
-	    {
-	      if (uFlags & SVSI_DESELECTOTHERS)
-	        lvItem.state &= ~LVIS_SELECTED;
-	    }
-	    SendMessageW(This->hWndList, LVM_SETITEMW, 0, (LPARAM) &lvItem);
-	    lvItem.iItem++;
-	  }
-
-
-	  if(uFlags & SVSI_EDIT)
-	    SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
-
-	}
-	return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
@@ -2783,9 +2755,34 @@ static HRESULT WINAPI IFView_GetAutoArrange(IFolderView *iface)
 
 static HRESULT WINAPI IFView_SelectItem(IFolderView *iface, int item, DWORD flags)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%d, %x), stub\n", This, item, flags);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+    LVITEMW lvItem;
+
+    TRACE("(%p)->(%d, %x)\n", This, item, flags);
+
+    lvItem.state = 0;
+    lvItem.stateMask = LVIS_SELECTED;
+
+    if (flags & SVSI_ENSUREVISIBLE)
+        SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, item, 0);
+
+    /* all items */
+    if (flags & SVSI_DESELECTOTHERS)
+        SendMessageW(This->hWndList, LVM_SETITEMSTATE, -1, (LPARAM)&lvItem);
+
+    /* this item */
+    if (flags & SVSI_SELECT)
+        lvItem.state |= LVIS_SELECTED;
+
+    if (flags & SVSI_FOCUSED)
+        lvItem.stateMask |= LVIS_FOCUSED;
+
+    SendMessageW(This->hWndList, LVM_SETITEMSTATE, item, (LPARAM)&lvItem);
+
+    if (flags & SVSI_EDIT)
+        SendMessageW(This->hWndList, LVM_EDITLABELW, item, 0);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFView_SelectAndPositionItems(IFolderView *iface, UINT cidl,
