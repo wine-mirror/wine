@@ -6546,7 +6546,7 @@ else
 CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,confest.so.1"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1=yes
@@ -6571,7 +6571,7 @@ else
 CFLAGS="$CFLAGS -fPIC -shared -Wl,-h,confest.so.1"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1=yes
@@ -6598,7 +6598,7 @@ else
 CFLAGS="$CFLAGS -fPIC -shared -Wl,-Bsymbolic,-z,defs"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs=yes
@@ -6624,7 +6624,7 @@ else
 CFLAGS="$CFLAGS -fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini=yes
@@ -6651,7 +6651,7 @@ else
 CFLAGS="$CFLAGS -fPIC -shared -Wl,--version-script=conftest.map"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map=yes
@@ -6678,7 +6678,7 @@ else
 CFLAGS="$CFLAGS -fPIC -Wl,--export-dynamic"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fPIC__Wl___export_dynamic=yes
@@ -6706,7 +6706,7 @@ else
 CFLAGS="$CFLAGS -fPIC -Wl,--rpath,\$ORIGIN/../lib"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   eval "$as_ac_var=yes"
@@ -6734,7 +6734,7 @@ else
 CFLAGS="$CFLAGS -fPIC -Wl,-R,\$ORIGIN/../lib"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   eval "$as_ac_var=yes"
@@ -6763,7 +6763,7 @@ else
 CFLAGS="$CFLAGS -Wl,--enable-new-dtags"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wl___enable_new_dtags=yes
@@ -6791,7 +6791,7 @@ else
 CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7bf00400"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wl___section_start__interp_0x7bf00400=yes
@@ -11504,7 +11504,7 @@ else
 CFLAGS="$CFLAGS -fno-builtin"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fno_builtin=yes
@@ -11530,7 +11530,7 @@ else
 CFLAGS="$CFLAGS -fno-strict-aliasing"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__fno_strict_aliasing=yes
@@ -11555,7 +11555,7 @@ else
 CFLAGS="$CFLAGS -Wdeclaration-after-statement"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wdeclaration_after_statement=yes
@@ -11580,7 +11580,7 @@ else
 CFLAGS="$CFLAGS -Wstrict-prototypes"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wstrict_prototypes=yes
@@ -11605,7 +11605,7 @@ else
 CFLAGS="$CFLAGS -Wtype-limits"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wtype_limits=yes
@@ -11630,7 +11630,7 @@ else
 CFLAGS="$CFLAGS -Wwrite-strings"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Wwrite_strings=yes
@@ -11691,7 +11691,7 @@ else
 CFLAGS="$CFLAGS -Werror"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char *argv) { return 0; }
+int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_cflags__Werror=yes
