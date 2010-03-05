@@ -5487,6 +5487,7 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     LPWSTR driver, driver_path, ptr;
     WCHAR outpath[MAX_PATH];
     MSIFILE *driver_file, *setup_file;
+    MSIRECORD *uirow;
     LPCWSTR desc;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
@@ -5546,6 +5547,13 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
         r = ERROR_FUNCTION_FAILED;
     }
 
+    uirow = MSI_CreateRecord( 5 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    MSI_RecordSetStringW( uirow, 3, driver_path );
+    ui_actiondata( package, szInstallODBC, uirow );
+    msiobj_release( &uirow->hdr );
+
     msi_free(driver);
     msi_free(driver_path);
 
@@ -5558,6 +5566,7 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     LPWSTR translator, translator_path, ptr;
     WCHAR outpath[MAX_PATH];
     MSIFILE *translator_file, *setup_file;
+    MSIRECORD *uirow;
     LPCWSTR desc;
     DWORD len, usage;
     UINT r = ERROR_SUCCESS;
@@ -5611,6 +5620,13 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
         r = ERROR_FUNCTION_FAILED;
     }
 
+    uirow = MSI_CreateRecord( 5 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    MSI_RecordSetStringW( uirow, 3, translator_path );
+    ui_actiondata( package, szInstallODBC, uirow );
+    msiobj_release( &uirow->hdr );
+
     msi_free(translator);
     msi_free(translator_path);
 
@@ -5619,12 +5635,14 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
 
 static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
 {
+    MSIPACKAGE *package = param;
     LPWSTR attrs;
     LPCWSTR desc, driver;
     WORD request = ODBC_ADD_SYS_DSN;
     INT registration;
     DWORD len;
     UINT r = ERROR_SUCCESS;
+    MSIRECORD *uirow;
 
     static const WCHAR attrs_fmt[] = {
         'D','S','N','=','%','s',0 };
@@ -5649,6 +5667,13 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
         ERR("Failed to install SQL data source!\n");
         r = ERROR_FUNCTION_FAILED;
     }
+
+    uirow = MSI_CreateRecord( 5 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    MSI_RecordSetInteger( uirow, 3, request );
+    ui_actiondata( package, szInstallODBC, uirow );
+    msiobj_release( &uirow->hdr );
 
     msi_free(attrs);
 
