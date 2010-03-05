@@ -4531,6 +4531,7 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
     WCHAR squashed_pc[SQUISH_GUID_SIZE];
+    MSIRECORD *uirow;
     LPWSTR upgrade_code;
     HKEY hkey, props;
     HKEY upgrade;
@@ -4575,8 +4576,12 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     }
 
 done:
-    RegCloseKey(hkey);
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetStringW( uirow, 1, package->ProductCode );
+    ui_actiondata( package, szRegisterProduct, uirow );
+    msiobj_release( &uirow->hdr );
 
+    RegCloseKey(hkey);
     return ERROR_SUCCESS;
 }
 
