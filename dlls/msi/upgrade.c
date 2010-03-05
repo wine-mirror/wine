@@ -182,9 +182,10 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
                 continue;
             }
 
-            action_property = MSI_RecordGetString(rec,7);
-            append_productcode(package,action_property,productid);
-            ui_actiondata(package,szFindRelatedProducts,uirow);
+            action_property = MSI_RecordGetString(rec, 7);
+            append_productcode(package, action_property, productid);
+            MSI_RecordSetStringW(uirow, 1, productid);
+            ui_actiondata(package, szFindRelatedProducts, uirow);
         }
         index ++;
     }
