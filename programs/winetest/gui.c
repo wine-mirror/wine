@@ -473,7 +473,7 @@ DlgThreadProc (LPVOID param)
                      NULL, DlgProc);
     switch (ret) {
     case 0:
-        report (R_WARNING, "Invalid parent handle");
+        report (R_FATAL, "Cannot display dialog");
         break;
     case 1:
         report (R_WARNING, "DialogBox failed: %d",

@@ -145,6 +145,18 @@ static int check_mount_mgr(void)
     return TRUE;
 }
 
+static int check_display_driver(void)
+{
+    if (running_under_wine())
+    {
+        HWND hwnd = CreateWindowA( "STATIC", "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+                                   0, 0, GetModuleHandleA(0), 0 );
+        if (!hwnd) return FALSE;
+        DestroyWindow( hwnd );
+    }
+    return TRUE;
+}
+
 static int running_on_visible_desktop (void)
 {
     HWND desktop;
@@ -1052,7 +1064,10 @@ int main( int argc, char *argv[] )
             report (R_FATAL, "Tests must be run on a visible desktop");
 
         if (!check_mount_mgr())
-            report (R_FATAL, "Mount manager not running, most likely your WINEPREFIX wasn't created correctly");
+            report (R_FATAL, "Mount manager not running, most likely your WINEPREFIX wasn't created correctly.");
+
+        if (!check_display_driver())
+            report (R_FATAL, "Unable to create a window, the display driver is not working.");
 
         SetConsoleCtrlHandler(ctrl_handler, TRUE);
 
