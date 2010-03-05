@@ -5723,6 +5723,8 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 
 static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
 {
+    MSIPACKAGE *package = param;
+    MSIRECORD *uirow;
     DWORD usage;
     LPCWSTR desc;
 
@@ -5736,11 +5738,19 @@ static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
         FIXME("Usage count reached 0\n");
     }
 
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    ui_actiondata( package, szRemoveODBC, uirow );
+    msiobj_release( &uirow->hdr );
+
     return ERROR_SUCCESS;
 }
 
 static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
 {
+    MSIPACKAGE *package = param;
+    MSIRECORD *uirow;
     DWORD usage;
     LPCWSTR desc;
 
@@ -5754,11 +5764,19 @@ static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
         FIXME("Usage count reached 0\n");
     }
 
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    ui_actiondata( package, szRemoveODBC, uirow );
+    msiobj_release( &uirow->hdr );
+
     return ERROR_SUCCESS;
 }
 
 static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
 {
+    MSIPACKAGE *package = param;
+    MSIRECORD *uirow;
     LPWSTR attrs;
     LPCWSTR desc, driver;
     WORD request = ODBC_REMOVE_SYS_DSN;
@@ -5790,6 +5808,13 @@ static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
         WARN("Failed to remove ODBC data source\n");
     }
     msi_free( attrs );
+
+    uirow = MSI_CreateRecord( 3 );
+    MSI_RecordSetStringW( uirow, 1, desc );
+    MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
+    MSI_RecordSetInteger( uirow, 3, request );
+    ui_actiondata( package, szRemoveODBC, uirow );
+    msiobj_release( &uirow->hdr );
 
     return ERROR_SUCCESS;
 }
