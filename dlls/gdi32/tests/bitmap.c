@@ -364,7 +364,9 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     ok(ds.dsBmih.biSize == bmih->biSize, "%u != %u\n", ds.dsBmih.biSize, bmih->biSize);
     ok(ds.dsBmih.biWidth == bmih->biWidth, "%d != %d\n", ds.dsBmih.biWidth, bmih->biWidth);
-    ok(ds.dsBmih.biHeight == abs(bmih->biHeight), "%d != %d\n", ds.dsBmih.biHeight, abs(bmih->biHeight));
+    ok(ds.dsBmih.biHeight == abs(bmih->biHeight) ||
+       broken(ds.dsBmih.biHeight == bmih->biHeight), /* Win9x/WinMe */
+       "%d != %d\n", ds.dsBmih.biHeight, abs(bmih->biHeight));
     ok(ds.dsBmih.biPlanes == bmih->biPlanes, "%u != %u\n", ds.dsBmih.biPlanes, bmih->biPlanes);
     ok(ds.dsBmih.biBitCount == bmih->biBitCount, "%u != %u\n", ds.dsBmih.biBitCount, bmih->biBitCount);
     ok(ds.dsBmih.biCompression == bmih->biCompression, "%u != %u\n", ds.dsBmih.biCompression, bmih->biCompression);
