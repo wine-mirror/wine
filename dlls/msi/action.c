@@ -6272,6 +6272,7 @@ typedef struct tagMSIASSEMBLY
     MSIFILE *file;
     LPWSTR manifest;
     LPWSTR application;
+    LPWSTR display_name;
     DWORD attributes;
     BOOL installed;
 } MSIASSEMBLY;
@@ -6322,10 +6323,16 @@ static UINT install_assembly(MSIPACKAGE *package, MSIASSEMBLY *assembly,
                              LPWSTR path)
 {
     IAssemblyCache *cache;
+    MSIRECORD *uirow;
     HRESULT hr;
     UINT r = ERROR_FUNCTION_FAILED;
 
     TRACE("installing assembly: %s\n", debugstr_w(path));
+
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 2, assembly->display_name );
+    ui_actiondata( package, szMsiPublishAssemblies, uirow );
+    msiobj_release( &uirow->hdr );
 
     if (assembly->feature)
         msi_feature_set_state(package, assembly->feature, INSTALLSTATE_LOCAL);
@@ -6416,81 +6423,87 @@ static void append_str(LPWSTR *str, DWORD *size, LPCWSTR append)
     lstrcatW(*str, append);
 }
 
-static BOOL check_assembly_installed(MSIDATABASE *db, IAssemblyCache *cache,
-                                     MSICOMPONENT *comp)
+static WCHAR *get_assembly_display_name( MSIDATABASE *db, MSICOMPONENT *comp )
 {
-    ASSEMBLY_INFO asminfo;
-    ASSEMBLY_NAME name;
-    MSIQUERY *view;
-    LPWSTR disp;
-    DWORD size;
-    BOOL found;
-    UINT r;
-
     static const WCHAR separator[] = {',',' ',0};
     static const WCHAR Version[] = {'V','e','r','s','i','o','n','=',0};
     static const WCHAR Culture[] = {'C','u','l','t','u','r','e','=',0};
-    static const WCHAR PublicKeyToken[] = {
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
+    static const WCHAR PublicKeyToken[] = {'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','M','s','i','A','s','s','e','m','b','l','y','N','a','m','e','`',' ',
         'W','H','E','R','E',' ','`','C','o','m','p','o','n','e','n','t','_','`',
         '=','\'','%','s','\'',0};
+    ASSEMBLY_NAME name;
+    MSIQUERY *view;
+    LPWSTR display_name;
+    DWORD size;
+    UINT r;
 
-    disp = NULL;
-    found = FALSE;
-    ZeroMemory(&name, sizeof(ASSEMBLY_NAME));
-    ZeroMemory(&asminfo, sizeof(ASSEMBLY_INFO));
+    display_name = NULL;
+    memset( &name, 0, sizeof(ASSEMBLY_NAME) );
 
-    r = MSI_OpenQuery(db, &view, query, comp->Component);
+    r = MSI_OpenQuery( db, &view, query, comp->Component );
     if (r != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
+        return NULL;
 
-    MSI_IterateRecords(view, NULL, parse_assembly_name, &name);
-    msiobj_release(&view->hdr);
+    MSI_IterateRecords( view, NULL, parse_assembly_name, &name );
+    msiobj_release( &view->hdr );
 
     if (!name.name)
     {
         ERR("No assembly name specified!\n");
-        goto done;
+        return NULL;
     }
 
-    append_str(&disp, &size, name.name);
+    append_str( &display_name, &size, name.name );
 
     if (name.version)
     {
-        append_str(&disp, &size, separator);
-        append_str(&disp, &size, Version);
-        append_str(&disp, &size, name.version);
+        append_str( &display_name, &size, separator );
+        append_str( &display_name, &size, Version );
+        append_str( &display_name, &size, name.version );
     }
-
     if (name.culture)
     {
-        append_str(&disp, &size, separator);
-        append_str(&disp, &size, Culture);
-        append_str(&disp, &size, name.culture);
+        append_str( &display_name, &size, separator );
+        append_str( &display_name, &size, Culture );
+        append_str( &display_name, &size, name.culture );
     }
-
     if (name.pubkeytoken)
     {
-        append_str(&disp, &size, separator);
-        append_str(&disp, &size, PublicKeyToken);
-        append_str(&disp, &size, name.pubkeytoken);
+        append_str( &display_name, &size, separator );
+        append_str( &display_name, &size, PublicKeyToken );
+        append_str( &display_name, &size, name.pubkeytoken );
     }
 
+    msi_free( name.name );
+    msi_free( name.version );
+    msi_free( name.culture );
+    msi_free( name.pubkeytoken );
+
+    return display_name;
+}
+
+static BOOL check_assembly_installed( MSIDATABASE *db, IAssemblyCache *cache, MSICOMPONENT *comp )
+{
+    ASSEMBLY_INFO asminfo;
+    LPWSTR disp;
+    BOOL found = FALSE;
+    HRESULT hr;
+
+    disp = get_assembly_display_name( db, comp );
+    if (!disp)
+        return FALSE;
+
+    memset( &asminfo, 0, sizeof(ASSEMBLY_INFO) );
     asminfo.cbAssemblyInfo = sizeof(ASSEMBLY_INFO);
-    IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
-                                     disp, &asminfo);
-    found = (asminfo.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
 
-done:
-    msi_free(disp);
-    msi_free(name.name);
-    msi_free(name.version);
-    msi_free(name.culture);
-    msi_free(name.pubkeytoken);
+    hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_VALIDATE, disp, &asminfo );
+    if (SUCCEEDED(hr))
+        found = (asminfo.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
 
+    msi_free( disp );
     return found;
 }
 
@@ -6596,6 +6609,7 @@ static void free_assemblies(struct list *assemblies)
         list_remove(&assembly->entry);
         msi_free(assembly->application);
         msi_free(assembly->manifest);
+        msi_free(assembly->display_name);
         msi_free(assembly);
     }
 }
