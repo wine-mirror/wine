@@ -912,6 +912,7 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     LPCWSTR component, filename, dirprop;
     UINT install_mode;
     LPWSTR dir = NULL, path = NULL;
@@ -966,6 +967,12 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     }
 
 done:
+    uirow = MSI_CreateRecord( 9 );
+    MSI_RecordSetStringW( uirow, 1, MSI_RecordGetString(row, 1) );
+    MSI_RecordSetStringW( uirow, 9, dir );
+    ui_actiondata( package, szRemoveFiles, uirow );
+    msiobj_release( &uirow->hdr );
+
     msi_free(path);
     msi_free(dir);
     return ERROR_SUCCESS;
