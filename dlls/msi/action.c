@@ -5383,9 +5383,10 @@ static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     LPCWSTR component;
-    LPWSTR name = NULL;
-    DWORD event;
+    LPWSTR name = NULL, display_name = NULL;
+    DWORD event, len;
     SC_HANDLE scm = NULL, service = NULL;
 
     event = MSI_RecordGetInteger( rec, 3 );
@@ -5415,6 +5416,14 @@ static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
         goto done;
     }
 
+    len = 0;
+    if (!GetServiceDisplayNameW( scm, name, NULL, &len ) &&
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        if ((display_name = msi_alloc( ++len * sizeof(WCHAR ))))
+            GetServiceDisplayNameW( scm, name, display_name, &len );
+    }
+
     service = OpenServiceW( scm, name, DELETE );
     if (!service)
     {
@@ -5426,9 +5435,16 @@ static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
         WARN("Failed to delete service (%s): %u\n", debugstr_w(name), GetLastError());
 
 done:
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, display_name );
+    MSI_RecordSetStringW( uirow, 2, name );
+    ui_actiondata( package, szDeleteServices, uirow );
+    msiobj_release( &uirow->hdr );
+
     CloseServiceHandle( service );
     CloseServiceHandle( scm );
     msi_free( name );
+    msi_free( display_name );
 
     return ERROR_SUCCESS;
 }
