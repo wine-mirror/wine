@@ -1688,7 +1688,13 @@ if (0)
     flags = FDTF_SHORTTIME;
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
     ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
+    SetLastError(0xdeadbeef);
     ret = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff2, sizeof(buff2)/sizeof(WCHAR));
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Needed W-functions are not implemented\n");
+        return;
+    }
     ok(ret == lstrlenW(buff2)+1, "got %d\n", ret);
     ok(lstrcmpW(buff, buff2) == 0, "expected equal strings\n");
 
