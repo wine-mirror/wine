@@ -92,8 +92,6 @@ static const WCHAR szForceReboot[] =
     {'F','o','r','c','e','R','e','b','o','o','t',0};
 static const WCHAR szResolveSource[] =
     {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
-static const WCHAR szAppSearch[] = 
-    {'A','p','p','S','e','a','r','c','h',0};
 static const WCHAR szAllocateRegistrySpace[] = 
     {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y','S','p','a','c','e',0};
 static const WCHAR szBindImage[] = 
@@ -910,6 +908,11 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
+    uirow = MSI_CreateRecord(1);
+    MSI_RecordSetStringW(uirow, 1, dir);
+    ui_actiondata(package, szCreateFolders, uirow);
+    msiobj_release(&uirow->hdr);
+
     full_path = resolve_folder(package,dir,FALSE,FALSE,TRUE,&folder);
     if (!full_path)
     {
@@ -918,12 +921,6 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     }
 
     TRACE("Folder is %s\n",debugstr_w(full_path));
-
-    /* UI stuff */
-    uirow = MSI_CreateRecord(1);
-    MSI_RecordSetStringW(uirow,1,full_path);
-    ui_actiondata(package,szCreateFolders,uirow);
-    msiobj_release( &uirow->hdr );
 
     if (folder->State == 0)
         create_full_pathW(full_path);
