@@ -386,6 +386,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     LPWSTR dest;
     LPCWSTR file_key, component;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     MSIFILE *file;
 
     component = MSI_RecordGetString(row,2);
@@ -432,7 +433,12 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
 
     FIXME("We should track these duplicate files as well\n");   
 
-    msi_file_update_ui(package, file, szDuplicateFiles);
+    uirow = MSI_CreateRecord( 9 );
+    MSI_RecordSetStringW( uirow, 1, MSI_RecordGetString( row, 1 ) );
+    MSI_RecordSetInteger( uirow, 6, file->FileSize );
+    MSI_RecordSetStringW( uirow, 9, MSI_RecordGetString( row, 5 ) );
+    ui_actiondata( package, szDuplicateFiles, uirow );
+    msiobj_release( &uirow->hdr );
 
     msi_free(dest);
     return ERROR_SUCCESS;
@@ -462,6 +468,7 @@ static UINT ITERATE_RemoveDuplicateFiles( MSIRECORD *row, LPVOID param )
     LPWSTR dest;
     LPCWSTR file_key, component;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     MSIFILE *file;
 
     component = MSI_RecordGetString( row, 2 );
@@ -505,7 +512,11 @@ static UINT ITERATE_RemoveDuplicateFiles( MSIRECORD *row, LPVOID param )
         WARN("Failed to delete duplicate file %s (%u)\n", debugstr_w(dest), GetLastError());
     }
 
-    msi_file_update_ui( package, file, szRemoveDuplicateFiles );
+    uirow = MSI_CreateRecord( 9 );
+    MSI_RecordSetStringW( uirow, 1, MSI_RecordGetString( row, 1 ) );
+    MSI_RecordSetStringW( uirow, 9, MSI_RecordGetString( row, 5 ) );
+    ui_actiondata( package, szRemoveDuplicateFiles, uirow );
+    msiobj_release( &uirow->hdr );
 
     msi_free(dest);
     return ERROR_SUCCESS;
