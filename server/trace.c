@@ -438,7 +438,7 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                      ctx.debug.i386_regs.dr3, ctx.debug.i386_regs.dr6, ctx.debug.i386_regs.dr7 );
         if (ctx.flags & SERVER_CTX_FLOATING_POINT)
         {
-            fprintf( stderr, "fp.ctrl=%08x,fp.status=%08x,fp.tag=%08x,fp.err_off=%08x,fp.err_sel=%08x",
+            fprintf( stderr, ",fp.ctrl=%08x,fp.status=%08x,fp.tag=%08x,fp.err_off=%08x,fp.err_sel=%08x",
                      ctx.fp.i386_regs.ctrl, ctx.fp.i386_regs.status, ctx.fp.i386_regs.tag,
                      ctx.fp.i386_regs.err_off, ctx.fp.i386_regs.err_sel );
             fprintf( stderr, ",fp.data_off=%08x,fp.data_sel=%08x,fp.cr0npx=%08x",
