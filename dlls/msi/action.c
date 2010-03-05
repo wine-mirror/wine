@@ -7035,8 +7035,16 @@ static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
 {
     static const WCHAR szAvailableFreeReg[] =
         {'A','V','A','I','L','A','B','L','E','F','R','E','E','R','E','G',0};
+    MSIRECORD *uirow;
+    int space = msi_get_property_int( package, szAvailableFreeReg, 0 );
 
-    TRACE("%p %d kilobytes\n", package, msi_get_property_int( package, szAvailableFreeReg, 0 ));
+    TRACE("%p %d kilobytes\n", package, space);
+
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetInteger( uirow, 1, space );
+    ui_actiondata( package, szAllocateRegistrySpace, uirow );
+    msiobj_release( &uirow->hdr );
+
     return ERROR_SUCCESS;
 }
 
