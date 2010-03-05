@@ -531,11 +531,10 @@ done:
 static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
+    MSIRECORD *uirow;
     MSICOMPONENT *comp;
     LPCWSTR sourcename, component;
-    LPWSTR destname = NULL;
-    LPWSTR sourcedir = NULL, destdir = NULL;
-    LPWSTR source = NULL, dest = NULL;
+    LPWSTR sourcedir, destname = NULL, destdir = NULL, source = NULL, dest = NULL;
     int options;
     DWORD size;
     BOOL ret, wildcards;
@@ -626,7 +625,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
         if (!ret)
         {
             WARN("CreateDirectory failed: %d\n", GetLastError());
-            return ERROR_SUCCESS;
+            goto done;
         }
     }
 
@@ -636,6 +635,13 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
         move_files_wildcard(source, dest, options);
 
 done:
+    uirow = MSI_CreateRecord( 9 );
+    MSI_RecordSetStringW( uirow, 1, MSI_RecordGetString(rec, 1) );
+    MSI_RecordSetInteger( uirow, 6, 1 ); /* FIXME */
+    MSI_RecordSetStringW( uirow, 9, destdir );
+    ui_actiondata( package, szMoveFiles, uirow );
+    msiobj_release( &uirow->hdr );
+
     msi_free(sourcedir);
     msi_free(destdir);
     msi_free(destname);

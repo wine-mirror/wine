@@ -112,8 +112,6 @@ static const WCHAR szIsolateComponents[] =
     {'I','s','o','l','a','t','e','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szMigrateFeatureStates[] =
     {'M','i','g','r','a','t','e','F','e','a','t','u','r','e','S','t','a','t','e','s',0};
-static const WCHAR szMoveFiles[] =
-    {'M','o','v','e','F','i','l','e','s',0};
 static const WCHAR szMsiPublishAssemblies[] = 
     {'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szMsiUnpublishAssemblies[] = 
