@@ -1599,11 +1599,15 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
   SNB         snbExclude,   /* [unique][in] */
   IStorage*   pstgDest)     /* [unique][in] */
 {
+  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+
   IEnumSTATSTG *elements     = 0;
   STATSTG      curElement, strStat;
   HRESULT      hr;
   IStorage     *pstgTmp, *pstgChild;
   IStream      *pstrTmp, *pstrChild;
+  DirRef       srcEntryRef;
+  DirEntry     srcEntry;
   BOOL         skip = FALSE, skip_storage = FALSE, skip_stream = FALSE;
   int          i;
 
@@ -1728,11 +1732,25 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
         goto cleanup;
 
       /*
-       * open child stream storage
+       * open child stream storage. This operation must succeed even if the
+       * stream is already open, so we use internal functions to do it.
        */
-      hr = IStorage_OpenStream( iface, curElement.pwcsName, NULL,
-				STGM_READ|STGM_SHARE_EXCLUSIVE,
-				0, &pstrChild );
+      srcEntryRef = findElement( This, This->storageDirEntry, curElement.pwcsName,
+        &srcEntry);
+      if (!srcEntryRef)
+      {
+        ERR("source stream not found\n");
+        hr = STG_E_DOCFILECORRUPT;
+      }
+
+      if (hr == S_OK)
+      {
+        pstrChild = (IStream*)StgStreamImpl_Construct(This, STGM_READ|STGM_SHARE_EXCLUSIVE, srcEntryRef);
+        if (pstrChild)
+          IStream_AddRef(pstrChild);
+        else
+          hr = E_OUTOFMEMORY;
+      }
 
       if (hr == S_OK)
       {

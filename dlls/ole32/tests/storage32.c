@@ -2750,7 +2750,7 @@ static void test_copyto_locking(void)
 
     /* Try to copy the storage while the stream is open */
     r = IStorage_CopyTo(stg2, 0, NULL, NULL, stg3);
-    todo_wine ok(r==S_OK, "IStorage->CopyTo failed, hr=%08x\n", r);
+    ok(r==S_OK, "IStorage->CopyTo failed, hr=%08x\n", r);
 
     IStream_Release(stm);
 
