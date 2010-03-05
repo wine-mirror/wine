@@ -3469,7 +3469,6 @@ static UINT ITERATE_PublishIcon(MSIRECORD *row, LPVOID param)
     CHAR buffer[1024];
     DWORD sz;
     UINT rc;
-    MSIRECORD *uirow;
 
     FileName = MSI_RecordGetString(row,1);
     if (!FileName)
@@ -3508,13 +3507,7 @@ static UINT ITERATE_PublishIcon(MSIRECORD *row, LPVOID param)
     } while (sz == 1024);
 
     msi_free(FilePath);
-
     CloseHandle(the_file);
-
-    uirow = MSI_CreateRecord(1);
-    MSI_RecordSetStringW(uirow,1,FileName);
-    ui_actiondata(package,szPublishProduct,uirow);
-    msiobj_release( &uirow->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -3777,8 +3770,8 @@ done:
 static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
-    HKEY hukey=0;
-    HKEY hudkey=0;
+    HKEY hukey = NULL, hudkey = NULL;
+    MSIRECORD *uirow;
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
@@ -3816,6 +3809,11 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     rc = msi_publish_icons(package);
 
 end:
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetStringW( uirow, 1, package->ProductCode );
+    ui_actiondata( package, szPublishProduct, uirow );
+    msiobj_release( &uirow->hdr );
+
     RegCloseKey(hukey);
     RegCloseKey(hudkey);
 
