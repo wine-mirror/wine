@@ -1435,8 +1435,9 @@ static void test_SHSetWindowBits(void)
     SetLastError(0xdeadbeef);
     style = pSHSetWindowBits(NULL, GWL_STYLE, 0, 0);
     ok(style == 0, "expected 0 retval, got %d\n", style);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
-              "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x/WinMe */
+        "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
 
     /* zero mask, zero flags */
     styleold = GetWindowLongA(hwnd, GWL_STYLE);
@@ -1532,7 +1533,9 @@ if (0)
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+        broken(GetLastError() == ERROR_INVALID_FLAGS), /* Win9x/WinMe */
+        "expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* now check returned strings */
     flags = FDTF_SHORTTIME;
@@ -1682,7 +1685,9 @@ if (0)
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
     ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+        broken(GetLastError() == ERROR_INVALID_FLAGS), /* Win9x/WinMe */
+        "expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* now check returned strings */
     flags = FDTF_SHORTTIME;
