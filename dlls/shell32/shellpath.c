@@ -2417,7 +2417,7 @@ HRESULT WINAPI SHGetFolderLocation(
 
     /* The virtual folders' locations are not user-dependent */
     *ppidl = NULL;
-    switch (nFolder)
+    switch (nFolder & CSIDL_FOLDER_MASK)
     {
         case CSIDL_DESKTOP:
             *ppidl = _ILCreateDesktop();
