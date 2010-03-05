@@ -163,6 +163,7 @@
 #include "shfldr.h"
 #include "shresdef.h"
 #include "pidl.h"
+#include "debughlp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -795,7 +796,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
         
-    TRACE("(iface=%p, riid=%p, ppv=%p)\n", iface, riid, ppv);
+    TRACE("(iface=%p, riid=%s, ppv=%p)\n", iface, shdebugstr_guid(riid), ppv);
     
     if (!ppv) return E_INVALIDARG;
     
@@ -817,6 +818,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
             cfShellIDList = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
     } else {
         *ppv = NULL;
+        FIXME("Unimplemented interface %s\n", shdebugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
