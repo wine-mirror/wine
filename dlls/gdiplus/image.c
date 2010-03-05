@@ -1614,7 +1614,7 @@ static GpStatus get_screen_resolution(REAL *xres, REAL *yres)
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
-    BITMAPINFOHEADER bmih;
+    BITMAPINFO* pbmi;
     HBITMAP hbitmap;
     INT row_size, dib_stride;
     HDC hdc;
@@ -1644,26 +1644,33 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     if(stride == 0)
         stride = dib_stride;
 
-    bmih.biSize = sizeof(BITMAPINFOHEADER);
-    bmih.biWidth = width;
-    bmih.biHeight = -height;
-    bmih.biPlanes = 1;
+    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    if (!pbmi)
+        return OutOfMemory;
+
+    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    pbmi->bmiHeader.biWidth = width;
+    pbmi->bmiHeader.biHeight = -height;
+    pbmi->bmiHeader.biPlanes = 1;
     /* FIXME: use the rest of the data from format */
-    bmih.biBitCount = PIXELFORMATBPP(format);
-    bmih.biCompression = BI_RGB;
-    bmih.biSizeImage = 0;
-    bmih.biXPelsPerMeter = 0;
-    bmih.biYPelsPerMeter = 0;
-    bmih.biClrUsed = 0;
-    bmih.biClrImportant = 0;
+    pbmi->bmiHeader.biBitCount = PIXELFORMATBPP(format);
+    pbmi->bmiHeader.biCompression = BI_RGB;
+    pbmi->bmiHeader.biSizeImage = 0;
+    pbmi->bmiHeader.biXPelsPerMeter = 0;
+    pbmi->bmiHeader.biYPelsPerMeter = 0;
+    pbmi->bmiHeader.biClrUsed = 0;
+    pbmi->bmiHeader.biClrImportant = 0;
 
     hdc = CreateCompatibleDC(NULL);
-    if (!hdc) return GenericError;
+    if (!hdc) {
+        GdipFree(pbmi);
+        return GenericError;
+    }
 
-    hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS, (void**)&bits,
-        NULL, 0);
+    hbitmap = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
 
     DeleteDC(hdc);
+    GdipFree(pbmi);
 
     if (!hbitmap) return GenericError;
 
