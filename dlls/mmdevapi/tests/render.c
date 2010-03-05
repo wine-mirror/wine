@@ -199,7 +199,9 @@ static void test_audioclient(IAudioClient *ac)
     ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, handle);
-    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED, "SetEventHandle returns %08x\n", hr);
+    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED ||
+       hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME)
+       , "SetEventHandle returns %08x\n", hr);
 
     CloseHandle(handle);
     CoTaskMemFree(pwfx);
