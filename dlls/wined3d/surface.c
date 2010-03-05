@@ -4324,9 +4324,41 @@ struct depth_blt_info
     GLfloat coords[4][3];
 };
 
-static void surface_get_depth_blt_info(GLenum target, GLsizei w, GLsizei h, struct depth_blt_info *info)
+struct coords {
+    GLfloat x, y, z;
+};
+
+struct float_rect
+{
+    float l;
+    float t;
+    float r;
+    float b;
+};
+
+static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float_rect *f)
+{
+    f->l = ((r->left * 2.0f) / w) - 1.0f;
+    f->t = ((r->top * 2.0f) / h) - 1.0f;
+    f->r = ((r->right * 2.0f) / w) - 1.0f;
+    f->b = ((r->bottom * 2.0f) / h) - 1.0f;
+}
+
+static void surface_get_depth_blt_info(GLenum target, const RECT *rect_in, GLsizei w, GLsizei h, struct depth_blt_info *info)
 {
     GLfloat (*coords)[3] = info->coords;
+    RECT rect;
+    struct float_rect f;
+
+    if (rect_in)
+        rect = *rect_in;
+    else
+    {
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = w;
+        rect.bottom = h;
+    }
 
     switch (target)
     {
@@ -4337,75 +4369,104 @@ static void surface_get_depth_blt_info(GLenum target, GLsizei w, GLsizei h, stru
             info->binding = GL_TEXTURE_BINDING_2D;
             info->bind_target = GL_TEXTURE_2D;
             info->tex_type = tex_2d;
-            coords[0][0] = 0.0f;    coords[0][1] = 1.0f;    coords[0][2] = 0.0f;
-            coords[1][0] = 1.0f;    coords[1][1] = 1.0f;    coords[1][2] = 0.0f;
-            coords[2][0] = 0.0f;    coords[2][1] = 0.0f;    coords[2][2] = 0.0f;
-            coords[3][0] = 1.0f;    coords[3][1] = 0.0f;    coords[3][2] = 0.0f;
+            coords[0][0] = (float)rect.left / w;
+            coords[0][1] = (float)rect.top / h;
+            coords[0][2] = 0.0f;
+
+            coords[1][0] = (float)rect.right / w;
+            coords[1][1] = (float)rect.top / h;
+            coords[1][2] = 0.0f;
+
+            coords[2][0] = (float)rect.left / w;
+            coords[2][1] = (float)rect.bottom / h;
+            coords[2][2] = 0.0f;
+
+            coords[3][0] = (float)rect.right / w;
+            coords[3][1] = (float)rect.bottom / h;
+            coords[3][2] = 0.0f;
             break;
 
         case GL_TEXTURE_RECTANGLE_ARB:
             info->binding = GL_TEXTURE_BINDING_RECTANGLE_ARB;
             info->bind_target = GL_TEXTURE_RECTANGLE_ARB;
             info->tex_type = tex_rect;
-            coords[0][0] = 0.0f;    coords[0][1] = h;       coords[0][2] = 0.0f;
-            coords[1][0] = w;       coords[1][1] = h;       coords[1][2] = 0.0f;
-            coords[2][0] = 0.0f;    coords[2][1] = 0.0f;    coords[2][2] = 0.0f;
-            coords[3][0] = w;       coords[3][1] = 0.0f;    coords[3][2] = 0.0f;
+            coords[0][0] = rect.left;   coords[0][1] = rect.top;     coords[0][2] = 0.0f;
+            coords[1][0] = rect.right;  coords[1][1] = rect.top;     coords[1][2] = 0.0f;
+            coords[2][0] = rect.left;   coords[2][1] = rect.bottom;  coords[2][2] = 0.0f;
+            coords[3][0] = rect.right;  coords[3][1] = rect.bottom;  coords[3][2] = 0.0f;
             break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] =  1.0f;   coords[0][1] = -1.0f;   coords[0][2] =  1.0f;
-            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
-            coords[2][0] =  1.0f;   coords[2][1] =  1.0f;   coords[2][2] =  1.0f;
-            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] =  1.0f;   coords[0][1] = -f.t;   coords[0][2] = -f.l;
+            coords[1][0] =  1.0f;   coords[1][1] = -f.t;   coords[1][2] = -f.r;
+            coords[2][0] =  1.0f;   coords[2][1] = -f.b;   coords[2][2] = -f.l;
+            coords[3][0] =  1.0f;   coords[3][1] = -f.b;   coords[3][2] = -f.r;
+            break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
-            coords[1][0] = -1.0f;   coords[1][1] = -1.0f;   coords[1][2] =  1.0f;
-            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
-            coords[3][0] = -1.0f;   coords[3][1] =  1.0f;   coords[3][2] =  1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] = -1.0f;   coords[0][1] = -f.t;   coords[0][2] = f.l;
+            coords[1][0] = -1.0f;   coords[1][1] = -f.t;   coords[1][2] = f.r;
+            coords[2][0] = -1.0f;   coords[2][1] = -f.b;   coords[2][2] = f.l;
+            coords[3][0] = -1.0f;   coords[3][1] = -f.b;   coords[3][2] = f.r;
+            break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] = -1.0f;   coords[0][1] =  1.0f;   coords[0][2] =  1.0f;
-            coords[1][0] =  1.0f;   coords[1][1] =  1.0f;   coords[1][2] =  1.0f;
-            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
-            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] = f.l;   coords[0][1] =  1.0f;   coords[0][2] = f.t;
+            coords[1][0] = f.r;   coords[1][1] =  1.0f;   coords[1][2] = f.t;
+            coords[2][0] = f.l;   coords[2][1] =  1.0f;   coords[2][2] = f.b;
+            coords[3][0] = f.r;   coords[3][1] =  1.0f;   coords[3][2] = f.b;
+            break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
-            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
-            coords[2][0] = -1.0f;   coords[2][1] = -1.0f;   coords[2][2] =  1.0f;
-            coords[3][0] =  1.0f;   coords[3][1] = -1.0f;   coords[3][2] =  1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] = f.l;   coords[0][1] = -1.0f;   coords[0][2] = -f.t;
+            coords[1][0] = f.r;   coords[1][1] = -1.0f;   coords[1][2] = -f.t;
+            coords[2][0] = f.l;   coords[2][1] = -1.0f;   coords[2][2] = -f.b;
+            coords[3][0] = f.r;   coords[3][1] = -1.0f;   coords[3][2] = -f.b;
+            break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] =  1.0f;
-            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] =  1.0f;
-            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] =  1.0f;
-            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] =  1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] = f.l;   coords[0][1] = -f.t;   coords[0][2] =  1.0f;
+            coords[1][0] = f.r;   coords[1][1] = -f.t;   coords[1][2] =  1.0f;
+            coords[2][0] = f.l;   coords[2][1] = -f.b;   coords[2][2] =  1.0f;
+            coords[3][0] = f.r;   coords[3][1] = -f.b;   coords[3][2] =  1.0f;
+            break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             info->tex_type = tex_cube;
-            coords[0][0] =  1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
-            coords[1][0] = -1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
-            coords[2][0] =  1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
-            coords[3][0] = -1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+            cube_coords_float(&rect, w, h, &f);
+
+            coords[0][0] = -f.l;   coords[0][1] = -f.t;   coords[0][2] = -1.0f;
+            coords[1][0] = -f.r;   coords[1][1] = -f.t;   coords[1][2] = -1.0f;
+            coords[2][0] = -f.l;   coords[2][1] = -f.b;   coords[2][2] = -1.0f;
+            coords[3][0] = -f.r;   coords[3][1] = -f.b;   coords[3][2] = -1.0f;
+            break;
     }
 }
 
@@ -4429,7 +4490,7 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, w, h);
 
-    surface_get_depth_blt_info(target, w, h, &info);
+    surface_get_depth_blt_info(target, NULL, w, h, &info);
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
@@ -4641,26 +4702,6 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     if(!(This->Flags & SFLAG_LOCATIONS)) {
         ERR("%p: Surface does not have any up to date location\n", This);
     }
-}
-
-struct coords {
-    GLfloat x, y, z;
-};
-
-struct float_rect
-{
-    float l;
-    float t;
-    float r;
-    float b;
-};
-
-static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float_rect *f)
-{
-    f->l = ((r->left * 2.0f) / w) - 1.0f;
-    f->t = ((r->top * 2.0f) / h) - 1.0f;
-    f->r = ((r->right * 2.0f) / w) - 1.0f;
-    f->b = ((r->bottom * 2.0f) / h) - 1.0f;
 }
 
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
