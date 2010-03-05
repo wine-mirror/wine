@@ -955,6 +955,7 @@ extern UINT ACTION_CCPSearch(MSIPACKAGE *package);
 extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 extern UINT ACTION_InstallFiles(MSIPACKAGE *package);
 extern UINT ACTION_RemoveFiles(MSIPACKAGE *package);
+extern UINT ACTION_MoveFiles(MSIPACKAGE *package);
 extern UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
 extern UINT ACTION_RemoveDuplicateFiles(MSIPACKAGE *package);
 extern UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
