@@ -4782,10 +4782,10 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 
 static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 {
-    HKEY hkey=0;
-    LPWSTR buffer;
-    LPWSTR productid;
-    UINT rc,i;
+    HKEY hkey = 0;
+    LPWSTR buffer, productid = NULL;
+    UINT i, rc = ERROR_SUCCESS;
+    MSIRECORD *uirow;
 
     static const WCHAR szPropKeys[][80] = 
     {
@@ -4806,12 +4806,12 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (msi_check_unpublish(package))
     {
         MSIREG_DeleteUserDataProductKey(package->ProductCode);
-        return ERROR_SUCCESS;
+        goto end;
     }
 
     productid = msi_dup_property( package, INSTALLPROPERTY_PRODUCTIDW );
     if (!productid)
-        return ERROR_SUCCESS;
+        goto end;
 
     rc = MSIREG_OpenInstallProps(package->ProductCode, package->Context,
                                  NULL, &hkey, TRUE);
@@ -4826,11 +4826,13 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     }
 
 end:
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetStringW( uirow, 1, productid );
+    ui_actiondata( package, szRegisterUser, uirow );
+    msiobj_release( &uirow->hdr );
+
     msi_free(productid);
     RegCloseKey(hkey);
-
-    /* FIXME: call ui_actiondata */
-
     return rc;
 }
 
