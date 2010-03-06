@@ -298,6 +298,11 @@ static const struct message folderview_getspacing_seq[] = {
     { 0 }
 };
 
+static const struct message folderview_getselectionmarked_seq[] = {
+    { LVM_GETSELECTIONMARK, sent },
+    { 0 }
+};
+
 static void test_IShellView_CreateViewWindow(void)
 {
     IShellFolder *desktop;
@@ -344,7 +349,7 @@ static void test_IFolderView(void)
     IFolderView *fv;
     HWND hwnd_view, hwnd_list;
     HRESULT hr;
-    DWORD ret;
+    INT ret;
     POINT pt;
     RECT r;
 
@@ -371,6 +376,9 @@ if (0)
 {
     /* crashes on Vista and Win2k8 - List not created yet case */
     hr = IFolderView_GetSpacing(fv, &pt);
+
+    /* crashes on XP */
+    hr = IFolderView_GetSelectionMarkedItem(fv, NULL);
 }
 
     browser = IShellBrowserImpl_Construct();
@@ -413,6 +421,19 @@ if (0)
         ret = SendMessageA(hwnd_list, LVM_GETITEMSPACING, 0, 0);
         ok(pt.x == LOWORD(ret) && pt.y == HIWORD(ret), "got (%d, %d)\n", LOWORD(ret), HIWORD(ret));
     }
+
+    /* IFolderView::GetSelectionMarkedItem */
+if (0)
+{
+    /* crashes on XP */
+    hr = IFolderView_GetSelectionMarkedItem(fv, NULL);
+}
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    hr = IFolderView_GetSelectionMarkedItem(fv, &ret);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_getselectionmarked_seq,
+                                  "IFolderView::GetSelectionMarkedItem", FALSE);
 
     IShellBrowser_Release(browser);
     IFolderView_Release(fv);

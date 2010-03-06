@@ -2739,9 +2739,13 @@ static HRESULT WINAPI IFView_Items(IFolderView *iface, UINT flags, REFIID riid, 
 
 static HRESULT WINAPI IFView_GetSelectionMarkedItem(IFolderView *iface, int *item)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%p), stub\n", This, item);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+
+    TRACE("(%p)->(%p)\n", This, item);
+
+    *item = SendMessageW(This->hWndList, LVM_GETSELECTIONMARK, 0, 0);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFView_GetFocusedItem(IFolderView *iface, int *item)
