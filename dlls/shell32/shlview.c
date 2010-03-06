@@ -2711,9 +2711,19 @@ static HRESULT WINAPI IFView_SetCurrentViewMode(IFolderView *iface, UINT mode)
 
 static HRESULT WINAPI IFView_GetFolder(IFolderView *iface, REFIID riid, void **ppv)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%s, %p), stub\n", This, debugstr_guid(riid), ppv);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv) return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IShellFolder))
+    {
+        *ppv = This->pSFParent;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI IFView_Item(IFolderView *iface, int index, PITEMID_CHILD *ppidl)
