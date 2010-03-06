@@ -683,6 +683,7 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
 static LRESULT ShellView_OnCreate(IShellViewImpl *This)
 {
     IShellView2 *iface = (IShellView2*)This;
+    static const WCHAR accel_nameW[] = {'s','h','v','_','a','c','c','e','l',0};
     IPersistFolder2 *ppf2;
     IDropTarget* pdt;
     HRESULT hr;
@@ -721,7 +722,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
         IPersistFolder2_Release(ppf2);
     }
 
-    This->hAccel = LoadAcceleratorsA(shell32_hInstance, "shv_accel");
+    This->hAccel = LoadAcceleratorsW(shell32_hInstance, accel_nameW);
 
     return S_OK;
 }
@@ -776,57 +777,64 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 /**********************************************************
 * ShellView_MergeFileMenu()
 */
-static void ShellView_MergeFileMenu(IShellViewImpl * This, HMENU hSubMenu)
-{	TRACE("(%p)->(submenu=%p) stub\n",This,hSubMenu);
+static void ShellView_MergeFileMenu(IShellViewImpl *This, HMENU hSubMenu)
+{
+     TRACE("(%p)->(submenu=%p) stub\n",This,hSubMenu);
 
-	if(hSubMenu)
-	{ /*insert This item at the beginning of the menu */
-            MENUITEMINFOA mii;
+     if (hSubMenu)
+     {
+         static const WCHAR dummyW[] = {'d','u','m','m','y','4','5',0};
+         MENUITEMINFOW mii;
 
-            mii.cbSize = sizeof(mii);
-            mii.fMask = MIIM_ID | MIIM_TYPE;
-            mii.wID = 0;
-            mii.fType = MFT_SEPARATOR;
-            InsertMenuItemA(hSubMenu, 0, TRUE, &mii);
+         /* insert This item at the beginning of the menu */
 
-            mii.cbSize = sizeof(mii);
-            mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-            mii.dwTypeData = (LPSTR)"dummy45";
-            mii.fState = MFS_ENABLED;
-            mii.wID = IDM_MYFILEITEM;
-            mii.fType = MFT_STRING;
-            InsertMenuItemA(hSubMenu, 0, TRUE, &mii);
-	}
-	TRACE("--\n");
+         mii.cbSize = sizeof(mii);
+         mii.fMask = MIIM_ID | MIIM_TYPE;
+         mii.wID = 0;
+         mii.fType = MFT_SEPARATOR;
+         InsertMenuItemW(hSubMenu, 0, TRUE, &mii);
+
+         mii.cbSize = sizeof(mii);
+         mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
+         mii.dwTypeData = (LPWSTR)dummyW;
+         mii.fState = MFS_ENABLED;
+         mii.wID = IDM_MYFILEITEM;
+         mii.fType = MFT_STRING;
+         InsertMenuItemW(hSubMenu, 0, TRUE, &mii);
+    }
+
+    TRACE("--\n");
 }
 
 /**********************************************************
 * ShellView_MergeViewMenu()
 */
 
-static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
+static void ShellView_MergeViewMenu(IShellViewImpl *This, HMENU hSubMenu)
 {
-	TRACE("(%p)->(submenu=%p)\n",This,hSubMenu);
+    TRACE("(%p)->(submenu=%p)\n",This,hSubMenu);
 
-	if(hSubMenu)
-	{ /*add a separator at the correct position in the menu*/
-	  MENUITEMINFOA mii;
-	  static char view[] = "View";
+    /* add a separator at the correct position in the menu */
+    if (hSubMenu)
+    {
+        static const WCHAR menuW[] = {'M','E','N','U','_','0','0','1',0};
+	static const WCHAR viewW[] = {'V','i','e','w',0};
+        MENUITEMINFOW mii;
 
-          ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE;
-          mii.wID = 0;
-          mii.fType = MFT_SEPARATOR;
-          InsertMenuItemA(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
+        memset(&mii, 0, sizeof(mii));
+        mii.cbSize = sizeof(mii);
+        mii.fMask = MIIM_ID | MIIM_TYPE;
+        mii.wID = 0;
+        mii.fType = MFT_SEPARATOR;
+        InsertMenuItemW(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 
-	  mii.cbSize = sizeof(mii);
-	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;
-	  mii.fType = MFT_STRING;
-	  mii.dwTypeData = view;
-	  mii.hSubMenu = LoadMenuA(shell32_hInstance, "MENU_001");
-	  InsertMenuItemA(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
-	}
+        mii.cbSize = sizeof(mii);
+        mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;
+        mii.fType = MFT_STRING;
+        mii.dwTypeData = (LPWSTR)viewW;
+        mii.hSubMenu = LoadMenuW(shell32_hInstance, menuW);
+        InsertMenuItemW(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
+    }
 }
 
 /**********************************************************
@@ -1116,79 +1124,76 @@ static void ShellView_OnDeactivate(IShellViewImpl * This)
 /**********************************************************
 * ShellView_OnActivate()
 */
-static LRESULT ShellView_OnActivate(IShellViewImpl * This, UINT uState)
-{	OLEMENUGROUPWIDTHS   omw = { {0, 0, 0, 0, 0, 0} };
-	MENUITEMINFOA         mii;
-	CHAR                szText[MAX_PATH];
+static LRESULT ShellView_OnActivate(IShellViewImpl *This, UINT uState)
+{
+    OLEMENUGROUPWIDTHS   omw = { {0, 0, 0, 0, 0, 0} };
+    MENUITEMINFOW mii;
 
-	TRACE("%p uState=%x\n",This,uState);
+    TRACE("(%p) uState=%x\n",This,uState);
 
-	/*don't do anything if the state isn't really changing */
-	if(This->uState == uState)
+    /* don't do anything if the state isn't really changing */
+    if (This->uState == uState) return S_OK;
+
+    ShellView_OnDeactivate(This);
+
+    /* only do This if we are active */
+    if (uState != SVUIA_DEACTIVATE)
+    {
+        /* merge the menus */
+        This->hMenu = CreateMenu();
+
+        if (This->hMenu)
 	{
-	  return S_OK;
-	}
+            static const WCHAR dummyW[] = {'d','u','m','m','y',' ','3','1',0};
 
-	ShellView_OnDeactivate(This);
-
-	/*only do This if we are active */
-	if(uState != SVUIA_DEACTIVATE)
-	{
-	  /*merge the menus */
-	  This->hMenu = CreateMenu();
-
-	  if(This->hMenu)
-	  {
-	    IShellBrowser_InsertMenusSB(This->pShellBrowser, This->hMenu, &omw);
+            IShellBrowser_InsertMenusSB(This->pShellBrowser, This->hMenu, &omw);
 	    TRACE("-- after fnInsertMenusSB\n");
 
-	    /*build the top level menu get the menu item's text*/
-	    strcpy(szText,"dummy 31");
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_STATE;
+            mii.fType = MFT_STRING;
+            mii.fState = MFS_ENABLED;
+            mii.wID = 0;
+            mii.hSubMenu = ShellView_BuildFileMenu(This);
+            mii.hbmpChecked = NULL;
+            mii.hbmpUnchecked = NULL;
+            mii.dwItemData = 0;
+            /* build the top level menu get the menu item's text */
+            mii.dwTypeData = (LPWSTR)dummyW;
+            mii.cch = 0;
+            mii.hbmpItem = NULL;
 
-	    ZeroMemory(&mii, sizeof(mii));
-	    mii.cbSize = sizeof(mii);
-	    mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_STATE;
-	    mii.fType = MFT_STRING;
-	    mii.fState = MFS_ENABLED;
-	    mii.dwTypeData = szText;
-	    mii.hSubMenu = ShellView_BuildFileMenu(This);
+            /* insert our menu into the menu bar */
+            if (mii.hSubMenu)
+                InsertMenuItemW(This->hMenu, FCIDM_MENU_HELP, FALSE, &mii);
 
-	    /*insert our menu into the menu bar*/
-	    if(mii.hSubMenu)
+            /* get the view menu so we can merge with it */
+            memset(&mii, 0, sizeof(mii));
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_SUBMENU;
+
+            if (GetMenuItemInfoW(This->hMenu, FCIDM_MENU_VIEW, FALSE, &mii))
+                ShellView_MergeViewMenu(This, mii.hSubMenu);
+
+            /* add the items that should only be added if we have the focus */
+	    if (SVUIA_ACTIVATE_FOCUS == uState)
 	    {
-	      InsertMenuItemA(This->hMenu, FCIDM_MENU_HELP, FALSE, &mii);
+                /* get the file menu so we can merge with it */
+                memset(&mii, 0, sizeof(mii));
+                mii.cbSize = sizeof(mii);
+                mii.fMask = MIIM_SUBMENU;
+
+                if (GetMenuItemInfoW(This->hMenu, FCIDM_MENU_FILE, FALSE, &mii))
+                    ShellView_MergeFileMenu(This, mii.hSubMenu);
 	    }
 
-	    /*get the view menu so we can merge with it*/
-	    ZeroMemory(&mii, sizeof(mii));
-	    mii.cbSize = sizeof(mii);
-	    mii.fMask = MIIM_SUBMENU;
-
-	    if(GetMenuItemInfoA(This->hMenu, FCIDM_MENU_VIEW, FALSE, &mii))
-	    {
-	      ShellView_MergeViewMenu(This, mii.hSubMenu);
-	    }
-
-	    /*add the items that should only be added if we have the focus*/
-	    if(SVUIA_ACTIVATE_FOCUS == uState)
-	    {
-	      /*get the file menu so we can merge with it */
-	      ZeroMemory(&mii, sizeof(mii));
-	      mii.cbSize = sizeof(mii);
-	      mii.fMask = MIIM_SUBMENU;
-
-	      if(GetMenuItemInfoA(This->hMenu, FCIDM_MENU_FILE, FALSE, &mii))
-	      {
-	        ShellView_MergeFileMenu(This, mii.hSubMenu);
-	      }
-	    }
-	    TRACE("-- before fnSetMenuSB\n");
-	    IShellBrowser_SetMenuSB(This->pShellBrowser, This->hMenu, 0, This->hWnd);
-	  }
+            TRACE("-- before fnSetMenuSB\n");
+            IShellBrowser_SetMenuSB(This->pShellBrowser, This->hMenu, 0, This->hWnd);
 	}
-	This->uState = uState;
-	TRACE("--\n");
-	return S_OK;
+    }
+    This->uState = uState;
+    TRACE("--\n");
+    return S_OK;
 }
 
 /**********************************************************
@@ -1273,7 +1278,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
             This->ListViewSortInfo.nHeaderID = dwCmdID - 0x30;
 	    This->ListViewSortInfo.bIsAscending = TRUE;
 	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
-	    SendMessageA(This->hWndList, LVM_SORTITEMS, (WPARAM) &This->ListViewSortInfo, (LPARAM)ShellView_ListViewCompareItems);
+	    SendMessageW(This->hWndList, LVM_SORTITEMS, (WPARAM) &This->ListViewSortInfo, (LPARAM)ShellView_ListViewCompareItems);
 	    break;
 
 	  default:
@@ -1548,7 +1553,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
                                             MAKELPARAM (LVNI_SELECTED, 0));
 		  item.iItem = item_index;
 		  item.mask = LVIF_PARAM;
-		  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &item);
+		  SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &item);
 
 		  /* get item pidl */
 		  pItems[i] = (LPITEMIDLIST)item.lParam;
@@ -1655,7 +1660,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 	  case WM_SHOWWINDOW:	UpdateWindow(pThis->hWndList);
 				break;
 
-	  case WM_GETDLGCODE:   return SendMessageA(pThis->hWndList,uMessage,0,0);
+	  case WM_GETDLGCODE:   return SendMessageW(pThis->hWndList, uMessage, 0, 0);
 
 	  case WM_DESTROY:	
 	  			RevokeDragDrop(pThis->hWnd);
