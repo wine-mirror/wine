@@ -2068,7 +2068,7 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
 
     /* Get our parent window */
     IShellBrowser_AddRef(This->pShellBrowser);
-    IShellBrowser_GetWindow(This->pShellBrowser, &(This->hWndParent));
+    IShellBrowser_GetWindow(This->pShellBrowser, &This->hWndParent);
 
     /* Try to get the ICommDlgBrowserInterface, adds a reference !!! */
     This->pCommDlgBrowser = NULL;
@@ -2079,7 +2079,6 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
     /* If our window class has not been registered, then do so */
     if (!GetClassInfoW(shell32_hInstance, SV_CLASS_NAME, &wc))
     {
-        ZeroMemory(&wc, sizeof(wc));
         wc.style            = CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc      = ShellView_WndProc;
         wc.cbClsExtra       = 0;
@@ -2102,7 +2101,11 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
 
     CheckToolbar(This);
 
-    if (!wnd) return E_FAIL;
+    if (!wnd)
+    {
+        IShellBrowser_Release(This->pShellBrowser);
+        return E_FAIL;
+    }
 
     SetWindowPos(wnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
     UpdateWindow(wnd);
