@@ -634,96 +634,96 @@ static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
     return TRUE;
 }
 
-static HRESULT ShellView_FillList(IShellViewImpl * This)
+static HRESULT ShellView_FillList(IShellViewImpl *This)
 {
-	LPENUMIDLIST	pEnumIDList;
-	LPITEMIDLIST	pidl;
-	DWORD		dwFetched;
-	HRESULT		hRes;
-	HDPA		hdpa;
+    LPENUMIDLIST pEnumIDList;
+    LPITEMIDLIST pidl;
+    DWORD fetched;
+    HRESULT hr;
+    HDPA hdpa;
 
-	TRACE("%p\n",This);
+    TRACE("(%p)\n", This);
 
-	/* get the itemlist from the shfolder*/
-	hRes = IShellFolder_EnumObjects(This->pSFParent,This->hWnd, SHCONTF_NONFOLDERS | SHCONTF_FOLDERS, &pEnumIDList);
-	if (hRes != S_OK)
-	{
-	  if (hRes==S_FALSE)
-	    return(NOERROR);
-	  return(hRes);
-	}
+    /* get the itemlist from the shfolder*/
+    hr = IShellFolder_EnumObjects(This->pSFParent, This->hWnd, SHCONTF_NONFOLDERS | SHCONTF_FOLDERS, &pEnumIDList);
+    if (hr != S_OK) return hr;
 
-	/* create a pointer array */
-	hdpa = DPA_Create(16);
-	if (!hdpa)
-	{
-	  return(E_OUTOFMEMORY);
-	}
+    /* create a pointer array */
+    hdpa = DPA_Create(16);
+    if (!hdpa)
+    {
+        IEnumIDList_Release(pEnumIDList);
+        return E_OUTOFMEMORY;
+    }
 
-	/* copy the items into the array*/
-	while((S_OK == IEnumIDList_Next(pEnumIDList,1, &pidl, &dwFetched)) && dwFetched)
-	{
-	  if (DPA_InsertPtr(hdpa, 0x7fff, pidl) == -1)
-	  {
-	    SHFree(pidl);
-	  }
-	}
+    /* copy the items into the array*/
+    while((S_OK == IEnumIDList_Next(pEnumIDList, 1, &pidl, &fetched)) && fetched)
+    {
+        if (DPA_InsertPtr(hdpa, DPA_GetPtrCount(hdpa), pidl) == -1)
+        {
+            SHFree(pidl);
+        }
+    }
 
-	/* sort the array */
-	DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
+    /* sort the array */
+    DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
 
-	/*turn the listview's redrawing off*/
-	SendMessageA(This->hWndList, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(This->hWndList, WM_SETREDRAW, FALSE, 0);
+    DPA_DestroyCallback(hdpa, fill_list, This);
+    SendMessageW(This->hWndList, WM_SETREDRAW, TRUE, 0);
 
-        DPA_DestroyCallback( hdpa, fill_list, This );
+    IEnumIDList_Release(pEnumIDList);
 
-	/*turn the listview's redrawing back on and force it to draw*/
-	SendMessageA(This->hWndList, WM_SETREDRAW, TRUE, 0);
-
-	IEnumIDList_Release(pEnumIDList); /* destroy the list*/
-
-	return S_OK;
+    return S_OK;
 }
 
 /**********************************************************
 *  ShellView_OnCreate()
 */
-static LRESULT ShellView_OnCreate(IShellViewImpl * This)
+static LRESULT ShellView_OnCreate(IShellViewImpl *This)
 {
-	IDropTarget* pdt;
-	SHChangeNotifyEntry ntreg;
-	IPersistFolder2 * ppf2 = NULL;
+    IShellView2 *iface = (IShellView2*)This;
+    IPersistFolder2 *ppf2;
+    IDropTarget* pdt;
+    HRESULT hr;
 
-	TRACE("%p\n",This);
+    TRACE("(%p)\n", This);
 
-	if(ShellView_CreateList(This))
-	{
-	  if(ShellView_InitList(This))
-	  {
+    if (ShellView_CreateList(This))
+    {
+        if (ShellView_InitList(This))
+        {
 	    ShellView_FillList(This);
-	  }
-	}
+        }
+    }
 
-        if (SUCCEEDED(IUnknown_QueryInterface((IUnknown*)&This->lpVtbl, &IID_IDropTarget, (LPVOID*)&pdt)))
-	{
-	    RegisterDragDrop(This->hWnd, pdt);
-	    IDropTarget_Release(pdt);
-	}
+    hr = IShellView2_QueryInterface(iface, &IID_IDropTarget, (LPVOID*)&pdt);
+    if (hr == S_OK)
+    {
+        RegisterDragDrop(This->hWnd, pdt);
+        IDropTarget_Release(pdt);
+    }
 
-	/* register for receiving notifications */
-	IShellFolder_QueryInterface(This->pSFParent, &IID_IPersistFolder2, (LPVOID*)&ppf2);
-	if (ppf2)
-	{
-	  IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&ntreg.pidl);
-	  ntreg.fRecursive = TRUE;
-	  This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNF_IDLIST, SHCNE_ALLEVENTS, SHV_CHANGE_NOTIFY, 1, &ntreg);
-	  SHFree((LPITEMIDLIST)ntreg.pidl);
-	  IPersistFolder2_Release(ppf2);
-	}
+    /* register for receiving notifications */
+    hr = IShellFolder_QueryInterface(This->pSFParent, &IID_IPersistFolder2, (LPVOID*)&ppf2);
+    if (hr == S_OK)
+    {
+        SHChangeNotifyEntry ntreg;
 
-	This->hAccel = LoadAcceleratorsA(shell32_hInstance, "shv_accel");
+        hr = IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&ntreg.pidl);
+        if (hr == S_OK)
+        {
+            ntreg.fRecursive = TRUE;
+            This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNF_IDLIST, SHCNE_ALLEVENTS,
+                                                   SHV_CHANGE_NOTIFY, 1, &ntreg);
+            SHFree((LPITEMIDLIST)ntreg.pidl);
+        }
+        IPersistFolder2_Release(ppf2);
+    }
 
-	return S_OK;
+    This->hAccel = LoadAcceleratorsA(shell32_hInstance, "shv_accel");
+
+    return S_OK;
 }
 
 /**********************************************************
@@ -1875,7 +1875,7 @@ static HRESULT WINAPI IShellView_fnRefresh(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
-	TRACE("(%p)\n",This);
+	TRACE("(%p)\n", This);
 
 	SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
 	ShellView_FillList(This);
