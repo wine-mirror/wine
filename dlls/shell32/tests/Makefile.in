@@ -16,6 +16,7 @@ C_SRCS = \
 	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \
+	shlview.c \
 	string.c \
 	systray.c
 

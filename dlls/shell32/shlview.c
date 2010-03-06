@@ -2023,6 +2023,7 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
 {
     IShellViewImpl *This = (IShellViewImpl *)iface;
     WNDCLASSW wc;
+    HRESULT hr;
     HWND wnd;
 
     TRACE("(%p)->(view_params %p)\n", iface, view_params);
@@ -2038,6 +2039,8 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
     TRACE("-- vmode %#x, flags %#x, left %d, top %d, right %d, bottom %d\n",
             view_params->pfs->ViewMode, view_params->pfs->fFlags, view_params->prcView->left,
             view_params->prcView->top, view_params->prcView->right, view_params->prcView->bottom);
+
+    if (!view_params->psbOwner) return E_UNEXPECTED;
 
     /* Set up the member variables */
     This->pShellBrowser = view_params->psbOwner;
@@ -2069,10 +2072,9 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
 
     /* Try to get the ICommDlgBrowserInterface, adds a reference !!! */
     This->pCommDlgBrowser = NULL;
-    if (SUCCEEDED(IShellBrowser_QueryInterface(This->pShellBrowser, &IID_ICommDlgBrowser, (void **)&This->pCommDlgBrowser)))
-    {
+    hr = IShellBrowser_QueryInterface(This->pShellBrowser, &IID_ICommDlgBrowser, (void **)&This->pCommDlgBrowser);
+    if (hr == S_OK)
         TRACE("-- CommDlgBrowser %p\n", This->pCommDlgBrowser);
-    }
 
     /* If our window class has not been registered, then do so */
     if (!GetClassInfoW(shell32_hInstance, SV_CLASS_NAME, &wc))
@@ -2755,9 +2757,22 @@ static HRESULT WINAPI IFView_GetItemPosition(IFolderView *iface, PCUITEMID_CHILD
 
 static HRESULT WINAPI IFView_GetSpacing(IFolderView *iface, POINT *pt)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%p), stub\n", This, pt);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+
+    TRACE("(%p)->(%p)\n", This, pt);
+
+    if (!This->hWndList) return S_FALSE;
+
+    if (pt)
+    {
+        DWORD ret;
+        ret = SendMessageW(This->hWndList, LVM_GETITEMSPACING, 0, 0);
+
+        pt->x = LOWORD(ret);
+        pt->y = HIWORD(ret);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFView_GetDefaultSpacing(IFolderView *iface, POINT *pt)
