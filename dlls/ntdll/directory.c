@@ -1120,6 +1120,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
 
     default:
         assert(0);
+        return NULL;
     }
     memcpy( filename, long_nameW, total_len - ((char *)filename - (char *)info) );
     io->Information += total_len;
