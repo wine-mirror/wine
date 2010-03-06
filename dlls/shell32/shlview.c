@@ -2750,9 +2750,13 @@ static HRESULT WINAPI IFView_GetSelectionMarkedItem(IFolderView *iface, int *ite
 
 static HRESULT WINAPI IFView_GetFocusedItem(IFolderView *iface, int *item)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%p), stub\n", This, item);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+
+    TRACE("(%p)->(%p)\n", This, item);
+
+    *item = SendMessageW(This->hWndList, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFView_GetItemPosition(IFolderView *iface, PCUITEMID_CHILD pidl, POINT *ppt)
