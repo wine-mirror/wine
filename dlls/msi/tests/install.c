@@ -8171,6 +8171,8 @@ static void test_feature_override(void)
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_test_files();
+
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest");
 }
 
 static void test_create_folder(void)
