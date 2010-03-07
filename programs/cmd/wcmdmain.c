@@ -1636,6 +1636,8 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
 
     } else {
         thisEntry->command = NULL;
+        thisEntry->redirects = NULL;
+        thisEntry->pipeFile[0] = 0x00;
     }
 
     /* Fill in other fields */
