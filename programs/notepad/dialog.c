@@ -297,7 +297,9 @@ BOOL DoCloseFile(void)
     int nResult;
     static const WCHAR empty_strW[] = { 0 };
 
-    if (SendMessageW(Globals.hEdit, EM_GETMODIFY, 0, 0))
+    nResult=GetWindowTextLengthW(Globals.hEdit);
+    if (SendMessageW(Globals.hEdit, EM_GETMODIFY, 0, 0) &&
+        (nResult || Globals.szFileName[0]))
     {
         /* prompt user to save changes */
         nResult = AlertFileNotSaved(Globals.szFileName);
