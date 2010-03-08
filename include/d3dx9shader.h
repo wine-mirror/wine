@@ -299,4 +299,43 @@ HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* byte_code,
 }
 #endif
 
+typedef struct _D3DXSHADER_CONSTANTTABLE
+{
+    DWORD Size;
+    DWORD Creator;
+    DWORD Version;
+    DWORD Constants;
+    DWORD ConstantInfo;
+    DWORD Flags;
+    DWORD Target;
+} D3DXSHADER_CONSTANTTABLE, *LPD3DXSHADER_CONSTANTTABLE;
+
+typedef struct _D3DXSHADER_CONSTANTINFO
+{
+    DWORD Name;
+    WORD  RegisterSet;
+    WORD  RegisterIndex;
+    WORD  RegisterCount;
+    WORD  Reserved;
+    DWORD TypeInfo;
+    DWORD DefaultValue;
+} D3DXSHADER_CONSTANTINFO, *LPD3DXSHADER_CONSTANTINFO;
+
+typedef struct _D3DXSHADER_TYPEINFO
+{
+    WORD  Class;
+    WORD  Type;
+    WORD  Rows;
+    WORD  Columns;
+    WORD  Elements;
+    WORD  StructMembers;
+    DWORD StructMemberInfo;
+} D3DXSHADER_TYPEINFO, *LPD3DXSHADER_TYPEINFO;
+
+typedef struct _D3DXSHADER_STRUCTMEMBERINFO
+{
+    DWORD Name;
+    DWORD TypeInfo;
+} D3DXSHADER_STRUCTMEMBERINFO, *LPD3DXSHADER_STRUCTMEMBERINFO;
+
 #endif /* __D3DX9SHADER_H__ */
