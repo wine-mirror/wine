@@ -828,6 +828,7 @@ static void test_loadwmf(void)
     GpRectF bounds;
     GpUnit unit;
     REAL res = 12345.0;
+    MetafileHeader header;
 
     hglob = GlobalAlloc (0, sizeof(wmfimage));
     data = GlobalLock (hglob);
@@ -863,6 +864,27 @@ static void test_loadwmf(void)
     expect(Ok, stat);
     todo_wine expectf(1440.0, res);
 
+    memset(&header, 0, sizeof(header));
+    stat = GdipGetMetafileHeaderFromMetafile((GpMetafile*)img, &header);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        todo_wine expect(MetafileTypeWmfPlaceable, header.Type);
+        todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
+        todo_wine expect(0x300, header.Version);
+        expect(0, header.EmfPlusFlags);
+        todo_wine expectf(1440.0, header.DpiX);
+        todo_wine expectf(1440.0, header.DpiY);
+        expect(0, header.X);
+        expect(0, header.Y);
+        todo_wine expect(320, header.Width);
+        todo_wine expect(320, header.Height);
+        todo_wine expect(1, header.WmfHeader.mtType);
+        expect(0, header.EmfPlusHeaderSize);
+        expect(0, header.LogicalDpiX);
+        expect(0, header.LogicalDpiY);
+    }
+
     GdipDisposeImage(img);
 }
 
@@ -874,6 +896,7 @@ static void test_createfromwmf(void)
     GpRectF bounds;
     GpUnit unit;
     REAL res = 12345.0;
+    MetafileHeader header;
 
     hwmf = SetMetaFileBitsEx(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader),
         wmfimage+sizeof(WmfPlaceableFileHeader));
@@ -898,6 +921,27 @@ static void test_createfromwmf(void)
     stat = GdipGetImageVerticalResolution(img, &res);
     expect(Ok, stat);
     expectf(1440.0, res);
+
+    memset(&header, 0, sizeof(header));
+    stat = GdipGetMetafileHeaderFromMetafile((GpMetafile*)img, &header);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        todo_wine expect(MetafileTypeWmfPlaceable, header.Type);
+        todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
+        todo_wine expect(0x300, header.Version);
+        expect(0, header.EmfPlusFlags);
+        todo_wine expectf(1440.0, header.DpiX);
+        todo_wine expectf(1440.0, header.DpiY);
+        expect(0, header.X);
+        expect(0, header.Y);
+        todo_wine expect(320, header.Width);
+        todo_wine expect(320, header.Height);
+        todo_wine expect(1, header.WmfHeader.mtType);
+        expect(0, header.EmfPlusHeaderSize);
+        expect(0, header.LogicalDpiX);
+        expect(0, header.LogicalDpiY);
+    }
 
     GdipDisposeImage(img);
 }
