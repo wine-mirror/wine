@@ -169,7 +169,6 @@ cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT 0x88982f80")
 cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
-interface IWICBitmap;
 interface IWICPalette;
 interface IWICBitmapScaler;
 interface IWICBitmapClipper;
@@ -205,6 +204,46 @@ interface IWICBitmapSource : IUnknown
         [in] UINT cbStride,
         [in] UINT cbBufferSize,
         [out, size_is(cbBufferSize)] BYTE *pbBuffer);
+}
+
+[
+    object,
+    uuid(00000123-a8f2-4877-ba0a-fd2b6645fb94)
+]
+interface IWICBitmapLock : IUnknown
+{
+    HRESULT GetSize(
+        [out] UINT *pWidth,
+        [out] UINT *pHeight);
+
+    HRESULT GetStride(
+        [out] UINT *pcbStride);
+
+    HRESULT GetDataPointer(
+        [out] UINT *pcbBufferSize,
+        [out, size_is(,*pcbBufferSize)] BYTE **ppbData);
+
+    HRESULT GetPixelFormat(
+        [out] WICPixelFormatGUID *pPixelFormat);
+}
+
+[
+    object,
+    uuid(00000121-a8f2-4877-ba0a-fd2b6645fb94)
+]
+interface IWICBitmap : IWICBitmapSource
+{
+    HRESULT Lock(
+        [in] const WICRect *prcLock,
+        [in] DWORD flags,
+        [out] IWICBitmapLock **ppILock);
+
+    HRESULT SetPalette(
+        [in] IWICPalette *pIPalette);
+
+    HRESULT SetResolution(
+        [in] double dpiX,
+        [in] double dpiY);
 }
 
 [
