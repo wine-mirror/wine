@@ -585,21 +585,21 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
     ID3DXConstantTableImpl_SetMatrixTransposePointerArray
 };
 
-HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
+HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
                                             DWORD flags,
-                                            LPD3DXCONSTANTTABLE* ppConstantTable)
+                                            LPD3DXCONSTANTTABLE* constant_table)
 {
     ID3DXConstantTableImpl* object;
     HRESULT hr;
     LPCVOID data;
     UINT size;
 
-    FIXME("(%p, %x, %p): semi-stub\n", pFunction, flags, ppConstantTable);
+    FIXME("(%p, %x, %p): semi-stub\n", byte_code, flags, constant_table);
 
-    if (!pFunction || !ppConstantTable)
+    if (!byte_code || !constant_table)
         return D3DERR_INVALIDCALL;
 
-    hr = D3DXFindShaderComment(pFunction, MAKEFOURCC('C','T','A','B'), &data, &size);
+    hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), &data, &size);
     if (hr != D3D_OK)
         return D3DXERR_INVALIDDATA;
 
@@ -623,15 +623,15 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* pFunction,
     object->size = size;
     memcpy(object->ctab, data, object->size);
 
-    *ppConstantTable = (LPD3DXCONSTANTTABLE)object;
+    *constant_table = (LPD3DXCONSTANTTABLE)object;
 
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* pFunction,
-                                          LPD3DXCONSTANTTABLE* ppConstantTable)
+HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* byte_code,
+                                          LPD3DXCONSTANTTABLE* constant_table)
 {
-    TRACE("(%p, %p): Forwarded to D3DXGetShaderConstantTableEx\n", pFunction, ppConstantTable);
+    TRACE("(%p, %p): Forwarded to D3DXGetShaderConstantTableEx\n", byte_code, constant_table);
 
-    return D3DXGetShaderConstantTableEx(pFunction, 0, ppConstantTable);
+    return D3DXGetShaderConstantTableEx(byte_code, 0, constant_table);
 }
