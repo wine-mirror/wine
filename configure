@@ -803,6 +803,7 @@ with_oss
 with_png
 with_pthread
 with_sane
+with_tiff
 with_v4l
 with_xcomposite
 with_xcursor
@@ -1489,6 +1490,7 @@ Optional Packages:
   --without-png           do not use PNG
   --without-pthread       do not use the pthread library
   --without-sane          do not use SANE (scanner support)
+  --without-tiff          do not use TIFF
   --without-v4l           do not use v4l1 (v4l support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
@@ -2665,6 +2667,12 @@ fi
 # Check whether --with-sane was given.
 if test "${with_sane+set}" = set; then :
   withval=$with_sane;
+fi
+
+
+# Check whether --with-tiff was given.
+if test "${with_tiff+set}" = set; then :
+  withval=$with_tiff; if test "x$withval" = "xno"; then ac_cv_header_tiffio_h=no; fi
 fi
 
 
@@ -5814,6 +5822,7 @@ for ac_header in \
 	sys/wait.h \
 	syscall.h \
 	termios.h \
+	tiffio.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
@@ -11261,6 +11270,68 @@ if test "x$ac_cv_lib_soname_png" = "x"; then :
   xno) ;;
   *)   as_fn_error "libpng ${notice_platform}development files not found, PNG won't be supported.
 This is an error since --with-png was requested." "$LINENO" 5 ;;
+esac
+fi
+
+if test "$ac_cv_header_tiffio_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ltiff" >&5
+$as_echo_n "checking for -ltiff... " >&6; }
+if test "${ac_cv_lib_soname_tiff+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-ltiff  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TIFFClientOpen ();
+int
+main ()
+{
+return TIFFClientOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_tiff=`$ac_cv_path_LDD conftest.exe | grep "tiff" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_tiff=`otool -L conftest$ac_exeext | grep "libtiff\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libtiff\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_tiff=`$ac_cv_path_LDD conftest$ac_exeext | grep "libtiff\\.$LIBEXT" | sed -e "s/^.*\(libtiff\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_tiff" = "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_tiff" >&5
+$as_echo "$ac_cv_lib_soname_tiff" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBTIFF "$ac_cv_lib_soname_tiff"
+_ACEOF
+
+
+fi
+fi
+if test "x$ac_cv_lib_soname_tiff" = "x"; then :
+  case "x$with_tiff" in
+  x)   as_fn_append wine_notices "|libtiff ${notice_platform}development files not found, TIFF won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error "libtiff ${notice_platform}development files not found, TIFF won't be supported.
+This is an error since --with-tiff was requested." "$LINENO" 5 ;;
 esac
 fi
 

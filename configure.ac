@@ -69,6 +69,8 @@ AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
+AC_ARG_WITH(tiff,       AS_HELP_STRING([--without-tiff],[do not use TIFF]),
+            [if test "x$withval" = "xno"; then ac_cv_header_tiffio_h=no; fi])
 AC_ARG_WITH(v4l,       AS_HELP_STRING([--without-v4l],[do not use v4l1 (v4l support)]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi])
@@ -435,6 +437,7 @@ AC_CHECK_HEADERS(\
 	sys/wait.h \
 	syscall.h \
 	termios.h \
+	tiffio.h \
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
@@ -1457,6 +1460,14 @@ then
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])
+
+dnl **** Check for libtiff ****
+if test "$ac_cv_header_tiffio_h" = "yes"
+then
+    WINE_CHECK_SONAME(tiff,TIFFClientOpen)
+fi
+WINE_NOTICE_WITH(tiff,[test "x$ac_cv_lib_soname_tiff" = "x"],
+                 [libtiff ${notice_platform}development files not found, TIFF won't be supported.])
 
 dnl **** Check for mpg123 ****
 if test "$ac_cv_header_mpg123_h" = "yes"

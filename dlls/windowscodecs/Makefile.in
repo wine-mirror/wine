@@ -23,6 +23,7 @@ C_SRCS = \
 	propertybag.c \
 	regsvr.c \
 	stream.c \
+	tiffformat.c \
 	ungif.c
 
 RC_SRCS = version.rc
