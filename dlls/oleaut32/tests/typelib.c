@@ -1378,7 +1378,7 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ICreateTypeLib2_Release(createtl);
 
-    hres = LoadTypeLib(filenameW,  &tl);
+    hres = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
     ok(hres == S_OK, "got %08x\n", hres);
 
     ITypeInfo_Release(interface2);
