@@ -2108,6 +2108,8 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     if(!(calls++))
         FIXME("not implemented\n");
 
+    memset(header, 0, sizeof(MetafileHeader));
+
     return Ok;
 }
 
