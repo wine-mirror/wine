@@ -128,16 +128,28 @@ static int init_base_environment(DWORD dwKeyFlags)
     hProv = (HCRYPTPROV)INVALID_HANDLE_VALUE;
 
     result = CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
-    ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
+    ok(!result && (GetLastError()==NTE_BAD_FLAGS ||
+       broken(GetLastError() == NTE_KEYSET_NOT_DEF /* Win9x/NT4 */)),
+       "%d, %08x\n", result, GetLastError());
     
     if (!CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, 0))
     {
-        ok(GetLastError()==NTE_BAD_KEYSET, "%08x\n", GetLastError());
-        if (GetLastError()!=NTE_BAD_KEYSET) return 0;
+        ok(GetLastError()==NTE_BAD_KEYSET ||
+           broken(GetLastError() == NTE_KEYSET_NOT_DEF /* Win9x/NT4 */),
+           "%08x\n", GetLastError());
+        if (GetLastError()!=NTE_BAD_KEYSET)
+        {
+            win_skip("RSA full provider not available\n");
+            return 0;
+        }
         result = CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, 
                                      CRYPT_NEWKEYSET);
         ok(result, "%08x\n", GetLastError());
-        if (!result) return 0;
+        if (!result)
+        {
+            win_skip("Couldn't create crypto provider\n");
+            return 0;
+        }
         result = CryptGenKey(hProv, AT_KEYEXCHANGE, dwKeyFlags, &hKey);
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
