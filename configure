@@ -10119,6 +10119,9 @@ if test "${ac_cv_c_ppdev+set}" = set; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <linux/ppdev.h>
 int
 main ()

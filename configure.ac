@@ -1266,7 +1266,10 @@ test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
- AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/ppdev.h>]], [[ioctl (1,PPCLAIM,0)]])],
+ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+#include <linux/ppdev.h>]], [[ioctl (1,PPCLAIM,0)]])],
     [ac_cv_c_ppdev="yes"],[ac_cv_c_ppdev="no"]))
 if test "$ac_cv_c_ppdev" = "yes"
 then
