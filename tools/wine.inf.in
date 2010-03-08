@@ -111,6 +111,11 @@ AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=TermService,0,TerminalServices
 
+[DefaultInstall.ntamd64.Services]
+AddService=MountMgr,0x800,MountMgrService
+AddService=Spooler,0,SpoolerService
+AddService=TermService,0,TerminalServices
+
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
 Mci32Str="Software\Microsoft\Windows NT\CurrentVersion\MCI32"
