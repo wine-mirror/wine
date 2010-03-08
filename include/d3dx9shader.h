@@ -207,7 +207,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
 #define ID3DXConstantTable_SetMatrix(p,a,b,c)                         (p)->SetMatrix(a,b,c)
 #define ID3DXConstantTable_SetMatrixArray(p,a,b,c,d)                  (p)->SetMatrixArray(a,b,c,d)
 #define ID3DXConstantTable_SetMatrixPointerArray(p,a,b,c,d)           (p)->SetMatrixPointerArray(a,b,c,d)
-#define ID3DXConstantTable_SetMatrixTranspose(p,a,b,c)                (p)->>SetMatrixTranspose(a,b,c)
+#define ID3DXConstantTable_SetMatrixTranspose(p,a,b,c)                (p)->SetMatrixTranspose(a,b,c)
 #define ID3DXConstantTable_SetMatrixTransposeArray(p,a,b,c,d)         (p)->SetMatrixTransposeArray(a,b,c,d)
 #define ID3DXConstantTable_SetMatrixTransposePointerArray(p,a,b,c,d)  (p)->SetMatrixTransposePointerArray(a,b,c,d)
 #endif
