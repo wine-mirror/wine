@@ -111,11 +111,11 @@ static void test_refcount(void)
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 1, "Got refcount %d, expected 1\n", ref);
 
-    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     dxflm.lpMemory = &object;
-    dxflm.dSize = strlen(object);
+    dxflm.dSize = sizeof(object) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     ref = getRefcount( (IUnknown *) lpDirectXFile);
@@ -176,11 +176,11 @@ static void test_CreateEnumObject(void)
         return;
     }
 
-    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     dxflm.lpMemory = &object;
-    dxflm.dSize = strlen(object);
+    dxflm.dSize = sizeof(object) - 1;
     /* Check that only lowest 4 bits are relevant in DXFILELOADOPTIONS */
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, 0xFFFFFFF0 + DXFILELOAD_FROMMEMORY, &lpdxfeo);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
@@ -225,10 +225,10 @@ static void test_file_types(void)
         return;
     }
 
-    hr = IDirectXFile_RegisterTemplates(dxfile, empty_txt_file, strlen(empty_txt_file));
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_txt_file, sizeof(empty_txt_file) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
-    hr = IDirectXFile_RegisterTemplates(dxfile, empty_bin_file, strlen(empty_bin_file));
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_bin_file, sizeof(empty_bin_file) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_tzip_file, sizeof(empty_tzip_file) - 1);
@@ -237,20 +237,20 @@ static void test_file_types(void)
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_bzip_file, sizeof(empty_bzip_file) - 1);
     todo_wine ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
-    hr = IDirectXFile_RegisterTemplates(dxfile, empty_cmp_file, strlen(empty_cmp_file));
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_cmp_file, sizeof(empty_cmp_file) - 1);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
-    hr = IDirectXFile_RegisterTemplates(dxfile, empty_xxxx_file, strlen(empty_xxxx_file));
+    hr = IDirectXFile_RegisterTemplates(dxfile, empty_xxxx_file, sizeof(empty_xxxx_file) - 1);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     lminfo.lpMemory = empty_txt_file;
-    lminfo.dSize = strlen(empty_txt_file);
+    lminfo.dSize = sizeof(empty_txt_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_bin_file;
-    lminfo.dSize = strlen(empty_bin_file);
+    lminfo.dSize = sizeof(empty_bin_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
@@ -268,12 +268,12 @@ static void test_file_types(void)
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_cmp_file;
-    lminfo.dSize = strlen(empty_cmp_file);
+    lminfo.dSize = sizeof(empty_cmp_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
 
     lminfo.lpMemory = empty_xxxx_file;
-    lminfo.dSize = strlen(empty_xxxx_file);
+    lminfo.dSize = sizeof(empty_xxxx_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
 
@@ -421,7 +421,7 @@ static void test_dump(void)
         goto exit;
     }
 
-    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, pvData, strlen(pvData));
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, pvData, cbSize);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, (LPVOID)"objects.txt", DXFILELOAD_FROMFILE, &lpDirectXFileEnumObject);
