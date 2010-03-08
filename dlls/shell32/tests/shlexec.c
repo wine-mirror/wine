@@ -797,6 +797,10 @@ static const char* testfiles[]=
     "%s\\test file.sde",
     "%s\\test file.exe",
     "%s\\test2.exe",
+    "%s\\simple.shlexec",
+    "%s\\drawback_file.noassoc",
+    "%s\\drawback_file.noassoc foo.shlexec",
+    "%s\\drawback_nonexist.noassoc foo.shlexec",
     NULL
 };
 
@@ -851,6 +855,112 @@ static filename_tests_t noquotes_tests[]=
 
     {NULL, NULL, 0}
 };
+
+static void test_lpFile_parsed(void)
+{
+    /* basename tmpdir */
+    const char* shorttmpdir;
+
+    const char *testfile;
+    char fileA[MAX_PATH];
+
+    int rc;
+
+    GetTempPathA(sizeof(fileA), fileA);
+    shorttmpdir = tmpdir + strlen(fileA);
+
+    /* ensure tmpdir is in %TEMP%: GetTempPath() can succeed even if TEMP is undefined */
+    SetEnvironmentVariableA("TEMP", fileA);
+
+    /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    testfile = "%s\\drawback_file.noassoc foo.shlexec";
+    sprintf(fileA, testfile, tmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    todo_wine {
+        ok(rc>32,
+            "expected success (33), got %s (%d), lpFile: %s \n",
+            rc > 32 ? "success" : "failure", rc, fileA
+            );
+    }
+
+    /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    testfile = "\"%s\\drawback_file.noassoc foo.shlexec\"";
+    sprintf(fileA, testfile, tmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
+        "expected success (33), got %s (%d), lpFile: %s \n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+
+    /* error should be 2, not 31 */
+    testfile = "\"%s\\drawback_file.noassoc\" foo.shlexec";
+    sprintf(fileA, testfile, tmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    ok(rc==2,
+        "expected failure (2), got %s (%d), lpFile: %s \n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+
+    /* ""command"" not works on wine (and real win9x and w2k) */
+    testfile = "\"\"%s\\simple.shlexec\"\"";
+    sprintf(fileA, testfile, tmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    todo_wine {
+        ok(rc>32 || broken(rc == 2) /* Win9x/2000 */,
+            "expected success (33), got %s (%d), lpFile: %s \n",
+            rc > 32 ? "success" : "failure", rc, fileA
+            );
+    }
+
+    /* nonexisting "drawback_nonexist.noassoc" not prevents finding "drawback_nonexist.noassoc foo.shlexec" on wine */
+    testfile = "%s\\drawback_nonexist.noassoc foo.shlexec";
+    sprintf(fileA, testfile, tmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s \n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+
+    /* is SEE_MASK_DOENVSUBST default flag? Should only be when XP emulates 9x (XP bug or real 95 or ME behavior ?) */
+    testfile = "%%TEMP%%\\%s\\simple.shlexec";
+    sprintf(fileA, testfile, shorttmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    todo_wine {
+        ok(rc==2,
+            "expected failure (2), got %s (%d), lpFile: %s \n",
+            rc > 32 ? "success" : "failure", rc, fileA
+            );
+    }
+
+    /* quoted */
+    testfile = "\"%%TEMP%%\\%s\\simple.shlexec\"";
+    sprintf(fileA, testfile, shorttmpdir);
+    rc=shell_execute(NULL, fileA, NULL, NULL);
+    todo_wine {
+        ok(rc==2,
+            "expected failure (2), got %s (%d), lpFile: %s \n",
+            rc > 32 ? "success" : "failure", rc, fileA
+            );
+    }
+
+    /* test SEE_MASK_DOENVSUBST works */
+    testfile = "%%TEMP%%\\%s\\simple.shlexec";
+    sprintf(fileA, testfile, shorttmpdir);
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s \n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+
+    /* quoted lpFile not works only on real win95 and nt4 */
+    testfile = "\"%%TEMP%%\\%s\\simple.shlexec\"";
+    sprintf(fileA, testfile, shorttmpdir);
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
+    ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
+        "expected success (33), got %s (%d), lpFile: %s \n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+}
 
 static void test_filename(void)
 {
@@ -1938,6 +2048,7 @@ START_TEST(shlexec)
 
     init_test();
 
+    test_lpFile_parsed();
     test_filename();
     test_find_executable();
     test_lnks();
