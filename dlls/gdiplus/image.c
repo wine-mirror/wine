@@ -2459,6 +2459,11 @@ static GpStatus decode_image_gif(IStream* stream, REFCLSID clsid, GpImage **imag
     return decode_image_wic(stream, &CLSID_WICGifDecoder, image);
 }
 
+static GpStatus decode_image_tiff(IStream* stream, REFCLSID clsid, GpImage **image)
+{
+    return decode_image_wic(stream, &CLSID_WICTiffDecoder, image);
+}
+
 static GpStatus decode_image_olepicture_metafile(IStream* stream, REFCLSID clsid, GpImage **image)
 {
     IPicture *pic;
@@ -2505,6 +2510,7 @@ typedef enum {
     BMP,
     JPEG,
     GIF,
+    TIFF,
     EMF,
     WMF,
     PNG,
@@ -2906,6 +2912,13 @@ static const WCHAR gif_format[] = {'G','I','F',0};
 static const BYTE gif_sig_pattern[4] = "GIF8";
 static const BYTE gif_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
 
+static const WCHAR tiff_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'T','I','F','F', 0};
+static const WCHAR tiff_extension[] = {'*','.','T','I','F','F',';','*','.','T','I','F',0};
+static const WCHAR tiff_mimetype[] = {'i','m','a','g','e','/','t','i','f','f', 0};
+static const WCHAR tiff_format[] = {'T','I','F','F',0};
+static const BYTE tiff_sig_pattern[] = {0x49,0x49,42,0,0x4d,0x4d,0,42};
+static const BYTE tiff_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
 static const WCHAR emf_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'E','M','F', 0};
 static const WCHAR emf_extension[] = {'*','.','E','M','F',0};
 static const WCHAR emf_mimetype[] = {'i','m','a','g','e','/','x','-','e','m','f', 0};
@@ -2991,6 +3004,25 @@ static const struct image_codec codecs[NUM_CODECS] = {
         },
         NULL,
         decode_image_gif
+    },
+    {
+        { /* TIFF */
+            /* Clsid */              { 0x557cf405, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cb1U, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          tiff_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  tiff_format,
+            /* FilenameExtension */  tiff_extension,
+            /* MimeType */           tiff_mimetype,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           2,
+            /* SigSize */            4,
+            /* SigPattern */         tiff_sig_pattern,
+            /* SigMask */            tiff_sig_mask,
+        },
+        NULL,
+        decode_image_tiff
     },
     {
         { /* EMF */
