@@ -2517,10 +2517,11 @@ static const struct image_codec codecs[NUM_CODECS];
 static GpStatus get_decoder_info(IStream* stream, const struct image_codec **result)
 {
     BYTE signature[8];
+    const BYTE *pattern, *mask;
     LARGE_INTEGER seek;
     HRESULT hr;
     UINT bytesread;
-    int i, j;
+    int i, j, sig;
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
@@ -2528,7 +2529,7 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
     if (FAILED(hr)) return hresult_to_status(hr);
 
     /* read the first 8 bytes */
-    /* FIXME: This assumes all codecs have one signature <= 8 bytes in length */
+    /* FIXME: This assumes all codecs have signatures <= 8 bytes in length */
     hr = IStream_Read(stream, signature, 8, &bytesread);
     if (FAILED(hr)) return hresult_to_status(hr);
     if (hr == S_FALSE || bytesread == 0) return GenericError;
@@ -2537,13 +2538,18 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
         if ((codecs[i].info.Flags & ImageCodecFlagsDecoder) &&
             bytesread >= codecs[i].info.SigSize)
         {
-            for (j=0; j<codecs[i].info.SigSize; j++)
-                if ((signature[j] & codecs[i].info.SigMask[j]) != codecs[i].info.SigPattern[j])
-                    break;
-            if (j == codecs[i].info.SigSize)
+            for (sig=0; sig<codecs[i].info.SigCount; sig++)
             {
-                *result = &codecs[i];
-                return Ok;
+                pattern = &codecs[i].info.SigPattern[codecs[i].info.SigSize*sig];
+                mask = &codecs[i].info.SigMask[codecs[i].info.SigSize*sig];
+                for (j=0; j<codecs[i].info.SigSize; j++)
+                    if ((signature[j] & mask[j]) != pattern[j])
+                        break;
+                if (j == codecs[i].info.SigSize)
+                {
+                    *result = &codecs[i];
+                    return Ok;
+                }
             }
         }
     }
