@@ -43,8 +43,8 @@ static const DWORD simple_ps[] = {
 static const DWORD shader_with_ctab[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
     0x0002fffe, FCC_TEXT,   0x00000000,                                     /* TEXT comment                 */
-    0x0006fffe, FCC_CTAB,   0x0000001c, 0x00000000, 0xfffe0300, 0x00000000, /* CTAB comment                 */
-                0x00000000,
+    0x0008fffe, FCC_CTAB,   0x0000001c, 0x00000000, 0xfffe0300, 0x00000000, /* CTAB comment                 */
+                0x00000000, 0x00000000, 0x00000000,
     0x0004fffe, FCC_TEXT,   0x00000000, 0x00000000, 0x00000000,             /* TEXT comment                 */
     0x0000ffff};                                                            /* END                          */
 
@@ -111,7 +111,7 @@ static void test_find_shader_comment(void)
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     ok(data == (LPCVOID)(shader_with_ctab + 6), "Got result %p, expected %p\n", data, shader_with_ctab + 6);
-    ok(size == 20, "Got result %d, expected 20\n", size);
+    ok(size == 28, "Got result %d, expected 28\n", size);
 }
 
 static void test_get_shader_constant_table_ex(void)
@@ -139,7 +139,7 @@ static void test_get_shader_constant_table_ex(void)
     if (constant_table)
     {
         size = ID3DXConstantTable_GetBufferSize(constant_table);
-        ok(size == 20, "Got result %x, expected 20\n", size);
+        ok(size == 28, "Got result %x, expected 28\n", size);
 
         data = ID3DXConstantTable_GetBufferPointer(constant_table);
         ok(!memcmp(data, shader_with_ctab + 6, size), "Retreived wrong CTAB data\n");
