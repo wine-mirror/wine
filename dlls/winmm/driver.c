@@ -543,8 +543,6 @@ BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
     switch (uFlags & DCB_TYPEMASK) {
     case DCB_NULL:
 	TRACE("Null !\n");
-	if (dwCallBack)
-	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08lX is not null !\n", uFlags, dwCallBack);
 	break;
     case DCB_WINDOW:
 	TRACE("Window(%04lX) handle=%p!\n", dwCallBack, hDev);
@@ -556,7 +554,8 @@ BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
 	break;
     case DCB_FUNCTION:
 	TRACE("Function (32 bit) !\n");
-	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
+	if (dwCallBack)
+	    ((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
 	break;
     case DCB_EVENT:
 	TRACE("Event(%08lx) !\n", dwCallBack);
