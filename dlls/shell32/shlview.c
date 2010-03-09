@@ -2735,9 +2735,16 @@ static HRESULT WINAPI IFView_Item(IFolderView *iface, int index, PITEMID_CHILD *
 
 static HRESULT WINAPI IFView_ItemCount(IFolderView *iface, UINT flags, int *items)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%u %p), stub\n", This, flags, items);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+
+    TRACE("(%p)->(%u %p)\n", This, flags, items);
+
+    if (flags != SVGIO_ALLVIEW)
+        FIXME("some flags unsupported, %x\n", flags & ~SVGIO_ALLVIEW);
+
+    *items = SendMessageW(This->hWndList, LVM_GETITEMCOUNT, 0, 0);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFView_Items(IFolderView *iface, UINT flags, REFIID riid, void **ppv)

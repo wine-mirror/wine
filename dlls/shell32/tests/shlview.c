@@ -308,6 +308,11 @@ static const struct message folderview_getfocused_seq[] = {
     { 0 }
 };
 
+static const struct message folderview_itemcount_seq[] = {
+    { LVM_GETITEMCOUNT, sent },
+    { 0 }
+};
+
 static void test_IShellView_CreateViewWindow(void)
 {
     IShellFolder *desktop;
@@ -468,6 +473,19 @@ if (0)
     IShellFolder_Release(desktop);
     ok(ref1 == ref2, "expected same refcount, got %d\n", ref2);
     ok(desktop == folder, "\n");
+
+    /* IFolderView::ItemCount */
+if (0)
+{
+    /* crashes on XP */
+    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, NULL);
+}
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, &ret);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_itemcount_seq,
+                                  "IFolderView::ItemCount", FALSE);
 
     IShellBrowser_Release(browser);
     IFolderView_Release(fv);
