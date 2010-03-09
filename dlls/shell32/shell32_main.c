@@ -795,6 +795,13 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
     return NULL;
 }
 
+HRESULT WINAPI SHCreateFileExtractIconW(LPCWSTR file, DWORD attribs, REFIID riid, void **ppv)
+{
+  FIXME("%s, %x, %s, %p\n", debugstr_w(file), attribs, debugstr_guid(riid), ppv);
+  *ppv = NULL;
+  return E_NOTIMPL;
+}
+
 /*************************************************************************
  * Printer_LoadIconsW        [SHELL32.205]
  */
