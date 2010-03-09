@@ -16,6 +16,21 @@ bar
 ~dp0 should be directory containing batch file
 @pwd@\
 @pwd@\
+@pwd@
+%
+P
+P
+S
+P
+PS
+ERRORLEVEL
+0
+00
+0
+0%
+P0
+0S
+P0S
 ------------ Testing if/else --------------
 if/else should work with blocks
 if seems to work

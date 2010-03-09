@@ -23,6 +23,21 @@ cd dummydir
 echo %~dp0
 cd ..
 rmdir dummydir
+echo %CD%
+echo %%
+echo P%
+echo %P
+echo %UNKNOWN%S
+echo P%UNKNOWN%
+echo P%UNKNOWN%S
+echo %ERRORLEVEL
+echo %ERRORLEVEL%
+echo %ERRORLEVEL%%ERRORLEVEL%
+echo %ERRORLEVEL%%
+echo %ERRORLEVEL%%%
+echo P%ERRORLEVEL%
+echo %ERRORLEVEL%S
+echo P%ERRORLEVEL%S
 
 echo ------------ Testing if/else --------------
 echo if/else should work with blocks
