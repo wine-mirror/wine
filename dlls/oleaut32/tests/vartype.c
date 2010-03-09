@@ -5238,9 +5238,7 @@ static void test_SysAllocStringLen(void)
   if (0)
   {
   str = SysAllocStringLen(szTest, 0x80000000);
-  todo_wine {
   ok (str == NULL, "Expected NULL, got %p\n", str);
-  }
   }
   
   str = SysAllocStringLen(NULL, 0);
