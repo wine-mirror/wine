@@ -94,11 +94,11 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     WINE_MM_DRIVER_PART*	part;
     WINE_LLTYPE*		llType = &llTypes[mld->type];
 
-    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx)\n",
+    TRACE("(%s %d %u 0x%08lx 0x%08lx 0x%08lx)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2);
 
-    if (mld->uDeviceID == (UINT16)-1) {
+    if ((UINT16)mld->uDeviceID == (UINT16)-1) {
         if (llType->nMapper == -1) {
 	    WARN("uDev=-1 requested on non-mapped ll type %s\n",
 		 llTypes[mld->type].typestr);
@@ -116,7 +116,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 
     assert(part->fnMessage32);
 
-    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+    TRACE("Calling message(dev=%d msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
           mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
     ret = part->fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
     TRACE("=> %s\n", WINMM_ErrorToString(ret));
@@ -202,7 +202,6 @@ DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
             WARN("Mapper not supported for type %s\n", llTypes[mld->type].typestr);
             return MMSYSERR_BADDEVICEID;
         }
-        mld->uDeviceID = (UINT16)-1;
         mld->mmdIndex = llType->lpMlds[-1].mmdIndex;
         TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
         dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags);
@@ -403,7 +402,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
     /* re-build the translation table */
     if (lpDrv->bIsMapper) {
 	TRACE("%s:Trans[%d] -> %s\n", llTypes[type].typestr, -1, MMDrvs[llTypes[type].nMapper].drvname);
-	llTypes[type].lpMlds[-1].uDeviceID = (UINT16)-1;
+	llTypes[type].lpMlds[-1].uDeviceID = (UINT)-1;
 	llTypes[type].lpMlds[-1].type = type;
 	llTypes[type].lpMlds[-1].mmdIndex = llTypes[type].nMapper;
 	llTypes[type].lpMlds[-1].dwDriverInstance = 0;
