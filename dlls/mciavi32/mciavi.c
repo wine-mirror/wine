@@ -89,6 +89,7 @@ static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     wma->hStopEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
     wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
+    wma->dwStatus = MCI_MODE_NOT_READY;
     modp->wCustomCommandTable = wma->wCommandTable;
     modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;
     mciSetDriverData(wma->wDevID, (DWORD_PTR)wma);
@@ -301,11 +302,11 @@ DWORD MCIAVI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL) 	return MCIERR_INVALID_DEVICE_ID;
 
+    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
+
     EnterCriticalSection(&wma->cs);
 
     if (wma->nUseCount == 1) {
-	if (wma->dwStatus != MCI_MODE_STOP)
-           dwRet = MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
     	MCIAVI_CleanUp(wma);
 
 	if ((dwFlags & MCI_NOTIFY) && lpParms) {
