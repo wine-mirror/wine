@@ -599,7 +599,9 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 	{
 		/* Should *NEVER* happen */
 		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d/%d (%d/%d), primary_mixpos=%d, writepos=%d, mixlen=%d\n", primary_done,dsb->buf_mixpos,dsb->tmp_buffer_len,dsb->sec_mixpos, dsb->buflen, dsb->primary_mixpos, writepos, mixlen);
-		return 0;
+		dsb->primary_mixpos = writepos + mixlen;
+		dsb->primary_mixpos %= dsb->device->buflen;
+		return mixlen;
 	}
 
 	/* take into account already mixed data */
