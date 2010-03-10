@@ -2651,7 +2651,7 @@ static HRESULT StorageImpl_Construct(
   if (create)
   {
     ULARGE_INTEGER size;
-    BYTE bigBlockBuffer[BIG_BLOCK_SIZE];
+    BYTE bigBlockBuffer[MAX_BIG_BLOCK_SIZE];
 
     /*
      * Initialize all header variables:
@@ -2848,7 +2848,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
   StorageImpl* This)
 {
   ULONG depotBlockIndexPos;
-  BYTE depotBuffer[BIG_BLOCK_SIZE];
+  BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
   BOOL success;
   ULONG depotBlockOffset;
   ULONG blocksPerDepot    = This->bigBlockSize / sizeof(ULONG);
@@ -2983,7 +2983,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
  */
 static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex)
 {
-  BYTE blockBuffer[BIG_BLOCK_SIZE];
+  BYTE blockBuffer[MAX_BIG_BLOCK_SIZE];
 
   /*
    * Initialize blocks as free
@@ -3066,7 +3066,7 @@ static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
 {
   ULONG numExtBlocks           = This->extBigBlockDepotCount;
   ULONG nextExtBlock           = This->extBigBlockDepotStart;
-  BYTE  depotBuffer[BIG_BLOCK_SIZE];
+  BYTE  depotBuffer[MAX_BIG_BLOCK_SIZE];
   ULONG index                  = BLOCK_UNUSED;
   ULONG nextBlockOffset        = This->bigBlockSize - sizeof(ULONG);
   ULONG blocksPerDepotBlock    = This->bigBlockSize / sizeof(ULONG);
@@ -3156,7 +3156,7 @@ static HRESULT StorageImpl_GetNextBlockInChain(
   ULONG offsetInDepot    = blockIndex * sizeof (ULONG);
   ULONG depotBlockCount  = offsetInDepot / This->bigBlockSize;
   ULONG depotBlockOffset = offsetInDepot % This->bigBlockSize;
-  BYTE depotBuffer[BIG_BLOCK_SIZE];
+  BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
   BOOL success;
   ULONG depotBlockIndexPos;
   int index;
@@ -5745,7 +5745,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
 
       ULONG sbdIndex = This->parentStorage->smallBlockDepotStart;
       ULONG nextBlock, newsbdIndex;
-      BYTE smallBlockDepot[BIG_BLOCK_SIZE];
+      BYTE smallBlockDepot[MAX_BIG_BLOCK_SIZE];
 
       nextBlock = sbdIndex;
       while (nextBlock != BLOCK_END_OF_CHAIN)

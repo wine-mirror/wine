@@ -81,6 +81,9 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 
 #define HEADER_SIZE 512
 
+#define MIN_BIG_BLOCK_SIZE 0x200
+#define MAX_BIG_BLOCK_SIZE 0x1000
+
 /*
  * Type of child entry link
  */
@@ -98,7 +101,6 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
  * if the blocksize is different. Some changes will have to be done if it
  * becomes the case.
  */
-#define BIG_BLOCK_SIZE           0x200
 #define COUNT_BBDEPOTINHEADER    109
 #define LIMIT_TO_USE_SMALL_BLOCK 0x1000
 #define NUM_BLOCKS_PER_DEPOT_BLOCK 128
