@@ -3399,29 +3399,35 @@ static HRESULT StorageImpl_LoadFileHeader(
 /******************************************************************************
  *      Storage32Impl_SaveFileHeader
  *
- * This method will save to the file the header, i.e. big block -1.
+ * This method will save to the file the header
  */
 static void StorageImpl_SaveFileHeader(
           StorageImpl* This)
 {
-  BYTE   headerBigBlock[BIG_BLOCK_SIZE];
+  BYTE   headerBigBlock[HEADER_SIZE];
   int    index;
-  BOOL success;
+  HRESULT hr;
+  ULARGE_INTEGER offset;
+  DWORD bytes_read, bytes_written;
 
   /*
    * Get a pointer to the big block of data containing the header.
    */
-  success = StorageImpl_ReadBigBlock(This, -1, headerBigBlock);
+  offset.u.HighPart = 0;
+  offset.u.LowPart = 0;
+  hr = StorageImpl_ReadAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_read);
+  if (SUCCEEDED(hr) && bytes_read != HEADER_SIZE)
+    hr = STG_E_FILENOTFOUND;
 
   /*
    * If the block read failed, the file is probably new.
    */
-  if (!success)
+  if (FAILED(hr))
   {
     /*
      * Initialize for all unknown fields.
      */
-    memset(headerBigBlock, 0, BIG_BLOCK_SIZE);
+    memset(headerBigBlock, 0, HEADER_SIZE);
 
     /*
      * Initialize the magic number.
@@ -3492,7 +3498,7 @@ static void StorageImpl_SaveFileHeader(
   /*
    * Write the big block back to the file.
    */
-  StorageImpl_WriteBigBlock(This, -1, headerBigBlock);
+  StorageImpl_WriteAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_written);
 }
 
 /******************************************************************************
