@@ -269,14 +269,9 @@ static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 ** Block Functions
 */
 
-static ULONG BLOCK_GetBigBlockOffset(ULONG index)
+static ULONG StorageImpl_GetBigBlockOffset(StorageImpl* This, ULONG index)
 {
-    if (index == 0xffffffff)
-        index = 0;
-    else
-        index ++;
-
-    return index * BIG_BLOCK_SIZE;
+    return (index+1) * This->bigBlockSize;
 }
 
 /************************************************************************
@@ -3740,7 +3735,7 @@ static BOOL StorageImpl_ReadBigBlock(
   DWORD  read;
 
   ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex);
+  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
   StorageImpl_ReadAt(This, ulOffset, buffer, This->bigBlockSize, &read);
   return (read == This->bigBlockSize);
@@ -3757,7 +3752,7 @@ static BOOL StorageImpl_ReadDWordFromBigBlock(
   DWORD  tmp;
 
   ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex);
+  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
   ulOffset.u.LowPart += offset;
 
   StorageImpl_ReadAt(This, ulOffset, &tmp, sizeof(DWORD), &read);
@@ -3774,7 +3769,7 @@ static BOOL StorageImpl_WriteBigBlock(
   DWORD  wrote;
 
   ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex);
+  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
   StorageImpl_WriteAt(This, ulOffset, buffer, This->bigBlockSize, &wrote);
   return (wrote == This->bigBlockSize);
@@ -3790,7 +3785,7 @@ static BOOL StorageImpl_WriteDWordToBigBlock(
   DWORD  wrote;
 
   ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex);
+  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
   ulOffset.u.LowPart += offset;
 
   value = htole32(value);
@@ -5180,7 +5175,7 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
 
      TRACE("block %i\n",blockIndex);
      ulOffset.u.HighPart = 0;
-     ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex) +
+     ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
                              offsetInBlock;
 
      StorageImpl_ReadAt(This->parentStorage,
@@ -5276,7 +5271,7 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
 
     TRACE("block %i\n",blockIndex);
     ulOffset.u.HighPart = 0;
-    ulOffset.u.LowPart = BLOCK_GetBigBlockOffset(blockIndex) +
+    ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
                              offsetInBlock;
 
     StorageImpl_WriteAt(This->parentStorage,
