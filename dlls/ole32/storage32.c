@@ -3159,7 +3159,7 @@ static HRESULT StorageImpl_GetNextBlockInChain(
   BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
   BOOL success;
   ULONG depotBlockIndexPos;
-  int index;
+  int index, num_blocks;
 
   *nextBlockIndex   = BLOCK_SPECIAL;
 
@@ -3194,7 +3194,9 @@ static HRESULT StorageImpl_GetNextBlockInChain(
     if (!success)
       return STG_E_READFAULT;
 
-    for (index = 0; index < NUM_BLOCKS_PER_DEPOT_BLOCK; index++)
+    num_blocks = This->bigBlockSize / 4;
+
+    for (index = 0; index < num_blocks; index++)
     {
       StorageUtl_ReadDWord(depotBuffer, index*sizeof(ULONG), nextBlockIndex);
       This->blockDepotCached[index] = *nextBlockIndex;
