@@ -3290,26 +3290,31 @@ static void StorageImpl_SetNextBlockInChain(
 /******************************************************************************
  *      Storage32Impl_LoadFileHeader
  *
- * This method will read in the file header, i.e. big block index -1.
+ * This method will read in the file header
  */
 static HRESULT StorageImpl_LoadFileHeader(
           StorageImpl* This)
 {
-  HRESULT hr = STG_E_FILENOTFOUND;
-  BYTE    headerBigBlock[BIG_BLOCK_SIZE];
-  BOOL    success;
+  HRESULT hr;
+  BYTE    headerBigBlock[HEADER_SIZE];
   int     index;
+  ULARGE_INTEGER offset;
+  DWORD bytes_read;
 
   TRACE("\n");
   /*
    * Get a pointer to the big block of data containing the header.
    */
-  success = StorageImpl_ReadBigBlock(This, -1, headerBigBlock);
+  offset.u.HighPart = 0;
+  offset.u.LowPart = 0;
+  hr = StorageImpl_ReadAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_read);
+  if (SUCCEEDED(hr) && bytes_read != HEADER_SIZE)
+    hr = STG_E_FILENOTFOUND;
 
   /*
    * Extract the information from the header.
    */
-  if (success)
+  if (SUCCEEDED(hr))
   {
     /*
      * Check for the "magic number" signature and return an error if it is not

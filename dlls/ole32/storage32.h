@@ -79,6 +79,8 @@ static const ULONG DIRENTRY_NULL             = 0xFFFFFFFF;
 
 #define RAW_DIRENTRY_SIZE 0x00000080
 
+#define HEADER_SIZE 512
+
 /*
  * Type of child entry link
  */
