@@ -483,6 +483,8 @@ static DWORD MCICDA_Close(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParm
 
     if (wmcda == NULL) 	return MCIERR_INVALID_DEVICE_ID;
 
+    MCICDA_Stop(wDevID, MCI_WAIT, NULL);
+
     if (--wmcda->nUseCount == 0) {
 	CloseHandle(wmcda->handle);
     }
