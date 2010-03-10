@@ -63,18 +63,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 /* We map in PAGE_SIZE-sized chunks. Must be a multiple of 4096. */
 #define PAGE_SIZE       131072
 
-#define BLOCKS_PER_PAGE (PAGE_SIZE / BIG_BLOCK_SIZE)
-
 /* We keep a list of recently-discarded pages. This controls the
  * size of that list. */
 #define MAX_VICTIM_PAGES 16
-
-/* This structure provides one bit for each block in a page.
- * Use BIGBLOCKFILE_{Test,Set,Clear}Bit to manipulate it. */
-typedef struct
-{
-    unsigned int bits[BLOCKS_PER_PAGE / (CHAR_BIT * sizeof(unsigned int))];
-} BlockBits;
 
 /***
  * This structure identifies the paged that are mapped
@@ -96,9 +87,6 @@ struct MappedPage
     DWORD  mapped_bytes;
     LPVOID lpBytes;
     LONG   refcnt;
-
-    BlockBits readable_blocks;
-    BlockBits writable_blocks;
 };
 
 struct BigBlockFile
@@ -122,39 +110,6 @@ struct BigBlockFile
 /* Note that this evaluates a and b multiple times, so don't
  * pass expressions with side effects. */
 #define ROUND_UP(a, b) ((((a) + (b) - 1)/(b))*(b))
-
-/***********************************************************
- * Blockbits functions.
- */
-static inline BOOL BIGBLOCKFILE_TestBit(const BlockBits *bb,
-					unsigned int index)
-{
-    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
-    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
-
-    return bb->bits[array_index] & (1 << bit_index);
-}
-
-static inline void BIGBLOCKFILE_SetBit(BlockBits *bb, unsigned int index)
-{
-    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
-    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
-
-    bb->bits[array_index] |= (1 << bit_index);
-}
-
-static inline void BIGBLOCKFILE_ClearBit(BlockBits *bb, unsigned int index)
-{
-    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
-    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
-
-    bb->bits[array_index] &= ~(1 << bit_index);
-}
-
-static inline void BIGBLOCKFILE_Zero(BlockBits *bb)
-{
-    memset(bb->bits, 0, sizeof(bb->bits));
-}
 
 /******************************************************************************
  *      BIGBLOCKFILE_FileInit
@@ -302,9 +257,6 @@ static MappedPage *BIGBLOCKFILE_CreatePage(BigBlockFile *This, ULONG page_index)
         return NULL;
     }
 
-    BIGBLOCKFILE_Zero(&page->readable_blocks);
-    BIGBLOCKFILE_Zero(&page->writable_blocks);
-
     return page;
 }
 
@@ -328,9 +280,6 @@ static void * BIGBLOCKFILE_GetMappedView(
 	if (page)
 	{
 	    This->num_victim_pages--;
-
-	    BIGBLOCKFILE_Zero(&page->readable_blocks);
-	    BIGBLOCKFILE_Zero(&page->writable_blocks);
 	}
     }
 
