@@ -3381,7 +3381,7 @@ static HRESULT StorageImpl_LoadFileHeader(
      * Right now, the code is making some assumptions about the size of the
      * blocks, just make sure they are what we're expecting.
      */
-    if (This->bigBlockSize != DEF_BIG_BLOCK_SIZE ||
+    if ((This->bigBlockSize != MIN_BIG_BLOCK_SIZE && This->bigBlockSize != MAX_BIG_BLOCK_SIZE) ||
 	This->smallBlockSize != DEF_SMALL_BLOCK_SIZE)
     {
 	WARN("Broken OLE storage file\n");
