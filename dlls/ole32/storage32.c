@@ -2639,7 +2639,6 @@ static HRESULT StorageImpl_Construct(
   This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile,
                                                 pLkbyt,
                                                 openFlags,
-                                                This->bigBlockSize,
                                                 fileBased);
 
   if (This->bigBlockFile == 0)
@@ -2855,6 +2854,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
   ULONG nextBlockIndex    = BLOCK_SPECIAL;
   int   depotIndex        = 0;
   ULONG freeBlock         = BLOCK_UNUSED;
+  ULARGE_INTEGER neededSize;
 
   depotIndex = This->prevFreeBlock / blocksPerDepot;
   depotBlockOffset = (This->prevFreeBlock % blocksPerDepot) * sizeof(ULONG);
@@ -2968,7 +2968,8 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
   /*
    * make sure that the block physically exists before using it
    */
-  BIGBLOCKFILE_EnsureExists(This->bigBlockFile, freeBlock);
+  neededSize.QuadPart = StorageImpl_GetBigBlockOffset(This, freeBlock)+This->bigBlockSize;
+  BIGBLOCKFILE_Expand(This->bigBlockFile, neededSize);
 
   This->prevFreeBlock = freeBlock;
 

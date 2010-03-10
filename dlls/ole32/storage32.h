@@ -161,10 +161,9 @@ typedef struct BigBlockFile BigBlockFile,*LPBIGBLOCKFILE;
 BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
                                       ILockBytes* pLkByt,
                                       DWORD openFlags,
-                                      ULONG blocksize,
                                       BOOL fileBased);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
-HRESULT        BIGBLOCKFILE_EnsureExists(LPBIGBLOCKFILE This, ULONG index);
+HRESULT        BIGBLOCKFILE_Expand(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
 HRESULT        BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
 HRESULT        BIGBLOCKFILE_ReadAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
            void* buffer, ULONG size, ULONG* bytesRead);

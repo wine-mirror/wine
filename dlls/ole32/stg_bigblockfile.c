@@ -93,7 +93,6 @@ struct BigBlockFile
 {
     BOOL fileBased;
     ULARGE_INTEGER filesize;
-    ULONG blocksize;
     HANDLE hfile;
     HANDLE hfilemap;
     DWORD flProtect;
@@ -658,7 +657,7 @@ static HRESULT ImplBIGBLOCKFILE_WriteAt(
  * and the blocks in use list.
  */
 BigBlockFile *BIGBLOCKFILE_Construct(HANDLE hFile, ILockBytes* pLkByt, DWORD openFlags,
-                                     ULONG blocksize, BOOL fileBased)
+                                     BOOL fileBased)
 {
     BigBlockFile *This;
 
@@ -669,7 +668,6 @@ BigBlockFile *BIGBLOCKFILE_Construct(HANDLE hFile, ILockBytes* pLkByt, DWORD ope
 
     This->fileBased = fileBased;
     This->flProtect = BIGBLOCKFILE_GetProtectMode(openFlags);
-    This->blocksize = blocksize;
 
     This->maplist = NULL;
     This->victimhead = NULL;
@@ -812,31 +810,19 @@ static HRESULT BIGBLOCKFILE_GetSize(BigBlockFile *This, ULARGE_INTEGER *size)
 }
 
 /******************************************************************************
- *      BIGBLOCKFILE_EnsureExists
+ *      BIGBLOCKFILE_Expand
  *
- * Grows the file if necessary to make sure the block is valid.
+ * Grows the file to the specified size if necessary.
  */
-HRESULT BIGBLOCKFILE_EnsureExists(BigBlockFile *This, ULONG index)
+HRESULT BIGBLOCKFILE_Expand(BigBlockFile *This, ULARGE_INTEGER newSize)
 {
     ULARGE_INTEGER size;
     HRESULT hr;
 
-    /* Block index starts at -1 translate to zero based index */
-    if (index == 0xffffffff)
-        index = 0;
-    else
-        index++;
-
     hr = BIGBLOCKFILE_GetSize(This, &size);
     if(FAILED(hr)) return hr;
 
-    /* make sure that the block physically exists */
-    if ((This->blocksize * (index + 1)) > size.QuadPart)
-    {
-        ULARGE_INTEGER newSize;
-
-        newSize.QuadPart = This->blocksize * (index + 1);
+    if (newSize.QuadPart > size.QuadPart)
         hr = BIGBLOCKFILE_SetSize(This, newSize);
-    }
     return hr;
 }
