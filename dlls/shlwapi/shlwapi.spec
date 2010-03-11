@@ -473,7 +473,7 @@
 473 stub -noname SHGetIniStringUTF7W
 474 stub -noname SHSetIniStringUTF7W
 475 stdcall -noname GetShellSecurityDescriptor(ptr long)
-476 stub -noname SHGetObjectCompatFlags
+476 stdcall -noname SHGetObjectCompatFlags(ptr ptr)
 477 stub -noname SHCreatePropertyBagOnMemory
 478 stdcall -noname IUnknown_TranslateAcceleratorIO(ptr ptr)
 479 stdcall -noname IUnknown_UIActivateIO(ptr long ptr)
