@@ -2407,17 +2407,25 @@ static HRESULT WINAPI ISVDropTarget_DragOver(IDropTarget *iface, DWORD grfKeySta
     return drag_notify_subitem(This, grfKeyState, pt, pdwEffect);
 }
 
-static HRESULT WINAPI ISVDropTarget_DragLeave(IDropTarget *iface) {
+static HRESULT WINAPI ISVDropTarget_DragLeave(IDropTarget *iface)
+{
     IShellViewImpl *This = impl_from_IDropTarget(iface);
 
-    IDropTarget_DragLeave(This->pCurDropTarget);
+    if (This->pCurDropTarget)
+    {
+        IDropTarget_DragLeave(This->pCurDropTarget);
+        IDropTarget_Release(This->pCurDropTarget);
+        This->pCurDropTarget = NULL;
+    }
 
-    IDropTarget_Release(This->pCurDropTarget);
-    IDataObject_Release(This->pCurDataObject);
-    This->pCurDataObject = NULL;
-    This->pCurDropTarget = NULL;
+    if (This->pCurDataObject)
+    {
+        IDataObject_Release(This->pCurDataObject);
+        This->pCurDataObject = NULL;
+    }
+
     This->iDragOverItem = 0;
-     
+
     return S_OK;
 }
 

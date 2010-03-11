@@ -318,6 +318,7 @@ static void test_IShellView_CreateViewWindow(void)
     IShellFolder *desktop;
     FOLDERSETTINGS settings;
     IShellView *view;
+    IDropTarget *dt;
     HWND hwnd_view;
     HRESULT hr;
     RECT r = {0};
@@ -345,6 +346,13 @@ if (0)
     hr = IShellView_CreateViewWindow(view, NULL, &settings, NULL, &r, &hwnd_view);
     ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
     ok(hwnd_view == 0, "got %p\n", hwnd_view);
+
+    /* ::DragLeave without drag operation */
+    hr = IShellView_QueryInterface(view, &IID_IDropTarget, (void**)&dt);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    hr = IDropTarget_DragLeave(dt);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    IDropTarget_Release(dt);
 
     IShellView_Release(view);
     IShellFolder_Release(desktop);
