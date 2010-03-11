@@ -2478,6 +2478,8 @@ struct wined3d_map_range
 #define WINED3D_BUFFER_CREATEBO     0x04    /* Attempt to create a buffer object next PreLoad */
 #define WINED3D_BUFFER_DOUBLEBUFFER 0x08    /* Use a vbo and local allocated memory */
 #define WINED3D_BUFFER_FLUSH        0x10    /* Manual unmap flushing */
+#define WINED3D_BUFFER_DISCARD      0x20    /* A DISCARD lock has occured since the last PreLoad */
+#define WINED3D_BUFFER_NOSYNC       0x40    /* All locks since the last PreLoad had NOOVERWRITE set */
 
 struct wined3d_buffer
 {
