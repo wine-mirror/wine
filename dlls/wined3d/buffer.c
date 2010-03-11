@@ -1033,7 +1033,7 @@ static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *ifac
 
 /* IWineD3DBuffer methods */
 
-static DWORD buffer_sanitize_flags(DWORD flags)
+static DWORD buffer_sanitize_flags(struct wined3d_buffer *buffer, DWORD flags)
 {
     /* Not all flags make sense together, but Windows never returns an error. Catch the
      * cases that could cause issues */
@@ -1053,6 +1053,11 @@ static DWORD buffer_sanitize_flags(DWORD flags)
     else if((flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE)) == (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE))
     {
         WARN("WINED3DLOCK_DISCARD and WINED3DLOCK_NOOVERWRITE used together, ignoring\n");
+        return 0;
+    }
+    else if (flags & (WINED3DLOCK_DISCARD | WINED3DLOCK_NOOVERWRITE) && !(buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
+    {
+        WARN("DISCARD or NOOVERWRITE lock on non-dynamic buffer, ignoring\n");
         return 0;
     }
 
@@ -1085,7 +1090,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
 
-    flags = buffer_sanitize_flags(flags);
+    flags = buffer_sanitize_flags(This, flags);
     if (!(flags & WINED3DLOCK_READONLY))
     {
         if (!buffer_add_dirty_area(This, offset, size)) return E_OUTOFMEMORY;
