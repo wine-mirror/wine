@@ -1186,6 +1186,21 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
                     This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
                 }
                 LEAVE_GL();
+
+                if (((DWORD_PTR) This->resource.allocatedMemory) & (RESOURCE_ALIGNMENT - 1))
+                {
+                    WARN("Pointer %p is not %u byte aligned, falling back to double buffered operation\n",
+                        This->resource.allocatedMemory, RESOURCE_ALIGNMENT);
+
+                    ENTER_GL();
+                    GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+                    checkGLcall("glUnmapBufferARB");
+                    LEAVE_GL();
+                    This->resource.allocatedMemory = NULL;
+
+                    buffer_get_sysmem(This);
+                    TRACE("New pointer is %p\n", This->resource.allocatedMemory);
+                }
                 context_release(context);
             }
         }
