@@ -1798,7 +1798,7 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
         const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;
 
 /* Tests show that the start address of resources is 32 byte aligned */
-#define RESOURCE_ALIGNMENT 32
+#define RESOURCE_ALIGNMENT 16
 
 /*****************************************************************************
  * IWineD3DBaseTexture D3D- > openGL state map lookups

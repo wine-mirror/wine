@@ -137,6 +137,7 @@ static void test_vertex_buffer_alignment(IDirect3DDevice9 *device)
     DWORD sizes[] = {1, 4, 16, 17, 32, 33, 64, 65, 1024, 1025, 1048576, 1048577};
     unsigned int i, j;
     void *data;
+    unsigned int align = 16;
 
     for(i = 0; i < (sizeof(sizes) / sizeof(sizes[0])); i++)
     {
@@ -156,8 +157,8 @@ static void test_vertex_buffer_alignment(IDirect3DDevice9 *device)
 
             hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, 0);
             ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Lock failed (0x%08x)\n", hr);
-            ok(((DWORD_PTR) data & 31) == 0, "Vertex buffer start address is not 32 byte aligned(size: %d, pool: %s, data: %p)\n",
-               sizes[i], debug_d3dpool(pools[j]), data);
+            ok(((DWORD_PTR) data & (align - 1)) == 0, "Vertex buffer start address is not %u byte aligned(size: %d, pool: %s, data: %p)\n",
+               align, sizes[i], debug_d3dpool(pools[j]), data);
             hr = IDirect3DVertexBuffer9_Unlock(buffer);
             ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Unlock failed (0x%08x)\n", hr);
 
