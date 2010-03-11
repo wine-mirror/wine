@@ -900,6 +900,19 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
             goto end;
         }
         buffer_check_buffer_object_size(This);
+
+        /* The declaration changed, reload the whole buffer */
+        WARN("Reloading buffer because of decl change\n");
+        buffer_clear_dirty_areas(This);
+        if(!buffer_add_dirty_area(This, 0, 0))
+        {
+            ERR("buffer_add_dirty_area failed, this is not expected\n");
+            return;
+        }
+        /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
+         * cleared for unsynchronized updates
+         */
+        flags = 0;
     }
     else
     {
@@ -925,22 +938,6 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
             if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
             if (This->draw_count > VB_RESETFULLCONVS) This->full_conversion_count = 0;
         }
-    }
-
-    if (decl_changed)
-    {
-        /* The declaration changed, reload the whole buffer */
-        WARN("Reloading buffer because of decl change\n");
-        buffer_clear_dirty_areas(This);
-        if(!buffer_add_dirty_area(This, 0, 0))
-        {
-            ERR("buffer_add_dirty_area failed, this is not expected\n");
-            return;
-        }
-        /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
-         * cleared for unsynchronized updates
-         */
-        flags = 0;
     }
 
     if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
