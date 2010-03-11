@@ -570,7 +570,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         /* Use the callback to create the texture surface. */
         hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_h, format_desc->format,
                 usage, pool, i, WINED3DCUBEMAP_FACE_POSITIVE_X, &texture->surfaces[i]);
-        if (FAILED(hr) || ((IWineD3DSurfaceImpl *)texture->surfaces[i])->Flags & SFLAG_OVERSIZE)
+        if (FAILED(hr))
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);
             texture->surfaces[i] = NULL;

@@ -2159,7 +2159,6 @@ void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *h
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
-#define SFLAG_OVERSIZE      0x00000001 /* Surface is bigger than gl size, blts only */
 #define SFLAG_CONVERTED     0x00000002 /* Converted for color keying or Palettized */
 #define SFLAG_DIBSECTION    0x00000004 /* Has a DIB section attached for GetDC */
 #define SFLAG_LOCKABLE      0x00000008 /* Surface can be locked */
@@ -2186,7 +2185,6 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPE
 #define SFLAG_SWAPCHAIN     0x01000000 /* The surface is part of a swapchain */
 
 /* In some conditions the surface memory must not be freed:
- * SFLAG_OVERSIZE: Not all data can be kept in GL
  * SFLAG_CONVERTED: Converting the data back would take too long
  * SFLAG_DIBSECTION: The dib code manages the memory
  * SFLAG_LOCKED: The app requires access to the surface data
@@ -2194,8 +2192,7 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPE
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
-#define SFLAG_DONOTFREE     (SFLAG_OVERSIZE   | \
-                             SFLAG_CONVERTED  | \
+#define SFLAG_DONOTFREE     (SFLAG_CONVERTED  | \
                              SFLAG_DIBSECTION | \
                              SFLAG_LOCKED     | \
                              SFLAG_DYNLOCK    | \

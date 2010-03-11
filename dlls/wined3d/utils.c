@@ -2276,10 +2276,8 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
  *********************************************************************/
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4])
 {
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
     int x1 = Rect->left, x2 = Rect->right;
     int y1 = Rect->top, y2 = Rect->bottom;
-    GLint maxSize = gl_info->limits.texture_size;
 
     TRACE("(%p)->(%d,%d)-(%d,%d)\n", This,
           Rect->left, Rect->top, Rect->right, Rect->bottom);
@@ -2294,107 +2292,18 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
         y2 = Rect->top;
     }
 
-    /* No oversized texture? This is easy */
-    if(!(This->Flags & SFLAG_OVERSIZE)) {
-        /* Which rect from the texture do I need? */
-        if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            glTexCoord[0] = (float) Rect->left;
-            glTexCoord[2] = (float) Rect->top;
-            glTexCoord[1] = (float) Rect->right;
-            glTexCoord[3] = (float) Rect->bottom;
-        } else {
-            glTexCoord[0] = (float) Rect->left / (float) This->pow2Width;
-            glTexCoord[2] = (float) Rect->top / (float) This->pow2Height;
-            glTexCoord[1] = (float) Rect->right / (float) This->pow2Width;
-            glTexCoord[3] = (float) Rect->bottom / (float) This->pow2Height;
-        }
-
-        return TRUE;
+    /* Which rect from the texture do I need? */
+    if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
+    {
+        glTexCoord[0] = (float) Rect->left;
+        glTexCoord[2] = (float) Rect->top;
+        glTexCoord[1] = (float) Rect->right;
+        glTexCoord[3] = (float) Rect->bottom;
     } else {
-        /* Check if we can succeed at all */
-        if( (x2 - x1) > maxSize ||
-            (y2 - y1) > maxSize ) {
-            TRACE("Requested rectangle is too large for gl\n");
-            return FALSE;
-        }
-
-        /* A part of the texture has to be picked. First, check if
-         * some texture part is loaded already, if yes try to re-use it.
-         * If the texture is dirty, or the part can't be used,
-         * re-position the part to load
-         */
-        if(This->Flags & SFLAG_INTEXTURE) {
-            if(This->glRect.left <= x1 && This->glRect.right >= x2 &&
-               This->glRect.top <= y1 && This->glRect.bottom >= x2 ) {
-                /* Ok, the rectangle is ok, re-use it */
-                TRACE("Using existing gl Texture\n");
-            } else {
-                /* Rectangle is not ok, dirtify the texture to reload it */
-                TRACE("Dirtifying texture to force reload\n");
-                This->Flags &= ~SFLAG_INTEXTURE;
-            }
-        }
-
-        /* Now if we are dirty(no else if!) */
-        if(!(This->Flags & SFLAG_INTEXTURE)) {
-            /* Set the new rectangle. Use the following strategy:
-             * 1) Use as big textures as possible.
-             * 2) Place the texture part in the way that the requested
-             *    part is in the middle of the texture(well, almost)
-             * 3) If the texture is moved over the edges of the
-             *    surface, replace it nicely
-             * 4) If the coord is not limiting the texture size,
-             *    use the whole size
-             */
-            if((This->pow2Width) > maxSize) {
-                This->glRect.left = x1 - maxSize / 2;
-                if(This->glRect.left < 0) {
-                    This->glRect.left = 0;
-                }
-                This->glRect.right = This->glRect.left + maxSize;
-                if(This->glRect.right > This->currentDesc.Width) {
-                    This->glRect.right = This->currentDesc.Width;
-                    This->glRect.left = This->glRect.right - maxSize;
-                }
-            } else {
-                This->glRect.left = 0;
-                This->glRect.right = This->pow2Width;
-            }
-
-            if (This->pow2Height > maxSize)
-            {
-                This->glRect.top = x1 - gl_info->limits.texture_size / 2;
-                if(This->glRect.top < 0) This->glRect.top = 0;
-                This->glRect.bottom = This->glRect.left + maxSize;
-                if(This->glRect.bottom > This->currentDesc.Height) {
-                    This->glRect.bottom = This->currentDesc.Height;
-                    This->glRect.top = This->glRect.bottom - maxSize;
-                }
-            } else {
-                This->glRect.top = 0;
-                This->glRect.bottom = This->pow2Height;
-            }
-            TRACE("(%p): Using rect (%d,%d)-(%d,%d)\n", This,
-                   This->glRect.left, This->glRect.top, This->glRect.right, This->glRect.bottom);
-        }
-
-        /* Re-calculate the rect to draw */
-        Rect->left -= This->glRect.left;
-        Rect->right -= This->glRect.left;
-        Rect->top -= This->glRect.top;
-        Rect->bottom -= This->glRect.top;
-
-        /* Get the gl coordinates. The gl rectangle is a power of 2, eigher the max size,
-         * or the pow2Width / pow2Height of the surface.
-         *
-         * Can never be GL_TEXTURE_RECTANGLE_ARB because oversized surfaces are always set up
-         * as regular GL_TEXTURE_2D.
-         */
-        glTexCoord[0] = (float) Rect->left / (float) (This->glRect.right - This->glRect.left);
-        glTexCoord[2] = (float) Rect->top / (float) (This->glRect.bottom - This->glRect.top);
-        glTexCoord[1] = (float) Rect->right / (float) (This->glRect.right - This->glRect.left);
-        glTexCoord[3] = (float) Rect->bottom / (float) (This->glRect.bottom - This->glRect.top);
+        glTexCoord[0] = (float) Rect->left / (float) This->pow2Width;
+        glTexCoord[2] = (float) Rect->top / (float) This->pow2Height;
+        glTexCoord[1] = (float) Rect->right / (float) This->pow2Width;
+        glTexCoord[3] = (float) Rect->bottom / (float) This->pow2Height;
     }
     return TRUE;
 }

@@ -719,11 +719,10 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
-        if(This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_OVERSIZE | SFLAG_CONVERTED) || This->resource.allocatedMemory == NULL) {
+        if(This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED) || This->resource.allocatedMemory == NULL) {
             /* In some cases we want to disable client storage.
              * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
              * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
-             * SFLAG_OVERSIZE: The gl texture is smaller than the allocated memory
              * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
              * allocatedMemory == NULL: Not defined in the extension. Seems to disable client storage effectively
              */
@@ -1419,7 +1418,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, BOOL srgb)
     if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
     else surface->Flags &= ~SFLAG_CONVERTED;
 
-    if ((surface->Flags & SFLAG_NONPOW2) && !(surface->Flags & SFLAG_OVERSIZE))
+    if (surface->Flags & SFLAG_NONPOW2)
     {
         width = surface->pow2Width;
         height = surface->pow2Height;
@@ -4420,9 +4419,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         3:    WARN and return WINED3DERR_NOTAVAILABLE;
         4: Create the surface, but allow it to be used only for DirectDraw Blts. Some apps(e.g. Swat 3) create textures with a Height of 16 and a Width > 3000 and blt 16x16 letter areas from them to the render target.
         */
-        WARN("(%p) Creating an oversized surface: %ux%u (texture is %ux%u)\n",
-             This, This->pow2Width, This->pow2Height, This->currentDesc.Width, This->currentDesc.Height);
-        This->Flags |= SFLAG_OVERSIZE;
+        if(This->resource.pool == WINED3DPOOL_DEFAULT || This->resource.pool == WINED3DPOOL_MANAGED)
+        {
+            WARN("(%p) Unable to allocate a surface which exceeds the maximum OpenGL texture size\n", This);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        /* We should never use this surface in combination with OpenGL! */
+        TRACE("(%p) Creating an oversized surface: %ux%u\n", This, This->pow2Width, This->pow2Height);
 
         /* This will be initialized on the first blt */
         This->glRect.left = 0;
@@ -4430,8 +4434,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.right = 0;
         This->glRect.bottom = 0;
     } else {
-        /* Check this after the oversize check - do not make an oversized surface a texture_rectangle one.
-           Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
+        /* Don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
            is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
            doesn't work in combination with ARB_TEXTURE_RECTANGLE.
         */
@@ -4446,8 +4449,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
             This->Flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
         }
 
-        /* No oversize, gl rect is the full texture size */
-        This->Flags &= ~SFLAG_OVERSIZE;
         This->glRect.left = 0;
         This->glRect.top = 0;
         This->glRect.right = This->pow2Width;
@@ -5001,7 +5002,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
             LEAVE_GL();
 
-            if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
+            if (This->Flags & SFLAG_NONPOW2) {
                 TRACE("non power of two support\n");
                 if (mem || (This->Flags & SFLAG_PBO)) {
                     surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
