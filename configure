@@ -13429,6 +13429,23 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_hwaddr" "ac_cv_member_struct_ifreq_ifr_hwaddr" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+"
+if test "x$ac_cv_member_struct_ifreq_ifr_hwaddr" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_IFREQ_IFR_HWADDR 1
+_ACEOF
+
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for timezone variable" >&5
 $as_echo_n "checking for timezone variable... " >&6; }
 if test "${ac_cv_have_timezone+set}" = set; then :

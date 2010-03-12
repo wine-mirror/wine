@@ -298,7 +298,7 @@ static DWORD getInterfaceMaskByName(const char *name)
   return ret;
 }
 
-#if defined (SIOCGIFHWADDR)
+#if defined (SIOCGIFHWADDR) && defined (HAVE_STRUCT_IFREQ_IFR_HWADDR)
 static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
  PDWORD type)
 {
