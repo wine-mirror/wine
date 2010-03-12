@@ -542,6 +542,14 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   HRESULT res;
   DWORD dwSize;
 
+  dwSize = 1;
+  res = pUrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
+  ok(res == E_POINTER, "UrlGetPart for \"%s\" gave: 0x%08x\n", szUrl, res);
+  ok(dwSize == strlen(szExpected)+1 ||
+          (*szExpected == '?' && dwSize == strlen(szExpected)),
+          "UrlGetPart for \"%s\" gave size: %d, expected: %d\n",
+          szUrl, dwSize, (*szExpected == '?' ? strlen(szExpected) : strlen(szExpected) + 1));
+
   dwSize = INTERNET_MAX_URL_LENGTH;
   res = pUrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
   ok(res == S_OK,
@@ -575,6 +583,7 @@ static void test_UrlGetPart(void)
 {
   const char* file_url = "file://h o s t/c:/windows/file";
   const char* http_url = "http://user:pass 123@www.wine hq.org";
+  const char* res_url = "res://some.dll/find.dlg";
   const char* about_url = "about:blank";
 
   CHAR szPart[INTERNET_MAX_URL_LENGTH];
@@ -586,20 +595,38 @@ static void test_UrlGetPart(void)
     return;
   }
 
+  res = pUrlGetPartA(NULL, NULL, NULL, URL_PART_SCHEME, 0);
+  ok(res == E_INVALIDARG, "null params gave: 0x%08x\n", res);
+
+  res = pUrlGetPartA(NULL, szPart, &dwSize, URL_PART_SCHEME, 0);
+  ok(res == E_INVALIDARG, "null URL gave: 0x%08x\n", res);
+
+  res = pUrlGetPartA(res_url, NULL, &dwSize, URL_PART_SCHEME, 0);
+  ok(res == E_INVALIDARG, "null szPart gave: 0x%08x\n", res);
+
+  res = pUrlGetPartA(res_url, szPart, NULL, URL_PART_SCHEME, 0);
+  ok(res == E_INVALIDARG, "null URL gave: 0x%08x\n", res);
+
+  dwSize = 0;
+  szPart[0]='x'; szPart[1]=0;
+  res = pUrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
+  ok(res == E_INVALIDARG, "UrlGetPartA(*pcchOut = 0) returned %08X\n", res);
+  ok(szPart[0] == 'x' && szPart[1] == 0, "UrlGetPartA(*pcchOut = 0) modified szPart: \"%s\"\n", szPart);
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+
   dwSize = sizeof szPart;
   szPart[0]='x'; szPart[1]=0;
   res = pUrlGetPartA("hi", szPart, &dwSize, URL_PART_SCHEME, 0);
-  todo_wine {
   ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
   ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
-  }
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+
   dwSize = sizeof szPart;
   szPart[0]='x'; szPart[1]=0;
   res = pUrlGetPartA("hi", szPart, &dwSize, URL_PART_QUERY, 0);
-  todo_wine {
   ok (res==S_FALSE, "UrlGetPartA(\"hi\") returned %08X\n", res);
   ok(szPart[0]==0, "UrlGetPartA(\"hi\") return \"%s\" instead of \"\"\n", szPart);
-  }
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
 
   test_url_part(TEST_URL_3, URL_PART_HOSTNAME, 0, "localhost");
   test_url_part(TEST_URL_3, URL_PART_PORT, 0, "21");
@@ -619,9 +646,20 @@ static void test_UrlGetPart(void)
   res = pUrlGetPartA(about_url, szPart, &dwSize, URL_PART_HOSTNAME, 0);
   ok(res==E_FAIL, "returned %08x\n", res);
 
+  test_url_part(res_url, URL_PART_SCHEME, 0, "res");
+  test_url_part("http://www.winehq.org", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, "http:www.winehq.org");
+
+  dwSize = sizeof szPart;
+  szPart[0]='x'; szPart[1]=0;
+  res = pUrlGetPartA(res_url, szPart, &dwSize, URL_PART_QUERY, 0);
+  ok(res==S_FALSE, "UrlGetPartA returned %08X\n", res);
+  ok(szPart[0]==0, "UrlGetPartA gave \"%s\" instead of \"\"\n", szPart);
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
+
   dwSize = sizeof(szPart);
   res = pUrlGetPartA("file://c:\\index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
   ok(res==S_FALSE, "returned %08x\n", res);
+  ok(dwSize == 0, "dwSize = %d\n", dwSize);
 
   dwSize = sizeof(szPart);
   szPart[0] = 'x'; szPart[1] = '\0';
@@ -629,6 +667,11 @@ static void test_UrlGetPart(void)
   ok(res==S_FALSE, "returned %08x\n", res);
   ok(szPart[0] == '\0', "szPart[0] = %c\n", szPart[0]);
   ok(dwSize == 0, "dwSize = %d\n", dwSize);
+
+  dwSize = sizeof(szPart);
+  szPart[0] = 'x'; szPart[1] = '\0';
+  res = pUrlGetPartA("index.htm", szPart, &dwSize, URL_PART_HOSTNAME, 0);
+  ok(res==E_FAIL, "returned %08x\n", res);
 }
 
 /* ########################### */
