@@ -37,7 +37,7 @@ static WCHAR const pin_in_name[] = { 'I', 'n', 0 };
 static WCHAR const pin_out_name[] = { 'O', 'u', 't', 0 };
 
 IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount);
-IEnumMediaTypes *mediaenum_create(AM_MEDIA_TYPE *mtype);
+IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype);
 
 /* Fixed pins enumerator, holds filter referenced */
 typedef struct _PE_Impl {
@@ -258,7 +258,7 @@ Single_IEnumMediaTypes_Next(IEnumMediaTypes *iface, ULONG nTypes, AM_MEDIA_TYPE 
         return E_INVALIDARG;
     if (!types || ((nTypes != 1) && !fetched))
         return E_POINTER;
-    if (!This->past) {
+    if (!This->past && !IsEqualGUID(&This->mtype.majortype,&GUID_NULL)) {
         AM_MEDIA_TYPE *mtype = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         *mtype = This->mtype;
         if (mtype->cbFormat) {
@@ -324,7 +324,7 @@ static const IEnumMediaTypesVtbl IEnumMediaTypes_VTable =
     Single_IEnumMediaTypes_Clone,
 };
 
-IEnumMediaTypes *mediaenum_create(AM_MEDIA_TYPE *mtype)
+IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype)
 {
     ME_Impl *obj = CoTaskMemAlloc(sizeof(ME_Impl));
     if (obj) {
@@ -332,14 +332,18 @@ IEnumMediaTypes *mediaenum_create(AM_MEDIA_TYPE *mtype)
         obj->me.lpVtbl = &IEnumMediaTypes_VTable;
         obj->refCount = 1;
         obj->past = FALSE;
-        obj->mtype = *mtype;
-        obj->mtype.pUnk = NULL;
-        if (mtype->cbFormat) {
-            obj->mtype.pbFormat = CoTaskMemAlloc(mtype->cbFormat);
-            CopyMemory(obj->mtype.pbFormat, mtype->pbFormat, mtype->cbFormat);
+        if (mtype) {
+            obj->mtype = *mtype;
+            obj->mtype.pUnk = NULL;
+            if (mtype->cbFormat) {
+                obj->mtype.pbFormat = CoTaskMemAlloc(mtype->cbFormat);
+                CopyMemory(obj->mtype.pbFormat, mtype->pbFormat, mtype->cbFormat);
+            }
+            else
+                obj->mtype.pbFormat = NULL;
         }
         else
-            obj->mtype.pbFormat = NULL;
+            obj->mtype.majortype = GUID_NULL;
     }
     return &obj->me;
 }
@@ -1212,7 +1216,7 @@ SampleGrabber_IPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **mtypes)
     TRACE("(%p)->(%p)\n", This, mtypes);
     if (!mtypes)
         return E_POINTER;
-    *mtypes = mediaenum_create(&This->sg->mtype);
+    *mtypes = mediaenum_create(This->sg->pin_in.pair ? &This->sg->mtype : (const AM_MEDIA_TYPE *)NULL);
     return *mtypes ? S_OK : E_OUTOFMEMORY;
 }
 
