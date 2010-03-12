@@ -305,27 +305,22 @@ BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWST
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
-    char *deviceA;
 
     /* If no device name was specified, retrieve the device name
-     * from the DEVMODE structure from the DC's physDev.
+     * from the PRINTERINFO structure from the DC's physDev.
      * (See CreateCompatibleDC) */
     if ( !device && *pdev )
     {
-        physDev = *pdev;
-        deviceA = HeapAlloc(GetProcessHeap(), 0, CCHDEVICENAME);
-        lstrcpynA(deviceA, (LPCSTR)physDev->Devmode->dmPublic.dmDeviceName, CCHDEVICENAME);
+        pi = PSDRV_FindPrinterInfo((*pdev)->pi->FriendlyName);
     }
     else
     {
         DWORD len = WideCharToMultiByte(CP_ACP, 0, device, -1, NULL, 0, NULL, NULL);
-        deviceA = HeapAlloc(GetProcessHeap(), 0, len);
+        char *deviceA = HeapAlloc(GetProcessHeap(), 0, len);
         WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, len, NULL, NULL);
+        pi = PSDRV_FindPrinterInfo(deviceA);
+        HeapFree(GetProcessHeap(), 0, deviceA);
     }
-    pi = PSDRV_FindPrinterInfo(deviceA);
-
-    HeapFree(GetProcessHeap(), 0, deviceA);
-    deviceA = NULL;
 
     TRACE("(%s %s %s %p)\n", debugstr_w(driver), debugstr_w(device),
                              debugstr_w(output), initData);
