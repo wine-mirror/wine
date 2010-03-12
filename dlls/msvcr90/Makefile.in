@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcr90.dll
+IMPORTLIB = msvcr90
+IMPORTS   = msvcrt kernel32
+
+C_SRCS = \
+	msvcr90.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
