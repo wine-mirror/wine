@@ -38,6 +38,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "iprtrmib.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
 
 #define MAX_INTERFACE_PHYSADDR    8
 #define MAX_INTERFACE_DESCRIPTION 256
@@ -104,6 +106,11 @@ DWORD getNumIPAddresses(void);
  * one IP address may exist per interface.
  */
 DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags);
+
+/* Returns the IPv6 addresses for a particular interface index.
+ * Returns NO_ERROR on success, something else on failure.
+ */
+ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs);
 
 /* Converts the network-order bytes in addr to a printable string.  Returns
  * string.

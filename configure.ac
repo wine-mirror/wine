@@ -556,6 +556,8 @@ AC_CHECK_HEADERS([resolv.h],,,
      # include <arpa/nameser.h>
      #endif])
 
+AC_CHECK_HEADERS([ifaddrs.h],,,[#include <sys/types.h>])
+
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
 AC_CHECK_HEADERS([sys/thr.h],,,

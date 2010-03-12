@@ -6064,6 +6064,20 @@ fi
 done
 
 
+for ac_header in ifaddrs.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "ifaddrs.h" "ac_cv_header_ifaddrs_h" "#include <sys/types.h>
+"
+if test "x$ac_cv_header_ifaddrs_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_IFADDRS_H 1
+_ACEOF
+
+fi
+
+done
+
+
 for ac_header in ucontext.h
 do :
   ac_fn_c_check_header_compile "$LINENO" "ucontext.h" "ac_cv_header_ucontext_h" "#include <signal.h>

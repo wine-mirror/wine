@@ -49,6 +49,7 @@
 #include "winreg.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "ws2ipdef.h"
 #include "iphlpapi.h"
 #include "ifenum.h"
 #include "ipstats.h"
@@ -634,22 +635,23 @@ static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
 
 static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret, i, num_v4addrs = 0, total_size;
+    ULONG ret, i, num_v4addrs = 0, num_v6addrs = 0, total_size;
     DWORD *v4addrs = NULL;
+    SOCKET_ADDRESS *v6addrs = NULL;
 
     if (family == AF_INET)
         ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+    else if (family == AF_INET6)
+        ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
     else if (family == AF_UNSPEC)
     {
-        WARN("no support for IPv6 addresses\n");
         ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        if (!ret)
+            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
     }
     else
     {
-        if (family == AF_INET6)
-            FIXME("no support for IPv6 addresses\n");
-        else
-            FIXME("address family %u unsupported\n", family);
+        FIXME("address family %u unsupported\n", family);
         ret = ERROR_NO_DATA;
     }
     if (ret) return ret;
@@ -659,6 +661,10 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
     total_size += sizeof(struct sockaddr_in) * num_v4addrs;
+    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v6addrs;
+    total_size += sizeof(SOCKET_ADDRESS) * num_v6addrs;
+    for (i = 0; i < num_v6addrs; i++)
+        total_size += v6addrs[i].iSockaddrLength;
 
     if (aa && *size >= total_size)
     {
@@ -706,6 +712,37 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                 }
             }
         }
+        if (num_v6addrs)
+        {
+            IP_ADAPTER_UNICAST_ADDRESS *ua;
+            struct WS_sockaddr_in6 *sa;
+
+            if (aa->FirstUnicastAddress)
+            {
+                for (ua = aa->FirstUnicastAddress; ua->Next; ua = ua->Next)
+                    ;
+                ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+            }
+            else
+                ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+            for (i = 0; i < num_v6addrs; i++)
+            {
+                memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
+                ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
+                ua->Address.iSockaddrLength = v6addrs[i].iSockaddrLength;
+                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->u.s.Length);
+
+                sa = (struct WS_sockaddr_in6 *)ua->Address.lpSockaddr;
+                memcpy(sa, v6addrs[i].lpSockaddr, sizeof(*sa));
+
+                ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
+                if (i < num_v6addrs - 1)
+                {
+                    ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                    ua = ua->Next;
+                }
+            }
+        }
 
         buflen = MAX_INTERFACE_PHYSADDR;
         getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
@@ -720,6 +757,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
         else aa->OperStatus = IfOperStatusUnknown;
     }
     *size = total_size;
+    HeapFree(GetProcessHeap(), 0, v6addrs);
     HeapFree(GetProcessHeap(), 0, v4addrs);
     return ERROR_SUCCESS;
 }
