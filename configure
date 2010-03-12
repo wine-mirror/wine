@@ -15172,6 +15172,14 @@ dlls/msvcr71 dlls/msvcr71/__install__ dlls/msvcr71/__install-lib__ dlls/msvcr71/
 wine_fn_config_makefile dlls/msvcr71 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvcr71" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvcr71"
 
+wine_fn_append_file ALL_IMPORT_LIBS "dlls/msvcr80/libmsvcr80.$IMPLIBEXT"
+wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/msvcr80/libmsvcr80.$IMPLIBEXT dlls/msvcr80/libmsvcr80.cross.a: tools/widl tools/winebuild tools/winegcc include
+dlls/msvcr80/libmsvcr80.$IMPLIBEXT dlls/msvcr80/libmsvcr80.cross.a: dlls/msvcr80/msvcr80.spec dlls/msvcr80/Makefile
+	@cd dlls/msvcr80 && \$(MAKE) \`basename \$@\`
+dlls/msvcr80 dlls/msvcr80/__install__ dlls/msvcr80/__install-lib__ dlls/msvcr80/__install-dev__: __builddeps__"
+wine_fn_config_makefile dlls/msvcr80 "dlls/Makedll.rules \$(MAKEDEP)"
+test "x$enable_msvcr80" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvcr80"
+
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/msvcrt/libmsvcrt.$IMPLIBEXT"
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/msvcrt/libmsvcrt.$IMPLIBEXT dlls/msvcrt/libmsvcrt.cross.a: tools/widl tools/winebuild tools/winegcc include
 dlls/msvcrt/libmsvcrt.$IMPLIBEXT dlls/msvcrt/libmsvcrt.cross.a: dlls/msvcrt/msvcrt.spec dlls/msvcrt/Makefile
@@ -17607,6 +17615,7 @@ do
     "dlls/msvcirt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcirt/Makefile" ;;
     "dlls/msvcr70/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr70/Makefile" ;;
     "dlls/msvcr71/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr71/Makefile" ;;
+    "dlls/msvcr80/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr80/Makefile" ;;
     "dlls/msvcrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/Makefile" ;;
     "dlls/msvcrt/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/tests/Makefile" ;;
     "dlls/msvcrt20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt20/Makefile" ;;
