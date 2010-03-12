@@ -636,6 +636,78 @@ static void test_ScriptTextOut2(HDC hdc)
     }
 }
 
+static void test_ScriptTextOut3(HDC hdc)
+{
+    HRESULT         hr;
+
+    int             cInChars;
+    int             cMaxItems;
+    SCRIPT_ITEM     pItem[255];
+    int             pcItems;
+    WCHAR           TestItem1[] = {' ','\r', 0};
+
+    SCRIPT_CACHE    psc;
+    int             cChars;
+    int             cMaxGlyphs;
+    unsigned short  pwOutGlyphs1[256];
+    WORD            pwLogClust[256];
+    SCRIPT_VISATTR  psva[256];
+    int             pcGlyphs;
+    int             piAdvance[256];
+    GOFFSET         pGoffset[256];
+    ABC             pABC[256];
+    RECT            rect;
+
+    /* This is to ensure that non exisiting glyphs are translated into a valid glyph number */
+    cInChars = 2;
+    cMaxItems = 255;
+    hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
+     *  returned.                                                                             */
+    ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
+    if (pcItems > 0)
+        ok (pItem[0].iCharPos == 0 && pItem[2].iCharPos == cInChars,
+            "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
+            pItem[0].iCharPos, cInChars, pItem[2].iCharPos);
+
+    /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
+     * ie. ScriptItemize has succeeded and that pItem has been set                            */
+    cInChars = 2;
+    cMaxItems = 255;
+    if (hr == 0) {
+        psc = NULL;                                   /* must be null on first call           */
+        cChars = cInChars;
+        cMaxGlyphs = cInChars;
+        cMaxGlyphs = 256;
+        hr = ScriptShape(hdc, &psc, TestItem1, cChars,
+                         cMaxGlyphs, &pItem[0].a,
+                         pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
+        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+        ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+        ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
+        if (hr ==0) {
+            /* Note hdc is needed as glyph info is not yet in psc                  */
+            hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
+                             pGoffset, pABC);
+            ok (hr == 0, "Should return 0 not (%08x)\n", hr);
+
+            /* Test Rect Rgn is acceptable */
+            rect.top = 10;
+            rect.bottom = 20;
+            rect.left = 10;
+            rect.right = 40;
+            hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
+                               piAdvance, NULL, pGoffset);
+            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
+
+        }
+        /* Clean up and go   */
+        ScriptFreeCache(&psc);
+        ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+    }
+}
+
 static void test_ScriptXtoX(void)
 /****************************************************************************************
  *  This routine tests the ScriptXtoCP and ScriptCPtoX functions using static variables *
@@ -1334,6 +1406,7 @@ START_TEST(usp10)
     test_ScriptGetFontProperties(hdc);
     test_ScriptTextOut(hdc);
     test_ScriptTextOut2(hdc);
+    test_ScriptTextOut3(hdc);
     test_ScriptXtoX();
     test_ScriptString(hdc);
     test_ScriptStringXtoCP_CPtoX(hdc);
