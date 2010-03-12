@@ -632,12 +632,27 @@ static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
     return ERROR_SUCCESS;
 }
 
-static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
+static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret, i, num_v4addrs, total_size;
-    DWORD *v4addrs;
+    ULONG ret, i, num_v4addrs = 0, total_size;
+    DWORD *v4addrs = NULL;
 
-    if ((ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs))) return ret;
+    if (family == AF_INET)
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+    else if (family == AF_UNSPEC)
+    {
+        WARN("no support for IPv6 addresses\n");
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+    }
+    else
+    {
+        if (family == AF_INET6)
+            FIXME("no support for IPv6 addresses\n");
+        else
+            FIXME("address family %u unsupported\n", family);
+        ret = ERROR_NO_DATA;
+    }
+    if (ret) return ret;
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
     total_size += IF_NAMESIZE;
@@ -717,11 +732,6 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
 
     if (!buflen) return ERROR_INVALID_PARAMETER;
 
-    if (family == AF_INET6 || family == AF_UNSPEC)
-        FIXME("no support for IPv6 addresses\n");
-
-    if (family != AF_INET && family != AF_UNSPEC) return ERROR_NO_DATA;
-
     table = getInterfaceIndexTable();
     if (!table || !table->numIndexes)
     {
@@ -732,7 +742,7 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
     for (i = 0; i < table->numIndexes; i++)
     {
         size = 0;
-        if ((ret = adapterAddressesFromIndex(table->indexes[i], NULL, &size)))
+        if ((ret = adapterAddressesFromIndex(family, table->indexes[i], NULL, &size)))
         {
             HeapFree(GetProcessHeap(), 0, table);
             return ret;
@@ -744,7 +754,7 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         ULONG bytes_left = size = total_size;
         for (i = 0; i < table->numIndexes; i++)
         {
-            if ((ret = adapterAddressesFromIndex(table->indexes[i], aa, &size)))
+            if ((ret = adapterAddressesFromIndex(family, table->indexes[i], aa, &size)))
             {
                 HeapFree(GetProcessHeap(), 0, table);
                 return ret;
