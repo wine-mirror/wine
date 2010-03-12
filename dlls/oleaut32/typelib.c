@@ -4722,6 +4722,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
     ITypeInfoImpl *pTypeInfo;
+    int typemismatch=0;
 
     TRACE("(%s, 0x%x, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
@@ -4761,6 +4762,8 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 TRACE("found in module or in enum: %s\n", debugstr_w(szName));
                 return S_OK;
             }
+            else if (hr == TYPE_E_TYPEMISMATCH)
+                typemismatch = 1;
         }
 
         if ((pTypeInfo->TypeAttr.typekind == TKIND_COCLASS) &&
@@ -4833,11 +4836,21 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 ITypeInfo_AddRef(*ppTInfo);
                 return S_OK;
             }
+            else if (hr == TYPE_E_TYPEMISMATCH)
+                typemismatch = 1;
         }
     }
 
-    TRACE("name not found %s\n", debugstr_w(szName));
-    return S_OK;
+    if (typemismatch)
+    {
+        TRACE("type mismatch %s\n", debugstr_w(szName));
+        return TYPE_E_TYPEMISMATCH;
+    }
+    else
+    {
+        TRACE("name not found %s\n", debugstr_w(szName));
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI ITypeLibComp_fnBindType(

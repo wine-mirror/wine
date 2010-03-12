@@ -150,7 +150,7 @@ static void test_TypeComp(void)
     /* test getting a function within a TKIND_MODULE with INVOKE_PROPERTYGET */
     ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszSavePicture);
     hr = ITypeComp_Bind(pTypeComp, wszSavePicture, ulHash, INVOKE_PROPERTYGET, &pTypeInfo, &desckind, &bindptr);
-    todo_wine ok(hr == TYPE_E_TYPEMISMATCH,
+    ok(hr == TYPE_E_TYPEMISMATCH,
         "ITypeComp_Bind should have failed with TYPE_E_TYPEMISMATCH instead of 0x%08x\n",
         hr);
 
