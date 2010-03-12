@@ -402,7 +402,9 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
     V_VT(&var) = VT_UNKNOWN;
     V_UNKNOWN(&var) = (IUnknown*)pIEnumFormatEtc;
 
-    hRet = IWebBrowserApp_PutProperty(pBrowser, (BSTR)szProperty, var);
+    property = SysAllocString(szProperty);
+    hRet = IWebBrowserApp_PutProperty(pBrowser, property, var);
+    SysFreeString(property);
     if (FAILED(hRet))
     {
        IEnumFORMATETC_Release(pIEnumFormatEtc);
