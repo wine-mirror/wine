@@ -608,7 +608,7 @@ static DWORD typeFromMibType(DWORD mib_type)
     }
 }
 
-static ULONG addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
+static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
 {
     ULONG ret, i, j;
     MIB_IPADDRTABLE *at;
@@ -634,16 +634,16 @@ static ULONG addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
 
 static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret, i, num_addrs, total_size;
-    DWORD *addrs;
+    ULONG ret, i, num_v4addrs, total_size;
+    DWORD *v4addrs;
 
-    if ((ret = addressesFromIndex(index, &addrs, &num_addrs))) return ret;
+    if ((ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs))) return ret;
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
     total_size += IF_NAMESIZE;
     total_size += IF_NAMESIZE * sizeof(WCHAR);
-    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_addrs;
-    total_size += sizeof(struct sockaddr_in) * num_addrs;
+    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
+    total_size += sizeof(struct sockaddr_in) * num_v4addrs;
 
     if (aa && *size >= total_size)
     {
@@ -665,13 +665,13 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
         *dst++ = 0;
         ptr = (char *)dst;
 
-        if (num_addrs)
+        if (num_v4addrs)
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct sockaddr_in *sa;
 
             ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
-            for (i = 0; i < num_addrs; i++)
+            for (i = 0; i < num_v4addrs; i++)
             {
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
@@ -680,11 +680,11 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
 
                 sa = (struct sockaddr_in *)ua->Address.lpSockaddr;
                 sa->sin_family      = AF_INET;
-                sa->sin_addr.s_addr = addrs[i];
+                sa->sin_addr.s_addr = v4addrs[i];
                 sa->sin_port        = 0;
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
-                if (i < num_addrs - 1)
+                if (i < num_v4addrs - 1)
                 {
                     ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
                     ua = ua->Next;
@@ -705,7 +705,7 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
         else aa->OperStatus = IfOperStatusUnknown;
     }
     *size = total_size;
-    HeapFree(GetProcessHeap(), 0, addrs);
+    HeapFree(GetProcessHeap(), 0, v4addrs);
     return ERROR_SUCCESS;
 }
 
