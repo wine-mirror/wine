@@ -159,20 +159,9 @@ Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefügt, wenn ein vollständ
          Dateiname auf der Kommandozeile angegeben wird.
 
 Die Entwicklung von Wine ist noch nicht abgeschlossen, daher können einige
-Programme abstürzen. Vorausgesetzt, dass Sie winedbg korrekt entsprechend
-documentation/debugger.sgml einrichten, werden Sie dann in einem Debugger landen,
-um das Problem untersuchen und beheben zu können.
-Weitere Informationen zu diesem Thema entnehmen Sie bitte der Datei
-documentation/debugging.sgml.
-
-Sie sollten Backups von allen wichtigen Dateien machen, auf die Sie Wine 
-Zugriff gewähren, oder spezielle Kopien für Wine anlegen, da Benutzer einige
-Fälle gemeldet haben, in denen Dateien zerstört wurden. Führen Sie zum Beispiel
-NICHT den Explorer aus, wenn Sie kein geeignetes Backup haben, da er manchmal
-Verzeichnise verstümmelt / umbenennnt. Selbst andere MS-Applikationen wie z.B
-der Messenger sind nicht sicher, da sie unter Umständen den Explorer aufrufen.
-Diese spezielle Beschädigung (!$!$!$!$.pfr) kann zumindest teilweise durch
-http://home.nexgo.de/andi.mohr/download/decorrupt_explorer behoben werden.
+Programme abstürzen. In diesem Fall startet der Debugger, so dass Sie das Problem
+untersuchen und beheben können. Weitere Informationen zu diesem Thema entnehmen Sie
+bitte dem Kapitel Debugging aus dem Wine Developer's Guide.
 
 7. WEITERFÜHRENDE INFORMATIONEN
 
@@ -198,7 +187,7 @@ Git:	Der aktuelle Wine-Entwicklungs-Zweig ist über Git verfügbar.
 	Besuchen Sie http://www.winehq.org/site/git für weitere Informationen.
 
 Mailing-Listen:
-	Es gibt mehrere Mailing-Listen für die Wine-Entwickler; Schauen Sie
+	Es gibt mehrere Mailing-Listen für die Wine-User und -Entwickler; Schauen Sie
 	sich bitte dazu http://www.winehq.org/forums an.
 
 Wiki:	Das Wine-Wiki finden Sie unter http://wiki.winehq.org
