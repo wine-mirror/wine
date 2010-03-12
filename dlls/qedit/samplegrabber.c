@@ -1048,6 +1048,10 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
 	    debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
 	    type->lSampleSize,
 	    debugstr_guid(&type->formattype), type->cbFormat);
+	if (!IsEqualGUID(&type->formattype, &FORMAT_None) &&
+	    !IsEqualGUID(&type->formattype, &GUID_NULL) &&
+	    !type->pbFormat)
+	    return VFW_E_INVALIDMEDIATYPE;
 	if (!IsEqualGUID(&This->sg->mtype.majortype,&GUID_NULL) &&
 	    !IsEqualGUID(&This->sg->mtype.majortype,&type->majortype))
 	    return VFW_E_TYPE_NOT_ACCEPTED;
@@ -1057,10 +1061,6 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
 	if (!IsEqualGUID(&This->sg->mtype.formattype,&GUID_NULL) &&
 	    !IsEqualGUID(&This->sg->mtype.formattype,&FORMAT_None) &&
 	    !IsEqualGUID(&This->sg->mtype.formattype,&type->formattype))
-	    return VFW_E_TYPE_NOT_ACCEPTED;
-	if (!IsEqualGUID(&type->formattype, &FORMAT_None) &&
-	    !IsEqualGUID(&type->formattype, &GUID_NULL) &&
-	    !type->pbFormat)
 	    return VFW_E_TYPE_NOT_ACCEPTED;
         if (This->sg->mtype.pbFormat)
             CoTaskMemFree(This->sg->mtype.pbFormat);
