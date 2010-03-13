@@ -108,6 +108,7 @@ static void set_progress_proc(task_t *_task)
         V_I4(&progress) = 0; /* FIXME */
         IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
                                &progress, NULL);
+        IOleCommandTarget_Release(olecmd);
     }
 
     if(doc->usermode == EDITMODE && doc->hostui) {
