@@ -148,15 +148,13 @@ $(ALL_TEST_DIRS:%=%/__test__): dummy
 $(ALL_TEST_DIRS:%=%/__crosstest__): dummy
 	@cd `dirname $@` && $(MAKE) crosstest
 
-$(ALL_TEST_DIRS:%=%/__testclean__): dummy
-	@cd `dirname $@` && $(MAKE) testclean
-
 check test:: $(ALL_TEST_DIRS:%=%/__test__)
 crosstest:: $(ALL_TEST_DIRS:%=%/__crosstest__)
-testclean:: $(ALL_TEST_DIRS:%=%/__testclean__)
 
-.PHONY: check test testclean crosstest $(ALL_TEST_DIRS:%=%/__test__) \
-	$(ALL_TEST_DIRS:%=%/__crosstest__) $(ALL_TEST_DIRS:%=%/__testclean__)
+testclean::
+	$(RM) $(ALL_TEST_DIRS:%=%/*.ok)
+
+.PHONY: check test testclean crosstest $(ALL_TEST_DIRS:%=%/__test__) $(ALL_TEST_DIRS:%=%/__crosstest__)
 
 # Rules for auto documentation
 
@@ -230,7 +228,6 @@ RECURSE_TARGETS = \
 	__instal-dev__ \
 	__install-lib__ \
 	__uninstall__ \
-	__testclean__ \
 	__crosstest__
 
 $(MAKEDEP): include/config.h tools/Makefile
