@@ -272,6 +272,14 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     struct ThunkDataCommon *TD16;
     HMODULE16 hmod;
     int ordinal;
+    static int done;
+
+    if (!done)
+    {
+        LoadLibrary16( "gdi.exe" );
+        LoadLibrary16( "user.exe" );
+        done = TRUE;
+    }
 
     if ((hmod = LoadLibrary16(module)) <= 32)
     {
