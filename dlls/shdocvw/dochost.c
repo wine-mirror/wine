@@ -248,7 +248,7 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
     if(SUCCEEDED(hres)) {
         if(ready_state == READYSTATE_COMPLETE)
             push_ready_state_task(This, READYSTATE_COMPLETE);
-        else
+        if(ready_state != READYSTATE_COMPLETE || This->doc_navigate)
             advise_prop_notif(This, TRUE);
     }
 
@@ -752,7 +752,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         if(FAILED(hres))
             return hres;
 
-        if(ready_state == READYSTATE_COMPLETE)
+        if(ready_state == READYSTATE_COMPLETE && !This->doc_navigate)
             advise_prop_notif(This, FALSE);
 
         push_ready_state_task(This, ready_state);
