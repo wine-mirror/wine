@@ -216,7 +216,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", doc);
 
-    if(!doc)
+    if(!doc || !doc->basedoc.window)
         return NS_ERROR_FAILURE;
     doc_obj = doc->basedoc.doc_obj;
 
