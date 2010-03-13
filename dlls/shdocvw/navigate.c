@@ -378,8 +378,7 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
     return ret;
 }
 
-static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_data,
-                                ULONG post_data_len, LPWSTR headers, VARIANT_BOOL *cancel)
+static void on_before_navigate2(DocHost *This, LPCWSTR url, SAFEARRAY *post_data, LPWSTR headers, VARIANT_BOOL *cancel)
 {
     VARIANT var_url, var_flags, var_frame_name, var_post_data, var_post_data2, var_headers;
     DISPPARAMS dispparams;
@@ -404,18 +403,12 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_dat
     V_VARIANTREF(params+2) = &var_post_data2;
     V_VT(&var_post_data2) = (VT_BYREF|VT_VARIANT);
     V_VARIANTREF(&var_post_data2) = &var_post_data;
-    VariantInit(&var_post_data);
 
-    if(post_data_len) {
-        SAFEARRAYBOUND bound = {post_data_len, 0};
-        void *data;
-
+    if(post_data) {
         V_VT(&var_post_data) = VT_UI1|VT_ARRAY;
-        V_ARRAY(&var_post_data) = SafeArrayCreate(VT_UI1, 1, &bound);
-
-        SafeArrayAccessData(V_ARRAY(&var_post_data), &data);
-        memcpy(data, post_data, post_data_len);
-        SafeArrayUnaccessData(V_ARRAY(&var_post_data));
+        V_ARRAY(&var_post_data) = post_data;
+    }else {
+        V_VT(&var_post_data) = VT_EMPTY;
     }
 
     V_VT(params+3) = (VT_BYREF|VT_VARIANT);
@@ -439,8 +432,6 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_dat
     call_sink(This->cps.wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 
     SysFreeString(V_BSTR(&var_url));
-    if(post_data_len)
-        SafeArrayDestroy(V_ARRAY(&var_post_data));
 }
 
 /* FIXME: urlmon should handle it */
@@ -545,13 +536,21 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
 
 static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mon)
 {
-    IBindCtx *bindctx;
     VARIANT_BOOL cancel = VARIANT_FALSE;
+    SAFEARRAY *post_data = NULL;
+    IBindCtx *bindctx;
     HRESULT hres;
 
     set_doc_state(This, READYSTATE_LOADING);
 
-    on_before_navigate2(This, bsc->url, bsc->post_data, bsc->post_data_len, bsc->headers, &cancel);
+    if(bsc->post_data) {
+        post_data = SafeArrayCreateVector(VT_UI1, 0, bsc->post_data_len);
+        memcpy(post_data->pvData, post_data, bsc->post_data_len);
+    }
+
+    on_before_navigate2(This, bsc->url, post_data, bsc->headers, &cancel);
+    if(post_data)
+        SafeArrayDestroy(post_data);
     if(cancel) {
         FIXME("Navigation canceled\n");
         return S_OK;
