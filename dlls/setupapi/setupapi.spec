@@ -375,7 +375,7 @@
 @ stub SetupDiOpenDeviceInterfaceRegKey
 @ stdcall SetupDiOpenDeviceInterfaceW(ptr wstr long ptr)
 @ stdcall SetupDiRegisterDeviceInfo(ptr ptr long ptr ptr ptr)
-@ stub SetupDiRemoveDevice
+@ stdcall SetupDiRemoveDevice(ptr ptr)
 @ stub SetupDiRemoveDeviceInterface
 @ stub SetupDiSelectDevice
 @ stub SetupDiSelectOEMDrv

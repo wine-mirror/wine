@@ -1556,6 +1556,18 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(
 }
 
 /***********************************************************************
+ *              SetupDiRemoveDevice (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiRemoveDevice(
+        HDEVINFO devinfo,
+        PSP_DEVINFO_DATA info)
+{
+    FIXME("(%p, %p): stub\n", devinfo, info);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		SetupDiEnumDeviceInfo (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDeviceInfo(
