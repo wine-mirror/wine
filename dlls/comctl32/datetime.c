@@ -289,7 +289,7 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR lpszFormat)
 	    format_item = LOCALE_STIMEFORMAT;
         else /* DTS_SHORTDATEFORMAT */
 	    format_item = LOCALE_SSHORTDATE;
-	GetLocaleInfoW( GetSystemDefaultLCID(), format_item, format_buf, sizeof(format_buf)/sizeof(format_buf[0]));
+	GetLocaleInfoW(LOCALE_USER_DEFAULT, format_item, format_buf, sizeof(format_buf)/sizeof(format_buf[0]));
 	lpszFormat = format_buf;
     }
 
@@ -410,12 +410,12 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	    wsprintfW (result, fmt__2dW, date.wMonth);
 	    break;
 	case THREECHARMONTH:
-	    GetLocaleInfoW(GetSystemDefaultLCID(), LOCALE_SMONTHNAME1+date.wMonth -1, 
+	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+date.wMonth -1,
 			   buffer, sizeof(buffer)/sizeof(buffer[0]));
 	    wsprintfW (result, fmt__3sW, buffer);
 	    break;
 	case FULLMONTH:
-	    GetLocaleInfoW(GetSystemDefaultLCID(),LOCALE_SMONTHNAME1+date.wMonth -1,
+	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+date.wMonth -1,
                            result, resultSize);
 	    break;
 	case ONELETTERAMPM:
