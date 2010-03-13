@@ -55,6 +55,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
+static NTSTATUS create_key( HANDLE root, const char *name, HANDLE *key, DWORD *disp )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, name )) return STATUS_NO_MEMORY;
+    status = NtCreateKey( key, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, disp );
+    if (status) ERR("Cannot create %s registry key\n", name );
+    RtlFreeUnicodeString( &nameW );
+    return status;
+}
+
 /******************************************************************
  *		create_scsi_entry
  *
@@ -69,7 +89,6 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     static UCHAR uCdromNumber = 0;
     static UCHAR uTapeNumber = 0;
 
-    OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR dataW[50];
     DWORD sizeW;
@@ -83,52 +102,14 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     HANDLE lunKey;
     DWORD disp;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE" ) ||
-        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create HARDWARE registry key\n" );
-        return;
-    }
+    if (create_key( 0, "Machine\\HARDWARE\\DEVICEMAP", &scsiKey, &disp )) return;
     NtClose( scsiKey );
-    RtlFreeUnicodeString( &nameW );
-    if (disp == REG_OPENED_EXISTING_KEY) return;
-
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP" ) ||
-        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP registry key\n" );
-        return;
-    }
-    NtClose( scsiKey );
-    RtlFreeUnicodeString( &nameW );
 
     /* Ensure there is Scsi key */
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP\\Scsi" ) ||
-        NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( 0, "Machine\\HARDWARE\\DEVICEMAP\\Scsi", &scsiKey, &disp )) return;
 
     snprintf(buffer,sizeof(buffer),"Scsi Port %d",scsi_addr->PortNumber);
-    attr.RootDirectory = scsiKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &portKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( scsiKey, buffer, &portKey, &disp )) return;
 
     RtlCreateUnicodeStringFromAsciiz( &nameW, "Driver" );
     RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, lpDriver, strlen(lpDriver)+1);
@@ -158,49 +139,17 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     }
 
     snprintf(buffer, sizeof(buffer),"Scsi Bus %d", scsi_addr->PathId);
-    attr.RootDirectory = portKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &busKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( portKey, buffer, &busKey, &disp )) return;
 
-    attr.RootDirectory = busKey;
     /* FIXME: get real controller Id for SCSI */
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Initiator Id 255" ) ||
-        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus\\Initiator Id 255 registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( busKey, buffer, &targetKey, &disp )) return;
     NtClose( targetKey );
 
     snprintf(buffer, sizeof(buffer),"Target Id %d", scsi_addr->TargetId);
-    attr.RootDirectory = busKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &targetKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus 0\\Target Id registry key\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( busKey, buffer, &targetKey, &disp )) return;
 
     snprintf(buffer, sizeof(buffer),"Logical Unit Id %d", scsi_addr->Lun);
-    attr.RootDirectory = targetKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
-        NtCreateKey( &lunKey, KEY_ALL_ACCESS, &attr, 0,
-                     NULL, REG_OPTION_VOLATILE, &disp ))
-    {
-        ERR("Cannot create DEVICEMAP\\Scsi Port\\Scsi Bus 0\\Target Id registry key\\Logical Unit Id\n" );
-        return;
-    }
-    RtlFreeUnicodeString( &nameW );
+    if (create_key( targetKey, buffer, &lunKey, &disp )) return;
 
     switch (uDriveType)
     {
@@ -445,6 +394,11 @@ static void create_hardware_branch(void)
  */
 void convert_old_config(void)
 {
+    HANDLE key;
+    DWORD disp;
+
     /* create some hardware keys (FIXME: should not be done here) */
-    create_hardware_branch();
+    if (create_key( 0, "Machine\\HARDWARE", &key, &disp )) return;
+    NtClose( key );
+    if (disp != REG_OPENED_EXISTING_KEY) create_hardware_branch();
 }
