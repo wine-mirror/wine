@@ -41,6 +41,7 @@
 #include "mimeinfo.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -128,16 +129,22 @@ DEFINE_EXPECT(QueryStatus_STOP);
 DEFINE_EXPECT(DocHost_EnableModeless_TRUE);
 DEFINE_EXPECT(DocHost_EnableModeless_FALSE);
 DEFINE_EXPECT(GetDropTarget);
+DEFINE_EXPECT(TranslateUrl);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
-static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static const WCHAR emptyW[] = {0};
 
 static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading = FALSE;
+static BOOL is_downloading, is_first_load;
+static const char *current_url;
+
+#define DWL_EXPECT_BEFORE_NAVIGATE  0x01
+#define DWL_FROM_PUT_HREF           0x02
+
+static DWORD dwl_flags;
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
@@ -158,8 +165,20 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 #define test_LocationURL(a,b) _test_LocationURL(__LINE__,a,b)
-static void _test_LocationURL(unsigned line, IUnknown *unk, LPCWSTR exurl)
+static void _test_LocationURL(unsigned line, IUnknown *unk, const char *exurl)
 {
     IWebBrowser2 *wb;
     BSTR url = (void*)0xdeadbeef;
@@ -172,7 +191,7 @@ static void _test_LocationURL(unsigned line, IUnknown *unk, LPCWSTR exurl)
 
     hres = IWebBrowser2_get_LocationURL(wb, &url);
     ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
-    ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
+    ok_(__FILE__,line) (!strcmp_wa(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
 
     SysFreeString(url);
     IWebBrowser2_Release(wb);
@@ -296,6 +315,13 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
+        }
+    }else if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 11: /* TODO */
+            break;
+        default:
+            ok(0, "unexpected nCmdID %d of CGID_DocHostCmdPriv\n", nCmdID);
         }
     }else {
         ok(0, "unexpected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
@@ -505,8 +531,8 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
         ok(V_VT(V_VARIANTREF(url)) == VT_BSTR, "V_VT(V_VARIANTREF(url))=%d, expected VT_BSTR\n",
            V_VT(V_VARIANTREF(url)));
         ok(V_BSTR(V_VARIANTREF(url)) != NULL, "V_BSTR(V_VARIANTREF(url)) == NULL\n");
-        ok(!lstrcmpW(V_BSTR(V_VARIANTREF(url)), about_blankW), "unexpected url %s\n",
-           wine_dbgstr_w(V_BSTR(V_VARIANTREF(url))));
+        ok(!strcmp_wa(V_BSTR(V_VARIANTREF(url)), current_url), "unexpected url %s, expected %s\n",
+           wine_dbgstr_w(V_BSTR(V_VARIANTREF(url))), current_url);
     }
 
     ok(V_VT(flags) == (VT_BYREF|VT_VARIANT), "V_VT(flags)=%x, expected VT_BYREF|VT_VARIANT\n",
@@ -517,8 +543,13 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
     if(V_VARIANTREF(flags)) {
         ok(V_VT(V_VARIANTREF(flags)) == VT_I4, "V_VT(V_VARIANTREF(flags))=%d, expected VT_I4\n",
            V_VT(V_VARIANTREF(flags)));
-        ok(V_I4(V_VARIANTREF(flags)) == 0, "V_I4(V_VARIANTREF(flags)) = %d, expected 0\n",
-           V_I4(V_VARIANTREF(flags)));
+        if(is_first_load) {
+            ok(V_I4(V_VARIANTREF(flags)) == 0, "V_I4(V_VARIANTREF(flags)) = %x, expected 0\n",
+               V_I4(V_VARIANTREF(flags)));
+        }else {
+            ok((V_I4(V_VARIANTREF(flags)) & ~0x40) == 0, "V_I4(V_VARIANTREF(flags)) = %x, expected 0x40 or 0\n",
+               V_I4(V_VARIANTREF(flags)));
+        }
     }
 
     ok(V_VT(frame) == (VT_BYREF|VT_VARIANT), "V_VT(frame)=%x, expected VT_BYREF|VT_VARIANT\n",
@@ -624,7 +655,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         test_OnBeforeNavigate(pDispParams->rgvarg+6, pDispParams->rgvarg+5, pDispParams->rgvarg+4,
                               pDispParams->rgvarg+3, pDispParams->rgvarg+2, pDispParams->rgvarg+1,
                               pDispParams->rgvarg);
-        test_ready_state(READYSTATE_LOADING);
+        test_ready_state((dwl_flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
         break;
 
     case DISPID_SETSECURELOCKICON:
@@ -702,7 +733,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_NAVIGATECOMPLETE2:
         CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
         /* FIXME */
-        test_ready_state(READYSTATE_LOADING);
+        test_ready_state((dwl_flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
         break;
 
     case DISPID_PROGRESSCHANGE:
@@ -1249,7 +1280,10 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, ID
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
         OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
-    ok(0, "unexpected call\n");
+    if(is_downloading && !(dwl_flags & DWL_EXPECT_BEFORE_NAVIGATE))
+        todo_wine CHECK_EXPECT(TranslateUrl);
+    else
+        CHECK_EXPECT(TranslateUrl);
     return E_NOTIMPL;
 }
 
@@ -1492,7 +1526,7 @@ static void test_SetHostNames(IOleObject *oleobj)
     ok(hres == S_OK, "SetHostNames failed: %08x\n", hres);
 }
 
-static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
+static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_download)
 {
     IOleObject *oleobj;
     IOleInPlaceObject *inplace;
@@ -1523,7 +1557,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         SET_EXPECT(Site_GetWindow);
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Invoke_AMBIENT_SILENT);
-    }else if(!is_downloading) {
+    }else if(stop_download) {
         SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
         SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
@@ -1537,7 +1571,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
         CHECK_CALLED(Site_GetWindow);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
-    }else if(!is_downloading) {
+    }else if(stop_download) {
         todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
         todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
@@ -2127,60 +2161,65 @@ static void test_Navigate2(IUnknown *unk)
     if(FAILED(hres))
         return;
 
-    test_LocationURL(unk, emptyW);
-    test_ready_state(READYSTATE_UNINITIALIZED);
+    test_LocationURL(unk, is_first_load ? "" : current_url);
+    test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE);
 
     V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = SysAllocString(about_blankW);
+    V_BSTR(&url) = a2bstr("about:blank");
+    current_url = "about:blank";
 
-    SET_EXPECT(Invoke_AMBIENT_USERMODE);
-    SET_EXPECT(Invoke_PROPERTYCHANGE);
-    SET_EXPECT(Invoke_BEFORENAVIGATE2);
-    SET_EXPECT(Invoke_DOWNLOADBEGIN);
-    SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
-    SET_EXPECT(EnableModeless_FALSE);
-    SET_EXPECT(Invoke_STATUSTEXTCHANGE);
-    SET_EXPECT(SetStatusText);
-    SET_EXPECT(GetHostInfo);
-    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
-    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
-    SET_EXPECT(Invoke_AMBIENT_PALETTE);
-    SET_EXPECT(GetOptionKeyPath);
-    SET_EXPECT(GetOverridesKeyPath);
-    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
-    SET_EXPECT(Exec_SETPROGRESSMAX);
-    SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Invoke_SETSECURELOCKICON);
-    SET_EXPECT(Invoke_FILEDOWNLOAD);
-    SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE);
-    SET_EXPECT(EnableModeless_TRUE);
+    if(is_first_load) {
+        SET_EXPECT(Invoke_AMBIENT_USERMODE);
+        SET_EXPECT(Invoke_PROPERTYCHANGE);
+        SET_EXPECT(Invoke_BEFORENAVIGATE2);
+        SET_EXPECT(Invoke_DOWNLOADBEGIN);
+        SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
+        SET_EXPECT(EnableModeless_FALSE);
+        SET_EXPECT(Invoke_STATUSTEXTCHANGE);
+        SET_EXPECT(SetStatusText);
+        SET_EXPECT(GetHostInfo);
+        SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+        SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+        SET_EXPECT(Invoke_AMBIENT_PALETTE);
+        SET_EXPECT(GetOptionKeyPath);
+        SET_EXPECT(GetOverridesKeyPath);
+        SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        SET_EXPECT(Exec_SETPROGRESSMAX);
+        SET_EXPECT(Exec_SETPROGRESSPOS);
+        SET_EXPECT(Invoke_SETSECURELOCKICON);
+        SET_EXPECT(Invoke_FILEDOWNLOAD);
+        SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+        SET_EXPECT(EnableModeless_TRUE);
+    }
 
     hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
     ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
 
-    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
-    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
-    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
-    todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
-    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
-    CHECK_CALLED(EnableModeless_FALSE);
-    CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
-    CHECK_CALLED(SetStatusText);
-    CHECK_CALLED(GetHostInfo);
-    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
-    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
-    CHECK_CALLED(GetOptionKeyPath);
-    CHECK_CALLED_BROKEN(GetOverridesKeyPath);
-    todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-    todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
-    todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
-    todo_wine CHECK_CALLED_BROKEN(Invoke_SETSECURELOCKICON);
-    todo_wine CHECK_CALLED_BROKEN(Invoke_FILEDOWNLOAD);
-    todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
-    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
-    CHECK_CALLED(EnableModeless_TRUE);
+    if(is_first_load) {
+        CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+        todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+        CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+        todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
+        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+        CHECK_CALLED(EnableModeless_FALSE);
+        CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
+        CHECK_CALLED(SetStatusText);
+        CHECK_CALLED(GetHostInfo);
+        CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+        CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+        CHECK_CALLED(GetOptionKeyPath);
+        CHECK_CALLED_BROKEN(GetOverridesKeyPath);
+        todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+        todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
+        todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+        todo_wine CHECK_CALLED_BROKEN(Invoke_SETSECURELOCKICON);
+        todo_wine CHECK_CALLED_BROKEN(Invoke_FILEDOWNLOAD);
+        todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+        CHECK_CALLED(EnableModeless_TRUE);
+    }
 
     VariantClear(&url);
     IWebBrowser2_Release(webbrowser);
@@ -2188,14 +2227,20 @@ static void test_Navigate2(IUnknown *unk)
     test_ready_state(READYSTATE_LOADING);
 }
 
-static void test_download(void)
+static void test_download(DWORD flags)
 {
     MSG msg;
 
     is_downloading = TRUE;
+    dwl_flags = flags;
 
-    test_ready_state(READYSTATE_LOADING);
+    test_ready_state((flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
+    if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
+        SET_EXPECT(Invoke_PROPERTYCHANGE);
+        SET_EXPECT(Invoke_BEFORENAVIGATE2);
+        SET_EXPECT(TranslateUrl);
+    }
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
@@ -2208,19 +2253,27 @@ static void test_download(void)
     SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     SET_EXPECT(SetStatusText);
     SET_EXPECT(EnableModeless_TRUE);
-    SET_EXPECT(QueryStatus_STOP);
+    if(is_first_load)
+        SET_EXPECT(QueryStatus_STOP);
+    else
+        SET_EXPECT(GetHostInfo);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Invoke_TITLECHANGE);
     SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
-    SET_EXPECT(GetDropTarget);
+    if(is_first_load)
+        SET_EXPECT(GetDropTarget);
     SET_EXPECT(Invoke_PROGRESSCHANGE);
     SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
-
     while(!called_Invoke_DOCUMENTCOMPLETE && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
+    if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
+        todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+        CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+        CHECK_CALLED(TranslateUrl);
+    }
     todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
     todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
@@ -2228,18 +2281,30 @@ static void test_download(void)
     CLEAR_CALLED(DocHost_EnableModeless_TRUE); /* IE 7 */
     todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
     CLEAR_CALLED(Invoke_282); /* IE 7 */
-    todo_wine CHECK_CALLED(EnableModeless_FALSE);
+    if(is_first_load)
+        todo_wine CHECK_CALLED(EnableModeless_FALSE);
+    else
+        CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
     todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
     todo_wine CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
     todo_wine CHECK_CALLED(SetStatusText);
-    todo_wine CHECK_CALLED(EnableModeless_TRUE);
-    todo_wine CHECK_CALLED(QueryStatus_STOP);
+    if(is_first_load)
+        todo_wine CHECK_CALLED(EnableModeless_TRUE);
+    else
+        CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
+    if(is_first_load)
+        todo_wine CHECK_CALLED(QueryStatus_STOP);
+    else
+        todo_wine CHECK_CALLED(GetHostInfo);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
     CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
-    todo_wine CHECK_CALLED(GetDropTarget);
+    if(is_first_load)
+        todo_wine CHECK_CALLED(GetDropTarget);
     todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
     CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
+
+    is_downloading = FALSE;
 
     test_ready_state(READYSTATE_COMPLETE);
 }
@@ -2298,6 +2363,67 @@ static void test_IServiceProvider(IUnknown *unk)
     IServiceProvider_Release(servprov);
 }
 
+#define get_document(u) _get_document(__LINE__,u)
+static IDispatch *_get_document(unsigned line, IUnknown *unk)
+{
+    IWebBrowser2 *wb;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IWebBrowser2) failed: %08x\n", hres);
+
+    disp = NULL;
+    hres = IWebBrowser2_get_Document(wb, &disp);
+    IWebBrowser2_Release(wb);
+    ok_(__FILE__,line)(hres == S_OK, "get_Document failed: %08x\n", hres);
+    ok_(__FILE__,line)(disp != NULL, "doc_disp == NULL\n");
+
+    return disp;
+}
+
+static void test_put_href(IUnknown *unk)
+{
+    IHTMLLocation *location;
+    IHTMLDocument2 *doc;
+    IDispatch *doc_disp;
+    BSTR str;
+    HRESULT hres;
+
+    doc_disp = get_document(unk);
+
+    hres = IDispatch_QueryInterface(doc_disp, &IID_IHTMLDocument2, (void**)&doc);
+    IDispatch_Release(doc_disp);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2 failed: %08x\n", hres);
+
+    location = NULL;
+    hres = IHTMLDocument2_get_location(doc, &location);
+    IHTMLDocument2_Release(doc);
+    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+    ok(location != NULL, "location == NULL\n");
+
+    SET_EXPECT(TranslateUrl);
+    SET_EXPECT(Invoke_BEFORENAVIGATE2);
+    SET_EXPECT(Invoke_PROPERTYCHANGE);
+
+    dwl_flags = DWL_FROM_PUT_HREF;
+
+    str = a2bstr("about:test");
+    current_url = "about:test";
+    is_first_load = FALSE;
+    hres = IHTMLLocation_put_href(location, str);
+
+    CHECK_CALLED(TranslateUrl);
+    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+
+    IHTMLLocation_Release(location);
+    SysFreeString(str);
+    ok(hres == S_OK, "put_href failed: %08x\n", hres);
+
+    test_ready_state(READYSTATE_COMPLETE);
+}
+
 static void test_QueryInterface(IUnknown *unk)
 {
     IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
@@ -2352,6 +2478,7 @@ static void test_WebBrowser(BOOL do_download)
         return;
 
     is_downloading = FALSE;
+    is_first_load = TRUE;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
@@ -2359,9 +2486,9 @@ static void test_WebBrowser(BOOL do_download)
     test_QueryInterface(unk);
     test_ready_state(READYSTATE_UNINITIALIZED);
     test_ClassInfo(unk);
-    test_LocationURL(unk, emptyW);
+    test_LocationURL(unk, "");
     test_ConnectionPoint(unk, TRUE);
-    test_ClientSite(unk, &ClientSite);
+    test_ClientSite(unk, &ClientSite, !do_download);
     test_Extent(unk);
     test_wb_funcs(unk, TRUE);
     test_DoVerb(unk);
@@ -2369,11 +2496,27 @@ static void test_WebBrowser(BOOL do_download)
     test_Navigate2(unk);
 
     if(do_download) {
-        test_download();
+        IDispatch *doc, *doc2;
+
+        test_download(0);
         test_olecmd(unk, TRUE);
+        doc = get_document(unk);
+
+        test_put_href(unk);
+        test_download(DWL_FROM_PUT_HREF);
+        doc2 = get_document(unk);
+        ok(doc == doc2, "doc != doc2\n");
+        IDispatch_Release(doc2);
+
+        test_Navigate2(unk);
+        test_download(DWL_EXPECT_BEFORE_NAVIGATE);
+        doc2 = get_document(unk);
+        ok(doc == doc2, "doc != doc2\n");
+        IDispatch_Release(doc2);
+        IDispatch_Release(doc2);
     }
 
-    test_ClientSite(unk, NULL);
+    test_ClientSite(unk, NULL, !do_download);
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
     test_wb_funcs(unk, FALSE);
