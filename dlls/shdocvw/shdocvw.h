@@ -92,6 +92,7 @@ struct DocHost {
 
     IUnknown *document;
     IOleDocumentView *view;
+    IUnknown *doc_navigate;
 
     HWND hwnd;
     HWND frame_hwnd;

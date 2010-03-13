@@ -21,8 +21,13 @@
 #include "hlink.h"
 #include "exdispid.h"
 #include "mshtml.h"
+#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+
+DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
+
+#define DOCHOST_DOCCANNAVIGATE  0
 
 static ATOM doc_view_atom = 0;
 
@@ -314,6 +319,11 @@ void deactivate_document(DocHost *This)
     IHlinkTarget *hlink = NULL;
     HRESULT hres;
 
+    if(This->doc_navigate) {
+        IUnknown_Release(This->doc_navigate);
+        This->doc_navigate = NULL;
+    }
+
     if(This->is_prop_notif)
         advise_prop_notif(This, FALSE);
 
@@ -425,8 +435,34 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         VARIANT *pvaOut)
 {
     DocHost *This = OLECMD_THIS(iface);
-    FIXME("(%p)->(%s %d %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
-          nCmdexecopt, pvaIn, pvaOut);
+
+    TRACE("(%p)->(%s %d %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
+          nCmdexecopt, debugstr_variant(pvaIn), debugstr_variant(pvaOut));
+
+    if(!pguidCmdGroup) {
+        FIXME("Unimplemented cmdid %d\n", nCmdID);
+        return E_NOTIMPL;
+    }
+
+    if(IsEqualGUID(pguidCmdGroup, &CGID_DocHostCmdPriv)) {
+        switch(nCmdID) {
+        case DOCHOST_DOCCANNAVIGATE:
+            if(!pvaIn || V_VT(pvaIn) != VT_UNKNOWN)
+                return E_INVALIDARG;
+
+            if(This->doc_navigate)
+                IUnknown_Release(This->doc_navigate);
+            IUnknown_AddRef(V_UNKNOWN(pvaIn));
+            This->doc_navigate = V_UNKNOWN(pvaIn);
+            return S_OK;
+
+        default:
+            FIXME("unsupported command %d of CGID_DocHostCmdPriv\n", nCmdID);
+            return E_NOTIMPL;
+        }
+    }
+
+    FIXME("Unimplemented group %s\n", debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
 
