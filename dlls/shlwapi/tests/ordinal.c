@@ -1683,10 +1683,11 @@ if (0)
 
     flags = FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
     SetLastError(0xdeadbeef);
+    buff[0] = 0; /* NT4 doesn't clear the buffer on failure */
     ret = pSHFormatDateTimeW(&filetime, &flags, buff, sizeof(buff)/sizeof(WCHAR));
     ok(ret == lstrlenW(buff)+1, "got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef ||
-        broken(GetLastError() == ERROR_INVALID_FLAGS), /* Win9x/WinMe */
+        broken(GetLastError() == ERROR_INVALID_FLAGS), /* Win9x/WinMe/NT4 */
         "expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* now check returned strings */
