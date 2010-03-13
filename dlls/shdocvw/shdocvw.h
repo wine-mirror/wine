@@ -104,6 +104,7 @@ struct DocHost {
     VARIANT_BOOL busy;
 
     READYSTATE ready_state;
+    READYSTATE doc_state;
     DWORD prop_notif_cookie;
     BOOL is_prop_notif;
 
@@ -223,6 +224,7 @@ HRESULT dochost_object_available(DocHost*,IUnknown*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*);
 HRESULT go_home(DocHost*);
+void set_doc_state(DocHost*,READYSTATE);
 
 #define WM_DOCHOSTTASK (WM_USER+0x300)
 void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL);

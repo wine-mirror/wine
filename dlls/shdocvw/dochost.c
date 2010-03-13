@@ -159,16 +159,23 @@ static void advise_prop_notif(DocHost *This, BOOL set)
         This->is_prop_notif = set;
 }
 
+void set_doc_state(DocHost *This, READYSTATE doc_state)
+{
+    This->doc_state = doc_state;
+    if(doc_state > This->ready_state)
+        This->ready_state = doc_state;
+}
+
 static void update_ready_state(DocHost *This, READYSTATE ready_state)
 {
-    if(ready_state > READYSTATE_LOADING && This->ready_state <= READYSTATE_LOADING) {
+    if(ready_state > READYSTATE_LOADING && This->doc_state <= READYSTATE_LOADING)
         notif_complete(This, DISPID_NAVIGATECOMPLETE2);
-        This->ready_state = ready_state;
-    }
 
-    if(ready_state == READYSTATE_COMPLETE && This->ready_state < READYSTATE_COMPLETE) {
-        This->ready_state = READYSTATE_COMPLETE;
+    if(ready_state == READYSTATE_COMPLETE && This->doc_state < READYSTATE_COMPLETE) {
+        set_doc_state(This, READYSTATE_COMPLETE);
         notif_complete(This, DISPID_DOCUMENTCOMPLETE);
+    }else {
+        set_doc_state(This, ready_state);
     }
 }
 
