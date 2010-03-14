@@ -151,6 +151,8 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
   cur = strchrW(tmp, '.');
   while (NULL != cur) {
     *cur = '\0'; /* cut tmp string to '.' */
+    if (!*(cur + 1)) break; /* Account for a lone terminating period, as in "cont1.cont2.". */
+    TRACE("Trying to get parent container %s\n", debugstr_w(tmp));
     hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, &pContainer);
     if (FAILED(hr) || NULL == pContainer)
       goto on_error;
@@ -159,8 +161,10 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
     cur = strchrW(tmp, '.');
   }
 
+  TRACE("Trying to get container %s\n", debugstr_w(tmp));
   hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, ppInstance);
   if (SUCCEEDED(hr)) {
+    TRACE("Succeeded in getting the container instance\n");
     IDxDiagContainerImpl_AddRef(*ppInstance);
   }
 

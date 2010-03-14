@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 
+#include <stdio.h>
 #include "dxdiag.h"
 #include "wine/test.h"
 
@@ -289,6 +290,103 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_dot_parsing(void)
+{
+    HRESULT hr;
+    WCHAR containerbufW[256] = {0}, childbufW[256] = {0};
+    DWORD count, index;
+    size_t i;
+    static const struct
+    {
+        const char *format;
+        const HRESULT expect;
+    } test_strings[] = {
+        { "%s.%s",   S_OK },
+        { "%s.%s.",  S_OK },
+        { ".%s.%s",  E_INVALIDARG },
+        { "%s.%s..", E_INVALIDARG },
+        { ".%s.%s.", E_INVALIDARG },
+        { "..%s.%s", E_INVALIDARG },
+    };
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    /* Find a container with a child container of its own. */
+    hr = IDxDiagContainer_GetNumberOfChildContainers(pddc, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("IDxDiagContainer::GetNumberOfChildContainers failed\n");
+        goto cleanup;
+    }
+
+    for (index = 0; index < count; index++)
+    {
+        IDxDiagContainer *child;
+
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, containerbufW, sizeof(containerbufW)/sizeof(WCHAR));
+        ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+        if (FAILED(hr))
+        {
+            skip("IDxDiagContainer::EnumChildContainerNames failed\n");
+            goto cleanup;
+        }
+
+        hr = IDxDiagContainer_GetChildContainer(pddc, containerbufW, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDxDiagContainer_EnumChildContainerNames(child, 0, childbufW, sizeof(childbufW)/sizeof(WCHAR));
+            ok(hr == S_OK || hr == E_INVALIDARG,
+               "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK or E_INVALIDARG, got 0x%08x\n", hr);
+            IDxDiagContainer_Release(child);
+
+            if (SUCCEEDED(hr))
+                break;
+        }
+    }
+
+    if (!*containerbufW || !*childbufW)
+    {
+        skip("Unable to find a suitable container\n");
+        goto cleanup;
+    }
+
+    trace("Testing IDxDiagContainer::GetChildContainer dot parsing with container %s and child container %s.\n",
+          wine_dbgstr_w(containerbufW), wine_dbgstr_w(childbufW));
+
+    for (i = 0; i < sizeof(test_strings)/sizeof(test_strings[0]); i++)
+    {
+        IDxDiagContainer *child;
+        char containerbufA[256];
+        char childbufA[256];
+        char dotbufferA[255 + 255 + 3 + 1];
+        WCHAR dotbufferW[255 + 255 + 3 + 1]; /* containerbuf + childbuf + dots + null terminator */
+
+        WideCharToMultiByte(CP_ACP, 0, containerbufW, -1, containerbufA, sizeof(containerbufA), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, childbufW, -1, childbufA, sizeof(childbufA), NULL, NULL);
+        sprintf(dotbufferA, test_strings[i].format, containerbufA, childbufA);
+        MultiByteToWideChar(CP_ACP, 0, dotbufferA, -1, dotbufferW, sizeof(dotbufferW)/sizeof(WCHAR));
+
+        trace("Trying container name %s\n", wine_dbgstr_w(dotbufferW));
+        hr = IDxDiagContainer_GetChildContainer(pddc, dotbufferW, &child);
+        ok(hr == test_strings[i].expect,
+           "Expected IDxDiagContainer::GetChildContainer to return 0x%08x for %s, got 0x%08x\n",
+           test_strings[i].expect, wine_dbgstr_w(dotbufferW), hr);
+        if (SUCCEEDED(hr))
+            IDxDiagContainer_Release(child);
+    }
+
+cleanup:
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
@@ -296,5 +394,6 @@ START_TEST(container)
     test_GetNumberOfProps();
     test_EnumChildContainerNames();
     test_GetChildContainer();
+    test_dot_parsing();
     CoUninitialize();
 }
