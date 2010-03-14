@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winerror.h"
 #include "wine/server.h"
 #include "kernel_private.h"
@@ -432,13 +434,23 @@ BOOL WINAPI IsDebuggerPresent(void)
  */
 BOOL WINAPI CheckRemoteDebuggerPresent(HANDLE process, PBOOL DebuggerPresent)
 {
+    NTSTATUS status;
+    DWORD_PTR port;
+
     if(!process || !DebuggerPresent)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    FIXME("(%p)->(%p): Stub!\n", process, DebuggerPresent);
-    *DebuggerPresent = FALSE;
+
+    status = NtQueryInformationProcess(process, ProcessDebugPort, &port, sizeof(port), NULL);
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    *DebuggerPresent = !!port;
     return TRUE;
 }
 
