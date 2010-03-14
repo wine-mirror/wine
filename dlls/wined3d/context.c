@@ -920,35 +920,6 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
     context->isStateDirty[idx] |= (1 << shift);
 }
 
-/*****************************************************************************
- * AddContextToArray
- *
- * Adds a context to the context array. Helper function for context_create().
- *
- * This method is not called in performance-critical code paths, only when a
- * new render target or swapchain is created. Thus performance is not an issue
- * here.
- *
- *****************************************************************************/
-static BOOL AddContextToArray(IWineD3DDeviceImpl *This, struct wined3d_context *context)
-{
-    struct wined3d_context **oldArray = This->contexts;
-
-    This->contexts = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->contexts) * (This->numContexts + 1));
-    if(This->contexts == NULL) {
-        ERR("Unable to grow the context array\n");
-        This->contexts = oldArray;
-        return FALSE;
-    }
-    if(oldArray) {
-        memcpy(This->contexts, oldArray, sizeof(*This->contexts) * This->numContexts);
-    }
-    HeapFree(GetProcessHeap(), 0, oldArray);
-    This->contexts[This->numContexts++] = context;
-
-    return TRUE;
-}
-
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
         const struct GlPixelFormatDesc *color_format_desc, const struct GlPixelFormatDesc *ds_format_desc,
@@ -1289,7 +1260,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         goto out;
     }
 
-    if (!AddContextToArray(This, ret))
+    if (!device_context_add(This, ret))
     {
         ERR("Failed to add the newly created context to the context list\n");
         if (!pwglDeleteContext(ctx))
@@ -1474,67 +1445,6 @@ out:
 }
 
 /*****************************************************************************
- * RemoveContextFromArray
- *
- * Removes a context from the context manager. The opengl context is not
- * destroyed or unset. context is not a valid pointer after that call.
- *
- * Similar to the former call this isn't a performance critical function. A
- * helper function for context_destroy().
- *
- * Params:
- *  This: Device to activate the context for
- *  context: Context to remove
- *
- *****************************************************************************/
-static void RemoveContextFromArray(IWineD3DDeviceImpl *This, struct wined3d_context *context)
-{
-    struct wined3d_context **new_array;
-    BOOL found = FALSE;
-    UINT i;
-
-    TRACE("Removing ctx %p\n", context);
-
-    for (i = 0; i < This->numContexts; ++i)
-    {
-        if (This->contexts[i] == context)
-        {
-            found = TRUE;
-            break;
-        }
-    }
-
-    if (!found)
-    {
-        ERR("Context %p doesn't exist in context array\n", context);
-        return;
-    }
-
-    while (i < This->numContexts - 1)
-    {
-        This->contexts[i] = This->contexts[i + 1];
-        ++i;
-    }
-
-    --This->numContexts;
-    if (!This->numContexts)
-    {
-        HeapFree(GetProcessHeap(), 0, This->contexts);
-        This->contexts = NULL;
-        return;
-    }
-
-    new_array = HeapReAlloc(GetProcessHeap(), 0, This->contexts, This->numContexts * sizeof(*This->contexts));
-    if (!new_array)
-    {
-        ERR("Failed to shrink context array. Oh well.\n");
-        return;
-    }
-
-    This->contexts = new_array;
-}
-
-/*****************************************************************************
  * context_destroy
  *
  * Destroys a wined3d context
@@ -1564,7 +1474,7 @@ void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 
     HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
-    RemoveContextFromArray(This, context);
+    device_context_remove(This, context);
     if (destroy) HeapFree(GetProcessHeap(), 0, context);
 }
 

@@ -1710,6 +1710,8 @@ struct IWineD3DDeviceImpl
     struct WineD3DRectPatch *currentPatch;
 };
 
+BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
+void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         IUnknown *parent, IWineD3DDeviceParent *device_parent) DECLSPEC_HIDDEN;

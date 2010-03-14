@@ -494,6 +494,68 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     }
 }
 
+BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context)
+{
+    struct wined3d_context **new_array;
+
+    TRACE("Adding context %p.\n", context);
+
+    if (!device->contexts) new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_array));
+    else new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, sizeof(*new_array) * (device->numContexts + 1));
+
+    if (!new_array)
+    {
+        ERR("Failed to grow the context array.\n");
+        return FALSE;
+    }
+
+    new_array[device->numContexts++] = context;
+    device->contexts = new_array;
+    return TRUE;
+}
+
+void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context)
+{
+    struct wined3d_context **new_array;
+    BOOL found = FALSE;
+    UINT i;
+
+    TRACE("Removing context %p.\n", context);
+
+    for (i = 0; i < device->numContexts; ++i)
+    {
+        if (device->contexts[i] == context)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        ERR("Context %p doesn't exist in context array.\n", context);
+        return;
+    }
+
+    if (!--device->numContexts)
+    {
+        HeapFree(GetProcessHeap(), 0, device->contexts);
+        device->contexts = NULL;
+        return;
+    }
+
+    memmove(&device->contexts[i], &device->contexts[i + 1], (device->numContexts - i) * sizeof(*device->contexts));
+    new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, device->numContexts * sizeof(*device->contexts));
+    if (!new_array)
+    {
+        ERR("Failed to shrink context array. Oh well.\n");
+        return;
+    }
+
+    device->contexts = new_array;
+}
+
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
