@@ -129,7 +129,7 @@ static HRESULT IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER i
 
 static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-  IDxDiagContainer* pContainer = NULL;
+  IDxDiagContainer* pContainer = (PDXDIAGCONTAINER)This;
   LPWSTR tmp, orig_tmp;
   INT tmp_len;
   WCHAR* cur;
@@ -141,7 +141,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
     return E_INVALIDARG;
   }
 
-  pContainer = (PDXDIAGCONTAINER) This;
+  *ppInstance = NULL;
 
   tmp_len = strlenW(pwszContainer) + 1;
   orig_tmp = tmp = HeapAlloc(GetProcessHeap(), 0, tmp_len * sizeof(WCHAR));
