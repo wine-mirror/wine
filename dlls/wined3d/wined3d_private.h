@@ -234,8 +234,7 @@ static inline float float_24_to_32(DWORD in)
 #define VBO_HW     1
 
 #define ORM_BACKBUFFER  0
-#define ORM_PBUFFER     1
-#define ORM_FBO         2
+#define ORM_FBO         1
 
 #define SHADER_ARB  1
 #define SHADER_GLSL 2
@@ -1089,7 +1088,6 @@ struct wined3d_context
     HGLRC                   glCtx;
     HWND                    win_handle;
     HDC                     hdc;
-    HPBUFFERARB             pbuffer;
     GLint                   aux_buffers;
 
     /* FBOs */
@@ -1201,8 +1199,8 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) DECLSPEC_HIDDEN;
-struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win,
-        BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
+struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target,
+        HWND win, const WINED3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
@@ -1251,7 +1249,6 @@ typedef struct WineD3D_PixelFormat
     int redSize, greenSize, blueSize, alphaSize, colorSize;
     int depthSize, stencilSize;
     BOOL windowDrawable;
-    BOOL pbufferDrawable;
     BOOL doubleBuffer;
     int auxBuffers;
     int numSamples;
@@ -1705,8 +1702,6 @@ struct IWineD3DDeviceImpl
     /* Context management */
     struct wined3d_context **contexts;
     UINT                    numContexts;
-    struct wined3d_context *pbufferContext;              /* The context that has a pbuffer as drawable */
-    DWORD                   pbufferWidth, pbufferHeight; /* Size of the buffer drawable */
 
     /* High level patch management */
 #define PATCHMAP_SIZE 43
@@ -2153,7 +2148,6 @@ const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface) DECLS
 
 void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
-void get_drawable_size_pbuffer(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPEC_HIDDEN;

@@ -2522,10 +2522,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
                 ThisExtn[len] = '\0';
                 TRACE_(d3d_caps)("- %s\n", debugstr_a(ThisExtn));
 
-                if (!strcmp(ThisExtn, "WGL_ARB_pbuffer")) {
-                    gl_info->supported[WGL_ARB_PBUFFER] = TRUE;
-                    TRACE_(d3d_caps)("FOUND: WGL_ARB_pbuffer support\n");
-                }
                 if (!strcmp(ThisExtn, "WGL_ARB_pixel_format")) {
                     gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
@@ -3204,23 +3200,9 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
                 return TRUE;
             }
         }
-    } else if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
-        /* We can probably use this function in FBO mode too on some drivers to get some basic indication of the capabilities. */
-        WineD3D_PixelFormat *cfgs = adapter->cfgs;
-        int it;
-
-        /* Check if there is a WGL pixel format matching the requirements, the pixel format should also be usable with pbuffers */
-        for (it = 0; it < adapter->nCfgs; ++it)
-        {
-            if (cfgs[it].pbufferDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
-                    &cfgs[it], check_format_desc))
-            {
-                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n",
-                        cfgs[it].iPixelFormat, debug_d3dformat(check_format_desc->format));
-                return TRUE;
-            }
-        }
-    } else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO){
+    }
+    else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
         /* For now return TRUE for FBOs until we have some proper checks.
          * Note that this function will only be called when the format is around for texturing. */
         return TRUE;
@@ -5120,17 +5102,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
                 cfgs->doubleBuffer = values[9];
                 cfgs->auxBuffers = values[10];
 
-                cfgs->pbufferDrawable = FALSE;
-                /* Check for pbuffer support when it is around as
-                 * wglGetPixelFormatAttribiv fails for unknown attributes. */
-                if (gl_info->supported[WGL_ARB_PBUFFER])
-                {
-                    int attrib = WGL_DRAW_TO_PBUFFER_ARB;
-                    int value;
-                    if(GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, 1, &attrib, &value)))
-                        cfgs->pbufferDrawable = value;
-                }
-
                 cfgs->numSamples = 0;
                 /* Check multisample support */
                 if (gl_info->supported[ARB_MULTISAMPLE])
@@ -5145,7 +5116,11 @@ BOOL InitAdapters(IWineD3DImpl *This)
                     }
                 }
 
-                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, samples=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->numSamples, cfgs->windowDrawable, cfgs->pbufferDrawable);
+                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
+                        "depth=%d, stencil=%d, samples=%d, windowDrawable=%d\n",
+                        cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer,
+                        cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize,
+                        cfgs->depthSize, cfgs->stencilSize, cfgs->numSamples, cfgs->windowDrawable);
                 cfgs++;
             }
         }
@@ -5182,14 +5157,17 @@ BOOL InitAdapters(IWineD3DImpl *This)
                 cfgs->colorSize = ppfd.cColorBits;
                 cfgs->depthSize = ppfd.cDepthBits;
                 cfgs->stencilSize = ppfd.cStencilBits;
-                cfgs->pbufferDrawable = 0;
                 cfgs->windowDrawable = (ppfd.dwFlags & PFD_DRAW_TO_WINDOW) ? 1 : 0;
                 cfgs->iPixelType = (ppfd.iPixelType == PFD_TYPE_RGBA) ? WGL_TYPE_RGBA_ARB : WGL_TYPE_COLORINDEX_ARB;
                 cfgs->doubleBuffer = (ppfd.dwFlags & PFD_DOUBLEBUFFER) ? 1 : 0;
                 cfgs->auxBuffers = ppfd.cAuxBuffers;
                 cfgs->numSamples = 0;
 
-                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
+                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
+                        "depth=%d, stencil=%d, windowDrawable=%d\n",
+                        cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer,
+                        cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize,
+                        cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable);
                 cfgs++;
                 adapter->nCfgs++;
             }

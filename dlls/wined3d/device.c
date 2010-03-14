@@ -1583,10 +1583,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
             This->offscreenBuffer = GL_COLOR_ATTACHMENT0;
             break;
 
-        case ORM_PBUFFER:
-            This->offscreenBuffer = GL_BACK;
-            break;
-
         case ORM_BACKBUFFER:
         {
             if (context_get_current()->aux_buffers > 0)
@@ -1719,9 +1715,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
             IWineD3DDevice_DeletePatch(iface, patch->Handle);
         }
     }
-
-    /* Delete the pbuffer context if there is any */
-    if(This->pbufferContext) context_destroy(This, This->pbufferContext);
 
     /* Delete the mouse cursor texture */
     if(This->cursorTexture) {
@@ -6387,7 +6380,7 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
     }
 
     target = (IWineD3DSurfaceImpl *)(swapchain->backBuffer ? swapchain->backBuffer[0] : swapchain->frontBuffer);
-    context = context_create(This, target, swapchain->win_handle, FALSE, &swapchain->presentParms);
+    context = context_create(This, target, swapchain->win_handle, &swapchain->presentParms);
     if (!context)
     {
         WARN("Failed to create context.\n");
@@ -7088,14 +7081,6 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
         shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] |= (1 << shift);
     }
-}
-
-void get_drawable_size_pbuffer(struct wined3d_context *context, UINT *width, UINT *height)
-{
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.device;
-    /* The drawable size of a pbuffer render target is the current pbuffer size. */
-    *width = device->pbufferWidth;
-    *height = device->pbufferHeight;
 }
 
 void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height)

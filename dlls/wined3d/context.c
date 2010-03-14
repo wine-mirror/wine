@@ -772,15 +772,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         ERR("Failed to disable GL context.\n");
     }
 
-    if (context->pbuffer)
-    {
-        GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
-        GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
-    }
-    else
-    {
-        ReleaseDC(context->win_handle, context->hdc);
-    }
+    ReleaseDC(context->win_handle, context->hdc);
 
     if (!pwglDeleteContext(context->glCtx))
     {
@@ -941,11 +933,10 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
  *  This: Device to add the context for
  *  hdc: device context
  *  glCtx: WGL context to add
- *  pbuffer: optional pbuffer used with this context
  *
  *****************************************************************************/
 static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
-        HWND win_handle, HDC hdc, HGLRC glCtx, HPBUFFERARB pbuffer)
+        HWND win_handle, HDC hdc, HGLRC glCtx)
 {
     struct wined3d_context **oldArray = This->contexts;
     DWORD state;
@@ -970,7 +961,6 @@ static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
 
     This->contexts[This->numContexts]->hdc = hdc;
     This->contexts[This->numContexts]->glCtx = glCtx;
-    This->contexts[This->numContexts]->pbuffer = pbuffer;
     This->contexts[This->numContexts]->win_handle = win_handle;
     HeapFree(GetProcessHeap(), 0, oldArray);
 
@@ -989,7 +979,7 @@ static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
         const struct GlPixelFormatDesc *color_format_desc, const struct GlPixelFormatDesc *ds_format_desc,
-        BOOL auxBuffers, int numSamples, BOOL pbuffer, BOOL findCompatible)
+        BOOL auxBuffers, int numSamples, BOOL findCompatible)
 {
     int iPixelFormat=0;
     unsigned int matchtry;
@@ -1019,9 +1009,9 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     int i = 0;
     int nCfgs = This->adapter->nCfgs;
 
-    TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, pbuffer=%d, findCompatible=%d\n",
+    TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, findCompatible=%d\n",
           debug_d3dformat(color_format_desc->format), debug_d3dformat(ds_format_desc->format),
-          auxBuffers, numSamples, pbuffer, findCompatible);
+          auxBuffers, numSamples, findCompatible);
 
     if (!getColorBits(color_format_desc, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
     {
@@ -1059,16 +1049,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
             if(cfg->iPixelType != WGL_TYPE_RGBA_ARB)
                 continue;
 
-            /* In window mode (!pbuffer) we need a window drawable format and double buffering. */
-            if(!pbuffer && !(cfg->windowDrawable && cfg->doubleBuffer))
+            /* In window mode we need a window drawable format and double buffering. */
+            if(!(cfg->windowDrawable && cfg->doubleBuffer))
                 continue;
 
             /* We like to have aux buffers in backbuffer mode */
             if(auxBuffers && !cfg->auxBuffers && matches[matchtry].require_aux)
-                continue;
-
-            /* In pbuffer-mode we need a pbuffer-capable format but we don't want double buffering */
-            if(pbuffer && (!cfg->pbufferDrawable || cfg->doubleBuffer))
                 continue;
 
             if(matches[matchtry].exact_color) {
@@ -1167,172 +1153,142 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 /*****************************************************************************
  * context_create
  *
- * Creates a new context for a window, or a pbuffer context.
+ * Creates a new context.
  *
  * * Params:
  *  This: Device to activate the context for
  *  target: Surface this context will render to
  *  win_handle: handle to the window which we are drawing to
- *  create_pbuffer: tells whether to create a pbuffer or not
  *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
 struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target,
-        HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms)
+        HWND win_handle, const WINED3DPRESENT_PARAMETERS *pPresentParms)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    const struct GlPixelFormatDesc *color_format_desc;
+    const struct GlPixelFormatDesc *ds_format_desc;
     struct wined3d_context *ret = NULL;
-    HPBUFFERARB pbuffer = NULL;
+    PIXELFORMATDESCRIPTOR pfd;
+    BOOL auxBuffers = FALSE;
+    int numSamples = 0;
+    int pixel_format;
     unsigned int s;
     HGLRC ctx;
     HDC hdc;
+    int res;
 
-    TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
+    TRACE("device %p, target %p, window %p, present parameters %p.\n",
+            This, target, win_handle, pPresentParms);
 
-    if(create_pbuffer) {
-        HDC hdc_parent = GetDC(win_handle);
-        int iPixelFormat = 0;
+    if (!(hdc = GetDC(win_handle)))
+    {
+        ERR("Failed to retrieve a device context.\n");
+        goto out;
+    }
 
-        IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
-        const struct GlPixelFormatDesc *ds_format_desc = StencilSurface
-                ? ((IWineD3DSurfaceImpl *)StencilSurface)->resource.format_desc
-                : getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
+    ds_format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, gl_info);
+    color_format_desc = target->resource.format_desc;
 
-        /* Try to find a pixel format with pbuffer support. */
-        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format_desc,
-                ds_format_desc, FALSE /* auxBuffers */, 0 /* numSamples */, TRUE /* PBUFFER */,
-                FALSE /* findCompatible */);
-        if(!iPixelFormat) {
-            TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
+    /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
+     * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
+    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+    {
+        auxBuffers = TRUE;
 
-            /* For some reason we weren't able to find a format, try to find something instead of crashing.
-             * A reason for failure could have been wglChoosePixelFormatARB strictness. */
-            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format_desc,
-                    ds_format_desc, FALSE /* auxBuffer */, 0 /* numSamples */, TRUE /* PBUFFER */,
-                    TRUE /* findCompatible */);
-        }
-
-        /* This shouldn't happen as ChoosePixelFormat always returns something */
-        if(!iPixelFormat) {
-            ERR("Unable to locate a pixel format for a pbuffer\n");
-            ReleaseDC(win_handle, hdc_parent);
-            goto out;
-        }
-
-        TRACE("Creating a pBuffer drawable for the new context\n");
-        pbuffer = GL_EXTCALL(wglCreatePbufferARB(hdc_parent, iPixelFormat, target->currentDesc.Width, target->currentDesc.Height, 0));
-        if(!pbuffer) {
-            ERR("Cannot create a pbuffer\n");
-            ReleaseDC(win_handle, hdc_parent);
-            goto out;
-        }
-
-        /* In WGL a pbuffer is 'wrapped' inside a HDC to 'fool' wglMakeCurrent */
-        hdc = GL_EXTCALL(wglGetPbufferDCARB(pbuffer));
-        if(!hdc) {
-            ERR("Cannot get a HDC for pbuffer (%p)\n", pbuffer);
-            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
-            ReleaseDC(win_handle, hdc_parent);
-            goto out;
-        }
-        ReleaseDC(win_handle, hdc_parent);
-    } else {
-        PIXELFORMATDESCRIPTOR pfd;
-        int iPixelFormat;
-        int res;
-        const struct GlPixelFormatDesc *color_format_desc = target->resource.format_desc;
-        const struct GlPixelFormatDesc *ds_format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN,
-                &This->adapter->gl_info);
-        BOOL auxBuffers = FALSE;
-        int numSamples = 0;
-
-        hdc = GetDC(win_handle);
-        if(hdc == NULL) {
-            ERR("Cannot retrieve a device context!\n");
-            goto out;
-        }
-
-        /* In case of ORM_BACKBUFFER, make sure to request an alpha component for X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
-        if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
-            auxBuffers = TRUE;
-
-            if (color_format_desc->format == WINED3DFMT_B4G4R4X4_UNORM)
-                color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, &This->adapter->gl_info);
-            else if (color_format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
-                color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
-        }
-
-        /* DirectDraw supports 8bit paletted render targets and these are used by old games like Starcraft and C&C.
-         * Most modern hardware doesn't support 8bit natively so we perform some form of 8bit -> 32bit conversion.
-         * The conversion (ab)uses the alpha component for storing the palette index. For this reason we require
-         * a format with 8bit alpha, so request A8R8G8B8. */
-        if (color_format_desc->format == WINED3DFMT_P8_UINT)
+        if (color_format_desc->format == WINED3DFMT_B4G4R4X4_UNORM)
+            color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, &This->adapter->gl_info);
+        else if (color_format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
             color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
+    }
 
-        /* Retrieve the depth stencil format from the present parameters.
-         * The choice of the proper format can give a nice performance boost
-         * in case of GPU limited programs. */
-        if(pPresentParms->EnableAutoDepthStencil) {
-            TRACE("pPresentParms->EnableAutoDepthStencil=enabled; using AutoDepthStencilFormat=%s\n", debug_d3dformat(pPresentParms->AutoDepthStencilFormat));
-            ds_format_desc = getFormatDescEntry(pPresentParms->AutoDepthStencilFormat, &This->adapter->gl_info);
+    /* DirectDraw supports 8bit paletted render targets and these are used by
+     * old games like Starcraft and C&C. Most modern hardware doesn't support
+     * 8bit natively so we perform some form of 8bit -> 32bit conversion. The
+     * conversion (ab)uses the alpha component for storing the palette index.
+     * For this reason we require a format with 8bit alpha, so request
+     * A8R8G8B8. */
+    if (color_format_desc->format == WINED3DFMT_P8_UINT)
+        color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
+
+    /* Retrieve the depth stencil format from the present parameters.
+     * The choice of the proper format can give a nice performance boost
+     * in case of GPU limited programs. */
+    if (pPresentParms->EnableAutoDepthStencil)
+    {
+        TRACE("Auto depth stencil enabled, using format %s.\n",
+                debug_d3dformat(pPresentParms->AutoDepthStencilFormat));
+        ds_format_desc = getFormatDescEntry(pPresentParms->AutoDepthStencilFormat, &This->adapter->gl_info);
+    }
+
+    /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
+    if (pPresentParms->MultiSampleType && (pPresentParms->SwapEffect == WINED3DSWAPEFFECT_DISCARD))
+    {
+        if (!gl_info->supported[ARB_MULTISAMPLE])
+            WARN("The application is requesting multisampling without support.\n");
+        else
+        {
+            TRACE("Requesting multisample type %#x.\n", pPresentParms->MultiSampleType);
+            numSamples = pPresentParms->MultiSampleType;
         }
+    }
 
-        /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD */
-        if(pPresentParms->MultiSampleType && (pPresentParms->SwapEffect == WINED3DSWAPEFFECT_DISCARD)) {
-            if (!gl_info->supported[ARB_MULTISAMPLE])
-                ERR("The program is requesting multisampling without support!\n");
-            else
+    /* Try to find a pixel format which matches our requirements. */
+    pixel_format = WineD3D_ChoosePixelFormat(This, hdc, color_format_desc, ds_format_desc,
+            auxBuffers, numSamples, FALSE /* findCompatible */);
+
+    /* Try to locate a compatible format if we weren't able to find anything. */
+    if (!pixel_format)
+    {
+        TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
+        pixel_format = WineD3D_ChoosePixelFormat(This, hdc, color_format_desc, ds_format_desc,
+                auxBuffers, 0 /* numSamples */, TRUE /* findCompatible */);
+    }
+
+    /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */
+    if (!pixel_format)
+    {
+        ERR("Can't find a suitable pixel format.\n");
+        return NULL;
+    }
+
+    DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
+    res = SetPixelFormat(hdc, pixel_format, NULL);
+    if (!res)
+    {
+        int oldPixelFormat = GetPixelFormat(hdc);
+
+        /* By default WGL doesn't allow pixel format adjustments but we need
+         * it here. For this reason there is a WINE-specific wglSetPixelFormat
+         * which allows you to set the pixel format multiple times. Only use
+         * it when it is really needed. */
+
+        if (oldPixelFormat == pixel_format)
+        {
+            /* We don't have to do anything as the formats are the same :) */
+        }
+        else if (oldPixelFormat && gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
+        {
+            res = GL_EXTCALL(wglSetPixelFormatWINE(hdc, pixel_format, NULL));
+
+            if (!res)
             {
-                TRACE("Requesting multisample type %#x.\n", pPresentParms->MultiSampleType);
-                numSamples = pPresentParms->MultiSampleType;
-            }
-        }
-
-        /* Try to find a pixel format which matches our requirements */
-        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, color_format_desc, ds_format_desc,
-                auxBuffers, numSamples, FALSE /* PBUFFER */, FALSE /* findCompatible */);
-
-        /* Try to locate a compatible format if we weren't able to find anything */
-        if(!iPixelFormat) {
-            TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, color_format_desc, ds_format_desc,
-                    auxBuffers, 0 /* numSamples */, FALSE /* PBUFFER */, TRUE /* findCompatible */ );
-        }
-
-        /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */
-        if(!iPixelFormat) {
-            ERR("Can't find a suitable iPixelFormat\n");
-            return NULL;
-        }
-
-        DescribePixelFormat(hdc, iPixelFormat, sizeof(pfd), &pfd);
-        res = SetPixelFormat(hdc, iPixelFormat, NULL);
-        if(!res) {
-            int oldPixelFormat = GetPixelFormat(hdc);
-
-            /* By default WGL doesn't allow pixel format adjustments but we need it here.
-             * For this reason there is a WINE-specific wglSetPixelFormat which allows you to
-             * set the pixel format multiple times. Only use it when it is really needed. */
-
-            if(oldPixelFormat == iPixelFormat) {
-                /* We don't have to do anything as the formats are the same :) */
-            }
-            else if (oldPixelFormat && gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
-            {
-                res = GL_EXTCALL(wglSetPixelFormatWINE(hdc, iPixelFormat, NULL));
-
-                if(!res) {
-                    ERR("wglSetPixelFormatWINE failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
-                    return NULL;
-                }
-            } else if(oldPixelFormat) {
-                /* OpenGL doesn't allow pixel format adjustments. Print an error and continue using the old format.
-                 * There's a big chance that the old format works although with a performance hit and perhaps rendering errors. */
-                ERR("HDC=%p is already set to iPixelFormat=%d and OpenGL doesn't allow changes!\n", hdc, oldPixelFormat);
-            } else {
-                ERR("SetPixelFormat failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
+                ERR("wglSetPixelFormatWINE failed on HDC %p for pixel_format %d.\n", hdc, pixel_format);
                 return NULL;
             }
+        }
+        else if (oldPixelFormat)
+        {
+            /* OpenGL doesn't allow pixel format adjustments. Print an error
+             * and continue using the old format. There's a big chance that
+             * the old format works although with a performance hit and perhaps
+             * rendering errors. */
+            ERR("HDC %p is already set to pixel_format %d and OpenGL doesn't allow changes.\n", hdc, oldPixelFormat);
+        }
+        else
+        {
+            ERR("SetPixelFormat failed on HDC %p for pixel format %d.\n", hdc, pixel_format);
+            return NULL;
         }
     }
 
@@ -1349,23 +1305,15 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
 
     if(!ctx) {
         ERR("Failed to create a WGL context\n");
-        if(create_pbuffer) {
-            GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
-            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
-        }
         goto out;
     }
-    ret = AddContextToArray(This, win_handle, hdc, ctx, pbuffer);
+    ret = AddContextToArray(This, win_handle, hdc, ctx);
     if(!ret) {
         ERR("Failed to add the newly created context to the context list\n");
         if (!pwglDeleteContext(ctx))
         {
             DWORD err = GetLastError();
             ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, err);
-        }
-        if(create_pbuffer) {
-            GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
-            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
         }
         goto out;
     }
@@ -1922,78 +1870,26 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 
         old_render_offscreen = context->render_offscreen;
         context->render_offscreen = surface_is_offscreen(target);
-        /* The context != This->activeContext will catch a NOP context change. This can occur
-         * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
-         * rendering. No context change is needed in that case
-         */
-
-        if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
-            if(This->pbufferContext && tid == This->pbufferContext->tid) {
-                This->pbufferContext->tid = 0;
-            }
-        }
         IWineD3DSwapChain_Release(swapchain);
     }
     else
     {
         TRACE("Rendering offscreen\n");
 
-retry:
-        if (wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER)
+        /* Stay with the currently active context. */
+        if (current_context && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.device == This)
         {
-            IWineD3DSurfaceImpl *targetimpl = (IWineD3DSurfaceImpl *)target;
-            if (!This->pbufferContext
-                    || This->pbufferWidth < targetimpl->currentDesc.Width
-                    || This->pbufferHeight < targetimpl->currentDesc.Height)
-            {
-                if (This->pbufferContext) context_destroy(This, This->pbufferContext);
-
-                /* The display is irrelevant here, the window is 0. But
-                 * context_create() needs a valid X connection. Create the context
-                 * on the same server as the primary swapchain. The primary
-                 * swapchain is exists at this point. */
-                This->pbufferContext = context_create(This, targetimpl,
-                        ((IWineD3DSwapChainImpl *)This->swapchains[0])->context[0]->win_handle,
-                        TRUE /* pbuffer */, &((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms);
-                This->pbufferWidth = targetimpl->currentDesc.Width;
-                This->pbufferHeight = targetimpl->currentDesc.Height;
-                if (This->pbufferContext) context_release(This->pbufferContext);
-            }
-
-            if (This->pbufferContext)
-            {
-                if (This->pbufferContext->tid && This->pbufferContext->tid != tid)
-                {
-                    FIXME("The PBuffer context is only supported for one thread for now!\n");
-                }
-                This->pbufferContext->tid = tid;
-                context = This->pbufferContext;
-            }
-            else
-            {
-                ERR("Failed to create a buffer context and drawable, falling back to back buffer offscreen rendering.\n");
-                wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
-                goto retry;
-            }
+            context = current_context;
         }
         else
         {
-            /* Stay with the currently active context. */
-            if (current_context
-                    && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.device == This)
-            {
-                context = current_context;
-            }
-            else
-            {
-                /* This may happen if the app jumps straight into offscreen rendering
-                 * Start using the context of the primary swapchain. tid == 0 is no problem
-                 * for findThreadContextForSwapChain.
-                 *
-                 * Can also happen on thread switches - in that case findThreadContextForSwapChain
-                 * is perfect to call. */
-                context = findThreadContextForSwapChain(This->swapchains[0], tid);
-            }
+            /* This may happen if the app jumps straight into offscreen rendering
+             * Start using the context of the primary swapchain. tid == 0 is no problem
+             * for findThreadContextForSwapChain.
+             *
+             * Can also happen on thread switches - in that case findThreadContextForSwapChain
+             * is perfect to call. */
+            context = findThreadContextForSwapChain(This->swapchains[0], tid);
         }
 
         old_render_offscreen = context->render_offscreen;

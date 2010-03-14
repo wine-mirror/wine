@@ -4458,7 +4458,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         switch(wined3d_settings.offscreen_rendering_mode) {
             case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
-            case ORM_PBUFFER:    This->get_drawable_size = get_drawable_size_pbuffer;    break;
             case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
         }
     }
@@ -5056,7 +5055,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, I
     } else if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         switch(wined3d_settings.offscreen_rendering_mode) {
             case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
-            case ORM_PBUFFER:    This->get_drawable_size = get_drawable_size_pbuffer;    break;
             case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
         }
     }

@@ -547,7 +547,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapCh
 
         context_destroy(This->device, This->context[0]);
         This->context[0] = context_create(This->device, (IWineD3DSurfaceImpl *)This->frontBuffer,
-                This->win_handle, FALSE /* pbuffer */, &This->presentParms);
+                This->win_handle, &This->presentParms);
         context_release(This->context[0]);
 
         IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
@@ -817,7 +817,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     if (surface_type == SURFACE_OPENGL)
     {
         swapchain->context[0] = context_create(device, (IWineD3DSurfaceImpl *)swapchain->frontBuffer,
-                window, FALSE /* pbuffer */, present_parameters);
+                window, present_parameters);
         if (!swapchain->context[0])
         {
             WARN("Failed to create context.\n");
@@ -936,7 +936,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
     ctx = context_create(This->device, (IWineD3DSurfaceImpl *)This->frontBuffer,
-            This->context[0]->win_handle, FALSE /* pbuffer */, &This->presentParms);
+            This->context[0]->win_handle, &This->presentParms);
     if (!ctx)
     {
         ERR("Failed to create a new context for the swapchain\n");
