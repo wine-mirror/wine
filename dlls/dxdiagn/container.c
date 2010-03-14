@@ -88,16 +88,13 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAI
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
   DWORD i = 0;
-  
-  TRACE("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszContainer), cchContainer);
 
-  if (NULL == pwszContainer) {
+  TRACE("(%p, %u, %p, %u)\n", iface, dwIndex, pwszContainer, cchContainer);
+
+  if (NULL == pwszContainer || 0 == cchContainer) {
     return E_INVALIDARG;
   }
-  if (256 > cchContainer) {
-    return DXDIAG_E_INSUFFICIENT_BUFFER;
-  }
-  
+
   p = This->subContainers;
   while (NULL != p) {
     if (dwIndex == i) {  
@@ -109,7 +106,9 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAI
     }
     p = p->next;
     ++i;
-  }  
+  }
+
+  *pwszContainer = '\0';
   return E_INVALIDARG;
 }
 

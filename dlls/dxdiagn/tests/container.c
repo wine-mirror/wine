@@ -99,10 +99,59 @@ static void test_GetNumberOfProps(void)
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_EnumChildContainerNames(void)
+{
+    HRESULT hr;
+    WCHAR container[256];
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR zerotestW[] = {0,'e','s','t',0};
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    /* Test various combinations of invalid parameters. */
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, NULL, 0);
+    ok(hr == E_INVALIDARG,
+       "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, NULL, sizeof(container)/sizeof(WCHAR));
+    ok(hr == E_INVALIDARG,
+       "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    /* Test the conditions in which the output buffer can be modified. */
+    memcpy(container, testW, sizeof(testW));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, container, 0);
+    ok(hr == E_INVALIDARG,
+       "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(!memcmp(container, testW, sizeof(testW)),
+       "Expected the container buffer to be untouched, got %s\n", wine_dbgstr_w(container));
+
+    memcpy(container, testW, sizeof(testW));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, ~0, container, 0);
+    ok(hr == E_INVALIDARG,
+       "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(!memcmp(container, testW, sizeof(testW)),
+       "Expected the container buffer to be untouched, got %s\n", wine_dbgstr_w(container));
+
+    memcpy(container, testW, sizeof(testW));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, ~0, container, sizeof(container)/sizeof(WCHAR));
+    ok(hr == E_INVALIDARG,
+       "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(!memcmp(container, zerotestW, sizeof(zerotestW)),
+       "Expected the container buffer string to be empty, got %s\n", wine_dbgstr_w(container));
+
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
     test_GetNumberOfChildContainers();
     test_GetNumberOfProps();
+    test_EnumChildContainerNames();
     CoUninitialize();
 }
