@@ -97,17 +97,17 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAI
 
   p = This->subContainers;
   while (NULL != p) {
-    if (dwIndex == i) {  
-      if (cchContainer <= strlenW(p->contName)) {
-	return DXDIAG_E_INSUFFICIENT_BUFFER;
-      }
+    if (dwIndex == i) {
+      TRACE("Found container name %s, copying string\n", debugstr_w(p->contName));
       lstrcpynW(pwszContainer, p->contName, cchContainer);
-      return S_OK;
+      return (cchContainer <= strlenW(p->contName)) ?
+              DXDIAG_E_INSUFFICIENT_BUFFER : S_OK;
     }
     p = p->next;
     ++i;
   }
 
+  TRACE("Failed to find container name at specified index\n");
   *pwszContainer = '\0';
   return E_INVALIDARG;
 }

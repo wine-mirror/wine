@@ -103,6 +103,7 @@ static void test_EnumChildContainerNames(void)
 {
     HRESULT hr;
     WCHAR container[256];
+    DWORD maxcount, index;
     static const WCHAR testW[] = {'t','e','s','t',0};
     static const WCHAR zerotestW[] = {0,'e','s','t',0};
 
@@ -143,6 +144,77 @@ static void test_EnumChildContainerNames(void)
     ok(!memcmp(container, zerotestW, sizeof(zerotestW)),
        "Expected the container buffer string to be empty, got %s\n", wine_dbgstr_w(container));
 
+    hr = IDxDiagContainer_GetNumberOfChildContainers(pddc, &maxcount);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("IDxDiagContainer::GetNumberOfChildContainers failed\n");
+        goto cleanup;
+    }
+
+    trace("Starting child container enumeration of the root container:\n");
+
+    /* We should be able to enumerate as many child containers as the value
+     * that IDxDiagContainer::GetNumberOfChildContainers returns. */
+    for (index = 0; index <= maxcount; index++)
+    {
+        /* A buffer size of 1 is unlikely to be valid, as only a null terminator
+         * could be stored, and it is unlikely that a container name could be empty. */
+        DWORD buffersize = 1;
+        memcpy(container, testW, sizeof(testW));
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, buffersize);
+        if (hr == E_INVALIDARG)
+        {
+            /* We should get here when index is one more than the maximum index value. */
+            ok(maxcount == index,
+               "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG "
+               "on the last index %d, got 0x%08x\n", index, hr);
+            ok(container[0] == '\0',
+               "Expected the container buffer string to be empty, got %s\n", wine_dbgstr_w(container));
+            break;
+        }
+        else if (hr == DXDIAG_E_INSUFFICIENT_BUFFER)
+        {
+            WCHAR temp[256];
+
+            ok(container[0] == '\0',
+               "Expected the container buffer string to be empty, got %s\n", wine_dbgstr_w(container));
+
+            /* Get the container name to compare against. */
+            hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, temp, sizeof(temp)/sizeof(WCHAR));
+            ok(hr == S_OK,
+               "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+
+            /* Show that the DirectX SDK's stipulation that the buffer be at
+             * least 256 characters long is a mere suggestion, and smaller sizes
+             * can be acceptable also. IDxDiagContainer::EnumChildContainerNames
+             * doesn't provide a way of getting the exact size required, so the
+             * buffersize value will be iterated to at most 256 characters. */
+            for (buffersize = 2; buffersize <= 256; buffersize++)
+            {
+                memcpy(container, testW, sizeof(testW));
+                hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, buffersize);
+                if (hr != DXDIAG_E_INSUFFICIENT_BUFFER)
+                    break;
+
+                ok(!memcmp(temp, container, sizeof(WCHAR)*(buffersize - 1)),
+                   "Expected truncated container name string, got %s\n", wine_dbgstr_w(container));
+            }
+
+            ok(hr == S_OK,
+               "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, "
+               "got hr = 0x%08x, buffersize = %d\n", hr, buffersize);
+            if (hr == S_OK)
+                trace("pddc[%d] = %s, length = %d\n", index, wine_dbgstr_w(container), buffersize);
+        }
+        else
+        {
+            ok(0, "IDxDiagContainer::EnumChildContainerNames unexpectedly returned 0x%08x\n", hr);
+            break;
+        }
+    }
+
+cleanup:
     IDxDiagContainer_Release(pddc);
     IDxDiagProvider_Release(pddp);
 }
