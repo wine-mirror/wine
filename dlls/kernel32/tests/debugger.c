@@ -537,6 +537,9 @@ static void test_debug_loop(int argc, char **argv)
     }
 
     pid = GetCurrentProcessId();
+    ret = DebugActiveProcess(pid);
+    ok(!ret, "DebugActiveProcess() succeeded on own process.\n");
+
     get_file_name(blackbox_file);
     cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv[0]) + strlen(arguments) + strlen(blackbox_file) + 10);
     sprintf(cmd, "%s%s%08x %s", argv[0], arguments, pid, blackbox_file);

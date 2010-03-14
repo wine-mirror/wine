@@ -421,6 +421,7 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
 static int debugger_attach( struct process *process, struct thread *debugger )
 {
     if (process->debugger) goto error;  /* already being debugged */
+    if (debugger->process == process) goto error;
     if (!is_process_init_done( process )) goto error;  /* still starting up */
     if (list_empty( &process->thread_list )) goto error;  /* no thread running in the process */
 
