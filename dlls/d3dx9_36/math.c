@@ -793,7 +793,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *ifac
      return S_OK;
     }
     *ppobj = NULL;
-    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p), not found\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 

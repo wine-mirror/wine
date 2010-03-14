@@ -299,7 +299,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable* 
         return S_OK;
     }
 
-    ERR("Interface %s not found\n", debugstr_guid(riid));
+    WARN("Interface %s not found.\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
 }
