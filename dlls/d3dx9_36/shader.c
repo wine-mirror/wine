@@ -291,6 +291,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable* 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_ID3DXBuffer) ||
         IsEqualGUID(riid, &IID_ID3DXConstantTable))
     {
         ID3DXConstantTable_AddRef(iface);
