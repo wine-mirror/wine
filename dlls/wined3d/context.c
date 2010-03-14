@@ -929,51 +929,24 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
  * new render target or swapchain is created. Thus performance is not an issue
  * here.
  *
- * Params:
- *  This: Device to add the context for
- *  hdc: device context
- *  glCtx: WGL context to add
- *
  *****************************************************************************/
-static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
-        HWND win_handle, HDC hdc, HGLRC glCtx)
+static BOOL AddContextToArray(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 {
     struct wined3d_context **oldArray = This->contexts;
-    DWORD state;
 
     This->contexts = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->contexts) * (This->numContexts + 1));
     if(This->contexts == NULL) {
         ERR("Unable to grow the context array\n");
         This->contexts = oldArray;
-        return NULL;
+        return FALSE;
     }
     if(oldArray) {
         memcpy(This->contexts, oldArray, sizeof(*This->contexts) * This->numContexts);
     }
-
-    This->contexts[This->numContexts] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**This->contexts));
-    if(This->contexts[This->numContexts] == NULL) {
-        ERR("Unable to allocate a new context\n");
-        HeapFree(GetProcessHeap(), 0, This->contexts);
-        This->contexts = oldArray;
-        return NULL;
-    }
-
-    This->contexts[This->numContexts]->hdc = hdc;
-    This->contexts[This->numContexts]->glCtx = glCtx;
-    This->contexts[This->numContexts]->win_handle = win_handle;
     HeapFree(GetProcessHeap(), 0, oldArray);
+    This->contexts[This->numContexts++] = context;
 
-    /* Mark all states dirty to force a proper initialization of the states on the first use of the context
-     */
-    for(state = 0; state <= STATE_HIGHEST; state++) {
-        if (This->StateTable[state].representative)
-            Context_MarkStateDirty(This->contexts[This->numContexts], state, This->StateTable);
-    }
-
-    This->numContexts++;
-    TRACE("Created context %p\n", This->contexts[This->numContexts - 1]);
-    return This->contexts[This->numContexts - 1];
+    return TRUE;
 }
 
 /* This function takes care of WineD3D pixel format selection. */
@@ -1168,18 +1141,26 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     const struct GlPixelFormatDesc *color_format_desc;
     const struct GlPixelFormatDesc *ds_format_desc;
-    struct wined3d_context *ret = NULL;
+    struct wined3d_context *ret;
     PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
     int numSamples = 0;
     int pixel_format;
     unsigned int s;
+    DWORD state;
     HGLRC ctx;
     HDC hdc;
     int res;
 
     TRACE("device %p, target %p, window %p, present parameters %p.\n",
             This, target, win_handle, pPresentParms);
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    if (!ret)
+    {
+        ERR("Failed to allocate context memory.\n");
+        return NULL;
+    }
 
     if (!(hdc = GetDC(win_handle)))
     {
@@ -1249,7 +1230,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     if (!pixel_format)
     {
         ERR("Can't find a suitable pixel format.\n");
-        return NULL;
+        goto out;
     }
 
     DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
@@ -1274,7 +1255,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
             if (!res)
             {
                 ERR("wglSetPixelFormatWINE failed on HDC %p for pixel_format %d.\n", hdc, pixel_format);
-                return NULL;
+                goto out;
             }
         }
         else if (oldPixelFormat)
@@ -1288,7 +1269,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         else
         {
             ERR("SetPixelFormat failed on HDC %p for pixel format %d.\n", hdc, pixel_format);
-            return NULL;
+            goto out;
         }
     }
 
@@ -1307,8 +1288,9 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         ERR("Failed to create a WGL context\n");
         goto out;
     }
-    ret = AddContextToArray(This, win_handle, hdc, ctx);
-    if(!ret) {
+
+    if (!AddContextToArray(This, ret))
+    {
         ERR("Failed to add the newly created context to the context list\n");
         if (!pwglDeleteContext(ctx))
         {
@@ -1317,13 +1299,29 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         }
         goto out;
     }
-    ret->valid = 1;
+
     ret->gl_info = &This->adapter->gl_info;
+
+    /* Mark all states dirty to force a proper initialization of the states
+     * on the first use of the context. */
+    for (state = 0; state <= STATE_HIGHEST; ++state)
+    {
+        if (This->StateTable[state].representative)
+            Context_MarkStateDirty(ret, state, This->StateTable);
+    }
+
     ret->surface = (IWineD3DSurface *) target;
     ret->current_rt = (IWineD3DSurface *)target;
+    ret->tid = GetCurrentThreadId();
+
     ret->render_offscreen = surface_is_offscreen((IWineD3DSurface *) target);
     ret->draw_buffer_dirty = TRUE;
-    ret->tid = GetCurrentThreadId();
+    ret->valid = 1;
+
+    ret->glCtx = ctx;
+    ret->win_handle = win_handle;
+    ret->hdc = hdc;
+
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
         /* Create the dirty constants array and initialize them to dirty */
         ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
@@ -1462,17 +1460,16 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
 
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
+    TRACE("Created context %p.\n", ret);
+
     return ret;
 
 out:
-    if (ret)
-    {
-        HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
-        HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
-        HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
-        HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
-        HeapFree(GetProcessHeap(), 0, ret);
-    }
+    HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
+    HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
+    HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, ret);
     return NULL;
 }
 
