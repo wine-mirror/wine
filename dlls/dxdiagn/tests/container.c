@@ -394,7 +394,6 @@ static void test_EnumPropNames(void)
     IDxDiagContainer *child = NULL;
     DWORD count, index, propcount;
     static const WCHAR testW[] = {'t','e','s','t',0};
-    static const WCHAR zerotestW[] = {0,'e','s','t',0};
 
     if (!create_root_IDxDiagContainer())
     {
@@ -459,6 +458,67 @@ static void test_EnumPropNames(void)
     ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG, got 0x%08x\n", hr);
     ok(!memcmp(property, testW, sizeof(testW)),
        "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
+
+    trace("Starting property enumeration of the %s container:\n", wine_dbgstr_w(container));
+
+    /* We should be able to enumerate as many properties as the value that
+     * IDxDiagContainer::GetNumberOfProps returns. */
+    for (index = 0; index <= propcount; index++)
+    {
+        /* A buffer size of 1 is unlikely to be valid, as only a null terminator
+         * could be stored, and it is unlikely that a property name could be empty. */
+        DWORD buffersize = 1;
+
+        memcpy(property, testW, sizeof(testW));
+        hr = IDxDiagContainer_EnumPropNames(child, index, property, buffersize);
+        if (hr == E_INVALIDARG)
+        {
+            /* We should get here when index is one more than the maximum index value. */
+            ok(propcount == index,
+               "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG "
+               "on the last index %d, got 0x%08x\n", index, hr);
+            ok(!memcmp(property, testW, sizeof(testW)),
+               "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
+            break;
+        }
+        else if (hr == DXDIAG_E_INSUFFICIENT_BUFFER)
+        {
+            WCHAR temp[256];
+
+            ok(property[0] == '\0',
+               "Expected the property buffer string to be empty, got %s\n", wine_dbgstr_w(property));
+            hr = IDxDiagContainer_EnumPropNames(child, index, temp, sizeof(temp)/sizeof(WCHAR));
+            ok(hr == S_OK,
+               "Expected IDxDiagContainer::EnumPropNames to return S_OK, got 0x%08x\n", hr);
+
+            /* Show that the DirectX SDK's stipulation that the buffer be at
+             * least 256 characters long is a mere suggestion, and smaller sizes
+             * can be acceptable also. IDxDiagContainer::EnumPropNames doesn't
+             * provide a way of getting the exact size required, so the buffersize
+             * value will be iterated to at most 256 characters. */
+            for (buffersize = 2; buffersize <= 256; buffersize++)
+            {
+                memcpy(property, testW, sizeof(testW));
+                hr = IDxDiagContainer_EnumPropNames(child, index, property, buffersize);
+                if (hr != DXDIAG_E_INSUFFICIENT_BUFFER)
+                    break;
+
+                ok(!memcmp(temp, property, sizeof(WCHAR)*(buffersize - 1)),
+                   "Expected truncated property name string, got %s\n", wine_dbgstr_w(property));
+            }
+
+            ok(hr == S_OK,
+               "Expected IDxDiagContainer::EnumPropNames to return S_OK, "
+               "got hr = 0x%08x, buffersize = %d\n", hr, buffersize);
+            if (hr == S_OK)
+                trace("child[%d] = %s, length = %d\n", index, wine_dbgstr_w(property), buffersize);
+        }
+        else
+        {
+            ok(0, "IDxDiagContainer::EnumPropNames unexpectedly returned 0x%08x\n", hr);
+            break;
+        }
+    }
 
     IDxDiagContainer_Release(child);
 

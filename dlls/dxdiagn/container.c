@@ -196,16 +196,16 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
 
   p = This->properties;
   while (NULL != p) {
-    if (dwIndex == i) {  
-      if (cchPropName <= strlenW(p->vName)) {
-        return DXDIAG_E_INSUFFICIENT_BUFFER;
-      }
+    if (dwIndex == i) {
+      TRACE("Found property name %s, copying string\n", debugstr_w(p->vName));
       lstrcpynW(pwszPropName, p->vName, cchPropName);
-      return S_OK;
+      return (cchPropName <= strlenW(p->vName)) ?
+              DXDIAG_E_INSUFFICIENT_BUFFER : S_OK;
     }
     p = p->next;
     ++i;
   }
+  TRACE("Failed to find property name at specified index\n");
   return E_INVALIDARG;
 }
 
