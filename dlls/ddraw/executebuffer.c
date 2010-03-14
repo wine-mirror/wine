@@ -489,7 +489,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			
 			memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
 		    } else {
-		        ERR("Unhandled vertex processing !\n");
+		        ERR("Unhandled vertex processing flag %#x.\n", ci->dwFlags);
 		    }
 
 		    instr += size;
