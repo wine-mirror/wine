@@ -295,7 +295,24 @@ NTSTATUS WINAPI NtQueryInformationProcess(
          * set it to 0 aka "no debugger" to satisfy copy protections */
         len = sizeof(DWORD_PTR);
         if (ProcessInformationLength == len)
-            memset(ProcessInformation, 0, ProcessInformationLength);
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( ProcessHandle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        *(DWORD_PTR *)ProcessInformation = reply->debugger_present ? ~(DWORD_PTR)0 : 0;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
         break;

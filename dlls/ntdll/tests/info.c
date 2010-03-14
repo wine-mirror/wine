@@ -20,6 +20,7 @@
 
 #include "ntdll_test.h"
 #include <winnls.h>
+#include <stdio.h>
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -751,6 +752,78 @@ static void test_query_process_times(void)
         "Inconsistent length %d\n", ReturnLength);
 }
 
+static void test_query_process_debug_port(int argc, char **argv)
+{
+    DWORD_PTR debug_port = 0xdeadbeef;
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { 0 };
+    NTSTATUS status;
+    BOOL ret;
+
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
+
+    si.cb = sizeof(si);
+    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    if (!ret) return;
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugPort,
+            NULL, 0, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugPort,
+            NULL, sizeof(debug_port), NULL);
+    ok(status == STATUS_INVALID_HANDLE || status == STATUS_ACCESS_VIOLATION,
+            "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
+            NULL, sizeof(debug_port), NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugPort,
+            &debug_port, sizeof(debug_port), NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
+            &debug_port, sizeof(debug_port) - 1, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
+            &debug_port, sizeof(debug_port) + 1, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
+            &debug_port, sizeof(debug_port), NULL);
+    ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+    ok(debug_port == 0, "Expected port 0, got %#lx.\n", debug_port);
+
+    status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugPort,
+            &debug_port, sizeof(debug_port), NULL);
+    ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+    ok(debug_port == ~(DWORD_PTR)0, "Expected port %#lx, got %#lx.\n", ~(DWORD_PTR)0, debug_port);
+
+    for (;;)
+    {
+        DEBUG_EVENT ev;
+
+        ret = WaitForDebugEvent(&ev, INFINITE);
+        ok(ret, "WaitForDebugEvent failed, last error %#x.\n", GetLastError());
+        if (!ret) break;
+
+        if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+
+        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+        ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
+        if (!ret) break;
+    }
+
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
+}
+
 static void test_query_process_handlecount(void)
 {
     NTSTATUS status;
@@ -978,8 +1051,14 @@ static void test_affinity(void)
 
 START_TEST(info)
 {
+    char **argv;
+    int argc;
+
     if(!InitFunctionPtrs())
         return;
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 3) return; /* Child */
 
     /* NtQuerySystemInformation */
 
@@ -1048,6 +1127,10 @@ START_TEST(info)
     /* 0x4 ProcessTimes */
     trace("Starting test_query_process_times()\n");
     test_query_process_times();
+
+    /* 0x7 ProcessDebugPort */
+    trace("Starting test_process_debug_port()\n");
+    test_query_process_debug_port(argc, argv);
 
     /* 0x14 ProcessHandleCount */
     trace("Starting test_query_process_handlecount()\n");

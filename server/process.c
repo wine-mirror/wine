@@ -1091,6 +1091,7 @@ DECL_HANDLER(get_process_info)
         reply->start_time       = process->start_time;
         reply->end_time         = process->end_time;
         reply->cpu              = process->cpu;
+        reply->debugger_present = !!process->debugger;
         release_object( process );
     }
 }

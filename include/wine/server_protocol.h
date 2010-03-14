@@ -725,7 +725,7 @@ struct get_process_info_reply
     int          exit_code;
     int          priority;
     cpu_type_t   cpu;
-    char __pad_60[4];
+    int          debugger_present;
 };
 
 
@@ -5397,6 +5397,6 @@ union generic_reply
     struct free_user_handle_reply free_user_handle_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 395
+#define SERVER_PROTOCOL_VERSION 396
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

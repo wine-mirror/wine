@@ -692,6 +692,7 @@ typedef union
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     cpu_type_t   cpu;              /* CPU that this process is running on */
+    int          debugger_present; /* process is being debugged */
 @END
 
 

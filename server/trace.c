@@ -1118,6 +1118,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
     dump_cpu_type( ", cpu=", &req->cpu );
+    fprintf( stderr, ", debugger_present=%d", req->debugger_present );
 }
 
 static void dump_set_process_info_request( const struct set_process_info_request *req )
