@@ -387,6 +387,86 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_EnumPropNames(void)
+{
+    HRESULT hr;
+    WCHAR container[256], property[256];
+    IDxDiagContainer *child = NULL;
+    DWORD count, index, propcount;
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR zerotestW[] = {0,'e','s','t',0};
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    /* Find a container with a non-zero number of properties. */
+    hr = IDxDiagContainer_GetNumberOfChildContainers(pddc, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("IDxDiagContainer::GetNumberOfChildContainers failed\n");
+        goto cleanup;
+    }
+
+    for (index = 0; index < count; index++)
+    {
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, sizeof(container)/sizeof(WCHAR));
+        ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+        if (FAILED(hr))
+        {
+            skip("IDxDiagContainer::EnumChildContainerNames failed\n");
+            goto cleanup;
+        }
+
+        hr = IDxDiagContainer_GetChildContainer(pddc, container, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDxDiagContainer_GetNumberOfProps(child, &propcount);
+            ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfProps to return S_OK, got 0x%08x\n", hr);
+
+            if (!propcount)
+            {
+                IDxDiagContainer_Release(child);
+                child = NULL;
+            }
+            else
+                break;
+        }
+    }
+
+    if (!child)
+    {
+        skip("Unable to find a container with non-zero property count\n");
+        goto cleanup;
+    }
+
+    hr = IDxDiagContainer_EnumPropNames(child, ~0, NULL, 0);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    memcpy(property, testW, sizeof(testW));
+    hr = IDxDiagContainer_EnumPropNames(child, ~0, property, 0);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(!memcmp(property, testW, sizeof(testW)),
+       "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
+
+    memcpy(property, testW, sizeof(testW));
+    hr = IDxDiagContainer_EnumPropNames(child, ~0, property, sizeof(property)/sizeof(WCHAR));
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(!memcmp(property, testW, sizeof(testW)),
+       "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
+
+    IDxDiagContainer_Release(child);
+
+cleanup:
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
@@ -395,5 +475,6 @@ START_TEST(container)
     test_EnumChildContainerNames();
     test_GetChildContainer();
     test_dot_parsing();
+    test_EnumPropNames();
     CoUninitialize();
 }

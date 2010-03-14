@@ -187,16 +187,13 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_Property* p = NULL;
   DWORD i = 0;
-  
-  TRACE("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
 
-  if (NULL == pwszPropName) {
+  TRACE("(%p, %u, %p, %u)\n", iface, dwIndex, pwszPropName, cchPropName);
+
+  if (NULL == pwszPropName || 0 == cchPropName) {
     return E_INVALIDARG;
   }
-  if (256 > cchPropName) {
-    return DXDIAG_E_INSUFFICIENT_BUFFER;
-  }
-  
+
   p = This->properties;
   while (NULL != p) {
     if (dwIndex == i) {  
@@ -208,7 +205,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
     }
     p = p->next;
     ++i;
-  }  
+  }
   return E_INVALIDARG;
 }
 
