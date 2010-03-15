@@ -3324,15 +3324,10 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
     /* get fundamental type for the argument */
     for (;;)
     {
-        if (is_attr(type->attrs, ATTR_WIREMARSHAL))
-            break;
-        else if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
-            break;
-        else if (type_is_alias(type))
-            type = type_alias_get_aliasee(type);
-        else if (is_array(type))
+        switch (typegen_detect_type(type, var->attrs, TDT_IGNORE_STRINGS|TDT_IGNORE_RANGES))
         {
-            if (is_conformance_needed_for_phase(phase) && is_array(type))
+        case TGT_ARRAY:
+            if (is_conformance_needed_for_phase(phase))
             {
                 if (type_array_has_conformance(type))
                 {
@@ -3349,18 +3344,16 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
                 }
             }
             break;
-        }
-        else if (type_get_type(type) == TYPE_UNION)
-        {
-            if (is_conformance_needed_for_phase(phase))
+        case TGT_UNION:
+            if (type_get_type(type) == TYPE_UNION &&
+                is_conformance_needed_for_phase(phase))
             {
                 print_file(file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR)");
                 write_expr(file, get_attrp(var->attrs, ATTR_SWITCHIS), 1, 1, NULL, NULL, local_var_prefix);
                 fprintf(file, ";\n\n");
             }
             break;
-        }
-        else if (type_get_type(type) == TYPE_INTERFACE || is_void(type))
+        case TGT_IFACE_POINTER:
         {
             expr_t *iid;
 
@@ -3372,10 +3365,21 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
             }
             break;
         }
-        else if (is_ptr(type))
+        case TGT_POINTER:
             type = type_pointer_get_ref(type);
-        else
+            continue;
+        case TGT_INVALID:
+        case TGT_USER_TYPE:
+        case TGT_CTXT_HANDLE:
+        case TGT_CTXT_HANDLE_POINTER:
+        case TGT_STRING:
+        case TGT_BASIC:
+        case TGT_ENUM:
+        case TGT_STRUCT:
+        case TGT_RANGE:
             break;
+        }
+        break;
     }
 }
 
