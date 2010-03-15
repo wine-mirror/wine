@@ -1425,19 +1425,19 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeLib2_SaveAllChanges(createtl);
     ok(hres == S_OK, "got %08x\n", hres);
-    ICreateTypeLib2_Release(createtl);
 
     hres = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    ITypeInfo_Release(interface2);
-    ITypeInfo_Release(interface1);
-    ITypeInfo_Release(dual);
-    ITypeInfo_Release(dispatch);
-    ITypeInfo_Release(unknown);
+    ok(ITypeInfo_Release(interface2)==0, "Object should be freed\n");
+    ok(ITypeInfo_Release(interface1)==0, "Object should be freed\n");
+    ok(ITypeInfo_Release(dual)==0, "Object should be freed\n");
+    ok(ICreateTypeLib2_Release(createtl)==0, "Object should be freed\n");
+    ok(ITypeInfo_Release(dispatch)==0, "Object should be freed\n");
+    ok(ITypeInfo_Release(unknown)==0, "Object should be freed\n");
 
-    ITypeLib_Release(tl);
-    ITypeLib_Release(stdole);
+    ok(ITypeLib_Release(tl)==0, "Object should be freed\n");
+    ok(ITypeLib_Release(stdole)==0, "Object should be freed\n");
 
     DeleteFileA(filename);
 }

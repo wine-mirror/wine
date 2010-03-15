@@ -1315,7 +1315,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(
 
     if(*ppvObject)
     {
-        ICreateTypeLib2_AddRef(iface);
+        ICreateTypeInfo2_AddRef(iface);
         TRACE("-- Interface: (%p)->(%p)\n",ppvObject,*ppvObject);
         return S_OK;
     }
@@ -1583,8 +1583,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
 
         /* Allocate container GUID */
         hres = ITypeLib_GetLibAttr(container, &tlibattr);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            ITypeLib_Release(container);
             return hres;
+        }
 
         guid.guid = tlibattr->guid;
         guid.hreftype = This->typelib->typelib_guids*12+2;
@@ -1593,6 +1595,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
         if(guid_offset == -1) {
             ITypeLib_ReleaseTLibAttr(container, tlibattr);
+            ITypeLib_Release(container);
             return E_OUTOFMEMORY;
         }
 
@@ -1613,6 +1616,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             || (p=strrchrW(name, '\\'))==NULL) {
             ERR("Error guessing typelib filename\n");
             ITypeLib_ReleaseTLibAttr(container, tlibattr);
+            ITypeLib_Release(container);
             return E_NOTIMPL;
         }
         memmove(name, p+1, strlenW(p)*sizeof(WCHAR));
@@ -1622,13 +1626,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
                 tlibattr->lcid, tlibattr->wMajorVerNum, tlibattr->wMinorVerNum, name);
         ITypeLib_ReleaseTLibAttr(container, tlibattr);
 
-        if(import_offset == -1)
+        if(import_offset == -1) {
+            ITypeLib_Release(container);
             return E_OUTOFMEMORY;
+        }
 
         /* Allocate referenced guid */
         hres = ITypeInfo_GetTypeAttr(pTInfo, &typeattr);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            ITypeLib_Release(container);
             return hres;
+        }
 
         guid.guid = typeattr->guid;
         guid.hreftype = This->typelib->typeinfo_guids*12+1;
@@ -1636,8 +1644,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         ITypeInfo_ReleaseTypeAttr(pTInfo, typeattr);
 
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
-        if(guid_offset == -1)
+        if(guid_offset == -1) {
+            ITypeLib_Release(container);
             return E_OUTOFMEMORY;
+        }
 
         check_guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][guid_offset];
         if(check_guid->hreftype == guid.hreftype)
@@ -2390,15 +2400,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
             return hres;
 
         hres = ITypeInfo_GetRefTypeInfo(next, hreftype, &cur);
+        ITypeInfo_Release(next);
         if(FAILED(hres))
             return hres;
 
-        ITypeInfo_Release(next);
 
         while(1) {
             hres = ITypeInfo_GetTypeAttr(cur, &typeattr);
-            if(FAILED(hres))
+            if(FAILED(hres)) {
+                ITypeInfo_Release(cur);
                 return hres;
+            }
 
             if(!memcmp(&typeattr->guid, &IID_IDispatch, sizeof(IDispatch)))
                 This->typeinfo->flags |= TYPEFLAG_FDISPATCHABLE;
@@ -2409,16 +2421,21 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
             hres = ITypeInfo_GetRefTypeOfImplType(cur, 0, &hreftype);
             if(hres == TYPE_E_ELEMENTNOTFOUND)
                 break;
-            if(FAILED(hres))
+            if(FAILED(hres)) {
+                ITypeInfo_Release(cur);
                 return hres;
+            }
 
             hres = ITypeInfo_GetRefTypeInfo(cur, hreftype, &next);
-            if(FAILED(hres))
+            if(FAILED(hres)) {
+                ITypeInfo_Release(cur);
                 return hres;
+            }
 
             ITypeInfo_Release(cur);
             cur = next;
         }
+        ITypeInfo_Release(cur);
     }
 
     This->typeinfo->cbSizeVft = (This->typeinfo->datatype2>>16) * 4;
@@ -3102,6 +3119,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
 
     if(hRefType==-2 && This->dual) {
         *ppTInfo = (ITypeInfo*)&This->dual->lpVtblTypeInfo2;
+        ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     }
 
@@ -3207,7 +3225,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetContainingTypeLib(
     TRACE("(%p,%p,%p)\n", iface, ppTLib, pIndex);
     
     *ppTLib = (ITypeLib *)&This->typelib->lpVtblTypeLib2;
-    This->typelib->ref++;
+    ICreateTypeLib_AddRef((ICreateTypeLib*)This->typelib);
     *pIndex = This->typeinfo->typekind >> 16;
 
     return S_OK;
@@ -3656,7 +3674,7 @@ static ICreateTypeInfo2 *ICreateTypeInfo2_Constructor(ICreateTypeLib2Impl *typel
     pCreateTypeInfo2Impl->ref = 1;
 
     pCreateTypeInfo2Impl->typelib = typelib;
-    typelib->ref++;
+    ICreateTypeLib_AddRef((ICreateTypeLib*)typelib);
 
     nameoffset = ctl2_alloc_name(typelib, szName);
     typeinfo_offset = ctl2_alloc_typeinfo(typelib, nameoffset);
