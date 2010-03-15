@@ -2360,6 +2360,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
     TRACE("(%p)\n", iface);
 
+    /* FIXME: LayOut should be run on all ImplTypes */
     if(This->typekind == TKIND_COCLASS)
         return S_OK;
 
@@ -2429,7 +2430,34 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         ITypeInfo_Release(cur);
     }
 
-    This->typeinfo->cbSizeVft = (This->typeinfo->datatype2>>16) * 4;
+    /* Get cbSizeVft of inherited interface */
+    /* Makes LayOut running recursively */
+    if(This->typeinfo->datatype1 != -1) {
+        ITypeInfo *cur, *inherited;
+        TYPEATTR *typeattr;
+
+        hres = ICreateTypeInfo_QueryInterface(iface, &IID_ITypeInfo, (void**)&cur);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ITypeInfo_GetRefTypeInfo(cur, This->typeinfo->datatype1, &inherited);
+        ITypeInfo_Release(cur);
+        if(FAILED(hres))
+            return hres;
+
+        hres = ITypeInfo_GetTypeAttr(inherited, &typeattr);
+        if(FAILED(hres)) {
+            ITypeInfo_Release(inherited);
+            return hres;
+        }
+
+        This->typeinfo->cbSizeVft = typeattr->cbSizeVft;
+
+        ITypeInfo_ReleaseTypeAttr(inherited, typeattr);
+        ITypeInfo_Release(inherited);
+    } else
+        This->typeinfo->cbSizeVft = 0;
+
     if(!This->typedata)
         return S_OK;
 
