@@ -1118,8 +1118,10 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
         LIST_FOR_EACH_ENTRY(eval, &expr_eval_routines, struct expr_eval_routine, entry)
         {
-            if (!strcmp (eval->structure->name, structure->name)
-                && !compare_expr (eval->expr, expr))
+            if (eval->structure == structure ||
+                (eval->structure->name && structure->name &&
+                 !strcmp(eval->structure->name, structure->name) &&
+                 !compare_expr(eval->expr, expr)))
             {
                 found = 1;
                 break;
@@ -3957,8 +3959,11 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         print_file(file, 0, "static void __RPC_USER %s_%sExprEval_%04u(PMIDL_STUB_MESSAGE pStubMsg)\n",
                    iface, name, callback_offset);
         print_file(file, 0, "{\n");
-        print_file (file, 1, "%s *%s = (%s *)(pStubMsg->StackTop - %u);\n",
-                    name, var_name, name, eval->baseoff);
+        print_file(file, 1, "%s", "");
+        write_type_left(file, (type_t *)eval->structure, TRUE);
+        fprintf(file, " *%s = (", var_name);
+        write_type_left(file, (type_t *)eval->structure, TRUE);
+        fprintf(file, " *)(pStubMsg->StackTop - %u);\n", eval->baseoff);
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */
         print_file(file, 1, "pStubMsg->MaxCount = (ULONG_PTR)");
         write_expr(file, eval->expr, 1, 1, var_name_expr, eval->structure, "");
