@@ -6632,7 +6632,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
                         pPresentationParameters->BackBufferHeight);
             } else {
                 /* Fullscreen -> fullscreen mode change */
-                MoveWindow(swapchain->win_handle, 0, 0,
+                MoveWindow(swapchain->device_window, 0, 0,
                            pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
                            TRUE);
             }

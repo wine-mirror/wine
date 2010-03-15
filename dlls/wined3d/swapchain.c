@@ -598,7 +598,7 @@ static LONG fullscreen_exstyle(LONG exstyle)
 void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w, UINT h)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
-    HWND window = swapchain->win_handle;
+    HWND window = swapchain->device_window;
     BOOL filter_messages;
     LONG style, exstyle;
 
@@ -632,7 +632,7 @@ void swapchain_setup_fullscreen_window(IWineD3DSwapChainImpl *swapchain, UINT w,
 void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
-    HWND window = swapchain->win_handle;
+    HWND window = swapchain->device_window;
     BOOL filter_messages;
     LONG style, exstyle;
 
@@ -712,6 +712,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->parent = parent;
     swapchain->ref = 1;
     swapchain->win_handle = window;
+    swapchain->device_window = window;
 
     if (!present_parameters->Windowed && window)
     {
