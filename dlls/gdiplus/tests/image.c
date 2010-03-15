@@ -237,12 +237,12 @@ static void test_GdipImageGetFrameDimensionsCount(void)
     }
 
     stat = GdipImageGetFrameCount((GpImage*)bm, NULL, &count);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bm, &dimension, &count);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(1, count);
+    expect(Ok, stat);
+    expect(1, count);
 
     GdipBitmapSetPixel(bm, 0, 0, 0xffffffff);
 
@@ -1601,7 +1601,7 @@ static void test_multiframegif(void)
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     todo_wine expect(2, count);
 
     /* SelectActiveFrame overwrites our current data */
@@ -1675,8 +1675,8 @@ static void test_multiframegif(void)
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(1, count);
+    expect(Ok, stat);
+    expect(1, count);
 
     GdipDisposeImage((GpImage*)bmp);
     IStream_Release(stream);
