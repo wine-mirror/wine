@@ -1090,6 +1090,13 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
             else
                 param_type = RPC_FC_SHORT;
         }
+        else if (type_get_type(correlation_variable) == TYPE_POINTER)
+        {
+            if (pointer_size == 8)
+                param_type = RPC_FC_HYPER;
+            else
+                param_type = RPC_FC_LONG;
+        }
         else
         {
             error("write_conf_or_var_desc: non-arithmetic type used as correlation variable %s\n",
@@ -2647,12 +2654,14 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
     unsigned int start_offset = *typeformat_offset;
     expr_t *iid = get_attrp(attrs, ATTR_IIDIS);
 
+    print_start_tfs_comment(file, type, start_offset);
+
     if (iid)
     {
         print_file(file, 2, "0x2f,  /* FC_IP */\n");
         print_file(file, 2, "0x5c,  /* FC_PAD */\n");
         *typeformat_offset
-            += write_conf_or_var_desc(file, NULL, 0, type, iid) + 2;
+            += write_conf_or_var_desc(file, current_structure, 0, type, iid) + 2;
     }
     else
     {
@@ -2663,7 +2672,6 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
             error("%s: interface %s missing UUID\n", __FUNCTION__, base->name);
 
         update_tfsoff(type, start_offset, file);
-        print_start_tfs_comment(file, type, start_offset);
         print_file(file, 2, "0x2f,\t/* FC_IP */\n");
         print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
         print_file(file, 2, "NdrFcLong(0x%08x),\n", uuid->Data1);
