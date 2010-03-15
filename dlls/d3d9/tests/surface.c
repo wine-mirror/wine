@@ -187,8 +187,10 @@ todo_wine   ok(SUCCEEDED(hr), "Double IDirect3DTexture9_UnLockRect failed with %
 static void test_lockrect_offset(IDirect3DDevice9 *device)
 {
     IDirect3DSurface9 *surface = 0;
+    IDirect3D9 *d3d;
     const RECT rect = {60, 60, 68, 68};
     D3DLOCKED_RECT locked_rect;
+    int expected_pitch;
     unsigned int expected_offset;
     unsigned int offset;
     unsigned int i;
@@ -202,14 +204,24 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
         unsigned int block_height;
         unsigned int block_size;
     } dxt_formats[] = {
-        {D3DFMT_DXT1, "D3DFMT_DXT1", 4, 4, 8},
-        {D3DFMT_DXT2, "D3DFMT_DXT2", 4, 4, 16},
-        {D3DFMT_DXT3, "D3DFMT_DXT3", 4, 4, 16},
-        {D3DFMT_DXT4, "D3DFMT_DXT4", 4, 4, 16},
-        {D3DFMT_DXT5, "D3DFMT_DXT5", 4, 4, 16},
+        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, 8},
+        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, 16},
+        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, 16},
+        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, 16},
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 16},
+        {MAKEFOURCC('A','T','I','2'), "ATI2N",       1, 1,  1},
     };
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetDirect3D failed (%08x)\n", hr);
 
     for (i = 0; i < (sizeof(dxt_formats) / sizeof(*dxt_formats)); ++i) {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, dxt_formats[i].fmt);
+        if(FAILED(hr))
+        {
+            skip("Format %s not supported, skipping lockrect offset test\n", dxt_formats[i].name);
+            continue;
+        }
+
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128, dxt_formats[i].fmt, D3DPOOL_SCRATCH, &surface, 0);
         ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (%08x)\n", hr);
 
@@ -217,6 +229,9 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "LockRect failed (%08x)\n", hr);
 
         base = locked_rect.pBits;
+        expected_pitch = (128 + dxt_formats[i].block_height - 1) / dxt_formats[i].block_width
+                         * dxt_formats[i].block_size;
+        ok(locked_rect.Pitch == expected_pitch, "Got pitch %d, expected pitch %d for format %s\n", locked_rect.Pitch, expected_pitch, dxt_formats[i].name);
 
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "UnlockRect failed (%08x)\n", hr);
@@ -227,7 +242,7 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "LockRect failed (%08x)\n", hr);
 
         offset = (BYTE *)locked_rect.pBits - base;
-        expected_offset = (rect.top / dxt_formats[i].block_height) * locked_rect.Pitch
+        expected_offset = (rect.top / dxt_formats[i].block_height) * expected_pitch
                         + (rect.left / dxt_formats[i].block_width) * dxt_formats[i].block_size;
         ok(offset == expected_offset, "Got offset %u, expected offset %u for format %s\n", offset, expected_offset, dxt_formats[i].name);
 
@@ -236,6 +251,7 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
 
         IDirect3DSurface9_Release(surface);
     }
+    IDirect3D9_Release(d3d);
 }
 
 static void test_lockrect_invalid(IDirect3DDevice9 *device)
