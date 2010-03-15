@@ -647,6 +647,47 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     }
 }
 
+static BOOL context_set_pixel_format(const struct wined3d_gl_info *gl_info, HDC dc, int format)
+{
+    int current = GetPixelFormat(dc);
+
+    if (current == format) return TRUE;
+
+    if (!current)
+    {
+        if (!SetPixelFormat(dc, format, NULL))
+        {
+            ERR("Failed to set pixel format %d on device context %p, last error %#x.\n",
+                    format, dc, GetLastError());
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    /* By default WGL doesn't allow pixel format adjustments but we need it
+     * here. For this reason there's a Wine specific wglSetPixelFormat()
+     * which allows us to set the pixel format multiple times. Only use it
+     * when really needed. */
+    if (gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
+    {
+        if (!GL_EXTCALL(wglSetPixelFormatWINE(dc, format, NULL)))
+        {
+            ERR("wglSetPixelFormatWINE failed to set pixel format %d on device context %p.\n",
+                    format, dc);
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    /* OpenGL doesn't allow pixel format adjustments. Print an error and
+     * continue using the old format. There's a big chance that the old
+     * format works although with a performance hit and perhaps rendering
+     * errors. */
+    ERR("Unable to set pixel format %d on device context %p. Already using format %d.\n",
+            format, dc, current);
+    return TRUE;
+}
+
 static void context_validate(struct wined3d_context *context)
 {
     HWND wnd = WindowFromDC(context->hdc);
@@ -1121,7 +1162,6 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     DWORD state;
     HGLRC ctx;
     HDC hdc;
-    int res;
 
     TRACE("device %p, target %p, window %p, present parameters %p.\n",
             This, target, win_handle, pPresentParms);
@@ -1205,43 +1245,10 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     }
 
     DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
-    res = SetPixelFormat(hdc, pixel_format, NULL);
-    if (!res)
+    if (!context_set_pixel_format(gl_info, hdc, pixel_format))
     {
-        int oldPixelFormat = GetPixelFormat(hdc);
-
-        /* By default WGL doesn't allow pixel format adjustments but we need
-         * it here. For this reason there is a WINE-specific wglSetPixelFormat
-         * which allows you to set the pixel format multiple times. Only use
-         * it when it is really needed. */
-
-        if (oldPixelFormat == pixel_format)
-        {
-            /* We don't have to do anything as the formats are the same :) */
-        }
-        else if (oldPixelFormat && gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
-        {
-            res = GL_EXTCALL(wglSetPixelFormatWINE(hdc, pixel_format, NULL));
-
-            if (!res)
-            {
-                ERR("wglSetPixelFormatWINE failed on HDC %p for pixel_format %d.\n", hdc, pixel_format);
-                goto out;
-            }
-        }
-        else if (oldPixelFormat)
-        {
-            /* OpenGL doesn't allow pixel format adjustments. Print an error
-             * and continue using the old format. There's a big chance that
-             * the old format works although with a performance hit and perhaps
-             * rendering errors. */
-            ERR("HDC %p is already set to pixel_format %d and OpenGL doesn't allow changes.\n", hdc, oldPixelFormat);
-        }
-        else
-        {
-            ERR("SetPixelFormat failed on HDC %p for pixel format %d.\n", hdc, pixel_format);
-            goto out;
-        }
+        ERR("Failed to set pixel format %d on device context %p.\n", pixel_format, hdc);
+        goto out;
     }
 
     ctx = pwglCreateContext(hdc);
