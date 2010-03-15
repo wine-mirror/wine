@@ -75,13 +75,6 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-struct elf_module_info
-{
-    DWORD_PTR                   elf_addr;
-    unsigned short	        elf_mark : 1,
-                                elf_loader : 1;
-};
-
 #ifdef __ELF__
 
 #define ELF_INFO_DEBUG_HEADER   0x0001
@@ -150,6 +143,14 @@ struct elf_thunk_area
     THUNK_ORDINAL               ordinal;
     unsigned long               rva_start;
     unsigned long               rva_end;
+};
+
+struct elf_module_info
+{
+    unsigned long               elf_addr;
+    unsigned short	        elf_mark : 1,
+                                elf_loader : 1;
+    struct elf_file_map         file_map;
 };
 
 /******************************************************************
@@ -258,6 +259,13 @@ static inline unsigned elf_get_map_size(const struct elf_section_map* esm)
     return esm->fmap->sect[esm->sidx].shdr.sh_size;
 }
 
+static inline void elf_reset_file_map(struct elf_file_map* fmap)
+{
+    fmap->fd = -1;
+    fmap->shstrtab = ELF_NO_MAP;
+    fmap->alternate = NULL;
+}
+
 /******************************************************************
  *		elf_map_file
  *
@@ -278,9 +286,7 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
     if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
     WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
 
-    fmap->fd = -1;
-    fmap->shstrtab = ELF_NO_MAP;
-    fmap->alternate = NULL;
+    elf_reset_file_map(fmap);
 
     /* check that the file exists, and that the module hasn't been loaded yet */
     if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
@@ -1043,6 +1049,12 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
     }
     if (ret)
         ret = elf_load_debug_info_from_map(module, fmap, &pool, &ht_symtab);
+
+    if (ret)
+    {
+        module->elf_info->file_map = *fmap;
+        elf_reset_file_map(fmap);
+    }
 
     pool_destroy(&pool);
     if (fmap == &my_fmap) elf_unmap_file(fmap);
