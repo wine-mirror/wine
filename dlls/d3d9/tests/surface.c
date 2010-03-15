@@ -169,8 +169,9 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
             ok(SUCCEEDED(hr), "IDirect3DTexture9_LockRect: %08x\n", hr);
             hr = IDirect3DTexture9_UnlockRect(pTexture, j);
             ok(SUCCEEDED(hr), "IDirect3DTexture9_UnLockRect: %08x\n", hr);
-            hr = IDirect3DTexture9_UnlockRect(pTexture, j);
-todo_wine   ok(SUCCEEDED(hr), "Double IDirect3DTexture9_UnLockRect failed with %08x\n", hr);
+            /* Windows XP returns D3D_OK when calling UnlockRect on an unlocked surface,
+             * windows 7 returns an error.
+             */
 
             pitch = ((descr.Width + 3) >> 2) << 3;
             if (i > 0) pitch <<= 1;
