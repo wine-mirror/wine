@@ -2711,12 +2711,18 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       safe_copy_to_buffer(pStubMsg, pMemory, sizeof(double));
       pMemory += sizeof(double);
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
     {
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
       TRACE("pointer=%p <= %p\n", *(unsigned char**)pMemory, pMemory);
       TRACE("pStubMsg->Buffer before %p\n", pStubMsg->Buffer);
+      if (*pFormat != RPC_FC_POINTER)
+        pPointer = pFormat;
       if (*pPointer != RPC_FC_RP)
         ALIGN_POINTER_CLEAR(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
@@ -2738,7 +2744,10 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
           safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
       TRACE("pStubMsg->Buffer after %p\n", pStubMsg->Buffer);
-      pPointer += 4;
+      if (*pFormat == RPC_FC_POINTER)
+        pPointer += 4;
+      else
+        pFormat += 4;
       pMemory += sizeof(void *);
       break;
     }
@@ -2850,11 +2859,17 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("double=%f => %p\n", *(double*)pMemory, pMemory);
       pMemory += sizeof(double);
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
     {
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
       TRACE("pointer => %p\n", pMemory);
+      if (*pFormat != RPC_FC_POINTER)
+        pPointer = pFormat;
       if (*pPointer != RPC_FC_RP)
         ALIGN_POINTER(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
@@ -2876,7 +2891,10 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         if (*pPointer != RPC_FC_RP)
           safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
-      pPointer += 4;
+      if (*pFormat == RPC_FC_POINTER)
+        pPointer += 4;
+      else
+        pFormat += 4;
       pMemory += sizeof(void *);
       break;
     }
@@ -2979,7 +2997,13 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       safe_buffer_length_increment(pStubMsg, 8);
       pMemory += 8;
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
+      if (*pFormat != RPC_FC_POINTER)
+        pPointer = pFormat;
       if (!pStubMsg->IgnoreEmbeddedPointers)
       {
         int saved_buffer_length = pStubMsg->BufferLength;
@@ -2996,7 +3020,10 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         ALIGN_LENGTH(pStubMsg->BufferLength, 4);
         safe_buffer_length_increment(pStubMsg, 4);
       }
-      pPointer += 4;
+      if (*pFormat == RPC_FC_POINTER)
+        pPointer += 4;
+      else
+        pFormat += 4;
       pMemory += sizeof(void*);
       break;
     case RPC_FC_ALIGNM2:
@@ -3082,9 +3109,18 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_DOUBLE:
       pMemory += 8;
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
+      if (*pFormat != RPC_FC_POINTER)
+        pPointer = pFormat;
       NdrPointerFree(pStubMsg, *(unsigned char**)pMemory, pPointer);
-      pPointer += 4;
+      if (*pFormat == RPC_FC_POINTER)
+        pPointer += 4;
+      else
+        pFormat += 4;
       pMemory += sizeof(void *);
       break;
     case RPC_FC_ALIGNM2:
@@ -3174,10 +3210,16 @@ static ULONG ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       size += 8;
       safe_buffer_increment(pStubMsg, 8);
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
     {
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
+      if (*pFormat != RPC_FC_POINTER)
+        pPointer = pFormat;
       if (*pPointer != RPC_FC_RP)
         ALIGN_POINTER(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
@@ -3200,7 +3242,10 @@ static ULONG ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
         if (*pPointer != RPC_FC_RP)
           safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
-      pPointer += 4;
+      if (*pFormat == RPC_FC_POINTER)
+        pPointer += 4;
+      else
+        pFormat += 4;
       size += sizeof(void *);
       break;
     }
@@ -3269,8 +3314,14 @@ ULONG ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
     case RPC_FC_DOUBLE:
       size += 8;
       break;
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
     case RPC_FC_POINTER:
       size += sizeof(void *);
+      if (*pFormat != RPC_FC_POINTER)
+        pFormat += 4;
       break;
     case RPC_FC_ALIGNM2:
       ALIGN_LENGTH(size, 2);

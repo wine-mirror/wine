@@ -1997,7 +1997,6 @@ static void test_conf_complex_array(void)
         win_skip("Tests crash on Win9x, WinMe and NT4\n");
         goto cleanup;
     }
-todo_wine
     ok(StubMsg.BufferLength >= expected_length, "length %d\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
@@ -2013,12 +2012,7 @@ todo_wine
 #endif
 
     ok(ptr == NULL, "ret %p\n", ptr);
-todo_wine
     ok((char*)StubMsg.Buffer == (char*)StubMsg.BufferStart + expected_length, "not at expected length\n");
-
-    /* Skip tests on Wine until the todo_wine is removed */
-    if((char*)StubMsg.Buffer == (char*)StubMsg.BufferStart + expected_length)
-    {
 
     buf = (DWORD *)StubMsg.BufferStart;
 
@@ -2069,7 +2063,6 @@ todo_wine
 #else
     NdrSimpleStructFree( &StubMsg, (unsigned char*)mem, &fmtstr_complex_array[32]);
 #endif
-    }
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 
