@@ -988,7 +988,7 @@ static void test_CreateTypeLib(void) {
     ICreateTypeLib2 *createtl;
     ICreateTypeInfo *createti;
     ITypeLib *tl, *stdole;
-    ITypeInfo *interface1, *interface2, *unknown, *dispatch, *ti;
+    ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti;
     FUNCDESC funcdesc;
     ELEMDESC elemdesc[5];
     PARAMDESCEX paramdescex;
@@ -1337,10 +1337,10 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&ti);
+    hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&dual);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    hres = ITypeInfo_GetTypeAttr(dual, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
     ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
@@ -1353,9 +1353,27 @@ static void test_CreateTypeLib(void) {
     ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
     ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
 
-    hres = ITypeInfo_GetRefTypeOfImplType(ti, -1, &hreftype);
+    ITypeInfo_ReleaseTypeAttr(dual, typeattr);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(dual, -1, &hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == -2, "got %08x\n", hreftype);
+
+    hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
+    ok(typeattr->typekind == 4, "typekind = %d\n", typeattr->typekind);
+    todo_wine ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
+    ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
+    ok(typeattr->cbSizeVft == 28, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
+    ok(typeattr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL), "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
+    ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
 
     ITypeInfo_ReleaseTypeAttr(ti, typeattr);
 
@@ -1402,6 +1420,7 @@ static void test_CreateTypeLib(void) {
 
     ITypeInfo_Release(interface2);
     ITypeInfo_Release(interface1);
+    ITypeInfo_Release(dual);
     ITypeInfo_Release(dispatch);
     ITypeInfo_Release(unknown);
 
