@@ -3500,7 +3500,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
     case TGT_ARRAY:
     {
         unsigned char tc = get_array_fc(type);
-        const char *array_type = "FixedArray";
+        const char *array_type = NULL;
 
         /* We already have the size_is expression since it's at the
            top level, but do checks for multidimensional conformant
@@ -3509,19 +3509,25 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
            the return value.  */
         get_size_is_expr(type, var->name);
 
-        if (tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY)
+        switch (tc)
         {
+        case RPC_FC_SMFARRAY:
+        case RPC_FC_LGFARRAY:
+            array_type = "FixedArray";
+            break;
+        case RPC_FC_SMVARRAY:
+        case RPC_FC_LGVARRAY:
             array_type = "VaryingArray";
-        }
-        else if (tc == RPC_FC_CARRAY)
-        {
+            break;
+        case RPC_FC_CARRAY:
             array_type = "ConformantArray";
-        }
-        else if (tc == RPC_FC_CVARRAY || tc == RPC_FC_BOGUS_ARRAY)
-        {
-            array_type = (tc == RPC_FC_BOGUS_ARRAY
-                          ? "ComplexArray"
-                          : "ConformantVaryingArray");
+            break;
+        case RPC_FC_CVARRAY:
+            array_type = "ConformantVaryingArray";
+            break;
+        case RPC_FC_BOGUS_ARRAY:
+            array_type = "ComplexArray";
+            break;
         }
 
         if (pointer_type != RPC_FC_RP) array_type = "Pointer";
