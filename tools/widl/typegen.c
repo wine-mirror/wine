@@ -1555,8 +1555,10 @@ static void write_member_type(FILE *file, const type_t *cont,
         reloff = absoff - (*tfsoff + 2);
 
         print_file(file, 2, "0x4c,\t/* FC_EMBEDDED_COMPLEX */\n");
-        /* FIXME: actually compute necessary padding */
-        print_file(file, 2, "0x0,\t/* FIXME: padding */\n");
+        /* padding is represented using FC_STRUCTPAD* types, so presumably
+         * this is left over in the format for historical purposes in MIDL
+         * or rpcrt4. */
+        print_file(file, 2, "0x0,\n");
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                    reloff, reloff, absoff);
         *tfsoff += 4;
@@ -1651,8 +1653,11 @@ static int write_pointer_description_offsets(
         {
             unsigned int memsize;
 
-            /* pointer instance */
-            /* FIXME: sometimes from end of structure, sometimes from beginning */
+            /* pointer instance
+             *
+             * note that MSDN states that for pointer layouts in structures,
+             * this is a negative offset from the end of the structure, but
+             * this statement is incorrect. all offsets are positive */
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Memory offset = %d */\n", *offset_in_memory, *offset_in_memory);
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Buffer offset = %d */\n", *offset_in_buffer, *offset_in_buffer);
 
