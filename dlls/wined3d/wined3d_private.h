@@ -1088,6 +1088,7 @@ struct wined3d_context
     HGLRC                   glCtx;
     HWND                    win_handle;
     HDC                     hdc;
+    int pixel_format;
     GLint                   aux_buffers;
 
     /* FBOs */

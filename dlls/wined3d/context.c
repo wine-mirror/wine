@@ -688,6 +688,49 @@ static BOOL context_set_pixel_format(const struct wined3d_gl_info *gl_info, HDC 
     return TRUE;
 }
 
+static void context_update_window(struct wined3d_context *context)
+{
+    TRACE("Updating context %p window from %p to %p.\n",
+            context, context->win_handle, context->swapchain->win_handle);
+
+    if (context->valid)
+    {
+        if (!ReleaseDC(context->win_handle, context->hdc))
+        {
+            ERR("Failed to release device context %p, last error %#x.\n",
+                    context->hdc, GetLastError());
+        }
+    }
+    else context->valid = 1;
+
+    context->win_handle = context->swapchain->win_handle;
+
+    if (!(context->hdc = GetDC(context->win_handle)))
+    {
+        ERR("Failed to get a device context for window %p.\n", context->win_handle);
+        goto err;
+    }
+
+    if (!context_set_pixel_format(context->gl_info, context->hdc, context->pixel_format))
+    {
+        ERR("Failed to set pixel format %d on device context %p.\n",
+                context->pixel_format, context->hdc);
+        goto err;
+    }
+
+    if (!pwglMakeCurrent(context->hdc, context->glCtx))
+    {
+        ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
+                context->glCtx, context->hdc, GetLastError());
+        goto err;
+    }
+
+    return;
+
+err:
+    context->valid = 0;
+}
+
 static void context_validate(struct wined3d_context *context)
 {
     HWND wnd = WindowFromDC(context->hdc);
@@ -698,6 +741,9 @@ static void context_validate(struct wined3d_context *context)
                 context->hdc, wnd, context->win_handle);
         context->valid = 0;
     }
+
+    if (context->win_handle != context->swapchain->win_handle)
+        context_update_window(context);
 }
 
 static void context_destroy_gl_resources(struct wined3d_context *context)
@@ -1298,6 +1344,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     ret->glCtx = ctx;
     ret->win_handle = swapchain->win_handle;
     ret->hdc = hdc;
+    ret->pixel_format = pixel_format;
 
     if (device->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *)device))
     {

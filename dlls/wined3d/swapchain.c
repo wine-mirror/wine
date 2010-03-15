@@ -514,46 +514,16 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window) {
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    WINED3DLOCKED_RECT r;
-    BYTE *mem;
+static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
 
-    if (!window || window == This->win_handle) return WINED3D_OK;
+    if (!window) window = swapchain->device_window;
+    if (window == swapchain->win_handle) return WINED3D_OK;
 
-    TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, window);
-    if (This->context[0] == This->device->contexts[0])
-    {
-        /* The primary context 'owns' all the opengl resources. Destroying and recreating that context requires downloading
-         * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
-         * and reload the resources
-         */
-        delete_opengl_contexts((IWineD3DDevice *)This->device, iface);
-        This->win_handle = window;
-        create_primary_opengl_context((IWineD3DDevice *)This->device, iface);
-    }
-    else
-    {
-        This->win_handle = window;
+    TRACE("Setting swapchain %p window from %p to %p\n", swapchain, swapchain->win_handle, window);
+    swapchain->win_handle = window;
 
-        /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
-         * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
-         * So lock read only, copy the surface out, then lock with the discard flag and write back
-         */
-        IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_READONLY);
-        mem = HeapAlloc(GetProcessHeap(), 0, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-        memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-        IWineD3DSurface_UnlockRect(This->backBuffer[0]);
-
-        context_destroy(This->device, This->context[0]);
-        This->context[0] = context_create(This, (IWineD3DSurfaceImpl *)This->frontBuffer);
-        context_release(This->context[0]);
-
-        IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
-        memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-        HeapFree(GetProcessHeap(), 0, mem);
-        IWineD3DSurface_UnlockRect(This->backBuffer[0]);
-    }
     return WINED3D_OK;
 }
 
