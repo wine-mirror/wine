@@ -358,6 +358,11 @@ static void elf_unmap_file(struct elf_file_map* fmap)
     }
 }
 
+static void elf_module_remove(struct process* pcs, struct module* module)
+{
+    HeapFree(GetProcessHeap(), 0, module->elf_info);
+}
+
 /******************************************************************
  *		elf_is_in_thunk_area
  *
@@ -1132,6 +1137,7 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
         elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE,
                                       (load_offset) ? load_offset : fmap.elf_start,
                                       fmap.elf_size, 0, calc_crc32(fmap.fd));
+        elf_info->module->module_remove = elf_module_remove;
         if (!elf_info->module)
         {
             HeapFree(GetProcessHeap(), 0, elf_module_info);

@@ -168,6 +168,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
 
     module->type              = type;
     module->is_virtual        = virtual ? TRUE : FALSE;
+    module->module_remove     = NULL;
     module->sortlist_valid    = FALSE;
     module->sorttab_size      = 0;
     module->addr_sorttab      = NULL;
@@ -624,6 +625,8 @@ BOOL module_remove(struct process* pcs, struct module* module)
     struct module**     p;
 
     TRACE("%s (%p)\n", debugstr_w(module->module.ModuleName), module);
+
+    if (module->module_remove) module->module_remove(pcs, module);
     hash_table_destroy(&module->ht_symbols);
     hash_table_destroy(&module->ht_types);
     HeapFree(GetProcessHeap(), 0, module->sources);

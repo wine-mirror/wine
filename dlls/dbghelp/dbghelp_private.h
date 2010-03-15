@@ -326,6 +326,7 @@ struct module
     /* specific information for debug types */
     struct elf_module_info*	elf_info;
     struct dwarf2_module_info_s*dwarf2_info;
+    void                        (*module_remove)(struct process* pcs, struct module* module);
 
     struct macho_module_info*	macho_info;
 
