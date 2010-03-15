@@ -202,6 +202,30 @@ static unsigned char get_enum_fc(const type_t *type)
         return RPC_FC_ENUM16;
 }
 
+static type_t *get_user_type(const type_t *t, const char **pname)
+{
+    for (;;)
+    {
+        type_t *ut = get_attrp(t->attrs, ATTR_WIREMARSHAL);
+        if (ut)
+        {
+            if (pname)
+                *pname = t->name;
+            return ut;
+        }
+
+        if (type_is_alias(t))
+            t = type_alias_get_aliasee(t);
+        else
+            return NULL;
+    }
+}
+
+static int is_user_type(const type_t *t)
+{
+    return get_user_type(t, NULL) != NULL;
+}
+
 enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *attrs, unsigned int flags)
 {
     if (is_user_type(type))
@@ -250,6 +274,29 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
         break;
     }
     return TGT_INVALID;
+}
+
+static int get_padding(const var_list_t *fields)
+{
+    unsigned short offset = 0;
+    unsigned int salign = 1;
+    const var_t *f;
+
+    if (!fields)
+        return 0;
+
+    LIST_FOR_EACH_ENTRY(f, fields, const var_t, entry)
+    {
+        type_t *ft = f->type;
+        unsigned int align = 0;
+        unsigned int size = type_memsize(ft, &align);
+        align = clamp_align(align);
+        if (align > salign) salign = align;
+        offset = ROUND_SIZE(offset, align);
+        offset += size;
+    }
+
+    return ROUNDING(offset, salign);
 }
 
 unsigned char get_struct_fc(const type_t *type)
@@ -472,22 +519,6 @@ static unsigned char get_array_fc(const type_t *type)
     return fc;
 }
 
-int is_struct(unsigned char type)
-{
-    switch (type)
-    {
-    case RPC_FC_STRUCT:
-    case RPC_FC_PSTRUCT:
-    case RPC_FC_CSTRUCT:
-    case RPC_FC_CPSTRUCT:
-    case RPC_FC_CVSTRUCT:
-    case RPC_FC_BOGUS_STRUCT:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 static int is_non_complex_struct(const type_t *type)
 {
     return (type_get_type(type) == TYPE_STRUCT &&
@@ -624,30 +655,6 @@ static void guard_rec(type_t *type)
         type->tfswrite = FALSE;
     else
         type->typestring_offset = 1;
-}
-
-static type_t *get_user_type(const type_t *t, const char **pname)
-{
-    for (;;)
-    {
-        type_t *ut = get_attrp(t->attrs, ATTR_WIREMARSHAL);
-        if (ut)
-        {
-            if (pname)
-                *pname = t->name;
-            return ut;
-        }
-
-        if (type_is_alias(t))
-            t = type_alias_get_aliasee(t);
-        else
-            return NULL;
-    }
-}
-
-int is_user_type(const type_t *t)
-{
-    return get_user_type(t, NULL) != NULL;
 }
 
 static int is_embedded_complex(const type_t *type)
@@ -1175,29 +1182,6 @@ static unsigned int union_memsize(const var_list_t *fields, unsigned int *pmaxa)
     }
 
     return maxs;
-}
-
-int get_padding(const var_list_t *fields)
-{
-    unsigned short offset = 0;
-    unsigned int salign = 1;
-    const var_t *f;
-
-    if (!fields)
-        return 0;
-
-    LIST_FOR_EACH_ENTRY(f, fields, const var_t, entry)
-    {
-        type_t *ft = f->type;
-        unsigned int align = 0;
-        unsigned int size = type_memsize(ft, &align);
-        align = clamp_align(align);
-        if (align > salign) salign = align;
-        offset = ROUND_SIZE(offset, align);
-        offset += size;
-    }
-
-    return ROUNDING(offset, salign);
 }
 
 unsigned int type_memsize(const type_t *t, unsigned int *align)
