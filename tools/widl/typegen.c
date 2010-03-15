@@ -1404,15 +1404,21 @@ static unsigned int write_pointer_tfs(FILE *file, const attr_list_t *attrs,
     print_start_tfs_comment(file, type, offset);
     update_tfsoff(type, offset, file);
 
-    if (ref->typestring_offset)
-        write_nonsimple_pointer(file, attrs, type,
-                                toplevel_param,
-                                type_pointer_get_ref(type)->typestring_offset,
-                                typestring_offset);
-    else if (type_get_type(ref) == TYPE_BASIC ||
-             type_get_type(ref) == TYPE_ENUM)
+    switch (typegen_detect_type(ref, attrs, TDT_ALL_TYPES))
+    {
+    case TGT_BASIC:
+    case TGT_ENUM:
         *typestring_offset += write_simple_pointer(file, attrs, type,
                                                    toplevel_param);
+        break;
+    default:
+        if (ref->typestring_offset)
+            write_nonsimple_pointer(file, attrs, type,
+                                    toplevel_param,
+                                    type_pointer_get_ref(type)->typestring_offset,
+                                    typestring_offset);
+        break;
+    }
 
     return offset;
 }
