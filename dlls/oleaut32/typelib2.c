@@ -1566,20 +1566,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         /* Process locally defined TypeInfo */
 	*phRefType = This->typelib->typelib_typeinfo_offsets[index];
     } else {
-        static const WCHAR regkey[] = {'T','y','p','e','L','i','b','\\','{',
-            '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%',
-            '0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
-            '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
-            '}','\\','%','d','.','%','d','\\','0','\\','w','i','n','3','2',0};
-
-        WCHAR name[MAX_PATH], *p;
+        BSTR name;
         TLIBATTR *tlibattr;
         TYPEATTR *typeattr;
         TYPEKIND typekind;
         MSFT_GuidEntry guid, *check_guid;
         MSFT_ImpInfo impinfo;
         int guid_offset, import_offset;
-        DWORD len;
         HRESULT hres;
 
         /* Allocate container GUID */
@@ -1605,27 +1598,19 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             This->typelib->typelib_guids++;
 
         /* Get import file name */
-        /* Check HKEY_CLASSES_ROOT\TypeLib\{GUID}\{Ver}\0\win32 */
-        len = MAX_PATH;
-        sprintfW(name, regkey, guid.guid.Data1, guid.guid.Data2,
-                guid.guid.Data3, guid.guid.Data4[0], guid.guid.Data4[1],
-                guid.guid.Data4[2], guid.guid.Data4[3], guid.guid.Data4[4],
-                guid.guid.Data4[5], guid.guid.Data4[6], guid.guid.Data4[7],
-                tlibattr->wMajorVerNum, tlibattr->wMinorVerNum);
-
-        if(RegGetValueW(HKEY_CLASSES_ROOT, name, NULL, RRF_RT_REG_SZ, NULL, name, &len)!=ERROR_SUCCESS
-            || (p=strrchrW(name, '\\'))==NULL) {
-            ERR("Error guessing typelib filename\n");
+        hres = QueryPathOfRegTypeLib(&guid.guid, tlibattr->wMajorVerNum,
+                tlibattr->wMinorVerNum, tlibattr->lcid, &name);
+        if(FAILED(hres)) {
             ITypeLib_ReleaseTLibAttr(container, tlibattr);
             ITypeLib_Release(container);
-            return E_NOTIMPL;
+            return hres;
         }
-        memmove(name, p+1, strlenW(p)*sizeof(WCHAR));
 
         /* Import file */
-        import_offset = ctl2_alloc_importfile(This->typelib, guid_offset,
-                tlibattr->lcid, tlibattr->wMajorVerNum, tlibattr->wMinorVerNum, name);
+        import_offset = ctl2_alloc_importfile(This->typelib, guid_offset, tlibattr->lcid,
+                tlibattr->wMajorVerNum, tlibattr->wMinorVerNum, strrchrW(name, '\\')+1);
         ITypeLib_ReleaseTLibAttr(container, tlibattr);
+        SysFreeString(name);
 
         if(import_offset == -1) {
             ITypeLib_Release(container);
