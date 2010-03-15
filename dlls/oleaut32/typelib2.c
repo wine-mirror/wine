@@ -1575,6 +1575,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         WCHAR name[MAX_PATH], *p;
         TLIBATTR *tlibattr;
         TYPEATTR *typeattr;
+        TYPEKIND typekind;
         MSFT_GuidEntry guid, *check_guid;
         MSFT_ImpInfo impinfo;
         int guid_offset, import_offset;
@@ -1641,6 +1642,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         guid.guid = typeattr->guid;
         guid.hreftype = This->typelib->typeinfo_guids*12+1;
         guid.next_hash = -1;
+        typekind = typeattr->typekind;
         ITypeInfo_ReleaseTypeAttr(pTInfo, typeattr);
 
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
@@ -1654,7 +1656,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
             This->typelib->typeinfo_guids++;
 
         /* Allocate importinfo */
-        impinfo.flags = (This->typekind<<24) | MSFT_IMPINFO_OFFSET_IS_GUID;
+        impinfo.flags = (typekind<<24) | MSFT_IMPINFO_OFFSET_IS_GUID;
         impinfo.oImpFile = import_offset;
         impinfo.oGuid = guid_offset;
         *phRefType = ctl2_alloc_importinfo(This->typelib, &impinfo)+1;
