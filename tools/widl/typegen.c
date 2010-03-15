@@ -2137,7 +2137,6 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     unsigned int size;
     unsigned int start_offset;
     unsigned char fc;
-    int has_pointer;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     unsigned int baseoff
         = !type_array_is_decl_as_ptr(type) && current_structure
@@ -2147,10 +2146,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
-    if (write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset))
-        has_pointer = TRUE;
-    else
-        has_pointer = type_has_pointers(type_array_get_element(type));
+    write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
 
     align = 0;
     size = type_memsize((is_conformant_array(type) ? type_array_get_element(type) : type), &align);
@@ -2208,7 +2204,8 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
                 += write_conf_or_var_desc(file, current_structure, baseoff,
                                           type, length_is);
 
-        if (has_pointer && (type_array_is_decl_as_ptr(type) || !current_structure))
+        if (type_has_pointers(type_array_get_element(type)) &&
+            (type_array_is_decl_as_ptr(type) || !current_structure))
         {
             print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
             print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
@@ -2328,7 +2325,6 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     const var_t *array;
     unsigned int start_offset;
     unsigned int array_offset;
-    int has_pointers = 0;
     unsigned int align = 0;
     unsigned int corroff;
     var_t *f;
@@ -2344,9 +2340,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
               name, USHRT_MAX, total_size - USHRT_MAX);
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
-        has_pointers |= write_embedded_types(file, f->attrs, f->type, f->name,
-                                             FALSE, tfsoff);
-    if (!has_pointers) has_pointers = type_has_pointers(type);
+        write_embedded_types(file, f->attrs, f->type, f->name, FALSE, tfsoff);
 
     array = find_array_or_string_in_struct(type);
     if (array && !processed(array->type))
@@ -2394,7 +2388,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     }
     else if ((fc == RPC_FC_PSTRUCT) ||
              (fc == RPC_FC_CPSTRUCT) ||
-             (fc == RPC_FC_CVSTRUCT && has_pointers))
+             (fc == RPC_FC_CVSTRUCT && type_has_pointers(type)))
     {
         print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
