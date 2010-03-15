@@ -183,7 +183,7 @@ static const struct wined3d_format_compression_info format_compression_info[] =
     {WINED3DFMT_DXT3,   4,  4,  16},
     {WINED3DFMT_DXT4,   4,  4,  16},
     {WINED3DFMT_DXT5,   4,  4,  16},
-    {WINED3DFMT_ATI2N,  4,  4,  16},
+    {WINED3DFMT_ATI2N,  1,  1,  1},
 };
 
 struct wined3d_format_vertex_info
