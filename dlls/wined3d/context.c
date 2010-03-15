@@ -1149,9 +1149,9 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         auxBuffers = TRUE;
 
         if (color_format_desc->format == WINED3DFMT_B4G4R4X4_UNORM)
-            color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, &This->adapter->gl_info);
+            color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, gl_info);
         else if (color_format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
-            color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
+            color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
     }
 
     /* DirectDraw supports 8bit paletted render targets and these are used by
@@ -1161,7 +1161,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
      * For this reason we require a format with 8bit alpha, so request
      * A8R8G8B8. */
     if (color_format_desc->format == WINED3DFMT_P8_UINT)
-        color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, &This->adapter->gl_info);
+        color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
 
     /* Retrieve the depth stencil format from the present parameters.
      * The choice of the proper format can give a nice performance boost
@@ -1170,7 +1170,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
     {
         TRACE("Auto depth stencil enabled, using format %s.\n",
                 debug_d3dformat(pPresentParms->AutoDepthStencilFormat));
-        ds_format_desc = getFormatDescEntry(pPresentParms->AutoDepthStencilFormat, &This->adapter->gl_info);
+        ds_format_desc = getFormatDescEntry(pPresentParms->AutoDepthStencilFormat, gl_info);
     }
 
     /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
@@ -1271,7 +1271,7 @@ struct wined3d_context *context_create(IWineD3DDeviceImpl *This, IWineD3DSurface
         goto out;
     }
 
-    ret->gl_info = &This->adapter->gl_info;
+    ret->gl_info = gl_info;
 
     /* Mark all states dirty to force a proper initialization of the states
      * on the first use of the context. */
