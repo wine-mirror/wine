@@ -1106,6 +1106,9 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeInfo_SetFuncHelpContext(createti, 0, 0xabcdefab);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     funcdesc.invkind = INVOKE_PROPERTYPUT;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == TYPE_E_INCONSISTENTPROPFUNCS, "got %08x\n", hres);
@@ -1126,8 +1129,17 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeInfo_SetFuncHelpContext(createti, 1, 0xabcdefab);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     funcdesc.invkind = INVOKE_PROPERTYPUTREF;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncHelpContext(createti, 0, 0xabcdefab);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncHelpContext(createti, 0, 0x201);
     ok(hres == S_OK, "got %08x\n", hres);
 
     funcdesc.memid = 1;

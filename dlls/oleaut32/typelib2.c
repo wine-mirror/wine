@@ -2264,8 +2264,42 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
         UINT index,
         DWORD dwHelpContext)
 {
-    FIXME("(%p,%d,%d), stub!\n", iface, index, dwHelpContext);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    CyclicList *func;
+    int *typedata;
+    int size;
+
+    TRACE("(%p,%d,%d)\n", iface, index, dwHelpContext);
+
+    if(This->typeinfo->cElement<index)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if(This->typeinfo->cElement == index)
+        func = This->typedata;
+    else
+        for(func=This->typedata->next->next; func!=This->typedata; func=func->next)
+            if(index-- == 0)
+                break;
+
+    typedata = func->u.data;
+
+    /* Compute func size without arguments */
+    size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
+
+    /* Allocate memory for HelpContext if needed */
+    if(size < 7*sizeof(int)) {
+        typedata = HeapReAlloc(GetProcessHeap(), 0, typedata, typedata[0]+sizeof(int));
+        if(!typedata)
+            return E_OUTOFMEMORY;
+
+        memmove(&typedata[7], &typedata[6], typedata[0]-sizeof(int)*6);
+        typedata[0] += sizeof(int);
+        This->typedata->next->u.val += sizeof(int);
+        func->u.data = typedata;
+    }
+
+    typedata[6] = dwHelpContext;
+    return S_OK;
 }
 
 /******************************************************************************
