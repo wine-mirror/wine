@@ -6619,10 +6619,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         }
     }
 
-    if((pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
-       (swapchain->presentParms.Windowed && !pPresentationParameters->Windowed) ||
-        DisplayModeChanged) {
-
+    if (!pPresentationParameters->Windowed != !swapchain->presentParms.Windowed
+            || DisplayModeChanged)
+    {
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
         if (!pPresentationParameters->Windowed)
