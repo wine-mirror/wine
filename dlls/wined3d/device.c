@@ -6442,8 +6442,7 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
     }
 
     target = (IWineD3DSurfaceImpl *)(swapchain->backBuffer ? swapchain->backBuffer[0] : swapchain->frontBuffer);
-    context = context_create(This, target, swapchain->win_handle, &swapchain->presentParms);
-    if (!context)
+    if (!(context = context_create(swapchain, target)))
     {
         WARN("Failed to create context.\n");
         HeapFree(GetProcessHeap(), 0, swapchain->context);
@@ -7155,13 +7154,12 @@ void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *h
 
 void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->surface;
+    IWineD3DSwapChainImpl *swapchain = context->swapchain;
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
      * current context's drawable, which is the size of the back buffer of the swapchain
-     * the active context belongs to. The back buffer of the swapchain is stored as the
-     * surface the context belongs to. */
-    *width = surface->currentDesc.Width;
-    *height = surface->currentDesc.Height;
+     * the active context belongs to. */
+    *width = swapchain->presentParms.BackBufferWidth;
+    *height = swapchain->presentParms.BackBufferHeight;
 }
 
 LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window,
