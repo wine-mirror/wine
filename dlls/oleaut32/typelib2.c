@@ -1689,7 +1689,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     TRACE("(%p,%d,%p)\n", iface, index, pFuncDesc);
 
-    if(!pFuncDesc || (pFuncDesc->memid>0x7fffffff && pFuncDesc->memid!=MEMBERID_NIL))
+    if(!pFuncDesc)
         return E_INVALIDARG;
 
     TRACE("{%d,%p,%p,%d,%d,%d,%d,%d,%d,%d,{%d},%d}\n", pFuncDesc->memid,
