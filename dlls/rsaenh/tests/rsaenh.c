@@ -804,7 +804,6 @@ static void test_sha2(void)
 
     /* SHA-256 hash */
     result = CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash);
-    todo_wine
     ok(result, "%08x\n", GetLastError());
     if (result) {
         len = sizeof(DWORD);
@@ -826,7 +825,6 @@ static void test_sha2(void)
 
     /* SHA-384 hash */
     result = CryptCreateHash(hProv, CALG_SHA_384, 0, 0, &hHash);
-    todo_wine
     ok(result, "%08x\n", GetLastError());
     if (result) {
         len = sizeof(DWORD);
@@ -848,7 +846,6 @@ static void test_sha2(void)
 
     /* SHA-512 hash */
     result = CryptCreateHash(hProv, CALG_SHA_512, 0, 0, &hHash);
-    todo_wine
     ok(result, "%08x\n", GetLastError());
     if (result) {
         len = sizeof(DWORD);

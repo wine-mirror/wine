@@ -17,7 +17,8 @@ C_SRCS = \
 	rc2.c \
 	rc4.c \
 	rsa.c \
-	rsaenh.c
+	rsaenh.c \
+	sha2.c
 
 RC_SRCS = version.rc
 
