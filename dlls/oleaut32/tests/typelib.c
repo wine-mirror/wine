@@ -1265,6 +1265,14 @@ static void test_CreateTypeLib(void) {
     hres = ITypeInfo_GetImplTypeFlags(interface2, 1, &impltypeflags);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
 
+    funcdesc.oVft = 0xaaac;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    funcdesc.oVft = 0xaaa8;
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hres == S_OK, "got %08x\n", hres);
+    funcdesc.oVft = 0;
+
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, coclassW, TKIND_COCLASS, &createti);
@@ -1412,10 +1420,10 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
     ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
-    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cFuncs == 2, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
-    ok(typeattr->cbSizeVft == 56, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbSizeVft == 43696, "cbSizeVft = %d\n", typeattr->cbSizeVft);
     ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
     ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
     ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);

@@ -1674,7 +1674,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     TRACE("(%p,%d,%p)\n", iface, index, pFuncDesc);
 
-    if(!pFuncDesc)
+    if(!pFuncDesc || pFuncDesc->oVft&3)
         return E_INVALIDARG;
 
     TRACE("{%d,%p,%p,%d,%d,%d,%d,%d,%d,%d,{%d},%d}\n", pFuncDesc->memid,
@@ -1682,6 +1682,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
             pFuncDesc->invkind, pFuncDesc->callconv, pFuncDesc->cParams,
             pFuncDesc->cParamsOpt, pFuncDesc->oVft, pFuncDesc->cScodes,
             pFuncDesc->elemdescFunc.tdesc.vt, pFuncDesc->wFuncFlags);
+
+    if(pFuncDesc->cParamsOpt || pFuncDesc->cScodes)
+        FIXME("Unimplemented parameter - created typelib will be incorrect\n");
 
     switch(This->typekind) {
     case TKIND_MODULE:
@@ -1736,7 +1739,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     typedata[0] = 0x18 + pFuncDesc->cParams*(num_defaults?16:12);
     ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = pFuncDesc->wFuncFlags;
-    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | This->typeinfo->cbSizeVft;
+    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | (unsigned short)(pFuncDesc->oVft?pFuncDesc->oVft+1:0);
     typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
     if(num_defaults) typedata[4] |= 0x1000;
     typedata[5] = pFuncDesc->cParams;
@@ -2352,6 +2355,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
     CyclicList *iter, *iter2, **typedata;
     HREFTYPE hreftype;
     HRESULT hres;
+    unsigned user_vft = 0;
     int i;
 
     TRACE("(%p)\n", iface);
@@ -2435,6 +2439,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
     /* Assign IDs and VTBL entries */
     i = 0;
+    if(This->typedata->u.data[3]&1)
+        user_vft = This->typedata->u.data[3]&0xffff;
+
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
         /* Assign MEMBERID if MEMBERID_NIL was specified */
         if(iter->indice == MEMBERID_NIL) {
@@ -2460,7 +2467,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
         iter->u.data[0] = (iter->u.data[0]&0xffff) | (i<<16);
 
-        if(This->typekind != TKIND_MODULE) {
+        if((iter->u.data[3]&1) != (user_vft&1))
+            return TYPE_E_INVALIDID;
+
+        if(user_vft&1) {
+            if(user_vft < (iter->u.data[3]&0xffff))
+                user_vft = (iter->u.data[3]&0xffff);
+
+            if((iter->u.data[3]&0xffff) < This->typeinfo->cbSizeVft)
+                return TYPE_E_INVALIDID;
+        } else if(This->typekind != TKIND_MODULE) {
             iter->u.data[3] = (iter->u.data[3]&0xffff0000) | This->typeinfo->cbSizeVft;
             This->typeinfo->cbSizeVft += 4;
         }
@@ -2482,6 +2498,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
         i++;
     }
+
+    if(user_vft)
+        This->typeinfo->cbSizeVft = user_vft+3;
 
     for(i=0; i<(This->typeinfo->cElement&0xffff); i++) {
         if(typedata[i]->u.data[4]>>16 > i) {
