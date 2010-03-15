@@ -1406,43 +1406,35 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 
     TRACE("(%p,0x%x)\n", iface, uTypeFlags);
 
-    This->typeinfo->flags = uTypeFlags;
+    if (uTypeFlags & (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL)) {
+        static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+        ITypeLib *stdole;
+        ITypeInfo *dispatch;
+        HREFTYPE hreftype;
+        HRESULT hres;
 
-    if (uTypeFlags & TYPEFLAG_FDISPATCHABLE) {
-	MSFT_GuidEntry foo;
-	int guidoffset;
-	int fileoffset;
-	MSFT_ImpInfo impinfo;
-	static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+        hres = LoadTypeLib(stdole2tlb, &stdole);
+        if(FAILED(hres))
+            return hres;
 
-	foo.guid = IID_StdOle;
-	foo.hreftype = 2;
-	foo.next_hash = -1;
-	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
-	if (guidoffset == -1) return E_OUTOFMEMORY;
+        hres = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispatch);
+        ITypeLib_Release(stdole);
+        if(FAILED(hres))
+            return hres;
 
-	fileoffset =  ctl2_alloc_importfile(This->typelib, guidoffset,
-                This->typelib->typelib_header.lcid2, 2, 0, stdole2tlb);
-	if (fileoffset == -1) return E_OUTOFMEMORY;
-
-	foo.guid = IID_IDispatch;
-	foo.hreftype = 1;
-	foo.next_hash = -1;
-	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
-	if (guidoffset == -1) return E_OUTOFMEMORY;
-
-	impinfo.flags = TKIND_INTERFACE << 24 | MSFT_IMPINFO_OFFSET_IS_GUID;
-	impinfo.oImpFile = fileoffset;
-	impinfo.oGuid = guidoffset;
-	ctl2_alloc_importinfo(This->typelib, &impinfo);
-
-	This->typelib->typelib_header.dispatchpos = 1;
-
-	This->typeinfo->typekind |= 0x10;
-	This->typeinfo->typekind &= ~0x0f;
-	This->typeinfo->typekind |= TKIND_DISPATCH;
+        hres = ICreateTypeInfo2_AddRefTypeInfo(iface, dispatch, &hreftype);
+        ITypeInfo_Release(dispatch);
+        if(FAILED(hres))
+            return hres;
     }
 
+    if(uTypeFlags & TYPEFLAG_FDUAL) {
+        This->typeinfo->typekind |= 0x10;
+        This->typeinfo->typekind &= ~0x0f;
+        This->typeinfo->typekind |= TKIND_DISPATCH;
+    }
+
+    This->typeinfo->flags = uTypeFlags;
     return S_OK;
 }
 
