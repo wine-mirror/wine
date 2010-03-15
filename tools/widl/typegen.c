@@ -1339,7 +1339,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     if (out_attr && !in_attr && pointer_type == RPC_FC_RP)
         flags |= RPC_FC_P_ONSTACK;
 
-    if (is_ptr(type) && !last_ptr(type))
+    if (is_ptr(type) && is_declptr(type_pointer_get_ref(type)))
         flags |= RPC_FC_P_DEREF;
 
     print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
@@ -2794,50 +2794,48 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
     case TGT_IFACE_POINTER:
         return write_ip_tfs(file, var->attrs, type, typeformat_offset);
     case TGT_POINTER:
-        if (last_ptr(type))
+    {
+        type_t *ref = type_pointer_get_ref(type);
+
+        switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
         {
+        /* special case for pointers to base types */
+        case TGT_BASIC:
+        case TGT_ENUM:
+        {
+            unsigned char fc;
             size_t start_offset = *typeformat_offset;
             int in_attr = is_attr(var->attrs, ATTR_IN);
             int out_attr = is_attr(var->attrs, ATTR_OUT);
-            const type_t *ref = type_pointer_get_ref(type);
 
-            switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
-            {
-            /* special case for pointers to base types */
-            case TGT_BASIC:
-            case TGT_ENUM:
-            {
-                unsigned char fc;
+            if (type_get_type(ref) == TYPE_ENUM)
+                fc = get_enum_fc(ref);
+            else
+                fc = get_basic_fc(ref);
 
-                if (type_get_type(ref) == TYPE_ENUM)
-                    fc = get_enum_fc(ref);
-                else
-                    fc = get_basic_fc(ref);
-
-                print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
-                           get_pointer_fc(type, var->attrs, toplevel_param),
-                           (!in_attr && out_attr) ? 0x0C : 0x08,
-                           string_of_type(get_pointer_fc(type, var->attrs, toplevel_param)),
-                           (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
-                print_file(file, indent, "0x%02x,    /* %s */\n",
-                           fc, string_of_type(fc));
-                print_file(file, indent, "0x5c,          /* FC_PAD */\n");
-                *typeformat_offset += 4;
-                return start_offset;
-            }
-            default:
-                break;
-            }
+            print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
+                       get_pointer_fc(type, var->attrs, toplevel_param),
+                       (!in_attr && out_attr) ? 0x0C : 0x08,
+                       string_of_type(get_pointer_fc(type, var->attrs, toplevel_param)),
+                       (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
+            print_file(file, indent, "0x%02x,    /* %s */\n",
+                       fc, string_of_type(fc));
+            print_file(file, indent, "0x5c,          /* FC_PAD */\n");
+            *typeformat_offset += 4;
+            return start_offset;
+        }
+        default:
+            break;
         }
 
-        offset = write_typeformatstring_var(file, indent, func,
-                                            type_pointer_get_ref(type), var,
+        offset = write_typeformatstring_var(file, indent, func, ref, var,
                                             FALSE, typeformat_offset);
         if (file)
             fprintf(file, "/* %2u */\n", *typeformat_offset);
         return write_nonsimple_pointer(file, var->attrs, type,
                                        toplevel_param,
                                        offset, typeformat_offset);
+    }
     case TGT_INVALID:
         break;
     }
