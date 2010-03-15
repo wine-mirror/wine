@@ -1640,6 +1640,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     int *typedata;
     int i, num_defaults = 0;
     int decoded_size;
+    TYPEKIND tkind;
     HRESULT hres;
 
     TRACE("(%p,%d,%p)\n", iface, index, pFuncDesc);
@@ -1653,7 +1654,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
             pFuncDesc->cParamsOpt, pFuncDesc->oVft, pFuncDesc->cScodes,
             pFuncDesc->elemdescFunc.tdesc.vt, pFuncDesc->wFuncFlags);
 
-    switch(This->typeinfo->typekind&0xf) {
+    tkind = This->typeinfo->typekind&0x10?TKIND_INTERFACE:This->typeinfo->typekind&0xf;
+
+    switch(tkind) {
     case TKIND_MODULE:
         if(pFuncDesc->funckind != FUNC_STATIC)
             return TYPE_E_BADMODULEKIND;
@@ -1814,15 +1817,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
 	ref->flags = 0;
 	ref->oCustData = -1;
 	ref->onext = -1;
-    } else if ((This->typeinfo->typekind & 15) == TKIND_DISPATCH) {
-	FIXME("dispatch case unhandled.\n");
-    } else if ((This->typeinfo->typekind & 15) == TKIND_INTERFACE) {
+    } else if ((This->typeinfo->typekind & 15) == TKIND_INTERFACE ||
+            (This->typeinfo->typekind&0x10)) {
         if (This->typeinfo->cImplTypes && index==1)
             return TYPE_E_BADMODULEKIND;
 
         if( index != 0)  return TYPE_E_ELEMENTNOTFOUND;
 
         This->typeinfo->datatype1 = hRefType;
+    } else if ((This->typeinfo->typekind & 15) == TKIND_DISPATCH) {
+	FIXME("dispatch case unhandled.\n");
     } else {
 	FIXME("AddImplType unsupported on typekind %d\n", This->typeinfo->typekind & 15);
 	return E_OUTOFMEMORY;
@@ -2779,7 +2783,10 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
 
     (*ppTypeAttr)->lcid = This->typelib->typelib_header.lcid;
     (*ppTypeAttr)->cbSizeInstance = This->typeinfo->size;
-    (*ppTypeAttr)->typekind = This->typeinfo->typekind&0xf;
+    if(This->typeinfo->typekind & 0x10)
+        (*ppTypeAttr)->typekind = TKIND_INTERFACE;
+    else
+        (*ppTypeAttr)->typekind = This->typeinfo->typekind&0xf;
     (*ppTypeAttr)->cFuncs = This->typeinfo->cElement&0xffff;
     (*ppTypeAttr)->cVars = This->typeinfo->cElement>>16;
     (*ppTypeAttr)->cImplTypes = This->typeinfo->cImplTypes;
@@ -2872,8 +2879,13 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
         return E_INVALIDARG;
 
     if(index == -1) {
-        FIXME("Dual interfaces not handled yet\n");
-        return E_NOTIMPL;
+        if((This->typeinfo->typekind&0xf)==TKIND_DISPATCH
+                && (This->typeinfo->flags&TYPEFLAG_FDUAL)) {
+            *pRefType = -2; /* FIXME: is it correct? */
+            return S_OK;
+        }
+
+        return TYPE_E_ELEMENTNOTFOUND;
     }
 
     if(index >= This->typeinfo->cImplTypes)
@@ -3013,6 +3025,11 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
 
     if(!ppTInfo)
         return E_INVALIDARG;
+
+    if(hRefType == -2) {
+        FIXME("Negative hreftype not handled yet\n");
+        return E_NOTIMPL;
+    }
 
     if(hRefType&1) {
         ITypeLib *tl;

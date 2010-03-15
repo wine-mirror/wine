@@ -1087,6 +1087,9 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == 3, "hreftype = %d\n", hreftype);
 
+    hres = ITypeInfo_GetRefTypeOfImplType(interface1, -1, &hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     memset(&funcdesc, 0, sizeof(FUNCDESC));
     funcdesc.funckind = FUNC_PUREVIRTUAL;
     funcdesc.invkind = INVOKE_PROPERTYGET;
@@ -1237,6 +1240,9 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == 2, "hreftype = %d\n", hreftype);
 
+    hres = ITypeInfo_GetRefTypeOfImplType(interface2, -1, &hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     hres = ICreateTypeInfo_SetImplTypeFlags(createti, 0, IMPLTYPEFLAG_FDEFAULT);
     ok(hres == TYPE_E_BADMODULEKIND, "got %08x\n", hres);
 
@@ -1309,11 +1315,20 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == 1, "hreftype = %d\n", hreftype);
 
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, -1, &hreftype);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     ITypeInfo_Release(ti);
 
     ICreateTypeInfo_Release(createti);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, dualW, TKIND_INTERFACE, &createti);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetTypeFlags(createti, TYPEFLAG_FDUAL);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, dispatch, &hreftype);
@@ -1329,14 +1344,18 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
     ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
-    ok(typeattr->cFuncs == 0, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cFuncs == 1, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
-    ok(typeattr->cbSizeVft == 28, "cbSizeVft = %d\n", typeattr->cbSizeVft);
+    ok(typeattr->cbSizeVft == 32, "cbSizeVft = %d\n", typeattr->cbSizeVft);
     ok(typeattr->cbAlignment == 4, "cbAlignment = %d\n", typeattr->cbAlignment);
-    ok(typeattr->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "wTypeFlags = %d\n", typeattr->wTypeFlags);
+    ok(typeattr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL), "wTypeFlags = %d\n", typeattr->wTypeFlags);
     ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
     ok(typeattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", typeattr->wMinorVerNum);
+
+    hres = ITypeInfo_GetRefTypeOfImplType(ti, -1, &hreftype);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(hreftype == -2, "got %08x\n", hreftype);
 
     ITypeInfo_ReleaseTypeAttr(ti, typeattr);
 
