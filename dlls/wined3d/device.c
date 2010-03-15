@@ -5425,19 +5425,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3DERR_INVALIDCALL;
 }
 
-static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
-    HRESULT hr;
-    IWineD3DSwapChain *swapchain;
-
-    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if (SUCCEEDED(hr)) {
-        IWineD3DSwapChain_Release((IUnknown *)swapchain);
-        return swapchain;
-    }
-
-    return NULL;
-}
-
 static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         const WINED3DRECT *rect, const float color[4])
 {
@@ -5827,7 +5814,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
-    IWineD3DSwapChain *src_swapchain, *dst_swapchain;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     GLenum gl_filter;
@@ -5857,12 +5843,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
 
-    /* Attach src surface to src fbo */
-    src_swapchain = get_swapchain(src_surface);
-    dst_swapchain = get_swapchain(dst_surface);
-
-    if (src_swapchain) context = context_acquire(This, src_surface, CTXUSAGE_RESOURCELOAD);
-    else if (dst_swapchain) context = context_acquire(This, dst_surface, CTXUSAGE_RESOURCELOAD);
+    if (!surface_is_offscreen(src_surface)) context = context_acquire(This, src_surface, CTXUSAGE_RESOURCELOAD);
+    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(This, dst_surface, CTXUSAGE_RESOURCELOAD);
     else context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
 
     gl_info = context->gl_info;
@@ -5876,8 +5858,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         if(buffer == GL_FRONT) {
             RECT windowsize;
             UINT h;
-            ClientToScreen(((IWineD3DSwapChainImpl *)src_swapchain)->win_handle, &offset);
-            GetClientRect(((IWineD3DSwapChainImpl *)src_swapchain)->win_handle, &windowsize);
+            ClientToScreen(context->win_handle, &offset);
+            GetClientRect(context->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
             src_rect->x1 -= offset.x; src_rect->x2 -=offset.x;
             src_rect->y1 =  offset.y + h - src_rect->y1;
@@ -5912,8 +5894,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         if(buffer == GL_FRONT) {
             RECT windowsize;
             UINT h;
-            ClientToScreen(((IWineD3DSwapChainImpl *)dst_swapchain)->win_handle, &offset);
-            GetClientRect(((IWineD3DSwapChainImpl *)dst_swapchain)->win_handle, &windowsize);
+            ClientToScreen(context->win_handle, &offset);
+            GetClientRect(context->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
             dst_rect->x1 -= offset.x; dst_rect->x2 -=offset.x;
             dst_rect->y1 =  offset.y + h - dst_rect->y1;
