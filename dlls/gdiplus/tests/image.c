@@ -226,6 +226,19 @@ static void test_GdipImageGetFrameDimensionsCount(void)
     stat = GdipImageGetFrameDimensionsList((GpImage*)bm, &dimension, 0);
     expect(InvalidParameter, stat);
 
+    stat = GdipImageGetFrameCount(NULL, &dimension, &count);
+    expect(InvalidParameter, stat);
+
+    /* WinXP crashes on this test */
+    if(0)
+    {
+        stat = GdipImageGetFrameCount((GpImage*)bm, &dimension, NULL);
+        expect(InvalidParameter, stat);
+    }
+
+    stat = GdipImageGetFrameCount((GpImage*)bm, NULL, &count);
+    todo_wine expect(Ok, stat);
+
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bm, &dimension, &count);
     todo_wine expect(Ok, stat);
