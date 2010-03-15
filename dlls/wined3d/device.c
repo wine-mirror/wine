@@ -6625,7 +6625,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
 
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
-        if(swapchain->win_handle && !pPresentationParameters->Windowed) {
+        if (!pPresentationParameters->Windowed)
+        {
             if(swapchain->presentParms.Windowed) {
                 /* switch from windowed to fs */
                 swapchain_setup_fullscreen_window(swapchain, pPresentationParameters->BackBufferWidth,
@@ -6636,7 +6637,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
                            pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
                            TRUE);
             }
-        } else if(swapchain->win_handle && !swapchain->presentParms.Windowed) {
+        }
+        else if (!swapchain->presentParms.Windowed)
+        {
             /* Fullscreen -> windowed switch */
             swapchain_restore_fullscreen_window(swapchain);
         }
