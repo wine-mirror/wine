@@ -2417,27 +2417,33 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
         if (fields) LIST_FOR_EACH_ENTRY(f, fields, const var_t, entry)
         {
             type_t *ft = f->type;
-            if (is_ptr(ft))
+            switch (typegen_detect_type(ft, f->attrs, TDT_IGNORE_STRINGS))
             {
+            case TGT_POINTER:
                 if (is_string_type(f->attrs, ft))
                     write_string_tfs(file, f->attrs, ft, FALSE, f->name, tfsoff);
                 else
                     write_pointer_tfs(file, f->attrs, ft,
                                       type_pointer_get_ref(ft)->typestring_offset,
                                       FALSE, tfsoff);
-            }
-            else if (type_get_type(ft) == TYPE_ARRAY && type_array_is_decl_as_ptr(ft))
-            {
-                unsigned int offset;
+                break;
+            case TGT_ARRAY:
+                if (type_array_is_decl_as_ptr(ft))
+                {
+                    unsigned int offset;
 
-                print_file(file, 0, "/* %d */\n", *tfsoff);
+                    print_file(file, 0, "/* %d */\n", *tfsoff);
 
-                offset = ft->typestring_offset;
-                /* skip over the pointer that is written for strings, since a
-                 * pointer has to be written in-place here */
-                if (is_string_type(f->attrs, ft))
-                    offset += 4;
-                write_nonsimple_pointer(file, f->attrs, ft, FALSE, offset, tfsoff);
+                    offset = ft->typestring_offset;
+                    /* skip over the pointer that is written for strings, since a
+                     * pointer has to be written in-place here */
+                    if (is_string_type(f->attrs, ft))
+                        offset += 4;
+                    write_nonsimple_pointer(file, f->attrs, ft, FALSE, offset, tfsoff);
+                }
+                break;
+            default:
+                break;
             }
         }
         if (type->ptrdesc == *tfsoff)
