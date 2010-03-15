@@ -6872,7 +6872,8 @@ static HRESULT WINAPI ITypeInfo_fnGetMops( ITypeInfo2 *iface, MEMBERID memid,
 				BSTR  *pBstrMops)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    FIXME("(%p) stub!\n", This);
+    FIXME("(%p %d) stub!\n", This, memid);
+    *pBstrMops = NULL;
     return S_OK;
 }
 
