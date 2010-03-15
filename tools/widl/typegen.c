@@ -59,6 +59,14 @@ struct expr_eval_routine
     const expr_t *expr;
 };
 
+enum type_context
+{
+    TYPE_CONTEXT_TOPLEVELPARAM,
+    TYPE_CONTEXT_PARAM,
+    TYPE_CONTEXT_CONTAINER,
+    TYPE_CONTEXT_CONTAINER_NO_POINTERS,
+};
+
 static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
 static unsigned int write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
@@ -2666,8 +2674,9 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
     return start_offset;
 }
 
-static unsigned int write_contexthandle_tfs(FILE *file, const type_t *type,
-                                            const var_t *var,
+static unsigned int write_contexthandle_tfs(FILE *file,
+                                            const attr_list_t *attrs,
+                                            const type_t *type,
                                             unsigned int *typeformat_offset)
 {
     unsigned int start_offset = *typeformat_offset;
@@ -2678,13 +2687,13 @@ static unsigned int write_contexthandle_tfs(FILE *file, const type_t *type,
 
     if (is_ptr(type))
         flags |= 0x80;
-    if (is_attr(var->attrs, ATTR_IN))
+    if (is_attr(attrs, ATTR_IN))
     {
         flags |= 0x40;
-        if (!is_attr(var->attrs, ATTR_OUT))
+        if (!is_attr(attrs, ATTR_OUT))
             flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
     }
-    if (is_attr(var->attrs, ATTR_OUT))
+    if (is_attr(attrs, ATTR_OUT))
         flags |= 0x20;
 
     WRITE_FCTYPE(file, FC_BIND_CONTEXT, *typeformat_offset);
@@ -2741,46 +2750,60 @@ static unsigned int write_range_tfs(FILE *file, const attr_list_t *attrs,
     return start_offset;
 }
 
-static unsigned int write_typeformatstring_var(FILE *file, int indent, const var_t *func,
-                                               type_t *type, const var_t *var,
-                                               int toplevel_param,
-                                               unsigned int *typeformat_offset)
+static unsigned int write_type_tfs(FILE *file, int indent,
+                                   const attr_list_t *attrs, type_t *type,
+                                   const char *name,
+                                   enum type_context context,
+                                   unsigned int *typeformat_offset)
 {
     unsigned int offset;
 
-    switch (typegen_detect_type(type, var->attrs, TDT_ALL_TYPES))
+    switch (typegen_detect_type(type, attrs, TDT_ALL_TYPES))
     {
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
-        return write_contexthandle_tfs(file, type, var, typeformat_offset);
+        return write_contexthandle_tfs(file, attrs, type, typeformat_offset);
     case TGT_USER_TYPE:
         write_user_tfs(file, type, typeformat_offset);
         return type->typestring_offset;
     case TGT_STRING:
-        return write_string_tfs(file, var->attrs, type, toplevel_param, var->name, typeformat_offset);
+        return write_string_tfs(file, attrs, type,
+                                context == TYPE_CONTEXT_TOPLEVELPARAM,
+                                name, typeformat_offset);
     case TGT_ARRAY:
     {
-        int ptr_type;
         unsigned int off;
-        off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
-        ptr_type = get_pointer_fc(type, var->attrs, toplevel_param);
-        if (ptr_type != RPC_FC_RP)
+        /* conformant and pointer arrays are handled specially */
+        if ((context != TYPE_CONTEXT_CONTAINER &&
+             context != TYPE_CONTEXT_CONTAINER_NO_POINTERS) ||
+            !is_conformant_array(type) || type_array_is_decl_as_ptr(type))
+            off = write_array_tfs(file, attrs, type, name, typeformat_offset);
+        else
+            off = 0;
+        if (context != TYPE_CONTEXT_CONTAINER &&
+            context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
         {
-            unsigned int absoff = type->typestring_offset;
-            short reloff = absoff - (*typeformat_offset + 2);
-            off = *typeformat_offset;
-            print_file(file, 0, "/* %d */\n", off);
-            print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", ptr_type,
-                       string_of_type(ptr_type));
-            print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
-                       reloff, reloff, absoff);
-            *typeformat_offset += 4;
+            int ptr_type;
+            ptr_type = get_pointer_fc(type, attrs,
+                                      context == TYPE_CONTEXT_TOPLEVELPARAM);
+            if (ptr_type != RPC_FC_RP)
+            {
+                unsigned int absoff = type->typestring_offset;
+                short reloff = absoff - (*typeformat_offset + 2);
+                off = *typeformat_offset;
+                print_file(file, 0, "/* %d */\n", off);
+                print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", ptr_type,
+                           string_of_type(ptr_type));
+                print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+                           reloff, reloff, absoff);
+                *typeformat_offset += 4;
+            }
         }
         return off;
     }
     case TGT_STRUCT:
         if (processed(type)) return type->typestring_offset;
-        return write_struct_tfs(file, type, var->name, typeformat_offset);
+        return write_struct_tfs(file, type, name, typeformat_offset);
     case TGT_UNION:
         if (processed(type)) return type->typestring_offset;
         return write_union_tfs(file, type, typeformat_offset);
@@ -2790,92 +2813,46 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
         return 0;
     case TGT_RANGE:
     {
-        expr_list_t *range_list = get_attrp(var->attrs, ATTR_RANGE);
+        expr_list_t *range_list = get_attrp(attrs, ATTR_RANGE);
         if (!range_list)
             range_list = get_aliaschain_attrp(type, ATTR_RANGE);
-        return write_range_tfs(file, var->attrs, type, range_list, typeformat_offset);
+        return write_range_tfs(file, attrs, type, range_list, typeformat_offset);
     }
     case TGT_IFACE_POINTER:
-        return write_ip_tfs(file, var->attrs, type, typeformat_offset);
+        return write_ip_tfs(file, attrs, type, typeformat_offset);
     case TGT_POINTER:
-        offset = write_typeformatstring_var(file, indent, func,
-                                   type_pointer_get_ref(type), var,
-                                   FALSE, typeformat_offset);
-        return write_pointer_tfs(file, var->attrs, type, offset,
-                                 toplevel_param, typeformat_offset);
+        if (processed(type_pointer_get_ref(type)))
+            offset = type_pointer_get_ref(type)->typestring_offset;
+        else
+        {
+            enum type_context ref_context;
+            if (context == TYPE_CONTEXT_TOPLEVELPARAM)
+                ref_context = TYPE_CONTEXT_PARAM;
+            else if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
+                ref_context = TYPE_CONTEXT_CONTAINER;
+            else
+                ref_context = context;
+            offset = write_type_tfs(
+                file, indent, attrs, type_pointer_get_ref(type), name,
+                ref_context, typeformat_offset);
+        }
+        if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
+            return 0;
+        else
+            return write_pointer_tfs(file, attrs, type, offset,
+                                     context == TYPE_CONTEXT_TOPLEVELPARAM,
+                                     typeformat_offset);
     case TGT_INVALID:
         break;
     }
-    error("invalid type %s for var %s\n", type->name, var->name);
+    error("invalid type %s for var %s\n", type->name, name);
     return 0;
 }
 
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
                                 const char *name, int write_ptr, unsigned int *tfsoff)
 {
-    int retmask = 0;
-
-    switch (typegen_detect_type(type, attrs, TDT_ALL_TYPES))
-    {
-    case TGT_USER_TYPE:
-        write_user_tfs(file, type, tfsoff);
-        break;
-    case TGT_STRING:
-        write_string_tfs(file, attrs, type, FALSE, name, tfsoff);
-        break;
-    case TGT_IFACE_POINTER:
-        write_ip_tfs(file, attrs, type, tfsoff);
-        break;
-    case TGT_POINTER:
-    {
-        type_t *ref = type_pointer_get_ref(type);
-
-        if (!processed(ref) && type_get_type(ref) != TYPE_BASIC)
-            retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
-
-        if (write_ptr)
-            write_pointer_tfs(file, attrs, type, type_pointer_get_ref(type)->typestring_offset, FALSE, tfsoff);
-
-        retmask |= 1;
-        break;
-    }
-    case TGT_ARRAY:
-        /* conformant arrays and strings are handled specially */
-        if (!is_conformant_array(type) || type_array_is_decl_as_ptr(type) )
-        {
-            write_array_tfs(file, attrs, type, name, tfsoff);
-            if (is_conformant_array(type))
-                retmask |= 1;
-        }
-        break;
-    case TGT_STRUCT:
-        if (!processed(type))
-            write_struct_tfs(file, type, name, tfsoff);
-        break;
-    case TGT_UNION:
-        if (!processed(type))
-            write_union_tfs(file, type, tfsoff);
-        break;
-    case TGT_ENUM:
-    case TGT_BASIC:
-        /* nothing to do */
-        break;
-    case TGT_RANGE:
-    {
-        expr_list_t *range_list = get_attrp(attrs, ATTR_RANGE);
-        if (!range_list)
-            range_list = get_aliaschain_attrp(type, ATTR_RANGE);
-        write_range_tfs(file, attrs, type, range_list, tfsoff);
-        break;
-    }
-    case TGT_CTXT_HANDLE:
-    case TGT_CTXT_HANDLE_POINTER:
-    case TGT_INVALID:
-        error("invalid type %s for var %s\n", type->name, name);
-        break;
-    }
-
-    return retmask;
+    return write_type_tfs(file, 2, attrs, type, name, write_ptr ? TYPE_CONTEXT_CONTAINER : TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
 }
 
 static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
@@ -2909,13 +2886,12 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
 
                 if (!is_void(type_function_get_rettype(func->type)))
                 {
-                    var_t v = *func;
-                    v.type = type_function_get_rettype(func->type);
                     update_tfsoff(type_function_get_rettype(func->type),
-                                  write_typeformatstring_var(
-                                      file, 2, NULL,
+                                  write_type_tfs(
+                                      file, 2, func->attrs,
                                       type_function_get_rettype(func->type),
-                                      &v, FALSE, typeformat_offset),
+                                      func->name, TYPE_CONTEXT_PARAM,
+                                      typeformat_offset),
                                   file);
                 }
 
@@ -2924,9 +2900,10 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
                         update_tfsoff(
                             var->type,
-                            write_typeformatstring_var(
-                                file, 2, func, var->type, var,
-                                TRUE, typeformat_offset),
+                            write_type_tfs(
+                                file, 2, var->attrs, var->type, var->name,
+                                TYPE_CONTEXT_TOPLEVELPARAM,
+                                typeformat_offset),
                             file);
         }
     }
