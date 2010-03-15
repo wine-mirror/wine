@@ -139,6 +139,7 @@ struct attribute
     union
     {
         unsigned long                   uvalue;
+        ULONGLONG                       lluvalue;
         long                            svalue;
         const char*                     string;
         struct dwarf2_block             block;
@@ -512,9 +513,8 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_data8:
-        attr->u.block.size = 8;
-        attr->u.block.ptr  = data;
-        data += 8;
+        attr->u.lluvalue = dwarf2_get_u8(data);
+        TRACE("data8<%s>\n", wine_dbgstr_longlong(attr->u.uvalue));
         break;
 
     case DW_FORM_ref1:
@@ -1480,6 +1480,11 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             v.n1.n2.n3.lVal = value.u.uvalue;
             break;
 
+        case DW_FORM_data8:
+            v.n1.n2.vt = VT_UI8;
+            v.n1.n2.n3.llVal = value.u.lluvalue;
+            break;
+
         case DW_FORM_sdata:
             v.n1.n2.vt = VT_I4;
             v.n1.n2.n3.lVal = value.u.svalue;
@@ -1510,12 +1515,6 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 memcpy(v.n1.n2.n3.byref, value.u.block.ptr, value.u.block.size);
             }
             break;
-
-        case DW_FORM_data8:
-	    v.n1.n2.vt = VT_I1 | VT_BYREF;
-	    v.n1.n2.n3.byref = pool_alloc(&subpgm->ctx->module->pool, value.u.block.size);
-	    memcpy(v.n1.n2.n3.byref, value.u.block.ptr, value.u.block.size);
-	    break;
 
         default:
             FIXME("Unsupported form for const value %s (%lx)\n",
