@@ -837,14 +837,14 @@ static	DWORD	MCIAVI_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
 {
     WINE_MCIAVI *wma;
 
-    FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    FIXME("(%04x, %08x, %p) Item %04x: stub\n", wDevID, dwFlags, lpParms, dwFlags & MCI_DGV_SETAUDIO_ITEM ? lpParms->dwItem : 0);
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    return MCIERR_UNSUPPORTED_FUNCTION; /* like w2k */
+    return 0;
 }
 
 /******************************************************************************
@@ -871,14 +871,14 @@ static	DWORD	MCIAVI_mciSetVideo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETVIDEO_P
 {
     WINE_MCIAVI *wma;
 
-    FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
-
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    FIXME("(%04x, %08x, %p) Item %04x: stub\n", wDevID, dwFlags, lpParms, dwFlags & MCI_DGV_SETVIDEO_ITEM ? lpParms->dwItem : 0);
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    return MCIERR_UNSUPPORTED_FUNCTION; /* like w2k */
+    return 0;
 }
 
 /******************************************************************************
