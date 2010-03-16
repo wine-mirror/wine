@@ -807,7 +807,8 @@ ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs
 
     getInterfaceNameByIndex(index, name);
     for (p = ifa, n = 0; p; p = p->ifa_next)
-      if (p->ifa_addr->sa_family == AF_INET6 && !strcmp(name, p->ifa_name))
+      if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
+          !strcmp(name, p->ifa_name))
         n++;
     if (n)
     {
@@ -820,7 +821,8 @@ ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs
 
         for (p = ifa, n = 0; p; p = p->ifa_next)
         {
-          if (p->ifa_addr->sa_family == AF_INET6 && !strcmp(name, p->ifa_name))
+          if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
+              !strcmp(name, p->ifa_name))
           {
             struct sockaddr_in6 *addr = (struct sockaddr_in6 *)p->ifa_addr;
 
