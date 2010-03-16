@@ -2415,7 +2415,10 @@ static void test_GdipGetNearestColor(void)
     expect(Ok, status);
     status = GdipGetNearestColor(graphics, &color);
     expect(Ok, status);
-    todo_wine expect(0xffa8b8e8, color);
+    todo_wine
+    ok(color == 0xffa8b8e8 ||
+       broken(color == 0xffa0b8e0), /* Win98/WinMe */
+       "Expected ffa8b8e8, got %.8x\n", color);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
 
