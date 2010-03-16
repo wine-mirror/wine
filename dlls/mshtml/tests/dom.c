@@ -3195,8 +3195,6 @@ static void test_screen(IHTMLWindow2 *window)
     HDC hdc;
     HRESULT hres;
 
-    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
-
     screen = NULL;
     hres = IHTMLWindow2_get_screen(window, &screen);
     ok(hres == S_OK, "get_screen failed: %08x\n", hres);
@@ -3216,7 +3214,7 @@ static void test_screen(IHTMLWindow2 *window)
         IDispatchEx_Release(dispex);
     }
 
-    hdc = CreateICW(displayW, NULL, NULL, NULL);
+    hdc = CreateICA("DISPLAY", NULL, NULL, NULL);
 
     exl = GetDeviceCaps(hdc, HORZRES);
     l = 0xdeadbeef;
