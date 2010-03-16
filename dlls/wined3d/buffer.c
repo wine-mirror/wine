@@ -1180,10 +1180,12 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
                     GLbitfield mapflags = buffer_gl_map_flags(flags);
                     This->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
                                                                                 This->resource.size, mapflags));
+                    checkGLcall("glMapBufferRange");
                 }
                 else
                 {
                     This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+                    checkGLcall("glMapBufferARB");
                 }
                 LEAVE_GL();
 
