@@ -32,6 +32,8 @@
 #include "pidl.h"
 #include "undocshell.h"
 #include "shlobj.h"
+#include "winreg.h"
+#include "prsht.h"
 
 #include "shell32_main.h"
 #include "shellfolder.h"
@@ -381,6 +383,130 @@ static BOOL DoCopyOrCut(
 	}
 	return TRUE;
 }
+
+/**************************************************************************
+ * Properties_AddPropSheetCallback
+ *
+ * Used by DoOpenProperties through SHCreatePropSheetExtArrayEx to add
+ * propertysheet pages from shell extensions.
+ */
+static BOOL Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARAM lparam)
+{
+	LPPROPSHEETHEADERW psh = (LPPROPSHEETHEADERW) lparam;
+	psh->u3.phpage[psh->nPages++] = hpage;
+
+	return TRUE;
+}
+
+/**************************************************************************
+ * DoOpenProperties
+ */
+static void DoOpenProperties(IContextMenu2 *iface, HWND hwnd)
+{
+	ItemCmImpl *This = (ItemCmImpl *)iface;
+	static const UINT MAX_PROP_PAGES = 99;
+	static const WCHAR wszFolder[] = {'F','o','l','d','e','r', 0};
+	static const WCHAR wszFiletypeAll[] = {'*',0};
+	LPSHELLFOLDER lpDesktopSF;
+	LPSHELLFOLDER lpSF;
+	LPDATAOBJECT lpDo;
+	WCHAR wszFiletype[MAX_PATH];
+	WCHAR wszFilename[MAX_PATH];
+	PROPSHEETHEADERW psh;
+	HPROPSHEETPAGE hpages[MAX_PROP_PAGES];
+	HPSXA hpsxa;
+	UINT ret;
+
+	TRACE("(%p)->(wnd=%p)\n", This, hwnd);
+
+	ZeroMemory(&psh, sizeof(PROPSHEETHEADERW));
+	psh.dwSize = sizeof (PROPSHEETHEADERW);
+	psh.hwndParent = hwnd;
+	psh.dwFlags = PSH_PROPTITLE;
+	psh.nPages = 0;
+	psh.u3.phpage = hpages;
+	psh.u2.nStartPage = 0;
+
+	_ILSimpleGetTextW(This->apidl[0], (LPVOID)&wszFilename, MAX_PATH);
+	psh.pszCaption = (LPCWSTR)&wszFilename;
+
+	/* Find out where to look for the shell extensions */
+	if (_ILIsValue(This->apidl[0]))
+	{
+	    char sTemp[64];
+	    sTemp[0] = 0;
+	    if (_ILGetExtension(This->apidl[0], sTemp, 64))
+	    {
+		HCR_MapTypeToValueA(sTemp, sTemp, 64, TRUE);
+		MultiByteToWideChar(CP_ACP, 0, sTemp, -1, wszFiletype, MAX_PATH);
+	    }
+	    else
+	    {
+		wszFiletype[0] = 0;
+	    }
+	}
+	else if (_ILIsFolder(This->apidl[0]))
+	{
+	    lstrcpynW(wszFiletype, wszFolder, 64);
+	}
+	else if (_ILIsSpecialFolder(This->apidl[0]))
+	{
+	    LPGUID folderGUID;
+	    static const WCHAR wszclsid[] = {'C','L','S','I','D','\\', 0};
+	    folderGUID = _ILGetGUIDPointer(This->apidl[0]);
+	    lstrcpyW(wszFiletype, wszclsid);
+	    StringFromGUID2(folderGUID, &wszFiletype[6], MAX_PATH - 6);
+	}
+	else
+	{
+	    FIXME("Requested properties for unknown type.\n");
+	    return;
+	}
+
+	/* Get a suitable DataObject for accessing the files */
+	SHGetDesktopFolder(&lpDesktopSF);
+	if (_ILIsPidlSimple(This->pidl))
+	{
+	    ret = IShellFolder_GetUIObjectOf(lpDesktopSF, hwnd, This->cidl, (LPCITEMIDLIST*)This->apidl,
+					     &IID_IDataObject, NULL, (LPVOID *)&lpDo);
+	    IShellFolder_Release(lpDesktopSF);
+	}
+	else
+	{
+	    IShellFolder_BindToObject(lpDesktopSF, This->pidl, NULL, &IID_IShellFolder, (LPVOID*) &lpSF);
+	    ret = IShellFolder_GetUIObjectOf(lpSF, hwnd, This->cidl, (LPCITEMIDLIST*)This->apidl,
+					     &IID_IDataObject, NULL, (LPVOID *)&lpDo);
+	    IShellFolder_Release(lpSF);
+	    IShellFolder_Release(lpDesktopSF);
+	}
+
+	if (SUCCEEDED(ret))
+	{
+	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, wszFiletype, MAX_PROP_PAGES - psh.nPages, lpDo);
+	    if (hpsxa != NULL)
+	    {
+		SHAddFromPropSheetExtArray((HPSXA)hpsxa,
+					   (LPFNADDPROPSHEETPAGE)&Properties_AddPropSheetCallback,
+					   (LPARAM)&psh);
+		SHDestroyPropSheetExtArray(hpsxa);
+	    }
+	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, wszFiletypeAll, MAX_PROP_PAGES - psh.nPages, lpDo);
+	    if (hpsxa != NULL)
+	    {
+		SHAddFromPropSheetExtArray((HPSXA)hpsxa,
+					   (LPFNADDPROPSHEETPAGE)&Properties_AddPropSheetCallback,
+					   (LPARAM)&psh);
+		SHDestroyPropSheetExtArray(hpsxa);
+	    }
+	    IDataObject_Release(lpDo);
+	}
+
+	if (psh.nPages)
+	    PropertySheetW(&psh);
+	else
+	    FIXME("No property pages found.\n");
+}
+
 /**************************************************************************
 * ISvItemCm_fnInvokeCommand()
 */
@@ -429,6 +555,10 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             TRACE("Verb FCIDM_SHVIEW_CUT\n");
             DoCopyOrCut(iface, lpcmi->hwnd, TRUE);
             break;
+        case FCIDM_SHVIEW_PROPERTIES:
+            TRACE("Verb FCIDM_SHVIEW_PROPERTIES\n");
+            DoOpenProperties(iface, lpcmi->hwnd);
+            break;
         default:
             FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
         }
@@ -438,6 +568,8 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
         TRACE("Verb is %s\n",debugstr_a(lpcmi->lpVerb));
         if (strcmp(lpcmi->lpVerb,"delete")==0)
             DoDelete(iface);
+        else if (strcmp(lpcmi->lpVerb,"properties")==0)
+            DoOpenProperties(iface, lpcmi->hwnd);
         else
             FIXME("Unhandled string verb %s\n",debugstr_a(lpcmi->lpVerb));
     }
