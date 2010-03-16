@@ -6065,9 +6065,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     hres = DISP_E_PARAMNOTFOUND;
                     goto func_fail;
                 }
-                /* ignore the DISPID_PROPERTYPUT named argument from now on */
-                cNamedArgs--;
-                rgdispidNamedArgs++;
             }
 
             if (func_desc->cParamsOpt < 0 && cNamedArgs)
@@ -6105,7 +6102,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     USHORT j;
                     src_arg = NULL;
                     for (j = 0; j < cNamedArgs; j++)
-                        if (rgdispidNamedArgs[j] == i)
+                        if (rgdispidNamedArgs[j] == i || (i == func_desc->cParams-1 && rgdispidNamedArgs[j] == DISPID_PROPERTYPUT))
                         {
                             src_arg = &pDispParams->rgvarg[j];
                             break;

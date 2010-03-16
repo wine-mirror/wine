@@ -140,6 +140,9 @@ library TestTypelib
 
         [id(DISPID_TM_BYREF_UINT)]
         HRESULT ByRefUInt([in, out] UINT *i);
+
+        [id(DISPID_TM_PROP_OPT_ARG), propput]
+        HRESULT prop_opt_arg([in,optional] INT opt, [in] INT i);
     }
 
     [
