@@ -7,5 +7,3 @@ IMPORTS   = avifil32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,avifil32.dll
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

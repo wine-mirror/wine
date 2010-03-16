@@ -49,5 +49,3 @@ install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winegcc$(EXEEXT) $(DESTDIR)$(bindir)/wineg++$(EXEEXT) $(DESTDIR)$(bindir)/winecpp$(EXEEXT) \
 	      $(DESTDIR)$(mandir)/man$(prog_manext)/winegcc.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineg++.$(prog_manext)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

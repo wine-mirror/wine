@@ -16,5 +16,3 @@ RC_SRCS = rsrc.rc
 SVG_SRCS = msiexec.svg
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

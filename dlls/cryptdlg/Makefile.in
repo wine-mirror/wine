@@ -20,5 +20,3 @@ RC_SRCS = \
 	cryptdlg_Uk.rc
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

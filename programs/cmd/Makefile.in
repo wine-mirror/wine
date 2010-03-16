@@ -36,5 +36,3 @@ RC_SRCS = \
 SVG_SRCS = wcmd.svg
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

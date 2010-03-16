@@ -14,5 +14,3 @@ C_SRCS = \
 	virtcopy.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -11,5 +11,3 @@ C_SRCS = \
 	tracing.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

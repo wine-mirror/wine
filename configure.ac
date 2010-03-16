@@ -2107,13 +2107,6 @@ esac
 
 dnl **** Generate output files ****
 
-AC_SUBST(DEPENDENCIES,["### Dependencies:
-\$(OBJS) \$(CROSSOBJS): \$(IDL_GEN_HEADERS) \$(BISON_SRCS:.y=.tab.h)
-\$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
-\$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
-\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
-\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"])
-
 AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies"])

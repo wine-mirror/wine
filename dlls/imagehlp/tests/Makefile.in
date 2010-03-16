@@ -9,5 +9,3 @@ C_SRCS = \
 	integrity.c
 
 @MAKE_TEST_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

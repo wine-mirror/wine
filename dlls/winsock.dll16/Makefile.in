@@ -10,5 +10,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ws2_32.dll
 C_SRCS = socket.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

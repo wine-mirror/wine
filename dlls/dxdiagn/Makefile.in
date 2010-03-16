@@ -16,5 +16,3 @@ RC_SRCS = version.rc
 IDL_H_SRCS = fil_data.idl
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

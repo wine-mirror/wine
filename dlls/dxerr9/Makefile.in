@@ -8,5 +8,3 @@ C_SRCS = \
 	dxerr9.c
 
 @MAKE_IMPLIB_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

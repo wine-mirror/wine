@@ -43,5 +43,3 @@ C_SRCS = \
 RC_SRCS = resource.rc
 
 @MAKE_TEST_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

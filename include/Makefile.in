@@ -571,5 +571,3 @@ uninstall::
 	  *)        $(RM) $(DESTDIR)$(includedir)/windows/$$f ;; \
 	esac; done
 	-rmdir $(INSTALLDIRS)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

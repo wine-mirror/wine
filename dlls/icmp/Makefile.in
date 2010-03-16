@@ -6,5 +6,3 @@ MODULE    = icmp.dll
 IMPORTS   = kernel32
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

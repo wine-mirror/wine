@@ -612,7 +612,6 @@ ALL_WINETEST_DEPENDS
 ALL_MAKEFILE_DEPENDS
 ALL_SYMLINKS
 ALL_MAKERULES
-DEPENDENCIES
 LDAPLIBS
 LIBPOLL
 LIBDL
@@ -13756,14 +13755,6 @@ if test $ac_cv_cpp_def___sun__ = yes; then :
   LINTFLAGS="$LINTFLAGS -D__sun__"
 fi ;;
 esac
-
-
-DEPENDENCIES="### Dependencies:
-\$(OBJS) \$(CROSSOBJS): \$(IDL_GEN_HEADERS) \$(BISON_SRCS:.y=.tab.h)
-\$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
-\$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
-\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
-\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"
 
 
 ALL_MAKERULES=""

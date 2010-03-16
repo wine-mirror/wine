@@ -9,5 +9,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wnaspi32.dll
 C_SRCS = winaspi.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

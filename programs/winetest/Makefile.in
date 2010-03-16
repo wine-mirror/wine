@@ -43,5 +43,3 @@ winetest-dist.exe winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
 	-upx -9 -qqq $@
 
 dist.res: build.nfo
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

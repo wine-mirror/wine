@@ -41,5 +41,3 @@ $(MODULE): $(OBJS) Makefile.in
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

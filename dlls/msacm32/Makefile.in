@@ -40,5 +40,3 @@ RC_SRCS = \
 	msacm_Zh.rc
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

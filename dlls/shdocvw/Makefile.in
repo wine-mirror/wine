@@ -32,5 +32,3 @@ RC_SRCS = shdocvw.rc
 IDL_TLB_SRCS = shdocvw_v1.idl
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

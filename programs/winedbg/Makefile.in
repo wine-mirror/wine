@@ -62,5 +62,3 @@ uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 dbg.tab.c: dbg.tab.h   # for parallel makes
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

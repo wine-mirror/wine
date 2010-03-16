@@ -12,5 +12,3 @@ C_SRCS = winver.c
 RC_SRCS = version.rc
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

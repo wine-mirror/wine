@@ -9,5 +9,3 @@ IMPORTS   = loadperf kernel32
 C_SRCS = unlodctr_main.c
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

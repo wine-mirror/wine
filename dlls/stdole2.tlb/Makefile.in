@@ -9,5 +9,3 @@ RC_SRCS = rsrc.rc
 IDL_TLB_SRCS = std_ole_v2.idl
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -44,5 +44,3 @@ BISON_SRCS = \
 @MAKE_DLL_RULES@
 
 parser.tab.c: parser.tab.h   # for parallel makes
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

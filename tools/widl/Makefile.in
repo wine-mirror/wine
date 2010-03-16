@@ -43,5 +43,3 @@ uninstall::
 	$(RM) $(DESTDIR)$(bindir)/widl$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 parser.tab.c: parser.tab.h   # for parallel makes
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

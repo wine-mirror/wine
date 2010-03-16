@@ -13,5 +13,3 @@ C_SRCS = display.c
 RC_SRCS = display.rc
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

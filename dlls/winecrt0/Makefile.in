@@ -18,5 +18,3 @@ C_SRCS = \
 	stub.c
 
 @MAKE_IMPLIB_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

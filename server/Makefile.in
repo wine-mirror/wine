@@ -77,5 +77,3 @@ install install-lib:: wineserver-installed $(MANPAGES) $(INSTALLDIRS)
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wineserver $(DESTDIR)$(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

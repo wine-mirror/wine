@@ -9,5 +9,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,w32skrnl.dll
 C_SRCS = w32sys.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

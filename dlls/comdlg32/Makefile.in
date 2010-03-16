@@ -51,5 +51,3 @@ RC_SRCS = \
 	cdlg_xx.rc
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

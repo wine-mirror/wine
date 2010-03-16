@@ -10,5 +10,3 @@ IMPORTS   = kernel32
 C_SRCS = eject.c
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -26,5 +26,3 @@ IDL_TLB_SRCS = \
 	tmarshal.idl
 
 @MAKE_TEST_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -183,5 +183,3 @@ clean::
 
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -33,5 +33,3 @@ RC_SRCS = \
 	wineboot_Zh.rc
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -35,5 +35,3 @@ install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winebuild$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

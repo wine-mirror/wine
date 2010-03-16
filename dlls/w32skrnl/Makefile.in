@@ -8,5 +8,3 @@ IMPORTS   = kernel32 kernel ntdll
 C_SRCS = w32skernel.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

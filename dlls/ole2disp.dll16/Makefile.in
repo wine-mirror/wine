@@ -9,5 +9,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,oleaut32.dll
 C_SRCS = ole2disp.c
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -84,5 +84,3 @@ uninstall::
 	-$(UPDATE_DESKTOP_DATABASE)
 
 depend: makedep$(EXEEXT)
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -41,5 +41,3 @@ RC_SRCS = version.rc
 IDL_TLB_SRCS = msxml3_v1.idl
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

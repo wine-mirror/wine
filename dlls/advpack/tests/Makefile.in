@@ -11,5 +11,3 @@ C_SRCS = \
 	install.c
 
 @MAKE_TEST_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

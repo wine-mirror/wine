@@ -64,5 +64,3 @@ IDL_P_SRCS = \
 EXTRA_OBJS = dlldata.o
 
 @MAKE_DLL_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

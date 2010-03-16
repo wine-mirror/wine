@@ -10,5 +10,3 @@ C_SRCS = \
 	rundll32.c
 
 @MAKE_PROG_RULES@
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend

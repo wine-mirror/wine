@@ -106,5 +106,3 @@ authors.c: $(TOPSRCDIR)/AUTHORS
 
 clean::
 	$(RM) authors.c
-
-@DEPENDENCIES@  # everything below this line is overwritten by make depend
