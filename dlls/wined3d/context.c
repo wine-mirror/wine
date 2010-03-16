@@ -116,15 +116,16 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 /* GL locking is done by the caller */
 static void context_apply_attachment_filter_states(IWineD3DSurface *surface)
 {
-    const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
-    IWineD3DDeviceImpl *device = surface_impl->resource.device;
     IWineD3DBaseTextureImpl *texture_impl;
-    BOOL update_minfilter = FALSE;
-    BOOL update_magfilter = FALSE;
 
     /* Update base texture states array */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(surface, &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
     {
+        IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
+        IWineD3DDeviceImpl *device = surface_impl->resource.device;
+        BOOL update_minfilter = FALSE;
+        BOOL update_magfilter = FALSE;
+
         if (texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_POINT
             || texture_impl->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_NONE)
         {
@@ -146,33 +147,37 @@ static void context_apply_attachment_filter_states(IWineD3DSurface *surface)
         }
 
         IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
-    }
 
-    if (update_minfilter || update_magfilter)
-    {
-        GLenum target, bind_target;
-        GLint old_binding;
-
-        target = surface_impl->texture_target;
-        if (target == GL_TEXTURE_2D)
+        if (update_minfilter || update_magfilter)
         {
-            bind_target = GL_TEXTURE_2D;
-            glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-        } else if (target == GL_TEXTURE_RECTANGLE_ARB) {
-            bind_target = GL_TEXTURE_RECTANGLE_ARB;
-            glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
-        } else {
-            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+            GLenum target, bind_target;
+            GLint old_binding;
+
+            target = surface_impl->texture_target;
+            if (target == GL_TEXTURE_2D)
+            {
+                bind_target = GL_TEXTURE_2D;
+                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+            }
+            else if (target == GL_TEXTURE_RECTANGLE_ARB)
+            {
+                bind_target = GL_TEXTURE_RECTANGLE_ARB;
+                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+            }
+            else
+            {
+                bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+                glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+            }
+
+            glBindTexture(bind_target, surface_impl->texture_name);
+            if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            if (update_magfilter) glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(bind_target, old_binding);
         }
 
-        glBindTexture(bind_target, surface_impl->texture_name);
-        if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        if (update_magfilter) glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glBindTexture(bind_target, old_binding);
+        checkGLcall("apply_attachment_filter_states()");
     }
-
-    checkGLcall("apply_attachment_filter_states()");
 }
 
 /* GL locking is done by the caller */
