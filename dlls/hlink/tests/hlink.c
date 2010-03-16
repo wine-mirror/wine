@@ -1363,6 +1363,83 @@ static void test_HlinkMoniker(void)
     IHlink_Release(hlink);
 }
 
+static void test_HashLink(void)
+{
+    IHlink *hlink;
+    IMoniker *pmk;
+    const WCHAR hash_targetW[] = {'a','f','i','l','e','#','a','n','a','n','c','h','o','r',0};
+    const WCHAR two_hash_targetW[] = {'a','f','i','l','e','#','a','n','a','n','c','h','o','r','#','a','n','o','t','h','e','r',0};
+    const WCHAR hash_no_tgtW[] = {'#','a','n','a','n','c','h','o','r',0};
+    const WCHAR tgt_partW[] = {'a','f','i','l','e',0};
+    const WCHAR loc_partW[] = {'a','n','a','n','c','h','o','r',0};
+    const WCHAR two_hash_loc_partW[] = {'a','n','a','n','c','h','o','r','#','a','n','o','t','h','e','r',0};
+    const WCHAR test_locW[] = {'t','e','s','t','l','o','c',0};
+    HRESULT hres;
+
+    /* simple single hash test */
+    hres = HlinkCreateFromString(hash_targetW, NULL, NULL, NULL, 0, NULL, &IID_IHlink, (void*)&hlink);
+    ok(hres == S_OK, "HlinkCreateFromString failed: 0x%08x\n", hres);
+    ok(hlink != NULL, "Didn't get an hlink\n");
+
+    if(hlink){
+        getStringRef(hlink, tgt_partW, loc_partW);
+        pmk = getMonikerRef(hlink, (IMoniker*)0xFFFFFFFF, loc_partW);
+        ok(pmk != NULL, "Found moniker should not be NULL\n");
+        if(pmk)
+            IMoniker_Release(pmk);
+
+        setStringRef(hlink, HLINKSETF_TARGET, hash_targetW, NULL);
+        getStringRef(hlink, hash_targetW, loc_partW);
+
+        IHlink_Release(hlink);
+    }
+
+    /* two hashes in the target */
+    hres = HlinkCreateFromString(two_hash_targetW, NULL, NULL, NULL, 0, NULL, &IID_IHlink, (void*)&hlink);
+    ok(hres == S_OK, "HlinkCreateFromString failed: 0x%08x\n", hres);
+    ok(hlink != NULL, "Didn't get an hlink\n");
+
+    if(hlink){
+        getStringRef(hlink, tgt_partW, two_hash_loc_partW);
+        pmk = getMonikerRef(hlink, (IMoniker*)0xFFFFFFFF, two_hash_loc_partW);
+        ok(pmk != NULL, "Found moniker should not be NULL\n");
+        if(pmk)
+            IMoniker_Release(pmk);
+
+        IHlink_Release(hlink);
+    }
+
+    /* target with hash plus a location string */
+    hres = HlinkCreateFromString(hash_targetW, test_locW, NULL, NULL, 0, NULL, &IID_IHlink, (void*)&hlink);
+    ok(hres == S_OK, "HlinkCreateFromString failed: 0x%08x\n", hres);
+    ok(hlink != NULL, "Didn't get an hlink\n");
+
+    if(hlink){
+        getStringRef(hlink, tgt_partW, test_locW);
+        pmk = getMonikerRef(hlink, (IMoniker*)0xFFFFFFFF, test_locW);
+        ok(pmk != NULL, "Found moniker should not be NULL\n");
+        if(pmk)
+            IMoniker_Release(pmk);
+
+        IHlink_Release(hlink);
+    }
+
+    /* target with hash containing no "target part" */
+    hres = HlinkCreateFromString(hash_no_tgtW, NULL, NULL, NULL, 0, NULL, &IID_IHlink, (void*)&hlink);
+    ok(hres == S_OK, "HlinkCreateFromString failed: 0x%08x\n", hres);
+    ok(hlink != NULL, "Didn't get an hlink\n");
+
+    if(hlink){
+        getStringRef(hlink, NULL, loc_partW);
+        pmk = getMonikerRef(hlink, (IMoniker*)0xFFFFFFFF, loc_partW);
+        ok(pmk == NULL, "Found moniker should be NULL\n");
+        if(pmk)
+            IMoniker_Release(pmk);
+
+        IHlink_Release(hlink);
+    }
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -1377,6 +1454,7 @@ START_TEST(hlink)
     test_HlinkGetSetMonikerReference();
     test_HlinkGetSetStringReference();
     test_HlinkMoniker();
+    test_HashLink();
 
     CoUninitialize();
 }
