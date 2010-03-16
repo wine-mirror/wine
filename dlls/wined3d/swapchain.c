@@ -152,6 +152,9 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
             tex_bottom /= src_h;
         }
 
+        if (is_complex_fixup(backbuffer->resource.format_desc->color_fixup))
+            gl_filter = GL_NEAREST;
+
         ENTER_GL();
         context_bind_fbo(context2, GL_DRAW_FRAMEBUFFER, NULL);
 
