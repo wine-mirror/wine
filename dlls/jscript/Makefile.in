@@ -42,5 +42,3 @@ BISON_SRCS = \
 	parser.y
 
 @MAKE_DLL_RULES@
-
-parser.tab.c: parser.tab.h   # for parallel makes

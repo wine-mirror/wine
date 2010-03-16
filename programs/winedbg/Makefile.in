@@ -60,5 +60,3 @@ install install-lib:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
-
-dbg.tab.c: dbg.tab.h   # for parallel makes

@@ -36,5 +36,3 @@ install install-dev:: wmc-installed $(MANPAGES) $(INSTALLDIRS)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
-
-mcy.tab.c: mcy.tab.h   # for parallel makes

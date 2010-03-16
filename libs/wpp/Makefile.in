@@ -19,5 +19,3 @@ $(MODULE): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
-
-ppy.tab.c: ppy.tab.h   # for parallel makes
