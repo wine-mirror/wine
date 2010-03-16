@@ -156,7 +156,7 @@ wine_fn_config_makefile ()
     ac_deps=$[2]
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"\$(RECURSE_TARGETS:%=$ac_dir/%) $ac_dir: $ac_dir/Makefile
+"$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
 }
@@ -172,6 +172,52 @@ dlls/$ac_name/lib$ac_name.cross.a: dlls/$ac_name/Makefile dummy
 	@cd dlls/$ac_name && \$(MAKE) lib$ac_name.cross.a"
 }
 
+wine_fn_config_dll ()
+{
+    ac_dir=$[1]
+    ac_implib=$[2]
+    ac_implibsrc=$[3]
+    ac_file="dlls/$ac_dir/lib$ac_implib"
+    ac_deps="tools/widl tools/winebuild tools/winegcc include"
+
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"dlls/$ac_dir dlls/$ac_dir/__install__ dlls/$ac_dir/__install-lib__ dlls/$ac_dir/__install-dev__: __builddeps__"
+
+    if test -n "$ac_implibsrc"
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
+$ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
+	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`
+$ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
+	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`"
+    elif test -n "$ac_implib"
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_file.$IMPLIBEXT $ac_file.cross.a: $ac_deps
+$ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
+	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`"
+
+        if test "$ac_dir" != "$ac_implib"
+        then
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
+	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.$IMPLIBEXT \$[@]
+dlls/lib$ac_implib.cross.a: $ac_file.cross.a
+	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.cross.a \$[@]
+clean::
+	\$(RM) dlls/lib$ac_implib.$IMPLIBEXT"
+        fi
+    fi
+}
+
+wine_fn_config_program ()
+{
+    ac_dir=$[1]
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"programs/$ac_dir programs/$ac_dir/__install__ programs/$ac_dir/__install-lib__: __builddeps__"
+}
+
 wine_fn_config_test ()
 {
     ac_dir=$[1]
@@ -184,7 +230,7 @@ $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: __builddeps__"
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir/__crosstest__: __buildcrossdeps__"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir/__crosstest__: __buildcrossdeps__ $ac_dir/Makefile"
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
@@ -245,41 +291,21 @@ dnl **** Create a dll makefile from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
 dnl
-AC_DEFUN([WINE_CONFIG_DLL],
-[m4_pushdef([ac_implib],m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT]))dnl
-m4_pushdef([ac_crosslib],m4_ifval([$3],[dlls/$1/lib$3.cross.a]))dnl
-m4_pushdef([ac_staticlib],m4_ifval([$4],[dlls/$1/lib$3.$STATIC_IMPLIBEXT]))dnl
-m4_pushdef([ac_symlink],m4_if([$1],[$3],,[dlls/lib$3.$IMPLIBEXT]))dnl
+AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
+m4_pushdef([ac_implib],m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT]))dnl
 m4_ifval(ac_implib,[m4_ifval([$2],[test "x$[$2]" != xno && ])WINE_APPEND_FILE(ALL_IMPORT_LIBS,ac_implib)dnl
-m4_ifval(ac_symlink,[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,ac_symlink)])dnl
-m4_ifval(ac_staticlib,[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,ac_staticlib)])
-])WINE_APPEND_RULE(ALL_MAKEFILE_DEPENDS,
-[m4_ifval(ac_implib,[ac_implib m4_ifval(ac_staticlib,[ac_staticlib ])ac_crosslib: tools/widl tools/winebuild tools/winegcc include
-m4_ifval(ac_symlink,[ac_symlink: ac_implib
-	\$(RM) \$[@] && \$(LN_S) $1/lib$3.$IMPLIBEXT \$[@]
-dlls/lib$3.cross.a: ac_crosslib
-	\$(RM) \$[@] && \$(LN_S) $1/lib$3.cross.a \$[@]
-clean::
-	\$(RM) ac_symlink
-])m4_ifval(ac_staticlib,[dlls/$1/lib$3.def: dlls/$1/$1.spec dlls/$1/Makefile
-	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`
-ac_staticlib ac_crosslib: dlls/$1/Makefile dummy
-	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`],
-[ac_implib ac_crosslib: dlls/$1/$1.spec dlls/$1/Makefile
-	@cd dlls/$1 && \$(MAKE) \`basename \$[@]\`])
-])dlls/$1 dlls/$1/__install__ dlls/$1/__install-lib__ dlls/$1/__install-dev__: __builddeps__])
+m4_if([$1],[$3],,[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,[dlls/lib$3.$IMPLIBEXT])])dnl
+m4_ifval([$4],[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,[dlls/$1/lib$3.$STATIC_IMPLIBEXT])])
+])wine_fn_config_dll [$1] [$3] m4_ifval([$4],["$4"])
 WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[ALL_DLL_DIRS],[$2])dnl
-m4_popdef([ac_implib])dnl
-m4_popdef([ac_crosslib])dnl
-m4_popdef([ac_staticlib])dnl
-m4_popdef([ac_symlink])])
+m4_popdef([ac_implib])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_PROGRAM(name,var,enable)
 dnl
-AC_DEFUN([WINE_CONFIG_PROGRAM],
-[WINE_APPEND_RULE(ALL_MAKEFILE_DEPENDS,[programs/$1 programs/$1/__install__ programs/$1/__install-lib__: __builddeps__])
+AC_DEFUN([WINE_CONFIG_PROGRAM],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
+wine_fn_config_program [$1]
 WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[$2],[$3])])
 
 dnl **** Create a test makefile from config.status ****

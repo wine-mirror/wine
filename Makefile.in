@@ -222,14 +222,6 @@ tools/wmc/__install__ tools/wmc/__install-dev__: tools/wmc
 tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
 tools/__depend__: $(MAKEDEP)
 
-RECURSE_TARGETS = \
-	__clean__ \
-	__install__ \
-	__instal-dev__ \
-	__install-lib__ \
-	__uninstall__ \
-	__crosstest__
-
 $(MAKEDEP): include/config.h tools/Makefile
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
 
