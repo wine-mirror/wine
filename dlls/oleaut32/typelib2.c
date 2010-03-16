@@ -2482,8 +2482,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
                     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
                         if(iter == iter2) continue;
-                        if(iter2->indice == iter->indice)
+                        if(iter2->indice == iter->indice) {
+                            HeapFree(GetProcessHeap(), 0, typedata);
                             return E_ACCESSDENIED;
+                        }
                     }
 
                     break;
@@ -2495,15 +2497,19 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 
         iter->u.data[0] = (iter->u.data[0]&0xffff) | (i<<16);
 
-        if((iter->u.data[3]&1) != (user_vft&1))
+        if((iter->u.data[3]&1) != (user_vft&1)) {
+            HeapFree(GetProcessHeap(), 0, typedata);
             return TYPE_E_INVALIDID;
+        }
 
         if(user_vft&1) {
             if(user_vft < (iter->u.data[3]&0xffff))
                 user_vft = (iter->u.data[3]&0xffff);
 
-            if((iter->u.data[3]&0xffff) < This->typeinfo->cbSizeVft)
+            if((iter->u.data[3]&0xffff) < This->typeinfo->cbSizeVft) {
+                HeapFree(GetProcessHeap(), 0, typedata);
                 return TYPE_E_INVALIDID;
+            }
         } else if(This->typekind != TKIND_MODULE) {
             iter->u.data[3] = (iter->u.data[3]&0xffff0000) | This->typeinfo->cbSizeVft;
             This->typeinfo->cbSizeVft += 4;
