@@ -44,6 +44,7 @@ static char** myARGV;
 static BOOL (WINAPI *pCheckRemoteDebuggerPresent)(HANDLE,PBOOL);
 static BOOL (WINAPI *pDebugActiveProcessStop)(DWORD);
 static BOOL (WINAPI *pDebugSetProcessKillOnExit)(BOOL);
+static BOOL (WINAPI *pIsDebuggerPresent)(void);
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 
 static LONG child_failures;
@@ -529,7 +530,7 @@ static void doChild(int argc, char **argv)
     ret = CloseHandle(parent);
     child_ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
 
-    ret = IsDebuggerPresent();
+    ret = pIsDebuggerPresent();
     child_ok(ret, "Expected ret != 0, got %#x.\n", ret);
     ret = pCheckRemoteDebuggerPresent(GetCurrentProcess(), &debug);
     child_ok(ret, "CheckRemoteDebuggerPresent failed, last error %#x.\n", GetLastError());
@@ -539,7 +540,7 @@ static void doChild(int argc, char **argv)
     {
         pNtCurrentTeb()->Peb->BeingDebugged = FALSE;
 
-        ret = IsDebuggerPresent();
+        ret = pIsDebuggerPresent();
         child_ok(!ret, "Expected ret != 0, got %#x.\n", ret);
         ret = pCheckRemoteDebuggerPresent(GetCurrentProcess(), &debug);
         child_ok(ret, "CheckRemoteDebuggerPresent failed, last error %#x.\n", GetLastError());
@@ -624,6 +625,7 @@ START_TEST(debugger)
     pCheckRemoteDebuggerPresent=(void*)GetProcAddress(hdll, "CheckRemoteDebuggerPresent");
     pDebugActiveProcessStop=(void*)GetProcAddress(hdll, "DebugActiveProcessStop");
     pDebugSetProcessKillOnExit=(void*)GetProcAddress(hdll, "DebugSetProcessKillOnExit");
+    pIsDebuggerPresent=(void*)GetProcAddress(hdll, "IsDebuggerPresent");
     hdll=GetModuleHandle("ntdll.dll");
     if (hdll) pNtCurrentTeb = (void*)GetProcAddress(hdll, "NtCurrentTeb");
 
