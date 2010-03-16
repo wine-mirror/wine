@@ -3456,6 +3456,10 @@ interface IWineD3DDevice : IWineD3DBase
         [in] D3DCB_ENUMRESOURCES callback,
         [in] void *data
     );
+    HRESULT GetSurfaceFromDC(
+        [in] HDC dc,
+        [out] IWineD3DSurface **surface
+    );
 }
 
 IWineD3D *WineDirect3DCreate(UINT dxVersion, IUnknown *parent);

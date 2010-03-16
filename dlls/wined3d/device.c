@@ -6870,6 +6870,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface, D3
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_GetSurfaceFromDC(IWineD3DDevice *iface, HDC dc, IWineD3DSurface **surface)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DResourceImpl *resource;
+
+    LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+    {
+        WINED3DRESOURCETYPE type = IWineD3DResource_GetType((IWineD3DResource *)resource);
+        if (type == WINED3DRTYPE_SURFACE)
+        {
+            if (((IWineD3DSurfaceImpl *)resource)->hDC == dc)
+            {
+                TRACE("Found surface %p for dc %p.\n", resource, dc);
+                *surface = (IWineD3DSurface *)resource;
+                return WINED3D_OK;
+            }
+        }
+    }
+
+    return WINED3DERR_INVALIDCALL;
+}
+
 /**********************************************************
  * IWineD3DDevice VTbl follows
  **********************************************************/
@@ -7018,7 +7040,8 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_UpdateSurface,
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** object tracking ***/
-    IWineD3DDeviceImpl_EnumResources
+    IWineD3DDeviceImpl_EnumResources,
+    IWineD3DDeviceImpl_GetSurfaceFromDC,
 };
 
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
