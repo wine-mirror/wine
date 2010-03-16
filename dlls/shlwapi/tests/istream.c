@@ -432,6 +432,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
+    if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
+        win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
+        Sleep(1000);
+        ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
+    }
     ok( ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
         ret == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
         "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) or "
@@ -491,6 +496,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
+        win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
+        Sleep(1000);
+        ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    }
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
@@ -507,6 +517,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
+        win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
+        Sleep(1000);
+        ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    }
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
