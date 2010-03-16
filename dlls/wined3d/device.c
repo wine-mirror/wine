@@ -4305,15 +4305,42 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
+static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const WINED3DVIEWPORT *viewport,
+        const RECT *scissor_rect, const WINED3DRECT *clear_rect)
+{
+    /* partial viewport*/
+    if (viewport->X != 0 || viewport->Y != 0
+            || viewport->Width < target->currentDesc.Width
+            || viewport->Height < target->currentDesc.Height)
+        return FALSE;
+
+    /* partial scissor rect */
+    if (scissor_rect && (scissor_rect->left > 0 || scissor_rect->top > 0
+            || scissor_rect->right < target->currentDesc.Width
+            || scissor_rect->bottom < target->currentDesc.Height))
+        return FALSE;
+
+    /* partial clear rect */
+    if (clear_rect && (clear_rect->x1 > 0 || clear_rect->y1 > 0
+            || clear_rect->x2 < target->currentDesc.Width
+            || clear_rect->y2 < target->currentDesc.Height))
+        return FALSE;
+
+    return TRUE;
+}
+
 /* Not called from the VTable (internal subroutine) */
-HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfaceImpl *target, DWORD Count,
-                                        CONST WINED3DRECT* pRects, DWORD Flags, WINED3DCOLOR Color,
-                                        float Z, DWORD Stencil) {
+HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
+        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
+{
+    IWineD3DStateBlockImpl *stateblock = This->stateBlock;
+    const RECT *scissor_rect = stateblock->renderState[WINED3DRS_SCISSORTESTENABLE] ? &stateblock->scissorRect : NULL;
+    const WINED3DRECT *clear_rect = (Count > 0 && pRects) ? pRects : NULL;
+    const WINED3DVIEWPORT *vp = &stateblock->viewport;
     GLbitfield     glMask = 0;
     unsigned int   i;
     WINED3DRECT curRect;
     RECT vp_rect;
-    const WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
     UINT drawable_width, drawable_height;
     IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) This->stencilBufferTarget;
     struct wined3d_context *context;
@@ -4327,29 +4354,10 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
      * the drawable up to date. We have to check all settings that limit the clear area though. Do not bother
      * checking all this if the dest surface is in the drawable anyway.
      */
-    if((Flags & WINED3DCLEAR_TARGET) && !(target->Flags & SFLAG_INDRAWABLE)) {
-        while(1) {
-            if(vp->X != 0 || vp->Y != 0 ||
-               vp->Width < target->currentDesc.Width || vp->Height < target->currentDesc.Height) {
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-                break;
-            }
-            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
-               This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
-               This->stateBlock->scissorRect.right < target->currentDesc.Width ||
-               This->stateBlock->scissorRect.bottom < target->currentDesc.Height)) {
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-                break;
-            }
-            if(Count > 0 && pRects && (
-               pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
-               pRects[0].x2 < target->currentDesc.Width ||
-               pRects[0].y2 < target->currentDesc.Height)) {
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-                break;
-            }
-            break;
-        }
+    if (Flags & WINED3DCLEAR_TARGET && !(target->Flags & SFLAG_INDRAWABLE))
+    {
+        if (!is_full_clear(target, vp, scissor_rect, clear_rect))
+            IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
     }
 
     context = context_acquire(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
@@ -4374,22 +4382,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
 
-        if (vp->X != 0 || vp->Y != 0 ||
-                vp->Width < depth_stencil->currentDesc.Width || vp->Height < depth_stencil->currentDesc.Height) {
+        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
             surface_load_ds_location(This->stencilBufferTarget, context, location);
-        }
-        else if (This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
-                This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
-                This->stateBlock->scissorRect.right < depth_stencil->currentDesc.Width ||
-                This->stateBlock->scissorRect.bottom < depth_stencil->currentDesc.Height)) {
-            surface_load_ds_location(This->stencilBufferTarget, context, location);
-        }
-        else if (Count > 0 && pRects && (
-                pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
-                pRects[0].x2 < depth_stencil->currentDesc.Width ||
-                pRects[0].y2 < depth_stencil->currentDesc.Height)) {
-            surface_load_ds_location(This->stencilBufferTarget, context, location);
-        }
     }
 
     if (Flags & WINED3DCLEAR_TARGET) {
