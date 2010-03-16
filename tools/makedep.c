@@ -929,15 +929,17 @@ static void output_dependencies(void)
     {
         char buffer[1024];
         FILE *tmp_file = create_temp_file( &tmp_name );
+        int found = 0;
 
-        while (fgets( buffer, sizeof(buffer), file ))
+        while (fgets( buffer, sizeof(buffer), file ) && !found)
         {
             if (fwrite( buffer, 1, strlen(buffer), tmp_file ) != strlen(buffer))
                 fatal_error( "error writing to %s\n", tmp_name );
-            if (!strncmp( buffer, Separator, strlen(Separator) )) break;
+            found = !strncmp( buffer, Separator, strlen(Separator) );
         }
         fclose( file );
         file = tmp_file;
+        if (!found && list_head(&sources)) fprintf( file, "\n%s\n", Separator );
     }
     else
     {
