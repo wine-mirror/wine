@@ -5743,28 +5743,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
     if(Swapchain->backBuffer[0] != Back) {
         TRACE("Changing the back buffer from %p to %p\n", Swapchain->backBuffer, Back);
 
-        /* What to do about the context here in the case of multithreading? Not sure.
-         * This function is called by IDirect3D7::CreateDevice so in theory its initialization code
-         */
-        WARN("No active context?\n");
-
-        ENTER_GL();
-        if(!Swapchain->backBuffer[0]) {
-            /* GL was told to draw to the front buffer at creation,
-             * undo that
-             */
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer(GL_BACK)");
-            /* Set the backbuffer count to 1 because other code uses it to fing the back buffers */
-            Swapchain->presentParms.BackBufferCount = 1;
-        } else if (!Back) {
-            /* That makes problems - disable for now */
-            /* glDrawBuffer(GL_FRONT); */
-            checkGLcall("glDrawBuffer(GL_FRONT)");
-            /* We have lost our back buffer, set this to 0 to avoid confusing other code */
-            Swapchain->presentParms.BackBufferCount = 0;
-        }
-        LEAVE_GL();
+        /* Update the backbuffer count. */
+        if (!Swapchain->backBuffer[0]) Swapchain->presentParms.BackBufferCount = 1;
+        else if (!Back) Swapchain->presentParms.BackBufferCount = 0;
 
         if(Swapchain->backBuffer[0])
         {
