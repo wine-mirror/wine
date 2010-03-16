@@ -5688,85 +5688,97 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface,
-        IWineD3DSurface *Front, IWineD3DSurface *Back)
+        IWineD3DSurface *front, IWineD3DSurface *back)
 {
-    IWineD3DSurfaceImpl *FrontImpl = (IWineD3DSurfaceImpl *) Front;
-    IWineD3DSurfaceImpl *BackImpl = (IWineD3DSurfaceImpl *) Back;
-    IWineD3DSwapChainImpl *Swapchain;
+    IWineD3DSurfaceImpl *front_impl = (IWineD3DSurfaceImpl *)front;
+    IWineD3DSurfaceImpl *back_impl = (IWineD3DSurfaceImpl *)back;
+    IWineD3DSwapChainImpl *swapchain;
     HRESULT hr;
 
-    TRACE("iface %p, front %p, back %p.\n", iface, Front, Back);
+    TRACE("iface %p, front %p, back %p.\n", iface, front, back);
 
-    hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &Swapchain);
-    if(hr != WINED3D_OK) {
-        ERR("Can't get the swapchain\n");
+    if (FAILED(hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **)&swapchain)))
+    {
+        ERR("Failed to get the swapchain, hr %#x.\n", hr);
         return hr;
     }
 
-    /* Make sure to release the swapchain */
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) Swapchain);
-
-    if(FrontImpl && !(FrontImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) ) {
-        ERR("Trying to set a front buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    else if(BackImpl && !(BackImpl->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
-        ERR("Trying to set a back buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage\n");
+    if (front_impl && !(front_impl->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    {
+        ERR("Trying to set a front buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage.\n");
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(Swapchain->frontBuffer != Front) {
-        TRACE("Changing the front buffer from %p to %p\n", Swapchain->frontBuffer, Front);
-
-        if(Swapchain->frontBuffer)
+    if (back_impl)
+    {
+        if (!(back_impl->resource.usage & WINED3DUSAGE_RENDERTARGET))
         {
-            IWineD3DSurface_SetContainer(Swapchain->frontBuffer, NULL);
-            ((IWineD3DSurfaceImpl *)Swapchain->frontBuffer)->Flags &= ~SFLAG_SWAPCHAIN;
+            ERR("Trying to set a back buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage.\n");
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            return WINED3DERR_INVALIDCALL;
         }
-        Swapchain->frontBuffer = Front;
 
-        if(Swapchain->frontBuffer) {
-            IWineD3DSurface_SetContainer(Swapchain->frontBuffer, (IWineD3DBase *) Swapchain);
-            ((IWineD3DSurfaceImpl *)Swapchain->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
-        }
-    }
-
-    if(Back && !Swapchain->backBuffer) {
-        /* We need memory for the back buffer array - only one back buffer this way */
-        Swapchain->backBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *));
-        if(!Swapchain->backBuffer) {
-            ERR("Out of memory\n");
-            return E_OUTOFMEMORY;
-        }
-    }
-
-    if(Swapchain->backBuffer[0] != Back) {
-        TRACE("Changing the back buffer from %p to %p\n", Swapchain->backBuffer, Back);
-
-        /* Update the backbuffer count. */
-        if (!Swapchain->backBuffer[0]) Swapchain->presentParms.BackBufferCount = 1;
-        else if (!Back) Swapchain->presentParms.BackBufferCount = 0;
-
-        if(Swapchain->backBuffer[0])
+        if (!swapchain->backBuffer)
         {
-            IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], NULL);
-            ((IWineD3DSurfaceImpl *)Swapchain->backBuffer[0])->Flags &= ~SFLAG_SWAPCHAIN;
+            swapchain->backBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*swapchain->backBuffer));
+            if (!swapchain->backBuffer)
+            {
+                ERR("Failed to allocate back buffer array memory.\n");
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+                return E_OUTOFMEMORY;
+            }
         }
-        Swapchain->backBuffer[0] = Back;
-
-        if(Swapchain->backBuffer[0]) {
-            IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], (IWineD3DBase *) Swapchain);
-            ((IWineD3DSurfaceImpl *)Swapchain->backBuffer[0])->Flags |= SFLAG_SWAPCHAIN;
-            Swapchain->presentParms.BackBufferWidth = BackImpl->currentDesc.Width;
-            Swapchain->presentParms.BackBufferHeight = BackImpl->currentDesc.Height;
-            Swapchain->presentParms.BackBufferFormat = BackImpl->resource.format_desc->format;
-        } else {
-            HeapFree(GetProcessHeap(), 0, Swapchain->backBuffer);
-            Swapchain->backBuffer = NULL;
-        }
-
     }
 
+    if (swapchain->frontBuffer != front)
+    {
+        TRACE("Changing the front buffer from %p to %p.\n", swapchain->frontBuffer, front);
+
+        if (swapchain->frontBuffer)
+        {
+            IWineD3DSurface_SetContainer(swapchain->frontBuffer, NULL);
+            ((IWineD3DSurfaceImpl *)swapchain->frontBuffer)->Flags &= ~SFLAG_SWAPCHAIN;
+        }
+        swapchain->frontBuffer = front;
+
+        if (front)
+        {
+            IWineD3DSurface_SetContainer(front, (IWineD3DBase *)swapchain);
+            front_impl->Flags |= SFLAG_SWAPCHAIN;
+        }
+    }
+
+    if (swapchain->backBuffer[0] != back)
+    {
+        TRACE("Changing the back buffer from %p to %p.\n", swapchain->backBuffer[0], back);
+
+        if (swapchain->backBuffer[0])
+        {
+            IWineD3DSurface_SetContainer(swapchain->backBuffer[0], NULL);
+            ((IWineD3DSurfaceImpl *)swapchain->backBuffer[0])->Flags &= ~SFLAG_SWAPCHAIN;
+        }
+        swapchain->backBuffer[0] = back;
+
+        if (back)
+        {
+            swapchain->presentParms.BackBufferWidth = back_impl->currentDesc.Width;
+            swapchain->presentParms.BackBufferHeight = back_impl->currentDesc.Height;
+            swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->format;
+            swapchain->presentParms.BackBufferCount = 1;
+
+            IWineD3DSurface_SetContainer(back, (IWineD3DBase *)swapchain);
+            back_impl->Flags |= SFLAG_SWAPCHAIN;
+        }
+        else
+        {
+            swapchain->presentParms.BackBufferCount = 0;
+            HeapFree(GetProcessHeap(), 0, swapchain->backBuffer);
+            swapchain->backBuffer = NULL;
+        }
+    }
+
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
     return WINED3D_OK;
 }
 
