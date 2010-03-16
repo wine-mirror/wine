@@ -3854,9 +3854,7 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
                 }
             }
 
-            if(typeinfo->dual)
-                HeapFree(GetProcessHeap(), 0, typeinfo->dual);
-
+            HeapFree(GetProcessHeap(), 0, typeinfo->dual);
             HeapFree(GetProcessHeap(), 0, typeinfo);
 	}
 
