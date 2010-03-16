@@ -3008,6 +3008,7 @@ static void GetDCTest(void)
     IDirectDrawSurface2 *surf2;
     IDirectDrawSurface4 *surf4;
     IDirectDrawSurface7 *surf7;
+    IDirectDrawSurface *tmp;
     IDirectDrawSurface7 *tmp7;
     HRESULT hr;
     IDirectDraw2 *dd2;
@@ -3055,6 +3056,37 @@ static void GetDCTest(void)
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2, &surf4, NULL);
     ok(hr == DD_OK, "IDirectDraw4_CreateSurface failed: 0x%08x\n", hr);
     dctest_surf((IDirectDrawSurface *) surf4, 2);
+
+    hr = IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **)&surf);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetDC(surf4, &dc);
+    ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, NULL);
+    ok(hr == E_INVALIDARG, "Expected hr E_INVALIDARG, got %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok(tmp == surf, "Expected surface %p, got %p.\n\n", surf, tmp);
+
+    hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
+    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
+
+    dc = CreateCompatibleDC(NULL);
+    ok(!!dc, "CreateCompatibleDC failed.\n");
+
+    tmp = (IDirectDrawSurface *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
+
+    ok(DeleteDC(dc), "DeleteDC failed.\n");
+
+    tmp = (IDirectDrawSurface *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, NULL, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
 
     IDirectDrawSurface4_Release(surf4);
     IDirectDraw4_Release(dd4);

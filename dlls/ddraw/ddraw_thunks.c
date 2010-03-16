@@ -1048,7 +1048,15 @@ static HRESULT WINAPI
 IDirectDraw4Impl_GetSurfaceFromDC(LPDIRECTDRAW4 This, HDC hDC,
 				  LPDIRECTDRAWSURFACE4 *pSurf)
 {
-    return IDirectDraw7_GetSurfaceFromDC((IDirectDraw7 *)ddraw_from_ddraw4(This), hDC, (LPDIRECTDRAWSURFACE7 *)pSurf);
+    IDirectDrawSurface7 *surf7;
+    HRESULT hr;
+
+    if (!pSurf) return E_INVALIDARG;
+
+    hr = IDirectDraw7_GetSurfaceFromDC((IDirectDraw7 *)ddraw_from_ddraw4(This), hDC, &surf7);
+    *pSurf = surf7 ? (IDirectDrawSurface4 *)&((IDirectDrawSurfaceImpl *)surf7)->IDirectDrawSurface3_vtbl : NULL;
+
+    return hr;
 }
 
 static HRESULT WINAPI
