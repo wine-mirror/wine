@@ -1272,12 +1272,12 @@ static void r_getStringRef(unsigned line, IHlink *hlink, const WCHAR *exp_tgt, c
     if(exp_tgt)
         ok_(__FILE__,line) (!lstrcmpW(fnd_tgt, exp_tgt), "Found string target should have been %s, was: %s\n", wine_dbgstr_w(exp_tgt), wine_dbgstr_w(fnd_tgt));
     else
-        ok_(__FILE__,line) (exp_tgt == NULL, "Found string target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
+        ok_(__FILE__,line) (fnd_tgt == NULL, "Found string target should have been NULL, was: %s\n", wine_dbgstr_w(fnd_tgt));
 
     if(exp_loc)
         ok_(__FILE__,line) (!lstrcmpW(fnd_loc, exp_loc), "Found string location should have been %s, was: %s\n", wine_dbgstr_w(exp_loc), wine_dbgstr_w(fnd_loc));
     else
-        ok_(__FILE__,line) (exp_loc == NULL, "Found string location should have been NULL, was: %s\n", wine_dbgstr_w(fnd_loc));
+        ok_(__FILE__,line) (fnd_loc == NULL, "Found string location should have been NULL, was: %s\n", wine_dbgstr_w(fnd_loc));
 
     CoTaskMemFree(fnd_tgt);
     CoTaskMemFree(fnd_loc);
@@ -1305,7 +1305,7 @@ static IMoniker *r_getMonikerRef(unsigned line, IHlink *hlink, IMoniker *exp_tgt
     if(exp_loc)
         ok_(__FILE__,line) (!lstrcmpW(fnd_loc, exp_loc), "Found string location should have been %s, was: %s\n", wine_dbgstr_w(exp_loc), wine_dbgstr_w(fnd_loc));
     else
-        ok_(__FILE__,line) (exp_loc == NULL, "Found string location should have been NULL, was: %s\n", wine_dbgstr_w(fnd_loc));
+        ok_(__FILE__,line) (fnd_loc == NULL, "Found string location should have been NULL, was: %s\n", wine_dbgstr_w(fnd_loc));
 
     CoTaskMemFree(fnd_loc);
 
