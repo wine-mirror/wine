@@ -803,7 +803,12 @@ static void test_sha2(void)
     for (i=0; i<2048; i++) pbData[i] = (unsigned char)i;
 
     /* SHA-256 hash */
+    SetLastError(0xdeadbeef);
     result = CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash);
+    if (!result && GetLastError() == NTE_BAD_ALGID) {
+        win_skip("SHA-256/384/512 hashes are not supported before Windows XP SP3\n");
+        return;
+    }
     ok(result, "%08x\n", GetLastError());
     if (result) {
         len = sizeof(DWORD);
