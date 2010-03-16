@@ -133,7 +133,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     p += 2;
 
     if (!p[0]) goto exit;
-    if ((q = memchrW( p, '@', len - (p - url) )))
+    if ((q = memchrW( p, '@', len - (p - url) )) && !(memchrW( p, '/', q - p )))
     {
         if ((r = memchrW( p, ':', q - p )))
         {
