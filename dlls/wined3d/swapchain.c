@@ -114,7 +114,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     else
         gl_filter = GL_LINEAR;
 
-    if (gl_info->fbo_ops.glBlitFramebuffer)
+    if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format_desc->color_fixup))
     {
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
