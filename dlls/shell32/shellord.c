@@ -1807,34 +1807,40 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
                     break;
                 }
 
-                dwClsidSize = sizeof(szClsidHandler);
-                if (SHGetValueW(hkPropSheetHandlers, szHandler, NULL, NULL, szClsidHandler, &dwClsidSize) == ERROR_SUCCESS)
+                /* The CLSID is stored either in the key itself or in its default value. */
+                if (!SUCCEEDED(lRet = SHCLSIDFromStringW(szHandler, &clsid)))
                 {
-                    /* Force a NULL-termination and convert the string */
-                    szClsidHandler[(sizeof(szClsidHandler) / sizeof(szClsidHandler[0])) - 1] = 0;
-                    if (SUCCEEDED(SHCLSIDFromStringW(szClsidHandler, &clsid)))
+                    dwClsidSize = sizeof(szClsidHandler);
+                    if (SHGetValueW(hkPropSheetHandlers, szHandler, NULL, NULL, szClsidHandler, &dwClsidSize) == ERROR_SUCCESS)
                     {
-                        /* Attempt to get an IShellPropSheetExt and an IShellExtInit instance.
-                           Only if both interfaces are supported it's a real shell extension.
-                           Then call IShellExtInit's Initialize method. */
-                        if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER/* | CLSCTX_NO_CODE_DOWNLOAD */, &IID_IShellPropSheetExt, (LPVOID *)&pspsx)))
+                        /* Force a NULL-termination and convert the string */
+                        szClsidHandler[(sizeof(szClsidHandler) / sizeof(szClsidHandler[0])) - 1] = 0;
+                        lRet = SHCLSIDFromStringW(szClsidHandler, &clsid);
+                    }
+                }
+
+                if (SUCCEEDED(lRet))
+                {
+                    /* Attempt to get an IShellPropSheetExt and an IShellExtInit instance.
+                       Only if both interfaces are supported it's a real shell extension.
+                       Then call IShellExtInit's Initialize method. */
+                    if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER/* | CLSCTX_NO_CODE_DOWNLOAD */, &IID_IShellPropSheetExt, (LPVOID *)&pspsx)))
+                    {
+                        if (SUCCEEDED(pspsx->lpVtbl->QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
                         {
-                            if (SUCCEEDED(pspsx->lpVtbl->QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
+                            if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, pDataObj, hKey)))
                             {
-                                if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, pDataObj, hKey)))
-                                {
-                                    /* Add the IShellPropSheetExt instance to the array */
-                                    psxa->pspsx[psxa->uiCount++] = pspsx;
-                                }
-                                else
-                                {
-                                    psxi->lpVtbl->Release(psxi);
-                                    pspsx->lpVtbl->Release(pspsx);
-                                }
+                                /* Add the IShellPropSheetExt instance to the array */
+                                psxa->pspsx[psxa->uiCount++] = pspsx;
                             }
                             else
+                            {
+                                psxi->lpVtbl->Release(psxi);
                                 pspsx->lpVtbl->Release(pspsx);
+                            }
                         }
+                        else
+                            pspsx->lpVtbl->Release(pspsx);
                     }
                 }
 
