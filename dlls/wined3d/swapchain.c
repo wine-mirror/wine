@@ -161,8 +161,8 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         device->blitter->set_shader((IWineD3DDevice *) device, backbuffer->resource.format_desc,
                                     backbuffer->texture_target, backbuffer->pow2Width,
                                     backbuffer->pow2Height);
-        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
+        glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
 
         context_set_draw_buffer(context, GL_BACK);
 
