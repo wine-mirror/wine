@@ -1853,6 +1853,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
 	ref->flags = 0;
 	ref->oCustData = -1;
 	ref->onext = -1;
+        This->typeinfo->cImplTypes++;
     } else if (This->typekind == TKIND_INTERFACE) {
         if (This->typeinfo->cImplTypes && index==1)
             return TYPE_E_BADMODULEKIND;
@@ -1860,14 +1861,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
         if( index != 0)  return TYPE_E_ELEMENTNOTFOUND;
 
         This->typeinfo->datatype1 = hRefType;
+        This->typeinfo->cImplTypes = 1;
     } else if (This->typekind == TKIND_DISPATCH) {
-	FIXME("dispatch case unhandled.\n");
+        if(index != 0) return TYPE_E_ELEMENTNOTFOUND;
+
+        /* FIXME: Check if referenced typeinfo is IDispatch */
+        This->typeinfo->flags |= TYPEFLAG_FDISPATCHABLE;
+        This->typeinfo->cImplTypes = 1;
     } else {
 	FIXME("AddImplType unsupported on typekind %d\n", This->typekind);
 	return E_OUTOFMEMORY;
     }
 
-    This->typeinfo->cImplTypes++;
     return S_OK;
 }
 
