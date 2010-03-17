@@ -20,7 +20,9 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
-
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifdef HAVE_TIFFIO_H
 #include <tiffio.h>
 #endif
@@ -54,6 +56,7 @@ static CRITICAL_SECTION init_tiff_cs = { &init_tiff_cs_debug, -1, 0, 0, 0, 0 };
 static void *libtiff_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(TIFFClientOpen);
+MAKE_FUNCPTR(TIFFClose);
 #undef MAKE_FUNCPTR
 
 static void *load_libtiff(void)
@@ -74,6 +77,7 @@ static void *load_libtiff(void)
         return NULL; \
     }
         LOAD_FUNCPTR(TIFFClientOpen);
+        LOAD_FUNCPTR(TIFFClose);
 #undef LOAD_FUNCPTR
 
     }
@@ -84,9 +88,101 @@ static void *load_libtiff(void)
     return result;
 }
 
+static tsize_t tiff_stream_read(thandle_t client_data, tdata_t data, tsize_t size)
+{
+    IStream *stream = (IStream*)client_data;
+    ULONG bytes_read;
+    HRESULT hr;
+
+    hr = IStream_Read(stream, data, size, &bytes_read);
+    if (FAILED(hr)) bytes_read = 0;
+    return bytes_read;
+}
+
+static tsize_t tiff_stream_write(thandle_t client_data, tdata_t data, tsize_t size)
+{
+    IStream *stream = (IStream*)client_data;
+    ULONG bytes_written;
+    HRESULT hr;
+
+    hr = IStream_Write(stream, data, size, &bytes_written);
+    if (FAILED(hr)) bytes_written = 0;
+    return bytes_written;
+}
+
+static toff_t tiff_stream_seek(thandle_t client_data, toff_t offset, int whence)
+{
+    IStream *stream = (IStream*)client_data;
+    LARGE_INTEGER move;
+    DWORD origin;
+    ULARGE_INTEGER new_position;
+    HRESULT hr;
+
+    move.QuadPart = offset;
+    switch (whence)
+    {
+        case SEEK_SET:
+            origin = STREAM_SEEK_SET;
+            break;
+        case SEEK_CUR:
+            origin = STREAM_SEEK_CUR;
+            break;
+        case SEEK_END:
+            origin = STREAM_SEEK_END;
+            break;
+        default:
+            ERR("unknown whence value %i\n", whence);
+            return -1;
+    }
+
+    hr = IStream_Seek(stream, move, origin, &new_position);
+    if (SUCCEEDED(hr)) return new_position.QuadPart;
+    else return -1;
+}
+
+static int tiff_stream_close(thandle_t client_data)
+{
+    /* Caller is responsible for releasing the stream object. */
+    return 0;
+}
+
+static toff_t tiff_stream_size(thandle_t client_data)
+{
+    IStream *stream = (IStream*)client_data;
+    STATSTG statstg;
+    HRESULT hr;
+
+    hr = IStream_Stat(stream, &statstg, STATFLAG_NONAME);
+
+    if (SUCCEEDED(hr)) return statstg.cbSize.QuadPart;
+    else return -1;
+}
+
+static int tiff_stream_map(thandle_t client_data, tdata_t *addr, toff_t *size)
+{
+    /* Cannot mmap streams */
+    return 0;
+}
+
+static void tiff_stream_unmap(thandle_t client_data, tdata_t addr, toff_t size)
+{
+    /* No need to ever do this, since we can't map things. */
+}
+
+static TIFF* tiff_open_stream(IStream *stream, const char *mode)
+{
+    return pTIFFClientOpen("<IStream object>", mode, stream, tiff_stream_read,
+        tiff_stream_write, tiff_stream_seek, tiff_stream_close,
+        tiff_stream_size, tiff_stream_map, tiff_stream_unmap);
+}
+
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    IStream *stream;
+    CRITICAL_SECTION lock; /* Must be held when tiff is used or initiailzed is set */
+    TIFF *tiff;
+    BOOL initialized;
 } TiffDecoder;
 
 static HRESULT WINAPI TiffDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -130,6 +226,10 @@ static ULONG WINAPI TiffDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        if (This->tiff) pTIFFClose(This->tiff);
+        if (This->stream) IStream_Release(This->stream);
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -146,8 +246,36 @@ static HRESULT WINAPI TiffDecoder_QueryCapability(IWICBitmapDecoder *iface, IStr
 static HRESULT WINAPI TiffDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    TiffDecoder *This = (TiffDecoder*)iface;
+    TIFF *tiff;
+    HRESULT hr=S_OK;
+
+    TRACE("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->initialized)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto exit;
+    }
+
+    tiff = tiff_open_stream(pIStream, "r");
+
+    if (!tiff)
+    {
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    This->tiff = tiff;
+    This->stream = pIStream;
+    IStream_AddRef(pIStream);
+    This->initialized = TRUE;
+
+exit:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI TiffDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -252,6 +380,11 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &TiffDecoder_Vtbl;
     This->ref = 1;
+    This->stream = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TiffDecoder.lock");
+    This->tiff = NULL;
+    This->initialized = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
