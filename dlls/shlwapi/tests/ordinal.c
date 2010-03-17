@@ -1518,20 +1518,22 @@ if (0)
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
     ok(buff[0] == 'a', "expected same string, got %s\n", buff);
 
+    /* flags needs to have FDTF_NOAUTOREADINGORDER for these tests to succeed on Vista+ */
+
     /* all combinations documented as invalid succeeded */
-    flags = FDTF_SHORTTIME | FDTF_LONGTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTTIME | FDTF_LONGTIME;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
-    flags = FDTF_SHORTDATE | FDTF_LONGDATE;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_LONGDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
-    flags = FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
+    flags =  FDTF_SHORTDATE | FDTF_LTRDATE | FDTF_RTLDATE;
     SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
@@ -1540,14 +1542,14 @@ if (0)
         "expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* now check returned strings */
-    flags = FDTF_SHORTTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_LONGTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2));
@@ -1555,21 +1557,21 @@ if (0)
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     /* both time flags */
-    flags = FDTF_LONGTIME | FDTF_SHORTTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGTIME | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_SHORTDATE;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_LONGDATE;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
@@ -1577,7 +1579,7 @@ if (0)
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     /* both date flags */
-    flags = FDTF_LONGDATE | FDTF_SHORTDATE;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_SHORTDATE;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
@@ -1585,7 +1587,7 @@ if (0)
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
     /* various combinations of date/time flags */
-    flags = FDTF_LONGDATE | FDTF_SHORTTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d, length %d\n", ret, lstrlenA(buff)+1);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
@@ -1596,7 +1598,7 @@ if (0)
     strcat(buff2, buff3);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_LONGDATE | FDTF_LONGTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_LONGDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, buff2, sizeof(buff2));
@@ -1607,7 +1609,7 @@ if (0)
     strcat(buff2, buff3);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_SHORTDATE | FDTF_SHORTTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_SHORTTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
@@ -1618,7 +1620,7 @@ if (0)
     strcat(buff2, buff3);
     ok(lstrcmpA(buff, buff2) == 0, "expected (%s), got (%s)\n", buff2, buff);
 
-    flags = FDTF_SHORTDATE | FDTF_LONGTIME;
+    flags = FDTF_NOAUTOREADINGORDER | FDTF_SHORTDATE | FDTF_LONGTIME;
     ret = pSHFormatDateTimeA(&filetime, &flags, buff, sizeof(buff));
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buff2, sizeof(buff2));
