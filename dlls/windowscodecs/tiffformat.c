@@ -57,6 +57,8 @@ static void *libtiff_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(TIFFClientOpen);
 MAKE_FUNCPTR(TIFFClose);
+MAKE_FUNCPTR(TIFFCurrentDirectory);
+MAKE_FUNCPTR(TIFFReadDirectory);
 #undef MAKE_FUNCPTR
 
 static void *load_libtiff(void)
@@ -78,6 +80,8 @@ static void *load_libtiff(void)
     }
         LOAD_FUNCPTR(TIFFClientOpen);
         LOAD_FUNCPTR(TIFFClose);
+        LOAD_FUNCPTR(TIFFCurrentDirectory);
+        LOAD_FUNCPTR(TIFFReadDirectory);
 #undef LOAD_FUNCPTR
 
     }
@@ -330,8 +334,22 @@ static HRESULT WINAPI TiffDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    FIXME("(%p,%p)\n", iface, pCount);
-    return E_NOTIMPL;
+    TiffDecoder *This = (TiffDecoder*)iface;
+
+    if (!This->tiff)
+    {
+        WARN("(%p) <-- WINCODEC_ERR_WRONGSTATE\n", iface);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    EnterCriticalSection(&This->lock);
+    while (pTIFFReadDirectory(This->tiff)) { }
+    *pCount = pTIFFCurrentDirectory(This->tiff)+1;
+    LeaveCriticalSection(&This->lock);
+
+    TRACE("(%p) <-- %i\n", iface, *pCount);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
