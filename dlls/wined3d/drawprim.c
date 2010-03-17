@@ -102,7 +102,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     }
 
     /* Start drawing in GL */
-    VTRACE(("glBegin(%x)\n", glPrimType));
     glBegin(glPrimType);
 
     if (si->use_map & (1 << WINED3D_FFP_POSITION))
@@ -226,13 +225,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         if (idxData != NULL) {
 
             /* Indexed so work out the number of strides to skip */
-            if (idxSize == 2) {
-                VTRACE(("Idx for vertex %u = %u\n", vx_index, pIdxBufS[startIdx+vx_index]));
+            if (idxSize == 2)
                 SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
-            } else {
-                VTRACE(("Idx for vertex %u = %u\n", vx_index, pIdxBufL[startIdx+vx_index]));
+            else
                 SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
-            }
         }
 
         tmp_tex_mask = tex_mask;
@@ -451,20 +447,16 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
     }
 
     /* Start drawing in GL */
-    VTRACE(("glBegin(%x)\n", glPrimitiveType));
     glBegin(glPrimitiveType);
 
     for (vx_index = 0; vx_index < numberOfVertices; ++vx_index) {
         if (idxData != NULL) {
 
             /* Indexed so work out the number of strides to skip */
-            if (idxSize == 2) {
-                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
+            if (idxSize == 2)
                 SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
-            } else {
-                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
+            else
                 SkipnStrides = pIdxBufL[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
-            }
         }
 
         for (i = MAX_ATTRIBS - 1; i >= 0; i--)

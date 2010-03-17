@@ -830,13 +830,6 @@ extern const float identity[16] DECLSPEC_HIDDEN;
  * Compilable extra diagnostics
  */
 
-/* Trace information per-vertex: (extremely high amount of trace) */
-#if 0 /* NOTE: Must be 0 in cvs */
-# define VTRACE(A) TRACE A
-#else
-# define VTRACE(A)
-#endif
-
 /* TODO: Confirm each of these works when wined3d move completed */
 #if 0 /* NOTE: Must be 0 in cvs */
   /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
