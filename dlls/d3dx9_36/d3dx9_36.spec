@@ -97,7 +97,7 @@
 @ stub D3DXCreateTextureFromFileExA
 @ stub D3DXCreateTextureFromFileExW
 @ stub D3DXCreateTextureFromFileInMemory
-@ stub D3DXCreateTextureFromFileInMemoryEx
+@ stdcall D3DXCreateTextureFromFileInMemoryEx(ptr ptr long long long long long long long long long long ptr ptr ptr)
 @ stub D3DXCreateTextureFromFileW
 @ stub D3DXCreateTextureFromResourceA
 @ stub D3DXCreateTextureFromResourceExA
