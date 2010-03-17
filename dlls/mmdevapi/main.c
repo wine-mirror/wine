@@ -27,8 +27,9 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 
-#include "initguid.h"
 #include "ole2.h"
+#include "olectl.h"
+#include "initguid.h"
 #include "mmdeviceapi.h"
 #include "dshow.h"
 #include "dsound.h"
