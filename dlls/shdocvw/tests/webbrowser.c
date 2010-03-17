@@ -2285,7 +2285,7 @@ static void test_download(DWORD flags)
         todo_wine CHECK_CALLED(EnableModeless_FALSE);
     else
         CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
-    todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+    CLEAR_CALLED(Invoke_COMMANDSTATECHANGE);
     todo_wine CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
     todo_wine CHECK_CALLED(SetStatusText);
     if(is_first_load)
