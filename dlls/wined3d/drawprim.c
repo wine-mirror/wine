@@ -596,6 +596,12 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     This->isInDraw = TRUE;
 
     context = context_acquire(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping draw.\n");
+        return;
+    }
 
     if (This->stencilBufferTarget) {
         /* Note that this depends on the context_acquire() call above to set

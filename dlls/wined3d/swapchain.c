@@ -223,6 +223,12 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
 
     context = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping present.\n");
+        return WINED3D_OK;
+    }
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
     if (This->device->bCursorVisible && This->device->cursorTexture)
