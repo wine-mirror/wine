@@ -5581,6 +5581,11 @@ static HRESULT WINAPI ITypeInfo_fnGetImplTypeFlags( ITypeInfo2 *iface,
         return S_OK;
     }
     *pImplTypeFlags=0;
+
+    if(This->TypeAttr.typekind==TKIND_DISPATCH && !index)
+        return S_OK;
+
+    WARN("ImplType %d not found\n", index);
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
