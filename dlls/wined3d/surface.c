@@ -697,6 +697,17 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
     }
 
     LEAVE_GL();
+
+    if (gl_info->quirks & WINED3D_QUIRK_FBO_TEX_UPDATE)
+    {
+        IWineD3DDeviceImpl *device = This->resource.device;
+        unsigned int i;
+
+        for (i = 0; i < device->numContexts; ++i)
+        {
+            context_surface_update(device->contexts[i], This);
+        }
+    }
 }
 
 /* This call just allocates the texture, the caller is responsible for binding

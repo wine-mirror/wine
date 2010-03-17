@@ -669,6 +669,56 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     return ret;
 }
 
+static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    char data[4 * 4 * 4];
+    GLuint tex, fbo;
+    GLenum status;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return FALSE;
+
+    memset(data, 0xcc, sizeof(data));
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    checkGLcall("glTexImage2D");
+
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    checkGLcall("glFramebufferTexture2D");
+
+    status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) ERR("FBO status %#x\n", status);
+    checkGLcall("glCheckFramebufferStatus");
+
+    memset(data, 0x11, sizeof(data));
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    checkGLcall("glTexSubImage2D");
+
+    glClearColor(0.996, 0.729, 0.745, 0.792);
+    glClear(GL_COLOR_BUFFER_BIT);
+    checkGLcall("glClear");
+
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    checkGLcall("glGetTexImage");
+
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    checkGLcall("glBindTexture");
+
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
+    glDeleteTextures(1, &tex);
+    checkGLcall("glDeleteTextures");
+
+    return *(DWORD *)data == 0x11111111;
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
@@ -797,6 +847,11 @@ static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_NV_CLIP_BROKEN;
 }
 
+static void quirk_fbo_tex_update(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_FBO_TEX_UPDATE;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -875,6 +930,11 @@ static const struct driver_quirk quirk_table[] =
         match_broken_nv_clip,
         quirk_disable_nvvp_clip,
         "Apple NV_vertex_program clip bug quirk"
+    },
+    {
+        match_fbo_tex_update,
+        quirk_fbo_tex_update,
+        "FBO rebind for attachment updates"
     },
 };
 

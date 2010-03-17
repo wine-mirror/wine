@@ -461,6 +461,12 @@ static void context_apply_fbo_state(struct wined3d_context *context)
         context_destroy_fbo_entry(context, entry);
     }
 
+    if (context->rebind_fbo)
+    {
+        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        context->rebind_fbo = FALSE;
+    }
+
     if (context->render_offscreen)
     {
         context->current_fbo = context_find_fbo_entry(context);
@@ -649,6 +655,31 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 
         default:
             break;
+    }
+}
+
+void context_surface_update(struct wined3d_context *context, IWineD3DSurfaceImpl *surface)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct fbo_entry *entry = context->current_fbo;
+    unsigned int i;
+
+    if (!entry || context->rebind_fbo) return;
+
+    for (i = 0; i < gl_info->limits.buffers; ++i)
+    {
+        if (surface == (IWineD3DSurfaceImpl *)entry->render_targets[i])
+        {
+            TRACE("Updated surface %p is bound as color attachment %u to the current FBO.\n", surface, i);
+            context->rebind_fbo = TRUE;
+            return;
+        }
+    }
+
+    if (surface == (IWineD3DSurfaceImpl *)entry->depth_stencil)
+    {
+        TRACE("Updated surface %p is bound as depth attachment to the current FBO.\n", surface);
+        context->rebind_fbo = TRUE;
     }
 }
 
