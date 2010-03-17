@@ -2476,10 +2476,39 @@ static void test_SetActiveWindow(HWND hwnd)
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 }
 
+struct create_window_thread_params
+{
+    HWND window;
+    HANDLE window_created;
+    HANDLE test_finished;
+};
+
+static DWORD WINAPI create_window_thread(void *param)
+{
+    struct create_window_thread_params *p = param;
+    DWORD res;
+    BOOL ret;
+
+    p->window = CreateWindowA("static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    ret = SetEvent(p->window_created);
+    ok(ret, "SetEvent failed, last error %#x.\n", GetLastError());
+
+    res = WaitForSingleObject(p->test_finished, INFINITE);
+    ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
+
+    DestroyWindow(p->window);
+    return 0;
+}
+
 static void test_SetForegroundWindow(HWND hwnd)
 {
+    struct create_window_thread_params thread_params;
+    HANDLE thread;
+    DWORD res;
     BOOL ret;
     HWND hwnd2;
+    MSG msg;
 
     flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
@@ -2552,6 +2581,34 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     DestroyWindow(hwnd2);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    hwnd2 = CreateWindowA("static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 0, 0, 0, 0, 0, 0);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    thread_params.window_created = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(!!thread_params.window_created, "CreateEvent failed, last error %#x.\n", GetLastError());
+    thread_params.test_finished = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
+    thread = CreateThread(NULL, 0, create_window_thread, &thread_params, 0, NULL);
+    ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
+    res = WaitForSingleObject(thread_params.window_created, INFINITE);
+    ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
+    check_wnd_state(hwnd2, thread_params.window, hwnd2, 0);
+
+    SetForegroundWindow(hwnd2);
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    if (0) check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+    todo_wine ok(GetActiveWindow() == hwnd2, "Expected active window %p, got %p.\n", hwnd2, GetActiveWindow());
+    todo_wine ok(GetFocus() == hwnd2, "Expected focus window %p, got %p.\n", hwnd2, GetFocus());
+
+    SetEvent(thread_params.test_finished);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread_params.test_finished);
+    CloseHandle(thread_params.window_created);
+    CloseHandle(thread);
+    DestroyWindow(hwnd2);
 }
 
 static WNDPROC old_button_proc;
