@@ -1076,6 +1076,10 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, &hreftype);
     ok(hres == S_OK, "got %08x\n", hres);
+    if(hres != S_OK) {
+        skip("Skipping some tests\n");
+        return;
+    }
 
     hres = ICreateTypeInfo_AddImplType(createti, 1, hreftype);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
@@ -1434,18 +1438,18 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeLib2_SaveAllChanges(createtl);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
-    ok(hres == S_OK, "got %08x\n", hres);
-
     ok(ITypeInfo_Release(interface2)==0, "Object should be freed\n");
     ok(ITypeInfo_Release(interface1)==0, "Object should be freed\n");
     ok(ITypeInfo_Release(dual)==0, "Object should be freed\n");
     ok(ICreateTypeLib2_Release(createtl)==0, "Object should be freed\n");
+
     ok(ITypeInfo_Release(dispatch)==0, "Object should be freed\n");
     ok(ITypeInfo_Release(unknown)==0, "Object should be freed\n");
-
-    ok(ITypeLib_Release(tl)==0, "Object should be freed\n");
     ok(ITypeLib_Release(stdole)==0, "Object should be freed\n");
+
+    hres = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(ITypeLib_Release(tl)==0, "Object should be freed\n");
 
     DeleteFileA(filename);
 }
