@@ -1491,6 +1491,30 @@ static void destroy_dummy_textures(IWineD3DDeviceImpl *device, const struct wine
     memset(device->dummyTextureName, 0, gl_info->limits.textures * sizeof(*device->dummyTextureName));
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_AcquireFocusWindow(IWineD3DDevice *iface, HWND window)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    if (!wined3d_register_window(window, device))
+    {
+        ERR("Failed to register window %p.\n", window);
+        return E_FAIL;
+    }
+
+    device->focus_window = window;
+    SetForegroundWindow(window);
+
+    return WINED3D_OK;
+}
+
+static void WINAPI IWineD3DDeviceImpl_ReleaseFocusWindow(IWineD3DDevice *iface)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    if (device->focus_window) wined3d_unregister_window(device->focus_window);
+    device->focus_window = NULL;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *pPresentationParameters)
 {
@@ -1506,17 +1530,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
-
-    if (!pPresentationParameters->Windowed)
-    {
-        This->focus_window = This->createParms.hFocusWindow;
-        if (!This->focus_window) This->focus_window = pPresentationParameters->hDeviceWindow;
-        if (!wined3d_register_window(This->focus_window, This))
-        {
-            ERR("Failed to register window %p.\n", This->focus_window);
-            return E_FAIL;
-        }
-    }
 
     TRACE("(%p) : Creating stateblock\n", This);
     /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
@@ -1570,8 +1583,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
             This->rev_tex_unit_map[state] = WINED3D_UNMAPPED_STAGE;
         }
     }
-
-    if (This->focus_window) SetForegroundWindow(This->focus_window);
 
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
@@ -1703,7 +1714,6 @@ err_out:
     if (This->shader_priv) {
         This->shader_backend->shader_free_private(iface);
     }
-    if (This->focus_window) wined3d_unregister_window(This->focus_window);
     return hr;
 }
 
@@ -1882,8 +1892,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->draw_buffers = NULL;
 
     This->d3d_initialized = FALSE;
-
-    if (This->focus_window) wined3d_unregister_window(This->focus_window);
 
     return WINED3D_OK;
 }
@@ -7042,6 +7050,8 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** object tracking ***/
     IWineD3DDeviceImpl_EnumResources,
     IWineD3DDeviceImpl_GetSurfaceFromDC,
+    IWineD3DDeviceImpl_AcquireFocusWindow,
+    IWineD3DDeviceImpl_ReleaseFocusWindow,
 };
 
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,

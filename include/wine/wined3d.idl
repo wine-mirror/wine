@@ -3460,6 +3460,11 @@ interface IWineD3DDevice : IWineD3DBase
         [in] HDC dc,
         [out] IWineD3DSurface **surface
     );
+    HRESULT AcquireFocusWindow(
+        [in] HWND window
+    );
+    void ReleaseFocusWindow(
+    );
 }
 
 IWineD3D *WineDirect3DCreate(UINT dxVersion, IUnknown *parent);

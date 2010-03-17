@@ -447,6 +447,8 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             This->cooperative_level &= ~DDSCL_FULLSCREEN;
             This->cooperative_level &= ~DDSCL_EXCLUSIVE;
             This->cooperative_level &= ~DDSCL_ALLOWMODEX;
+
+            IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
         }
 
         /* Don't override focus windows or private device windows */
@@ -483,6 +485,13 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             !(This->devicewindow) &&
             (hwnd != window) )
         {
+            HRESULT hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
+            if (FAILED(hr))
+            {
+                ERR("Failed to acquire focus window, hr %#x.\n", hr);
+                LeaveCriticalSection(&ddraw_cs);
+                return hr;
+            }
             This->dest_window = hwnd;
         }
     }

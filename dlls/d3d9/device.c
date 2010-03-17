@@ -271,6 +271,7 @@ static ULONG WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Release(LPDIRECT3DDEV
       HeapFree(GetProcessHeap(), 0, This->convertedDecls);
 
       IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroySwapChain);
+      IWineD3DDevice_ReleaseFocusWindow(This->WineD3DDevice);
       IWineD3DDevice_Release(This->WineD3DDevice);
       wined3d_mutex_unlock();
 
@@ -2842,6 +2843,18 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
         return hr;
     }
 
+    if (!parameters->Windowed)
+    {
+        if (!focus_window) focus_window = parameters->hDeviceWindow;
+        if (FAILED(hr = IWineD3DDevice_AcquireFocusWindow(device->WineD3DDevice, focus_window)))
+        {
+            ERR("Failed to acquire focus window, hr %#x.\n", hr);
+            IWineD3DDevice_Release(device->WineD3DDevice);
+            wined3d_mutex_unlock();
+            return hr;
+        }
+    }
+
     if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
     {
         WINED3DCAPS caps;
@@ -2885,6 +2898,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
     if (FAILED(hr))
     {
         WARN("Failed to initialize 3D, hr %#x.\n", hr);
+        IWineD3DDevice_ReleaseFocusWindow(device->WineD3DDevice);
         HeapFree(GetProcessHeap(), 0, wined3d_parameters);
         IWineD3DDevice_Release(device->WineD3DDevice);
         wined3d_mutex_unlock();
@@ -2921,6 +2935,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
         ERR("Failed to allocate FVF vertex declaration map memory.\n");
         wined3d_mutex_lock();
         IWineD3DDevice_Uninit3D(device->WineD3DDevice, D3D9CB_DestroySwapChain);
+        IWineD3DDevice_ReleaseFocusWindow(device->WineD3DDevice);
         IWineD3DDevice_Release(device->WineD3DDevice);
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;

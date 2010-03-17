@@ -3289,10 +3289,10 @@ static void test_wndproc(void)
         goto done;
     }
 
-    todo_wine ok(!expect_message, "Expected message %#x, but didn't receive it.\n", expect_message);
+    ok(!expect_message, "Expected message %#x, but didn't receive it.\n", expect_message);
 
     proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
-    todo_wine ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
 
     ref = IDirectDraw7_Release(ddraw7);
@@ -3322,7 +3322,7 @@ static void test_wndproc(void)
     }
 
     proc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
-    todo_wine ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
 
     ref = IDirectDraw7_Release(ddraw7);
