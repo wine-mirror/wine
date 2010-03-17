@@ -3016,17 +3016,18 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
     if(!pRefType)
         return E_INVALIDARG;
 
-    if(index == -1) {
-        if((This->typeinfo->typekind&0xf)==TKIND_DISPATCH
-                && (This->typeinfo->flags&TYPEFLAG_FDUAL)) {
+    if(This->typeinfo->flags&TYPEFLAG_FDUAL) {
+        if(index == -1) {
             *pRefType = -2;
             return S_OK;
         }
 
-        return TYPE_E_ELEMENTNOTFOUND;
+        if(This->typekind == TKIND_DISPATCH)
+            return ITypeInfo2_GetRefTypeOfImplType((ITypeInfo2*)&This->dual->lpVtblTypeInfo2,
+                    index, pRefType);
     }
 
-    if(index >= This->typeinfo->cImplTypes)
+    if(index>=This->typeinfo->cImplTypes)
         return TYPE_E_ELEMENTNOTFOUND;
 
     if(This->typekind == TKIND_INTERFACE) {
