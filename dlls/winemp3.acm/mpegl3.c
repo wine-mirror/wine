@@ -1,8 +1,8 @@
 /*
  * MPEG Layer 3 handling
  *
- *      Copyright (C) 2002		Eric Pouech
- *      Copyright (C) 2009		CodeWeavers, Aric Stewart
+ * Copyright (C) 2002 Eric Pouech
+ * Copyright (C) 2009 CodeWeavers, Aric Stewart
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,25 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
+
+#ifdef HAVE_MPG123_H
+# include <mpg123.h>
+#else
+# ifdef HAVE_COREAUDIO_COREAUDIO_H
+#  include <CoreFoundation/CoreFoundation.h>
+#  include <CoreAudio/CoreAudio.h>
+# endif
+# ifdef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
+#  include <AudioToolbox/AudioConverter.h>
+# endif
+# ifdef HAVE_AUDIOTOOLBOX_AUDIOFILE_H
+#  include <AudioToolbox/AudioFile.h>
+# endif
+# ifdef HAVE_AUDIOTOOLBOX_AUDIOFILESTREAM_H
+#  include <AudioToolbox/AudioFileStream.h>
+# endif
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -35,39 +54,9 @@
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-
-#ifdef HAVE_MPG123_H
-#include <mpg123.h>
-#endif
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mpeg3);
-
-/***********************************************************************
- *           MPEG3_drvOpen
- */
-static LRESULT MPEG3_drvOpen(LPCSTR str)
-{
-    mpg123_init();
-    return 1;
-}
-
-/***********************************************************************
- *           MPEG3_drvClose
- */
-static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
-{
-    mpg123_exit();
-    return 1;
-}
-
-typedef struct tagAcmMpeg3Data
-{
-    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
-		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
-    mpg123_handle *mh;
-} AcmMpeg3Data;
 
 /* table to list all supported formats... those are the basic ones. this
  * also helps given a unique index to each of the supported formats
@@ -141,6 +130,34 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
     return 0xFFFFFFFF;
 }
 
+#ifdef HAVE_MPG123_H
+
+typedef struct tagAcmMpeg3Data
+{
+    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
+		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
+    mpg123_handle *mh;
+} AcmMpeg3Data;
+
+/***********************************************************************
+ *           MPEG3_drvOpen
+ */
+static LRESULT MPEG3_drvOpen(LPCSTR str)
+{
+    mpg123_init();
+    return 1;
+}
+
+/***********************************************************************
+ *           MPEG3_drvClose
+ */
+static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
+{
+    mpg123_exit();
+    return 1;
+}
+
+
 static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
                       const unsigned char* src, LPDWORD nsrc,
                       unsigned char* dst, LPDWORD ndst)
@@ -184,6 +201,314 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     } while (ret != MPG123_ERR && ret != MPG123_NEED_MORE);
     *ndst = dpos;
 }
+
+/***********************************************************************
+ *           MPEG3_Reset
+ *
+ */
+static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
+{
+    mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
+    mpg123_close(aad->mh);
+    mpg123_open_feed(aad->mh);
+}
+
+/***********************************************************************
+ *           MPEG3_StreamOpen
+ *
+ */
+static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
+{
+    AcmMpeg3Data*	aad;
+    int err;
+
+    assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
+
+    if (MPEG3_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
+	MPEG3_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
+	return ACMERR_NOTPOSSIBLE;
+
+    aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data));
+    if (aad == 0) return MMSYSERR_NOMEM;
+
+    adsi->dwDriver = (DWORD_PTR)aad;
+
+    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+    {
+	goto theEnd;
+    }
+    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+    {
+	/* resampling or mono <=> stereo not available
+         * MPEG3 algo only define 16 bit per sample output
+         */
+	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
+	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
+            adsi->pwfxDst->wBitsPerSample != 16)
+	    goto theEnd;
+        aad->convert = mp3_horse;
+        aad->mh = mpg123_new(NULL,&err);
+        mpg123_open_feed(aad->mh);
+    }
+    /* no encoding yet
+    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
+    */
+    else goto theEnd;
+    MPEG3_Reset(adsi, aad);
+
+    return MMSYSERR_NOERROR;
+
+ theEnd:
+    HeapFree(GetProcessHeap(), 0, aad);
+    adsi->dwDriver = 0L;
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+/***********************************************************************
+ *           MPEG3_StreamClose
+ *
+ */
+static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
+{
+    mpg123_close(((AcmMpeg3Data*)adsi->dwDriver)->mh);
+    mpg123_delete(((AcmMpeg3Data*)adsi->dwDriver)->mh);
+    HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
+    return MMSYSERR_NOERROR;
+}
+
+#elif defined(HAVE_AUDIOFILESTREAMOPEN)
+
+typedef struct tagAcmMpeg3Data
+{
+    LRESULT (*convert)(PACMDRVSTREAMINSTANCE adsi,
+            const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
+    AudioConverterRef acr;
+    AudioStreamBasicDescription in,out;
+    AudioFileStreamID afs;
+
+    AudioBufferList outBuffer;
+    AudioBuffer inBuffer;
+
+    UInt32 NumberPackets;
+    AudioStreamPacketDescription *PacketDescriptions;
+
+    OSStatus lastError;
+} AcmMpeg3Data;
+
+static inline const char* wine_dbgstr_fourcc(unsigned long fourcc)
+{
+    char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
+                    (char) (fourcc >> 8),  (char) fourcc };
+    return wine_dbgstr_an(buf, sizeof(buf));
+}
+
+/***********************************************************************
+ *           MPEG3_drvOpen
+ */
+static LRESULT MPEG3_drvOpen(LPCSTR str)
+{
+    return 1;
+}
+
+/***********************************************************************
+ *           MPEG3_drvClose
+ */
+static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
+{
+    return 1;
+}
+
+
+static OSStatus Mp3AudioConverterComplexInputDataProc (
+   AudioConverterRef             inAudioConverter,
+   UInt32                        *ioNumberDataPackets,
+   AudioBufferList               *ioData,
+   AudioStreamPacketDescription  **outDataPacketDescription,
+   void                          *inUserData
+)
+{
+    AcmMpeg3Data *amd = (AcmMpeg3Data*)inUserData;
+
+    if (amd->inBuffer.mDataByteSize > 0)
+    {
+        *ioNumberDataPackets = amd->NumberPackets;
+        ioData->mNumberBuffers = 1;
+        ioData->mBuffers[0].mDataByteSize =  amd->inBuffer.mDataByteSize;
+        ioData->mBuffers[0].mData =  amd->inBuffer.mData;
+        ioData->mBuffers[0].mNumberChannels =  amd->inBuffer.mNumberChannels;
+        amd->inBuffer.mDataByteSize = 0;
+        if (outDataPacketDescription)
+            *outDataPacketDescription = amd->PacketDescriptions;
+    }
+    else
+        *ioNumberDataPackets = 0;
+    return noErr;
+}
+
+static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
+                      const unsigned char* src, LPDWORD nsrc,
+                      unsigned char* dst, LPDWORD ndst)
+{
+    AcmMpeg3Data*       amd = (AcmMpeg3Data*)adsi->dwDriver;
+    OSStatus            ret;
+
+    TRACE("ndst %u %p  <-  %u %p\n",*ndst,dst,*nsrc, src);
+    amd->outBuffer.mNumberBuffers = 1;
+    amd->outBuffer.mBuffers[0].mDataByteSize =  *ndst;
+    amd->outBuffer.mBuffers[0].mData = dst;
+    amd->outBuffer.mBuffers[0].mNumberChannels =  amd->out.mChannelsPerFrame;
+
+    memset(dst,0xff,*ndst);
+    ret = AudioFileStreamParseBytes( amd->afs, *nsrc, src, 0 );
+
+    if (ret != noErr)
+    {
+        *nsrc = 0;
+        ERR("Feed Error %s\n", wine_dbgstr_fourcc(ret));
+        return MMSYSERR_ERROR;
+    }
+    else if (amd->lastError != noErr)
+    {
+        *nsrc = 0;
+        ERR("Error during feed %s\n", wine_dbgstr_fourcc(ret));
+        return MMSYSERR_ERROR;
+    }
+
+    *ndst = amd->outBuffer.mBuffers[0].mDataByteSize;
+    *nsrc = amd->inBuffer.mDataByteSize;
+
+    return MMSYSERR_NOERROR;
+}
+
+/***********************************************************************
+ *           MPEG3_Reset
+ *
+ */
+static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
+{
+    SInt64 offset;
+    AudioConverterReset(aad->acr);
+    AudioFileStreamSeek(aad->afs, 0, &offset, 0);
+}
+
+static void Mp3PropertyListenerProc ( void *inClientData,
+           AudioFileStreamID inAudioFileStream, UInt32 inPropertyID, UInt32 *ioFlags)
+{
+    /* No operation at this time */
+}
+
+static void Mp3PacketsProc ( void *inClientData, UInt32 inNumberBytes,
+   UInt32 inNumberPackets, const void *inInputData,
+   AudioStreamPacketDescription *inPacketDescriptions)
+{
+    AcmMpeg3Data *amd = (AcmMpeg3Data*)inClientData;
+    UInt32 size;
+
+    amd->inBuffer.mDataByteSize = inNumberBytes;
+    amd->inBuffer.mData = (void*)inInputData;
+    amd->inBuffer.mNumberChannels =  amd->in.mChannelsPerFrame;
+
+    amd->NumberPackets = inNumberPackets;
+    amd->PacketDescriptions = inPacketDescriptions;
+
+    size = amd->outBuffer.mBuffers[0].mDataByteSize / amd->out.mBytesPerPacket;
+    amd->lastError = AudioConverterFillComplexBuffer(amd->acr, Mp3AudioConverterComplexInputDataProc, inClientData, &size, &amd->outBuffer, NULL);
+}
+
+/***********************************************************************
+ *           MPEG3_StreamOpen
+ *
+ */
+static LRESULT MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
+{
+    AcmMpeg3Data* aad;
+
+    assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
+
+    if (MPEG3_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
+        MPEG3_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
+        return ACMERR_NOTPOSSIBLE;
+
+    aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data));
+    if (aad == 0) return MMSYSERR_NOMEM;
+
+    adsi->dwDriver = (DWORD_PTR)aad;
+
+    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+        adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+    {
+        goto theEnd;
+    }
+    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+    {
+        OSStatus err;
+
+        aad->in.mSampleRate = adsi->pwfxSrc->nSamplesPerSec;
+        aad->out.mSampleRate = adsi->pwfxDst->nSamplesPerSec;
+        aad->in.mBitsPerChannel = adsi->pwfxSrc->wBitsPerSample;
+        aad->out.mBitsPerChannel = adsi->pwfxDst->wBitsPerSample;
+        aad->in.mFormatID = kAudioFormatMPEGLayer3;
+        aad->out.mFormatID = kAudioFormatLinearPCM;
+        aad->in.mChannelsPerFrame = adsi->pwfxSrc->nChannels;
+        aad->out.mChannelsPerFrame = adsi->pwfxDst->nChannels;
+        aad->in.mFormatFlags = 0;
+        aad->out.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
+        aad->in.mBytesPerFrame = 0;
+
+        aad->out.mBytesPerFrame = (aad->out.mBitsPerChannel * aad->out.mChannelsPerFrame) / 8;
+        aad->in.mBytesPerPacket =  0;
+        aad->out.mBytesPerPacket = aad->out.mBytesPerFrame;
+        aad->in.mFramesPerPacket = 0;
+        aad->out.mFramesPerPacket = 1;
+        aad->in.mReserved = aad->out.mReserved = 0;
+
+        aad->acr = NULL;
+
+        err = AudioConverterNew(&aad->in, &aad->out ,&aad->acr);
+        if (err != noErr)
+        {
+            ERR("Create failed: %s\n", wine_dbgstr_fourcc(err));
+            goto theEnd;
+        }
+        else
+        {
+            aad->convert = mp3_leopard_horse;
+            err = AudioFileStreamOpen(aad, Mp3PropertyListenerProc, Mp3PacketsProc, kAudioFormatMPEGLayer3, &aad->afs);
+            if (err != noErr)
+            {
+                ERR("Stream Open failed: %s\n", wine_dbgstr_fourcc(err));
+                goto theEnd;
+            }
+        }
+    }
+    else goto theEnd;
+    MPEG3_Reset(adsi, aad);
+
+    return MMSYSERR_NOERROR;
+
+ theEnd:
+    HeapFree(GetProcessHeap(), 0, aad);
+    adsi->dwDriver = 0L;
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+/***********************************************************************
+ *           MPEG3_StreamClose
+ *
+ */
+static LRESULT MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
+{
+    AudioConverterDispose(((AcmMpeg3Data*)adsi->dwDriver)->acr);
+    AudioFileStreamClose(((AcmMpeg3Data*)adsi->dwDriver)->afs);
+    HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
+    return MMSYSERR_NOERROR;
+}
+
+#endif
 
 /***********************************************************************
  *           MPEG3_DriverDetails
@@ -387,83 +712,6 @@ static	LRESULT	MPEG3_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
         break;
     }
 
-    return MMSYSERR_NOERROR;
-}
-
-/***********************************************************************
- *           MPEG3_Reset
- *
- */
-static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
-{
-    mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
-    mpg123_close(aad->mh);
-    mpg123_open_feed(aad->mh);
-}
-
-/***********************************************************************
- *           MPEG3_StreamOpen
- *
- */
-static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
-{
-    AcmMpeg3Data*	aad;
-    int err;
-
-    assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
-
-    if (MPEG3_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
-	MPEG3_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
-	return ACMERR_NOTPOSSIBLE;
-
-    aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data));
-    if (aad == 0) return MMSYSERR_NOMEM;
-
-    adsi->dwDriver = (DWORD_PTR)aad;
-
-    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
-    {
-	goto theEnd;
-    }
-    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
-    {
-	/* resampling or mono <=> stereo not available
-         * MPEG3 algo only define 16 bit per sample output
-         */
-	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
-	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
-            adsi->pwfxDst->wBitsPerSample != 16)
-	    goto theEnd;
-        aad->convert = mp3_horse;
-        aad->mh = mpg123_new(NULL,&err);
-        mpg123_open_feed(aad->mh);
-    }
-    /* no encoding yet
-    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
-    */
-    else goto theEnd;
-    MPEG3_Reset(adsi, aad);
-
-    return MMSYSERR_NOERROR;
-
- theEnd:
-    HeapFree(GetProcessHeap(), 0, aad);
-    adsi->dwDriver = 0L;
-    return MMSYSERR_NOTSUPPORTED;
-}
-
-/***********************************************************************
- *           MPEG3_StreamClose
- *
- */
-static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
-{
-    mpg123_close(((AcmMpeg3Data*)adsi->dwDriver)->mh);
-    mpg123_delete(((AcmMpeg3Data*)adsi->dwDriver)->mh);
-    HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
     return MMSYSERR_NOERROR;
 }
 

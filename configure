@@ -5687,6 +5687,9 @@ done
 
 for ac_header in \
 	AL/al.h \
+	AudioToolbox/AudioConverter.h \
+	AudioToolbox/AudioFile.h \
+	AudioToolbox/AudioFileStream.h \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
@@ -6448,6 +6451,24 @@ fi
     then
                 COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
+        ac_save_LIBS="$LIBS"
+        if test "$ac_cv_header_AudioToolbox_AudioFile_h" = "yes"
+        then
+            LIBS="$LIBS $COREAUDIO"
+            for ac_func in AudioFileStreamOpen
+do :
+  ac_fn_c_check_func "$LINENO" "AudioFileStreamOpen" "ac_cv_func_AudioFileStreamOpen"
+if test "x$ac_cv_func_AudioFileStreamOpen" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_AUDIOFILESTREAMOPEN 1
+_ACEOF
+
+fi
+done
+
+            LIBS="$ac_save_LIBS"
+        fi
+        test "x$ac_cv_func_AudioFileStreamOpen" = xyes || as_fn_append wine_notices "|AudioToolbox version too old, mp3 codec won't be supported."
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
@@ -11287,7 +11308,7 @@ if test "x$ac_cv_lib_mpg123_mpg123_feed" = x""yes; then :
 fi
 
 fi
-if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes; then :
+if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes; then :
   case "x$with_mpg123" in
   x)   as_fn_append wine_notices "|libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported." ;;
   xno) ;;
@@ -11295,7 +11316,7 @@ if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes; then :
 This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
 esac
 fi
-test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
+test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_func_AudioFileStreamOpen" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
