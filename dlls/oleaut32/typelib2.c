@@ -2919,6 +2919,8 @@ static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
     (*ppTypeAttr)->cbSizeInstance = This->typeinfo->size;
     (*ppTypeAttr)->typekind = This->typekind;
     (*ppTypeAttr)->cFuncs = This->typeinfo->cElement&0xffff;
+    if(This->typeinfo->flags&TYPEFLAG_FDUAL && This->typekind==TKIND_DISPATCH)
+        (*ppTypeAttr)->cFuncs += 7;
     (*ppTypeAttr)->cVars = This->typeinfo->cElement>>16;
     (*ppTypeAttr)->cImplTypes = This->typeinfo->cImplTypes;
     (*ppTypeAttr)->cbSizeVft = This->typekind==TKIND_DISPATCH ? 28 : This->typeinfo->cbSizeVft;

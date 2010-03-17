@@ -1386,7 +1386,7 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == 4, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
     ok(typeattr->typekind == 4, "typekind = %d\n", typeattr->typekind);
-    todo_wine ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
+    ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
     ok(typeattr->cbSizeVft == 28, "cbSizeVft = %d\n", typeattr->cbSizeVft);
