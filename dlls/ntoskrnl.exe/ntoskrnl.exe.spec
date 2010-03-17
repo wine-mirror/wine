@@ -406,7 +406,7 @@
 @ stub IoIsOperationSynchronous
 @ stub IoIsSystemThread
 @ stub IoIsValidNameGraftingBuffer
-@ stub IoIsWdmVersionAvailable
+@ stdcall IoIsWdmVersionAvailable(long long)
 @ stub IoMakeAssociatedIrp
 @ stub IoOpenDeviceInterfaceRegistryKey
 @ stub IoOpenDeviceRegistryKey

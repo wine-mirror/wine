@@ -2,6 +2,7 @@
  * ntoskrnl.exe implementation
  *
  * Copyright (C) 2007 Alexandre Julliard
+ * Copyright (C) 2010 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -674,6 +675,72 @@ PCONFIGURATION_INFORMATION WINAPI IoGetConfigurationInformation(void)
     FIXME( "partial stub\n" );
     /* FIXME: return actual devices on system */
     return &configuration_information;
+}
+
+
+/***********************************************************************
+ *           IoIsWdmVersionAvailable     (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoIsWdmVersionAvailable(UCHAR MajorVersion, UCHAR MinorVersion)
+{
+    DWORD version;
+    DWORD major;
+    DWORD minor;
+
+    TRACE( "%d, 0x%X\n", MajorVersion, MinorVersion );
+
+    version = GetVersion();
+    major = LOBYTE(version);
+    minor = HIBYTE(LOWORD(version));
+
+    if (MajorVersion == 6 && MinorVersion == 0)
+    {
+        /* Windows Vista, Windows Server 2008, Windows 7 */
+    }
+    else if (MajorVersion == 1)
+    {
+        if (MinorVersion == 0x30)
+        {
+            /* Windows server 2003 */
+            MajorVersion = 6;
+            MinorVersion = 0;
+        }
+        else if (MinorVersion == 0x20)
+        {
+            /* Windows XP */
+            MajorVersion = 5;
+            MinorVersion = 1;
+        }
+        else if (MinorVersion == 0x10)
+        {
+            /* Windows 2000 */
+            MajorVersion = 5;
+            MinorVersion = 0;
+        }
+        else if (MinorVersion == 0x05)
+        {
+            /* Windows ME */
+            MajorVersion = 4;
+            MinorVersion = 0x5a;
+        }
+        else if (MinorVersion == 0x00)
+        {
+            /* Windows 98 */
+            MajorVersion = 4;
+            MinorVersion = 0x0a;
+        }
+        else
+        {
+            FIXME( "unknown major %d minor 0x%X\n", MajorVersion, MinorVersion );
+            return FALSE;
+        }
+    }
+    else
+    {
+        FIXME( "unknown major %d minor 0x%X\n", MajorVersion, MinorVersion );
+        return FALSE;
+    }
+    return major > MajorVersion || (major == MajorVersion && minor >= MinorVersion);
 }
 
 
