@@ -200,6 +200,7 @@ static BOOL PlaySound_IsString(DWORD fdwSound, const void* psz)
     case SND_MEMORY:    return FALSE;
     case SND_ALIAS:
     case SND_FILENAME:
+    case SND_ALIAS|SND_FILENAME:
     case 0:             return TRUE;
     default:            FIXME("WTF\n"); return FALSE;
     }
@@ -308,7 +309,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	TRACE("Memory sound %p\n", data);
 	hmmio = mmioOpenW(NULL, &mminfo, MMIO_READ);
     }
-    else if (wps->fdwSound & SND_ALIAS)
+    if (!hmmio && wps->fdwSound & SND_ALIAS)
     {
         if ((wps->fdwSound & SND_ALIAS_ID) == SND_ALIAS_ID)
         {
@@ -342,11 +343,11 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
         }
         hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
     }
-    else if (wps->fdwSound & SND_FILENAME)
+    if (!hmmio && wps->fdwSound & SND_FILENAME)
     {
         hmmio = get_mmioFromFile(wps->pszSound);
     }
-    else
+    if (!(wps->fdwSound & (SND_FILENAME|SND_ALIAS|SND_MEMORY)))
     {
         if ((hmmio = get_mmioFromProfile(wps->fdwSound | SND_NODEFAULT, wps->pszSound)) == 0)
         {
