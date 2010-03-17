@@ -211,7 +211,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         }
         else
         {
-            surface_prepare_texture(depth_stencil_impl, FALSE);
+            surface_prepare_texture(depth_stencil_impl, gl_info, FALSE);
             context_apply_attachment_filter_states(depth_stencil);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
@@ -264,7 +264,7 @@ void context_attach_surface_fbo(const struct wined3d_context *context,
 
     if (surface)
     {
-        surface_prepare_texture(surface_impl, FALSE);
+        surface_prepare_texture(surface_impl, gl_info, FALSE);
         context_apply_attachment_filter_states(surface);
 
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx, surface_impl->texture_target,
