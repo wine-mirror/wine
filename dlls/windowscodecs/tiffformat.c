@@ -58,7 +58,9 @@ static void *libtiff_handle;
 MAKE_FUNCPTR(TIFFClientOpen);
 MAKE_FUNCPTR(TIFFClose);
 MAKE_FUNCPTR(TIFFCurrentDirectory);
+MAKE_FUNCPTR(TIFFGetField);
 MAKE_FUNCPTR(TIFFReadDirectory);
+MAKE_FUNCPTR(TIFFSetDirectory);
 #undef MAKE_FUNCPTR
 
 static void *load_libtiff(void)
@@ -81,7 +83,9 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFClientOpen);
         LOAD_FUNCPTR(TIFFClose);
         LOAD_FUNCPTR(TIFFCurrentDirectory);
+        LOAD_FUNCPTR(TIFFGetField);
         LOAD_FUNCPTR(TIFFReadDirectory);
+        LOAD_FUNCPTR(TIFFSetDirectory);
 #undef LOAD_FUNCPTR
 
     }
@@ -188,6 +192,91 @@ typedef struct {
     TIFF *tiff;
     BOOL initialized;
 } TiffDecoder;
+
+typedef struct {
+    const WICPixelFormatGUID *format;
+    int bpp;
+    int indexed;
+    int reverse_bgr;
+} tiff_decode_info;
+
+typedef struct {
+    const IWICBitmapFrameDecodeVtbl *lpVtbl;
+    LONG ref;
+    TiffDecoder *parent;
+    UINT index;
+    tiff_decode_info decode_info;
+} TiffFrameDecode;
+
+static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
+
+static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
+{
+    uint16 photometric, bps;
+    int ret;
+
+    decode_info->indexed = 0;
+    decode_info->reverse_bgr = 0;
+
+    ret = pTIFFGetField(tiff, TIFFTAG_PHOTOMETRIC, &photometric);
+    if (!ret)
+    {
+        WARN("missing PhotometricInterpretation tag\n");
+        return E_FAIL;
+    }
+
+    ret = pTIFFGetField(tiff, TIFFTAG_BITSPERSAMPLE, &bps);
+    if (!ret) bps = 1;
+
+    switch(photometric)
+    {
+    case 1: /* BlackIsZero */
+        decode_info->bpp = bps;
+        switch (bps)
+        {
+        case 1:
+            decode_info->format = &GUID_WICPixelFormatBlackWhite;
+            break;
+        case 4:
+            decode_info->format = &GUID_WICPixelFormat4bppGray;
+            break;
+        case 8:
+            decode_info->format = &GUID_WICPixelFormat8bppGray;
+            break;
+        default:
+            FIXME("unhandled greyscale bit count %u\n", bps);
+            return E_FAIL;
+        }
+        break;
+    case 3: /* RGB Palette */
+        decode_info->indexed = 1;
+        decode_info->bpp = bps;
+        switch (bps)
+        {
+        case 4:
+            decode_info->format = &GUID_WICPixelFormat4bppIndexed;
+            break;
+        case 8:
+            decode_info->format = &GUID_WICPixelFormat8bppIndexed;
+            break;
+        default:
+            FIXME("unhandled indexed bit count %u\n", bps);
+            return E_FAIL;
+        }
+        break;
+    case 0: /* WhiteIsZero */
+    case 2: /* RGB */
+    case 4: /* Transparency mask */
+    case 5: /* CMYK */
+    case 6: /* YCbCr */
+    case 8: /* CIELab */
+    default:
+        FIXME("unhandled PhotometricInterpretation %u\n", photometric);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
 
 static HRESULT WINAPI TiffDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
@@ -355,8 +444,43 @@ static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    FIXME("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
-    return E_NOTIMPL;
+    TiffDecoder *This = (TiffDecoder*)iface;
+    TiffFrameDecode *result;
+    int res;
+    tiff_decode_info decode_info;
+    HRESULT hr;
+
+    TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
+
+    if (!This->tiff)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    EnterCriticalSection(&This->lock);
+    res = pTIFFSetDirectory(This->tiff, index);
+    if (!res) hr = E_INVALIDARG;
+    else hr = tiff_get_decode_info(This->tiff, &decode_info);
+    LeaveCriticalSection(&This->lock);
+
+    if (SUCCEEDED(hr))
+    {
+        result = HeapAlloc(GetProcessHeap(), 0, sizeof(TiffFrameDecode));
+
+        if (result)
+        {
+            result->lpVtbl = &TiffFrameDecode_Vtbl;
+            result->ref = 1;
+            result->parent = This;
+            result->index = index;
+            result->decode_info = decode_info;
+
+            *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
+        }
+        else hr = E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr)) *ppIBitmapFrame = NULL;
+
+    return hr;
 }
 
 static const IWICBitmapDecoderVtbl TiffDecoder_Vtbl = {
@@ -374,6 +498,125 @@ static const IWICBitmapDecoderVtbl TiffDecoder_Vtbl = {
     TiffDecoder_GetThumbnail,
     TiffDecoder_GetFrameCount,
     TiffDecoder_GetFrame
+};
+
+static HRESULT WINAPI TiffFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
+    void **ppv)
+{
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapSource, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameDecode, iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TiffFrameDecode_AddRef(IWICBitmapFrameDecode *iface)
+{
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TiffFrameDecode_Release(IWICBitmapFrameDecode *iface)
+{
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
+    UINT *puiWidth, UINT *puiHeight)
+{
+    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    FIXME("(%p,%p)\n", iface, pPixelFormat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
+    double *pDpiX, double *pDpiY)
+{
+    FIXME("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
+    IWICPalette *pIPalette)
+{
+    FIXME("(%p,%p)\n", iface, pIPalette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
+    const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
+{
+    FIXME("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
+    IWICMetadataQueryReader **ppIMetadataQueryReader)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryReader);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetColorContexts(IWICBitmapFrameDecode *iface,
+    UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cCount, ppIColorContexts, pcActualCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameDecode_GetThumbnail(IWICBitmapFrameDecode *iface,
+    IWICBitmapSource **ppIThumbnail)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl = {
+    TiffFrameDecode_QueryInterface,
+    TiffFrameDecode_AddRef,
+    TiffFrameDecode_Release,
+    TiffFrameDecode_GetSize,
+    TiffFrameDecode_GetPixelFormat,
+    TiffFrameDecode_GetResolution,
+    TiffFrameDecode_CopyPalette,
+    TiffFrameDecode_CopyPixels,
+    TiffFrameDecode_GetMetadataQueryReader,
+    TiffFrameDecode_GetColorContexts,
+    TiffFrameDecode_GetThumbnail
 };
 
 HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
