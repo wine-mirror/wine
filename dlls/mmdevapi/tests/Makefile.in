@@ -6,6 +6,7 @@ TESTDLL   = mmdevapi.dll
 IMPORTS   = ole32 version user32 kernel32
 
 C_SRCS = \
+	capture.c \
 	dependency.c \
 	mmdevenum.c \
 	propstore.c \
