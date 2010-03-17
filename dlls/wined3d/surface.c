@@ -273,6 +273,62 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
     }
 }
 
+/* GL locking and context activation is done by the caller */
+static void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
+{
+    IWineD3DBaseTextureImpl *texture;
+    struct blt_info info;
+
+    surface_get_blt_info(src_surface->texture_target, src_rect, src_surface->pow2Width, src_surface->pow2Height, &info);
+
+    glEnable(info.bind_target);
+    checkGLcall("glEnable(bind_target)");
+
+    /* Bind the texture */
+    glBindTexture(info.bind_target, src_surface->texture_name);
+    checkGLcall("glBindTexture");
+
+    /* Filtering for StretchRect */
+    glTexParameteri(info.bind_target, GL_TEXTURE_MAG_FILTER,
+            wined3d_gl_mag_filter(magLookup, Filter));
+    checkGLcall("glTexParameteri");
+    glTexParameteri(info.bind_target, GL_TEXTURE_MIN_FILTER,
+            wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
+    checkGLcall("glTexParameteri");
+    glTexParameteri(info.bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(info.bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    checkGLcall("glTexEnvi");
+
+    /* Draw a quad */
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord3fv(info.coords[0]);
+    glVertex2i(dst_rect->left, dst_rect->top);
+
+    glTexCoord3fv(info.coords[1]);
+    glVertex2i(dst_rect->right, dst_rect->top);
+
+    glTexCoord3fv(info.coords[2]);
+    glVertex2i(dst_rect->left, dst_rect->bottom);
+
+    glTexCoord3fv(info.coords[3]);
+    glVertex2i(dst_rect->right, dst_rect->bottom);
+    glEnd();
+
+    /* Unbind the texture */
+    glBindTexture(info.bind_target, 0);
+    checkGLcall("glBindTexture(info->bind_target, 0)");
+
+    /* We changed the filtering settings on the texture. Inform the
+     * container about this to get the filters reset properly next draw. */
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DBaseTexture, (void **)&texture)))
+    {
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
+    }
+}
 
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
@@ -4733,72 +4789,36 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
-    IWineD3DBaseTextureImpl *texture;
     struct wined3d_context *context;
-    RECT rect;
-    struct blt_info info;
+    RECT src_rect, dst_rect;
 
     if(rect_in) {
-        rect = *rect_in;
+        src_rect = *rect_in;
     } else {
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = This->currentDesc.Width;
-        rect.bottom = This->currentDesc.Height;
+        src_rect.left = 0;
+        src_rect.top = 0;
+        src_rect.right = This->currentDesc.Width;
+        src_rect.bottom = This->currentDesc.Height;
     }
-
-    surface_get_blt_info(This->texture_target, &rect, This->pow2Width, This->pow2Height, &info);
 
     context = context_acquire(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
-
-    ENTER_GL();
-
-    glEnable(info.bind_target);
-    checkGLcall("glEnable(bind_target)");
-    glBindTexture(info.bind_target, This->texture_name);
-    checkGLcall("glBindTexture(bind_target, This->texture_name)");
-    glTexParameteri(info.bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    checkGLcall("glTexParameteri");
-    glTexParameteri(info.bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    checkGLcall("glTexParameteri");
-
     if (context->render_offscreen)
     {
-        LONG tmp = rect.top;
-        rect.top = rect.bottom;
-        rect.bottom = tmp;
+        dst_rect.left = src_rect.left;
+        dst_rect.right = src_rect.right;
+        dst_rect.top = src_rect.bottom;
+        dst_rect.bottom = src_rect.top;
+    }
+    else
+    {
+        dst_rect = src_rect;
     }
 
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord3fv(info.coords[0]);
-    glVertex2i(rect.left, rect.top);
-
-    glTexCoord3fv(info.coords[1]);
-    glVertex2i(rect.right, rect.top);
-
-    glTexCoord3fv(info.coords[2]);
-    glVertex2i(rect.left, rect.bottom);
-
-    glTexCoord3fv(info.coords[3]);
-    glVertex2i(rect.right, rect.bottom);
-    glEnd();
-
-    glDisable(info.bind_target);
-    checkGLcall("glDisable(bind_target)");
-
+    ENTER_GL();
+    draw_textured_quad(This, &src_rect, &dst_rect, WINED3DTEXF_POINT);
     LEAVE_GL();
 
     wglFlush(); /* Flush to ensure ordering across contexts. */
-
-    /* We changed the filtering settings on the texture. Inform the
-     * container about this to get the filters reset properly next draw. */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DBaseTexture, (void **)&texture)))
-    {
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
-        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
-    }
 
     context_release(context);
 }
