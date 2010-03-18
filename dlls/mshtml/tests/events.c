@@ -1310,7 +1310,6 @@ static void test_onreadystatechange(IHTMLDocument2 *doc)
     SET_EXPECT(iframe_onreadystatechange_interactive);
     SET_EXPECT(iframe_onreadystatechange_complete);
     pump_msgs(&called_iframe_onreadystatechange_complete);
-    todo_wine
     CHECK_CALLED(iframe_onreadystatechange_loading);
     CHECK_CALLED(iframe_onreadystatechange_interactive);
     CHECK_CALLED(iframe_onreadystatechange_complete);
