@@ -68,6 +68,7 @@ DEFINE_EXPECT(iframe_onreadystatechange_loading);
 DEFINE_EXPECT(iframe_onreadystatechange_interactive);
 DEFINE_EXPECT(iframe_onreadystatechange_complete);
 DEFINE_EXPECT(iframedoc_onreadystatechange);
+DEFINE_EXPECT(img_onload);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -93,7 +94,10 @@ static const char click_doc_str[] =
     "</body></html>";
 
 static const char readystate_doc_str[] =
-    "<<html><body><iframe id=\"iframe\"></iframe></body></html>";
+    "<html><body><iframe id=\"iframe\"></iframe></body></html>";
+
+static const char img_doc_str[] =
+    "<html><body><img id=\"imgid\"></img></body></html>";
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -880,6 +884,17 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
 
 EVENT_HANDLER_FUNC_OBJ(body_onclick);
 
+static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(img_onload);
+    test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("IMG");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(img_onload);
+
 static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1357,6 +1372,48 @@ static void test_onreadystatechange(IHTMLDocument2 *doc)
     CHECK_CALLED(iframe_onreadystatechange_complete);
 
     IHTMLFrameBase_Release(iframe);
+}
+
+static void test_imgload(IHTMLDocument2 *doc)
+{
+    IHTMLImgElement *img;
+    IHTMLElement *elem;
+    VARIANT v;
+    BSTR str;
+    HRESULT hres;
+
+    elem = get_elem_id(doc, "imgid");
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLImgElement, (void**)&img);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IHTMLImgElement iface: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLImgElement_get_onload(img, &v);
+    ok(hres == S_OK, "get_onload failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_NULL, "V_VT(onload) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&img_onload_obj;
+    hres = IHTMLImgElement_put_onload(img, v);
+    ok(hres == S_OK, "put_onload failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLImgElement_get_onload(img, &v);
+    ok(hres == S_OK, "get_onload failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onload) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&img_onload_obj, "V_DISPATCH(onload) != onloadkFunc\n");
+    VariantClear(&v);
+
+    str = a2bstr("http://www.winehq.org/images/winehq_logo_text.png");
+    hres = IHTMLImgElement_put_src(img, str);
+    ok(hres == S_OK, "put_src failed: %08x\n", hres);
+    SysFreeString(str);
+
+    SET_EXPECT(img_onload);
+    pump_msgs(&called_img_onload);
+    CHECK_CALLED(img_onload);
+
+    IHTMLImgElement_Release(img);
 }
 
 static void test_timeout(IHTMLDocument2 *doc)
@@ -1998,6 +2055,7 @@ START_TEST(events)
     run_test(empty_doc_str, test_timeout);
     run_test(click_doc_str, test_onclick);
     run_test(readystate_doc_str, test_onreadystatechange);
+    run_test(img_doc_str, test_imgload);
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
