@@ -313,6 +313,30 @@ enum module_type
 };
 
 struct process;
+struct module;
+
+/* a module can be made of several debug information formats, so we have to
+ * support them all
+ */
+enum format_info
+{
+    DFI_DWARF,
+    DFI_LAST
+};
+
+struct module_format
+{
+    struct module*              module;
+    void                        (*remove)(struct process* pcs, struct module_format* modfmt);
+    void                        (*loc_compute)(struct process* pcs,
+                                               const struct module_format* modfmt,
+                                               const struct symt_function* func,
+                                               struct location* loc);
+    union
+    {
+        struct dwarf2_module_info_s*    dwarf2_info;
+    } u;
+};
 
 struct module
 {
@@ -326,8 +350,8 @@ struct module
     /* specific information for debug types */
     struct elf_module_info*	elf_info;
     struct pe_module_info*	pe_info;
-    struct dwarf2_module_info_s*dwarf2_info;
     void                        (*module_remove)(struct process* pcs, struct module* module);
+    struct module_format*       format_info[DFI_LAST];
 
     struct macho_module_info*	macho_info;
 
@@ -342,10 +366,6 @@ struct module
     unsigned                    sorttab_size;
     struct symt_ht**            addr_sorttab;
     struct hash_table           ht_symbols;
-    void                        (*loc_compute)(struct process* pcs,
-                                               const struct module* module,
-                                               const struct symt_function* func,
-                                               struct location* loc);
 
     /* types */
     struct hash_table           ht_types;
