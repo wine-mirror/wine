@@ -68,8 +68,7 @@ Mac OS X Info:
   Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu können.
 
 Unterstützte Dateisysteme:
-  Wine sollte auf den meisten Dateisystemen laufen. Jedoch wird Wine nicht
-  starten, wenn umsdos für das Verzeichnis /tmp benutzt wird. Ein paar
+  Wine sollte auf den meisten Dateisystemen laufen. Ein paar
   Kompatibilitäts-Probleme wurden auch gemeldet beim Dateizugriff über Samba.
   Ausserdem können wir, da NTFS derzeit nur sicher für Lesezugriffe genutzt
   werden kann, den Einsatz von NTFS nicht empfehlen; Windows-Programme
