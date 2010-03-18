@@ -320,6 +320,7 @@ struct module;
  */
 enum format_info
 {
+    DFI_ELF,
     DFI_PE,
     DFI_DWARF,
     DFI_LAST
@@ -335,6 +336,7 @@ struct module_format
                                                struct location* loc);
     union
     {
+        struct elf_module_info*         elf_info;
         struct dwarf2_module_info_s*    dwarf2_info;
         struct pe_module_info*          pe_info;
     } u;
@@ -350,8 +352,6 @@ struct module
     unsigned short              is_virtual : 1;
 
     /* specific information for debug types */
-    struct elf_module_info*	elf_info;
-    void                        (*module_remove)(struct process* pcs, struct module* module);
     struct module_format*       format_info[DFI_LAST];
 
     struct macho_module_info*	macho_info;

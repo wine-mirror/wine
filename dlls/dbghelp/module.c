@@ -629,7 +629,6 @@ BOOL module_remove(struct process* pcs, struct module* module)
 
     TRACE("%s (%p)\n", debugstr_w(module->module.ModuleName), module);
 
-    if (module->module_remove) module->module_remove(pcs, module);
     for (i = 0; i < DFI_LAST; i++)
     {
         if ((modfmt = module->format_info[i]) && modfmt->remove)
