@@ -1436,6 +1436,100 @@ static void test_SetCursor(void)
         "wrong error %u\n", error );
 }
 
+static HANDLE event_start, event_next;
+
+static DWORD CALLBACK show_cursor_thread( void *arg )
+{
+    DWORD count = (DWORD_PTR)arg;
+    int ret;
+
+    PeekMessage( 0, 0, 0, 0, PM_NOREMOVE );  /* create a msg queue */
+    if (parent_id)
+    {
+        BOOL ret = AttachThreadInput( GetCurrentThreadId(), parent_id, TRUE );
+        ok( ret, "AttachThreadInput failed\n" );
+    }
+    if (!count) ret = ShowCursor( FALSE );
+    else while (count--) ret = ShowCursor( TRUE );
+    SetEvent( event_start );
+    WaitForSingleObject( event_next, 2000 );
+    return ret;
+}
+
+static void test_ShowCursor(void)
+{
+    int count;
+    DWORD id, result;
+    HANDLE thread;
+
+    event_start = CreateEvent( NULL, FALSE, FALSE, NULL );
+    event_next = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+    count = ShowCursor( TRUE );
+    ok( count == 1, "wrong count %d\n", count );
+    count = ShowCursor( TRUE );
+    ok( count == 2, "wrong count %d\n", count );
+    count = ShowCursor( FALSE );
+    ok( count == 1, "wrong count %d\n", count );
+    count = ShowCursor( FALSE );
+    ok( count == 0, "wrong count %d\n", count );
+    count = ShowCursor( FALSE );
+    ok( count == -1, "wrong count %d\n", count );
+    count = ShowCursor( FALSE );
+    ok( count == -2, "wrong count %d\n", count );
+
+    parent_id = 0;
+    thread = CreateThread( NULL, 0, show_cursor_thread, NULL, 0, &id );
+    WaitForSingleObject( event_start, 1000 );
+    count = ShowCursor( FALSE );
+    ok( count == -3, "wrong count %d\n", count );
+    SetEvent( event_next );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == -1, "wrong thread count %d\n", result );
+    count = ShowCursor( FALSE );
+    ok( count == -4, "wrong count %d\n", count );
+
+    thread = CreateThread( NULL, 0, show_cursor_thread, (void *)1, 0, &id );
+    WaitForSingleObject( event_start, 1000 );
+    count = ShowCursor( TRUE );
+    ok( count == -3, "wrong count %d\n", count );
+    SetEvent( event_next );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == 1, "wrong thread count %d\n", result );
+    count = ShowCursor( TRUE );
+    ok( count == -2, "wrong count %d\n", count );
+
+    parent_id = GetCurrentThreadId();
+    thread = CreateThread( NULL, 0, show_cursor_thread, NULL, 0, &id );
+    WaitForSingleObject( event_start, 1000 );
+    count = ShowCursor( TRUE );
+    todo_wine ok( count == -2, "wrong count %d\n", count );
+    SetEvent( event_next );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    todo_wine ok( result == -3, "wrong thread count %d\n", result );
+    count = ShowCursor( FALSE );
+    ok( count == -2, "wrong count %d\n", count );
+
+    thread = CreateThread( NULL, 0, show_cursor_thread, (void *)3, 0, &id );
+    WaitForSingleObject( event_start, 1000 );
+    count = ShowCursor( TRUE );
+    todo_wine ok( count == 2, "wrong count %d\n", count );
+    SetEvent( event_next );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    todo_wine ok( result == 1, "wrong thread count %d\n", result );
+    count = ShowCursor( FALSE );
+    ok( count == -2, "wrong count %d\n", count );
+
+    count = ShowCursor( TRUE );
+    ok( count == -1, "wrong count %d\n", count );
+    count = ShowCursor( TRUE );
+    ok( count == 0, "wrong count %d\n", count );
+}
+
 
 static void test_DestroyCursor(void)
 {
@@ -1548,6 +1642,7 @@ START_TEST(cursoricon)
     test_DrawIconEx();
     test_DrawState();
     test_SetCursor();
+    test_ShowCursor();
     test_DestroyCursor();
     do_parent();
     test_child_process();
