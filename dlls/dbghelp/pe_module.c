@@ -36,6 +36,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+struct pe_module_info
+{
+    struct image_file_map       fmap;
+};
+
 static void* pe_map_full(struct image_file_map* fmap, IMAGE_NT_HEADERS** nth)
 {
     if (!fmap->u.pe.full_map)
@@ -236,7 +241,14 @@ static void pe_unmap_file(struct image_file_map* fmap)
         HeapFree(GetProcessHeap(), 0, fmap->u.pe.sect);
         HeapFree(GetProcessHeap(), 0, (void*)fmap->u.pe.strtable); /* FIXME ugly (see pe_map_file) */
         CloseHandle(fmap->u.pe.hMap);
+        fmap->u.pe.hMap = NULL;
     }
+}
+
+static void pe_module_remove(struct process* pcs, struct module* module)
+{
+    pe_unmap_file(&module->pe_info->fmap);
+    HeapFree(GetProcessHeap(), 0, module->pe_info);
 }
 
 /******************************************************************
@@ -247,8 +259,9 @@ static void pe_unmap_file(struct image_file_map* fmap)
  * Mingw32 requires this for stabs debug information as address for global variables isn't filled in
  * (this is similar to what is done in elf_module.c when using the .symtab ELF section)
  */
-static BOOL pe_locate_with_coff_symbol_table(struct module* module, struct image_file_map* fmap)
+static BOOL pe_locate_with_coff_symbol_table(struct module* module)
 {
+    struct image_file_map* fmap = &module->pe_info->fmap;
     const IMAGE_SYMBOL* isym;
     int                 i, numsym, naux;
     char                tmp[9];
@@ -306,8 +319,9 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module, struct image
  *
  * Load public symbols out of the COFF symbol table (if any).
  */
-static BOOL pe_load_coff_symbol_table(struct module* module, struct image_file_map* fmap)
+static BOOL pe_load_coff_symbol_table(struct module* module)
 {
+    struct image_file_map* fmap = &module->pe_info->fmap;
     const IMAGE_SYMBOL* isym;
     int                 i, numsym, naux;
     const char*         strtable;
@@ -382,8 +396,9 @@ static inline DWORD pe_get_sect_size(IMAGE_SECTION_HEADER* sect)
  * look for stabs information in PE header (it's how the mingw compiler provides 
  * its debugging information)
  */
-static BOOL pe_load_stabs(const struct process* pcs, struct module* module, struct image_file_map* fmap)
+static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
 {
+    struct image_file_map*      fmap = &module->pe_info->fmap;
     struct image_section_map    sect_stabs, sect_stabstr;
     BOOL                        ret = FALSE;
 
@@ -404,7 +419,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module, stru
         }
         image_unmap_section(&sect_stabs);
         image_unmap_section(&sect_stabstr);
-        if (ret) pe_locate_with_coff_symbol_table(module, fmap);
+        if (ret) pe_locate_with_coff_symbol_table(module);
     }
     TRACE("%s the STABS debug info\n", ret ? "successfully loaded" : "failed to load");
 
@@ -417,9 +432,9 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module, stru
  * look for dwarf information in PE header (it's also a way for the mingw compiler
  * to provide its debugging information)
  */
-static BOOL pe_load_dwarf(const struct process* pcs, struct module* module,
-                          struct image_file_map* fmap)
+static BOOL pe_load_dwarf(const struct process* pcs, struct module* module)
 {
+    struct image_file_map*      fmap = &module->pe_info->fmap;
     struct image_section_map    sect_debuginfo, sect_debugstr, sect_debugabbrev, sect_debugline, sect_debugloc;
     BOOL                        ret = FALSE;
 
@@ -516,8 +531,9 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
  *
  * Process MSC debug information in PE file.
  */
-static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* module, struct image_file_map* fmap)
+static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* module)
 {
+    struct image_file_map*      fmap = &module->pe_info->fmap;
     BOOL                        ret = FALSE;
     const IMAGE_DATA_DIRECTORY* dir;
     const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
@@ -566,8 +582,9 @@ done:
 /***********************************************************************
  *			pe_load_export_debug_info
  */
-static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* module, struct image_file_map* fmap)
+static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* module)
 {
+    struct image_file_map*              fmap = &module->pe_info->fmap;
     unsigned int 		        i;
     const IMAGE_EXPORT_DIRECTORY* 	exports;
     DWORD			        base = module->module.BaseOfImage;
@@ -649,44 +666,24 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
  *		pe_load_debug_info
  *
  */
-BOOL pe_load_debug_info_internal(const struct process* pcs, struct module* module,
-                                 struct image_file_map* fmap)
+BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
 {
     BOOL                ret = FALSE;
 
     if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
-        ret = pe_load_stabs(pcs, module, fmap) ||
-            pe_load_dwarf(pcs, module, fmap) ||
-            pe_load_msc_debug_info(pcs, module, fmap) ||
-            pe_load_coff_symbol_table(module, fmap);
+        ret = pe_load_stabs(pcs, module) ||
+            pe_load_dwarf(pcs, module) ||
+            pe_load_msc_debug_info(pcs, module) ||
+            pe_load_coff_symbol_table(module);
         /* if we still have no debug info (we could only get SymExport at this
          * point), then do the SymExport except if we have an ELF container,
          * in which case we'll rely on the export's on the ELF side
          */
     }
-/* FIXME shouldn't we check that? if (!module_get_debug(pcs, module))l */
-    if (pe_load_export_debug_info(pcs, module, fmap) && !ret)
+    /* FIXME shouldn't we check that? if (!module_get_debug(pcs, module)) */
+    if (pe_load_export_debug_info(pcs, module) && !ret)
         ret = TRUE;
-
-    return ret;
-}
-
-BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
-{
-    BOOL                        ret = FALSE;
-    HANDLE                      hFile;
-    struct image_file_map       fmap;
-
-    hFile = CreateFileW(module->module.LoadedImageName, GENERIC_READ, FILE_SHARE_READ,
-                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-    if (pe_map_file(hFile, &fmap, DMT_PE))
-    {
-        ret = pe_load_debug_info_internal(pcs, module, &fmap);
-        pe_unmap_file(&fmap);
-    }
-    CloseHandle(hFile);
 
     return ret;
 }
@@ -700,7 +697,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
 {
     struct module*              module = NULL;
     BOOL                        opened = FALSE;
-    struct image_file_map       fmap;
+    struct pe_module_info*      module_info;
     WCHAR                       loaded_name[MAX_PATH];
 
     loaded_name[0] = '\0';
@@ -715,25 +712,33 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     else if (name) strcpyW(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-
-    if (pe_map_file(hFile, &fmap, DMT_PE))
+    if (!(module_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module_info))))
+        return NULL;
+    if (pe_map_file(hFile, &module_info->fmap, DMT_PE))
     {
-        if (!base) base = fmap.u.pe.ntheader.OptionalHeader.ImageBase;
-        if (!size) size = fmap.u.pe.ntheader.OptionalHeader.SizeOfImage;
+        if (!base) base = module_info->fmap.u.pe.ntheader.OptionalHeader.ImageBase;
+        if (!size) size = module_info->fmap.u.pe.ntheader.OptionalHeader.SizeOfImage;
 
         module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
-                            fmap.u.pe.ntheader.FileHeader.TimeDateStamp,
-                            fmap.u.pe.ntheader.OptionalHeader.CheckSum);
+                            module_info->fmap.u.pe.ntheader.FileHeader.TimeDateStamp,
+                            module_info->fmap.u.pe.ntheader.OptionalHeader.CheckSum);
         if (module)
         {
+            module->pe_info = module_info;
+            module->module_remove = pe_module_remove;
             if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
                 module->module.SymType = SymDeferred;
             else
-                pe_load_debug_info_internal(pcs, module, &fmap);
+                pe_load_debug_info(pcs, module);
         }
-        else ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
-        pe_unmap_file(&fmap);
+        else
+        {
+            ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
+            pe_unmap_file(&module_info->fmap);
+        }
     }
+    if (!module) HeapFree(GetProcessHeap(), 0, module_info);
+
     if (opened) CloseHandle(hFile);
 
     return module;
