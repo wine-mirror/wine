@@ -116,12 +116,14 @@ extern BOOL         elf_find_section(struct image_file_map* fmap, const char* na
                                      unsigned sht, struct image_section_map* ism);
 extern const char*  elf_map_section(struct image_section_map* ism);
 extern void         elf_unmap_section(struct image_section_map* ism);
+extern DWORD_PTR    elf_get_map_rva(const struct image_section_map* ism);
 extern unsigned     elf_get_map_size(const struct image_section_map* ism);
 
 extern BOOL         pe_find_section(struct image_file_map* fmap, const char* name,
                                     struct image_section_map* ism);
 extern const char*  pe_map_section(struct image_section_map* psm);
 extern void         pe_unmap_section(struct image_section_map* psm);
+extern DWORD_PTR    pe_get_map_rva(const struct image_section_map* psm);
 extern unsigned     pe_get_map_size(const struct image_section_map* psm);
 
 static inline BOOL image_find_section(struct image_file_map* fmap, const char* name,
@@ -154,6 +156,17 @@ static inline void image_unmap_section(struct image_section_map* ism)
     case DMT_ELF: elf_unmap_section(ism); break;
     case DMT_PE:  pe_unmap_section(ism);   break;
     default: assert(0); return;
+    }
+}
+
+static inline DWORD_PTR image_get_map_rva(struct image_section_map* ism)
+{
+    if (!ism->fmap) return 0;
+    switch (ism->fmap->modtype)
+    {
+    case DMT_ELF: return elf_get_map_rva(ism);
+    case DMT_PE:  return pe_get_map_rva(ism);
+    default: assert(0); return 0;
     }
 }
 

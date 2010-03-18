@@ -148,6 +148,18 @@ void pe_unmap_section(struct image_section_map* ism)
 }
 
 /******************************************************************
+ *		pe_get_map_rva
+ *
+ * Get the RVA of an PE section
+ */
+DWORD_PTR pe_get_map_rva(const struct image_section_map* ism)
+{
+    if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.pe.ntheader.FileHeader.NumberOfSections)
+        return 0;
+    return ism->fmap->u.pe.sect[ism->sidx].shdr.VirtualAddress;
+}
+
+/******************************************************************
  *		pe_get_map_size
  *
  * Get the size of an PE section

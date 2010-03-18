@@ -195,6 +195,18 @@ static void elf_end_find(struct image_file_map* fmap)
 }
 
 /******************************************************************
+ *		elf_get_map_rva
+ *
+ * Get the RVA of an ELF section
+ */
+DWORD_PTR elf_get_map_rva(const struct image_section_map* ism)
+{
+    if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.elf.elfhdr.e_shnum)
+        return 0;
+    return ism->fmap->u.elf.sect[ism->sidx].shdr.sh_addr - ism->fmap->u.elf.elf_start;
+}
+
+/******************************************************************
  *		elf_get_map_size
  *
  * Get the size of an ELF section
