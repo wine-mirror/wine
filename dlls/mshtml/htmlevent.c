@@ -1043,10 +1043,23 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
     return S_OK;
 }
 
+static HRESULT remove_event_handler(event_target_t **event_target, eventid_t eid)
+{
+    if(*event_target && (*event_target)->event_table[eid]->handler_prop) {
+        IDispatch_Release((*event_target)->event_table[eid]->handler_prop);
+        (*event_target)->event_table[eid]->handler_prop = NULL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDocumentNode *doc,
         eventid_t eid, IDispatch *disp)
 {
     event_target_t *event_target;
+
+    if(!disp)
+        return remove_event_handler(event_target_ptr, eid);
 
     event_target = get_event_target(event_target_ptr);
     if(!event_target)
@@ -1059,8 +1072,6 @@ static HRESULT set_event_handler_disp(event_target_t **event_target_ptr, HTMLDoc
         IDispatch_Release(event_target->event_table[eid]->handler_prop);
 
     event_target->event_table[eid]->handler_prop = disp;
-    if(!disp)
-        return S_OK;
     IDispatch_AddRef(disp);
 
     return ensure_nsevent_handler(doc, eid);
@@ -1070,11 +1081,7 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocumentNode *doc, 
 {
     switch(V_VT(var)) {
     case VT_NULL:
-        if(*event_target && (*event_target)->event_table[eid] && (*event_target)->event_table[eid]->handler_prop) {
-            IDispatch_Release((*event_target)->event_table[eid]->handler_prop);
-            (*event_target)->event_table[eid]->handler_prop = NULL;
-        }
-        break;
+        return remove_event_handler(event_target, eid);
 
     case VT_DISPATCH:
         return set_event_handler_disp(event_target, doc, eid, V_DISPATCH(var));
