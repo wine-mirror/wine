@@ -271,6 +271,8 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     eventid_t eid;
     nsresult nsres;
 
+    TRACE("\n");
+
     nsAString_Init(&type_str, NULL);
     nsIDOMEvent_GetType(event, &type_str);
     nsAString_GetData(&type_str, &type);
@@ -334,12 +336,15 @@ static void init_listener(nsEventListener *This, nsDocumentEventListener *listen
     This->This = listener;
 }
 
-void add_nsevent_listener(HTMLDocumentNode *doc, LPCWSTR type)
+void add_nsevent_listener(HTMLDocumentNode *doc, nsIDOMNode *nsnode, LPCWSTR type)
 {
     nsIDOMEventTarget *target;
     nsresult nsres;
 
-    nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
+    if(nsnode)
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMEventTarget, (void**)&target);
+    else
+        nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
         return;

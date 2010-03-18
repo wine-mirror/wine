@@ -1477,7 +1477,7 @@ static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
     HTMLDocument *This = HTMLDOC_THIS(iface);
 
     if(This->window)
-        update_cp_events(This->window, cp);
+        update_cp_events(This->window, &This->doc_node->node.event_target, cp, This->doc_node->node.nsnode);
 }
 
 #undef HTMLDOC_THIS
