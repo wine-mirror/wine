@@ -4355,19 +4355,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
     if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
             || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
-        int bpp;
-        GLenum format, internal, type;
-        CONVERT_TYPES convert;
-
-        /* Check if we are using a RTL mode which uses texturing for uploads */
-        BOOL use_texture = (wined3d_settings.rendertargetlock_mode == RTL_READTEX);
-
-        /* Check if we have hardware palette conversion if we have convert is set to NO_CONVERSION */
-        d3dfmt_get_conv(This, TRUE, use_texture, &format, &internal, &type, &convert, &bpp, FALSE);
-
-        if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) && (convert == NO_CONVERSION))
+        IWineD3DDeviceImpl *device = This->resource.device;
+        if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) &&
+            device->blitter->color_fixup_supported(&device->adapter->gl_info, This->resource.format_desc->color_fixup))
         {
-            IWineD3DDeviceImpl *device = This->resource.device;
             struct wined3d_context *context;
 
             /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
@@ -4378,7 +4369,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 
             /* Re-upload the palette */
             context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
-            d3dfmt_p8_upload_palette(iface, context->gl_info, convert);
+            d3dfmt_p8_upload_palette(iface, context->gl_info, NO_CONVERSION);
             context_release(context);
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
