@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = usbd.sys
+IMPORTLIB = usbd.sys
+IMPORTS   = kernel32 ntoskrnl.exe
+EXTRADLLFLAGS = -Wb,--subsystem,native
+
+C_SRCS = \
+	usbd.c
+
+@MAKE_DLL_RULES@

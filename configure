@@ -15613,6 +15613,11 @@ wine_fn_config_test dlls/urlmon/tests urlmon_test
 wine_fn_config_makefile dlls/urlmon/tests "Maketest.rules \$(MAKEDEP)"
 test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/urlmon/tests"
 
+wine_fn_append_file ALL_IMPORT_LIBS "dlls/usbd.sys/libusbd.sys.$IMPLIBEXT"
+wine_fn_config_dll usbd.sys usbd.sys
+wine_fn_config_makefile dlls/usbd.sys "dlls/Makedll.rules \$(MAKEDEP)"
+test "x$enable_usbd_sys" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/usbd.sys"
+
 wine_fn_config_dll user.exe16
 wine_fn_config_makefile dlls/user.exe16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/user.exe16"
@@ -17342,6 +17347,7 @@ do
     "dlls/url/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
     "dlls/urlmon/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/Makefile" ;;
     "dlls/urlmon/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/tests/Makefile" ;;
+    "dlls/usbd.sys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usbd.sys/Makefile" ;;
     "dlls/user.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user.exe16/Makefile" ;;
     "dlls/user32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/Makefile" ;;
     "dlls/user32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/tests/Makefile" ;;
