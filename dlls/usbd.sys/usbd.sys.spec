@@ -1,6 +1,6 @@
 @ stub USBD_CreateConfigurationRequestEx
-@ stub USBD_ParseConfigurationDescriptorEx
-@ stub USBD_ParseDescriptors
+@ stdcall USBD_ParseConfigurationDescriptorEx(ptr ptr long long long long long)
+@ stdcall USBD_ParseDescriptors(ptr long ptr long)
 @ stub USBD_AllocateDeviceName
 @ stub USBD_CalculateUsbBandwidth
 @ stub USBD_CompleteRequest
@@ -14,15 +14,15 @@
 @ stub USBD_FreeDeviceMutex
 @ stub USBD_FreeDeviceName
 @ stub USBD_GetDeviceInformation
-@ stub USBD_GetInterfaceLength
+@ stdcall USBD_GetInterfaceLength(ptr ptr)
 @ stub USBD_GetPdoRegistryParameter
 @ stub USBD_GetSuspendPowerState
 @ stub USBD_GetUSBDIVersion
 @ stub USBD_InitializeDevice
 @ stub USBD_MakePdoName
 @ stub USBD_ParseConfigurationDescriptor
-@ stub _USBD_ParseConfigurationDescriptorEx@28
-@ stub _USBD_ParseDescriptors@16
+@ stdcall _USBD_ParseConfigurationDescriptorEx@28(ptr ptr long long long long long) USBD_ParseConfigurationDescriptorEx
+@ stdcall _USBD_ParseDescriptors@16(ptr long ptr long) USBD_ParseDescriptors
 @ stub USBD_QueryBusTime
 @ stub USBD_RegisterHcDeviceCapabilities
 @ stub USBD_RegisterHcFilter

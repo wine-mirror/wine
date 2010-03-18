@@ -27,9 +27,86 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
+#include "ddk/usb.h"
+#include "ddk/usbdlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(usbd);
+
+PUSB_INTERFACE_DESCRIPTOR WINAPI USBD_ParseConfigurationDescriptorEx(
+        PUSB_CONFIGURATION_DESCRIPTOR ConfigurationDescriptor,
+        PVOID StartPosition, LONG InterfaceNumber,
+        LONG AlternateSetting, LONG InterfaceClass,
+        LONG InterfaceSubClass, LONG InterfaceProtocol )
+{
+    /* http://blogs.msdn.com/usbcoreblog/archive/2009/12/12/
+     *        what-is-the-right-way-to-validate-and-parse-configuration-descriptors.aspx
+     */
+
+    PUSB_INTERFACE_DESCRIPTOR interface;
+
+    TRACE( "(%p, %p, %d, %d, %d, %d, %d)\n", ConfigurationDescriptor,
+            StartPosition, InterfaceNumber, AlternateSetting,
+            InterfaceClass, InterfaceSubClass, InterfaceProtocol );
+
+    interface = (PUSB_INTERFACE_DESCRIPTOR) USBD_ParseDescriptors(
+        ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+        StartPosition, USB_INTERFACE_DESCRIPTOR_TYPE );
+    while (interface != NULL)
+    {
+        if ((InterfaceNumber == -1 || interface->bInterfaceNumber == InterfaceNumber) &&
+            (AlternateSetting == -1 || interface->bAlternateSetting == AlternateSetting) &&
+            (InterfaceClass == -1 || interface->bInterfaceClass == InterfaceClass) &&
+            (InterfaceSubClass == -1 || interface->bInterfaceSubClass == InterfaceSubClass) &&
+            (InterfaceProtocol == -1 || interface->bInterfaceProtocol == InterfaceProtocol))
+        {
+            return interface;
+        }
+        interface = (PUSB_INTERFACE_DESCRIPTOR) USBD_ParseDescriptors(
+            ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+            interface + 1, USB_INTERFACE_DESCRIPTOR_TYPE );
+    }
+    return NULL;
+}
+
+PUSB_COMMON_DESCRIPTOR WINAPI USBD_ParseDescriptors(
+        PVOID DescriptorBuffer,
+        ULONG TotalLength,
+        PVOID StartPosition,
+        LONG DescriptorType )
+{
+    PUSB_COMMON_DESCRIPTOR common;
+
+    TRACE( "(%p, %u, %p, %d)\n", DescriptorBuffer, TotalLength, StartPosition, DescriptorType );
+
+    for (common = (PUSB_COMMON_DESCRIPTOR)DescriptorBuffer;
+         ((char*)common) + sizeof(USB_COMMON_DESCRIPTOR) <= ((char*)DescriptorBuffer) + TotalLength;
+         common = (PUSB_COMMON_DESCRIPTOR)(((char*)common) + common->bLength))
+    {
+        if (StartPosition <= (PVOID)common && common->bDescriptorType == DescriptorType)
+            return common;
+    }
+    return NULL;
+}
+
+ULONG WINAPI USBD_GetInterfaceLength(
+        PUSB_INTERFACE_DESCRIPTOR InterfaceDescriptor,
+        PUCHAR BufferEnd )
+{
+    PUSB_COMMON_DESCRIPTOR common;
+    ULONG total = InterfaceDescriptor->bLength;
+
+    TRACE( "(%p, %p)\n", InterfaceDescriptor, BufferEnd );
+
+    for (common = (PUSB_COMMON_DESCRIPTOR)(InterfaceDescriptor + 1);
+         (((PUCHAR)common) + sizeof(USB_COMMON_DESCRIPTOR)) <= BufferEnd &&
+             common->bDescriptorType != USB_INTERFACE_DESCRIPTOR_TYPE;
+         common = (PUSB_COMMON_DESCRIPTOR)(((char*)common) + common->bLength))
+    {
+        total += common->bLength;
+    }
+    return total;
+}
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
