@@ -421,6 +421,22 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
     lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08x)\n", r);
     if (SUCCEEDED(r))
     {
+        CHAR buff[MAX_PATH], buff2[MAX_PATH];
+        IMalloc *pmalloc;
+        LPOLESTR str;
+
+    if (0)
+    {
+        /* crashes on XP */
+        r = IPersistFile_GetCurFile(pf, NULL);
+    }
+
+        /* test GetCurFile before ::Save */
+        str = (LPWSTR)0xdeadbeef;
+        r = IPersistFile_GetCurFile(pf, &str);
+        lok(r == S_FALSE, "got 0x%08x\n", r);
+        ok(str == NULL, "got %p\n", str);
+
         r = IPersistFile_Save(pf, path, TRUE);
         if (save_fails)
         {
@@ -432,6 +448,18 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         {
             lok(SUCCEEDED(r), "save failed (0x%08x)\n", r);
         }
+
+        /* test GetCurFile after ::Save */
+        r = IPersistFile_GetCurFile(pf, &str);
+        lok(r == S_OK, "got 0x%08x\n", r);
+
+        WideCharToMultiByte( CP_ACP, 0, str, -1, buff, sizeof(buff), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, path, -1, buff2, sizeof(buff2), NULL, NULL );
+
+        lok(!strcmp(buff, buff2), "Expected %s, got %s\n", buff2, buff);
+
+        SHGetMalloc(&pmalloc);
+        IMalloc_Free(pmalloc, str);
         IPersistFile_Release(pf);
     }
 
@@ -444,6 +472,9 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     IShellLinkA *sl;
     IPersistFile *pf;
     char buffer[INFOTIPSIZE];
+    CHAR buff[MAX_PATH], buff2[MAX_PATH];
+    IMalloc *pmalloc;
+    LPOLESTR str;
 
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
@@ -459,8 +490,28 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         return;
     }
 
+    SHGetMalloc(&pmalloc);
+
+    /* test GetCurFile before ::Load */
+    str = (LPWSTR)0xdeadbeef;
+    r = IPersistFile_GetCurFile(pf, &str);
+    lok(r == S_FALSE, "got 0x%08x\n", r);
+    lok(str == NULL, "got %p\n", str);
+
     r = IPersistFile_Load(pf, path, STGM_READ);
     lok(SUCCEEDED(r), "load failed (0x%08x)\n", r);
+
+    /* test GetCurFile after ::Save */
+    r = IPersistFile_GetCurFile(pf, &str);
+    lok(r == S_OK, "got 0x%08x\n", r);
+
+    WideCharToMultiByte( CP_ACP, 0, str, -1, buff, sizeof(buff), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, path, -1, buff2, sizeof(buff2), NULL, NULL );
+
+    lok(!strcmp(buff, buff2), "Expected %s, got %s\n", buff2, buff);
+
+    IMalloc_Free(pmalloc, str);
+
     IPersistFile_Release(pf);
     if (FAILED(r))
     {
@@ -744,10 +795,11 @@ static void test_datalink(void)
     r = IShellLinkW_SetPath(sl, lnk);
     ok(r == S_OK, "set path failed\n");
 
-    /*
-     * The following crashes:
-     * r = IShellLinkDataList_GetFlags( dl, NULL );
-     */
+if (0)
+{
+    /* the following crashes */
+    r = IShellLinkDataList_GetFlags( dl, NULL );
+}
 
     flags = 0;
     r = IShellLinkDataList_GetFlags( dl, &flags );
