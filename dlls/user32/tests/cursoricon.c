@@ -1353,6 +1353,90 @@ cleanup:
         DeleteDC(hdcDst);
 }
 
+static DWORD parent_id;
+
+static DWORD CALLBACK set_cursor_thread( void *arg )
+{
+    HCURSOR ret;
+
+    PeekMessage( 0, 0, 0, 0, PM_NOREMOVE );  /* create a msg queue */
+    if (parent_id)
+    {
+        BOOL ret = AttachThreadInput( GetCurrentThreadId(), parent_id, TRUE );
+        ok( ret, "AttachThreadInput failed\n" );
+    }
+    if (arg) ret = SetCursor( (HCURSOR)arg );
+    else ret = GetCursor();
+    return (DWORD_PTR)ret;
+}
+
+static void test_SetCursor(void)
+{
+    static const BYTE bmp_bits[4096];
+    ICONINFO cursorInfo;
+    HCURSOR cursor, old_cursor;
+    DWORD error, id, result;
+    UINT display_bpp;
+    HDC hdc;
+    HANDLE thread;
+
+    cursor = GetCursor();
+    thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == (DWORD_PTR)cursor, "wrong thread cursor %x/%p\n", result, cursor );
+
+    hdc = GetDC(0);
+    display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
+    ReleaseDC(0, hdc);
+
+    cursorInfo.fIcon = FALSE;
+    cursorInfo.xHotspot = 0;
+    cursorInfo.yHotspot = 0;
+    cursorInfo.hbmMask = CreateBitmap(32, 32, 1, 1, bmp_bits);
+    cursorInfo.hbmColor = CreateBitmap(32, 32, 1, display_bpp, bmp_bits);
+
+    cursor = CreateIconIndirect(&cursorInfo);
+    ok(cursor != NULL, "CreateIconIndirect returned %p\n", cursor);
+    old_cursor = SetCursor( cursor );
+
+    thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
+
+    SetCursor( 0 );
+    ok( GetCursor() == 0, "wrong cursor %p\n", GetCursor() );
+    thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
+
+    thread = CreateThread( NULL, 0, set_cursor_thread, cursor, 0, &id );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
+    ok( GetCursor() == 0, "wrong cursor %p/0\n", GetCursor() );
+
+    parent_id = GetCurrentThreadId();
+    thread = CreateThread( NULL, 0, set_cursor_thread, cursor, 0, &id );
+    WaitForSingleObject( thread, 1000 );
+    GetExitCodeThread( thread, &result );
+    ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
+    todo_wine ok( GetCursor() == cursor, "wrong cursor %p/0\n", cursor );
+
+    SetCursor( old_cursor );
+    DestroyCursor( cursor );
+
+    SetLastError( 0xdeadbeef );
+    cursor = SetCursor( (HCURSOR)0xbadbad );
+    error = GetLastError();
+    ok( cursor == 0, "wrong cursor %p/0\n", cursor );
+    todo_wine ok( error == ERROR_INVALID_CURSOR_HANDLE || broken( error == 0xdeadbeef ),  /* win9x */
+        "wrong error %u\n", error );
+}
+
+
 static void test_DestroyCursor(void)
 {
     static const BYTE bmp_bits[4096];
@@ -1463,6 +1547,7 @@ START_TEST(cursoricon)
     test_DrawIcon();
     test_DrawIconEx();
     test_DrawState();
+    test_SetCursor();
     test_DestroyCursor();
     do_parent();
     test_child_process();
