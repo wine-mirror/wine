@@ -78,10 +78,31 @@ struct elf_file_map
         const char*                     mapped;
     }*                          sect;
 };
+#endif
+
+struct pe_file_map
+{
+    HANDLE                      hMap;
+    IMAGE_NT_HEADERS            ntheader;
+    unsigned                    full_count;
+    void*                       full_map;
+    struct
+    {
+        IMAGE_SECTION_HEADER            shdr;
+        const char*                     mapped;
+    }*                          sect;
+    const char*	                strtable;
+};
 
 struct elf_section_map
 {
     struct elf_file_map*        fmap;
+    long                        sidx;
+};
+
+struct pe_section_map
+{
+    struct pe_file_map*         fmap;
     long                        sidx;
 };
 
@@ -91,4 +112,8 @@ extern const char*  elf_map_section(struct elf_section_map* esm);
 extern void         elf_unmap_section(struct elf_section_map* esm);
 extern unsigned     elf_get_map_size(const struct elf_section_map* esm);
 
-#endif
+extern BOOL         pe_find_section(struct pe_file_map* fmap, const char* name,
+                                    struct pe_section_map* psm);
+extern const char*  pe_map_section(struct pe_section_map* psm);
+extern void         pe_unmap_section(struct pe_section_map* psm);
+extern unsigned     pe_get_map_size(const struct pe_section_map* psm);
