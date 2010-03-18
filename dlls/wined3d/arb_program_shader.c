@@ -6808,7 +6808,7 @@ static void arbfp_blit_unset(IWineD3DDevice *iface) {
     LEAVE_GL();
 }
 
-static BOOL arbfp_blit_color_fixup_supported(struct color_fixup_desc fixup)
+static BOOL arbfp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
 {
     enum complex_fixup complex_fixup;
 

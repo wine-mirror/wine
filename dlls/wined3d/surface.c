@@ -2078,14 +2078,13 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 Paletted Texture
                 **************** */
 
-             /* Use conversion when the paletted texture extension OR fragment shaders are available. When either
-             * of the two is available make sure texturing is requested as neither of the two works in
-             * conjunction with calls like glDraw-/glReadPixels. Further also use conversion in case of color keying.
+            /* Use conversion when the blit_shader backend supports it. It only supports this in case of
+             * texturing. Further also use conversion in case of color keying.
              * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!(gl_info->supported[EXT_PALETTED_TEXTURE] || (device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup)
+            if (!((device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup)
                     && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
@@ -2099,7 +2098,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     *convert = CONVERT_PALETTED;
                 }
             }
-            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup))
+            /* TODO: this check is evil and should die (it basically checks which blitter backend is used) */
+            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup))
             {
                 *format = GL_ALPHA;
                 *type = GL_UNSIGNED_BYTE;
@@ -4062,7 +4062,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             dump_color_fixup_desc(This->resource.format_desc->color_fixup);
         }
 
-        if (!myDevice->blitter->color_fixup_supported(Src->resource.format_desc->color_fixup))
+        if (!myDevice->blitter->color_fixup_supported(&myDevice->adapter->gl_info, Src->resource.format_desc->color_fixup))
         {
             FIXME("Source format %s has an unsupported fixup:\n",
                     debug_d3dformat(Src->resource.format_desc->format));
@@ -4993,7 +4993,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
             }
             else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
-                    && (gl_info->supported[EXT_PALETTED_TEXTURE] || device->blitter->color_fixup_supported(This->resource.format_desc->color_fixup)))
+                    && (device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup)))
             {
                 d3dfmt_p8_upload_palette(iface, gl_info, convert);
                 mem = This->resource.allocatedMemory;
@@ -5206,8 +5206,10 @@ static void ffp_blit_unset(IWineD3DDevice *iface)
     LEAVE_GL();
 }
 
-static BOOL ffp_blit_color_fixup_supported(struct color_fixup_desc fixup)
+static BOOL ffp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
 {
+    enum complex_fixup complex_fixup;
+
     if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
     {
         TRACE("Checking support for fixup:\n");
@@ -5218,6 +5220,13 @@ static BOOL ffp_blit_color_fixup_supported(struct color_fixup_desc fixup)
     if (is_identity_fixup(fixup))
     {
         TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    complex_fixup = get_complex_fixup(fixup);
+    if(complex_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
+    {
+        TRACE("P8 fixup supported\n");
         return TRUE;
     }
 

@@ -1169,7 +1169,7 @@ struct blit_shader
     HRESULT (*set_shader)(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
             GLenum textype, UINT width, UINT height);
     void (*unset_shader)(IWineD3DDevice *iface);
-    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
+    BOOL (*color_fixup_supported)(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup);
 };
 
 extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
