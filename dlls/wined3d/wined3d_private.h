@@ -2476,6 +2476,7 @@ struct wined3d_map_range
 #define WINED3D_BUFFER_FLUSH        0x10    /* Manual unmap flushing */
 #define WINED3D_BUFFER_DISCARD      0x20    /* A DISCARD lock has occurred since the last PreLoad */
 #define WINED3D_BUFFER_NOSYNC       0x40    /* All locks since the last PreLoad had NOOVERWRITE set */
+#define WINED3D_BUFFER_APPLESYNC    0x80    /* Using sync as in GL_APPLE_flush_buffer_range */
 
 struct wined3d_buffer
 {

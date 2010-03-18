@@ -107,6 +107,8 @@ static void delete_gl_buffer(struct wined3d_buffer *This)
     checkGLcall("glDeleteBuffersARB");
     LEAVE_GL();
     This->buffer_object = 0;
+
+    This->flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
 /* Context activation is done by the caller. */
@@ -169,6 +171,10 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
             GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
             checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE)");
             This->flags |= WINED3D_BUFFER_FLUSH;
+
+            GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
+            checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE)");
+            This->flags |= WINED3D_BUFFER_APPLESYNC;
         }
         /* No setup is needed here for GL_ARB_map_buffer_range */
     }
@@ -768,6 +774,26 @@ static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
+/* The caller provides a context and GL locking and binds the buffer */
+static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags)
+{
+    /* No fencing needs to be done if the app promises not to overwrite
+     * existing data */
+    if(flags & WINED3DLOCK_NOOVERWRITE) return;
+    if(flags & WINED3DLOCK_DISCARD)
+    {
+        GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, NULL, This->buffer_object_usage));
+        checkGLcall("glBufferDataARB\n");
+        return;
+    }
+
+    /* Drop the unserialized updates for now */
+    FIXME("Implement fences for unserialized buffers\n");
+    GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
+    checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
+    This->flags &= ~WINED3D_BUFFER_APPLESYNC;
+}
+
 /* The caller provides a GL context */
 static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info, DWORD flags)
 {
@@ -795,6 +821,13 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         }
         else
         {
+            if (This->flags & WINED3D_BUFFER_APPLESYNC)
+            {
+                DWORD syncflags = 0;
+                if (flags & WINED3D_BUFFER_DISCARD) syncflags |= WINED3DLOCK_DISCARD;
+                if (flags & WINED3D_BUFFER_NOSYNC) syncflags |= WINED3DLOCK_NOOVERWRITE;
+                buffer_sync_apple(This, syncflags);
+            }
             map = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_WRITE_ONLY_ARB));
             checkGLcall("glMapBufferARB");
         }
@@ -1183,6 +1216,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
                 }
                 else
                 {
+                    if(This->flags & WINED3D_BUFFER_APPLESYNC) buffer_sync_apple(This, flags);
                     This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
                     checkGLcall("glMapBufferARB");
                 }
