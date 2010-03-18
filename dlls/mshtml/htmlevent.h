@@ -42,7 +42,7 @@ typedef enum {
 eventid_t str_to_eid(LPCWSTR);
 void check_event_attr(HTMLDocumentNode*,nsIDOMElement*);
 void release_event_target(event_target_t*);
-void fire_event(HTMLDocumentNode*,eventid_t,nsIDOMNode*,nsIDOMEvent*);
+void fire_event(HTMLDocumentNode*,eventid_t,BOOL,nsIDOMNode*,nsIDOMEvent*);
 HRESULT set_event_handler(event_target_t**,HTMLDocumentNode*,eventid_t,VARIANT*);
 HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*);
 HRESULT attach_event(event_target_t**,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*);

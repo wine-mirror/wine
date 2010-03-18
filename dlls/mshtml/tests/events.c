@@ -67,6 +67,7 @@ DEFINE_EXPECT(div_onclick_disp);
 DEFINE_EXPECT(iframe_onreadystatechange_loading);
 DEFINE_EXPECT(iframe_onreadystatechange_interactive);
 DEFINE_EXPECT(iframe_onreadystatechange_complete);
+DEFINE_EXPECT(iframedoc_onreadystatechange);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -879,14 +880,35 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
 
 EVENT_HANDLER_FUNC_OBJ(body_onclick);
 
+static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IHTMLEventObj *event = NULL;
+    HRESULT hres;
+
+    CHECK_EXPECT2(iframedoc_onreadystatechange);
+    test_event_args(&DIID_DispHTMLDocument, id, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    event = (void*)0xdeadbeef;
+    hres = IHTMLWindow2_get_event(window, &event);
+    ok(hres == S_OK, "get_event failed: %08x\n", hres);
+    ok(!event, "event = %p\n", event);
+
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(iframedoc_onreadystatechange);
+
 static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+    IHTMLWindow2 *iframe_window;
+    IHTMLDocument2 *iframe_doc;
     IHTMLFrameBase2 *iframe;
     IHTMLElement2 *elem2;
     IHTMLElement *elem;
     VARIANT v;
-    BSTR str;
+    BSTR str, str2;
     HRESULT hres;
 
     test_event_args(&DIID_DispHTMLIFrame, id, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -913,15 +935,33 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     ok(!lstrcmpW(str, V_BSTR(&v)), "ready states differ\n");
     VariantClear(&v);
 
-    if(!strcmp_wa(str, "loading"))
+    hres = IHTMLFrameBase2_get_contentWindow(iframe, &iframe_window);
+    ok(hres == S_OK, "get_contentDocument failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_document(iframe_window, &iframe_doc);
+    IHTMLWindow2_Release(iframe_window);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_readyState(iframe_doc, &str2);
+    ok(!lstrcmpW(str, str2), "unexpected document readyState %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str2);
+
+    if(!strcmp_wa(str, "loading")) {
         CHECK_EXPECT(iframe_onreadystatechange_loading);
-    else if(!strcmp_wa(str, "interactive"))
+
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = (IDispatch*)&iframedoc_onreadystatechange_obj;
+        hres = IHTMLDocument2_put_onreadystatechange(iframe_doc, v);
+        ok(hres == S_OK, "put_onreadystatechange: %08x\n", hres);
+    }else if(!strcmp_wa(str, "interactive"))
         CHECK_EXPECT(iframe_onreadystatechange_interactive);
     else if(!strcmp_wa(str, "complete"))
         CHECK_EXPECT(iframe_onreadystatechange_complete);
     else
         ok(0, "unexpected state %s\n", wine_dbgstr_w(str));
 
+    IHTMLDocument2_Release(iframe_doc);
+    IHTMLFrameBase2_Release(iframe);
     return S_OK;
 }
 
@@ -1307,10 +1347,12 @@ static void test_onreadystatechange(IHTMLDocument2 *doc)
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
 
     SET_EXPECT(iframe_onreadystatechange_loading);
+    SET_EXPECT(iframedoc_onreadystatechange);
     SET_EXPECT(iframe_onreadystatechange_interactive);
     SET_EXPECT(iframe_onreadystatechange_complete);
     pump_msgs(&called_iframe_onreadystatechange_complete);
     CHECK_CALLED(iframe_onreadystatechange_loading);
+    CHECK_CALLED(iframedoc_onreadystatechange);
     CHECK_CALLED(iframe_onreadystatechange_interactive);
     CHECK_CALLED(iframe_onreadystatechange_complete);
 
