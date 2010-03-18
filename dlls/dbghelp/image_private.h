@@ -60,60 +60,110 @@
 #define         Elf_Dyn         Elf32_Dyn
 #define         Elf_Sym         Elf32_Sym
 #endif
+#else
+#ifndef SHT_NULL
+#define SHT_NULL        0
+#endif
+#endif
 
 /* structure holding information while handling an ELF image
  * allows one by one section mapping for memory savings
  */
-struct elf_file_map
+struct image_file_map
 {
-    size_t                      elf_size;
-    size_t                      elf_start;
-    int                         fd;
-    const char*	                shstrtab;
-    struct elf_file_map*        alternate;      /* another ELF file (linked to this one) */
-    Elf_Ehdr                    elfhdr;
-    struct
+    enum module_type            modtype;
+    union
     {
-        Elf_Shdr                        shdr;
-        const char*                     mapped;
-    }*                          sect;
-};
+        struct elf_file_map
+        {
+            size_t                      elf_size;
+            size_t                      elf_start;
+            int                         fd;
+            const char*	                shstrtab;
+            struct image_file_map*      alternate;      /* another ELF file (linked to this one) */
+#ifdef __ELF__
+            Elf_Ehdr                    elfhdr;
+            struct
+            {
+                Elf_Shdr                        shdr;
+                const char*                     mapped;
+            }*                          sect;
 #endif
+        } elf;
+        struct pe_file_map
+        {
+            HANDLE                      hMap;
+            IMAGE_NT_HEADERS            ntheader;
+            unsigned                    full_count;
+            void*                       full_map;
+            struct
+            {
+                IMAGE_SECTION_HEADER            shdr;
+                const char*                     mapped;
+            }*                          sect;
+            const char*	                strtable;
+        } pe;
+    } u;
+};
 
-struct pe_file_map
+struct image_section_map
 {
-    HANDLE                      hMap;
-    IMAGE_NT_HEADERS            ntheader;
-    unsigned                    full_count;
-    void*                       full_map;
-    struct
+    struct image_file_map*      fmap;
+    long                        sidx;
+};
+
+extern BOOL         elf_find_section(struct image_file_map* fmap, const char* name,
+                                     unsigned sht, struct image_section_map* ism);
+extern const char*  elf_map_section(struct image_section_map* ism);
+extern void         elf_unmap_section(struct image_section_map* ism);
+extern unsigned     elf_get_map_size(const struct image_section_map* ism);
+
+extern BOOL         pe_find_section(struct image_file_map* fmap, const char* name,
+                                    struct image_section_map* ism);
+extern const char*  pe_map_section(struct image_section_map* psm);
+extern void         pe_unmap_section(struct image_section_map* psm);
+extern unsigned     pe_get_map_size(const struct image_section_map* psm);
+
+static inline BOOL image_find_section(struct image_file_map* fmap, const char* name,
+                                      struct image_section_map* ism)
+{
+    switch (fmap->modtype)
     {
-        IMAGE_SECTION_HEADER            shdr;
-        const char*                     mapped;
-    }*                          sect;
-    const char*	                strtable;
-};
+    case DMT_ELF: return elf_find_section(fmap, name, SHT_NULL, ism);
+    case DMT_PE:  return pe_find_section(fmap, name, ism);
+    default: assert(0); return FALSE;
+    }
+}
 
-struct elf_section_map
+static inline const char* image_map_section(struct image_section_map* ism)
 {
-    struct elf_file_map*        fmap;
-    long                        sidx;
-};
+    if (!ism->fmap) return NULL;
+    switch (ism->fmap->modtype)
+    {
+    case DMT_ELF: return elf_map_section(ism);
+    case DMT_PE:  return pe_map_section(ism);
+    default: assert(0); return NULL;
+    }
+}
 
-struct pe_section_map
+static inline void image_unmap_section(struct image_section_map* ism)
 {
-    struct pe_file_map*         fmap;
-    long                        sidx;
-};
+    if (!ism->fmap) return;
+    switch (ism->fmap->modtype)
+    {
+    case DMT_ELF: elf_unmap_section(ism); break;
+    case DMT_PE:  pe_unmap_section(ism);   break;
+    default: assert(0); return;
+    }
+}
 
-extern BOOL         elf_find_section(struct elf_file_map* fmap, const char* name,
-                                     unsigned sht, struct elf_section_map* esm);
-extern const char*  elf_map_section(struct elf_section_map* esm);
-extern void         elf_unmap_section(struct elf_section_map* esm);
-extern unsigned     elf_get_map_size(const struct elf_section_map* esm);
-
-extern BOOL         pe_find_section(struct pe_file_map* fmap, const char* name,
-                                    struct pe_section_map* psm);
-extern const char*  pe_map_section(struct pe_section_map* psm);
-extern void         pe_unmap_section(struct pe_section_map* psm);
-extern unsigned     pe_get_map_size(const struct pe_section_map* psm);
+static inline unsigned image_get_map_size(struct image_section_map* ism)
+{
+    if (!ism->fmap) return 0;
+    switch (ism->fmap->modtype)
+    {
+    case DMT_ELF: return elf_get_map_size(ism);
+    case DMT_PE:  return pe_get_map_size(ism);
+    default: assert(0); return 0;
+    }
+}
