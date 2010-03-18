@@ -3964,7 +3964,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         return WINED3D_OK;
     } else if(Src) {
         /* Blit from offscreen surface to render target */
-        float glTexCoord[4];
         DWORD oldCKeyFlags = Src->CKeyFlags;
         WINEDDCOLORKEY oldBltCKey = Src->SrcBltCKey;
         struct wined3d_context *context;
@@ -4012,14 +4011,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             if(paletteOverride)
                 Src->palette = NULL;
             return WINED3D_OK;
-        }
-
-        if(!CalculateTexRect(Src, &SourceRectangle, glTexCoord)) {
-            /* Fall back to software */
-            WARN("(%p) Source texture area (%d,%d)-(%d,%d) is too big\n", Src,
-                    SourceRectangle.left, SourceRectangle.top,
-                    SourceRectangle.right, SourceRectangle.bottom);
-            return WINED3DERR_INVALIDCALL;
         }
 
         /* Color keying: Check if we have to do a color keyed blt,
@@ -4083,22 +4074,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         ENTER_GL();
 
-        /* Bind the texture */
-        glBindTexture(Src->texture_target, Src->texture_name);
-        checkGLcall("glBindTexture");
-
-        /* Filtering for StretchRect */
-        glTexParameteri(Src->texture_target, GL_TEXTURE_MAG_FILTER,
-                wined3d_gl_mag_filter(magLookup, Filter));
-        checkGLcall("glTexParameteri");
-        glTexParameteri(Src->texture_target, GL_TEXTURE_MIN_FILTER,
-                wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
-        checkGLcall("glTexParameteri");
-        glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-        checkGLcall("glTexEnvi");
-
         /* This is for color keying */
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glEnable(GL_ALPHA_TEST);
@@ -4119,31 +4094,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         /* Draw a textured quad
          */
-        glBegin(GL_QUADS);
-
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glTexCoord2f(glTexCoord[0], glTexCoord[2]);
-        glVertex3f(rect.x1, rect.y1, 0.0f);
-
-        glTexCoord2f(glTexCoord[0], glTexCoord[3]);
-        glVertex3f(rect.x1, rect.y2, 0.0f);
-
-        glTexCoord2f(glTexCoord[1], glTexCoord[3]);
-        glVertex3f(rect.x2, rect.y2, 0.0f);
-
-        glTexCoord2f(glTexCoord[1], glTexCoord[2]);
-        glVertex3f(rect.x2, rect.y1, 0.0f);
-
-        glEnd();
-        checkGLcall("glEnd");
+        draw_textured_quad(Src, &SourceRectangle, (RECT*)&rect, Filter);
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glDisable(GL_ALPHA_TEST);
             checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
-
-        glBindTexture(Src->texture_target, 0);
-        checkGLcall("glBindTexture(Src->texture_target, 0)");
 
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;

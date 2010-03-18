@@ -2258,56 +2258,6 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     return size;
 }
 
-/***********************************************************************
- * CalculateTexRect
- *
- * Calculates the dimensions of the opengl texture used for blits.
- * Handled oversized opengl textures and updates the source rectangle
- * accordingly
- *
- * Params:
- *  This: Surface to operate on
- *  Rect: Requested rectangle
- *
- * Returns:
- *  TRUE if the texture part can be loaded,
- *  FALSE otherwise
- *
- *********************************************************************/
-BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4])
-{
-    int x1 = Rect->left, x2 = Rect->right;
-    int y1 = Rect->top, y2 = Rect->bottom;
-
-    TRACE("(%p)->(%d,%d)-(%d,%d)\n", This,
-          Rect->left, Rect->top, Rect->right, Rect->bottom);
-
-    /* The sizes might be reversed */
-    if(Rect->left > Rect->right) {
-        x1 = Rect->right;
-        x2 = Rect->left;
-    }
-    if(Rect->top > Rect->bottom) {
-        y1 = Rect->bottom;
-        y2 = Rect->top;
-    }
-
-    /* Which rect from the texture do I need? */
-    if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
-    {
-        glTexCoord[0] = (float) Rect->left;
-        glTexCoord[2] = (float) Rect->top;
-        glTexCoord[1] = (float) Rect->right;
-        glTexCoord[3] = (float) Rect->bottom;
-    } else {
-        glTexCoord[0] = (float) Rect->left / (float) This->pow2Width;
-        glTexCoord[2] = (float) Rect->top / (float) This->pow2Height;
-        glTexCoord[1] = (float) Rect->right / (float) This->pow2Width;
-        glTexCoord[3] = (float) Rect->bottom / (float) This->pow2Height;
-    }
-    return TRUE;
-}
-
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype) {
 #define ARG1 0x01
 #define ARG2 0x02
