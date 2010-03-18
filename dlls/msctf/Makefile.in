@@ -9,6 +9,7 @@ C_SRCS = \
 	categorymgr.c \
 	compartmentmgr.c \
 	context.c \
+	displayattributemgr.c \
 	documentmgr.c \
 	inputprocessor.c \
 	langbarmgr.c \
