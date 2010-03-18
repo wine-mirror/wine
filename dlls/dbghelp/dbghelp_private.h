@@ -472,7 +472,6 @@ extern DWORD calc_crc32(int fd);
 typedef BOOL (*enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
 
 /* elf_module.c */
-#define ELF_NO_MAP      ((const void*)-1)
 extern BOOL         elf_enum_modules(HANDLE hProc, enum_modules_cb, void*);
 extern BOOL         elf_fetch_file_info(const WCHAR* name, DWORD* base, DWORD* size, DWORD* checksum);
 struct elf_file_map;

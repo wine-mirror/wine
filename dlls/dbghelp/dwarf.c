@@ -51,6 +51,7 @@
 #include "oleauto.h"
 
 #include "dbghelp_private.h"
+#include "image_private.h"
 
 #include "wine/debug.h"
 
@@ -1951,7 +1952,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     const char**                p;
 
     /* section with line numbers stripped */
-    if (sections[section_line].address == ELF_NO_MAP)
+    if (sections[section_line].address == IMAGE_NO_MAP)
         return FALSE;
 
     traverse.data = sections[section_line].address + offset;
