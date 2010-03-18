@@ -101,9 +101,11 @@ static const char *compare_line(const char *out_line, const char *out_end, const
         const char *exp_end)
 {
     const char *out_ptr = out_line, *exp_ptr = exp_line;
+    const char *err = NULL;
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
     static const char todo_space_cmd[] = {'@','t','o','d','o','_','s','p','a','c','e','@'};
+    static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
     while(exp_ptr < exp_end) {
         if(*exp_ptr == '@') {
@@ -111,11 +113,13 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     && !memcmp(exp_ptr, pwd_cmd, sizeof(pwd_cmd))) {
                 exp_ptr += sizeof(pwd_cmd);
                 if(out_end-out_ptr < workdir_len
-                        || (CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, out_ptr, workdir_len,
-                            workdir, workdir_len) != CSTR_EQUAL))
-                    return out_ptr;
-                out_ptr += workdir_len;
-                continue;
+                   || (CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, out_ptr, workdir_len,
+                       workdir, workdir_len) != CSTR_EQUAL)) {
+                    err = out_ptr;
+                }else {
+                    out_ptr += workdir_len;
+                    continue;
+                }
             }else if(exp_ptr+sizeof(todo_space_cmd) <= exp_end
                     && !memcmp(exp_ptr, todo_space_cmd, sizeof(todo_space_cmd))) {
                 exp_ptr += sizeof(todo_space_cmd);
@@ -123,10 +127,31 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                 if(out_ptr < out_end && *out_ptr == ' ')
                     out_ptr++;
                 continue;
+            }else if(exp_ptr+sizeof(or_broken_cmd) <= exp_end
+                     && !memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd))) {
+                exp_ptr = exp_end;
+                continue;
             }
+        }else if(out_ptr == out_end || *out_ptr != *exp_ptr) {
+            err = out_ptr;
         }
-        if(out_ptr == out_end || *out_ptr != *exp_ptr++)
-            return out_ptr;
+
+        if(err) {
+            if(!broken(1))
+                return err;
+
+            while(exp_ptr+sizeof(or_broken_cmd) <= exp_end && memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd)))
+                exp_ptr++;
+            if(!exp_ptr)
+                return err;
+
+            exp_ptr += sizeof(or_broken_cmd);
+            out_ptr = out_line;
+            err = NULL;
+            continue;
+        }
+
+        exp_ptr++;
         out_ptr++;
     }
 

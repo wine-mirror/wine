@@ -23,6 +23,7 @@ cd dummydir
 echo %~dp0
 cd ..
 rmdir dummydir
+echo CD value %CD%
 echo %%
 echo P%
 echo %P
