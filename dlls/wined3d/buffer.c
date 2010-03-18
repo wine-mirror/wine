@@ -97,6 +97,18 @@ static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
     return FALSE;
 }
 
+/* Context activation is done by the caller */
+static void delete_gl_buffer(struct wined3d_buffer *This)
+{
+    if(!This->buffer_object) return;
+
+    ENTER_GL();
+    GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
+    checkGLcall("glDeleteBuffersARB");
+    LEAVE_GL();
+    This->buffer_object = 0;
+}
+
 /* Context activation is done by the caller. */
 static void buffer_create_buffer_object(struct wined3d_buffer *This)
 {
@@ -203,13 +215,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
 fail:
     /* Clean up all vbo init, but continue because we can work without a vbo :-) */
     ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur\n");
-    if (This->buffer_object)
-    {
-        ENTER_GL();
-        GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
-        LEAVE_GL();
-    }
-    This->buffer_object = 0;
+    delete_gl_buffer(This);
     buffer_clear_dirty_areas(This);
 }
 
@@ -691,11 +697,7 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
             This->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
-        ENTER_GL();
-        GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
-        checkGLcall("glDeleteBuffersARB");
-        LEAVE_GL();
-        This->buffer_object = 0;
+        delete_gl_buffer(This);
         This->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
         buffer_clear_dirty_areas(This);
 
