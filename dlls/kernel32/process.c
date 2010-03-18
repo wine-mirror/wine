@@ -90,6 +90,7 @@ const WCHAR *DIR_SysWow64 = NULL;
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
+static const WCHAR exeW[] = {'.','e','x','e',0};
 static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR cmdW[] = {'.','c','m','d',0};
@@ -152,6 +153,9 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
     void *redir_disabled = 0;
     unsigned int flags = (sizeof(void*) > sizeof(int) ? BINARY_FLAG_64BIT : 0);
 
+    /* builtin names cannot be empty or contain spaces */
+    if (!libname[0] || strchrW( libname, ' ' ) || strchrW( libname, '\t' )) return FALSE;
+
     if (is_wow64 && Wow64DisableWow64FsRedirection( &redir_disabled ))
         Wow64RevertWow64FsRedirection( redir_disabled );
 
@@ -198,35 +202,6 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
 
 
 /***********************************************************************
- *           open_builtin_exe_file
- *
- * Open an exe file for a builtin exe.
- */
-static void *open_builtin_exe_file( const WCHAR *name, char *error, int error_size,
-                                    int test_only, int *file_exists )
-{
-    char exename[MAX_PATH];
-    WCHAR *p;
-    UINT i, len;
-
-    *file_exists = 0;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-
-    /* we don't want to depend on the current codepage here */
-    len = strlenW( name ) + 1;
-    if (len >= sizeof(exename)) return NULL;
-    for (i = 0; i < len; i++)
-    {
-        if (name[i] > 127) return NULL;
-        exename[i] = (char)name[i];
-        if (exename[i] >= 'A' && exename[i] <= 'Z') exename[i] += 'a' - 'A';
-    }
-    return wine_dll_load_main_exe( exename, error, error_size, test_only, file_exists );
-}
-
-
-/***********************************************************************
  *           open_exe_file
  *
  * Open a specific exe file, taking load order into account.
@@ -263,27 +238,16 @@ static HANDLE open_exe_file( const WCHAR *name, struct binary_info *binary_info 
 static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
                            HANDLE *handle, struct binary_info *binary_info )
 {
-    static const WCHAR exeW[] = {'.','e','x','e',0};
-    int file_exists;
-
     TRACE("looking for %s\n", debugstr_w(name) );
 
     if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ))
     {
-        if (get_builtin_path( name, exeW, buffer, buflen, binary_info ))
+        if (contains_path( name ) && get_builtin_path( name, exeW, buffer, buflen, binary_info ))
         {
-            TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
-            open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
-            if (file_exists)
-            {
-                *handle = 0;
-                return TRUE;
-            }
-            return FALSE;
+            *handle = 0;
+            return TRUE;
         }
-
         /* no builtin found, try native without extension in case it is a Unix app */
-
         if (!SearchPathW( NULL, name, NULL, buflen, buffer, NULL )) return FALSE;
     }
 
@@ -1075,7 +1039,6 @@ void CDECL __wine_kernel_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     static const WCHAR dotW[] = {'.',0};
-    static const WCHAR exeW[] = {'.','e','x','e',0};
 
     WCHAR *p, main_exe_name[MAX_PATH+1];
     PEB *peb = NtCurrentTeb()->Peb;
@@ -1181,6 +1144,8 @@ void CDECL __wine_kernel_init(void)
                          debugstr_w(__wine_main_wargv[3]) );
                 ExitProcess( ERROR_BAD_EXE_FORMAT );
             }
+            MESSAGE( "wine: cannot find %s\n", debugstr_w(main_exe_name) );
+            ExitProcess( ERROR_FILE_NOT_FOUND );
         }
         args[0] = (DWORD_PTR)main_exe_name;
         FormatMessageW( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
@@ -1898,9 +1863,8 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
 {
     static const WCHAR quotesW[] = {'"','%','s','"',0};
 
-    WCHAR *name, *pos, *ret = NULL;
+    WCHAR *name, *pos, *first_space, *ret = NULL;
     const WCHAR *p;
-    BOOL got_space;
 
     /* if we have an app name, everything is easy */
 
@@ -1928,8 +1892,12 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         memcpy( name, cmdline + 1, len * sizeof(WCHAR) );
         name[len] = 0;
 
-        if (find_exe_file( name, buffer, buflen, handle, binary_info ))
-            ret = cmdline;  /* no change necessary */
+        if (!find_exe_file( name, buffer, buflen, handle, binary_info ))
+        {
+            if (!get_builtin_path( name, exeW, buffer, buflen, binary_info )) goto done;
+            *handle = 0;
+        }
+        ret = cmdline;  /* no change necessary */
         goto done;
     }
 
@@ -1939,28 +1907,38 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         return NULL;
     pos = name;
     p = cmdline;
-    got_space = FALSE;
+    first_space = NULL;
 
-    while (*p)
+    for (;;)
     {
-        do *pos++ = *p++; while (*p && *p != ' ' && *p != '\t');
+        while (*p && *p != ' ' && *p != '\t') *pos++ = *p++;
         *pos = 0;
         if (find_exe_file( name, buffer, buflen, handle, binary_info ))
         {
             ret = cmdline;
             break;
         }
-        if (*p) got_space = TRUE;
+        if (!(*pos++ = *p++)) break;
+        if (!first_space) first_space = pos;
     }
 
-    if (ret && got_space)  /* now build a new command-line with quotes */
+    if (!ret)
+    {
+        if (first_space) *first_space = 0;  /* try only the first word as a builtin */
+        if (get_builtin_path( name, exeW, buffer, buflen, binary_info ))
+        {
+            *handle = 0;
+            ret = cmdline;
+        }
+        else SetLastError( ERROR_FILE_NOT_FOUND );
+    }
+    else if (first_space)  /* build a new command-line with quotes */
     {
         if (!(ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(cmdline) + 3) * sizeof(WCHAR) )))
             goto done;
         sprintfW( ret, quotesW, name );
         strcatW( ret, p );
     }
-    else if (!ret) SetLastError( ERROR_FILE_NOT_FOUND );
 
  done:
     HeapFree( GetProcessHeap(), 0, name );
