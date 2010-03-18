@@ -879,7 +879,6 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     {
         struct image_section_map stab_sect, stabstr_sect;
         struct image_section_map debuglink_sect;
-        struct image_section_map debug_sect;
 
         /* if present, add the .gnu_debuglink file as an alternate to current one */
 	if (elf_find_section(fmap, ".gnu_debuglink", SHT_NULL, &debuglink_sect))
@@ -923,55 +922,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             image_unmap_section(&stab_sect);
             image_unmap_section(&stabstr_sect);
         }
-        if (elf_find_section(fmap, ".debug_info", SHT_NULL, &debug_sect))
-        {
-            struct image_section_map debug_str_sect, debug_abbrev_sect, debug_line_sect, debug_loclist_sect;
-            /* Dwarf 2 debug information */
-            const BYTE* dw2_debug;
-            const BYTE* dw2_debug_abbrev;
-            const BYTE* dw2_debug_str;
-            const BYTE* dw2_debug_line;
-            const BYTE* dw2_debug_loclist;
-
-            /* debug info might have a different base address than .so file
-             * when elf file is prelinked after splitting off debug info
-             * adjust symbol base addresses accordingly
-             */
-            unsigned long load_offset = module->elf_info->elf_addr +
-                fmap->u.elf.elf_start - debug_sect.fmap->u.elf.elf_start;
-
-            TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->module.ModuleName));
-
-            elf_find_section(fmap, ".debug_str", SHT_NULL, &debug_str_sect);
-            elf_find_section(fmap, ".debug_abbrev", SHT_NULL, &debug_abbrev_sect);
-            elf_find_section(fmap, ".debug_line", SHT_NULL, &debug_line_sect);
-            elf_find_section(fmap, ".debug_loc", SHT_NULL, &debug_loclist_sect);
-
-            dw2_debug = (const BYTE*)image_map_section(&debug_sect);
-            dw2_debug_abbrev = (const BYTE*)image_map_section(&debug_abbrev_sect);
-            dw2_debug_str = (const BYTE*)image_map_section(&debug_str_sect);
-            dw2_debug_line = (const BYTE*)image_map_section(&debug_line_sect);
-            dw2_debug_loclist = (const BYTE*)image_map_section(&debug_loclist_sect);
-            if (dw2_debug != IMAGE_NO_MAP && dw2_debug_abbrev != IMAGE_NO_MAP && dw2_debug_str != IMAGE_NO_MAP)
-            {
-                /* OK, now just parse dwarf2 debug infos. */
-                lret = dwarf2_parse(module, load_offset, thunks,
-                                    dw2_debug, image_get_map_size(&debug_sect),
-                                    dw2_debug_abbrev, image_get_map_size(&debug_abbrev_sect),
-                                    dw2_debug_str, image_get_map_size(&debug_str_sect),
-                                    dw2_debug_line, image_get_map_size(&debug_line_sect),
-                                    dw2_debug_loclist, image_get_map_size(&debug_loclist_sect));
-
-                if (!lret)
-                    WARN("Couldn't correctly read dwarf2\n");
-                ret = ret || lret;
-            }
-            image_unmap_section(&debug_sect);
-            image_unmap_section(&debug_abbrev_sect);
-            image_unmap_section(&debug_str_sect);
-            image_unmap_section(&debug_line_sect);
-            image_unmap_section(&debug_loclist_sect);
-        }
+        lret = dwarf2_parse(module, module->elf_info->elf_addr, thunks, fmap);
+        ret = ret || lret;
     }
     if (strstrW(module->module.ModuleName, S_ElfW) ||
         !strcmpW(module->module.ModuleName, S_WineLoaderW))
@@ -1516,6 +1468,11 @@ void         elf_unmap_section(struct image_section_map* ism)
 {}
 
 unsigned     elf_get_map_size(const struct image_section_map* ism)
+{
+    return 0;
+}
+
+DWORD_PTR elf_get_map_rva(const struct image_section_map* ism)
 {
     return 0;
 }

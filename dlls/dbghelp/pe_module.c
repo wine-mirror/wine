@@ -374,9 +374,12 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
             if (!compiland && lastfilename)
                 compiland = symt_new_compiland(module, 0,
                                                source_new(module, NULL, lastfilename));
-            symt_new_public(module, compiland, name,
-                            module->module.BaseOfImage + sect[isym->SectionNumber - 1].VirtualAddress + isym->Value,
-                            1);
+
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
+                symt_new_public(module, compiland, name,
+                                module->module.BaseOfImage + sect[isym->SectionNumber - 1].VirtualAddress +
+                                     isym->Value,
+                                1);
         }
         naux = isym->NumberOfAuxSymbols + 1;
     }
@@ -444,48 +447,15 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
  * look for dwarf information in PE header (it's also a way for the mingw compiler
  * to provide its debugging information)
  */
-static BOOL pe_load_dwarf(const struct process* pcs, struct module* module)
+static BOOL pe_load_dwarf(struct module* module)
 {
     struct image_file_map*      fmap = &module->pe_info->fmap;
-    struct image_section_map    sect_debuginfo, sect_debugstr, sect_debugabbrev, sect_debugline, sect_debugloc;
     BOOL                        ret = FALSE;
 
-    if (pe_find_section(fmap, ".debug_info", &sect_debuginfo))
-    {
-        const BYTE* dw2_debuginfo;
-        const BYTE* dw2_debugabbrev;
-        const BYTE* dw2_debugstr;
-        const BYTE* dw2_debugline;
-        const BYTE* dw2_debugloc;
-
-        pe_find_section(fmap, ".debug_str",    &sect_debugstr);
-        pe_find_section(fmap, ".debug_abbrev", &sect_debugabbrev);
-        pe_find_section(fmap, ".debug_line",   &sect_debugline);
-        pe_find_section(fmap, ".debug_loc",    &sect_debugloc);
-
-        dw2_debuginfo   = (const BYTE*)image_map_section(&sect_debuginfo);
-        dw2_debugabbrev = (const BYTE*)image_map_section(&sect_debugabbrev);
-        dw2_debugstr    = (const BYTE*)image_map_section(&sect_debugstr);
-        dw2_debugline   = (const BYTE*)image_map_section(&sect_debugline);
-        dw2_debugloc    = (const BYTE*)image_map_section(&sect_debugloc);
-
-        if (dw2_debuginfo != IMAGE_NO_MAP && dw2_debugabbrev != IMAGE_NO_MAP && dw2_debugstr != IMAGE_NO_MAP)
-        {
-            ret = dwarf2_parse(module,
-                               module->module.BaseOfImage - fmap->u.pe.ntheader.OptionalHeader.ImageBase,
-                               NULL, /* FIXME: some thunks to deal with ? */
-                               dw2_debuginfo,   image_get_map_size(&sect_debuginfo),
-                               dw2_debugabbrev, image_get_map_size(&sect_debugabbrev),
-                               dw2_debugstr,    image_get_map_size(&sect_debugstr),
-                               dw2_debugline,   image_get_map_size(&sect_debugline),
-                               dw2_debugloc,    image_get_map_size(&sect_debugloc));
-        }
-        image_unmap_section(&sect_debuginfo);
-        image_unmap_section(&sect_debugabbrev);
-        image_unmap_section(&sect_debugstr);
-        image_unmap_section(&sect_debugline);
-        image_unmap_section(&sect_debugloc);
-    }
+    ret = dwarf2_parse(module,
+                       module->module.BaseOfImage - fmap->u.pe.ntheader.OptionalHeader.ImageBase,
+                       NULL, /* FIXME: some thunks to deal with ? */
+                       fmap);
     TRACE("%s the DWARF debug info\n", ret ? "successfully loaded" : "failed to load");
 
     return ret;
@@ -684,10 +654,10 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
 
     if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
-        ret = pe_load_stabs(pcs, module) ||
-            pe_load_dwarf(pcs, module) ||
-            pe_load_msc_debug_info(pcs, module) ||
-            pe_load_coff_symbol_table(module);
+        ret = pe_load_stabs(pcs, module);
+        ret = pe_load_dwarf(module) || ret;
+        ret = pe_load_msc_debug_info(pcs, module) || ret;
+        ret = ret || pe_load_coff_symbol_table(module); /* FIXME */
         /* if we still have no debug info (we could only get SymExport at this
          * point), then do the SymExport except if we have an ELF container,
          * in which case we'll rely on the export's on the ELF side

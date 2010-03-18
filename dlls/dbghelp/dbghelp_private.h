@@ -566,11 +566,7 @@ extern BOOL         stabs_parse(struct module* module, unsigned long load_offset
 /* dwarf.c */
 extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offset,
                                  const struct elf_thunk_area* thunks,
-				 const unsigned char* debug, unsigned int debug_size, 
-				 const unsigned char* abbrev, unsigned int abbrev_size, 
-				 const unsigned char* str, unsigned int str_size,
-                                 const unsigned char* line, unsigned int line_size,
-                                 const unsigned char* loclist, unsigned int loclist_size);
+                                 struct image_file_map* fmap);
 
 /* stack.c */
 extern BOOL         sw_read_mem(struct cpu_stack_walk* csw, DWORD64 addr, void* ptr, DWORD sz);
