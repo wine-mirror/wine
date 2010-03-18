@@ -2376,7 +2376,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
                   struct image_file_map* fmap)
 {
     dwarf2_section_t    section[section_max];
-    unsigned char*      ptr;
     dwarf2_traverse_context_t   mod_ctx;
     struct image_section_map    debug_sect, debug_str_sect, debug_abbrev_sect,
                                 debug_line_sect, debug_loclist_sect;
@@ -2419,17 +2418,15 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     if (image_get_map_size(&debug_loclist_sect))
     {
         /* initialize the dwarf2 specific info block for this module.
-         * As we'll need later on the .debug_loc section content, we copy it in
-         * the module structure for later reuse
+         * As we'll need later the .debug_loc section content, we won't unmap this
+         * section upon existing this function
          */
-        module->dwarf2_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module->dwarf2_info) +
-                                        image_get_map_size(&debug_loclist_sect));
+        module->dwarf2_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module->dwarf2_info));
         if (!module->dwarf2_info) return FALSE;
-        ptr = (unsigned char*)(module->dwarf2_info + 1);
-        memcpy(ptr, image_map_section(&debug_loclist_sect), image_get_map_size(&debug_loclist_sect));
-        module->dwarf2_info->debug_loc.address = ptr;
+        module->dwarf2_info->debug_loc.address = (const BYTE*)image_map_section(&debug_loclist_sect);
         module->dwarf2_info->debug_loc.size    = image_get_map_size(&debug_loclist_sect);
     }
+    else image_unmap_section(&debug_loclist_sect);
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
@@ -2448,6 +2445,6 @@ leave:
     image_unmap_section(&debug_abbrev_sect);
     image_unmap_section(&debug_str_sect);
     image_unmap_section(&debug_line_sect);
-    image_unmap_section(&debug_loclist_sect);
+
     return ret;
 }
