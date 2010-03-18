@@ -322,6 +322,7 @@ enum format_info
 {
     DFI_ELF,
     DFI_PE,
+    DFI_MACHO,
     DFI_DWARF,
     DFI_LAST
 };
@@ -339,6 +340,7 @@ struct module_format
         struct elf_module_info*         elf_info;
         struct dwarf2_module_info_s*    dwarf2_info;
         struct pe_module_info*          pe_info;
+        struct macho_module_info*	macho_info;
     } u;
 };
 
@@ -353,8 +355,6 @@ struct module
 
     /* specific information for debug types */
     struct module_format*       format_info[DFI_LAST];
-
-    struct macho_module_info*	macho_info;
 
     /* memory allocation pool */
     struct pool                 pool;
