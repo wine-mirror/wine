@@ -257,10 +257,10 @@ static void pe_unmap_file(struct image_file_map* fmap)
     }
 }
 
-static void pe_module_remove(struct process* pcs, struct module* module)
+static void pe_module_remove(struct process* pcs, struct module_format* modfmt)
 {
-    pe_unmap_file(&module->pe_info->fmap);
-    HeapFree(GetProcessHeap(), 0, module->pe_info);
+    pe_unmap_file(&modfmt->u.pe_info->fmap);
+    HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
 /******************************************************************
@@ -273,7 +273,7 @@ static void pe_module_remove(struct process* pcs, struct module* module)
  */
 static BOOL pe_locate_with_coff_symbol_table(struct module* module)
 {
-    struct image_file_map* fmap = &module->pe_info->fmap;
+    struct image_file_map* fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     const IMAGE_SYMBOL* isym;
     int                 i, numsym, naux;
     char                tmp[9];
@@ -333,7 +333,7 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module)
  */
 static BOOL pe_load_coff_symbol_table(struct module* module)
 {
-    struct image_file_map* fmap = &module->pe_info->fmap;
+    struct image_file_map* fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     const IMAGE_SYMBOL* isym;
     int                 i, numsym, naux;
     const char*         strtable;
@@ -413,7 +413,7 @@ static inline DWORD pe_get_sect_size(IMAGE_SECTION_HEADER* sect)
  */
 static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
 {
-    struct image_file_map*      fmap = &module->pe_info->fmap;
+    struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     struct image_section_map    sect_stabs, sect_stabstr;
     BOOL                        ret = FALSE;
 
@@ -449,7 +449,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
  */
 static BOOL pe_load_dwarf(struct module* module)
 {
-    struct image_file_map*      fmap = &module->pe_info->fmap;
+    struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     BOOL                        ret = FALSE;
 
     ret = dwarf2_parse(module,
@@ -515,7 +515,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
  */
 static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* module)
 {
-    struct image_file_map*      fmap = &module->pe_info->fmap;
+    struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     BOOL                        ret = FALSE;
     const IMAGE_DATA_DIRECTORY* dir;
     const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
@@ -566,7 +566,7 @@ done:
  */
 static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* module)
 {
-    struct image_file_map*              fmap = &module->pe_info->fmap;
+    struct image_file_map*              fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     unsigned int 		        i;
     const IMAGE_EXPORT_DIRECTORY* 	exports;
     DWORD			        base = module->module.BaseOfImage;
@@ -679,7 +679,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
 {
     struct module*              module = NULL;
     BOOL                        opened = FALSE;
-    struct pe_module_info*      module_info;
+    struct module_format*       modfmt;
     WCHAR                       loaded_name[MAX_PATH];
 
     loaded_name[0] = '\0';
@@ -694,20 +694,24 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     else if (name) strcpyW(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-    if (!(module_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module_info))))
+    if (!(modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
         return NULL;
-    if (pe_map_file(hFile, &module_info->fmap, DMT_PE))
+    modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
+    if (pe_map_file(hFile, &modfmt->u.pe_info->fmap, DMT_PE))
     {
-        if (!base) base = module_info->fmap.u.pe.ntheader.OptionalHeader.ImageBase;
-        if (!size) size = module_info->fmap.u.pe.ntheader.OptionalHeader.SizeOfImage;
+        if (!base) base = modfmt->u.pe_info->fmap.u.pe.ntheader.OptionalHeader.ImageBase;
+        if (!size) size = modfmt->u.pe_info->fmap.u.pe.ntheader.OptionalHeader.SizeOfImage;
 
         module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
-                            module_info->fmap.u.pe.ntheader.FileHeader.TimeDateStamp,
-                            module_info->fmap.u.pe.ntheader.OptionalHeader.CheckSum);
+                            modfmt->u.pe_info->fmap.u.pe.ntheader.FileHeader.TimeDateStamp,
+                            modfmt->u.pe_info->fmap.u.pe.ntheader.OptionalHeader.CheckSum);
         if (module)
         {
-            module->pe_info = module_info;
-            module->module_remove = pe_module_remove;
+            modfmt->module = module;
+            modfmt->remove = pe_module_remove;
+            modfmt->loc_compute = NULL;
+
+            module->format_info[DFI_PE] = modfmt;
             if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
                 module->module.SymType = SymDeferred;
             else
@@ -716,10 +720,10 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
         else
         {
             ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
-            pe_unmap_file(&module_info->fmap);
+            pe_unmap_file(&modfmt->u.pe_info->fmap);
         }
     }
-    if (!module) HeapFree(GetProcessHeap(), 0, module_info);
+    if (!module) HeapFree(GetProcessHeap(), 0, modfmt);
 
     if (opened) CloseHandle(hFile);
 
