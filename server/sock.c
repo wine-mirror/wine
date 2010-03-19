@@ -51,6 +51,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "winerror.h"
 
 #include "process.h"
 #include "file.h"
@@ -59,11 +60,34 @@
 #include "request.h"
 #include "user.h"
 
-/* To avoid conflicts with the Unix socket headers. Plus we only need a few
- * macros anyway.
+/* From winsock.h */
+#define FD_MAX_EVENTS              10
+#define FD_READ_BIT                0
+#define FD_WRITE_BIT               1
+#define FD_OOB_BIT                 2
+#define FD_ACCEPT_BIT              3
+#define FD_CONNECT_BIT             4
+#define FD_CLOSE_BIT               5
+
+/*
+ * Define flags to be used with the WSAAsyncSelect() call.
  */
-#define USE_WS_PREFIX
-#include "winsock2.h"
+#define FD_READ                    0x00000001
+#define FD_WRITE                   0x00000002
+#define FD_OOB                     0x00000004
+#define FD_ACCEPT                  0x00000008
+#define FD_CONNECT                 0x00000010
+#define FD_CLOSE                   0x00000020
+
+/* internal per-socket flags */
+#define FD_WINE_LISTENING          0x10000000
+#define FD_WINE_NONBLOCKING        0x20000000
+#define FD_WINE_CONNECTED          0x40000000
+#define FD_WINE_RAW                0x80000000
+#define FD_WINE_INTERNAL           0xFFFF0000
+
+/* Constants for WSAIoctl() */
+#define WSA_FLAG_OVERLAPPED        0x01
 
 struct sock
 {
