@@ -16026,6 +16026,10 @@ test "x$enable_loader" != xno && wine_fn_append_file ALL_TOP_DIRS "loader"
 wine_fn_config_makefile programs "Make.rules \$(MAKEDEP)"
 test "x$enable_programs" != xno && wine_fn_append_file ALL_TOP_DIRS "programs"
 
+wine_fn_config_program attrib
+wine_fn_config_makefile programs/attrib "programs/Makeprog.rules \$(MAKEDEP)"
+test "x$enable_attrib" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/attrib" && wine_fn_append_file ALL_INSTALL_DIRS "programs/attrib"
+
 wine_fn_config_program cacls
 wine_fn_config_makefile programs/cacls "programs/Makeprog.rules \$(MAKEDEP)"
 test "x$enable_cacls" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cacls" && wine_fn_append_file ALL_INSTALL_DIRS "programs/cacls"
@@ -17470,6 +17474,7 @@ do
     "libs/wpp/Makefile") CONFIG_FILES="$CONFIG_FILES libs/wpp/Makefile" ;;
     "loader/Makefile") CONFIG_FILES="$CONFIG_FILES loader/Makefile" ;;
     "programs/Makefile") CONFIG_FILES="$CONFIG_FILES programs/Makefile" ;;
+    "programs/attrib/Makefile") CONFIG_FILES="$CONFIG_FILES programs/attrib/Makefile" ;;
     "programs/cacls/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cacls/Makefile" ;;
     "programs/clock/Makefile") CONFIG_FILES="$CONFIG_FILES programs/clock/Makefile" ;;
     "programs/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/Makefile" ;;
