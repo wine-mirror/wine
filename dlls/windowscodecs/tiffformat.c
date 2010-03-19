@@ -559,8 +559,13 @@ static HRESULT WINAPI TiffFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI TiffFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p)\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+
+    memcpy(pPixelFormat, This->decode_info.format, sizeof(GUID));
+
+    TRACE("(%p) <-- %s\n", This, debugstr_guid(This->decode_info.format));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
