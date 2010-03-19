@@ -2505,7 +2505,7 @@ static void test_SetForegroundWindow(HWND hwnd)
 {
     struct create_window_thread_params thread_params;
     HANDLE thread;
-    DWORD res;
+    DWORD res, tid;
     BOOL ret;
     HWND hwnd2;
     MSG msg;
@@ -2589,7 +2589,7 @@ static void test_SetForegroundWindow(HWND hwnd)
     ok(!!thread_params.window_created, "CreateEvent failed, last error %#x.\n", GetLastError());
     thread_params.test_finished = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
-    thread = CreateThread(NULL, 0, create_window_thread, &thread_params, 0, NULL);
+    thread = CreateThread(NULL, 0, create_window_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
     res = WaitForSingleObject(thread_params.window_created, INFINITE);
     ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
