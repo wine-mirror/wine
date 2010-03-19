@@ -220,7 +220,7 @@ static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
-    uint16 photometric, bps;
+    uint16 photometric, bps, samples, planar;
     int ret;
 
     decode_info->indexed = 0;
@@ -256,6 +256,29 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_FAIL;
         }
         break;
+    case 2: /* RGB */
+        if (bps != 8)
+        {
+            FIXME("unhandled RGB bit count %u\n", bps);
+            return E_FAIL;
+        }
+        ret = pTIFFGetField(tiff, TIFFTAG_SAMPLESPERPIXEL, &samples);
+        if (samples != 3)
+        {
+            FIXME("unhandled RGB sample count %u\n", samples);
+            return E_FAIL;
+        }
+        ret = pTIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
+        if (!ret) planar = 1;
+        if (planar != 1)
+        {
+            FIXME("unhandled planar configuration %u\n", planar);
+            return E_FAIL;
+        }
+        decode_info->bpp = bps * samples;
+        decode_info->reverse_bgr = 1;
+        decode_info->format = &GUID_WICPixelFormat24bppBGR;
+        break;
     case 3: /* RGB Palette */
         decode_info->indexed = 1;
         decode_info->bpp = bps;
@@ -273,7 +296,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         }
         break;
     case 0: /* WhiteIsZero */
-    case 2: /* RGB */
     case 4: /* Transparency mask */
     case 5: /* CMYK */
     case 6: /* YCbCr */
@@ -649,6 +671,25 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 
         if (ret == -1)
             hr = E_FAIL;
+    }
+
+    if (hr == S_OK && This->decode_info.reverse_bgr)
+    {
+        if (This->decode_info.format == &GUID_WICPixelFormat24bppBGR)
+        {
+            UINT i, total_pixels;
+            BYTE *pixel, temp;
+
+            total_pixels = This->decode_info.tile_width * This->decode_info.tile_height;
+            pixel = This->cached_tile;
+            for (i=0; i<total_pixels; i++)
+            {
+                temp = pixel[2];
+                pixel[2] = pixel[0];
+                pixel[0] = temp;
+                pixel += 3;
+            }
+        }
     }
 
     if (hr == S_OK)
