@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcr80.dll
 IMPORTLIB = msvcr80
-IMPORTS   = msvcrt kernel32
+IMPORTS   = msvcrt msvcr90 kernel32
 
 C_SRCS = \
 	msvcr80.c
