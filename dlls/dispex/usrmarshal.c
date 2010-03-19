@@ -41,18 +41,92 @@ HRESULT CALLBACK IDispatchEx_InvokeEx_Proxy(IDispatchEx* This, DISPID id, LCID l
                                             DISPPARAMS *pdp, VARIANT *pvarRes, EXCEPINFO *pei,
                                             IServiceProvider *pspCaller)
 {
-    FIXME("(%p)->(%08x, %04x, %04x, %p, %p, %p, %p): stub\n", This, id, lcid, wFlags,
+    HRESULT hr;
+    VARIANT result;
+    EXCEPINFO excep_info;
+    UINT byref_args, arg;
+    VARIANT dummy_arg, *ref_arg = &dummy_arg, *copy_arg, *orig_arg = NULL;
+    UINT *ref_idx = NULL;
+
+    TRACE("(%p)->(%08x, %04x, %04x, %p, %p, %p, %p)\n", This, id, lcid, wFlags,
           pdp, pvarRes, pei, pspCaller);
-    return E_NOTIMPL;
+
+    if(!pvarRes) pvarRes = &result;
+    if(!pei) pei = &excep_info;
+
+    for(arg = 0, byref_args = 0; arg < pdp->cArgs; arg++)
+        if(V_ISBYREF(pdp->rgvarg + arg)) byref_args++;
+
+    if(byref_args)
+    {
+        DWORD size = pdp->cArgs * sizeof(VARIANT) +
+            byref_args * (sizeof(VARIANT) + sizeof(UINT));
+
+        copy_arg = CoTaskMemAlloc(size);
+        if(!copy_arg) return E_OUTOFMEMORY;
+
+        ref_arg = copy_arg + pdp->cArgs;
+        ref_idx = (UINT*)(ref_arg + byref_args);
+
+        /* copy the byref args to ref_arg[], the others go to copy_arg[] */
+        for(arg = 0, byref_args = 0; arg < pdp->cArgs; arg++)
+        {
+            if(V_ISBYREF(pdp->rgvarg + arg))
+            {
+                ref_arg[byref_args] = pdp->rgvarg[arg];
+                ref_idx[byref_args] = arg;
+                VariantInit(copy_arg + arg);
+                byref_args++;
+            }
+            else
+                copy_arg[arg] = pdp->rgvarg[arg];
+        }
+
+        orig_arg = pdp->rgvarg;
+        pdp->rgvarg = copy_arg;
+    }
+
+    hr = IDispatchEx_RemoteInvokeEx_Proxy(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller,
+                                          byref_args, ref_idx, ref_arg);
+
+    if(byref_args)
+    {
+        CoTaskMemFree(pdp->rgvarg);
+        pdp->rgvarg = orig_arg;
+    }
+
+    if(pvarRes == &result) VariantClear(pvarRes);
+    if(pei == &excep_info)
+    {
+        SysFreeString(pei->bstrSource);
+        SysFreeString(pei->bstrDescription);
+        SysFreeString(pei->bstrHelpFile);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID lcid, DWORD dwFlags,
-                                             DISPPARAMS *pdp, VARIANT *pvarRes, EXCEPINFO *pei,
-                                             IServiceProvider *pspCaller, UINT cvarRefArg,
-                                             UINT *rgiRefArg, VARIANT *rgvarRefArg)
+                                             DISPPARAMS *pdp, VARIANT *result, EXCEPINFO *pei,
+                                             IServiceProvider *pspCaller, UINT byref_args,
+                                             UINT *ref_idx, VARIANT *ref_arg)
 {
-    FIXME("(%p)->(%08x, %04x, %08x, %p, %p, %p, %p, %d, %p, %p): stub\n", This, id, lcid, dwFlags,
-          pdp, pvarRes, pei, pspCaller, cvarRefArg, rgiRefArg, rgvarRefArg);
-    return E_NOTIMPL;
+    HRESULT hr;
+    UINT arg;
 
+    TRACE("(%p)->(%08x, %04x, %08x, %p, %p, %p, %p, %d, %p, %p)\n", This, id, lcid, dwFlags,
+          pdp, result, pei, pspCaller, byref_args, ref_idx, ref_arg);
+
+    VariantInit(result);
+    memset(pei, 0, sizeof(*pei));
+
+    for(arg = 0; arg < byref_args; arg++)
+        pdp->rgvarg[ref_idx[arg]] = ref_arg[arg];
+
+    hr = IDispatchEx_InvokeEx(This, id, lcid, dwFlags, pdp, result, pei, pspCaller);
+
+    for(arg = 0; arg < byref_args; arg++)
+        VariantInit(pdp->rgvarg + ref_idx[arg]);
+
+    return hr;
 }
