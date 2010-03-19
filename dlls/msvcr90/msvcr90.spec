@@ -647,7 +647,7 @@
 @ stub _ltow_s
 @ cdecl _makepath(ptr str str str str) msvcrt._makepath
 @ stub _makepath_s
-@ stub _malloc_crt
+@ cdecl _malloc_crt(long) msvcrt.malloc
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
