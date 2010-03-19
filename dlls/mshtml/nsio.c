@@ -307,7 +307,7 @@ static void set_uri_window(nsWineURI *This, HTMLWindow *window)
 
 static inline BOOL is_http_channel(nsChannel *This)
 {
-    return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTP;
+    return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTPS;
 }
 
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
