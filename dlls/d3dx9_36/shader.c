@@ -401,7 +401,7 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantT
     return NULL;
 }
 
-static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByElement(ID3DXConstantTable* iface, D3DXHANDLE constant, UINT index)
+static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstantTable* iface, D3DXHANDLE constant, UINT index)
 {
     ID3DXConstantTableImpl *This = (ID3DXConstantTableImpl *)iface;
 
@@ -583,7 +583,7 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
     ID3DXConstantTableImpl_GetSamplerIndex,
     ID3DXConstantTableImpl_GetConstant,
     ID3DXConstantTableImpl_GetConstantByName,
-    ID3DXConstantTableImpl_GetConstantByElement,
+    ID3DXConstantTableImpl_GetConstantElement,
     ID3DXConstantTableImpl_SetDefaults,
     ID3DXConstantTableImpl_SetValue,
     ID3DXConstantTableImpl_SetBool,
