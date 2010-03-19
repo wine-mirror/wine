@@ -14359,6 +14359,7 @@ wine_fn_config_dll msvcr70 enable_msvcr70 msvcr70
 wine_fn_config_dll msvcr71 enable_msvcr71 msvcr71
 wine_fn_config_dll msvcr80 enable_msvcr80 msvcr80
 wine_fn_config_dll msvcr90 enable_msvcr90 msvcr90
+wine_fn_config_test dlls/msvcr90/tests msvcr90_test
 wine_fn_config_dll msvcrt enable_msvcrt msvcrt
 wine_fn_config_test dlls/msvcrt/tests msvcrt_test
 wine_fn_config_dll msvcrt20 enable_msvcrt20 msvcrt20
