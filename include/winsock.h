@@ -853,7 +853,7 @@ typedef struct WS(WSAData)
 
 /*
  * All Windows Sockets error constants are biased by WSABASEERR from
- * the "normal"
+ * the "normal". They are also defined in winerror.h.
  */
 #define WSABASEERR                 10000
 /*
