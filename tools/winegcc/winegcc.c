@@ -704,7 +704,6 @@ static void build(struct options* opts)
         {
             strarray_addall(link_args, get_translator(opts));
             strarray_add(link_args, opts->gui_app ? "-mwindows" : "-mconsole");
-            if (opts->use_msvcrt) strarray_add(link_args, "-mno-cygwin");
             if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
         }
 
@@ -777,6 +776,7 @@ static void build(struct options* opts)
                 break;
             }
         }
+        if (!opts->shared && (opts->use_msvcrt || opts->unicode_app)) strarray_add(link_args, "-lmsvcrt");
 
         if (res_o_name) compile_resources_to_object( opts, resources, res_o_name );
 
