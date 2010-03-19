@@ -198,6 +198,7 @@ typedef struct {
     int bpp;
     int indexed;
     int reverse_bgr;
+    UINT width, height;
 } tiff_decode_info;
 
 typedef struct {
@@ -272,6 +273,20 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     case 8: /* CIELab */
     default:
         FIXME("unhandled PhotometricInterpretation %u\n", photometric);
+        return E_FAIL;
+    }
+
+    ret = pTIFFGetField(tiff, TIFFTAG_IMAGEWIDTH, &decode_info->width);
+    if (!ret)
+    {
+        WARN("missing image width\n");
+        return E_FAIL;
+    }
+
+    ret = pTIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &decode_info->height);
+    if (!ret)
+    {
+        WARN("missing image length\n");
         return E_FAIL;
     }
 
@@ -552,8 +567,14 @@ static ULONG WINAPI TiffFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI TiffFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+
+    *puiWidth = This->decode_info.width;
+    *puiHeight = This->decode_info.height;
+
+    TRACE("(%p) <-- %ux%u\n", iface, *puiWidth, *puiHeight);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
