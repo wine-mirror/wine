@@ -2388,7 +2388,7 @@ static void test_wndproc(void)
     HANDLE thread;
     LONG_PTR proc;
     ULONG ref;
-    DWORD res;
+    DWORD res, tid;
 
     if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
     {
@@ -2409,7 +2409,7 @@ static void test_wndproc(void)
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
-    thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, NULL);
+    thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
     res = WaitForSingleObject(thread_params.window_created, INFINITE);
@@ -2519,7 +2519,7 @@ static void test_wndproc_windowed(void)
     HANDLE thread;
     LONG_PTR proc;
     ULONG ref;
-    DWORD res;
+    DWORD res, tid;
 
     if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
     {
@@ -2540,7 +2540,7 @@ static void test_wndproc_windowed(void)
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
-    thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, NULL);
+    thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
     res = WaitForSingleObject(thread_params.window_created, INFINITE);
