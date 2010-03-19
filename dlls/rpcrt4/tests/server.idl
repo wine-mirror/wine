@@ -120,6 +120,8 @@ cpp_quote("#endif")
     } u;
   } test_list_t;
 
+  typedef [ref] int *refpint_t;
+
   int test_list_length(test_list_t *ls);
   int sum_fixed_int_3d(int m[2][3][4]);
   int sum_conf_array([size_is(n)] int x[], int n);
@@ -154,6 +156,7 @@ cpp_quote("#endif")
   int sum_cs(cs_t *cs);
   int sum_cps(cps_t *cps);
   int sum_cpsc(cpsc_t *cpsc);
+  int sum_complex_array(int n, refpint_t pi[n]);
 
   typedef [wire_marshal(int)] void *puint_t;
   int square_puint(puint_t p);

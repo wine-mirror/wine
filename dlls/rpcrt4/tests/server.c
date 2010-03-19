@@ -283,6 +283,15 @@ s_sum_var_array(int x[20], int n)
 }
 
 int
+s_sum_complex_array(int n, refpint_t pi[])
+{
+  int total = 0;
+  for (; n > 0; n--)
+    total += *pi[n - 1];
+  return total;
+}
+
+int
 s_dot_two_vectors(vector_t vs[2])
 {
   return vs[0].x * vs[1].x + vs[0].y * vs[1].y + vs[0].z * vs[1].z;
@@ -1213,6 +1222,7 @@ array_tests(void)
   int *pi;
   pints_t api[5];
   numbers_struct_t *ns;
+  refpint_t rpi[5];
 
   if (!old_windows_version)
   {
@@ -1316,6 +1326,15 @@ array_tests(void)
       ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
       HeapFree(GetProcessHeap(), 0, ns);
   }
+  HeapFree(GetProcessHeap(), 0, pi);
+
+  pi = HeapAlloc(GetProcessHeap(), 0, 5 * sizeof(*pi));
+  pi[0] = 3;  rpi[0] = &pi[0];
+  pi[1] = 5;  rpi[1] = &pi[1];
+  pi[2] = -2; rpi[2] = &pi[2];
+  pi[3] = -1; rpi[3] = &pi[3];
+  pi[4] = -4; rpi[4] = &pi[4];
+  ok(sum_complex_array(5, rpi) == 1, "RPC sum_complex_array\n");
   HeapFree(GetProcessHeap(), 0, pi);
 }
 
