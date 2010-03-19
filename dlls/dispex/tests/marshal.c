@@ -244,9 +244,7 @@ static HRESULT WINAPI dispex_InvokeEx(IDispatchEx* iface,
     if(id == 1)
     {
         ok(pdp->cArgs == 0, "got %d\n", pdp->cArgs);
-todo_wine
         ok(pei == NULL, "got non-NULL excepinfo\n");
-todo_wine
         ok(pvarRes == NULL, "got non-NULL result\n");
     }
     else if(id == 2)
@@ -266,7 +264,6 @@ todo_wine
     }
     else if(id == 4)
     {
-todo_wine
         ok(wFlags == 0xf, "got %04x\n", wFlags);
     }
     return S_OK;
