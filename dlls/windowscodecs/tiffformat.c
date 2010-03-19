@@ -60,6 +60,7 @@ MAKE_FUNCPTR(TIFFClose);
 MAKE_FUNCPTR(TIFFCurrentDirectory);
 MAKE_FUNCPTR(TIFFGetField);
 MAKE_FUNCPTR(TIFFReadDirectory);
+MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFSetDirectory);
 #undef MAKE_FUNCPTR
 
@@ -85,6 +86,7 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFCurrentDirectory);
         LOAD_FUNCPTR(TIFFGetField);
         LOAD_FUNCPTR(TIFFReadDirectory);
+        LOAD_FUNCPTR(TIFFReadEncodedStrip);
         LOAD_FUNCPTR(TIFFSetDirectory);
 #undef LOAD_FUNCPTR
 
@@ -199,6 +201,9 @@ typedef struct {
     int indexed;
     int reverse_bgr;
     UINT width, height;
+    UINT tile_width, tile_height;
+    UINT tile_stride;
+    UINT tile_size;
 } tiff_decode_info;
 
 typedef struct {
@@ -207,6 +212,8 @@ typedef struct {
     TiffDecoder *parent;
     UINT index;
     tiff_decode_info decode_info;
+    INT cached_tile_x, cached_tile_y;
+    BYTE *cached_tile;
 } TiffFrameDecode;
 
 static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
@@ -287,6 +294,20 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     if (!ret)
     {
         WARN("missing image length\n");
+        return E_FAIL;
+    }
+
+    ret = pTIFFGetField(tiff, TIFFTAG_ROWSPERSTRIP, &decode_info->tile_height);
+    if (ret)
+    {
+        decode_info->tile_width = decode_info->width;
+        decode_info->tile_stride = ((decode_info->bpp * decode_info->tile_width + 7)/8);
+        decode_info->tile_size = decode_info->tile_height * decode_info->tile_stride;
+    }
+    else
+    {
+        /* Probably a tiled image */
+        FIXME("missing RowsPerStrip value\n");
         return E_FAIL;
     }
 
@@ -487,8 +508,16 @@ static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
             result->parent = This;
             result->index = index;
             result->decode_info = decode_info;
+            result->cached_tile_x = -1;
+            result->cached_tile = HeapAlloc(GetProcessHeap(), 0, decode_info.tile_size);
 
-            *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
+            if (result->cached_tile)
+                *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
+            else
+            {
+                hr = E_OUTOFMEMORY;
+                HeapFree(GetProcessHeap(), 0, result);
+            }
         }
         else hr = E_OUTOFMEMORY;
     }
@@ -558,6 +587,7 @@ static ULONG WINAPI TiffFrameDecode_Release(IWICBitmapFrameDecode *iface)
 
     if (ref == 0)
     {
+        HeapFree(GetProcessHeap(), 0, This->cached_tile);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -603,11 +633,116 @@ static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT tile_y)
+{
+    HRESULT hr=S_OK;
+    tsize_t ret;
+
+    ret = pTIFFSetDirectory(This->parent->tiff, This->index);
+
+    if (ret == -1)
+        hr = E_FAIL;
+
+    if (hr == S_OK)
+    {
+        ret = pTIFFReadEncodedStrip(This->parent->tiff, tile_y, This->cached_tile, This->decode_info.tile_size);
+
+        if (ret == -1)
+            hr = E_FAIL;
+    }
+
+    if (hr == S_OK)
+    {
+        This->cached_tile_x = tile_x;
+        This->cached_tile_y = tile_y;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI TiffFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    UINT min_tile_x, max_tile_x, min_tile_y, max_tile_y;
+    UINT tile_x, tile_y;
+    WICRect rc;
+    HRESULT hr=S_OK;
+    BYTE *dst_tilepos;
+    UINT bytesperrow;
+
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (prc->X < 0 || prc->Y < 0 || prc->X+prc->Width > This->decode_info.width ||
+        prc->Y+prc->Height > This->decode_info.height)
+        return E_INVALIDARG;
+
+    bytesperrow = ((This->decode_info.bpp * prc->Width)+7)/8;
+
+    if (cbStride < bytesperrow)
+        return E_INVALIDARG;
+
+    if ((cbStride * prc->Height) > cbBufferSize)
+        return E_INVALIDARG;
+
+    min_tile_x = prc->X / This->decode_info.tile_width;
+    min_tile_y = prc->Y / This->decode_info.tile_height;
+    max_tile_x = (prc->X+prc->Width-1) / This->decode_info.tile_width;
+    max_tile_y = (prc->Y+prc->Height-1) / This->decode_info.tile_height;
+
+    EnterCriticalSection(&This->parent->lock);
+
+    for (tile_x=min_tile_x; tile_x <= max_tile_x; tile_x++)
+    {
+        for (tile_y=min_tile_y; tile_y <= max_tile_y; tile_y++)
+        {
+            if (tile_x != This->cached_tile_x || tile_y != This->cached_tile_y)
+            {
+                hr = TiffFrameDecode_ReadTile(This, tile_x, tile_y);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                if (prc->X < tile_x * This->decode_info.tile_width)
+                    rc.X = 0;
+                else
+                    rc.X = prc->X - tile_x * This->decode_info.tile_width;
+
+                if (prc->Y < tile_y * This->decode_info.tile_height)
+                    rc.Y = 0;
+                else
+                    rc.Y = prc->Y - tile_y * This->decode_info.tile_height;
+
+                if (prc->X+prc->Width > (tile_x+1) * This->decode_info.tile_width)
+                    rc.Width = This->decode_info.tile_width - rc.X;
+                else
+                    rc.Width = prc->Width + rc.X - prc->X;
+
+                if (prc->Y+prc->Height > (tile_y+1) * This->decode_info.tile_height)
+                    rc.Height = This->decode_info.tile_height - rc.Y;
+                else
+                    rc.Height = prc->Height + rc.Y - prc->Y;
+
+                dst_tilepos = pbBuffer + (cbStride * (rc.Y - prc->Y)) +
+                    ((This->decode_info.bpp * (rc.X - prc->X) + 7) / 8);
+
+                hr = copy_pixels(This->decode_info.bpp, This->cached_tile,
+                    This->decode_info.tile_width, This->decode_info.tile_height, This->decode_info.tile_stride,
+                    &rc, cbStride, cbBufferSize, dst_tilepos);
+            }
+
+            if (FAILED(hr))
+            {
+                LeaveCriticalSection(&This->parent->lock);
+                TRACE("<-- 0x%x\n", hr);
+                return hr;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
