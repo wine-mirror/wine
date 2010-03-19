@@ -359,6 +359,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             if (*wk1 != '/') {state = 6; break;}
             *wk2++ = *wk1++;
             if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost)
+                        && !strncmpW(wszFile, pszUrl, sizeof(wszFile)/sizeof(WCHAR))
                         && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost))){
                 wk1 += sizeof(wszLocalhost)/sizeof(WCHAR);
                 while(*wk1 == '\\' && (dwFlags & URL_FILE_USE_PATHURL))
