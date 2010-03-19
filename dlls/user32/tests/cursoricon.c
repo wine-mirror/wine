@@ -1529,7 +1529,7 @@ static void test_ShowCursor(void)
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
         /* global show count is not affected since we don't have a window */
-        todo_wine ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
     }
 
     parent_id = 0;
@@ -1582,7 +1582,7 @@ static void test_ShowCursor(void)
     {
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
-        todo_wine ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
     }
 
     count = ShowCursor( TRUE );
