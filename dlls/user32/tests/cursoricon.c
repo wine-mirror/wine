@@ -64,6 +64,8 @@ static HANDLE child_process;
 
 #define PROC_INIT (WM_USER+1)
 
+static BOOL (WINAPI *pGetCursorInfo)(CURSORINFO *);
+
 static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BOOL ret;
@@ -1374,12 +1376,24 @@ static void test_SetCursor(void)
 {
     static const BYTE bmp_bits[4096];
     ICONINFO cursorInfo;
-    HCURSOR cursor, old_cursor;
+    HCURSOR cursor, old_cursor, global_cursor = 0;
     DWORD error, id, result;
     UINT display_bpp;
     HDC hdc;
     HANDLE thread;
+    CURSORINFO info;
 
+    if (pGetCursorInfo)
+    {
+        memset( &info, 0, sizeof(info) );
+        info.cbSize = sizeof(info);
+        if (!pGetCursorInfo( &info ))
+        {
+            win_skip( "GetCursorInfo not working\n" );
+            pGetCursorInfo = NULL;
+        }
+        else global_cursor = info.hCursor;
+    }
     cursor = GetCursor();
     thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
     WaitForSingleObject( thread, 1000 );
@@ -1400,6 +1414,14 @@ static void test_SetCursor(void)
     ok(cursor != NULL, "CreateIconIndirect returned %p\n", cursor);
     old_cursor = SetCursor( cursor );
 
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        /* global cursor doesn't change since we don't have a window */
+        ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
+            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+    }
     thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
     WaitForSingleObject( thread, 1000 );
     GetExitCodeThread( thread, &result );
@@ -1425,6 +1447,13 @@ static void test_SetCursor(void)
     ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
     todo_wine ok( GetCursor() == cursor, "wrong cursor %p/0\n", cursor );
 
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
+            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+    }
     SetCursor( old_cursor );
     DestroyCursor( cursor );
 
@@ -1434,6 +1463,14 @@ static void test_SetCursor(void)
     ok( cursor == 0, "wrong cursor %p/0\n", cursor );
     todo_wine ok( error == ERROR_INVALID_CURSOR_HANDLE || broken( error == 0xdeadbeef ),  /* win9x */
         "wrong error %u\n", error );
+
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
+            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+    }
 }
 
 static HANDLE event_start, event_next;
@@ -1461,6 +1498,15 @@ static void test_ShowCursor(void)
     int count;
     DWORD id, result;
     HANDLE thread;
+    CURSORINFO info;
+
+    if (pGetCursorInfo)
+    {
+        memset( &info, 0, sizeof(info) );
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+    }
 
     event_start = CreateEvent( NULL, FALSE, FALSE, NULL );
     event_next = CreateEvent( NULL, FALSE, FALSE, NULL );
@@ -1477,6 +1523,14 @@ static void test_ShowCursor(void)
     ok( count == -1, "wrong count %d\n", count );
     count = ShowCursor( FALSE );
     ok( count == -2, "wrong count %d\n", count );
+
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        /* global show count is not affected since we don't have a window */
+        todo_wine ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+    }
 
     parent_id = 0;
     thread = CreateThread( NULL, 0, show_cursor_thread, NULL, 0, &id );
@@ -1524,10 +1578,24 @@ static void test_ShowCursor(void)
     count = ShowCursor( FALSE );
     ok( count == -2, "wrong count %d\n", count );
 
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        todo_wine ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+    }
+
     count = ShowCursor( TRUE );
     ok( count == -1, "wrong count %d\n", count );
     count = ShowCursor( TRUE );
     ok( count == 0, "wrong count %d\n", count );
+
+    if (pGetCursorInfo)
+    {
+        info.cbSize = sizeof(info);
+        ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
+        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+    }
 }
 
 
@@ -1613,6 +1681,7 @@ static void test_DestroyCursor(void)
 
 START_TEST(cursoricon)
 {
+    pGetCursorInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetCursorInfo" );
     test_argc = winetest_get_mainargs(&test_argv);
 
     if (test_argc >= 3)
