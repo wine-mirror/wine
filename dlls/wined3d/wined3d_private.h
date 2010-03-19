@@ -68,10 +68,11 @@ enum fixup_channel_source
 
 enum complex_fixup
 {
-    COMPLEX_FIXUP_YUY2 = 0,
-    COMPLEX_FIXUP_UYVY = 1,
-    COMPLEX_FIXUP_YV12 = 2,
-    COMPLEX_FIXUP_P8   = 3,
+    COMPLEX_FIXUP_NONE = 0,
+    COMPLEX_FIXUP_YUY2 = 1,
+    COMPLEX_FIXUP_UYVY = 2,
+    COMPLEX_FIXUP_YV12 = 3,
+    COMPLEX_FIXUP_P8   = 4,
 };
 
 #include <pshpack2.h>
