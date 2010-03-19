@@ -28,11 +28,13 @@
 #define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
 #define TABLE_LEN (23)
 
+static HWND hwnd;
+
 static void test_constructor_destructor(void)
 {
     GpStatus stat;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     stat = GdipCreateFromHDC(NULL, &graphics);
     expect(OutOfMemory, stat);
@@ -56,7 +58,7 @@ static void test_constructor_destructor(void)
 
     stat = GdipDeleteGraphics(NULL);
     expect(InvalidParameter, stat);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 typedef struct node{
@@ -115,7 +117,7 @@ static void test_save_restore(void)
     InterpolationMode mode;
     GpGraphics *graphics1, *graphics2;
     node * state_log = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     state_a = state_b = state_c = 0xdeadbeef;
 
     /* Invalid saving. */
@@ -224,7 +226,7 @@ static void test_save_restore(void)
     todo_wine
         check_no_duplicates(state_log);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawArc(void)
@@ -232,7 +234,7 @@ static void test_GdipDrawArc(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* make a graphics object and pen object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -268,7 +270,7 @@ static void test_GdipDrawArc(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawArcI(void)
@@ -276,7 +278,7 @@ static void test_GdipDrawArcI(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* make a graphics object and pen object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -312,7 +314,7 @@ static void test_GdipDrawArcI(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_BeginContainer2(void)
@@ -334,7 +336,7 @@ static void test_BeginContainer2(void)
 
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
@@ -497,7 +499,7 @@ static void test_BeginContainer2(void)
     expect(Ok, status);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawBezierI(void)
@@ -505,7 +507,7 @@ static void test_GdipDrawBezierI(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* make a graphics object and pen object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -535,7 +537,7 @@ static void test_GdipDrawBezierI(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurve3(void)
@@ -543,7 +545,7 @@ static void test_GdipDrawCurve3(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPointF points[3];
 
     points[0].X = 0;
@@ -615,7 +617,7 @@ static void test_GdipDrawCurve3(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurve3I(void)
@@ -623,7 +625,7 @@ static void test_GdipDrawCurve3I(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPoint points[3];
 
     points[0].X = 0;
@@ -695,7 +697,7 @@ static void test_GdipDrawCurve3I(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurve2(void)
@@ -703,7 +705,7 @@ static void test_GdipDrawCurve2(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPointF points[3];
 
     points[0].X = 0;
@@ -762,7 +764,7 @@ static void test_GdipDrawCurve2(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurve2I(void)
@@ -770,7 +772,7 @@ static void test_GdipDrawCurve2I(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPoint points[3];
 
     points[0].X = 0;
@@ -829,7 +831,7 @@ static void test_GdipDrawCurve2I(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurve(void)
@@ -837,7 +839,7 @@ static void test_GdipDrawCurve(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPointF points[3];
 
     points[0].X = 0;
@@ -890,7 +892,7 @@ static void test_GdipDrawCurve(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawCurveI(void)
@@ -898,7 +900,7 @@ static void test_GdipDrawCurveI(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPoint points[3];
 
     points[0].X = 0;
@@ -951,7 +953,7 @@ static void test_GdipDrawCurveI(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawLineI(void)
@@ -959,7 +961,7 @@ static void test_GdipDrawLineI(void)
     GpStatus status;
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* make a graphics object and pen object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -989,7 +991,7 @@ static void test_GdipDrawLineI(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawLinesI(void)
@@ -998,7 +1000,7 @@ static void test_GdipDrawLinesI(void)
     GpGraphics *graphics = NULL;
     GpPen *pen = NULL;
     GpPoint *ptf = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* make a graphics object and pen object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -1041,7 +1043,7 @@ static void test_GdipDrawLinesI(void)
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_Get_Release_DC(void)
@@ -1051,7 +1053,7 @@ static void test_Get_Release_DC(void)
     GpPen *pen;
     GpSolidFill *brush;
     GpPath *path;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     HDC retdc;
     REAL r;
     CompositingQuality quality;
@@ -1345,14 +1347,14 @@ static void test_Get_Release_DC(void)
     GdipDeleteMatrix(m);
     DeleteObject(hrgn);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_transformpoints(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpPointF ptf[2];
     GpPoint pt[2];
 
@@ -1465,14 +1467,14 @@ static void test_transformpoints(void)
     expect(18, pt[1].Y);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_get_set_clip(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpRegion *clip;
     GpRectF rect;
     BOOL res;
@@ -1544,14 +1546,14 @@ static void test_get_set_clip(void)
     GdipDeleteRegion(clip);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_isempty(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpRegion *clip;
     BOOL res;
 
@@ -1578,7 +1580,7 @@ static void test_isempty(void)
     GdipDeleteRegion(clip);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_clear(void)
@@ -1592,7 +1594,7 @@ static void test_clear(void)
 static void test_textcontrast(void)
 {
     GpStatus status;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpGraphics *graphics;
     UINT contrast;
 
@@ -1608,7 +1610,7 @@ static void test_textcontrast(void)
     expect(4, contrast);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipDrawString(void)
@@ -1620,7 +1622,7 @@ static void test_GdipDrawString(void)
     GpStringFormat *format;
     GpBrush *brush;
     LOGFONTA logfont;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     static const WCHAR string[] = {'T','e','s','t',0};
 
     memset(&logfont,0,sizeof(logfont));
@@ -1658,7 +1660,7 @@ static void test_GdipDrawString(void)
     GdipDeleteFont(fnt);
     GdipDeleteStringFormat(format);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipGetVisibleClipBounds_screen(void)
@@ -1758,35 +1760,9 @@ static void test_GdipGetVisibleClipBounds_window(void)
     GpGraphics *graphics = NULL;
     GpRectF rectf, window, exp, clipr;
     GpRect recti;
-    HWND hwnd;
-    WNDCLASSA class;
     HDC hdc;
     PAINTSTRUCT ps;
-    HINSTANCE hInstance = GetModuleHandle(NULL);
     RECT wnd_rect;
-
-    window.X = 0;
-    window.Y = 0;
-    window.Width = 200;
-    window.Height = 300;
-
-    class.lpszClassName = "ClipBoundsTestClass";
-    class.style = CS_HREDRAW | CS_VREDRAW;
-    class.lpfnWndProc = DefWindowProcA;
-    class.hInstance = hInstance;
-    class.hIcon = LoadIcon(0, IDI_APPLICATION);
-    class.hCursor = LoadCursor(NULL, IDC_ARROW);
-    class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    class.lpszMenuName = 0;
-    class.cbClsExtra = 0;
-    class.cbWndExtra = 0;
-    RegisterClass(&class);
-
-    hwnd = CreateWindow(class.lpszClassName, "ClipboundsTest",
-        WS_OVERLAPPEDWINDOW, window.X, window.Y, window.Width, window.Height,
-        NULL, NULL, hInstance, NULL);
-
-    ok(hwnd != NULL, "Expected window to be created\n");
 
     /* get client area size */
     ok(GetClientRect(hwnd, &wnd_rect), "GetClientRect should have succeeded\n");
@@ -1870,7 +1846,6 @@ static void test_GdipGetVisibleClipBounds_window(void)
 
     GdipDeleteGraphics(graphics);
     EndPaint(hwnd, &ps);
-    DestroyWindow(hwnd);
 }
 
 static void test_GdipGetVisibleClipBounds(void)
@@ -1878,7 +1853,7 @@ static void test_GdipGetVisibleClipBounds(void)
     GpGraphics* graphics = NULL;
     GpRectF rectf;
     GpRect rect;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     GpStatus status;
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -1899,7 +1874,7 @@ static void test_GdipGetVisibleClipBounds(void)
     expect(InvalidParameter, status);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 
     test_GdipGetVisibleClipBounds_screen();
     test_GdipGetVisibleClipBounds_window();
@@ -1933,7 +1908,7 @@ static void test_GdipIsVisiblePoint(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     REAL x, y;
     BOOL val;
 
@@ -2105,14 +2080,14 @@ static void test_GdipIsVisiblePoint(void)
     ok(val == FALSE, "After clipping, expected (%.2f, %.2f) not to be visible\n", x, y);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipIsVisibleRect(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
     REAL x, y, width, height;
     BOOL val;
 
@@ -2267,7 +2242,7 @@ static void test_GdipIsVisibleRect(void)
     ok(val == TRUE, "Expected (%.2f, %.2f, %.2f, %.2f) to be visible\n", x, y, width, height);
 
     GdipDeleteGraphics(graphics);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_GdipGetNearestColor(void)
@@ -2276,7 +2251,7 @@ static void test_GdipGetNearestColor(void)
     GpGraphics *graphics;
     GpBitmap *bitmap;
     ARGB color = 0xdeadbeef;
-    HDC hdc = GetDC(0);
+    HDC hdc = GetDC( hwnd );
 
     /* create a graphics object */
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -2422,13 +2397,27 @@ static void test_GdipGetNearestColor(void)
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap);
 
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
+    WNDCLASSA class;
+
+    memset( &class, 0, sizeof(class) );
+    class.lpszClassName = "gdiplus_test";
+    class.style = CS_HREDRAW | CS_VREDRAW;
+    class.lpfnWndProc = DefWindowProcA;
+    class.hInstance = GetModuleHandleA(0);
+    class.hIcon = LoadIcon(0, IDI_APPLICATION);
+    class.hCursor = LoadCursor(NULL, IDC_ARROW);
+    class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    RegisterClassA( &class );
+    hwnd = CreateWindowA( "gdiplus_test", "graphics test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                          CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, 0, 0, GetModuleHandleA(0), 0 );
+    ok(hwnd != NULL, "Expected window to be created\n");
 
     gdiplusStartupInput.GdiplusVersion              = 1;
     gdiplusStartupInput.DebugEventCallback          = NULL;
@@ -2465,4 +2454,5 @@ START_TEST(graphics)
     test_fromMemoryBitmap();
 
     GdiplusShutdown(gdiplusToken);
+    DestroyWindow( hwnd );
 }
