@@ -6102,10 +6102,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     continue;
                 }
 
+                src_arg = NULL;
+
                 if (cNamedArgs)
                 {
                     USHORT j;
-                    src_arg = NULL;
                     for (j = 0; j < cNamedArgs; j++)
                         if (rgdispidNamedArgs[j] == i || (i == func_desc->cParams-1 && rgdispidNamedArgs[j] == DISPID_PROPERTYPUT))
                         {
@@ -6113,9 +6114,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                             break;
                         }
                 }
-                else
+
+                if (!src_arg && vargs_converted + cNamedArgs < pDispParams->cArgs)
                 {
-                    src_arg = vargs_converted < pDispParams->cArgs ? &pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted] : NULL;
+                    src_arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - vargs_converted];
                     vargs_converted++;
                 }
 

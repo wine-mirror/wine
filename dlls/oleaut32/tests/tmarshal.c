@@ -603,6 +603,15 @@ static HRESULT WINAPI Widget_put_prop_opt_arg(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_put_prop_req_arg(
+    IWidget* iface, INT req, INT i)
+{
+    trace("put_prop_req_arg(%08x, %08x)\n", req, i);
+    ok(req == 0x5678, "got req=%08x\n", req);
+    ok(i == 0x1234, "got i=%08x\n", i);
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -637,6 +646,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_get_prop_uint,
     Widget_ByRefUInt,
     Widget_put_prop_opt_arg,
+    Widget_put_prop_req_arg,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1407,6 +1417,22 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_OPT_ARG, &IID_NULL, 0x40c, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    VariantClear(&varresult);
+
+    /* test propput with required argument. */
+    VariantInit(&vararg[0]);
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = 0x1234;
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = 0x5678;
+    dispparams.cNamedArgs = 1;
+    dispparams.rgdispidNamedArgs = &dispidNamed;
+    dispparams.cArgs = 2;
+    dispparams.rgvarg = vararg;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_REQ_ARG, &IID_NULL, 0x40c, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
     VariantClear(&varresult);
 
