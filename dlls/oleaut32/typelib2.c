@@ -1179,6 +1179,7 @@ static HRESULT ctl2_add_default_value(
 {
     VARIANT v;
     HRESULT hres;
+    int mask = 0;
 
     TRACE("%p %d %d\n", This, V_VT(value), arg_type);
 
@@ -1196,7 +1197,6 @@ static HRESULT ctl2_add_default_value(
 
     /* Check if default value can be stored in encoded_value */
     switch(arg_type) {
-    int mask = 0;
     case VT_I4:
     case VT_UI4:
         mask = 0x3ffffff;
