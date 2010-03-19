@@ -129,6 +129,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
     /*** ID3DXConstantTable methods ***/
     STDMETHOD(GetDesc)(THIS_ D3DXCONSTANTTABLE_DESC *pDesc) PURE;
     STDMETHOD(GetConstantDesc)(THIS_ D3DXHANDLE hConstant, D3DXCONSTANT_DESC *pConstantDesc, UINT *pCount) PURE;
+    STDMETHOD_(UINT, GetSamplerIndex)(THIS_ D3DXHANDLE hConstant) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstant)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstantByName)(THIS_ D3DXHANDLE hConstant, LPCSTR pName) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstantElement)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
@@ -161,6 +162,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
 /*** ID3DXConstantTable methods ***/
 #define ID3DXConstantTable_GetDesc(p,a)                               (p)->lpVtbl->GetDesc(p,a)
 #define ID3DXConstantTable_GetConstantDesc(p,a,b,c)                   (p)->lpVtbl->GetConstantDesc(p,a,b,c)
+#define ID3DXConstantTable_GetSamplerIndex(p,a)                       (p)->lpVtbl->GetSamplerIndex(p,a)
 #define ID3DXConstantTable_GetConstant(p,a,b)                         (p)->lpVtbl->GetConstant(p,a,b)
 #define ID3DXConstantTable_GetConstantByName(p,a,b)                   (p)->lpVtbl->GetConstantByName(p,a,b)
 #define ID3DXConstantTable_GetConstantElement(p,a,b)                  (p)->lpVtbl->GetConstantElement(p,a,b)
@@ -191,6 +193,7 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
 /*** ID3DXConstantTable methods ***/
 #define ID3DXConstantTable_GetDesc(p,a)                               (p)->GetDesc(a)
 #define ID3DXConstantTable_GetConstantDesc(p,a,b,c)                   (p)->GetConstantDesc(a,b,c)
+#define ID3DXConstantTable_GetSamplerIndex(p,a)                       (p)->GetConstantDesc(a)
 #define ID3DXConstantTable_GetConstant(p,a,b)                         (p)->GetConstant(a,b)
 #define ID3DXConstantTable_GetConstantByName(p,a,b)                   (p)->GetConstantByName(a,b)
 #define ID3DXConstantTable_GetConstantElement(p,a,b)                  (p)->GetConstantElement(a,b)
