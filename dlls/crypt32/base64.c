@@ -204,8 +204,6 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
 
     charsNeeded = 0;
     encodeBase64A(pbBinary, cbBinary, sep, NULL, &charsNeeded);
-    if (sep)
-        charsNeeded += strlen(sep);
     if (header)
         charsNeeded += strlen(header) + strlen(sep);
     if (trailer)
@@ -409,8 +407,6 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
 
     charsNeeded = 0;
     encodeBase64W(pbBinary, cbBinary, sep, NULL, &charsNeeded);
-    if (sep)
-        charsNeeded += strlenW(sep);
     if (header)
         charsNeeded += strlenW(header) + strlenW(sep);
     if (trailer)
