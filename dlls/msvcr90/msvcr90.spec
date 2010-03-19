@@ -517,7 +517,7 @@
 @ stub _i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
-@ stub _initterm_e
+@ cdecl _initterm_e(ptr ptr)
 @ stub _inp
 @ stub _inpd
 @ stub _inpw
