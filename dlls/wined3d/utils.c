@@ -218,20 +218,20 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
     {WINED3DFMT_R16G16B16A16_FLOAT, WINED3D_FFP_EMIT_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)}
 };
 
-typedef struct {
-    WINED3DFORMAT           fmt;
-    GLint                   glInternal, glGammaInternal, rtInternal, glFormat, glType;
-    unsigned int            Flags;
+struct wined3d_format_texture_info
+{
+    WINED3DFORMAT format;
+    GLint gl_internal;
+    GLint gl_srgb_internal;
+    GLint gl_rt_internal;
+    GLint gl_format;
+    GLint gl_type;
+    unsigned int flags;
     GL_SupportedExt extension;
-} GlPixelFormatDescTemplate;
+};
 
-/*****************************************************************************
- * OpenGL format template. Contains unexciting formats which do not need
- * extension checks. The order in this table is independent of the order in
- * the table StaticPixelFormatDesc above. Not all formats have to be in this
- * table.
- */
-static const GlPixelFormatDescTemplate gl_formats_template[] = {
+static const struct wined3d_format_texture_info format_texture_info[] =
+{
     /* WINED3DFORMAT                    internal                          srgbInternal                       rtInternal
             format                      type
             flags
@@ -798,28 +798,28 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); ++i)
+    for (i = 0; i < sizeof(format_texture_info) / sizeof(*format_texture_info); ++i)
     {
-        int fmt_idx = getFmtIdx(gl_formats_template[i].fmt);
+        int fmt_idx = getFmtIdx(format_texture_info[i].format);
         struct wined3d_format_desc *desc;
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(gl_formats_template[i].fmt), gl_formats_template[i].fmt);
+                    debug_d3dformat(format_texture_info[i].format), format_texture_info[i].format);
             return FALSE;
         }
 
-        if (!gl_info->supported[gl_formats_template[i].extension]) continue;
+        if (!gl_info->supported[format_texture_info[i].extension]) continue;
 
         desc = &gl_info->gl_formats[fmt_idx];
-        desc->glInternal = gl_formats_template[i].glInternal;
-        desc->glGammaInternal = gl_formats_template[i].glGammaInternal;
-        desc->rtInternal = gl_formats_template[i].rtInternal;
-        desc->glFormat = gl_formats_template[i].glFormat;
-        desc->glType = gl_formats_template[i].glType;
+        desc->glInternal = format_texture_info[i].gl_internal;
+        desc->glGammaInternal = format_texture_info[i].gl_srgb_internal;
+        desc->rtInternal = format_texture_info[i].gl_rt_internal;
+        desc->glFormat = format_texture_info[i].gl_format;
+        desc->glType = format_texture_info[i].gl_type;
         desc->color_fixup = COLOR_FIXUP_IDENTITY;
-        desc->Flags |= gl_formats_template[i].Flags;
+        desc->Flags |= format_texture_info[i].flags;
         desc->heightscale = 1.0f;
     }
 
