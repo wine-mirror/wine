@@ -222,6 +222,11 @@ typedef struct _D3DXMACRO {
     LPCSTR Definition;
 } D3DXMACRO, *LPD3DXMACRO;
 
+typedef struct _D3DXSEMANTIC {
+    UINT Usage;
+    UINT UsageIndex;
+} D3DXSEMANTIC, *LPD3DXSEMANTIC;
+
 typedef enum _D3DXINCLUDE_TYPE
 {
     D3DXINC_LOCAL,
