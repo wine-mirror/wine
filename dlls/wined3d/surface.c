@@ -98,7 +98,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     if (context) context_release(context);
 }
 
-UINT surface_calculate_size(const struct GlPixelFormatDesc *format_desc, UINT alignment, UINT width, UINT height)
+UINT surface_calculate_size(const struct wined3d_format_desc *format_desc, UINT alignment, UINT width, UINT height)
 {
     UINT size;
 
@@ -336,7 +336,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
         WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format, gl_info);
     void (*cleanup)(IWineD3DSurfaceImpl *This);
     unsigned int resource_size;
     HRESULT hr;
@@ -555,7 +555,7 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 /* Context activation is done by the caller. */
 static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info)
 {
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
 
     /* Only support read back of converted P8 surfaces */
     if (This->Flags & SFLAG_CONVERTED && format_desc->format != WINED3DFMT_P8_UINT)
@@ -709,7 +709,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
 static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
         GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data)
 {
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
 
     TRACE("This %p, internal %#x, width %d, height %d, format %#x, type %#x, data %p.\n",
             This, internal, width, height, format, type, data);
@@ -772,7 +772,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
         GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type)
 {
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
     BOOL enable_client_storage = FALSE;
     const BYTE *mem = NULL;
 
@@ -2049,7 +2049,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
-    const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
+    const struct wined3d_format_desc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
@@ -5165,7 +5165,7 @@ static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
         GLenum textype, UINT width, UINT height)
 {
     ENTER_GL();

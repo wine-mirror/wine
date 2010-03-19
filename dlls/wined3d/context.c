@@ -1045,7 +1045,7 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
 
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
-        const struct GlPixelFormatDesc *color_format_desc, const struct GlPixelFormatDesc *ds_format_desc,
+        const struct wined3d_format_desc *color_format_desc, const struct wined3d_format_desc *ds_format_desc,
         BOOL auxBuffers, int numSamples, BOOL findCompatible)
 {
     int iPixelFormat=0;
@@ -1233,8 +1233,8 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct GlPixelFormatDesc *color_format_desc;
-    const struct GlPixelFormatDesc *ds_format_desc;
+    const struct wined3d_format_desc *color_format_desc;
+    const struct wined3d_format_desc *ds_format_desc;
     struct wined3d_context *ret;
     PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
@@ -1912,8 +1912,8 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
     }
     else
     {
-        const struct GlPixelFormatDesc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
-        const struct GlPixelFormatDesc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
+        const struct wined3d_format_desc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
+        const struct wined3d_format_desc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
 
         if (old->format != new->format)
         {

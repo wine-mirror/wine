@@ -6720,7 +6720,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
         GLenum textype, UINT width, UINT height)
 {
     GLenum shader;

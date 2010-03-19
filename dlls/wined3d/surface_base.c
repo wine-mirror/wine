@@ -326,7 +326,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD
 
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
     DWORD ret;
     TRACE("(%p)\n", This);
 
@@ -502,7 +502,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWin
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format,
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format,
             &This->resource.device->adapter->gl_info);
 
     if (This->resource.format_desc->format != WINED3DFMT_UNKNOWN)
@@ -527,7 +527,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
 
 HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
     int extraline = 0;
     SYSTEM_INFO sysInfo;
     BITMAPINFO* b_info;
@@ -959,7 +959,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     HRESULT     ret = WINED3D_OK;
     WINED3DLOCKED_RECT  dlock, slock;
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
-    const struct GlPixelFormatDesc *sEntry, *dEntry;
+    const struct wined3d_format_desc *sEntry, *dEntry;
     int x, y;
     const BYTE *sbuf;
     BYTE *dbuf;
@@ -1602,7 +1602,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     RECT                lock_src, lock_dst, lock_union;
     const BYTE          *sbuf;
     BYTE                *dbuf;
-    const struct GlPixelFormatDesc *sEntry, *dEntry;
+    const struct wined3d_format_desc *sEntry, *dEntry;
 
     if (TRACE_ON(d3d_surface))
     {
@@ -1883,7 +1883,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
     }
     else
     {
-        const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+        const struct wined3d_format_desc *format_desc = This->resource.format_desc;
 
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);

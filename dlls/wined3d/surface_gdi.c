@@ -296,9 +296,9 @@ const char* filename)
     FILE* f = NULL;
     UINT y = 0, x = 0;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
     static char *output = NULL;
     static UINT size = 0;
-    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
     if (This->pow2Width > size) {
         output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pow2Width * 3);

@@ -2646,7 +2646,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (Adapter == 0) { /* Display */
-        const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
+        const struct wined3d_format_desc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
         UINT format_bits = format_desc->byte_count * CHAR_BIT;
         unsigned int i = 0;
         unsigned int j = 0;
@@ -2693,7 +2693,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (Adapter == 0)
     {
-        const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
+        const struct wined3d_format_desc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
         UINT format_bits = format_desc->byte_count * CHAR_BIT;
         DEVMODEW DevModeW;
         int ModeIdx = 0;
@@ -2858,7 +2858,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined3d_gl_info *gl_info,
-        const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
+        const WineD3D_PixelFormat *cfg, const struct wined3d_format_desc *format_desc)
 {
     short redSize, greenSize, blueSize, alphaSize, colorBits;
 
@@ -2907,7 +2907,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3d_gl_info *gl_info,
-        const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
+        const WineD3D_PixelFormat *cfg, const struct wined3d_format_desc *format_desc)
 {
     short depthSize, stencilSize;
     BOOL lockable = FALSE;
@@ -2946,8 +2946,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     int nCfgs;
     const WineD3D_PixelFormat *cfgs;
     const struct wined3d_adapter *adapter;
-    const struct GlPixelFormatDesc *rt_format_desc;
-    const struct GlPixelFormatDesc *ds_format_desc;
+    const struct wined3d_format_desc *rt_format_desc;
+    const struct wined3d_format_desc *ds_format_desc;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -2986,7 +2986,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
         WINED3DFORMAT SurfaceFormat, BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD *pQualityLevels)
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    const struct GlPixelFormatDesc *glDesc;
+    const struct wined3d_format_desc *glDesc;
     const struct wined3d_adapter *adapter;
 
     TRACE_(d3d_caps)("(%p)-> (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
@@ -3166,7 +3166,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
 /* Check if we support bumpmapping for a format */
 static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
+        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
 {
     switch(format_desc->format)
     {
@@ -3194,7 +3194,7 @@ static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
 static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
-        const struct GlPixelFormatDesc *display_format_desc, const struct GlPixelFormatDesc *ds_format_desc)
+        const struct wined3d_format_desc *display_format_desc, const struct wined3d_format_desc *ds_format_desc)
 {
     int it=0;
 
@@ -3217,7 +3217,7 @@ static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckFilterCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckFilterCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     /* The flags entry of a format contains the filtering capability */
     if (format_desc->Flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
@@ -3227,7 +3227,7 @@ static BOOL CheckFilterCapability(struct wined3d_adapter *adapter, const struct 
 
 /* Check the render target capabilities of a format */
 static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
-        const struct GlPixelFormatDesc *adapter_format_desc, const struct GlPixelFormatDesc *check_format_desc)
+        const struct wined3d_format_desc *adapter_format_desc, const struct wined3d_format_desc *check_format_desc)
 {
     /* Filter out non-RT formats */
     if (!(check_format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
@@ -3270,7 +3270,7 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -3304,7 +3304,7 @@ static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struc
 }
 
 static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
+        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
 {
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
@@ -3327,7 +3327,7 @@ static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
 
 /* Check if a format support blending in combination with pixel shaders */
 static BOOL CheckPostPixelShaderBlendingCapability(struct wined3d_adapter *adapter,
-        const struct GlPixelFormatDesc *format_desc)
+        const struct wined3d_format_desc *format_desc)
 {
     /* The flags entry of a format contains the post pixel shader blending capability */
     if (format_desc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) return TRUE;
@@ -3335,7 +3335,7 @@ static BOOL CheckPostPixelShaderBlendingCapability(struct wined3d_adapter *adapt
     return FALSE;
 }
 
-static BOOL CheckWrapAndMipCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckWrapAndMipCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
      * but we have to report mipmapping so we cannot reject this flag. Tests show that
@@ -3351,7 +3351,7 @@ static BOOL CheckWrapAndMipCapability(struct wined3d_adapter *adapter, const str
 
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
+        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -3581,8 +3581,10 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *adapter_format_desc,
-        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *check_format_desc, WINED3DSURFTYPE SurfaceType)
+static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
+        const struct wined3d_format_desc *adapter_format_desc,
+        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *check_format_desc,
+        WINED3DSURFTYPE SurfaceType)
 {
     if(SurfaceType == SURFACE_GDI) {
         switch(check_format_desc->format)
@@ -3630,7 +3632,8 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter, const struct
     return FALSE;
 }
 
-static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter, const struct GlPixelFormatDesc *format_desc)
+static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter,
+        const struct wined3d_format_desc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -3665,8 +3668,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct wined3d_adapter *adapter = &This->adapters[Adapter];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(CheckFormat, gl_info);
-    const struct GlPixelFormatDesc *adapter_format_desc = getFormatDescEntry(AdapterFormat, gl_info);
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(CheckFormat, gl_info);
+    const struct wined3d_format_desc *adapter_format_desc = getFormatDescEntry(AdapterFormat, gl_info);
     DWORD UsageCaps = 0;
 
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%u,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n",

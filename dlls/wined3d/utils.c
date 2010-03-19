@@ -560,7 +560,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < format_count; ++i)
     {
-        struct GlPixelFormatDesc *desc = &gl_info->gl_formats[i];
+        struct wined3d_format_desc *desc = &gl_info->gl_formats[i];
         desc->format = formats[i].format;
         desc->red_mask = formats[i].redMask;
         desc->green_mask = formats[i].greenMask;
@@ -595,7 +595,7 @@ static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < (sizeof(format_compression_info) / sizeof(*format_compression_info)); ++i)
     {
-        struct GlPixelFormatDesc *format_desc;
+        struct wined3d_format_desc *format_desc;
         int fmt_idx = getFmtIdx(format_compression_info[i].format);
 
         if (fmt_idx == -1)
@@ -616,7 +616,7 @@ static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPixelFormatDesc *format_desc)
+static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined3d_format_desc *format_desc)
 {
     /* Check if the default internal format is supported as a frame buffer
      * target, otherwise fall back to the render target internal.
@@ -755,7 +755,7 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
     {
-        struct GlPixelFormatDesc *desc = &gl_info->gl_formats[i];
+        struct wined3d_format_desc *desc = &gl_info->gl_formats[i];
 
         if (!desc->glInternal) continue;
 
@@ -801,7 +801,7 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); ++i)
     {
         int fmt_idx = getFmtIdx(gl_formats_template[i].fmt);
-        struct GlPixelFormatDesc *desc;
+        struct wined3d_format_desc *desc;
 
         if (fmt_idx == -1)
         {
@@ -938,6 +938,7 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
 
 static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor)
 {
+    struct wined3d_format_desc *desc;
     unsigned int fmt_idx, i;
     WINED3DFORMAT fmts16[] = {
         WINED3DFMT_R16_FLOAT,
@@ -945,7 +946,6 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
         WINED3DFMT_R16G16B16A16_FLOAT,
     };
     BOOL filtered;
-    struct GlPixelFormatDesc *desc;
 
     if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
@@ -1128,7 +1128,7 @@ static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < (sizeof(format_vertex_info) / sizeof(*format_vertex_info)); ++i)
     {
-        struct GlPixelFormatDesc *format_desc;
+        struct wined3d_format_desc *format_desc;
         int fmt_idx = getFmtIdx(format_vertex_info[i].format);
 
         if (fmt_idx == -1)
@@ -1185,7 +1185,7 @@ fail:
     return FALSE;
 }
 
-const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info)
+const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info)
 {
     int idx = getFmtIdx(fmt);
 
@@ -2128,7 +2128,7 @@ unsigned int count_bits(unsigned int mask)
 
 /* Helper function for retrieving color info for ChoosePixelFormat and wglChoosePixelFormatARB.
  * The later function requires individual color components. */
-BOOL getColorBits(const struct GlPixelFormatDesc *format_desc,
+BOOL getColorBits(const struct wined3d_format_desc *format_desc,
         short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
 {
     TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
@@ -2165,7 +2165,7 @@ BOOL getColorBits(const struct GlPixelFormatDesc *format_desc,
 }
 
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
-BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *depthSize, short *stencilSize)
+BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *depthSize, short *stencilSize)
 {
     TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
     switch(format_desc->format)

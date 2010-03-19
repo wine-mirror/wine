@@ -334,7 +334,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(strided->format, gl_info);
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(strided->format, gl_info);
     e->format_desc = format_desc;
     e->stride = strided->dwStride;
     e->data = strided->lpData;
@@ -1218,7 +1218,8 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     /* Now compute offsets, and initialize the rest of the fields */
     for (idx = 0, offset = 0; idx < size; ++idx)
     {
-        const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(elements[idx].format, &This->adapter->gl_info);
+        const struct wined3d_format_desc *format_desc = getFormatDescEntry(elements[idx].format,
+                &This->adapter->gl_info);
         elements[idx].input_slot = 0;
         elements[idx].method = WINED3DDECLMETHOD_DEFAULT;
         elements[idx].offset = offset;
@@ -1930,8 +1931,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
         const WINED3DDISPLAYMODE* pMode) {
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(pMode->Format, &This->adapter->gl_info);
     LONG ret;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(pMode->Format, &This->adapter->gl_info);
     RECT clip_rc;
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
@@ -5147,6 +5148,7 @@ static float WINAPI IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface)
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface, CONST POINT* pDestPoint) {
+    const struct wined3d_format_desc *src_format_desc, *dst_format_desc;
     IWineD3DDeviceImpl  *This         = (IWineD3DDeviceImpl *) iface;
     /** TODO: remove casts to IWineD3DSurfaceImpl
      *       NOTE: move code to surface to accomplish this
@@ -5161,7 +5163,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     WINED3DPOOL       srcPool, destPool;
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
-    const struct GlPixelFormatDesc *src_format_desc, *dst_format_desc;
     GLenum dummy;
     DWORD sampler;
     int bpp;
@@ -6110,15 +6111,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-                const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
+                const struct wined3d_format_desc *format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
                 struct wined3d_context *context;
                 char *mem, *bits = rect.pBits;
-                GLint intfmt = glDesc->glInternal;
-                GLint format = glDesc->glFormat;
-                GLint type = glDesc->glType;
+                GLint intfmt = format_desc->glInternal;
+                GLint format = format_desc->glFormat;
+                GLint type = format_desc->glType;
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
-                INT bpp = glDesc->byte_count;
+                INT bpp = format_desc->byte_count;
                 DWORD sampler;
                 INT i;
 
