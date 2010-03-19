@@ -547,8 +547,7 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   ok(res == E_POINTER, "UrlGetPart for \"%s\" gave: 0x%08x\n", szUrl, res);
   ok(dwSize == strlen(szExpected)+1 ||
           (*szExpected == '?' && dwSize == strlen(szExpected)),
-          "UrlGetPart for \"%s\" gave size: %d, expected: %d\n",
-          szUrl, dwSize, (*szExpected == '?' ? strlen(szExpected) : strlen(szExpected) + 1));
+          "UrlGetPart for \"%s\" gave size: %u\n", szUrl, dwSize);
 
   dwSize = INTERNET_MAX_URL_LENGTH;
   res = pUrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags);
