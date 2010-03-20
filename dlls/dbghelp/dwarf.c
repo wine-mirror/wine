@@ -167,7 +167,6 @@ enum dwarf2_sections {section_debug, section_string, section_abbrev, section_lin
 typedef struct dwarf2_traverse_context_s
 {
     const unsigned char*        data;
-    const unsigned char*        start_data;
     const unsigned char*        end_data;
     unsigned char               word_size;
 } dwarf2_traverse_context_t;
@@ -1957,12 +1956,11 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         return FALSE;
 
     traverse.data = sections[section_line].address + offset;
-    traverse.start_data = traverse.data;
     traverse.end_data = traverse.data + 4;
     traverse.word_size = ctx->word_size;
 
     length = dwarf2_parse_u4(&traverse);
-    traverse.end_data = traverse.start_data + length;
+    traverse.end_data = sections[section_line].address + offset + length;
 
     version = dwarf2_parse_u2(&traverse);
     header_len = dwarf2_parse_u4(&traverse);
@@ -2130,7 +2128,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     BOOL ret = FALSE;
 
     cu_length = dwarf2_parse_u4(mod_ctx);
-    cu_ctx.data = cu_ctx.start_data = mod_ctx->data;
+    cu_ctx.data = mod_ctx->data;
     cu_ctx.end_data = mod_ctx->data + cu_length;
     mod_ctx->data += cu_length;
     cu_version = dwarf2_parse_u2(&cu_ctx);
@@ -2162,8 +2160,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     memset(ctx.symt_cache, 0, sizeof(ctx.symt_cache));
     ctx.symt_cache[sc_void] = &symt_new_basic(module, btVoid, "void", 0)->symt;
 
-    abbrev_ctx.start_data = sections[section_abbrev].address + cu_abbrev_offset;
-    abbrev_ctx.data = abbrev_ctx.start_data;
+    abbrev_ctx.data = sections[section_abbrev].address + cu_abbrev_offset;
     abbrev_ctx.end_data = sections[section_abbrev].address + sections[section_abbrev].size;
     abbrev_ctx.word_size = cu_ctx.word_size;
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
@@ -2416,9 +2413,8 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 
     TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->module.ModuleName));
 
-    mod_ctx.start_data = mod_ctx.data = section[section_debug].address;
+    mod_ctx.data = section[section_debug].address;
     mod_ctx.end_data = mod_ctx.data + section[section_debug].size;
-
 
     dwarf2_modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(*dwarf2_modfmt));
     if (!dwarf2_modfmt) return FALSE;
