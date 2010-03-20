@@ -2711,6 +2711,8 @@ static HRESULT StorageImpl_Construct(
    */
   This->prevFreeBlock = 0;
 
+  This->firstFreeSmallBlock = 0;
+
   /*
    * Create the block chain abstractions.
    */
@@ -5710,7 +5712,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
   ULARGE_INTEGER offsetOfBlockInDepot;
   DWORD buffer;
   ULONG bytesRead;
-  ULONG blockIndex = 0;
+  ULONG blockIndex = This->parentStorage->firstFreeSmallBlock;
   ULONG nextBlockIndex = BLOCK_END_OF_CHAIN;
   HRESULT res = S_OK;
   ULONG smallBlocksPerBigBlock;
@@ -5818,6 +5820,8 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
         StorageImpl_SaveFileHeader(This->parentStorage);
     }
   }
+
+  This->parentStorage->firstFreeSmallBlock = blockIndex+1;
 
   smallBlocksPerBigBlock =
     This->parentStorage->bigBlockSize / This->parentStorage->smallBlockSize;
@@ -6117,6 +6121,7 @@ static BOOL SmallBlockChainStream_Shrink(
 							&blockIndex)))
       return FALSE;
     SmallBlockChainStream_FreeBlock(This, extraBlock);
+    This->parentStorage->firstFreeSmallBlock = min(This->parentStorage->firstFreeSmallBlock, extraBlock);
     extraBlock = blockIndex;
   }
 

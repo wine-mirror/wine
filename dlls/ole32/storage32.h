@@ -360,6 +360,9 @@ struct StorageImpl
   ULONG indexBlockDepotCached;
   ULONG prevFreeBlock;
 
+  /* All small blocks before this one are known to be in use. */
+  ULONG firstFreeSmallBlock;
+
   /*
    * Abstraction of the big block chains for the chains of the header.
    */
