@@ -378,8 +378,12 @@ HRESULT WINAPI DirectSoundEnumerateW(
                   debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+            wDesc[(sizeof(wDesc)/sizeof(WCHAR)) - 1] = '\0';
+
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
+            wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
+
             if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
@@ -462,6 +466,8 @@ DirectSoundCaptureEnumerateW(
                                              wDesc, sizeof(wDesc)/sizeof(WCHAR) );
                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                              wName, sizeof(wName)/sizeof(WCHAR) );
+                        wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
+
                         if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
                             return DS_OK;
                     }
@@ -477,8 +483,12 @@ DirectSoundCaptureEnumerateW(
                   debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+            wDesc[(sizeof(wDesc)/sizeof(WCHAR)) - 1] = '\0';
+
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
+            wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
+
             if (lpDSEnumCallback(&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
