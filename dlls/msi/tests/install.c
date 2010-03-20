@@ -8015,6 +8015,7 @@ static void test_file_in_use(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+    DeleteFileA("msitest\\maximus");
     delete_test_files();
 }
 
@@ -8432,6 +8433,7 @@ static void test_register_font(void)
 
     RegDeleteValueA(key, "msi test font");
     RegCloseKey(key);
+    DeleteFileA("msitest\\font.ttf");
     delete_test_files();
 }
 
@@ -8496,6 +8498,11 @@ static void test_install_remove_odbc(void)
     ok(delete_pf("msitest\\ODBCsetup.dll", TRUE), "file not created\n");
     ok(delete_pf("msitest", FALSE), "directory not created\n");
 
+    DeleteFileA("msitest\\ODBCdriver.dll");
+    DeleteFileA("msitest\\ODBCdriver2.dll");
+    DeleteFileA("msitest\\ODBCtranslator.dll");
+    DeleteFileA("msitest\\ODBCtranslator2.dll");
+    DeleteFileA("msitest\\ODBCsetup.dll");
     delete_test_files();
 }
 
@@ -8521,6 +8528,7 @@ static void test_register_typelib(void)
     ok(!delete_pf("msitest\\typelib.dll", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+    DeleteFileA("msitest\\typelib.dll");
     delete_test_files();
 }
 
@@ -8547,6 +8555,7 @@ static void test_create_remove_shortcut(void)
     ok(!delete_pf("msitest\\target.txt", TRUE), "file not removed\n");
     todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+    DeleteFileA("msitest\\target.txt");
     delete_test_files();
 }
 
@@ -8583,6 +8592,8 @@ static void test_publish_components(void)
 
     ok(!delete_pf("msitest\\english.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\english.txt");
     delete_test_files();
 }
 
@@ -8616,6 +8627,10 @@ static void test_remove_duplicate_files(void)
     ok(!delete_pf("msitest\\duplicate.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest\\duplicate2.txt", TRUE), "file not removed\n");
     ok(delete_pf("msitest", FALSE), "directory removed\n");
+
+    DeleteFileA("msitest\\original.txt");
+    DeleteFileA("msitest\\original2.txt");
+    DeleteFileA("msitest\\original3.txt");
     delete_test_files();
 }
 
@@ -8687,6 +8702,8 @@ static void test_remove_registry_values(void)
 
     ok(!delete_pf("msitest\\registry.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\registry.txt");
     delete_test_files();
 }
 
@@ -8712,6 +8729,8 @@ static void test_find_related_products(void)
 
     ok(!delete_pf("msitest\\product.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\product.txt");
     delete_test_files();
 }
 
@@ -8763,6 +8782,8 @@ static void test_remove_ini_values(void)
     todo_wine ok(!delete_pf("msitest\\test.ini", TRUE), "file removed\n");
     ok(!delete_pf("msitest\\inifile.txt", TRUE), "file not removed\n");
     ok(delete_pf("msitest", FALSE), "directory removed\n");
+
+    DeleteFileA("msitest\\inifile.txt");
     delete_test_files();
 }
 
@@ -8882,6 +8903,8 @@ static void test_remove_env_strings(void)
 
     ok(!delete_pf("msitest\\envvar.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\envvar.txt");
     delete_test_files();
 }
 
