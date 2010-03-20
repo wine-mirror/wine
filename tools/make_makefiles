@@ -392,7 +392,8 @@ sub update_makefiles(@)
         }
         elsif ($file =~ /^tools.*\/Makefile$/)
         {
-            push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules],[ALL_TOOL_DIRS],enable_tools)\n";
+            (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
+            push @lines, "WINE_CONFIG_TOOL($name)\n";
         }
         elsif ($file =~ /^[^\/]*\/Makefile$/)
         {

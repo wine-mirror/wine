@@ -13957,6 +13957,26 @@ else
   wine_fn_append_file ALL_TEST_DIRS $ac_dir
 fi
 }
+
+wine_fn_config_tool ()
+{
+    ac_dir=$1
+    ac_deps="Make.rules"
+    if test "$ac_dir" != tools
+    then
+                ac_deps="$ac_deps \$(MAKEDEP)"
+    fi
+    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    if test "x$enable_tools" = x""no; then :
+
+else
+  wine_fn_append_file ALL_TOOL_DIRS $ac_dir
+fi
+}
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
 test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "dlls/wineps.drv/generic.ppd"
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
@@ -14569,27 +14589,13 @@ wine_fn_config_program xcopy enable_xcopy install
 wine_fn_config_makefile server "Make.rules \$(MAKEDEP)"
 test "x$enable_server" != xno && wine_fn_append_file ALL_TOP_DIRS "server"
 
-wine_fn_config_makefile tools Make.rules
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools"
-
-wine_fn_config_makefile tools/widl "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/widl"
-
-wine_fn_config_makefile tools/winebuild "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/winebuild"
-
-wine_fn_config_makefile tools/winedump "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/winedump"
-
-wine_fn_config_makefile tools/winegcc "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/winegcc"
-
-wine_fn_config_makefile tools/wmc "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/wmc"
-
-wine_fn_config_makefile tools/wrc "Make.rules \$(MAKEDEP)"
-test "x$enable_tools" != xno && wine_fn_append_file ALL_TOOL_DIRS "tools/wrc"
-
+wine_fn_config_tool tools
+wine_fn_config_tool tools/widl
+wine_fn_config_tool tools/winebuild
+wine_fn_config_tool tools/winedump
+wine_fn_config_tool tools/winegcc
+wine_fn_config_tool tools/wmc
+wine_fn_config_tool tools/wrc
 
 test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
 
@@ -15314,13 +15320,6 @@ do
     "loader/Makefile") CONFIG_FILES="$CONFIG_FILES loader/Makefile" ;;
     "programs/Makefile") CONFIG_FILES="$CONFIG_FILES programs/Makefile" ;;
     "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
-    "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
-    "tools/widl/Makefile") CONFIG_FILES="$CONFIG_FILES tools/widl/Makefile" ;;
-    "tools/winebuild/Makefile") CONFIG_FILES="$CONFIG_FILES tools/winebuild/Makefile" ;;
-    "tools/winedump/Makefile") CONFIG_FILES="$CONFIG_FILES tools/winedump/Makefile" ;;
-    "tools/winegcc/Makefile") CONFIG_FILES="$CONFIG_FILES tools/winegcc/Makefile" ;;
-    "tools/wmc/Makefile") CONFIG_FILES="$CONFIG_FILES tools/wmc/Makefile" ;;
-    "tools/wrc/Makefile") CONFIG_FILES="$CONFIG_FILES tools/wrc/Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

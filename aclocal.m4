@@ -268,6 +268,23 @@ $ac_dir/__clean__ $ac_dir/__crosstest__ $ac_dir: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.rules \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_file ALL_TEST_DIRS $ac_dir])
+}
+
+wine_fn_config_tool ()
+{
+    ac_dir=$[1]
+    ac_deps="Make.rules"
+    if test "$ac_dir" != tools
+    then
+        dnl makedep is in tools so tools makefile cannot depend on it
+        ac_deps="$ac_deps \$(MAKEDEP)"
+    fi
+    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    AS_VAR_IF([enable_tools],[no],,[wine_fn_append_file ALL_TOOL_DIRS $ac_dir])
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
@@ -359,6 +376,13 @@ dnl Usage: WINE_CONFIG_LIB(name)
 dnl
 AC_DEFUN([WINE_CONFIG_LIB],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 wine_fn_config_lib $1])
+
+dnl **** Create a tool makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_TOOL(name)
+dnl
+AC_DEFUN([WINE_CONFIG_TOOL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
+wine_fn_config_tool $1])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
