@@ -541,7 +541,7 @@ static void test_notify(void)
     wclass.lpszClassName = "TestNotifyParentClass";
     wclass.lpfnWndProc   = test_notify_parent_proc;
     atom = RegisterClassA(&wclass);
-    ok(atom, "RegisterClass failed!n");
+    ok(atom, "RegisterClass failed\n");
 
     /* create parent */
     hwndParent = CreateWindow(wclass.lpszClassName, "parent", WS_OVERLAPPEDWINDOW,
