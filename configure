@@ -608,10 +608,10 @@ ALL_TOOL_DIRS
 ALL_DLL_DIRS
 ALL_TOP_DIRS
 ALL_DIRS
-ALL_WINETEST_DEPENDS
-ALL_MAKEFILE_DEPENDS
 ALL_SYMLINKS
 ALL_MAKERULES
+ALL_WINETEST_DEPENDS
+ALL_MAKEFILE_DEPENDS
 LDAPLIBS
 LIBPOLL
 LIBDL
@@ -13778,14 +13778,19 @@ fi ;;
 esac
 
 
-ALL_MAKERULES=""
 
-ALL_SYMLINKS=""
+
+ac_config_commands="$ac_config_commands include/stamp-h"
+
 
 ALL_MAKEFILE_DEPENDS="# Makefile dependencies"
 
 ALL_WINETEST_DEPENDS="# Test binaries"
 
+
+ALL_MAKERULES=""
+
+ALL_SYMLINKS=""
 
 ALL_DIRS=""
 
@@ -13810,11 +13815,6 @@ ALL_TEST_BINARIES=""
 ALL_PROGRAM_DIRS=""
 
 ALL_PROGRAM_BIN_INSTALL_DIRS=""
-
-
-
-
-ac_config_commands="$ac_config_commands include/stamp-h"
 
 
 wine_fn_append_file ()
