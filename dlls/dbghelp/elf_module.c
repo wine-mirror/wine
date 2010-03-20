@@ -272,7 +272,12 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct image_file_map* fmap)
     lseek(fmap->u.elf.fd, fmap->u.elf.elfhdr.e_shoff, SEEK_SET);
     for (i = 0; i < fmap->u.elf.elfhdr.e_shnum; i++)
     {
-        read(fmap->u.elf.fd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr));
+        if (read(fmap->u.elf.fd, &fmap->u.elf.sect[i].shdr, sizeof(fmap->u.elf.sect[i].shdr)) != sizeof(fmap->u.elf.sect[i].shdr))
+        {
+            HeapFree(GetProcessHeap, 0, fmap->u.elf.sect);
+            fmap->u.elf.sect = NULL;
+            goto done;
+        }
         fmap->u.elf.sect[i].mapped = IMAGE_NO_MAP;
     }
 
