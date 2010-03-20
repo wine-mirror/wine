@@ -43,28 +43,28 @@ ULONG WINAPI MAPIAddress(LHANDLE session, ULONG_PTR uiparam, LPSTR caption,
     ULONG editfields, LPSTR labels, ULONG nRecips, lpMapiRecipDesc lpRecips,
     FLAGS flags, ULONG reserved, LPULONG newRecips, lpMapiRecipDesc * lppNewRecips)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
 ULONG WINAPI MAPIDeleteMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
     FLAGS flags, ULONG reserved)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
 ULONG WINAPI MAPIDetails(LHANDLE session, ULONG_PTR uiparam, lpMapiRecipDesc recip,
     FLAGS flags, ULONG reserved)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
 ULONG WINAPI MAPIFindNext(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_type,
     LPSTR seed_msg_id, FLAGS flags, ULONG reserved, LPSTR msg_id)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
@@ -92,20 +92,20 @@ ULONG WINAPI MAPILogoff(LHANDLE session, ULONG_PTR uiparam, FLAGS flags,
 ULONG WINAPI MAPIReadMail(LHANDLE session, ULONG_PTR uiparam, LPSTR msg_id,
     FLAGS flags, ULONG reserved, lpMapiMessage msg)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
 ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
     FLAGS flags, ULONG reserved, lpMapiRecipDesc *recip)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
 
 ULONG WINAPI MAPISaveMail(LHANDLE session, ULONG_PTR uiparam, lpMapiMessage msg,
     FLAGS flags, ULONG reserved, LPSTR msg_id)
 {
-    FIXME("(stub)");
+    FIXME("(stub)\n");
     return MAPI_E_NOT_SUPPORTED;
 }
