@@ -1016,7 +1016,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 {
     struct module_pair  pair;
     struct symt_ht*     sym;
-    DWORD               pc = pcs->ctx_frame.InstructionOffset;
+    DWORD_PTR           pc = pcs->ctx_frame.InstructionOffset;
 
     se->sym_info->SizeOfStruct = sizeof(*se->sym_info);
     se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
