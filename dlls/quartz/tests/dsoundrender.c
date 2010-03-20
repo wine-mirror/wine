@@ -1,7 +1,7 @@
 /*
  * Unit tests for DSound Renderer functions
  *
- * Copyright (C) 2010 Maarten Lankhorst for Codeweavers
+ * Copyright (C) 2010 Maarten Lankhorst for CodeWeavers
  * Copyright (C) 2007 Google (Lei Zhang)
  *
  * This library is free software; you can redistribute it and/or

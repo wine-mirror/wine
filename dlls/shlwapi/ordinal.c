@@ -500,7 +500,7 @@ HRESULT WINAPI GetAcceptLanguagesW( LPWSTR langbuf, LPDWORD buflen)
         return S_OK;
     }
 
-    /* Did not find a value in the registry or the user buffer is to small */
+    /* Did not find a value in the registry or the user buffer is too small */
     mylcid = GetUserDefaultLCID();
     retval = LcidToRfc1766W(mylcid, mystr, mystrlen);
     len = lstrlenW(mystr);

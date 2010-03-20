@@ -954,8 +954,9 @@ static void test_hfont_lifetime(void)
         ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
     }
 
-    /* Interestingly if we release a non-existent reference on the hfont, it persists
-       until the font object is released */
+    /* Interestingly if we release a nonexistent reference on the hfont,
+     * it persists until the font object is released
+     */
     for(i = 0; i < 100; i++)
     {
         size.int64 = (i + 10) * 20000;

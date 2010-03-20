@@ -186,7 +186,7 @@ static void test_GetAcceptLanguagesA(void)
         /* There is no space for the string in the registry.
            When the buffer is large enough, the default language is returned
 
-           When the buffer is to small for that fallback, win7_32 and w2k8_64
+           When the buffer is too small for that fallback, win7_32 and w2k8_64
            and above fail with HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), but
            recent os succeed and return a partial result while
            older os succeed and overflow the buffer */
@@ -254,7 +254,7 @@ static void test_GetAcceptLanguagesA(void)
     memset(buffer, '#', maxlen);
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, &len);
-    /* When the buffer is to small, win7_32 and w2k8_64 and above fail with
+    /* When the buffer is too small, win7_32 and w2k8_64 and above fail with
        HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), other versions suceed
        and return a partial 0 terminated result while other versions
        fail with E_INVALIDARG and return a partial unterminated result */

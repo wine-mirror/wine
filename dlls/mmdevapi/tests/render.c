@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Maarten Lankhorst for Codeweavers
+ * Copyright 2010 Maarten Lankhorst for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -177,7 +177,7 @@ static void test_audioclient(IAudioClient *ac)
     ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
 
     /* It seems that if length > 2s or periodicity != 0 the length is ignored and call succeeds
-     * Since we can only initialize succesfully once skip those tests
+     * Since we can only initialize successfully once, skip those tests.
      */
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, NULL, NULL);
     ok(hr == E_POINTER, "Initialize with null format returns %08x\n", hr);

@@ -143,7 +143,7 @@ static void test_get_shader_constant_table_ex(void)
         ok(size == 28, "Got result %x, expected 28\n", size);
 
         data = ID3DXConstantTable_GetBufferPointer(constant_table);
-        ok(!memcmp(data, shader_with_ctab + 6, size), "Retreived wrong CTAB data\n");
+        ok(!memcmp(data, shader_with_ctab + 6, size), "Retrieved wrong CTAB data\n");
 
         hr = ID3DXConstantTable_GetDesc(constant_table, NULL);
         ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);

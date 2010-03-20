@@ -854,7 +854,7 @@ SampleGrabber_ISampleGrabber_GetCurrentBuffer(ISampleGrabber *iface, LONG *bufSi
 static HRESULT WINAPI
 SampleGrabber_ISampleGrabber_GetCurrentSample(ISampleGrabber *iface, IMediaSample **sample)
 {
-    /* MS doesn't implement it either, noone should call it */
+    /* MS doesn't implement it either, no one should call it */
     WARN("(%p): not implemented\n", sample);
     return E_NOTIMPL;
 }

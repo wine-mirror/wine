@@ -255,7 +255,7 @@ static void test_DispGetParam(void)
 
     CLEAR_VARARG(vararg);
 
-    /* Coerce the the first parameter, which is of type VT_EMPTY, to VT_BSTR. */
+    /* Coerce the first parameter, which is of type VT_EMPTY, to VT_BSTR. */
     VariantInit(&vararg[0]);
     INIT_DISPPARAMS(dispparams, vararg, NULL, 1, 0);
     VariantInit(&result);

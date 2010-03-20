@@ -1822,7 +1822,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
     if (cbMidiHdr < offsetof(MIDIHDR,dwOffset) || !lpMidiHdr || !lpMidiHdr->lpData
 	|| lpMidiHdr->dwBufferLength < lpMidiHdr->dwBytesRecorded)
 	return MMSYSERR_INVALPARAM;
-    /* FIXME: Native additionaly checks if the MIDIEVENTs in lpData
+    /* FIXME: Native additionally checks if the MIDIEVENTs in lpData
      * exactly fit dwBytesRecorded. */
 
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))

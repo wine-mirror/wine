@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Maarten Lankhorst for Codeweavers
+ * Copyright (C) 2010 Maarten Lankhorst for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

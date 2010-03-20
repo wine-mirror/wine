@@ -811,7 +811,7 @@ static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, 
     TRACE("(%p)->(%d %d %p)\n", This, aspects, advf, pAdvSink);
 
     if(aspects != DVASPECT_CONTENT || advf != ADVF_PRIMEFIRST)
-        FIXME("unsuported arguments\n");
+        FIXME("unsupported arguments\n");
 
     if(This->doc_obj->view_sink)
         IAdviseSink_Release(This->doc_obj->view_sink);

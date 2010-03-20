@@ -838,7 +838,7 @@ static HRESULT create_row_proxy(IWineRowServer *server, IUnknown **obj)
     proxy->server = server;
 
     *obj = (IUnknown*)&proxy->row_vtbl;
-    TRACE("returing %p\n", *obj);
+    TRACE("returning %p\n", *obj);
     return S_OK;
 }
 
@@ -1339,7 +1339,7 @@ HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
     proxy->server = server;
 
     *obj = (IUnknown *)&proxy->rowset_vtbl;
-    TRACE("returing %p\n", *obj);
+    TRACE("returning %p\n", *obj);
     return S_OK;
 }
 
@@ -1474,7 +1474,7 @@ static HRESULT WINAPI marshal_UnmarshalInterface(IMarshal *iface, IStream *strea
         IWineRowServer_Release(server);
     }
 
-    TRACE("returing %p\n", *obj);
+    TRACE("returning %p\n", *obj);
     return hr;
 }
 
@@ -1522,7 +1522,7 @@ static HRESULT create_marshal(IUnknown *outer, const CLSID *class, void **obj)
     marshal->ref = 1;
 
     *obj = &marshal->marshal_vtbl;
-    TRACE("returing %p\n", *obj);
+    TRACE("returning %p\n", *obj);
     return S_OK;
 }
 

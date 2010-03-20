@@ -1300,7 +1300,7 @@ end_of_mci_open:
     case MCI_SEEK:
     case MCI_STEP:
         {
-            MCI_SEEK_PARMS mci_seek; /* Layout is useable as MCI_XYZ_STEP_PARMS */
+            MCI_SEEK_PARMS mci_seek; /* Layout is usable as MCI_XYZ_STEP_PARMS */
             DWORD flags = MCI_STEP == wMsg ? 0 :
                           MCIWND_START == lParam ? MCI_SEEK_TO_START :
                           MCIWND_END   == lParam ? MCI_SEEK_TO_END : MCI_TO;

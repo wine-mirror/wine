@@ -662,7 +662,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             }
         }
 
-        /* If there is a '#' and the characters immediately preceeding it are
+        /* If there is a '#' and the characters immediately preceding it are
          * ".htm[l]", then begin looking for the last leaf starting from
          * the '#'. Otherwise the '#' is not meaningful and just start
          * looking from the end. */
