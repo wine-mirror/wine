@@ -4153,11 +4153,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
         hProxyDll = hinstDLL;
         COMPOBJ_InitProcess();
-	if (TRACE_ON(ole)) CoRegisterMallocSpy((LPVOID)-1);
 	break;
 
     case DLL_PROCESS_DETACH:
-        if (TRACE_ON(ole)) CoRevokeMallocSpy();
         OLEDD_UnInitialize();
         COMPOBJ_UninitProcess();
         RPC_UnregisterAllChannelHooks();
