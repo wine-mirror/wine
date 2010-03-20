@@ -140,7 +140,8 @@ dnl
 dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
 dnl
 AC_DEFUN([WINE_CONFIG_HELPERS],
-[AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies"])
+[AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies
+Makefile: Makefile.in Make.rules config.status"])
 AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 
 AC_SUBST(ALL_MAKERULES,"")
@@ -171,12 +172,16 @@ wine_fn_append_rule ()
 wine_fn_config_makefile ()
 {
     ac_dir=$[1]
-    ac_deps=$[2]
+    ac_enable=$[2]
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Make.rules \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    AS_VAR_IF([$ac_enable],[no],,[case $ac_dir in
+                 */*) ;;
+                 *) wine_fn_append_file ALL_TOP_DIRS $ac_dir ;;
+               esac])
 }
 
 wine_fn_config_lib ()
@@ -345,19 +350,12 @@ AC_CONFIG_FILES([$1])])
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,deps,var,enable)
+dnl Usage: WINE_CONFIG_MAKEFILE(file,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\(\(.*\)/\)?Makefile$],[\2]))dnl
-m4_pushdef([ac_name],m4_bpatsubst(ac_dir,[.*/\(.*\)$],[\1]))dnl
-m4_if(ac_dir,,WINE_APPEND_RULE(ALL_MAKEFILE_DEPENDS,[$1: $1.in $2 config.status])
-AC_CONFIG_FILES([$1]),
-[wine_fn_config_makefile ac_dir m4_if(ac_dir,tools,[$2],["$2 \$(MAKEDEP)"])
-AS_VAR_PUSHDEF([ac_enable],m4_default([$4],[enable_]ac_name))dnl
-m4_ifval([$3],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$3],[ && WINE_APPEND_FILE(ac_var,ac_dir)]))
-AS_VAR_POPDEF([ac_enable])])dnl
-m4_popdef([ac_dir])dnl
-m4_popdef([ac_name])])
+AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+wine_fn_config_makefile [$1] ac_enable[]dnl
+AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a dll makefile from config.status ****
 dnl

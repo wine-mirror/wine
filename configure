@@ -13782,8 +13782,11 @@ esac
 
 ac_config_commands="$ac_config_commands include/stamp-h"
 
+ac_config_files="$ac_config_files Makefile"
 
-ALL_MAKEFILE_DEPENDS="# Makefile dependencies"
+
+ALL_MAKEFILE_DEPENDS="# Makefile dependencies
+Makefile: Makefile.in Make.rules config.status"
 
 ALL_WINETEST_DEPENDS="# Test binaries"
 
@@ -13830,12 +13833,21 @@ wine_fn_append_rule ()
 wine_fn_config_makefile ()
 {
     ac_dir=$1
-    ac_deps=$2
+    ac_enable=$2
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Make.rules \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    eval as_val=\$$ac_enable
+   if test "x$as_val" = x""no; then :
+
+else
+  case $ac_dir in
+                 */*) ;;
+                 *) wine_fn_append_file ALL_TOP_DIRS $ac_dir ;;
+               esac
+fi
 }
 
 wine_fn_config_lib ()
@@ -14028,9 +14040,6 @@ wine_fn_append_rule ALL_MAKEFILE_DEPENDS "programs/Makeprog.rules: programs/Make
 MAKE_PROG_RULES=programs/Makeprog.rules
 ac_config_files="$ac_config_files programs/Makeprog.rules"
 
-
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "Makefile: Makefile.in Make.rules config.status"
-ac_config_files="$ac_config_files Makefile"
 
 wine_fn_config_dll acledit enable_acledit
 wine_fn_config_dll aclui enable_aclui aclui
@@ -14505,30 +14514,14 @@ wine_fn_config_test dlls/xinput1_3/tests xinput1_3_test
 wine_fn_config_dll xinput9_1_0 enable_xinput9_1_0
 wine_fn_config_dll xmllite enable_xmllite
 wine_fn_config_test dlls/xmllite/tests xmllite_test
-wine_fn_config_makefile documentation "Make.rules \$(MAKEDEP)"
-test "x$enable_documentation" != xno && wine_fn_append_file ALL_TOP_DIRS "documentation"
-
-wine_fn_config_makefile fonts "Make.rules \$(MAKEDEP)"
-test "x$enable_fonts" != xno && wine_fn_append_file ALL_TOP_DIRS "fonts"
-
-wine_fn_config_makefile include "Make.rules \$(MAKEDEP)"
-test "x$enable_include" != xno && wine_fn_append_file ALL_TOP_DIRS "include"
-
-wine_fn_config_makefile libs/port "Make.rules \$(MAKEDEP)"
-
-
-wine_fn_config_makefile libs/wine "Make.rules \$(MAKEDEP)"
-
-
-wine_fn_config_makefile libs/wpp "Make.rules \$(MAKEDEP)"
-
-
-wine_fn_config_makefile loader "Make.rules \$(MAKEDEP)"
-test "x$enable_loader" != xno && wine_fn_append_file ALL_TOP_DIRS "loader"
-
-wine_fn_config_makefile programs "Make.rules \$(MAKEDEP)"
-test "x$enable_programs" != xno && wine_fn_append_file ALL_TOP_DIRS "programs"
-
+wine_fn_config_makefile documentation enable_documentation
+wine_fn_config_makefile fonts enable_fonts
+wine_fn_config_makefile include enable_include
+wine_fn_config_makefile libs/port enable_libs_port
+wine_fn_config_makefile libs/wine enable_libs_wine
+wine_fn_config_makefile libs/wpp enable_libs_wpp
+wine_fn_config_makefile loader enable_loader
+wine_fn_config_makefile programs enable_programs
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cacls enable_cacls install
 wine_fn_config_program clock enable_clock install
@@ -14586,9 +14579,7 @@ wine_fn_config_program winver enable_winver install
 wine_fn_config_program wordpad enable_wordpad install
 wine_fn_config_program write enable_write install
 wine_fn_config_program xcopy enable_xcopy install
-wine_fn_config_makefile server "Make.rules \$(MAKEDEP)"
-test "x$enable_server" != xno && wine_fn_append_file ALL_TOP_DIRS "server"
-
+wine_fn_config_makefile server enable_server
 wine_fn_config_tool tools
 wine_fn_config_tool tools/widl
 wine_fn_config_tool tools/winebuild
@@ -15293,6 +15284,7 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "dlls/wineps.drv/generic.ppd") CONFIG_LINKS="$CONFIG_LINKS dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd" ;;
     "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
@@ -15310,16 +15302,6 @@ do
     "dlls/Makedll.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
     "dlls/Makeimplib.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makeimplib.rules" ;;
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
-    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "documentation/Makefile") CONFIG_FILES="$CONFIG_FILES documentation/Makefile" ;;
-    "fonts/Makefile") CONFIG_FILES="$CONFIG_FILES fonts/Makefile" ;;
-    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
-    "libs/port/Makefile") CONFIG_FILES="$CONFIG_FILES libs/port/Makefile" ;;
-    "libs/wine/Makefile") CONFIG_FILES="$CONFIG_FILES libs/wine/Makefile" ;;
-    "libs/wpp/Makefile") CONFIG_FILES="$CONFIG_FILES libs/wpp/Makefile" ;;
-    "loader/Makefile") CONFIG_FILES="$CONFIG_FILES loader/Makefile" ;;
-    "programs/Makefile") CONFIG_FILES="$CONFIG_FILES programs/Makefile" ;;
-    "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
