@@ -164,12 +164,18 @@ $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
 wine_fn_config_lib ()
 {
     ac_name=$[1]
-    wine_fn_append_file ALL_STATIC_LIBS dlls/$ac_name/lib$ac_name.a
+    ac_dir=dlls/$ac_name
+    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_append_file ALL_STATICLIB_DIRS $ac_dir
+    wine_fn_append_file ALL_STATIC_LIBS $ac_dir/lib$ac_name.a
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"dlls/$ac_name/__install__ dlls/$ac_name/__install-dev__: dlls/$ac_name
-dlls/$ac_name dlls/$ac_name/lib$ac_name.cross.a: tools/widl tools/winebuild tools/winegcc include
-dlls/$ac_name/lib$ac_name.cross.a: dlls/$ac_name/Makefile dummy
-	@cd dlls/$ac_name && \$(MAKE) lib$ac_name.cross.a"
+"$ac_dir/__install__ $ac_dir/__install-dev__: $ac_dir
+$ac_dir $ac_dir/lib$ac_name.cross.a: tools/widl tools/winebuild tools/winegcc include
+$ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile dummy
+	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
+$ac_dir/__clean__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status dlls/Makeimplib.rules \$(MAKEDEP)
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
 }
 
 wine_fn_config_dll ()
@@ -325,8 +331,7 @@ dnl
 dnl Usage: WINE_CONFIG_LIB(name)
 dnl
 AC_DEFUN([WINE_CONFIG_LIB],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_lib $1
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makeimplib.rules],[ALL_STATICLIB_DIRS])])
+wine_fn_config_lib $1])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
