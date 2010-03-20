@@ -319,7 +319,7 @@ static void test_default_data(void)
     ok(asi0.rcFrame.right == 8, "got %u (expected 8)\n", asi0.rcFrame.right);  /* these are based on the values in the mah and not */
     ok(asi0.rcFrame.bottom == 6, "got %u (expected 6)\n", asi0.rcFrame.bottom);/* on the ones in the ash which are 0 here */
     ok(asi0.dwEditCount == 0, "got %u (expected 0)\n", asi0.dwEditCount);
-    ok(asi0.dwFormatChangeCount == 0, "got %u (expected 0)\n)", asi0.dwFormatChangeCount);
+    ok(asi0.dwFormatChangeCount == 0, "got %u (expected 0)\n", asi0.dwFormatChangeCount);
 
     ok(asi1.fccType == streamtypeAUDIO, "got 0x%x (expected streamtypeVIDEO)\n", asi1.fccType);
     ok(asi1.fccHandler == 0x1, "got 0x%x (expected 0x1)\n", asi1.fccHandler);
@@ -339,7 +339,7 @@ static void test_default_data(void)
     ok(asi1.rcFrame.right == 0, "got %u (expected 0)\n", asi1.rcFrame.right);
     ok(asi1.rcFrame.bottom == 0, "got %u (expected 0)\n", asi1.rcFrame.bottom);
     ok(asi1.dwEditCount == 0, "got %u (expected 0)\n", asi1.dwEditCount);
-    ok(asi1.dwFormatChangeCount == 0, "got %u (expected 0)\n)", asi1.dwFormatChangeCount);
+    ok(asi1.dwFormatChangeCount == 0, "got %u (expected 0)\n", asi1.dwFormatChangeCount);
 
     ok(wfx.wFormatTag == 1, "got %u (expected 1)\n",wfx.wFormatTag);
     ok(wfx.nChannels == 2, "got %u (expected 2)\n",wfx.nChannels);
@@ -351,7 +351,7 @@ static void test_default_data(void)
     AVIStreamRelease(pStream0);
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 static void test_amh_corruption(void)
@@ -408,7 +408,7 @@ static void test_ash1_corruption(void)
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 static void test_ash1_corruption2(void)
@@ -442,7 +442,7 @@ static void test_ash1_corruption2(void)
 
     AVIStreamRelease(pStream1);
     AVIFileRelease(pFile);
-    ok(DeleteFile(filename) !=0, "Deleting file %s failed", filename);
+    ok(DeleteFile(filename) !=0, "Deleting file %s failed\n", filename);
 }
 
 /* ########################### */
