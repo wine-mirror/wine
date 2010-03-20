@@ -1989,28 +1989,38 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 
 static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
 {
-	IShellViewImpl *This = (IShellViewImpl *)iface;
+    IShellViewImpl *This = (IShellViewImpl *)iface;
+    HRESULT hr = E_NOINTERFACE;
 
-	TRACE("(%p)->(uItem=0x%08x,\n\tIID=%s, ppv=%p)\n",This, uItem, debugstr_guid(riid), ppvOut);
+    TRACE("(%p)->(0x%08x, %s, %p)\n",This, uItem, debugstr_guid(riid), ppvOut);
 
-	*ppvOut = NULL;
+    *ppvOut = NULL;
 
-	switch(uItem)
-	{
-	  case SVGIO_BACKGROUND:
-	    *ppvOut = ISvBgCm_Constructor(This->pSFParent, FALSE);
-	    break;
+    switch(uItem)
+    {
+    case SVGIO_BACKGROUND:
 
-	  case SVGIO_SELECTION:
-	    ShellView_GetSelections(This);
-	    IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, (LPCITEMIDLIST*)This->apidl, riid, 0, ppvOut);
-	    break;
-	}
-	TRACE("-- (%p)->(interface=%p)\n",This, *ppvOut);
+        if (IsEqualIID(&IID_IContextMenu, riid))
+        {
+            *ppvOut = ISvBgCm_Constructor(This->pSFParent, FALSE);
+            hr = S_OK;
+        }
+        else
+            FIXME("unsupported interface requested %s\n", debugstr_guid(riid));
 
-	if(!*ppvOut) return E_OUTOFMEMORY;
+        break;
 
-	return S_OK;
+    case SVGIO_SELECTION:
+	ShellView_GetSelections(This);
+	hr = IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, (LPCITEMIDLIST*)This->apidl, riid, 0, ppvOut);
+	break;
+
+    default:
+        FIXME("unimplemented for uItem = 0x%08x\n", uItem);
+    }
+    TRACE("-- (%p)->(interface=%p)\n",This, *ppvOut);
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellView2_fnGetView(IShellView2* iface, SHELLVIEWID *view_guid, ULONG view_type)
