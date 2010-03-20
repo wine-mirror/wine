@@ -279,7 +279,7 @@ static void test_GetChildContainer(void)
         ok(hr == S_OK,
            "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
         if (SUCCEEDED(hr))
-            todo_wine ok(ptr != child, "Expected the two pointers (%p vs. %p) to be unequal", child, ptr);
+            todo_wine ok(ptr != child, "Expected the two pointers (%p vs. %p) to be unequal\n", child, ptr);
 
         IDxDiagContainer_Release(ptr);
         IDxDiagContainer_Release(child);
