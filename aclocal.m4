@@ -233,8 +233,20 @@ clean::
 wine_fn_config_program ()
 {
     ac_dir=$[1]
+    ac_enable=$[2]
+    ac_install=$[3]
+    wine_fn_append_file ALL_DIRS programs/$ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"programs/$ac_dir programs/$ac_dir/__install__ programs/$ac_dir/__install-lib__: __builddeps__"
+"programs/$ac_dir programs/$ac_dir/__install__ programs/$ac_dir/__install-lib__: __builddeps__ programs/$ac_dir/Makefile
+programs/$ac_dir/__clean__ programs/$ac_dir/__install-dev__ programs/$ac_dir/__uninstall__ programs/$ac_dir: programs/$ac_dir/Makefile
+programs/$ac_dir/Makefile programs/$ac_dir/__depend__: programs/$ac_dir/Makefile.in config.status programs/Makeprog.rules \$(MAKEDEP)
+	@./config.status --file programs/$ac_dir/Makefile && cd programs/$ac_dir && \$(MAKE) depend"
+    AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_file ALL_PROGRAM_DIRS programs/$ac_dir
+              case $ac_install in
+               installbin) wine_fn_append_file ALL_INSTALL_DIRS programs/$ac_dir
+                           wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS programs/$ac_dir ;;
+               install) wine_fn_append_file ALL_INSTALL_DIRS programs/$ac_dir ;;
+              esac])
 }
 
 wine_fn_config_test ()
@@ -323,11 +335,12 @@ AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_PROGRAM(name,var,enable)
+dnl Usage: WINE_CONFIG_PROGRAM(name,install,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_PROGRAM],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_program [$1]
-WINE_CONFIG_MAKEFILE([programs/$1/Makefile],[programs/Makeprog.rules],[$2],[$3])])
+AS_VAR_PUSHDEF([ac_enable],m4_default([$3],[enable_]$1))dnl
+wine_fn_config_program [$1] ac_enable [$2]dnl
+AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a test makefile from config.status ****
 dnl

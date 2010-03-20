@@ -13912,8 +13912,25 @@ clean::
 wine_fn_config_program ()
 {
     ac_dir=$1
+    ac_enable=$2
+    ac_install=$3
+    wine_fn_append_file ALL_DIRS programs/$ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"programs/$ac_dir programs/$ac_dir/__install__ programs/$ac_dir/__install-lib__: __builddeps__"
+"programs/$ac_dir programs/$ac_dir/__install__ programs/$ac_dir/__install-lib__: __builddeps__ programs/$ac_dir/Makefile
+programs/$ac_dir/__clean__ programs/$ac_dir/__install-dev__ programs/$ac_dir/__uninstall__ programs/$ac_dir: programs/$ac_dir/Makefile
+programs/$ac_dir/Makefile programs/$ac_dir/__depend__: programs/$ac_dir/Makefile.in config.status programs/Makeprog.rules \$(MAKEDEP)
+	@./config.status --file programs/$ac_dir/Makefile && cd programs/$ac_dir && \$(MAKE) depend"
+    eval as_val=\$$ac_enable
+   if test "x$as_val" = x""no; then :
+
+else
+  wine_fn_append_file ALL_PROGRAM_DIRS programs/$ac_dir
+              case $ac_install in
+               installbin) wine_fn_append_file ALL_INSTALL_DIRS programs/$ac_dir
+                           wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS programs/$ac_dir ;;
+               install) wine_fn_append_file ALL_INSTALL_DIRS programs/$ac_dir ;;
+              esac
+fi
 }
 
 wine_fn_config_test ()
@@ -14492,231 +14509,63 @@ test "x$enable_loader" != xno && wine_fn_append_file ALL_TOP_DIRS "loader"
 wine_fn_config_makefile programs "Make.rules \$(MAKEDEP)"
 test "x$enable_programs" != xno && wine_fn_append_file ALL_TOP_DIRS "programs"
 
-wine_fn_config_program attrib
-wine_fn_config_makefile programs/attrib "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_attrib" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/attrib" && wine_fn_append_file ALL_INSTALL_DIRS "programs/attrib"
-
-wine_fn_config_program cacls
-wine_fn_config_makefile programs/cacls "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_cacls" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cacls" && wine_fn_append_file ALL_INSTALL_DIRS "programs/cacls"
-
-wine_fn_config_program clock
-wine_fn_config_makefile programs/clock "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_clock" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/clock" && wine_fn_append_file ALL_INSTALL_DIRS "programs/clock"
-
-wine_fn_config_program cmd
-wine_fn_config_makefile programs/cmd "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_cmd" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cmd" && wine_fn_append_file ALL_INSTALL_DIRS "programs/cmd"
-
+wine_fn_config_program attrib enable_attrib install
+wine_fn_config_program cacls enable_cacls install
+wine_fn_config_program clock enable_clock install
+wine_fn_config_program cmd enable_cmd install
 wine_fn_config_test programs/cmd/tests cmd.exe_test
-wine_fn_config_program cmdlgtst
-wine_fn_config_makefile programs/cmdlgtst "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_cmdlgtst" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cmdlgtst"
-
-wine_fn_config_program control
-wine_fn_config_makefile programs/control "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_control" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/control" && wine_fn_append_file ALL_INSTALL_DIRS "programs/control"
-
-wine_fn_config_program dxdiag
-wine_fn_config_makefile programs/dxdiag "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_dxdiag" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/dxdiag" && wine_fn_append_file ALL_INSTALL_DIRS "programs/dxdiag"
-
-wine_fn_config_program eject
-wine_fn_config_makefile programs/eject "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_eject" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/eject" && wine_fn_append_file ALL_INSTALL_DIRS "programs/eject"
-
-wine_fn_config_program expand
-wine_fn_config_makefile programs/expand "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_expand" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/expand" && wine_fn_append_file ALL_INSTALL_DIRS "programs/expand"
-
-wine_fn_config_program explorer
-wine_fn_config_makefile programs/explorer "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_explorer" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/explorer" && wine_fn_append_file ALL_INSTALL_DIRS "programs/explorer"
-
-wine_fn_config_program extrac32
-wine_fn_config_makefile programs/extrac32 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_extrac32" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/extrac32" && wine_fn_append_file ALL_INSTALL_DIRS "programs/extrac32"
-
-wine_fn_config_program hh
-wine_fn_config_makefile programs/hh "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_hh" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/hh" && wine_fn_append_file ALL_INSTALL_DIRS "programs/hh"
-
-wine_fn_config_program icinfo
-wine_fn_config_makefile programs/icinfo "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_icinfo" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/icinfo" && wine_fn_append_file ALL_INSTALL_DIRS "programs/icinfo"
-
-wine_fn_config_program iexplore
-wine_fn_config_makefile programs/iexplore "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_iexplore" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/iexplore" && wine_fn_append_file ALL_INSTALL_DIRS "programs/iexplore"
-
-wine_fn_config_program lodctr
-wine_fn_config_makefile programs/lodctr "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_lodctr" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/lodctr" && wine_fn_append_file ALL_INSTALL_DIRS "programs/lodctr"
-
-wine_fn_config_program mshta
-wine_fn_config_makefile programs/mshta "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_mshta" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/mshta" && wine_fn_append_file ALL_INSTALL_DIRS "programs/mshta"
-
-wine_fn_config_program msiexec
-wine_fn_config_makefile programs/msiexec "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_msiexec" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/msiexec" && wine_fn_append_file ALL_INSTALL_DIRS "programs/msiexec" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/msiexec"
-
-wine_fn_config_program net
-wine_fn_config_makefile programs/net "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_net" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/net" && wine_fn_append_file ALL_INSTALL_DIRS "programs/net"
-
-wine_fn_config_program notepad
-wine_fn_config_makefile programs/notepad "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_notepad" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/notepad" && wine_fn_append_file ALL_INSTALL_DIRS "programs/notepad" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/notepad"
-
-wine_fn_config_program oleview
-wine_fn_config_makefile programs/oleview "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_oleview" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/oleview" && wine_fn_append_file ALL_INSTALL_DIRS "programs/oleview"
-
-wine_fn_config_program ping
-wine_fn_config_makefile programs/ping "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_ping" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/ping" && wine_fn_append_file ALL_INSTALL_DIRS "programs/ping"
-
-wine_fn_config_program progman
-wine_fn_config_makefile programs/progman "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_progman" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/progman" && wine_fn_append_file ALL_INSTALL_DIRS "programs/progman"
-
-wine_fn_config_program reg
-wine_fn_config_makefile programs/reg "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_reg" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/reg" && wine_fn_append_file ALL_INSTALL_DIRS "programs/reg"
-
-wine_fn_config_program regedit
-wine_fn_config_makefile programs/regedit "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_regedit" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/regedit" && wine_fn_append_file ALL_INSTALL_DIRS "programs/regedit" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/regedit"
-
-wine_fn_config_program regsvr32
-wine_fn_config_makefile programs/regsvr32 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_regsvr32" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/regsvr32" && wine_fn_append_file ALL_INSTALL_DIRS "programs/regsvr32" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/regsvr32"
-
-wine_fn_config_program rpcss
-wine_fn_config_makefile programs/rpcss "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_rpcss" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/rpcss" && wine_fn_append_file ALL_INSTALL_DIRS "programs/rpcss"
-
-wine_fn_config_program rundll32
-wine_fn_config_makefile programs/rundll32 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_rundll32" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/rundll32" && wine_fn_append_file ALL_INSTALL_DIRS "programs/rundll32"
-
-wine_fn_config_program secedit
-wine_fn_config_makefile programs/secedit "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_secedit" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/secedit" && wine_fn_append_file ALL_INSTALL_DIRS "programs/secedit"
-
-wine_fn_config_program services
-wine_fn_config_makefile programs/services "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_services" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/services" && wine_fn_append_file ALL_INSTALL_DIRS "programs/services"
-
-wine_fn_config_program spoolsv
-wine_fn_config_makefile programs/spoolsv "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_spoolsv" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/spoolsv" && wine_fn_append_file ALL_INSTALL_DIRS "programs/spoolsv"
-
-wine_fn_config_program start
-wine_fn_config_makefile programs/start "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_start" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/start" && wine_fn_append_file ALL_INSTALL_DIRS "programs/start"
-
-wine_fn_config_program svchost
-wine_fn_config_makefile programs/svchost "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_svchost" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/svchost" && wine_fn_append_file ALL_INSTALL_DIRS "programs/svchost"
-
-wine_fn_config_program taskmgr
-wine_fn_config_makefile programs/taskmgr "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_taskmgr" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/taskmgr" && wine_fn_append_file ALL_INSTALL_DIRS "programs/taskmgr"
-
-wine_fn_config_program termsv
-wine_fn_config_makefile programs/termsv "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_termsv" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/termsv" && wine_fn_append_file ALL_INSTALL_DIRS "programs/termsv"
-
-wine_fn_config_program uninstaller
-wine_fn_config_makefile programs/uninstaller "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_uninstaller" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/uninstaller" && wine_fn_append_file ALL_INSTALL_DIRS "programs/uninstaller"
-
-wine_fn_config_program unlodctr
-wine_fn_config_makefile programs/unlodctr "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_unlodctr" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/unlodctr" && wine_fn_append_file ALL_INSTALL_DIRS "programs/unlodctr"
-
-wine_fn_config_program view
-wine_fn_config_makefile programs/view "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_view" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/view"
-
-wine_fn_config_program wineboot
-wine_fn_config_makefile programs/wineboot "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_wineboot" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/wineboot" && wine_fn_append_file ALL_INSTALL_DIRS "programs/wineboot" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/wineboot"
-
-wine_fn_config_program winebrowser
-wine_fn_config_makefile programs/winebrowser "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winebrowser" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winebrowser" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winebrowser"
-
-wine_fn_config_program winecfg
-wine_fn_config_makefile programs/winecfg "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winecfg" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winecfg" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winecfg" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/winecfg"
-
-wine_fn_config_program wineconsole
-wine_fn_config_makefile programs/wineconsole "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_wineconsole" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/wineconsole" && wine_fn_append_file ALL_INSTALL_DIRS "programs/wineconsole" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/wineconsole"
-
-wine_fn_config_program winedbg
-wine_fn_config_makefile programs/winedbg "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winedbg" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winedbg" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winedbg" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/winedbg"
-
-wine_fn_config_program winedevice
-wine_fn_config_makefile programs/winedevice "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winedevice" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winedevice" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winedevice"
-
-wine_fn_config_program winefile
-wine_fn_config_makefile programs/winefile "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winefile" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winefile" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winefile" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/winefile"
-
-wine_fn_config_program winemenubuilder
-wine_fn_config_makefile programs/winemenubuilder "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winemenubuilder" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winemenubuilder" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winemenubuilder"
-
-wine_fn_config_program winemine
-wine_fn_config_makefile programs/winemine "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winemine" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winemine" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winemine" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/winemine"
-
-wine_fn_config_program winepath
-wine_fn_config_makefile programs/winepath "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winepath" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winepath" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winepath" && wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS "programs/winepath"
-
-wine_fn_config_program winetest
-wine_fn_config_makefile programs/winetest "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winetest" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winetest"
-
-wine_fn_config_program winevdm
-wine_fn_config_makefile programs/winevdm "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_win16" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winevdm" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winevdm"
-
-wine_fn_config_program winhelp.exe16
-wine_fn_config_makefile programs/winhelp.exe16 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_win16" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winhelp.exe16" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winhelp.exe16"
-
-wine_fn_config_program winhlp32
-wine_fn_config_makefile programs/winhlp32 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winhlp32" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winhlp32" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winhlp32"
-
-wine_fn_config_program winoldap.mod16
-wine_fn_config_makefile programs/winoldap.mod16 "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_win16" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winoldap.mod16" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winoldap.mod16"
-
-wine_fn_config_program winver
-wine_fn_config_makefile programs/winver "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_winver" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/winver" && wine_fn_append_file ALL_INSTALL_DIRS "programs/winver"
-
-wine_fn_config_program wordpad
-wine_fn_config_makefile programs/wordpad "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_wordpad" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/wordpad" && wine_fn_append_file ALL_INSTALL_DIRS "programs/wordpad"
-
-wine_fn_config_program write
-wine_fn_config_makefile programs/write "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_write" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/write" && wine_fn_append_file ALL_INSTALL_DIRS "programs/write"
-
-wine_fn_config_program xcopy
-wine_fn_config_makefile programs/xcopy "programs/Makeprog.rules \$(MAKEDEP)"
-test "x$enable_xcopy" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/xcopy" && wine_fn_append_file ALL_INSTALL_DIRS "programs/xcopy"
-
+wine_fn_config_program cmdlgtst enable_cmdlgtst
+wine_fn_config_program control enable_control install
+wine_fn_config_program dxdiag enable_dxdiag install
+wine_fn_config_program eject enable_eject install
+wine_fn_config_program expand enable_expand install
+wine_fn_config_program explorer enable_explorer install
+wine_fn_config_program extrac32 enable_extrac32 install
+wine_fn_config_program hh enable_hh install
+wine_fn_config_program icinfo enable_icinfo install
+wine_fn_config_program iexplore enable_iexplore install
+wine_fn_config_program lodctr enable_lodctr install
+wine_fn_config_program mshta enable_mshta install
+wine_fn_config_program msiexec enable_msiexec installbin
+wine_fn_config_program net enable_net install
+wine_fn_config_program notepad enable_notepad installbin
+wine_fn_config_program oleview enable_oleview install
+wine_fn_config_program ping enable_ping install
+wine_fn_config_program progman enable_progman install
+wine_fn_config_program reg enable_reg install
+wine_fn_config_program regedit enable_regedit installbin
+wine_fn_config_program regsvr32 enable_regsvr32 installbin
+wine_fn_config_program rpcss enable_rpcss install
+wine_fn_config_program rundll32 enable_rundll32 install
+wine_fn_config_program secedit enable_secedit install
+wine_fn_config_program services enable_services install
+wine_fn_config_program spoolsv enable_spoolsv install
+wine_fn_config_program start enable_start install
+wine_fn_config_program svchost enable_svchost install
+wine_fn_config_program taskmgr enable_taskmgr install
+wine_fn_config_program termsv enable_termsv install
+wine_fn_config_program uninstaller enable_uninstaller install
+wine_fn_config_program unlodctr enable_unlodctr install
+wine_fn_config_program view enable_view
+wine_fn_config_program wineboot enable_wineboot installbin
+wine_fn_config_program winebrowser enable_winebrowser install
+wine_fn_config_program winecfg enable_winecfg installbin
+wine_fn_config_program wineconsole enable_wineconsole installbin
+wine_fn_config_program winedbg enable_winedbg installbin
+wine_fn_config_program winedevice enable_winedevice install
+wine_fn_config_program winefile enable_winefile installbin
+wine_fn_config_program winemenubuilder enable_winemenubuilder install
+wine_fn_config_program winemine enable_winemine installbin
+wine_fn_config_program winepath enable_winepath installbin
+wine_fn_config_program winetest enable_winetest
+wine_fn_config_program winevdm enable_win16 install
+wine_fn_config_program winhelp.exe16 enable_win16 install
+wine_fn_config_program winhlp32 enable_winhlp32 install
+wine_fn_config_program winoldap.mod16 enable_win16 install
+wine_fn_config_program winver enable_winver install
+wine_fn_config_program wordpad enable_wordpad install
+wine_fn_config_program write enable_write install
+wine_fn_config_program xcopy enable_xcopy install
 wine_fn_config_makefile server "Make.rules \$(MAKEDEP)"
 test "x$enable_server" != xno && wine_fn_append_file ALL_TOP_DIRS "server"
 
@@ -15464,62 +15313,6 @@ do
     "libs/wpp/Makefile") CONFIG_FILES="$CONFIG_FILES libs/wpp/Makefile" ;;
     "loader/Makefile") CONFIG_FILES="$CONFIG_FILES loader/Makefile" ;;
     "programs/Makefile") CONFIG_FILES="$CONFIG_FILES programs/Makefile" ;;
-    "programs/attrib/Makefile") CONFIG_FILES="$CONFIG_FILES programs/attrib/Makefile" ;;
-    "programs/cacls/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cacls/Makefile" ;;
-    "programs/clock/Makefile") CONFIG_FILES="$CONFIG_FILES programs/clock/Makefile" ;;
-    "programs/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/Makefile" ;;
-    "programs/cmdlgtst/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmdlgtst/Makefile" ;;
-    "programs/control/Makefile") CONFIG_FILES="$CONFIG_FILES programs/control/Makefile" ;;
-    "programs/dxdiag/Makefile") CONFIG_FILES="$CONFIG_FILES programs/dxdiag/Makefile" ;;
-    "programs/eject/Makefile") CONFIG_FILES="$CONFIG_FILES programs/eject/Makefile" ;;
-    "programs/expand/Makefile") CONFIG_FILES="$CONFIG_FILES programs/expand/Makefile" ;;
-    "programs/explorer/Makefile") CONFIG_FILES="$CONFIG_FILES programs/explorer/Makefile" ;;
-    "programs/extrac32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/extrac32/Makefile" ;;
-    "programs/hh/Makefile") CONFIG_FILES="$CONFIG_FILES programs/hh/Makefile" ;;
-    "programs/icinfo/Makefile") CONFIG_FILES="$CONFIG_FILES programs/icinfo/Makefile" ;;
-    "programs/iexplore/Makefile") CONFIG_FILES="$CONFIG_FILES programs/iexplore/Makefile" ;;
-    "programs/lodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/lodctr/Makefile" ;;
-    "programs/mshta/Makefile") CONFIG_FILES="$CONFIG_FILES programs/mshta/Makefile" ;;
-    "programs/msiexec/Makefile") CONFIG_FILES="$CONFIG_FILES programs/msiexec/Makefile" ;;
-    "programs/net/Makefile") CONFIG_FILES="$CONFIG_FILES programs/net/Makefile" ;;
-    "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
-    "programs/oleview/Makefile") CONFIG_FILES="$CONFIG_FILES programs/oleview/Makefile" ;;
-    "programs/ping/Makefile") CONFIG_FILES="$CONFIG_FILES programs/ping/Makefile" ;;
-    "programs/progman/Makefile") CONFIG_FILES="$CONFIG_FILES programs/progman/Makefile" ;;
-    "programs/reg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/reg/Makefile" ;;
-    "programs/regedit/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regedit/Makefile" ;;
-    "programs/regsvr32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regsvr32/Makefile" ;;
-    "programs/rpcss/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rpcss/Makefile" ;;
-    "programs/rundll32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rundll32/Makefile" ;;
-    "programs/secedit/Makefile") CONFIG_FILES="$CONFIG_FILES programs/secedit/Makefile" ;;
-    "programs/services/Makefile") CONFIG_FILES="$CONFIG_FILES programs/services/Makefile" ;;
-    "programs/spoolsv/Makefile") CONFIG_FILES="$CONFIG_FILES programs/spoolsv/Makefile" ;;
-    "programs/start/Makefile") CONFIG_FILES="$CONFIG_FILES programs/start/Makefile" ;;
-    "programs/svchost/Makefile") CONFIG_FILES="$CONFIG_FILES programs/svchost/Makefile" ;;
-    "programs/taskmgr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/taskmgr/Makefile" ;;
-    "programs/termsv/Makefile") CONFIG_FILES="$CONFIG_FILES programs/termsv/Makefile" ;;
-    "programs/uninstaller/Makefile") CONFIG_FILES="$CONFIG_FILES programs/uninstaller/Makefile" ;;
-    "programs/unlodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/unlodctr/Makefile" ;;
-    "programs/view/Makefile") CONFIG_FILES="$CONFIG_FILES programs/view/Makefile" ;;
-    "programs/wineboot/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wineboot/Makefile" ;;
-    "programs/winebrowser/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winebrowser/Makefile" ;;
-    "programs/winecfg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winecfg/Makefile" ;;
-    "programs/wineconsole/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wineconsole/Makefile" ;;
-    "programs/winedbg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winedbg/Makefile" ;;
-    "programs/winedevice/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winedevice/Makefile" ;;
-    "programs/winefile/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winefile/Makefile" ;;
-    "programs/winemenubuilder/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winemenubuilder/Makefile" ;;
-    "programs/winemine/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winemine/Makefile" ;;
-    "programs/winepath/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winepath/Makefile" ;;
-    "programs/winetest/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winetest/Makefile" ;;
-    "programs/winevdm/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winevdm/Makefile" ;;
-    "programs/winhelp.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhelp.exe16/Makefile" ;;
-    "programs/winhlp32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhlp32/Makefile" ;;
-    "programs/winoldap.mod16/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winoldap.mod16/Makefile" ;;
-    "programs/winver/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winver/Makefile" ;;
-    "programs/wordpad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wordpad/Makefile" ;;
-    "programs/write/Makefile") CONFIG_FILES="$CONFIG_FILES programs/write/Makefile" ;;
-    "programs/xcopy/Makefile") CONFIG_FILES="$CONFIG_FILES programs/xcopy/Makefile" ;;
     "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
     "tools/widl/Makefile") CONFIG_FILES="$CONFIG_FILES tools/widl/Makefile" ;;

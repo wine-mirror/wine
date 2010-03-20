@@ -373,10 +373,10 @@ sub update_makefiles(@)
         elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
         {
             (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
-            $args = ",[ALL_PROGRAM_DIRS";
-            $args .= ",ALL_INSTALL_DIRS" unless $dont_install{$name};
-            $args .= ",ALL_PROGRAM_BIN_INSTALL_DIRS" if $bin_install{$name};
-            $args .= "]";
+            my $install = $dont_install{$name} ? "" : "install";
+            $install .= "bin" if $bin_install{$name};
+            $args .= "," if $is_win16 || $install;
+            $args .= "$install" if $install;
             $args .= ",enable_win16" if $is_win16;
             push @lines, "WINE_CONFIG_PROGRAM($name$args)\n";
         }
