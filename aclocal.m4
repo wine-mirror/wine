@@ -181,16 +181,27 @@ $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status dlls/Make
 wine_fn_config_dll ()
 {
     ac_dir=$[1]
-    ac_implib=$[2]
-    ac_implibsrc=$[3]
+    ac_enable=$[2]
+    ac_implib=$[3]
+    ac_implibsrc=$[4]
     ac_file="dlls/$ac_dir/lib$ac_implib"
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
 
+    wine_fn_append_file ALL_DIRS dlls/$ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"dlls/$ac_dir dlls/$ac_dir/__install__ dlls/$ac_dir/__install-lib__ dlls/$ac_dir/__install-dev__: __builddeps__"
+"dlls/$ac_dir dlls/$ac_dir/__install__ dlls/$ac_dir/__install-lib__ dlls/$ac_dir/__install-dev__: __builddeps__ dlls/$ac_dir/Makefile
+dlls/$ac_dir/__clean__ dlls/$ac_dir/__uninstall__ dlls/$ac_dir: dlls/$ac_dir/Makefile
+dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.status dlls/Makedll.rules \$(MAKEDEP)
+	@./config.status --file dlls/$ac_dir/Makefile && cd dlls/$ac_dir && \$(MAKE) depend"
+    AS_VAR_IF([$ac_enable],[no],
+              dnl enable_win16 is special in that it disables import libs too
+              [test "$ac_enable" != enable_win16 || return 0],
+              [wine_fn_append_file ALL_DLL_DIRS dlls/$ac_dir])
 
     if test -n "$ac_implibsrc"
     then
+        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$IMPLIBEXT
+        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$STATIC_IMPLIBEXT
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
@@ -199,6 +210,7 @@ $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
 	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`"
     elif test -n "$ac_implib"
     then
+        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$IMPLIBEXT
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_file.$IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
@@ -206,6 +218,7 @@ $ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Mak
 
         if test "$ac_dir" != "$ac_implib"
         then
+            wine_fn_append_file ALL_IMPORT_LIBS dlls/lib$ac_implib.$IMPLIBEXT
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
 	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.$IMPLIBEXT \$[@]
@@ -304,13 +317,9 @@ dnl
 dnl Usage: WINE_CONFIG_DLL(name,enable,implib,implibsrc)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_pushdef([ac_implib],m4_ifval([$3],[dlls/$1/lib$3.$IMPLIBEXT]))dnl
-m4_ifval(ac_implib,[m4_ifval([$2],[test "x$[$2]" != xno && ])WINE_APPEND_FILE(ALL_IMPORT_LIBS,ac_implib)dnl
-m4_if([$1],[$3],,[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,[dlls/lib$3.$IMPLIBEXT])])dnl
-m4_ifval([$4],[ && WINE_APPEND_FILE(ALL_IMPORT_LIBS,[dlls/$1/lib$3.$STATIC_IMPLIBEXT])])
-])wine_fn_config_dll [$1] [$3] m4_ifval([$4],["$4"])
-WINE_CONFIG_MAKEFILE([dlls/$1/Makefile],[dlls/Makedll.rules],[ALL_DLL_DIRS],[$2])dnl
-m4_popdef([ac_implib])])
+AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+wine_fn_config_dll [$1] ac_enable [$3] m4_ifval([$4],["$4"])dnl
+AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a program makefile from config.status ****
 dnl
