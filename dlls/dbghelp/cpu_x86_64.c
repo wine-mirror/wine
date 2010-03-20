@@ -124,9 +124,39 @@ done_err:
     return FALSE;
 }
 
+static void*    x86_64_find_runtime_function(struct module* module, DWORD64 addr)
+{
+#ifdef __x86_64__
+    RUNTIME_FUNCTION*   rtf;
+    ULONG               size;
+    int                 min, max;
+
+    rtf = (RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
+    if (rtf) for (min = 0, max = size / sizeof(*rtf); min <= max; )
+    {
+        int pos = (min + max) / 2;
+        if (addr < module->module.BaseOfImage + rtf[pos].BeginAddress) max = pos - 1;
+        else if (addr >= module->module.BaseOfImage + rtf[pos].EndAddress) min = pos + 1;
+        else
+        {
+            rtf += pos;
+            while (rtf->UnwindData & 1)  /* follow chained entry */
+            {
+                FIXME("RunTime_Function outside IMAGE_DIRECTORY_ENTRY_EXCEPTION unimplemented yet!\n");
+                /* we need to read into the other process */
+                /* rtf = (RUNTIME_FUNCTION*)(module->module.BaseOfImage + (rtf->UnwindData & ~1)); */
+            }
+            return rtf;
+        }
+    }
+#endif
+    return NULL;
+}
+
 struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
     x86_64_get_addr,
     x86_64_stack_walk,
+    x86_64_find_runtime_function,
 };

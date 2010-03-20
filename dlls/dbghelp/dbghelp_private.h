@@ -475,6 +475,9 @@ struct cpu
 
     /* stack manipulation */
     BOOL        (*stack_walk)(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame);
+
+    /* module manipulation */
+    void*       (*find_runtime_function)(struct module*, DWORD64 addr);
 };
 
 extern struct cpu*      dbghelp_current_cpu;

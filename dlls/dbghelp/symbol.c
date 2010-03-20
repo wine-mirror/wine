@@ -1794,24 +1794,6 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 }
 
 /***********************************************************************
- *		SymFunctionTableAccess (DBGHELP.@)
- */
-PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
-{
-    WARN("(%p, 0x%08x): stub\n", hProcess, AddrBase);
-    return NULL;
-}
-
-/***********************************************************************
- *		SymFunctionTableAccess64 (DBGHELP.@)
- */
-PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
-{
-    WARN("(%p, %s): stub\n", hProcess, wine_dbgstr_longlong(AddrBase));
-    return NULL;
-}
-
-/***********************************************************************
  *		SymUnDName (DBGHELP.@)
  */
 BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, PSTR UnDecName, DWORD UnDecNameLength)

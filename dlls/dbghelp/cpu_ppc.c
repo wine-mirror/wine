@@ -59,4 +59,5 @@ struct cpu cpu_ppc = {
     4,
     ppc_get_addr,
     ppc_stack_walk,
+    NULL,
 };

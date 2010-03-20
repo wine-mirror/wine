@@ -1087,3 +1087,26 @@ BOOL WINAPI SymRefreshModuleList(HANDLE hProcess)
 
     return refresh_module_list(pcs);
 }
+
+/***********************************************************************
+ *		SymFunctionTableAccess (DBGHELP.@)
+ */
+PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
+{
+    return SymFunctionTableAccess64(hProcess, AddrBase);
+}
+
+/***********************************************************************
+ *		SymFunctionTableAccess64 (DBGHELP.@)
+ */
+PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
+{
+    struct process*     pcs = process_find_by_handle(hProcess);
+    struct module*      module;
+
+    if (!pcs || !dbghelp_current_cpu->find_runtime_function) return NULL;
+    module = module_find_by_addr(pcs, AddrBase, DMT_UNKNOWN);
+    if (!module) return NULL;
+
+    return dbghelp_current_cpu->find_runtime_function(module, AddrBase);
+}

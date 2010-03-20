@@ -409,4 +409,5 @@ struct cpu cpu_i386 = {
     4,
     i386_get_addr,
     i386_stack_walk,
+    NULL,
 };
