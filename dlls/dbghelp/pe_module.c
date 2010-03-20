@@ -257,6 +257,35 @@ static void pe_unmap_file(struct image_file_map* fmap)
     }
 }
 
+/******************************************************************
+ *		pe_map_directory
+ *
+ * Maps a directory content out of a PE file
+ */
+const char* pe_map_directory(struct module* module, int dirno, DWORD* size)
+{
+    IMAGE_NT_HEADERS*   nth;
+    void*               mapping;
+
+    if (module->type != DMT_PE || !module->format_info[DFI_PE]) return NULL;
+    if (dirno >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES ||
+        !(mapping = pe_map_full(&module->format_info[DFI_PE]->u.pe_info->fmap, &nth)))
+        return NULL;
+    if (size) *size = nth->OptionalHeader.DataDirectory[dirno].Size;
+    return RtlImageRvaToVa(nth, mapping,
+                           nth->OptionalHeader.DataDirectory[dirno].VirtualAddress, NULL);
+}
+
+/******************************************************************
+ *		pe_unmap_directory
+ *
+ * Unmaps a directory content
+ */
+void pe_unmap_directory(struct image_file_map* fmap, int dirno)
+{
+    pe_unmap_full(fmap);
+}
+
 static void pe_module_remove(struct process* pcs, struct module_format* modfmt)
 {
     pe_unmap_file(&modfmt->u.pe_info->fmap);

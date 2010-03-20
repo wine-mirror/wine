@@ -570,6 +570,9 @@ extern struct module*
                                            DWORD64 base, DWORD64 size);
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
+extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size);
+extern void         pe_unmap_directoy(struct module* module, int dirno);
+
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source);
 extern const char*  source_get(const struct module* module, unsigned idx);
