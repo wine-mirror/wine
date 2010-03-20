@@ -13912,8 +13912,18 @@ wine_fn_config_test ()
 $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$@ || (\$(RM) \$@ && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: __builddeps__"
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir/__crosstest__: __buildcrossdeps__ $ac_dir/Makefile"
+    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir: __builddeps__
+$ac_dir/__crosstest__: __buildcrossdeps__
+$ac_dir/__clean__ $ac_dir/__crosstest__ $ac_dir: $ac_dir/Makefile
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.rules \$(MAKEDEP)
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    if test "x$enable_tests" = x""no; then :
+
+else
+  wine_fn_append_file ALL_TEST_DIRS $ac_dir
+fi
 }
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
 test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "dlls/wineps.drv/generic.ppd"
@@ -13995,26 +14005,17 @@ wine_fn_config_makefile dlls/advapi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_advapi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/advapi32"
 
 wine_fn_config_test dlls/advapi32/tests advapi32_test
-wine_fn_config_makefile dlls/advapi32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/advapi32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/advpack/libadvpack.$IMPLIBEXT"
 wine_fn_config_dll advpack advpack
 wine_fn_config_makefile dlls/advpack "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_advpack" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/advpack"
 
 wine_fn_config_test dlls/advpack/tests advpack_test
-wine_fn_config_makefile dlls/advpack/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/advpack/tests"
-
 wine_fn_config_dll amstream
 wine_fn_config_makefile dlls/amstream "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_amstream" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/amstream"
 
 wine_fn_config_test dlls/amstream/tests amstream_test
-wine_fn_config_makefile dlls/amstream/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/amstream/tests"
-
 wine_fn_config_dll appwiz.cpl
 wine_fn_config_makefile dlls/appwiz.cpl "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_appwiz_cpl" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/appwiz.cpl"
@@ -14039,9 +14040,6 @@ wine_fn_config_makefile dlls/avifil32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_avifil32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/avifil32"
 
 wine_fn_config_test dlls/avifil32/tests avifil32_test
-wine_fn_config_makefile dlls/avifil32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/avifil32/tests"
-
 wine_fn_config_dll avifile.dll16
 wine_fn_config_makefile dlls/avifile.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/avifile.dll16"
@@ -14060,18 +14058,12 @@ wine_fn_config_makefile dlls/browseui "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_browseui" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/browseui"
 
 wine_fn_config_test dlls/browseui/tests browseui_test
-wine_fn_config_makefile dlls/browseui/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/browseui/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/cabinet/libcabinet.$IMPLIBEXT"
 wine_fn_config_dll cabinet cabinet
 wine_fn_config_makefile dlls/cabinet "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_cabinet" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/cabinet"
 
 wine_fn_config_test dlls/cabinet/tests cabinet_test
-wine_fn_config_makefile dlls/cabinet/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/cabinet/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/capi2032/libcapi2032.$IMPLIBEXT"
 wine_fn_config_dll capi2032 capi2032
 wine_fn_config_makefile dlls/capi2032 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14097,27 +14089,18 @@ wine_fn_config_makefile dlls/comcat "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_comcat" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/comcat"
 
 wine_fn_config_test dlls/comcat/tests comcat_test
-wine_fn_config_makefile dlls/comcat/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/comcat/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/comctl32/libcomctl32.$IMPLIBEXT"
 wine_fn_config_dll comctl32 comctl32
 wine_fn_config_makefile dlls/comctl32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_comctl32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/comctl32"
 
 wine_fn_config_test dlls/comctl32/tests comctl32_test
-wine_fn_config_makefile dlls/comctl32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/comctl32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/comdlg32/libcomdlg32.$IMPLIBEXT"
 wine_fn_config_dll comdlg32 comdlg32
 wine_fn_config_makefile dlls/comdlg32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_comdlg32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/comdlg32"
 
 wine_fn_config_test dlls/comdlg32/tests comdlg32_test
-wine_fn_config_makefile dlls/comdlg32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/comdlg32/tests"
-
 wine_fn_config_dll comm.drv16
 wine_fn_config_makefile dlls/comm.drv16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/comm.drv16"
@@ -14141,9 +14124,6 @@ wine_fn_config_makefile dlls/credui "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_credui" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/credui"
 
 wine_fn_config_test dlls/credui/tests credui_test
-wine_fn_config_makefile dlls/credui/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/credui/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/crtdll/libcrtdll.$IMPLIBEXT"
 wine_fn_config_dll crtdll crtdll
 wine_fn_config_makefile dlls/crtdll "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14155,9 +14135,6 @@ wine_fn_config_makefile dlls/crypt32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_crypt32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/crypt32"
 
 wine_fn_config_test dlls/crypt32/tests crypt32_test
-wine_fn_config_makefile dlls/crypt32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/crypt32/tests"
-
 wine_fn_config_dll cryptdlg
 wine_fn_config_makefile dlls/cryptdlg "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_cryptdlg" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/cryptdlg"
@@ -14173,18 +14150,12 @@ wine_fn_config_makefile dlls/cryptnet "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_cryptnet" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/cryptnet"
 
 wine_fn_config_test dlls/cryptnet/tests cryptnet_test
-wine_fn_config_makefile dlls/cryptnet/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/cryptnet/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/cryptui/libcryptui.$IMPLIBEXT"
 wine_fn_config_dll cryptui cryptui
 wine_fn_config_makefile dlls/cryptui "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_cryptui" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/cryptui"
 
 wine_fn_config_test dlls/cryptui/tests cryptui_test
-wine_fn_config_makefile dlls/cryptui/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/cryptui/tests"
-
 wine_fn_config_dll ctapi32
 wine_fn_config_makefile dlls/ctapi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ctapi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ctapi32"
@@ -14208,36 +14179,24 @@ wine_fn_config_makefile dlls/d3d10 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3d10" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3d10"
 
 wine_fn_config_test dlls/d3d10/tests d3d10_test
-wine_fn_config_makefile dlls/d3d10/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3d10/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/d3d10core/libd3d10core.$IMPLIBEXT"
 wine_fn_config_dll d3d10core d3d10core
 wine_fn_config_makefile dlls/d3d10core "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3d10core" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3d10core"
 
 wine_fn_config_test dlls/d3d10core/tests d3d10core_test
-wine_fn_config_makefile dlls/d3d10core/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3d10core/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/d3d8/libd3d8.$IMPLIBEXT"
 wine_fn_config_dll d3d8 d3d8
 wine_fn_config_makefile dlls/d3d8 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3d8" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3d8"
 
 wine_fn_config_test dlls/d3d8/tests d3d8_test
-wine_fn_config_makefile dlls/d3d8/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3d8/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/d3d9/libd3d9.$IMPLIBEXT"
 wine_fn_config_dll d3d9 d3d9
 wine_fn_config_makefile dlls/d3d9 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3d9" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3d9"
 
 wine_fn_config_test dlls/d3d9/tests d3d9_test
-wine_fn_config_makefile dlls/d3d9/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3d9/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/d3dim/libd3dim.$IMPLIBEXT"
 wine_fn_config_dll d3dim d3dim
 wine_fn_config_makefile dlls/d3dim "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14249,9 +14208,6 @@ wine_fn_config_makefile dlls/d3drm "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3drm" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3drm"
 
 wine_fn_config_test dlls/d3drm/tests d3drm_test
-wine_fn_config_makefile dlls/d3drm/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3drm/tests"
-
 wine_fn_config_dll d3dx9_24
 wine_fn_config_makefile dlls/d3dx9_24 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3dx9_24" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3dx9_24"
@@ -14306,9 +14262,6 @@ wine_fn_config_makefile dlls/d3dx9_36 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3dx9_36" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3dx9_36"
 
 wine_fn_config_test dlls/d3dx9_36/tests d3dx9_36_test
-wine_fn_config_makefile dlls/d3dx9_36/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3dx9_36/tests"
-
 wine_fn_config_dll d3dx9_37
 wine_fn_config_makefile dlls/d3dx9_37 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3dx9_37" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3dx9_37"
@@ -14339,9 +14292,6 @@ wine_fn_config_makefile dlls/d3dxof "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_d3dxof" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/d3dxof"
 
 wine_fn_config_test dlls/d3dxof/tests d3dxof_test
-wine_fn_config_makefile dlls/d3dxof/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/d3dxof/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/dbghelp/libdbghelp.$IMPLIBEXT"
 wine_fn_config_dll dbghelp dbghelp
 wine_fn_config_makefile dlls/dbghelp "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14362,17 +14312,11 @@ wine_fn_config_makefile dlls/ddraw "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ddraw" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ddraw"
 
 wine_fn_config_test dlls/ddraw/tests ddraw_test
-wine_fn_config_makefile dlls/ddraw/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ddraw/tests"
-
 wine_fn_config_dll ddrawex
 wine_fn_config_makefile dlls/ddrawex "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ddrawex" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ddrawex"
 
 wine_fn_config_test dlls/ddrawex/tests ddrawex_test
-wine_fn_config_makefile dlls/ddrawex/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ddrawex/tests"
-
 wine_fn_config_dll devenum
 wine_fn_config_makefile dlls/devenum "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_devenum" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/devenum"
@@ -14383,9 +14327,6 @@ wine_fn_config_makefile dlls/dinput "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dinput" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dinput"
 
 wine_fn_config_test dlls/dinput/tests dinput_test
-wine_fn_config_makefile dlls/dinput/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dinput/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/dinput8/libdinput8.$IMPLIBEXT"
 wine_fn_config_dll dinput8 dinput8
 wine_fn_config_makefile dlls/dinput8 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14400,9 +14341,6 @@ wine_fn_config_makefile dlls/dispex "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dispex" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dispex"
 
 wine_fn_config_test dlls/dispex/tests dispex_test
-wine_fn_config_makefile dlls/dispex/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dispex/tests"
-
 wine_fn_config_dll display.drv16
 wine_fn_config_makefile dlls/display.drv16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/display.drv16"
@@ -14424,9 +14362,6 @@ wine_fn_config_makefile dlls/dmloader "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dmloader" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dmloader"
 
 wine_fn_config_test dlls/dmloader/tests dmloader_test
-wine_fn_config_makefile dlls/dmloader/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dmloader/tests"
-
 wine_fn_config_dll dmscript
 wine_fn_config_makefile dlls/dmscript "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dmscript" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dmscript"
@@ -14454,9 +14389,6 @@ wine_fn_config_makefile dlls/dnsapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dnsapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dnsapi"
 
 wine_fn_config_test dlls/dnsapi/tests dnsapi_test
-wine_fn_config_makefile dlls/dnsapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dnsapi/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/dplay/libdplay.$IMPLIBEXT"
 wine_fn_config_dll dplay dplay
 wine_fn_config_makefile dlls/dplay "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14468,9 +14400,6 @@ wine_fn_config_makefile dlls/dplayx "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dplayx" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dplayx"
 
 wine_fn_config_test dlls/dplayx/tests dplayx_test
-wine_fn_config_makefile dlls/dplayx/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dplayx/tests"
-
 wine_fn_config_dll dpnaddr
 wine_fn_config_makefile dlls/dpnaddr "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dpnaddr" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dpnaddr"
@@ -14502,9 +14431,6 @@ wine_fn_config_makefile dlls/dsound "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dsound" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dsound"
 
 wine_fn_config_test dlls/dsound/tests dsound_test
-wine_fn_config_makefile dlls/dsound/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dsound/tests"
-
 wine_fn_config_dll dssenh
 wine_fn_config_makefile dlls/dssenh "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dssenh" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dssenh"
@@ -14523,9 +14449,6 @@ wine_fn_config_makefile dlls/dxdiagn "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dxdiagn" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dxdiagn"
 
 wine_fn_config_test dlls/dxdiagn/tests dxdiagn_test
-wine_fn_config_makefile dlls/dxdiagn/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dxdiagn/tests"
-
 wine_fn_config_lib dxerr8
 wine_fn_config_lib dxerr9
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/dxgi/libdxgi.$IMPLIBEXT"
@@ -14534,9 +14457,6 @@ wine_fn_config_makefile dlls/dxgi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_dxgi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/dxgi"
 
 wine_fn_config_test dlls/dxgi/tests dxgi_test
-wine_fn_config_makefile dlls/dxgi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/dxgi/tests"
-
 wine_fn_config_lib dxguid
 wine_fn_config_dll faultrep
 wine_fn_config_makefile dlls/faultrep "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14551,9 +14471,6 @@ wine_fn_config_makefile dlls/fusion "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_fusion" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/fusion"
 
 wine_fn_config_test dlls/fusion/tests fusion_test
-wine_fn_config_makefile dlls/fusion/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/fusion/tests"
-
 wine_fn_config_dll fwpuclnt
 wine_fn_config_makefile dlls/fwpuclnt "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_fwpuclnt" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/fwpuclnt"
@@ -14568,18 +14485,12 @@ wine_fn_config_makefile dlls/gdi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_gdi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/gdi32"
 
 wine_fn_config_test dlls/gdi32/tests gdi32_test
-wine_fn_config_makefile dlls/gdi32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/gdi32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/gdiplus/libgdiplus.$IMPLIBEXT"
 wine_fn_config_dll gdiplus gdiplus
 wine_fn_config_makefile dlls/gdiplus "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_gdiplus" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/gdiplus"
 
 wine_fn_config_test dlls/gdiplus/tests gdiplus_test
-wine_fn_config_makefile dlls/gdiplus/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/gdiplus/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/glu32/libglu32.$IMPLIBEXT"
 wine_fn_config_dll glu32 glu32
 wine_fn_config_makefile dlls/glu32 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14612,9 +14523,6 @@ wine_fn_config_makefile dlls/hlink "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_hlink" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/hlink"
 
 wine_fn_config_test dlls/hlink/tests hlink_test
-wine_fn_config_makefile dlls/hlink/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/hlink/tests"
-
 wine_fn_config_dll hnetcfg
 wine_fn_config_makefile dlls/hnetcfg "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_hnetcfg" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/hnetcfg"
@@ -14645,9 +14553,6 @@ wine_fn_config_makefile dlls/imagehlp "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_imagehlp" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/imagehlp"
 
 wine_fn_config_test dlls/imagehlp/tests imagehlp_test
-wine_fn_config_makefile dlls/imagehlp/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/imagehlp/tests"
-
 wine_fn_config_dll imm.dll16
 wine_fn_config_makefile dlls/imm.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/imm.dll16"
@@ -14658,34 +14563,22 @@ wine_fn_config_makefile dlls/imm32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_imm32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/imm32"
 
 wine_fn_config_test dlls/imm32/tests imm32_test
-wine_fn_config_makefile dlls/imm32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/imm32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/inetcomm/libinetcomm.$IMPLIBEXT"
 wine_fn_config_dll inetcomm inetcomm
 wine_fn_config_makefile dlls/inetcomm "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_inetcomm" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/inetcomm"
 
 wine_fn_config_test dlls/inetcomm/tests inetcomm_test
-wine_fn_config_makefile dlls/inetcomm/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/inetcomm/tests"
-
 wine_fn_config_dll inetmib1
 wine_fn_config_makefile dlls/inetmib1 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_inetmib1" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/inetmib1"
 
 wine_fn_config_test dlls/inetmib1/tests inetmib1_test
-wine_fn_config_makefile dlls/inetmib1/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/inetmib1/tests"
-
 wine_fn_config_dll infosoft
 wine_fn_config_makefile dlls/infosoft "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_infosoft" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/infosoft"
 
 wine_fn_config_test dlls/infosoft/tests infosoft_test
-wine_fn_config_makefile dlls/infosoft/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/infosoft/tests"
-
 wine_fn_config_dll initpki
 wine_fn_config_makefile dlls/initpki "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_initpki" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/initpki"
@@ -14704,9 +14597,6 @@ wine_fn_config_makefile dlls/iphlpapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_iphlpapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/iphlpapi"
 
 wine_fn_config_test dlls/iphlpapi/tests iphlpapi_test
-wine_fn_config_makefile dlls/iphlpapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/iphlpapi/tests"
-
 wine_fn_config_dll itircl
 wine_fn_config_makefile dlls/itircl "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_itircl" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/itircl"
@@ -14716,26 +14606,17 @@ wine_fn_config_makefile dlls/itss "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_itss" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/itss"
 
 wine_fn_config_test dlls/itss/tests itss_test
-wine_fn_config_makefile dlls/itss/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/itss/tests"
-
 wine_fn_config_dll jscript
 wine_fn_config_makefile dlls/jscript "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_jscript" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/jscript"
 
 wine_fn_config_test dlls/jscript/tests jscript_test
-wine_fn_config_makefile dlls/jscript/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/jscript/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/kernel32/libkernel32.$IMPLIBEXT"
 wine_fn_config_dll kernel32 kernel32
 wine_fn_config_makefile dlls/kernel32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_kernel32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/kernel32"
 
 wine_fn_config_test dlls/kernel32/tests kernel32_test
-wine_fn_config_makefile dlls/kernel32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/kernel32/tests"
-
 wine_fn_config_dll keyboard.drv16
 wine_fn_config_makefile dlls/keyboard.drv16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/keyboard.drv16"
@@ -14755,26 +14636,17 @@ wine_fn_config_makefile dlls/localspl "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_localspl" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/localspl"
 
 wine_fn_config_test dlls/localspl/tests localspl_test
-wine_fn_config_makefile dlls/localspl/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/localspl/tests"
-
 wine_fn_config_dll localui
 wine_fn_config_makefile dlls/localui "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_localui" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/localui"
 
 wine_fn_config_test dlls/localui/tests localui_test
-wine_fn_config_makefile dlls/localui/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/localui/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/lz32/liblz32.$IMPLIBEXT"
 wine_fn_config_dll lz32 lz32
 wine_fn_config_makefile dlls/lz32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_lz32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/lz32"
 
 wine_fn_config_test dlls/lz32/tests lz32_test
-wine_fn_config_makefile dlls/lz32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/lz32/tests"
-
 wine_fn_config_dll lzexpand.dll16
 wine_fn_config_makefile dlls/lzexpand.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/lzexpand.dll16"
@@ -14785,9 +14657,6 @@ wine_fn_config_makefile dlls/mapi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mapi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mapi32"
 
 wine_fn_config_test dlls/mapi32/tests mapi32_test
-wine_fn_config_makefile dlls/mapi32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mapi32/tests"
-
 wine_fn_config_dll mapistub
 wine_fn_config_makefile dlls/mapistub "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mapistub" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mapistub"
@@ -14822,17 +14691,11 @@ wine_fn_config_makefile dlls/mlang "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mlang" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mlang"
 
 wine_fn_config_test dlls/mlang/tests mlang_test
-wine_fn_config_makefile dlls/mlang/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mlang/tests"
-
 wine_fn_config_dll mmdevapi
 wine_fn_config_makefile dlls/mmdevapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mmdevapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mmdevapi"
 
 wine_fn_config_test dlls/mmdevapi/tests mmdevapi_test
-wine_fn_config_makefile dlls/mmdevapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mmdevapi/tests"
-
 wine_fn_config_dll mmdevldr.vxd
 wine_fn_config_makefile dlls/mmdevldr.vxd "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mmdevldr.vxd"
@@ -14877,9 +14740,6 @@ wine_fn_config_makefile dlls/msacm32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msacm32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msacm32"
 
 wine_fn_config_test dlls/msacm32/tests msacm32_test
-wine_fn_config_makefile dlls/msacm32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msacm32/tests"
-
 wine_fn_config_dll msadp32.acm
 wine_fn_config_makefile dlls/msadp32.acm "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msadp32_acm" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msadp32.acm"
@@ -14894,9 +14754,6 @@ wine_fn_config_makefile dlls/mscms "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mscms" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mscms"
 
 wine_fn_config_test dlls/mscms/tests mscms_test
-wine_fn_config_makefile dlls/mscms/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mscms/tests"
-
 wine_fn_config_dll mscoree
 wine_fn_config_makefile dlls/mscoree "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mscoree" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mscoree"
@@ -14906,9 +14763,6 @@ wine_fn_config_makefile dlls/msctf "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msctf" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msctf"
 
 wine_fn_config_test dlls/msctf/tests msctf_test
-wine_fn_config_makefile dlls/msctf/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msctf/tests"
-
 wine_fn_config_dll msdaps
 wine_fn_config_makefile dlls/msdaps "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msdaps" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msdaps"
@@ -14940,18 +14794,12 @@ wine_fn_config_makefile dlls/mshtml "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mshtml" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mshtml"
 
 wine_fn_config_test dlls/mshtml/tests mshtml_test
-wine_fn_config_makefile dlls/mshtml/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mshtml/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/msi/libmsi.$IMPLIBEXT"
 wine_fn_config_dll msi msi
 wine_fn_config_makefile dlls/msi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msi"
 
 wine_fn_config_test dlls/msi/tests msi_test
-wine_fn_config_makefile dlls/msi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msi/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/msimg32/libmsimg32.$IMPLIBEXT"
 wine_fn_config_dll msimg32 msimg32
 wine_fn_config_makefile dlls/msimg32 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -14990,9 +14838,6 @@ wine_fn_config_makefile dlls/mstask "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_mstask" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/mstask"
 
 wine_fn_config_test dlls/mstask/tests mstask_test
-wine_fn_config_makefile dlls/mstask/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/mstask/tests"
-
 wine_fn_config_dll msvcirt
 wine_fn_config_makefile dlls/msvcirt "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvcirt" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvcirt"
@@ -15023,9 +14868,6 @@ wine_fn_config_makefile dlls/msvcrt "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvcrt" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvcrt"
 
 wine_fn_config_test dlls/msvcrt/tests msvcrt_test
-wine_fn_config_makefile dlls/msvcrt/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msvcrt/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/msvcrt20/libmsvcrt20.$IMPLIBEXT"
 wine_fn_config_dll msvcrt20 msvcrt20
 wine_fn_config_makefile dlls/msvcrt20 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15042,18 +14884,12 @@ wine_fn_config_makefile dlls/msvcrtd "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvcrtd" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvcrtd"
 
 wine_fn_config_test dlls/msvcrtd/tests msvcrtd_test
-wine_fn_config_makefile dlls/msvcrtd/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msvcrtd/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/msvfw32/libmsvfw32.$IMPLIBEXT"
 wine_fn_config_dll msvfw32 msvfw32
 wine_fn_config_makefile dlls/msvfw32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvfw32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvfw32"
 
 wine_fn_config_test dlls/msvfw32/tests msvfw32_test
-wine_fn_config_makefile dlls/msvfw32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msvfw32/tests"
-
 wine_fn_config_dll msvidc32
 wine_fn_config_makefile dlls/msvidc32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msvidc32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msvidc32"
@@ -15072,9 +14908,6 @@ wine_fn_config_makefile dlls/msxml3 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msxml3" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msxml3"
 
 wine_fn_config_test dlls/msxml3/tests msxml3_test
-wine_fn_config_makefile dlls/msxml3/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/msxml3/tests"
-
 wine_fn_config_dll msxml4
 wine_fn_config_makefile dlls/msxml4 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_msxml4" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/msxml4"
@@ -15090,9 +14923,6 @@ wine_fn_config_makefile dlls/netapi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_netapi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/netapi32"
 
 wine_fn_config_test dlls/netapi32/tests netapi32_test
-wine_fn_config_makefile dlls/netapi32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/netapi32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/newdev/libnewdev.$IMPLIBEXT"
 wine_fn_config_dll newdev newdev
 wine_fn_config_makefile dlls/newdev "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15104,18 +14934,12 @@ wine_fn_config_makefile dlls/ntdll "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ntdll" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ntdll"
 
 wine_fn_config_test dlls/ntdll/tests ntdll_test
-wine_fn_config_makefile dlls/ntdll/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ntdll/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/ntdsapi/libntdsapi.$IMPLIBEXT"
 wine_fn_config_dll ntdsapi ntdsapi
 wine_fn_config_makefile dlls/ntdsapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ntdsapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ntdsapi"
 
 wine_fn_config_test dlls/ntdsapi/tests ntdsapi_test
-wine_fn_config_makefile dlls/ntdsapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ntdsapi/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/ntoskrnl.exe/libntoskrnl.exe.$IMPLIBEXT"
 wine_fn_config_dll ntoskrnl.exe ntoskrnl.exe
 wine_fn_config_makefile dlls/ntoskrnl.exe "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15126,9 +14950,6 @@ wine_fn_config_makefile dlls/ntprint "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ntprint" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ntprint"
 
 wine_fn_config_test dlls/ntprint/tests ntprint_test
-wine_fn_config_makefile dlls/ntprint/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ntprint/tests"
-
 wine_fn_config_dll objsel
 wine_fn_config_makefile dlls/objsel "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_objsel" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/objsel"
@@ -15144,9 +14965,6 @@ wine_fn_config_makefile dlls/odbccp32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_odbccp32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/odbccp32"
 
 wine_fn_config_test dlls/odbccp32/tests odbccp32_test
-wine_fn_config_makefile dlls/odbccp32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/odbccp32/tests"
-
 wine_fn_config_dll ole2.dll16
 wine_fn_config_makefile dlls/ole2.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ole2.dll16"
@@ -15177,27 +14995,18 @@ wine_fn_config_makefile dlls/ole32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ole32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ole32"
 
 wine_fn_config_test dlls/ole32/tests ole32_test
-wine_fn_config_makefile dlls/ole32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ole32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/oleacc/liboleacc.$IMPLIBEXT"
 wine_fn_config_dll oleacc oleacc
 wine_fn_config_makefile dlls/oleacc "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_oleacc" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/oleacc"
 
 wine_fn_config_test dlls/oleacc/tests oleacc_test
-wine_fn_config_makefile dlls/oleacc/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/oleacc/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/oleaut32/liboleaut32.$IMPLIBEXT"
 wine_fn_config_dll oleaut32 oleaut32
 wine_fn_config_makefile dlls/oleaut32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_oleaut32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/oleaut32"
 
 wine_fn_config_test dlls/oleaut32/tests oleaut32_test
-wine_fn_config_makefile dlls/oleaut32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/oleaut32/tests"
-
 wine_fn_config_dll olecli.dll16
 wine_fn_config_makefile dlls/olecli.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/olecli.dll16"
@@ -15212,9 +15021,6 @@ wine_fn_config_makefile dlls/oledb32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_oledb32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/oledb32"
 
 wine_fn_config_test dlls/oledb32/tests oledb32_test
-wine_fn_config_makefile dlls/oledb32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/oledb32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/oledlg/liboledlg.$IMPLIBEXT"
 wine_fn_config_dll oledlg oledlg
 wine_fn_config_makefile dlls/oledlg "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15248,18 +15054,12 @@ wine_fn_config_makefile dlls/opengl32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_opengl32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/opengl32"
 
 wine_fn_config_test dlls/opengl32/tests opengl32_test
-wine_fn_config_makefile dlls/opengl32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/opengl32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/pdh/libpdh.$IMPLIBEXT"
 wine_fn_config_dll pdh pdh
 wine_fn_config_makefile dlls/pdh "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_pdh" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/pdh"
 
 wine_fn_config_test dlls/pdh/tests pdh_test
-wine_fn_config_makefile dlls/pdh/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/pdh/tests"
-
 wine_fn_config_dll pidgen
 wine_fn_config_makefile dlls/pidgen "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_pidgen" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/pidgen"
@@ -15283,9 +15083,6 @@ wine_fn_config_makefile dlls/psapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_psapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/psapi"
 
 wine_fn_config_test dlls/psapi/tests psapi_test
-wine_fn_config_makefile dlls/psapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/psapi/tests"
-
 wine_fn_config_dll pstorec
 wine_fn_config_makefile dlls/pstorec "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_pstorec" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/pstorec"
@@ -15299,17 +15096,11 @@ wine_fn_config_makefile dlls/qedit "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_qedit" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/qedit"
 
 wine_fn_config_test dlls/qedit/tests qedit_test
-wine_fn_config_makefile dlls/qedit/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/qedit/tests"
-
 wine_fn_config_dll qmgr
 wine_fn_config_makefile dlls/qmgr "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_qmgr" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/qmgr"
 
 wine_fn_config_test dlls/qmgr/tests qmgr_test
-wine_fn_config_makefile dlls/qmgr/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/qmgr/tests"
-
 wine_fn_config_dll qmgrprxy
 wine_fn_config_makefile dlls/qmgrprxy "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_qmgrprxy" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/qmgrprxy"
@@ -15320,9 +15111,6 @@ wine_fn_config_makefile dlls/quartz "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_quartz" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/quartz"
 
 wine_fn_config_test dlls/quartz/tests quartz_test
-wine_fn_config_makefile dlls/quartz/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/quartz/tests"
-
 wine_fn_config_dll query
 wine_fn_config_makefile dlls/query "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_query" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/query"
@@ -15337,9 +15125,6 @@ wine_fn_config_makefile dlls/rasapi32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_rasapi32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/rasapi32"
 
 wine_fn_config_test dlls/rasapi32/tests rasapi32_test
-wine_fn_config_makefile dlls/rasapi32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/rasapi32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/rasdlg/librasdlg.$IMPLIBEXT"
 wine_fn_config_dll rasdlg rasdlg
 wine_fn_config_makefile dlls/rasdlg "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15356,26 +15141,17 @@ wine_fn_config_makefile dlls/riched20 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_riched20" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/riched20"
 
 wine_fn_config_test dlls/riched20/tests riched20_test
-wine_fn_config_makefile dlls/riched20/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/riched20/tests"
-
 wine_fn_config_dll riched32
 wine_fn_config_makefile dlls/riched32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_riched32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/riched32"
 
 wine_fn_config_test dlls/riched32/tests riched32_test
-wine_fn_config_makefile dlls/riched32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/riched32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/rpcrt4/librpcrt4.$IMPLIBEXT"
 wine_fn_config_dll rpcrt4 rpcrt4
 wine_fn_config_makefile dlls/rpcrt4 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_rpcrt4" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/rpcrt4"
 
 wine_fn_config_test dlls/rpcrt4/tests rpcrt4_test
-wine_fn_config_makefile dlls/rpcrt4/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/rpcrt4/tests"
-
 wine_fn_config_dll rsabase
 wine_fn_config_makefile dlls/rsabase "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_rsabase" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/rsabase"
@@ -15386,9 +15162,6 @@ wine_fn_config_makefile dlls/rsaenh "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_rsaenh" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/rsaenh"
 
 wine_fn_config_test dlls/rsaenh/tests rsaenh_test
-wine_fn_config_makefile dlls/rsaenh/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/rsaenh/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/rtutils/librtutils.$IMPLIBEXT"
 wine_fn_config_dll rtutils rtutils
 wine_fn_config_makefile dlls/rtutils "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15407,18 +15180,12 @@ wine_fn_config_makefile dlls/schannel "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_schannel" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/schannel"
 
 wine_fn_config_test dlls/schannel/tests schannel_test
-wine_fn_config_makefile dlls/schannel/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/schannel/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/secur32/libsecur32.$IMPLIBEXT"
 wine_fn_config_dll secur32 secur32
 wine_fn_config_makefile dlls/secur32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_secur32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/secur32"
 
 wine_fn_config_test dlls/secur32/tests secur32_test
-wine_fn_config_makefile dlls/secur32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/secur32/tests"
-
 wine_fn_config_dll security
 wine_fn_config_makefile dlls/security "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_security" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/security"
@@ -15434,18 +15201,12 @@ wine_fn_config_makefile dlls/serialui "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_serialui" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/serialui"
 
 wine_fn_config_test dlls/serialui/tests serialui_test
-wine_fn_config_makefile dlls/serialui/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/serialui/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/setupapi/libsetupapi.$IMPLIBEXT"
 wine_fn_config_dll setupapi setupapi
 wine_fn_config_makefile dlls/setupapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_setupapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/setupapi"
 
 wine_fn_config_test dlls/setupapi/tests setupapi_test
-wine_fn_config_makefile dlls/setupapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/setupapi/tests"
-
 wine_fn_config_dll setupx.dll16
 wine_fn_config_makefile dlls/setupx.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/setupx.dll16"
@@ -15470,9 +15231,6 @@ wine_fn_config_makefile dlls/shdocvw "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_shdocvw" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/shdocvw"
 
 wine_fn_config_test dlls/shdocvw/tests shdocvw_test
-wine_fn_config_makefile dlls/shdocvw/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/shdocvw/tests"
-
 wine_fn_config_dll shell.dll16
 wine_fn_config_makefile dlls/shell.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/shell.dll16"
@@ -15483,9 +15241,6 @@ wine_fn_config_makefile dlls/shell32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_shell32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/shell32"
 
 wine_fn_config_test dlls/shell32/tests shell32_test
-wine_fn_config_makefile dlls/shell32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/shell32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/shfolder/libshfolder.$IMPLIBEXT"
 wine_fn_config_dll shfolder shfolder
 wine_fn_config_makefile dlls/shfolder "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15497,9 +15252,6 @@ wine_fn_config_makefile dlls/shlwapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_shlwapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/shlwapi"
 
 wine_fn_config_test dlls/shlwapi/tests shlwapi_test
-wine_fn_config_makefile dlls/shlwapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/shlwapi/tests"
-
 wine_fn_config_dll slbcsp
 wine_fn_config_makefile dlls/slbcsp "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_slbcsp" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/slbcsp"
@@ -15515,9 +15267,6 @@ wine_fn_config_makefile dlls/snmpapi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_snmpapi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/snmpapi"
 
 wine_fn_config_test dlls/snmpapi/tests snmpapi_test
-wine_fn_config_makefile dlls/snmpapi/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/snmpapi/tests"
-
 wine_fn_config_dll softpub
 wine_fn_config_makefile dlls/softpub "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_softpub" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/softpub"
@@ -15532,9 +15281,6 @@ wine_fn_config_makefile dlls/spoolss "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_spoolss" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/spoolss"
 
 wine_fn_config_test dlls/spoolss/tests spoolss_test
-wine_fn_config_makefile dlls/spoolss/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/spoolss/tests"
-
 wine_fn_config_dll stdole2.tlb
 wine_fn_config_makefile dlls/stdole2.tlb "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_stdole2_tlb" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/stdole2.tlb"
@@ -15549,9 +15295,6 @@ wine_fn_config_makefile dlls/sti "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_sti" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/sti"
 
 wine_fn_config_test dlls/sti/tests sti_test
-wine_fn_config_makefile dlls/sti/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/sti/tests"
-
 wine_fn_config_dll storage.dll16
 wine_fn_config_makefile dlls/storage.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/storage.dll16"
@@ -15599,9 +15342,6 @@ wine_fn_config_makefile dlls/twain_32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_twain_32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/twain_32"
 
 wine_fn_config_test dlls/twain_32/tests twain_32_test
-wine_fn_config_makefile dlls/twain_32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/twain_32/tests"
-
 wine_fn_config_dll typelib.dll16
 wine_fn_config_makefile dlls/typelib.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/typelib.dll16"
@@ -15626,9 +15366,6 @@ wine_fn_config_makefile dlls/urlmon "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_urlmon" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/urlmon"
 
 wine_fn_config_test dlls/urlmon/tests urlmon_test
-wine_fn_config_makefile dlls/urlmon/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/urlmon/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/usbd.sys/libusbd.sys.$IMPLIBEXT"
 wine_fn_config_dll usbd.sys usbd.sys
 wine_fn_config_makefile dlls/usbd.sys "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15644,27 +15381,18 @@ wine_fn_config_makefile dlls/user32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_user32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/user32"
 
 wine_fn_config_test dlls/user32/tests user32_test
-wine_fn_config_makefile dlls/user32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/user32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/userenv/libuserenv.$IMPLIBEXT"
 wine_fn_config_dll userenv userenv
 wine_fn_config_makefile dlls/userenv "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_userenv" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/userenv"
 
 wine_fn_config_test dlls/userenv/tests userenv_test
-wine_fn_config_makefile dlls/userenv/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/userenv/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/usp10/libusp10.$IMPLIBEXT"
 wine_fn_config_dll usp10 usp10
 wine_fn_config_makefile dlls/usp10 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_usp10" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/usp10"
 
 wine_fn_config_test dlls/usp10/tests usp10_test
-wine_fn_config_makefile dlls/usp10/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/usp10/tests"
-
 wine_fn_config_lib uuid
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/uxtheme/libuxtheme.$IMPLIBEXT"
 wine_fn_config_dll uxtheme uxtheme
@@ -15672,9 +15400,6 @@ wine_fn_config_makefile dlls/uxtheme "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_uxtheme" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/uxtheme"
 
 wine_fn_config_test dlls/uxtheme/tests uxtheme_test
-wine_fn_config_makefile dlls/uxtheme/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/uxtheme/tests"
-
 wine_fn_config_dll vdhcp.vxd
 wine_fn_config_makefile dlls/vdhcp.vxd "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/vdhcp.vxd"
@@ -15694,9 +15419,6 @@ wine_fn_config_makefile dlls/version "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_version" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/version"
 
 wine_fn_config_test dlls/version/tests version_test
-wine_fn_config_makefile dlls/version/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/version/tests"
-
 wine_fn_config_dll vmm.vxd
 wine_fn_config_makefile dlls/vmm.vxd "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/vmm.vxd"
@@ -15755,9 +15477,6 @@ wine_fn_config_makefile dlls/windowscodecs "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_windowscodecs" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/windowscodecs"
 
 wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
-wine_fn_config_makefile dlls/windowscodecs/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/windowscodecs/tests"
-
 wine_fn_config_dll winealsa.drv
 wine_fn_config_makefile dlls/winealsa.drv "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_winealsa_drv" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/winealsa.drv"
@@ -15834,27 +15553,18 @@ wine_fn_config_makefile dlls/winhttp "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_winhttp" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/winhttp"
 
 wine_fn_config_test dlls/winhttp/tests winhttp_test
-wine_fn_config_makefile dlls/winhttp/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/winhttp/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/wininet/libwininet.$IMPLIBEXT"
 wine_fn_config_dll wininet wininet
 wine_fn_config_makefile dlls/wininet "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_wininet" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wininet"
 
 wine_fn_config_test dlls/wininet/tests wininet_test
-wine_fn_config_makefile dlls/wininet/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/wininet/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/winmm/libwinmm.$IMPLIBEXT"
 wine_fn_config_dll winmm winmm
 wine_fn_config_makefile dlls/winmm "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_winmm" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/winmm"
 
 wine_fn_config_test dlls/winmm/tests winmm_test
-wine_fn_config_makefile dlls/winmm/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/winmm/tests"
-
 wine_fn_config_dll winnls.dll16
 wine_fn_config_makefile dlls/winnls.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/winnls.dll16"
@@ -15879,9 +15589,6 @@ wine_fn_config_makefile dlls/winspool.drv "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_winspool_drv" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/winspool.drv"
 
 wine_fn_config_test dlls/winspool.drv/tests winspool.drv_test
-wine_fn_config_makefile dlls/winspool.drv/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/winspool.drv/tests"
-
 wine_fn_config_dll wintab.dll16
 wine_fn_config_makefile dlls/wintab.dll16 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_win16" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wintab.dll16"
@@ -15892,27 +15599,18 @@ wine_fn_config_makefile dlls/wintab32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_wintab32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wintab32"
 
 wine_fn_config_test dlls/wintab32/tests wintab32_test
-wine_fn_config_makefile dlls/wintab32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/wintab32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/wintrust/libwintrust.$IMPLIBEXT"
 wine_fn_config_dll wintrust wintrust
 wine_fn_config_makefile dlls/wintrust "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_wintrust" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wintrust"
 
 wine_fn_config_test dlls/wintrust/tests wintrust_test
-wine_fn_config_makefile dlls/wintrust/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/wintrust/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/wldap32/libwldap32.$IMPLIBEXT"
 wine_fn_config_dll wldap32 wldap32
 wine_fn_config_makefile dlls/wldap32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_wldap32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wldap32"
 
 wine_fn_config_test dlls/wldap32/tests wldap32_test
-wine_fn_config_makefile dlls/wldap32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/wldap32/tests"
-
 wine_fn_config_dll wmi
 wine_fn_config_makefile dlls/wmi "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_wmi" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/wmi"
@@ -15937,9 +15635,6 @@ wine_fn_config_makefile dlls/ws2_32 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_ws2_32" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/ws2_32"
 
 wine_fn_config_test dlls/ws2_32/tests ws2_32_test
-wine_fn_config_makefile dlls/ws2_32/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/ws2_32/tests"
-
 wine_fn_append_file ALL_IMPORT_LIBS "dlls/wsock32/libwsock32.$IMPLIBEXT"
 wine_fn_config_dll wsock32 wsock32
 wine_fn_config_makefile dlls/wsock32 "dlls/Makedll.rules \$(MAKEDEP)"
@@ -15972,9 +15667,6 @@ wine_fn_config_makefile dlls/xinput1_3 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_xinput1_3" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/xinput1_3"
 
 wine_fn_config_test dlls/xinput1_3/tests xinput1_3_test
-wine_fn_config_makefile dlls/xinput1_3/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/xinput1_3/tests"
-
 wine_fn_config_dll xinput9_1_0
 wine_fn_config_makefile dlls/xinput9_1_0 "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_xinput9_1_0" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/xinput9_1_0"
@@ -15984,9 +15676,6 @@ wine_fn_config_makefile dlls/xmllite "dlls/Makedll.rules \$(MAKEDEP)"
 test "x$enable_xmllite" != xno && wine_fn_append_file ALL_DLL_DIRS "dlls/xmllite"
 
 wine_fn_config_test dlls/xmllite/tests xmllite_test
-wine_fn_config_makefile dlls/xmllite/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "dlls/xmllite/tests"
-
 wine_fn_config_makefile documentation "Make.rules \$(MAKEDEP)"
 test "x$enable_documentation" != xno && wine_fn_append_file ALL_TOP_DIRS "documentation"
 
@@ -16028,9 +15717,6 @@ wine_fn_config_makefile programs/cmd "programs/Makeprog.rules \$(MAKEDEP)"
 test "x$enable_cmd" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cmd" && wine_fn_append_file ALL_INSTALL_DIRS "programs/cmd"
 
 wine_fn_config_test programs/cmd/tests cmd.exe_test
-wine_fn_config_makefile programs/cmd/tests "Maketest.rules \$(MAKEDEP)"
-test "x$enable_tests" != xno && wine_fn_append_file ALL_TEST_DIRS "programs/cmd/tests"
-
 wine_fn_config_program cmdlgtst
 wine_fn_config_makefile programs/cmdlgtst "programs/Makeprog.rules \$(MAKEDEP)"
 test "x$enable_cmdlgtst" != xno && wine_fn_append_file ALL_PROGRAM_DIRS "programs/cmdlgtst"
@@ -16983,64 +16669,46 @@ do
     "dlls/activeds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/activeds/Makefile" ;;
     "dlls/actxprxy/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/actxprxy/Makefile" ;;
     "dlls/advapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advapi32/Makefile" ;;
-    "dlls/advapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advapi32/tests/Makefile" ;;
     "dlls/advpack/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/Makefile" ;;
-    "dlls/advpack/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/tests/Makefile" ;;
     "dlls/amstream/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/Makefile" ;;
-    "dlls/amstream/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/tests/Makefile" ;;
     "dlls/appwiz.cpl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/appwiz.cpl/Makefile" ;;
     "dlls/atl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/atl/Makefile" ;;
     "dlls/authz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/authz/Makefile" ;;
     "dlls/avicap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
     "dlls/avifil32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;
-    "dlls/avifil32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/tests/Makefile" ;;
     "dlls/avifile.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifile.dll16/Makefile" ;;
     "dlls/avrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avrt/Makefile" ;;
     "dlls/bcrypt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/bcrypt/Makefile" ;;
     "dlls/browseui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/Makefile" ;;
-    "dlls/browseui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/tests/Makefile" ;;
     "dlls/cabinet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cabinet/Makefile" ;;
-    "dlls/cabinet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cabinet/tests/Makefile" ;;
     "dlls/capi2032/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/capi2032/Makefile" ;;
     "dlls/cards/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cards/Makefile" ;;
     "dlls/cfgmgr32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cfgmgr32/Makefile" ;;
     "dlls/clusapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/clusapi/Makefile" ;;
     "dlls/comcat/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comcat/Makefile" ;;
-    "dlls/comcat/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comcat/tests/Makefile" ;;
     "dlls/comctl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comctl32/Makefile" ;;
-    "dlls/comctl32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comctl32/tests/Makefile" ;;
     "dlls/comdlg32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comdlg32/Makefile" ;;
-    "dlls/comdlg32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comdlg32/tests/Makefile" ;;
     "dlls/comm.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comm.drv16/Makefile" ;;
     "dlls/commdlg.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/commdlg.dll16/Makefile" ;;
     "dlls/compobj.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/compobj.dll16/Makefile" ;;
     "dlls/compstui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/compstui/Makefile" ;;
     "dlls/credui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/Makefile" ;;
-    "dlls/credui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/tests/Makefile" ;;
     "dlls/crtdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crtdll/Makefile" ;;
     "dlls/crypt32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/Makefile" ;;
-    "dlls/crypt32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/tests/Makefile" ;;
     "dlls/cryptdlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptdlg/Makefile" ;;
     "dlls/cryptdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptdll/Makefile" ;;
     "dlls/cryptnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/Makefile" ;;
-    "dlls/cryptnet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/tests/Makefile" ;;
     "dlls/cryptui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/Makefile" ;;
-    "dlls/cryptui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/tests/Makefile" ;;
     "dlls/ctapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctapi32/Makefile" ;;
     "dlls/ctl3d.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d.dll16/Makefile" ;;
     "dlls/ctl3d32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d32/Makefile" ;;
     "dlls/ctl3dv2.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3dv2.dll16/Makefile" ;;
     "dlls/d3d10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/Makefile" ;;
-    "dlls/d3d10/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/tests/Makefile" ;;
     "dlls/d3d10core/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10core/Makefile" ;;
-    "dlls/d3d10core/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10core/tests/Makefile" ;;
     "dlls/d3d8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d8/Makefile" ;;
-    "dlls/d3d8/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d8/tests/Makefile" ;;
     "dlls/d3d9/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d9/Makefile" ;;
-    "dlls/d3d9/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d9/tests/Makefile" ;;
     "dlls/d3dim/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dim/Makefile" ;;
     "dlls/d3drm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3drm/Makefile" ;;
-    "dlls/d3drm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3drm/tests/Makefile" ;;
     "dlls/d3dx9_24/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_24/Makefile" ;;
     "dlls/d3dx9_25/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_25/Makefile" ;;
     "dlls/d3dx9_26/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_26/Makefile" ;;
@@ -17054,7 +16722,6 @@ do
     "dlls/d3dx9_34/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_34/Makefile" ;;
     "dlls/d3dx9_35/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_35/Makefile" ;;
     "dlls/d3dx9_36/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_36/Makefile" ;;
-    "dlls/d3dx9_36/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_36/tests/Makefile" ;;
     "dlls/d3dx9_37/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_37/Makefile" ;;
     "dlls/d3dx9_38/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_38/Makefile" ;;
     "dlls/d3dx9_39/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_39/Makefile" ;;
@@ -17062,37 +16729,29 @@ do
     "dlls/d3dx9_41/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_41/Makefile" ;;
     "dlls/d3dx9_42/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_42/Makefile" ;;
     "dlls/d3dxof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dxof/Makefile" ;;
-    "dlls/d3dxof/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dxof/tests/Makefile" ;;
     "dlls/dbghelp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dbghelp/Makefile" ;;
     "dlls/dciman32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dciman32/Makefile" ;;
     "dlls/ddeml.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddeml.dll16/Makefile" ;;
     "dlls/ddraw/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddraw/Makefile" ;;
-    "dlls/ddraw/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddraw/tests/Makefile" ;;
     "dlls/ddrawex/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddrawex/Makefile" ;;
-    "dlls/ddrawex/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddrawex/tests/Makefile" ;;
     "dlls/devenum/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/devenum/Makefile" ;;
     "dlls/dinput/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/Makefile" ;;
-    "dlls/dinput/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/tests/Makefile" ;;
     "dlls/dinput8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput8/Makefile" ;;
     "dlls/dispdib.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispdib.dll16/Makefile" ;;
     "dlls/dispex/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispex/Makefile" ;;
-    "dlls/dispex/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispex/tests/Makefile" ;;
     "dlls/display.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/display.drv16/Makefile" ;;
     "dlls/dmband/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmband/Makefile" ;;
     "dlls/dmcompos/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmcompos/Makefile" ;;
     "dlls/dmime/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmime/Makefile" ;;
     "dlls/dmloader/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmloader/Makefile" ;;
-    "dlls/dmloader/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmloader/tests/Makefile" ;;
     "dlls/dmscript/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmscript/Makefile" ;;
     "dlls/dmstyle/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmstyle/Makefile" ;;
     "dlls/dmsynth/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmsynth/Makefile" ;;
     "dlls/dmusic/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmusic/Makefile" ;;
     "dlls/dmusic32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmusic32/Makefile" ;;
     "dlls/dnsapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dnsapi/Makefile" ;;
-    "dlls/dnsapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dnsapi/tests/Makefile" ;;
     "dlls/dplay/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplay/Makefile" ;;
     "dlls/dplayx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplayx/Makefile" ;;
-    "dlls/dplayx/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplayx/tests/Makefile" ;;
     "dlls/dpnaddr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnaddr/Makefile" ;;
     "dlls/dpnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnet/Makefile" ;;
     "dlls/dpnhpast/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnhpast/Makefile" ;;
@@ -17100,24 +16759,18 @@ do
     "dlls/dpwsockx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpwsockx/Makefile" ;;
     "dlls/drmclien/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/drmclien/Makefile" ;;
     "dlls/dsound/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/Makefile" ;;
-    "dlls/dsound/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/tests/Makefile" ;;
     "dlls/dssenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dssenh/Makefile" ;;
     "dlls/dswave/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dswave/Makefile" ;;
     "dlls/dwmapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dwmapi/Makefile" ;;
     "dlls/dxdiagn/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxdiagn/Makefile" ;;
-    "dlls/dxdiagn/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxdiagn/tests/Makefile" ;;
     "dlls/dxgi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/Makefile" ;;
-    "dlls/dxgi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/tests/Makefile" ;;
     "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
     "dlls/fltlib/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fltlib/Makefile" ;;
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;
-    "dlls/fusion/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/tests/Makefile" ;;
     "dlls/fwpuclnt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fwpuclnt/Makefile" ;;
     "dlls/gdi.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi.exe16/Makefile" ;;
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
-    "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/gdiplus/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/Makefile" ;;
-    "dlls/gdiplus/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/tests/Makefile" ;;
     "dlls/glu32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/glu32/Makefile" ;;
     "dlls/gphoto2.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gphoto2.ds/Makefile" ;;
     "dlls/gpkcsp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gpkcsp/Makefile" ;;
@@ -17125,7 +16778,6 @@ do
     "dlls/hhctrl.ocx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hhctrl.ocx/Makefile" ;;
     "dlls/hid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hid/Makefile" ;;
     "dlls/hlink/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/Makefile" ;;
-    "dlls/hlink/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/tests/Makefile" ;;
     "dlls/hnetcfg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hnetcfg/Makefile" ;;
     "dlls/httpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/httpapi/Makefile" ;;
     "dlls/iccvid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iccvid/Makefile" ;;
@@ -17133,40 +16785,27 @@ do
     "dlls/ifsmgr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ifsmgr.vxd/Makefile" ;;
     "dlls/imaadp32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imaadp32.acm/Makefile" ;;
     "dlls/imagehlp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imagehlp/Makefile" ;;
-    "dlls/imagehlp/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imagehlp/tests/Makefile" ;;
     "dlls/imm.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm.dll16/Makefile" ;;
     "dlls/imm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/Makefile" ;;
-    "dlls/imm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/tests/Makefile" ;;
     "dlls/inetcomm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/Makefile" ;;
-    "dlls/inetcomm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/tests/Makefile" ;;
     "dlls/inetmib1/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetmib1/Makefile" ;;
-    "dlls/inetmib1/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetmib1/tests/Makefile" ;;
     "dlls/infosoft/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/infosoft/Makefile" ;;
-    "dlls/infosoft/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/infosoft/tests/Makefile" ;;
     "dlls/initpki/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/initpki/Makefile" ;;
     "dlls/inkobj/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inkobj/Makefile" ;;
     "dlls/inseng/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inseng/Makefile" ;;
     "dlls/iphlpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iphlpapi/Makefile" ;;
-    "dlls/iphlpapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iphlpapi/tests/Makefile" ;;
     "dlls/itircl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itircl/Makefile" ;;
     "dlls/itss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/Makefile" ;;
-    "dlls/itss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/tests/Makefile" ;;
     "dlls/jscript/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/jscript/Makefile" ;;
-    "dlls/jscript/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/jscript/tests/Makefile" ;;
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
-    "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
     "dlls/keyboard.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/keyboard.drv16/Makefile" ;;
     "dlls/krnl386.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/krnl386.exe16/Makefile" ;;
     "dlls/loadperf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/loadperf/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;
-    "dlls/localspl/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/tests/Makefile" ;;
     "dlls/localui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localui/Makefile" ;;
-    "dlls/localui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localui/tests/Makefile" ;;
     "dlls/lz32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/Makefile" ;;
-    "dlls/lz32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/tests/Makefile" ;;
     "dlls/lzexpand.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lzexpand.dll16/Makefile" ;;
     "dlls/mapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/Makefile" ;;
-    "dlls/mapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/tests/Makefile" ;;
     "dlls/mapistub/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapistub/Makefile" ;;
     "dlls/mciavi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciavi32/Makefile" ;;
     "dlls/mcicda/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mcicda/Makefile" ;;
@@ -17175,9 +16814,7 @@ do
     "dlls/mciwave/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciwave/Makefile" ;;
     "dlls/midimap/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/midimap/Makefile" ;;
     "dlls/mlang/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/Makefile" ;;
-    "dlls/mlang/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mlang/tests/Makefile" ;;
     "dlls/mmdevapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevapi/Makefile" ;;
-    "dlls/mmdevapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevapi/tests/Makefile" ;;
     "dlls/mmdevldr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmdevldr.vxd/Makefile" ;;
     "dlls/mmsystem.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mmsystem.dll16/Makefile" ;;
     "dlls/monodebg.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/monodebg.vxd/Makefile" ;;
@@ -17188,14 +16825,11 @@ do
     "dlls/msacm.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm.dll16/Makefile" ;;
     "dlls/msacm32.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32.drv/Makefile" ;;
     "dlls/msacm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/Makefile" ;;
-    "dlls/msacm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/tests/Makefile" ;;
     "dlls/msadp32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msadp32.acm/Makefile" ;;
     "dlls/mscat32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscat32/Makefile" ;;
     "dlls/mscms/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscms/Makefile" ;;
-    "dlls/mscms/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscms/tests/Makefile" ;;
     "dlls/mscoree/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscoree/Makefile" ;;
     "dlls/msctf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msctf/Makefile" ;;
-    "dlls/msctf/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msctf/tests/Makefile" ;;
     "dlls/msdaps/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdaps/Makefile" ;;
     "dlls/msdmo/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdmo/Makefile" ;;
     "dlls/msftedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msftedit/Makefile" ;;
@@ -17203,9 +16837,7 @@ do
     "dlls/msgsm32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msgsm32.acm/Makefile" ;;
     "dlls/mshtml.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml.tlb/Makefile" ;;
     "dlls/mshtml/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/Makefile" ;;
-    "dlls/mshtml/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/tests/Makefile" ;;
     "dlls/msi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msi/Makefile" ;;
-    "dlls/msi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msi/tests/Makefile" ;;
     "dlls/msimg32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msimg32/Makefile" ;;
     "dlls/msimtf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msimtf/Makefile" ;;
     "dlls/msisip/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msisip/Makefile" ;;
@@ -17215,41 +16847,31 @@ do
     "dlls/mssign32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mssign32/Makefile" ;;
     "dlls/mssip32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mssip32/Makefile" ;;
     "dlls/mstask/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mstask/Makefile" ;;
-    "dlls/mstask/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mstask/tests/Makefile" ;;
     "dlls/msvcirt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcirt/Makefile" ;;
     "dlls/msvcr70/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr70/Makefile" ;;
     "dlls/msvcr71/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr71/Makefile" ;;
     "dlls/msvcr80/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr80/Makefile" ;;
     "dlls/msvcr90/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr90/Makefile" ;;
     "dlls/msvcrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/Makefile" ;;
-    "dlls/msvcrt/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/tests/Makefile" ;;
     "dlls/msvcrt20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt20/Makefile" ;;
     "dlls/msvcrt40/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt40/Makefile" ;;
     "dlls/msvcrtd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrtd/Makefile" ;;
-    "dlls/msvcrtd/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrtd/tests/Makefile" ;;
     "dlls/msvfw32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvfw32/Makefile" ;;
-    "dlls/msvfw32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvfw32/tests/Makefile" ;;
     "dlls/msvidc32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvidc32/Makefile" ;;
     "dlls/msvideo.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvideo.dll16/Makefile" ;;
     "dlls/mswsock/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mswsock/Makefile" ;;
     "dlls/msxml3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/Makefile" ;;
-    "dlls/msxml3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/tests/Makefile" ;;
     "dlls/msxml4/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml4/Makefile" ;;
     "dlls/nddeapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/nddeapi/Makefile" ;;
     "dlls/netapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/netapi32/Makefile" ;;
-    "dlls/netapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/netapi32/tests/Makefile" ;;
     "dlls/newdev/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/newdev/Makefile" ;;
     "dlls/ntdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntdll/Makefile" ;;
-    "dlls/ntdll/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntdll/tests/Makefile" ;;
     "dlls/ntdsapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntdsapi/Makefile" ;;
-    "dlls/ntdsapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntdsapi/tests/Makefile" ;;
     "dlls/ntoskrnl.exe/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntoskrnl.exe/Makefile" ;;
     "dlls/ntprint/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntprint/Makefile" ;;
-    "dlls/ntprint/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntprint/tests/Makefile" ;;
     "dlls/objsel/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/objsel/Makefile" ;;
     "dlls/odbc32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbc32/Makefile" ;;
     "dlls/odbccp32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbccp32/Makefile" ;;
-    "dlls/odbccp32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbccp32/tests/Makefile" ;;
     "dlls/ole2.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2.dll16/Makefile" ;;
     "dlls/ole2conv.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2conv.dll16/Makefile" ;;
     "dlls/ole2disp.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2disp.dll16/Makefile" ;;
@@ -17257,15 +16879,11 @@ do
     "dlls/ole2prox.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2prox.dll16/Makefile" ;;
     "dlls/ole2thk.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2thk.dll16/Makefile" ;;
     "dlls/ole32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole32/Makefile" ;;
-    "dlls/ole32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole32/tests/Makefile" ;;
     "dlls/oleacc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleacc/Makefile" ;;
-    "dlls/oleacc/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleacc/tests/Makefile" ;;
     "dlls/oleaut32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleaut32/Makefile" ;;
-    "dlls/oleaut32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleaut32/tests/Makefile" ;;
     "dlls/olecli.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olecli.dll16/Makefile" ;;
     "dlls/olecli32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olecli32/Makefile" ;;
     "dlls/oledb32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledb32/Makefile" ;;
-    "dlls/oledb32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledb32/tests/Makefile" ;;
     "dlls/oledlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledlg/Makefile" ;;
     "dlls/olepro32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olepro32/Makefile" ;;
     "dlls/olesvr.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr.dll16/Makefile" ;;
@@ -17273,76 +16891,55 @@ do
     "dlls/olethk32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olethk32/Makefile" ;;
     "dlls/openal32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/openal32/Makefile" ;;
     "dlls/opengl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/Makefile" ;;
-    "dlls/opengl32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/tests/Makefile" ;;
     "dlls/pdh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/Makefile" ;;
-    "dlls/pdh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/tests/Makefile" ;;
     "dlls/pidgen/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pidgen/Makefile" ;;
     "dlls/powrprof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/powrprof/Makefile" ;;
     "dlls/printui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/printui/Makefile" ;;
     "dlls/propsys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/propsys/Makefile" ;;
     "dlls/psapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/psapi/Makefile" ;;
-    "dlls/psapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/psapi/tests/Makefile" ;;
     "dlls/pstorec/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pstorec/Makefile" ;;
     "dlls/qcap/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qcap/Makefile" ;;
     "dlls/qedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/Makefile" ;;
-    "dlls/qedit/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/tests/Makefile" ;;
     "dlls/qmgr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgr/Makefile" ;;
-    "dlls/qmgr/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgr/tests/Makefile" ;;
     "dlls/qmgrprxy/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgrprxy/Makefile" ;;
     "dlls/quartz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/Makefile" ;;
-    "dlls/quartz/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/tests/Makefile" ;;
     "dlls/query/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/query/Makefile" ;;
     "dlls/rasapi16.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi16.dll16/Makefile" ;;
     "dlls/rasapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/Makefile" ;;
-    "dlls/rasapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/tests/Makefile" ;;
     "dlls/rasdlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasdlg/Makefile" ;;
     "dlls/resutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/resutils/Makefile" ;;
     "dlls/riched20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/Makefile" ;;
-    "dlls/riched20/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/tests/Makefile" ;;
     "dlls/riched32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched32/Makefile" ;;
-    "dlls/riched32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched32/tests/Makefile" ;;
     "dlls/rpcrt4/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rpcrt4/Makefile" ;;
-    "dlls/rpcrt4/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rpcrt4/tests/Makefile" ;;
     "dlls/rsabase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsabase/Makefile" ;;
     "dlls/rsaenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/Makefile" ;;
-    "dlls/rsaenh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/tests/Makefile" ;;
     "dlls/rtutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rtutils/Makefile" ;;
     "dlls/sane.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sane.ds/Makefile" ;;
     "dlls/sccbase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sccbase/Makefile" ;;
     "dlls/schannel/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/schannel/Makefile" ;;
-    "dlls/schannel/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/schannel/tests/Makefile" ;;
     "dlls/secur32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/secur32/Makefile" ;;
-    "dlls/secur32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/secur32/tests/Makefile" ;;
     "dlls/security/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/security/Makefile" ;;
     "dlls/sensapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sensapi/Makefile" ;;
     "dlls/serialui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/serialui/Makefile" ;;
-    "dlls/serialui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/serialui/tests/Makefile" ;;
     "dlls/setupapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupapi/Makefile" ;;
-    "dlls/setupapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupapi/tests/Makefile" ;;
     "dlls/setupx.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/setupx.dll16/Makefile" ;;
     "dlls/sfc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sfc/Makefile" ;;
     "dlls/sfc_os/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sfc_os/Makefile" ;;
     "dlls/shdoclc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdoclc/Makefile" ;;
     "dlls/shdocvw/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdocvw/Makefile" ;;
-    "dlls/shdocvw/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdocvw/tests/Makefile" ;;
     "dlls/shell.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell.dll16/Makefile" ;;
     "dlls/shell32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell32/Makefile" ;;
-    "dlls/shell32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell32/tests/Makefile" ;;
     "dlls/shfolder/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shfolder/Makefile" ;;
     "dlls/shlwapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shlwapi/Makefile" ;;
-    "dlls/shlwapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shlwapi/tests/Makefile" ;;
     "dlls/slbcsp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/slbcsp/Makefile" ;;
     "dlls/slc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/slc/Makefile" ;;
     "dlls/snmpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/Makefile" ;;
-    "dlls/snmpapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/tests/Makefile" ;;
     "dlls/softpub/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/softpub/Makefile" ;;
     "dlls/sound.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sound.drv16/Makefile" ;;
     "dlls/spoolss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/Makefile" ;;
-    "dlls/spoolss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/tests/Makefile" ;;
     "dlls/stdole2.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole2.tlb/Makefile" ;;
     "dlls/stdole32.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole32.tlb/Makefile" ;;
     "dlls/sti/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sti/Makefile" ;;
-    "dlls/sti/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sti/tests/Makefile" ;;
     "dlls/storage.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/storage.dll16/Makefile" ;;
     "dlls/stress.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stress.dll16/Makefile" ;;
     "dlls/svrapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/svrapi/Makefile" ;;
@@ -17354,28 +16951,21 @@ do
     "dlls/traffic/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/traffic/Makefile" ;;
     "dlls/twain.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain.dll16/Makefile" ;;
     "dlls/twain_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/Makefile" ;;
-    "dlls/twain_32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/tests/Makefile" ;;
     "dlls/typelib.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/typelib.dll16/Makefile" ;;
     "dlls/unicows/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/unicows/Makefile" ;;
     "dlls/updspapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/updspapi/Makefile" ;;
     "dlls/url/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
     "dlls/urlmon/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/Makefile" ;;
-    "dlls/urlmon/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/tests/Makefile" ;;
     "dlls/usbd.sys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usbd.sys/Makefile" ;;
     "dlls/user.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user.exe16/Makefile" ;;
     "dlls/user32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/Makefile" ;;
-    "dlls/user32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/tests/Makefile" ;;
     "dlls/userenv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/userenv/Makefile" ;;
-    "dlls/userenv/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/userenv/tests/Makefile" ;;
     "dlls/usp10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usp10/Makefile" ;;
-    "dlls/usp10/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usp10/tests/Makefile" ;;
     "dlls/uxtheme/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/uxtheme/Makefile" ;;
-    "dlls/uxtheme/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/uxtheme/tests/Makefile" ;;
     "dlls/vdhcp.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vdhcp.vxd/Makefile" ;;
     "dlls/vdmdbg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vdmdbg/Makefile" ;;
     "dlls/ver.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ver.dll16/Makefile" ;;
     "dlls/version/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/version/Makefile" ;;
-    "dlls/version/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/version/tests/Makefile" ;;
     "dlls/vmm.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vmm.vxd/Makefile" ;;
     "dlls/vnbt.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vnbt.vxd/Makefile" ;;
     "dlls/vnetbios.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vnetbios.vxd/Makefile" ;;
@@ -17390,7 +16980,6 @@ do
     "dlls/winaspi.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winaspi.dll16/Makefile" ;;
     "dlls/windebug.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/windebug.dll16/Makefile" ;;
     "dlls/windowscodecs/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/windowscodecs/Makefile" ;;
-    "dlls/windowscodecs/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/windowscodecs/tests/Makefile" ;;
     "dlls/winealsa.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winealsa.drv/Makefile" ;;
     "dlls/wineaudioio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineaudioio.drv/Makefile" ;;
     "dlls/winecoreaudio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecoreaudio.drv/Makefile" ;;
@@ -17409,30 +16998,22 @@ do
     "dlls/wing.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing.dll16/Makefile" ;;
     "dlls/wing32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing32/Makefile" ;;
     "dlls/winhttp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winhttp/Makefile" ;;
-    "dlls/winhttp/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winhttp/tests/Makefile" ;;
     "dlls/wininet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wininet/Makefile" ;;
-    "dlls/wininet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wininet/tests/Makefile" ;;
     "dlls/winmm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/Makefile" ;;
-    "dlls/winmm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/tests/Makefile" ;;
     "dlls/winnls.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winnls.dll16/Makefile" ;;
     "dlls/winnls32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winnls32/Makefile" ;;
     "dlls/winscard/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winscard/Makefile" ;;
     "dlls/winsock.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winsock.dll16/Makefile" ;;
     "dlls/winspool.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/Makefile" ;;
-    "dlls/winspool.drv/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/tests/Makefile" ;;
     "dlls/wintab.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab.dll16/Makefile" ;;
     "dlls/wintab32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab32/Makefile" ;;
-    "dlls/wintab32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab32/tests/Makefile" ;;
     "dlls/wintrust/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/Makefile" ;;
-    "dlls/wintrust/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/tests/Makefile" ;;
     "dlls/wldap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wldap32/Makefile" ;;
-    "dlls/wldap32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wldap32/tests/Makefile" ;;
     "dlls/wmi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wmi/Makefile" ;;
     "dlls/wmiutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wmiutils/Makefile" ;;
     "dlls/wnaspi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wnaspi32/Makefile" ;;
     "dlls/wow32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wow32/Makefile" ;;
     "dlls/ws2_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ws2_32/Makefile" ;;
-    "dlls/ws2_32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ws2_32/tests/Makefile" ;;
     "dlls/wsock32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wsock32/Makefile" ;;
     "dlls/wtsapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wtsapi32/Makefile" ;;
     "dlls/wuapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wuapi/Makefile" ;;
@@ -17440,10 +17021,8 @@ do
     "dlls/xinput1_1/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_1/Makefile" ;;
     "dlls/xinput1_2/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_2/Makefile" ;;
     "dlls/xinput1_3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/Makefile" ;;
-    "dlls/xinput1_3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/tests/Makefile" ;;
     "dlls/xinput9_1_0/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput9_1_0/Makefile" ;;
     "dlls/xmllite/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xmllite/Makefile" ;;
-    "dlls/xmllite/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xmllite/tests/Makefile" ;;
     "documentation/Makefile") CONFIG_FILES="$CONFIG_FILES documentation/Makefile" ;;
     "fonts/Makefile") CONFIG_FILES="$CONFIG_FILES fonts/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
@@ -17456,7 +17035,6 @@ do
     "programs/cacls/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cacls/Makefile" ;;
     "programs/clock/Makefile") CONFIG_FILES="$CONFIG_FILES programs/clock/Makefile" ;;
     "programs/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/Makefile" ;;
-    "programs/cmd/tests/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmd/tests/Makefile" ;;
     "programs/cmdlgtst/Makefile") CONFIG_FILES="$CONFIG_FILES programs/cmdlgtst/Makefile" ;;
     "programs/control/Makefile") CONFIG_FILES="$CONFIG_FILES programs/control/Makefile" ;;
     "programs/dxdiag/Makefile") CONFIG_FILES="$CONFIG_FILES programs/dxdiag/Makefile" ;;

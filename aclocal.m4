@@ -235,8 +235,14 @@ wine_fn_config_test ()
 $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: __builddeps__"
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir/__crosstest__: __buildcrossdeps__ $ac_dir/Makefile"
+    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir: __builddeps__
+$ac_dir/__crosstest__: __buildcrossdeps__
+$ac_dir/__clean__ $ac_dir/__crosstest__ $ac_dir: $ac_dir/Makefile
+$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.rules \$(MAKEDEP)
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    AS_VAR_IF([enable_tests],[no],,[wine_fn_append_file ALL_TEST_DIRS $ac_dir])
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
@@ -321,8 +327,7 @@ dnl
 AC_DEFUN([WINE_CONFIG_TEST],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 m4_pushdef([ac_suffix],m4_if(m4_substr([$1],0,9),[programs/],[.exe_test],[_test]))dnl
 m4_pushdef([ac_name],[m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1])])dnl
-wine_fn_config_test $1 ac_name[]ac_suffix
-WINE_CONFIG_MAKEFILE([$1/Makefile],[Maketest.rules],[ALL_TEST_DIRS],[enable_tests])dnl
+wine_fn_config_test $1 ac_name[]ac_suffix[]dnl
 m4_popdef([ac_suffix])dnl
 m4_popdef([ac_name])])
 
