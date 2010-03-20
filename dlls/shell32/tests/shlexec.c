@@ -878,7 +878,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc>32,
-            "expected success (33), got %s (%d), lpFile: %s \n",
+            "expected success (33), got %s (%d), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -888,7 +888,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%d), lpFile: %s \n",
+        "expected success (33), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -897,7 +897,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc==2,
-        "expected failure (2), got %s (%d), lpFile: %s \n",
+        "expected failure (2), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -907,7 +907,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc>32 || broken(rc == 2) /* Win9x/2000 */,
-            "expected success (33), got %s (%d), lpFile: %s \n",
+            "expected success (33), got %s (%d), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -917,7 +917,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s \n",
+        "expected success (33), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -927,7 +927,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc==2,
-            "expected failure (2), got %s (%d), lpFile: %s \n",
+            "expected failure (2), got %s (%d), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -938,7 +938,7 @@ static void test_lpFile_parsed(void)
     rc=shell_execute(NULL, fileA, NULL, NULL);
     todo_wine {
         ok(rc==2,
-            "expected failure (2), got %s (%d), lpFile: %s \n",
+            "expected failure (2), got %s (%d), lpFile: %s\n",
             rc > 32 ? "success" : "failure", rc, fileA
             );
     }
@@ -948,7 +948,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, shorttmpdir);
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
     ok(rc>32,
-        "expected success (33), got %s (%d), lpFile: %s \n",
+        "expected success (33), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
@@ -957,7 +957,7 @@ static void test_lpFile_parsed(void)
     sprintf(fileA, testfile, shorttmpdir);
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
     ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%d), lpFile: %s \n",
+        "expected success (33), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
 }
