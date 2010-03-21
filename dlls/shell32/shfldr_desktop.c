@@ -65,6 +65,7 @@ extern HRESULT WINAPI IEParseDisplayNameWithBCW(DWORD codepage, LPCWSTR lpszDisp
 
 typedef struct {
     const IShellFolder2Vtbl *lpVtbl;
+    const IPersistVtbl *lpVtblIPersist;
     LONG ref;
 
     /* both paths are parsible from the desktop */
@@ -77,6 +78,11 @@ typedef struct {
 
 #define _IUnknown_(This)    (IShellFolder*)&(This->lpVtbl)
 #define _IShellFolder_(This)    (IShellFolder*)&(This->lpVtbl)
+
+static inline IGenericSFImpl *impl_from_IPersist( IPersist *iface )
+{
+    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpVtblIPersist));
+}
 
 static const shvheader DesktopSFHeader[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
@@ -91,7 +97,7 @@ static const shvheader DesktopSFHeader[] = {
 /**************************************************************************
  *    ISF_Desktop_fnQueryInterface
  *
- * NOTES supports not IPersist/IPersistFolder
+ * NOTES supports not IPersistFolder
  */
 static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
                 IShellFolder2 * iface, REFIID riid, LPVOID * ppvObj)
@@ -107,6 +113,10 @@ static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
         IsEqualIID (riid, &IID_IShellFolder2))
     {
         *ppvObj = This;
+    }
+    else if (IsEqualIID (riid, &IID_IPersist))
+    {
+        *ppvObj = &This->lpVtblIPersist;
     }
 
     if (*ppvObj)
@@ -862,6 +872,42 @@ static const IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
 };
 
 /**************************************************************************
+ *    IPersist
+ */
+static HRESULT WINAPI ISF_Desktop_IPersist_fnQueryInterface(
+    IPersist *iface, REFIID riid, LPVOID *ppvObj)
+{
+    IGenericSFImpl *This = impl_from_IPersist( iface );
+    return IShellFolder2_QueryInterface((IShellFolder2*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI ISF_Desktop_IPersist_fnAddRef(IPersist *iface)
+{
+    IGenericSFImpl *This = impl_from_IPersist( iface );
+    return IShellFolder2_AddRef((IShellFolder2*)This);
+}
+
+static ULONG WINAPI ISF_Desktop_IPersist_fnRelease(IPersist *iface)
+{
+    IGenericSFImpl *This = impl_from_IPersist( iface );
+    return IShellFolder2_Release((IShellFolder2*)This);
+}
+
+static HRESULT WINAPI ISF_Desktop_IPersist_fnGetClassID(IPersist *iface, CLSID *clsid)
+{
+    *clsid = CLSID_ShellDesktop;
+    return S_OK;
+}
+
+static const IPersistVtbl vt_IPersist =
+{
+    ISF_Desktop_IPersist_fnQueryInterface,
+    ISF_Desktop_IPersist_fnAddRef,
+    ISF_Desktop_IPersist_fnRelease,
+    ISF_Desktop_IPersist_fnGetClassID
+};
+
+/**************************************************************************
  *    ISF_Desktop_Constructor
  */
 HRESULT WINAPI ISF_Desktop_Constructor (
@@ -890,6 +936,7 @@ HRESULT WINAPI ISF_Desktop_Constructor (
 
         sf->ref = 1;
         sf->lpVtbl = &vt_MCFldr_ShellFolder2;
+        sf->lpVtblIPersist = &vt_IPersist;
         sf->pidlRoot = _ILCreateDesktop();    /* my qualified pidl */
         sf->sPathTarget = SHAlloc( (lstrlenW(szMyPath) + 1)*sizeof(WCHAR) );
         lstrcpyW( sf->sPathTarget, szMyPath );

@@ -2044,6 +2044,36 @@ if (0)
     IShellFolder_Release(desktop);
 }
 
+static void test_desktop_IPersist(void)
+{
+    IShellFolder *desktop;
+    IPersist *persist;
+    CLSID clsid;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "failed %08x\n", hr);
+
+    hr = IShellFolder_QueryInterface(desktop, &IID_IPersist, (void**)&persist);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* NT4, W9X */, "failed %08x\n", hr);
+
+    if (hr == S_OK)
+    {
+    if (0)
+    {
+        /* crashes on native */
+        hr = IPersist_GetClassID(persist, NULL);
+    }
+        memset(&clsid, 0, sizeof(clsid));
+        hr = IPersist_GetClassID(persist, &clsid);
+        ok(hr == S_OK, "failed %08x\n", hr);
+        ok(IsEqualIID(&CLSID_ShellDesktop, &clsid), "Expected CLSID_ShellDesktop\n");
+        IPersist_Release(persist);
+    }
+
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -2064,6 +2094,7 @@ START_TEST(shlfolder)
     test_SHGetFolderPathAndSubDirA();
     test_LocalizedNames();
     test_SHCreateShellItem();
+    test_desktop_IPersist();
 
     OleUninitialize();
 }
