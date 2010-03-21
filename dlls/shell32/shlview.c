@@ -3062,8 +3062,21 @@ static HRESULT WINAPI IShellFolderView_fnGetSelectedObjects(
     UINT *items)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p %p) stub\n", This, pidl, items);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, pidl, items);
+
+    *items = ShellView_GetSelections( This );
+
+    if (*items)
+    {
+        *pidl = LocalAlloc(0, *items*sizeof(LPITEMIDLIST));
+        if (!*pidl) return E_OUTOFMEMORY;
+
+        /* it's documented that caller shouldn't PIDLs, only array itself */
+        memcpy((PITEMID_CHILD*)*pidl, This->apidl, *items*sizeof(LPITEMIDLIST));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellFolderView_fnIsDropOnSource(
