@@ -64,7 +64,7 @@ static BOOL (WINAPI *pCryptSetHashParam)(HCRYPTKEY, DWORD, BYTE*, DWORD);
 static BOOL (WINAPI *pCryptSetKeyParam)(HCRYPTKEY, DWORD, BYTE*, DWORD);
 static BOOL (WINAPI *pCryptSetProvParam)(HCRYPTPROV, DWORD, BYTE*, DWORD);
 static BOOL (WINAPI *pCryptVerifySignatureW)(HCRYPTHASH, BYTE*, DWORD, HCRYPTKEY, LPCWSTR, DWORD);
-static BOOL (WINAPI *pSystemFunction036)(PVOID, ULONG);
+static BOOLEAN (WINAPI *pSystemFunction036)(PVOID, ULONG);
 
 static void init_function_pointers(void)
 {

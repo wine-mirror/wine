@@ -2274,7 +2274,7 @@ BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
  *  Failure: FALSE
  */
 
-BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
+BOOLEAN WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
 {
     int dev_random;
 
