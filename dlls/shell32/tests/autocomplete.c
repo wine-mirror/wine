@@ -59,6 +59,11 @@ static IAutoComplete *test_init(void)
     }
     ok(SUCCEEDED(r), "no IID_IACList (0x%08x)\n", r);
 
+if (0)
+{
+    /* crashes on native */
+    r = IAutoComplete_Init(ac, hEdit, NULL, NULL, NULL);
+}
     /* bind to edit control */
     r = IAutoComplete_Init(ac, hEdit, acSource, NULL, NULL);
     ok(SUCCEEDED(r), "Init failed (0x%08x)\n", r);
