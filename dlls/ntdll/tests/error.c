@@ -33,15 +33,16 @@
 #include "winternl.h"
 
 /* FIXME!!! this test checks only mappings, defined by MSDN
- * It is necessary to add other mappings and to test them up to Windows XP.
+ * It is necessary to add other mappings and to test them
+ * up to the latest Windows platform.
  *
  * Some Windows platforms don't know about all the mappings, and in such
  * cases they return somewhat strange results (Win98) or a generic error
  * like ERROR_MR_MID_NOT_FOUND (NT4). Our tests have to know about these to
  * not fail, but we would very much prefer Wine not to return such garbage.
- * To you can pass the 'strict' option to this test to force it to only check
+ * So you can pass the 'strict' option to this test to force it to only check
  * results against the first listed value. This test should pass in strict
- * mode on the latest Windows platform (currently XP) and in Wine.
+ * mode on the latest Windows platform and in Wine.
  * (of course older Windows platforms will fail to pass the strict mode)
  */
 
@@ -167,6 +168,7 @@ static void run_error_tests(void)
     cmp(STATUS_INTEGER_OVERFLOW,                 ERROR_ARITHMETIC_OVERFLOW);
     cmp(STATUS_BUFFER_OVERFLOW,                  ERROR_MORE_DATA);
     cmp(STATUS_NO_MORE_FILES,                    ERROR_NO_MORE_FILES);
+    cmp2(STATUS_HANDLES_CLOSED,                  ERROR_HANDLES_CLOSED);
     cmp(STATUS_NO_INHERITANCE,                   ERROR_NO_INHERITANCE);
     cmp(STATUS_NO_MORE_EAS,                      ERROR_NO_MORE_ITEMS);
     cmp(STATUS_NO_MORE_ENTRIES,                  ERROR_NO_MORE_ITEMS);

@@ -241,7 +241,7 @@ static const DWORD table_80000001[39] =
    0,                                      /* 80000007 (STATUS_WAKE_SYSTEM_DEBUGGER) */
    0,                                      /* 80000008 */
    0,                                      /* 80000009 */
-   0,                                      /* 8000000a (STATUS_HANDLES_CLOSED) */
+   ERROR_HANDLES_CLOSED,                   /* 8000000a (STATUS_HANDLES_CLOSED) */
    ERROR_NO_INHERITANCE,                   /* 8000000b (STATUS_NO_INHERITANCE) */
    0,                                      /* 8000000c (STATUS_GUID_SUBSTITUTION_MADE) */
    ERROR_PARTIAL_COPY,                     /* 8000000d (STATUS_PARTIAL_COPY) */
@@ -834,8 +834,8 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c0000227 (STATUS_RECOVERY_FAILURE) */
    0,                                      /* c0000228 (STATUS_STACK_OVERFLOW_READ) */
    ERROR_INVALID_PARAMETER,                /* c0000229 (STATUS_FAIL_CHECK) */
-   STATUS_DUPLICATE_OBJECTID,              /* c000022a (STATUS_DUPLICATE_OBJECTID) */
-   STATUS_OBJECTID_EXISTS,                 /* c000022b (STATUS_OBJECTID_EXISTS) */
+   ERROR_OBJECT_ALREADY_EXISTS,            /* c000022a (STATUS_DUPLICATE_OBJECTID) */
+   ERROR_OBJECT_ALREADY_EXISTS,            /* c000022b (STATUS_OBJECTID_EXISTS) */
    0,                                      /* c000022c (STATUS_CONVERT_TO_LARGE) */
    ERROR_RETRY,                            /* c000022d (STATUS_RETRY) */
    0,                                      /* c000022e (STATUS_FOUND_OUT_OF_SCOPE) */
@@ -875,7 +875,7 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c0000250 (STATUS_INSUFFICIENT_LOGON_INFO) */
    0,                                      /* c0000251 (STATUS_BAD_DLL_ENTRYPOINT) */
    0,                                      /* c0000252 (STATUS_BAD_SERVICE_ENTRYPOINT) */
-   ERROR_INTERNAL_ERROR,                   /* c0000253 (STATUS_LPC_REPLY_LOST) */
+   ERROR_CONNECTION_ABORTED,               /* c0000253 (STATUS_LPC_REPLY_LOST) */
    0,                                      /* c0000254 (STATUS_IP_ADDRESS_CONFLICT1) */
    0,                                      /* c0000255 (STATUS_IP_ADDRESS_CONFLICT2) */
    0,                                      /* c0000256 (STATUS_REGISTRY_QUOTA_LIMIT) */

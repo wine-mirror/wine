@@ -306,6 +306,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_ARITHMETIC_OVERFLOW                          534
 #define ERROR_PIPE_CONNECTED                               535
 #define ERROR_PIPE_LISTENING                               536
+#define ERROR_HANDLES_CLOSED                               676
 #define ERROR_EA_ACCESS_DENIED                             994
 #define ERROR_OPERATION_ABORTED                            995
 #define ERROR_IO_INCOMPLETE                                996
