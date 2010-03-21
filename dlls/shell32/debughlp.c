@@ -422,16 +422,13 @@ const char * shdebugstr_guid( const struct _GUID *id )
 
 	if (!id) return "(null)";
 
-	    for (i=0;InterfaceDesc[i].riid && !name;i++) {
-	        if (IsEqualIID(InterfaceDesc[i].riid, id)) name = InterfaceDesc[i].name;
-	    }
-	    if (!name) {
-		if (HCR_GetClassNameA(id, clsidbuf, 100))
-		    name = clsidbuf;
-	    }
+	for (i = 0; InterfaceDesc[i].riid && !name; i++) {
+	    if (IsEqualIID(InterfaceDesc[i].riid, id)) name = InterfaceDesc[i].name;
+	}
+	if (!name) {
+	    if (HCR_GetClassNameA(id, clsidbuf, 100))
+		name = clsidbuf;
+	}
 
-            return wine_dbg_sprintf( "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x} (%s)",
-                 id->Data1, id->Data2, id->Data3,
-                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7], name ? name : "unknown" );
+        return wine_dbg_sprintf( "%s (%s)", debugstr_guid(id), name ? name : "unknown" );
 }

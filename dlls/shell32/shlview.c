@@ -2218,16 +2218,16 @@ static ULONG WINAPI ISVOleCmdTarget_Release(
  */
 static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	IOleCommandTarget *iface,
-	const GUID* pguidCmdGroup,
+	const GUID *pguidCmdGroup,
 	ULONG cCmds,
-	OLECMD * prgCmds,
-	OLECMDTEXT* pCmdText)
+	OLECMD *prgCmds,
+	OLECMDTEXT *pCmdText)
 {
-    UINT i;
     IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
+    UINT i;
 
-    FIXME("(%p)->(%p(%s) 0x%08x %p %p\n",
-              This, pguidCmdGroup, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+    FIXME("(%p)->(%s %d %p %p)\n",
+              This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 
     if (!prgCmds)
         return E_POINTER;

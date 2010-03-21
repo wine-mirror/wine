@@ -125,9 +125,9 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
     LPCWSTR pszTail = pszNext;
     DWORD dwCopy;
 
-    TRACE ("(%s %p 0x%08x)\n", debugstr_w (pszNext), pszOut, dwOut);
+    TRACE ("(%s %p 0x%08x)\n", debugstr_w(pszNext), pszOut, dwOut);
 
-    *pszOut = 0x0000;
+    *pszOut = 0;
 
     if (!pszNext || !*pszNext)
 	return NULL;
@@ -150,10 +150,9 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
 HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
 				  LPITEMIDLIST * pidlInOut, LPOLESTR szNext, DWORD * pEaten, DWORD * pdwAttributes)
 {
-    HRESULT hr = E_INVALIDARG;
-    LPITEMIDLIST pidlOut = NULL,
-      pidlTemp = NULL;
+    LPITEMIDLIST pidlOut = NULL, pidlTemp = NULL;
     IShellFolder *psfChild;
+    HRESULT hr;
 
     TRACE ("(%p, %p, %p, %s)\n", psf, pbc, pidlInOut ? *pidlInOut : NULL, debugstr_w (szNext));
 
@@ -197,7 +196,7 @@ static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,
 {
     HRESULT hr;
 
-    TRACE ("%p %s %p\n", pidlRoot, debugstr_w(pathRoot), pidlChild);
+    TRACE ("(%p %s %p %s %p)\n", pidlRoot, debugstr_w(pathRoot), pidlChild, debugstr_guid(clsid), ppvOut);
 
     hr = SHCoCreateInstance(NULL, clsid, NULL, &IID_IShellFolder, ppvOut);
     if (SUCCEEDED (hr))
@@ -268,6 +267,8 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
     HRESULT hr;
     LPITEMIDLIST pidlChild;
 
+    TRACE("(%p %s %p %s %p)\n", pidlRoot, debugstr_w(pathRoot), pidlComplete, debugstr_guid(riid), ppvOut);
+
     if (!pidlRoot || !ppvOut || !pidlComplete || !pidlComplete->mkid.cb)
         return E_INVALIDARG;
 
@@ -312,7 +313,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
         IShellFolder_Release (pSF);
     }
 
-    TRACE ("-- returning (%p) %08x\n", *ppvOut, hr);
+    TRACE ("-- returning (%p) 0x%08x\n", *ppvOut, hr);
 
     return hr;
 }
@@ -335,7 +336,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 				       LPCITEMIDLIST pidl, DWORD dwFlags, LPWSTR szOut, DWORD dwOutLen)
 {
     LPITEMIDLIST pidlFirst;
-    HRESULT hr = E_INVALIDARG;
+    HRESULT hr;
 
     TRACE ("(%p)->(pidl=%p 0x%08x %p 0x%08x)\n", psf, pidl, dwFlags, szOut, dwOutLen);
     pdump (pidl);

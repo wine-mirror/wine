@@ -386,7 +386,7 @@ BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len)
 	  }
 	}
 
-	TRACE("-- %s\n", szDest);
+	TRACE("-- (%s)\n", szDest);
 
 	return ret;
 }
