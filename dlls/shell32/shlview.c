@@ -86,6 +86,7 @@ typedef struct
 	const IDropSourceVtbl*	lpvtblDropSource;
 	const IViewObjectVtbl*	lpvtblViewObject;
 	const IFolderViewVtbl*  lpvtblFolderView;
+	const IShellFolderViewVtbl *lpvtblShellFolderView;
 	IShellFolder*	pSFParent;
 	IShellFolder2*	pSF2Parent;
 	IShellBrowser*	pShellBrowser;
@@ -117,6 +118,7 @@ static const IDropTargetVtbl dtvt;
 static const IDropSourceVtbl dsvt;
 static const IViewObjectVtbl vovt;
 static const IFolderViewVtbl fviewvt;
+static const IShellFolderViewVtbl shellfolderviewvt;
 
 static inline IShellViewImpl *impl_from_IOleCommandTarget( IOleCommandTarget *iface )
 {
@@ -141,6 +143,11 @@ static inline IShellViewImpl *impl_from_IViewObject( IViewObject *iface )
 static inline IShellViewImpl *impl_from_IFolderView( IFolderView *iface )
 {
     return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblFolderView));
+}
+
+static inline IShellViewImpl *impl_from_IShellFolderView( IShellFolderView *iface )
+{
+    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblShellFolderView));
 }
 
 /* ListView Header ID's */
@@ -200,6 +207,7 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv->lpvtblDropSource=&dsvt;
 	sv->lpvtblViewObject=&vovt;
 	sv->lpvtblFolderView=&fviewvt;
+	sv->lpvtblShellFolderView=&shellfolderviewvt;
 
 	sv->pSFParent = pFolder;
 	if(pFolder) IShellFolder_AddRef(pFolder);
@@ -1705,6 +1713,10 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 * iface,REFIID rii
 	{
           *ppvObj = This;
 	}
+	else if(IsEqualIID(riid, &IID_IShellFolderView))
+	{
+	  *ppvObj = &This->lpvtblShellFolderView;
+	}
 	else if(IsEqualIID(riid, &IID_IFolderView))
 	{
 	  *ppvObj = &This->lpvtblFolderView;
@@ -2894,4 +2906,317 @@ static const IFolderViewVtbl fviewvt =
 	IFView_GetAutoArrange,
 	IFView_SelectItem,
 	IFView_SelectAndPositionItems
+};
+
+/* IShellFolderView */
+static HRESULT WINAPI IShellFolderView_fnQueryInterface(
+    IShellFolderView *iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    TRACE("(%p)->(IID:%s,%p)\n", This, debugstr_guid(riid), ppvObj);
+    return IShellView2_QueryInterface((IShellView2*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI IShellFolderView_fnAddRef(IShellFolderView *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    return IShellView2_AddRef((IShellView2*)This);
+}
+
+static ULONG WINAPI IShellFolderView_fnRelease(IShellFolderView *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    TRACE("(%p)->(count=%u)\n", This, This->ref);
+    return IShellView2_Release((IShellView2*)This);
+}
+
+static HRESULT WINAPI IShellFolderView_fnRearrange(IShellFolderView *iface, LPARAM sort)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%ld) stub\n", This, sort);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetArrangeParam(IShellFolderView *iface, LPARAM *sort)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, sort);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnArrangeGrid(IShellFolderView *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnAutoArrange(IShellFolderView *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetAutoArrange(IShellFolderView *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnAddObject(
+    IShellFolderView *iface,
+    PITEMID_CHILD pidl,
+    UINT *item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, pidl, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetObject(
+    IShellFolderView *iface,
+    PITEMID_CHILD *pidl,
+    UINT item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %d) stub\n", This, pidl, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnRemoveObject(
+    IShellFolderView *iface,
+    PITEMID_CHILD pidl,
+    UINT *item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, pidl, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetObjectCount(
+    IShellFolderView *iface,
+    UINT *count)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetObjectCount(
+    IShellFolderView *iface,
+    UINT count,
+    UINT flags)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%d %x) stub\n", This, count, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnUpdateObject(
+    IShellFolderView *iface,
+    PITEMID_CHILD pidl_old,
+    PITEMID_CHILD pidl_new,
+    UINT *item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p %p) stub\n", This, pidl_old, pidl_new, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnRefreshObject(
+    IShellFolderView *iface,
+    PITEMID_CHILD pidl,
+    UINT *item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, pidl, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetRedraw(
+    IShellFolderView *iface,
+    BOOL redraw)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%d) stub\n", This, redraw);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetSelectedCount(
+    IShellFolderView *iface,
+    UINT *count)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetSelectedObjects(
+    IShellFolderView *iface,
+    PCITEMID_CHILD **pidl,
+    UINT *items)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, pidl, items);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnIsDropOnSource(
+    IShellFolderView *iface,
+    IDropTarget *drop_target)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, drop_target);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetDragPoint(
+    IShellFolderView *iface,
+    POINT *pt)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, pt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetDropPoint(
+    IShellFolderView *iface,
+    POINT *pt)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, pt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnMoveIcons(
+    IShellFolderView *iface,
+    IDataObject *obj)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, obj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetItemPos(
+    IShellFolderView *iface,
+    PCUITEMID_CHILD pidl,
+    POINT *pt)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, pidl, pt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnIsBkDropTarget(
+    IShellFolderView *iface,
+    IDropTarget *drop_target)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, drop_target);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetClipboard(
+    IShellFolderView *iface,
+    BOOL move)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%d) stub\n", This, move);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetPoints(
+    IShellFolderView *iface,
+    IDataObject *obj)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, obj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnGetItemSpacing(
+    IShellFolderView *iface,
+    ITEMSPACING *spacing)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, spacing);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetCallback(
+    IShellFolderView    *iface,
+    IShellFolderViewCB  *new_cb,
+    IShellFolderViewCB **old_cb)
+
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p %p) stub\n", This, new_cb, old_cb);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSelect(
+    IShellFolderView *iface,
+    UINT flags)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%d) stub\n", This, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnQuerySupport(
+    IShellFolderView *iface,
+    UINT *support)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, support);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellFolderView_fnSetAutomationObject(
+    IShellFolderView *iface,
+    IDispatch *disp)
+{
+    IShellViewImpl *This = impl_from_IShellFolderView(iface);
+    FIXME("(%p)->(%p) stub\n", This, disp);
+    return E_NOTIMPL;
+}
+
+static const IShellFolderViewVtbl shellfolderviewvt =
+{
+    IShellFolderView_fnQueryInterface,
+    IShellFolderView_fnAddRef,
+    IShellFolderView_fnRelease,
+    IShellFolderView_fnRearrange,
+    IShellFolderView_fnGetArrangeParam,
+    IShellFolderView_fnArrangeGrid,
+    IShellFolderView_fnAutoArrange,
+    IShellFolderView_fnGetAutoArrange,
+    IShellFolderView_fnAddObject,
+    IShellFolderView_fnGetObject,
+    IShellFolderView_fnRemoveObject,
+    IShellFolderView_fnGetObjectCount,
+    IShellFolderView_fnSetObjectCount,
+    IShellFolderView_fnUpdateObject,
+    IShellFolderView_fnRefreshObject,
+    IShellFolderView_fnSetRedraw,
+    IShellFolderView_fnGetSelectedCount,
+    IShellFolderView_fnGetSelectedObjects,
+    IShellFolderView_fnIsDropOnSource,
+    IShellFolderView_fnGetDragPoint,
+    IShellFolderView_fnGetDropPoint,
+    IShellFolderView_fnMoveIcons,
+    IShellFolderView_fnSetItemPos,
+    IShellFolderView_fnIsBkDropTarget,
+    IShellFolderView_fnSetClipboard,
+    IShellFolderView_fnSetPoints,
+    IShellFolderView_fnGetItemSpacing,
+    IShellFolderView_fnSetCallback,
+    IShellFolderView_fnSelect,
+    IShellFolderView_fnQuerySupport,
+    IShellFolderView_fnSetAutomationObject
 };

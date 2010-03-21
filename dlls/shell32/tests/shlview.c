@@ -542,6 +542,34 @@ static void test_GetItemObject(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_IShellFolderView(void)
+{
+    IShellFolderView *folderview;
+    IShellFolder *desktop;
+    IShellView *view;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellView_QueryInterface(view, &IID_IShellFolderView, (void**)&folderview);
+    if (hr != S_OK)
+    {
+        win_skip("IShellView doesn't provide IShellFolderView on this platform\n");
+        IShellView_Release(view);
+        IShellFolder_Release(desktop);
+        return;
+    }
+
+    IShellFolderView_Release(folderview);
+
+    IShellView_Release(view);
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -551,6 +579,7 @@ START_TEST(shlview)
     test_IShellView_CreateViewWindow();
     test_IFolderView();
     test_GetItemObject();
+    test_IShellFolderView();
 
     OleUninitialize();
 }
