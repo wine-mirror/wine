@@ -689,6 +689,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Finished updating the screen, restore lock */
     LEAVE_GL();
 
+    for(i = 0; i < This->num_buffer_queries; i++)
+    {
+        wined3d_event_query_issue(This->buffer_queries[i], This);
+    }
+
     wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);

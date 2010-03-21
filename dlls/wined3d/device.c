@@ -305,6 +305,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         }
     }
 
+    This->num_buffer_queries = 0;
     if (!This->stateBlock->streamIsUP)
     {
         WORD map = stream_info->use_map;
@@ -314,6 +315,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         {
             struct wined3d_stream_info_element *element;
             struct wined3d_buffer *buffer;
+            struct wined3d_event_query *query;
 
             if (!(map & 1)) continue;
 
@@ -326,6 +328,12 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             {
                 element->buffer_object = 0;
                 element->data = buffer_get_sysmem(buffer) + (ptrdiff_t)element->data;
+            }
+
+            query = ((struct wined3d_buffer *) buffer)->query;
+            if(query)
+            {
+                This->buffer_queries[This->num_buffer_queries++] = query;
             }
         }
     }

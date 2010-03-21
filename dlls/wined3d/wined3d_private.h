@@ -1033,6 +1033,12 @@ enum wined3d_event_query_result
     WINED3D_EVENT_QUERY_ERROR
 };
 
+HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, struct wined3d_event_query **query) DECLSPEC_HIDDEN;
+void wined3d_event_query_destroy(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
+enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
@@ -1695,6 +1701,8 @@ struct IWineD3DDeviceImpl
     /* Stream source management */
     struct wined3d_stream_info strided_streams;
     const WineDirect3DVertexStridedData *up_strided;
+    struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
+    unsigned int num_buffer_queries;
 
     /* Context management */
     struct wined3d_context **contexts;
@@ -2495,6 +2503,7 @@ struct wined3d_buffer
     LONG lock_count;
     struct wined3d_map_range *maps;
     ULONG maps_size, modified_areas;
+    struct wined3d_event_query *query;
 
     /* conversion stuff */
     UINT decl_change_count, full_conversion_count;

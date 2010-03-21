@@ -27,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION (*gl_info)
 
-static HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, struct wined3d_event_query **query)
+HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, struct wined3d_event_query **query)
 {
     struct wined3d_event_query *ret;
     *query = NULL;
@@ -45,13 +45,13 @@ static HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, s
     return WINED3D_OK;
 }
 
-static void wined3d_event_query_destroy(struct wined3d_event_query *query)
+void wined3d_event_query_destroy(struct wined3d_event_query *query)
 {
     if (query->context) context_free_event_query(query);
     HeapFree(GetProcessHeap(), 0, query);
 }
 
-static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
 {
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
@@ -125,7 +125,75 @@ static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_e
     return ret;
 }
 
-static void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+{
+    struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info;
+    enum wined3d_event_query_result ret;
+
+    TRACE("(%p)\n", query);
+
+    if (!query->context)
+    {
+        TRACE("Query not started\n");
+        return WINED3D_EVENT_QUERY_NOT_STARTED;
+    }
+    gl_info = query->context->gl_info;
+
+    if (query->context->tid != GetCurrentThreadId() && !gl_info->supported[ARB_SYNC])
+    {
+        /* A glFinish does not reliably wait for draws in other contexts. The caller has
+         * to find its own way to cope with the thread switch
+         */
+        WARN("Event query finished from wrong thread\n");
+        return WINED3D_EVENT_QUERY_WRONG_THREAD;
+    }
+
+    context = context_acquire(device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+
+    ENTER_GL();
+    if (gl_info->supported[ARB_SYNC])
+    {
+        GLenum gl_ret = GL_EXTCALL(glClientWaitSync(query->object.sync, 0, ~(GLuint64)0));
+        checkGLcall("glClientWaitSync");
+
+        switch (gl_ret)
+        {
+            case GL_ALREADY_SIGNALED:
+            case GL_CONDITION_SATISFIED:
+                ret = WINED3D_EVENT_QUERY_OK;
+                break;
+
+                /* We don't expect a timeout for a ~584 year wait */
+            default:
+                ERR("glClientWaitSync returned %#x.\n", gl_ret);
+                ret = WINED3D_EVENT_QUERY_ERROR;
+        }
+    }
+    else if (context->gl_info->supported[APPLE_FENCE])
+    {
+        GL_EXTCALL(glFinishFenceAPPLE(query->object.id));
+        checkGLcall("glFinishFenceAPPLE");
+        ret = WINED3D_EVENT_QUERY_OK;
+    }
+    else if (context->gl_info->supported[NV_FENCE])
+    {
+        GL_EXTCALL(glFinishFenceNV(query->object.id));
+        checkGLcall("glFinishFenceNV");
+        ret = WINED3D_EVENT_QUERY_OK;
+    }
+    else
+    {
+        ERR("Event query created without GL support\n");
+        ret = WINED3D_EVENT_QUERY_ERROR;
+    }
+    LEAVE_GL();
+
+    context_release(context);
+    return ret;
+}
+
+void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
