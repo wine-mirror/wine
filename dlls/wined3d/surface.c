@@ -158,9 +158,9 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
     else
     {
         rect.left = 0;
-        rect.top = 0;
+        rect.top = h;
         rect.right = w;
-        rect.bottom = h;
+        rect.bottom = 0;
     }
 
     switch (target)
