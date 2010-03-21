@@ -2965,15 +2965,26 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     adapter = &This->adapters[Adapter];
     rt_format_desc = getFormatDescEntry(RenderTargetFormat, &adapter->gl_info);
     ds_format_desc = getFormatDescEntry(DepthStencilFormat, &adapter->gl_info);
-    cfgs = adapter->cfgs;
-    nCfgs = adapter->nCfgs;
-    for (it = 0; it < nCfgs; ++it) {
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[it], rt_format_desc))
-        {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[it], ds_format_desc))
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if ((rt_format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET) &&
+            (ds_format_desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))) {
+            TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
+            return WINED3D_OK;
+        }
+    }
+    else
+    {
+        cfgs = adapter->cfgs;
+        nCfgs = adapter->nCfgs;
+        for (it = 0; it < nCfgs; ++it) {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[it], rt_format_desc))
             {
-                TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
-                return WINED3D_OK;
+                if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[it], ds_format_desc))
+                {
+                    TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
+                    return WINED3D_OK;
+                }
             }
         }
     }
@@ -3200,7 +3211,6 @@ static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
 
     /* Only allow depth/stencil formats */
     if (!(ds_format_desc->depth_size || ds_format_desc->stencil_size)) return FALSE;
-
     /* Walk through all WGL pixel formats to find a match */
     for (it = 0; it < adapter->nCfgs; ++it)
     {
@@ -3231,7 +3241,6 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
 {
     /* Filter out non-RT formats */
     if (!(check_format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
-
     if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
         WineD3D_PixelFormat *cfgs = adapter->cfgs;
         int it;
