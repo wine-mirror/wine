@@ -52,7 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 extern const char * const SHELL_Authors[];
 
-#define MORE_DEBUG 1
 /*************************************************************************
  * CommandLineToArgvW            [SHELL32.@]
  *
@@ -607,7 +606,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                                 GetSystemMetrics( SM_CXICON),
                                 GetSystemMetrics( SM_CYICON),
                                 &psfi->hIcon, 0, 1, 0);
-                        if (ret != 0 && ret != 0xFFFFFFFF)
+                        if (ret != 0 && ret != (UINT)-1)
                         {
                             IconNotYetLoaded=FALSE;
                             psfi->iIcon = icon_idx;
@@ -653,11 +652,9 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 
     SHFree(pidlLast);
 
-#ifdef MORE_DEBUG
     TRACE ("icon=%p index=0x%08x attr=0x%08x name=%s type=%s ret=0x%08lx\n",
            psfi->hIcon, psfi->iIcon, psfi->dwAttributes,
            debugstr_w(psfi->szDisplayName), debugstr_w(psfi->szTypeName), ret);
-#endif
 
     return ret;
 }
@@ -777,17 +774,17 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
 
     TRACE("%p %s %d\n", hInstance, debugstr_w(lpszFile), nIconIndex);
 
-    if (nIconIndex == 0xFFFFFFFF)
+    if (nIconIndex == (UINT)-1)
     {
         ret = PrivateExtractIconsW(lpszFile, 0, cx, cy, NULL, NULL, 0, LR_DEFAULTCOLOR);
-        if (ret != 0xFFFFFFFF && ret)
+        if (ret != (UINT)-1 && ret)
             return (HICON)(UINT_PTR)ret;
         return NULL;
     }
     else
         ret = PrivateExtractIconsW(lpszFile, nIconIndex, cx, cy, &hIcon, NULL, 1, LR_DEFAULTCOLOR);
 
-    if (ret == 0xFFFFFFFF)
+    if (ret == (UINT)-1)
         return (HICON)1;
     else if (ret > 0 && hIcon)
         return hIcon;

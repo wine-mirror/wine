@@ -60,7 +60,7 @@ static void FillList (HWND, char *, BOOL) ;
  * PickIconDlg					[SHELL32.62]
  *
  */
-BOOL WINAPI PickIconDlg(
+INT WINAPI PickIconDlg(
 	HWND hwndOwner,
 	LPSTR lpstrFile,
 	DWORD nMaxFile,
