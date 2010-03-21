@@ -1980,8 +1980,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	UINT flags)
 {
     IShellViewImpl *This = (IShellViewImpl *)iface;
-    IFolderView *view;
-    HRESULT hr;
+    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
     int i;
 
     TRACE("(%p)->(pidl=%p, 0x%08x)\n",This, pidl, flags);
@@ -1989,14 +1988,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
     i = LV_FindItemByPidl(This, pidl);
     if (i == -1) return S_OK;
 
-    hr = IShellView2_QueryInterface(iface, &IID_IFolderView, (void**)&view);
-    if (hr == S_OK)
-    {
-        hr = IFolderView_SelectItem(view, i, flags);
-        IFolderView_Release(view);
-    }
-
-    return hr;
+    return IFolderView_SelectItem(view, i, flags);
 }
 
 static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
@@ -2964,8 +2956,10 @@ static HRESULT WINAPI IShellFolderView_fnAutoArrange(IShellFolderView *iface)
 static HRESULT WINAPI IShellFolderView_fnGetAutoArrange(IShellFolderView *iface)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+
+    TRACE("(%p)\n", This);
+    return IFolderView_GetAutoArrange(view);
 }
 
 static HRESULT WINAPI IShellFolderView_fnAddObject(
@@ -2984,8 +2978,10 @@ static HRESULT WINAPI IShellFolderView_fnGetObject(
     UINT item)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p %d) stub\n", This, pidl, item);
-    return E_NOTIMPL;
+    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+
+    TRACE("(%p)->(%p %d)\n", This, pidl, item);
+    return IFolderView_Item(view, item, pidl);
 }
 
 static HRESULT WINAPI IShellFolderView_fnRemoveObject(
@@ -3003,8 +2999,10 @@ static HRESULT WINAPI IShellFolderView_fnGetObjectCount(
     UINT *count)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p) stub\n", This, count);
-    return E_NOTIMPL;
+    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+
+    TRACE("(%p)->(%p)\n", This, count);
+    return IFolderView_ItemCount(view, SVGIO_ALLVIEW, (INT*)count);
 }
 
 static HRESULT WINAPI IShellFolderView_fnSetObjectCount(
@@ -3111,7 +3109,7 @@ static HRESULT WINAPI IShellFolderView_fnMoveIcons(
     IDataObject *obj)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p) stub\n", This, obj);
+    TRACE("(%p)->(%p)\n", This, obj);
     return E_NOTIMPL;
 }
 

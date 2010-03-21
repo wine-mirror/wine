@@ -564,6 +564,10 @@ static void test_IShellFolderView(void)
         return;
     }
 
+    /* ::MoveIcons */
+    hr = IShellFolderView_MoveIcons(folderview, NULL);
+    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+
     IShellFolderView_Release(folderview);
 
     IShellView_Release(view);
