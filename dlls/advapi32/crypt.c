@@ -2302,7 +2302,7 @@ BOOLEAN WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
 /******************************************************************************
  * SystemFunction040   (ADVAPI32.@)
  *
- * MSDN documents this function as RtlEncryptMemory.
+ * MSDN documents this function as RtlEncryptMemory and declares it in ntsecapi.h.
  *
  * PARAMS
  *  memory [I/O] Pointer to memory to encrypt.
@@ -2330,7 +2330,7 @@ NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)
 /******************************************************************************
  * SystemFunction041  (ADVAPI32.@)
  *
- * MSDN documents this function as RtlDecryptMemory.
+ * MSDN documents this function as RtlDecryptMemory and declares it in ntsecapi.h.
  *
  * PARAMS
  *  memory [I/O] Pointer to memory to decrypt.
