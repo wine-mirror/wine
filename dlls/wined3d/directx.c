@@ -2885,24 +2885,9 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
             return FALSE;
 
         return TRUE;
-    } else if(cfg->iPixelType == WGL_TYPE_RGBA_FLOAT_ARB) { /* Float RGBA formats; TODO: WGL_NV_float_buffer */
-        if (format_desc->format == WINED3DFMT_R16_FLOAT)
-            return (cfg->redSize == 16 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if (format_desc->format == WINED3DFMT_R16G16_FLOAT)
-            return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if (format_desc->format == WINED3DFMT_R16G16B16A16_FLOAT)
-            return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 16 && cfg->alphaSize == 16);
-        if (format_desc->format == WINED3DFMT_R32_FLOAT)
-            return (cfg->redSize == 32 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if (format_desc->format == WINED3DFMT_R32G32_FLOAT)
-            return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if (format_desc->format == WINED3DFMT_R32G32B32A32_FLOAT)
-            return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 32 && cfg->alphaSize == 32);
-    } else {
-        /* Probably a color index mode */
-        return FALSE;
     }
 
+    /* Probably a RGBA_float or color index mode */
     return FALSE;
 }
 
