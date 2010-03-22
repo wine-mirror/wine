@@ -1,5 +1,5 @@
 @ stdcall CreateProxyFromTypeInfo(ptr ptr ptr ptr ptr)
-@ stub CreateStubFromTypeInfo
+@ stdcall CreateStubFromTypeInfo(ptr ptr ptr ptr)
 @ stdcall CStdStubBuffer_AddRef(ptr)
 @ stdcall CStdStubBuffer_Connect(ptr ptr)
 @ stdcall CStdStubBuffer_CountRefs(ptr)
