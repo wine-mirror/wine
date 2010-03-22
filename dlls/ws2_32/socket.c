@@ -424,12 +424,53 @@ static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 /* ----------------------------------- error handling */
 
-static UINT wsaErrno(void)
+static NTSTATUS sock_get_ntstatus( int err )
 {
-    int	loc_errno = errno;
-    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
+    switch ( err )
+    {
+        case EBADF:             return STATUS_INVALID_HANDLE;
+        case EBUSY:             return STATUS_DEVICE_BUSY;
+        case EPERM:
+        case EACCES:            return STATUS_ACCESS_DENIED;
+        case EFAULT:            return STATUS_NO_MEMORY;
+        case EINVAL:            return STATUS_INVALID_PARAMETER;
+        case ENFILE:
+        case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
+        case EWOULDBLOCK:       return STATUS_CANT_WAIT;
+        case EINPROGRESS:       return STATUS_PENDING;
+        case EALREADY:          return STATUS_NETWORK_BUSY;
+        case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
+        case EDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
+        case EMSGSIZE:          return STATUS_BUFFER_OVERFLOW;
+        case EPROTONOSUPPORT:
+        case ESOCKTNOSUPPORT:
+        case EPFNOSUPPORT:
+        case EAFNOSUPPORT:
+        case EPROTOTYPE:        return STATUS_NOT_SUPPORTED;
+        case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
+        case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
+        case EADDRINUSE:        return STATUS_ADDRESS_ALREADY_ASSOCIATED;
+        case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
+        case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
+        case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
+        case ENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
+        case ETIMEDOUT:         return STATUS_IO_TIMEOUT;
+        case ENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
+        case ENETDOWN:          return STATUS_NETWORK_BUSY;
+        case EPIPE:
+        case ECONNRESET:        return STATUS_CONNECTION_RESET;
+        case ECONNABORTED:      return STATUS_CONNECTION_ABORTED;
 
-    switch(loc_errno)
+        case 0:                 return STATUS_SUCCESS;
+        default:
+            WARN("Unknown errno %d!\n", err);
+            return STATUS_UNSUCCESSFUL;
+    }
+}
+
+static UINT sock_get_error( int err )
+{
+	switch(err)
     {
 	case EINTR:		return WSAEINTR;
 	case EBADF:		return WSAEBADF;
@@ -487,17 +528,33 @@ static UINT wsaErrno(void)
 	case EREMOTE:		return WSAEREMOTE;
 #endif
 
-       /* just in case we ever get here and there are no problems */
+	/* just in case we ever get here and there are no problems */
 	case 0:			return 0;
-        default:
-		WARN("Unknown errno %d!\n", loc_errno);
+	default:
+		WARN("Unknown errno %d!\n", err);
 		return WSAEOPNOTSUPP;
     }
 }
 
+static UINT wsaErrno(void)
+{
+    int	loc_errno = errno;
+    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
+
+    return sock_get_error( loc_errno );
+}
+
+/* most ws2 overlapped functions return an ntstatus-based error code */
+static NTSTATUS wsaErrStatus(void)
+{
+    int	loc_errno = errno;
+    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
+
+    return sock_get_ntstatus(loc_errno);
+}
+
 static UINT wsaHerrno(int loc_errno)
 {
-
     WARN("h_errno %d.\n", loc_errno);
 
     switch(loc_errno)
@@ -509,7 +566,7 @@ static UINT wsaHerrno(int loc_errno)
 	case ENOBUFS:		return WSAENOBUFS;
 
 	case 0:			return 0;
-        default:
+	default:
 		WARN("Unknown h_errno %d!\n", loc_errno);
 		return WSAEOPNOTSUPP;
     }
@@ -521,24 +578,32 @@ static inline DWORD NtStatusToWSAError( const DWORD status )
     DWORD wserr;
     switch ( status )
     {
-    case STATUS_SUCCESS:              wserr = 0;                     break;
-    case STATUS_PENDING:              wserr = WSA_IO_PENDING;        break;
-    case STATUS_OBJECT_TYPE_MISMATCH: wserr = WSAENOTSOCK;           break;
-    case STATUS_INVALID_HANDLE:       wserr = WSAEBADF;              break;
-    case STATUS_INVALID_PARAMETER:    wserr = WSAEINVAL;             break;
-    case STATUS_PIPE_DISCONNECTED:    wserr = WSAESHUTDOWN;          break;
-    case STATUS_CANCELLED:            wserr = WSA_OPERATION_ABORTED; break;
-    case STATUS_TIMEOUT:              wserr = WSAETIMEDOUT;          break;
-    case STATUS_NO_MEMORY:            wserr = WSAEFAULT;             break;
+    case STATUS_SUCCESS:                    wserr = 0;                     break;
+    case STATUS_PENDING:                    wserr = WSA_IO_PENDING;        break;
+    case STATUS_OBJECT_TYPE_MISMATCH:       wserr = WSAENOTSOCK;           break;
+    case STATUS_INVALID_HANDLE:             wserr = WSAEBADF;              break;
+    case STATUS_INVALID_PARAMETER:          wserr = WSAEINVAL;             break;
+    case STATUS_PIPE_DISCONNECTED:          wserr = WSAESHUTDOWN;          break;
+    case STATUS_NETWORK_BUSY:               wserr = WSAEALREADY;           break;
+    case STATUS_NETWORK_UNREACHABLE:        wserr = WSAENETUNREACH;        break;
+    case STATUS_CONNECTION_REFUSED:         wserr = WSAECONNREFUSED;       break;
+    case STATUS_CONNECTION_DISCONNECTED:    wserr = WSAENOTCONN;           break;
+    case STATUS_CONNECTION_RESET:           wserr = WSAECONNRESET;         break;
+    case STATUS_CONNECTION_ABORTED:         wserr = WSAECONNABORTED;       break;
+    case STATUS_CANCELLED:                  wserr = WSA_OPERATION_ABORTED; break;
+    case STATUS_ADDRESS_ALREADY_ASSOCIATED: wserr = WSAEADDRINUSE;         break;
+    case STATUS_IO_TIMEOUT:
+    case STATUS_TIMEOUT:                    wserr = WSAETIMEDOUT;          break;
+    case STATUS_NO_MEMORY:                  wserr = WSAEFAULT;             break;
+    case STATUS_ACCESS_DENIED:              wserr = WSAEACCES;             break;
+    case STATUS_TOO_MANY_OPENED_FILES:      wserr = WSAEMFILE;             break;
+    case STATUS_CANT_WAIT:                  wserr = WSAEWOULDBLOCK;        break;
+    case STATUS_BUFFER_OVERFLOW:            wserr = WSAEMSGSIZE;           break;
+    case STATUS_NOT_SUPPORTED:              wserr = WSAEOPNOTSUPP;         break;
+
     default:
-        if ( status >= WSABASEERR && status <= WSABASEERR+1004 )
-            /* It is not an NT status code but a winsock error */
-            wserr = status;
-        else
-        {
-            wserr = RtlNtStatusToDosError( status );
-            FIXME( "Status code %08x converted to DOS error code %x\n", status, wserr );
-        }
+        wserr = RtlNtStatusToDosError( status );
+        FIXME( "Status code %08x converted to DOS error code %x\n", status, wserr );
     }
     return wserr;
 }
@@ -1365,7 +1430,7 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
             else
             {
                 result = 0;
-                status = wsaErrno(); /* FIXME: is this correct ???? */
+                status = wsaErrStatus();
             }
         }
         break;
@@ -1473,9 +1538,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
             }
             else
             {
-                /* We set the status to a winsock error code and check for that
-                   later in NtStatusToWSAError () */
-                status = wsaErrno();
+                status = wsaErrStatus();
                 result = 0;
             }
         }
@@ -1511,8 +1574,8 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
         case ASYNC_TYPE_READ:   err = shutdown( fd, 0 );  break;
         case ASYNC_TYPE_WRITE:  err = shutdown( fd, 1 );  break;
         }
+        status = err ? wsaErrStatus() : STATUS_SUCCESS;
         wine_server_release_fd( wsa->hSocket, fd );
-        status = err ? wsaErrno() : STATUS_SUCCESS;
         break;
     }
     iosb->u.Status = status;
@@ -1590,7 +1653,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
             if (addr) WS_getpeername(as, addr, addrlen32);
             return as;
         }
-        if (is_blocking && status == WSAEWOULDBLOCK)
+        if (is_blocking && status == STATUS_CANT_WAIT)
         {
             int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
             /* block here */
@@ -1598,7 +1661,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
             _sync_sock_state(s); /* let wineserver notice connection */
             release_sock_fd( s, fd );
         }
-    } while (is_blocking && status == WSAEWOULDBLOCK);
+    } while (is_blocking && status == STATUS_CANT_WAIT);
 
     set_error(status);
     return INVALID_SOCKET;
@@ -1747,7 +1810,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
                 /* retrieve any error codes from it */
                 result = _get_sock_error(s, FD_CONNECT_BIT);
                 if (result)
-                    SetLastError(result);
+                    SetLastError(NtStatusToWSAError(result));
                 else
                 {
                     goto connect_success;
@@ -3044,8 +3107,9 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     }
     if (n == -1 && errno != EAGAIN)
     {
+        int loc_errno = errno;
         err = wsaErrno();
-        if (cvalue) WS_AddCompletion( s, cvalue, err, 0 );
+        if (cvalue) WS_AddCompletion( s, cvalue, sock_get_ntstatus(loc_errno), 0 );
         goto error;
     }
 
@@ -4227,6 +4291,8 @@ int WINAPI WS_gethostname(char *name, int namelen)
 int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
 {
     int ret;
+    int i;
+    int errors[FD_MAX_EVENTS];
 
     TRACE("%08lx, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
 
@@ -4235,11 +4301,16 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
         req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = TRUE;
         req->c_event = wine_server_obj_handle( hEvent );
-        wine_server_set_reply( req, lpEvent->iErrorCode, sizeof(lpEvent->iErrorCode) );
+        wine_server_set_reply( req, errors, sizeof(errors) );
         if (!(ret = wine_server_call(req))) lpEvent->lNetworkEvents = reply->pmask & reply->mask;
     }
     SERVER_END_REQ;
-    if (!ret) return 0;
+    if (!ret)
+    {
+        for (i = 0; i < FD_MAX_EVENTS; i++)
+            lpEvent->iErrorCode[i] = NtStatusToWSAError(errors[i]);
+        return 0;
+    }
     SetLastError(WSAEINVAL);
     return SOCKET_ERROR;
 }
@@ -4794,8 +4865,9 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             if (errno == EINTR) continue;
             if (errno != EAGAIN)
             {
+                int loc_errno = errno;
                 err = wsaErrno();
-                if (cvalue) WS_AddCompletion( s, cvalue, err, 0 );
+                if (cvalue) WS_AddCompletion( s, cvalue, sock_get_ntstatus(loc_errno), 0 );
                 goto error;
             }
         }
