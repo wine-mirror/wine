@@ -33,6 +33,128 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(usbd);
 
+PURB WINAPI USBD_CreateConfigurationRequest(
+        PUSB_CONFIGURATION_DESCRIPTOR ConfigurationDescriptor, PUSHORT Siz )
+{
+    URB *urb = NULL;
+    USBD_INTERFACE_LIST_ENTRY *interfaceList;
+    ULONG interfaceListSize;
+    USB_INTERFACE_DESCRIPTOR *interfaceDesc;
+    int i;
+
+    TRACE( "(%p, %p)\n", ConfigurationDescriptor, Siz );
+
+    /* http://www.microsoft.com/whdc/archive/usbfaq.mspx
+     * claims USBD_CreateConfigurationRequest doesn't support > 1 interface,
+     * but is this on Windows 98 only or all versions?
+     */
+
+    *Siz = 0;
+    interfaceListSize = (ConfigurationDescriptor->bNumInterfaces + 1) * sizeof(USBD_INTERFACE_LIST_ENTRY);
+    interfaceList = ExAllocatePool( NonPagedPool, interfaceListSize );
+    if (interfaceList)
+    {
+        RtlZeroMemory( interfaceList,  interfaceListSize );
+        interfaceDesc = (PUSB_INTERFACE_DESCRIPTOR) USBD_ParseDescriptors(
+            ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+            ConfigurationDescriptor, USB_INTERFACE_DESCRIPTOR_TYPE );
+        for (i = 0; i < ConfigurationDescriptor->bNumInterfaces && interfaceDesc != NULL; i++)
+        {
+            interfaceList[i].InterfaceDescriptor = interfaceDesc;
+            interfaceDesc = (PUSB_INTERFACE_DESCRIPTOR) USBD_ParseDescriptors(
+                ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+                interfaceDesc + 1, USB_INTERFACE_DESCRIPTOR_TYPE );
+        }
+        urb = USBD_CreateConfigurationRequestEx( ConfigurationDescriptor, interfaceList );
+        if (urb)
+            *Siz = urb->u.UrbHeader.Length;
+        ExFreePool( interfaceList );
+    }
+    return urb;
+}
+
+PURB WINAPI USBD_CreateConfigurationRequestEx(
+        PUSB_CONFIGURATION_DESCRIPTOR ConfigurationDescriptor,
+        PUSBD_INTERFACE_LIST_ENTRY InterfaceList )
+{
+    URB *urb;
+    ULONG size = 0;
+    USBD_INTERFACE_LIST_ENTRY *interfaceEntry;
+    ULONG interfaceCount = 0;
+
+    TRACE( "(%p, %p)\n", ConfigurationDescriptor, InterfaceList );
+
+    size = sizeof(struct _URB_SELECT_CONFIGURATION);
+    for (interfaceEntry = InterfaceList; interfaceEntry->InterfaceDescriptor; interfaceEntry++)
+    {
+        ++interfaceCount;
+        size += (interfaceEntry->InterfaceDescriptor->bNumEndpoints - 1) *
+            sizeof(USBD_PIPE_INFORMATION);
+    }
+    size += (interfaceCount - 1) * sizeof(USBD_INTERFACE_INFORMATION);
+
+    urb = ExAllocatePool( NonPagedPool, size );
+    if (urb)
+    {
+        USBD_INTERFACE_INFORMATION *interfaceInfo;
+
+        RtlZeroMemory( urb, size );
+        urb->u.UrbSelectConfiguration.Hdr.Length = size;
+        urb->u.UrbSelectConfiguration.Hdr.Function = URB_FUNCTION_SELECT_CONFIGURATION;
+        urb->u.UrbSelectConfiguration.ConfigurationDescriptor = ConfigurationDescriptor;
+        interfaceInfo = &urb->u.UrbSelectConfiguration.Interface;
+        for (interfaceEntry = InterfaceList; interfaceEntry->InterfaceDescriptor; interfaceEntry++)
+        {
+            int i;
+            USB_INTERFACE_DESCRIPTOR *currentInterface;
+            USB_ENDPOINT_DESCRIPTOR *endpointDescriptor;
+            interfaceInfo->InterfaceNumber = interfaceEntry->InterfaceDescriptor->bInterfaceNumber;
+            interfaceInfo->AlternateSetting = interfaceEntry->InterfaceDescriptor->bAlternateSetting;
+            interfaceInfo->Class = interfaceEntry->InterfaceDescriptor->bInterfaceClass;
+            interfaceInfo->SubClass = interfaceEntry->InterfaceDescriptor->bInterfaceSubClass;
+            interfaceInfo->Protocol = interfaceEntry->InterfaceDescriptor->bInterfaceProtocol;
+            interfaceInfo->NumberOfPipes = interfaceEntry->InterfaceDescriptor->bNumEndpoints;
+            currentInterface = USBD_ParseConfigurationDescriptorEx(
+                ConfigurationDescriptor, ConfigurationDescriptor,
+                interfaceEntry->InterfaceDescriptor->bInterfaceNumber, -1, -1, -1, -1 );
+            endpointDescriptor = (PUSB_ENDPOINT_DESCRIPTOR) USBD_ParseDescriptors(
+                ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+                currentInterface, USB_ENDPOINT_DESCRIPTOR_TYPE );
+            for (i = 0; i < interfaceInfo->NumberOfPipes && endpointDescriptor; i++)
+            {
+                interfaceInfo->Pipes[i].MaximumPacketSize = endpointDescriptor->wMaxPacketSize;
+                interfaceInfo->Pipes[i].EndpointAddress = endpointDescriptor->bEndpointAddress;
+                interfaceInfo->Pipes[i].Interval = endpointDescriptor->bInterval;
+                if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_CONTROL)
+                    interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeControl;
+                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_BULK)
+                    interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeBulk;
+                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_INTERRUPT)
+                    interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeInterrupt;
+                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_ISOCHRONOUS)
+                    interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeIsochronous;
+                endpointDescriptor = (PUSB_ENDPOINT_DESCRIPTOR) USBD_ParseDescriptors(
+                    ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
+                    endpointDescriptor + 1, USB_ENDPOINT_DESCRIPTOR_TYPE );
+            }
+            interfaceInfo->Length = sizeof(USBD_INTERFACE_INFORMATION) +
+                (i - 1) * sizeof(USBD_PIPE_INFORMATION);
+            interfaceEntry->Interface = interfaceInfo;
+            interfaceInfo = (USBD_INTERFACE_INFORMATION*)(((char*)interfaceInfo)+interfaceInfo->Length);
+        }
+    }
+    return urb;
+}
+
+VOID WINAPI USBD_GetUSBDIVersion(
+        PUSBD_VERSION_INFORMATION VersionInformation )
+{
+    TRACE( "(%p)\n", VersionInformation );
+    /* Emulate Windows 2000 (= 0x300) for now */
+    VersionInformation->USBDI_Version = 0x300;
+    VersionInformation->Supported_USB_Version = 0x200;
+}
+
 PUSB_INTERFACE_DESCRIPTOR WINAPI USBD_ParseConfigurationDescriptorEx(
         PUSB_CONFIGURATION_DESCRIPTOR ConfigurationDescriptor,
         PVOID StartPosition, LONG InterfaceNumber,
