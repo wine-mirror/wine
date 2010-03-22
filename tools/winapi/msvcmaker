@@ -202,7 +202,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
             push @imports, $;
 	} elsif (/^EXTRALIBS\s*=\s*/) {
             push @imports, map { /^-l(dxerr8|dxerr9|dxguid|strmiids|uuid)$/ ? $1 : () } split /\s+/s, $';
-	} elsif (/^CTESTS\s*=\s*/) {
+	} elsif (/^CTESTS\s*=\s*/ || ( ($makefile_in_file =~ /\/tests\/Makefile\.in$/) && /^C_SRCS\s*=\s*/ ) ) {
 	    my @files = split /\s+/s, $';
 
 	    my $dir = $makefile_in_file;
