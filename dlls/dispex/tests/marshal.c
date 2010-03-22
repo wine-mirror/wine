@@ -232,6 +232,12 @@ static HRESULT WINAPI dispex_GetDispID(IDispatchEx* iface,
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI defer_fn(EXCEPINFO *except)
+{
+    except->scode = E_OUTOFMEMORY;
+    return S_OK;
+}
+
 static HRESULT WINAPI dispex_InvokeEx(IDispatchEx* iface,
                                       DISPID id,
                                       LCID lcid,
@@ -265,6 +271,11 @@ static HRESULT WINAPI dispex_InvokeEx(IDispatchEx* iface,
     else if(id == 4)
     {
         ok(wFlags == 0xf, "got %04x\n", wFlags);
+    }
+    else if(id == 5)
+    {
+        if(pei) pei->pfnDeferredFillIn = defer_fn;
+        return DISP_E_EXCEPTION;
     }
     return S_OK;
 }
@@ -354,6 +365,7 @@ static void test_dispex(void)
     DISPPARAMS params;
     VARIANTARG args[10];
     INT i;
+    EXCEPINFO excepinfo;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -398,6 +410,14 @@ todo_wine
 
     hr = IDispatchEx_InvokeEx(dispex, 4, LOCALE_SYSTEM_DEFAULT, 0xffff, &params, NULL, NULL, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    params.cArgs = 0;
+    hr = IDispatchEx_InvokeEx(dispex, 5, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
+    ok(hr == DISP_E_EXCEPTION, "got %08x\n", hr);
+    hr = IDispatchEx_InvokeEx(dispex, 5, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, &excepinfo, NULL);
+    ok(hr == DISP_E_EXCEPTION, "got %08x\n", hr);
+    ok(excepinfo.scode == E_OUTOFMEMORY, "got scode %08x\n", excepinfo.scode);
+    ok(excepinfo.pfnDeferredFillIn == NULL, "got non-NULL pfnDeferredFillIn\n");
 
     IDispatchEx_Release(dispex);
     end_host_object(tid, thread);

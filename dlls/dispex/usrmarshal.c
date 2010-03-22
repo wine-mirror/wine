@@ -133,6 +133,15 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
 
     hr = IDispatchEx_InvokeEx(This, id, lcid, dwFlags & 0xffff, pdp, result, pei, pspCaller);
 
+    if(hr == DISP_E_EXCEPTION)
+    {
+        if(pei && pei->pfnDeferredFillIn)
+        {
+            pei->pfnDeferredFillIn(pei);
+            pei->pfnDeferredFillIn = NULL;
+        }
+    }
+
     for(arg = 0; arg < byref_args; arg++)
         VariantInit(pdp->rgvarg + ref_idx[arg]);
 
