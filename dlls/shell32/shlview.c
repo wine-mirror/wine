@@ -3188,8 +3188,8 @@ static HRESULT WINAPI IShellFolderView_fnQuerySupport(
     UINT *support)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p) stub\n", This, support);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, support);
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellFolderView_fnSetAutomationObject(

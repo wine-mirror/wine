@@ -547,6 +547,7 @@ static void test_IShellFolderView(void)
     IShellFolderView *folderview;
     IShellFolder *desktop;
     IShellView *view;
+    UINT i;
     HRESULT hr;
 
     hr = SHGetDesktopFolder(&desktop);
@@ -571,6 +572,14 @@ static void test_IShellFolderView(void)
     /* ::SetRedraw without list created */
     hr = IShellFolderView_SetRedraw(folderview, TRUE);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    /* ::QuerySupport */
+    hr = IShellFolderView_QuerySupport(folderview, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    i = 0xdeadbeef;
+    hr = IShellFolderView_QuerySupport(folderview, &i);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(i == 0xdeadbeef, "got %d\n", i);
 
     IShellFolderView_Release(folderview);
 
