@@ -2778,6 +2778,62 @@ static void test_WSASendTo(void)
             "a successful call to WSASendTo()\n");
 }
 
+static void test_WSARecv(void)
+{
+    SOCKET src, dest;
+    char buf[20];
+    WSABUF bufs;
+    WSAOVERLAPPED ov;
+    DWORD bytesReturned;
+    DWORD flags;
+    struct linger ling;
+    int iret;
+    DWORD dwret;
+    BOOL bret;
+
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        goto end;
+    }
+
+    bufs.len = sizeof(buf);
+    bufs.buf = buf;
+    flags = 0;
+
+    memset(&ov, 0, sizeof(ov));
+    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+    if (!ov.hEvent)
+        goto end;
+
+    ling.l_onoff = 1;
+    ling.l_linger = 0;
+    ok(!setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling)), "Failed to set linger %d\n", GetLastError());
+
+    iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, &ov, NULL);
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+
+    dwret = WaitForSingleObject(ov.hEvent, 1000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for disconnect event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)dest, &ov, &bytesReturned, FALSE);
+    todo_wine ok(!bret && GetLastError() == ERROR_NETNAME_DELETED, "Did not get disconnect event: %d, error %d\n", bret, GetLastError());
+    ok(bytesReturned == 0, "Bytes received is %d\n", bytesReturned);
+
+end:
+    if (dest != INVALID_SOCKET)
+        closesocket(dest);
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+    if (ov.hEvent)
+        WSACloseEvent(ov.hEvent);
+}
+
 static void test_GetAddrInfoW(void)
 {
     static const WCHAR port[] = {'8','0',0};
@@ -3392,6 +3448,7 @@ START_TEST( sock )
     test_write_events();
 
     test_WSASendTo();
+    test_WSARecv();
 
     test_ipv6only();
     test_GetAddrInfoW();
