@@ -421,8 +421,6 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
     lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08x)\n", r);
     if (SUCCEEDED(r))
     {
-        CHAR buff[MAX_PATH], buff2[MAX_PATH];
-        IMalloc *pmalloc;
         LPOLESTR str;
 
     if (0)
@@ -434,8 +432,10 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         /* test GetCurFile before ::Save */
         str = (LPWSTR)0xdeadbeef;
         r = IPersistFile_GetCurFile(pf, &str);
-        lok(r == S_FALSE, "got 0x%08x\n", r);
-        ok(str == NULL, "got %p\n", str);
+        lok(r == S_FALSE ||
+            broken(r == S_OK), /* shell32 < 5.0 */
+            "got 0x%08x\n", r);
+        lok(str == NULL, "got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
         if (save_fails)
@@ -452,14 +452,22 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
         lok(r == S_OK, "got 0x%08x\n", r);
+        lok(str != NULL ||
+            broken(str == NULL), /* shell32 < 5.0 */
+            "Didn't expect NULL\n");
+        if (str != NULL)
+        {
+            IMalloc *pmalloc;
 
-        WideCharToMultiByte( CP_ACP, 0, str, -1, buff, sizeof(buff), NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, path, -1, buff2, sizeof(buff2), NULL, NULL );
+            lok(!winetest_strcmpW(path, str), "Expected %s, got %s\n",
+                wine_dbgstr_w(path), wine_dbgstr_w(str));
 
-        lok(!strcmp(buff, buff2), "Expected %s, got %s\n", buff2, buff);
+            SHGetMalloc(&pmalloc);
+            IMalloc_Free(pmalloc, str);
+        }
+        else
+            win_skip("GetCurFile fails on shell32 < 5.0\n");
 
-        SHGetMalloc(&pmalloc);
-        IMalloc_Free(pmalloc, str);
         IPersistFile_Release(pf);
     }
 
@@ -472,8 +480,6 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     IShellLinkA *sl;
     IPersistFile *pf;
     char buffer[INFOTIPSIZE];
-    CHAR buff[MAX_PATH], buff2[MAX_PATH];
-    IMalloc *pmalloc;
     LPOLESTR str;
 
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
@@ -490,12 +496,12 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         return;
     }
 
-    SHGetMalloc(&pmalloc);
-
     /* test GetCurFile before ::Load */
     str = (LPWSTR)0xdeadbeef;
     r = IPersistFile_GetCurFile(pf, &str);
-    lok(r == S_FALSE, "got 0x%08x\n", r);
+    lok(r == S_FALSE ||
+        broken(r == S_OK), /* shell32 < 5.0 */
+        "got 0x%08x\n", r);
     lok(str == NULL, "got %p\n", str);
 
     r = IPersistFile_Load(pf, path, STGM_READ);
@@ -504,13 +510,21 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     /* test GetCurFile after ::Save */
     r = IPersistFile_GetCurFile(pf, &str);
     lok(r == S_OK, "got 0x%08x\n", r);
+    lok(str != NULL ||
+        broken(str == NULL), /* shell32 < 5.0 */
+        "Didn't expect NULL\n");
+    if (str != NULL)
+    {
+        IMalloc *pmalloc;
 
-    WideCharToMultiByte( CP_ACP, 0, str, -1, buff, sizeof(buff), NULL, NULL );
-    WideCharToMultiByte( CP_ACP, 0, path, -1, buff2, sizeof(buff2), NULL, NULL );
+        lok(!winetest_strcmpW(path, str), "Expected %s, got %s\n",
+            wine_dbgstr_w(path), wine_dbgstr_w(str));
 
-    lok(!strcmp(buff, buff2), "Expected %s, got %s\n", buff2, buff);
-
-    IMalloc_Free(pmalloc, str);
+        SHGetMalloc(&pmalloc);
+        IMalloc_Free(pmalloc, str);
+    }
+    else
+        win_skip("GetCurFile fails on shell32 < 5.0\n");
 
     IPersistFile_Release(pf);
     if (FAILED(r))
