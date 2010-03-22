@@ -1371,7 +1371,7 @@ static BSTR EnsureNoEncoding(BSTR sInput)
 
 /*
  * We are trying to replicate the same behaviour as msxml by converting
- * line endings to \r\n and using idents as \t. The problem is that msxml
+ * line endings to \r\n and using indents as \t. The problem is that msxml
  * only formats nodes that have a line ending. Using libxml we cannot
  * reproduce behaviour exactly.
  *
