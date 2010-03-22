@@ -3250,3 +3250,16 @@ enum message_type
 @REQ(free_user_handle)
     user_handle_t  handle;        /* handle to free*/
 @END
+
+
+/* Set/get the current cursor */
+@REQ(set_cursor)
+    unsigned int   flags;         /* flags for fields to set (see below) */
+    user_handle_t  handle;        /* handle to the cursor */
+    int            show_count;    /* show count increment/decrement */
+@REPLY
+    user_handle_t  prev_handle;   /* previous handle */
+    int            prev_count;    /* previous show count */
+@END
+#define SET_CURSOR_HANDLE 0x01
+#define SET_CURSOR_COUNT  0x02

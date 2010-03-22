@@ -3807,6 +3807,19 @@ static void dump_free_user_handle_request( const struct free_user_handle_request
     fprintf( stderr, " handle=%08x", req->handle );
 }
 
+static void dump_set_cursor_request( const struct set_cursor_request *req )
+{
+    fprintf( stderr, " flags=%08x", req->flags );
+    fprintf( stderr, ", handle=%08x", req->handle );
+    fprintf( stderr, ", show_count=%d", req->show_count );
+}
+
+static void dump_set_cursor_reply( const struct set_cursor_reply *req )
+{
+    fprintf( stderr, " prev_handle=%08x", req->prev_handle );
+    fprintf( stderr, ", prev_count=%d", req->prev_count );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4049,6 +4062,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_window_layered_info_request,
     (dump_func)dump_alloc_user_handle_request,
     (dump_func)dump_free_user_handle_request,
+    (dump_func)dump_set_cursor_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4293,6 +4307,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
+    (dump_func)dump_set_cursor_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4537,6 +4552,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_window_layered_info",
     "alloc_user_handle",
     "free_user_handle",
+    "set_cursor",
 };
 
 static const struct
@@ -4568,6 +4584,7 @@ static const struct
     { "ERROR_CLASS_DOES_NOT_EXIST",  0xc0010000 | ERROR_CLASS_DOES_NOT_EXIST },
     { "ERROR_CLASS_HAS_WINDOWS",     0xc0010000 | ERROR_CLASS_HAS_WINDOWS },
     { "ERROR_CLIPBOARD_NOT_OPEN",    0xc0010000 | ERROR_CLIPBOARD_NOT_OPEN },
+    { "ERROR_INVALID_CURSOR_HANDLE", 0xc0010000 | ERROR_INVALID_CURSOR_HANDLE },
     { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
     { "ERROR_INVALID_WINDOW_HANDLE", 0xc0010000 | ERROR_INVALID_WINDOW_HANDLE },
     { "FILE_DELETED",                STATUS_FILE_DELETED },
