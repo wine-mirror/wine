@@ -13853,8 +13853,6 @@ esac
 
 ac_config_commands="$ac_config_commands include/stamp-h"
 
-ac_config_files="$ac_config_files Makefile"
-
 
 ALL_MAKEFILE_DEPENDS="# Makefile dependencies
 Makefile: Makefile.in Make.rules config.status"
@@ -14660,6 +14658,9 @@ wine_fn_config_tool tools/winegcc
 wine_fn_config_tool tools/wmc
 wine_fn_config_tool tools/wrc
 
+ac_config_files="$ac_config_files Makefile"
+
+
 test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
 
 cat >confcache <<\_ACEOF
@@ -15356,7 +15357,6 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
-    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "dlls/wineps.drv/generic.ppd") CONFIG_LINKS="$CONFIG_LINKS dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd" ;;
     "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
@@ -15374,6 +15374,7 @@ do
     "dlls/Makedll.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
     "dlls/Makeimplib.rules") CONFIG_FILES="$CONFIG_FILES dlls/Makeimplib.rules" ;;
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

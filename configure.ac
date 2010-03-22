@@ -2132,7 +2132,6 @@ dnl **** Generate output files ****
 AH_TOP([#define __WINE_CONFIG_H])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
-AC_CONFIG_FILES([Makefile])
 
 WINE_CONFIG_SYMLINK(dlls/wineps.drv/generic.ppd)
 WINE_CONFIG_SYMLINK(fonts/marlett.ttf)
@@ -2702,6 +2701,8 @@ WINE_CONFIG_TOOL(tools/winegcc)
 WINE_CONFIG_TOOL(tools/wmc)
 WINE_CONFIG_TOOL(tools/wrc)
 dnl End of auto-generated output commands
+
+AC_CONFIG_FILES([Makefile])
 
 dnl Don't install in bin dir for Windows build
 test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
