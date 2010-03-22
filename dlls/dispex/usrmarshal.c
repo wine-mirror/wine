@@ -118,6 +118,7 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
 {
     HRESULT hr;
     UINT arg;
+    VARTYPE *vt_list = NULL;
 
     TRACE("(%p)->(%08x, %04x, %08x, %p, %p, %p, %p, %d, %p, %p)\n", This, id, lcid, dwFlags,
           pdp, result, pei, pspCaller, byref_args, ref_idx, ref_arg);
@@ -131,7 +132,29 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
     if(dwFlags & NULL_RESULT) result = NULL;
     if(dwFlags & NULL_EXCEPINFO) pei = NULL;
 
+    /* Create an array of the original VTs to check that the function doesn't change
+       any on return. */
+    if(byref_args)
+    {
+        vt_list = HeapAlloc(GetProcessHeap(), 0, pdp->cArgs * sizeof(vt_list[0]));
+        if(!vt_list) return E_OUTOFMEMORY;
+        for(arg = 0; arg < pdp->cArgs; arg++)
+            vt_list[arg] = V_VT(pdp->rgvarg + arg);
+    }
+
     hr = IDispatchEx_InvokeEx(This, id, lcid, dwFlags & 0xffff, pdp, result, pei, pspCaller);
+
+    if(SUCCEEDED(hr) && byref_args)
+    {
+        for(arg = 0; arg < pdp->cArgs; arg++)
+        {
+            if(vt_list[arg] != V_VT(pdp->rgvarg + arg))
+            {
+                hr = DISP_E_BADCALLEE;
+                break;
+            }
+        }
+    }
 
     if(hr == DISP_E_EXCEPTION)
     {
@@ -145,5 +168,6 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
     for(arg = 0; arg < byref_args; arg++)
         VariantInit(pdp->rgvarg + ref_idx[arg]);
 
+    HeapFree(GetProcessHeap(), 0, vt_list);
     return hr;
 }

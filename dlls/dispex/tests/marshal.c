@@ -405,7 +405,6 @@ static void test_dispex(void)
     /* change one of the argument vts */
     i = 0xbeef;
     hr = IDispatchEx_InvokeEx(dispex, 3, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
-todo_wine
     ok(hr == DISP_E_BADCALLEE, "got %08x\n", hr);
 
     hr = IDispatchEx_InvokeEx(dispex, 4, LOCALE_SYSTEM_DEFAULT, 0xffff, &params, NULL, NULL, NULL);
