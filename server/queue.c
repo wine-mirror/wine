@@ -241,23 +241,19 @@ static struct thread_input *create_thread_input( struct thread *thread )
     return input;
 }
 
-/* release the thread input data of a given thread */
-static inline void release_thread_input( struct thread *thread )
-{
-    struct thread_input *input = thread->queue->input;
-
-    if (!input) return;
-    release_object( input );
-    thread->queue->input = NULL;
-}
-
 /* create a message queue object */
 static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_input *input )
 {
+    struct thread_input *new_input = NULL;
     struct msg_queue *queue;
     int i;
 
-    if (!input && !(input = create_thread_input( thread ))) return NULL;
+    if (!input)
+    {
+        if (!(new_input = create_thread_input( thread ))) return NULL;
+        input = new_input;
+    }
+
     if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->fd              = NULL;
@@ -281,7 +277,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
 
         thread->queue = queue;
     }
-    release_object( input );
+    if (new_input) release_object( new_input );
     return queue;
 }
 
@@ -292,6 +288,20 @@ void free_msg_queue( struct thread *thread )
     if (!thread->queue) return;
     release_object( thread->queue );
     thread->queue = NULL;
+}
+
+/* change the thread input data of a given thread */
+static int assign_thread_input( struct thread *thread, struct thread_input *new_input )
+{
+    if (!thread->queue)
+    {
+        thread->queue = create_msg_queue( thread, new_input );
+        return thread->queue != NULL;
+    }
+
+    if (thread->queue->input) release_object( thread->queue->input );
+    thread->queue->input = (struct thread_input *)grab_object( new_input );
+    return 1;
 }
 
 /* get the hook table for a given thread */
@@ -917,6 +927,7 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 {
     struct desktop *desktop;
     struct thread_input *input;
+    int ret;
 
     if (!thread_to->queue && !(thread_to->queue = create_msg_queue( thread_to, NULL ))) return 0;
     if (!(desktop = get_thread_desktop( thread_from, 0 ))) return 0;
@@ -930,17 +941,10 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
     }
     release_object( desktop );
 
-    if (thread_from->queue)
-    {
-        release_thread_input( thread_from );
-        thread_from->queue->input = input;
-    }
-    else
-    {
-        if (!(thread_from->queue = create_msg_queue( thread_from, input ))) return 0;
-    }
-    memset( input->keystate, 0, sizeof(input->keystate) );
-    return 1;
+    ret = assign_thread_input( thread_from, input );
+    if (ret) memset( input->keystate, 0, sizeof(input->keystate) );
+    release_object( input );
+    return ret;
 }
 
 /* detach two thread input data structures */
@@ -950,8 +954,8 @@ void detach_thread_input( struct thread *thread_from )
 
     if ((input = create_thread_input( thread_from )))
     {
-        release_thread_input( thread_from );
-        thread_from->queue->input = input;
+        assign_thread_input( thread_from, input );
+        release_object( input );
     }
 }
 
