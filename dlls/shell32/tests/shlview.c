@@ -587,6 +587,28 @@ static void test_IShellFolderView(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_IOleWindow(void)
+{
+    IShellFolder *desktop;
+    IShellView *view;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    /* IShellView::ContextSensitiveHelp */
+    hr = IShellView_ContextSensitiveHelp(view, TRUE);
+    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    hr = IShellView_ContextSensitiveHelp(view, FALSE);
+    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+
+    IShellView_Release(view);
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -597,6 +619,7 @@ START_TEST(shlview)
     test_IFolderView();
     test_GetItemObject();
     test_IShellFolderView();
+    test_IOleWindow();
 
     OleUninitialize();
 }

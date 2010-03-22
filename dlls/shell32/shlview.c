@@ -1807,13 +1807,11 @@ static HRESULT WINAPI IShellView_fnGetWindow(IShellView2 * iface,HWND * phWnd)
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView2 * iface,BOOL fEnterMode)
+static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView2 *iface, BOOL mode)
 {
-	IShellViewImpl *This = (IShellViewImpl *)iface;
-
-	FIXME("(%p) stub\n",This);
-
-	return E_NOTIMPL;
+    IShellViewImpl *This = (IShellViewImpl *)iface;
+    TRACE("(%p)->(%d)\n", This, mode);
+    return E_NOTIMPL;
 }
 
 /**********************************************************
@@ -3074,7 +3072,7 @@ static HRESULT WINAPI IShellFolderView_fnGetSelectedObjects(
         *pidl = LocalAlloc(0, *items*sizeof(LPITEMIDLIST));
         if (!*pidl) return E_OUTOFMEMORY;
 
-        /* it's documented that caller shouldn't PIDLs, only array itself */
+        /* it's documented that caller shouldn't free PIDLs, only array itself */
         memcpy((PITEMID_CHILD*)*pidl, This->apidl, *items*sizeof(LPITEMIDLIST));
     }
 
