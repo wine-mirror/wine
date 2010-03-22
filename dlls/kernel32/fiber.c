@@ -271,7 +271,7 @@ BOOL WINAPI FlsFree( DWORD index )
     }
     else SetLastError( ERROR_INVALID_PARAMETER );
     RtlReleasePebLock();
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
