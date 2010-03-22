@@ -644,6 +644,7 @@ static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
 
 static HRESULT ShellView_FillList(IShellViewImpl *This)
 {
+    IShellFolderView *folderview = (IShellFolderView*)&This->lpvtblShellFolderView;
     LPENUMIDLIST pEnumIDList;
     LPITEMIDLIST pidl;
     DWORD fetched;
@@ -676,9 +677,9 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
     /* sort the array */
     DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
 
-    SendMessageW(This->hWndList, WM_SETREDRAW, FALSE, 0);
+    IShellFolderView_SetRedraw(folderview, FALSE);
     DPA_DestroyCallback(hdpa, fill_list, This);
-    SendMessageW(This->hWndList, WM_SETREDRAW, TRUE, 0);
+    IShellFolderView_SetRedraw(folderview, TRUE);
 
     IEnumIDList_Release(pEnumIDList);
 
@@ -3041,8 +3042,11 @@ static HRESULT WINAPI IShellFolderView_fnSetRedraw(
     BOOL redraw)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%d) stub\n", This, redraw);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, redraw);
+
+    SendMessageW(This->hWndList, WM_SETREDRAW, redraw, 0);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellFolderView_fnGetSelectedCount(
