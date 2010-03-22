@@ -54,9 +54,10 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
-#include "wine/debug.h"
+#include "wine/server.h"
 #include "controls.h"
 #include "user_private.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
@@ -1587,7 +1588,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
  */
 BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
-    if (get_user_thread_info()->cursor == hCursor)
+    if (GetCursor() == hCursor)
     {
         WARN_(cursor)("Destroying active cursor!\n" );
         return FALSE;
@@ -1762,15 +1763,28 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
  */
 HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
     HCURSOR hOldCursor;
+    int show_count;
+    BOOL ret;
 
-    if (hCursor == thread_info->cursor) return hCursor;  /* No change */
     TRACE("%p\n", hCursor);
-    hOldCursor = thread_info->cursor;
-    thread_info->cursor = hCursor;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = SET_CURSOR_HANDLE;
+        req->handle = wine_server_user_handle( hCursor );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            hOldCursor = wine_server_ptr_handle( reply->prev_handle );
+            show_count = reply->prev_count;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (!ret) return 0;
+
     /* Change the cursor shape only if it is visible */
-    if (thread_info->cursor_count >= 0)
+    if (show_count >= 0)
     {
         CURSORICONINFO *info = get_icon_ptr( hCursor );
         /* release before calling driver (FIXME) */
@@ -1785,26 +1799,34 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
  */
 INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    HCURSOR cursor;
+    int increment = bShow ? 1 : -1;
+    int prev_count;
 
-    TRACE("%d, count=%d\n", bShow, thread_info->cursor_count );
-
-    if (bShow)
+    SERVER_START_REQ( set_cursor )
     {
-        if (++thread_info->cursor_count == 0) /* Show it */
+        req->flags = SET_CURSOR_COUNT;
+        req->show_count = increment;
+        wine_server_call( req );
+        cursor = wine_server_ptr_handle( reply->prev_handle );
+        prev_count = reply->prev_count;
+    }
+    SERVER_END_REQ;
+
+    TRACE("%d, count=%d\n", bShow, prev_count + increment );
+
+    if (!prev_count)
+    {
+        if (bShow)
         {
-            CURSORICONINFO *info = get_icon_ptr( thread_info->cursor );
+            CURSORICONINFO *info = get_icon_ptr( cursor );
             /* release before calling driver (FIXME) */
-            if (info) release_icon_ptr( thread_info->cursor, info );
+            if (info) release_icon_ptr( cursor, info );
             USER_Driver->pSetCursor( info );
         }
+        else USER_Driver->pSetCursor( NULL );
     }
-    else
-    {
-        if (--thread_info->cursor_count == -1) /* Hide it */
-            USER_Driver->pSetCursor( NULL );
-    }
-    return thread_info->cursor_count;
+    return prev_count + increment;
 }
 
 /***********************************************************************
@@ -1812,7 +1834,16 @@ INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
  */
 HCURSOR WINAPI GetCursor(void)
 {
-    return get_user_thread_info()->cursor;
+    HCURSOR ret;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        wine_server_call( req );
+        ret = wine_server_ptr_handle( reply->prev_handle );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

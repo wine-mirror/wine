@@ -1445,7 +1445,7 @@ static void test_SetCursor(void)
     WaitForSingleObject( thread, 1000 );
     GetExitCodeThread( thread, &result );
     ok( result == (DWORD_PTR)old_cursor, "wrong thread cursor %x/%p\n", result, old_cursor );
-    todo_wine ok( GetCursor() == cursor, "wrong cursor %p/0\n", cursor );
+    ok( GetCursor() == cursor, "wrong cursor %p/0\n", cursor );
 
     if (pGetCursorInfo)
     {
@@ -1461,7 +1461,7 @@ static void test_SetCursor(void)
     cursor = SetCursor( (HCURSOR)0xbadbad );
     error = GetLastError();
     ok( cursor == 0, "wrong cursor %p/0\n", cursor );
-    todo_wine ok( error == ERROR_INVALID_CURSOR_HANDLE || broken( error == 0xdeadbeef ),  /* win9x */
+    ok( error == ERROR_INVALID_CURSOR_HANDLE || broken( error == 0xdeadbeef ),  /* win9x */
         "wrong error %u\n", error );
 
     if (pGetCursorInfo)
@@ -1559,22 +1559,22 @@ static void test_ShowCursor(void)
     thread = CreateThread( NULL, 0, show_cursor_thread, NULL, 0, &id );
     WaitForSingleObject( event_start, 1000 );
     count = ShowCursor( TRUE );
-    todo_wine ok( count == -2, "wrong count %d\n", count );
+    ok( count == -2, "wrong count %d\n", count );
     SetEvent( event_next );
     WaitForSingleObject( thread, 1000 );
     GetExitCodeThread( thread, &result );
-    todo_wine ok( result == -3, "wrong thread count %d\n", result );
+    ok( result == -3, "wrong thread count %d\n", result );
     count = ShowCursor( FALSE );
     ok( count == -2, "wrong count %d\n", count );
 
     thread = CreateThread( NULL, 0, show_cursor_thread, (void *)3, 0, &id );
     WaitForSingleObject( event_start, 1000 );
     count = ShowCursor( TRUE );
-    todo_wine ok( count == 2, "wrong count %d\n", count );
+    ok( count == 2, "wrong count %d\n", count );
     SetEvent( event_next );
     WaitForSingleObject( thread, 1000 );
     GetExitCodeThread( thread, &result );
-    todo_wine ok( result == 1, "wrong thread count %d\n", result );
+    ok( result == 1, "wrong thread count %d\n", result );
     count = ShowCursor( FALSE );
     ok( count == -2, "wrong count %d\n", count );
 
