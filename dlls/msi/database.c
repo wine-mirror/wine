@@ -176,6 +176,37 @@ static void free_transforms( MSIDATABASE *db )
     }
 }
 
+void db_destroy_stream( MSIDATABASE *db, LPCWSTR stname )
+{
+    MSISTREAM *stream, *stream2;
+
+    LIST_FOR_EACH_ENTRY_SAFE( stream, stream2, &db->streams, MSISTREAM, entry )
+    {
+        HRESULT r;
+        STATSTG stat;
+
+        r = IStream_Stat( stream->stm, &stat, 0 );
+        if (FAILED(r))
+        {
+            WARN("failed to stat stream r = %08x\n", r);
+            continue;
+        }
+
+        if (!strcmpW( stname, stat.pwcsName ))
+        {
+            TRACE("destroying %s\n", debugstr_w(stname));
+
+            list_remove( &stream->entry );
+            IStream_Release( stream->stm );
+            msi_free( stream );
+            IStorage_DestroyElement( db->storage, stname );
+            CoTaskMemFree( stat.pwcsName );
+            break;
+        }
+        CoTaskMemFree( stat.pwcsName );
+    }
+}
+
 static void free_streams( MSIDATABASE *db )
 {
     while( !list_empty( &db->streams ) )

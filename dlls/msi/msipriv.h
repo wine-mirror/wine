@@ -722,6 +722,7 @@ extern BOOL decode_streamname(LPCWSTR in, LPWSTR out);
 
 /* database internals */
 extern UINT db_get_raw_stream( MSIDATABASE *, LPCWSTR, IStream ** );
+void db_destroy_stream( MSIDATABASE *, LPCWSTR );
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
