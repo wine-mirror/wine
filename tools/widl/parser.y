@@ -2527,10 +2527,11 @@ static void check_remoting_args(const var_t *func)
                 error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
                 break;
             case TGT_STRING:
-                if (!is_array(type))
-                {
-                    /* FIXME */
-                }
+                if (is_ptr(type) ||
+                    (is_array(type) &&
+                     (!type_array_has_conformance(type) ||
+                      type_array_get_conformance(type)->type == EXPR_VOID)))
+                    error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' cannot be an unsized string\n", arg->name, funcname);
                 break;
             case TGT_INVALID:
                 /* already error'd before we get here */
