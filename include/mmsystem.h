@@ -657,6 +657,8 @@ DECL_WINELIB_TYPE_AW(LPMIDIOUTCAPS2)
 #define MOD_SQSYNTH     3  /* square wave internal synth */
 #define MOD_FMSYNTH     4  /* FM internal synth */
 #define MOD_MAPPER      5  /* MIDI mapper */
+#define MOD_WAVETABLE   6  /* hardware watetable internal synth */
+#define MOD_SWSYNTH     7  /* software synth */
 
 #define MIDICAPS_VOLUME		0x0001  /* supports volume control */
 #define MIDICAPS_LRVOLUME	0x0002  /* separate left-right volume control */
