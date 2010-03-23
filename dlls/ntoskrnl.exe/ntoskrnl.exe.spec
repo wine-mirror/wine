@@ -333,7 +333,7 @@
 @ stub IoCheckQuerySetVolumeInformation
 @ stub IoCheckQuotaBufferValidity
 @ stub IoCheckShareAccess
-@ stub IoCompleteRequest
+@ stdcall IoCompleteRequest(ptr long)
 @ stub IoConnectInterrupt
 @ stub IoCreateController
 @ stdcall IoCreateDevice(ptr long ptr long long long ptr)

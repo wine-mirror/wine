@@ -789,14 +789,9 @@ NTSTATUS WINAPI IoReportResourceUsage(PUNICODE_STRING name, PDRIVER_OBJECT drv_o
 
 
 /***********************************************************************
- *           IofCompleteRequest   (NTOSKRNL.EXE.@)
+ *           IoCompleteRequest   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( IofCompleteRequest )
-void WINAPI __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
-#else
-void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
-#endif
+VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
 {
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
@@ -849,6 +844,21 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
             break;
         }
     }
+}
+
+
+/***********************************************************************
+ *           IofCompleteRequest   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( IofCompleteRequest )
+void WINAPI __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
+#else
+void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
+#endif
+{
+    TRACE( "%p %u\n", irp, priority_boost );
+    IoCompleteRequest( irp, priority_boost );
 }
 
 
