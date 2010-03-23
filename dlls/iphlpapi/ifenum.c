@@ -115,8 +115,6 @@
 
 #define INITIAL_INTERFACES_ASSUMED 4
 
-#define INDEX_IS_LOOPBACK 0x00800000
-
 /* Functions */
 
 static int isLoopbackInterface(int fd, const char *name)
