@@ -3900,33 +3900,36 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
         {
             print_file(file, indent, "%s%s", local_var_prefix, var->name);
 
-            if (is_context_handle(var->type))
+            switch (typegen_detect_type(var->type, var->attrs, TDT_IGNORE_STRINGS))
             {
+            case TGT_CTXT_HANDLE_POINTER:
                 fprintf(file, " = NdrContextHandleInitialize(\n");
                 print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n",
                            var->type->typestring_offset);
-            }
-            else if (is_array(var->type) &&
-                     type_array_has_conformance(var->type))
-            {
-                unsigned int size, align = 0;
-                type_t *type = var->type;
-
-                fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
-                for ( ;
-                     is_array(type) && type_array_has_conformance(type);
-                     type = type_array_get_element(type))
+                break;
+            case TGT_ARRAY:
+                if (type_array_has_conformance(var->type))
                 {
-                    write_expr(file, type_array_get_conformance(type), TRUE,
-                               TRUE, NULL, NULL, local_var_prefix);
-                    fprintf(file, " * ");
+                    unsigned int size, align = 0;
+                    type_t *type = var->type;
+
+                    fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
+                    for ( ;
+                         is_array(type) && type_array_has_conformance(type);
+                         type = type_array_get_element(type))
+                    {
+                        write_expr(file, type_array_get_conformance(type), TRUE,
+                                   TRUE, NULL, NULL, local_var_prefix);
+                        fprintf(file, " * ");
+                    }
+                    size = type_memsize(type, &align);
+                    fprintf(file, "%u);\n", size);
                 }
-                size = type_memsize(type, &align);
-                fprintf(file, "%u);\n", size);
-            }
-            else
-            {
+                else
+                    fprintf(file, " = &%s_W%u;\n", local_var_prefix, i++);
+                break;
+            case TGT_POINTER:
                 fprintf(file, " = &%s_W%u;\n", local_var_prefix, i);
                 switch (typegen_detect_type(type_pointer_get_ref(var->type), var->attrs, TDT_IGNORE_STRINGS))
                 {
@@ -3949,6 +3952,9 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                     break;
                 }
                 i++;
+                break;
+            default:
+                break;
             }
 
             sep = 1;
