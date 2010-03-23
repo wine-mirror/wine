@@ -1854,7 +1854,7 @@ static void init_test(void)
     }
 
     r = CoInitialize(NULL);
-    ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
+    ok(r == S_OK, "CoInitialize failed (0x%08x)\n", r);
     if (FAILED(r))
         exit(1);
 

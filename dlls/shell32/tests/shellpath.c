@@ -201,7 +201,7 @@ static void loadShell32(void)
     {
         HRESULT hr = pSHGetMalloc(&pMalloc);
 
-        ok(SUCCEEDED(hr), "SHGetMalloc failed: 0x%08x\n", hr);
+        ok(hr == S_OK, "SHGetMalloc failed: 0x%08x\n", hr);
         ok(pMalloc != NULL, "SHGetMalloc returned a NULL IMalloc\n");
     }
 
@@ -315,14 +315,14 @@ static void testSHGetFolderLocationInvalidArgs(void)
     hr = pSHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl);
     ok(hr == E_INVALIDARG,
      "SHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl) returned 0x%08x, expected E_INVALIDARG\n", hr);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
         IMalloc_Free(pMalloc, pidl);
     /* check a bogus user token: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
     ok(hr == E_FAIL || hr == E_HANDLE,
      "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl) returned 0x%08x, expected E_FAIL or E_HANDLE\n", hr);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
         IMalloc_Free(pMalloc, pidl);
     /* a NULL pidl pointer crashes, so don't test it */
 }
@@ -403,7 +403,7 @@ static BYTE testSHGetFolderLocation(int folder)
 
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         if (pidl)
         {
@@ -431,7 +431,7 @@ static BYTE testSHGetSpecialFolderLocation(int folder)
 
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, folder, &pidl);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         if (pidl)
         {
@@ -455,7 +455,7 @@ static void testSHGetFolderPath(BOOL optional, int folder)
     if (!pSHGetFolderPathA) return;
 
     hr = pSHGetFolderPathA(NULL, folder, NULL, SHGFP_TYPE_CURRENT, path);
-    ok(SUCCEEDED(hr) || optional,
+    ok(hr == S_OK || optional,
      "SHGetFolderPathA(NULL, %s, NULL, SHGFP_TYPE_CURRENT, path) failed: 0x%08x\n", getFolderName(folder), hr);
 }
 
@@ -555,7 +555,7 @@ static void matchGUID(int folder, const GUID *guid, const GUID *guid_alt)
 
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         LPITEMIDLIST pidlLast = pILFindLastID(pidl);
 
@@ -734,7 +734,7 @@ static void testNonExistentPath1(void)
      &pidl);
     ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
      "SHGetFolderLocation returned 0x%08x\n", hr);
-    if (SUCCEEDED(hr) && pidl)
+    if (hr == S_OK && pidl)
         IMalloc_Free(pMalloc, pidl);
     ok(!pSHGetSpecialFolderPathA(NULL, path, CSIDL_FAVORITES, FALSE),
      "SHGetSpecialFolderPath succeeded, expected failure\n");
@@ -742,12 +742,12 @@ static void testNonExistentPath1(void)
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_FAVORITES, &pidl);
     ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "SHGetFolderLocation returned 0x%08x\n", hr);
-    if (SUCCEEDED(hr) && pidl)
+    if (hr == S_OK && pidl)
         IMalloc_Free(pMalloc, pidl);
     /* now test success: */
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, NULL,
      SHGFP_TYPE_CURRENT, path);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         BOOL ret;
 
@@ -769,7 +769,7 @@ static void testNonExistentPath1(void)
         ret = RemoveDirectoryA(path);
         ok( ret, "failed to remove %s error %u\n", path, GetLastError() );
     }
-    ok(SUCCEEDED(hr),
+    ok(hr == S_OK,
      "SHGetFolderPath(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, "
      "NULL, SHGFP_TYPE_CURRENT, path) failed: 0x%08x\n", hr);
 }
@@ -784,7 +784,7 @@ static void testNonExistentPath2(void)
 
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, NULL,
      SHGFP_TYPE_CURRENT, path);
-    ok(SUCCEEDED(hr), "SHGetFolderPath failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "SHGetFolderPath failed: 0x%08x\n", hr);
 }
 
 static void doChild(const char *arg)

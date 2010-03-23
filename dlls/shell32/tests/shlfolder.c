@@ -125,9 +125,9 @@ static void test_ParseDisplayName(void)
     MultiByteToWideChar(CP_ACP, 0, cInetTestA, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
+    todo_wine ok(hr == S_OK || broken(hr == E_FAIL) /* NT4 */,
         "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL\n", hr);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
            "PT_IESPECIAL1, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
@@ -137,9 +137,9 @@ static void test_ParseDisplayName(void)
     MultiByteToWideChar(CP_ACP, 0, cInetTest2A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
+    todo_wine ok(hr == S_OK || broken(hr == E_FAIL) /* NT4 */,
         "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL\n", hr);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
            "PT_IESPECIAL1, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
@@ -174,8 +174,8 @@ static void test_ParseDisplayName(void)
     if (!bRes) goto finished;
 
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
-    ok(SUCCEEDED(hr), "DesktopFolder->ParseDisplayName failed. hr = %08x.\n", hr);
-    if (FAILED(hr)) goto finished;
+    ok(hr == S_OK, "DesktopFolder->ParseDisplayName failed. hr = %08x.\n", hr);
+    if (hr != S_OK) goto finished;
 
     ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x31 ||
        pILFindLastID(newPIDL)->mkid.abID[0] == 0xb1, /* Win98 */
@@ -331,8 +331,8 @@ static void test_BindToObject(void)
      * with an empty pidl. This is tested for Desktop, MyComputer and the FS ShellFolder
      */
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
     
     hr = IShellFolder_BindToObject(psfDesktop, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "Desktop's BindToObject should fail, when called with empty pidl! hr = %08x\n", hr);
@@ -341,17 +341,17 @@ static void test_BindToObject(void)
     ok (hr == E_INVALIDARG, "Desktop's BindToObject should fail, when called with NULL pidl! hr = %08x\n", hr);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
-    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
     
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
-    ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
     IShellFolder_Release(psfDesktop);
     IMalloc_Free(ppM, pidlMyComputer);
-    if (FAILED(hr)) return;
+    if (hr != S_OK) return;
 
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with empty pidl! hr = %08x\n", hr);
@@ -372,17 +372,17 @@ if (0)
     MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszSystemDir, MAX_PATH);
     
     hr = IShellFolder_ParseDisplayName(psfMyComputer, NULL, NULL, wszSystemDir, NULL, &pidlSystemDir, NULL);
-    ok (SUCCEEDED(hr), "MyComputers's ParseDisplayName failed to parse the SystemDirectory! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "MyComputers's ParseDisplayName failed to parse the SystemDirectory! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfMyComputer);
         return;
     }
 
     hr = IShellFolder_BindToObject(psfMyComputer, pidlSystemDir, NULL, &IID_IShellFolder, (LPVOID*)&psfSystemDir);
-    ok (SUCCEEDED(hr), "MyComputer failed to bind to a FileSystem ShellFolder! hr = %08x\n", hr);
+    ok (hr == S_OK, "MyComputer failed to bind to a FileSystem ShellFolder! hr = %08x\n", hr);
     IShellFolder_Release(psfMyComputer);
     IMalloc_Free(ppM, pidlSystemDir);
-    if (FAILED(hr)) return;
+    if (hr != S_OK) return;
 
     hr = IShellFolder_BindToObject(psfSystemDir, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, 
@@ -475,14 +475,14 @@ static void test_GetDisplayName(void)
 
     /* Getting an itemidlist for the file. */
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     MultiByteToWideChar(CP_ACP, 0, szTestFile, -1, wszTestFile, MAX_PATH);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszTestFile, NULL, &pidlTestFile, NULL);
-    ok(SUCCEEDED(hr), "Desktop->ParseDisplayName failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok(hr == S_OK, "Desktop->ParseDisplayName failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -510,9 +510,9 @@ static void test_GetDisplayName(void)
     todo_wine
     ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
         hr == E_NOTIMPL || /* Vista */
-        broken(SUCCEEDED(hr)), /* Win9x, W2K */
+        broken(hr == S_OK), /* Win9x, W2K */
         "hr = %08x\n", hr);
-    if (SUCCEEDED(hr)) {
+    if (hr == S_OK) {
         IShellFolder_Release(psfFile);
     }
 
@@ -528,15 +528,15 @@ static void test_GetDisplayName(void)
     if (pSHGetFolderPathAndSubDirA)
     {
         hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
-        ok(SUCCEEDED(hr), "SHBindToParent failed! hr = %08x\n", hr);
-        if (SUCCEEDED(hr)) {
+        ok(hr == S_OK, "SHBindToParent failed! hr = %08x\n", hr);
+        if (hr == S_OK) {
             /* It's ok to use this fixed path. Call will fail anyway. */
             WCHAR wszAbsoluteFilename[] = { 'C',':','\\','w','i','n','e','t','e','s','t', 0 };
             LPITEMIDLIST pidlNew;
 
             /* The pidl returned through the last parameter of SetNameOf is a simple one. */
             hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlLast, wszDirName, SHGDN_NORMAL, &pidlNew);
-            ok (SUCCEEDED(hr), "SetNameOf failed! hr = %08x\n", hr);
+            ok (hr == S_OK, "SetNameOf failed! hr = %08x\n", hr);
             if (hr == S_OK)
             {
                 ok (((LPITEMIDLIST)((LPBYTE)pidlNew+pidlNew->mkid.cb))->mkid.cb == 0,
@@ -551,7 +551,7 @@ static void test_GetDisplayName(void)
                 /* Rename the file back to its original name. SetNameOf ignores the fact, that the
                  * SHGDN flags specify an absolute path. */
                 hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlNew, wszFileName, SHGDN_FORPARSING, NULL);
-                ok (SUCCEEDED(hr), "SetNameOf failed! hr = %08x\n", hr);
+                ok (hr == S_OK, "SetNameOf failed! hr = %08x\n", hr);
 
                 pILFree(pidlNew);
             }
@@ -576,19 +576,19 @@ static void test_GetDisplayName(void)
 
     /* SHBindToParent fails, if called with a NULL PIDL. */
     hr = pSHBindToParent(NULL, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
-    ok (FAILED(hr), "SHBindToParent(NULL) should fail!\n");
+    ok (hr != S_OK, "SHBindToParent(NULL) should fail!\n");
 
     /* But it succeeds with an empty PIDL. */
     hr = pSHBindToParent(pidlEmpty, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
-    ok (SUCCEEDED(hr), "SHBindToParent(empty PIDL) should succeed! hr = %08x\n", hr);
+    ok (hr == S_OK, "SHBindToParent(empty PIDL) should succeed! hr = %08x\n", hr);
     ok (pidlLast == pidlEmpty, "The last element of an empty PIDL should be the PIDL itself!\n");
-    if (SUCCEEDED(hr)) 
+    if (hr == S_OK)
         IShellFolder_Release(psfPersonal);
     
     /* Binding to the folder and querying the display name of the file also works. */
     hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast); 
-    ok (SUCCEEDED(hr), "SHBindToParent failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "SHBindToParent failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -599,8 +599,8 @@ static void test_GetDisplayName(void)
                                 "SHBindToParent doesn't return the last id of the pidl param!\n");
     
     hr = IShellFolder_GetDisplayNameOf(psfPersonal, pidlLast, SHGDN_FORPARSING, &strret);
-    ok (SUCCEEDED(hr), "Personal->GetDisplayNameOf failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "Personal->GetDisplayNameOf failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         IShellFolder_Release(psfPersonal);
         return;
@@ -609,7 +609,7 @@ static void test_GetDisplayName(void)
     if (pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, pidlLast, wszTestFile2, MAX_PATH);
-        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        ok (hr == S_OK, "StrRetToBufW failed! hr = %08x\n", hr);
         ok (!lstrcmpiW(wszTestFile, wszTestFile2), "GetDisplayNameOf returns incorrect path!\n");
     }
     
@@ -648,15 +648,15 @@ static void test_CallForAttributes(void)
      * on MSDN. This test is meant to document the observed behaviour on WinXP SP2.
      */
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
     
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyDocuments, NULL, 
                                        &pidlMyDocuments, NULL);
-    ok (SUCCEEDED(hr) ||
+    ok (hr == S_OK ||
         broken(hr == E_INVALIDARG), /* Win95, NT4 */
         "Desktop's ParseDisplayName failed to parse MyDocuments's CLSID! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -664,7 +664,7 @@ static void test_CallForAttributes(void)
     dwAttributes = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, 
                                       (LPCITEMIDLIST*)&pidlMyDocuments, &dwAttributes);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08x\n", hr);
 
     /* We need the following setup (as observed on WinXP SP2), for the tests to make sense. */
     ok (dwAttributes & SFGAO_FILESYSTEM, "SFGAO_FILESYSTEM attribute is not set for MyDocuments!\n");
@@ -726,8 +726,8 @@ static void test_CallForAttributes(void)
     dwAttributes = SFGAO_ISSLOW|SFGAO_GHOSTED|SFGAO_FILESYSTEM;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, 
                                       (LPCITEMIDLIST*)&pidlMyDocuments, &dwAttributes);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08x\n", hr);
-    if (SUCCEEDED(hr)) 
+    ok (hr == S_OK, "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08x\n", hr);
+    if (hr == S_OK)
         ok (dwAttributes == SFGAO_FILESYSTEM, 
             "Desktop->GetAttributes(MyDocuments) returned unexpected attributes: %08x\n", 
             dwAttributes);
@@ -786,13 +786,13 @@ static void test_GetAttributesOf(void)
     BOOL foundFlagsMatch;
 
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     /* The Desktop attributes can be queried with a single empty itemidlist, .. */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, &pidlEmpty, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(empty pidl) failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf(empty pidl) failed! hr = %08x\n", hr);
     for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
          i < sizeof(desktopFlags) / sizeof(desktopFlags[0]); i++)
     {
@@ -804,7 +804,7 @@ static void test_GetAttributesOf(void)
     /* .. or with no itemidlist at all. */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 0, NULL, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(NULL) failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf(NULL) failed! hr = %08x\n", hr);
     for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
          i < sizeof(desktopFlags) / sizeof(desktopFlags[0]); i++)
     {
@@ -815,8 +815,8 @@ static void test_GetAttributesOf(void)
    
     /* Testing the attributes of the MyComputer shellfolder */
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
-    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -826,7 +826,7 @@ static void test_GetAttributesOf(void)
      */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, (LPCITEMIDLIST*)&pidlMyComputer, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyComputer) failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf(MyComputer) failed! hr = %08x\n", hr);
     for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
          i < sizeof(myComputerFlags) / sizeof(myComputerFlags[0]); i++)
     {
@@ -837,20 +837,20 @@ static void test_GetAttributesOf(void)
     ok (foundFlagsMatch, "Wrong MyComputer attributes: %08x\n", dwFlags);
 
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
-    ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
     IShellFolder_Release(psfDesktop);
     IMalloc_Free(ppM, pidlMyComputer);
-    if (FAILED(hr)) return;
+    if (hr != S_OK) return;
 
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 1, &pidlEmpty, &dwFlags);
     todo_wine
     ok (hr == E_INVALIDARG ||
-        broken(SUCCEEDED(hr)), /* W2K and earlier */
+        broken(hr == S_OK), /* W2K and earlier */
         "MyComputer->GetAttributesOf(emtpy pidl) should fail! hr = %08x\n", hr);
 
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 0, NULL, &dwFlags);
-    ok (SUCCEEDED(hr), "MyComputer->GetAttributesOf(NULL) failed! hr = %08x\n", hr); 
+    ok (hr == S_OK, "MyComputer->GetAttributesOf(NULL) failed! hr = %08x\n", hr);
     for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
          i < sizeof(myComputerFlags) / sizeof(myComputerFlags[0]); i++)
     {
@@ -895,7 +895,7 @@ static void test_GetAttributesOf(void)
     /* test the shell attributes of the test directory using the relative PIDL */
     dwFlags = SFGAO_FOLDER;
     hr = IShellFolder_GetAttributesOf(testIShellFolder, 1, (LPCITEMIDLIST*)&newPIDL, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf() failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf() failed! hr = %08x\n", hr);
     ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for relative PIDL: %08x\n", dwFlags);
 
     /* free memory */
@@ -913,7 +913,7 @@ static void test_GetAttributesOf(void)
     /* test the shell attributes of the test directory using the absolute PIDL */
     dwFlags = SFGAO_FOLDER;
     hr = IShellFolder_GetAttributesOf(IDesktopFolder, 1, (LPCITEMIDLIST*)&newPIDL, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf() failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop->GetAttributesOf() failed! hr = %08x\n", hr);
     ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for absolute PIDL: %08x\n", dwFlags);
 
     /* free memory */
@@ -982,12 +982,12 @@ static void test_SHGetPathFromIDList(void)
 
     /* MyComputer does not map to a filesystem path. SHGetPathFromIDListW should fail. */
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
-    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -1025,8 +1025,8 @@ static void test_SHGetPathFromIDList(void)
     CloseHandle(hTestFile);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszTestFile, NULL, &pidlTestFile, NULL);
-    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse filename hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "Desktop's ParseDisplayName failed to parse filename hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         DeleteFileW(wszFileName);
         IMalloc_Free(ppM, pidlTestFile);
@@ -1036,10 +1036,10 @@ static void test_SHGetPathFromIDList(void)
     /* This test is to show that the Desktop shellfolder prepends the CSIDL_DESKTOPDIRECTORY
      * path for files placed on the desktop, if called with SHGDN_FORPARSING. */
     hr = IShellFolder_GetDisplayNameOf(psfDesktop, pidlTestFile, SHGDN_FORPARSING, &strret);
-    ok (SUCCEEDED(hr), "Desktop's GetDisplayNamfOf failed! hr = %08x\n", hr);
+    ok (hr == S_OK, "Desktop's GetDisplayNamfOf failed! hr = %08x\n", hr);
     IShellFolder_Release(psfDesktop);
     DeleteFileW(wszFileName);
-    if (FAILED(hr)) {
+    if (hr != S_OK) {
         IMalloc_Free(ppM, pidlTestFile);
         return;
     }
@@ -1063,7 +1063,7 @@ static void test_SHGetPathFromIDList(void)
     pSHGetSpecialFolderLocation = (void *)GetProcAddress(hShell32, "SHGetSpecialFolderLocation");
 
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
-    ok(SUCCEEDED(hr), "SHGetFolderLocation failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "SHGetFolderLocation failed: 0x%08x\n", hr);
 
     SetLastError(0xdeadbeef);
     result = pSHGetPathFromIDListW(pidlPrograms, wszPath);
@@ -1280,12 +1280,12 @@ static void test_FolderShortcut(void) {
         win_skip("CLSID_FolderShortcut is not implemented\n");
         return;
     }
-    ok (SUCCEEDED(hr), "CoCreateInstance failed! hr = 0x%08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "CoCreateInstance failed! hr = 0x%08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IPersistPropertyBag_Load(pPersistPropertyBag, &InitPropertyBag, NULL);
-    ok(SUCCEEDED(hr), "IPersistPropertyBag_Load failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok(hr == S_OK, "IPersistPropertyBag_Load failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IPersistPropertyBag_Release(pPersistPropertyBag);
         return;
     }
@@ -1293,12 +1293,12 @@ static void test_FolderShortcut(void) {
     hr = IPersistPropertyBag_QueryInterface(pPersistPropertyBag, &IID_IShellFolder, 
                                             (LPVOID*)&pShellFolder);
     IPersistPropertyBag_Release(pPersistPropertyBag);
-    ok(SUCCEEDED(hr), "IPersistPropertyBag_QueryInterface(IShellFolder) failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "IPersistPropertyBag_QueryInterface(IShellFolder) failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IShellFolder_GetDisplayNameOf(pShellFolder, NULL, SHGDN_FORPARSING, &strret);
-    ok(SUCCEEDED(hr), "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok(hr == S_OK, "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(pShellFolder);
         return;
     }
@@ -1312,15 +1312,15 @@ static void test_FolderShortcut(void) {
 
     hr = IShellFolder_QueryInterface(pShellFolder, &IID_IPersistFolder3, (LPVOID*)&pPersistFolder3);
     IShellFolder_Release(pShellFolder);
-    ok(SUCCEEDED(hr), "IShellFolder_QueryInterface(IID_IPersistFolder3 failed! hr = 0x%08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "IShellFolder_QueryInterface(IID_IPersistFolder3 failed! hr = 0x%08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IPersistFolder3_GetClassID(pPersistFolder3, &clsid);
-    ok(SUCCEEDED(hr), "IPersistFolder3_GetClassID failed! hr=0x%08x\n", hr);
+    ok(hr == S_OK, "IPersistFolder3_GetClassID failed! hr=0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_FolderShortcut), "Unexpected CLSID!\n");
 
     hr = IPersistFolder3_GetCurFolder(pPersistFolder3, &pidlCurrentFolder);
-    ok(SUCCEEDED(hr), "IPersistFolder3_GetCurFolder failed! hr=0x%08x\n", hr);
+    todo_wine ok(hr == S_FALSE, "IPersistFolder3_GetCurFolder failed! hr=0x%08x\n", hr);
     ok(!pidlCurrentFolder, "IPersistFolder3_GetCurFolder should return a NULL pidl!\n");
                     
     /* For FolderShortcut objects, the Initialize method initialized the folder's position in the
@@ -1330,8 +1330,8 @@ static void test_FolderShortcut(void) {
      * itemidlist, but GetDisplayNameOf still returns the path from above.
      */
     hr = SHGetDesktopFolder(&pDesktopFolder);
-    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "SHGetDesktopFolder failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     /* Temporarily register WineTestFolder as a shell namespace extension at the Desktop. 
      * Otherwise ParseDisplayName fails on WinXP with E_INVALIDARG */
@@ -1341,19 +1341,19 @@ static void test_FolderShortcut(void) {
                                        &pidlWineTestFolder, NULL);
     RegDeleteKeyW(HKEY_CURRENT_USER, wszShellExtKey);
     IShellFolder_Release(pDesktopFolder);
-    ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok (hr == S_OK, "IShellFolder::ParseDisplayName failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IPersistFolder3_Initialize(pPersistFolder3, pidlWineTestFolder);
-    ok (SUCCEEDED(hr), "IPersistFolder3::Initialize failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "IPersistFolder3::Initialize failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IPersistFolder3_Release(pPersistFolder3);
         pILFree(pidlWineTestFolder);
         return;
     }
 
     hr = IPersistFolder3_GetCurFolder(pPersistFolder3, &pidlCurrentFolder);
-    ok(SUCCEEDED(hr), "IPersistFolder3_GetCurFolder failed! hr=0x%08x\n", hr);
+    ok(hr == S_OK, "IPersistFolder3_GetCurFolder failed! hr=0x%08x\n", hr);
     ok(pILIsEqual(pidlCurrentFolder, pidlWineTestFolder),
         "IPersistFolder3_GetCurFolder should return pidlWineTestFolder!\n");
     pILFree(pidlCurrentFolder);
@@ -1361,12 +1361,12 @@ static void test_FolderShortcut(void) {
 
     hr = IPersistFolder3_QueryInterface(pPersistFolder3, &IID_IShellFolder, (LPVOID*)&pShellFolder);
     IPersistFolder3_Release(pPersistFolder3);
-    ok(SUCCEEDED(hr), "IPersistFolder3_QueryInterface(IShellFolder) failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "IPersistFolder3_QueryInterface(IShellFolder) failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IShellFolder_GetDisplayNameOf(pShellFolder, NULL, SHGDN_FORPARSING, &strret);
-    ok(SUCCEEDED(hr), "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok(hr == S_OK, "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(pShellFolder);
         return;
     }
@@ -1386,8 +1386,8 @@ static void test_FolderShortcut(void) {
     hr = IShellFolder_ParseDisplayName(pShellFolder, NULL, NULL, wszSomeSubFolder, NULL, 
                                        &pidlSubFolder, NULL);
     RemoveDirectoryW(wszDesktopPath);
-    ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok (hr == S_OK, "IShellFolder::ParseDisplayName failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(pShellFolder);
         return;
     }
@@ -1396,14 +1396,14 @@ static void test_FolderShortcut(void) {
                                    (LPVOID*)&pPersistFolder3);
     IShellFolder_Release(pShellFolder);
     pILFree(pidlSubFolder);
-    ok (SUCCEEDED(hr), "IShellFolder::BindToObject failed! hr = %08x\n", hr);
-    if (FAILED(hr))
+    ok (hr == S_OK, "IShellFolder::BindToObject failed! hr = %08x\n", hr);
+    if (hr != S_OK)
         return;
 
     /* On windows, we expect CLSID_ShellFSFolder. On wine we relax this constraint
      * a little bit and also allow CLSID_UnixDosFolder. */
     hr = IPersistFolder3_GetClassID(pPersistFolder3, &clsid);
-    ok(SUCCEEDED(hr), "IPersistFolder3_GetClassID failed! hr=0x%08x\n", hr);
+    ok(hr == S_OK, "IPersistFolder3_GetClassID failed! hr=0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder) || IsEqualCLSID(&clsid, &CLSID_UnixDosFolder),
         "IPersistFolder3::GetClassID returned unexpected CLSID!\n");
 
@@ -1463,12 +1463,12 @@ static void test_ITEMIDLIST_format(void) {
     if (!bResult) return;
 
     hr = SHGetDesktopFolder(&psfDesktop);
-    ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr: %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "SHGetDesktopFolder failed! hr: %08x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszPersonal, NULL, &pidlPersonal, NULL);
-    ok(SUCCEEDED(hr), "psfDesktop->ParseDisplayName failed! hr = %08x\n", hr);
-    if (FAILED(hr)) {
+    ok(hr == S_OK, "psfDesktop->ParseDisplayName failed! hr = %08x\n", hr);
+    if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -1477,8 +1477,8 @@ static void test_ITEMIDLIST_format(void) {
         (LPVOID*)&psfPersonal);
     IShellFolder_Release(psfDesktop);
     pILFree(pidlPersonal);
-    ok(SUCCEEDED(hr), "psfDesktop->BindToObject failed! hr = %08x\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "psfDesktop->BindToObject failed! hr = %08x\n", hr);
+    if (hr != S_OK) return;
 
     for (i=0; i<3; i++) {
         CHAR szFile[MAX_PATH];
@@ -1497,8 +1497,8 @@ static void test_ITEMIDLIST_format(void) {
 
         hr = IShellFolder_ParseDisplayName(psfPersonal, NULL, NULL, wszFile[i], NULL, &pidlFile, NULL);
         DeleteFileW(wszFile[i]);
-        ok(SUCCEEDED(hr), "psfPersonal->ParseDisplayName failed! hr: %08x\n", hr);
-        if (FAILED(hr)) {
+        ok(hr == S_OK, "psfPersonal->ParseDisplayName failed! hr: %08x\n", hr);
+        if (hr != S_OK) {
             IShellFolder_Release(psfPersonal);
             return;
         }
@@ -1771,10 +1771,10 @@ static void test_LocalizedNames(void)
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER, &strret);
     ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
-    if (SUCCEEDED(hr) && pStrRetToBufW)
+    if (hr == S_OK && pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
-        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        ok (hr == S_OK, "StrRetToBufW failed! hr = %08x\n", hr);
         todo_wine
         ok (!lstrcmpiW(tempbufW, folderdisplayW) ||
             broken(!lstrcmpiW(tempbufW, foldernameW)), /* W2K */
@@ -1785,10 +1785,10 @@ static void test_LocalizedNames(void)
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FOREDITING, &strret);
     ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
-    if (SUCCEEDED(hr) && pStrRetToBufW)
+    if (hr == S_OK && pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
-        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        ok (hr == S_OK, "StrRetToBufW failed! hr = %08x\n", hr);
         todo_wine
         ok (!lstrcmpiW(tempbufW, folderdisplayW) ||
             broken(!lstrcmpiW(tempbufW, foldernameW)), /* W2K */
@@ -1799,10 +1799,10 @@ static void test_LocalizedNames(void)
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FORPARSING, &strret);
     ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
-    if (SUCCEEDED(hr) && pStrRetToBufW)
+    if (hr == S_OK && pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
-        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        ok (hr == S_OK, "StrRetToBufW failed! hr = %08x\n", hr);
         ok (!lstrcmpiW(tempbufW, foldernameW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
     }
 
