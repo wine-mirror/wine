@@ -3010,7 +3010,7 @@ static void test_mouse_input(HWND hwnd)
     BOOL ret;
     LRESULT res;
 
-    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
     SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
 
@@ -5218,6 +5218,7 @@ static void run_NCRedrawLoop(UINT flags)
                          NULL, NULL, 0, &flags);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
+    flush_events( FALSE );
     while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE) != 0)
     {
         if (msg.message == WM_PAINT) loopcount++;
