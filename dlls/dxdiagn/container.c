@@ -227,7 +227,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWS
     }
     p = p->next;
   }
-  return S_OK;
+  return E_INVALIDARG;
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp) {

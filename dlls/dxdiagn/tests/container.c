@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include "dxdiag.h"
+#include "oleauto.h"
 #include "wine/test.h"
 
 static IDxDiagProvider *pddp;
@@ -527,6 +528,97 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_GetProp(void)
+{
+    HRESULT hr;
+    WCHAR container[256], property[256];
+    IDxDiagContainer *child = NULL;
+    DWORD count, index;
+    VARIANT var;
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR testW[] = {'t','e','s','t',0};
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    /* Find a container with a property. */
+    hr = IDxDiagContainer_GetNumberOfChildContainers(pddc, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("IDxDiagContainer::GetNumberOfChildContainers failed\n");
+        goto cleanup;
+    }
+
+    for (index = 0; index < count; index++)
+    {
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, sizeof(container)/sizeof(WCHAR));
+        ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+        if (FAILED(hr))
+        {
+            skip("IDxDiagContainer::EnumChildContainerNames failed\n");
+            goto cleanup;
+        }
+
+        hr = IDxDiagContainer_GetChildContainer(pddc, container, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDxDiagContainer_EnumPropNames(child, 0, property, sizeof(property)/sizeof(WCHAR));
+            ok(hr == S_OK || hr == E_INVALIDARG,
+               "Expected IDxDiagContainer::EnumPropNames to return S_OK or E_INVALIDARG, got 0x%08x\n", hr);
+
+            if (SUCCEEDED(hr))
+                break;
+            else
+            {
+                IDxDiagContainer_Release(child);
+                child = NULL;
+            }
+        }
+    }
+
+    if (!child)
+    {
+        skip("Unable to find a suitable container\n");
+        goto cleanup;
+    }
+
+    hr = IDxDiagContainer_GetProp(child, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    V_VT(&var) = 0xdead;
+    hr = IDxDiagContainer_GetProp(child, NULL, &var);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(V_VT(&var) == 0xdead, "Expected the variant to be untouched, got %u\n", V_VT(&var));
+
+    hr = IDxDiagContainer_GetProp(child, emptyW, NULL);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    V_VT(&var) = 0xdead;
+    hr = IDxDiagContainer_GetProp(child, emptyW, &var);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(V_VT(&var) == 0xdead, "Expected the variant to be untouched, got %u\n", V_VT(&var));
+
+    hr = IDxDiagContainer_GetProp(child, testW, NULL);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    V_VT(&var) = 0xdead;
+    hr = IDxDiagContainer_GetProp(child, testW, &var);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(V_VT(&var) == 0xdead, "Expected the variant to be untouched, got %u\n", V_VT(&var));
+
+    IDxDiagContainer_Release(child);
+
+cleanup:
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
@@ -536,5 +628,6 @@ START_TEST(container)
     test_GetChildContainer();
     test_dot_parsing();
     test_EnumPropNames();
+    test_GetProp();
     CoUninitialize();
 }
