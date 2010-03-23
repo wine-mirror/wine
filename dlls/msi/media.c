@@ -686,7 +686,7 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     return ERROR_SUCCESS;
 }
 
-/* FIXME: search NETWORK and URL sources as well */
+/* FIXME: search URL sources as well */
 static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     WCHAR source[MAX_PATH];
@@ -694,7 +694,15 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     WCHAR prompt[MAX_PATH];
     DWORD volumesz, promptsz;
     DWORD index, size, id;
+    WCHAR last_type[2];
     UINT r;
+
+    size = 2;
+    r = MsiSourceListGetInfoW(package->ProductCode, NULL,
+                              package->Context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDTYPEW, last_type, &size);
+    if (r != ERROR_SUCCESS)
+        return r;
 
     size = MAX_PATH;
     r = MsiSourceListGetInfoW(package->ProductCode, NULL,
@@ -702,6 +710,27 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
                               INSTALLPROPERTY_LASTUSEDSOURCEW, source, &size);
     if (r != ERROR_SUCCESS)
         return r;
+
+    index = 0;
+    volumesz = MAX_PATH;
+    promptsz = MAX_PATH;
+
+    if (last_type[0] == 'n')
+    {
+        while (MsiSourceListEnumSourcesW(package->ProductCode, NULL,
+                                        package->Context,
+                                        MSISOURCETYPE_NETWORK, index++,
+                                        volume, &volumesz) == ERROR_SUCCESS)
+        {
+            if (!strncmpiW(source, volume, strlenW(source)))
+            {
+                lstrcpyW(mi->source, source);
+                lstrcatW(mi->source, mi->cabinet);
+                TRACE("Found network source %s\n", debugstr_w(mi->source));
+                return ERROR_SUCCESS;
+            }
+        }
+    }
 
     index = 0;
     volumesz = MAX_PATH;
@@ -721,6 +750,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
         {
             /* FIXME: what about SourceDir */
             lstrcpyW(mi->source, source);
+            TRACE("Found disk source %s\n", debugstr_w(mi->source));
             return ERROR_SUCCESS;
         }
     }
