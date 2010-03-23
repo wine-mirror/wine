@@ -1514,8 +1514,9 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
     {
       if (is_array(*ptype))
       {
-        if (type_array_get_conformance(*ptype)->is_const)
-          error_loc("%s: cannot specify size_is for a fixed sized array\n", v->name);
+        if (!type_array_get_conformance(*ptype) ||
+            type_array_get_conformance(*ptype)->type != EXPR_VOID)
+          error_loc("%s: cannot specify size_is for an already sized array\n", v->name);
         else
           *ptype = type_new_array((*ptype)->name,
                                   type_array_get_element(*ptype), FALSE,
