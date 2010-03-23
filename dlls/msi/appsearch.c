@@ -1064,6 +1064,14 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
     MSIQUERY *view = NULL;
     UINT r;
 
+    if (check_unique_action(package, szAppSearch))
+    {
+        TRACE("Skipping AppSearch action: already done in UI sequence\n");
+        return ERROR_SUCCESS;
+    }
+    else
+        register_unique_action(package, szAppSearch);
+
     r = MSI_OpenQuery( package->db, &view, query );
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -1110,6 +1118,14 @@ UINT ACTION_CCPSearch(MSIPACKAGE *package)
         'C','C','P','S','e','a','r','c','h',0};
     MSIQUERY *view = NULL;
     UINT r;
+
+    if (check_unique_action(package, szCCPSearch))
+    {
+        TRACE("Skipping AppSearch action: already done in UI sequence\n");
+        return ERROR_SUCCESS;
+    }
+    else
+        register_unique_action(package, szCCPSearch);
 
     r = MSI_OpenQuery(package->db, &view, query);
     if (r != ERROR_SUCCESS)

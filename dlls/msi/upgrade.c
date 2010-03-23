@@ -209,13 +209,13 @@ UINT ACTION_FindRelatedProducts(MSIPACKAGE *package)
         return ERROR_SUCCESS;
     }
 
-    if (check_unique_action(package,szFindRelatedProducts))
+    if (check_unique_action(package, szFindRelatedProducts))
     {
-        TRACE("Skipping FindRelatedProducts action: already done on client side\n");
+        TRACE("Skipping FindRelatedProducts action: already done in UI sequence\n");
         return ERROR_SUCCESS;
     }
     else
-        register_unique_action(package,szFindRelatedProducts);
+        register_unique_action(package, szFindRelatedProducts);
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)

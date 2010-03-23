@@ -96,8 +96,6 @@ static const WCHAR szAllocateRegistrySpace[] =
     {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y','S','p','a','c','e',0};
 static const WCHAR szBindImage[] = 
     {'B','i','n','d','I','m','a','g','e',0};
-static const WCHAR szCCPSearch[] = 
-    {'C','C','P','S','e','a','r','c','h',0};
 static const WCHAR szDeleteServices[] = 
     {'D','e','l','e','t','e','S','e','r','v','i','c','e','s',0};
 static const WCHAR szDisableRollback[] = 
