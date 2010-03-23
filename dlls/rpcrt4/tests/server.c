@@ -297,6 +297,14 @@ s_dot_two_vectors(vector_t vs[2])
   return vs[0].x * vs[1].x + vs[0].y * vs[1].y + vs[0].z * vs[1].z;
 }
 
+void
+s_get_number_array(int x[20], int *n)
+{
+  int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  memcpy(x, c, sizeof(c));
+  *n = sizeof(c)/sizeof(c[0]);
+}
+
 int
 s_sum_cs(cs_t *cs)
 {
@@ -1212,6 +1220,7 @@ array_tests(void)
   };
   int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   int c2[] = {10, 100, 200};
+  int c3[20];
   vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
   cps_t cps;
   cpsc_t cpsc;
@@ -1246,6 +1255,11 @@ array_tests(void)
   ok(sum_unique_conf_ptr(ca, 5) == 3, "RPC sum_unique_conf_array\n");
   ok(sum_unique_conf_ptr(NULL, 10) == 0, "RPC sum_unique_conf_array\n");
 
+  get_number_array(c3, &n);
+  ok(n == 10, "RPC get_num_array\n");
+  for (; n > 0; n--)
+    ok(c3[n-1] == c[n-1], "get_num_array returned wrong value %d @ %d\n",
+       c3[n-1], n);
   ok(sum_var_array(c, 10) == 45, "RPC sum_conf_array\n");
   ok(sum_var_array(&c[5], 2) == 11, "RPC sum_conf_array\n");
   ok(sum_var_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
