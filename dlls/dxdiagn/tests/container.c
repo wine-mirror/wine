@@ -535,6 +535,8 @@ static void test_GetProp(void)
     IDxDiagContainer *child = NULL;
     DWORD count, index;
     VARIANT var;
+    SAFEARRAY *sa;
+    SAFEARRAYBOUND bound;
     static const WCHAR emptyW[] = {0};
     static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -612,6 +614,41 @@ static void test_GetProp(void)
     ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetProp to return E_INVALIDARG, got 0x%08x\n", hr);
     ok(V_VT(&var) == 0xdead, "Expected the variant to be untouched, got %u\n", V_VT(&var));
 
+    VariantInit(&var);
+    hr = IDxDiagContainer_GetProp(child, property, &var);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", hr);
+    ok(V_VT(&var) != VT_EMPTY, "Expected the variant to be modified, got %d\n", V_VT(&var));
+
+    /* Since the documentation for IDxDiagContainer::GetProp claims that the
+     * function reports return values from VariantCopy, try to exercise failure
+     * paths in handling the destination variant. */
+
+    /* Try an invalid variant type. */
+    V_VT(&var) = 0xdead;
+    hr = IDxDiagContainer_GetProp(child, property, &var);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", hr);
+    ok(V_VT(&var) != 0xdead, "Expected the variant to be modified, got %d\n", V_VT(&var));
+
+    /* Try passing a variant with a locked SAFEARRAY. */
+    bound.cElements = 1;
+    bound.lLbound = 0;
+    sa = SafeArrayCreate(VT_UI1, 1, &bound);
+    ok(sa != NULL, "Expected SafeArrayCreate to return a valid pointer\n");
+
+    V_VT(&var) = (VT_ARRAY | VT_UI1);
+    V_ARRAY(&var) = sa;
+
+    hr = SafeArrayLock(sa);
+    ok(hr == S_OK, "Expected SafeArrayLock to return S_OK, got 0x%08x\n", hr);
+
+    hr = IDxDiagContainer_GetProp(child, property, &var);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", hr);
+    ok(V_VT(&var) != (VT_ARRAY | VT_UI1), "Expected the variant to be modified\n");
+
+    hr = SafeArrayUnlock(sa);
+    ok(hr == S_OK, "Expected SafeArrayUnlock to return S_OK, got 0x%08x\n", hr);
+    hr = SafeArrayDestroy(sa);
+    ok(hr == S_OK, "Expected SafeArrayDestroy to return S_OK, got 0x%08x\n", hr);
     IDxDiagContainer_Release(child);
 
 cleanup:
