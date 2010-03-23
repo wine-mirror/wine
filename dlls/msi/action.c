@@ -2362,12 +2362,8 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     uirow = MSI_CreateRecord(3);
     MSI_RecordSetStringW(uirow,2,deformated);
     MSI_RecordSetStringW(uirow,1,uikey);
-
-    if (type == REG_SZ)
+    if (type == REG_SZ || type == REG_EXPAND_SZ)
         MSI_RecordSetStringW(uirow,3,(LPWSTR)value_data);
-    else
-        MSI_RecordSetStringW(uirow,3,value);
-
     ui_actiondata(package,szWriteRegistryValues,uirow);
     msiobj_release( &uirow->hdr );
 
