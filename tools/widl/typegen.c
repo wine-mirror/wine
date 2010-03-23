@@ -46,7 +46,6 @@
 /* value to add on to round size up to a multiple of alignment */
 #define ROUNDING(size, alignment) (((alignment) - 1) - (((size) + ((alignment) - 1)) & ((alignment) - 1)))
 
-static const var_t *current_func;
 static const type_t *current_structure;
 static const type_t *current_iface;
 
@@ -2916,7 +2915,6 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                                   file);
                 }
 
-                current_func = func;
                 if (type_get_function_args(func->type))
                     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
                         update_tfsoff(
