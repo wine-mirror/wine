@@ -581,6 +581,12 @@ static void test_IShellFolderView(void)
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     ok(i == 0xdeadbeef, "got %d\n", i);
 
+    /* ::RemoveObject */
+    i = 0xdeadbeef;
+    hr = IShellFolderView_RemoveObject(folderview, NULL, &i);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(i == 0, "got %d\n", i);
+
     IShellFolderView_Release(folderview);
 
     IShellView_Release(view);

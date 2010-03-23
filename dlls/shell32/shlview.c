@@ -585,19 +585,6 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 }
 
 /**********************************************************
-* LV_DeleteItem()
-*/
-static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
-{
-	int nIndex;
-
-	TRACE("(%p)(pidl=%p)\n", This, pidl);
-
-	nIndex = LV_FindItemByPidl(This, ILFindLastID(pidl));
-	return (-1==SendMessageW(This->hWndList, LVM_DELETEITEM, nIndex, 0))? FALSE: TRUE;
-}
-
-/**********************************************************
 * LV_RenameItem()
 */
 static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCITEMIDLIST pidlNew )
@@ -1608,28 +1595,33 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 * ShellView_OnChange()
 */
 
-static LRESULT ShellView_OnChange(IShellViewImpl * This, const LPCITEMIDLIST * Pidls, LONG wEventId)
+static LRESULT ShellView_OnChange(IShellViewImpl * This, const LPCITEMIDLIST *pidls, LONG event)
 {
+    BOOL ret = TRUE;
 
-	TRACE("(%p)(%p,%p,0x%08x)\n", This, Pidls[0], Pidls[1], wEventId);
-	switch(wEventId)
-	{
-	  case SHCNE_MKDIR:
-	  case SHCNE_CREATE:
-	    LV_AddItem(This, Pidls[0]);
+    TRACE("(%p)->(%p, %p, 0x%08x)\n", This, pidls[0], pidls[1], event);
+
+    switch (event)
+    {
+        case SHCNE_MKDIR:
+        case SHCNE_CREATE:
+            LV_AddItem(This, pidls[0]);
+            break;
+        case SHCNE_RMDIR:
+        case SHCNE_DELETE:
+        {
+            INT i = LV_FindItemByPidl(This, ILFindLastID(pidls[0]));
+            ret = SendMessageW(This->hWndList, LVM_DELETEITEM, i, 0);
+            break;
+        }
+        case SHCNE_RENAMEFOLDER:
+        case SHCNE_RENAMEITEM:
+            LV_RenameItem(This, pidls[0], pidls[1]);
+            break;
+        case SHCNE_UPDATEITEM:
 	    break;
-	  case SHCNE_RMDIR:
-	  case SHCNE_DELETE:
-	    LV_DeleteItem(This, Pidls[0]);
-	    break;
-	  case SHCNE_RENAMEFOLDER:
-	  case SHCNE_RENAMEITEM:
-	    LV_RenameItem(This, Pidls[0], Pidls[1]);
-	    break;
-	  case SHCNE_UPDATEITEM:
-	    break;
-	}
-	return TRUE;
+    }
+    return ret;
 }
 /**********************************************************
 *  ShellView_WndProc
@@ -2989,8 +2981,21 @@ static HRESULT WINAPI IShellFolderView_fnRemoveObject(
     UINT *item)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p %p) stub\n", This, pidl, item);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, pidl, item);
+
+    if (pidl)
+    {
+        *item = LV_FindItemByPidl(This, ILFindLastID(pidl));
+        SendMessageW(This->hWndList, LVM_DELETEITEM, *item, 0);
+    }
+    else
+    {
+        *item = 0;
+        SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellFolderView_fnGetObjectCount(
