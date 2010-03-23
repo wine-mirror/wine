@@ -150,7 +150,7 @@ UUID *parse_uuid(const char *u)
 				parser_lval.str = get_buffered_cstring();
 				return aSTRING;
 			}
-<INITIAL,ATTR>L\"	yy_push_state(WSTRQUOTE);
+<INITIAL,ATTR>L\"	yy_push_state(WSTRQUOTE); cbufidx = 0;
 <WSTRQUOTE>\"		{
 				yy_pop_state();
 				parser_lval.str = get_buffered_cstring();
