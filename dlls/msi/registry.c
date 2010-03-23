@@ -1156,7 +1156,7 @@ UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
     len = ( &p[21] - szDescriptor );
 
     TRACE("length = %d\n", len);
-    *pUsed = len;
+    if (pUsed) *pUsed = len;
 
     return ERROR_SUCCESS;
 }

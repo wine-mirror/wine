@@ -479,6 +479,9 @@ static void test_msidecomposedesc(void)
     r = pMsiDecomposeDescriptorA(NULL, NULL, NULL, NULL, &len);
     ok(r == ERROR_INVALID_PARAMETER, "returned wrong error\n");
     ok(len == 0, "length wrong\n");
+
+    r = pMsiDecomposeDescriptorA(desc, NULL, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "returned wrong error\n");
 }
 
 static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
