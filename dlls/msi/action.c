@@ -4152,21 +4152,16 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
         CloseHandle(info.hProcess);
     }
 
-    msi_free(FullName);
-
-    /* the UI chunk */
     uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, filename );
     uipath = strdupW( file->TargetPath );
-    p = strrchrW(uipath,'\\');
-    if (p)
-        p[0]=0;
-    MSI_RecordSetStringW( uirow, 1, &p[1] );
-    MSI_RecordSetStringW( uirow, 2, uipath);
-    ui_actiondata( package, szSelfRegModules, uirow);
+    if ((p = strrchrW( uipath,'\\' ))) *p = 0;
+    MSI_RecordSetStringW( uirow, 2, uipath );
+    ui_actiondata( package, szSelfRegModules, uirow );
     msiobj_release( &uirow->hdr );
-    msi_free( uipath );
-    /* FIXME: call ui_progress? */
 
+    msi_free( FullName );
+    msi_free( uipath );
     return ERROR_SUCCESS;
 }
 
@@ -4235,21 +4230,16 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
         CloseHandle( pi.hProcess );
     }
 
-    msi_free( cmdline );
-
     uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, filename );
     uipath = strdupW( file->TargetPath );
-    if ((p = strrchrW( uipath, '\\' )))
-    {
-        *p = 0;
-        MSI_RecordSetStringW( uirow, 1, ++p );
-    }
+    if ((p = strrchrW( uipath,'\\' ))) *p = 0;
     MSI_RecordSetStringW( uirow, 2, uipath );
     ui_actiondata( package, szSelfUnregModules, uirow );
     msiobj_release( &uirow->hdr );
-    msi_free( uipath );
-    /* FIXME call ui_progress? */
 
+    msi_free( cmdline );
+    msi_free( uipath );
     return ERROR_SUCCESS;
 }
 
