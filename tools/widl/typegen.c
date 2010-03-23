@@ -3069,9 +3069,10 @@ static unsigned int get_required_buffer_size_type(
         break;
 
     case TGT_ARRAY:
-        /* FIXME: depends on pointer type */
-        return type_array_get_dim(type) *
-            get_required_buffer_size_type(type_array_get_element(type), name, NULL, FALSE, alignment);
+        if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
+            return type_array_get_dim(type) *
+                get_required_buffer_size_type(type_array_get_element(type), name,
+                                              NULL, FALSE, alignment);
 
     default:
         break;
