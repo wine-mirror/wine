@@ -69,7 +69,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* Call once per thread on systems that have per-thread _res. */
-/* FIXME: should do same fix in dnsapi (or use dnsapi here?) */
 static void initialise_resolver(void)
 {
     if ((_res.options & RES_INIT) == 0)

@@ -65,16 +65,12 @@ static CRITICAL_SECTION resolver_cs = { &resolver_cs_debug, -1, 0, 0, 0, 0 };
 #define LOCK_RESOLVER()     do { EnterCriticalSection( &resolver_cs ); } while (0)
 #define UNLOCK_RESOLVER()   do { LeaveCriticalSection( &resolver_cs ); } while (0)
 
-static int resolver_initialised;
-
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
+/* call once per thread on systems that have per-thread _res */
 static void initialise_resolver( void )
 {
-    if (!resolver_initialised)
-    {
+    if ((_res.options & RES_INIT) == 0)
         res_init();
-        resolver_initialised = 1;
-    }
 }
 
 static const char *dns_section_to_str( ns_sect section )
