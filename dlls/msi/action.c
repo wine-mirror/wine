@@ -4373,6 +4373,7 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
 {
     UINT r;
     HKEY hkey;
+    MSIRECORD *uirow;
 
     TRACE("unpublishing feature %s\n", debugstr_w(feature->Feature));
 
@@ -4391,6 +4392,11 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
         RegDeleteValueW(hkey, feature->Feature);
         RegCloseKey(hkey);
     }
+
+    uirow = MSI_CreateRecord( 1 );
+    MSI_RecordSetStringW( uirow, 1, feature->Feature );
+    ui_actiondata( package, szUnpublishFeatures, uirow );
+    msiobj_release( &uirow->hdr );
 
     return ERROR_SUCCESS;
 }
