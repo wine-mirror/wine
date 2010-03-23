@@ -86,13 +86,134 @@ static HWND subclass_listview(HWND hwnd)
     return listview;
 }
 
+/* dummy IDataObject implementation */
 typedef struct {
+    const IDataObjectVtbl *lpVtbl;
+    LONG ref;
+} IDataObjectImpl;
 
+static const IDataObjectVtbl IDataObjectImpl_Vtbl;
+
+IDataObject* IDataObjectImpl_Construct(void)
+{
+    IDataObjectImpl *obj;
+
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj->lpVtbl = &IDataObjectImpl_Vtbl;
+    obj->ref = 1;
+
+    return (IDataObject*)obj;
+}
+
+static HRESULT WINAPI IDataObjectImpl_QueryInterface(IDataObject *iface, REFIID riid, void **ppvObj)
+{
+    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDataObject))
+    {
+        *ppvObj = This;
+    }
+
+    if(*ppvObj)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDataObjectImpl_AddRef(IDataObject * iface)
+{
+    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IDataObjectImpl_Release(IDataObject * iface)
+{
+    IDataObjectImpl *This = (IDataObjectImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return 0;
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IDataObjectImpl_GetData(IDataObject *iface, FORMATETC *pformat, STGMEDIUM *pmedium)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_GetDataHere(IDataObject *iface, FORMATETC *pformat, STGMEDIUM *pmedium)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_QueryGetData(IDataObject *iface, FORMATETC *pformat)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_GetCanonicalFormatEtc(
+    IDataObject *iface, FORMATETC *pformatIn, FORMATETC *pformatOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_SetData(
+    IDataObject *iface, FORMATETC *pformat, STGMEDIUM *pmedium, BOOL release)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_EnumFormatEtc(
+    IDataObject *iface, DWORD direction, IEnumFORMATETC **ppenumFormatEtc)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_DAdvise(
+    IDataObject *iface, FORMATETC *pformatetc, DWORD advf, IAdviseSink *pSink, DWORD *pConnection)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_DUnadvise(IDataObject *iface, DWORD connection)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDataObjectImpl_EnumDAdvise(IDataObject *iface, IEnumSTATDATA **ppenumAdvise)
+{
+    return E_NOTIMPL;
+}
+
+static const IDataObjectVtbl IDataObjectImpl_Vtbl =
+{
+    IDataObjectImpl_QueryInterface,
+    IDataObjectImpl_AddRef,
+    IDataObjectImpl_Release,
+    IDataObjectImpl_GetData,
+    IDataObjectImpl_GetDataHere,
+    IDataObjectImpl_QueryGetData,
+    IDataObjectImpl_GetCanonicalFormatEtc,
+    IDataObjectImpl_SetData,
+    IDataObjectImpl_EnumFormatEtc,
+    IDataObjectImpl_DAdvise,
+    IDataObjectImpl_DUnadvise,
+    IDataObjectImpl_EnumDAdvise
+};
+
+/* dummy IShellBrowser implementation */
+typedef struct {
     const IShellBrowserVtbl *lpVtbl;
     LONG ref;
 } IShellBrowserImpl;
 
-/* dummy IShellBrowser implementation */
 static const IShellBrowserVtbl IShellBrowserImpl_Vtbl;
 
 IShellBrowser* IShellBrowserImpl_Construct(void)
@@ -114,22 +235,16 @@ static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
 
     *ppvObj = NULL;
 
-    if(IsEqualIID(riid, &IID_IUnknown))
-    {
-        *ppvObj = This;
-    }
-    else if(IsEqualIID(riid, &IID_IOleWindow))
-    {
-        *ppvObj = This;
-    }
-    else if(IsEqualIID(riid, &IID_IShellBrowser))
+    if(IsEqualIID(riid, &IID_IUnknown)   ||
+       IsEqualIID(riid, &IID_IOleWindow) ||
+       IsEqualIID(riid, &IID_IShellBrowser))
     {
         *ppvObj = This;
     }
 
     if(*ppvObj)
     {
-        IUnknown_AddRef( (IShellBrowser*) *ppvObj);
+        IUnknown_AddRef(iface);
         return S_OK;
     }
 
@@ -556,6 +671,7 @@ static void test_IShellFolderView(void)
     IShellFolderView *folderview;
     IShellFolder *desktop;
     IShellView *view;
+    IDataObject *obj;
     UINT i;
     HRESULT hr;
 
@@ -575,8 +691,10 @@ static void test_IShellFolderView(void)
     }
 
     /* ::MoveIcons */
-    hr = IShellFolderView_MoveIcons(folderview, NULL);
-    ok(hr == E_NOTIMPL, "got (0x%08x)\n", hr);
+    obj = IDataObjectImpl_Construct();
+    hr = IShellFolderView_MoveIcons(folderview, obj);
+    ok(hr == E_NOTIMPL || broken(hr == S_OK) /* W98 */, "got (0x%08x)\n", hr);
+    IDataObject_Release(obj);
 
     /* ::SetRedraw without list created */
     hr = IShellFolderView_SetRedraw(folderview, TRUE);
