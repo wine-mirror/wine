@@ -370,6 +370,7 @@ static void test_IFolderView(void)
     IShellBrowser *browser;
     IFolderView *fv;
     HWND hwnd_view, hwnd_list;
+    PITEMID_CHILD pidl;
     HRESULT hr;
     INT ret;
     POINT pt;
@@ -395,6 +396,11 @@ static void test_IFolderView(void)
     hr = IFolderView_GetSpacing(fv, NULL);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win7 */, "got (0x%08x)\n", hr);
 
+    pidl = (void*)0xdeadbeef;
+    hr = IFolderView_Item(fv, 0, &pidl);
+    ok(hr == E_INVALIDARG || broken(hr == E_FAIL) /* < Vista */, "got (0x%08x)\n", hr);
+    ok(pidl == 0 || broken(pidl == (void*)0xdeadbeef) /* < Vista */, "got %p\n", pidl);
+
 if (0)
 {
     /* crashes on Vista and Win2k8 - List not created yet case */
@@ -403,6 +409,9 @@ if (0)
     /* crashes on XP */
     hr = IFolderView_GetSelectionMarkedItem(fv, NULL);
     hr = IFolderView_GetFocusedItem(fv, NULL);
+
+    /* crashes on Vista+ */
+    hr = IFolderView_Item(fv, 0, NULL);
 }
 
     browser = IShellBrowserImpl_Construct();
@@ -585,7 +594,8 @@ static void test_IShellFolderView(void)
     i = 0xdeadbeef;
     hr = IShellFolderView_RemoveObject(folderview, NULL, &i);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
-    ok(i == 0, "got %d\n", i);
+    ok(i == 0 || i == -1 /* Win7 */ || broken(i == 0xdeadbeef) /* Vista, 2k8 */,
+        "got %d\n", i);
 
     IShellFolderView_Release(folderview);
 

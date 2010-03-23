@@ -2741,9 +2741,24 @@ static HRESULT WINAPI IFView_GetFolder(IFolderView *iface, REFIID riid, void **p
 
 static HRESULT WINAPI IFView_Item(IFolderView *iface, int index, PITEMID_CHILD *ppidl)
 {
-	IShellViewImpl *This = impl_from_IFolderView(iface);
-	FIXME("(%p)->(%d %p), stub\n", This, index, ppidl);
-	return E_NOTIMPL;
+    IShellViewImpl *This = impl_from_IFolderView(iface);
+    LVITEMW item;
+
+    TRACE("(%p)->(%d %p)\n", This, index, ppidl);
+
+    item.mask = LVIF_PARAM;
+    item.iItem = index;
+
+    if (SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM)&item))
+    {
+        *ppidl = ILClone((PITEMID_CHILD)item.lParam);
+        return S_OK;
+    }
+    else
+    {
+        *ppidl = 0;
+        return E_INVALIDARG;
+    }
 }
 
 static HRESULT WINAPI IFView_ItemCount(IFolderView *iface, UINT flags, int *items)
