@@ -2439,7 +2439,11 @@ static void check_field_common(const type_t *container_type,
         }
         case TGT_CTXT_HANDLE:
         case TGT_CTXT_HANDLE_POINTER:
-            /* FIXME */
+            if (type_get_type(container_type) != TYPE_FUNCTION)
+                error_loc_info(&arg->loc_info,
+                               "%s \'%s\' of %s \'%s\' cannot be a context handle\n",
+                               var_type, arg->name, container_type_name,
+                               container_name);
             break;
         case TGT_STRING:
         {
