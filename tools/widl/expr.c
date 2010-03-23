@@ -35,8 +35,76 @@
 #include "typetree.h"
 #include "typegen.h"
 
-static int is_integer_type(const type_t *type);
-static int is_float_type(const type_t *type);
+static int is_integer_type(const type_t *type)
+{
+    switch (type_get_type(type))
+    {
+    case TYPE_ENUM:
+        return TRUE;
+    case TYPE_BASIC:
+        switch (type_basic_get_type(type))
+        {
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
+            return TRUE;
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+        case TYPE_BASIC_HANDLE:
+            return FALSE;
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
+static int is_signed_integer_type(const type_t *type)
+{
+    switch (type_get_type(type))
+    {
+    case TYPE_ENUM:
+        return FALSE;
+    case TYPE_BASIC:
+        switch (type_basic_get_type(type))
+        {
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT3264:
+            return type_basic_get_sign(type) < 0;
+        case TYPE_BASIC_CHAR:
+            return TRUE;
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+        case TYPE_BASIC_HANDLE:
+            return FALSE;
+        }
+    default:
+        return FALSE;
+    }
+}
+
+static int is_float_type(const type_t *type)
+{
+    return (type_get_type(type) == TYPE_BASIC &&
+        (type_basic_get_type(type) == TYPE_BASIC_FLOAT ||
+         type_basic_get_type(type) == TYPE_BASIC_DOUBLE));
+}
 
 expr_t *make_expr(enum expr_type type)
 {
@@ -146,8 +214,34 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
     /* check for cast of constant expression */
     if (type == EXPR_CAST && expr->is_const)
     {
-        e->is_const = TRUE;
-        e->cval = expr->cval;
+        if (is_integer_type(tref))
+        {
+            unsigned int align = 0;
+            unsigned int cast_type_bits = type_memsize(tref, &align) * 8;
+            unsigned long cast_mask;
+
+            e->is_const = TRUE;
+            if (is_signed_integer_type(tref))
+            {
+                cast_mask = (1 << (cast_type_bits - 1)) - 1;
+                if (expr->cval & (1 << (cast_type_bits - 1)))
+                    e->cval = -((-expr->cval) & cast_mask);
+                else
+                    e->cval = expr->cval & cast_mask;
+            }
+            else
+            {
+                /* calculate ((1 << cast_type_bits) - 1) avoiding overflow */
+                cast_mask = ((1 << (cast_type_bits - 1)) - 1) |
+                            1 << (cast_type_bits - 1);
+                e->cval = expr->cval & cast_mask;
+            }
+        }
+        else
+        {
+            e->is_const = TRUE;
+            e->cval = expr->cval;
+        }
     }
     free(var);
     return e;
@@ -307,45 +401,6 @@ struct expression_type
     int is_temporary; /* should the type be freed? */
     type_t *type;
 };
-
-static int is_integer_type(const type_t *type)
-{
-    switch (type_get_type(type))
-    {
-    case TYPE_ENUM:
-        return TRUE;
-    case TYPE_BASIC:
-        switch (type_basic_get_type(type))
-        {
-        case TYPE_BASIC_INT8:
-        case TYPE_BASIC_INT16:
-        case TYPE_BASIC_INT32:
-        case TYPE_BASIC_INT64:
-        case TYPE_BASIC_INT:
-        case TYPE_BASIC_INT3264:
-        case TYPE_BASIC_CHAR:
-        case TYPE_BASIC_HYPER:
-        case TYPE_BASIC_BYTE:
-        case TYPE_BASIC_WCHAR:
-        case TYPE_BASIC_ERROR_STATUS_T:
-            return TRUE;
-        case TYPE_BASIC_FLOAT:
-        case TYPE_BASIC_DOUBLE:
-        case TYPE_BASIC_HANDLE:
-            return FALSE;
-        }
-        return FALSE;
-    default:
-        return FALSE;
-    }
-}
-
-static int is_float_type(const type_t *type)
-{
-    return (type_get_type(type) == TYPE_BASIC &&
-        (type_basic_get_type(type) == TYPE_BASIC_FLOAT ||
-         type_basic_get_type(type) == TYPE_BASIC_DOUBLE));
-}
 
 static void check_scalar_type(const struct expr_loc *expr_loc,
                               const type_t *cont_type, const type_t *type)
