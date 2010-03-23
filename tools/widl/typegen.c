@@ -3305,7 +3305,8 @@ expr_t *get_size_is_expr(const type_t *t, const char *name)
     expr_t *x = NULL;
 
     for ( ; is_array(t); t = type_array_get_element(t))
-        if (type_array_has_conformance(t))
+        if (type_array_has_conformance(t) &&
+            type_array_get_conformance(t)->type != EXPR_VOID)
         {
             if (!x)
                 x = type_array_get_conformance(t);
@@ -3330,7 +3331,8 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
         case TGT_ARRAY:
             if (is_conformance_needed_for_phase(phase))
             {
-                if (type_array_has_conformance(type))
+                if (type_array_has_conformance(type) &&
+                    type_array_get_conformance(type)->type != EXPR_VOID)
                 {
                     print_file(file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR)");
                     write_expr(file, type_array_get_conformance(type), 1, 1, NULL, NULL, local_var_prefix);
