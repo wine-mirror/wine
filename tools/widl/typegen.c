@@ -123,6 +123,41 @@ static const char *string_of_type(unsigned char type)
     case RPC_FC_C_WSTRING: return "FC_C_WSTRING";
     case RPC_FC_CSTRING: return "FC_CSTRING";
     case RPC_FC_WSTRING: return "FC_WSTRING";
+    case RPC_FC_BYTE_COUNT_POINTER: return "FC_BYTE_COUNT_POINTER";
+    case RPC_FC_TRANSMIT_AS: return "FC_TRANSMIT_AS";
+    case RPC_FC_REPRESENT_AS: return "FC_REPRESENT_AS";
+    case RPC_FC_IP: return "FC_IP";
+    case RPC_FC_BIND_CONTEXT: return "FC_BIND_CONTEXT";
+    case RPC_FC_BIND_GENERIC: return "FC_BIND_GENERIC";
+    case RPC_FC_BIND_PRIMITIVE: return "FC_BIND_PRIMITIVE";
+    case RPC_FC_AUTO_HANDLE: return "FC_AUTO_HANDLE";
+    case RPC_FC_CALLBACK_HANDLE: return "FC_CALLBACK_HANDLE";
+    case RPC_FC_STRUCTPAD1: return "FC_STRUCTPAD1";
+    case RPC_FC_STRUCTPAD2: return "FC_STRUCTPAD2";
+    case RPC_FC_STRUCTPAD3: return "FC_STRUCTPAD3";
+    case RPC_FC_STRUCTPAD4: return "FC_STRUCTPAD4";
+    case RPC_FC_STRUCTPAD5: return "FC_STRUCTPAD5";
+    case RPC_FC_STRUCTPAD6: return "FC_STRUCTPAD6";
+    case RPC_FC_STRUCTPAD7: return "FC_STRUCTPAD7";
+    case RPC_FC_STRING_SIZED: return "FC_STRING_SIZED";
+    case RPC_FC_NO_REPEAT: return "FC_NO_REPEAT";
+    case RPC_FC_FIXED_REPEAT: return "FC_FIXED_REPEAT";
+    case RPC_FC_VARIABLE_REPEAT: return "FC_VARIABLE_REPEAT";
+    case RPC_FC_FIXED_OFFSET: return "FC_FIXED_OFFSET";
+    case RPC_FC_VARIABLE_OFFSET: return "FC_VARIABLE_OFFSET";
+    case RPC_FC_PP: return "FC_PP";
+    case RPC_FC_EMBEDDED_COMPLEX: return "FC_EMBEDDED_COMPLEX";
+    case RPC_FC_DEREFERENCE: return "FC_DEREFERENCE";
+    case RPC_FC_DIV_2: return "FC_DIV_2";
+    case RPC_FC_MULT_2: return "FC_MULT_2";
+    case RPC_FC_ADD_1: return "FC_ADD_1";
+    case RPC_FC_SUB_1: return "FC_SUB_1";
+    case RPC_FC_CALLBACK: return "FC_CALLBACK";
+    case RPC_FC_CONSTANT_IID: return "FC_CONSTANT_IID";
+    case RPC_FC_END: return "FC_END";
+    case RPC_FC_PAD: return "FC_PAD";
+    case RPC_FC_USER_MARSHAL: return "FC_USER_MARSHAL";
+    case RPC_FC_RANGE: return "FC_RANGE";
     case RPC_FC_INT3264: return "FC_INT3264";
     case RPC_FC_UINT3264: return "FC_UINT3264";
     default:
@@ -942,7 +977,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
     unsigned char operator_type = 0;
     unsigned char conftype = RPC_FC_NORMAL_CONFORMANCE;
     const char *conftype_string = "";
-    const char *operator_string = "no operators";
     const expr_t *subexpr;
 
     if (!expr)
@@ -988,14 +1022,12 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
     case EXPR_PPTR:
         subexpr = subexpr->ref;
         operator_type = RPC_FC_DEREFERENCE;
-        operator_string = "FC_DEREFERENCE";
         break;
     case EXPR_DIV:
         if (subexpr->u.ext->is_const && (subexpr->u.ext->cval == 2))
         {
             subexpr = subexpr->ref;
             operator_type = RPC_FC_DIV_2;
-            operator_string = "FC_DIV_2";
         }
         break;
     case EXPR_MUL:
@@ -1003,7 +1035,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         {
             subexpr = subexpr->ref;
             operator_type = RPC_FC_MULT_2;
-            operator_string = "FC_MULT_2";
         }
         break;
     case EXPR_SUB:
@@ -1011,7 +1042,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         {
             subexpr = subexpr->ref;
             operator_type = RPC_FC_SUB_1;
-            operator_string = "FC_SUB_1";
         }
         break;
     case EXPR_ADD:
@@ -1019,7 +1049,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         {
             subexpr = subexpr->ref;
             operator_type = RPC_FC_ADD_1;
-            operator_string = "FC_ADD_1";
         }
         break;
     default:
@@ -1105,7 +1134,8 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
         print_file(file, 2, "0x%x, /* Corr desc: %s%s */\n",
                    conftype | param_type, conftype_string, string_of_type(param_type));
-        print_file(file, 2, "0x%x, /* %s */\n", operator_type, operator_string);
+        print_file(file, 2, "0x%x, /* %s */\n", operator_type,
+                   operator_type ? string_of_type(operator_type) : "no operators");
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* offset = %d */\n",
                    offset, offset);
     }
