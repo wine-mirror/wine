@@ -39,7 +39,7 @@
 #define MAX_CHILDS 100
 #define MAX_TEMPLATES 200
 #define MAX_OBJECTS 500
-#define MAX_SUBOBJECTS 500
+#define MAX_SUBOBJECTS 2000
 #define MAX_STRINGS_BUFFER 10000
 
 typedef struct {

@@ -1104,13 +1104,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     goto error;
   }
 
-  if (This->buf.pxo->nb_subobjects > MAX_SUBOBJECTS)
-  {
-    FIXME("Too many subobjects %d\n", This->buf.pxo->nb_subobjects);
-    hr = DXFILEERR_BADALLOC;
-    goto error;
-  }
-
   object->pstrings = pstrings;
   object->pobj = This->buf.pxo;
   object->cur_enum_object = 0;
