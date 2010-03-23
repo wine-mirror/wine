@@ -2993,6 +2993,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             else
                 MSIREG_DeleteUserDataComponentKey(comp->ComponentId, NULL);
         }
+        comp->Action = comp->ActionRequest;
 
         /* UI stuff */
         uirow = MSI_CreateRecord(3);

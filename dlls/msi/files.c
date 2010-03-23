@@ -98,6 +98,8 @@ static void schedule_install_files(MSIPACKAGE *package)
             ui_progress(package,2,file->FileSize,0,0);
             file->state = msifs_skipped;
         }
+        else
+            file->Component->Action = INSTALLSTATE_LOCAL;
     }
 }
 
