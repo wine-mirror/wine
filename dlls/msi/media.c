@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winerror.h"
 #include "wine/debug.h"
@@ -28,6 +30,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "objidl.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -114,49 +117,6 @@ static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     return r;
 }
 
-static UINT writeout_cabinet_stream(MSIPACKAGE *package, LPCWSTR stream,
-                                    WCHAR* source)
-{
-    UINT rc;
-    USHORT* data;
-    UINT size;
-    DWORD write;
-    HANDLE hfile;
-    WCHAR tmp[MAX_PATH];
-
-    static const WCHAR cszTempFolder[]= {
-	'T','e','m','p','F','o','l','d','e','r',0};
-
-    rc = read_raw_stream_data(package->db, stream, &data, &size);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    write = MAX_PATH;
-    if (MSI_GetPropertyW(package, cszTempFolder, tmp, &write))
-        GetTempPathW(MAX_PATH, tmp);
-
-    GetTempFileNameW(tmp, stream, 0, source);
-
-    track_tempfile(package, source);
-    hfile = CreateFileW(source, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                        FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hfile == INVALID_HANDLE_VALUE)
-    {
-        ERR("Unable to create file %s\n", debugstr_w(source));
-        rc = ERROR_FUNCTION_FAILED;
-        goto end;
-    }
-
-    WriteFile(hfile, data, size, &write, NULL);
-    CloseHandle(hfile);
-    TRACE("wrote %i bytes to %s\n", write, debugstr_w(source));
-
-end:
-    msi_free(data);
-    return rc;
-}
-
 static void * CDECL cabinet_alloc(ULONG cb)
 {
     return msi_alloc(cb);
@@ -236,6 +196,69 @@ static LONG CDECL cabinet_seek(INT_PTR hf, LONG dist, int seektype)
     HANDLE handle = (HANDLE)hf;
     /* flags are compatible and so are passed straight through */
     return SetFilePointer(handle, dist, NULL, seektype);
+}
+
+struct cab_stream
+{
+    MSIDATABASE *db;
+    WCHAR       *name;
+};
+
+static struct cab_stream cab_stream;
+
+static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
+{
+    UINT r;
+    IStream *stm;
+
+    if (oflag)
+        WARN("ignoring open flags 0x%08x\n", oflag);
+
+    r = db_get_raw_stream( cab_stream.db, cab_stream.name, &stm );
+    if (r != ERROR_SUCCESS)
+    {
+        WARN("Failed to get cabinet stream %u\n", r);
+        return 0;
+    }
+
+    return (INT_PTR)stm;
+}
+
+static UINT CDECL cabinet_read_stream( INT_PTR hf, void *pv, UINT cb )
+{
+    IStream *stm = (IStream *)hf;
+    DWORD read;
+    HRESULT hr;
+
+    hr = IStream_Read( stm, pv, cb, &read );
+    if (hr == S_OK || hr == S_FALSE)
+        return read;
+
+    return 0;
+}
+
+static int CDECL cabinet_close_stream( INT_PTR hf )
+{
+    IStream *stm = (IStream *)hf;
+    IStream_Release( stm );
+    return 0;
+}
+
+static LONG CDECL cabinet_seek_stream( INT_PTR hf, LONG dist, int seektype )
+{
+    IStream *stm = (IStream *)hf;
+    LARGE_INTEGER move;
+    ULARGE_INTEGER newpos;
+    HRESULT hr;
+
+    move.QuadPart = dist;
+    hr = IStream_Seek( stm, move, seektype, &newpos );
+    if (SUCCEEDED(hr))
+    {
+        if (newpos.QuadPart <= MAXLONG) return newpos.QuadPart;
+        ERR("Too big!\n");
+    }
+    return -1;
 }
 
 static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
@@ -457,12 +480,28 @@ static INT_PTR CDECL cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION 
     }
 }
 
-/***********************************************************************
- *            msi_cabextract
- *
- * Extract files from a cab file.
- */
-BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data)
+static INT_PTR CDECL cabinet_notify_stream( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin )
+{
+    TRACE("(%d)\n", fdint);
+
+    switch (fdint)
+    {
+    case fdintCOPY_FILE:
+        return cabinet_copy_file( fdint, pfdin );
+
+    case fdintCLOSE_FILE_INFO:
+        return cabinet_close_file_info( fdint, pfdin );
+
+    case fdintCABINET_INFO:
+        return 0;
+
+    default:
+        ERR("Unexpected notification %d\n", fdint);
+        return 0;
+    }
+}
+
+static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data )
 {
     LPSTR cabinet, cab_path = NULL;
     LPWSTR ptr;
@@ -472,38 +511,88 @@ BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data)
 
     TRACE("Extracting %s\n", debugstr_w(mi->source));
 
-    hfdi = FDICreate(cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
-                     cabinet_write, cabinet_close, cabinet_seek, 0, &erf);
+    hfdi = FDICreate( cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
+                      cabinet_write, cabinet_close, cabinet_seek, 0, &erf );
     if (!hfdi)
     {
         ERR("FDICreate failed\n");
         return FALSE;
     }
 
-    ptr = strrchrW(mi->source, '\\') + 1;
-    cabinet = strdupWtoA(ptr);
+    ptr = strrchrW( mi->source, '\\' ) + 1;
+    cabinet = strdupWtoA( ptr );
     if (!cabinet)
         goto done;
 
-    cab_path = strdupWtoA(mi->source);
+    cab_path = strdupWtoA( mi->source );
     if (!cab_path)
         goto done;
 
     cab_path[ptr - mi->source] = '\0';
 
-    ret = FDICopy(hfdi, cabinet, cab_path, 0, cabinet_notify, NULL, data);
+    ret = FDICopy( hfdi, cabinet, cab_path, 0, cabinet_notify, NULL, data );
     if (!ret)
         ERR("FDICopy failed\n");
 
 done:
-    FDIDestroy(hfdi);
-    msi_free(cabinet);
-    msi_free(cab_path);
+    FDIDestroy( hfdi );
+    msi_free(cabinet );
+    msi_free( cab_path );
 
     if (ret)
         mi->is_extracted = TRUE;
 
     return ret;
+}
+
+static BOOL extract_cabinet_stream( MSIPACKAGE *package, MSIMEDIAINFO *mi, LPVOID data )
+{
+    static char filename[] = {'<','S','T','R','E','A','M','>',0};
+    HFDI hfdi;
+    ERF erf;
+    BOOL ret = FALSE;
+
+    TRACE("Extracting %s\n", debugstr_w(mi->cabinet));
+
+    hfdi = FDICreate( cabinet_alloc, cabinet_free, cabinet_open_stream, cabinet_read_stream,
+                      cabinet_write, cabinet_close_stream, cabinet_seek_stream, 0, &erf );
+    if (!hfdi)
+    {
+        ERR("FDICreate failed\n");
+        return FALSE;
+    }
+
+    cab_stream.db = package->db;
+    cab_stream.name = encode_streamname( FALSE, mi->cabinet + 1 );
+    if (!cab_stream.name)
+        goto done;
+
+    ret = FDICopy( hfdi, filename, NULL, 0, cabinet_notify_stream, NULL, data );
+    if (!ret)
+        ERR("FDICopy failed\n");
+
+done:
+    FDIDestroy( hfdi );
+    msi_free( cab_stream.name );
+
+    if (ret)
+        mi->is_extracted = TRUE;
+
+    return ret;
+}
+
+/***********************************************************************
+ *            msi_cabextract
+ *
+ * Extract files from a cabinet file or stream.
+ */
+BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data)
+{
+    if (mi->cabinet[0] == '#')
+    {
+        return extract_cabinet_stream( package, mi, data );
+    }
+    return extract_cabinet( package, mi, data );
 }
 
 void msi_free_media_info(MSIMEDIAINFO *mi)
@@ -532,7 +621,6 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     LPWSTR source_dir;
     LPWSTR source;
     DWORD options;
-    UINT r;
 
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
@@ -567,20 +655,8 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     lstrcpyW(mi->source, source_dir);
     mi->type = get_drive_type(source_dir);
 
-    if (file->IsCompressed && mi->cabinet)
-    {
-        if (mi->cabinet[0] == '#')
-        {
-            r = writeout_cabinet_stream(package, &mi->cabinet[1], mi->source);
-            if (r != ERROR_SUCCESS)
-            {
-                ERR("Failed to extract cabinet stream\n");
-                return ERROR_FUNCTION_FAILED;
-            }
-        }
-        else
-            lstrcatW(mi->source, mi->cabinet);
-    }
+    if (file->IsCompressed && mi->cabinet && mi->cabinet[0] != '#')
+        lstrcatW(mi->source, mi->cabinet);
 
     options = MSICODE_PRODUCT;
     if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)

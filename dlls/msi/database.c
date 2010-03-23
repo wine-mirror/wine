@@ -164,64 +164,6 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
     return SUCCEEDED(r) ? ERROR_SUCCESS : ERROR_FUNCTION_FAILED;
 }
 
-UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
-                              USHORT **pdata, UINT *psz )
-{
-    HRESULT r;
-    UINT ret = ERROR_FUNCTION_FAILED;
-    VOID *data;
-    ULONG sz, count;
-    IStream *stm = NULL;
-    STATSTG stat;
-    LPWSTR encname;
-
-    encname = encode_streamname( FALSE, stname );
-    r = db_get_raw_stream( db, encname, &stm );
-    msi_free( encname );
-
-    if( r != ERROR_SUCCESS)
-        return ret;
-
-    r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
-    if( FAILED( r ) )
-    {
-        WARN("open stream failed r = %08x!\n", r);
-        goto end;
-    }
-
-    if( stat.cbSize.QuadPart >> 32 )
-    {
-        WARN("Too big!\n");
-        goto end;
-    }
-
-    sz = stat.cbSize.QuadPart;
-    data = msi_alloc( sz );
-    if( !data )
-    {
-        WARN("couldn't allocate memory r=%08x!\n", r);
-        ret = ERROR_NOT_ENOUGH_MEMORY;
-        goto end;
-    }
-
-    r = IStream_Read(stm, data, sz, &count );
-    if( FAILED( r ) || ( count != sz ) )
-    {
-        msi_free( data );
-        WARN("read stream failed r = %08x!\n", r);
-        goto end;
-    }
-
-    *pdata = data;
-    *psz = sz;
-    ret = ERROR_SUCCESS;
-
-end:
-    IStream_Release( stm );
-
-    return ret;
-}
-
 static void free_transforms( MSIDATABASE *db )
 {
     while( !list_empty( &db->transforms ) )

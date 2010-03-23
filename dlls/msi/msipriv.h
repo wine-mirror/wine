@@ -672,8 +672,6 @@ extern UINT msi_save_string_table( const string_table *st, IStorage *storage );
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );
 
-extern UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
-                                  USHORT **pdata, UINT *psz );
 extern UINT read_stream_data( IStorage *stg, LPCWSTR stname, BOOL table,
                               BYTE **pdata, UINT *psz );
 extern UINT write_stream_data( IStorage *stg, LPCWSTR stname,
