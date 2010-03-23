@@ -158,6 +158,21 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index)
   return ret;
 }
 
+BOOL isIfIndexLoopback(ULONG idx)
+{
+  BOOL ret = FALSE;
+  char name[IFNAMSIZ];
+  int fd;
+
+  getInterfaceNameByIndex(idx, name);
+  fd = socket(PF_INET, SOCK_DGRAM, 0);
+  if (fd != -1) {
+    ret = isLoopbackInterface(fd, name);
+    close(fd);
+  }
+  return ret;
+}
+
 DWORD getNumNonLoopbackInterfaces(void)
 {
   DWORD numInterfaces;

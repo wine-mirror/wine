@@ -1688,18 +1688,21 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
- *
- * FIXME
- *  Stub, returns empty IP_PER_ADAPTER_INFO in every case.
  */
 DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
 {
-  ULONG bytesNeeded = sizeof(IP_PER_ADAPTER_INFO);
+  ULONG bytesNeeded = sizeof(IP_PER_ADAPTER_INFO), serverListSize = 0;
+  DWORD ret = NO_ERROR;
 
   TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex, pPerAdapterInfo, pOutBufLen);
 
   if (!pOutBufLen) return ERROR_INVALID_PARAMETER;
 
+  if (!isIfIndexLoopback(IfIndex)) {
+    get_dns_server_list(NULL, NULL, &serverListSize);
+    if (serverListSize > sizeof(IP_ADDR_STRING))
+      bytesNeeded += serverListSize - sizeof(IP_ADDR_STRING);
+  }
   if (!pPerAdapterInfo || *pOutBufLen < bytesNeeded)
   {
     *pOutBufLen = bytesNeeded;
@@ -1707,7 +1710,14 @@ DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterIn
   }
 
   memset(pPerAdapterInfo, 0, bytesNeeded);
-  return NO_ERROR;
+  if (!isIfIndexLoopback(IfIndex)) {
+    ret = get_dns_server_list(&pPerAdapterInfo->DnsServerList,
+     (PIP_ADDR_STRING)((PBYTE)pPerAdapterInfo + sizeof(IP_PER_ADAPTER_INFO)),
+     &serverListSize);
+    /* Assume the first DNS server in the list is the "current" DNS server: */
+    pPerAdapterInfo->CurrentDnsServer = &pPerAdapterInfo->DnsServerList;
+  }
+  return ret;
 }
 
 

@@ -46,6 +46,7 @@
 
 DWORD getNumInterfaces(void);
 DWORD getNumNonLoopbackInterfaces(void);
+BOOL isIfIndexLoopback(ULONG idx);
 
 /* A table of interface indexes, see get*InterfaceTable(). */
 typedef struct _InterfaceIndexTable {
