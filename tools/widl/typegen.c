@@ -985,16 +985,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         return 4;
     }
 
-    if (!structure)
-    {
-        /* Top-level conformance calculations are done inline.  */
-        print_file (file, 2, "0x%x,\t/* Corr desc: parameter */\n",
-                    RPC_FC_TOP_LEVEL_CONFORMANCE);
-        print_file (file, 2, "0x0,\n");
-        print_file (file, 2, "NdrFcShort(0x0),\n");
-        return 4;
-    }
-
     if (expr->is_const)
     {
         if (expr->cval > UCHAR_MAX * (USHRT_MAX + 1) + USHRT_MAX)
@@ -1007,6 +997,16 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         print_file(file, 2, "0x%lx,\n", expr->cval >> 16);
         print_file(file, 2, "NdrFcShort(0x%hx),\n", (unsigned short)expr->cval);
 
+        return 4;
+    }
+
+    if (!structure)
+    {
+        /* Top-level conformance calculations are done inline.  */
+        print_file (file, 2, "0x%x,\t/* Corr desc: parameter */\n",
+                    RPC_FC_TOP_LEVEL_CONFORMANCE);
+        print_file (file, 2, "0x0,\n");
+        print_file (file, 2, "NdrFcShort(0x0),\n");
         return 4;
     }
 
