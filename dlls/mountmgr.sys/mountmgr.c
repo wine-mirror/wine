@@ -351,7 +351,7 @@ done:
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
-    IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -390,6 +390,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
         break;
     }
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
     return irp->IoStatus.u.Status;
 }
 
