@@ -41,7 +41,6 @@ typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
 typedef struct _var_t var_t;
 typedef struct _declarator_t declarator_t;
-typedef struct _func_t func_t;
 typedef struct _ifref_t ifref_t;
 typedef struct _typelib_entry_t typelib_entry_t;
 typedef struct _importlib_t importlib_t;
@@ -54,7 +53,6 @@ typedef struct _statement_t statement_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
-typedef struct list func_list_t;
 typedef struct list expr_list_t;
 typedef struct list var_list_t;
 typedef struct list declarator_list_t;
@@ -301,7 +299,7 @@ struct func_details
 struct iface_details
 {
   statement_list_t *stmts;
-  func_list_t *disp_methods;
+  var_list_t *disp_methods;
   var_list_t *disp_props;
   struct _type_t *inherit;
 };
@@ -309,7 +307,6 @@ struct iface_details
 struct module_details
 {
   statement_list_t *stmts;
-  func_list_t *funcs;
 };
 
 struct array_details
@@ -413,13 +410,6 @@ struct _declarator_t {
   type_t *func_type;
   array_dims_t *array;
   expr_t *bits;
-
-  /* parser-internal */
-  struct list entry;
-};
-
-struct _func_t {
-  var_t *def;
 
   /* parser-internal */
   struct list entry;

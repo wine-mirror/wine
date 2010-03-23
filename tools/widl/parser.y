@@ -108,8 +108,6 @@ static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
 static declarator_t *make_declarator(var_t *var);
-static func_list_t *append_func(func_list_t *list, func_t *func);
-static func_t *make_func(var_t *def);
 static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
@@ -165,8 +163,6 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 	var_list_t *var_list;
 	declarator_t *declarator;
 	declarator_list_t *declarator_list;
-	func_t *func;
-	func_list_t *func_list;
 	statement_t *statement;
 	statement_list_t *stmt_list;
 	ifref_t *ifref;
@@ -293,14 +289,14 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum declaration
-%type <var_list> m_args arg_list args
+%type <var> funcdef
+%type <var_list> m_args arg_list args dispint_meths
 %type <var_list> fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
 %type <declarator> declarator direct_declarator init_declarator struct_declarator
 %type <declarator> m_any_declarator any_declarator any_declarator_no_direct any_direct_declarator
 %type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
 %type <declarator_list> declarator_list struct_declarator_list
-%type <func> funcdef
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
 %type <str> libraryhdr callconv cppquote importlib import t_ident
@@ -308,7 +304,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <import> import_start
 %type <typelib> library_start librarydef
 %type <statement> statement typedef
-%type <stmt_list> gbl_statements imp_statements int_statements dispint_meths
+%type <stmt_list> gbl_statements imp_statements int_statements
 
 %left ','
 %right '?' ':'
@@ -720,12 +716,10 @@ s_field:  m_attributes decl_spec declarator	{ $$ = declare_var(check_field_attrs
 						}
 	;
 
-funcdef:
-	  m_attributes decl_spec declarator	{ var_t *v;
-						  v = declare_var(check_function_attrs($3->var->name, $1),
-						               $2, $3, FALSE);
-						  free($3);
-						  $$ = make_func(v);
+funcdef: declaration				{ $$ = $1;
+						  if (type_get_type($$->type) != TYPE_FUNCTION)
+						    error_loc("only methods may be declared inside the methods section of a dispinterface\n");
+						  check_function_attrs($$->name, $$->attrs);
 						}
 	;
 
@@ -826,7 +820,7 @@ dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
 	;
 
 dispint_meths: tMETHODS ':'			{ $$ = NULL; }
-	| dispint_meths funcdef ';'		{ $$ = append_func( $1, $2 ); }
+	| dispint_meths funcdef ';'		{ $$ = append_var( $1, $2 ); }
 	;
 
 dispinterfacedef: dispinterfacehdr '{'
@@ -1691,25 +1685,6 @@ static declarator_t *make_declarator(var_t *var)
   d->array = NULL;
   d->bits = NULL;
   return d;
-}
-
-static func_list_t *append_func(func_list_t *list, func_t *func)
-{
-    if (!func) return list;
-    if (!list)
-    {
-        list = xmalloc( sizeof(*list) );
-        list_init( list );
-    }
-    list_add_tail( list, &func->entry );
-    return list;
-}
-
-static func_t *make_func(var_t *def)
-{
-  func_t *f = xmalloc(sizeof(func_t));
-  f->def = def;
-  return f;
 }
 
 static type_t *make_safearray(type_t *type)

@@ -1950,7 +1950,7 @@ static void add_dispatch(msft_typelib_t *typelib)
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
 {
     int idx = 0;
-    const func_t *func;
+    var_t *func;
     var_t *var;
     msft_typeinfo_t *msft_typeinfo;
 
@@ -1970,7 +1970,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
 
     /* count the no of methods, as the variable indices come after the funcs */
     if (dispinterface->details.iface->disp_methods)
-        LIST_FOR_EACH_ENTRY( func, dispinterface->details.iface->disp_methods, const func_t, entry )
+        LIST_FOR_EACH_ENTRY( func, dispinterface->details.iface->disp_methods, var_t, entry )
             idx++;
 
     if (type_dispiface_get_props(dispinterface))
@@ -1980,8 +1980,8 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     if (type_dispiface_get_methods(dispinterface))
     {
         idx = 0;
-        LIST_FOR_EACH_ENTRY( func, type_dispiface_get_methods(dispinterface), const func_t, entry )
-            if(add_func_desc(msft_typeinfo, func->def, idx) == S_OK)
+        LIST_FOR_EACH_ENTRY( func, type_dispiface_get_methods(dispinterface), var_t, entry )
+            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
                 idx++;
     }
 }
