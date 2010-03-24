@@ -462,7 +462,7 @@
 @ stub _get_errno
 @ stub _get_fmode
 @ stub _get_heap_handle
-@ stub _get_invalid_parameter_handler
+@ cdecl _get_invalid_parameter_handler()
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ stub _get_output_format
 @ stub _get_pgmptr
@@ -521,7 +521,7 @@
 @ stub _inp
 @ stub _inpd
 @ stub _inpw
-@ stub _invalid_parameter
+@ extern _invalid_parameter msvcrt._invalid_parameter
 @ stub _invalid_parameter_noinfo
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
@@ -859,7 +859,7 @@
 @ stub _set_errno
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
 @ stub _set_fmode
-@ stub _set_invalid_parameter_handler
+@ cdecl _set_invalid_parameter_handler(ptr)
 @ stub _set_malloc_crt_max_wait
 @ stub _set_output_format
 @ stub _set_printf_count_output

@@ -53,6 +53,7 @@ static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsig
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
+static _invalid_parameter_handler *p_invalid_parameter;
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -60,6 +61,17 @@ static unsigned char *p_mbctype;
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
 
 HMODULE hMsvcrt;
+
+void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, unsigned *res)
+{
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(res == NULL, "res = %p\n", res);
+}
 
 static void test_swab( void ) {
     char original[]  = "BADCFEHGJILKNMPORQTSVUXWZY@#";
@@ -946,6 +958,9 @@ START_TEST(string)
     SET(pmemcmp,"memcmp");
     SET(p_mbctype,"_mbctype");
     SET(p__mb_cur_max,"__mb_cur_max");
+    p_invalid_parameter = (void *)GetProcAddress( hMsvcrt,"_invalid_parameter");
+    if(p_invalid_parameter)
+        *p_invalid_parameter = test_invalid_parameter_handler;
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );

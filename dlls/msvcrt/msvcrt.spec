@@ -479,7 +479,7 @@
 @ stub _inp #(long) -i386
 @ stub _inpd #(long) -i386
 @ stub _inpw #(long) -i386
-# stub _invalid_parameter
+@ extern _invalid_parameter MSVCRT_invalid_parameter
 @ extern _iob MSVCRT__iob
 # stub _isalnum_l
 # stub _isalpha_l

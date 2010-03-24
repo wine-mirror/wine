@@ -75,6 +75,7 @@ typedef void (*__cdecl MSVCRT__se_translator_function)(unsigned int code, struct
 typedef void (*__cdecl MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);
 typedef int (*__cdecl MSVCRT__onexit_t)(void);
+typedef void (__cdecl *MSVCRT_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, unsigned*);
 
 typedef struct {long double x;} MSVCRT__LDOUBLE;
 
@@ -124,6 +125,7 @@ extern LCID MSVCRT_current_lc_all_lcid;
 extern WORD MSVCRT__ctype [257];
 extern WORD MSVCRT_current_ctype[257];
 extern WORD* MSVCRT__pctype;
+extern MSVCRT_invalid_parameter_handler MSVCRT_invalid_parameter;
 
 void   msvcrt_set_errno(int);
 

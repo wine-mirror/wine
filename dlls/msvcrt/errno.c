@@ -117,6 +117,7 @@ char *MSVCRT__sys_errlist[] =
 };
 
 unsigned int MSVCRT__sys_nerr = sizeof(MSVCRT__sys_errlist)/sizeof(MSVCRT__sys_errlist[0]) - 1;
+MSVCRT_invalid_parameter_handler MSVCRT_invalid_parameter = NULL;
 
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
 void msvcrt_set_errno(int err)

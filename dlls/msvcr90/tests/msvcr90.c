@@ -25,6 +25,7 @@
 #include <errno.h>
 #include "wine/test.h"
 
+static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 typedef int (__cdecl *_INITTERM_E_FN)(void);
 static int (__cdecl *p_initterm_e)(_INITTERM_E_FN *table, _INITTERM_E_FN *end);
 static void* (__cdecl *p_encode_pointer)(void *);
@@ -34,6 +35,17 @@ static void* (__cdecl *p_encoded_null)(void);
 int cb_called[4];
 
 /* ########## */
+
+void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, unsigned *res)
+{
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(res == NULL, "res = %p\n", res);
+}
 
 static int initterm_cb0(void)
 {
@@ -168,6 +180,11 @@ START_TEST(msvcr90)
         win_skip("msvcr90.dll not installed (got %d)\n", GetLastError());
         return;
     }
+
+    p_set_invalid_parameter_handler = (void *) GetProcAddress(hcrt, "_set_invalid_parameter_handler");
+    if(p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+                "Invalid parameter handler was already set\n");
 
     p_initterm_e = (void *) GetProcAddress(hcrt, "_initterm_e");
     p_encode_pointer = (void *) GetProcAddress(hcrt, "_encode_pointer");
