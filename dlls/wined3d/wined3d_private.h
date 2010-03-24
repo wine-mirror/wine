@@ -2963,6 +2963,7 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN;
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE           0x40
 #define WINED3DFMT_FLAG_COMPRESSED               0x80
 #define WINED3DFMT_FLAG_GETDC                    0x100
+#define WINED3DFMT_FLAG_FLOAT                    0x200
 
 struct wined3d_format_desc
 {

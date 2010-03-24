@@ -2865,6 +2865,9 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
     if(!cfg)
         return FALSE;
 
+    /* Float formats need FBOs. If FBOs are used this function isn't called */
+    if (format_desc->Flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
+
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
         if (!getColorBits(format_desc, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
         {
@@ -2905,6 +2908,9 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3
         ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
         return FALSE;
     }
+
+    /* Float formats need FBOs. If FBOs are used this function isn't called */
+    if (format_desc->Flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
 
     if ((format_desc->format == WINED3DFMT_D16_LOCKABLE) || (format_desc->format == WINED3DFMT_D32_FLOAT))
         lockable = TRUE;
