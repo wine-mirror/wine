@@ -467,6 +467,24 @@ end:
     return found;
 }
 
+/*************************************************************************
+ *	SHELL_FindExecutableByOperation [Internal]
+ *
+ * called from SHELL_FindExecutable or SHELL_execute_class
+ * in/out:
+ *      filetype a buffer, big enough, to get the key name to do actually the
+ *              command   "WordPad.Document.1\\shell\\open\\command"
+ *              passed as "WordPad.Document.1"
+ * in:
+ *      lpOperation the operation on it (open)
+ *      commandlen the size of command buffer (in bytes)
+ * out:
+ *      command a buffer, to store the command to do the
+ *              operation on the file
+ *      key a buffer, big enough, to get the key name to do actually the
+ *              command "WordPad.Document.1\\shell\\open\\command"
+ *              Can be NULL
+ */
 static UINT SHELL_FindExecutableByOperation(LPCWSTR lpOperation, LPWSTR key, LPWSTR filetype, LPWSTR command, LONG commandlen)
 {
     static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
@@ -1294,17 +1312,25 @@ static LONG ShellExecute_FromContextMenu( LPSHELLEXECUTEINFOW sei )
     return r;
 }
 
+static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LPCWSTR lpstrProtocol, LPCWSTR wszApplicationName, LPWSTR env, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc );
+
 static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
 {
+    static const WCHAR wQuote[] = {'"',0};
     static const WCHAR wSpace[] = {' ',0};
-    WCHAR execCmd[1024], wcmd[1024];
+    WCHAR execCmd[1024], filetype[1024];
     /* launch a document by fileclass like 'WordPad.Document.1' */
     /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
     /* FIXME: wcmd should not be of a fixed size. Fixed to 1024, MAX_PATH is way too short! */
     ULONG cmask=(psei->fMask & SEE_MASK_CLASSALL);
     DWORD resultLen;
     BOOL done;
+    UINT_PTR rslt;
 
+  /* FIXME: remove following block when SHELL_quote_and_execute supports hkeyClass parameter */
+  if (cmask != SEE_MASK_CLASSNAME)
+  {
+    WCHAR wcmd[1024];
     HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? psei->hkeyClass : NULL,
                            (cmask == SEE_MASK_CLASSNAME) ? psei->lpClass: NULL,
                            psei->lpVerb,
@@ -1318,11 +1344,30 @@ static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEI
     if (!done && wszApplicationName[0])
     {
         strcatW(wcmd, wSpace);
-        strcatW(wcmd, wszApplicationName);
+        if (*wszApplicationName != '"')
+        {
+            strcatW(wcmd, wQuote);
+            strcatW(wcmd, wszApplicationName);
+            strcatW(wcmd, wQuote);
+        }
+        else
+            strcatW(wcmd, wszApplicationName);
     }
     if (resultLen > sizeof(wcmd)/sizeof(WCHAR))
         ERR("Argify buffer not large enough... truncating\n");
     return execfunc(wcmd, NULL, FALSE, psei, psei_out);
+  }
+
+    strcpyW(filetype, psei->lpClass);
+    rslt = SHELL_FindExecutableByOperation(psei->lpVerb, NULL, filetype, execCmd, sizeof(execCmd));
+
+    TRACE("SHELL_FindExecutableByOperation returned %u (%s, %s)\n", (unsigned int)rslt, debugstr_w(filetype), debugstr_w(execCmd));
+    if (33 > rslt)
+        return rslt;
+    rslt = SHELL_quote_and_execute( execCmd, wszEmpty, filetype,
+                                      wszApplicationName, NULL, psei,
+                                      psei_out, execfunc );
+    return rslt;
 }
 
 static BOOL SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameters, DWORD parametersLen, LPWSTR wszApplicationName, DWORD dwApplicationNameLen )
