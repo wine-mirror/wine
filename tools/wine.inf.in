@@ -37,6 +37,7 @@ AddReg=\
     CurrentVersion,\
     Debugger,\
     Desktop,\
+    Dotnet,\
     Metrics,\
     DirectX,\
     Fonts,\
@@ -61,6 +62,7 @@ AddReg=\
     CurrentVersion,\
     Debugger,\
     Desktop,\
+    Dotnet,\
     Metrics,\
     DirectX,\
     Fonts,\
@@ -86,6 +88,7 @@ AddReg=\
     CurrentVersion,\
     Debugger,\
     Desktop,\
+    Dotnet,\
     Metrics,\
     DirectX,\
     Fonts,\
@@ -462,6 +465,11 @@ HKCU,%Desktop%,"SmoothScroll",3,00,00,00,00
 HKCU,%Desktop%,"UserPreferenceMask",3,10,00,00,80
 HKCU,%Desktop%,"LowPowerActive",,"0"
 HKCU,%Desktop%,"MenuShowDelay",2,"400"
+
+[DotNet]
+HKLM,Software\Microsoft\.NETFramework\policy\v1.0
+HKLM,Software\Microsoft\.NETFramework\policy\v2.0
+HKLM,Software\Microsoft\.NETFramework\policy\v3.0
 
 [Metrics]
 HKCU,%Metrics%,"ScrollWidth",2,"16"
