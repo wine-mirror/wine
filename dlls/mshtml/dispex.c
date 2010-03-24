@@ -729,6 +729,47 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
     return DISP_E_UNKNOWNNAME;
 }
 
+static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID *ret)
+{
+    dispex_data_t *data;
+    int min, max, n, c;
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    min = 0;
+    max = data->func_cnt-1;
+
+    while(min <= max) {
+        n = (min+max)/2;
+
+        c = strcmpiW(data->name_table[n]->name, name);
+        if(!c) {
+            if((grfdex & fdexNameCaseSensitive) && strcmpW(data->name_table[n]->name, name))
+                break;
+
+            *ret = data->name_table[n]->id;
+            return S_OK;
+        }
+
+        if(c > 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
+    if(This->data->vtbl && This->data->vtbl->get_dispid) {
+        HRESULT hres;
+
+        hres = This->data->vtbl->get_dispid(This->outer, name, grfdex, ret);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -815,8 +856,6 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
     dynamic_prop_t *dprop;
-    dispex_data_t *data;
-    int min, max, n, c;
     HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -824,38 +863,9 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameCaseInsensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
-    data = get_dispex_data(This);
-    if(!data)
-        return E_FAIL;
-
-    min = 0;
-    max = data->func_cnt-1;
-
-    while(min <= max) {
-        n = (min+max)/2;
-
-        c = strcmpiW(data->name_table[n]->name, bstrName);
-        if(!c) {
-            if((grfdex & fdexNameCaseSensitive) && strcmpW(data->name_table[n]->name, bstrName))
-                break;
-
-            *pid = data->name_table[n]->id;
-            return S_OK;
-        }
-
-        if(c > 0)
-            max = n-1;
-        else
-            min = n+1;
-    }
-
-    if(This->data->vtbl && This->data->vtbl->get_dispid) {
-        HRESULT hres;
-
-        hres = This->data->vtbl->get_dispid(This->outer, bstrName, grfdex, pid);
-        if(hres != DISP_E_UNKNOWNNAME)
-            return hres;
-    }
+    hres = get_builtin_id(This, bstrName, grfdex, pid);
+    if(hres != DISP_E_UNKNOWNNAME)
+        return hres;
 
     hres = get_dynamic_prop(This, bstrName, grfdex, &dprop);
     if(FAILED(hres))
