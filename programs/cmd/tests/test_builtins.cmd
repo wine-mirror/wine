@@ -59,3 +59,14 @@ if /i foo==FOO echo if /i seems to work
 if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
+
+echo -----------Testing GOTO-----------
+if a==a goto dest1
+:dest1
+echo goto with no leading space worked
+if b==b goto dest2
+ :dest2
+echo goto with a leading space worked
+if c==c goto dest3
+	:dest3
+echo goto with a leading tab worked

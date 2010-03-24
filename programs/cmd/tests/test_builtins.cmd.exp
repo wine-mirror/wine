@@ -40,3 +40,7 @@ Testing case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
+-----------Testing GOTO-----------
+goto with no leading space worked
+goto with a leading space worked
+goto with a leading tab worked
