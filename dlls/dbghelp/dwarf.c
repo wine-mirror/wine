@@ -2213,8 +2213,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 }
 
 static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE* start,
-                                  unsigned long ip,
-                                  dwarf2_traverse_context_t*  lctx)
+                                  unsigned long ip, dwarf2_traverse_context_t* lctx)
 {
     DWORD_PTR                   beg, end;
     const BYTE*                 ptr = start;
@@ -2222,8 +2221,8 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
 
     while (ptr < modfmt->u.dwarf2_info->debug_loc.address + modfmt->u.dwarf2_info->debug_loc.size)
     {
-        beg = dwarf2_get_u4(ptr); ptr += 4;
-        end = dwarf2_get_u4(ptr); ptr += 4;
+        beg = dwarf2_get_addr(ptr, modfmt->u.dwarf2_info->word_size); ptr += modfmt->u.dwarf2_info->word_size;
+        end = dwarf2_get_addr(ptr, modfmt->u.dwarf2_info->word_size); ptr += modfmt->u.dwarf2_info->word_size;
         if (!beg && !end) break;
         len = dwarf2_get_u2(ptr); ptr += 2;
 
