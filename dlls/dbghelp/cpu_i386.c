@@ -98,7 +98,7 @@ enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 #define curr_switch (frame->Reserved[__CurrentSwitch])
 #define next_switch (frame->Reserved[__NextSwitch])
 
-static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame)
+static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
     STACK32FRAME        frame32;
     STACK16FRAME        frame16;

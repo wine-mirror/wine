@@ -48,7 +48,7 @@ static unsigned ppc_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
-static BOOL ppc_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame)
+static BOOL ppc_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
     FIXME("not done\n");
     return FALSE;

@@ -474,7 +474,7 @@ struct cpu
                             enum cpu_addr, ADDRESS64* addr);
 
     /* stack manipulation */
-    BOOL        (*stack_walk)(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame);
+    BOOL        (*stack_walk)(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context);
 
     /* module manipulation */
     void*       (*find_runtime_function)(struct module*, DWORD64 addr);

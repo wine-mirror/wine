@@ -180,7 +180,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     csw.u.s32.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess;
     csw.u.s32.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase;
 
-    if ((ret = cpu->stack_walk(&csw, &frame64)))
+    if ((ret = cpu->stack_walk(&csw, &frame64, ctx)))
     {
         addr_64to32(&frame64.AddrPC,     &frame32->AddrPC);
         addr_64to32(&frame64.AddrReturn, &frame32->AddrReturn);
@@ -236,7 +236,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     csw.u.s64.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess64;
     csw.u.s64.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase64;
 
-    if (!cpu->stack_walk(&csw, frame)) return FALSE;
+    if (!cpu->stack_walk(&csw, frame, ctx)) return FALSE;
 
     /* we don't handle KdHelp */
     frame->KdHelp.Thread = 0xC000FADE;
