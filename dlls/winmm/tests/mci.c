@@ -162,6 +162,83 @@ static void test_notification_dbg(HWND hwnd, const char* command, WPARAM type, i
     else ok_(__FILE__,line)(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
 }
 
+static void test_mciParser(HWND hwnd)
+{
+    MCIERROR err;
+    MCIDEVICEID wDeviceID;
+    MCI_PARMS_UNION parm;
+    char buf[1024];
+    memset(buf, 0, sizeof(buf));
+    test_notification(hwnd, "-prior to parser test-", 0);
+
+    /* Get a handle on an MCI device, works even without sound. */
+    parm.open.lpstrDeviceType = "waveaudio";
+    parm.open.lpstrElementName = ""; /* "new" at the command level */
+    parm.open.lpstrAlias = "x"; /* to enable mciSendString */
+    parm.open.dwCallback = (DWORD_PTR)hwnd;
+    err = mciSendCommand(0, MCI_OPEN,
+        MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS | MCI_NOTIFY,
+        (DWORD_PTR)&parm);
+    ok(!err,"mciCommand open new type waveaudio alias x notify: %s\n", dbg_mcierr(err));
+    wDeviceID = parm.open.wDeviceID;
+    ok(!strcmp(parm.open.lpstrDeviceType,"waveaudio"), "open modified device type\n");
+
+    test_notification(hwnd, "MCI_OPEN", MCI_NOTIFY_SUCCESSFUL);
+    test_notification(hwnd, "MCI_OPEN no #2", 0);
+
+    /* MCI_STATUS' dwReturn is a DWORD_PTR, others' a plain DWORD. */
+    parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
+    parm.status.dwReturn = 0xFEEDABAD;
+    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
+    if(!err) ok(MCI_FORMAT_MILLISECONDS==parm.status.dwReturn,"status time format: %ld\n",parm.status.dwReturn);
+
+    parm.status.dwItem = MCI_STATUS_MODE;
+    parm.status.dwReturn = 0xFEEDABAD;
+    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand status mode: %s\n", dbg_mcierr(err));
+    if(!err) ok(MCI_MODE_STOP==parm.status.dwReturn,"STATUS mode: %ld\n",parm.status.dwReturn);
+
+    err = mciSendString("status x mode", buf, sizeof(buf), hwnd);
+    ok(!err,"status mode: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf, "stopped"), "status mode is %s\n", buf);
+
+    parm.caps.dwItem = MCI_GETDEVCAPS_USES_FILES;
+    parm.caps.dwReturn = 0xFEEDABAD;
+    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand getdevcaps files: %s\n", dbg_mcierr(err));
+    if(!err) ok(1==parm.caps.dwReturn,"getdevcaps files: %d\n",parm.caps.dwReturn);
+
+    parm.caps.dwItem = MCI_GETDEVCAPS_HAS_VIDEO;
+    parm.caps.dwReturn = 0xFEEDABAD;
+    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
+    if(!err) ok(0==parm.caps.dwReturn,"getdevcaps video: %d\n",parm.caps.dwReturn);
+
+    parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
+    parm.caps.dwReturn = 0xFEEDABAD;
+    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
+    if(!err) ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"getdevcaps device type: %d\n",parm.caps.dwReturn);
+
+    err = mciSendString("capability x uses files", buf, sizeof(buf), hwnd);
+    ok(!err,"capability files: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf, "true"), "capability files is %s\n", buf);
+
+    err = mciSendString("capability x has video", buf, sizeof(buf), hwnd);
+    ok(!err,"capability video: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf, "false"), "capability video is %s\n", buf);
+
+    err = mciSendString("capability x device type", buf, sizeof(buf), hwnd);
+    ok(!err,"capability device type: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf, "waveaudio"), "capability device type is %s\n", buf);
+
+    err = mciSendCommand(wDeviceID, MCI_CLOSE, 0, 0);
+    ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
+
+    test_notification(hwnd, "-end of 1st set-", 0);
+}
+
 static void test_openCloseWAVE(HWND hwnd)
 {
     MCIERROR err;
@@ -1012,6 +1089,7 @@ START_TEST(mci)
     HWND hwnd;
     hwnd = CreateWindowExA(0, "static", "winmm test", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
+    test_mciParser(hwnd);
     test_openCloseWAVE(hwnd);
     test_recordWAVE(hwnd);
     test_playWAVE(hwnd);
