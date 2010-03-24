@@ -3293,7 +3293,7 @@ static void test_getitemrect(void)
     expect(18, rect.left);
     expect(50, rect.right);
 
-    r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)NULL);
+    r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, 0);
     ok(r != 0, "should return current list handle\n");
 
     r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl);

@@ -968,7 +968,7 @@ static void test_monthcal_hittest(void)
     expect(-1, res);
     expect(0, mchit.uHit);
     /* test with invalid pointer */
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)NULL);
+    res = SendMessage(hwnd, MCM_HITTEST, 0, 0);
     expect(-1, res);
 
     /* resize control to display single Calendar */
