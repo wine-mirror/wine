@@ -4572,6 +4572,7 @@ static void test_publish_publishproduct(void)
     CHAR keypath[MAX_PATH];
     CHAR temp[MAX_PATH];
     CHAR path[MAX_PATH];
+    BOOL old_installer = FALSE;
 
     static const CHAR prodpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                    "\\Installer\\UserData\\%s\\Products"
@@ -4609,6 +4610,22 @@ static void test_publish_publishproduct(void)
 
     sprintf(keypath, prodpath, usersid);
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    if (res == ERROR_FILE_NOT_FOUND)
+    {
+        res = RegOpenKeyA(HKEY_CURRENT_USER, cuprodpath, &hkey);
+        if (res == ERROR_SUCCESS)
+        {
+            win_skip("Windows Installer < 3.0 detected\n");
+            RegCloseKey(hkey);
+            old_installer = TRUE;
+            goto currentuser;
+        }
+        else
+        {
+            win_skip("Install failed, no need to continue\n");
+            return;
+        }
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegOpenKeyA(hkey, "InstallProperties", &props);
@@ -4627,6 +4644,7 @@ static void test_publish_publishproduct(void)
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
+currentuser:
     res = RegOpenKeyA(HKEY_CURRENT_USER, cuprodpath, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -4634,7 +4652,8 @@ static void test_publish_publishproduct(void)
     CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
-    CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
+    if (!old_installer)
+        CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
     CHECK_DEL_REG_DWORD(hkey, "Assignment", 0);
     CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
     CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
@@ -4678,6 +4697,8 @@ static void test_publish_publishproduct(void)
 
     /* PublishProduct, machine */
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
+    if (old_installer)
+        goto machprod;
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -4705,6 +4726,7 @@ static void test_publish_publishproduct(void)
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
+machprod:
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, machprod, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -4712,7 +4734,8 @@ static void test_publish_publishproduct(void)
     CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
-    CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
+    if (!old_installer)
+        CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
     todo_wine CHECK_DEL_REG_DWORD(hkey, "Assignment", 1);
     CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
     CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
