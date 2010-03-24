@@ -2213,7 +2213,7 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
                                   unsigned long ip,
                                   dwarf2_traverse_context_t*  lctx)
 {
-    DWORD                       beg, end;
+    DWORD_PTR                   beg, end;
     const BYTE*                 ptr = start;
     DWORD                       len;
 
@@ -2240,7 +2240,7 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
 static enum location_error loc_compute_frame(struct process* pcs,
                                              const struct module_format* modfmt,
                                              const struct symt_function* func,
-                                             DWORD ip, struct location* frame)
+                                             DWORD_PTR ip, struct location* frame)
 {
     struct symt**               psym = NULL;
     struct location*            pframe;
@@ -2292,7 +2292,7 @@ static void dwarf2_location_compute(struct process* pcs,
                                     struct location* loc)
 {
     struct location             frame;
-    DWORD                       ip;
+    DWORD_PTR                   ip;
     int                         err;
     dwarf2_traverse_context_t   lctx;
 
