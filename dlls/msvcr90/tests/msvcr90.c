@@ -31,6 +31,10 @@ static int (__cdecl *p_initterm_e)(_INITTERM_E_FN *table, _INITTERM_E_FN *end);
 static void* (__cdecl *p_encode_pointer)(void *);
 static void* (__cdecl *p_decode_pointer)(void *);
 static void* (__cdecl *p_encoded_null)(void);
+static int *p_sys_nerr;
+static int* (__cdecl *p__sys_nerr)(void);
+static char **p_sys_errlist;
+static char** (__cdecl *p__sys_errlist)(void);
 
 int cb_called[4];
 
@@ -168,6 +172,27 @@ static void test__encode_pointer(void)
     ok(p_encoded_null() == p_encode_pointer(NULL), "Error encoding null\n");
 }
 
+static void test_error_messages(void)
+{
+    int *size, size_copy;
+
+    if(!p_sys_nerr || !p__sys_nerr || !p_sys_errlist || !p__sys_errlist) {
+        win_skip("Skipping test_error_messages tests\n");
+        return;
+    }
+
+    size = p__sys_nerr();
+    size_copy = *size;
+    ok(*p_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *p_sys_nerr, *size);
+
+    *size = 20;
+    ok(*p_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *p_sys_nerr, *size);
+
+    *size = size_copy;
+
+    ok(*p_sys_errlist == *(p__sys_errlist()), "p_sys_errlist != p__sys_errlist()\n");
+}
+
 /* ########## */
 
 START_TEST(msvcr90)
@@ -190,7 +215,12 @@ START_TEST(msvcr90)
     p_encode_pointer = (void *) GetProcAddress(hcrt, "_encode_pointer");
     p_decode_pointer = (void *) GetProcAddress(hcrt, "_decode_pointer");
     p_encoded_null = (void *) GetProcAddress(hcrt, "_encoded_null");
+    p_sys_nerr = (void *) GetProcAddress(hcrt, "_sys_nerr");
+    p__sys_nerr = (void *) GetProcAddress(hcrt, "__sys_nerr");
+    p_sys_errlist = (void *) GetProcAddress(hcrt, "_sys_errlist");
+    p__sys_errlist = (void *) GetProcAddress(hcrt, "__sys_errlist");
 
     test__initterm_e();
     test__encode_pointer();
+    test_error_messages();
 }

@@ -123,3 +123,19 @@ int CDECL _initterm_e(_INITTERM_E_FN *table, _INITTERM_E_FN *end)
     }
     return res;
 }
+
+/*********************************************************************
+ * __sys_nerr (MSVCR90.@)
+ */
+int* CDECL __sys_nerr(void)
+{
+        return (int*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_sys_nerr");
+}
+
+/*********************************************************************
+ *  __sys_errlist (MSVCR90.@)
+ */
+char** CDECL __sys_errlist(void)
+{
+    return (char**)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_sys_errlist");
+}

@@ -231,8 +231,8 @@
 @ cdecl __setusermatherr(ptr) msvcrt.__setusermatherr
 @ stub __strncnt
 @ stub __swprintf_l
-@ stub __sys_errlist
-@ stub __sys_nerr
+@ cdecl __sys_errlist()
+@ cdecl __sys_nerr()
 @ cdecl __threadhandle() msvcrt.__threadhandle
 @ cdecl __threadid() msvcrt.__threadid
 @ stub __timezone
