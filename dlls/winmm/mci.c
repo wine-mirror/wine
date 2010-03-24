@@ -601,6 +601,9 @@ static	BOOL		MCI_IsCommandTableValid(UINT uTbl)
         switch (eid) {
         case MCI_COMMAND_HEAD:          if (!*str || !flg) return FALSE; idx = 0;		break;	/* check unicity of str in table */
         case MCI_STRING:                if (inCst) return FALSE;				break;
+        case MCI_HWND:                  /* Occurs inside MCI_CONSTANT as in "window handle default" */
+        case MCI_HPAL:
+        case MCI_HDC:
         case MCI_INTEGER:               if (!*str) return FALSE;				break;
         case MCI_END_COMMAND:           if (*str || flg || idx == 0) return FALSE; idx = 0;	break;
         case MCI_RETURN:		if (*str || idx != 1) return FALSE;			break;
@@ -1087,6 +1090,9 @@ static	DWORD	MCI_ParseOptArgs(DWORD* data, int _offset, LPCWSTR lpCmd,
 		    *dwFlags |= flg;
 		    TRACE("flag=%08x\n", flg);
 		    break;
+		case MCI_HWND:
+		case MCI_HPAL:
+		case MCI_HDC:
 		case MCI_INTEGER:
 		    if (inCst) {
 			data[offset] |= flg;
@@ -1132,6 +1138,9 @@ static	DWORD	MCI_ParseOptArgs(DWORD* data, int _offset, LPCWSTR lpCmd,
 		case MCI_END_COMMAND_LIST:
 		case MCI_CONSTANT:
 		case MCI_FLAG:			break;
+		case MCI_HWND:
+		case MCI_HPAL:
+		case MCI_HDC:			if (!inCst) offset += sizeof(HANDLE)/sizeof(DWORD); break;
 		case MCI_INTEGER:		if (!inCst) offset++;	break;
 		case MCI_END_CONSTANT:		offset++; break;
 		case MCI_STRING:		offset += sizeof(LPWSTR)/sizeof(DWORD); break;
