@@ -52,6 +52,7 @@ static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
+static size_t (__cdecl *p_strnlen)(const char *, size_t);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -911,6 +912,26 @@ static void test_strtol(void)
     ok(errno == ERANGE, "wrong errno %d\n", errno);
 }
 
+static void test_strnlen(void)
+{
+    static const char str[] = "string";
+    size_t res;
+
+    if(!p_strnlen) {
+        win_skip("strnlen not found\n");
+        return;
+    }
+
+    res = p_strnlen(str, 20);
+    ok(res == 6, "Returned length = %d\n", (int)res);
+
+    res = p_strnlen(str, 3);
+    ok(res == 3, "Returned length = %d\n", (int)res);
+
+    res = p_strnlen(NULL, 0);
+    ok(res == 0, "Returned length = %d\n", (int)res);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -930,6 +951,7 @@ START_TEST(string)
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
     p_wcsupr_s = (void *)GetProcAddress( hMsvcrt,"_wcsupr_s" );
+    p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -959,4 +981,5 @@ START_TEST(string)
     test_wcscpy_s();
     test__wcsupr_s();
     test_strtol();
+    test_strnlen();
 }

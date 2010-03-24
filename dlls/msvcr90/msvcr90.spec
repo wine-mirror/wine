@@ -1373,7 +1373,7 @@
 @ cdecl strncmp(str str long) msvcrt.strncmp
 @ cdecl strncpy(ptr str long) msvcrt.strncpy
 @ stub strncpy_s
-@ stub strnlen
+@ cdecl strnlen(str long) msvcrt.strnlen
 @ cdecl strpbrk(str str) msvcrt.strpbrk
 @ cdecl strrchr(str long) msvcrt.strrchr
 @ cdecl strspn(str str) msvcrt.strspn
