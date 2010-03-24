@@ -441,8 +441,7 @@ no_compat_defines:
     {
         if (opts->use_msvcrt)
         {
-            if (gcc_defs) strarray_add(comp_args, "-isystem" INCLUDEDIR "/msvcrt");
-            else strarray_add(comp_args, "-I" INCLUDEDIR "/msvcrt");
+            strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/msvcrt" : "-I" INCLUDEDIR "/msvcrt" );
             strarray_add(comp_args, "-D__MSVCRT__");
         }
         strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/windows" : "-I" INCLUDEDIR "/windows" );
