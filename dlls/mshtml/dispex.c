@@ -52,7 +52,10 @@ struct dispex_data_t {
 typedef struct {
     VARIANT var;
     LPWSTR name;
+    DWORD flags;
 } dynamic_prop_t;
+
+#define DYNPROP_DELETED    0x01
 
 typedef struct {
     DispatchEx dispex;
@@ -442,7 +445,7 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
 {
     const BOOL alloc = flags & fdexNameEnsure;
     dispex_dynamic_data_t *data;
-    unsigned i;
+    dynamic_prop_t *prop;
 
     data = get_dynamic_data(This, alloc);
     if(!data) {
@@ -453,9 +456,14 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
         return DISP_E_UNKNOWNNAME;
     }
 
-    for(i=0; i < data->prop_cnt; i++) {
-        if(flags & fdexNameCaseInsensitive ? !strcmpiW(data->props[i].name, name) : !strcmpW(data->props[i].name, name)) {
-            *ret = data->props+i;
+    for(prop = data->props; prop < data->props+data->prop_cnt; prop++) {
+        if(flags & fdexNameCaseInsensitive ? !strcmpiW(prop->name, name) : !strcmpW(prop->name, name)) {
+            if(prop->flags & DYNPROP_DELETED) {
+                if(!alloc)
+                    return DISP_E_UNKNOWNNAME;
+                prop->flags &= ~DYNPROP_DELETED;
+            }
+            *ret = prop;
             return S_OK;
         }
     }
@@ -481,10 +489,16 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
         data->buf_size <<= 1;
     }
 
-    data->props[data->prop_cnt].name = heap_strdupW(name);
-    VariantInit(&data->props[data->prop_cnt].var);
-    *ret = data->props + data->prop_cnt++;
+    prop = data->props + data->prop_cnt;
 
+    prop->name = heap_strdupW(name);
+    if(!prop->name)
+        return E_OUTOFMEMORY;
+
+    VariantInit(&prop->var);
+    prop->flags = 0;
+    data->prop_cnt++;
+    *ret = prop;
     return S_OK;
 }
 
@@ -795,6 +809,43 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     return hres;
 }
 
+HRESULT remove_prop(DispatchEx *This, BSTR name, VARIANT_BOOL *success)
+{
+    dynamic_prop_t *prop;
+    DISPID id;
+    HRESULT hres;
+
+    hres = get_builtin_id(This, name, 0, &id);
+    if(hres == S_OK) {
+        DISPID named_id = DISPID_PROPERTYPUT;
+        VARIANT var;
+        DISPPARAMS dp = {&var,&named_id,1,1};
+        EXCEPINFO ei;
+
+        V_VT(&var) = VT_EMPTY;
+        memset(&ei, 0, sizeof(ei));
+        hres = invoke_builtin_prop(This, id, 0, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+        if(FAILED(hres))
+            return hres;
+
+        *success = VARIANT_TRUE;
+        return S_OK;
+    }
+
+    hres = get_dynamic_prop(This, name, 0, &prop);
+    if(FAILED(hres)) {
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+        *success = VARIANT_FALSE;
+        return S_OK;
+    }
+
+    VariantClear(&prop->var);
+    prop->flags |= DYNPROP_DELETED;
+    *success = VARIANT_TRUE;
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -926,12 +977,12 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
-        VARIANT *var;
+        dynamic_prop_t *prop;
 
         if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
             return DISP_E_UNKNOWNNAME;
 
-        var = &This->dynamic_data->props[idx].var;
+        prop = This->dynamic_data->props+idx;
 
         switch(wFlags) {
         case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -942,8 +993,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             DISPPARAMS dp = {NULL, &named_arg, 0, 1};
             IDispatchEx *dispex;
 
-            if(V_VT(var) != VT_DISPATCH) {
-                FIXME("invoke vt %d\n", V_VT(var));
+            if(V_VT(&prop->var) != VT_DISPATCH) {
+                FIXME("invoke %s\n", debugstr_variant(&prop->var));
                 return E_NOTIMPL;
             }
 
@@ -962,14 +1013,14 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             V_VT(dp.rgvarg) = VT_DISPATCH;
             V_DISPATCH(dp.rgvarg) = (IDispatch*)DISPATCHEX(This);
 
-            hres = IDispatch_QueryInterface(V_DISPATCH(var), &IID_IDispatchEx, (void**)&dispex);
+            hres = IDispatch_QueryInterface(V_DISPATCH(&prop->var), &IID_IDispatchEx, (void**)&dispex);
             TRACE("%s call\n", debugstr_w(This->dynamic_data->props[idx].name));
             if(SUCCEEDED(hres)) {
                 hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, wFlags, &dp, pvarRes, pei, pspCaller);
                 IDispatchEx_Release(dispex);
             }else {
                 ULONG err = 0;
-                hres = IDispatch_Invoke(V_DISPATCH(var), DISPID_VALUE, &IID_NULL, lcid, wFlags, pdp, pvarRes, pei, &err);
+                hres = IDispatch_Invoke(V_DISPATCH(&prop->var), DISPID_VALUE, &IID_NULL, lcid, wFlags, pdp, pvarRes, pei, &err);
             }
             TRACE("%s ret %08x\n", debugstr_w(This->dynamic_data->props[idx].name), hres);
 
@@ -977,7 +1028,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             return hres;
         }
         case DISPATCH_PROPERTYGET:
-            return VariantCopy(pvarRes, var);
+            if(prop->flags & DYNPROP_DELETED)
+                return DISP_E_UNKNOWNNAME;
+            return VariantCopy(pvarRes, &prop->var);
         case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT:
             if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
@@ -987,8 +1040,13 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             }
 
             TRACE("put %s\n", debugstr_variant(pdp->rgvarg));
-            VariantClear(var);
-            return VariantCopy(var, pdp->rgvarg);
+            VariantClear(&prop->var);
+            hres = VariantCopy(&prop->var, pdp->rgvarg);
+            if(FAILED(hres))
+                return hres;
+
+            prop->flags &= ~DYNPROP_DELETED;
+            return S_OK;
         default:
             FIXME("unhandled wFlags %x\n", wFlags);
             return E_NOTIMPL;
@@ -1073,12 +1131,14 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
         if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
             return DISP_E_UNKNOWNNAME;
 
-        if(idx+1 == This->dynamic_data->prop_cnt) {
+        while(++idx < This->dynamic_data->prop_cnt && This->dynamic_data->props[idx].flags & DYNPROP_DELETED);
+
+        if(idx == This->dynamic_data->prop_cnt) {
             *pid = DISPID_STARTENUM;
             return S_FALSE;
         }
 
-        *pid = id+1;
+        *pid = DISPID_DYNPROP_0+idx;
         return S_OK;
     }
 
