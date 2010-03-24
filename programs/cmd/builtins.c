@@ -1165,7 +1165,7 @@ void WCMD_goto (CMD_LIST **cmdList) {
     return;
   }
   if (context != NULL) {
-    WCHAR *paramStart = param1;
+    WCHAR *paramStart = param1, *str;
     static const WCHAR eofW[] = {':','e','o','f','\0'};
 
     /* Handle special :EOF label */
@@ -1179,7 +1179,9 @@ void WCMD_goto (CMD_LIST **cmdList) {
 
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h)) {
-      if ((string[0] == ':') && (lstrcmpiW (&string[1], paramStart) == 0)) return;
+      str = string;
+      while (isspaceW(*str)) str++;
+      if ((*str == ':') && (lstrcmpiW (++str, paramStart) == 0)) return;
     }
     WCMD_output (WCMD_LoadMessage(WCMD_NOTARGET));
   }
