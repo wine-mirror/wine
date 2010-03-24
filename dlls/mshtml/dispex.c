@@ -770,6 +770,31 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     return DISP_E_UNKNOWNNAME;
 }
 
+static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    dispex_data_t *data;
+    func_info_t *func;
+    HRESULT hres;
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    hres = get_builtin_func(data, id, &func);
+    if(id == DISPID_VALUE && hres == DISP_E_UNKNOWNNAME)
+        return dispex_value(This, lcid, flags, dp, res, ei, caller);
+    if(FAILED(hres))
+        return hres;
+
+    if(func->func_disp_idx == -1)
+        hres = typeinfo_invoke(This, func, flags, dp, res, ei);
+    else
+        hres = function_invoke(This, func, flags, dp, res, ei);
+
+    return hres;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -879,8 +904,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    dispex_data_t *data;
-    func_info_t *func;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -972,22 +995,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         }
     }
 
-    data = get_dispex_data(This);
-    if(!data)
-        return E_FAIL;
-
-    hres = get_builtin_func(data, id, &func);
-    if(id == DISPID_VALUE && hres == DISP_E_UNKNOWNNAME)
-        return dispex_value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-    if(FAILED(hres))
-        return hres;
-
-    if(func->func_disp_idx == -1)
-        hres = typeinfo_invoke(This, func, wFlags, pdp, pvarRes, pei);
-    else
-        hres = function_invoke(This, func, wFlags, pdp, pvarRes, pei);
-
-    return hres;
+    return invoke_builtin_prop(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
