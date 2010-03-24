@@ -478,6 +478,9 @@ struct cpu
 
     /* module manipulation */
     void*       (*find_runtime_function)(struct module*, DWORD64 addr);
+
+    /* dwarf dedicated information */
+    unsigned    (*map_dwarf_register)(unsigned regno);
 };
 
 extern struct cpu*      dbghelp_current_cpu;

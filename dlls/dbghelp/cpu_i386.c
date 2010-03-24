@@ -404,10 +404,57 @@ done_err:
     return FALSE;
 }
 
+static unsigned i386_map_dwarf_register(unsigned regno)
+{
+    unsigned    reg;
+
+    switch (regno)
+    {
+    case  0: reg = CV_REG_EAX; break;
+    case  1: reg = CV_REG_ECX; break;
+    case  2: reg = CV_REG_EDX; break;
+    case  3: reg = CV_REG_EBX; break;
+    case  4: reg = CV_REG_ESP; break;
+    case  5: reg = CV_REG_EBP; break;
+    case  6: reg = CV_REG_ESI; break;
+    case  7: reg = CV_REG_EDI; break;
+    case  8: reg = CV_REG_EIP; break;
+    case  9: reg = CV_REG_EFLAGS; break;
+    case 10: reg = CV_REG_CS;  break;
+    case 11: reg = CV_REG_SS;  break;
+    case 12: reg = CV_REG_DS;  break;
+    case 13: reg = CV_REG_ES;  break;
+    case 14: reg = CV_REG_FS;  break;
+    case 15: reg = CV_REG_GS;  break;
+    case 16: case 17: case 18: case 19:
+    case 20: case 21: case 22: case 23:
+        reg = CV_REG_ST0 + regno - 16; break;
+    case 24: reg = CV_REG_CTRL; break;
+    case 25: reg = CV_REG_STAT; break;
+    case 26: reg = CV_REG_TAG; break;
+/*
+reg: fiseg 27
+reg: fioff 28
+reg: foseg 29
+reg: fooff 30
+reg: fop   31
+*/
+    case 32: case 33: case 34: case 35:
+    case 36: case 37: case 38: case 39:
+        reg = CV_REG_XMM0 + regno - 32; break;
+    case 40: reg = CV_REG_MXCSR; break;
+    default:
+        FIXME("Don't know how to map register %d\n", regno);
+        return 0;
+    }
+    return reg;
+}
+
 struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
     i386_get_addr,
     i386_stack_walk,
     NULL,
+    i386_map_dwarf_register,
 };

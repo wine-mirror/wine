@@ -54,10 +54,17 @@ static BOOL ppc_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CON
     return FALSE;
 }
 
+static unsigned ppc_map_dwarf_register(unsigned regno)
+{
+    FIXME("not done\n");
+    return 0;
+}
+
 struct cpu cpu_ppc = {
     IMAGE_FILE_MACHINE_POWERPC,
     4,
     ppc_get_addr,
     ppc_stack_walk,
     NULL,
+    ppc_map_dwarf_register,
 };

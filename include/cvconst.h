@@ -511,6 +511,8 @@ enum CV_HREG_e
     CV_AMD64_MM70       = CV_REG_MM70,
     CV_AMD64_MM71       = CV_REG_MM71,
 
+    CV_AMD64_XMM8       = 252,           /* this includes XMM9 to XMM15 */
+
     CV_AMD64_RAX        = 328,
     CV_AMD64_RBX        = 329,
     CV_AMD64_RCX        = 330,
