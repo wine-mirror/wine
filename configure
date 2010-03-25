@@ -598,7 +598,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_TEST_BINARIES
-ALL_DIRS
 ALL_SYMLINKS
 ALL_MAKERULES
 ALL_WINETEST_DEPENDS
@@ -13855,8 +13854,6 @@ ALL_MAKERULES=""
 
 ALL_SYMLINKS=""
 
-ALL_DIRS=""
-
 ALL_TEST_BINARIES=""
 
 ALL_PROGRAM_BIN_INSTALL_DIRS=""
@@ -13876,7 +13873,10 @@ wine_fn_all_dir_rules ()
 {
     wine_fn_append_file ALL_DIRS $1
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$1/__clean__: $1/Makefile
+"__clean__ .PHONY: $1/__clean__
+$1/__clean__: $1/Makefile
+	@cd $1 && \$(MAKE) clean
+	\$(RM) $1/Makefile
 $1/Makefile: $1/Makefile.in config.status $2
 	@./config.status --file $1/Makefile && cd $1 && \$(MAKE) depend
 depend .PHONY: $1/__depend__

@@ -27,8 +27,6 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
 
-ALL_DIRS           = @ALL_DIRS@
-
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
 
@@ -63,17 +61,13 @@ $(ALL_CONFIGS):
 
 # Rules for cleaning
 
-$(ALL_DIRS:%=%/__clean__): dummy
-	@cd `dirname $@` && $(MAKE) clean
-
-clean:: $(ALL_DIRS:%=%/__clean__)
-	$(RM) $(ALL_DIRS:%=%/Makefile) tools/makedep$(EXEEXT)
+.PHONY: __clean__
+clean:: __clean__
+	$(RM) tools/makedep$(EXEEXT)
 
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h $(ALL_CONFIGS)
 	$(RM) -r autom4te.cache
-
-.PHONY: distclean $(ALL_DIRS:%=%/__clean__)
 
 # Dependencies between directories
 

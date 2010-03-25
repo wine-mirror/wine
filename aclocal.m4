@@ -146,7 +146,6 @@ AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 
 AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_SYMLINKS,"")
-AC_SUBST(ALL_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -164,7 +163,10 @@ wine_fn_all_dir_rules ()
 {
     wine_fn_append_file ALL_DIRS $[1]
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$[1]/__clean__: $[1]/Makefile
+"__clean__ .PHONY: $[1]/__clean__
+$[1]/__clean__: $[1]/Makefile
+	@cd $[1] && \$(MAKE) clean
+	\$(RM) $[1]/Makefile
 $[1]/Makefile: $[1]/Makefile.in config.status $[2]
 	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend
 depend .PHONY: $[1]/__depend__
