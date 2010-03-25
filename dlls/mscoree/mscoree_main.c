@@ -91,9 +91,9 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
 {
     WCHAR *mono_exe;
 
-    FIXME("(%s, %s, %s, %p, %d, %p, %p, %p): semi-stub!\n", debugstr_w(pwszVersion),
+    FIXME("(%s, %s, %s, %p, %d, %s, %s, %p): semi-stub!\n", debugstr_w(pwszVersion),
           debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
-          startupFlags, rclsid, riid, ppv);
+          startupFlags, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if (!(mono_exe = get_mono_exe()))
     {
@@ -290,7 +290,7 @@ HRESULT WINAPI CoInitializeCor(DWORD fFlags)
 
 HRESULT WINAPI GetAssemblyMDImport(LPCWSTR szFileName, REFIID riid, IUnknown **ppIUnk)
 {
-    FIXME("(%p %s, %p, %p): stub\n", szFileName, debugstr_w(szFileName), riid, *ppIUnk);
+    FIXME("(%p %s, %s, %p): stub\n", szFileName, debugstr_w(szFileName), debugstr_guid(riid), *ppIUnk);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -357,7 +357,7 @@ BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerifi
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
-    FIXME("(%p, %p, %p): stub\n", rclsid, riid, ppv);
+    FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if(!ppv)
         return E_INVALIDARG;
 
