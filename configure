@@ -599,7 +599,6 @@ LIBOBJS
 ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_PROGRAM_DIRS
 ALL_TEST_BINARIES
-ALL_TEST_DIRS
 ALL_INSTALL_DIRS
 ALL_STATICLIB_DIRS
 ALL_TOOL_DIRS
@@ -13874,8 +13873,6 @@ ALL_STATICLIB_DIRS=""
 
 ALL_INSTALL_DIRS=""
 
-ALL_TEST_DIRS=""
-
 ALL_TEST_BINARIES=""
 
 ALL_PROGRAM_DIRS=""
@@ -14022,15 +14019,22 @@ $ac_name.rc:
 $ac_name.res: $ac_name.rc $ac_name.exe"
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir: __builddeps__
-$ac_dir/__crosstest__: __buildcrossdeps__
-$ac_dir/__clean__ $ac_dir/__crosstest__ $ac_dir: $ac_dir/Makefile
+"$ac_dir/__clean__: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.rules \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+
     if test "x$enable_tests" = x""no; then :
 
 else
-  wine_fn_append_file ALL_TEST_DIRS $ac_dir
+  wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"all programs/winetest: $ac_dir
+$ac_dir: $ac_dir/Makefile __builddeps__
+crosstest:: $ac_dir/Makefile __buildcrossdeps__
+	@cd $ac_dir && \$(MAKE) crosstest
+test::
+	@cd $ac_dir && \$(MAKE) test
+testclean::
+	\$(RM) $ac_dir/*.ok"
 fi
 }
 

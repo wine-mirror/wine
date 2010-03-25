@@ -32,7 +32,6 @@ ALL_DLL_DIRS       = @ALL_DLL_DIRS@
 ALL_INSTALL_DIRS   = @ALL_INSTALL_DIRS@
 ALL_PROGRAM_DIRS   = @ALL_PROGRAM_DIRS@
 ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
-ALL_TEST_DIRS      = @ALL_TEST_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
@@ -43,8 +42,7 @@ BUILDSUBDIRS = \
 	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
 	$(ALL_DLL_DIRS) \
-	$(ALL_PROGRAM_DIRS) \
-	$(ALL_TEST_DIRS)
+	$(ALL_PROGRAM_DIRS)
 
 # Sub-directories to run make install/uninstall into
 INSTALLSUBDIRS = \
@@ -140,22 +138,6 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
 uninstall::
 	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
-# Rules for testing
-
-$(ALL_TEST_DIRS:%=%/__test__): dummy
-	@cd `dirname $@` && $(MAKE) test
-
-$(ALL_TEST_DIRS:%=%/__crosstest__): dummy
-	@cd `dirname $@` && $(MAKE) crosstest
-
-check test:: $(ALL_TEST_DIRS:%=%/__test__)
-crosstest:: $(ALL_TEST_DIRS:%=%/__crosstest__)
-
-testclean::
-	$(RM) $(ALL_TEST_DIRS:%=%/*.ok)
-
-.PHONY: check test testclean crosstest $(ALL_TEST_DIRS:%=%/__test__) $(ALL_TEST_DIRS:%=%/__crosstest__)
-
 # Rules for auto documentation
 
 DOCSUBDIRS = $(ALL_DLL_DIRS)
@@ -193,7 +175,6 @@ __builddeps__ __buildcrossdeps__: __tooldeps__ include
 loader server: libs/port libs/wine tools
 fonts: tools
 include: tools/widl
-programs/winetest: $(ALL_TEST_DIRS)
 libs/wine $(ALL_TOOL_DIRS): libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
