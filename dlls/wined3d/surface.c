@@ -4183,19 +4183,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     } else {
         /* Source-Less Blit to render target */
         if (Flags & WINEDDBLT_COLORFILL) {
-            /* This is easy to handle for the D3D Device... */
             DWORD color;
 
             TRACE("Colorfill\n");
-
-            /* This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0] || dstSwapchain
-                must be true if we are here */
-            if (This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0] &&
-                    !(This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer ||
-                      (dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]))) {
-                TRACE("Surface is higher back buffer, falling back to software\n");
-                return WINED3DERR_INVALIDCALL;
-            }
 
             /* The color as given in the Blt function is in the format of the frame-buffer...
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
@@ -4206,10 +4196,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 return WINED3DERR_INVALIDCALL;
             }
 
-            TRACE("(%p) executing Render Target override, color = %x\n", This, color);
-            IWineD3DDeviceImpl_ClearSurface(myDevice, This, 1 /* Number of rectangles */,
-                    &rect, WINED3DCLEAR_TARGET, color, 0.0f /* Z */, 0 /* Stencil */);
-            return WINED3D_OK;
+            /* This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0] || dstSwapchain
+                must be true if we are here */
+            if (This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0] &&
+                    !(This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer ||
+                      (dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]))) {
+                TRACE("Surface is higher back buffer, falling back to software\n");
+                return cpu_blit.color_fill(myDevice, This, (RECT*)&rect, color);
+            }
+
+            return ffp_blit.color_fill(myDevice, This, (RECT*)&rect, color);
         }
     }
 
@@ -5245,10 +5241,62 @@ static BOOL ffp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info
     return FALSE;
 }
 
+static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
+{
+    return IWineD3DDeviceImpl_ClearSurface(device, dst_surface, 1 /* Number of rectangles */,
+                                           (const WINED3DRECT*)dst_rect, WINED3DCLEAR_TARGET, fill_color, 0.0f /* Z */, 0 /* Stencil */);
+}
+
 const struct blit_shader ffp_blit =  {
     ffp_blit_alloc,
     ffp_blit_free,
     ffp_blit_set,
     ffp_blit_unset,
-    ffp_blit_color_fixup_supported
+    ffp_blit_color_fixup_supported,
+    ffp_blit_color_fill
+};
+
+static HRESULT cpu_blit_alloc(IWineD3DDevice *iface)
+{
+    return WINED3D_OK;
+}
+
+/* Context activation is done by the caller. */
+static void cpu_blit_free(IWineD3DDevice *iface)
+{
+}
+
+/* Context activation is done by the caller. */
+static HRESULT cpu_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
+        GLenum textype, UINT width, UINT height)
+{
+    return WINED3D_OK;
+}
+
+/* Context activation is done by the caller. */
+static void cpu_blit_unset(IWineD3DDevice *iface)
+{
+}
+
+static BOOL cpu_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
+{
+    return FALSE;
+}
+
+static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
+{
+    WINEDDBLTFX BltFx;
+    memset(&BltFx, 0, sizeof(BltFx));
+    BltFx.dwSize = sizeof(BltFx);
+    BltFx.u5.dwFillColor = color_convert_argb_to_fmt(fill_color, dst_surface->resource.format_desc->format);
+    return IWineD3DBaseSurfaceImpl_Blt((IWineD3DSurface*)dst_surface, dst_rect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
+}
+
+const struct blit_shader cpu_blit =  {
+    cpu_blit_alloc,
+    cpu_blit_free,
+    cpu_blit_set,
+    cpu_blit_unset,
+    cpu_blit_color_fixup_supported,
+    cpu_blit_color_fill
 };

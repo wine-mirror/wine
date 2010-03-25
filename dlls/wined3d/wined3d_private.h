@@ -1177,10 +1177,12 @@ struct blit_shader
             GLenum textype, UINT width, UINT height);
     void (*unset_shader)(IWineD3DDevice *iface);
     BOOL (*color_fixup_supported)(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup);
+    HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color);
 };
 
 extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader arbfp_blit DECLSPEC_HIDDEN;
+extern const struct blit_shader cpu_blit DECLSPEC_HIDDEN;
 
 typedef enum ContextUsage {
     CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */

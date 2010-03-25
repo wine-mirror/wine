@@ -6848,12 +6848,19 @@ static BOOL arbfp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_in
     }
 }
 
+static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
+{
+    FIXME("Color filling not implemented by arbfp_blit\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 const struct blit_shader arbfp_blit = {
     arbfp_blit_alloc,
     arbfp_blit_free,
     arbfp_blit_set,
     arbfp_blit_unset,
     arbfp_blit_color_fixup_supported,
+    arbfp_blit_color_fill
 };
 
 #undef GLINFO_LOCATION
