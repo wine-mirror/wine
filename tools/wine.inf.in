@@ -470,6 +470,17 @@ HKCU,%Desktop%,"MenuShowDelay",2,"400"
 HKLM,Software\Microsoft\.NETFramework\policy\v1.0
 HKLM,Software\Microsoft\.NETFramework\policy\v2.0
 HKLM,Software\Microsoft\.NETFramework\policy\v3.0
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v1.1.4322,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v1.1.4322,SP,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,SP,0x10003,2
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v2.0.50727,Version,2,2.2.30729
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,SP,0x10003,2
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.0,Version,2,3.2.30729
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,SP,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Version,2,3.5.30729.01
 
 [Metrics]
 HKCU,%Metrics%,"ScrollWidth",2,"16"
