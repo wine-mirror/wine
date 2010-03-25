@@ -183,20 +183,11 @@ manpages htmlpages sgmlpages xmlpages: dummy
 .PHONY: man doc-html doc-sgml doc-xml manpages htmlpages sgmlpages xmlpages \
 	$(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__) $(DOCSUBDIRS:%=%/__doc_xml__)
 
-# Rules for import libraries
-
-STATIC_LIBS = @ALL_STATIC_LIBS@
-IMPORT_LIBS = @ALL_IMPORT_LIBS@
-
-implib: $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
-.PHONY: implib
-
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS)
-__builddeps__: __tooldeps__ include $(ALL_STATICLIB_DIRS) $(IMPORT_LIBS)
-__buildcrossdeps__: __tooldeps__ include $(STATIC_LIBS:.a=.cross.a) $(IMPORT_LIBS:.def=.cross.a)
+__builddeps__ __buildcrossdeps__: __tooldeps__ include
 .PHONY: __tooldeps__ __builddeps__ __buildcrossdeps__
 
 loader server: libs/port libs/wine tools

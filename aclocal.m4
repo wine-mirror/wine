@@ -151,8 +151,6 @@ AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_DLL_DIRS,"")
 AC_SUBST(ALL_TOOL_DIRS,"")
 AC_SUBST(ALL_STATICLIB_DIRS,"")
-AC_SUBST(ALL_STATIC_LIBS,"")
-AC_SUBST(ALL_IMPORT_LIBS,"")
 AC_SUBST(ALL_INSTALL_DIRS,"")
 AC_SUBST(ALL_TEST_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
@@ -190,9 +188,9 @@ wine_fn_config_lib ()
     ac_dir=dlls/$ac_name
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_file ALL_STATICLIB_DIRS $ac_dir
-    wine_fn_append_file ALL_STATIC_LIBS $ac_dir/lib$ac_name.a
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__install__ $ac_dir/__install-dev__: $ac_dir
+"$ac_dir/__install__ $ac_dir/__install-dev__ __builddeps__: $ac_dir
+__buildcrossdeps__: $ac_dir/lib$ac_name.cross.a
 $ac_dir $ac_dir/lib$ac_name.cross.a: tools/widl tools/winebuild tools/winegcc include
 $ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
@@ -223,27 +221,28 @@ dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.s
 
     if test -n "$ac_implibsrc"
     then
-        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$IMPLIBEXT
-        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$STATIC_IMPLIBEXT
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
+"__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
+__buildcrossdeps__: $ac_file.cross.a
+$ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
 	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`
 $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
 	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`"
     elif test -n "$ac_implib"
     then
-        wine_fn_append_file ALL_IMPORT_LIBS $ac_file.$IMPLIBEXT
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_file.$IMPLIBEXT $ac_file.cross.a: $ac_deps
-$ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
+"__builddeps__: $ac_file.$IMPLIBEXT
+__buildcrossdeps__: $ac_file.cross.a
+$ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
 	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`"
 
         if test "$ac_dir" != "$ac_implib"
         then
-            wine_fn_append_file ALL_IMPORT_LIBS dlls/lib$ac_implib.$IMPLIBEXT
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
+"__builddeps__: dlls/lib$ac_implib.$IMPLIBEXT
+__buildcrossdeps__: dlls/lib$ac_implib.cross.a
+dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
 	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.$IMPLIBEXT \$[@]
 dlls/lib$ac_implib.cross.a: $ac_file.cross.a
 	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.cross.a \$[@]
