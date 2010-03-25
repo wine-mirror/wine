@@ -598,8 +598,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_TEST_BINARIES
-ALL_SYMLINKS
-ALL_MAKERULES
 ALL_WINETEST_DEPENDS
 ALL_MAKEFILE_DEPENDS
 LDAPLIBS
@@ -13845,14 +13843,11 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 
 
 ALL_MAKEFILE_DEPENDS="# Makefile dependencies
-Makefile: Makefile.in Make.rules config.status"
+Makefile: Makefile.in Make.rules config.status
+	@./config.status Makefile"
+
 
 ALL_WINETEST_DEPENDS="# Test binaries"
-
-
-ALL_MAKERULES=""
-
-ALL_SYMLINKS=""
 
 ALL_TEST_BINARIES=""
 
@@ -14084,18 +14079,39 @@ $ac_dir: $ac_dir/Makefile libs/port dummy
 	@cd $ac_dir && \$(MAKE)"
 fi
 }
+
+wine_fn_config_makerules ()
+{
+    ac_rules=$1
+    ac_deps=$2
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_rules: $ac_rules.in $ac_deps config.status
+	@./config.status $ac_rules
+distclean::
+	\$(RM) $ac_rules"
+}
+
+wine_fn_config_symlink ()
+{
+    ac_link=$1
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_link:
+	@./config.status $ac_link
+distclean::
+	\$(RM) $ac_link"
+}
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
-test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "dlls/wineps.drv/generic.ppd"
+test "$srcdir" = "." || wine_fn_config_symlink dlls/wineps.drv/generic.ppd
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
-test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "fonts/marlett.ttf"
+test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
-test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "fonts/symbol.ttf"
+test "$srcdir" = "." || wine_fn_config_symlink fonts/symbol.ttf
 ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
-test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "fonts/tahoma.ttf"
+test "$srcdir" = "." || wine_fn_config_symlink fonts/tahoma.ttf
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
-test "$srcdir" = "." || wine_fn_append_file ALL_SYMLINKS "fonts/tahomabd.ttf"
+test "$srcdir" = "." || wine_fn_config_symlink fonts/tahomabd.ttf
 ac_config_links="$ac_config_links wine:tools/winewrapper"
-wine_fn_append_file ALL_SYMLINKS "wine"
+wine_fn_config_symlink wine
 
 ac_config_commands="$ac_config_commands dlls/gdi32/enhmfdrv"
 
@@ -14110,28 +14126,23 @@ ac_config_commands="$ac_config_commands dlls/wineps.drv/data"
 ac_config_commands="$ac_config_commands include/wine"
 
 
-wine_fn_append_file ALL_MAKERULES "Make.rules"
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "Make.rules: Make.rules.in config.status"
+wine_fn_config_makerules Make.rules
 MAKE_RULES=Make.rules
 ac_config_files="$ac_config_files Make.rules"
 
-wine_fn_append_file ALL_MAKERULES "Maketest.rules"
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "Maketest.rules: Maketest.rules.in Make.rules config.status"
+wine_fn_config_makerules Maketest.rules Make.rules
 MAKE_TEST_RULES=Maketest.rules
 ac_config_files="$ac_config_files Maketest.rules"
 
-wine_fn_append_file ALL_MAKERULES "dlls/Makedll.rules"
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/Makedll.rules: dlls/Makedll.rules.in Make.rules config.status"
+wine_fn_config_makerules dlls/Makedll.rules Make.rules
 MAKE_DLL_RULES=dlls/Makedll.rules
 ac_config_files="$ac_config_files dlls/Makedll.rules"
 
-wine_fn_append_file ALL_MAKERULES "dlls/Makeimplib.rules"
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "dlls/Makeimplib.rules: dlls/Makeimplib.rules.in Make.rules config.status"
+wine_fn_config_makerules dlls/Makeimplib.rules Make.rules
 MAKE_IMPLIB_RULES=dlls/Makeimplib.rules
 ac_config_files="$ac_config_files dlls/Makeimplib.rules"
 
-wine_fn_append_file ALL_MAKERULES "programs/Makeprog.rules"
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "programs/Makeprog.rules: programs/Makeprog.rules.in Make.rules config.status"
+wine_fn_config_makerules programs/Makeprog.rules Make.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
 ac_config_files="$ac_config_files programs/Makeprog.rules"
 

@@ -39,8 +39,6 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 # Rules for re-running configure
 
-ALL_CONFIGS = Makefile @ALL_MAKERULES@ @ALL_SYMLINKS@
-
 $(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
 	cd $(SRCDIR) && autoconf --warnings=all
 
@@ -56,9 +54,6 @@ include/config.h: include/stamp-h
 include/stamp-h: include/config.h.in config.status
 	@./config.status include/config.h include/stamp-h
 
-$(ALL_CONFIGS):
-	@./config.status $@
-
 # Rules for cleaning
 
 .PHONY: __clean__
@@ -66,7 +61,7 @@ clean:: __clean__
 	$(RM) tools/makedep$(EXEEXT)
 
 distclean:: clean
-	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h $(ALL_CONFIGS)
+	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile
 	$(RM) -r autom4te.cache
 
 # Dependencies between directories

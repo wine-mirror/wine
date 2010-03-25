@@ -141,11 +141,10 @@ dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
 dnl
 AC_DEFUN([WINE_CONFIG_HELPERS],
 [AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies
-Makefile: Makefile.in Make.rules config.status"])
-AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
+Makefile: Makefile.in Make.rules config.status
+	@./config.status Makefile"])
 
-AC_SUBST(ALL_MAKERULES,"")
-AC_SUBST(ALL_SYMLINKS,"")
+AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -355,6 +354,27 @@ install-dev:: $ac_dir
 all __tooldeps__ .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile libs/port dummy
 	@cd $ac_dir && \$(MAKE)"])
+}
+
+wine_fn_config_makerules ()
+{
+    ac_rules=$[1]
+    ac_deps=$[2]
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_rules: $ac_rules.in $ac_deps config.status
+	@./config.status $ac_rules
+distclean::
+	\$(RM) $ac_rules"
+}
+
+wine_fn_config_symlink ()
+{
+    ac_link=$[1]
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_link:
+	@./config.status $ac_link
+distclean::
+	\$(RM) $ac_link"
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
@@ -382,15 +402,14 @@ dnl Usage: WINE_CONFIG_SYMLINK(name,target)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AC_CONFIG_LINKS([$1:]m4_default([$2],[$1]))dnl
-m4_if([$2],,[test "$srcdir" = "." || ])WINE_APPEND_FILE(ALL_SYMLINKS,[$1])])
+m4_if([$2],,[test "$srcdir" = "." || ])wine_fn_config_symlink $1])
 
 dnl **** Create a make rules file from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_MAKERULES(file,var,deps)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKERULES],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-WINE_APPEND_FILE(ALL_MAKERULES,[$1])
-WINE_APPEND_RULE(ALL_MAKEFILE_DEPENDS,[$1: m4_ifval([$3],[$1.in $3],[$1.in]) config.status])
+wine_fn_config_makerules $1 $3
 $2=$1
 AC_SUBST_FILE([$2])dnl
 AC_CONFIG_FILES([$1])])
