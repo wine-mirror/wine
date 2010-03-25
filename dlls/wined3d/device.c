@@ -4390,7 +4390,13 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     ENTER_GL();
 
     /* Only set the values up once, as they are not changing */
-    if (Flags & WINED3DCLEAR_STENCIL) {
+    if (Flags & WINED3DCLEAR_STENCIL)
+    {
+        if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        {
+            glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+        }
         glClearStencil(Stencil);
         checkGLcall("glClearStencil");
         glMask = glMask | GL_STENCIL_BUFFER_BIT;
