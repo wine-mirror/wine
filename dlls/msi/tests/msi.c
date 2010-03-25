@@ -8221,7 +8221,9 @@ static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expecteds
     r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                            MSIPATCHSTATE_APPLIED, 0, patchcode, targetprod,
                            &context, targetsid, &size);
-    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(r == ERROR_NO_MORE_ITEMS ||
+       broken(r == ERROR_BAD_CONFIGURATION), /* Windows Installer 3.0 */
+       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(patchcode, "apple"),
        "Expected patchcode to be unchanged, got %s\n", patchcode);
     ok(!lstrcmpA(targetprod, "banana"),
@@ -8245,7 +8247,9 @@ static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expecteds
     r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                            MSIPATCHSTATE_APPLIED, 0, patchcode, targetprod,
                            &context, targetsid, &size);
-    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(r == ERROR_NO_MORE_ITEMS ||
+       broken(r == ERROR_BAD_CONFIGURATION), /* Windows Installer 3.0 */
+       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(patchcode, "apple"),
        "Expected patchcode to be unchanged, got %s\n", patchcode);
     ok(!lstrcmpA(targetprod, "banana"),
