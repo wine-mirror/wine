@@ -306,9 +306,11 @@ $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all programs/winetest: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__
-crosstest:: $ac_dir/Makefile __buildcrossdeps__
+crosstest .PHONY: $ac_dir/__crosstest__
+$ac_dir/__crosstest__: $ac_dir/Makefile __buildcrossdeps__ dummy
 	@cd $ac_dir && \$(MAKE) crosstest
-test::
+test .PHONY: $ac_dir/__test__
+$ac_dir/__test__: dummy
 	@cd $ac_dir && \$(MAKE) test
 testclean::
 	\$(RM) $ac_dir/*.ok"])
