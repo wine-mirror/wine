@@ -22,8 +22,6 @@
 #include "wine/unicode.h"
 #include "windef.h"
 #include "wingdi.h"
-#include "d3dx9.h"
-#include "d3dx9shader.h"
 #include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
