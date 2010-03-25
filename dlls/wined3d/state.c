@@ -1525,27 +1525,28 @@ static void state_debug_monitor(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
 static void state_colorwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD Value = stateblock->renderState[WINED3DRS_COLORWRITEENABLE];
+    DWORD mask0 = stateblock->renderState[WINED3DRS_COLORWRITEENABLE];
+    DWORD mask1 = stateblock->renderState[WINED3DRS_COLORWRITEENABLE1];
+    DWORD mask2 = stateblock->renderState[WINED3DRS_COLORWRITEENABLE2];
+    DWORD mask3 = stateblock->renderState[WINED3DRS_COLORWRITEENABLE3];
 
     TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
-        Value & WINED3DCOLORWRITEENABLE_RED   ? 1 : 0,
-        Value & WINED3DCOLORWRITEENABLE_GREEN ? 1 : 0,
-        Value & WINED3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
-        Value & WINED3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
-    glColorMask(Value & WINED3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
-                Value & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                Value & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                Value & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+            mask0 & WINED3DCOLORWRITEENABLE_RED ? 1 : 0,
+            mask0 & WINED3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+            mask0 & WINED3DCOLORWRITEENABLE_BLUE ? 1 : 0,
+            mask0 & WINED3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
+    glColorMask(mask0 & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
+            mask0 & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+            mask0 & WINED3DCOLORWRITEENABLE_BLUE ? GL_TRUE : GL_FALSE,
+            mask0 & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     checkGLcall("glColorMask(...)");
 
-    /* depends on WINED3DRS_COLORWRITEENABLE. */
-    if(stateblock->renderState[WINED3DRS_COLORWRITEENABLE1] != 0x0000000F ||
-       stateblock->renderState[WINED3DRS_COLORWRITEENABLE2] != 0x0000000F ||
-       stateblock->renderState[WINED3DRS_COLORWRITEENABLE3] != 0x0000000F ) {
-        ERR("(WINED3DRS_COLORWRITEENABLE1/2/3,%d,%d,%d) not yet implemented. Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n",
-            stateblock->renderState[WINED3DRS_COLORWRITEENABLE1],
-            stateblock->renderState[WINED3DRS_COLORWRITEENABLE2],
-            stateblock->renderState[WINED3DRS_COLORWRITEENABLE3]);
+    if (!((mask1 == mask0 && mask2 == mask0 && mask3 == mask0)
+        || (mask1 == 0xf && mask2 == 0xf && mask3 == 0xf)))
+    {
+        FIXME("WINED3DRS_COLORWRITEENABLE/1/2/3, %#x/%#x/%#x/%#x not yet implemented.\n",
+            mask0, mask1, mask2, mask3);
+        FIXME("Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n");
     }
 }
 
