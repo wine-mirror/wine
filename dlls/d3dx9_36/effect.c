@@ -888,6 +888,19 @@ HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
+                                        UINT srcdatalen,
+                                        CONST D3DXMACRO* defines,
+                                        LPD3DXINCLUDE include,
+                                        DWORD flags,
+                                        LPD3DXEFFECTCOMPILER* compiler,
+                                        LPD3DXBUFFER* parse_errors)
+{
+    FIXME("(%p, %u, %p, %p, %#x, %p, %p): stub\n", srcdata, srcdatalen, defines, include, flags, compiler, parse_errors);
+
+    return E_NOTIMPL;
+}
+
 static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl;
 
 typedef struct ID3DXEffectPoolImpl {

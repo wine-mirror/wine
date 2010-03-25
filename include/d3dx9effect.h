@@ -274,6 +274,84 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT byte_offset, UINT bytes) PURE;
 };
 
+typedef struct ID3DXEffectCompiler *LPD3DXEFFECTCOMPILER;
+
+DEFINE_GUID(IID_ID3DXEffectCompiler, 0x51b8a949, 0x1a31, 0x47e6, 0xbe, 0xa0, 0x4b, 0x30, 0xdb, 0x53, 0xf1, 0xe0);
+
+#undef INTERFACE
+#define INTERFACE ID3DXEffectCompiler
+
+DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID* object) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /*** ID3DXBaseEffect methods ***/
+    STDMETHOD(GetDesc)(THIS_ D3DXEFFECT_DESC* desc) PURE;
+    STDMETHOD(GetParameterDesc)(THIS_ D3DXHANDLE parameter, D3DXPARAMETER_DESC* desc) PURE;
+    STDMETHOD(GetTechniqueDesc)(THIS_ D3DXHANDLE technique, D3DXTECHNIQUE_DESC* desc) PURE;
+    STDMETHOD(GetPassDesc)(THIS_ D3DXHANDLE pass, D3DXPASS_DESC* desc) PURE;
+    STDMETHOD(GetFunctionDesc)(THIS_ D3DXHANDLE shader, D3DXFUNCTION_DESC* desc) PURE;
+    STDMETHOD_(D3DXHANDLE, GetParameter)(THIS_ D3DXHANDLE parameter, UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetParameterByName)(THIS_ D3DXHANDLE parameter, LPCSTR name) PURE;
+    STDMETHOD_(D3DXHANDLE, GetParameterBySemantic)(THIS_ D3DXHANDLE parameter, LPCSTR semantic) PURE;
+    STDMETHOD_(D3DXHANDLE, GetParameterElement)(THIS_ D3DXHANDLE parameter, UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetTechnique)(THIS_ UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetTechniqueByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(D3DXHANDLE, GetPass)(THIS_ D3DXHANDLE technique, UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetPassByName)(THIS_ D3DXHANDLE technique, LPCSTR name) PURE;
+    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index);
+    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ LPCSTR name);
+    STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, LPCSTR name) PURE;
+    STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT bytes) PURE;
+    STDMETHOD(GetValue)(THIS_ D3DXHANDLE parameter, LPVOID data, UINT bytes) PURE;
+    STDMETHOD(SetBool)(THIS_ D3DXHANDLE parameter, BOOL b) PURE;
+    STDMETHOD(GetBool)(THIS_ D3DXHANDLE parameter, BOOL* b) PURE;
+    STDMETHOD(SetBoolArray)(THIS_ D3DXHANDLE parameter, CONST BOOL* b, UINT count) PURE;
+    STDMETHOD(GetBoolArray)(THIS_ D3DXHANDLE parameter, BOOL* b, UINT count) PURE;
+    STDMETHOD(SetInt)(THIS_ D3DXHANDLE parameter, INT n) PURE;
+    STDMETHOD(GetInt)(THIS_ D3DXHANDLE parameter, INT* n) PURE;
+    STDMETHOD(SetIntArray)(THIS_ D3DXHANDLE parameter, CONST INT* n, UINT count) PURE;
+    STDMETHOD(GetIntArray)(THIS_ D3DXHANDLE parameter, INT* n, UINT count) PURE;
+    STDMETHOD(SetFloat)(THIS_ D3DXHANDLE parameter, FLOAT f) PURE;
+    STDMETHOD(GetFloat)(THIS_ D3DXHANDLE parameter, FLOAT* f) PURE;
+    STDMETHOD(SetFloatArray)(THIS_ D3DXHANDLE parameter, CONST FLOAT* f, UINT count) PURE;
+    STDMETHOD(GetFloatArray)(THIS_ D3DXHANDLE parameter, FLOAT* f, UINT count) PURE;
+    STDMETHOD(SetVector)(THIS_ D3DXHANDLE parameter, CONST D3DXVECTOR4* vector) PURE;
+    STDMETHOD(GetVector)(THIS_ D3DXHANDLE parameter, D3DXVECTOR4* vector) PURE;
+    STDMETHOD(SetVectorArray)(THIS_ D3DXHANDLE parameter, CONST D3DXVECTOR4* vector, UINT count) PURE;
+    STDMETHOD(GetVectorArray)(THIS_ D3DXHANDLE parameter, D3DXVECTOR4* vector, UINT count) PURE;
+    STDMETHOD(SetMatrix)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX* matrix) PURE;
+    STDMETHOD(GetMatrix)(THIS_ D3DXHANDLE parameter, D3DXMATRIX* matrix) PURE;
+    STDMETHOD(SetMatrixArray)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX* matrix, UINT count) PURE;
+    STDMETHOD(GetMatrixArray)(THIS_ D3DXHANDLE parameter, D3DXMATRIX* matrix, UINT count) PURE;
+    STDMETHOD(SetMatrixPointerArray)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX** matrix, UINT count) PURE;
+    STDMETHOD(GetMatrixPointerArray)(THIS_ D3DXHANDLE parameter, D3DXMATRIX** matrix, UINT count) PURE;
+    STDMETHOD(SetMatrixTranspose)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX* matrix) PURE;
+    STDMETHOD(GetMatrixTranspose)(THIS_ D3DXHANDLE parameter, D3DXMATRIX* matrix) PURE;
+    STDMETHOD(SetMatrixTransposeArray)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX* matrix, UINT count) PURE;
+    STDMETHOD(GetMatrixTransposeArray)(THIS_ D3DXHANDLE parameter, D3DXMATRIX* matrix, UINT count) PURE;
+    STDMETHOD(SetMatrixTransposePointerArray)(THIS_ D3DXHANDLE parameter, CONST D3DXMATRIX** matrix, UINT count) PURE;
+    STDMETHOD(GetMatrixTransposePointerArray)(THIS_ D3DXHANDLE parameter, D3DXMATRIX** matrix, UINT count) PURE;
+    STDMETHOD(SetString)(THIS_ D3DXHANDLE parameter, LPCSTR string) PURE;
+    STDMETHOD(GetString)(THIS_ D3DXHANDLE parameter, LPCSTR* string) PURE;
+    STDMETHOD(SetTexture)(THIS_ D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 texture) PURE;
+    STDMETHOD(GetTexture)(THIS_ D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9* texture) PURE;
+    STDMETHOD(SetPixelShader)(THIS_ D3DXHANDLE parameter, LPDIRECT3DPIXELSHADER9 pshader) PURE;
+    STDMETHOD(GetPixelShader)(THIS_ D3DXHANDLE parameter, LPDIRECT3DPIXELSHADER9* pshader) PURE;
+    STDMETHOD(SetVertexShader)(THIS_ D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 vshader) PURE;
+    STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9* vshader) PURE;
+    STDMETHOD(SetArrayRange)(THIS_ D3DXHANDLE parameter, UINT start, UINT end) PURE;
+    /*** ID3DXEffectCompiler methods ***/
+    STDMETHOD(SetLiteral)(THIS_ D3DXHANDLE parameter, BOOL literal) PURE;
+    STDMETHOD(GetLiteral)(THIS_ D3DXHANDLE parameter, BOOL* literal) PURE;
+    STDMETHOD(CompileEffect)(THIS_ DWORD flags, LPD3DXBUFFER* effect, LPD3DXBUFFER* error_msgs) PURE;
+    STDMETHOD(CompileShader)(THIS_ D3DXHANDLE function, LPCSTR target, DWORD flags, LPD3DXBUFFER* shader,
+        LPD3DXBUFFER* error_msgs, LPD3DXCONSTANTTABLE* constant_table) PURE;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -289,6 +367,14 @@ HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
                                 LPD3DXEFFECTPOOL pool,
                                 LPD3DXEFFECT* effect,
                                 LPD3DXBUFFER* compilation_errors);
+
+HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
+                                        UINT srcdatalen,
+                                        CONST D3DXMACRO* defines,
+                                        LPD3DXINCLUDE include,
+                                        DWORD flags,
+                                        LPD3DXEFFECTCOMPILER* compiler,
+                                        LPD3DXBUFFER* parse_errors);
 
 #ifdef __cplusplus
 }
