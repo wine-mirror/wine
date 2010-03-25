@@ -149,7 +149,6 @@ AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_DIRS,"")
 AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_DLL_DIRS,"")
-AC_SUBST(ALL_TOOL_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -328,10 +327,28 @@ wine_fn_config_tool ()
     fi
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+"$ac_dir/__clean__: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
-    AS_VAR_IF([enable_tools],[no],,[wine_fn_append_file ALL_TOOL_DIRS $ac_dir])
+
+    AS_VAR_IF([enable_tools],[no],,[case $ac_dir in
+      dnl tools directory has both install-lib and install-dev
+      tools) wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install
+install-lib:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-lib
+install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-dev" ;;
+      *)     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install" ;;
+      esac
+      wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"uninstall:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall
+all __tooldeps__: $ac_dir
+$ac_dir: $ac_dir/Makefile libs/port"])
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****

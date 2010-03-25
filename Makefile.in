@@ -29,19 +29,16 @@ MODULE    = none
 
 ALL_DIRS           = @ALL_DIRS@
 ALL_DLL_DIRS       = @ALL_DLL_DIRS@
-ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
 # Sub-directories to run make all into
 BUILDSUBDIRS = \
 	libs/wine \
-	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS)
 
 # Sub-directories to run make install/uninstall into
 INSTALLSUBDIRS = \
 	libs/wine \
-	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS)
 
 # Sub-directories that don't have a makefile
@@ -156,14 +153,14 @@ manpages htmlpages sgmlpages xmlpages: dummy
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
-__tooldeps__: libs/port libs/wine libs/wpp $(ALL_TOOL_DIRS)
+__tooldeps__: libs/port libs/wine libs/wpp
 __builddeps__ __buildcrossdeps__: __tooldeps__ include
 .PHONY: __tooldeps__ __builddeps__ __buildcrossdeps__
 
 loader server: libs/port libs/wine tools
 fonts: tools
 include: tools/widl
-libs/wine $(ALL_TOOL_DIRS): libs/port
+libs/wine: libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
@@ -173,13 +170,6 @@ include/__install__ include/__install-dev__: include
 libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
 loader/__install__ loader/__install-lib__: libs/port libs/wine tools
 server/__install__ server/__install-lib__: libs/port libs/wine tools
-tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
-tools/widl/__install__ tools/widl/__install-dev__: tools/widl
-tools/winebuild/__install__ tools/winebuild/__install-dev__: tools/winebuild
-tools/winedump/__install__ tools/winedump/__install-dev__: tools/winedump
-tools/winegcc/__install__ tools/winegcc/__install-dev__: tools/winegcc
-tools/wmc/__install__ tools/wmc/__install-dev__: tools/wmc
-tools/wrc/__install__ tools/wrc/__install-dev__: tools/wrc
 tools/__depend__: $(MAKEDEP)
 
 $(MAKEDEP): include/config.h tools/Makefile
