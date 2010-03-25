@@ -352,7 +352,7 @@
 @ stub _cwscanf_s
 @ stub _cwscanf_s_l
 @ extern _daylight msvcrt._daylight
-@ stub _decode_pointer
+@ cdecl _decode_pointer(ptr) MSVCR90_decode_pointer
 @ cdecl _difftime32(long long) msvcrt._difftime32
 @ cdecl _difftime64(long long) msvcrt._difftime64
 @ stub _dosmaperr
@@ -362,7 +362,7 @@
 @ stub _dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ stub _ecvt_s
-@ stub _encode_pointer
+@ cdecl _encode_pointer(ptr) MSVCR90_encode_pointer
 @ stub _encoded_null
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex

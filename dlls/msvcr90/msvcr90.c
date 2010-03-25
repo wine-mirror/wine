@@ -44,6 +44,27 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/*********************************************************************
+ *  _decode_pointer (MSVCR90.@)
+ *
+ * cdecl version of DecodePointer
+ *
+ */
+void * CDECL MSVCR90_decode_pointer(void * ptr)
+{
+    return DecodePointer(ptr);
+}
+
+/*********************************************************************
+ *  _encode_pointer (MSVCR90.@)
+ *
+ * cdecl version of EncodePointer
+ *
+ */
+void * CDECL MSVCR90_encode_pointer(void * ptr)
+{
+    return EncodePointer(ptr);
+}
 
 /*********************************************************************
  *  _initterm_e (MSVCR90.@)

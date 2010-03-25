@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcr90.dll
-IMPORTLIB = msvcr90
 IMPORTS   = msvcrt kernel32
 
 C_SRCS = \
