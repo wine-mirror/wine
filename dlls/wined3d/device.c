@@ -4397,10 +4397,11 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
         }
+        glStencilMask(~0U);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
         glClearStencil(Stencil);
         checkGLcall("glClearStencil");
         glMask = glMask | GL_STENCIL_BUFFER_BIT;
-        glStencilMask(0xFFFFFFFF);
     }
 
     if (Flags & WINED3DCLEAR_ZBUFFER) {
@@ -4484,10 +4485,6 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         }
     }
 
-    /* Restore the old values (why..?) */
-    if (Flags & WINED3DCLEAR_STENCIL) {
-        glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
-    }
     if (Flags & WINED3DCLEAR_TARGET) {
         DWORD mask = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE];
         glColorMask(mask & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
