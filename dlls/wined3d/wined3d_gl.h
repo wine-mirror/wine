@@ -1782,6 +1782,7 @@ typedef enum wined3d_gl_extension
     EXT_BLEND_EQUATION_SEPARATE,
     EXT_BLEND_FUNC_SEPARATE,
     EXT_BLEND_MINMAX,
+    EXT_DRAW_BUFFERS2,
     EXT_FOG_COORD,
     EXT_FRAMEBUFFER_BLIT,
     EXT_FRAMEBUFFER_MULTISAMPLE,
@@ -2957,6 +2958,15 @@ typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONSEPARATEEXTPROC)(GLenum modeRGB, GLe
 #endif
 typedef void (WINE_GLAPI *PGLFNBLENDFUNCSEPARATEEXTPROC)(GLenum sfactorRGB, GLenum dfactorRGB,
         GLenum sfactorAlpha, GLenum dfactorAlpha);
+
+/* GL_EXT_draw_buffers2 */
+typedef GLvoid (WINE_GLAPI *PGLFNCOLORMASKINDEXEDEXTPROC)(GLuint buffer_idx, GLboolean r, GLboolean g,
+        GLboolean b, GLboolean a);
+typedef GLvoid (WINE_GLAPI *PGLFNGETBOOLEANINDEXEDVEXTPROC)(GLenum param, GLuint index, GLboolean *value);
+typedef GLvoid (WINE_GLAPI *PGLFNGETINTEGERINDEXEDVEXTPROC)(GLenum param, GLuint index, GLint *value);
+typedef GLvoid (WINE_GLAPI *PGLFNENABLEINDEXEDEXTPROC)(GLenum target, GLuint index);
+typedef GLvoid (WINE_GLAPI *PGLFNDISABLEINDEXEDEXTPROC)(GLenum target, GLuint index);
+typedef GLboolean (WINE_GLAPI *PGLFNISENABLEDINDEXEDEXTPROC)(GLenum target, GLuint index);
 
 /* GL_EXT_fog_coord */
 #ifndef GL_EXT_fog_coord
@@ -4178,6 +4188,19 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
     /* GL_EXT_blend_func_separate */ \
     USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEEXTPROC, \
             glBlendEquationSeparateEXT,                 EXT_BLEND_EQUATION_SEPARATE,    NULL) \
+    /* GL_EXT_draw_buffers2 */ \
+    USE_GL_FUNC(PGLFNCOLORMASKINDEXEDEXTPROC, \
+            glColorMaskIndexedEXT,                      EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(PGLFNGETBOOLEANINDEXEDVEXTPROC, \
+            glGetBooleanIndexedvEXT,                    EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(PGLFNGETINTEGERINDEXEDVEXTPROC, \
+            glGetIntegerIndexedvEXT,                    EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(PGLFNENABLEINDEXEDEXTPROC, \
+            glEnableIndexedEXT,                         EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(PGLFNDISABLEINDEXEDEXTPROC, \
+            glDisableIndexedEXT,                        EXT_DRAW_BUFFERS2,              NULL) \
+    USE_GL_FUNC(PGLFNISENABLEDINDEXEDEXTPROC, \
+            glIsEnabledIndexedEXT,                      EXT_DRAW_BUFFERS2,              NULL) \
     /* GL_EXT_fog_coord */ \
     USE_GL_FUNC(PGLFNGLFOGCOORDFEXTPROC, \
             glFogCoordfEXT,                             EXT_FOG_COORD,                  NULL) \
