@@ -28,7 +28,6 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 
 ALL_DIRS           = @ALL_DIRS@
-ALL_DLL_DIRS       = @ALL_DLL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
 # Sub-directories to run make all into
@@ -122,33 +121,6 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
 
 .PHONY: $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__) \
 	$(INSTALLSUBDIRS:%=%/__install-lib__) $(INSTALLSUBDIRS:%=%/__install-dev__)
-
-# Rules for auto documentation
-
-DOCSUBDIRS = $(ALL_DLL_DIRS)
-
-$(DOCSUBDIRS:%=%/__man__): dummy
-	@cd `dirname $@` && $(MAKE) man
-
-$(DOCSUBDIRS:%=%/__doc_html__): dummy
-	@cd `dirname $@` && $(MAKE) doc-html
-
-$(DOCSUBDIRS:%=%/__doc_sgml__): dummy
-	@cd `dirname $@` && $(MAKE) doc-sgml
-
-$(DOCSUBDIRS:%=%/__doc_xml__): dummy
-	@cd `dirname $@` && $(MAKE) doc-xml
-
-man: $(DOCSUBDIRS:%=%/__man__)
-doc-html: $(DOCSUBDIRS:%=%/__doc_html__)
-doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
-doc-xml: $(DOCSUBDIRS:%=%/__doc_xml__)
-
-manpages htmlpages sgmlpages xmlpages: dummy
-	@cd documentation && $(MAKE) $@
-
-.PHONY: man doc-html doc-sgml doc-xml manpages htmlpages sgmlpages xmlpages \
-	$(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__) $(DOCSUBDIRS:%=%/__doc_xml__)
 
 # Dependencies between directories
 

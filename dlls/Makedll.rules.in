@@ -52,19 +52,17 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_CROSSOBJS)
 
 # Rules for auto documentation
 
-man: $(C_SRCS) dummy
+manpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -C$(SRCDIR) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(C_SRCS)
 
-doc-html: $(C_SRCS) dummy
+htmlpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
 
-doc-sgml: $(C_SRCS) dummy
+sgmlpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
 
-doc-xml: $(C_SRCS) dummy
+xmlpages:: $(C_SRCS) dummy
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide-xml -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
-
-.PHONY: man doc-html doc-sgml doc-xml
 
 # Rules for installation
 

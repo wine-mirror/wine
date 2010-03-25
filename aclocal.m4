@@ -148,7 +148,6 @@ AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_DIRS,"")
 AC_SUBST(ALL_TOP_DIRS,"")
-AC_SUBST(ALL_DLL_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -215,16 +214,15 @@ dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.s
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
               [test "$ac_enable" != enable_win16 || return 0],
-              [wine_fn_append_file ALL_DLL_DIRS dlls/$ac_dir
-               wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+              [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: dlls/$ac_dir
 dlls/$ac_dir: dlls/$ac_dir/Makefile __builddeps__ 
 install:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install
 install-lib:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install-lib
-uninstall:: dlls/$ac_dir/Makefile
-	@cd dlls/$ac_dir && \$(MAKE) uninstall"])
+uninstall manpages htmlpages sgmlpages xmlpages:: dlls/$ac_dir/Makefile
+	@cd dlls/$ac_dir && \$(MAKE) \$[@]"])
 
     if test -n "$ac_implibsrc"
     then
