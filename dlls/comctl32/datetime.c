@@ -949,7 +949,7 @@ DATETIME_Notify (DATETIME_INFO *infoPtr, const NMHDR *lpnmh)
         DATETIME_SendSimpleNotify(infoPtr, DTN_CLOSEUP);
     }
     if ((lpnmh->hwndFrom == infoPtr->hUpdown) && (lpnmh->code == UDN_DELTAPOS)) {
-        LPNMUPDOWN lpnmud = (LPNMUPDOWN)lpnmh;
+        const NM_UPDOWN *lpnmud = (const NM_UPDOWN*)lpnmh;
         TRACE("Delta pos %d\n", lpnmud->iDelta);
         infoPtr->pendingUpdown = lpnmud->iDelta;
     }

@@ -802,7 +802,7 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADE
 
     /* header always supplies unicode notifications,
        all we have to do is to convert strings to ANSI */
-    nmhA = *(NMHEADERA*)lpnmh;
+    nmhA = *(const NMHEADERA*)lpnmh;
     if (lpnmh->pitem)
     {
         hditema = *(HDITEMA*)lpnmh->pitem;

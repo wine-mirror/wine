@@ -1626,11 +1626,11 @@ TOOLTIPS_SetTitleT (TOOLTIPS_INFO *infoPtr, UINT_PTR uTitleIcon, LPCWSTR pszTitl
         }
         else
         {
-            size = sizeof(WCHAR)*MultiByteToWideChar(CP_ACP, 0, (LPSTR)pszTitle, -1, NULL, 0);
+            size = sizeof(WCHAR)*MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pszTitle, -1, NULL, 0);
             infoPtr->pszTitle = Alloc(size);
             if (!infoPtr->pszTitle)
                 return FALSE;
-            MultiByteToWideChar(CP_ACP, 0, (LPSTR)pszTitle, -1, infoPtr->pszTitle, size/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pszTitle, -1, infoPtr->pszTitle, size/sizeof(WCHAR));
         }
     }
     else
@@ -1729,7 +1729,7 @@ TOOLTIPS_TrackActivate (TOOLTIPS_INFO *infoPtr, BOOL track_activate, const TTTOO
 	    return FALSE;
 
 	/* activate */
-	infoPtr->nTrackTool = TOOLTIPS_GetToolFromInfoT (infoPtr, (TTTOOLINFOW*)ti);
+	infoPtr->nTrackTool = TOOLTIPS_GetToolFromInfoT (infoPtr, (const TTTOOLINFOW*)ti);
 	if (infoPtr->nTrackTool != -1) {
 	    TRACE("activated!\n");
 	    infoPtr->bTrackActive = TRUE;
