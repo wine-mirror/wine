@@ -28,17 +28,6 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 
 ALL_DIRS           = @ALL_DIRS@
-ALL_TOP_DIRS       = @ALL_TOP_DIRS@
-
-# Sub-directories to run make all into
-BUILDSUBDIRS = \
-	libs/wine \
-	$(ALL_TOP_DIRS)
-
-# Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = \
-	libs/wine \
-	$(ALL_TOP_DIRS)
 
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
@@ -74,8 +63,6 @@ $(ALL_CONFIGS):
 
 # Rules for building
 
-all: $(BUILDSUBDIRS)
-
 $(ALL_DIRS): dummy
 	@cd $@ && $(MAKE)
 
@@ -100,28 +87,6 @@ distclean:: clean
 
 .PHONY: distclean $(ALL_DIRS:%=%/__clean__)
 
-# Rules for installing
-
-$(INSTALLSUBDIRS:%=%/__install__): dummy
-	@cd `dirname $@` && $(MAKE) install
-
-$(INSTALLSUBDIRS:%=%/__install-lib__): dummy
-	@cd `dirname $@` && $(MAKE) install-lib
-
-$(INSTALLSUBDIRS:%=%/__install-dev__): dummy
-	@cd `dirname $@` && $(MAKE) install-dev
-
-$(INSTALLSUBDIRS:%=%/__uninstall__): dummy
-	@cd `dirname $@` && $(MAKE) uninstall
-
-install:: $(INSTALLSUBDIRS:%=%/__install__) dummy
-install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__) dummy
-install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__) dummy
-uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
-
-.PHONY: $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__) \
-	$(INSTALLSUBDIRS:%=%/__install-lib__) $(INSTALLSUBDIRS:%=%/__install-dev__)
-
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
@@ -136,12 +101,6 @@ libs/wine: libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
-
-fonts/__install__ fonts/__install-lib__: tools
-include/__install__ include/__install-dev__: include
-libs/wine/__install__ libs/wine/__install-lib__ libs/wine/__install-dev__: libs/wine
-loader/__install__ loader/__install-lib__: libs/port libs/wine tools
-server/__install__ server/__install-lib__: libs/port libs/wine tools
 tools/__depend__: $(MAKEDEP)
 
 $(MAKEDEP): include/config.h tools/Makefile

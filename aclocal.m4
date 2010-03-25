@@ -147,7 +147,6 @@ AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_SYMLINKS,"")
 AC_SUBST(ALL_DIRS,"")
-AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -167,13 +166,21 @@ wine_fn_config_makefile ()
     ac_enable=$[2]
     wine_fn_append_file ALL_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__clean__ $ac_dir/__install__ $ac_dir/__install-dev__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+"$ac_dir/__clean__: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Make.rules \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
-    AS_VAR_IF([$ac_enable],[no],,[case $ac_dir in
-                 */*) ;;
-                 *) wine_fn_append_file ALL_TOP_DIRS $ac_dir ;;
-               esac])
+
+    AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"all: $ac_dir
+$ac_dir: $ac_dir/Makefile
+install:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install
+install-lib:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-lib
+install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-dev
+uninstall:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall"])
 }
 
 wine_fn_config_lib ()
