@@ -2135,7 +2135,7 @@ todo_wine
     expect(100, rect.left);
     expect(250, rect.right);
 
-    ListView_Scroll(hwnd, 10, 0);
+    SendMessage(hwnd, LVM_SCROLL, 10, 0);
 
     rect.left = LVIR_BOUNDS;
     rect.top  = 1;
@@ -2145,7 +2145,7 @@ todo_wine
     expect(90, rect.left);
     expect(240, rect.right);
 
-    ListView_Scroll(hwnd, -10, 0);
+    SendMessage(hwnd, LVM_SCROLL, -10, 0);
 
     DestroyWindow(hwnd);
 
