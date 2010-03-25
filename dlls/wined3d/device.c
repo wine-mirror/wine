@@ -4417,16 +4417,12 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
     }
 
-    if (Flags & WINED3DCLEAR_TARGET) {
-        TRACE("Clearing screen with glClear to color %x\n", Color);
-        glClearColor(D3DCOLOR_R(Color),
-                     D3DCOLOR_G(Color),
-                     D3DCOLOR_B(Color),
-                     D3DCOLOR_A(Color));
-        checkGLcall("glClearColor");
-
-        /* Clear ALL colors! */
+    if (Flags & WINED3DCLEAR_TARGET)
+    {
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        glClearColor(D3DCOLOR_R(Color), D3DCOLOR_G(Color), D3DCOLOR_B(Color), D3DCOLOR_A(Color));
+        checkGLcall("glClearColor");
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
@@ -4486,16 +4482,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         }
     }
 
-    if (Flags & WINED3DCLEAR_TARGET) {
-        DWORD mask = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE];
-        glColorMask(mask & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
-                    mask & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    mask & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                    mask & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
-
-        /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
-         * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
-         */
+    if (Flags & WINED3DCLEAR_TARGET)
+    {
         IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
     }
     if (Flags & WINED3DCLEAR_ZBUFFER) {
