@@ -5525,114 +5525,6 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     context_release(context);
 }
 
-static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
-    unsigned int r, g, b, a;
-    DWORD ret;
-
-    if (destfmt == WINED3DFMT_B8G8R8A8_UNORM
-            || destfmt == WINED3DFMT_B8G8R8X8_UNORM
-            || destfmt == WINED3DFMT_B8G8R8_UNORM)
-        return color;
-
-    TRACE("Converting color %08x to format %s\n", color, debug_d3dformat(destfmt));
-
-    a = (color & 0xff000000) >> 24;
-    r = (color & 0x00ff0000) >> 16;
-    g = (color & 0x0000ff00) >>  8;
-    b = (color & 0x000000ff) >>  0;
-
-    switch(destfmt)
-    {
-        case WINED3DFMT_B5G6R5_UNORM:
-            if(r == 0xff && g == 0xff && b == 0xff) return 0xffff;
-            r = (r * 32) / 256;
-            g = (g * 64) / 256;
-            b = (b * 32) / 256;
-            ret  = r << 11;
-            ret |= g << 5;
-            ret |= b;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_B5G5R5X1_UNORM:
-        case WINED3DFMT_B5G5R5A1_UNORM:
-            a = (a *  2) / 256;
-            r = (r * 32) / 256;
-            g = (g * 32) / 256;
-            b = (b * 32) / 256;
-            ret  = a << 15;
-            ret |= r << 10;
-            ret |= g <<  5;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_A8_UNORM:
-            TRACE("Returning %08x\n", a);
-            return a;
-
-        case WINED3DFMT_B4G4R4X4_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-            a = (a * 16) / 256;
-            r = (r * 16) / 256;
-            g = (g * 16) / 256;
-            b = (b * 16) / 256;
-            ret  = a << 12;
-            ret |= r <<  8;
-            ret |= g <<  4;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_B2G3R3_UNORM:
-            r = (r * 8) / 256;
-            g = (g * 8) / 256;
-            b = (b * 4) / 256;
-            ret  = r <<  5;
-            ret |= g <<  2;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_R8G8B8X8_UNORM:
-        case WINED3DFMT_R8G8B8A8_UNORM:
-            ret  = a << 24;
-            ret |= b << 16;
-            ret |= g <<  8;
-            ret |= r <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_B10G10R10A2_UNORM:
-            a = (a *    4) / 256;
-            r = (r * 1024) / 256;
-            g = (g * 1024) / 256;
-            b = (b * 1024) / 256;
-            ret  = a << 30;
-            ret |= r << 20;
-            ret |= g << 10;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_R10G10B10A2_UNORM:
-            a = (a *    4) / 256;
-            r = (r * 1024) / 256;
-            g = (g * 1024) / 256;
-            b = (b * 1024) / 256;
-            ret  = a << 30;
-            ret |= b << 20;
-            ret |= g << 10;
-            ret |= r <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        default:
-            FIXME("Add a COLORFILL conversion for format %s\n", debug_d3dformat(destfmt));
-            return 0;
-    }
-}
-
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         IWineD3DSurface *pSurface, const WINED3DRECT *pRect, WINED3DCOLOR color)
 {
@@ -5654,7 +5546,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = argb_to_fmt(color, surface->resource.format_desc->format);
+        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(color, surface->resource.format_desc->format);
         return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
     }
@@ -5702,7 +5594,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format_desc->format);
+        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format_desc->format);
         hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
         if (FAILED(hr))
         {

@@ -2626,6 +2626,9 @@ const char *debug_d3dtop(WINED3DTEXTUREOP d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
 
+/* Color conversion routines */
+DWORD color_convert_argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) DECLSPEC_HIDDEN;
+
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op) DECLSPEC_HIDDEN;
 GLenum CompareFunc(DWORD func) DECLSPEC_HIDDEN;
