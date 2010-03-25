@@ -13932,15 +13932,24 @@ wine_fn_config_dll ()
 
     wine_fn_append_file ALL_DIRS dlls/$ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"dlls/$ac_dir dlls/$ac_dir/__install__ dlls/$ac_dir/__install-lib__ dlls/$ac_dir/__install-dev__: __builddeps__ dlls/$ac_dir/Makefile
-dlls/$ac_dir/__clean__ dlls/$ac_dir/__uninstall__ dlls/$ac_dir: dlls/$ac_dir/Makefile
+"dlls/$ac_dir/__clean__: dlls/$ac_dir/Makefile
 dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.status dlls/Makedll.rules \$(MAKEDEP)
 	@./config.status --file dlls/$ac_dir/Makefile && cd dlls/$ac_dir && \$(MAKE) depend"
+
     eval as_val=\$$ac_enable
    if test "x$as_val" = x""no; then :
                 test "$ac_enable" != enable_win16 || return 0
 else
   wine_fn_append_file ALL_DLL_DIRS dlls/$ac_dir
+               wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"all: dlls/$ac_dir
+dlls/$ac_dir: dlls/$ac_dir/Makefile __builddeps__
+install:: dlls/$ac_dir/Makefile __builddeps__
+	@cd dlls/$ac_dir && \$(MAKE) install
+install-lib:: dlls/$ac_dir/Makefile __builddeps__
+	@cd dlls/$ac_dir && \$(MAKE) install-lib
+uninstall:: dlls/$ac_dir/Makefile
+	@cd dlls/$ac_dir && \$(MAKE) uninstall"
 fi
 
     if test -n "$ac_implibsrc"
@@ -13952,14 +13961,18 @@ $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
 	@cd dlls/$ac_dir && \$(MAKE) \`basename \$@\`
 $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
-	@cd dlls/$ac_dir && \$(MAKE) \`basename \$@\`"
+	@cd dlls/$ac_dir && \$(MAKE) \`basename \$@\`
+install-dev:: dlls/$ac_dir/Makefile __builddeps__
+	@cd dlls/$ac_dir && \$(MAKE) install-dev"
     elif test -n "$ac_implib"
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
 __buildcrossdeps__: $ac_file.cross.a
 $ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
-	@cd dlls/$ac_dir && \$(MAKE) \`basename \$@\`"
+	@cd dlls/$ac_dir && \$(MAKE) \`basename \$@\`
+install-dev:: dlls/$ac_dir/Makefile __builddeps__
+	@cd dlls/$ac_dir && \$(MAKE) install-dev"
 
         if test "$ac_dir" != "$ac_implib"
         then
