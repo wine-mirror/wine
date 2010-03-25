@@ -1021,7 +1021,19 @@ typedef enum _MM_SYSTEM_SIZE
 
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
-#define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.CurrentStackLocation)
+#ifdef NONAMELESSUNION
+# ifdef NONAMELESSSTRUCT
+#  define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.s.u2.CurrentStackLocation)
+# else
+#  define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.u2.CurrentStackLocation)
+# endif
+#else
+# ifdef NONAMELESSSTRUCT
+#  define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.s.CurrentStackLocation)
+# else
+#  define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.CurrentStackLocation)
+# endif
+#endif
 
 #define KernelMode 0
 #define UserMode   1
