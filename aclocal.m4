@@ -150,7 +150,6 @@ AC_SUBST(ALL_DIRS,"")
 AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_DLL_DIRS,"")
 AC_SUBST(ALL_TOOL_DIRS,"")
-AC_SUBST(ALL_STATICLIB_DIRS,"")
 AC_SUBST(ALL_TEST_BINARIES,"")
 AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
@@ -184,16 +183,19 @@ wine_fn_config_lib ()
     ac_name=$[1]
     ac_dir=dlls/$ac_name
     wine_fn_append_file ALL_DIRS $ac_dir
-    wine_fn_append_file ALL_STATICLIB_DIRS $ac_dir
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__install__ $ac_dir/__install-dev__ __builddeps__: $ac_dir
+"all __builddeps__: $ac_dir
 __buildcrossdeps__: $ac_dir/lib$ac_name.cross.a
-$ac_dir $ac_dir/lib$ac_name.cross.a: tools/widl tools/winebuild tools/winegcc include
-$ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile dummy
+$ac_dir $ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include
+$ac_dir/lib$ac_name.cross.a: dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
-$ac_dir/__clean__ $ac_dir/__install-lib__ $ac_dir/__uninstall__ $ac_dir: $ac_dir/Makefile
+$ac_dir/__clean__: $ac_dir/Makefile
 $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status dlls/Makeimplib.rules \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend
+install install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install
+uninstall:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall"
 }
 
 wine_fn_config_dll ()

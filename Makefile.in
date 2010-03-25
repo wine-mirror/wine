@@ -29,7 +29,6 @@ MODULE    = none
 
 ALL_DIRS           = @ALL_DIRS@
 ALL_DLL_DIRS       = @ALL_DLL_DIRS@
-ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
 
@@ -38,7 +37,6 @@ BUILDSUBDIRS = \
 	libs/wine \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS) \
-	$(ALL_STATICLIB_DIRS) \
 	$(ALL_DLL_DIRS)
 
 # Sub-directories to run make install/uninstall into
@@ -46,7 +44,6 @@ INSTALLSUBDIRS = \
 	libs/wine \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS) \
-	$(ALL_STATICLIB_DIRS) \
 	$(ALL_DLL_DIRS)
 
 # Sub-directories that don't have a makefile
