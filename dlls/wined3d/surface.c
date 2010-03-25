@@ -273,6 +273,19 @@ static void surface_get_blt_info(GLenum target, const RECT *rect_in, GLsizei w, 
     }
 }
 
+static inline void surface_get_rect(IWineD3DSurfaceImpl *This, const RECT *rect_in, RECT *rect_out)
+{
+    if (rect_in)
+        *rect_out = *rect_in;
+    else
+    {
+        rect_out->left = 0;
+        rect_out->top = 0;
+        rect_out->right = This->currentDesc.Width;
+        rect_out->bottom = This->currentDesc.Height;
+    }
+}
+
 /* GL locking and context activation is done by the caller */
 static void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
 {
@@ -4027,17 +4040,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
 
-        if(SrcRect) {
-            SourceRectangle.left = SrcRect->left;
-            SourceRectangle.right = SrcRect->right;
-            SourceRectangle.top = SrcRect->top;
-            SourceRectangle.bottom = SrcRect->bottom;
-        } else {
-            SourceRectangle.left = 0;
-            SourceRectangle.right = Src->currentDesc.Width;
-            SourceRectangle.top = 0;
-            SourceRectangle.bottom = Src->currentDesc.Height;
-        }
+        surface_get_rect(Src, SrcRect, &SourceRectangle);
 
         /* When blitting from an offscreen surface to a rendertarget, the source
          * surface is not required to have a palette. Our rendering / conversion
@@ -4324,17 +4327,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
         RECT SrcRect, DstRect;
         DWORD Flags=0;
 
-        if(rsrc) {
-            SrcRect.left = rsrc->left;
-            SrcRect.top= rsrc->top;
-            SrcRect.bottom = rsrc->bottom;
-            SrcRect.right = rsrc->right;
-        } else {
-            SrcRect.left = 0;
-            SrcRect.top = 0;
-            SrcRect.right = srcImpl->currentDesc.Width;
-            SrcRect.bottom = srcImpl->currentDesc.Height;
-        }
+        surface_get_rect(srcImpl, rsrc, &SrcRect);
 
         DstRect.left = dstx;
         DstRect.top=dsty;
@@ -4755,14 +4748,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
 
-    if(rect_in) {
-        src_rect = *rect_in;
-    } else {
-        src_rect.left = 0;
-        src_rect.top = 0;
-        src_rect.right = This->currentDesc.Width;
-        src_rect.bottom = This->currentDesc.Height;
-    }
+    surface_get_rect(This, rect_in, &src_rect);
 
     context = context_acquire(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
     if (context->render_offscreen)
