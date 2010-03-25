@@ -368,6 +368,17 @@ HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
                                 LPD3DXEFFECT* effect,
                                 LPD3DXBUFFER* compilation_errors);
 
+HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
+                                  LPCVOID srcdata,
+                                  UINT srcdatalen,
+                                  CONST D3DXMACRO* defines,
+                                  LPD3DXINCLUDE include,
+                                  LPCSTR skip_constants,
+                                  DWORD flags,
+                                  LPD3DXEFFECTPOOL pool,
+                                  LPD3DXEFFECT* effect,
+                                  LPD3DXBUFFER* compilation_errors);
+
 HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
                                         UINT srcdatalen,
                                         CONST D3DXMACRO* defines,

@@ -848,20 +848,21 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl =
     ID3DXEffectImpl_SetRawValue
 };
 
-HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
-                                LPCVOID srcdata,
-                                UINT srcdatalen,
-                                CONST D3DXMACRO* defines,
-                                LPD3DXINCLUDE include,
-                                DWORD flags,
-                                LPD3DXEFFECTPOOL pool,
-                                LPD3DXEFFECT* effect,
-                                LPD3DXBUFFER* compilation_errors)
+HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
+                                  LPCVOID srcdata,
+                                  UINT srcdatalen,
+                                  CONST D3DXMACRO* defines,
+                                  LPD3DXINCLUDE include,
+                                  LPCSTR skip_constants,
+                                  DWORD flags,
+                                  LPD3DXEFFECTPOOL pool,
+                                  LPD3DXEFFECT* effect,
+                                  LPD3DXBUFFER* compilation_errors)
 {
     ID3DXEffectImpl* object;
 
-    FIXME("(%p, %p, %u, %p, %p, %#x, %p, %p, %p): semi-stub\n", device, srcdata, srcdatalen, defines, include, flags,
-        pool, effect, compilation_errors);
+    FIXME("(%p, %p, %u, %p, %p, %p, %#x, %p, %p, %p): semi-stub\n", device, srcdata, srcdatalen, defines, include,
+        skip_constants, flags, pool, effect, compilation_errors);
 
     if (!device || !srcdata)
         return D3DERR_INVALIDCALL;
@@ -886,6 +887,22 @@ HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
     *effect = (LPD3DXEFFECT)object;
 
     return D3D_OK;
+}
+
+HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
+                                LPCVOID srcdata,
+                                UINT srcdatalen,
+                                CONST D3DXMACRO* defines,
+                                LPD3DXINCLUDE include,
+                                DWORD flags,
+                                LPD3DXEFFECTPOOL pool,
+                                LPD3DXEFFECT* effect,
+                                LPD3DXBUFFER* compilation_errors)
+{
+    TRACE("(%p, %p, %u, %p, %p, %#x, %p, %p, %p): Forwarded to D3DXCreateEffectEx\n", device, srcdata, srcdatalen, defines,
+        include, flags, pool, effect, compilation_errors);
+
+    return D3DXCreateEffectEx(device, srcdata, srcdatalen, defines, include, NULL, flags, pool, effect, compilation_errors);
 }
 
 HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
