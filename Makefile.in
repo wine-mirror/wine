@@ -29,8 +29,6 @@ MODULE    = none
 
 ALL_DIRS           = @ALL_DIRS@
 ALL_DLL_DIRS       = @ALL_DLL_DIRS@
-ALL_INSTALL_DIRS   = @ALL_INSTALL_DIRS@
-ALL_PROGRAM_DIRS   = @ALL_PROGRAM_DIRS@
 ALL_STATICLIB_DIRS = @ALL_STATICLIB_DIRS@
 ALL_TOOL_DIRS      = @ALL_TOOL_DIRS@
 ALL_TOP_DIRS       = @ALL_TOP_DIRS@
@@ -41,8 +39,7 @@ BUILDSUBDIRS = \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
-	$(ALL_DLL_DIRS) \
-	$(ALL_PROGRAM_DIRS)
+	$(ALL_DLL_DIRS)
 
 # Sub-directories to run make install/uninstall into
 INSTALLSUBDIRS = \
@@ -50,8 +47,7 @@ INSTALLSUBDIRS = \
 	$(ALL_TOOL_DIRS) \
 	$(ALL_TOP_DIRS) \
 	$(ALL_STATICLIB_DIRS) \
-	$(ALL_DLL_DIRS) \
-	$(ALL_INSTALL_DIRS)
+	$(ALL_DLL_DIRS)
 
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
@@ -135,9 +131,6 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
 .PHONY: $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__) \
 	$(INSTALLSUBDIRS:%=%/__install-lib__) $(INSTALLSUBDIRS:%=%/__install-dev__)
 
-uninstall::
-	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
-
 # Rules for auto documentation
 
 DOCSUBDIRS = $(ALL_DLL_DIRS)
@@ -214,3 +207,6 @@ tags ctags:
 .MAKEFILEDEPS:
 
 @ALL_MAKEFILE_DEPENDS@
+
+uninstall::
+	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
