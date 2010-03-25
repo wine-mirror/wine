@@ -47,6 +47,20 @@ static void test_create_effect(IDirect3DDevice9* device)
     effect->lpVtbl->Release(effect);
 }
 
+static void test_create_effect_pool(void)
+{
+    HRESULT hr;
+    ID3DXEffectPool* pool;
+
+    hr = D3DXCreateEffectPool(NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateEffectPool(&pool);
+    ok(hr == S_OK, "Got result %x, expected 0 (S_OK)\n", hr);
+
+    pool->lpVtbl->Release(pool);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -79,6 +93,7 @@ START_TEST(effect)
     }
 
     test_create_effect(device);
+    test_create_effect_pool();
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);

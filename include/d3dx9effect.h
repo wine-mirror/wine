@@ -278,6 +278,8 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
 extern "C" {
 #endif
 
+HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool);
+
 HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
                                 LPCVOID srcdata,
                                 UINT srcdatalen,

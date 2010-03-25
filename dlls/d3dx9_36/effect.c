@@ -889,3 +889,84 @@ HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
 
     return D3D_OK;
 }
+
+static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl;
+
+typedef struct ID3DXEffectPoolImpl {
+    const ID3DXEffectPoolVtbl *lpVtbl;
+    LONG ref;
+} ID3DXEffectPoolImpl;
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool* iface, REFIID riid, void** object)
+{
+    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_ID3DXEffectPool))
+    {
+        This->lpVtbl->AddRef(iface);
+        *object = This;
+        return S_OK;
+    }
+
+    WARN("Interface %s not found\n", debugstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ID3DXEffectPoolImpl_AddRef(ID3DXEffectPool* iface)
+{
+    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+
+    TRACE("(%p)->(): AddRef from %u\n", This, This->ref);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ID3DXEffectPoolImpl_Release(ID3DXEffectPool* iface)
+{
+    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): Release from %u\n", This, ref + 1);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl =
+{
+    /*** IUnknown methods ***/
+    ID3DXEffectPoolImpl_QueryInterface,
+    ID3DXEffectPoolImpl_AddRef,
+    ID3DXEffectPoolImpl_Release
+};
+
+HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool)
+{
+    ID3DXEffectPoolImpl* object;
+
+    TRACE("(%p)\n", pool);
+
+    if (!pool)
+        return D3DERR_INVALIDCALL;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXEffectImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->lpVtbl = &ID3DXEffectPool_Vtbl;
+    object->ref = 1;
+
+    *pool = (LPD3DXEFFECTPOOL)object;
+
+    return S_OK;
+}

@@ -61,7 +61,7 @@
 @ stub D3DXCreateEffectFromResourceExA
 @ stub D3DXCreateEffectFromResourceExW
 @ stub D3DXCreateEffectFromResourceW
-@ stub D3DXCreateEffectPool
+@ stdcall D3DXCreateEffectPool(ptr)
 @ stdcall D3DXCreateFontA(ptr long long long long long long long long long str ptr)
 @ stdcall D3DXCreateFontIndirectA(ptr ptr ptr)
 @ stdcall D3DXCreateFontIndirectW(ptr ptr ptr)
