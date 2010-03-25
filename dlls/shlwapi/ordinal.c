@@ -1473,7 +1473,6 @@ HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID ri
   if (!lpUnknown)
     return E_FAIL;
 
-  /* Get an IServiceProvider interface from the object */
   hRet = IUnknown_QueryInterface(lpUnknown, &IID_IServiceProvider,
                                  (LPVOID*)&pService);
 
@@ -1486,10 +1485,51 @@ HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID ri
 
     TRACE("(IServiceProvider*)%p returned (IUnknown*)%p\n", pService, *lppOut);
 
-    /* Release the IServiceProvider interface */
     IUnknown_Release(pService);
   }
   return hRet;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.484]
+ *
+ * Calls IOleCommandTarget::Exec() for specified service object.
+ *
+ * PARAMS
+ *  lpUnknown [I] Object to get an IServiceProvider interface from
+ *  service   [I] Service ID for IServiceProvider_QueryService() call
+ *  group     [I] Group ID for IOleCommandTarget::Exec() call
+ *  cmdId     [I] Command ID for IOleCommandTarget::Exec() call
+ *  cmdOpt    [I] Options flags for command
+ *  pIn       [I] Input arguments for command
+ *  pOut      [O] Output arguments for command
+ *
+ * RETURNS
+ *  Success: S_OK. lppOut contains an object providing the requested service
+ *  Failure: An HRESULT error code
+ *
+ * NOTES
+ *  lpUnknown is expected to support the IServiceProvider interface.
+ */
+HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *lpUnknown, REFIID service,
+    const GUID *group, DWORD cmdId, DWORD cmdOpt, VARIANT *pIn, VARIANT *pOut)
+{
+    IOleCommandTarget *target;
+    HRESULT hr;
+
+    TRACE("%p %s %s %d %08x %p %p\n", lpUnknown, debugstr_guid(service),
+        debugstr_guid(group), cmdId, cmdOpt, pIn, pOut);
+
+    hr = IUnknown_QueryService(lpUnknown, service, &IID_IOleCommandTarget, (void**)&target);
+    if (hr == S_OK)
+    {
+        hr = IOleCommandTarget_Exec(target, group, cmdId, cmdOpt, pIn, pOut);
+        IOleCommandTarget_Release(target);
+    }
+
+    TRACE("<-- hr=0x%08x\n", hr);
+
+    return hr;
 }
 
 /*************************************************************************
@@ -4420,14 +4460,6 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     ret = MessageBoxW(hWnd, pszTemp, pszTitle, uType);
     LocalFree(pszTemp);
     return ret;
-}
-
-HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *unk, REFIID service, REFIID clsid,
-                                         DWORD x1, DWORD x2, DWORD x3, void **ppvOut)
-{
-    FIXME("%p %s %s %08x %08x %08x %p\n", unk,
-          debugstr_guid(service), debugstr_guid(clsid), x1, x2, x3, ppvOut);
-    return E_NOTIMPL;
 }
 
 HRESULT WINAPI IUnknown_ProfferService(IUnknown *unk, void *x0, void *x1, void *x2)

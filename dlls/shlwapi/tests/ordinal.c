@@ -29,6 +29,7 @@
 #include "ocidl.h"
 #include "mlang.h"
 #include "shlwapi.h"
+#include "docobj.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
@@ -49,6 +50,7 @@ static INT    (WINAPI *pSHFormatDateTimeA)(const FILETIME UNALIGNED*, DWORD*, LP
 static INT    (WINAPI *pSHFormatDateTimeW)(const FILETIME UNALIGNED*, DWORD*, LPWSTR, UINT);
 static DWORD  (WINAPI *pSHGetObjectCompatFlags)(IUnknown*, const CLSID*);
 static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
+static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -61,6 +63,49 @@ static const CHAR ie_international[] = {
 static const CHAR acceptlanguage[] = {
     'A','c','c','e','p','t','L','a','n','g','u','a','g','e',0};
 
+typedef struct {
+    int id;
+    const void *args[5];
+} call_entry_t;
+
+typedef struct {
+    call_entry_t *calls;
+    int count;
+    int alloc;
+} call_trace_t;
+
+static void init_call_trace(call_trace_t *ctrace)
+{
+    ctrace->alloc = 10;
+    ctrace->count = 0;
+    ctrace->calls = HeapAlloc(GetProcessHeap(), 0, sizeof(call_entry_t) * ctrace->alloc);
+}
+
+static void free_call_trace(const call_trace_t *ctrace)
+{
+    HeapFree(GetProcessHeap(), 0, ctrace->calls);
+}
+
+static void add_call(call_trace_t *ctrace, int id, const void *arg0,
+    const void *arg1, const void *arg2, const void *arg3, const void *arg4)
+{
+    call_entry_t call;
+
+    call.id = id;
+    call.args[0] = arg0;
+    call.args[1] = arg1;
+    call.args[2] = arg2;
+    call.args[3] = arg3;
+    call.args[4] = arg4;
+
+    if (ctrace->count == ctrace->alloc)
+    {
+        ctrace->alloc *= 2;
+        ctrace->calls = HeapReAlloc(GetProcessHeap(),0, ctrace->calls, ctrace->alloc*sizeof(call_entry_t));
+    }
+
+    ctrace->calls[ctrace->count++] = call;
+}
 
 static void test_GetAcceptLanguagesA(void)
 {
@@ -1873,6 +1918,233 @@ static void test_SHGetObjectCompatFlags(void)
     RegCloseKey(root);
 }
 
+static call_trace_t IUnknown_QueryServiceExec_trace;
+
+typedef struct {
+    const IOleCommandTargetVtbl *lpVtbl;
+    LONG ref;
+} IOleCommandTargetImpl;
+
+static const IOleCommandTargetVtbl IOleCommandTargetImpl_Vtbl;
+
+IOleCommandTarget* IOleCommandTargetImpl_Construct(void)
+{
+    IOleCommandTargetImpl *obj;
+
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj->lpVtbl = &IOleCommandTargetImpl_Vtbl;
+    obj->ref = 1;
+
+    return (IOleCommandTarget*)obj;
+}
+
+static HRESULT WINAPI IOleCommandTargetImpl_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppvObj)
+{
+    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IOleCommandTarget))
+    {
+        *ppvObj = This;
+    }
+
+    if(*ppvObj)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IOleCommandTargetImpl_AddRef(IOleCommandTarget *iface)
+{
+    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IOleCommandTargetImpl_Release(IOleCommandTarget *iface)
+{
+    IOleCommandTargetImpl *This = (IOleCommandTargetImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return 0;
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IOleCommandTargetImpl_QueryStatus(
+    IOleCommandTarget *iface, const GUID *group, ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleCommandTargetImpl_Exec(
+    IOleCommandTarget *iface,
+    const GUID *CmdGroup,
+    DWORD nCmdID,
+    DWORD nCmdexecopt,
+    VARIANT *pvaIn,
+    VARIANT *pvaOut)
+{
+    add_call(&IUnknown_QueryServiceExec_trace, 3, CmdGroup, (void*)nCmdID, (void*)nCmdexecopt, pvaIn, pvaOut);
+    return S_OK;
+}
+
+static const IOleCommandTargetVtbl IOleCommandTargetImpl_Vtbl =
+{
+    IOleCommandTargetImpl_QueryInterface,
+    IOleCommandTargetImpl_AddRef,
+    IOleCommandTargetImpl_Release,
+    IOleCommandTargetImpl_QueryStatus,
+    IOleCommandTargetImpl_Exec
+};
+
+typedef struct {
+    const IServiceProviderVtbl *lpVtbl;
+    LONG ref;
+} IServiceProviderImpl;
+
+static const IServiceProviderVtbl IServiceProviderImpl_Vtbl;
+
+IServiceProvider* IServiceProviderImpl_Construct(void)
+{
+    IServiceProviderImpl *obj;
+
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj->lpVtbl = &IServiceProviderImpl_Vtbl;
+    obj->ref = 1;
+
+    return (IServiceProvider*)obj;
+}
+
+static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObj)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IServiceProvider))
+    {
+        *ppvObj = This;
+    }
+
+    if(*ppvObj)
+    {
+        IUnknown_AddRef(iface);
+        /* native uses redefined IID_IServiceProvider symbol, so we can't compare pointers */
+        if (IsEqualIID(riid, &IID_IServiceProvider))
+            add_call(&IUnknown_QueryServiceExec_trace, 1, iface, &IID_IServiceProvider, 0, 0, 0);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IServiceProviderImpl_AddRef(IServiceProvider *iface)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IServiceProviderImpl_Release(IServiceProvider *iface)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return 0;
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IServiceProviderImpl_QueryService(
+    IServiceProvider *iface, REFGUID service, REFIID riid, void **ppv)
+{
+    /* natve uses redefined pointer for IID_IOleCommandTarget, not one from uuid.lib */
+    if (IsEqualIID(riid, &IID_IOleCommandTarget))
+        add_call(&IUnknown_QueryServiceExec_trace, 2, iface, service, &IID_IOleCommandTarget, 0, 0);
+    *ppv = IOleCommandTargetImpl_Construct();
+    return S_OK;
+}
+
+static const IServiceProviderVtbl IServiceProviderImpl_Vtbl =
+{
+    IServiceProviderImpl_QueryInterface,
+    IServiceProviderImpl_AddRef,
+    IServiceProviderImpl_Release,
+    IServiceProviderImpl_QueryService
+};
+
+static void test_IUnknown_QueryServiceExec(void)
+{
+    IServiceProvider *provider = IServiceProviderImpl_Construct();
+    void *test_ptr = (void*)GetProcAddress(hShlwapi, "StrChrNW");
+    static const GUID dummy_serviceid = { 0xdeadbeef };
+    static const GUID dummy_groupid = { 0xbeefbeef };
+    call_trace_t trace_expected;
+    HRESULT hr;
+    INT i;
+
+    /* on <=W2K platforms same ordinal used for another export with different
+       prototype, so skipping using this indirect condition */
+    if (!test_ptr)
+    {
+        win_skip("IUnknown_QueryServiceExec is not available\n");
+        return;
+    }
+
+    /* null source pointer */
+    hr = pIUnknown_QueryServiceExec(NULL, &dummy_serviceid, &dummy_groupid, 0, 0, 0, 0);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    /* expected trace:
+       IUnknown_QueryServiceExec( ptr1, serviceid, groupid, arg1, arg2, arg3, arg4);
+         -> IUnknown_QueryInterface( ptr1, &IID_IServiceProvider, &prov );
+         -> IServiceProvider_QueryService( prov, serviceid, &IID_IOleCommandTarget, &obj );
+         -> IOleCommandTarget_Exec( obj, groupid, arg1, arg2, arg3, arg4 );
+    */
+    init_call_trace(&trace_expected);
+
+    add_call(&trace_expected, 1, provider, &IID_IServiceProvider, 0, 0, 0);
+    add_call(&trace_expected, 2, provider, &dummy_serviceid, &IID_IOleCommandTarget, 0, 0);
+    add_call(&trace_expected, 3, &dummy_groupid, (void*)0x1, (void*)0x2, (void*)0x3, (void*)0x4);
+
+    init_call_trace(&IUnknown_QueryServiceExec_trace);
+    hr = pIUnknown_QueryServiceExec((IUnknown*)provider, &dummy_serviceid, &dummy_groupid, 0x1, 0x2, (void*)0x3, (void*)0x4);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (trace_expected.count == IUnknown_QueryServiceExec_trace.count)
+    {
+        /* compare */
+        for (i = 0; i < trace_expected.count; i++)
+        {
+            call_entry_t *expected = &trace_expected.calls[i];
+            call_entry_t *got = &IUnknown_QueryServiceExec_trace.calls[i];
+            INT j;
+
+            ok(expected->id == got->id, "got different ids %d: %d, %d\n", i+1, expected->id, got->id);
+
+            for (j = 0; j < 5; j++)
+            {
+                ok(expected->args[j] == got->args[j], "got different args[%d] for %d: %p, %p\n", j, i+1,
+                   expected->args[j], got->args[j]);
+            }
+        }
+    }
+    else
+        ok(0, "traces length mismatch expected %d, got %d\n", trace_expected.count, IUnknown_QueryServiceExec_trace.count);
+
+    free_call_trace(&trace_expected);
+    free_call_trace(&IUnknown_QueryServiceExec_trace);
+
+    IServiceProvider_Release(provider);
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -1891,6 +2163,7 @@ static void init_pointers(void)
     MAKEFUNC(SHFormatDateTimeA, 353);
     MAKEFUNC(SHFormatDateTimeW, 354);
     MAKEFUNC(SHGetObjectCompatFlags, 476);
+    MAKEFUNC(IUnknown_QueryServiceExec, 484);
     MAKEFUNC(SHPropertyBag_ReadLONG, 496);
 #undef MAKEFUNC
 }
@@ -1916,4 +2189,5 @@ START_TEST(ordinal)
     test_SHFormatDateTimeA();
     test_SHFormatDateTimeW();
     test_SHGetObjectCompatFlags();
+    test_IUnknown_QueryServiceExec();
 }
