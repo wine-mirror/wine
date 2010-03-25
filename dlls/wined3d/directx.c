@@ -669,6 +669,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     return ret;
 }
 
+/* Context activation is done by the caller. */
 static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
@@ -679,6 +680,8 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return FALSE;
 
     memset(data, 0xcc, sizeof(data));
+
+    ENTER_GL();
 
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -715,6 +718,8 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &tex);
     checkGLcall("glDeleteTextures");
+
+    LEAVE_GL();
 
     return *(DWORD *)data == 0x11111111;
 }
