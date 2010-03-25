@@ -61,13 +61,6 @@ include/stamp-h: include/config.h.in config.status
 $(ALL_CONFIGS):
 	@./config.status $@
 
-# Rules for building
-
-$(ALL_DIRS): dummy
-	@cd $@ && $(MAKE)
-
-.PHONY: $(ALL_DIRS)
-
 # Rules for dependencies
 
 depend: $(ALL_DIRS:%=%/__depend__) dummy

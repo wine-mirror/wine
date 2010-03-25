@@ -171,8 +171,9 @@ $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Make.rule
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all: $ac_dir
-$ac_dir: $ac_dir/Makefile
+"all .PHONY: $ac_dir
+$ac_dir: $ac_dir/Makefile dummy
+	@cd $ac_dir && \$(MAKE)
 install:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
 install-lib:: $ac_dir
@@ -192,6 +193,8 @@ wine_fn_config_lib ()
 "all __builddeps__: $ac_dir
 __buildcrossdeps__: $ac_dir/lib$ac_name.cross.a
 $ac_dir $ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include
+$ac_dir: dummy
+	@cd $ac_dir && \$(MAKE)
 $ac_dir/lib$ac_name.cross.a: dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
 $ac_dir/__clean__: $ac_dir/Makefile
@@ -222,8 +225,9 @@ dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.s
               dnl enable_win16 is special in that it disables import libs too
               [test "$ac_enable" != enable_win16 || return 0],
               [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all: dlls/$ac_dir
-dlls/$ac_dir: dlls/$ac_dir/Makefile __builddeps__ 
+"all .PHONY: dlls/$ac_dir
+dlls/$ac_dir: dlls/$ac_dir/Makefile __builddeps__ dummy
+	@cd dlls/$ac_dir && \$(MAKE)
 install:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install
 install-lib:: dlls/$ac_dir/Makefile __builddeps__ 
@@ -280,8 +284,10 @@ programs/$ac_dir/Makefile programs/$ac_dir/__depend__: programs/$ac_dir/Makefile
 	@./config.status --file programs/$ac_dir/Makefile && cd programs/$ac_dir && \$(MAKE) depend"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all: programs/$ac_dir
-programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__"
+"all .PHONY: programs/$ac_dir
+programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__ dummy
+	@cd programs/$ac_dir && \$(MAKE)"
+
     if test -n "$ac_install"
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -311,8 +317,9 @@ $ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.
 	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all programs/winetest: $ac_dir
-$ac_dir: $ac_dir/Makefile __builddeps__
+"all programs/winetest .PHONY: $ac_dir
+$ac_dir: $ac_dir/Makefile __builddeps__ dummy
+	@cd $ac_dir && \$(MAKE)
 crosstest .PHONY: $ac_dir/__crosstest__
 $ac_dir/__crosstest__: $ac_dir/Makefile __buildcrossdeps__ dummy
 	@cd $ac_dir && \$(MAKE) crosstest
@@ -354,8 +361,9 @@ install-dev:: $ac_dir
       wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall
-all __tooldeps__: $ac_dir
-$ac_dir: $ac_dir/Makefile libs/port"])
+all __tooldeps__ .PHONY: $ac_dir
+$ac_dir: $ac_dir/Makefile libs/port dummy
+	@cd $ac_dir && \$(MAKE)"])
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
