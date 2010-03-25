@@ -959,6 +959,61 @@ static inline BOOL surface_can_stretch_rect(IWineD3DSurfaceImpl *src, IWineD3DSu
             && is_identity_fixup(dst->resource.format_desc->color_fixup)));
 }
 
+static BOOL surface_convert_color_to_argb(IWineD3DSurfaceImpl *This, DWORD color, DWORD *argb_color)
+{
+    IWineD3DDeviceImpl *device = This->resource.device;
+
+    switch(This->resource.format_desc->format)
+    {
+        case WINED3DFMT_P8_UINT:
+            {
+                DWORD alpha;
+
+                if (primary_render_target_is_p8(device))
+                    alpha = color << 24;
+                else
+                    alpha = 0xFF000000;
+
+                if (This->palette) {
+                    *argb_color = (alpha |
+                            (This->palette->palents[color].peRed << 16) |
+                            (This->palette->palents[color].peGreen << 8) |
+                            (This->palette->palents[color].peBlue));
+                } else {
+                    *argb_color = alpha;
+                }
+            }
+            break;
+
+        case WINED3DFMT_B5G6R5_UNORM:
+            {
+                if (color == 0xFFFF) {
+                    *argb_color = 0xFFFFFFFF;
+                } else {
+                    *argb_color = ((0xFF000000) |
+                            ((color & 0xF800) << 8) |
+                            ((color & 0x07E0) << 5) |
+                            ((color & 0x001F) << 3));
+                }
+            }
+            break;
+
+        case WINED3DFMT_B8G8R8_UNORM:
+        case WINED3DFMT_B8G8R8X8_UNORM:
+            *argb_color = 0xFF000000 | color;
+            break;
+
+        case WINED3DFMT_B8G8R8A8_UNORM:
+            *argb_color = color;
+            break;
+
+        default:
+            ERR("Unhandled conversion from %s to ARGB!\n", debug_d3dformat(This->resource.format_desc->format));
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -4145,44 +4200,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* The color as given in the Blt function is in the format of the frame-buffer...
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
              */
-            if (This->resource.format_desc->format == WINED3DFMT_P8_UINT)
+            if (!surface_convert_color_to_argb(This, DDBltFx->u5.dwFillColor, &color))
             {
-                DWORD alpha;
-
-                if (primary_render_target_is_p8(myDevice)) alpha = DDBltFx->u5.dwFillColor << 24;
-                else alpha = 0xFF000000;
-
-                if (This->palette) {
-                    color = (alpha |
-                            (This->palette->palents[DDBltFx->u5.dwFillColor].peRed << 16) |
-                            (This->palette->palents[DDBltFx->u5.dwFillColor].peGreen << 8) |
-                            (This->palette->palents[DDBltFx->u5.dwFillColor].peBlue));
-                } else {
-                    color = alpha;
-                }
-            }
-            else if (This->resource.format_desc->format == WINED3DFMT_B5G6R5_UNORM)
-            {
-                if (DDBltFx->u5.dwFillColor == 0xFFFF) {
-                    color = 0xFFFFFFFF;
-                } else {
-                    color = ((0xFF000000) |
-                            ((DDBltFx->u5.dwFillColor & 0xF800) << 8) |
-                            ((DDBltFx->u5.dwFillColor & 0x07E0) << 5) |
-                            ((DDBltFx->u5.dwFillColor & 0x001F) << 3));
-                }
-            }
-            else if (This->resource.format_desc->format == WINED3DFMT_B8G8R8_UNORM
-                    || This->resource.format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
-            {
-                color = 0xFF000000 | DDBltFx->u5.dwFillColor;
-            }
-            else if (This->resource.format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
-            {
-                color = DDBltFx->u5.dwFillColor;
-            }
-            else {
-                ERR("Wrong surface type for BLT override(Format doesn't match) !\n");
+                /* The color conversion function already prints an error, so need to do it here */
                 return WINED3DERR_INVALIDCALL;
             }
 
