@@ -3196,15 +3196,24 @@ static BOOL CheckDepthStencilCapability(struct wined3d_adapter *adapter,
 
     /* Only allow depth/stencil formats */
     if (!(ds_format_desc->depth_size || ds_format_desc->stencil_size)) return FALSE;
-    /* Walk through all WGL pixel formats to find a match */
-    for (it = 0; it < adapter->nCfgs; ++it)
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        WineD3D_PixelFormat *cfg = &adapter->cfgs[it];
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format_desc))
+        /* With FBOs WGL limitations do not apply, but the format needs to be FBO attachable */
+        if (ds_format_desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) return TRUE;
+    }
+    else
+    {
+        /* Walk through all WGL pixel formats to find a match */
+        for (it = 0; it < adapter->nCfgs; ++it)
         {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, ds_format_desc))
+            WineD3D_PixelFormat *cfg = &adapter->cfgs[it];
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format_desc))
             {
-                return TRUE;
+                if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, ds_format_desc))
+                {
+                    return TRUE;
+                }
             }
         }
     }
