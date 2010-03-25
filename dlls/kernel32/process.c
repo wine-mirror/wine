@@ -2058,8 +2058,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
     else switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win32 binary (%p-%p)\n",
-               debugstr_w(name), binary_info.res_start, binary_info.res_end );
+        TRACE( "starting %s as Win%d binary (%p-%p)\n",
+               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
+               binary_info.res_start, binary_info.res_end );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
@@ -2146,8 +2147,9 @@ static void exec_process( LPCWSTR name )
     switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win32 binary (%p-%p)\n",
-               debugstr_w(name), binary_info.res_start, binary_info.res_end );
+        TRACE( "starting %s as Win%d binary (%p-%p)\n",
+               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
+               binary_info.res_start, binary_info.res_end );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
                         FALSE, 0, &startup_info, &info, NULL, &binary_info, TRUE );
         break;
