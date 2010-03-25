@@ -371,7 +371,7 @@
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ stub _ecvt_s
 @ cdecl _encode_pointer(ptr) msvcr90._encode_pointer
-@ stub _encoded_null
+@ cdecl _encoded_null() msvcr90._encoded_null
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
 @ extern _environ msvcrt._environ

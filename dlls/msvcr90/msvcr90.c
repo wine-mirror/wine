@@ -67,6 +67,16 @@ void * CDECL MSVCR90_encode_pointer(void * ptr)
 }
 
 /*********************************************************************
+ *  _encoded_null (MSVCR90.@)
+ */
+void * CDECL _encoded_null(void)
+{
+    TRACE("\n");
+
+    return MSVCR90_encode_pointer(NULL);
+}
+
+/*********************************************************************
  *  _initterm_e (MSVCR90.@)
  *
  * call an array of application initialization functions and report the return value

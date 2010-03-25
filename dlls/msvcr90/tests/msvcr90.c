@@ -29,6 +29,8 @@ typedef int (__cdecl *_INITTERM_E_FN)(void);
 static int (__cdecl *p_initterm_e)(_INITTERM_E_FN *table, _INITTERM_E_FN *end);
 static void* (__cdecl *p_encode_pointer)(void *);
 static void* (__cdecl *p_decode_pointer)(void *);
+static void* (__cdecl *p_encoded_null)(void);
+
 int cb_called[4];
 
 /* ########## */
@@ -136,8 +138,8 @@ static void test__encode_pointer(void)
 {
     void *ptr, *res;
 
-    if(!p_encode_pointer || !p_decode_pointer) {
-        win_skip("_encode_pointer or _decode_pointer not found\n");
+    if(!p_encode_pointer || !p_decode_pointer || !p_encoded_null) {
+        win_skip("_encode_pointer, _decode_pointer or _encoded_null not found\n");
         return;
     }
 
@@ -150,6 +152,8 @@ static void test__encode_pointer(void)
     res = EncodePointer(p_encode_pointer);
     ok(ptr == res, "_encode_pointer produced different result than EncodePointer\n");
     ok(p_decode_pointer(ptr) == p_encode_pointer, "Error decoding pointer\n");
+
+    ok(p_encoded_null() == p_encode_pointer(NULL), "Error encoding null\n");
 }
 
 /* ########## */
@@ -168,6 +172,7 @@ START_TEST(msvcr90)
     p_initterm_e = (void *) GetProcAddress(hcrt, "_initterm_e");
     p_encode_pointer = (void *) GetProcAddress(hcrt, "_encode_pointer");
     p_decode_pointer = (void *) GetProcAddress(hcrt, "_decode_pointer");
+    p_encoded_null = (void *) GetProcAddress(hcrt, "_encoded_null");
 
     test__initterm_e();
     test__encode_pointer();
