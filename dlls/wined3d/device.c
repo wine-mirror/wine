@@ -4421,6 +4421,9 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     {
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
         glClearColor(D3DCOLOR_R(Color), D3DCOLOR_G(Color), D3DCOLOR_B(Color), D3DCOLOR_A(Color));
         checkGLcall("glClearColor");
         glMask = glMask | GL_COLOR_BUFFER_BIT;
@@ -5483,6 +5486,9 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
     glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT);

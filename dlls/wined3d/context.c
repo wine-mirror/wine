@@ -1756,6 +1756,9 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     glColorMask(GL_TRUE, GL_TRUE,GL_TRUE,GL_TRUE);
     checkGLcall("glColorMask");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE), StateTable);
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1), StateTable);
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2), StateTable);
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3), StateTable);
     if (gl_info->supported[EXT_SECONDARY_COLOR])
     {
         glDisable(GL_COLOR_SUM_EXT);
