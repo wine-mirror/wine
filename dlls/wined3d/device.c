@@ -4404,16 +4404,17 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         glMask = glMask | GL_STENCIL_BUFFER_BIT;
     }
 
-    if (Flags & WINED3DCLEAR_ZBUFFER) {
+    if (Flags & WINED3DCLEAR_ZBUFFER)
+    {
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
+            surface_load_ds_location(This->stencilBufferTarget, context, location);
+
         glDepthMask(GL_TRUE);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
         glClearDepth(Z);
         checkGLcall("glClearDepth");
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
-
-        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
-            surface_load_ds_location(This->stencilBufferTarget, context, location);
     }
 
     if (Flags & WINED3DCLEAR_TARGET) {
