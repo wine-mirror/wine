@@ -3769,6 +3769,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     WINED3DRECT rect;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
+    RECT dst_rect;
 
     TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
@@ -3813,6 +3814,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         rect.x2 = This->currentDesc.Width;
         rect.y2 = This->currentDesc.Height;
     }
+    surface_get_rect(This, DestRect, &dst_rect);
 
     /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
     if(dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->backBuffer &&
@@ -4108,9 +4110,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             ClientToScreen(context->win_handle, &offset);
             GetClientRect(context->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
-            rect.x1 -= offset.x; rect.x2 -=offset.x;
-            rect.y1 -= offset.y; rect.y2 -=offset.y;
-            rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
+            dst_rect.left -= offset.x; dst_rect.right -=offset.x;
+            dst_rect.top -= offset.y; dst_rect.bottom -=offset.y;
+            dst_rect.top += This->currentDesc.Height - h; dst_rect.bottom += This->currentDesc.Height - h;
         }
 
         if (!is_identity_fixup(This->resource.format_desc->color_fixup))
@@ -4152,7 +4154,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         /* Draw a textured quad
          */
-        draw_textured_quad(Src, &SourceRectangle, (RECT*)&rect, Filter);
+        draw_textured_quad(Src, &SourceRectangle, &dst_rect, Filter);
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glDisable(GL_ALPHA_TEST);
@@ -4205,10 +4207,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                     !(This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer ||
                       (dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]))) {
                 TRACE("Surface is higher back buffer, falling back to software\n");
-                return cpu_blit.color_fill(myDevice, This, (RECT*)&rect, color);
+                return cpu_blit.color_fill(myDevice, This, &dst_rect, color);
             }
 
-            return ffp_blit.color_fill(myDevice, This, (RECT*)&rect, color);
+            return ffp_blit.color_fill(myDevice, This, &dst_rect, color);
         }
     }
 
