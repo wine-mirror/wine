@@ -365,7 +365,7 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
 static BOOL BinaryToBase64W(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD *pcchString)
 {
-    static const WCHAR crlf[] = { '\r','\n',0 }, lf[] = { '\n',0 }, empty = {0};
+    static const WCHAR crlf[] = { '\r','\n',0 }, lf[] = { '\n',0 }, empty[] = {0};
     BOOL ret = TRUE;
     LPCWSTR header = NULL, trailer = NULL, sep;
     DWORD charsNeeded;
