@@ -160,15 +160,20 @@ wine_fn_append_rule ()
     AS_VAR_APPEND($[1],"$as_nl$[2]")
 }
 
+wine_fn_all_dir_rules ()
+{
+    wine_fn_append_file ALL_DIRS $[1]
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$[1]/__clean__: $[1]/Makefile
+$[1]/Makefile $[1]/__depend__: $[1]/Makefile.in config.status $[2]
+	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend"
+}
+
 wine_fn_config_makefile ()
 {
     ac_dir=$[1]
     ac_enable=$[2]
-    wine_fn_append_file ALL_DIRS $ac_dir
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__clean__: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Make.rules \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    wine_fn_all_dir_rules $ac_dir "Make.rules \$(MAKEDEP)"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all .PHONY: $ac_dir
@@ -188,7 +193,7 @@ wine_fn_config_lib ()
 {
     ac_name=$[1]
     ac_dir=dlls/$ac_name
-    wine_fn_append_file ALL_DIRS $ac_dir
+    wine_fn_all_dir_rules $ac_dir "dlls/Makeimplib.rules \$(MAKEDEP)"
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all __builddeps__: $ac_dir
 __buildcrossdeps__: $ac_dir/lib$ac_name.cross.a
@@ -197,9 +202,6 @@ $ac_dir: dummy
 	@cd $ac_dir && \$(MAKE)
 $ac_dir/lib$ac_name.cross.a: dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
-$ac_dir/__clean__: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status dlls/Makeimplib.rules \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend
 install install-dev:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
 uninstall:: $ac_dir/Makefile
@@ -215,11 +217,7 @@ wine_fn_config_dll ()
     ac_file="dlls/$ac_dir/lib$ac_implib"
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
 
-    wine_fn_append_file ALL_DIRS dlls/$ac_dir
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"dlls/$ac_dir/__clean__: dlls/$ac_dir/Makefile
-dlls/$ac_dir/Makefile dlls/$ac_dir/__depend__: dlls/$ac_dir/Makefile.in config.status dlls/Makedll.rules \$(MAKEDEP)
-	@./config.status --file dlls/$ac_dir/Makefile && cd dlls/$ac_dir && \$(MAKE) depend"
+    wine_fn_all_dir_rules dlls/$ac_dir "dlls/Makedll.rules \$(MAKEDEP)"
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
@@ -277,11 +275,7 @@ wine_fn_config_program ()
     ac_dir=$[1]
     ac_enable=$[2]
     ac_install=$[3]
-    wine_fn_append_file ALL_DIRS programs/$ac_dir
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"programs/$ac_dir/__clean__: programs/$ac_dir/Makefile
-programs/$ac_dir/Makefile programs/$ac_dir/__depend__: programs/$ac_dir/Makefile.in config.status programs/Makeprog.rules \$(MAKEDEP)
-	@./config.status --file programs/$ac_dir/Makefile && cd programs/$ac_dir && \$(MAKE) depend"
+    wine_fn_all_dir_rules programs/$ac_dir "programs/Makeprog.rules \$(MAKEDEP)"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all .PHONY: programs/$ac_dir
@@ -310,11 +304,7 @@ wine_fn_config_test ()
 $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"
-    wine_fn_append_file ALL_DIRS $ac_dir
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__clean__: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status Maketest.rules \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    wine_fn_all_dir_rules $ac_dir "Maketest.rules \$(MAKEDEP)"
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all programs/winetest .PHONY: $ac_dir
@@ -339,11 +329,7 @@ wine_fn_config_tool ()
         dnl makedep is in tools so tools makefile cannot depend on it
         ac_deps="$ac_deps \$(MAKEDEP)"
     fi
-    wine_fn_append_file ALL_DIRS $ac_dir
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/__clean__: $ac_dir/Makefile
-$ac_dir/Makefile $ac_dir/__depend__: $ac_dir/Makefile.in config.status $ac_deps
-	@./config.status --file $ac_dir/Makefile && cd $ac_dir && \$(MAKE) depend"
+    wine_fn_all_dir_rules $ac_dir "$ac_deps"
 
     AS_VAR_IF([enable_tools],[no],,[case $ac_dir in
       dnl tools directory has both install-lib and install-dev
