@@ -61,11 +61,6 @@ include/stamp-h: include/config.h.in config.status
 $(ALL_CONFIGS):
 	@./config.status $@
 
-# Rules for dependencies
-
-depend: $(ALL_DIRS:%=%/__depend__) dummy
-.PHONY: $(ALL_DIRS:%=%/__depend__)
-
 # Rules for cleaning
 
 $(ALL_DIRS:%=%/__clean__): dummy
@@ -94,7 +89,6 @@ libs/wine: libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
-tools/__depend__: $(MAKEDEP)
 
 $(MAKEDEP): include/config.h tools/Makefile
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)

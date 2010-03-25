@@ -13877,7 +13877,10 @@ wine_fn_all_dir_rules ()
     wine_fn_append_file ALL_DIRS $1
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$1/__clean__: $1/Makefile
-$1/Makefile $1/__depend__: $1/Makefile.in config.status $2
+$1/Makefile: $1/Makefile.in config.status $2
+	@./config.status --file $1/Makefile && cd $1 && \$(MAKE) depend
+depend .PHONY: $1/__depend__
+$1/__depend__: \$(MAKEDEP) dummy
 	@./config.status --file $1/Makefile && cd $1 && \$(MAKE) depend"
 }
 
