@@ -2702,10 +2702,24 @@ WINE_CONFIG_TOOL(tools/wmc)
 WINE_CONFIG_TOOL(tools/wrc)
 dnl End of auto-generated output commands
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
+[wine_fn_output_makefile ()
+{
+    cat Make.tmp - <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && rm -f Make.tmp && return
+$ALL_MAKEFILE_DEPENDS
+_WINE_EOF
+    AS_ERROR([could not create Makefile])
+}])
+
+AC_CONFIG_FILES([Make.tmp:Makefile.in])
 
 dnl Don't install in bin dir for Windows build
 test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
+
+dnl Some final makefile rules
+WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
+[uninstall::
+	-rmdir \$(DESTDIR)\$(datadir)/wine \$(DESTDIR)\$(fakedlldir) \$(DESTDIR)\$(dlldir)])
 
 AC_OUTPUT
 

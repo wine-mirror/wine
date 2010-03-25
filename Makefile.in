@@ -18,14 +18,10 @@
 # sgmlpages:       compile sgml source for the Wine API Guide
 # xmlpages:        compile xml source for the Wine API Guide
 
-# Directories
-
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
-MODULE    = none
 
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
@@ -61,7 +57,7 @@ clean:: __clean__
 	$(RM) tools/makedep$(EXEEXT)
 
 distclean:: clean
-	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile
+	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp
 	$(RM) -r autom4te.cache
 
 # Dependencies between directories
@@ -91,14 +87,3 @@ TAGS etags:
 tags ctags:
 	$(RM) tags
 	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
-
-# Makefile rules
-
-.INIT: Makefile
-.BEGIN: Makefile
-.MAKEFILEDEPS:
-
-@ALL_MAKEFILE_DEPENDS@
-
-uninstall::
-	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
