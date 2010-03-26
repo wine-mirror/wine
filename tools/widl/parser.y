@@ -97,7 +97,7 @@ static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right, attr_t *attr, enum storage_class stgclass);
 static attr_t *make_attr(enum attr_type type);
-static attr_t *make_attrv(enum attr_type type, unsigned long val);
+static attr_t *make_attrv(enum attr_type type, unsigned int val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
@@ -1248,7 +1248,7 @@ static attr_t *make_attr(enum attr_type type)
   return a;
 }
 
-static attr_t *make_attrv(enum attr_type type, unsigned long val)
+static attr_t *make_attrv(enum attr_type type, unsigned int val)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;

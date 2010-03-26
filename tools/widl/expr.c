@@ -117,7 +117,7 @@ expr_t *make_expr(enum expr_type type)
     return e;
 }
 
-expr_t *make_exprl(enum expr_type type, long val)
+expr_t *make_exprl(enum expr_type type, int val)
 {
     expr_t *e = xmalloc(sizeof(expr_t));
     e->type = type;
@@ -218,7 +218,7 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
         {
             unsigned int align = 0;
             unsigned int cast_type_bits = type_memsize(tref, &align) * 8;
-            unsigned long cast_mask;
+            unsigned int cast_mask;
 
             e->is_const = TRUE;
             if (is_signed_integer_type(tref))
@@ -699,10 +699,10 @@ void write_expr(FILE *h, const expr_t *e, int brackets,
     case EXPR_VOID:
         break;
     case EXPR_NUM:
-        fprintf(h, "%lu", e->u.lval);
+        fprintf(h, "%u", e->u.lval);
         break;
     case EXPR_HEXNUM:
-        fprintf(h, "0x%lx", e->u.lval);
+        fprintf(h, "0x%x", e->u.lval);
         break;
     case EXPR_DOUBLE:
         fprintf(h, "%#.15g", e->u.dval);

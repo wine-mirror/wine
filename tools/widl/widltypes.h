@@ -255,7 +255,7 @@ struct str_list_entry_t
 struct _attr_t {
   enum attr_type type;
   union {
-    unsigned long ival;
+    unsigned int ival;
     void *pval;
   } u;
   /* parser-internal */
@@ -266,7 +266,7 @@ struct _expr_t {
   enum expr_type type;
   const expr_t *ref;
   union {
-    long lval;
+    int lval;
     double dval;
     const char *sval;
     const expr_t *ext;
@@ -274,7 +274,7 @@ struct _expr_t {
   } u;
   const expr_t *ext2;
   int is_const;
-  long cval;
+  int cval;
   /* parser-internal */
   struct list entry;
 };

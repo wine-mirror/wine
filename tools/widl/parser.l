@@ -85,15 +85,15 @@ int import_stack_ptr = 0;
 
 /* converts an integer in string form to an unsigned long and prints an error
  * on overflow */
-static unsigned long xstrtoul(const char *nptr, char **endptr, int base)
+static unsigned int xstrtoul(const char *nptr, char **endptr, int base)
 {
-    unsigned long l;
+    unsigned long val;
 
     errno = 0;
-    l = strtoul(nptr, endptr, base);
-    if (l == ULONG_MAX && errno == ERANGE)
+    val = strtoul(nptr, endptr, base);
+    if ((val == ULONG_MAX && errno == ERANGE) || ((unsigned int)val != val))
         error_loc("integer constant %s is too large\n", nptr);
-    return l;
+    return val;
 }
 
 UUID *parse_uuid(const char *u)

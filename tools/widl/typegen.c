@@ -988,13 +988,13 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
     if (expr->is_const)
     {
         if (expr->cval > UCHAR_MAX * (USHRT_MAX + 1) + USHRT_MAX)
-            error("write_conf_or_var_desc: constant value %ld is greater than "
+            error("write_conf_or_var_desc: constant value %d is greater than "
                   "the maximum constant size of %d\n", expr->cval,
                   UCHAR_MAX * (USHRT_MAX + 1) + USHRT_MAX);
 
-        print_file(file, 2, "0x%x, /* Corr desc: constant, val = %ld */\n",
+        print_file(file, 2, "0x%x, /* Corr desc: constant, val = %d */\n",
                    RPC_FC_CONSTANT_CONFORMANCE, expr->cval);
-        print_file(file, 2, "0x%lx,\n", expr->cval >> 16);
+        print_file(file, 2, "0x%x,\n", expr->cval >> 16);
         print_file(file, 2, "NdrFcShort(0x%hx),\n", (unsigned short)expr->cval);
 
         return 4;
@@ -2655,7 +2655,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
             /* MIDL doesn't check for duplicate cases, even though that seems
                like a reasonable thing to do, it just dumps them to the TFS
                like we're going to do here.  */
-            print_file(file, 2, "NdrFcLong(0x%lx),\t/* %ld */\n", c->cval, c->cval);
+            print_file(file, 2, "NdrFcLong(0x%x),\t/* %d */\n", c->cval, c->cval);
             *tfsoff += 4;
             write_branch_type(file, ft, tfsoff);
         }
@@ -2793,8 +2793,8 @@ static unsigned int write_range_tfs(FILE *file, const attr_list_t *attrs,
     print_file(file, 0, "/* %u */\n", *typeformat_offset);
     print_file(file, 2, "0x%x,\t/* FC_RANGE */\n", RPC_FC_RANGE);
     print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
-    print_file(file, 2, "NdrFcLong(0x%lx),\t/* %lu */\n", range_min->cval, range_min->cval);
-    print_file(file, 2, "NdrFcLong(0x%lx),\t/* %lu */\n", range_max->cval, range_max->cval);
+    print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", range_min->cval, range_min->cval);
+    print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", range_max->cval, range_max->cval);
     *typeformat_offset += 10;
 
     return start_offset;
@@ -3604,9 +3604,9 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
 
             print_file(file, indent, "if ((%s%s < (", local_var_prefix, var->name);
             write_type_decl(file, var->type, NULL);
-            fprintf(file, ")0x%lx) || (%s%s > (", range_min->cval, local_var_prefix, var->name);
+            fprintf(file, ")0x%x) || (%s%s > (", range_min->cval, local_var_prefix, var->name);
             write_type_decl(file, var->type, NULL);
-            fprintf(file, ")0x%lx))\n", range_max->cval);
+            fprintf(file, ")0x%x))\n", range_max->cval);
             print_file(file, indent, "{\n");
             print_file(file, indent+1, "RpcRaiseException(RPC_S_INVALID_BOUND);\n");
             print_file(file, indent, "}\n");
