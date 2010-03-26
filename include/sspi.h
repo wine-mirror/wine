@@ -131,6 +131,8 @@ typedef struct _SecPkgInfoW
 #define SECPKG_FLAG_DELEGATION             0x00020000
 #define SECPKG_FLAG_READONLY_WITH_CHECKSUM 0x00040000
 
+#define SECPKG_ID_NONE  0xffff
+
 typedef struct _SecBuffer
 {
     ULONG cbBuffer;
