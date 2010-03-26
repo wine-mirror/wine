@@ -309,24 +309,22 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
   BSTR property;
   IEnumFORMATETC* pIEnumFormatEtc = NULL;
   VARIANTARG var;
-  HRESULT hRet;
-  IWebBrowserApp* pBrowser = NULL;
+  HRESULT hr;
+  IWebBrowserApp* pBrowser;
 
   TRACE("(%p, %p)\n", lpBC, lpUnknown);
 
-  /* Get An IWebBrowserApp interface from  lpUnknown */
-  hRet = IUnknown_QueryService(lpUnknown, &IID_IWebBrowserApp, &IID_IWebBrowserApp, (PVOID)&pBrowser);
-  if (FAILED(hRet) || !pBrowser)
-    return E_NOINTERFACE;
+  hr = IUnknown_QueryService(lpUnknown, &IID_IWebBrowserApp, &IID_IWebBrowserApp, (void**)&pBrowser);
+  if (FAILED(hr))
+    return hr;
 
   V_VT(&var) = VT_EMPTY;
 
   /* The property we get is the browsers clipboard enumerator */
   property = SysAllocString(szProperty);
-  hRet = IWebBrowserApp_GetProperty(pBrowser, property, &var);
+  hr = IWebBrowserApp_GetProperty(pBrowser, property, &var);
   SysFreeString(property);
-  if (FAILED(hRet))
-    return hRet;
+  if (FAILED(hr)) goto exit;
 
   if (V_VT(&var) == VT_EMPTY)
   {
@@ -340,7 +338,10 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 
     if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\Current"
                      "Version\\Internet Settings\\Accepted Documents", &hDocs))
-      return E_FAIL;
+    {
+      hr = E_FAIL;
+      goto exit;
+    }
 
     /* Get count of values in key */
     while (!dwRet)
@@ -355,7 +356,11 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
     /* Note: dwCount = number of items + 1; The extra item is the end node */
     format = formatList = HeapAlloc(GetProcessHeap(), 0, dwCount * sizeof(FORMATETC));
     if (!formatList)
-      return E_OUTOFMEMORY;
+    {
+      RegCloseKey(hDocs);
+      hr = E_OUTOFMEMORY;
+      goto exit;
+    }
 
     if (dwNumValues > 1)
     {
@@ -372,7 +377,12 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
         dwRet = RegEnumValueA(hDocs, dwCount, szKeyBuff, &dwKeySize, 0, &dwType,
                               (PBYTE)szValueBuff, &dwValueSize);
         if (!dwRet)
-          return E_FAIL;
+        {
+          HeapFree(GetProcessHeap(), 0, formatList);
+          RegCloseKey(hDocs);
+          hr = E_FAIL;
+          goto exit;
+        }
 
         format->cfFormat = RegisterClipboardFormatA(szValueBuff);
         format->ptd = NULL;
@@ -385,6 +395,8 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
       }
     }
 
+    RegCloseKey(hDocs);
+
     /* Terminate the (maybe empty) list, last entry has a cfFormat of 0 */
     format->cfFormat = 0;
     format->ptd = NULL;
@@ -393,22 +405,21 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
     format->tymed = -1;
 
     /* Create a clipboard enumerator */
-    hRet = CreateFormatEnumerator(dwNumValues, formatList, &pIEnumFormatEtc);
-
-    if (FAILED(hRet) || !pIEnumFormatEtc)
-      return hRet;
+    hr = CreateFormatEnumerator(dwNumValues, formatList, &pIEnumFormatEtc);
+    HeapFree(GetProcessHeap(), 0, formatList);
+    if (FAILED(hr)) goto exit;
 
     /* Set our enumerator as the browsers property */
     V_VT(&var) = VT_UNKNOWN;
     V_UNKNOWN(&var) = (IUnknown*)pIEnumFormatEtc;
 
     property = SysAllocString(szProperty);
-    hRet = IWebBrowserApp_PutProperty(pBrowser, property, var);
+    hr = IWebBrowserApp_PutProperty(pBrowser, property, var);
     SysFreeString(property);
-    if (FAILED(hRet))
+    if (FAILED(hr))
     {
        IEnumFORMATETC_Release(pIEnumFormatEtc);
-       goto RegisterDefaultAcceptHeaders_Exit;
+       goto exit;
     }
   }
 
@@ -422,28 +433,26 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 
     /* Get an IEnumFormatEtc interface from the variants value */
     pIEnumFormatEtc = NULL;
-    hRet = IUnknown_QueryInterface(pIUnknown, &IID_IEnumFORMATETC,
-                                   (PVOID)&pIEnumFormatEtc);
-    if (hRet == S_OK && pIEnumFormatEtc)
+    hr = IUnknown_QueryInterface(pIUnknown, &IID_IEnumFORMATETC, (void**)&pIEnumFormatEtc);
+    if (hr == S_OK && pIEnumFormatEtc)
     {
       /* Clone and register the enumerator */
-      hRet = IEnumFORMATETC_Clone(pIEnumFormatEtc, &pClone);
-      if (hRet == S_OK && pClone)
+      hr = IEnumFORMATETC_Clone(pIEnumFormatEtc, &pClone);
+      if (hr == S_OK && pClone)
       {
         RegisterFormatEnumerator(lpBC, pClone, 0);
 
         IEnumFORMATETC_Release(pClone);
       }
 
-      /* Release the IEnumFormatEtc interface */
       IEnumFORMATETC_Release(pIUnknown);
     }
     IUnknown_Release(V_UNKNOWN(&var));
   }
 
-RegisterDefaultAcceptHeaders_Exit:
+exit:
   IWebBrowserApp_Release(pBrowser);
-  return hRet;
+  return hr;
 }
 
 /*************************************************************************
