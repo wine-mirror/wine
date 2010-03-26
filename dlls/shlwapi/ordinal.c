@@ -4310,10 +4310,10 @@ BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
 /***********************************************************************
  *		SHGetShellKey (SHLWAPI.@)
  */
-DWORD WINAPI SHGetShellKey(DWORD a, DWORD b, DWORD c)
+HKEY WINAPI SHGetShellKey(DWORD flags, LPCWSTR sub_key, BOOL create)
 {
-    FIXME("(%x, %x, %x): stub\n", a, b, c);
-    return 0x50;
+    FIXME("(0x%08x, %s, %d): stub\n", flags, debugstr_w(sub_key), create);
+    return (HKEY)0x50;
 }
 
 /***********************************************************************
