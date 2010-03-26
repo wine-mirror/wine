@@ -1533,6 +1533,45 @@ HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *lpUnknown, REFIID service,
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.514]
+ *
+ * Calls IProfferService methods to proffer/revoke specified service.
+ *
+ * PARAMS
+ *  lpUnknown [I]  Object to get an IServiceProvider interface from
+ *  service   [I]  Service ID for IProfferService::Proffer/Revoke calls
+ *  pService  [I]  Service to proffer. If NULL ::Revoke is called
+ *  pCookie   [IO] Group ID for IOleCommandTarget::Exec() call
+ *
+ * RETURNS
+ *  Success: S_OK. IProffer method returns S_OK
+ *  Failure: An HRESULT error code
+ *
+ * NOTES
+ *  lpUnknown is expected to support the IServiceProvider interface.
+ */
+HRESULT WINAPI IUnknown_ProfferService(IUnknown *lpUnknown, REFGUID service, IServiceProvider *pService, DWORD *pCookie)
+{
+    IProfferService *proffer;
+    HRESULT hr;
+
+    TRACE("%p %s %p %p\n", lpUnknown, debugstr_guid(service), pService, pCookie);
+
+    hr = IUnknown_QueryService(lpUnknown, &IID_IProfferService, &IID_IProfferService, (void**)&proffer);
+    if (hr == S_OK)
+    {
+        if (pService)
+            hr = IProfferService_ProfferService(proffer, service, pService, pCookie);
+        else
+            hr = IProfferService_RevokeService(proffer, *pCookie);
+
+        IProfferService_Release(proffer);
+    }
+
+    return hr;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.479]
  *
  * Call an object's UIActivateIO method.
@@ -4460,12 +4499,6 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     ret = MessageBoxW(hWnd, pszTemp, pszTitle, uType);
     LocalFree(pszTemp);
     return ret;
-}
-
-HRESULT WINAPI IUnknown_ProfferService(IUnknown *unk, void *x0, void *x1, void *x2)
-{
-    FIXME("%p %p %p %p\n", unk, x0, x1, x2);
-    return E_NOTIMPL;
 }
 
 /***********************************************************************

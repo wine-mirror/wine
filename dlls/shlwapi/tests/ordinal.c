@@ -30,6 +30,7 @@
 #include "mlang.h"
 #include "shlwapi.h"
 #include "docobj.h"
+#include "shobjidl.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
@@ -51,6 +52,7 @@ static INT    (WINAPI *pSHFormatDateTimeW)(const FILETIME UNALIGNED*, DWORD*, LP
 static DWORD  (WINAPI *pSHGetObjectCompatFlags)(IUnknown*, const CLSID*);
 static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
 static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
+static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServiceProvider*, DWORD*);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -106,6 +108,33 @@ static void add_call(call_trace_t *ctrace, int id, const void *arg0,
 
     ctrace->calls[ctrace->count++] = call;
 }
+
+static void ok_trace_(call_trace_t *texpected, call_trace_t *tgot, int line)
+{
+    if (texpected->count == tgot->count)
+    {
+        INT i;
+        /* compare */
+        for (i = 0; i < texpected->count; i++)
+        {
+            call_entry_t *expected = &texpected->calls[i];
+            call_entry_t *got = &tgot->calls[i];
+            INT j;
+
+            ok_(__FILE__, line)(expected->id == got->id, "got different ids %d: %d, %d\n", i+1, expected->id, got->id);
+
+            for (j = 0; j < 5; j++)
+            {
+                ok_(__FILE__, line)(expected->args[j] == got->args[j], "got different args[%d] for %d: %p, %p\n", j, i+1,
+                   expected->args[j], got->args[j]);
+            }
+        }
+    }
+    else
+        ok_(__FILE__, line)(0, "traces length mismatch\n");
+}
+
+#define ok_trace(a, b) ok_trace_(a, b, __LINE__)
 
 static void test_GetAcceptLanguagesA(void)
 {
@@ -2008,7 +2037,14 @@ typedef struct {
     LONG ref;
 } IServiceProviderImpl;
 
+typedef struct {
+    const IProfferServiceVtbl *lpVtbl;
+    LONG ref;
+} IProfferServiceImpl;
+
+
 static const IServiceProviderVtbl IServiceProviderImpl_Vtbl;
+static const IProfferServiceVtbl IProfferServiceImpl_Vtbl;
 
 IServiceProvider* IServiceProviderImpl_Construct(void)
 {
@@ -2020,6 +2056,19 @@ IServiceProvider* IServiceProviderImpl_Construct(void)
 
     return (IServiceProvider*)obj;
 }
+
+IProfferService* IProfferServiceImpl_Construct(void)
+{
+    IProfferServiceImpl *obj;
+
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj->lpVtbl = &IProfferServiceImpl_Vtbl;
+    obj->ref = 1;
+
+    return (IProfferService*)obj;
+}
+
+static call_trace_t IUnknown_ProfferService_trace;
 
 static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObj)
 {
@@ -2065,10 +2114,18 @@ static ULONG WINAPI IServiceProviderImpl_Release(IServiceProvider *iface)
 static HRESULT WINAPI IServiceProviderImpl_QueryService(
     IServiceProvider *iface, REFGUID service, REFIID riid, void **ppv)
 {
-    /* natve uses redefined pointer for IID_IOleCommandTarget, not one from uuid.lib */
+    /* native uses redefined pointer for IID_IOleCommandTarget, not one from uuid.lib */
     if (IsEqualIID(riid, &IID_IOleCommandTarget))
+    {
         add_call(&IUnknown_QueryServiceExec_trace, 2, iface, service, &IID_IOleCommandTarget, 0, 0);
-    *ppv = IOleCommandTargetImpl_Construct();
+        *ppv = IOleCommandTargetImpl_Construct();
+    }
+    if (IsEqualIID(riid, &IID_IProfferService))
+    {
+        if (IsEqualIID(service, &IID_IProfferService))
+            add_call(&IUnknown_ProfferService_trace, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
+        *ppv = IProfferServiceImpl_Construct();
+    }
     return S_OK;
 }
 
@@ -2088,7 +2145,6 @@ static void test_IUnknown_QueryServiceExec(void)
     static const GUID dummy_groupid = { 0xbeefbeef };
     call_trace_t trace_expected;
     HRESULT hr;
-    INT i;
 
     /* on <=W2K platforms same ordinal used for another export with different
        prototype, so skipping using this indirect condition */
@@ -2118,31 +2174,143 @@ static void test_IUnknown_QueryServiceExec(void)
     hr = pIUnknown_QueryServiceExec((IUnknown*)provider, &dummy_serviceid, &dummy_groupid, 0x1, 0x2, (void*)0x3, (void*)0x4);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    if (trace_expected.count == IUnknown_QueryServiceExec_trace.count)
-    {
-        /* compare */
-        for (i = 0; i < trace_expected.count; i++)
-        {
-            call_entry_t *expected = &trace_expected.calls[i];
-            call_entry_t *got = &IUnknown_QueryServiceExec_trace.calls[i];
-            INT j;
-
-            ok(expected->id == got->id, "got different ids %d: %d, %d\n", i+1, expected->id, got->id);
-
-            for (j = 0; j < 5; j++)
-            {
-                ok(expected->args[j] == got->args[j], "got different args[%d] for %d: %p, %p\n", j, i+1,
-                   expected->args[j], got->args[j]);
-            }
-        }
-    }
-    else
-        ok(0, "traces length mismatch expected %d, got %d\n", trace_expected.count, IUnknown_QueryServiceExec_trace.count);
+    ok_trace(&trace_expected, &IUnknown_QueryServiceExec_trace);
 
     free_call_trace(&trace_expected);
     free_call_trace(&IUnknown_QueryServiceExec_trace);
 
     IServiceProvider_Release(provider);
+}
+
+
+static HRESULT WINAPI IProfferServiceImpl_QueryInterface(IProfferService *iface, REFIID riid, void **ppvObj)
+{
+    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IProfferService))
+    {
+        *ppvObj = This;
+    }
+    else if (IsEqualIID(riid, &IID_IServiceProvider))
+    {
+        *ppvObj = IServiceProviderImpl_Construct();
+        add_call(&IUnknown_ProfferService_trace, 1, iface, &IID_IServiceProvider, 0, 0, 0);
+        return S_OK;
+    }
+
+    if(*ppvObj)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IProfferServiceImpl_AddRef(IProfferService *iface)
+{
+    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IProfferServiceImpl_Release(IProfferService *iface)
+{
+    IProfferServiceImpl *This = (IProfferServiceImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return 0;
+    }
+    return ref;
+}
+
+static HRESULT WINAPI IProfferServiceImpl_ProfferService(IProfferService *iface,
+    REFGUID service, IServiceProvider *pService, DWORD *pCookie)
+{
+    add_call(&IUnknown_ProfferService_trace, 3, service, pService, pCookie, 0, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI IProfferServiceImpl_RevokeService(IProfferService *iface, DWORD cookie)
+{
+    add_call(&IUnknown_ProfferService_trace, 4, (void*)cookie, 0, 0, 0, 0);
+    return S_OK;
+}
+
+static const IProfferServiceVtbl IProfferServiceImpl_Vtbl =
+{
+    IProfferServiceImpl_QueryInterface,
+    IProfferServiceImpl_AddRef,
+    IProfferServiceImpl_Release,
+    IProfferServiceImpl_ProfferService,
+    IProfferServiceImpl_RevokeService
+};
+
+static void test_IUnknown_ProfferService(void)
+{
+    void *test_ptr = (void*)GetProcAddress(hShlwapi, "StrChrNW");
+    IServiceProvider *provider = IServiceProviderImpl_Construct();
+    IProfferService *proff = IProfferServiceImpl_Construct();
+    static const GUID dummy_serviceid = { 0xdeadbeef };
+    call_trace_t trace_expected;
+    HRESULT hr;
+    DWORD cookie;
+
+    /* on <=W2K platforms same ordinal used for another export with different
+       prototype, so skipping using this indirect condition */
+    if (!test_ptr)
+    {
+        win_skip("IUnknown_ProfferService is not available\n");
+        return;
+    }
+
+    /* null source pointer */
+    hr = pIUnknown_ProfferService(NULL, &dummy_serviceid, 0, 0);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    /* expected trace:
+       IUnknown_ProfferService( ptr1, serviceid, arg1, arg2);
+         -> IUnknown_QueryInterface( ptr1, &IID_IServiceProvider, &provider );
+         -> IServiceProvider_QueryService( provider, &IID_IProfferService, &IID_IProfferService, &proffer );
+
+         if (service pointer not null):
+             -> IProfferService_ProfferService( proffer, serviceid, arg1, arg2 );
+         else
+             -> IProfferService_RevokeService( proffer, *arg2 );
+    */
+    init_call_trace(&trace_expected);
+
+    add_call(&trace_expected, 1, proff, &IID_IServiceProvider, 0, 0, 0);
+    add_call(&trace_expected, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
+    add_call(&trace_expected, 3, &dummy_serviceid, provider, &cookie, 0, 0);
+
+    init_call_trace(&IUnknown_ProfferService_trace);
+    hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, provider, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok_trace(&trace_expected, &IUnknown_ProfferService_trace);
+    free_call_trace(&IUnknown_ProfferService_trace);
+    free_call_trace(&trace_expected);
+
+    /* same with ::Revoke path */
+    init_call_trace(&trace_expected);
+
+    add_call(&trace_expected, 1, proff, &IID_IServiceProvider, 0, 0, 0);
+    add_call(&trace_expected, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
+    add_call(&trace_expected, 4, (void*)cookie, 0, 0, 0, 0);
+
+    init_call_trace(&IUnknown_ProfferService_trace);
+    hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, 0, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_trace(&trace_expected, &IUnknown_ProfferService_trace);
+    free_call_trace(&IUnknown_ProfferService_trace);
+    free_call_trace(&trace_expected);
+
+    IServiceProvider_Release(provider);
+    IProfferService_Release(proff);
 }
 
 static void init_pointers(void)
@@ -2165,6 +2333,7 @@ static void init_pointers(void)
     MAKEFUNC(SHGetObjectCompatFlags, 476);
     MAKEFUNC(IUnknown_QueryServiceExec, 484);
     MAKEFUNC(SHPropertyBag_ReadLONG, 496);
+    MAKEFUNC(IUnknown_ProfferService, 514);
 #undef MAKEFUNC
 }
 
@@ -2190,4 +2359,5 @@ START_TEST(ordinal)
     test_SHFormatDateTimeW();
     test_SHGetObjectCompatFlags();
     test_IUnknown_QueryServiceExec();
+    test_IUnknown_ProfferService();
 }

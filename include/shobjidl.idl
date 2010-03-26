@@ -1529,3 +1529,18 @@ cpp_quote("#define ACDD_VISIBLE   0x0001")
 
     HRESULT ResetEnumerator();
 }
+
+[
+    object,
+    uuid(cb728b20-f786-11ce-92ad-00aa00a74cd0),
+    pointer_default(unique)
+]
+interface IProfferService : IUnknown
+{
+    HRESULT ProfferService(
+        [in] REFGUID service,
+        [in] IServiceProvider *pService,
+        [out] DWORD *pCookie);
+
+    HRESULT RevokeService([in] DWORD cookie);
+}
