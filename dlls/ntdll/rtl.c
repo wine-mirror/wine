@@ -444,7 +444,10 @@ PVOID WINAPI RtlInitializeGenericTable(PVOID pTable, PVOID arg2, PVOID arg3, PVO
  */
 PVOID RtlEnumerateGenericTableWithoutSplaying(PVOID pTable, PVOID *RestartKey)
 {
-    FIXME("(%p,%p) stub!\n", pTable, RestartKey);
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(%p,%p) stub!\n", pTable, RestartKey);
     return NULL;
 }
 
