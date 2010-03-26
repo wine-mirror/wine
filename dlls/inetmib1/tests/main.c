@@ -189,8 +189,8 @@ static void testQuery(void)
             vars[2].name.idLength))
             moreData = FALSE;
         else if (!SnmpUtilOidCmp(&vars[0].name, &vars2[0].name) ||
-         !SnmpUtilOidCmp(&vars[0].name, &vars2[0].name) ||
-         !SnmpUtilOidCmp(&vars[0].name, &vars2[0].name))
+         !SnmpUtilOidCmp(&vars[1].name, &vars2[1].name) ||
+         !SnmpUtilOidCmp(&vars[2].name, &vars2[2].name))
         {
             /* If the OID isn't modified, the function isn't implemented on this
              * platform, skip the remaining tests.
