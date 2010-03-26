@@ -861,7 +861,7 @@ static int ps1_cmp(const void *s1, const void *s2, size_t num)
         if(*p1->pl1 != *p2->pl1)
             return 1;
     }
-    else if(p1->pl1 || p1->pl1)
+    else if(p1->pl1 || p2->pl1)
         return 1;
 
     if(p1->pc1 && p2->pc1)
@@ -869,7 +869,7 @@ static int ps1_cmp(const void *s1, const void *s2, size_t num)
         if(*p1->pc1 != *p2->pc1)
             return 1;
     }
-    else if(p1->pc1 || p1->pc1)
+    else if(p1->pc1 || p2->pc1)
         return 1;
 
     return 0;
