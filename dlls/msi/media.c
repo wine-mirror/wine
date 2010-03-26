@@ -264,7 +264,6 @@ static LONG CDECL cabinet_seek_stream( INT_PTR hf, LONG dist, int seektype )
 static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
-    LPWSTR ptr;
 
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
@@ -285,10 +284,7 @@ static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     if (!mi->first_volume)
         mi->first_volume = strdupW(mi->volume_label);
 
-    ptr = strrchrW(mi->source, '\\') + 1;
-    lstrcpyW(ptr, mi->cabinet);
     msiobj_release(&row->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -300,12 +296,24 @@ static INT_PTR cabinet_partial_file(FDINOTIFICATIONTYPE fdint,
     return 0;
 }
 
+static WCHAR *get_cabinet_filename(MSIMEDIAINFO *mi)
+{
+    int len;
+    WCHAR *ret;
+
+    len = strlenW(mi->sourcedir) + strlenW(mi->cabinet) + 1;
+    if (!(ret = msi_alloc(len * sizeof(WCHAR)))) return NULL;
+    strcpyW(ret, mi->sourcedir);
+    strcatW(ret, mi->cabinet);
+    return ret;
+}
+
 static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
                                     PFDINOTIFICATION pfdin)
 {
     MSICABDATA *data = pfdin->pv;
     MSIMEDIAINFO *mi = data->mi;
-    LPWSTR cab = strdupAtoW(pfdin->psz1);
+    LPWSTR cabinet_file = NULL, cab = strdupAtoW(pfdin->psz1);
     INT_PTR res = -1;
     UINT rc;
 
@@ -332,10 +340,13 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
         goto done;
     }
 
-    TRACE("Searching for %s\n", debugstr_w(mi->source));
+    if (!(cabinet_file = get_cabinet_filename(mi)))
+        goto done;
+
+    TRACE("Searching for %s\n", debugstr_w(cabinet_file));
 
     res = 0;
-    if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+    if (GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
     {
         if (msi_change_media(data->package, mi) != ERROR_SUCCESS)
             res = -1;
@@ -343,6 +354,7 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
 
 done:
     msi_free(cab);
+    msi_free(cabinet_file);
     return res;
 }
 
@@ -504,12 +516,11 @@ static INT_PTR CDECL cabinet_notify_stream( FDINOTIFICATIONTYPE fdint, PFDINOTIF
 static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data )
 {
     LPSTR cabinet, cab_path = NULL;
-    LPWSTR ptr;
     HFDI hfdi;
     ERF erf;
     BOOL ret = FALSE;
 
-    TRACE("Extracting %s\n", debugstr_w(mi->source));
+    TRACE("Extracting %s\n", debugstr_w(mi->cabinet));
 
     hfdi = FDICreate( cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
                       cabinet_write, cabinet_close, cabinet_seek, 0, &erf );
@@ -519,16 +530,13 @@ static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data 
         return FALSE;
     }
 
-    ptr = strrchrW( mi->source, '\\' ) + 1;
-    cabinet = strdupWtoA( ptr );
+    cabinet = strdupWtoA( mi->cabinet );
     if (!cabinet)
         goto done;
 
-    cab_path = strdupWtoA( mi->source );
+    cab_path = strdupWtoA( mi->sourcedir );
     if (!cab_path)
         goto done;
-
-    cab_path[ptr - mi->source] = '\0';
 
     ret = FDICopy( hfdi, cabinet, cab_path, 0, cabinet_notify, NULL, data );
     if (!ret)
@@ -652,11 +660,8 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
         mi->first_volume = strdupW(mi->volume_label);
 
     source_dir = msi_dup_property(package, cszSourceDir);
-    lstrcpyW(mi->source, source_dir);
+    lstrcpyW(mi->sourcedir, source_dir);
     mi->type = get_drive_type(source_dir);
-
-    if (file->IsCompressed && mi->cabinet && mi->cabinet[0] != '#')
-        lstrcatW(mi->source, mi->cabinet);
 
     options = MSICODE_PRODUCT;
     if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)
@@ -671,7 +676,7 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     }
     else
     {
-        source = mi->source;
+        source = mi->sourcedir;
         options |= MSISOURCETYPE_NETWORK;
     }
 
@@ -724,9 +729,8 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
         {
             if (!strncmpiW(source, volume, strlenW(source)))
             {
-                lstrcpyW(mi->source, source);
-                lstrcatW(mi->source, mi->cabinet);
-                TRACE("Found network source %s\n", debugstr_w(mi->source));
+                lstrcpyW(mi->sourcedir, source);
+                TRACE("Found network source %s\n", debugstr_w(mi->sourcedir));
                 return ERROR_SUCCESS;
             }
         }
@@ -749,8 +753,8 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
         if (source_matches_volume(mi, source))
         {
             /* FIXME: what about SourceDir */
-            lstrcpyW(mi->source, source);
-            TRACE("Found disk source %s\n", debugstr_w(mi->source));
+            lstrcpyW(mi->sourcedir, source);
+            TRACE("Found disk source %s\n", debugstr_w(mi->sourcedir));
             return ERROR_SUCCESS;
         }
     }
@@ -761,6 +765,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 {
     UINT rc = ERROR_SUCCESS;
+    WCHAR *cabinet_file;
 
     /* media info for continuous cabinet is already loaded */
     if (mi->is_continuous)
@@ -777,15 +782,24 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     if (!mi->cabinet || mi->cabinet[0] == '#')
         return ERROR_SUCCESS;
 
+    cabinet_file = get_cabinet_filename(mi);
+
     /* package should be downloaded */
     if (file->IsCompressed &&
-        GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
+        GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES &&
         package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
     {
-        WCHAR temppath[MAX_PATH];
+        WCHAR temppath[MAX_PATH], *p;
 
-        msi_download_file(mi->source, temppath);
-        lstrcpyW(mi->source, temppath);
+        msi_download_file(cabinet_file, temppath);
+        if ((p = strrchrW(temppath, '\\'))) *p = 0;
+
+        msi_free(mi->sourcedir);
+        strcpyW(mi->sourcedir, temppath);
+        msi_free(mi->cabinet);
+        strcpyW(mi->cabinet, p + 1);
+
+        msi_free(cabinet_file);
         return ERROR_SUCCESS;
     }
 
@@ -803,20 +817,25 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
         {
             rc = msi_change_media(package, mi);
             if (rc != ERROR_SUCCESS)
+            {
+                msi_free(cabinet_file);
                 return rc;
+            }
         }
     }
 
     if (file->IsCompressed &&
-        GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+        GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
     {
         rc = find_published_source(package, mi);
         if (rc != ERROR_SUCCESS)
         {
-            ERR("Cabinet not found: %s\n", debugstr_w(mi->source));
+            ERR("Cabinet not found: %s\n", debugstr_w(cabinet_file));
+            msi_free(cabinet_file);
             return ERROR_INSTALL_FAILURE;
         }
     }
 
+    msi_free(cabinet_file);
     return ERROR_SUCCESS;
 }

@@ -143,7 +143,7 @@ typedef struct tagMSIMEDIAINFO
     LPWSTR volume_label;
     BOOL is_continuous;
     BOOL is_extracted;
-    WCHAR source[MAX_PATH];
+    WCHAR sourcedir[MAX_PATH];
 } MSIMEDIAINFO;
 
 typedef struct tagMSIPATCHINFO
