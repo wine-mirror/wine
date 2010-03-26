@@ -5153,10 +5153,11 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     SC_HANDLE scm = NULL, service = NULL;
     LPCWSTR component, *vector = NULL;
-    LPWSTR name, args;
-    DWORD event, numargs;
+    LPWSTR name, args, display_name = NULL;
+    DWORD event, numargs, len;
     UINT r = ERROR_FUNCTION_FAILED;
 
     component = MSI_RecordGetString(rec, 6);
@@ -5189,6 +5190,14 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
         goto done;
     }
 
+    len = 0;
+    if (!GetServiceDisplayNameW( scm, name, NULL, &len ) &&
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        if ((display_name = msi_alloc( ++len * sizeof(WCHAR ))))
+            GetServiceDisplayNameW( scm, name, display_name, &len );
+    }
+
     service = OpenServiceW(scm, name, SERVICE_START);
     if (!service)
     {
@@ -5208,12 +5217,19 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     r = ERROR_SUCCESS;
 
 done:
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, display_name );
+    MSI_RecordSetStringW( uirow, 2, name );
+    ui_actiondata( package, szStartServices, uirow );
+    msiobj_release( &uirow->hdr );
+
     CloseServiceHandle(service);
     CloseServiceHandle(scm);
 
     msi_free(name);
     msi_free(args);
     msi_free(vector);
+    msi_free(display_name);
     return r;
 }
 
@@ -5326,9 +5342,11 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
+    MSIRECORD *uirow;
     LPCWSTR component;
-    LPWSTR name;
-    DWORD event;
+    LPWSTR name = NULL, display_name = NULL;
+    DWORD event, len;
+    SC_HANDLE scm;
 
     event = MSI_RecordGetInteger( rec, 3 );
     if (!(event & msidbServiceControlEventStop))
@@ -5347,10 +5365,34 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
     }
     comp->Action = INSTALLSTATE_ABSENT;
 
+    scm = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
+    if (!scm)
+    {
+        ERR("Failed to open the service control manager\n");
+        goto done;
+    }
+
+    len = 0;
+    if (!GetServiceDisplayNameW( scm, name, NULL, &len ) &&
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        if ((display_name = msi_alloc( ++len * sizeof(WCHAR ))))
+            GetServiceDisplayNameW( scm, name, display_name, &len );
+    }
+    CloseServiceHandle( scm );
+
     deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
     stop_service( name );
-    msi_free( name );
 
+done:
+    uirow = MSI_CreateRecord( 2 );
+    MSI_RecordSetStringW( uirow, 1, display_name );
+    MSI_RecordSetStringW( uirow, 2, name );
+    ui_actiondata( package, szStopServices, uirow );
+    msiobj_release( &uirow->hdr );
+
+    msi_free( name );
+    msi_free( display_name );
     return ERROR_SUCCESS;
 }
 
