@@ -1236,17 +1236,13 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     if (index && index - last_index != 1)
         return ERROR_INVALID_PARAMETER;
 
+    key = 0;
     r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_LocalClassesProd, &key);
-    if( r != ERROR_SUCCESS )
-        return ERROR_NO_MORE_ITEMS;
+    if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &machine_count, NULL, NULL,
                          NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS )
-    {
-        RegCloseKey(key);
-        return ERROR_NO_MORE_ITEMS;
-    }
+    if( r != ERROR_SUCCESS ) goto failed;
 
     if (machine_count && index <= machine_count)
     {
@@ -1261,26 +1257,23 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     }
     RegCloseKey(key);
 
+    key = 0;
     r = get_user_sid(&usersid);
     if (r != ERROR_SUCCESS || !usersid)
     {
         ERR("Failed to retrieve user SID: %d\n", r);
+        last_index = 0;
         return r;
     }
     sprintfW(keypath, szInstaller_LocalManaged_fmt, usersid);
     LocalFree(usersid);
 
     r = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, &key);
-    if( r != ERROR_SUCCESS )
-        return ERROR_NO_MORE_ITEMS;
+    if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &managed_count, NULL, NULL,
                          NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS )
-    {
-        RegCloseKey(key);
-        return ERROR_NO_MORE_ITEMS;
-    }
+    if( r != ERROR_SUCCESS ) goto failed;
 
     if (managed_count && index <= machine_count + managed_count)
     {
@@ -1295,17 +1288,13 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     }
     RegCloseKey(key);
 
+    key = 0;
     r = RegCreateKeyW(HKEY_CURRENT_USER, szUserProduct, &key);
-    if( r != ERROR_SUCCESS )
-        return ERROR_NO_MORE_ITEMS;
+    if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &unmanaged_count, NULL, NULL,
                          NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS )
-    {
-        RegCloseKey(key);
-        return ERROR_NO_MORE_ITEMS;
-    }
+    if( r != ERROR_SUCCESS ) goto failed;
 
     if (unmanaged_count && index <= machine_count + managed_count + unmanaged_count)
     {
@@ -1318,8 +1307,9 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
             return ERROR_SUCCESS;
         }
     }
+failed:
     RegCloseKey(key);
-
+    last_index = 0;
     return ERROR_NO_MORE_ITEMS;
 }
 
