@@ -235,7 +235,6 @@ programs/rpcss/irot.h
 programs/rpcss/irot_s.c
 programs/services/svcctl.h
 programs/services/svcctl_s.c
-programs/wineapploader
 programs/winedbg/dbg.tab.c
 programs/winedbg/dbg.tab.h
 programs/winedbg/debug.yy.c
@@ -260,6 +259,7 @@ tools/widl/parser.yy.c
 tools/widl/widl
 tools/widl/widl.man
 tools/wine.inf
+tools/wineapploader
 tools/winebuild/winebuild
 tools/winebuild/winebuild.man
 tools/winedump/winedump

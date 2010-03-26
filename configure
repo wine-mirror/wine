@@ -14009,11 +14009,11 @@ programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__ dummy
 	@cd programs/$ac_dir && \$(MAKE) install
 uninstall:: programs/$ac_dir/Makefile
 	@cd programs/$ac_dir && \$(MAKE) uninstall"
-    if test "$ac_install" = installbin -a -n "$DLLEXT" -a -z "$WOW64_DISABLE"
+    if test "$ac_install" = installbin -a -n "$DLLEXT" -a "x$enable_tools" != xno
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-lib:: programs \$(DESTDIR)\$(bindir)
-	\$(INSTALL_SCRIPT) programs/wineapploader \$(DESTDIR)\$(bindir)/$ac_dir
+"install install-lib:: tools \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_dir
 uninstall::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_dir"
     fi
@@ -14633,7 +14633,6 @@ wine_fn_config_makefile libs/port enable_libs_port
 wine_fn_config_makefile libs/wine enable_libs_wine
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader
-wine_fn_config_makefile programs enable_programs
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cacls enable_cacls install
 wine_fn_config_program clock enable_clock install

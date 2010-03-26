@@ -15,6 +15,7 @@ PROGRAMS = \
 	relpath$(EXEEXT) \
 	sfnt2fnt$(EXEEXT) \
 	wine.inf \
+	wineapploader \
 	wineprefixcreate
 
 MANPAGES = \
@@ -63,6 +64,9 @@ sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
 
 wine.inf: wine.inf.in
 	LC_ALL=C sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.inf.in >$@ || ($(RM) $@ && false)
+
+wineapploader: wineapploader.in
+	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
 
 wineprefixcreate: wineprefixcreate.in relpath$(EXEEXT)
 	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)/wine`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)

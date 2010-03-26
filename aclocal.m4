@@ -296,11 +296,11 @@ programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__ dummy
 	@cd programs/$ac_dir && \$(MAKE) install
 uninstall:: programs/$ac_dir/Makefile
 	@cd programs/$ac_dir && \$(MAKE) uninstall"
-    if test "$ac_install" = installbin -a -n "$DLLEXT" -a -z "$WOW64_DISABLE"
+    if test "$ac_install" = installbin -a -n "$DLLEXT" -a "x$enable_tools" != xno
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-lib:: programs \$(DESTDIR)\$(bindir)
-	\$(INSTALL_SCRIPT) programs/wineapploader \$(DESTDIR)\$(bindir)/$ac_dir
+"install install-lib:: tools \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_dir
 uninstall::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_dir"
     fi])
