@@ -6837,6 +6837,40 @@ static UINT ACTION_InstallAdminPackage( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
+{
+    UINT r, count;
+    MSIQUERY *view;
+
+    static const WCHAR driver_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','D','r','i','v','e','r',0 };
+
+    static const WCHAR translator_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
+
+    r = MSI_DatabaseOpenViewW( package->db, driver_query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        count = 0;
+        r = MSI_IterateRecords( view, &count, NULL, package );
+        msiobj_release( &view->hdr );
+        if (count) FIXME("ignored %u rows in ODBCDriver table\n", count);
+    }
+
+    r = MSI_DatabaseOpenViewW( package->db, translator_query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        count = 0;
+        r = MSI_IterateRecords( view, &count, NULL, package );
+        msiobj_release( &view->hdr );
+        if (count) FIXME("ignored %u rows in ODBCTranslator table\n", count);
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -6921,12 +6955,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'D','i','r','e','c','t','o','r','y',0 };
-    return msi_unimplemented_action_stub( package, "SetODBCFolders", table );
 }
 
 static UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
