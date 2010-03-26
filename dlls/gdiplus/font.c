@@ -489,6 +489,7 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
     switch (font->unit)
     {
         case UnitPixel:
+        case UnitWorld:
             *height = font_height;
             break;
         case UnitPoint:

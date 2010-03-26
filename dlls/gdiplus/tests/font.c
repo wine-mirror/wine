@@ -381,8 +381,8 @@ static void test_heightgivendpi(void)
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitWorld, &font);
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
-    todo_wine expect(Ok, stat);
-    todo_wine expectf((REAL)34.497070, height);
+    expect(Ok, stat);
+    expectf((REAL)34.497070, height);
     GdipDeleteFont(font);
 
     height = 12345;
