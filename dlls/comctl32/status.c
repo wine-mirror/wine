@@ -728,7 +728,7 @@ STATUSBAR_SetParts (STATUS_INFO *infoPtr, INT count, LPINT parts)
 
 static BOOL
 STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
-		    LPCWSTR text, BOOL isW)
+		    LPWSTR text, BOOL isW)
 {
     STATUSWINDOWPART *part=NULL;
     BOOL changed = FALSE;
@@ -759,7 +759,7 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
     if (style & SBT_OWNERDRAW) {
         if (!(oldStyle & SBT_OWNERDRAW))
             Free (part->text);
-        part->text = (LPWSTR)text;
+        part->text = text;
     } else {
 	LPWSTR ntext;
 	WCHAR  *idx;
@@ -1248,10 +1248,10 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_SetParts (infoPtr, (INT)wParam, (LPINT)lParam);
 
 	case SB_SETTEXTA:
-	    return STATUSBAR_SetTextT (infoPtr, nPart, wParam & 0xff00, (LPCWSTR)lParam, FALSE);
+	    return STATUSBAR_SetTextT (infoPtr, nPart, wParam & 0xff00, (LPWSTR)lParam, FALSE);
 
 	case SB_SETTEXTW:
-	    return STATUSBAR_SetTextT (infoPtr, nPart, wParam & 0xff00, (LPCWSTR)lParam, TRUE);
+	    return STATUSBAR_SetTextT (infoPtr, nPart, wParam & 0xff00, (LPWSTR)lParam, TRUE);
 
 	case SB_SETTIPTEXTA:
 	    return STATUSBAR_SetTipTextA (infoPtr, (INT)wParam, (LPSTR)lParam);
