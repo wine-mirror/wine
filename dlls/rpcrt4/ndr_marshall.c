@@ -2395,7 +2395,7 @@ unsigned char *  WINAPI NdrNonConformantStringMarshall(PMIDL_STUB_MESSAGE pStubM
 
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
-  maxsize = *(USHORT *)&pFormat[2];
+  maxsize = *(const USHORT *)&pFormat[2];
 
   if (*pFormat == RPC_FC_CSTRING)
   {
@@ -2445,7 +2445,7 @@ unsigned char *  WINAPI NdrNonConformantStringUnmarshall(PMIDL_STUB_MESSAGE pStu
   TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
 
-  maxsize = *(USHORT *)&pFormat[2];
+  maxsize = *(const USHORT *)&pFormat[2];
 
   ReadVariance(pStubMsg, NULL, maxsize);
   if (pStubMsg->Offset)
@@ -2495,7 +2495,7 @@ void WINAPI NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
-  maxsize = *(USHORT *)&pFormat[2];
+  maxsize = *(const USHORT *)&pFormat[2];
 
   SizeVariance(pStubMsg);
 
@@ -2538,7 +2538,7 @@ ULONG WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
 
-  maxsize = *(USHORT *)&pFormat[2];
+  maxsize = *(const USHORT *)&pFormat[2];
 
   ReadVariance(pStubMsg, NULL, maxsize);
 
@@ -6268,7 +6268,7 @@ static unsigned char *WINAPI NdrRangeMarshall(
     unsigned char *pMemory,
     PFORMAT_STRING pFormat)
 {
-    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    const NDR_RANGE *pRange = (const NDR_RANGE *)pFormat;
     unsigned char base_type;
 
     TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
@@ -6294,7 +6294,7 @@ unsigned char *WINAPI NdrRangeUnmarshall(
     PFORMAT_STRING pFormat,
     unsigned char fMustAlloc)
 {
-    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    const NDR_RANGE *pRange = (const NDR_RANGE *)pFormat;
     unsigned char base_type;
 
     TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
@@ -6391,7 +6391,7 @@ static void WINAPI NdrRangeBufferSize(
     unsigned char *pMemory,
     PFORMAT_STRING pFormat)
 {
-    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    const NDR_RANGE *pRange = (const NDR_RANGE *)pFormat;
     unsigned char base_type;
 
     TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
@@ -6413,7 +6413,7 @@ static ULONG WINAPI NdrRangeMemorySize(
     PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat)
 {
-    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    const NDR_RANGE *pRange = (const NDR_RANGE *)pFormat;
     unsigned char base_type;
 
     if (pRange->type != RPC_FC_RANGE)
