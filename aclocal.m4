@@ -151,7 +151,6 @@ Makefile: Makefile.in Make.rules config.status
 
 AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 AC_SUBST(ALL_TEST_BINARIES,"")
-AC_SUBST(ALL_PROGRAM_BIN_INSTALL_DIRS,"")
 
 wine_fn_append_file ()
 {
@@ -291,14 +290,19 @@ wine_fn_config_program ()
 programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__ dummy
 	@cd programs/$ac_dir && \$(MAKE)"
 
-    if test -n "$ac_install"
-    then
-        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+    test -n "$ac_install" || return
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-lib:: programs/$ac_dir/Makefile __builddeps__
 	@cd programs/$ac_dir && \$(MAKE) install
 uninstall:: programs/$ac_dir/Makefile
 	@cd programs/$ac_dir && \$(MAKE) uninstall"
-        test "$ac_install" != installbin || wine_fn_append_file ALL_PROGRAM_BIN_INSTALL_DIRS programs/$ac_dir
+    if test "$ac_install" = installbin -a -n "$DLLEXT" -a -z "$WOW64_DISABLE"
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install install-lib:: programs \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) programs/wineapploader \$(DESTDIR)\$(bindir)/$ac_dir
+uninstall::
+	\$(RM) \$(DESTDIR)\$(bindir)/$ac_dir"
     fi])
 }
 

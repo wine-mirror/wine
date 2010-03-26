@@ -3,11 +3,6 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-ALL_INSTALLS = @ALL_PROGRAM_BIN_INSTALL_DIRS@
-INSTALLPROGS = $(ALL_INSTALLS:programs/%=%)
-
-INSTALLDIRS = $(DESTDIR)$(bindir)
-
 PROGRAMS = wineapploader
 
 @MAKE_RULES@
@@ -16,19 +11,3 @@ all: $(PROGRAMS)
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
-
-# Rules for installation
-
-.PHONY: install-progs install-progs.so $(INSTALLPROGS:%=%/__installprog__)
-
-$(INSTALLPROGS:%=%/__installprog__): wineapploader $(INSTALLDIRS) dummy
-	$(RM) $(DESTDIR)$(bindir)/`dirname $@` && $(INSTALL_SCRIPT) wineapploader $(DESTDIR)$(bindir)/`dirname $@`
-
-install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
-install-progs: # nothing to do here
-
-@WOW64_DISABLE@ install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
-
-uninstall::
-	-cd $(DESTDIR)$(bindir) && $(RM) $(INSTALLPROGS)
-	-rmdir $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)

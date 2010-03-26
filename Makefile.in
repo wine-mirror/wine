@@ -26,6 +26,9 @@ VPATH     = @srcdir@
 # Sub-directories that don't have a makefile
 EXTRASUBDIRS = dlls libs
 
+# Destination directories for make install
+INSTALLDIRS = $(DESTDIR)$(bindir)
+
 all: wine
 	@echo "Wine build complete."
 

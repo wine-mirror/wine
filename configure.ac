@@ -2713,9 +2713,6 @@ _WINE_EOF
 
 AC_CONFIG_FILES([Make.tmp:Makefile.in])
 
-dnl Don't install in bin dir for Windows build
-test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
-
 dnl Some final makefile rules
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
 [uninstall::
