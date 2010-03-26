@@ -933,8 +933,8 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     {
         err = svcctl_CreateServiceW(hSCManager, lpServiceName,
                 lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
-                lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies,
-                multisz_cb(lpDependencies), lpServiceStartName, (LPBYTE)lpPassword, passwdlen,
+                lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (const BYTE*)lpDependencies,
+                multisz_cb(lpDependencies), lpServiceStartName, (const BYTE*)lpPassword, passwdlen,
                 (SC_RPC_HANDLE *)&handle);
     }
     __EXCEPT(rpc_filter)
