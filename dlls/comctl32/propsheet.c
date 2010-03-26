@@ -1370,10 +1370,10 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
                                 const PropSheetInfo * psInfo,
                                 LPCPROPSHEETPAGEW ppshpage)
 {
-  DLGTEMPLATE* pTemplate;
+  const DLGTEMPLATE* pTemplate;
   HWND hwndPage;
   DWORD resSize;
-  LPVOID temp = NULL;
+  DLGTEMPLATE* pTemplateCopy = NULL;
 
   TRACE("index %d\n", index);
 
@@ -1384,7 +1384,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   if (ppshpage->dwFlags & PSP_DLGINDIRECT)
     {
-      pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
+      pTemplate = ppshpage->u.pResource;
       resSize = GetTemplateSize(pTemplate);
     }
   else if(ppshpage->dwFlags & PSP_INTERNAL_UNICODE)
@@ -1431,39 +1431,38 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
      * Make a copy of the dialog template to make it writable
      */
   }
-  temp = Alloc(resSize);
-  if (!temp)
+  pTemplateCopy = Alloc(resSize);
+  if (!pTemplateCopy)
     return FALSE;
   
-  TRACE("copying pTemplate %p into temp %p (%d)\n", pTemplate, temp, resSize);
-  memcpy(temp, pTemplate, resSize);
-  pTemplate = temp;
+  TRACE("copying pTemplate %p into pTemplateCopy %p (%d)\n", pTemplate, pTemplateCopy, resSize);
+  memcpy(pTemplateCopy, pTemplate, resSize);
 
-  if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
+  if (((MyDLGTEMPLATEEX*)pTemplateCopy)->signature == 0xFFFF)
   {
-    ((MyDLGTEMPLATEEX*)pTemplate)->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~DS_MODALFRAME;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_CAPTION;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_SYSMENU;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_POPUP;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_DISABLED;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_VISIBLE;
-    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_THICKFRAME;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~DS_MODALFRAME;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_CAPTION;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_SYSMENU;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_POPUP;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_DISABLED;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_VISIBLE;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->style &= ~WS_THICKFRAME;
 
-    ((MyDLGTEMPLATEEX*)pTemplate)->exStyle |= WS_EX_CONTROLPARENT;
+    ((MyDLGTEMPLATEEX*)pTemplateCopy)->exStyle |= WS_EX_CONTROLPARENT;
   }
   else
   {
-    pTemplate->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
-    pTemplate->style &= ~DS_MODALFRAME;
-    pTemplate->style &= ~WS_CAPTION;
-    pTemplate->style &= ~WS_SYSMENU;
-    pTemplate->style &= ~WS_POPUP;
-    pTemplate->style &= ~WS_DISABLED;
-    pTemplate->style &= ~WS_VISIBLE;
-    pTemplate->style &= ~WS_THICKFRAME;
+    pTemplateCopy->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
+    pTemplateCopy->style &= ~DS_MODALFRAME;
+    pTemplateCopy->style &= ~WS_CAPTION;
+    pTemplateCopy->style &= ~WS_SYSMENU;
+    pTemplateCopy->style &= ~WS_POPUP;
+    pTemplateCopy->style &= ~WS_DISABLED;
+    pTemplateCopy->style &= ~WS_VISIBLE;
+    pTemplateCopy->style &= ~WS_THICKFRAME;
 
-    pTemplate->dwExtendedStyle |= WS_EX_CONTROLPARENT;
+    pTemplateCopy->dwExtendedStyle |= WS_EX_CONTROLPARENT;
   }
 
   if (psInfo->proppage[index].useCallback)
@@ -1472,18 +1471,18 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   if(ppshpage->dwFlags & PSP_INTERNAL_UNICODE)
      hwndPage = CreateDialogIndirectParamW(ppshpage->hInstance,
-					pTemplate,
+					pTemplateCopy,
 					hwndParent,
 					ppshpage->pfnDlgProc,
 					(LPARAM)ppshpage);
   else
      hwndPage = CreateDialogIndirectParamA(ppshpage->hInstance,
-					pTemplate,
+					pTemplateCopy,
 					hwndParent,
 					ppshpage->pfnDlgProc,
 					(LPARAM)ppshpage);
   /* Free a no more needed copy */
-  Free(temp);
+  Free(pTemplateCopy);
 
   psInfo->proppage[index].hwndPage = hwndPage;
 

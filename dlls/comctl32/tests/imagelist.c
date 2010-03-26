@@ -833,7 +833,7 @@ static void check_bitmap_data(const char *bm_data, ULONG bm_data_size,
 
 static void check_ilhead_data(const char *ilh_data, INT cx, INT cy, INT cur, INT max)
 {
-    ILHEAD *ilh = (ILHEAD *)ilh_data;
+    const ILHEAD *ilh = (const ILHEAD *)ilh_data;
 
     ok(ilh->usMagic == IMAGELIST_MAGIC, "wrong usMagic %4x (expected %02x)\n", ilh->usMagic, IMAGELIST_MAGIC);
     ok(ilh->usVersion == 0x101, "wrong usVersion %x (expected 0x101)\n", ilh->usVersion);
