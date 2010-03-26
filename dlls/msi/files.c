@@ -292,7 +292,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                 !msi_cabextract(package, mi, &data))
             {
                 ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
-                rc = ERROR_FUNCTION_FAILED;
+                rc = ERROR_INSTALL_FAILURE;
                 break;
             }
         }

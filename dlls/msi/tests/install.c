@@ -3670,9 +3670,9 @@ static void test_caborder(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     todo_wine
     {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
         ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
         ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
         ok(!delete_pf("msitest", FALSE), "File is installed\n");
