@@ -2750,6 +2750,12 @@ static void test_XMLHTTP(void)
     SysFreeString(str2);
 
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
+    if (hr == INET_E_RESOURCE_NOT_FOUND)
+    {
+        skip("No connection could be made with crossover.codeweavers.com\n");
+        IXMLHttpRequest_Release(pXMLHttpRequest);
+        return;
+    }
     todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
     VariantClear(&varbody);
 
