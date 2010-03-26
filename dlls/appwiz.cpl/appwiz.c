@@ -556,7 +556,7 @@ static void UninstallProgram(int id, DWORD button)
  *              hWnd         - handle of dialog box
  *              iDlgItem     - ID of label in dialog box
  */
-static void SetInfoDialogText(HKEY hKey, LPWSTR lpKeyName, LPWSTR lpAltMessage,
+static void SetInfoDialogText(HKEY hKey, LPCWSTR lpKeyName, LPCWSTR lpAltMessage,
   HWND hWnd, int iDlgItem)
 {
     WCHAR buf[MAX_STRING_LEN];
@@ -628,17 +628,17 @@ static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                         IDC_INFO_VERSION);
 
                     /* And now update the data for those items in the registry */
-                    SetInfoDialogText(hkey, (LPWSTR) ContactW, notfound, hWnd,
+                    SetInfoDialogText(hkey, ContactW, notfound, hWnd,
                         IDC_INFO_CONTACT);
-                    SetInfoDialogText(hkey, (LPWSTR) HelpLinkW, notfound, hWnd,
+                    SetInfoDialogText(hkey, HelpLinkW, notfound, hWnd,
                         IDC_INFO_SUPPORT);
-                    SetInfoDialogText(hkey, (LPWSTR) HelpTelephoneW, notfound, hWnd,
+                    SetInfoDialogText(hkey, HelpTelephoneW, notfound, hWnd,
                         IDC_INFO_PHONE);
-                    SetInfoDialogText(hkey, (LPWSTR) ReadmeW, notfound, hWnd,
+                    SetInfoDialogText(hkey, ReadmeW, notfound, hWnd,
                         IDC_INFO_README);
-                    SetInfoDialogText(hkey, (LPWSTR) URLUpdateInfoW, notfound, hWnd,
+                    SetInfoDialogText(hkey, URLUpdateInfoW, notfound, hWnd,
                         IDC_INFO_UPDATES);
-                    SetInfoDialogText(hkey, (LPWSTR) CommentsW, notfound, hWnd,
+                    SetInfoDialogText(hkey, CommentsW, notfound, hWnd,
                         IDC_INFO_COMMENTS);
 
                     /* Update the main label with the app name */
