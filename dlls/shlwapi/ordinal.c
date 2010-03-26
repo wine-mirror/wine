@@ -2818,7 +2818,7 @@ BOOL WINAPI GUIDFromStringA(LPCSTR idstr, CLSID *id)
  */
 BOOL WINAPI GUIDFromStringW(LPCWSTR idstr, CLSID *id)
 {
-    return SUCCEEDED(CLSIDFromString((LPOLESTR)idstr, id));
+    return SUCCEEDED(CLSIDFromString((LPCOLESTR)idstr, id));
 }
 
 /*************************************************************************
@@ -3903,7 +3903,7 @@ DWORD WINAPI SHSendMessageBroadcastW(UINT uMsg, WPARAM wParam, LPARAM lParam)
  */
 HRESULT WINAPI CLSIDFromStringWrap(LPCWSTR idstr, CLSID *id)
 {
-    return CLSIDFromString((LPOLESTR)idstr, id);
+    return CLSIDFromString((LPCOLESTR)idstr, id);
 }
 
 /*************************************************************************

@@ -252,7 +252,7 @@ DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id)
 DWORD WINAPI SHCLSIDFromStringW (LPCWSTR clsid, CLSID *id)
 {
 	TRACE("(%p(%s) %p)\n", clsid, debugstr_w(clsid), id);
-	return CLSIDFromString((LPWSTR)clsid, id);
+	return CLSIDFromString(clsid, id);
 }
 DWORD WINAPI SHCLSIDFromStringAW (LPCVOID clsid, CLSID *id)
 {

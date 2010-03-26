@@ -286,7 +286,7 @@ BOOL squash_guid(LPCWSTR in, LPWSTR out)
 
     out[0] = 0;
 
-    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
+    if (FAILED(CLSIDFromString((LPCOLESTR)in, &guid)))
         return FALSE;
 
     for(i=0; i<8; i++)

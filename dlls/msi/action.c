@@ -3098,7 +3098,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     {
         LPCWSTR guid;
         guid = MSI_RecordGetString(row,1);
-        CLSIDFromString((LPWSTR)guid, &tl_struct.clsid);
+        CLSIDFromString((LPCWSTR)guid, &tl_struct.clsid);
         tl_struct.source = strdupW( file->TargetPath );
         tl_struct.path = NULL;
 
@@ -3199,7 +3199,7 @@ static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
     ui_actiondata( package, szUnregisterTypeLibraries, row );
 
     guid = MSI_RecordGetString( row, 1 );
-    CLSIDFromString( (LPWSTR)guid, &libid );
+    CLSIDFromString( (LPCWSTR)guid, &libid );
     version = MSI_RecordGetInteger( row, 4 );
     language = MSI_RecordGetInteger( row, 2 );
 
