@@ -1843,10 +1843,10 @@ HKL WINAPI ImmInstallIMEW(
 
     if (rc == ERROR_SUCCESS)
     {
-        rc = RegSetValueExW(hkey, szImeFileW, 0, REG_SZ, (LPBYTE)lpszIMEFileName,
+        rc = RegSetValueExW(hkey, szImeFileW, 0, REG_SZ, (const BYTE*)lpszIMEFileName,
                             (lstrlenW(lpszIMEFileName) + 1) * sizeof(WCHAR));
         if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(hkey, szLayoutTextW, 0, REG_SZ, (LPBYTE)lpszLayoutText,
+            rc = RegSetValueExW(hkey, szLayoutTextW, 0, REG_SZ, (const BYTE*)lpszLayoutText,
                                 (lstrlenW(lpszLayoutText) + 1) * sizeof(WCHAR));
         RegCloseKey(hkey);
         return hkl;
