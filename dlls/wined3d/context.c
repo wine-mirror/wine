@@ -1834,10 +1834,8 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 {
     IWineD3DSwapChain *swapchain = NULL;
     struct wined3d_context *current_context = context_get_current();
-    const struct StateEntry *StateTable = This->StateTable;
     DWORD tid = GetCurrentThreadId();
     struct wined3d_context *context;
-    BOOL old_render_offscreen;
 
     if (current_context && current_context->destroyed) current_context = NULL;
 
@@ -1867,9 +1865,6 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         TRACE("Rendering onscreen\n");
 
         context = findThreadContextForSwapChain(swapchain, tid);
-
-        old_render_offscreen = context->render_offscreen;
-        context->render_offscreen = surface_is_offscreen(target);
         IWineD3DSwapChain_Release(swapchain);
     }
     else
@@ -1891,84 +1886,9 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
              * is perfect to call. */
             context = findThreadContextForSwapChain(This->swapchains[0], tid);
         }
-
-        old_render_offscreen = context->render_offscreen;
-        context->render_offscreen = TRUE;
     }
 
     context_validate(context);
-
-    if (context->render_offscreen != old_render_offscreen)
-    {
-        Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-        Context_MarkStateDirty(context, STATE_VDECL, StateTable);
-        Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-        Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
-        Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
-    }
-
-    /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
-     * the alpha blend state changes with different render target formats. */
-    if (!context->current_rt)
-    {
-        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
-    }
-    else
-    {
-        const struct wined3d_format_desc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
-        const struct wined3d_format_desc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
-
-        if (old->format != new->format)
-        {
-            /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
-            if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
-                    || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-            {
-                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
-            }
-        }
-
-        /* When switching away from an offscreen render target, and we're not
-         * using FBOs, we have to read the drawable into the texture. This is
-         * done via PreLoad (and SFLAG_INDRAWABLE set on the surface). There
-         * are some things that need care though. PreLoad needs a GL context,
-         * and FindContext is called before the context is activated. It also
-         * has to be called with the old rendertarget active, otherwise a
-         * wrong drawable is read. */
-        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-                && old_render_offscreen && context->current_rt != target)
-        {
-            BOOL oldInDraw = This->isInDraw;
-
-            /* surface_internal_preload() requires a context to load the
-             * texture, so it will call context_acquire(). Set isInDraw to true
-             * to signal surface_internal_preload() that it has a context. */
-
-            /* FIXME: This is just broken. There's no guarantee whatsoever
-             * that the currently active context, if any, is appropriate for
-             * reading back the render target. We should probably call
-             * context_set_current(context) here and then rely on
-             * context_acquire() doing the right thing. */
-            This->isInDraw = TRUE;
-
-            /* Read the back buffer of the old drawable into the destination texture. */
-            if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
-            {
-                surface_internal_preload(context->current_rt, SRGB_BOTH);
-            }
-            else
-            {
-                surface_internal_preload(context->current_rt, SRGB_RGB);
-            }
-
-            IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
-
-            This->isInDraw = oldInDraw;
-        }
-    }
-
-    context->draw_buffer_dirty = TRUE;
-    context->current_rt = target;
 
     return context;
 }
@@ -2139,6 +2059,88 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
     }
 }
 
+static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_context *context, IWineD3DSurface *target)
+{
+    BOOL old_render_offscreen = context->render_offscreen;
+    const struct StateEntry *StateTable = device->StateTable;
+
+    if (!target) return;
+    else if (context->current_rt == target) return;
+    context->render_offscreen = surface_is_offscreen(target);
+
+    if (context->render_offscreen != old_render_offscreen)
+    {
+        Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+        Context_MarkStateDirty(context, STATE_VDECL, StateTable);
+        Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
+        Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
+        Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
+    }
+
+    /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
+     * the alpha blend state changes with different render target formats. */
+    if (!context->current_rt)
+    {
+        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+    }
+    else
+    {
+        const struct wined3d_format_desc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
+        const struct wined3d_format_desc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
+
+        if (old->format != new->format)
+        {
+            /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
+            if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
+                    || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+            {
+                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+            }
+        }
+
+        /* When switching away from an offscreen render target, and we're not
+         * using FBOs, we have to read the drawable into the texture. This is
+         * done via PreLoad (and SFLAG_INDRAWABLE set on the surface). There
+         * are some things that need care though. PreLoad needs a GL context,
+         * and FindContext is called before the context is activated. It also
+         * has to be called with the old rendertarget active, otherwise a
+         * wrong drawable is read. */
+        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                && old_render_offscreen && context->current_rt != target)
+        {
+            BOOL oldInDraw = device->isInDraw;
+
+            /* surface_internal_preload() requires a context to load the
+             * texture, so it will call context_acquire(). Set isInDraw to true
+             * to signal surface_internal_preload() that it has a context. */
+
+            /* FIXME: This is just broken. There's no guarantee whatsoever
+             * that the currently active context, if any, is appropriate for
+             * reading back the render target. We should probably call
+             * context_set_current(context) here and then rely on
+             * context_acquire() doing the right thing. */
+            device->isInDraw = TRUE;
+
+            /* Read the back buffer of the old drawable into the destination texture. */
+            if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
+            {
+                surface_internal_preload(context->current_rt, SRGB_BOTH);
+            }
+            else
+            {
+                surface_internal_preload(context->current_rt, SRGB_RGB);
+            }
+
+            IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
+
+            device->isInDraw = oldInDraw;
+        }
+    }
+
+    context->draw_buffer_dirty = TRUE;
+    context->current_rt = target;
+}
+
 /*****************************************************************************
  * context_acquire
  *
@@ -2160,6 +2162,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
     TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
 
     context = FindContext(device, target);
+    context_setup_target(device, context, target);
     context_enter(context);
     if (!context->valid) return context;
 
