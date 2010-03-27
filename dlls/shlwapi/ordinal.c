@@ -1264,9 +1264,10 @@ LPCSTR WINAPI PathSkipLeadingSlashesA(LPCSTR lpszSrc)
  */
 BOOL WINAPI SHIsSameObject(IUnknown* lpInt1, IUnknown* lpInt2)
 {
-  LPVOID lpUnknown1, lpUnknown2;
+  IUnknown *lpUnknown1, *lpUnknown2;
+  BOOL ret;
 
-  TRACE("%p %p\n", lpInt1, lpInt2);
+  TRACE("(%p %p)\n", lpInt1, lpInt2);
 
   if (!lpInt1 || !lpInt2)
     return FALSE;
@@ -1274,16 +1275,21 @@ BOOL WINAPI SHIsSameObject(IUnknown* lpInt1, IUnknown* lpInt2)
   if (lpInt1 == lpInt2)
     return TRUE;
 
-  if (FAILED(IUnknown_QueryInterface(lpInt1, &IID_IUnknown, &lpUnknown1)))
+  if (IUnknown_QueryInterface(lpInt1, &IID_IUnknown, (void**)&lpUnknown1) != S_OK)
     return FALSE;
 
-  if (FAILED(IUnknown_QueryInterface(lpInt2, &IID_IUnknown, &lpUnknown2)))
+  if (IUnknown_QueryInterface(lpInt2, &IID_IUnknown, (void**)&lpUnknown2) != S_OK)
+  {
+    IUnknown_Release(lpUnknown1);
     return FALSE;
+  }
 
-  if (lpUnknown1 == lpUnknown2)
-    return TRUE;
+  ret = lpUnknown1 == lpUnknown2;
 
-  return FALSE;
+  IUnknown_Release(lpUnknown1);
+  IUnknown_Release(lpUnknown2);
+
+  return ret;
 }
 
 /*************************************************************************
