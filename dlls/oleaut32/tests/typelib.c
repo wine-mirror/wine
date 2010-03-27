@@ -1099,7 +1099,7 @@ static void test_CreateTypeLib(void) {
     funcdesc.invkind = INVOKE_PROPERTYGET;
     funcdesc.callconv = CC_STDCALL;
     funcdesc.elemdescFunc.tdesc.vt = VT_BSTR;
-    funcdesc.elemdescFunc.idldesc.wIDLFlags = IDLFLAG_NONE;
+    U(funcdesc.elemdescFunc).idldesc.wIDLFlags = IDLFLAG_NONE;
 
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, NULL);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
@@ -1122,8 +1122,8 @@ static void test_CreateTypeLib(void) {
     ok(hres == TYPE_E_INCONSISTENTPROPFUNCS, "got %08x\n", hres);
 
     elemdesc[0].tdesc.vt = VT_BSTR;
-    elemdesc[0].idldesc.dwReserved = 0;
-    elemdesc[0].idldesc.wIDLFlags = IDLFLAG_FIN;
+    U(elemdesc[0]).idldesc.dwReserved = 0;
+    U(elemdesc[0]).idldesc.wIDLFlags = IDLFLAG_FIN;
 
     funcdesc.lprgelemdescParam = elemdesc;
     funcdesc.invkind = INVOKE_PROPERTYPUT;
@@ -1158,40 +1158,40 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
 
     elemdesc[0].tdesc.vt = VT_PTR;
-    elemdesc[0].tdesc.lptdesc = &typedesc1;
+    U(elemdesc[0].tdesc).lptdesc = &typedesc1;
     typedesc1.vt = VT_BSTR;
     funcdesc.cParams = 1;
     funcdesc.lprgelemdescParam = elemdesc;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 4, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    elemdesc[0].tdesc.lptdesc = &typedesc2;
+    U(elemdesc[0].tdesc).lptdesc = &typedesc2;
     typedesc2.vt = VT_PTR;
-    typedesc2.lptdesc = &typedesc1;
+    U(typedesc2).lptdesc = &typedesc1;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 4, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
     elemdesc[0].tdesc.vt = VT_INT;
-    elemdesc[0].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
-    elemdesc[0].paramdesc.pparamdescex = &paramdescex;
+    U(elemdesc[0]).paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    U(elemdesc[0]).paramdesc.pparamdescex = &paramdescex;
     V_VT(&paramdescex.varDefaultValue) = VT_INT;
     V_INT(&paramdescex.varDefaultValue) = 0x123;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    elemdesc[0].idldesc.dwReserved = 0;
-    elemdesc[0].idldesc.wIDLFlags = IDLFLAG_FIN;
+    U(elemdesc[0]).idldesc.dwReserved = 0;
+    U(elemdesc[0]).idldesc.wIDLFlags = IDLFLAG_FIN;
     elemdesc[1].tdesc.vt = VT_UI2;
-    elemdesc[1].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
-    elemdesc[1].paramdesc.pparamdescex = &paramdescex;
+    U(elemdesc[1]).paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    U(elemdesc[1]).paramdesc.pparamdescex = &paramdescex;
     V_VT(&paramdescex.varDefaultValue) = VT_UI2;
     V_UI2(&paramdescex.varDefaultValue) = 0xffff;
     funcdesc.cParams = 2;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    elemdesc[0].paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
-    elemdesc[0].paramdesc.pparamdescex = &paramdescex;
+    U(elemdesc[0]).paramdesc.wParamFlags = PARAMFLAG_FHASDEFAULT;
+    U(elemdesc[0]).paramdesc.pparamdescex = &paramdescex;
     elemdesc[1].tdesc.vt = VT_INT;
     V_VT(&paramdescex.varDefaultValue) = VT_INT;
     V_INT(&paramdescex.varDefaultValue) = 0xffffffff;
