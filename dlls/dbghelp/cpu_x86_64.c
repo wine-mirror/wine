@@ -633,6 +633,128 @@ static unsigned x86_64_map_dwarf_register(unsigned regno)
     return reg;
 }
 
+static void* x86_64_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
+{
+#ifdef __x86_64__
+    switch (regno)
+    {
+    case CV_AMD64_RAX: *size = sizeof(ctx->Rax); return &ctx->Rax;
+    case CV_AMD64_RDX: *size = sizeof(ctx->Rdx); return &ctx->Rdx;
+    case CV_AMD64_RCX: *size = sizeof(ctx->Rcx); return &ctx->Rcx;
+    case CV_AMD64_RBX: *size = sizeof(ctx->Rbx); return &ctx->Rbx;
+    case CV_AMD64_RSI: *size = sizeof(ctx->Rsi); return &ctx->Rsi;
+    case CV_AMD64_RDI: *size = sizeof(ctx->Rdi); return &ctx->Rdi;
+    case CV_AMD64_RBP: *size = sizeof(ctx->Rbp); return &ctx->Rbp;
+    case CV_AMD64_RSP: *size = sizeof(ctx->Rsp); return &ctx->Rsp;
+    case CV_AMD64_R8:  *size = sizeof(ctx->R8);  return &ctx->R8;
+    case CV_AMD64_R9:  *size = sizeof(ctx->R9);  return &ctx->R9;
+    case CV_AMD64_R10: *size = sizeof(ctx->R10); return &ctx->R10;
+    case CV_AMD64_R11: *size = sizeof(ctx->R11); return &ctx->R11;
+    case CV_AMD64_R12: *size = sizeof(ctx->R12); return &ctx->R12;
+    case CV_AMD64_R13: *size = sizeof(ctx->R13); return &ctx->R13;
+    case CV_AMD64_R14: *size = sizeof(ctx->R14); return &ctx->R14;
+    case CV_AMD64_R15: *size = sizeof(ctx->R15); return &ctx->R15;
+    case CV_AMD64_RIP: *size = sizeof(ctx->Rip); return &ctx->Rip;
+
+    case CV_AMD64_XMM0 + 0: *size = sizeof(ctx->u.s.Xmm0 ); return &ctx->u.s.Xmm0;
+    case CV_AMD64_XMM0 + 1: *size = sizeof(ctx->u.s.Xmm1 ); return &ctx->u.s.Xmm1;
+    case CV_AMD64_XMM0 + 2: *size = sizeof(ctx->u.s.Xmm2 ); return &ctx->u.s.Xmm2;
+    case CV_AMD64_XMM0 + 3: *size = sizeof(ctx->u.s.Xmm3 ); return &ctx->u.s.Xmm3;
+    case CV_AMD64_XMM0 + 4: *size = sizeof(ctx->u.s.Xmm4 ); return &ctx->u.s.Xmm4;
+    case CV_AMD64_XMM0 + 5: *size = sizeof(ctx->u.s.Xmm5 ); return &ctx->u.s.Xmm5;
+    case CV_AMD64_XMM0 + 6: *size = sizeof(ctx->u.s.Xmm6 ); return &ctx->u.s.Xmm6;
+    case CV_AMD64_XMM0 + 7: *size = sizeof(ctx->u.s.Xmm7 ); return &ctx->u.s.Xmm7;
+    case CV_AMD64_XMM8 + 0: *size = sizeof(ctx->u.s.Xmm8 ); return &ctx->u.s.Xmm8;
+    case CV_AMD64_XMM8 + 1: *size = sizeof(ctx->u.s.Xmm9 ); return &ctx->u.s.Xmm9;
+    case CV_AMD64_XMM8 + 2: *size = sizeof(ctx->u.s.Xmm10); return &ctx->u.s.Xmm10;
+    case CV_AMD64_XMM8 + 3: *size = sizeof(ctx->u.s.Xmm11); return &ctx->u.s.Xmm11;
+    case CV_AMD64_XMM8 + 4: *size = sizeof(ctx->u.s.Xmm12); return &ctx->u.s.Xmm12;
+    case CV_AMD64_XMM8 + 5: *size = sizeof(ctx->u.s.Xmm13); return &ctx->u.s.Xmm13;
+    case CV_AMD64_XMM8 + 6: *size = sizeof(ctx->u.s.Xmm14); return &ctx->u.s.Xmm14;
+    case CV_AMD64_XMM8 + 7: *size = sizeof(ctx->u.s.Xmm15); return &ctx->u.s.Xmm15;
+
+    case CV_AMD64_ST0 + 0: *size = sizeof(ctx->u.s.Legacy[0]); return &ctx->u.s.Legacy[0];
+    case CV_AMD64_ST0 + 1: *size = sizeof(ctx->u.s.Legacy[1]); return &ctx->u.s.Legacy[1];
+    case CV_AMD64_ST0 + 2: *size = sizeof(ctx->u.s.Legacy[2]); return &ctx->u.s.Legacy[2];
+    case CV_AMD64_ST0 + 3: *size = sizeof(ctx->u.s.Legacy[3]); return &ctx->u.s.Legacy[3];
+    case CV_AMD64_ST0 + 4: *size = sizeof(ctx->u.s.Legacy[4]); return &ctx->u.s.Legacy[4];
+    case CV_AMD64_ST0 + 5: *size = sizeof(ctx->u.s.Legacy[5]); return &ctx->u.s.Legacy[5];
+    case CV_AMD64_ST0 + 6: *size = sizeof(ctx->u.s.Legacy[6]); return &ctx->u.s.Legacy[6];
+    case CV_AMD64_ST0 + 7: *size = sizeof(ctx->u.s.Legacy[7]); return &ctx->u.s.Legacy[7];
+
+    case CV_AMD64_EFLAGS: *size = sizeof(ctx->EFlags); return &ctx->EFlags;
+    case CV_AMD64_ES: *size = sizeof(ctx->SegEs); return &ctx->SegEs;
+    case CV_AMD64_CS: *size = sizeof(ctx->SegCs); return &ctx->SegCs;
+    case CV_AMD64_SS: *size = sizeof(ctx->SegSs); return &ctx->SegSs;
+    case CV_AMD64_DS: *size = sizeof(ctx->SegDs); return &ctx->SegDs;
+    case CV_AMD64_FS: *size = sizeof(ctx->SegFs); return &ctx->SegFs;
+    case CV_AMD64_GS: *size = sizeof(ctx->SegGs); return &ctx->SegGs;
+
+    }
+#endif
+    FIXME("Unknown register %x\n", regno);
+    return NULL;
+}
+
+static const char* x86_64_fetch_regname(unsigned regno)
+{
+    switch (regno)
+    {
+    case CV_AMD64_RAX:          return "rax";
+    case CV_AMD64_RDX:          return "rdx";
+    case CV_AMD64_RCX:          return "rcx";
+    case CV_AMD64_RBX:          return "rbx";
+    case CV_AMD64_RSI:          return "rsi";
+    case CV_AMD64_RDI:          return "rdi";
+    case CV_AMD64_RBP:          return "rbp";
+    case CV_AMD64_RSP:          return "rsp";
+    case CV_AMD64_R8:           return "r8";
+    case CV_AMD64_R9:           return "r9";
+    case CV_AMD64_R10:          return "r10";
+    case CV_AMD64_R11:          return "r11";
+    case CV_AMD64_R12:          return "r12";
+    case CV_AMD64_R13:          return "r13";
+    case CV_AMD64_R14:          return "r14";
+    case CV_AMD64_R15:          return "r15";
+    case CV_AMD64_RIP:          return "rip";
+
+    case CV_AMD64_XMM0 + 0:     return "xmm0";
+    case CV_AMD64_XMM0 + 1:     return "xmm1";
+    case CV_AMD64_XMM0 + 2:     return "xmm2";
+    case CV_AMD64_XMM0 + 3:     return "xmm3";
+    case CV_AMD64_XMM0 + 4:     return "xmm4";
+    case CV_AMD64_XMM0 + 5:     return "xmm5";
+    case CV_AMD64_XMM0 + 6:     return "xmm6";
+    case CV_AMD64_XMM0 + 7:     return "xmm7";
+    case CV_AMD64_XMM8 + 0:     return "xmm8";
+    case CV_AMD64_XMM8 + 1:     return "xmm9";
+    case CV_AMD64_XMM8 + 2:     return "xmm10";
+    case CV_AMD64_XMM8 + 3:     return "xmm11";
+    case CV_AMD64_XMM8 + 4:     return "xmm12";
+    case CV_AMD64_XMM8 + 5:     return "xmm13";
+    case CV_AMD64_XMM8 + 6:     return "xmm14";
+    case CV_AMD64_XMM8 + 7:     return "xmm15";
+
+    case CV_AMD64_ST0 + 0:      return "st0";
+    case CV_AMD64_ST0 + 1:      return "st1";
+    case CV_AMD64_ST0 + 2:      return "st2";
+    case CV_AMD64_ST0 + 3:      return "st3";
+    case CV_AMD64_ST0 + 4:      return "st4";
+    case CV_AMD64_ST0 + 5:      return "st5";
+    case CV_AMD64_ST0 + 6:      return "st6";
+    case CV_AMD64_ST0 + 7:      return "st7";
+
+    case CV_AMD64_EFLAGS:       return "eflags";
+    case CV_AMD64_ES:           return "es";
+    case CV_AMD64_CS:           return "cs";
+    case CV_AMD64_SS:           return "ss";
+    case CV_AMD64_DS:           return "ds";
+    case CV_AMD64_FS:           return "fs";
+    case CV_AMD64_GS:           return "gs";
+    }
+    FIXME("Unknown register %x\n", regno);
+    return NULL;
+}
 
 struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
@@ -641,4 +763,6 @@ struct cpu cpu_x86_64 = {
     x86_64_stack_walk,
     x86_64_find_runtime_function,
     x86_64_map_dwarf_register,
+    x86_64_fetch_context_reg,
+    x86_64_fetch_regname,
 };

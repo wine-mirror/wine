@@ -60,6 +60,18 @@ static unsigned ppc_map_dwarf_register(unsigned regno)
     return 0;
 }
 
+static void* ppc_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
+{
+    FIXME("NIY\n");
+    return NULL;
+}
+
+static const char* ppc_fetch_regname(unsigned regno)
+{
+    FIXME("Unknown register %x\n", regno);
+    return NULL;
+}
+
 struct cpu cpu_ppc = {
     IMAGE_FILE_MACHINE_POWERPC,
     4,
@@ -67,4 +79,6 @@ struct cpu cpu_ppc = {
     ppc_stack_walk,
     NULL,
     ppc_map_dwarf_register,
+    ppc_fetch_context_reg,
+    ppc_fetch_regname,
 };

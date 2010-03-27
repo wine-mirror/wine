@@ -481,6 +481,10 @@ struct cpu
 
     /* dwarf dedicated information */
     unsigned    (*map_dwarf_register)(unsigned regno);
+
+    /* context related maniputation */
+    void*       (*fetch_context_reg)(CONTEXT* context, unsigned regno, unsigned* size);
+    const char* (*fetch_regname)(unsigned regno);
 };
 
 extern struct cpu*      dbghelp_current_cpu;

@@ -450,6 +450,18 @@ reg: fop   31
     return reg;
 }
 
+static void* i386_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
+{
+    FIXME("NIY\n");
+    return NULL;
+}
+
+static const char* i386_fetch_regname(unsigned regno)
+{
+    FIXME("Unknown register %x\n", regno);
+    return NULL;
+}
+
 struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
@@ -457,4 +469,6 @@ struct cpu cpu_i386 = {
     i386_stack_walk,
     NULL,
     i386_map_dwarf_register,
+    i386_fetch_context_reg,
+    i386_fetch_regname,
 };
