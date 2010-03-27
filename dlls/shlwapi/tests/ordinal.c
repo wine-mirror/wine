@@ -136,6 +136,9 @@ static void ok_trace_(call_trace_t *texpected, call_trace_t *tgot, int line)
 
 #define ok_trace(a, b) ok_trace_(a, b, __LINE__)
 
+/* trace of actually made calls */
+static call_trace_t trace_got;
+
 static void test_GetAcceptLanguagesA(void)
 {
     static LPCSTR table[] = {"de,en-gb;q=0.7,en;q=0.3",
@@ -1947,8 +1950,6 @@ static void test_SHGetObjectCompatFlags(void)
     RegCloseKey(root);
 }
 
-static call_trace_t IUnknown_QueryServiceExec_trace;
-
 typedef struct {
     const IOleCommandTargetVtbl *lpVtbl;
     LONG ref;
@@ -2019,7 +2020,7 @@ static HRESULT WINAPI IOleCommandTargetImpl_Exec(
     VARIANT *pvaIn,
     VARIANT *pvaOut)
 {
-    add_call(&IUnknown_QueryServiceExec_trace, 3, CmdGroup, (void*)nCmdID, (void*)nCmdexecopt, pvaIn, pvaOut);
+    add_call(&trace_got, 3, CmdGroup, (void*)nCmdID, (void*)nCmdexecopt, pvaIn, pvaOut);
     return S_OK;
 }
 
@@ -2068,8 +2069,6 @@ IProfferService* IProfferServiceImpl_Construct(void)
     return (IProfferService*)obj;
 }
 
-static call_trace_t IUnknown_ProfferService_trace;
-
 static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObj)
 {
     IServiceProviderImpl *This = (IServiceProviderImpl *)iface;
@@ -2085,7 +2084,7 @@ static HRESULT WINAPI IServiceProviderImpl_QueryInterface(IServiceProvider *ifac
         IUnknown_AddRef(iface);
         /* native uses redefined IID_IServiceProvider symbol, so we can't compare pointers */
         if (IsEqualIID(riid, &IID_IServiceProvider))
-            add_call(&IUnknown_QueryServiceExec_trace, 1, iface, &IID_IServiceProvider, 0, 0, 0);
+            add_call(&trace_got, 1, iface, &IID_IServiceProvider, 0, 0, 0);
         return S_OK;
     }
 
@@ -2117,13 +2116,13 @@ static HRESULT WINAPI IServiceProviderImpl_QueryService(
     /* native uses redefined pointer for IID_IOleCommandTarget, not one from uuid.lib */
     if (IsEqualIID(riid, &IID_IOleCommandTarget))
     {
-        add_call(&IUnknown_QueryServiceExec_trace, 2, iface, service, &IID_IOleCommandTarget, 0, 0);
+        add_call(&trace_got, 2, iface, service, &IID_IOleCommandTarget, 0, 0);
         *ppv = IOleCommandTargetImpl_Construct();
     }
     if (IsEqualIID(riid, &IID_IProfferService))
     {
         if (IsEqualIID(service, &IID_IProfferService))
-            add_call(&IUnknown_ProfferService_trace, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
+            add_call(&trace_got, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
         *ppv = IProfferServiceImpl_Construct();
     }
     return S_OK;
@@ -2170,14 +2169,14 @@ static void test_IUnknown_QueryServiceExec(void)
     add_call(&trace_expected, 2, provider, &dummy_serviceid, &IID_IOleCommandTarget, 0, 0);
     add_call(&trace_expected, 3, &dummy_groupid, (void*)0x1, (void*)0x2, (void*)0x3, (void*)0x4);
 
-    init_call_trace(&IUnknown_QueryServiceExec_trace);
+    init_call_trace(&trace_got);
     hr = pIUnknown_QueryServiceExec((IUnknown*)provider, &dummy_serviceid, &dummy_groupid, 0x1, 0x2, (void*)0x3, (void*)0x4);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ok_trace(&trace_expected, &IUnknown_QueryServiceExec_trace);
+    ok_trace(&trace_expected, &trace_got);
 
     free_call_trace(&trace_expected);
-    free_call_trace(&IUnknown_QueryServiceExec_trace);
+    free_call_trace(&trace_got);
 
     IServiceProvider_Release(provider);
 }
@@ -2195,7 +2194,7 @@ static HRESULT WINAPI IProfferServiceImpl_QueryInterface(IProfferService *iface,
     else if (IsEqualIID(riid, &IID_IServiceProvider))
     {
         *ppvObj = IServiceProviderImpl_Construct();
-        add_call(&IUnknown_ProfferService_trace, 1, iface, &IID_IServiceProvider, 0, 0, 0);
+        add_call(&trace_got, 1, iface, &IID_IServiceProvider, 0, 0, 0);
         return S_OK;
     }
 
@@ -2230,13 +2229,13 @@ static ULONG WINAPI IProfferServiceImpl_Release(IProfferService *iface)
 static HRESULT WINAPI IProfferServiceImpl_ProfferService(IProfferService *iface,
     REFGUID service, IServiceProvider *pService, DWORD *pCookie)
 {
-    add_call(&IUnknown_ProfferService_trace, 3, service, pService, pCookie, 0, 0);
+    add_call(&trace_got, 3, service, pService, pCookie, 0, 0);
     return S_OK;
 }
 
 static HRESULT WINAPI IProfferServiceImpl_RevokeService(IProfferService *iface, DWORD cookie)
 {
-    add_call(&IUnknown_ProfferService_trace, 4, (void*)cookie, 0, 0, 0, 0);
+    add_call(&trace_got, 4, (void*)cookie, 0, 0, 0, 0);
     return S_OK;
 }
 
@@ -2287,12 +2286,12 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
     add_call(&trace_expected, 3, &dummy_serviceid, provider, &cookie, 0, 0);
 
-    init_call_trace(&IUnknown_ProfferService_trace);
+    init_call_trace(&trace_got);
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, provider, &cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ok_trace(&trace_expected, &IUnknown_ProfferService_trace);
-    free_call_trace(&IUnknown_ProfferService_trace);
+    ok_trace(&trace_expected, &trace_got);
+    free_call_trace(&trace_got);
     free_call_trace(&trace_expected);
 
     /* same with ::Revoke path */
@@ -2302,11 +2301,11 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
     add_call(&trace_expected, 4, (void*)cookie, 0, 0, 0, 0);
 
-    init_call_trace(&IUnknown_ProfferService_trace);
+    init_call_trace(&trace_got);
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, 0, &cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_trace(&trace_expected, &IUnknown_ProfferService_trace);
-    free_call_trace(&IUnknown_ProfferService_trace);
+    ok_trace(&trace_expected, &trace_got);
+    free_call_trace(&trace_got);
     free_call_trace(&trace_expected);
 
     IServiceProvider_Release(provider);
