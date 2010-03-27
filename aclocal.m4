@@ -407,11 +407,13 @@ AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 
 dnl **** Create symlinks from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_SYMLINK(name,target)
+dnl Usage: WINE_CONFIG_SYMLINK(name,target,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AC_CONFIG_LINKS([$1:]m4_default([$2],[$1]))dnl
-m4_if([$2],,[test "$srcdir" = "." || ])wine_fn_config_symlink $1])
+m4_ifval([$3],[if test "x$[$3]" != xno; then
+])AC_CONFIG_LINKS([$1:]m4_default([$2],[$1]))dnl
+m4_if([$2],,[test "$srcdir" = "." || ])wine_fn_config_symlink $1[]m4_ifval([$3],[
+fi])])
 
 dnl **** Create a make rules file from config.status ****
 dnl

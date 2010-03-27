@@ -14107,14 +14107,22 @@ distclean::
 }
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
 test "$srcdir" = "." || wine_fn_config_symlink dlls/wineps.drv/generic.ppd
+if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf
+fi
+if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/symbol.ttf
+fi
+if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/tahoma.ttf
+fi
+if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/tahomabd.ttf
+fi
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 
