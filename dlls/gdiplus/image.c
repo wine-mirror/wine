@@ -122,7 +122,7 @@ static inline void getpixel_16bppGrayScale(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
 static inline void getpixel_16bppRGB555(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
     const BYTE *row, UINT x)
 {
-    WORD pixel = *((WORD*)(row)+x);
+    WORD pixel = *((const WORD*)(row)+x);
     *r = (pixel>>7&0xf8)|(pixel>>12&0x7);
     *g = (pixel>>2&0xf8)|(pixel>>6&0x7);
     *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
@@ -132,7 +132,7 @@ static inline void getpixel_16bppRGB555(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
 static inline void getpixel_16bppRGB565(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
     const BYTE *row, UINT x)
 {
-    WORD pixel = *((WORD*)(row)+x);
+    WORD pixel = *((const WORD*)(row)+x);
     *r = (pixel>>8&0xf8)|(pixel>>13&0x7);
     *g = (pixel>>3&0xfc)|(pixel>>9&0x3);
     *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
@@ -142,7 +142,7 @@ static inline void getpixel_16bppRGB565(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
 static inline void getpixel_16bppARGB1555(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
     const BYTE *row, UINT x)
 {
-    WORD pixel = *((WORD*)(row)+x);
+    WORD pixel = *((const WORD*)(row)+x);
     *r = (pixel>>7&0xf8)|(pixel>>12&0x7);
     *g = (pixel>>2&0xf8)|(pixel>>6&0x7);
     *b = (pixel<<3&0xf8)|(pixel>>2&0x7);
