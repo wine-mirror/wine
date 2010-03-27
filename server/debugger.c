@@ -647,7 +647,7 @@ DECL_HANDLER(queue_exception_event)
 
         if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
         {
-            const context_t *context = (const context_t *)((char *)get_req_data() + req->len);
+            const context_t *context = (const context_t *)((const char *)get_req_data() + req->len);
             data_size_t size = get_req_data_size() - req->len;
 
             memset( &event->context, 0, sizeof(event->context) );
