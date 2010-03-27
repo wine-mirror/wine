@@ -170,8 +170,8 @@ static void MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, 
             PROPVARIANT pv;
             pv.vt = VT_LPWSTR;
             pv.u.pwszVal = name;
-            MMDevice_SetPropValue(id, flow, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
-            MMDevice_SetPropValue(id, flow, (PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv);
+            MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
+            MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv);
             RegCloseKey(keyprop);
         }
         RegCloseKey(key);
@@ -653,7 +653,7 @@ HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY ke
     {
         case VT_UI4:
         {
-            ret = RegSetValueExW(regkey, buffer, 0, REG_DWORD, (BYTE*)&pv->u.ulVal, sizeof(DWORD));
+            ret = RegSetValueExW(regkey, buffer, 0, REG_DWORD, (const BYTE*)&pv->u.ulVal, sizeof(DWORD));
             break;
         }
         case VT_BLOB:
@@ -665,7 +665,7 @@ HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY ke
         }
         case VT_LPWSTR:
         {
-            ret = RegSetValueExW(regkey, buffer, 0, REG_SZ, (BYTE*)pv->u.pwszVal, sizeof(WCHAR)*(1+lstrlenW(pv->u.pwszVal)));
+            ret = RegSetValueExW(regkey, buffer, 0, REG_SZ, (const BYTE*)pv->u.pwszVal, sizeof(WCHAR)*(1+lstrlenW(pv->u.pwszVal)));
             break;
         }
         default:
@@ -735,7 +735,7 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             if (ret != ERROR_SUCCESS)
                 continue;
             if (SUCCEEDED(CLSIDFromString(guidvalue, &guid))
-                && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
+                && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
                 && pv.vt == VT_LPWSTR)
             {
                 MMDevice_Create(pv.u.pwszVal, &guid, curflow,
