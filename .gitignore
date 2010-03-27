@@ -193,6 +193,7 @@ include/qedit.h
 include/richole.h
 include/sensevts.h
 include/servprov.h
+include/shdeprecated.h
 include/shldisp.h
 include/shobjidl.h
 include/shtypes.h

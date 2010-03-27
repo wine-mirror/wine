@@ -42,6 +42,7 @@
 #include "mmsystem.h"
 #include "objbase.h"
 #include "exdisp.h"
+#include "shdeprecated.h"
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "shellapi.h"
@@ -1349,36 +1350,32 @@ HRESULT WINAPI IUnknown_GetWindow(IUnknown *lpUnknown, HWND *lphWnd)
 /*************************************************************************
  *      @	[SHLWAPI.173]
  *
- * Call a method on as as yet unidentified object.
+ * Call a SetOwner method of IShellService from specified object.
  *
  * PARAMS
- *  pUnk [I] Object supporting the unidentified interface,
- *  arg  [I] Argument for the call on the object.
+ *  iface [I] Object that supports IShellService
+ *  pUnk  [I] Argument for the SetOwner call
  *
  * RETURNS
- *  S_OK.
+ *  Corresponding return value from last call or E_FAIL for null input
  */
-HRESULT WINAPI IUnknown_SetOwner(IUnknown *pUnk, ULONG arg)
+HRESULT WINAPI IUnknown_SetOwner(IUnknown *iface, IUnknown *pUnk)
 {
-  static const GUID guid_173 = {
-    0x5836fb00, 0x8187, 0x11cf, { 0xa1,0x2b,0x00,0xaa,0x00,0x4a,0xe8,0x37 }
-  };
-  IMalloc *pUnk2;
+  IShellService *service;
+  HRESULT hr;
 
-  TRACE("(%p,%d)\n", pUnk, arg);
+  TRACE("(%p, %p)\n", iface, pUnk);
 
-  /* Note: arg may not be a ULONG and pUnk2 is for sure not an IMalloc -
-   *       We use this interface as its vtable entry is compatible with the
-   *       object in question.
-   * FIXME: Find out what this object is and where it should be defined.
-   */
-  if (pUnk &&
-      SUCCEEDED(IUnknown_QueryInterface(pUnk, &guid_173, (void**)&pUnk2)))
+  if (!iface) return E_FAIL;
+
+  hr = IUnknown_QueryInterface(iface, &IID_IShellService, (void**)&service);
+  if (hr == S_OK)
   {
-    IMalloc_Alloc(pUnk2, arg); /* Faked call!! */
-    IMalloc_Release(pUnk2);
+    hr = IShellService_SetOwner(service, pUnk);
+    IShellService_Release(service);
   }
-  return S_OK;
+
+  return hr;
 }
 
 /*************************************************************************
