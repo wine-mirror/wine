@@ -59,11 +59,9 @@ struct backend_cpu
      * function empty
      */
     void                (*print_segment_info)(HANDLE hThread, const CONTEXT* ctx);
-    /* Do the initialization so that the debugger has internal variables linked
-     * to the context's registers
-     */
-    const struct dbg_internal_var*
-                        (*init_registers)(CONTEXT* ctx);
+    /* all the CONTEXT's relative variables, bound to this CPU */
+    const struct dbg_internal_var* context_vars;
+
     /* -------------------------------------------------------------------------------
      * code inspection 
      * -------------------------------------------------------------------------------*/

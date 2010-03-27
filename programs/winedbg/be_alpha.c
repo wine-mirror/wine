@@ -54,12 +54,6 @@ static struct dbg_internal_var be_alpha_ctx[] =
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
-static const struct dbg_internal_var* be_alpha_init_registers(CONTEXT* ctx)
-{
-    dbg_printf("not done\n");
-    return be_alpha_ctx;
-}
-
 static unsigned be_alpha_is_step_over_insn(const void* insn)
 {
     dbg_printf("not done\n");
@@ -159,7 +153,7 @@ struct backend_cpu be_alpha =
     be_alpha_single_step,
     be_alpha_print_context,
     be_alpha_print_segment_info,
-    be_alpha_init_registers,
+    be_alpha_ctx,
     be_alpha_is_step_over_insn,
     be_alpha_is_function_return,
     be_alpha_is_break_insn,

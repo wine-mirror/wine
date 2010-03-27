@@ -96,7 +96,6 @@ BOOL    	        dbg_interactiveP = FALSE;
 static struct dbg_process*      dbg_process_list = NULL;
 
 struct dbg_internal_var         dbg_internal_vars[DBG_IV_LAST];
-const struct dbg_internal_var*  dbg_context_vars;
 static HANDLE                   dbg_houtput;
 
 static void dbg_outputA(const char* buffer, int len)
@@ -208,8 +207,7 @@ static	unsigned dbg_load_internal_vars(void)
         }
     }
     RegCloseKey(hkey);
-    /* set up the debug variables for the CPU context */
-    dbg_context_vars = be_cpu->init_registers(&dbg_context);
+
     return TRUE;
 }
 
@@ -245,9 +243,16 @@ const struct dbg_internal_var* dbg_get_internal_var(const char* name)
     {
 	if (!strcmp(div->name, name)) return div;
     }
-    for (div = dbg_context_vars; div->name; div++)
+    for (div = be_cpu->context_vars; div->name; div++)
     {
-	if (!strcasecmp(div->name, name)) return div;
+	if (!strcasecmp(div->name, name))
+        {
+            struct dbg_internal_var*    ret = (void*)lexeme_alloc_size(sizeof(*ret));
+            /* relocate register's field against current context */
+            *ret = *div;
+            ret->pval = (DWORD_PTR*)((char*)&dbg_context + (DWORD_PTR)div->pval);
+            return ret;
+        }
     }
 
     return NULL;

@@ -290,15 +290,6 @@ static struct dbg_internal_var be_i386_ctx[] =
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
-static const struct dbg_internal_var* be_i386_init_registers(CONTEXT* ctx)
-{
-    struct dbg_internal_var*    div;
-
-    for (div = be_i386_ctx; div->name; div++) 
-        div->pval = (DWORD_PTR*)((char*)ctx + (DWORD)div->pval);
-    return be_i386_ctx;
-}
-
 static unsigned be_i386_is_step_over_insn(const void* insn)
 {
     BYTE	ch;
@@ -754,7 +745,7 @@ struct backend_cpu be_i386 =
     be_i386_single_step,
     be_i386_print_context,
     be_i386_print_segment_info,
-    be_i386_init_registers,
+    be_i386_ctx,
     be_i386_is_step_over_insn,
     be_i386_is_function_return,
     be_i386_is_break_insn,

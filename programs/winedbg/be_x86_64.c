@@ -153,15 +153,6 @@ static struct dbg_internal_var be_x86_64_ctx[] =
     {0,                 NULL,           0,                                          dbg_itype_none}
 };
 
-static const struct dbg_internal_var* be_x86_64_init_registers(CONTEXT* ctx)
-{
-    struct dbg_internal_var*    div;
-
-    for (div = be_x86_64_ctx; div->name; div++)
-        div->pval = (DWORD_PTR*)((char*)ctx + (DWORD_PTR)div->pval);
-    return be_x86_64_ctx;
-}
-
 #define	f_mod(b)	((b)>>6)
 #define	f_reg(b)	(((b)>>3)&0x7)
 #define	f_rm(b)		((b)&0x7)
@@ -561,7 +552,7 @@ struct backend_cpu be_x86_64 =
     be_x86_64_single_step,
     be_x86_64_print_context,
     be_x86_64_print_segment_info,
-    be_x86_64_init_registers,
+    be_x86_64_ctx,
     be_x86_64_is_step_over_insn,
     be_x86_64_is_function_return,
     be_x86_64_is_break_insn,

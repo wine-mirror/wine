@@ -488,7 +488,6 @@ static inline void* dbg_heap_realloc(void* buffer, size_t size)
 }
 
 extern struct dbg_internal_var          dbg_internal_vars[];
-extern const struct dbg_internal_var*   dbg_context_vars;
 
 #define  DBG_IVARNAME(_var)	dbg_internal_var_##_var
 #define  DBG_IVARSTRUCT(_var)	dbg_internal_vars[DBG_IVARNAME(_var)]

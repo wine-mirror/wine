@@ -690,7 +690,7 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
         return FALSE;
     }
 
-    for (div = dbg_context_vars; div->name; div++)
+    for (div = be_cpu->context_vars; div->name; div++)
     {
         if (div->val == regno)
         {
@@ -703,7 +703,7 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
                 }
             }
             else
-                *value = div->pval;
+                *value = (DWORD_PTR*)((char*)&dbg_context + (DWORD_PTR)div->pval);
 
             if (buffer) lstrcpynA(buffer, div->name, len);
             return TRUE;
