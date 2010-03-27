@@ -2895,16 +2895,19 @@ DWORD WINAPI WhichPlatform(void)
 HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
                         DWORD dwStyle, HMENU hMenu, LONG z)
 {
-  static const WCHAR szClass[] = { 'W', 'o', 'r', 'k', 'e', 'r', 'W', '\0' };
+  static const WCHAR szClass[] = { 'W', 'o', 'r', 'k', 'e', 'r', 'W', 0 };
   WNDCLASSW wc;
   HWND hWnd;
 
   TRACE("(0x%08x,%p,0x%08x,0x%08x,%p,0x%08x)\n",
          wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
 
-  /* If our OS is natively ASCII, use the ASCII version */
-  if (!(GetVersion() & 0x80000000))  /* NT */
+  /* If our OS is natively ANSI, use the ANSI version */
+  if (GetVersion() & 0x80000000)  /* not NT */
+  {
+    TRACE("fallback to ANSI, ver 0x%08x\n", GetVersion());
     return SHCreateWorkerWindowA(wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
+  }
 
   /* Create Window class */
   wc.style         = 0;
