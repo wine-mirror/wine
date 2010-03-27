@@ -1190,8 +1190,8 @@ static HRESULT WINAPI xmlnode_get_dataType(
     switch ( This->node->type )
     {
     case XML_ELEMENT_NODE:
-        pVal = xmlGetNsProp(This->node, (xmlChar*)"dt",
-                            (xmlChar*)"urn:schemas-microsoft-com:datatypes");
+        pVal = xmlGetNsProp(This->node, (const xmlChar*)"dt",
+                            (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
         if (pVal)
         {
             V_VT(dataTypeName) = VT_BSTR;
@@ -1260,20 +1260,20 @@ static HRESULT WINAPI xmlnode_put_dataType(
         xmlAttrPtr pAttr = NULL;
         xmlChar* str = xmlChar_from_wchar(dataTypeName);
 
-        pAttr = xmlHasNsProp(This->node, (xmlChar*)"dt",
-                            (xmlChar*)"urn:schemas-microsoft-com:datatypes");
+        pAttr = xmlHasNsProp(This->node, (const xmlChar*)"dt",
+                            (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
         if (pAttr)
         {
-            pAttr = xmlSetNsProp(This->node, pAttr->ns, (xmlChar*)"dt", str);
+            pAttr = xmlSetNsProp(This->node, pAttr->ns, (const xmlChar*)"dt", str);
 
             hr = S_OK;
         }
         else
         {
-            pNS = xmlNewNs(This->node, (xmlChar*)"urn:schemas-microsoft-com:datatypes", (xmlChar*)"dt");
+            pNS = xmlNewNs(This->node, (const xmlChar*)"urn:schemas-microsoft-com:datatypes", (const xmlChar*)"dt");
             if(pNS)
             {
-                pAttr = xmlNewNsProp(This->node, pNS, (xmlChar*)"dt", str);
+                pAttr = xmlNewNsProp(This->node, pNS, (const xmlChar*)"dt", str);
                 if(pAttr)
                 {
                     xmlAddChild(This->node, (xmlNodePtr)pAttr);
@@ -1402,7 +1402,7 @@ static HRESULT WINAPI xmlnode_get_xml(
 
             /* Attribute Nodes return a space in front of their name */
             pContent = xmlBufferContent(pXmlBuf);
-            if( ((char*)pContent)[0] == ' ')
+            if( ((const char*)pContent)[0] == ' ')
                 bstrContent = bstr_from_xmlChar(pContent+1);
             else
                 bstrContent = bstr_from_xmlChar(pContent);
