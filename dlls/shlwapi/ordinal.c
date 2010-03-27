@@ -1210,7 +1210,7 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL f
 /*************************************************************************
  *	@	[SHLWAPI.169]
  *
- * Release an interface.
+ * Release an interface and zero a supplied pointer.
  *
  * PARAMS
  *  lpUnknown [I] Object to release
@@ -1218,19 +1218,16 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL f
  * RETURNS
  *  Nothing.
  */
-DWORD WINAPI IUnknown_AtomicRelease(IUnknown ** lpUnknown)
+void WINAPI IUnknown_AtomicRelease(IUnknown ** lpUnknown)
 {
-    IUnknown *temp;
+    TRACE("(%p)\n", lpUnknown);
 
-    TRACE("(%p)\n",lpUnknown);
-
-    if(!lpUnknown || !*((LPDWORD)lpUnknown)) return 0;
-    temp = *lpUnknown;
-    *lpUnknown = NULL;
+    if(!lpUnknown || !*lpUnknown) return;
 
     TRACE("doing Release\n");
 
-    return IUnknown_Release(temp);
+    IUnknown_Release(*lpUnknown);
+    *lpUnknown = NULL;
 }
 
 /*************************************************************************
