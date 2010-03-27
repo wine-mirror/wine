@@ -1532,7 +1532,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient *grad,
 }
 
 GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
-    *grad, ARGB *argb, INT *count)
+    *grad, GDIPCONST ARGB *argb, INT *count)
 {
     static int calls;
 
