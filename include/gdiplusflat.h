@@ -563,6 +563,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient*,REAL,REAL);
 GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient*,
     GDIPCONST ARGB*,INT*);
 GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient*,GpWrapMode);
+GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorCount(GpPathGradient*,INT*);
 
 /* PathIterator */
 GpStatus WINGDIPAPI GdipCreatePathIter(GpPathIterator**,GpPath*);
