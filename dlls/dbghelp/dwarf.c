@@ -878,6 +878,13 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
         loc->reg = Wine_DW_no_register;
         loc->offset = xloc.u.uvalue;
         return TRUE;
+    case DW_FORM_block:
+    case DW_FORM_block1:
+    case DW_FORM_block2:
+    case DW_FORM_block4:
+        break;
+    default: FIXME("Unsupported yet form %lx\n", xloc.form);
+        return FALSE;
     }
 
     /* assume we have a block form */
