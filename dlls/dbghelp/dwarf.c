@@ -196,6 +196,8 @@ typedef struct dwarf2_parse_context_s
 struct dwarf2_module_info_s
 {
     dwarf2_section_t            debug_loc;
+    dwarf2_section_t            debug_frame;
+    dwarf2_section_t            eh_frame;
     unsigned char               word_size;
 };
 
@@ -2346,6 +2348,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_traverse_context_t   mod_ctx;
     struct image_section_map    debug_sect, debug_str_sect, debug_abbrev_sect,
                                 debug_line_sect;
+
     BOOL                ret = TRUE;
     struct module_format* dwarf2_modfmt;
 
@@ -2396,6 +2399,8 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_modfmt->module->format_info[DFI_DWARF] = dwarf2_modfmt;
 
     dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_loc,   fmap, ".debug_loc",   NULL);
+    dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_frame, fmap, ".debug_frame", NULL);
+    dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->eh_frame,    fmap, ".eh_frame",    NULL);
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
