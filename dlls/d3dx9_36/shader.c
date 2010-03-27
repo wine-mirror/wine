@@ -608,7 +608,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
     HRESULT hr;
     LPCVOID data;
     UINT size;
-    D3DXSHADER_CONSTANTTABLE* ctab_header;
+    const D3DXSHADER_CONSTANTTABLE* ctab_header;
 
     FIXME("(%p, %x, %p): semi-stub\n", byte_code, flags, constant_table);
 
@@ -642,7 +642,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
     object->size = size;
     memcpy(object->ctab, data, object->size);
 
-    ctab_header = (D3DXSHADER_CONSTANTTABLE*)data;
+    ctab_header = (const D3DXSHADER_CONSTANTTABLE*)data;
     if (ctab_header->Size != sizeof(D3DXSHADER_CONSTANTTABLE))
         goto error;
     object->desc.Creator = ctab_header->Creator ? (LPCSTR)object->ctab + ctab_header->Creator : NULL;

@@ -117,7 +117,7 @@ HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *pfirstposition, DWORD n
 
     for(i=0; i<numvertices; i++)
     {
-        vec = *( (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i) );
+        vec = *( (const D3DXVECTOR3*)((const char*)pfirstposition + dwstride * i) );
 
         if ( vec.x < pmin->x ) pmin->x = vec.x;
         if ( vec.x > pmax->x ) pmax->x = vec.x;
@@ -152,7 +152,7 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
 
     for(i=0; i<numvertices; i++)
     {
-        D3DXVec3Add(&temp1, &temp, (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i));
+        D3DXVec3Add(&temp1, &temp, (const D3DXVECTOR3*)((const char*)pfirstposition + dwstride * i));
         temp = temp1;
     }
 
@@ -160,7 +160,7 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
 
     for(i=0; i<numvertices; i++)
     {
-        d = D3DXVec3Length(D3DXVec3Subtract(&temp, (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i), pcenter));
+        d = D3DXVec3Length(D3DXVec3Subtract(&temp, (const D3DXVECTOR3*)((const char*)pfirstposition + dwstride * i), pcenter));
         if ( d > *pradius ) *pradius = d;
     }
     return D3D_OK;
