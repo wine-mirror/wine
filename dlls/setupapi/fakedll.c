@@ -630,5 +630,6 @@ void cleanup_fake_dlls(void)
     HeapFree( GetProcessHeap(), 0, file_buffer );
     file_buffer = NULL;
     HeapFree( GetProcessHeap(), 0, handled_dlls );
+    handled_dlls = NULL;
     handled_count = handled_total = 0;
 }
