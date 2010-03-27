@@ -28,7 +28,7 @@ signature="$CHICAGO$"
 
 [DefaultInstall]
 RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsSection
+WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
@@ -53,7 +53,7 @@ AddReg=\
 
 [DefaultInstall.NT]
 RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsSection
+WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
@@ -79,7 +79,7 @@ AddReg=\
 
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsSection
+WineFakeDlls=FakeDlls
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
@@ -2521,7 +2521,19 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wuapi.dll,1
 16422,Internet Explorer,iexplore.exe,1
 
-[FakeDllsSection]
+; 32bit-only fake dlls
+[FakeDllsWin32]
+10,,twain.dll,twain.dll16
+10,,twain_32.dll
+10,,winhelp.exe,winhelp.exe16
+10,,winhlp32.exe
+10,command,start.exe
+10,system,ddeml.dll,ddeml.dll16
+11,,ddhelp.exe
+11,,dosx.exe
+11,,dsound.vxd
+
+[FakeDlls]
 ; create some directories first
 10,help,
 10,inf,
@@ -2534,18 +2546,9 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,hh.exe
 10,,notepad.exe
 10,,regedit.exe
-10,,twain.dll,twain.dll16
-10,,twain_32.dll
-10,,winhelp.exe,winhelp.exe16
-10,,winhlp32.exe
-10,command,start.exe
-10,system,ddeml.dll,ddeml.dll16
-11,,ddhelp.exe
-11,,dosx.exe
-11,,dsound.vxd
+11,,explorer.exe
 11,,notepad.exe
 11,,winetest.exe,-
-11,,winhlp32.exe
 12,,mountmgr.sys
 16422,Internet Explorer,iexplore.exe
 11,,*
