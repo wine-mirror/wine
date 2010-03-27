@@ -1719,6 +1719,9 @@ void WINAPI SHPropagateMessage(HWND hWnd, UINT uiMsgId, WPARAM wParam, LPARAM lP
 DWORD WINAPI SHRemoveAllSubMenus(HMENU hMenu)
 {
   int iItemCount = GetMenuItemCount(hMenu) - 1;
+
+  TRACE("%p\n", hMenu);
+
   while (iItemCount >= 0)
   {
     HMENU hSubMenu = GetSubMenu(hMenu, iItemCount);
@@ -1744,6 +1747,7 @@ DWORD WINAPI SHRemoveAllSubMenus(HMENU hMenu)
  */
 UINT WINAPI SHEnableMenuItem(HMENU hMenu, UINT wItemID, BOOL bEnable)
 {
+  TRACE("%p, %u, %d\n", hMenu, wItemID, bEnable);
   return EnableMenuItem(hMenu, wItemID, bEnable ? MF_ENABLED : MF_GRAYED);
 }
 
@@ -1762,6 +1766,7 @@ UINT WINAPI SHEnableMenuItem(HMENU hMenu, UINT wItemID, BOOL bEnable)
  */
 DWORD WINAPI SHCheckMenuItem(HMENU hMenu, UINT uID, BOOL bCheck)
 {
+  TRACE("%p, %u, %d\n", hMenu, uID, bCheck);
   return CheckMenuItem(hMenu, uID, bCheck ? MF_CHECKED : MF_UNCHECKED);
 }
 
@@ -2945,7 +2950,8 @@ HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle
  */
 HRESULT WINAPI SHInvokeDefaultCommand(HWND hWnd, IShellFolder* lpFolder, LPCITEMIDLIST lpApidl)
 {
-  return SHInvokeCommand(hWnd, lpFolder, lpApidl, FALSE);
+    TRACE("%p %p %p\n", hWnd, lpFolder, lpApidl);
+    return SHInvokeCommand(hWnd, lpFolder, lpApidl, FALSE);
 }
 
 /*************************************************************************
@@ -3460,12 +3466,12 @@ UINT WINAPI SHDefExtractIconWrapW(LPCWSTR pszIconFile, int iIndex, UINT uFlags, 
 HRESULT WINAPI SHInvokeCommand(HWND hWnd, IShellFolder* lpFolder, LPCITEMIDLIST lpApidl, BOOL bInvokeDefault)
 {
   IContextMenu *iContext;
-  HRESULT hRet = E_FAIL;
+  HRESULT hRet;
 
-  TRACE("(%p,%p,%p,%d)\n", hWnd, lpFolder, lpApidl, bInvokeDefault);
+  TRACE("(%p, %p, %p, %d)\n", hWnd, lpFolder, lpApidl, bInvokeDefault);
 
   if (!lpFolder)
-    return hRet;
+    return E_FAIL;
 
   /* Get the context menu from the shell folder */
   hRet = IShellFolder_GetUIObjectOf(lpFolder, hWnd, 1, &lpApidl,
@@ -3485,7 +3491,7 @@ HRESULT WINAPI SHInvokeCommand(HWND hWnd, IShellFolder* lpFolder, LPCITEMIDLIST 
       if (SUCCEEDED(hQuery))
       {
         if (bInvokeDefault &&
-            (dwDefaultId = GetMenuDefaultItem(hMenu, 0, 0)) != 0xFFFFFFFF)
+            (dwDefaultId = GetMenuDefaultItem(hMenu, 0, 0)) != (UINT)-1)
         {
           CMINVOKECOMMANDINFO cmIci;
           /* Invoke the default item */
@@ -4255,18 +4261,24 @@ BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
  */
 INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
 {
- MENUITEMINFOW mi;
- INT nCount = GetMenuItemCount(hMenu), nIter = 0;
+    MENUITEMINFOW mi;
+    INT nCount = GetMenuItemCount(hMenu), nIter = 0;
 
- while (nIter < nCount)
- {
-   mi.cbSize = sizeof(mi);
-   mi.fMask = MIIM_ID;
-   if (GetMenuItemInfoW(hMenu, nIter, TRUE, &mi) && mi.wID == wID)
-     return nIter;
-   nIter++;
- }
- return -1;
+    TRACE("%p %u\n", hMenu, wID);
+
+    while (nIter < nCount)
+    {
+        mi.cbSize = sizeof(mi);
+        mi.fMask = MIIM_ID;
+        if (GetMenuItemInfoW(hMenu, nIter, TRUE, &mi) && mi.wID == wID)
+        {
+            TRACE("ret %d\n", nIter);
+            return nIter;
+        }
+        nIter++;
+    }
+
+    return -1;
 }
 
 /*************************************************************************
@@ -4276,6 +4288,7 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
  */
 DWORD WINAPI SHMenuIndexFromID(HMENU hMenu, UINT uID)
 {
+    TRACE("%p %u\n", hMenu, uID);
     return GetMenuPosFromID(hMenu, uID);
 }
 
