@@ -240,7 +240,7 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
 {
 
     LRESULT lRes;
-    LPCVOID template;
+    LPVOID template;
     HRSRC hRes;
     HANDLE hDlgTmpl = 0;
     HRESULT hr;
