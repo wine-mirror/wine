@@ -516,10 +516,8 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
         deltapc = 1;
     }
 
-    if (frame->AddrPC.Offset && (base = sw_module_base(csw, frame->AddrPC.Offset)))
-        frame->FuncTableEntry = sw_table_access(csw, frame->AddrPC.Offset);
-    else
-        frame->FuncTableEntry = NULL;
+    if (!frame->AddrPC.Offset || !(base = sw_module_base(csw, frame->AddrPC.Offset))) goto done_err;
+    frame->FuncTableEntry = sw_table_access(csw, frame->AddrPC.Offset);
     frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
     if (frame->FuncTableEntry)
     {
