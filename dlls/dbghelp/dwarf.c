@@ -690,7 +690,6 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             }
             stack[++stk] = dwarf2_leb128_as_signed(ctx);
             loc->kind = loc_regrel;
-            break;
         }
         else switch (op)
         {
@@ -736,18 +735,22 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
         case DW_OP_skip:        tmp = dwarf2_parse_u2(ctx); ctx->data += tmp; break;
         case DW_OP_bra:         tmp = dwarf2_parse_u2(ctx); if (!stack[stk--]) ctx->data += tmp; break;
         case DW_OP_regx:
-            if (loc->reg != Wine_DW_no_register)
-                FIXME("Only supporting one regx\n");
-            loc->reg = dwarf2_map_register(dwarf2_leb128_as_unsigned(ctx));
+            tmp = dwarf2_leb128_as_unsigned(ctx);
+            if (!piece_found)
+            {
+                if (loc->reg != Wine_DW_no_register)
+                    FIXME("Only supporting one reg\n");
+                loc->reg = dwarf2_map_register(tmp);
+            }
             loc->kind = loc_register;
             break;
         case DW_OP_bregx:
             tmp = dwarf2_leb128_as_unsigned(ctx);
-            ctx->data++;
             if (loc->reg != Wine_DW_no_register)
                 FIXME("Only supporting one regx\n");
-            loc->reg = dwarf2_map_register(tmp) + dwarf2_leb128_as_signed(ctx);
-            loc->kind = loc_register;
+            loc->reg = dwarf2_map_register(tmp);
+            stack[++stk] = dwarf2_leb128_as_signed(ctx);
+            loc->kind = loc_regrel;
             break;
         case DW_OP_fbreg:
             if (loc->reg != Wine_DW_no_register)
