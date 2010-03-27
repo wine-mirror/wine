@@ -913,7 +913,7 @@ static void test_loadwmf(void)
         expect(0, header.Y);
         todo_wine expect(320, header.Width);
         todo_wine expect(320, header.Height);
-        todo_wine expect(1, header.WmfHeader.mtType);
+        todo_wine expect(1, U(header).WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
@@ -971,7 +971,7 @@ static void test_createfromwmf(void)
         expect(0, header.Y);
         todo_wine expect(320, header.Width);
         todo_wine expect(320, header.Height);
-        todo_wine expect(1, header.WmfHeader.mtType);
+        todo_wine expect(1, U(header).WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
