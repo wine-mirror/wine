@@ -1261,15 +1261,15 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     /* Check unused bytes */
     if (pArena->magic == ARENA_PENDING_MAGIC)
     {
-        DWORD *ptr = (DWORD *)(pArena + 1);
-        DWORD *end = (DWORD *)((char *)ptr + size);
+        const DWORD *ptr = (const DWORD *)(pArena + 1);
+        const DWORD *end = (const DWORD *)((const char *)ptr + size);
 
         while (ptr < end)
         {
             if (*ptr != ARENA_FREE_FILLER)
             {
                 ERR("Heap %p: free block %p overwritten at %p by %08x\n",
-                    subheap->heap, (ARENA_INUSE *)pArena + 1, ptr, *ptr );
+                    subheap->heap, (const ARENA_INUSE *)pArena + 1, ptr, *ptr );
                 if (!*ptr) { HEAP_Dump( subheap->heap ); DbgBreakPoint(); }
                 return FALSE;
             }
@@ -1398,7 +1398,7 @@ static BOOL validate_block_pointer( HEAP *heap, SUBHEAP **ret_subheap, const ARE
         return TRUE;
     }
 
-    if ((char *)arena < (char *)subheap->base + subheap->headerSize)
+    if ((const char *)arena < (char *)subheap->base + subheap->headerSize)
         WARN( "Heap %p: pointer %p is inside subheap %p header\n", subheap->heap, arena + 1, subheap );
     else if (subheap->heap->flags & HEAP_VALIDATE)  /* do the full validation */
         ret = HEAP_ValidateInUseArena( subheap, arena, QUIET );

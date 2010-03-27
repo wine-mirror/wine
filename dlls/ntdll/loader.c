@@ -2688,7 +2688,7 @@ PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir,
     if (!(nt = RtlImageNtHeader( module ))) return NULL;
     if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
-        const IMAGE_NT_HEADERS64 *nt64 = (IMAGE_NT_HEADERS64 *)nt;
+        const IMAGE_NT_HEADERS64 *nt64 = (const IMAGE_NT_HEADERS64 *)nt;
 
         if (dir >= nt64->OptionalHeader.NumberOfRvaAndSizes) return NULL;
         if (!(addr = nt64->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
@@ -2697,7 +2697,7 @@ PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir,
     }
     else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
     {
-        const IMAGE_NT_HEADERS32 *nt32 = (IMAGE_NT_HEADERS32 *)nt;
+        const IMAGE_NT_HEADERS32 *nt32 = (const IMAGE_NT_HEADERS32 *)nt;
 
         if (dir >= nt32->OptionalHeader.NumberOfRvaAndSizes) return NULL;
         if (!(addr = nt32->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
