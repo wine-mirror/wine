@@ -4336,7 +4336,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         {
             size += sizeof(WCHAR);
             RegSetValueExW(hkey,feature->Feature,0,REG_SZ,
-                           (LPBYTE)(feature->Feature_Parent ? feature->Feature_Parent : szEmpty),size);
+                           (const BYTE*)(feature->Feature_Parent ? feature->Feature_Parent : szEmpty),size);
         }
         else
         {
