@@ -1034,13 +1034,10 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
  */
 DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
-    struct module*      module;
+    DWORD64     ret;
 
-    if (!pcs) return 0;
-    module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
-    if (!module) return 0;
-    return module->module.BaseOfImage;
+    ret = SymGetModuleBase64(hProcess, dwAddr);
+    return validate_addr64(ret) ? ret : 0;
 }
 
 /***********************************************************************
@@ -1048,8 +1045,13 @@ DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
  */
 DWORD64 WINAPI SymGetModuleBase64(HANDLE hProcess, DWORD64 dwAddr)
 {
-    if (!validate_addr64(dwAddr)) return 0;
-    return SymGetModuleBase(hProcess, (DWORD)dwAddr);
+    struct process*     pcs = process_find_by_handle(hProcess);
+    struct module*      module;
+
+    if (!pcs) return 0;
+    module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
+    if (!module) return 0;
+    return module->module.BaseOfImage;
 }
 
 /******************************************************************
