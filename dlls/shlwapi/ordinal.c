@@ -1634,6 +1634,8 @@ BOOL WINAPI SHLoadMenuPopup(HINSTANCE hInst, LPCWSTR szName)
 {
   HMENU hMenu;
 
+  TRACE("%p %s\n", hInst, debugstr_w(szName));
+
   if ((hMenu = LoadMenuW(hInst, szName)))
   {
     if (GetSubMenu(hMenu, 0))
@@ -1791,6 +1793,8 @@ BOOL WINAPI SHSimulateDrop(IDropTarget *pDrop, IDataObject *pDataObj,
   DWORD dwEffect = DROPEFFECT_LINK | DROPEFFECT_MOVE | DROPEFFECT_COPY;
   POINTL pt = { 0, 0 };
 
+  TRACE("%p %p 0x%08x %p %p\n", pDrop, pDataObj, grfKeyState, lpPt, pdwEffect);
+
   if (!lpPt)
     lpPt = &pt;
 
@@ -1799,7 +1803,7 @@ BOOL WINAPI SHSimulateDrop(IDropTarget *pDrop, IDataObject *pDataObj,
 
   IDropTarget_DragEnter(pDrop, pDataObj, grfKeyState, *lpPt, pdwEffect);
 
-  if (*pdwEffect)
+  if (*pdwEffect != DROPEFFECT_NONE)
     return IDropTarget_Drop(pDrop, pDataObj, grfKeyState, *lpPt, pdwEffect);
 
   IDropTarget_DragLeave(pDrop);
@@ -1891,7 +1895,7 @@ HRESULT WINAPI IUnknown_OnFocusOCS(IUnknown *lpUnknown, BOOL fGotFocus)
   IOleControlSite* lpCSite = NULL;
   HRESULT hRet = E_FAIL;
 
-  TRACE("(%p,%s)\n", lpUnknown, fGotFocus ? "TRUE" : "FALSE");
+  TRACE("(%p, %d)\n", lpUnknown, fGotFocus);
   if (lpUnknown)
   {
     hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleControlSite,
@@ -2149,12 +2153,10 @@ VOID WINAPI IUnknown_Set(IUnknown **lppDest, IUnknown *lpUnknown)
 {
   TRACE("(%p,%p)\n", lppDest, lpUnknown);
 
-  if (lppDest)
-    IUnknown_AtomicRelease(lppDest); /* Release existing interface */
+  IUnknown_AtomicRelease(lppDest);
 
   if (lpUnknown)
   {
-    /* Copy */
     IUnknown_AddRef(lpUnknown);
     *lppDest = lpUnknown;
   }
@@ -2344,12 +2346,6 @@ BOOL WINAPI FDSA_DeleteItem(FDSA_info *info, DWORD where)
     return TRUE;
 }
 
-
-typedef struct {
-    REFIID   refid;
-    DWORD    indx;
-} IFACE_INDEX_TBL;
-
 /*************************************************************************
  *      @	[SHLWAPI.219]
  *
@@ -2360,22 +2356,22 @@ typedef struct {
  *  Failure: E_POINTER or E_NOINTERFACE.
  */
 HRESULT WINAPI QISearch(
-	LPVOID w,           /* [in]   Table of interfaces */
-	IFACE_INDEX_TBL *x, /* [in]   Array of REFIIDs and indexes into the table */
+	void *base,         /* [in]   Table of interfaces */
+	const QITAB *table, /* [in]   Array of REFIIDs and indexes into the table */
 	REFIID riid,        /* [in]   REFIID to get interface for */
-	LPVOID *ppv)          /* [out]  Destination for interface pointer */
+	void **ppv)         /* [out]  Destination for interface pointer */
 {
 	HRESULT ret;
 	IUnknown *a_vtbl;
-	IFACE_INDEX_TBL *xmove;
+	const QITAB *xmove;
 
-	TRACE("(%p %p %s %p)\n", w,x,debugstr_guid(riid),ppv);
+	TRACE("(%p %p %s %p)\n", base, table, debugstr_guid(riid), ppv);
 	if (ppv) {
-	    xmove = x;
-	    while (xmove->refid) {
-		TRACE("trying (indx %d) %s\n", xmove->indx, debugstr_guid(xmove->refid));
-		if (IsEqualIID(riid, xmove->refid)) {
-		    a_vtbl = (IUnknown*)(xmove->indx + (LPBYTE)w);
+	    xmove = table;
+	    while (xmove->piid) {
+		TRACE("trying (offset %d) %s\n", xmove->dwOffset, debugstr_guid(xmove->piid));
+		if (IsEqualIID(riid, xmove->piid)) {
+		    a_vtbl = (IUnknown*)(xmove->dwOffset + (LPBYTE)base);
 		    TRACE("matched, returning (%p)\n", a_vtbl);
                     *ppv = a_vtbl;
 		    IUnknown_AddRef(a_vtbl);
@@ -2385,7 +2381,7 @@ HRESULT WINAPI QISearch(
 	    }
 
 	    if (IsEqualIID(riid, &IID_IUnknown)) {
-		a_vtbl = (IUnknown*)(x->indx + (LPBYTE)w);
+		a_vtbl = (IUnknown*)(table->dwOffset + (LPBYTE)base);
 		TRACE("returning first for IUnknown (%p)\n", a_vtbl);
                 *ppv = a_vtbl;
 		IUnknown_AddRef(a_vtbl);
