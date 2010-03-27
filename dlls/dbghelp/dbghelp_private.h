@@ -120,6 +120,7 @@ extern unsigned dbghelp_options;
 #define SYMOPT_WINE_WITH_NATIVE_MODULES 0x40000000
 
 enum location_kind {loc_error,          /* reg is the error code */
+                    loc_unavailable,    /* location is not available */
                     loc_absolute,       /* offset is the location */
                     loc_register,       /* reg is the location */
                     loc_regrel,         /* [reg+offset] is the location */
@@ -601,6 +602,8 @@ extern BOOL         stabs_parse(struct module* module, unsigned long load_offset
 extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offset,
                                  const struct elf_thunk_area* thunks,
                                  struct image_file_map* fmap);
+extern BOOL         dwarf2_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
+                                          CONTEXT* context, ULONG_PTR* cfa);
 
 /* stack.c */
 extern BOOL         sw_read_mem(struct cpu_stack_walk* csw, DWORD64 addr, void* ptr, DWORD sz);

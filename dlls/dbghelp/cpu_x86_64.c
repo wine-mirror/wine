@@ -477,6 +477,8 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw, LPSTACKFR
 static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
     DWORD64     base;
+    DWORD_PTR   cfa;
+    unsigned    deltapc = 0;
 
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
@@ -511,18 +513,33 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
     {
         if (frame->AddrReturn.Offset == 0) goto done_err;
         frame->AddrPC = frame->AddrReturn;
+        deltapc = 1;
     }
 
     if (frame->AddrPC.Offset && (base = sw_module_base(csw, frame->AddrPC.Offset)))
         frame->FuncTableEntry = sw_table_access(csw, frame->AddrPC.Offset);
     else
         frame->FuncTableEntry = NULL;
+    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
     if (frame->FuncTableEntry)
     {
         if (!interpret_function_table_entry(csw, frame, context, frame->FuncTableEntry, base))
             goto done_err;
     }
-    /* FIXME: should check "native" debug format for native modules */
+    else if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &cfa))
+    {
+        frame->AddrStack.Offset = context->Rsp = cfa;
+        frame->AddrReturn.Offset = context->Rip;
+        TRACE("next function rip=%016lx\n", context->Rip);
+        TRACE("  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+              context->Rax, context->Rbx, context->Rcx, context->Rdx);
+        TRACE("  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+              context->Rsi, context->Rdi, context->Rbp, context->Rsp);
+        TRACE("   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+              context->R8, context->R9, context->R10, context->R11);
+        TRACE("  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+              context->R12, context->R13, context->R14, context->R15);
+    }
     else if (!default_unwind(csw, frame, context)) goto done_err;
 
     memset(&frame->Params, 0, sizeof(frame->Params));
