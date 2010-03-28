@@ -582,7 +582,7 @@ char *SHA256_End(SHA256_CTX* context, char buffer[]) {
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
-		*buffer = (char)0;
+		*buffer = 0;
 	} else {
 		MEMSET_BZERO(context, sizeof(context));
 	}
@@ -911,7 +911,7 @@ char *SHA512_End(SHA512_CTX* context, char buffer[]) {
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
-		*buffer = (char)0;
+		*buffer = 0;
 	} else {
 		MEMSET_BZERO(context, sizeof(context));
 	}
@@ -986,7 +986,7 @@ char *SHA384_End(SHA384_CTX* context, char buffer[]) {
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
-		*buffer = (char)0;
+		*buffer = 0;
 	} else {
 		MEMSET_BZERO(context, sizeof(context));
 	}
