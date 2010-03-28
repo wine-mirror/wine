@@ -173,7 +173,7 @@ const VGA_MODE VGA_modelist[] =
     {0x000e, GRAPHIC, 80, 25,  8,  8,  640,  200,  4,  16, 4, FALSE},   /* VGA graphics mode 14 */
     {0x000f, GRAPHIC, 80, 25,  8, 14,  640,  350,  0,   0, 2, FALSE},   /* VGA graphics mode 15 */
     {0x0010, GRAPHIC, 80, 25,  8, 14,  640,  350,  4,  16, 2, FALSE},   /* VGA graphics mode 16 */
-    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  1,   2, 1, FALSE},   /* VGA graphics mode 17 */
+    {0x0011, GRAPHIC, 80, 30,  8, 16,  640,  480,  1,   2, 1, FALSE},   /* VGA graphics mode 17 */
     {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  4,  16, 1, FALSE},   /* VGA graphics mode 18 */
     {0x0013, GRAPHIC, 40, 25,  8,  8,  320,  200,  8, 256, 1, TRUE},   /* VGA graphics mode 19 */
     /* VESA 7-bit modes */
