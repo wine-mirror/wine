@@ -3054,7 +3054,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
 
-    if (dstData == NULL || ((signed int) MAX_CONST_I - (signed int) start) <= (signed int) 0)
+    if (dstData == NULL || ((signed int) MAX_CONST_I - (signed int) start) <= 0)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(dstData, &This->stateBlock->vertexShaderConstantI[start * 4], cnt * sizeof(int) * 4);
