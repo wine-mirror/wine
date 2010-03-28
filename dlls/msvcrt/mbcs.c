@@ -145,7 +145,7 @@ static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
 
 static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, MSVCRT_size_t len )
 {
-  return (unsigned char*) _strnset( (char*)s, c, len );
+  return (unsigned char*) MSVCRT__strnset( (char*)s, c, len );
 }
 
 static inline MSVCRT_size_t u_strcspn( const unsigned char *s, const unsigned char *rej )

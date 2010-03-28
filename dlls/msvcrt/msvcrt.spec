@@ -289,7 +289,7 @@
 @ cdecl _chgsign( double )
 @ cdecl -i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
-@ cdecl _chsize (long long)
+@ cdecl _chsize(long long) MSVCRT__chsize
 # stub _chsize_s
 # stub _chvalidator
 # stub _chvalidator_l
@@ -587,8 +587,8 @@
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb( double )
 @ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
-@ cdecl _lrotl(long long)
-@ cdecl _lrotr(long long)
+@ cdecl _lrotl(long long) MSVCRT__lrotl
+@ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr long long ptr)
 # stub _lsearch_s
 @ cdecl _lseek(long long long) MSVCRT__lseek
@@ -792,7 +792,7 @@
 @ cdecl -arch=i386 _safe_fdivr()
 @ cdecl -arch=i386 _safe_fprem()
 @ cdecl -arch=i386 _safe_fprem1()
-@ cdecl _scalb( double long)
+@ cdecl _scalb(double long) MSVCRT__scalb
 # stub _scanf_l
 # stub _scanf_s_l
 # stub _scprintf
@@ -847,9 +847,9 @@
 @ varargs _spawnlp(long str str)
 @ varargs _spawnlpe(long str str)
 @ cdecl _spawnv(long str ptr)
-@ cdecl _spawnve(long str ptr ptr)
+@ cdecl _spawnve(long str ptr ptr) MSVCRT__spawnve
 @ cdecl _spawnvp(long str ptr)
-@ cdecl _spawnvpe(long str ptr ptr)
+@ cdecl _spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
 @ cdecl _splitpath(str ptr ptr ptr ptr) ntdll._splitpath
 # stub _splitpath_s
 # stub _sprintf_l
@@ -883,7 +883,7 @@
 # stub _strnicmp_l
 @ stub _strnicoll #(str str long)
 # stub _strnicoll_l
-@ cdecl _strnset(str long long)
+@ cdecl _strnset(str long long) MSVCRT__strnset
 # stub _strnset_s
 @ cdecl _strrev(str)
 @ cdecl _strset(str long)
@@ -912,7 +912,7 @@
 # stub _swscanf_s_l
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
-@ cdecl _tell(long)
+@ cdecl _tell(long) MSVCRT__tell
 @ cdecl -ret64 _telli64(long)
 @ cdecl _tempnam(str str)
 # stub _tempnam_dbg
@@ -1028,7 +1028,7 @@
 # stub _wcsnicmp_l
 @ stub _wcsnicoll #(wstr wstr long)
 # stub _wcsnicoll_l
-@ cdecl _wcsnset(wstr long long)
+@ cdecl _wcsnset(wstr long long) MSVCRT__wcsnset
 # stub _wcsnset_s
 @ cdecl _wcsrev(wstr)
 @ cdecl _wcsset(wstr long)
@@ -1072,7 +1072,7 @@
 @ cdecl _wfindnexti64(long ptr) MSVCRT__wfindnexti64
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
 # stub _wfopen_s
-@ cdecl _wfreopen(wstr wstr ptr)
+@ cdecl _wfreopen(wstr wstr ptr) MSVCRT__wfreopen
 # stub _wfreopen_s
 @ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
 @ cdecl _wfullpath(ptr wstr long)

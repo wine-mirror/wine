@@ -744,14 +744,14 @@ int            __cdecl MSVCRT__write(int,const void*,unsigned int);
 int            __cdecl _getch(void);
 int            __cdecl _ismbblead(unsigned int);
 int            __cdecl _ismbstrail(const unsigned char* start, const unsigned char* str);
-MSVCRT_intptr_t __cdecl _spawnve(int,const char*,const char* const *,const char* const *);
-MSVCRT_intptr_t __cdecl _spawnvpe(int,const char*,const char* const *,const char* const *);
+MSVCRT_intptr_t __cdecl MSVCRT__spawnve(int,const char*,const char* const *,const char* const *);
+MSVCRT_intptr_t __cdecl MSVRT__spawnvpe(int,const char*,const char* const *,const char* const *);
 MSVCRT_intptr_t __cdecl _wspawnve(int,const MSVCRT_wchar_t*,const MSVCRT_wchar_t* const *,const MSVCRT_wchar_t* const *);
 MSVCRT_intptr_t __cdecl _wspawnvpe(int,const MSVCRT_wchar_t*,const MSVCRT_wchar_t* const *,const MSVCRT_wchar_t* const *);
 void __cdecl     _searchenv(const char*,const char*,char*);
 int __cdecl      _getdrive(void);
 char* __cdecl    _strdup(const char*);
-char* __cdecl    _strnset(char*,int,MSVCRT_size_t);
+char* __cdecl    MSVCRT__strnset(char*,int,MSVCRT_size_t);
 char* __cdecl    _strset(char*,int);
 int __cdecl      _ungetch(int);
 int __cdecl      _cputs(const char*);
@@ -770,6 +770,7 @@ int     __cdecl MSVCRT__dup2(int, int);
 int     __cdecl MSVCRT__pipe(int *, unsigned int, int);
 MSVCRT_wchar_t* __cdecl _wgetenv(const MSVCRT_wchar_t*);
 void __cdecl    _wsearchenv(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, MSVCRT_wchar_t*);
+MSVCRT_intptr_t __cdecl MSVCRT__spawnvpe(int, const char*, const char* const*, const char* const*);
 #endif
 
 #endif /* __WINE_MSVCRT_H */

@@ -49,7 +49,7 @@ char* CDECL _strdup(const char* str)
 /*********************************************************************
  *		_strnset (MSVCRT.@)
  */
-char* CDECL _strnset(char* str, int value, MSVCRT_size_t len)
+char* CDECL MSVCRT__strnset(char* str, int value, MSVCRT_size_t len)
 {
   if (len > 0 && str)
     while (*str && len--)

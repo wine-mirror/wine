@@ -57,7 +57,7 @@ INT CDECL _wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 /*********************************************************************
  *		_wcsnset (MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL _wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n )
+MSVCRT_wchar_t* CDECL MSVCRT__wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n )
 {
   MSVCRT_wchar_t* ret = str;
   while ((n-- > 0) && *str) *str++ = c;

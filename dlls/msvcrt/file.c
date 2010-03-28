@@ -962,7 +962,7 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
 /*********************************************************************
  *		_chsize (MSVCRT.@)
  */
-int CDECL _chsize(int fd, MSVCRT_long size)
+int CDECL MSVCRT__chsize(int fd, MSVCRT_long size)
 {
     LONG cur, pos;
     HANDLE handle;
@@ -2049,7 +2049,7 @@ int CDECL MSVCRT__wstat(const MSVCRT_wchar_t* path, struct MSVCRT__stat * buf)
 /*********************************************************************
  *		_tell (MSVCRT.@)
  */
-MSVCRT_long CDECL _tell(int fd)
+MSVCRT_long CDECL MSVCRT__tell(int fd)
 {
   return MSVCRT__lseek(fd, 0, SEEK_CUR);
 }
@@ -2817,7 +2817,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
  *		_wfreopen (MSVCRT.@)
  *
  */
-MSVCRT_FILE* CDECL _wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, MSVCRT_FILE* file)
+MSVCRT_FILE* CDECL MSVCRT__wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, MSVCRT_FILE* file)
 {
   int open_flags, stream_flags, fd;
 
@@ -2866,7 +2866,7 @@ MSVCRT_FILE* CDECL MSVCRT_freopen(const char *path, const char *mode, MSVCRT_FIL
         return NULL;
     }
 
-    ret = _wfreopen(pathW, modeW, file);
+    ret = MSVCRT__wfreopen(pathW, modeW, file);
 
     MSVCRT_free(pathW);
     MSVCRT_free(modeW);
@@ -2902,7 +2902,7 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
   /* TODO: just call fgetpos and return lower half of result */
   int off=0;
   MSVCRT_long pos;
-  pos = _tell(file->_file);
+  pos = MSVCRT__tell(file->_file);
   if(pos == -1) return -1;
   if(file->_bufsiz)  {
 	if( file->_flag & MSVCRT__IOWRT ) {

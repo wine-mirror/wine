@@ -436,7 +436,7 @@ double CDECL _logb(double num)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-MSVCRT_ulong CDECL _lrotl(MSVCRT_ulong num, int shift)
+MSVCRT_ulong CDECL MSVCRT__lrotl(MSVCRT_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -445,7 +445,7 @@ MSVCRT_ulong CDECL _lrotl(MSVCRT_ulong num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-MSVCRT_ulong CDECL _lrotr(MSVCRT_ulong num, int shift)
+MSVCRT_ulong CDECL MSVCRT__lrotr(MSVCRT_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -463,7 +463,7 @@ unsigned int CDECL _rotr(unsigned int num, int shift)
 /*********************************************************************
  *		_scalb (MSVCRT.@)
  */
-double CDECL _scalb(double num, MSVCRT_long power)
+double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double dblpower = (double)power;
