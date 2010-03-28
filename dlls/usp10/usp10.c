@@ -686,7 +686,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         int numGlyphsReturned;
 
         /* FIXME: non unicode strings */
-        WCHAR* pStr = (WCHAR*)pString;
+        const WCHAR* pStr = (const WCHAR*)pString;
         hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
                          cChar, numGlyphs, &analysis->pItem[i].a,
                          glyphs, pwLogClust, psva, &numGlyphsReturned);
