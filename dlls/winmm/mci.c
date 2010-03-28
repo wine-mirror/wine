@@ -1232,8 +1232,10 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     LPCWSTR		lpCmd = 0;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
-    static const WCHAR  wszTypeS[] = {'t','y','p','e',' ',0};
+    static const WCHAR  wszTypeS[]   = {'t','y','p','e',' ',0};
     static const WCHAR  wszSysinfo[] = {'s','y','s','i','n','f','o',0};
+    static const WCHAR  wszSound[]   = {'s','o','u','n','d',0};
+    static const WCHAR  wszBreak[]   = {'b','r','e','a','k',0};
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
@@ -1341,6 +1343,8 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    if (wmd)
 		data[4] = wmd->wType;
 	}
+    } else if (!strcmpW(verb, wszSound) || !strcmpW(verb, wszBreak)) {
+	/* Prevent auto-open for system commands. */
     } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
         static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
@@ -1882,11 +1886,10 @@ static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
     DWORD	dwRet = 0;
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+    FIXME("(%04x) vkey %04X stub\n", dwFlags, lpParms->nVirtKey);
 
-    if (dwFlags & MCI_NOTIFY)
-	mciDriverNotify((HWND)lpParms->dwCallback, wDevID,
-                        (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
-
+    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY))
+        mciDriverNotify((HWND)lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
 
@@ -1903,10 +1906,9 @@ static	DWORD MCI_Sound(UINT wDevID, DWORD dwFlags, LPMCI_SOUND_PARMSW lpParms)
         dwRet = sndPlaySoundW(lpParms->lpstrSoundName, SND_SYNC) ? MMSYSERR_NOERROR : MMSYSERR_ERROR;
     else
         dwRet = MMSYSERR_ERROR; /* what should be done ??? */
-    if (dwFlags & MCI_NOTIFY)
-	mciDriverNotify((HWND)lpParms->dwCallback, wDevID,
-                        (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
 
+    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY))
+        mciDriverNotify((HWND)lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
 
