@@ -922,7 +922,7 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
         HKEY hkey = open_menus_reg_key();
         if (hkey)
         {
-            RegSetValueExA(hkey, location, 0, REG_SZ, (BYTE*) unix_link, lstrlenA(unix_link) + 1);
+            RegSetValueExA(hkey, location, 0, REG_SZ, (const BYTE*) unix_link, lstrlenA(unix_link) + 1);
             RegCloseKey(hkey);
         }
         else
@@ -1061,7 +1061,7 @@ end:
         HKEY hkey = open_menus_reg_key();
         if (hkey)
         {
-            RegSetValueExA(hkey, menuPath, 0, REG_SZ, (BYTE*) unix_link, lstrlenA(unix_link) + 1);
+            RegSetValueExA(hkey, menuPath, 0, REG_SZ, (const BYTE*) unix_link, lstrlenA(unix_link) + 1);
             RegCloseKey(hkey);
         }
     }
@@ -1748,12 +1748,12 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
         HKEY subkey;
         if (RegCreateKeyW(assocKey, extension, &subkey) == ERROR_SUCCESS)
         {
-            RegSetValueExA(subkey, "MimeType", 0, REG_SZ, (BYTE*) mimeType, lstrlenA(mimeType) + 1);
-            RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
-            RegSetValueExA(subkey, "AppName", 0, REG_SZ, (BYTE*) appName, lstrlenA(appName) + 1);
+            RegSetValueExA(subkey, "MimeType", 0, REG_SZ, (const BYTE*) mimeType, lstrlenA(mimeType) + 1);
+            RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
+            RegSetValueExA(subkey, "AppName", 0, REG_SZ, (const BYTE*) appName, lstrlenA(appName) + 1);
             if (docName)
-                RegSetValueExW(subkey, DocNameW, 0, REG_SZ, (BYTE*) docName, (lstrlenW(docName) + 1) * sizeof(WCHAR));
-            RegSetValueExA(subkey, "DesktopFile", 0, REG_SZ, (BYTE*) desktopFile, (lstrlenA(desktopFile) + 1));
+                RegSetValueExW(subkey, DocNameW, 0, REG_SZ, (const BYTE*) docName, (lstrlenW(docName) + 1) * sizeof(WCHAR));
+            RegSetValueExA(subkey, "DesktopFile", 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenA(desktopFile) + 1));
             RegCloseKey(subkey);
         }
         else

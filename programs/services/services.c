@@ -149,7 +149,7 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
         return ERROR_SUCCESS;
     }
 
-    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (LPBYTE)string, sizeof(WCHAR)*(strlenW(string) + 1));
+    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(strlenW(string) + 1));
 }
 
 DWORD save_service_config(struct service_entry *entry)

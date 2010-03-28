@@ -161,7 +161,7 @@ done:
 /* wrapper for RegSetValueExW */
 static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
 {
-    return RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)value, (strlenW(value) + 1) * sizeof(WCHAR) );
+    return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (strlenW(value) + 1) * sizeof(WCHAR) );
 }
 
 /* create the volatile hardware registry keys */

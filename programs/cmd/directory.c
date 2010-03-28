@@ -123,8 +123,8 @@ static WCHAR * WCMD_filesize64 (ULONGLONG n) {
  */
 static int WCMD_dir_sort (const void *a, const void *b)
 {
-  WIN32_FIND_DATAW *filea = (WIN32_FIND_DATAW *)a;
-  WIN32_FIND_DATAW *fileb = (WIN32_FIND_DATAW *)b;
+  const WIN32_FIND_DATAW *filea = (const WIN32_FIND_DATAW *)a;
+  const WIN32_FIND_DATAW *fileb = (const WIN32_FIND_DATAW *)b;
   int result = 0;
 
   /* If /OG or /O-G supplied, dirs go at the top or bottom, ignoring the
@@ -154,7 +154,7 @@ static int WCMD_dir_sort (const void *a, const void *b)
   /* Order by Date: (Takes into account which date (/T option) */
   } else if (dirOrder == Date) {
 
-    FILETIME *ft;
+    const FILETIME *ft;
     ULONG64 timea, timeb;
 
     if (dirTime == Written) {

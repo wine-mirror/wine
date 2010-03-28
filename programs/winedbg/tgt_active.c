@@ -245,7 +245,7 @@ static void dbg_exception_epilog(void)
 static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance)
 {
     BOOL                is_debug = FALSE;
-    THREADNAME_INFO*    pThreadName;
+    const THREADNAME_INFO*    pThreadName;
     struct dbg_thread*  pThread;
 
     assert(dbg_curr_thread);
@@ -260,7 +260,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         is_debug = TRUE;
         break;
     case EXCEPTION_NAME_THREAD:
-        pThreadName = (THREADNAME_INFO*)(rec->ExceptionInformation);
+        pThreadName = (const THREADNAME_INFO*)(rec->ExceptionInformation);
         if (pThreadName->dwThreadID == -1)
             pThread = dbg_curr_thread;
         else
