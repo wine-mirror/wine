@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = d3dx9_36.dll
 IMPORTLIB = d3dx9
 IMPORTS   = d3d9 gdi32 user32 kernel32
+EXTRALIBS = $(LIBWPP)
 
 C_SRCS = \
 	core.c \

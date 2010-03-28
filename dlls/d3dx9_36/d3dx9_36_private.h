@@ -128,5 +128,12 @@ typedef struct ID3DXSpriteImpl
     int allocated_sprites; /* number of (pre-)allocated sprites */
 } ID3DXSpriteImpl;
 
+#define MESSAGEBUFFER_INITIAL_SIZE 256
+
+#ifdef __GNUC__
+#define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#else
+#define PRINTF_ATTR(fmt,args)
+#endif
 
 #endif /* __WINE_D3DX9_36_PRIVATE_H */
