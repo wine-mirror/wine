@@ -894,8 +894,8 @@
 @ cdecl _strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 # stub _strtol_l
-# stub _strtoui64
-# stub _strtoui64_l
+@ cdecl _strtoui64(str ptr long) MSVCRT_strtoui64
+@ cdecl _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
 # stub _strtoul_l
 @ cdecl _strupr(str) ntdll._strupr
 # stub _strupr_l

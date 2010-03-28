@@ -961,8 +961,8 @@
 @ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
 @ cdecl _strtoi64_l(str ptr long ptr) msvcrt._strtoi64_l
 @ stub _strtol_l
-@ stub _strtoui64
-@ stub _strtoui64_l
+@ cdecl _strtoui64(str ptr long) msvcrt._strtoui64
+@ cdecl _strtoui64_l(str ptr long ptr) msvcrt._strtoui64_l
 @ stub _strtoul_l
 @ cdecl _strupr(str) msvcrt._strupr
 @ stub _strupr_l

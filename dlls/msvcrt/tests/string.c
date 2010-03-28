@@ -55,6 +55,7 @@ static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wc
 static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
+static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static _invalid_parameter_handler *p_invalid_parameter;
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
@@ -959,10 +960,11 @@ static void test__strtoi64(void)
     static const char blanks[] = "        12 212.31";
 
     __int64 res;
+    unsigned __int64 ures;
     char *endpos;
 
-    if(!p_strtoi64) {
-        win_skip("_strtoi64 not found\n");
+    if(!p_strtoi64 || !p_strtoui64) {
+        win_skip("_strtoi64 or _strtoui64 not found\n");
         return;
     }
 
@@ -974,6 +976,12 @@ static void test__strtoi64(void)
         ok(res == 0, "res != 0\n");
         res = p_strtoi64(no1, NULL, 37);
         ok(res == 0, "res != 0\n");
+        ures = p_strtoui64(NULL, NULL, 10);
+        ok(ures == 0, "res = %d\n", (int)ures);
+        ures = p_strtoui64(no1, NULL, 1);
+        ok(ures == 0, "res = %d\n", (int)ures);
+        ures = p_strtoui64(no1, NULL, 37);
+        ok(ures == 0, "res = %d\n", (int)ures);
         ok(errno == 0xdeadbeef, "errno = %x\n", errno);
     }
 
@@ -1063,6 +1071,42 @@ static void test__strtoi64(void)
     ok(res == 12, "res != 12\n");
     ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
     ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    ures = p_strtoui64(no1, &endpos, 0);
+    ok(ures == 31923, "ures != 31923\n");
+    ok(endpos == no1+strlen(no1), "Incorrect endpos (%p-%p)\n", no1, endpos);
+    ures = p_strtoui64(no2, &endpos, 0);
+    ok(ures == -213312, "ures != -213312\n");
+    ok(endpos == no2+strlen(no2), "Incorrect endpos (%p-%p)\n", no2, endpos);
+    ures = p_strtoui64(no3, &endpos, 10);
+    ok(ures == 12, "ures != 12\n");
+    ok(endpos == no3+2, "Incorrect endpos (%p-%p)\n", no3, endpos);
+    ures = p_strtoui64(no4, &endpos, 10);
+    ok(ures == 0, "ures != 0\n");
+    ok(endpos == no4, "Incorrect endpos (%p-%p)\n", no4, endpos);
+    ures = p_strtoui64(hex, &endpos, 10);
+    ok(ures == 0, "ures != 0\n");
+    ok(endpos == hex+1, "Incorrect endpos (%p-%p)\n", hex, endpos);
+    ures = p_strtoui64(oct, &endpos, 10);
+    ok(ures == 123, "ures != 123\n");
+    ok(endpos == oct+strlen(oct), "Incorrect endpos (%p-%p)\n", oct, endpos);
+    ures = p_strtoui64(blanks, &endpos, 10);
+    ok(ures == 12, "ures != 12\n");
+    ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    ures = p_strtoui64(overflow, &endpos, 10);
+    ok(ures == _UI64_MAX, "ures != _UI64_MAX\n");
+    ok(endpos == overflow+strlen(overflow), "Incorrect endpos (%p-%p)\n", overflow, endpos);
+    ok(errno == ERANGE, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    ures = p_strtoui64(neg_overflow, &endpos, 10);
+    ok(ures == 1, "ures != 1\n");
+    ok(endpos == neg_overflow+strlen(neg_overflow), "Incorrect endpos (%p-%p)\n", neg_overflow, endpos);
+    ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
 START_TEST(string)
@@ -1089,6 +1133,7 @@ START_TEST(string)
     p_wcsupr_s = (void *)GetProcAddress( hMsvcrt,"_wcsupr_s" );
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
     p_strtoi64 = (void *) GetProcAddress(hMsvcrt, "_strtoi64");
+    p_strtoui64 = (void *) GetProcAddress(hMsvcrt, "_strtoui64");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
