@@ -465,10 +465,8 @@ unsigned int CDECL _rotr(unsigned int num, int shift)
  */
 double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
 {
-  /* Note - Can't forward directly as libc expects y as double */
-  double dblpower = (double)power;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return scalb(num, dblpower);
+  return ldexp(num, power);
 }
 
 /*********************************************************************
