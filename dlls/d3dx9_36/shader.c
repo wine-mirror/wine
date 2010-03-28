@@ -382,6 +382,68 @@ static int wpp_close_output(void)
     return 1;
 }
 
+HRESULT assemble_shader(const char *preprocShader, const char *preprocMessages,
+                        LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs)
+{
+    struct bwriter_shader *shader;
+    char *messages = NULL;
+    HRESULT hr;
+    LPD3DXBUFFER buffer;
+    int size;
+    char *pos;
+
+    shader = SlAssembleShader(preprocShader, &messages);
+
+    if(messages || preprocMessages)
+    {
+        if(preprocMessages)
+        {
+            TRACE("Preprocessor messages:\n");
+            TRACE("%s", preprocMessages);
+        }
+        if(messages)
+        {
+            TRACE("Assembler messages:\n");
+            TRACE("%s", messages);
+        }
+
+        TRACE("Shader source:\n");
+        TRACE("%s\n", debugstr_a(preprocShader));
+
+        size = (messages ? strlen(messages) : 0) +
+            (preprocMessages ? strlen(preprocMessages) : 0) + 1;
+        hr = D3DXCreateBuffer(size, &buffer);
+        if(FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, messages);
+            if(shader) SlDeleteShader(shader);
+            return hr;
+        }
+        pos = ID3DXBuffer_GetBufferPointer(buffer);
+        if(preprocMessages)
+        {
+            CopyMemory(pos, preprocMessages, strlen(preprocMessages) + 1);
+            pos += strlen(preprocMessages);
+        }
+        if(messages)
+            CopyMemory(pos, messages, strlen(messages) + 1);
+
+        *ppErrorMsgs = buffer;
+
+        HeapFree(GetProcessHeap(), 0, messages);
+    }
+
+    if(shader == NULL)
+    {
+        ERR("Asm reading failed\n");
+        return D3DXERR_INVALIDDATA;
+    }
+
+    /* TODO: generate bytecode from the shader */
+    SlDeleteShader(shader);
+    return D3DXERR_INVALIDDATA;
+}
+
 HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
                                   UINT data_len,
                                   CONST D3DXMACRO* defines,
@@ -459,8 +521,7 @@ HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
         goto cleanup;
     }
 
-    FIXME("(%p, %d, %p, %p, %x, %p, %p): stub\n", data, data_len, defines, include, flags, shader, error_messages);
-    hr = D3DERR_INVALIDCALL;
+    hr = assemble_shader(wpp_output, wpp_messages, shader, error_messages);
 
 cleanup:
     /* Remove the previously added defines */

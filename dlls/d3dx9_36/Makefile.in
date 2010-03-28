@@ -8,6 +8,9 @@ IMPORTS   = d3d9 gdi32 user32 kernel32
 EXTRALIBS = $(LIBWPP)
 
 C_SRCS = \
+	asmparser.c \
+	asmutils.c \
+	bytecodewriter.c \
 	core.c \
 	d3dx9_36_main.c \
 	effect.c \
@@ -19,6 +22,9 @@ C_SRCS = \
 	surface.c \
 	texture.c \
 	util.c
+
+LEX_SRCS = asmshader.l
+BISON_SRCS = asmshader.y
 
 RC_SRCS = version.rc
 

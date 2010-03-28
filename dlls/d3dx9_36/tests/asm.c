@@ -1327,6 +1327,8 @@ static void assembleshader_test(void) {
         if(shader) ID3DXBuffer_Release(shader);
     } else skip("Couldn't create \"shader.vsh\"\n");
 
+    } /* todo_wine */
+
     /* NULL shader tests */
     shader = NULL;
     messages = NULL;
@@ -1339,6 +1341,8 @@ static void assembleshader_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
+
+    todo_wine {
 
     shader = NULL;
     messages = NULL;
@@ -1403,7 +1407,7 @@ START_TEST(asm)
     todo_wine vs_3_0_test();
     todo_wine ps_3_0_test();
 
-    todo_wine failure_test();
+    failure_test();
 
     assembleshader_test();
 }

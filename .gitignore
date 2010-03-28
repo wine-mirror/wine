@@ -44,6 +44,9 @@ dlls/actxprxy/actxprxy_urlhist_p.c
 dlls/advapi32/svcctl.h
 dlls/advapi32/svcctl_c.c
 dlls/atl/atliface.h
+dlls/d3dx9_36/asmshader.tab.c
+dlls/d3dx9_36/asmshader.tab.h
+dlls/d3dx9_36/asmshader.yy.c
 dlls/dispex/disp_ex.h
 dlls/dispex/disp_ex_p.c
 dlls/dxdiagn/fil_data.h
