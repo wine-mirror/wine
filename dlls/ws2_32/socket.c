@@ -3352,7 +3352,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 return SOCKET_ERROR;
             }
             get_per_thread_data()->opentype = *(const int *)optval;
-            TRACE("setting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
+            TRACE("setting global SO_OPENTYPE = 0x%x\n", *((const int*)optval) );
             return 0;
 
 #ifdef SO_RCVTIMEO
