@@ -809,8 +809,9 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         }
         else
         {
-            LPWSTR p,space;
-            for (p=(LPWSTR)start; (space=strchrW(p, ' ')); p=space+1)
+            LPCWSTR p;
+            LPWSTR space;
+            for (p=start; (space=strchrW(p, ' ')); p=space+1)
             {
                 int idx = space-start;
                 memcpy(command, start, idx*sizeof(WCHAR));

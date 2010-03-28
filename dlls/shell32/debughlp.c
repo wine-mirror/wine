@@ -35,7 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);
 
 static
-LPITEMIDLIST _dbg_ILGetNext(LPCITEMIDLIST pidl)
+LPCITEMIDLIST _dbg_ILGetNext(LPCITEMIDLIST pidl)
 {
 	WORD len;
 
@@ -44,7 +44,7 @@ LPITEMIDLIST _dbg_ILGetNext(LPCITEMIDLIST pidl)
 	  len =  pidl->mkid.cb;
 	  if (len)
 	  {
-	    return (LPITEMIDLIST) (((LPBYTE)pidl)+len);
+	    return (LPCITEMIDLIST) (((const BYTE*)pidl)+len);
 	  }
 	}
 	return NULL;
@@ -57,17 +57,17 @@ BOOL _dbg_ILIsDesktop(LPCITEMIDLIST pidl)
 }
 
 static
-LPPIDLDATA _dbg_ILGetDataPointer(LPCITEMIDLIST pidl)
+const PIDLDATA* _dbg_ILGetDataPointer(LPCITEMIDLIST pidl)
 {
 	if(pidl && pidl->mkid.cb != 0x00)
-	  return (LPPIDLDATA)pidl->mkid.abID;
+	  return (const PIDLDATA*)pidl->mkid.abID;
 	return NULL;
 }
 
 static
-LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
+LPCSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 {
-	LPPIDLDATA pdata =_dbg_ILGetDataPointer(pidl);
+	const PIDLDATA* pdata =_dbg_ILGetDataPointer(pidl);
 
 	if (pdata)
 	{
@@ -103,9 +103,9 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 }
 
 static
-LPWSTR _dbg_ILGetTextPointerW(LPCITEMIDLIST pidl)
+LPCWSTR _dbg_ILGetTextPointerW(LPCITEMIDLIST pidl)
 {
-	LPPIDLDATA pdata =_dbg_ILGetDataPointer(pidl);
+	const PIDLDATA* pdata =_dbg_ILGetDataPointer(pidl);
 
 	if (pdata)
 	{
@@ -140,7 +140,7 @@ LPWSTR _dbg_ILGetTextPointerW(LPCITEMIDLIST pidl)
 	      return NULL;
 
 	    case PT_VALUEW:
-	      return (LPWSTR)pdata->u.file.szNames;
+	      return (LPCWSTR)pdata->u.file.szNames;
 	  }
 	}
 	return NULL;
@@ -148,9 +148,9 @@ LPWSTR _dbg_ILGetTextPointerW(LPCITEMIDLIST pidl)
 
 
 static
-LPSTR _dbg_ILGetSTextPointer(LPCITEMIDLIST pidl)
+LPCSTR _dbg_ILGetSTextPointer(LPCITEMIDLIST pidl)
 {
-	LPPIDLDATA pdata =_dbg_ILGetDataPointer(pidl);
+	const PIDLDATA* pdata =_dbg_ILGetDataPointer(pidl);
 
 	if (pdata)
 	{
@@ -170,9 +170,9 @@ LPSTR _dbg_ILGetSTextPointer(LPCITEMIDLIST pidl)
 }
 
 static
-LPWSTR _dbg_ILGetSTextPointerW(LPCITEMIDLIST pidl)
+LPCWSTR _dbg_ILGetSTextPointerW(LPCITEMIDLIST pidl)
 {
-	LPPIDLDATA pdata =_dbg_ILGetDataPointer(pidl);
+	const PIDLDATA* pdata =_dbg_ILGetDataPointer(pidl);
 
 	if (pdata)
 	{
@@ -190,7 +190,7 @@ LPWSTR _dbg_ILGetSTextPointerW(LPCITEMIDLIST pidl)
 	      return NULL;
 
 	    case PT_VALUEW:
-	      return (LPWSTR)(pdata->u.file.szNames + lstrlenW ((LPWSTR)pdata->u.file.szNames) + 1);
+	      return (LPCWSTR)(pdata->u.file.szNames + lstrlenW ((LPCWSTR)pdata->u.file.szNames) + 1);
 	  }
 	}
 	return NULL;
@@ -218,8 +218,8 @@ IID* _dbg_ILGetGUIDPointer(LPCITEMIDLIST pidl)
 static
 void _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 {
-	LPSTR		szSrc;
-	LPWSTR		szSrcW;
+	LPCSTR		szSrc;
+	LPCWSTR		szSrcW;
 	GUID const * 	riid;
 
 	if (!pidl) return;
@@ -277,10 +277,10 @@ void pdump (LPCITEMIDLIST pidl)
           if (_ILIsUnicode(pidltemp))
           {
               DWORD dwAttrib = 0;
-              LPPIDLDATA pData   = _dbg_ILGetDataPointer(pidltemp);
+              const PIDLDATA* pData   = _dbg_ILGetDataPointer(pidltemp);
               DWORD type = pData ? pData->type : 0;
-              LPWSTR szLongName   = _dbg_ILGetTextPointerW(pidltemp);
-              LPWSTR szShortName  = _dbg_ILGetSTextPointerW(pidltemp);
+              LPCWSTR szLongName   = _dbg_ILGetTextPointerW(pidltemp);
+              LPCWSTR szShortName  = _dbg_ILGetSTextPointerW(pidltemp);
               char szName[MAX_PATH];
 
               _dbg_ILSimpleGetText(pidltemp, szName, MAX_PATH);
@@ -294,10 +294,10 @@ void pdump (LPCITEMIDLIST pidl)
           else
           {
               DWORD dwAttrib = 0;
-              LPPIDLDATA pData   = _dbg_ILGetDataPointer(pidltemp);
+              const PIDLDATA* pData   = _dbg_ILGetDataPointer(pidltemp);
               DWORD type = pData ? pData->type : 0;
-              LPSTR szLongName   = _dbg_ILGetTextPointer(pidltemp);
-              LPSTR szShortName  = _dbg_ILGetSTextPointer(pidltemp);
+              LPCSTR szLongName   = _dbg_ILGetTextPointer(pidltemp);
+              LPCSTR szShortName  = _dbg_ILGetSTextPointer(pidltemp);
               char szName[MAX_PATH];
 
               _dbg_ILSimpleGetText(pidltemp, szName, MAX_PATH);

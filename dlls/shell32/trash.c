@@ -358,7 +358,7 @@ HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data)
         return E_INVALIDARG;
 
     if (data != NULL)
-        *data = *(WIN32_FIND_DATAW *)(id->abID+1);
+        *data = *(const WIN32_FIND_DATAW *)(id->abID+1);
     return S_OK;
 }
 
