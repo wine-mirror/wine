@@ -32,6 +32,7 @@
 #include <limits.h>
 
 #include "msvcrt.h"
+#include "mtdll.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/debug.h"
@@ -127,16 +128,21 @@ MSVCRT___time32_t CDECL MSVCRT_mktime(struct MSVCRT_tm *mstm)
  */
 struct MSVCRT_tm* CDECL MSVCRT__localtime64(const MSVCRT___time64_t* secs)
 {
-    struct tm tm;
+    struct tm *tm;
     thread_data_t *data;
     time_t seconds = *secs;
 
     if (seconds < 0) return NULL;
 
-    if (!localtime_r( &seconds, &tm )) return NULL;
+    _mlock(_TIME_LOCK);
+    if (!(tm = localtime( &seconds))) {
+        _munlock(_TIME_LOCK);
+        return NULL;
+    }
 
     data = msvcrt_get_thread_data();
-    unix_tm_to_msvcrt( &data->time_buffer, &tm );
+    unix_tm_to_msvcrt( &data->time_buffer, tm );
+    _munlock(_TIME_LOCK);
 
     return &data->time_buffer;
 }
@@ -492,12 +498,15 @@ void CDECL MSVCRT__tzset(void)
         struct tm *tmp;
         int zone_january, zone_july;
 
+        _mlock(_TIME_LOCK);
         t = (time(NULL) / seconds_in_year) * seconds_in_year;
         tmp = localtime(&t);
         zone_january = -tmp->tm_gmtoff;
         t += seconds_in_year / 2;
         tmp = localtime(&t);
         zone_july = -tmp->tm_gmtoff;
+        _munlock(_TIME_LOCK);
+
         MSVCRT___daylight = (zone_january != zone_july);
         MSVCRT___timezone = max(zone_january, zone_july);
     }
