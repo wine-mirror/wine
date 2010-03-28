@@ -1057,12 +1057,13 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci sysinfo waveaudio quantity open returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0, got: %s, some more tests will fail.\n", buf);
 
-    /* Who knows why some machines pass all tests but return MCIERR_HARDWARE here? */
+    /* Who knows why some MS machines pass all tests but return MCIERR_HARDWARE here? */
+    /* Wine returns MCIERR_HARDWARE when no default sound is found in win.ini or the registry. */
     err = mciSendString("sound NoSuchSoundDefined wait", NULL, 0, NULL);
-    todo_wine ok(err==ok_snd || broken(err==MCIERR_HARDWARE),"mci sound NoSuchSoundDefined returned %s\n", dbg_mcierr(err));
+    ok(err==ok_snd || err==MCIERR_HARDWARE, "mci sound NoSuchSoundDefined returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("sound SystemExclamation notify wait", NULL, 0, hwnd);
-    todo_wine ok(err==ok_snd || broken(err==MCIERR_HARDWARE),"mci sound SystemExclamation returned %s\n", dbg_mcierr(err));
+    ok(err==ok_snd || err==MCIERR_HARDWARE, "mci sound SystemExclamation returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, "sound notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
     Sleep(16); /* time to auto-close makes sysinfo below return expected error */

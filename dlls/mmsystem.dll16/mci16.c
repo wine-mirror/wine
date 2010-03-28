@@ -87,6 +87,7 @@ static const char* MCI_MessageToString(UINT wMsg)
 	CASE(MCI_SAVE);
 	CASE(MCI_SEEK);
 	CASE(MCI_SET);
+	CASE(MCI_SOUND);
 	CASE(MCI_SPIN);
 	CASE(MCI_STATUS);
 	CASE(MCI_STEP);

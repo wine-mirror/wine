@@ -178,6 +178,7 @@ static const char* MCI_MessageToString(UINT wMsg)
 	CASE(MCI_SAVE);
 	CASE(MCI_SEEK);
 	CASE(MCI_SET);
+	CASE(MCI_SOUND);
 	CASE(MCI_SPIN);
 	CASE(MCI_STATUS);
 	CASE(MCI_STEP);
@@ -1438,6 +1439,12 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    }
 	}
 	break;
+    case MCI_SOUND:
+	/* FIXME: name is optional, "sound" is a valid command.
+	 * FIXME: Parse "sound notify" as flag, not as name. */
+	((LPMCI_SOUND_PARMSW)data)->lpstrSoundName = dev;
+	dwFlags |= MCI_SOUND_NAME;
+	break;
     }
 
     TRACE("[%d, %s, %08x, %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx]\n",
@@ -1942,16 +1949,18 @@ static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
  */
 static	DWORD MCI_Sound(UINT wDevID, DWORD dwFlags, LPMCI_SOUND_PARMSW lpParms)
 {
-    DWORD	dwRet = 0;
+    DWORD	dwRet;
 
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+    if (dwFlags & MCI_SOUND_NAME) {
+	if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+	else dwRet = PlaySoundW(lpParms->lpstrSoundName, NULL,
+				SND_ALIAS    | (dwFlags & MCI_WAIT ? SND_SYNC : SND_ASYNC))
+		? 0 : MCIERR_HARDWARE;
+    } else   dwRet = PlaySoundW((LPCWSTR)SND_ALIAS_SYSTEMDEFAULT, NULL,
+				SND_ALIAS_ID | (dwFlags & MCI_WAIT ? SND_SYNC : SND_ASYNC))
+		? 0 : MCIERR_HARDWARE;
 
-    if (dwFlags & MCI_SOUND_NAME)
-        dwRet = sndPlaySoundW(lpParms->lpstrSoundName, SND_SYNC) ? MMSYSERR_NOERROR : MMSYSERR_ERROR;
-    else
-        dwRet = MMSYSERR_ERROR; /* what should be done ??? */
-
-    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY))
+    if (!dwRet && lpParms && (dwFlags & MCI_NOTIFY))
         mciDriverNotify((HWND)lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
 }
