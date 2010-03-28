@@ -1331,26 +1331,26 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_SECTINFO_V3:
             printf("\tSSection Info: seg=%04x ?=%04x rva=%08x size=%08x attr=%08x %s\n",
-                   *(unsigned short*)((const char*)sym + 4),
-                   *(unsigned short*)((const char*)sym + 6),
-                   *(unsigned*)((const char*)sym + 8),
-                   *(unsigned*)((const char*)sym + 12),
-                   *(unsigned*)((const char*)sym + 16),
+                   *(const unsigned short*)((const char*)sym + 4),
+                   *(const unsigned short*)((const char*)sym + 6),
+                   *(const unsigned*)((const char*)sym + 8),
+                   *(const unsigned*)((const char*)sym + 12),
+                   *(const unsigned*)((const char*)sym + 16),
                    (const char*)sym + 20);
             break;
 
         case S_SUBSECTINFO_V3:
             printf("\tSSubSection Info: addr=%04x:%08x size=%08x attr=%08x %s\n",
-                   *(unsigned short*)((const char*)sym + 16),
-                   *(unsigned*)((const char*)sym + 12),
-                   *(unsigned*)((const char*)sym + 4),
-                   *(unsigned*)((const char*)sym + 8),
+                   *(const unsigned short*)((const char*)sym + 16),
+                   *(const unsigned*)((const char*)sym + 12),
+                   *(const unsigned*)((const char*)sym + 4),
+                   *(const unsigned*)((const char*)sym + 8),
                    (const char*)sym + 18);
             break;
 
         case S_ENTRYPOINT_V3:
             printf("\tSEntryPoint: id=%x '%s'\n",
-                   *(unsigned*)((const char*)sym + 4), (const char*)sym + 8);
+                   *(const unsigned*)((const char*)sym + 4), (const char*)sym + 8);
             break;
 
         default:

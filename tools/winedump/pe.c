@@ -377,7 +377,7 @@ void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
 
         /* long section name ? */
         if (strtable && sectHead->Name[0] == '/' &&
-            ((offset = atoi((const char*)sectHead->Name + 1)) < *(DWORD*)strtable))
+            ((offset = atoi((const char*)sectHead->Name + 1)) < *(const DWORD*)strtable))
             printf("  %.8s (%s)", sectHead->Name, strtable + offset);
         else
 	    printf("  %-8.8s", sectHead->Name);
@@ -589,7 +589,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
         { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
           "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15" };
 
-    union handler_data *handler_data;
+    const union handler_data *handler_data;
     const struct unwind_info *info;
     unsigned int i, count;
 
@@ -629,12 +629,12 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
         case UWOP_ALLOC_LARGE:
             if (info->opcodes[i].info)
             {
-                count = *(DWORD *)&info->opcodes[i+1];
+                count = *(const DWORD *)&info->opcodes[i+1];
                 i += 2;
             }
             else
             {
-                count = *(USHORT *)&info->opcodes[i+1] * 8;
+                count = *(const USHORT *)&info->opcodes[i+1] * 8;
                 i++;
             }
             printf( "sub $0x%x,%%rsp\n", count );
@@ -648,22 +648,22 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
                     info->frame_offset * 16, reg_names[info->frame_reg] );
             break;
         case UWOP_SAVE_NONVOL:
-            count = *(USHORT *)&info->opcodes[i+1] * 8;
+            count = *(const USHORT *)&info->opcodes[i+1] * 8;
             printf( "mov %%%s,0x%x(%%rsp)\n", reg_names[info->opcodes[i].info], count );
             i++;
             break;
         case UWOP_SAVE_NONVOL_FAR:
-            count = *(DWORD *)&info->opcodes[i+1];
+            count = *(const DWORD *)&info->opcodes[i+1];
             printf( "mov %%%s,0x%x(%%rsp)\n", reg_names[info->opcodes[i].info], count );
             i += 2;
             break;
         case UWOP_SAVE_XMM128:
-            count = *(USHORT *)&info->opcodes[i+1] * 16;
+            count = *(const USHORT *)&info->opcodes[i+1] * 16;
             printf( "movaps %%xmm%u,0x%x(%%rsp)\n", info->opcodes[i].info, count );
             i++;
             break;
         case UWOP_SAVE_XMM128_FAR:
-            count = *(DWORD *)&info->opcodes[i+1];
+            count = *(const DWORD *)&info->opcodes[i+1];
             printf( "movaps %%xmm%u,0x%x(%%rsp)\n", info->opcodes[i].info, count );
             i += 2;
             break;
@@ -676,7 +676,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
         }
     }
 
-    handler_data = (union handler_data *)&info->opcodes[(info->count + 1) & ~1];
+    handler_data = (const union handler_data *)&info->opcodes[(info->count + 1) & ~1];
     if (info->flags & UNW_FLAG_CHAININFO)
     {
         printf( "    -> function %08x-%08x\n",
@@ -685,7 +685,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
     }
     if (info->flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
         printf( "    handler %08x data at %08x\n", handler_data->handler,
-                (ULONG)(function->UnwindData + (char *)(&handler_data->handler + 1) - (char *)info ));
+                (ULONG)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
 }
 
 static void dump_dir_exceptions(void)
@@ -995,7 +995,7 @@ static void dump_dir_reloc(void)
     unsigned int i, size = 0;
     const USHORT *relocs;
     const IMAGE_BASE_RELOCATION *rel = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_BASERELOC, &size);
-    const IMAGE_BASE_RELOCATION *end = (IMAGE_BASE_RELOCATION *)((char *)rel + size);
+    const IMAGE_BASE_RELOCATION *end = (const IMAGE_BASE_RELOCATION *)((const char *)rel + size);
     static const char * const names[] =
     {
         "BASED_ABSOLUTE",

@@ -171,16 +171,16 @@ static int dump_emfrecord(void)
     case EMR_EXTSELECTCLIPRGN:
     {
         const EMREXTSELECTCLIPRGN *clip = PRD(offset, sizeof(*clip));
-        const RGNDATA *data = (RGNDATA *)clip->RgnData;
+        const RGNDATA *data = (const RGNDATA *)clip->RgnData;
         DWORD i, rc_count = 0;
-        RECT *rc;
+        const RECT *rc;
 
         if (length >= sizeof(*clip) + sizeof(*data))
             rc_count = data->rdh.nCount;
 
         printf("%-20s %08x\n", "EMREXTSELECTCLIPRGN", length);
         printf("mode %d, rects %d\n", clip->iMode, rc_count);
-        for (i = 0, rc = (RECT *)data->Buffer; i < rc_count; i++, rc++)
+        for (i = 0, rc = (const RECT *)data->Buffer; i < rc_count; i++, rc++)
             printf(" (%d,%d)-(%d,%d)", rc->left, rc->top, rc->right, rc->bottom);
         if (rc_count != 0) printf("\n");
         break;
