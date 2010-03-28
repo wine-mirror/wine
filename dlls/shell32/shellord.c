@@ -1808,7 +1808,7 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
                 }
 
                 /* The CLSID is stored either in the key itself or in its default value. */
-                if (!SUCCEEDED(lRet = SHCLSIDFromStringW(szHandler, &clsid)))
+                if (FAILED(lRet = SHCLSIDFromStringW(szHandler, &clsid)))
                 {
                     dwClsidSize = sizeof(szClsidHandler);
                     if (SHGetValueW(hkPropSheetHandlers, szHandler, NULL, NULL, szClsidHandler, &dwClsidSize) == ERROR_SUCCESS)
