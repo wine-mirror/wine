@@ -811,7 +811,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         if (!present_parameters->EnableAutoDepthStencil
                 || swapchain->presentParms.AutoDepthStencilFormat != WINED3DFMT_D24_UNORM_S8_UINT)
         {
-            FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
+            FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
         }
         swapchain->ds_format = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, gl_info);
         swapchain->context[0] = context_create(swapchain, (IWineD3DSurfaceImpl *)swapchain->frontBuffer,

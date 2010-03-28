@@ -1929,6 +1929,57 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
     context->draw_buffer_dirty = TRUE;
 }
 
+static inline void context_set_render_offscreen(struct wined3d_context *context, const struct StateEntry *StateTable,
+        BOOL offscreen)
+{
+    if (context->render_offscreen == offscreen) return;
+
+    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+    Context_MarkStateDirty(context, STATE_VDECL, StateTable);
+    Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
+    Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
+    Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
+    context->render_offscreen = offscreen;
+}
+
+static BOOL match_depth_stencil_format(const struct wined3d_format_desc *existing,
+        const struct wined3d_format_desc *required)
+{
+    short existing_depth, existing_stencil, required_depth, required_stencil;
+
+    if(existing == required) return TRUE;
+    if((existing->Flags & WINED3DFMT_FLAG_FLOAT) != (required->Flags & WINED3DFMT_FLAG_FLOAT)) return FALSE;
+
+    getDepthStencilBits(existing, &existing_depth, &existing_stencil);
+    getDepthStencilBits(required, &required_depth, &required_stencil);
+
+    if(existing_depth < required_depth) return FALSE;
+    /* If stencil bits are used the exact amount is required - otherwise wrapping
+     * won't work correctly */
+    if(required_stencil && required_stencil != existing_stencil) return FALSE;
+    return TRUE;
+}
+/* The caller provides a context */
+static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct wined3d_context *context)
+{
+    /* Onscreen surfaces are always in a swapchain */
+    IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) device->stencilBufferTarget;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) ((IWineD3DSurfaceImpl *)context->current_rt)->container;
+
+    if (!depth_stencil) return;
+    if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;
+
+    /* TODO: If the requested format would satisfy the needs of the existing one(reverse match),
+     * or no onscreen depth buffer was created, the OpenGL drawable could be changed to the new
+     * format. */
+    WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
+
+    /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
+    IWineD3DSurface_LoadLocation(context->current_rt, SFLAG_INTEXTURE, NULL);
+    swapchain->render_to_fbo = TRUE;
+    context_set_render_offscreen(context, device->StateTable, TRUE);
+}
+
 /* Context activation is done by the caller. */
 static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceImpl *device, enum ContextUsage usage)
 {
@@ -1939,6 +1990,7 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
         case CTXUSAGE_CLEAR:
         case CTXUSAGE_DRAWPRIM:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+                if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
                 ENTER_GL();
                 context_apply_fbo_state(context);
                 LEAVE_GL();
@@ -1951,6 +2003,7 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
 
         case CTXUSAGE_BLIT:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+                if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
                 if (context->render_offscreen)
                 {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
@@ -2043,21 +2096,14 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
 
 static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_context *context, IWineD3DSurface *target)
 {
-    BOOL old_render_offscreen = context->render_offscreen;
+    BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
     const struct StateEntry *StateTable = device->StateTable;
 
     if (!target) return;
     else if (context->current_rt == target) return;
-    context->render_offscreen = surface_is_offscreen(target);
+    render_offscreen = surface_is_offscreen(target);
 
-    if (context->render_offscreen != old_render_offscreen)
-    {
-        Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-        Context_MarkStateDirty(context, STATE_VDECL, StateTable);
-        Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-        Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
-        Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
-    }
+    context_set_render_offscreen(context, StateTable, render_offscreen);
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
      * the alpha blend state changes with different render target formats. */
