@@ -1087,23 +1087,6 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
         return 0;
     }
 
-    /* In WGL both color, depth and stencil are features of a pixel format. In case of D3D they are separate.
-     * You are able to add a depth + stencil surface at a later stage when you need it.
-     * In order to support this properly in WineD3D we need the ability to recreate the opengl context and
-     * drawable when this is required. This is very tricky as we need to reapply ALL opengl states for the new
-     * context, need torecreate shaders, textures and other resources.
-     *
-     * The context manager already takes care of the state problem and for the other tasks code from Reset
-     * can be used. These changes are way to risky during the 1.0 code freeze which is taking place right now.
-     * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
-     * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
-     * issue needs to be fixed. */
-    if (ds_format_desc->format != WINED3DFMT_D24_UNORM_S8_UINT)
-    {
-        FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
-        ds_format_desc = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, &This->adapter->gl_info);
-    }
-
     getDepthStencilBits(ds_format_desc, &depthBits, &stencilBits);
 
     for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
@@ -1229,12 +1212,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
-struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target)
+struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
+        const struct wined3d_format_desc *ds_format_desc)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format_desc *color_format_desc;
-    const struct wined3d_format_desc *ds_format_desc;
     struct wined3d_context *ret;
     PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
@@ -1260,7 +1243,6 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
         goto out;
     }
 
-    ds_format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, gl_info);
     color_format_desc = target->resource.format_desc;
 
     /* In case of ORM_BACKBUFFER, make sure to request an alpha component for

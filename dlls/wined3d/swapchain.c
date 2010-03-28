@@ -795,7 +795,28 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     if (surface_type == SURFACE_OPENGL)
     {
-        if (!(swapchain->context[0] = context_create(swapchain, (IWineD3DSurfaceImpl *)swapchain->frontBuffer)))
+        const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
+        /* In WGL both color, depth and stencil are features of a pixel format. In case of D3D they are separate.
+         * You are able to add a depth + stencil surface at a later stage when you need it.
+         * In order to support this properly in WineD3D we need the ability to recreate the opengl context and
+         * drawable when this is required. This is very tricky as we need to reapply ALL opengl states for the new
+         * context, need torecreate shaders, textures and other resources.
+         *
+         * The context manager already takes care of the state problem and for the other tasks code from Reset
+         * can be used. These changes are way to risky during the 1.0 code freeze which is taking place right now.
+         * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
+         * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
+         * issue needs to be fixed. */
+        if (!present_parameters->EnableAutoDepthStencil
+                || swapchain->presentParms.AutoDepthStencilFormat != WINED3DFMT_D24_UNORM_S8_UINT)
+        {
+            FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
+        }
+        swapchain->ds_format = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, gl_info);
+        swapchain->context[0] = context_create(swapchain, (IWineD3DSurfaceImpl *)swapchain->frontBuffer,
+                swapchain->ds_format);
+        if (!swapchain->context[0])
         {
             WARN("Failed to create context.\n");
             hr = WINED3DERR_NOTAVAILABLE;
@@ -912,7 +933,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
 
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
-    if (!(ctx = context_create(This, (IWineD3DSurfaceImpl *)This->frontBuffer)))
+    if (!(ctx = context_create(This, (IWineD3DSurfaceImpl *)This->frontBuffer, This->ds_format)))
     {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;
