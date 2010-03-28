@@ -928,7 +928,7 @@ static DWORD WINAPI MIDIIn_MessageThread(LPVOID p)
 
     local = CFMessagePortCreateLocal(kCFAllocatorDefault, MIDIInThreadPortName, &MIDIIn_MessageHandler, NULL, &info);
 
-    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, (CFIndex)0);
+    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, 0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
 
     CFRunLoopRun();

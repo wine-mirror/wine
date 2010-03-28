@@ -341,8 +341,8 @@ static DWORD WINAPI messageThread(LPVOID p)
 {
     CFMessagePortRef port_ReceiveInMessageThread = (CFMessagePortRef) p;
     CFRunLoopSourceRef source;
-    
-    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, port_ReceiveInMessageThread, (CFIndex)0);
+
+    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, port_ReceiveInMessageThread, 0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
 
     CFRunLoopRun();
