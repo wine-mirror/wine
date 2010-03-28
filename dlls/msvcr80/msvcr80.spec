@@ -958,8 +958,8 @@
 @ cdecl _strtime(ptr) msvcrt._strtime
 @ stub _strtime_s
 @ stub _strtod_l
-@ stub _strtoi64
-@ stub _strtoi64_l
+@ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
+@ cdecl _strtoi64_l(str ptr long ptr) msvcrt._strtoi64_l
 @ stub _strtol_l
 @ stub _strtoui64
 @ stub _strtoui64_l

@@ -27,6 +27,7 @@
 #include <mbctype.h>
 #include <locale.h>
 #include <errno.h>
+#include <limits.h>
 
 static char *buf_to_string(const unsigned char *bin, int len, int nr)
 {
@@ -53,6 +54,7 @@ static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsig
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
+static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static _invalid_parameter_handler *p_invalid_parameter;
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
@@ -944,6 +946,125 @@ static void test_strnlen(void)
     ok(res == 0, "Returned length = %d\n", (int)res);
 }
 
+static void test__strtoi64(void)
+{
+    static const char no1[] = "31923";
+    static const char no2[] = "-213312";
+    static const char no3[] = "12aa";
+    static const char no4[] = "abc12";
+    static const char overflow[] = "99999999999999999999";
+    static const char neg_overflow[] = "-99999999999999999999";
+    static const char hex[] = "0x123";
+    static const char oct[] = "000123";
+    static const char blanks[] = "        12 212.31";
+
+    __int64 res;
+    char *endpos;
+
+    if(!p_strtoi64) {
+        win_skip("_strtoi64 not found\n");
+        return;
+    }
+
+    if(p_invalid_parameter) {
+        errno = 0xdeadbeef;
+        res = p_strtoi64(NULL, NULL, 10);
+        ok(res == 0, "res != 0\n");
+        res = p_strtoi64(no1, NULL, 1);
+        ok(res == 0, "res != 0\n");
+        res = p_strtoi64(no1, NULL, 37);
+        ok(res == 0, "res != 0\n");
+        ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+    }
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(no1, NULL, 10);
+    ok(res == 31923, "res != 31923\n");
+    res = p_strtoi64(no2, NULL, 10);
+    ok(res == -213312, "res != -213312\n");
+    res = p_strtoi64(no3, NULL, 10);
+    ok(res == 12, "res != 12\n");
+    res = p_strtoi64(no4, &endpos, 10);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == no4, "Scanning was not stopped on first character\n");
+    res = p_strtoi64(hex, &endpos, 10);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == hex+1, "Incorrect endpos (%p-%p)\n", hex, endpos);
+    res = p_strtoi64(oct, &endpos, 10);
+    ok(res == 123, "res != 123\n");
+    ok(endpos == oct+strlen(oct), "Incorrect endpos (%p-%p)\n", oct, endpos);
+    res = p_strtoi64(blanks, &endpos, 10);
+    ok(res == 12, "res != 12");
+    ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(overflow, &endpos, 10);
+    ok(res == _I64_MAX, "res != _I64_MAX\n");
+    ok(endpos == overflow+strlen(overflow), "Incorrect endpos (%p-%p)\n", overflow, endpos);
+    ok(errno == ERANGE, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(neg_overflow, &endpos, 10);
+    ok(res == _I64_MIN, "res != _I64_MIN\n");
+    ok(endpos == neg_overflow+strlen(neg_overflow), "Incorrect endpos (%p-%p)\n", neg_overflow, endpos);
+    ok(errno == ERANGE, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(no1, &endpos, 16);
+    ok(res == 203043, "res != 203043\n");
+    ok(endpos == no1+strlen(no1), "Incorrect endpos (%p-%p)\n", no1, endpos);
+    res = p_strtoi64(no2, &endpos, 16);
+    ok(res == -2175762, "res != -2175762\n");
+    ok(endpos == no2+strlen(no2), "Incorrect endpos (%p-%p)\n", no2, endpos);
+    res = p_strtoi64(no3, &endpos, 16);
+    ok(res == 4778, "res != 4778\n");
+    ok(endpos == no3+strlen(no3), "Incorrect endpos (%p-%p)\n", no3, endpos);
+    res = p_strtoi64(no4, &endpos, 16);
+    ok(res == 703506, "res != 703506\n");
+    ok(endpos == no4+strlen(no4), "Incorrect endpos (%p-%p)\n", no4, endpos);
+    res = p_strtoi64(hex, &endpos, 16);
+    ok(res == 291, "res != 291\n");
+    ok(endpos == hex+strlen(hex), "Incorrect endpos (%p-%p)\n", hex, endpos);
+    res = p_strtoi64(oct, &endpos, 16);
+    ok(res == 291, "res != 291\n");
+    ok(endpos == oct+strlen(oct), "Incorrect endpos (%p-%p)\n", oct, endpos);
+    res = p_strtoi64(blanks, &endpos, 16);
+    ok(res == 18, "res != 18\n");
+    ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(hex, &endpos, 36);
+    ok(res == 1541019, "res != 1541019\n");
+    ok(endpos == hex+strlen(hex), "Incorrect endpos (%p-%p)\n", hex, endpos);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(no1, &endpos, 0);
+    ok(res == 31923, "res != 31923\n");
+    ok(endpos == no1+strlen(no1), "Incorrect endpos (%p-%p)\n", no1, endpos);
+    res = p_strtoi64(no2, &endpos, 0);
+    ok(res == -213312, "res != -213312\n");
+    ok(endpos == no2+strlen(no2), "Incorrect endpos (%p-%p)\n", no2, endpos);
+    res = p_strtoi64(no3, &endpos, 10);
+    ok(res == 12, "res != 12\n");
+    ok(endpos == no3+2, "Incorrect endpos (%p-%p)\n", no3, endpos);
+    res = p_strtoi64(no4, &endpos, 10);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == no4, "Incorrect endpos (%p-%p)\n", no4, endpos);
+    res = p_strtoi64(hex, &endpos, 10);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == hex+1, "Incorrect endpos (%p-%p)\n", hex, endpos);
+    res = p_strtoi64(oct, &endpos, 10);
+    ok(res == 123, "res != 123\n");
+    ok(endpos == oct+strlen(oct), "Incorrect endpos (%p-%p)\n", oct, endpos);
+    res = p_strtoi64(blanks, &endpos, 10);
+    ok(res == 12, "res != 12\n");
+    ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -967,6 +1088,7 @@ START_TEST(string)
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
     p_wcsupr_s = (void *)GetProcAddress( hMsvcrt,"_wcsupr_s" );
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
+    p_strtoi64 = (void *) GetProcAddress(hMsvcrt, "_strtoi64");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -997,4 +1119,5 @@ START_TEST(string)
     test__wcsupr_s();
     test_strtol();
     test_strnlen();
+    test__strtoi64();
 }

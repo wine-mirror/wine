@@ -43,6 +43,9 @@
 
 #define MSVCRT_LONG_MAX    0x7fffffffL
 #define MSVCRT_ULONG_MAX   0xffffffffUL
+#define MSVCRT_I64_MAX    (((__int64)0x7fffffff << 32) | 0xffffffff)
+#define MSVCRT_I64_MIN    (-MSVCRT_I64_MAX-1)
+#define MSVCRT_UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
 
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
@@ -738,6 +741,47 @@ int            __cdecl MSVCRT_vsnprintf(char *str, unsigned int len, const char 
 int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
                                        const MSVCRT_wchar_t *format, __ms_va_list valist );
 int            __cdecl MSVCRT_raise(int sig);
+
+typedef struct MSVCRT_tagLC_ID {
+    unsigned short wLanguage;
+    unsigned short wCountry;
+    unsigned short wCodePage;
+} MSVCRT_LC_ID, *MSVCRT_LPLC_ID;
+
+typedef struct MSVCRT_threadlocaleinfostruct {
+    int refcount;
+    unsigned int lc_codepage;
+    unsigned int lc_collate_cp;
+    unsigned long lc_handle[6];
+    MSVCRT_LC_ID lc_id[6];
+    struct {
+        char *locale;
+        wchar_t *wlocale;
+        int *refcount;
+        int *wrefcount;
+    } lc_category[6];
+    int lc_clike;
+    int mb_cur_max;
+    int *lconv_intl_refcount;
+    int *lconv_num_refcount;
+    int *lconv_mon_refcount;
+    struct lconv *lconv;
+    int *ctype1_refcount;
+    unsigned short *ctype1;
+    const unsigned short *pctype;
+    const unsigned char *pclmap;
+    const unsigned char *pcumap;
+    struct __lc_time_data *lc_time_curr;
+} MSVCRT_threadlocinfo;
+
+typedef struct MSVCRT_threadlocaleinfostruct *MSVCRT_pthreadlocinfo;
+typedef struct MSVCRT_threadmbcinfostruct *MSVCRT_pthreadmbcinfo;
+
+typedef struct MSVCRT_localeinfo_struct
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    MSVCRT_pthreadmbcinfo mbcinfo;
+} MSVCRT__locale_tstruct, *MSVCRT__locale_t;
 
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);

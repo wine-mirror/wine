@@ -327,3 +327,83 @@ MSVCRT_size_t CDECL MSVCRT_strnlen(const char *s, MSVCRT_size_t maxlen)
 
     return i;
 }
+
+/*********************************************************************
+ *  _strtoi64_l (MSVCR90.@)
+ *
+ * FIXME: locale parameter is ignored
+ */
+__int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCRT__locale_t locale)
+{
+    BOOL negative = FALSE;
+    __int64 ret = 0;
+
+    TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
+
+    if(!nptr || base<0 || base>36 || base==1) {
+        MSVCRT_invalid_parameter(NULL, NULL, NULL, 0, NULL);
+        return 0;
+    }
+
+    while(isspace(*nptr)) nptr++;
+
+    if(*nptr == '-') {
+        negative = TRUE;
+        nptr++;
+    } else if(*nptr == '+')
+        nptr++;
+
+    if((base==0 || base==16) && *nptr=='0' && tolower(*(nptr+1))=='x') {
+        base = 16;
+        nptr += 2;
+    }
+
+    if(base == 0) {
+        if(*nptr=='0')
+            base = 8;
+        else
+            base = 10;
+    }
+
+    while(*nptr) {
+        char cur = tolower(*nptr);
+        int v;
+
+        if(isdigit(cur)) {
+            if(cur >= '0'+base)
+                break;
+            v = cur-'0';
+        } else {
+            if(cur<'a' || cur>='a'+base-10)
+                break;
+            v = cur-'a'+10;
+        }
+
+        if(negative)
+            v = -v;
+
+        nptr++;
+
+        if(!negative && (ret>MSVCRT_I64_MAX/base || ret*base>MSVCRT_I64_MAX-v)) {
+            ret = MSVCRT_I64_MAX;
+            *MSVCRT__errno() = ERANGE;
+        } else if(negative && (ret<MSVCRT_I64_MIN/base || ret*base<MSVCRT_I64_MIN-v)) {
+            ret = MSVCRT_I64_MIN;
+            *MSVCRT__errno() = ERANGE;
+        } else
+            ret = ret*base + v;
+    }
+
+    if(endptr)
+        *endptr = (char*)nptr;
+
+    return ret;
+}
+
+/*********************************************************************
+ *  _strtoi64 (MSVCR90.@)
+ */
+__int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
+{
+    return MSVCRT_strtoi64_l(nptr, endptr, base, NULL);
+}
