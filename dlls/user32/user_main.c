@@ -357,6 +357,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
     WCHAR cmdline[MAX_PATH + 64];
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
+    void *redir;
 
     GetSystemDirectoryW( app, MAX_PATH - sizeof(winebootW)/sizeof(WCHAR) );
     strcatW( app, winebootW );
@@ -372,11 +373,14 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 
     memset( &si, 0, sizeof si );
     si.cb = sizeof si;
+    Wow64DisableWow64FsRedirection( &redir );
     if (!CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
     {
+        Wow64RevertWow64FsRedirection( redir );
         ERR( "Failed to run %s\n", debugstr_w(cmdline) );
         return FALSE;
     }
+    Wow64RevertWow64FsRedirection( redir );
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
     return TRUE;
