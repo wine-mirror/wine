@@ -1124,8 +1124,81 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 
 /* System Information Class 0x02 */
 
+/* Documented in "Windows NT/2000 Native API Reference" by Gary Nebbett. */
 typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
-    BYTE Reserved1[312];
+    LARGE_INTEGER IdleTime;
+    LARGE_INTEGER ReadTransferCount;
+    LARGE_INTEGER WriteTransferCount;
+    LARGE_INTEGER OtherTransferCount;
+    ULONG ReadOperationCount;
+    ULONG WriteOperationCount;
+    ULONG OtherOperationCount;
+    ULONG AvailablePages;
+    ULONG TotalCommittedPages;
+    ULONG TotalCommitLimit;
+    ULONG PeakCommitment;
+    ULONG PageFaults;
+    ULONG WriteCopyFaults;
+    ULONG TransitionFaults;
+    ULONG Reserved1;
+    ULONG DemandZeroFaults;
+    ULONG PagesRead;
+    ULONG PageReadIos;
+    ULONG Reserved2[2];
+    ULONG PagefilePagesWritten;
+    ULONG PagefilePageWriteIos;
+    ULONG MappedFilePagesWritten;
+    ULONG MappedFilePageWriteIos;
+    ULONG PagedPoolUsage;
+    ULONG NonPagedPoolUsage;
+    ULONG PagedPoolAllocs;
+    ULONG PagedPoolFrees;
+    ULONG NonPagedPoolAllocs;
+    ULONG NonPagedPoolFrees;
+    ULONG TotalFreeSystemPtes;
+    ULONG SystemCodePage;
+    ULONG TotalSystemDriverPages;
+    ULONG TotalSystemCodePages;
+    ULONG SmallNonPagedLookasideListAllocateHits;
+    ULONG SmallPagedLookasideListAllocateHits;
+    ULONG Reserved3;
+    ULONG MmSystemCachePage;
+    ULONG PagedPoolPage;
+    ULONG SystemDriverPage;
+    ULONG FastReadNoWait;
+    ULONG FastReadWait;
+    ULONG FastReadResourceMiss;
+    ULONG FastReadNotPossible;
+    ULONG FastMdlReadNoWait;
+    ULONG FastMdlReadWait;
+    ULONG FastMdlReadResourceMiss;
+    ULONG FastMdlReadNotPossible;
+    ULONG MapDataNoWait;
+    ULONG MapDataWait;
+    ULONG MapDataNoWaitMiss;
+    ULONG MapDataWaitMiss;
+    ULONG PinMappedDataCount;
+    ULONG PinReadNoWait;
+    ULONG PinReadWait;
+    ULONG PinReadNoWaitMiss;
+    ULONG PinReadWaitMiss;
+    ULONG CopyReadNoWait;
+    ULONG CopyReadWait;
+    ULONG CopyReadNoWaitMiss;
+    ULONG CopyReadWaitMiss;
+    ULONG MdlReadNoWait;
+    ULONG MdlReadWait;
+    ULONG MdlReadNoWaitMiss;
+    ULONG MdlReadWaitMiss;
+    ULONG ReadAheadIos;
+    ULONG LazyWriteIos;
+    ULONG LazyWritePages;
+    ULONG DataFlushes;
+    ULONG DataPages;
+    ULONG ContextSwitches;
+    ULONG FirstLevelTbFills;
+    ULONG SecondLevelTbFills;
+    ULONG SystemCalls;
 } SYSTEM_PERFORMANCE_INFORMATION, *PSYSTEM_PERFORMANCE_INFORMATION;
 
 /* System Information Class 0x03 */
