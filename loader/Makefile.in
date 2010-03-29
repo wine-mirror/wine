@@ -13,6 +13,7 @@ EXTRA_BINARIES = @EXTRA_BINARIES@
 
 PROGRAMS = \
 	wine \
+	wine32 \
 	wine-installed \
 	wine-preloader
 
@@ -27,7 +28,7 @@ INSTALLDIRS = \
 	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
 	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
 
-all: wine wine-installed $(EXTRA_BINARIES) $(MANPAGES)
+all: $(MAIN_BINARY) wine-installed $(EXTRA_BINARIES) $(MANPAGES)
 
 @MAKE_RULES@
 
@@ -37,7 +38,7 @@ LDEXECFLAGS = @LDEXECFLAGS@
 wine-preloader: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
-wine: main.o Makefile.in
+$(MAIN_BINARY): main.o Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
 wine-installed: main.o Makefile.in

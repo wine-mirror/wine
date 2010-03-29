@@ -81,7 +81,14 @@ else
   export LD_LIBRARY_PATH
 fi
 
-WINELOADER="$topdir/loader/wine"
+if [ -x "$topdir/loader/wine" ]
+then WINELOADER="$topdir/loader/wine"
+elif [ -x "$topdir/loader/wine32" ]
+then WINELOADER="$topdir/loader/wine32"
+else
+  echo "$0: could not find the wine loader in $topdir"
+  exit 1
+fi
 export WINELOADER
 
 # any local settings ?
@@ -92,18 +99,4 @@ fi
 
 # and run the application
 
-case "$0" in
-  wine|*/wine)
-    exec "$WINELOADER" "$@"
-    ;;
-  */*)
-    [ -f "$0.exe.so" ] && exec "$WINELOADER" "$0.exe.so" "$@"
-    echo "$0: cannot find corresponding application"
-    exit 1
-    ;;
-  *)
-    [ -f "$appdir/$0.exe.so" ] && exec "$WINELOADER" "$appdir/$0.exe.so" "$@"
-    echo "$0: cannot find corresponding application"
-    exit 1
-    ;;
-esac
+exec "$WINELOADER" "$@"
