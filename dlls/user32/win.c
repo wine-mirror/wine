@@ -1785,6 +1785,7 @@ HWND WINAPI GetDesktopWindow(void)
             WCHAR windir[MAX_PATH];
             WCHAR app[MAX_PATH + sizeof(explorer)/sizeof(WCHAR)];
             WCHAR cmdline[MAX_PATH + (sizeof(explorer) + sizeof(args))/sizeof(WCHAR)];
+            void *redir;
 
             memset( &si, 0, sizeof(si) );
             si.cb = sizeof(si);
@@ -1793,11 +1794,13 @@ HWND WINAPI GetDesktopWindow(void)
             si.hStdOutput = 0;
             si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
-            GetWindowsDirectoryW( windir, MAX_PATH );
+            GetSystemDirectoryW( windir, MAX_PATH );
             strcpyW( app, windir );
             strcatW( app, explorer );
             strcpyW( cmdline, app );
             strcatW( cmdline, args );
+
+            Wow64DisableWow64FsRedirection( &redir );
             if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
                                 NULL, windir, &si, &pi ))
             {
@@ -1807,6 +1810,7 @@ HWND WINAPI GetDesktopWindow(void)
                 CloseHandle( pi.hProcess );
             }
             else WARN( "failed to start explorer, err %d\n", GetLastError() );
+            Wow64RevertWow64FsRedirection( redir );
         }
         else TRACE( "not starting explorer since winstation is not visible\n" );
 
