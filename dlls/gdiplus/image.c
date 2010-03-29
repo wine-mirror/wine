@@ -1946,6 +1946,7 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
     GpGraphics **graphics)
 {
     HDC hdc;
+    GpStatus stat;
 
     TRACE("%p %p\n", image, graphics);
 
@@ -1965,7 +1966,12 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
         ((GpBitmap*)image)->hdc = hdc;
     }
 
-    return GdipCreateFromHDC(hdc, graphics);
+    stat = GdipCreateFromHDC(hdc, graphics);
+
+    if (stat == Ok)
+        (*graphics)->image = image;
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
