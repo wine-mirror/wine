@@ -1320,6 +1320,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             memset(&spi, 0 , sizeof(spi));
             len = sizeof(spi);
 
+            spi.Reserved3 = 0x7fffffff; /* Available paged pool memory? */
+
             if (Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
