@@ -1967,8 +1967,8 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
             ret = cmdline;
             break;
         }
-        if (!(*pos++ = *p++)) break;
         if (!first_space) first_space = pos;
+        if (!(*pos++ = *p++)) break;
     }
 
     if (!ret)
