@@ -34,6 +34,8 @@
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
+static BOOL is_win2k_and_lower;
+
 static int (WINAPI *pSHSearchMapInt)(const int*,const int*,int,int);
 static HRESULT (WINAPI *pGetAcceptLanguagesA)(LPSTR,LPDWORD);
 
@@ -53,6 +55,7 @@ static DWORD  (WINAPI *pSHGetObjectCompatFlags)(IUnknown*, const CLSID*);
 static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
 static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
 static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServiceProvider*, DWORD*);
+static HWND   (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2139,7 +2142,6 @@ static const IServiceProviderVtbl IServiceProviderImpl_Vtbl =
 static void test_IUnknown_QueryServiceExec(void)
 {
     IServiceProvider *provider = IServiceProviderImpl_Construct();
-    void *test_ptr = (void*)GetProcAddress(hShlwapi, "StrChrNW");
     static const GUID dummy_serviceid = { 0xdeadbeef };
     static const GUID dummy_groupid = { 0xbeefbeef };
     call_trace_t trace_expected;
@@ -2147,7 +2149,7 @@ static void test_IUnknown_QueryServiceExec(void)
 
     /* on <=W2K platforms same ordinal used for another export with different
        prototype, so skipping using this indirect condition */
-    if (!test_ptr)
+    if (is_win2k_and_lower)
     {
         win_skip("IUnknown_QueryServiceExec is not available\n");
         return;
@@ -2250,7 +2252,6 @@ static const IProfferServiceVtbl IProfferServiceImpl_Vtbl =
 
 static void test_IUnknown_ProfferService(void)
 {
-    void *test_ptr = (void*)GetProcAddress(hShlwapi, "StrChrNW");
     IServiceProvider *provider = IServiceProviderImpl_Construct();
     IProfferService *proff = IProfferServiceImpl_Construct();
     static const GUID dummy_serviceid = { 0xdeadbeef };
@@ -2260,7 +2261,7 @@ static void test_IUnknown_ProfferService(void)
 
     /* on <=W2K platforms same ordinal used for another export with different
        prototype, so skipping using this indirect condition */
-    if (!test_ptr)
+    if (is_win2k_and_lower)
     {
         win_skip("IUnknown_ProfferService is not available\n");
         return;
@@ -2312,6 +2313,62 @@ static void test_IUnknown_ProfferService(void)
     IProfferService_Release(proff);
 }
 
+static void test_SHCreateWorkerWindowA(void)
+{
+    WNDCLASSA cliA;
+    char classA[20];
+    HWND hwnd;
+    LONG ret;
+    BOOL res;
+
+    if (is_win2k_and_lower)
+    {
+        win_skip("SHCreateWorkerWindowA not available\n");
+        return;
+    }
+
+    hwnd = pSHCreateWorkerWindowA(0, NULL, 0, 0, 0, 0);
+    ok(hwnd != 0, "expected window\n");
+
+    GetClassName(hwnd, classA, 20);
+    ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
+
+    ret = GetWindowLongA(hwnd, DWLP_MSGRESULT);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* class info */
+    memset(&cliA, 0, sizeof(cliA));
+    res = GetClassInfoA(GetModuleHandle("shlwapi.dll"), "WorkerA", &cliA);
+    ok(res, "failed to get class info\n");
+    ok(cliA.style == 0, "got 0x%08x\n", cliA.style);
+    ok(cliA.cbClsExtra == 0, "got %d\n", cliA.cbClsExtra);
+    ok(cliA.cbWndExtra == 4, "got %d\n", cliA.cbWndExtra);
+    ok(cliA.lpszMenuName == 0, "got %s\n", cliA.lpszMenuName);
+
+    DestroyWindow(hwnd);
+
+    /* set DWLP_MSGRESULT */
+    hwnd = pSHCreateWorkerWindowA(0, NULL, 0, 0, 0, 0xdeadbeef);
+    ok(hwnd != 0, "expected window\n");
+
+    GetClassName(hwnd, classA, 20);
+    ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
+
+    ret = GetWindowLongA(hwnd, DWLP_MSGRESULT);
+    ok(ret == 0xdeadbeef, "got %d\n", ret);
+
+    /* test exstyle */
+    ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    ok(ret == WS_EX_WINDOWEDGE, "0x%08x\n", ret);
+
+    DestroyWindow(hwnd);
+
+    hwnd = pSHCreateWorkerWindowA(0, NULL, WS_EX_TOOLWINDOW, 0, 0, 0);
+    ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW), "0x%08x\n", ret);
+    DestroyWindow(hwnd);
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -2323,6 +2380,7 @@ static void init_pointers(void)
     MAKEFUNC(SHSetWindowBits, 165);
     MAKEFUNC(ConnectToConnectionPoint, 168);
     MAKEFUNC(SHSearchMapInt, 198);
+    MAKEFUNC(SHCreateWorkerWindowA, 257);
     MAKEFUNC(GUIDFromStringA, 269);
     MAKEFUNC(SHPackDispParams, 282);
     MAKEFUNC(IConnectionPoint_InvokeWithCancel, 283);
@@ -2339,6 +2397,7 @@ static void init_pointers(void)
 START_TEST(ordinal)
 {
     hShlwapi = GetModuleHandleA("shlwapi.dll");
+    is_win2k_and_lower = GetProcAddress(hShlwapi, "StrChrNW") == 0;
 
     init_pointers();
 
@@ -2359,4 +2418,5 @@ START_TEST(ordinal)
     test_SHGetObjectCompatFlags();
     test_IUnknown_QueryServiceExec();
     test_IUnknown_ProfferService();
+    test_SHCreateWorkerWindowA();
 }

@@ -2595,21 +2595,21 @@ HRESULT WINAPI IUnknown_GetSite(LPUNKNOWN lpUnknown, REFIID iid, PVOID *lppSite)
  *  dwExStyle  [I] Extra style flags
  *  dwStyle    [I] Style flags
  *  hMenu      [I] Window menu
- *  z          [I] Unknown
+ *  msg_result [I] New DWLP_MSGRESULT value
  *
  * RETURNS
  *  Success: The window handle of the newly created window.
  *  Failure: 0.
  */
 HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
-                        DWORD dwStyle, HMENU hMenu, LONG z)
+                        DWORD dwStyle, HMENU hMenu, LONG msg_result)
 {
   static const char szClass[] = "WorkerA";
   WNDCLASSA wc;
   HWND hWnd;
 
-  TRACE("(0x%08x,%p,0x%08x,0x%08x,%p,0x%08x)\n",
-         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
+  TRACE("(0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08x)\n",
+         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, msg_result);
 
   /* Create Window class */
   wc.style         = 0;
@@ -2623,19 +2623,17 @@ HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;
 
-  SHRegisterClassA(&wc); /* Register class */
-
-  /* FIXME: Set extra bits in dwExStyle */
+  SHRegisterClassA(&wc);
 
   hWnd = CreateWindowExA(dwExStyle, szClass, 0, dwStyle, 0, 0, 0, 0,
                          hWndParent, hMenu, shlwapi_hInstance, 0);
   if (hWnd)
   {
-    SetWindowLongPtrW(hWnd, DWLP_MSGRESULT, z);
+    SetWindowLongPtrW(hWnd, DWLP_MSGRESULT, msg_result);
 
-    if (wndProc)
-      SetWindowLongPtrA(hWnd, GWLP_WNDPROC, wndProc);
+    if (wndProc) SetWindowLongPtrA(hWnd, GWLP_WNDPROC, wndProc);
   }
+
   return hWnd;
 }
 
@@ -2893,20 +2891,20 @@ DWORD WINAPI WhichPlatform(void)
  * Unicode version of SHCreateWorkerWindowA.
  */
 HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
-                        DWORD dwStyle, HMENU hMenu, LONG z)
+                        DWORD dwStyle, HMENU hMenu, LONG msg_result)
 {
   static const WCHAR szClass[] = { 'W', 'o', 'r', 'k', 'e', 'r', 'W', 0 };
   WNDCLASSW wc;
   HWND hWnd;
 
-  TRACE("(0x%08x,%p,0x%08x,0x%08x,%p,0x%08x)\n",
-         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
+  TRACE("(0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08x)\n",
+         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, msg_result);
 
   /* If our OS is natively ANSI, use the ANSI version */
   if (GetVersion() & 0x80000000)  /* not NT */
   {
     TRACE("fallback to ANSI, ver 0x%08x\n", GetVersion());
-    return SHCreateWorkerWindowA(wndProc, hWndParent, dwExStyle, dwStyle, hMenu, z);
+    return SHCreateWorkerWindowA(wndProc, hWndParent, dwExStyle, dwStyle, hMenu, msg_result);
   }
 
   /* Create Window class */
@@ -2921,19 +2919,17 @@ HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;
 
-  SHRegisterClassW(&wc); /* Register class */
-
-  /* FIXME: Set extra bits in dwExStyle */
+  SHRegisterClassW(&wc);
 
   hWnd = CreateWindowExW(dwExStyle, szClass, 0, dwStyle, 0, 0, 0, 0,
                          hWndParent, hMenu, shlwapi_hInstance, 0);
   if (hWnd)
   {
-    SetWindowLongPtrW(hWnd, DWLP_MSGRESULT, z);
+    SetWindowLongPtrW(hWnd, DWLP_MSGRESULT, msg_result);
 
-    if (wndProc)
-      SetWindowLongPtrW(hWnd, GWLP_WNDPROC, wndProc);
+    if (wndProc) SetWindowLongPtrW(hWnd, GWLP_WNDPROC, wndProc);
   }
+
   return hWnd;
 }
 
