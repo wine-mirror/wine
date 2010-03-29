@@ -3967,10 +3967,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             srect.y2 = Src->currentDesc.Height;
             upsideDown = FALSE;
         }
-        if(rect.x1 > rect.x2) {
-            UINT tmp = rect.x2;
-            rect.x2 = rect.x1;
-            rect.x1 = tmp;
+        if(rect.y1 > rect.y2) {
+            UINT tmp = rect.y2;
+            rect.y2 = rect.y1;
+            rect.y1 = tmp;
             upsideDown = !upsideDown;
         }
 
