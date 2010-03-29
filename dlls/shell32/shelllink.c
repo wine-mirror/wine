@@ -415,6 +415,7 @@ BOOL run_winemenubuilder( const WCHAR *args )
     PROCESS_INFORMATION pi;
     BOOL ret;
     WCHAR app[MAX_PATH];
+    void *redir;
 
     GetSystemDirectoryW( app, MAX_PATH - sizeof(menubuilder)/sizeof(WCHAR) );
     strcatW( app, menubuilder );
@@ -432,7 +433,9 @@ BOOL run_winemenubuilder( const WCHAR *args )
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
 
+    Wow64DisableWow64FsRedirection( &redir );
     ret = CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+    Wow64RevertWow64FsRedirection( redir );
 
     HeapFree( GetProcessHeap(), 0, buffer );
 
