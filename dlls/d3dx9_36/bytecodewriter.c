@@ -104,6 +104,381 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
     return TRUE;
 }
 
+/* shader bytecode buffer manipulation functions.
+ * allocate_buffer creates a new buffer structure, put_dword adds a new
+ * DWORD to the buffer. In the rare case of a memory allocation failure
+ * when trying to grow the buffer a flag is set in the buffer to mark it
+ * invalid. This avoids return value checking and passing in many places
+ */
+static struct bytecode_buffer *allocate_buffer(void) {
+    struct bytecode_buffer *ret;
+
+    ret = asm_alloc(sizeof(*ret));
+    if(!ret) return NULL;
+
+    ret->alloc_size = BYTECODEBUFFER_INITIAL_SIZE;
+    ret->data = asm_alloc(sizeof(DWORD) * ret->alloc_size);
+    if(!ret->data) {
+        asm_free(ret);
+        return NULL;
+    }
+    ret->state = S_OK;
+    return ret;
+}
+
+static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
+    if(FAILED(buffer->state)) return;
+
+    if(buffer->alloc_size == buffer->size) {
+        DWORD *newarray;
+        buffer->alloc_size *= 2;
+        newarray = asm_realloc(buffer->data,
+                               sizeof(DWORD) * buffer->alloc_size);
+        if(!newarray) {
+            ERR("Failed to grow the buffer data memory\n");
+            buffer->state = E_OUTOFMEMORY;
+            return;
+        }
+        buffer->data = newarray;
+    }
+    buffer->data[buffer->size++] = value;
+}
+
+/******************************************************
+ * Implementation of the writer functions starts here *
+ ******************************************************/
+static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
+    put_dword(buffer, D3DSIO_END);
+}
+
+static void write_srcregs(struct bc_writer *This, const struct instruction *instr,
+                          struct bytecode_buffer *buffer){
+    unsigned int i;
+    if(instr->has_predicate){
+        This->funcs->srcreg(This, &instr->predicate, buffer);
+    }
+    for(i = 0; i < instr->num_srcs; i++){
+        This->funcs->srcreg(This, &instr->src[i], buffer);
+    }
+}
+
+/* The length of an instruction consists of the destination register (if any),
+ * the number of source registers, the number of address registers used for
+ * indirect addressing, and optionally the predicate register
+ */
+static DWORD instrlen(const struct instruction *instr, unsigned int srcs, unsigned int dsts) {
+    unsigned int i;
+    DWORD ret = srcs + dsts + (instr->has_predicate ? 1 : 0);
+
+    if(dsts){
+        if(instr->dst.rel_reg) ret++;
+    }
+    for(i = 0; i < srcs; i++) {
+        if(instr->src[i].rel_reg) ret++;
+    }
+    return ret;
+}
+
+static void instr_handler(struct bc_writer *This,
+                          const struct instruction *instr,
+                          struct bytecode_buffer *buffer) {
+    DWORD token = d3d9_opcode(instr->opcode);
+    TRACE("token: %x\n", token);
+
+    This->funcs->opcode(This, instr, token, buffer);
+    if(instr->has_dst) This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
+    write_srcregs(This, instr, buffer);
+}
+
+static void sm_2_opcode(struct bc_writer *This,
+                        const struct instruction *instr,
+                        DWORD token, struct bytecode_buffer *buffer) {
+    /* From sm 2 onwards instruction length is encoded in the opcode field */
+    int dsts = instr->has_dst ? 1 : 0;
+    token |= instrlen(instr, instr->num_srcs, dsts) << D3DSI_INSTLENGTH_SHIFT;
+    put_dword(buffer,token);
+}
+
+static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
+    /* Declare the shader type and version */
+    put_dword(buffer, This->version);
+    return;
+}
+
+static void sm_3_srcreg(struct bc_writer *This,
+                        const struct shader_reg *reg,
+                        struct bytecode_buffer *buffer) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+    DWORD d3d9reg;
+
+    d3d9reg = d3d9_register(reg->type);
+    token |= (d3d9reg << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+    token |= (d3d9reg << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+    token |= reg->regnum & D3DSP_REGNUM_MASK;
+
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK;
+
+    put_dword(buffer, token);
+}
+
+static void sm_3_dstreg(struct bc_writer *This,
+                        const struct shader_reg *reg,
+                        struct bytecode_buffer *buffer,
+                        DWORD shift, DWORD mod) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+    DWORD d3d9reg;
+
+    d3d9reg = d3d9_register(reg->type);
+    token |= (d3d9reg << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+    token |= (d3d9reg << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+    token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
+
+    token |= d3d9_writemask(reg->writemask);
+    put_dword(buffer, token);
+}
+
+static const struct instr_handler_table vs_3_handlers[] = {
+    {BWRITERSIO_MOV,            instr_handler},
+    {BWRITERSIO_END,            NULL},
+};
+
+static const struct bytecode_backend vs_3_backend = {
+    sm_3_header,
+    end,
+    sm_3_srcreg,
+    sm_3_dstreg,
+    sm_2_opcode,
+    vs_3_handlers
+};
+
+static void init_vs30_dx9_writer(struct bc_writer *writer) {
+    TRACE("Creating DirectX9 vertex shader 3.0 writer\n");
+    writer->funcs = &vs_3_backend;
+}
+
+static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
+    struct bc_writer *ret = asm_alloc(sizeof(*ret));
+
+    if(!ret) {
+        WARN("Failed to allocate a bytecode writer instance\n");
+        return NULL;
+    }
+
+    switch(version) {
+        case BWRITERVS_VERSION(1, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for vertex shader 1.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERVS_VERSION(1, 1):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for vertex shader 1.1 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERVS_VERSION(2, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for vertex shader 2.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERVS_VERSION(2, 1):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for vertex shader 2.x requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERVS_VERSION(3, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for vertex shader 3.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            init_vs30_dx9_writer(ret);
+            break;
+
+        case BWRITERPS_VERSION(1, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 1.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERPS_VERSION(1, 1):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 1.1 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERPS_VERSION(1, 2):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 1.2 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERPS_VERSION(1, 3):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 1.3 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+        case BWRITERPS_VERSION(1, 4):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 1.4 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+
+        case BWRITERPS_VERSION(2, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 2.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+
+        case BWRITERPS_VERSION(2, 1):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 2.x requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+
+        case BWRITERPS_VERSION(3, 0):
+            if(dxversion != 9) {
+                WARN("Unsupported dxversion for pixel shader 3.0 requested: %u\n", dxversion);
+                goto fail;
+            }
+            /* TODO: Set the appropriate writer backend */
+            break;
+
+        default:
+            WARN("Unexpected shader version requested: %08x\n", version);
+            goto fail;
+    }
+    ret->version = version;
+    return ret;
+
+fail:
+    asm_free(ret);
+    return NULL;
+}
+
+static HRESULT call_instr_handler(struct bc_writer *writer,
+                                  const struct instruction *instr,
+                                  struct bytecode_buffer *buffer) {
+    DWORD i=0;
+
+    while(writer->funcs->instructions[i].opcode != BWRITERSIO_END) {
+        if(instr->opcode == writer->funcs->instructions[i].opcode) {
+            if(!writer->funcs->instructions[i].func) {
+                WARN("Opcode %u not supported by this profile\n", instr->opcode);
+                return E_INVALIDARG;
+            }
+            writer->funcs->instructions[i].func(writer, instr, buffer);
+            return S_OK;
+        }
+        i++;
+    }
+
+    FIXME("Unhandled instruction %u\n", instr->opcode);
+    return E_INVALIDARG;
+}
+
+/* SlWriteBytecode (wineshader.@)
+ *
+ * Writes shader version specific bytecode from the shader passed in.
+ * The returned bytecode can be passed to the Direct3D runtime like
+ * IDirect3DDevice9::Create*Shader.
+ *
+ * Parameters:
+ *  shader: Shader to translate into bytecode
+ *  version: Shader version to generate(d3d version token)
+ *  dxversion: DirectX version the code targets
+ *  result: the resulting shader bytecode
+ *
+ * Return values:
+ *  S_OK on success
+ */
+DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result) {
+    struct bc_writer *writer;
+    struct bytecode_buffer *buffer = NULL;
+    HRESULT hr;
+    unsigned int i;
+
+    if(!shader){
+        ERR("NULL shader structure, aborting\n");
+        return E_FAIL;
+    }
+    writer = create_writer(shader->version, dxversion);
+    *result = NULL;
+
+    if(!writer) {
+        WARN("Could not create a bytecode writer instance. Either unsupported version\n");
+        WARN("or out of memory\n");
+        hr = E_FAIL;
+        goto error;
+    }
+
+    buffer = allocate_buffer();
+    if(!buffer) {
+        WARN("Failed to allocate a buffer for the shader bytecode\n");
+        hr = E_FAIL;
+        goto error;
+    }
+
+    writer->funcs->header(writer, shader, buffer);
+    if(FAILED(writer->state)) {
+        hr = writer->state;
+        goto error;
+    }
+
+    for(i = 0; i < shader->num_instrs; i++) {
+        hr = call_instr_handler(writer, shader->instr[i], buffer);
+        if(FAILED(hr)) {
+            goto error;
+        }
+    }
+
+    if(FAILED(writer->state)) {
+        hr = writer->state;
+        goto error;
+    }
+
+    writer->funcs->end(writer, shader, buffer);
+
+    if(FAILED(buffer->state)) {
+        hr = buffer->state;
+        goto error;
+    }
+
+    /* Cut off unneeded memory from the result buffer */
+    *result = asm_realloc(buffer->data,
+                         sizeof(DWORD) * buffer->size);
+    if(!*result) {
+        *result = buffer->data;
+    }
+    buffer->data = NULL;
+    hr = S_OK;
+
+error:
+    if(buffer) {
+        asm_free(buffer->data);
+        asm_free(buffer);
+    }
+    asm_free(writer);
+    return hr;
+}
+
 void SlDeleteShader(struct bwriter_shader *shader) {
     unsigned int i, j;
 

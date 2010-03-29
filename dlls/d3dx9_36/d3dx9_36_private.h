@@ -160,6 +160,8 @@ struct instruction {
     struct shader_reg       dst;
     struct shader_reg       *src;
     unsigned int            num_srcs; /* For freeing the rel_regs */
+    BOOL                    has_predicate;
+    struct shader_reg       predicate;
 };
 
 struct declaration {
@@ -342,6 +344,12 @@ const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_opcode(DWORD opcode);
 
+/* Utilities for internal->d3d constant mapping */
+DWORD d3d9_swizzle(DWORD bwriter_swizzle);
+DWORD d3d9_writemask(DWORD bwriter_writemask);
+DWORD d3d9_register(DWORD bwriter_register);
+DWORD d3d9_opcode(DWORD bwriter_opcode);
+
 /*
   Enumerations and defines used in the bytecode writer
   intermediate representation
@@ -400,6 +408,7 @@ typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
 #define BWRITERVS_NOSWIZZLE (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z | BWRITERVS_W_W)
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
+DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);
 void SlDeleteShader(struct bwriter_shader *shader);
 
 #endif /* __WINE_D3DX9_36_PRIVATE_H */

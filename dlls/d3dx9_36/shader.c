@@ -388,6 +388,7 @@ HRESULT assemble_shader(const char *preprocShader, const char *preprocMessages,
     struct bwriter_shader *shader;
     char *messages = NULL;
     HRESULT hr;
+    DWORD *res;
     LPD3DXBUFFER buffer;
     int size;
     char *pos;
@@ -439,9 +440,27 @@ HRESULT assemble_shader(const char *preprocShader, const char *preprocMessages,
         return D3DXERR_INVALIDDATA;
     }
 
-    /* TODO: generate bytecode from the shader */
+    hr = SlWriteBytecode(shader, 9, &res);
     SlDeleteShader(shader);
-    return D3DXERR_INVALIDDATA;
+    if(FAILED(hr))
+    {
+        ERR("SlWriteBytecode failed with 0x%08x\n", hr);
+        return D3DXERR_INVALIDDATA;
+    }
+
+    size = HeapSize(GetProcessHeap(), 0, res);
+    hr = D3DXCreateBuffer(size, &buffer);
+    if(FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, res);
+        return hr;
+    }
+    CopyMemory(ID3DXBuffer_GetBufferPointer(buffer), res, size);
+    *ppShader = buffer;
+
+    HeapFree(GetProcessHeap(), 0, res);
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
