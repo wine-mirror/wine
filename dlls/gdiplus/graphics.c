@@ -1872,9 +1872,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
      REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
      DrawImageAbort callback, VOID * callbackData)
 {
-    GpPointF ptf[3];
-    POINT pti[3];
+    GpPointF ptf[4];
+    POINT pti[4];
     REAL dx, dy;
+    GpStatus stat;
 
     TRACE("(%p, %p, %p, %d, %f, %f, %f, %f, %d, %p, %p, %p)\n", graphics, image, points,
           count, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
@@ -1887,7 +1888,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         debugstr_pointf(&points[2]));
 
     memcpy(ptf, points, 3 * sizeof(GpPointF));
-    transform_and_round_points(graphics, pti, ptf, 3);
+    ptf[3].X = ptf[2].X + ptf[1].X - ptf[0].X;
+    ptf[3].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
+    transform_and_round_points(graphics, pti, ptf, 4);
 
     if (image->picture)
     {
@@ -1914,10 +1917,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     }
     else if (image->type == ImageTypeBitmap && ((GpBitmap*)image)->hbitmap)
     {
-        HDC hdc;
         GpBitmap* bitmap = (GpBitmap*)image;
-        int temp_hdc=0, temp_bitmap=0;
-        HBITMAP hbitmap, old_hbm=NULL;
+        int use_software=0;
 
         if (srcUnit == UnitInch)
             dx = dy = 96.0; /* FIXME: use the image resolution */
@@ -1926,83 +1927,167 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        if (!(bitmap->format == PixelFormat16bppRGB555 ||
-              bitmap->format == PixelFormat24bppRGB ||
-              bitmap->format == PixelFormat32bppRGB ||
-              bitmap->format == PixelFormat32bppPARGB))
+        if (graphics->image && graphics->image->type == ImageTypeBitmap)
         {
-            BITMAPINFOHEADER bih;
-            BYTE *temp_bits;
-            PixelFormat dst_format;
+            GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
+            if (!(dst_bitmap->format == PixelFormat16bppRGB555 ||
+                  dst_bitmap->format == PixelFormat24bppRGB ||
+                  dst_bitmap->format == PixelFormat32bppRGB))
+                use_software = 1;
+        }
 
-            /* we can't draw a bitmap of this format directly */
-            hdc = CreateCompatibleDC(0);
-            temp_hdc = 1;
-            temp_bitmap = 1;
+        if (use_software)
+        {
+            RECT src_area, dst_area;
+            int i, x, y;
+            GpMatrix *dst_to_src;
+            REAL m11, m12, m21, m22, mdx, mdy;
 
-            bih.biSize = sizeof(BITMAPINFOHEADER);
-            bih.biWidth = bitmap->width;
-            bih.biHeight = -bitmap->height;
-            bih.biPlanes = 1;
-            bih.biBitCount = 32;
-            bih.biCompression = BI_RGB;
-            bih.biSizeImage = 0;
-            bih.biXPelsPerMeter = 0;
-            bih.biYPelsPerMeter = 0;
-            bih.biClrUsed = 0;
-            bih.biClrImportant = 0;
+            src_area.left = srcx*dx;
+            src_area.top = srcy*dy;
+            src_area.right = (srcx+srcwidth)*dx;
+            src_area.bottom = (srcy+srcheight)*dy;
 
-            hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
-                (void**)&temp_bits, NULL, 0);
+            dst_area.left = dst_area.right = pti[0].x;
+            dst_area.top = dst_area.bottom = pti[0].y;
+            for (i=1; i<4; i++)
+            {
+                if (dst_area.left > pti[i].x) dst_area.left = pti[i].x;
+                if (dst_area.right < pti[i].x) dst_area.right = pti[i].x;
+                if (dst_area.top > pti[i].y) dst_area.top = pti[i].y;
+                if (dst_area.bottom < pti[i].y) dst_area.bottom = pti[i].y;
+            }
+
+            m11 = (ptf[1].X - ptf[0].X) / srcwidth;
+            m12 = (ptf[2].X - ptf[0].X) / srcheight;
+            mdx = ptf[0].X - m11 * srcx - m12 * srcy;
+            m21 = (ptf[1].Y - ptf[0].Y) / srcwidth;
+            m22 = (ptf[2].Y - ptf[0].Y) / srcheight;
+            mdy = ptf[0].Y - m21 * srcx - m22 * srcy;
+
+            stat = GdipCreateMatrix2(m11, m12, m21, m22, mdx, mdy, &dst_to_src);
+            if (stat != Ok) return stat;
+
+            stat = GdipInvertMatrix(dst_to_src);
+            if (stat != Ok)
+            {
+                GdipDeleteMatrix(dst_to_src);
+                return stat;
+            }
+
+            for (x=dst_area.left; x<dst_area.right; x++)
+            {
+                for (y=dst_area.top; y<dst_area.bottom; y++)
+                {
+                    GpPointF src_pointf;
+                    int src_x, src_y;
+                    ARGB src_color, dst_color;
+
+                    src_pointf.X = x;
+                    src_pointf.Y = y;
+
+                    GdipTransformMatrixPoints(dst_to_src, &src_pointf, 1);
+
+                    src_x = roundr(src_pointf.X);
+                    src_y = roundr(src_pointf.Y);
+
+                    if (src_x < src_area.left || src_x >= src_area.right ||
+                        src_y < src_area.top || src_y >= src_area.bottom)
+                        /* FIXME: Use wrapmode */
+                        continue;
+
+                    GdipBitmapGetPixel(bitmap, src_x, src_y, &src_color);
+                    GdipBitmapGetPixel((GpBitmap*)graphics->image, x, y, &dst_color);
+                    GdipBitmapSetPixel((GpBitmap*)graphics->image, x, y, color_over(dst_color, src_color));
+                }
+            }
+
+            GdipDeleteMatrix(dst_to_src);
+        }
+        else
+        {
+            HDC hdc;
+            int temp_hdc=0, temp_bitmap=0;
+            HBITMAP hbitmap, old_hbm=NULL;
+
+            if (!(bitmap->format == PixelFormat16bppRGB555 ||
+                  bitmap->format == PixelFormat24bppRGB ||
+                  bitmap->format == PixelFormat32bppRGB ||
+                  bitmap->format == PixelFormat32bppPARGB))
+            {
+                BITMAPINFOHEADER bih;
+                BYTE *temp_bits;
+                PixelFormat dst_format;
+
+                /* we can't draw a bitmap of this format directly */
+                hdc = CreateCompatibleDC(0);
+                temp_hdc = 1;
+                temp_bitmap = 1;
+
+                bih.biSize = sizeof(BITMAPINFOHEADER);
+                bih.biWidth = bitmap->width;
+                bih.biHeight = -bitmap->height;
+                bih.biPlanes = 1;
+                bih.biBitCount = 32;
+                bih.biCompression = BI_RGB;
+                bih.biSizeImage = 0;
+                bih.biXPelsPerMeter = 0;
+                bih.biYPelsPerMeter = 0;
+                bih.biClrUsed = 0;
+                bih.biClrImportant = 0;
+
+                hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
+                    (void**)&temp_bits, NULL, 0);
+
+                if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
+                    dst_format = PixelFormat32bppPARGB;
+                else
+                    dst_format = PixelFormat32bppRGB;
+
+                convert_pixels(bitmap->width, bitmap->height,
+                    bitmap->width*4, temp_bits, dst_format,
+                    bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
+            }
+            else
+            {
+                hbitmap = bitmap->hbitmap;
+                hdc = bitmap->hdc;
+                temp_hdc = (hdc == 0);
+            }
+
+            if (temp_hdc)
+            {
+                if (!hdc) hdc = CreateCompatibleDC(0);
+                old_hbm = SelectObject(hdc, hbitmap);
+            }
 
             if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
-                dst_format = PixelFormat32bppPARGB;
+            {
+                BLENDFUNCTION bf;
+
+                bf.BlendOp = AC_SRC_OVER;
+                bf.BlendFlags = 0;
+                bf.SourceConstantAlpha = 255;
+                bf.AlphaFormat = AC_SRC_ALPHA;
+
+                GdiAlphaBlend(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+                    hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, bf);
+            }
             else
-                dst_format = PixelFormat32bppRGB;
+            {
+                StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+                    hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
+            }
 
-            convert_pixels(bitmap->width, bitmap->height,
-                bitmap->width*4, temp_bits, dst_format,
-                bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
+            if (temp_hdc)
+            {
+                SelectObject(hdc, old_hbm);
+                DeleteDC(hdc);
+            }
+
+            if (temp_bitmap)
+                DeleteObject(hbitmap);
         }
-        else
-        {
-            hbitmap = bitmap->hbitmap;
-            hdc = bitmap->hdc;
-            temp_hdc = (hdc == 0);
-        }
-
-        if (temp_hdc)
-        {
-            if (!hdc) hdc = CreateCompatibleDC(0);
-            old_hbm = SelectObject(hdc, hbitmap);
-        }
-
-        if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
-        {
-            BLENDFUNCTION bf;
-
-            bf.BlendOp = AC_SRC_OVER;
-            bf.BlendFlags = 0;
-            bf.SourceConstantAlpha = 255;
-            bf.AlphaFormat = AC_SRC_ALPHA;
-
-            GdiAlphaBlend(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-                hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, bf);
-        }
-        else
-        {
-            StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-                hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
-        }
-
-        if (temp_hdc)
-        {
-            SelectObject(hdc, old_hbm);
-            DeleteDC(hdc);
-        }
-
-        if (temp_bitmap)
-            DeleteObject(hbitmap);
     }
     else
     {
