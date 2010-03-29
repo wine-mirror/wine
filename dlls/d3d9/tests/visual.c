@@ -2212,15 +2212,21 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color)
 static void stretchrect_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
-    IDirect3DTexture9 *tex_rt32 = NULL, *tex_rt64 = NULL, *tex_rt_dest64 = NULL;
-    IDirect3DSurface9 *surf_tex_rt32 = NULL, *surf_tex_rt64 = NULL, *surf_tex_rt_dest64 = NULL;
+    IDirect3DTexture9 *tex_rt32 = NULL, *tex_rt64 = NULL, *tex_rt_dest64 = NULL, *tex_rt_dest640_480 = NULL;
+    IDirect3DSurface9 *surf_tex_rt32 = NULL, *surf_tex_rt64 = NULL, *surf_tex_rt_dest64 = NULL, *surf_tex_rt_dest640_480 = NULL;
     IDirect3DTexture9 *tex32 = NULL, *tex64 = NULL, *tex_dest64 = NULL;
     IDirect3DSurface9 *surf_tex32 = NULL, *surf_tex64 = NULL, *surf_tex_dest64 = NULL;
     IDirect3DSurface9 *surf_rt32 = NULL, *surf_rt64 = NULL, *surf_rt_dest64 = NULL;
     IDirect3DSurface9 *surf_offscreen32 = NULL, *surf_offscreen64 = NULL, *surf_offscreen_dest64 = NULL;
     IDirect3DSurface9 *surf_temp32 = NULL, *surf_temp64 = NULL;
     IDirect3DSurface9 *orig_rt = NULL;
+    IDirect3DSurface9 *backbuffer;
     DWORD color;
+
+    RECT src_rect64 = {0, 0, 64, 64};
+    RECT src_rect64_flipy = {0, 64, 64, 0};
+    RECT dst_rect64 = {0, 0, 64, 64};
+    RECT dst_rect64_flipy = {0, 64, 64, 0};
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &orig_rt);
     ok(hr == D3D_OK, "Can't get render target, hr = %08x\n", hr);
@@ -2249,6 +2255,8 @@ static void stretchrect_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Creating the render target surface failed with %08x\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt_dest64, NULL );
     ok(hr == D3D_OK, "Creating the render target surface failed with %08x\n", hr);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
 
     /* Create render target textures */
     hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt32, NULL);
@@ -2256,6 +2264,8 @@ static void stretchrect_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt64, NULL);
     ok(hr == D3D_OK, "Creating the render target texture failed with %08x\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt_dest64, NULL);
+    ok(hr == D3D_OK, "Creating the render target texture failed with %08x\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt_dest640_480, NULL);
     ok(hr == D3D_OK, "Creating the render target texture failed with %08x\n", hr);
     if (tex_rt32) {
         hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt32, 0, &surf_tex_rt32);
@@ -2267,6 +2277,10 @@ static void stretchrect_test(IDirect3DDevice9 *device)
     }
     if (tex_rt_dest64) {
         hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest64, 0, &surf_tex_rt_dest64);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %08x\n", hr);
+    }
+    if (tex_rt_dest64) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest640_480, 0, &surf_tex_rt_dest640_480);
         ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %08x\n", hr);
     }
 
@@ -2307,6 +2321,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_offscreen_dest64, 32, 32);
             ok(color == 0xff00ff00, "StretchRect offscreen ==> offscreen same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_offscreen_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_offscreen_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_offscreen_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> rendertarget texture, same size */
@@ -2324,6 +2350,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_temp64, 32, 32);
             ok(color == 0xff00ff00, "StretchRect offscreen ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_tex_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> rendertarget surface, same size */
@@ -2335,6 +2373,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
             ok(color == 0xff00ff00, "StretchRect offscreen ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> texture, same size (should fail) */
@@ -2417,6 +2467,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_temp64, 32, 32);
             ok(color == 0xff0000ff, "StretchRect texture ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff0000ff.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_tex_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* texture ==> rendertarget surface, same size */
@@ -2428,6 +2490,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
             ok(color == 0xff0000ff, "StretchRect texture ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff0000ff.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* texture ==> texture, same size (should fail) */
@@ -2515,6 +2589,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_temp64, 32, 32);
             ok(color == 0xffffffff, "StretchRect rendertarget texture ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xffffffff.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget texture ==> rendertarget surface, same size */
@@ -2526,6 +2612,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
             ok(color == 0xffffffff, "StretchRect rendertarget texture ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xffffffff.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget texture ==> texture, same size (should fail) */
@@ -2609,6 +2707,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_temp64, 32, 32);
             ok(color == 0xff000000, "StretchRect rendertarget surface ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff000000.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget surface ==> rendertarget surface, same size */
@@ -2620,6 +2730,18 @@ static void stretchrect_test(IDirect3DDevice9 *device)
             color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
             ok(color == 0xff000000, "StretchRect rendertarget surface ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff000000.\n", color);
         }
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_rt_dest64, &dst_rect64, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget surface ==> texture, same size (should fail) */
@@ -2670,12 +2792,38 @@ static void stretchrect_test(IDirect3DDevice9 *device)
         todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
     }
 
-    /* TODO: Test when source and destination RECT parameters are given... */
+    /* backbuffer ==> surface tests (no scaling) */
+    if(backbuffer && surf_tex_rt_dest640_480)
+    {
+        RECT src_rect = {0, 0, 640, 480};
+        RECT src_rect_flipy = {0, 480, 640, 0};
+        RECT dst_rect = {0, 0, 640, 480};
+        RECT dst_rect_flipy = {0, 480, 640, 0};
+
+        /* Blit with NULL rectangles */
+        hr = IDirect3DDevice9_StretchRect(device, backbuffer, NULL, surf_tex_rt_dest640_480, NULL, 0);
+        ok( hr == D3D_OK, "StretchRect backbuffer ==> texture same size failed:\n");
+
+        /* Blit without scaling */
+        hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect, surf_tex_rt_dest640_480, &dst_rect, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+
+        /* Flipping in y-direction through src_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect_flipy, surf_tex_rt_dest640_480, &dst_rect, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+
+        /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
+        hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect, surf_tex_rt_dest640_480, &dst_rect_flipy, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+    }
+
     /* TODO: Test format conversions */
 
 
 out:
     /* Clean up */
+    if (backbuffer)
+        IDirect3DSurface9_Release(backbuffer);
     if (surf_rt32)
         IDirect3DSurface9_Release(surf_rt32);
     if (surf_rt64)
@@ -2707,6 +2855,11 @@ out:
         if (surf_tex_rt_dest64)
             IDirect3DSurface9_Release(surf_tex_rt_dest64);
         IDirect3DTexture9_Release(tex_rt_dest64);
+    }
+    if (tex_rt_dest640_480) {
+        if (surf_tex_rt_dest640_480)
+            IDirect3DSurface9_Release(surf_tex_rt_dest640_480);
+        IDirect3DTexture9_Release(tex_rt_dest640_480);
     }
     if (tex32) {
         if (surf_tex32)
