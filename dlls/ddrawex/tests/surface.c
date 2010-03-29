@@ -237,6 +237,158 @@ static void SysVidMemTest(void)
     GetDCTest_main(&ddsd, &ddsd2, dctest_sysvidmem);
 }
 
+static void test_surface_from_dc3(void)
+{
+    IDirectDrawSurface3 *surf3;
+    IDirectDrawSurface *surf1;
+    IDirectDrawSurface *tmp;
+    DDSURFACEDESC ddsd;
+    IDirectDraw3 *dd3;
+    IDirectDraw *dd1;
+    HRESULT hr;
+    HDC dc;
+
+    dd1 = createDD();
+    hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw3, (void **)&dd3);
+    ok(SUCCEEDED(hr), "IDirectDraw_QueryInterface failed, hr %#x.\n", hr);
+    IDirectDraw_Release(dd1);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+    hr = IDirectDraw3_CreateSurface(dd3, &ddsd, &surf1, NULL);
+    ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface3_QueryInterface(surf1, &IID_IDirectDrawSurface, (void **)&surf3);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surf1);
+
+    hr = IDirectDrawSurface3_GetDC(surf3, &dc);
+    ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw3_GetSurfaceFromDC(dd3, dc, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER, got %#x.\n", hr);
+
+    hr = IDirectDraw3_GetSurfaceFromDC(dd3, dc, &tmp);
+    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok((IDirectDrawSurface3 *)tmp == surf3, "Expected surface != %p.\n", surf3);
+
+    IUnknown_Release(tmp);
+
+    hr = IDirectDrawSurface3_ReleaseDC(surf3, dc);
+    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
+
+    dc = CreateCompatibleDC(NULL);
+    ok(!!dc, "CreateCompatibleDC failed.\n");
+
+    tmp = (IDirectDrawSurface *)0xdeadbeef;
+    hr = IDirectDraw3_GetSurfaceFromDC(dd3, dc, &tmp);
+    ok(hr == DDERR_NOTFOUND, "Expected DDERR_NOTFOUND, got %#x.\n", hr);
+    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
+
+    ok(DeleteDC(dc), "DeleteDC failed.\n");
+
+    IDirectDrawSurface3_Release(surf3);
+    IDirectDraw3_Release(dd3);
+}
+
+DEFINE_GUID(guid, 0x38594b23, 0x2311, 0x4332, 0x95, 0xde, 0x2b, 0x0c, 0x61, 0xbf, 0x7b, 0x84);
+
+static void test_surface_from_dc4(void)
+{
+    IDirectDrawSurface4 *surf4;
+    IDirectDrawSurface *surf1;
+    DDSURFACEDESC2 ddsd2;
+    IUnknown *tmp, *tmp2;
+    IDirectDraw4 *dd4;
+    IDirectDraw *dd1;
+    DWORD priv, size;
+    HRESULT hr;
+    HDC dc;
+
+    dd1 = createDD();
+    hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw4, (void **)&dd4);
+    ok(SUCCEEDED(hr), "IDirectDraw_QueryInterface failed, hr %#x.\n", hr);
+    IDirectDraw_Release(dd1);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd2.dwWidth = 64;
+    ddsd2.dwHeight = 64;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+    hr = IDirectDraw4_CreateSurface(dd4, &ddsd2, &surf4, NULL);
+    ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **)&surf1);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    priv = 0xdeadbeef;
+    size = sizeof(priv);
+    hr = IDirectDrawSurface4_SetPrivateData(surf4, &guid, &priv, size, 0);
+    ok(SUCCEEDED(hr), "SetPrivateData failed, hr %#x.\n", hr);
+
+    priv = 0;
+    hr = IDirectDrawSurface4_GetPrivateData(surf4, &guid, &priv, &size);
+    ok(SUCCEEDED(hr), "GetPrivateData failed, hr %#x.\n", hr);
+    ok(priv == 0xdeadbeef, "Expected private data 0xdeadbeef, got %#x.\n", priv);
+
+    hr = IDirectDrawSurface4_GetDC(surf4, &dc);
+    ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok((IDirectDrawSurface4 *)tmp != surf4, "Expected surface != %p.\n", surf4);
+
+    hr = IUnknown_QueryInterface(tmp, &IID_IDirectDrawSurface, (void **)&tmp2);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+    ok(tmp2 == tmp, "Expected %p, got %p.\n", tmp, tmp2);
+    ok((IDirectDrawSurface *)tmp2 != surf1, "Expected surface != %p.\n", surf1);
+    IUnknown_Release(tmp2);
+
+    hr = IUnknown_QueryInterface(tmp, &IID_IDirectDrawSurface4, (void **)&tmp2);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+    ok((IDirectDrawSurface4 *)tmp2 != surf4, "Expected surface != %p.\n", surf4);
+
+    priv = 0;
+    hr = IDirectDrawSurface4_GetPrivateData((IDirectDrawSurface4 *)tmp2, &guid, &priv, &size);
+    ok(SUCCEEDED(hr), "GetPrivateData failed, hr %#x.\n", hr);
+    ok(priv == 0xdeadbeef, "Expected private data 0xdeadbeef, got %#x.\n", priv);
+    IUnknown_Release(tmp2);
+
+    IUnknown_Release(tmp);
+
+    hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
+    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
+
+    dc = CreateCompatibleDC(NULL);
+    ok(!!dc, "CreateCompatibleDC failed.\n");
+
+    tmp = (IUnknown *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "Expected DDERR_NOTFOUND, got %#x.\n", hr);
+    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
+
+    ok(DeleteDC(dc), "DeleteDC failed.\n");
+
+    tmp = (IUnknown *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(dd4, NULL, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "Expected DDERR_NOTFOUND, got %#x.\n", hr);
+    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
+
+    IDirectDrawSurface_Release(surf1);
+    IDirectDrawSurface4_Release(surf4);
+    IDirectDraw4_Release(dd4);
+}
+
 START_TEST(surface)
 {
     IClassFactory *classfactory = NULL;
@@ -261,6 +413,8 @@ START_TEST(surface)
     GetDCTest();
     CapsTest();
     SysVidMemTest();
+    test_surface_from_dc3();
+    test_surface_from_dc4();
 
     if(factory) {
         ref = IDirectDrawFactory_Release(factory);
