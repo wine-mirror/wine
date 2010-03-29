@@ -70,8 +70,9 @@ static void output(const WCHAR *message)
  then terminate.
 */
 
-static void fatal_error(const WCHAR *msg, DWORD error_code)
+static void fatal_error(const WCHAR *msg, DWORD error_code, const WCHAR *filename)
 {
+    DWORD_PTR args[1];
     LPVOID lpMsgBuf;
     int status;
     static const WCHAR colonsW[] = { ':', ' ', 0 };
@@ -79,7 +80,9 @@ static void fatal_error(const WCHAR *msg, DWORD error_code)
 
     output(msg);
     output(colonsW);
-    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, (LPWSTR) & lpMsgBuf, 0, NULL);
+    args[0] = (DWORD_PTR)filename;
+    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                            NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, (__ms_va_list *)args );
     if (!status)
     {
         WINE_ERR("FormatMessage failed\n");
@@ -92,7 +95,7 @@ static void fatal_error(const WCHAR *msg, DWORD error_code)
     ExitProcess(1);
 }
 
-static void fatal_string_error(int which, DWORD error_code)
+static void fatal_string_error(int which, DWORD error_code, const WCHAR *filename)
 {
 	WCHAR msg[2048];
 
@@ -100,7 +103,7 @@ static void fatal_string_error(int which, DWORD error_code)
 					msg, sizeof(msg)/sizeof(WCHAR)))
 		WINE_ERR("LoadString failed, error %d\n", GetLastError());
 
-	fatal_error(msg, error_code);
+	fatal_error(msg, error_code, filename);
 }
 	
 static void fatal_string(int which)
@@ -332,7 +335,7 @@ int wmain (int argc, WCHAR *argv[])
                             &startup_info, /* lpStartupInfo */
                             &process_information /* lpProcessInformation */ ))
                     {
-			fatal_string_error(STRING_EXECFAIL, GetLastError());
+			fatal_string_error(STRING_EXECFAIL, GetLastError(), sei.lpFile);
                     }
                     sei.hProcess = process_information.hProcess;
                     goto done;
@@ -340,7 +343,7 @@ int wmain (int argc, WCHAR *argv[])
 	}
 
         if (!ShellExecuteExW(&sei))
-            fatal_string_error(STRING_EXECFAIL, GetLastError());
+            fatal_string_error(STRING_EXECFAIL, GetLastError(), sei.lpFile);
 
 done:
 	HeapFree( GetProcessHeap(), 0, args );
