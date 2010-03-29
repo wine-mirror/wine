@@ -2713,6 +2713,19 @@ _WINE_EOF
 AC_CONFIG_FILES([Make.tmp:Makefile.in])
 
 dnl Some final makefile rules
+
+if test -n "$with_wine64"
+then
+WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
+[all: fonts server $with_wine64/loader/wine32
+fonts server:
+	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
+$with_wine64/loader/wine32:
+	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine32 \$[@]
+clean::
+	\$(RM) fonts server $with_wine64/loader/wine32])
+fi
+
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
 [uninstall::
 	-rmdir \$(DESTDIR)\$(datadir)/wine \$(DESTDIR)\$(fakedlldir) \$(DESTDIR)\$(dlldir)])
