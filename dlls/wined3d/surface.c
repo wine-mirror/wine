@@ -3936,7 +3936,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     if((srcSwapchain || SrcSurface == myDevice->render_targets[0]) && !dstSwapchain) {
         /* Blit from render target to texture */
         WINED3DRECT srect;
-        BOOL upsideDown, stretchx;
+        BOOL upsideDown = FALSE, stretchx;
         BOOL paletteOverride = FALSE;
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
@@ -3945,19 +3945,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* Destination color key is checked above */
         }
 
-        /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
-         * glCopyTexSubImage is a bit picky about the parameters we pass to it
-         */
         if(SrcRect) {
-            if(SrcRect->top < SrcRect->bottom) {
-                srect.y1 = SrcRect->top;
-                srect.y2 = SrcRect->bottom;
-                upsideDown = FALSE;
-            } else {
-                srect.y1 = SrcRect->bottom;
-                srect.y2 = SrcRect->top;
-                upsideDown = TRUE;
-            }
+            srect.y1 = SrcRect->top;
+            srect.y2 = SrcRect->bottom;
             srect.x1 = SrcRect->left;
             srect.x2 = SrcRect->right;
         } else {
@@ -3965,13 +3955,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             srect.y1 = 0;
             srect.x2 = Src->currentDesc.Width;
             srect.y2 = Src->currentDesc.Height;
-            upsideDown = FALSE;
         }
+
+        /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
+         * glCopyTexSubImage is a bit picky about the parameters we pass to it
+         */
         if(rect.y1 > rect.y2) {
             UINT tmp = rect.y2;
             rect.y2 = rect.y1;
             rect.y1 = tmp;
-            upsideDown = !upsideDown;
+            upsideDown = TRUE;
         }
 
         if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
