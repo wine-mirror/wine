@@ -789,7 +789,7 @@ do {                                                                \
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);        \
                                                                     \
     } else do {                                                     \
-        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n",     \
+        ERR(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n",       \
             debug_glerror(err), err, A, __FILE__, __LINE__);        \
        err = glGetError();                                          \
     } while (err != GL_NO_ERROR);                                   \
