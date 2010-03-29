@@ -61,7 +61,8 @@ static void CALLBACK callback_func(HWAVEOUT hwo, UINT uMsg,
     cbinst = dwInstance; /* MYCBINST, see midiOut/StreamOpen */
 }
 
-static void test_notification(HWND hwnd, const char* command, UINT m1, DWORD_PTR p2)
+#define test_notification(hwnd, command, m1, p2) test_notification_dbg(hwnd, command, m1, p2, __LINE__)
+static void test_notification_dbg(HWND hwnd, const char* command, UINT m1, DWORD_PTR p2, int line)
 {   /* Use message type 0 as meaning no message */
     MSG msg;
     if (hwnd) {
@@ -74,29 +75,29 @@ static void test_notification(HWND hwnd, const char* command, UINT m1, DWORD_PTR
            * Perhaps the OS preempts the player thread after setting MHDR_DONE
            * or clearing MHDR_INQUEUE, before calling DriverCallback. */
           DWORD rc;
-          trace("Waiting for delayed message %x from %s\n", m1, command);
+          trace_(__FILE__,line)("Waiting for delayed message %x from %s\n", m1, command);
           SetLastError(0xDEADBEEF);
           rc = MsgWaitForMultipleObjects(0, NULL, FALSE, 3000, QS_POSTMESSAGE);
-          ok(rc==WAIT_OBJECT_0, "Wait failed: %04x %d\n", rc, GetLastError());
+          ok_(__FILE__,line)(rc==WAIT_OBJECT_0, "Wait failed: %04x %d\n", rc, GetLastError());
           seen = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE);
         }
         if (seen) {
-            trace("Message %x, wParam=%lx, lParam=%lx from %s\n",
+            trace_(__FILE__,line)("Message %x, wParam=%lx, lParam=%lx from %s\n",
                   msg.message, msg.wParam, msg.lParam, command);
-            ok(msg.hwnd==hwnd, "Didn't get the handle to our test window\n");
-            ok(msg.message==m1 && msg.lParam==p2, "bad message %x/%lx from %s, expect %x/%lx\n", msg.message, msg.lParam, command, m1, p2);
+            ok_(__FILE__,line)(msg.hwnd==hwnd, "Didn't get the handle to our test window\n");
+            ok_(__FILE__,line)(msg.message==m1 && msg.lParam==p2, "bad message %x/%lx from %s, expect %x/%lx\n", msg.message, msg.lParam, command, m1, p2);
         }
-        else ok(m1==0, "Expect message %x from %s\n", m1, command);
+        else ok_(__FILE__,line)(m1==0, "Expect message %x from %s\n", m1, command);
     }
     else {
         /* FIXME: MOM_POSITIONCB and MOM_DONE are so close that a queue is needed. */
         if (cbmsg) {
-            ok(cbmsg==m1 && cbval1==p2 && cbval2==0, "bad callback %x/%lx/%lx from %s, expect %x/%lx\n", cbmsg, cbval1, cbval2, command, m1, p2);
+            ok_(__FILE__,line)(cbmsg==m1 && cbval1==p2 && cbval2==0, "bad callback %x/%lx/%lx from %s, expect %x/%lx\n", cbmsg, cbval1, cbval2, command, m1, p2);
             cbmsg = 0; /* Mark as read */
             cbval1 = cbval2 = WHATEVER;
-            ok(cbinst==MYCBINST, "callback dwInstance changed to %lx\n", cbinst);
+            ok_(__FILE__,line)(cbinst==MYCBINST, "callback dwInstance changed to %lx\n", cbinst);
         }
-        else ok(m1==0, "Expect callback %x from %s\n", m1, command);
+        else ok_(__FILE__,line)(m1==0, "Expect callback %x from %s\n", m1, command);
     }
 }
 

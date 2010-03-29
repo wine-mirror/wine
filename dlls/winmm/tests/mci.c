@@ -136,7 +136,8 @@ static BOOL spurious_message(LPMSG msg)
 }
 
 /* A single ok() in each code path allows to prefix this with todo_wine */
-static void test_notification(HWND hwnd, const char* command, WPARAM type)
+#define test_notification(hwnd, command, type) test_notification_dbg(hwnd, command, type, __LINE__)
+static void test_notification_dbg(HWND hwnd, const char* command, WPARAM type, int line)
 {   /* Use type 0 as meaning no message */
     MSG msg;
     BOOL seen;
@@ -145,17 +146,17 @@ static void test_notification(HWND hwnd, const char* command, WPARAM type)
     if(type && !seen) {
       /* We observe transient delayed notification, mostly on native.
        * Notification is not always present right when mciSend returns. */
-      trace("Waiting for delayed notification from %s\n", command);
+      trace_(__FILE__,line)("Waiting for delayed notification from %s\n", command);
       MsgWaitForMultipleObjects(0, NULL, FALSE, 3000, QS_POSTMESSAGE);
       seen = PeekMessageA(&msg, hwnd, MM_MCINOTIFY, MM_MCINOTIFY, PM_REMOVE);
     }
     if(!seen)
-        ok(type==0, "Expect message %04lx from %s\n", type, command);
+      ok_(__FILE__,line)(type==0, "Expect message %04lx from %s\n", type, command);
     else if(msg.hwnd != hwnd)
-        ok(msg.hwnd == hwnd, "Didn't get the handle to our test window\n");
+        ok_(__FILE__,line)(msg.hwnd == hwnd, "Didn't get the handle to our test window\n");
     else if(msg.message != MM_MCINOTIFY)
-        ok(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY from command %s\n", msg.message, command);
-    else ok(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
+        ok_(__FILE__,line)(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY from command %s\n", msg.message, command);
+    else ok_(__FILE__,line)(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
 }
 
 static void test_openCloseWAVE(HWND hwnd)
