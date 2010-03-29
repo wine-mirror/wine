@@ -75,6 +75,7 @@ static UINT process_error_mode;
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static BOOL is_wow64;
+static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 HMODULE kernel32_handle = 0;
 
@@ -868,9 +869,7 @@ static void init_windows_dirs(void)
         ERR( "directory %s could not be created, error %u\n",
              debugstr_w(DIR_System), GetLastError() );
 
-#ifndef _WIN64  /* SysWow64 is always defined on 64-bit */
-    if (is_wow64)
-#endif
+    if (is_win64 || is_wow64)   /* SysWow64 is always defined on 64-bit */
     {
         len = strlenW( DIR_Windows );
         buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(default_syswow64W) );
@@ -1581,6 +1580,49 @@ done:
     return info;
 }
 
+/***********************************************************************
+ *           get_alternate_loader
+ *
+ * Get the name of the alternate (32 or 64 bit) Wine loader.
+ */
+static const char *get_alternate_loader( char **ret_env )
+{
+    char *env;
+    const char *loader = NULL;
+    const char *loader_env = getenv( "WINELOADER" );
+
+    *ret_env = NULL;
+
+    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine32" : "server/../loader/wine";
+
+    if (loader_env)
+    {
+        int len = strlen( loader_env );
+        if (is_win64)
+        {
+            if (!(env = HeapAlloc( GetProcessHeap(), 0, sizeof("WINELOADER=") + len + 2 ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            strcat( env, "32" );
+        }
+        else
+        {
+            if (!(env = HeapAlloc( GetProcessHeap(), 0, sizeof("WINELOADER=") + len ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            len += sizeof("WINELOADER=") - 1;
+            if (!strcmp( env + len - 2, "32" )) env[len - 2] = 0;
+        }
+        if (!loader)
+        {
+            if ((loader = strrchr( env, '/' ))) loader++;
+            else loader = env;
+        }
+    }
+    if (!loader) loader = is_win64 ? "wine32" : "wine";
+    *ret_env = env;
+    return loader;
+}
 
 /***********************************************************************
  *           create_process
@@ -1598,6 +1640,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     HANDLE process_info;
     WCHAR *env_end;
     char *winedebug = NULL;
+    char *wineloader = NULL;
+    const char *loader = NULL;
     char **argv;
     startup_info_t *startup_info;
     DWORD startup_info_size;
@@ -1605,7 +1649,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     pid_t pid;
     int err;
 
-    if (sizeof(void *) == sizeof(int) && !is_wow64 && (binary_info->flags & BINARY_FLAG_64BIT))
+    if (!is_win64 && !is_wow64 && (binary_info->flags & BINARY_FLAG_64BIT))
     {
         ERR( "starting 64-bit process %s not supported on this platform\n", debugstr_w(filename) );
         SetLastError( ERROR_BAD_EXE_FORMAT );
@@ -1698,6 +1742,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     /* create the child process */
     argv = build_argv( cmd_line, 1 );
 
+    if (!is_win64 ^ !(binary_info->flags & BINARY_FLAG_64BIT))
+        loader = get_alternate_loader( &wineloader );
+
     if (exec_only || !(pid = fork()))  /* child */
     {
         char preloader_reserve[64], socket_env[64];
@@ -1738,9 +1785,10 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         putenv( preloader_reserve );
         putenv( socket_env );
         if (winedebug) putenv( winedebug );
+        if (wineloader) putenv( wineloader );
         if (unixdir) chdir(unixdir);
 
-        if (argv) wine_exec_wine_binary( NULL, argv, getenv("WINELOADER") );
+        if (argv) wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
         _exit(1);
     }
 
@@ -1751,6 +1799,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     close( socketfd[0] );
     HeapFree( GetProcessHeap(), 0, argv );
     HeapFree( GetProcessHeap(), 0, winedebug );
+    HeapFree( GetProcessHeap(), 0, wineloader );
     if (pid == -1)
     {
         FILE_SetDosError();
@@ -2072,7 +2121,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
                                    inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
     case BINARY_UNIX_LIB:
-        TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
+        TRACE( "starting %s as %d-bit Winelib app\n",
+               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32 );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
