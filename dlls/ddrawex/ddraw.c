@@ -1320,20 +1320,9 @@ IDirectDraw4Impl_GetSurfaceFromDC(IDirectDraw4 *iface,
                                   IDirectDrawSurface4 **Surface)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
-    IDirectDrawSurface4 *inner;
     HRESULT hr;
     TRACE("(%p)->(%p, %p)\n", This, hdc, Surface);
-    hr = IDirectDraw4_GetSurfaceFromDC(This->parent,hdc, &inner);
-    if(SUCCEEDED(hr))
-    {
-        *Surface = dds_get_outer(inner);
-        IDirectDrawSurface4_AddRef(*Surface);
-        IDirectDrawSurface4_Release(inner);
-    }
-    else
-    {
-        *Surface = NULL;
-    }
+    hr = IDirectDraw4_GetSurfaceFromDC(This->parent,hdc, Surface);
 
     return hr;
 }
