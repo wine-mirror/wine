@@ -104,6 +104,19 @@ AddReg=\
     VersionInfo,\
     Wow64
 
+[Wow64Install]
+RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsWin32,FakeDllsWow64
+AddReg=\
+    CurrentVersion,\
+    Debugger,\
+    DirectX,\
+    Dotnet,\
+    MCI,\
+    Misc,\
+    Tapi,\
+    VersionInfo
+
 [DefaultInstall.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
@@ -428,7 +441,6 @@ HKLM,%CurrentVersion%\Explorer\KindMap,,16
 HKLM,%CurrentVersion%\Group Policy,,16
 HKLM,%CurrentVersion%\Policies,,16
 HKLM,%CurrentVersion%\PreviewHandlers,,16
-HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
 HKLM,%CurrentVersion%\Shell Extensions\Approved,,16
@@ -2533,6 +2545,16 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dosx.exe
 11,,dsound.vxd
 
+; Wow64-only fake dlls
+[FakeDllsWow64]
+; create some directories first
+11,mui,
+11,wbem,
+11,,iexplore.exe,-
+11,,winetest.exe,-
+12,,mountmgr.sys,-
+11,,*
+
 [FakeDlls]
 ; create some directories first
 10,help,
@@ -2957,6 +2979,7 @@ StartType=3
 ErrorControl=1
 
 [Services]
+HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
 
 [VersionInfo]
@@ -3026,5 +3049,6 @@ HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Ports,"SymbolicLin
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Print,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Print"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\ProfileList,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\ProfileList"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Time Zones,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Time Zones"
+HKLM,Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Time Zones,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Time Zones"
 HKLM,Software\Wow6432Node\Policies,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Policies"
 HKLM,Software\Wow6432Node\Registered Applications,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Registered Applications"
