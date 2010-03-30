@@ -208,6 +208,13 @@ struct packed_MDICREATESTRUCTW
     ULONGLONG lParam;
 };
 
+struct packed_hook_extra_info
+{
+    user_handle_t handle;
+    DWORD         __pad;
+    ULONGLONG     lparam;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -221,6 +228,7 @@ C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) +
 C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
 C_ASSERT( sizeof(struct packed_MDINEXTMENU) >= sizeof(MDINEXTMENU) );
 C_ASSERT( sizeof(struct packed_MDICREATESTRUCTW) >= sizeof(MDICREATESTRUCTW) );
+C_ASSERT( sizeof(struct packed_hook_extra_info) >= sizeof(struct hook_extra_info) );
 
 union packed_structs
 {
@@ -236,6 +244,7 @@ union packed_structs
     struct packed_MSG msg;
     struct packed_MDINEXTMENU mnm;
     struct packed_MDICREATESTRUCTW mcs;
+    struct packed_hook_extra_info hook;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -1012,14 +1021,16 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_WINE_KEYBOARD_LL_HOOK:
     {
         struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
-        push_data( data, h_extra, sizeof(*h_extra) );
+        data->ps.hook.handle = wine_server_user_handle( h_extra->handle );
+        push_data( data, &data->ps.hook, sizeof(data->ps.hook) );
         push_data( data, (LPVOID)h_extra->lparam, sizeof(KBDLLHOOKSTRUCT) );
         return 0;
     }
     case WM_WINE_MOUSE_LL_HOOK:
     {
         struct hook_extra_info *h_extra = (struct hook_extra_info *)lparam;
-        push_data( data, h_extra, sizeof(*h_extra) );
+        data->ps.hook.handle = wine_server_user_handle( h_extra->handle );
+        push_data( data, &data->ps.hook, sizeof(data->ps.hook) );
         push_data( data, (LPVOID)h_extra->lparam, sizeof(MSLLHOOKSTRUCT) );
         return 0;
     }
@@ -1412,13 +1423,14 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WINE_KEYBOARD_LL_HOOK:
     case WM_WINE_MOUSE_LL_HOOK:
     {
-        struct hook_extra_info *h_extra = *buffer;
-
-        minsize = sizeof(struct hook_extra_info) +
+        struct hook_extra_info h_extra;
+        minsize = sizeof(ps->hook) +
                   (message == WM_WINE_KEYBOARD_LL_HOOK ? sizeof(KBDLLHOOKSTRUCT)
                                                        : sizeof(MSLLHOOKSTRUCT));
         if (size < minsize) return FALSE;
-        h_extra->lparam = (LPARAM)(h_extra + 1);
+        h_extra.handle = wine_server_ptr_handle( ps->hook.handle );
+        h_extra.lparam = (LPARAM)(&ps->hook + 1);
+        memcpy( &ps->hook, &h_extra, sizeof(h_extra) );
         break;
     }
     case WM_NCPAINT:
