@@ -3769,7 +3769,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     WINED3DRECT rect;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
-    RECT dst_rect;
+    RECT dst_rect, src_rect;
 
     TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
@@ -3815,6 +3815,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         rect.y2 = This->currentDesc.Height;
     }
     surface_get_rect(This, DestRect, &dst_rect);
+    if(Src) surface_get_rect(Src, SrcRect, &src_rect);
 
     /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
     if(dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->backBuffer &&
@@ -3935,7 +3936,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
     if((srcSwapchain || SrcSurface == myDevice->render_targets[0]) && !dstSwapchain) {
         /* Blit from render target to texture */
-        WINED3DRECT srect;
         BOOL upsideDown = FALSE, stretchx;
         BOOL paletteOverride = FALSE;
 
@@ -3945,29 +3945,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* Destination color key is checked above */
         }
 
-        if(SrcRect) {
-            srect.y1 = SrcRect->top;
-            srect.y2 = SrcRect->bottom;
-            srect.x1 = SrcRect->left;
-            srect.x2 = SrcRect->right;
-        } else {
-            srect.x1 = 0;
-            srect.y1 = 0;
-            srect.x2 = Src->currentDesc.Width;
-            srect.y2 = Src->currentDesc.Height;
-        }
-
         /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
          * glCopyTexSubImage is a bit picky about the parameters we pass to it
          */
-        if(rect.y1 > rect.y2) {
-            UINT tmp = rect.y2;
-            rect.y2 = rect.y1;
-            rect.y1 = tmp;
+        if(dst_rect.top > dst_rect.bottom) {
+            UINT tmp = dst_rect.bottom;
+            dst_rect.bottom = dst_rect.top;
+            dst_rect.top = tmp;
             upsideDown = TRUE;
         }
 
-        if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
+        if(dst_rect.right - dst_rect.left != src_rect.right - src_rect.left) {
             stretchx = TRUE;
         } else {
             stretchx = FALSE;
@@ -4001,15 +3989,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 && myDevice->adapter->gl_info.fbo_ops.glBlitFramebuffer
                 && surface_can_stretch_rect(Src, This))
         {
-            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &srect,
-                    (IWineD3DSurface *)This, &rect, Filter, upsideDown);
-        } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
-                                    rect.y2 - rect.y1 > Src->currentDesc.Height) {
+            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
+                    (IWineD3DSurface *)This, &dst_rect, Filter, upsideDown);
+        } else if((!stretchx) || dst_rect.right - dst_rect.left > Src->currentDesc.Width ||
+                                    dst_rect.bottom - dst_rect.top > Src->currentDesc.Height) {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
-            fb_copy_to_texture_direct(This, SrcSurface, &srect, &rect, upsideDown, Filter);
+            fb_copy_to_texture_direct(This, SrcSurface, (WINED3DRECT*)&src_rect, (WINED3DRECT*)&dst_rect, upsideDown, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
-            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown, Filter);
+            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, (WINED3DRECT*)&src_rect, (WINED3DRECT*)&dst_rect, upsideDown, Filter);
         }
 
         /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
@@ -4030,12 +4018,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         DWORD oldCKeyFlags = Src->CKeyFlags;
         WINEDDCOLORKEY oldBltCKey = Src->SrcBltCKey;
         struct wined3d_context *context;
-        RECT SourceRectangle;
         BOOL paletteOverride = FALSE;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
-
-        surface_get_rect(Src, SrcRect, &SourceRectangle);
 
         /* When blitting from an offscreen surface to a rendertarget, the source
          * surface is not required to have a palette. Our rendering / conversion
@@ -4057,8 +4042,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* The source is always a texture, but never the currently active render target, and the texture
              * contents are never upside down
              */
-            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, (WINED3DRECT *) &SourceRectangle,
-                              (IWineD3DSurface *)This, &rect, Filter, FALSE);
+            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
+                              (IWineD3DSurface *)This, &dst_rect, Filter, FALSE);
 
             /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
             if(paletteOverride)
@@ -4147,7 +4132,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         /* Draw a textured quad
          */
-        draw_textured_quad(Src, &SourceRectangle, &dst_rect, Filter);
+        draw_textured_quad(Src, &src_rect, &dst_rect, Filter);
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glDisable(GL_ALPHA_TEST);

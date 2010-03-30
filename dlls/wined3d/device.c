@@ -5692,8 +5692,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     }
 }
 
-void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
-        IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip)
+void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const RECT *src_rect_in,
+        IWineD3DSurface *dst_surface, const RECT *dst_rect_in, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
@@ -5701,11 +5701,15 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     struct wined3d_context *context;
     GLenum gl_filter;
     POINT offset = {0, 0};
+    RECT src_rect, dst_rect;
 
-    TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x), flip %u\n",
-            This, src_surface, src_rect, dst_surface, dst_rect, debug_d3dtexturefiltertype(filter), filter, flip);
-    TRACE("src_rect [%u, %u]->[%u, %u]\n", src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2);
-    TRACE("dst_rect [%u, %u]->[%u, %u]\n", dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2);
+    TRACE("(%p) : src_surface %p, src_rect_in %p, dst_surface %p, dst_rect_in %p, filter %s (0x%08x), flip %u\n",
+            This, src_surface, src_rect_in, dst_surface, dst_rect_in, debug_d3dtexturefiltertype(filter), filter, flip);
+    TRACE("src_rect_in %s\n", wine_dbgstr_rect(src_rect_in));
+    TRACE("dst_rect_in %s\n", wine_dbgstr_rect(dst_rect_in));
+
+    src_rect = *src_rect_in;
+    dst_rect = *dst_rect_in;
 
     switch (filter) {
         case WINED3DTEXF_LINEAR:
@@ -5751,12 +5755,12 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
             ClientToScreen(context->win_handle, &offset);
             GetClientRect(context->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
-            src_rect->x1 -= offset.x; src_rect->x2 -=offset.x;
-            src_rect->y1 =  offset.y + h - src_rect->y1;
-            src_rect->y2 =  offset.y + h - src_rect->y2;
+            src_rect.left -= offset.x; src_rect.right -=offset.x;
+            src_rect.top =  offset.y + h - src_rect.top;
+            src_rect.bottom =  offset.y + h - src_rect.bottom;
         } else {
-            src_rect->y1 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y1;
-            src_rect->y2 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y2;
+            src_rect.top = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect.top;
+            src_rect.bottom = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect.bottom;
         }
 
         ENTER_GL();
@@ -5787,13 +5791,13 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
             ClientToScreen(context->win_handle, &offset);
             GetClientRect(context->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
-            dst_rect->x1 -= offset.x; dst_rect->x2 -=offset.x;
-            dst_rect->y1 =  offset.y + h - dst_rect->y1;
-            dst_rect->y2 =  offset.y + h - dst_rect->y2;
+            dst_rect.left -= offset.x; dst_rect.right -=offset.x;
+            dst_rect.top =  offset.y + h - dst_rect.top;
+            dst_rect.bottom =  offset.y + h - dst_rect.bottom;
         } else {
             /* Screen coords = window coords, surface height = window height */
-            dst_rect->y1 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y1;
-            dst_rect->y2 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y2;
+            dst_rect.top = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect.top;
+            dst_rect.bottom = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect.bottom;
         }
 
         ENTER_GL();
@@ -5814,12 +5818,12 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     if (flip) {
-        gl_info->fbo_ops.glBlitFramebuffer(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
-                dst_rect->x1, dst_rect->y2, dst_rect->x2, dst_rect->y1, mask, gl_filter);
+        gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
+                dst_rect.left, dst_rect.bottom, dst_rect.right, dst_rect.top, mask, gl_filter);
         checkGLcall("glBlitFramebuffer()");
     } else {
-        gl_info->fbo_ops.glBlitFramebuffer(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
-                dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter);
+        gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
+                dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, mask, gl_filter);
         checkGLcall("glBlitFramebuffer()");
     }
 
