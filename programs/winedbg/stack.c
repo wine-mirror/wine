@@ -83,6 +83,15 @@ static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
 {
     memset(ihsf, 0, sizeof(*ihsf));
     ihsf->InstructionOffset = dbg_curr_thread->frames[nf].linear_pc;
+    /* if we're not the first frame, InstructionOffset is the return address
+     * after the call instruction (at least on most processors I know of).
+     * However, there are cases where this address is outside of the current function.
+     * This happens when the called function is marked <NO RETURN>, in which
+     * case the compiler can omit the epilog (gcc 4 does it)
+     * Therefore, we decrement InstructionOffset in order to ensure that
+     * the considered address is really inside the current function.
+     */
+    if (nf) ihsf->InstructionOffset--;
     ihsf->FrameOffset = dbg_curr_thread->frames[nf].linear_frame;
     ihsf->StackOffset = dbg_curr_thread->frames[nf].linear_stack;
     return TRUE;
