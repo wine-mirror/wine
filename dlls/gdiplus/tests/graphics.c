@@ -2400,6 +2400,73 @@ static void test_GdipGetNearestColor(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_string_functions(void)
+{
+    GpStatus status;
+    GpGraphics *graphics;
+    GpFontFamily *family;
+    GpFont *font;
+    RectF rc;
+    GpBrush *brush;
+    ARGB color = 0xff000000;
+    HDC hdc = GetDC( hwnd );
+    const WCHAR fontname[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+    const WCHAR fontname2[] = {'C','o','u','r','i','e','r',0};
+    const WCHAR teststring[] = {'o','o',' ','o','\n','o',0};
+
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreateFontFamilyFromName(fontname, NULL, &family);
+
+    if (status != Ok)
+    {
+        /* Wine doesn't have Courier New? */
+        todo_wine expect(Ok, status);
+        status = GdipCreateFontFamilyFromName(fontname2, NULL, &family);
+    }
+
+    expect(Ok, status);
+
+    status = GdipCreateFont(family, 10.0, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, status);
+
+    status = GdipCreateSolidFill(color, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 100.0;
+    rc.Height = 100.0;
+
+    status = GdipDrawString(NULL, teststring, 6, font, &rc, NULL, brush);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawString(graphics, NULL, 6, font, &rc, NULL, brush);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawString(graphics, teststring, 6, NULL, &rc, NULL, brush);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawString(graphics, teststring, 6, font, NULL, NULL, brush);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawString(graphics, teststring, 6, font, &rc, NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawString(graphics, teststring, 6, font, &rc, NULL, brush);
+    expect(Ok, status);
+
+    GdipDeleteBrush(brush);
+    GdipDeleteFont(font);
+    GdipDeleteFontFamily(family);
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2452,6 +2519,7 @@ START_TEST(graphics)
     test_clear();
     test_textcontrast();
     test_fromMemoryBitmap();
+    test_string_functions();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
