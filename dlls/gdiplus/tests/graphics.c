@@ -25,7 +25,8 @@
 #include <math.h>
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
-#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
+#define expectf_(expected, got, precision) ok(fabs(expected - got) < precision, "Expected %.2f, got %.2f\n", expected, got)
+#define expectf(expected, got) expectf_(expected, got, 0.0001)
 #define TABLE_LEN (23)
 
 static HWND hwnd;
@@ -2406,13 +2407,15 @@ static void test_string_functions(void)
     GpGraphics *graphics;
     GpFontFamily *family;
     GpFont *font;
-    RectF rc;
+    RectF rc, char_bounds, bounds;
     GpBrush *brush;
     ARGB color = 0xff000000;
     HDC hdc = GetDC( hwnd );
     const WCHAR fontname[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
     const WCHAR fontname2[] = {'C','o','u','r','i','e','r',0};
     const WCHAR teststring[] = {'o','o',' ','o','\n','o',0};
+    REAL char_width, char_height;
+    INT codepointsfitted, linesfilled;
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -2458,6 +2461,92 @@ static void test_string_functions(void)
 
     status = GdipDrawString(graphics, teststring, 6, font, &rc, NULL, brush);
     expect(Ok, status);
+
+    status = GdipMeasureString(NULL, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureString(graphics, NULL, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureString(graphics, teststring, 6, NULL, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureString(graphics, teststring, 6, font, NULL, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, NULL, &codepointsfitted, &linesfilled);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, NULL, &linesfilled);
+    expect(Ok, status);
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, NULL);
+    expect(Ok, status);
+
+    status = GdipMeasureString(graphics, teststring, 1, font, &rc, NULL, &char_bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, char_bounds.X);
+    expectf(0.0, char_bounds.Y);
+    ok(char_bounds.Width > 0, "got %0.2f\n", bounds.Width);
+    ok(char_bounds.Height > 0, "got %0.2f\n", bounds.Height);
+    expect(1, codepointsfitted);
+    todo_wine expect(1, linesfilled);
+
+    status = GdipMeasureString(graphics, teststring, 2, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    ok(bounds.Width > char_bounds.Width, "got %0.2f, expected at least %0.2f\n", bounds.Width, char_bounds.Width);
+    expectf(char_bounds.Height, bounds.Height);
+    expect(2, codepointsfitted);
+    todo_wine expect(1, linesfilled);
+    char_width = bounds.Width - char_bounds.Width;
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(char_bounds.Width + char_width * 3, bounds.Width, 0.01);
+    ok(bounds.Height > char_bounds.Height, "got %0.2f, expected at least %0.2f\n", bounds.Height, char_bounds.Height);
+    expect(6, codepointsfitted);
+    todo_wine expect(2, linesfilled);
+    char_height = bounds.Height - char_bounds.Height;
+
+    /* Cut off everything after the first space. */
+    rc.Width = char_bounds.Width + char_width * 2.5;
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(char_bounds.Width + char_width, bounds.Width, 0.01);
+    expectf_(char_bounds.Height + char_height * 2, bounds.Height, 0.01);
+    expect(6, codepointsfitted);
+    todo_wine expect(3, linesfilled);
+
+    /* Cut off everything including the first space. */
+    rc.Width = char_bounds.Width + char_width * 1.5;
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(char_bounds.Width + char_width, bounds.Width, 0.01);
+    expectf_(char_bounds.Height + char_height * 2, bounds.Height, 0.01);
+    expect(6, codepointsfitted);
+    todo_wine expect(3, linesfilled);
+
+    /* Cut off everything after the first character. */
+    rc.Width = char_bounds.Width + char_width * 0.5;
+
+    status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(char_bounds.Width, bounds.Width, 0.01);
+    todo_wine expectf_(char_bounds.Height + char_height * 3, bounds.Height, 0.05);
+    expect(6, codepointsfitted);
+    todo_wine expect(4, linesfilled);
 
     GdipDeleteBrush(brush);
     GdipDeleteFont(font);
