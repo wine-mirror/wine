@@ -2000,8 +2000,9 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
             HGLOBAL h = dde_get_pair( (HANDLE)uiHi );
             if (h)
             {
+                ULONGLONG hpack = pack_ptr( h );
                 /* send back the value of h on the other side */
-                push_data( data, &h, sizeof(HGLOBAL) );
+                push_data( data, &hpack, sizeof(hpack) );
                 lp = uiLo;
                 TRACE( "send dde-ack %lx %08lx => %p\n", uiLo, uiHi, h );
             }
@@ -2102,11 +2103,13 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
     case WM_DDE_ACK:
         if (size)
         {
+            ULONGLONG hpack;
             /* hMem is being passed */
-            if (size != sizeof(HGLOBAL)) return FALSE;
+            if (size != sizeof(hpack)) return FALSE;
             if (!buffer || !*buffer) return FALSE;
             uiLo = *lparam;
-            memcpy( &hMem, *buffer, size );
+            memcpy( &hpack, *buffer, size );
+            hMem = unpack_ptr( hpack );
             uiHi = (UINT_PTR)hMem;
             TRACE("recv dde-ack %lx mem=%lx[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
