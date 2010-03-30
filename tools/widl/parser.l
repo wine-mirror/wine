@@ -42,6 +42,7 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 %{
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -442,10 +443,10 @@ struct imports {
 int do_import(char *fname)
 {
 	FILE *f;
-	char *path;
+	char *path, *name;
 	struct imports *import;
 	int ptr = import_stack_ptr;
-	int ret;
+	int ret, fd;
 
 	import = first_import;
 	while (import && strcmp(import->name, fname))
@@ -460,7 +461,7 @@ int do_import(char *fname)
         /* don't search for a file name with a path in the include directories,
          * for compatibility with MIDL */
         if (strchr( fname, '/' ) || strchr( fname, '\\' ))
-            path = strdup( fname );
+            path = xstrdup( fname );
         else if (!(path = wpp_find_include( fname, input_name )))
             error_loc("Unable to open include file %s\n", fname);
 
@@ -471,7 +472,16 @@ int do_import(char *fname)
         input_name = path;
         line_number = 1;
 
-        ret = wpp_parse_temp( path, NULL, &temp_name );
+        name = xstrdup( "widl.XXXXXX" );
+        if((fd = mkstemps( name, 0 )) == -1)
+            error("Could not generate a temp name from %s\n", name);
+
+        temp_name = name;
+        if (!(f = fdopen(fd, "wt")))
+            error("Could not open fd %s for writing\n", name);
+
+        ret = wpp_parse( path, f );
+        fclose( f );
         if (ret) exit(1);
 
 	if((f = fopen(temp_name, "r")) == NULL)

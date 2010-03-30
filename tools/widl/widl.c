@@ -701,7 +701,22 @@ int main(int argc,char *argv[])
 
     if (!preprocess_only)
     {
-        ret = wpp_parse_temp( input_name, header_name, &temp_name );
+        FILE *output;
+        int fd;
+        char *name = xmalloc( strlen(header_name) + 8 );
+
+        strcpy( name, header_name );
+        strcat( name, ".XXXXXX" );
+
+        if ((fd = mkstemps( name, 0 )) == -1)
+            error("Could not generate a temp name from %s\n", name);
+
+        temp_name = name;
+        if (!(output = fdopen(fd, "wt")))
+            error("Could not open fd %s for writing\n", name);
+
+        ret = wpp_parse( input_name, output );
+        fclose( output );
     }
     else
     {
