@@ -5151,8 +5151,9 @@ static float WINAPI IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface)
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface, CONST POINT* pDestPoint) {
-    const struct wined3d_format_desc *src_format_desc, *dst_format_desc;
     IWineD3DDeviceImpl  *This         = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_format_desc *src_format;
+    const struct wined3d_format_desc *dst_format;
     /** TODO: remove casts to IWineD3DSurfaceImpl
      *       NOTE: move code to surface to accomplish this
       ****************************************/
@@ -5160,7 +5161,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)pDestinationSurface;
     int srcWidth, srcHeight;
     unsigned int  srcSurfaceWidth, srcSurfaceHeight;
-    WINED3DFORMAT destFormat, srcFormat;
     int destLeft, destTop;
     WINED3DPOOL       srcPool, destPool;
     GLenum dummy;
@@ -5178,18 +5178,19 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     srcSurfaceWidth = winedesc.width;
     srcSurfaceHeight = winedesc.height;
     srcPool = winedesc.pool;
-    srcFormat = winedesc.format;
 
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
     destPool = winedesc.pool;
-    destFormat = winedesc.format;
 
     if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (srcFormat != destFormat)
+    src_format = pSrcSurface->resource.format_desc;
+    dst_format = dst_impl->resource.format_desc;
+
+    if (src_format->format != dst_format->format)
     {
         WARN("Source and destination surfaces should have the same format.\n");
         return WINED3DERR_INVALIDCALL;
@@ -5218,9 +5219,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     surface_internal_preload(pDestinationSurface, SRGB_RGB);
     IWineD3DSurface_BindTexture(pDestinationSurface, FALSE);
 
-    src_format_desc = ((IWineD3DSurfaceImpl *)pSrcSurface)->resource.format_desc;
-    dst_format_desc = dst_impl->resource.format_desc;
-
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
     srcHeight  = pSourceRect ? pSourceRect->bottom - pSourceRect->top   : srcSurfaceHeight;
@@ -5232,26 +5230,26 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     ENTER_GL();
 
-    if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (dst_format->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT row_length = (srcWidth / src_format_desc->block_width) * src_format_desc->block_byte_count;
-        UINT row_count = srcHeight / src_format_desc->block_height;
+        UINT row_length = (srcWidth / src_format->block_width) * src_format->block_byte_count;
+        UINT row_count = srcHeight / src_format->block_height;
         UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
 
         if (pSourceRect)
         {
-            data += (pSourceRect->top / src_format_desc->block_height) * src_pitch;
-            data += (pSourceRect->left / src_format_desc->block_width) * src_format_desc->block_byte_count;
+            data += (pSourceRect->top / src_format->block_height) * src_pitch;
+            data += (pSourceRect->left / src_format->block_width) * src_format->block_byte_count;
         }
 
         TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
                 "format %#x, image_size %#x, data %p.\n", dst_impl->texture_target, dst_impl->texture_level,
-                destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glFormat, row_count * row_length, data);
+                destLeft, destTop, srcWidth, srcHeight, dst_format->glFormat, row_count * row_length, data);
 
         if (row_length == src_pitch)
         {
             GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                    destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glInternal, row_count * row_length, data));
+                    destLeft, destTop, srcWidth, srcHeight, dst_format->glInternal, row_count * row_length, data));
         }
         else
         {
@@ -5262,9 +5260,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
             for (row = 0, y = destTop; row < row_count; ++row)
             {
                 GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                        destLeft, y, srcWidth, src_format_desc->block_height,
-                        dst_format_desc->glInternal, row_length, data));
-                y += src_format_desc->block_height;
+                        destLeft, y, srcWidth, src_format->block_height,
+                        dst_format->glInternal, row_length, data));
+                y += src_format->block_height;
                 data += src_pitch;
             }
         }
@@ -5274,17 +5272,17 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     {
         if (pSourceRect)
         {
-            data += pSourceRect->top * srcSurfaceWidth * src_format_desc->byte_count;
-            data += pSourceRect->left * src_format_desc->byte_count;
+            data += pSourceRect->top * srcSurfaceWidth * src_format->byte_count;
+            data += pSourceRect->left * src_format->byte_count;
         }
 
         TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, data %p.\n",
                 dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
-                srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
+                srcWidth, srcHeight, dst_format->glFormat, dst_format->glType, data);
 
         glPixelStorei(GL_UNPACK_ROW_LENGTH, srcSurfaceWidth);
         glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
-                srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
+                srcWidth, srcHeight, dst_format->glFormat, dst_format->glType, data);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         checkGLcall("glTexSubImage2D");
     }
