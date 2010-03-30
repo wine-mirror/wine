@@ -261,6 +261,11 @@ static void test_surface_from_dc3(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
     hr = IDirectDraw3_CreateSurface(dd3, &ddsd, &surf1, NULL);
+    if (hr == DDERR_UNSUPPORTEDMODE) {
+        win_skip("Unsupported mode\n");
+        IDirectDraw3_Release(dd3);
+        return;
+    }
     ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface3_QueryInterface(surf1, &IID_IDirectDrawSurface, (void **)&surf3);
@@ -323,6 +328,11 @@ static void test_surface_from_dc4(void)
     ddsd2.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2, &surf4, NULL);
+    if (hr == DDERR_UNSUPPORTEDMODE) {
+        win_skip("Unsupported mode\n");
+        IDirectDraw3_Release(dd4);
+        return;
+    }
     ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **)&surf1);
