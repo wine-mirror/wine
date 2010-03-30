@@ -1104,10 +1104,10 @@ void CDECL __wine_kernel_init(void)
 
     if (boot_events[0])
     {
-        DWORD timeout = 30000, count = 1;
+        DWORD timeout = 2 * 60 * 1000, count = 1;
 
         if (boot_events[1]) count++;
-        if (!got_environment) timeout = 300000;  /* initial prefix creation can take longer */
+        if (!got_environment) timeout = 5 * 60 * 1000;  /* initial prefix creation can take longer */
         if (WaitForMultipleObjects( count, boot_events, FALSE, timeout ) == WAIT_TIMEOUT)
             ERR( "boot event wait timed out\n" );
         CloseHandle( boot_events[0] );
