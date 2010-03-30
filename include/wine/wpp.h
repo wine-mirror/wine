@@ -57,7 +57,6 @@ extern void wpp_set_pedantic( int on );
 extern int wpp_add_include_path( const char *path );
 extern char *wpp_find_include( const char *name, const char *parent_name );
 extern int wpp_parse( const char *input, FILE *output );
-extern int wpp_parse_temp( const char *input, const char *output_base, char **output_name );
 extern void wpp_set_callbacks( const struct wpp_callbacks *callbacks );
 
 #endif  /* __WINE_WPP_H */

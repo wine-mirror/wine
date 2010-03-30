@@ -203,43 +203,6 @@ int wpp_parse( const char *input, FILE *output )
 }
 
 
-/* parse into a temporary file */
-int wpp_parse_temp( const char *input, const char *output_base, char **output_name )
-{
-    FILE *output;
-    int ret, fd;
-    char *temp_name;
-
-    if (!output_base || !output_base[0]) output_base = "wpptmp";
-
-    temp_name = pp_xmalloc( strlen(output_base) + 8 );
-    if(!temp_name)
-        return 1;
-    strcpy( temp_name, output_base );
-    strcat( temp_name, ".XXXXXX" );
-
-    if((fd = mkstemps( temp_name, 0 )) == -1)
-    {
-        ppy_error("Could not generate a temp name from %s\n", temp_name);
-        free( temp_name );
-        return 2;
-    }
-
-    if (!(output = fdopen(fd, "wt")))
-    {
-        ppy_error("Could not open fd %s for writing\n", temp_name);
-        close( fd );
-        unlink( temp_name );
-        free( temp_name );
-        return 2;
-    }
-
-    *output_name = temp_name;
-    ret = wpp_parse( input, output );
-    fclose( output );
-    return ret;
-}
-
 void wpp_set_callbacks( const struct wpp_callbacks *callbacks )
 {
     wpp_callbacks = callbacks;
