@@ -859,12 +859,13 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
-static HANDLE start_rundll32( const char *inf_path )
+static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
 {
     static const WCHAR rundll[] = {'\\','r','u','n','d','l','l','3','2','.','e','x','e',0};
     static const WCHAR setupapi[] = {' ','s','e','t','u','p','a','p','i',',',
                                      'I','n','s','t','a','l','l','H','i','n','f','S','e','c','t','i','o','n',0};
     static const WCHAR definstall[] = {' ','D','e','f','a','u','l','t','I','n','s','t','a','l','l',0};
+    static const WCHAR wowinstall[] = {' ','W','o','w','6','4','I','n','s','t','a','l','l',0};
     static const WCHAR inf[] = {' ','1','2','8',' ','\\','\\','?','\\','u','n','i','x',0 };
 
     WCHAR app[MAX_PATH + sizeof(rundll)/sizeof(WCHAR)];
@@ -876,7 +877,12 @@ static HANDLE start_rundll32( const char *inf_path )
     memset( &si, 0, sizeof(si) );
     si.cb = sizeof(si);
 
-    GetSystemDirectoryW( app, MAX_PATH );
+    if (wow64)
+    {
+        if (!GetSystemWow64DirectoryW( app, MAX_PATH )) return 0;  /* not on 64-bit */
+    }
+    else GetSystemDirectoryW( app, MAX_PATH );
+
     strcatW( app, rundll );
 
     cmd_len = strlenW(app) * sizeof(WCHAR) + sizeof(setupapi) + sizeof(definstall) + sizeof(inf);
@@ -886,7 +892,7 @@ static HANDLE start_rundll32( const char *inf_path )
 
     strcpyW( buffer, app );
     strcatW( buffer, setupapi );
-    strcatW( buffer, definstall );
+    strcatW( buffer, wow64 ? wowinstall : definstall );
     strcatW( buffer, inf );
     MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, buffer + strlenW(buffer), inf_len );
 
@@ -925,7 +931,12 @@ static void update_wineprefix( int force )
     {
         HANDLE process;
 
-        if ((process = start_rundll32( inf_path )))
+        if ((process = start_rundll32( inf_path, FALSE )))
+        {
+            WaitForSingleObject( process, INFINITE );
+            CloseHandle( process );
+        }
+        if ((process = start_rundll32( inf_path, TRUE )))
         {
             WaitForSingleObject( process, INFINITE );
             CloseHandle( process );
