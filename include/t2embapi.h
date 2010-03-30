@@ -39,6 +39,14 @@ typedef struct
 LONG WINAPI TTLoadEmbeddedFont(HANDLE*,ULONG,ULONG*,ULONG,ULONG*,READEMBEDPROC,
                                LPVOID,LPWSTR,LPSTR,TTLOADINFO*);
 
+/* embedding privileges */
+#define EMBED_PREVIEWPRINT  1
+#define EMBED_EDITABLE      2
+#define EMBED_INSTALLABLE   3
+#define EMBED_NOEMBEDDING   4
+
+LONG WINAPI TTGetEmbeddingType(HDC, ULONG*);
+
 #ifdef __cplusplus
 }
 #endif

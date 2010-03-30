@@ -59,3 +59,10 @@ LONG WINAPI TTLoadEmbeddedFont(HANDLE *phFontReference, ULONG ulFlags,
 
     return E_API_NOTIMPL;
 }
+
+LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
+{
+    FIXME("(%p %p) stub\n", hDC, status);
+    if (status) *status = EMBED_NOEMBEDDING;
+    return E_API_NOTIMPL;
+}

@@ -4,7 +4,7 @@
 @ stub TTEmbedFontFromFileA
 @ stub TTEnableEmbeddingForFacename
 @ stub TTGetEmbeddedFontInfo
-@ stub TTGetEmbeddingType
+@ stdcall TTGetEmbeddingType(ptr ptr)
 @ stub TTIsEmbeddingEnabled
 @ stub TTIsEmbeddingEnabledForFacename
 @ stdcall TTLoadEmbeddedFont(ptr long ptr long ptr ptr ptr wstr str ptr)
