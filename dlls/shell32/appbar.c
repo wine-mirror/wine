@@ -36,17 +36,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(appbar);
 
+struct appbar_data_msg  /* platform-independent data */
+{
+    ULONG     hWnd;
+    UINT      uCallbackMessage;
+    UINT      uEdge;
+    RECT      rc;
+    ULONGLONG lParam;
+};
+
 struct appbar_cmd
 {
-    HANDLE return_map;
-    DWORD return_process;
-    APPBARDATA abd;
+    ULONG  return_map;
+    DWORD  return_process;
+    struct appbar_data_msg abd;
 };
 
 struct appbar_response
 {
-    UINT_PTR result;
-    APPBARDATA abd;
+    ULONGLONG result;
+    struct appbar_data_msg abd;
 };
 
 /*************************************************************************
@@ -75,7 +84,11 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         return FALSE;
     }
 
-    command.abd = *data;
+    command.abd.hWnd = HandleToLong( data->hWnd );
+    command.abd.uCallbackMessage = data->uCallbackMessage;
+    command.abd.uEdge = data->uEdge;
+    command.abd.rc = data->rc;
+    command.abd.lParam = data->lParam;
 
     return_map = CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, sizeof(struct appbar_response), NULL);
     if (return_map == NULL)
@@ -83,7 +96,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         ERR("couldn't create file mapping\n");
         return 0;
     }
-    command.return_map = return_map;
+    command.return_map = HandleToUlong( return_map );
 
     command.return_process = GetCurrentProcessId();
 
@@ -112,8 +125,14 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     response = return_view;
 
     ret = response->result;
-    *data = response->abd;
-
+    if (ret)
+    {
+        data->hWnd = UlongToHandle( response->abd.hWnd );
+        data->uCallbackMessage = response->abd.uCallbackMessage;
+        data->uEdge = response->abd.uEdge;
+        data->rc = response->abd.rc;
+        data->lParam = response->abd.lParam;
+    }
     UnmapViewOfFile(return_view);
 
     CloseHandle(return_map);

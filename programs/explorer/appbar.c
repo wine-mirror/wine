@@ -37,17 +37,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(appbar);
 
+struct appbar_data_msg  /* platform-independent data */
+{
+    LONG      hWnd;
+    UINT      uCallbackMessage;
+    UINT      uEdge;
+    RECT      rc;
+    ULONGLONG lParam;
+};
+
 struct appbar_cmd
 {
-    HANDLE return_map;
-    DWORD return_process;
-    APPBARDATA abd;
+    ULONG  return_map;
+    DWORD  return_process;
+    struct appbar_data_msg abd;
 };
 
 struct appbar_response
 {
-    UINT_PTR result;
-    APPBARDATA abd;
+    ULONGLONG result;
+    struct appbar_data_msg abd;
 };
 
 static HWND appbarmsg_window = NULL;
@@ -92,12 +101,12 @@ static void send_poschanged(HWND hwnd)
 }
 
 /* appbar_cliprect: cut out parts of the rectangle that interfere with existing appbars */
-static void appbar_cliprect(PAPPBARDATA abd)
+static void appbar_cliprect( HWND hwnd, RECT *rect )
 {
     struct appbar_data* data;
     LIST_FOR_EACH_ENTRY(data, &appbars, struct appbar_data, entry)
     {
-        if (data->hwnd == abd->hWnd)
+        if (data->hwnd == hwnd)
         {
             /* we only care about appbars that were added before this one */
             return;
@@ -108,30 +117,31 @@ static void appbar_cliprect(PAPPBARDATA abd)
             switch (data->edge)
             {
             case ABE_BOTTOM:
-                abd->rc.bottom = min(abd->rc.bottom, data->rc.top);
+                rect->bottom = min(rect->bottom, data->rc.top);
                 break;
             case ABE_LEFT:
-                abd->rc.left = max(abd->rc.left, data->rc.right);
+                rect->left = max(rect->left, data->rc.right);
                 break;
             case ABE_RIGHT:
-                abd->rc.right = min(abd->rc.right, data->rc.left);
+                rect->right = min(rect->right, data->rc.left);
                 break;
             case ABE_TOP:
-                abd->rc.top = max(abd->rc.top, data->rc.bottom);
+                rect->top = max(rect->top, data->rc.bottom);
                 break;
             }
         }
     }
 }
 
-static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
+static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
 {
     struct appbar_data* data;
+    HWND hwnd = LongToHandle( abd->hWnd );
 
     switch (msg)
     {
     case ABM_NEW:
-        if (get_appbar(abd->hWnd))
+        if (get_appbar(hwnd))
         {
             /* fail when adding an hwnd the second time */
             return FALSE;
@@ -143,42 +153,42 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
             WINE_ERR("out of memory\n");
             return FALSE;
         }
-        data->hwnd = abd->hWnd;
+        data->hwnd = hwnd;
         data->callback_msg = abd->uCallbackMessage;
 
         list_add_tail(&appbars, &data->entry);
 
         return TRUE;
     case ABM_REMOVE:
-        if ((data = get_appbar(abd->hWnd)))
+        if ((data = get_appbar(hwnd)))
         {
             list_remove(&data->entry);
 
-            send_poschanged(abd->hWnd);
+            send_poschanged(hwnd);
 
             HeapFree(GetProcessHeap(), 0, data);
         }
         else
-            WINE_WARN("removing hwnd %p not on the list\n", abd->hWnd);
+            WINE_WARN("removing hwnd %p not on the list\n", hwnd);
         return TRUE;
     case ABM_QUERYPOS:
         if (abd->uEdge > ABE_BOTTOM)
-            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, abd->hWnd);
-        appbar_cliprect(abd);
+            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, hwnd);
+        appbar_cliprect( hwnd, &abd->rc );
         return TRUE;
     case ABM_SETPOS:
         if (abd->uEdge > ABE_BOTTOM)
         {
-            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, abd->hWnd);
+            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, hwnd);
             return TRUE;
         }
-        if ((data = get_appbar(abd->hWnd)))
+        if ((data = get_appbar(hwnd)))
         {
             /* calculate acceptable space */
-            appbar_cliprect(abd);
+            appbar_cliprect( hwnd, &abd->rc );
 
             if (!EqualRect(&abd->rc, &data->rc))
-                send_poschanged(abd->hWnd);
+                send_poschanged(hwnd);
 
             /* reserve that space for this appbar */
             data->edge = abd->uEdge;
@@ -187,14 +197,14 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         }
         else
         {
-            WINE_WARN("app sent ABM_SETPOS message for %p without ABM_ADD\n", abd->hWnd);
+            WINE_WARN("app sent ABM_SETPOS message for %p without ABM_ADD\n", hwnd);
         }
         return TRUE;
     case ABM_GETSTATE:
         WINE_FIXME("SHAppBarMessage(ABM_GETSTATE): stub\n");
         return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
     case ABM_GETTASKBARPOS:
-        WINE_FIXME("SHAppBarMessage(ABM_GETTASKBARPOS, hwnd=%p): stub\n", abd->hWnd);
+        WINE_FIXME("SHAppBarMessage(ABM_GETTASKBARPOS, hwnd=%p): stub\n", hwnd);
         /* Report the taskbar is at the bottom of the screen. */
         abd->rc.left = 0;
         abd->rc.right = GetSystemMetrics(SM_CXSCREEN);
@@ -205,10 +215,11 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
     case ABM_ACTIVATE:
         return TRUE;
     case ABM_GETAUTOHIDEBAR:
-        WINE_FIXME("SHAppBarMessage(ABM_GETAUTOHIDEBAR, hwnd=%p, edge=%x): stub\n", abd->hWnd, abd->uEdge);
+        WINE_FIXME("SHAppBarMessage(ABM_GETAUTOHIDEBAR, hwnd=%p, edge=%x): stub\n", hwnd, abd->uEdge);
         return 0;
     case ABM_SETAUTOHIDEBAR:
-        WINE_FIXME("SHAppBarMessage(ABM_SETAUTOHIDEBAR, hwnd=%p, edge=%x, lparam=%lx): stub\n", abd->hWnd, abd->uEdge, abd->lParam);
+        WINE_FIXME("SHAppBarMessage(ABM_SETAUTOHIDEBAR, hwnd=%p, edge=%x, lparam=%s): stub\n",
+                   hwnd, abd->uEdge, wine_dbgstr_longlong(abd->lParam));
         return TRUE;
     case ABM_WINDOWPOSCHANGED:
         return TRUE;
@@ -246,7 +257,8 @@ static LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
                 return TRUE;
             }
 
-            if (!DuplicateHandle(return_hproc, cmd.return_map, GetCurrentProcess(), &return_map, 0, FALSE, DUPLICATE_SAME_ACCESS))
+            if (!DuplicateHandle(return_hproc, UlongToHandle(cmd.return_map),
+                                 GetCurrentProcess(), &return_map, 0, FALSE, DUPLICATE_SAME_ACCESS))
             {
                 WINE_ERR("couldn't duplicate handle\n");
                 CloseHandle(return_hproc);
