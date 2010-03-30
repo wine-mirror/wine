@@ -27,22 +27,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION (*gl_info)
 
-HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, struct wined3d_event_query **query)
+BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info)
 {
-    struct wined3d_event_query *ret;
-    *query = NULL;
-    if (!gl_info->supported[ARB_SYNC] && !gl_info->supported[NV_FENCE]
-        && !gl_info->supported[APPLE_FENCE]) return E_NOTIMPL;
-
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(*ret));
-    if (!ret)
-    {
-        ERR("Failed to allocate a wined3d event query structure.\n");
-        return E_OUTOFMEMORY;
-    }
-    ret->context = NULL;
-    *query = ret;
-    return WINED3D_OK;
+    return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
 }
 
 void wined3d_event_query_destroy(struct wined3d_event_query *query)
@@ -593,7 +580,6 @@ HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
         WINED3DQUERYTYPE type, IUnknown *parent)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    HRESULT hr;
 
     switch (type)
     {
@@ -616,9 +602,7 @@ HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
 
         case WINED3DQUERYTYPE_EVENT:
             TRACE("Event query.\n");
-            query->lpVtbl = &IWineD3DEventQuery_Vtbl;
-            hr = wined3d_event_query_init(gl_info, (struct wined3d_event_query **) &query->extendedData);
-            if (hr == E_NOTIMPL)
+            if (!wined3d_event_query_supported(gl_info))
             {
                 /* Half-Life 2 needs this query. It does not render the main
                  * menu correctly otherwise. Pretend to support it, faking
@@ -626,9 +610,12 @@ HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
                  * lowering performance. */
                 FIXME("Event query: Unimplemented, but pretending to be supported.\n");
             }
-            else if(FAILED(hr))
+            query->lpVtbl = &IWineD3DEventQuery_Vtbl;
+            query->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct wined3d_event_query));
+            if (!query->extendedData)
             {
-                return hr;
+                ERR("Failed to allocate event query memory.\n");
+                return E_OUTOFMEMORY;
             }
             break;
 

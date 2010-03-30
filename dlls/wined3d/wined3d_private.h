@@ -1033,11 +1033,11 @@ enum wined3d_event_query_result
     WINED3D_EVENT_QUERY_ERROR
 };
 
-HRESULT wined3d_event_query_init(const struct wined3d_gl_info *gl_info, struct wined3d_event_query **query) DECLSPEC_HIDDEN;
 void wined3d_event_query_destroy(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+HRESULT wined3d_event_query_supported(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
 struct wined3d_context
 {

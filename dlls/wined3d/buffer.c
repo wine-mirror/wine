@@ -798,15 +798,21 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
 
     if(!This->query)
     {
-        HRESULT hr;
         TRACE("Creating event query for buffer %p\n", This);
 
-        hr = wined3d_event_query_init(gl_info, &This->query);
-        if(FAILED(hr))
+        if (!wined3d_event_query_supported(gl_info))
         {
-            ERR("Failed to create an event query, dropping async buffer locks\n");
+            FIXME("Event queries not supported, dropping async buffer locks.\n");
             goto drop_query;
         }
+
+        This->query = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->query));
+        if (!This->query)
+        {
+            ERR("Failed to allocate event query memory, dropping async buffer locks.\n");
+            goto drop_query;
+        }
+
         /* Since we don't know about old draws a glFinish is needed once */
         wglFinish();
         return;
