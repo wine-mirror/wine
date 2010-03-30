@@ -195,6 +195,19 @@ struct packed_MDINEXTMENU
     DWORD         __pad3;
 };
 
+struct packed_MDICREATESTRUCTW
+{
+    ULONGLONG szClass;
+    ULONGLONG szTitle;
+    ULONGLONG hOwner;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT       cy;
+    DWORD     style;
+    ULONGLONG lParam;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -207,6 +220,7 @@ C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
 C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) );
 C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
 C_ASSERT( sizeof(struct packed_MDINEXTMENU) >= sizeof(MDINEXTMENU) );
+C_ASSERT( sizeof(struct packed_MDICREATESTRUCTW) >= sizeof(MDICREATESTRUCTW) );
 
 union packed_structs
 {
@@ -221,6 +235,7 @@ union packed_structs
     struct packed_NCCALCSIZE_PARAMS ncp;
     struct packed_MSG msg;
     struct packed_MDINEXTMENU mnm;
+    struct packed_MDICREATESTRUCTW mcs;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -967,11 +982,20 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return sizeof(RECT);
     case WM_MDICREATE:
     {
-        MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lparam;
-        push_data( data, cs, sizeof(*cs) );
-        if (!IS_INTRESOURCE(cs->szTitle)) push_string( data, cs->szTitle );
-        if (!IS_INTRESOURCE(cs->szClass)) push_string( data, cs->szClass );
-        return sizeof(*cs);
+        MDICREATESTRUCTW *mcs = (MDICREATESTRUCTW *)lparam;
+        data->ps.mcs.szClass = pack_ptr( mcs->szClass );
+        data->ps.mcs.szTitle = pack_ptr( mcs->szTitle );
+        data->ps.mcs.hOwner  = pack_ptr( mcs->hOwner );
+        data->ps.mcs.x       = mcs->x;
+        data->ps.mcs.y       = mcs->y;
+        data->ps.mcs.cx      = mcs->cx;
+        data->ps.mcs.cy      = mcs->cy;
+        data->ps.mcs.style   = mcs->style;
+        data->ps.mcs.lParam  = mcs->lParam;
+        push_data( data, &data->ps.mcs, sizeof(data->ps.mcs) );
+        if (!IS_INTRESOURCE(mcs->szClass)) push_string( data, mcs->szClass );
+        if (!IS_INTRESOURCE(mcs->szTitle)) push_string( data, mcs->szTitle );
+        return sizeof(data->ps.mcs);
     }
     case WM_MDIGETACTIVE:
         if (lparam) return sizeof(BOOL);
@@ -1349,22 +1373,33 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case WM_MDICREATE:
     {
-        MDICREATESTRUCTW *cs = *buffer;
-        WCHAR *str = (WCHAR *)(cs + 1);
-        if (size < sizeof(*cs)) return FALSE;
-        size -= sizeof(*cs);
-        if (!IS_INTRESOURCE(cs->szTitle))
+        MDICREATESTRUCTW mcs;
+        WCHAR *str = (WCHAR *)(&ps->mcs + 1);
+        if (size < sizeof(ps->mcs)) return FALSE;
+        size -= sizeof(ps->mcs);
+
+        mcs.szClass = unpack_ptr( ps->mcs.szClass );
+        mcs.szTitle = unpack_ptr( ps->mcs.szTitle );
+        mcs.hOwner  = unpack_ptr( ps->mcs.hOwner );
+        mcs.x       = ps->mcs.x;
+        mcs.y       = ps->mcs.y;
+        mcs.cx      = ps->mcs.cx;
+        mcs.cy      = ps->mcs.cy;
+        mcs.style   = ps->mcs.style;
+        mcs.lParam  = (LPARAM)unpack_ptr( ps->mcs.lParam );
+        if (ps->mcs.szClass >> 16)
         {
             if (!check_string( str, size )) return FALSE;
-            cs->szTitle = str;
+            mcs.szClass = str;
             size -= (strlenW(str) + 1) * sizeof(WCHAR);
             str += strlenW(str) + 1;
         }
-        if (!IS_INTRESOURCE(cs->szClass))
+        if (ps->mcs.szTitle >> 16)
         {
             if (!check_string( str, size )) return FALSE;
-            cs->szClass = str;
+            mcs.szTitle = str;
         }
+        memcpy( &ps->mcs, &mcs, sizeof(mcs) );
         break;
     }
     case WM_MDIGETACTIVE:
@@ -1571,8 +1606,20 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     }
     case WM_MDICREATE:
-        push_data( data, (MDICREATESTRUCTW *)lparam, sizeof(MDICREATESTRUCTW) );
+    {
+        MDICREATESTRUCTW *mcs = (MDICREATESTRUCTW *)lparam;
+        data->ps.mcs.szClass = pack_ptr( mcs->szClass );
+        data->ps.mcs.szTitle = pack_ptr( mcs->szTitle );
+        data->ps.mcs.hOwner  = pack_ptr( mcs->hOwner );
+        data->ps.mcs.x       = mcs->x;
+        data->ps.mcs.y       = mcs->y;
+        data->ps.mcs.cx      = mcs->cx;
+        data->ps.mcs.cy      = mcs->cy;
+        data->ps.mcs.style   = mcs->style;
+        data->ps.mcs.lParam  = mcs->lParam;
+        push_data( data, &data->ps.mcs, sizeof(data->ps.mcs) );
         break;
+    }
     case WM_ASKCBFORMATNAME:
         push_data( data, (WCHAR *)lparam, (strlenW((WCHAR *)lparam) + 1) * sizeof(WCHAR) );
         break;
@@ -1722,14 +1769,19 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         if (lparam) memcpy( (DWORD *)lparam, buffer, min( sizeof(DWORD), size ));
         break;
     case WM_MDICREATE:
-    {
-        MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lparam;
-        LPCWSTR title = cs->szTitle, class = cs->szClass;
-        memcpy( cs, buffer, min( sizeof(*cs), size ));
-        cs->szTitle = title;  /* restore the original pointers */
-        cs->szClass = class;
+        if (size >= sizeof(ps->mcs))
+        {
+            MDICREATESTRUCTW *mcs = (MDICREATESTRUCTW *)lparam;
+            mcs->hOwner  = unpack_ptr( ps->mcs.hOwner );
+            mcs->x       = ps->mcs.x;
+            mcs->y       = ps->mcs.y;
+            mcs->cx      = ps->mcs.cx;
+            mcs->cy      = ps->mcs.cy;
+            mcs->style   = ps->mcs.style;
+            mcs->lParam  = (LPARAM)unpack_ptr( ps->mcs.lParam );
+            /* don't allow changing class and title pointers */
+        }
         break;
-    }
     default:
         ERR( "should not happen: unexpected message %x\n", message );
         break;
