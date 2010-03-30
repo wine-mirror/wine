@@ -146,6 +146,17 @@ struct packed_COPYDATASTRUCT
     ULONGLONG lpData;
 };
 
+struct packed_HELPINFO
+{
+    UINT          cbSize;
+    INT           iContextType;
+    INT           iCtrlId;
+    user_handle_t hItemHandle;
+    DWORD         __pad;
+    ULONGLONG     dwContextId;
+    POINT         MousePos;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -154,6 +165,7 @@ C_ASSERT( sizeof(struct packed_DELETEITEMSTRUCT) >= sizeof(DELETEITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
 C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
+C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
 
 union packed_structs
 {
@@ -164,6 +176,7 @@ union packed_structs
     struct packed_COMPAREITEMSTRUCT cis;
     struct packed_WINDOWPOS wp;
     struct packed_COPYDATASTRUCT cds;
+    struct packed_HELPINFO hi;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -783,8 +796,16 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         data->count = -1;
         return 0;
     case WM_HELP:
-        push_data( data, (HELPINFO *)lparam, sizeof(HELPINFO) );
+    {
+        HELPINFO *hi = (HELPINFO *)lparam;
+        data->ps.hi.iContextType = hi->iContextType;
+        data->ps.hi.iCtrlId      = hi->iCtrlId;
+        data->ps.hi.hItemHandle  = wine_server_user_handle( hi->hItemHandle );
+        data->ps.hi.dwContextId  = hi->dwContextId;
+        data->ps.hi.MousePos     = hi->MousePos;
+        push_data( data, &data->ps.hi, sizeof(data->ps.hi) );
         return 0;
+    }
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         push_data( data, (STYLESTRUCT *)lparam, sizeof(STYLESTRUCT) );
@@ -1114,8 +1135,18 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         /* WM_NOTIFY cannot be sent across processes (MSDN) */
         return FALSE;
     case WM_HELP:
-        minsize = sizeof(HELPINFO);
+    {
+        HELPINFO hi;
+        if (size < sizeof(ps->hi)) return FALSE;
+        hi.cbSize       = sizeof(hi);
+        hi.iContextType = ps->hi.iContextType;
+        hi.iCtrlId      = ps->hi.iCtrlId;
+        hi.hItemHandle  = wine_server_ptr_handle( ps->hi.hItemHandle );
+        hi.dwContextId  = (ULONG_PTR)unpack_ptr( ps->hi.dwContextId );
+        hi.MousePos     = ps->hi.MousePos;
+        memcpy( &ps->hi, &hi, sizeof(hi) );
         break;
+    }
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         minsize = sizeof(STYLESTRUCT);
