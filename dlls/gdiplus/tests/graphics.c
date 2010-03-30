@@ -2590,10 +2590,10 @@ static void test_string_functions(void)
     expect(InvalidParameter, status);
 
     status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 2, regions);
-    todo_wine expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
 
     status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 4, regions);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     for (i=0; i<4; i++)
     {
@@ -2611,7 +2611,7 @@ static void test_string_functions(void)
     rc.Height = char_bounds.Height + char_height * 0.5;
 
     status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 3, regions);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     for (i=0; i<4; i++)
     {
@@ -2621,7 +2621,7 @@ static void test_string_functions(void)
 
     ok(!region_isempty[0], "region shouldn't be empty\n");
     ok(!region_isempty[1], "region shouldn't be empty\n");
-    todo_wine ok(region_isempty[2], "region should be empty\n");
+    ok(region_isempty[2], "region should be empty\n");
     ok(!region_isempty[3], "region shouldn't be empty\n");
 
     for (i=0; i<4; i++)

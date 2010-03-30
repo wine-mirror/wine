@@ -3479,18 +3479,87 @@ static GpStatus gdip_format_string(GpGraphics *graphics,
     return stat;
 }
 
+struct measure_ranges_args {
+    GpRegion **regions;
+};
+
+GpStatus measure_ranges_callback(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *user_data)
+{
+    int i;
+    GpStatus stat = Ok;
+    struct measure_ranges_args *args = user_data;
+
+    for (i=0; i<format->range_count; i++)
+    {
+        INT range_start = max(index, format->character_ranges[i].First);
+        INT range_end = min(index+length, format->character_ranges[i].First+format->character_ranges[i].Length);
+        if (range_start < range_end)
+        {
+            GpRectF range_rect;
+            SIZE range_size;
+
+            range_rect.Y = bounds->Y;
+            range_rect.Height = bounds->Height;
+
+            GetTextExtentExPointW(graphics->hdc, string + index, range_start - index,
+                                  INT_MAX, NULL, NULL, &range_size);
+            range_rect.X = bounds->X + range_size.cx;
+
+            GetTextExtentExPointW(graphics->hdc, string + index, range_end - index,
+                                  INT_MAX, NULL, NULL, &range_size);
+            range_rect.Width = (bounds->X + range_size.cx) - range_rect.X;
+
+            stat = GdipCombineRegionRect(args->regions[i], &range_rect, CombineModeUnion);
+            if (stat != Ok)
+                break;
+        }
+    }
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
         INT regionCount, GpRegion** regions)
 {
-    FIXME("stub: %p %s %d %p %p %p %d %p\n", graphics, debugstr_w(string),
-            length, font, layoutRect, stringFormat, regionCount, regions);
+    GpStatus stat;
+    int i;
+    HFONT oldfont;
+    struct measure_ranges_args args;
+
+    TRACE("(%p %s %d %p %s %p %d %p)\n", graphics, debugstr_w(string),
+            length, font, debugstr_rectf(layoutRect), stringFormat, regionCount, regions);
 
     if (!(graphics && string && font && layoutRect && stringFormat && regions))
         return InvalidParameter;
 
-    return NotImplemented;
+    if (regionCount < stringFormat->range_count)
+        return InvalidParameter;
+
+    if (stringFormat->attr)
+        TRACE("may be ignoring some format flags: attr %x\n", stringFormat->attr);
+
+    oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
+
+    for (i=0; i<stringFormat->range_count; i++)
+    {
+        stat = GdipSetEmpty(regions[i]);
+        if (stat != Ok)
+            return stat;
+    }
+
+    args.regions = regions;
+
+    stat = gdip_format_string(graphics, string, length, font, layoutRect, stringFormat,
+        measure_ranges_callback, &args);
+
+    DeleteObject(SelectObject(graphics->hdc, oldfont));
+
+    return stat;
 }
 
 struct measure_string_args {
