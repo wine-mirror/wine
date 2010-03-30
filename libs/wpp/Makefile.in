@@ -2,6 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+DLLFLAGS  = @DLLFLAGS@
 MODULE    = libwpp.a
 
 C_SRCS = \
