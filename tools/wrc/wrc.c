@@ -256,40 +256,50 @@ static int load_file( const char *input_name, const char *output_name )
     /* Run the preprocessor on the input */
     if(!no_preprocess)
     {
+        FILE *output;
+        int ret, fd;
+        char *name;
+
         /*
          * Preprocess the input to a temp-file, or stdout if
          * no output was given.
          */
 
-        chat("Starting preprocess\n");
-
-        if (!preprocess_only)
+        if (preprocess_only)
         {
-            ret = wpp_parse_temp( input_name, output_name, &temp_name );
-        }
-        else if (output_name)
-        {
-            FILE *output;
+            if (output_name)
+            {
+                if (!(output = fopen( output_name, "w" )))
+                    fatal_perror( "Could not open %s for writing", output_name );
+                ret = wpp_parse( input_name, output );
+                fclose( output );
+            }
+            else ret = wpp_parse( input_name, stdout );
 
-            if (!(output = fopen( output_name, "w" )))
-                fatal_perror( "Could not open %s for writing", output_name );
-            ret = wpp_parse( input_name, output );
-            fclose( output );
-        }
-        else
-        {
-            ret = wpp_parse( input_name, stdout );
-        }
-
-        if (ret) return ret;
-
-        if(preprocess_only)
-        {
+            if (ret) return ret;
             output_name = NULL;
             exit(0);
         }
 
-        input_name = temp_name;
+        if (output_name && output_name[0])
+        {
+            name = xmalloc( strlen(output_name) + 8 );
+            strcpy( name, output_name );
+            strcat( name, ".XXXXXX" );
+        }
+        else name = xstrdup( "wrc.XXXXXX" );
+
+        if ((fd = mkstemps( name, 0 )) == -1)
+            error("Could not generate a temp name from %s\n", name);
+
+        temp_name = name;
+        if (!(output = fdopen(fd, "wt")))
+            error("Could not open fd %s for writing\n", name);
+
+        ret = wpp_parse( input_name, output );
+        fclose( output );
+        if (ret) return ret;
+        input_name = name;
     }
 
     /* Reset the language */
