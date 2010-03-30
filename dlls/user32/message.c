@@ -76,12 +76,69 @@ struct packed_CREATESTRUCTW
     DWORD         __pad3;
 };
 
+struct packed_DRAWITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    UINT          itemAction;
+    UINT          itemState;
+    user_handle_t hwndItem;
+    DWORD         __pad1;
+    user_handle_t hDC;
+    DWORD         __pad2;
+    RECT          rcItem;
+    ULONGLONG     itemData;
+};
+
+struct packed_MEASUREITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    UINT          itemWidth;
+    UINT          itemHeight;
+    ULONGLONG     itemData;
+};
+
+struct packed_DELETEITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    UINT          itemID;
+    user_handle_t hwndItem;
+    DWORD         __pad;
+    ULONGLONG     itemData;
+};
+
+struct packed_COMPAREITEMSTRUCT
+{
+    UINT          CtlType;
+    UINT          CtlID;
+    user_handle_t hwndItem;
+    DWORD         __pad1;
+    UINT          itemID1;
+    ULONGLONG     itemData1;
+    UINT          itemID2;
+    ULONGLONG     itemData2;
+    DWORD         dwLocaleId;
+    DWORD         __pad2;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
+C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_MEASUREITEMSTRUCT) >= sizeof(MEASUREITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_DELETEITEMSTRUCT) >= sizeof(DELETEITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) );
 
 union packed_structs
 {
     struct packed_CREATESTRUCTW cs;
+    struct packed_DRAWITEMSTRUCT dis;
+    struct packed_MEASUREITEMSTRUCT mis;
+    struct packed_DELETEITEMSTRUCT dls;
+    struct packed_COMPAREITEMSTRUCT cis;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -621,17 +678,57 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         push_data( data, (MINMAXINFO *)lparam, sizeof(MINMAXINFO) );
         return sizeof(MINMAXINFO);
     case WM_DRAWITEM:
-        push_data( data, (DRAWITEMSTRUCT *)lparam, sizeof(DRAWITEMSTRUCT) );
+    {
+        DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lparam;
+        data->ps.dis.CtlType    = dis->CtlType;
+        data->ps.dis.CtlID      = dis->CtlID;
+        data->ps.dis.itemID     = dis->itemID;
+        data->ps.dis.itemAction = dis->itemAction;
+        data->ps.dis.itemState  = dis->itemState;
+        data->ps.dis.hwndItem   = wine_server_user_handle( dis->hwndItem );
+        data->ps.dis.hDC        = wine_server_user_handle( dis->hDC );  /* FIXME */
+        data->ps.dis.rcItem     = dis->rcItem;
+        data->ps.dis.itemData   = dis->itemData;
+        push_data( data, &data->ps.dis, sizeof(data->ps.dis) );
         return 0;
+    }
     case WM_MEASUREITEM:
-        push_data( data, (MEASUREITEMSTRUCT *)lparam, sizeof(MEASUREITEMSTRUCT) );
-        return sizeof(MEASUREITEMSTRUCT);
+    {
+        MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lparam;
+        data->ps.mis.CtlType    = mis->CtlType;
+        data->ps.mis.CtlID      = mis->CtlID;
+        data->ps.mis.itemID     = mis->itemID;
+        data->ps.mis.itemWidth  = mis->itemWidth;
+        data->ps.mis.itemHeight = mis->itemHeight;
+        data->ps.mis.itemData   = mis->itemData;
+        push_data( data, &data->ps.mis, sizeof(data->ps.mis) );
+        return sizeof(data->ps.mis);
+    }
     case WM_DELETEITEM:
-        push_data( data, (DELETEITEMSTRUCT *)lparam, sizeof(DELETEITEMSTRUCT) );
+    {
+        DELETEITEMSTRUCT *dls = (DELETEITEMSTRUCT *)lparam;
+        data->ps.dls.CtlType    = dls->CtlType;
+        data->ps.dls.CtlID      = dls->CtlID;
+        data->ps.dls.itemID     = dls->itemID;
+        data->ps.dls.hwndItem   = wine_server_user_handle( dls->hwndItem );
+        data->ps.dls.itemData   = dls->itemData;
+        push_data( data, &data->ps.dls, sizeof(data->ps.dls) );
         return 0;
+    }
     case WM_COMPAREITEM:
-        push_data( data, (COMPAREITEMSTRUCT *)lparam, sizeof(COMPAREITEMSTRUCT) );
+    {
+        COMPAREITEMSTRUCT *cis = (COMPAREITEMSTRUCT *)lparam;
+        data->ps.cis.CtlType    = cis->CtlType;
+        data->ps.cis.CtlID      = cis->CtlID;
+        data->ps.cis.hwndItem   = wine_server_user_handle( cis->hwndItem );
+        data->ps.cis.itemID1    = cis->itemID1;
+        data->ps.cis.itemData1  = cis->itemData1;
+        data->ps.cis.itemID2    = cis->itemID2;
+        data->ps.cis.itemData2  = cis->itemData2;
+        data->ps.cis.dwLocaleId = cis->dwLocaleId;
+        push_data( data, &data->ps.cis, sizeof(data->ps.cis) );
         return 0;
+    }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
@@ -885,17 +982,61 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         minsize = sizeof(MINMAXINFO);
         break;
     case WM_DRAWITEM:
-        minsize = sizeof(DRAWITEMSTRUCT);
+    {
+        DRAWITEMSTRUCT dis;
+        if (size < sizeof(ps->dis)) return FALSE;
+        dis.CtlType    = ps->dis.CtlType;
+        dis.CtlID      = ps->dis.CtlID;
+        dis.itemID     = ps->dis.itemID;
+        dis.itemAction = ps->dis.itemAction;
+        dis.itemState  = ps->dis.itemState;
+        dis.hwndItem   = wine_server_ptr_handle( ps->dis.hwndItem );
+        dis.hDC        = wine_server_ptr_handle( ps->dis.hDC );
+        dis.rcItem     = ps->dis.rcItem;
+        dis.itemData   = (ULONG_PTR)unpack_ptr( ps->dis.itemData );
+        memcpy( &ps->dis, &dis, sizeof(dis) );
         break;
+    }
     case WM_MEASUREITEM:
-        minsize = sizeof(MEASUREITEMSTRUCT);
+    {
+        MEASUREITEMSTRUCT mis;
+        if (size < sizeof(ps->mis)) return FALSE;
+        mis.CtlType    = ps->mis.CtlType;
+        mis.CtlID      = ps->mis.CtlID;
+        mis.itemID     = ps->mis.itemID;
+        mis.itemWidth  = ps->mis.itemWidth;
+        mis.itemHeight = ps->mis.itemHeight;
+        mis.itemData   = (ULONG_PTR)unpack_ptr( ps->mis.itemData );
+        memcpy( &ps->mis, &mis, sizeof(mis) );
         break;
+    }
     case WM_DELETEITEM:
-        minsize = sizeof(DELETEITEMSTRUCT);
+    {
+        DELETEITEMSTRUCT dls;
+        if (size < sizeof(ps->dls)) return FALSE;
+        dls.CtlType    = ps->dls.CtlType;
+        dls.CtlID      = ps->dls.CtlID;
+        dls.itemID     = ps->dls.itemID;
+        dls.hwndItem   = wine_server_ptr_handle( ps->dls.hwndItem );
+        dls.itemData   = (ULONG_PTR)unpack_ptr( ps->dls.itemData );
+        memcpy( &ps->dls, &dls, sizeof(dls) );
         break;
+    }
     case WM_COMPAREITEM:
-        minsize = sizeof(COMPAREITEMSTRUCT);
+    {
+        COMPAREITEMSTRUCT cis;
+        if (size < sizeof(ps->cis)) return FALSE;
+        cis.CtlType    = ps->cis.CtlType;
+        cis.CtlID      = ps->cis.CtlID;
+        cis.hwndItem   = wine_server_ptr_handle( ps->cis.hwndItem );
+        cis.itemID1    = ps->cis.itemID1;
+        cis.itemData1  = (ULONG_PTR)unpack_ptr( ps->cis.itemData1 );
+        cis.itemID2    = ps->cis.itemID2;
+        cis.itemData2  = (ULONG_PTR)unpack_ptr( ps->cis.itemData2 );
+        cis.dwLocaleId = ps->cis.dwLocaleId;
+        memcpy( &ps->cis, &cis, sizeof(cis) );
         break;
+    }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
     case WM_WINE_SETWINDOWPOS:
@@ -1147,8 +1288,17 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         push_data( data, (MINMAXINFO *)lparam, sizeof(MINMAXINFO) );
         break;
     case WM_MEASUREITEM:
-        push_data( data, (MEASUREITEMSTRUCT *)lparam, sizeof(MEASUREITEMSTRUCT) );
+    {
+        MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lparam;
+        data->ps.mis.CtlType    = mis->CtlType;
+        data->ps.mis.CtlID      = mis->CtlID;
+        data->ps.mis.itemID     = mis->itemID;
+        data->ps.mis.itemWidth  = mis->itemWidth;
+        data->ps.mis.itemHeight = mis->itemHeight;
+        data->ps.mis.itemData   = mis->itemData;
+        push_data( data, &data->ps.mis, sizeof(data->ps.mis) );
         break;
+    }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
@@ -1245,7 +1395,16 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         memcpy( (MINMAXINFO *)lparam, buffer, min( sizeof(MINMAXINFO), size ));
         break;
     case WM_MEASUREITEM:
-        memcpy( (MEASUREITEMSTRUCT *)lparam, buffer, min( sizeof(MEASUREITEMSTRUCT), size ));
+        if (size >= sizeof(ps->mis))
+        {
+            MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lparam;
+            mis->CtlType    = ps->mis.CtlType;
+            mis->CtlID      = ps->mis.CtlID;
+            mis->itemID     = ps->mis.itemID;
+            mis->itemWidth  = ps->mis.itemWidth;
+            mis->itemHeight = ps->mis.itemHeight;
+            mis->itemData   = (ULONG_PTR)unpack_ptr( ps->mis.itemData );
+        }
         break;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
