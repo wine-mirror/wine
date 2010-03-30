@@ -2488,208 +2488,6 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
     return ret;
 }
 
-GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string,
-    INT length, GDIPCONST GpFont *font, GDIPCONST RectF *rect,
-    GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush)
-{
-    HRGN rgn = NULL;
-    HFONT gdifont;
-    LOGFONTW lfw;
-    TEXTMETRICW textmet;
-    GpPointF pt[3], rectcpy[4];
-    POINT corners[4];
-    WCHAR* stringdup;
-    REAL angle, ang_cos, ang_sin, rel_width, rel_height;
-    INT sum = 0, height = 0, offsety = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
-        nheight, lineend;
-    SIZE size;
-    POINT drawbase;
-    UINT drawflags;
-    RECT drawcoord;
-
-    TRACE("(%p, %s, %i, %p, %s, %p, %p)\n", graphics, debugstr_wn(string, length),
-        length, font, debugstr_rectf(rect), format, brush);
-
-    if(!graphics || !string || !font || !brush || !rect)
-        return InvalidParameter;
-
-    if((brush->bt != BrushTypeSolidColor)){
-        FIXME("not implemented for given parameters\n");
-        return NotImplemented;
-    }
-
-    if(format){
-        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
-
-        /* Should be no need to explicitly test for StringAlignmentNear as
-         * that is default behavior if no alignment is passed. */
-        if(format->vertalign != StringAlignmentNear){
-            RectF bounds;
-            GdipMeasureString(graphics, string, length, font, rect, format, &bounds, 0, 0);
-
-            if(format->vertalign == StringAlignmentCenter)
-                offsety = (rect->Height - bounds.Height) / 2;
-            else if(format->vertalign == StringAlignmentFar)
-                offsety = (rect->Height - bounds.Height);
-        }
-    }
-
-    if(length == -1) length = lstrlenW(string);
-
-    stringdup = GdipAlloc(length * sizeof(WCHAR));
-    if(!stringdup) return OutOfMemory;
-
-    save_state = SaveDC(graphics->hdc);
-    SetBkMode(graphics->hdc, TRANSPARENT);
-    SetTextColor(graphics->hdc, brush->lb.lbColor);
-
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    ang_cos = cos(angle);
-    ang_sin = sin(angle);
-    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
-
-    rectcpy[3].X = rectcpy[0].X = rect->X;
-    rectcpy[1].Y = rectcpy[0].Y = rect->Y + offsety;
-    rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
-    rectcpy[3].Y = rectcpy[2].Y = rect->Y + offsety + rect->Height;
-    transform_and_round_points(graphics, corners, rectcpy, 4);
-
-    if (roundr(rect->Width) == 0)
-        nwidth = INT_MAX;
-    else
-        nwidth = roundr(rel_width * rect->Width);
-
-    if (roundr(rect->Height) == 0)
-        nheight = INT_MAX;
-    else
-        nheight = roundr(rel_height * rect->Height);
-
-    if (roundr(rect->Width) != 0 && roundr(rect->Height) != 0)
-    {
-        /* FIXME: If only the width or only the height is 0, we should probably still clip */
-        rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
-        SelectClipRgn(graphics->hdc, rgn);
-    }
-
-    /* Use gdi to find the font, then perform transformations on it (height,
-     * width, angle). */
-    SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
-    GetTextMetricsW(graphics->hdc, &textmet);
-    lfw = font->lfw;
-
-    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
-    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
-
-    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
-
-    gdifont = CreateFontIndirectW(&lfw);
-    DeleteObject(SelectObject(graphics->hdc, CreateFontIndirectW(&lfw)));
-
-    for(i = 0, j = 0; i < length; i++){
-        if(!isprintW(string[i]) && (string[i] != '\n'))
-            continue;
-
-        stringdup[j] = string[i];
-        j++;
-    }
-
-    length = j;
-
-    if (!format || format->align == StringAlignmentNear)
-    {
-        drawbase.x = corners[0].x;
-        drawbase.y = corners[0].y;
-        drawflags = DT_NOCLIP | DT_EXPANDTABS;
-    }
-    else if (format->align == StringAlignmentCenter)
-    {
-        drawbase.x = (corners[0].x + corners[1].x)/2;
-        drawbase.y = (corners[0].y + corners[1].y)/2;
-        drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_CENTER;
-    }
-    else /* (format->align == StringAlignmentFar) */
-    {
-        drawbase.x = corners[1].x;
-        drawbase.y = corners[1].y;
-        drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_RIGHT;
-    }
-
-    while(sum < length){
-        drawcoord.left = drawcoord.right = drawbase.x + roundr(ang_sin * (REAL) height);
-        drawcoord.top = drawcoord.bottom = drawbase.y + roundr(ang_cos * (REAL) height);
-
-        GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
-                              nwidth, &fit, NULL, &size);
-        fitcpy = fit;
-
-        if(fit == 0){
-            DrawTextW(graphics->hdc, stringdup + sum, 1, &drawcoord, drawflags);
-            break;
-        }
-
-        for(lret = 0; lret < fit; lret++)
-            if(*(stringdup + sum + lret) == '\n')
-                break;
-
-        /* Line break code (may look strange, but it imitates windows). */
-        if(lret < fit)
-            lineend = fit = lret;    /* this is not an off-by-one error */
-        else if(fit < (length - sum)){
-            if(*(stringdup + sum + fit) == ' ')
-                while(*(stringdup + sum + fit) == ' ')
-                    fit++;
-            else
-                while(*(stringdup + sum + fit - 1) != ' '){
-                    fit--;
-
-                    if(*(stringdup + sum + fit) == '\t')
-                        break;
-
-                    if(fit == 0){
-                        fit = fitcpy;
-                        break;
-                    }
-                }
-            lineend = fit;
-            while(*(stringdup + sum + lineend - 1) == ' ' ||
-                  *(stringdup + sum + lineend - 1) == '\t')
-                lineend--;
-        }
-        else
-            lineend = fit;
-        DrawTextW(graphics->hdc, stringdup + sum, min(length - sum, lineend),
-                  &drawcoord, drawflags);
-
-        sum += fit + (lret < fitcpy ? 1 : 0);
-        height += size.cy;
-
-        if(height > nheight)
-            break;
-
-        /* Stop if this was a linewrap (but not if it was a linebreak). */
-        if((lret == fitcpy) && format && (format->attr & StringFormatFlagsNoWrap))
-            break;
-    }
-
-    GdipFree(stringdup);
-    DeleteObject(rgn);
-    DeleteObject(gdifont);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
-}
-
 GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPointF *points, INT count, REAL tension, GpFillMode fill)
 {
@@ -3763,6 +3561,151 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         measure_string_callback, &args);
 
     DeleteObject(SelectObject(graphics->hdc, oldfont));
+
+    return Ok;
+}
+
+struct draw_string_args {
+    POINT drawbase;
+    UINT drawflags;
+    REAL ang_cos, ang_sin;
+};
+
+static GpStatus draw_string_callback(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *user_data)
+{
+    struct draw_string_args *args = user_data;
+    RECT drawcoord;
+
+    drawcoord.left = drawcoord.right = args->drawbase.x + roundr(args->ang_sin * bounds->Y);
+    drawcoord.top = drawcoord.bottom = args->drawbase.y + roundr(args->ang_cos * bounds->Y);
+
+    DrawTextW(graphics->hdc, string + index, length, &drawcoord, args->drawflags);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string,
+    INT length, GDIPCONST GpFont *font, GDIPCONST RectF *rect,
+    GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush)
+{
+    HRGN rgn = NULL;
+    HFONT gdifont;
+    LOGFONTW lfw;
+    TEXTMETRICW textmet;
+    GpPointF pt[3], rectcpy[4];
+    POINT corners[4];
+    REAL angle, rel_width, rel_height;
+    INT offsety = 0, save_state;
+    struct draw_string_args args;
+    RectF scaled_rect;
+
+    TRACE("(%p, %s, %i, %p, %s, %p, %p)\n", graphics, debugstr_wn(string, length),
+        length, font, debugstr_rectf(rect), format, brush);
+
+    if(!graphics || !string || !font || !brush || !rect)
+        return InvalidParameter;
+
+    if((brush->bt != BrushTypeSolidColor)){
+        FIXME("not implemented for given parameters\n");
+        return NotImplemented;
+    }
+
+    if(format){
+        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
+
+        /* Should be no need to explicitly test for StringAlignmentNear as
+         * that is default behavior if no alignment is passed. */
+        if(format->vertalign != StringAlignmentNear){
+            RectF bounds;
+            GdipMeasureString(graphics, string, length, font, rect, format, &bounds, 0, 0);
+
+            if(format->vertalign == StringAlignmentCenter)
+                offsety = (rect->Height - bounds.Height) / 2;
+            else if(format->vertalign == StringAlignmentFar)
+                offsety = (rect->Height - bounds.Height);
+        }
+    }
+
+    save_state = SaveDC(graphics->hdc);
+    SetBkMode(graphics->hdc, TRANSPARENT);
+    SetTextColor(graphics->hdc, brush->lb.lbColor);
+
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    args.ang_cos = cos(angle);
+    args.ang_sin = sin(angle);
+    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    rectcpy[3].X = rectcpy[0].X = rect->X;
+    rectcpy[1].Y = rectcpy[0].Y = rect->Y + offsety;
+    rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
+    rectcpy[3].Y = rectcpy[2].Y = rect->Y + offsety + rect->Height;
+    transform_and_round_points(graphics, corners, rectcpy, 4);
+
+    scaled_rect.X = 0.0;
+    scaled_rect.Y = 0.0;
+    scaled_rect.Width = rel_width * rect->Width;
+    scaled_rect.Height = rel_height * rect->Height;
+
+    if (roundr(scaled_rect.Width) != 0 && roundr(scaled_rect.Height) != 0)
+    {
+        /* FIXME: If only the width or only the height is 0, we should probably still clip */
+        rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
+        SelectClipRgn(graphics->hdc, rgn);
+    }
+
+    /* Use gdi to find the font, then perform transformations on it (height,
+     * width, angle). */
+    SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
+    GetTextMetricsW(graphics->hdc, &textmet);
+    lfw = font->lfw;
+
+    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
+    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
+
+    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
+
+    gdifont = CreateFontIndirectW(&lfw);
+    DeleteObject(SelectObject(graphics->hdc, CreateFontIndirectW(&lfw)));
+
+    if (!format || format->align == StringAlignmentNear)
+    {
+        args.drawbase.x = corners[0].x;
+        args.drawbase.y = corners[0].y;
+        args.drawflags = DT_NOCLIP | DT_EXPANDTABS;
+    }
+    else if (format->align == StringAlignmentCenter)
+    {
+        args.drawbase.x = (corners[0].x + corners[1].x)/2;
+        args.drawbase.y = (corners[0].y + corners[1].y)/2;
+        args.drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_CENTER;
+    }
+    else /* (format->align == StringAlignmentFar) */
+    {
+        args.drawbase.x = corners[1].x;
+        args.drawbase.y = corners[1].y;
+        args.drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_RIGHT;
+    }
+
+    gdip_format_string(graphics, string, length, font, &scaled_rect, format,
+        draw_string_callback, &args);
+
+    DeleteObject(rgn);
+    DeleteObject(gdifont);
+
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
