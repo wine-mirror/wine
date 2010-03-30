@@ -344,6 +344,21 @@ static const int ws_ip_map[][2] =
     MAP_OPTION( IP_TTL ),
 };
 
+static const int ws_ipv6_map[][2] =
+{
+#ifdef IPV6_ADD_MEMBERSHIP
+    MAP_OPTION( IPV6_ADD_MEMBERSHIP ),
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
+    MAP_OPTION( IPV6_DROP_MEMBERSHIP ),
+#endif
+    MAP_OPTION( IPV6_MULTICAST_IF ),
+    MAP_OPTION( IPV6_MULTICAST_HOPS ),
+    MAP_OPTION( IPV6_MULTICAST_LOOP ),
+    MAP_OPTION( IPV6_UNICAST_HOPS ),
+    MAP_OPTION( IPV6_V6ONLY ),
+};
+
 static const int ws_af_map[][2] =
 {
     MAP_OPTION( AF_UNSPEC ),
@@ -792,6 +807,17 @@ static int convert_sockopt(INT *level, INT *optname)
             }
         }
 	FIXME("Unknown IPPROTO_IP optname 0x%x\n", *optname);
+	break;
+     case WS_IPPROTO_IPV6:
+        *level = IPPROTO_IPV6;
+        for(i=0; i<sizeof(ws_ipv6_map)/sizeof(ws_ipv6_map[0]); i++) {
+            if (ws_ipv6_map[i][0] == *optname )
+            {
+                *optname = ws_ipv6_map[i][1];
+                return 1;
+            }
+        }
+	FIXME("Unknown IPPROTO_IPV6 optname 0x%x\n", *optname);
 	break;
      default: FIXME("Unimplemented or unknown socket level\n");
   }
@@ -3463,6 +3489,27 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return 0;
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
+            return SOCKET_ERROR;
+        }
+        break;
+
+    case WS_IPPROTO_IPV6:
+        switch(optname)
+        {
+        case WS_IPV6_ADD_MEMBERSHIP:
+        case WS_IPV6_DROP_MEMBERSHIP:
+        case WS_IPV6_MULTICAST_IF:
+        case WS_IPV6_MULTICAST_HOPS:
+        case WS_IPV6_MULTICAST_LOOP:
+        case WS_IPV6_UNICAST_HOPS:
+        case WS_IPV6_V6ONLY:
+            convert_sockopt(&level, &optname);
+            break;
+        case WS_IPV6_DONTFRAG:
+            FIXME("IPV6_DONTFRAG is silently ignored!\n");
+            return 0;
+        default:
+            FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
             return SOCKET_ERROR;
         }
         break;
