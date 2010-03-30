@@ -1548,8 +1548,9 @@ static HRESULT WINAPI xmlnode_get_parsed(
     VARIANT_BOOL* isParsed)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p)\n", This, isParsed);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%p) stub!\n", This, isParsed);
+    *isParsed = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_namespaceURI(
