@@ -157,6 +157,22 @@ struct packed_HELPINFO
     POINT         MousePos;
 };
 
+struct packed_NCCALCSIZE_PARAMS
+{
+    RECT          rgrc[3];
+    ULONGLONG     __pad1;
+    user_handle_t hwnd;
+    DWORD         __pad2;
+    user_handle_t hwndInsertAfter;
+    DWORD         __pad3;
+    INT           x;
+    INT           y;
+    INT           cx;
+    INT           cy;
+    UINT          flags;
+    DWORD         __pad4;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -166,6 +182,7 @@ C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) )
 C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
 C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
 C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
+C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) );
 
 union packed_structs
 {
@@ -177,6 +194,7 @@ union packed_structs
     struct packed_WINDOWPOS wp;
     struct packed_COPYDATASTRUCT cds;
     struct packed_HELPINFO hi;
+    struct packed_NCCALCSIZE_PARAMS ncp;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -818,10 +836,19 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         }
         else
         {
-            NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lparam;
-            push_data( data, nc, sizeof(*nc) );
-            push_data( data, nc->lppos, sizeof(*nc->lppos) );
-            return sizeof(*nc) + sizeof(*nc->lppos);
+            NCCALCSIZE_PARAMS *ncp = (NCCALCSIZE_PARAMS *)lparam;
+            data->ps.ncp.rgrc[0]         = ncp->rgrc[0];
+            data->ps.ncp.rgrc[1]         = ncp->rgrc[1];
+            data->ps.ncp.rgrc[2]         = ncp->rgrc[2];
+            data->ps.ncp.hwnd            = wine_server_user_handle( ncp->lppos->hwnd );
+            data->ps.ncp.hwndInsertAfter = wine_server_user_handle( ncp->lppos->hwndInsertAfter );
+            data->ps.ncp.x               = ncp->lppos->x;
+            data->ps.ncp.y               = ncp->lppos->y;
+            data->ps.ncp.cx              = ncp->lppos->cx;
+            data->ps.ncp.cy              = ncp->lppos->cy;
+            data->ps.ncp.flags           = ncp->lppos->flags;
+            push_data( data, &data->ps.ncp, sizeof(data->ps.ncp) );
+            return sizeof(data->ps.ncp);
         }
     case WM_GETDLGCODE:
         if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
@@ -1155,9 +1182,22 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*wparam) minsize = sizeof(RECT);
         else
         {
-            NCCALCSIZE_PARAMS *nc = *buffer;
-            if (size < sizeof(*nc) + sizeof(*nc->lppos)) return FALSE;
-            nc->lppos = (WINDOWPOS *)(nc + 1);
+            NCCALCSIZE_PARAMS ncp;
+            WINDOWPOS wp;
+            if (size < sizeof(ps->ncp)) return FALSE;
+            ncp.rgrc[0]        = ps->ncp.rgrc[0];
+            ncp.rgrc[1]        = ps->ncp.rgrc[1];
+            ncp.rgrc[2]        = ps->ncp.rgrc[2];
+            wp.hwnd            = wine_server_ptr_handle( ps->ncp.hwnd );
+            wp.hwndInsertAfter = wine_server_ptr_handle( ps->ncp.hwndInsertAfter );
+            wp.x               = ps->ncp.x;
+            wp.y               = ps->ncp.y;
+            wp.cx              = ps->ncp.cx;
+            wp.cy              = ps->ncp.cy;
+            wp.flags           = ps->ncp.flags;
+            ncp.lppos = (WINDOWPOS *)((NCCALCSIZE_PARAMS *)&ps->ncp + 1);
+            memcpy( &ps->ncp, &ncp, sizeof(ncp) );
+            *ncp.lppos = wp;
         }
         break;
     case WM_GETDLGCODE:
@@ -1431,9 +1471,18 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
             push_data( data, (RECT *)lparam, sizeof(RECT) );
         else
         {
-            NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lparam;
-            push_data( data, nc, sizeof(*nc) );
-            push_data( data, nc->lppos, sizeof(*nc->lppos) );
+            NCCALCSIZE_PARAMS *ncp = (NCCALCSIZE_PARAMS *)lparam;
+            data->ps.ncp.rgrc[0]         = ncp->rgrc[0];
+            data->ps.ncp.rgrc[1]         = ncp->rgrc[1];
+            data->ps.ncp.rgrc[2]         = ncp->rgrc[2];
+            data->ps.ncp.hwnd            = wine_server_user_handle( ncp->lppos->hwnd );
+            data->ps.ncp.hwndInsertAfter = wine_server_user_handle( ncp->lppos->hwndInsertAfter );
+            data->ps.ncp.x               = ncp->lppos->x;
+            data->ps.ncp.y               = ncp->lppos->y;
+            data->ps.ncp.cx              = ncp->lppos->cx;
+            data->ps.ncp.cy              = ncp->lppos->cy;
+            data->ps.ncp.flags           = ncp->lppos->flags;
+            push_data( data, &data->ps.ncp, sizeof(data->ps.ncp) );
         }
         break;
     case EM_GETSEL:
@@ -1554,17 +1603,19 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     case WM_NCCALCSIZE:
         if (!wparam)
             memcpy( (RECT *)lparam, buffer, min( sizeof(RECT), size ));
-        else
+        else if (size >= sizeof(ps->ncp))
         {
-            NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lparam;
-            WINDOWPOS *wp = nc->lppos;
-            memcpy( nc, buffer, min( sizeof(*nc), size ));
-            if (size > sizeof(*nc))
-            {
-                size -= sizeof(*nc);
-                memcpy( wp, (NCCALCSIZE_PARAMS*)buffer + 1, min( sizeof(*wp), size ));
-            }
-            nc->lppos = wp;  /* restore the original pointer */
+            NCCALCSIZE_PARAMS *ncp = (NCCALCSIZE_PARAMS *)lparam;
+            ncp->rgrc[0]                = ps->ncp.rgrc[0];
+            ncp->rgrc[1]                = ps->ncp.rgrc[1];
+            ncp->rgrc[2]                = ps->ncp.rgrc[2];
+            ncp->lppos->hwnd            = wine_server_ptr_handle( ps->ncp.hwnd );
+            ncp->lppos->hwndInsertAfter = wine_server_ptr_handle( ps->ncp.hwndInsertAfter );
+            ncp->lppos->x               = ps->ncp.x;
+            ncp->lppos->y               = ps->ncp.y;
+            ncp->lppos->cx              = ps->ncp.cx;
+            ncp->lppos->cy              = ps->ncp.cy;
+            ncp->lppos->flags           = ps->ncp.flags;
         }
         break;
     case EM_GETSEL:
