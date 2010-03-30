@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = wineboot.exe
 APPMODE   = -mconsole
 IMPORTS   = uuid advapi32 kernel32 ntdll
-DELAYIMPORTS = setupapi shell32 shlwapi version user32
+DELAYIMPORTS = shell32 shlwapi version user32
 
 C_SRCS = \
 	shutdown.c \

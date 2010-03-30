@@ -81,7 +81,6 @@
 #include <shobjidl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
-#include <setupapi.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
@@ -860,12 +859,49 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
+static HANDLE start_rundll32( const char *inf_path )
+{
+    static const WCHAR rundll[] = {'\\','r','u','n','d','l','l','3','2','.','e','x','e',0};
+    static const WCHAR setupapi[] = {' ','s','e','t','u','p','a','p','i',',',
+                                     'I','n','s','t','a','l','l','H','i','n','f','S','e','c','t','i','o','n',0};
+    static const WCHAR definstall[] = {' ','D','e','f','a','u','l','t','I','n','s','t','a','l','l',0};
+    static const WCHAR inf[] = {' ','1','2','8',' ','\\','\\','?','\\','u','n','i','x',0 };
+
+    WCHAR app[MAX_PATH + sizeof(rundll)/sizeof(WCHAR)];
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    WCHAR *buffer;
+    DWORD inf_len, cmd_len;
+
+    memset( &si, 0, sizeof(si) );
+    si.cb = sizeof(si);
+
+    GetSystemDirectoryW( app, MAX_PATH );
+    strcatW( app, rundll );
+
+    cmd_len = strlenW(app) * sizeof(WCHAR) + sizeof(setupapi) + sizeof(definstall) + sizeof(inf);
+    inf_len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, cmd_len + inf_len * sizeof(WCHAR) ))) return 0;
+
+    strcpyW( buffer, app );
+    strcatW( buffer, setupapi );
+    strcatW( buffer, definstall );
+    strcatW( buffer, inf );
+    MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, buffer + strlenW(buffer), inf_len );
+
+    if (CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        CloseHandle( pi.hThread );
+    else
+        pi.hProcess = 0;
+
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return pi.hProcess;
+}
+
 /* execute rundll32 on the wine.inf file if necessary */
 static void update_wineprefix( int force )
 {
-    static const WCHAR cmdlineW[] = {'D','e','f','a','u','l','t','I','n','s','t','a','l','l',' ',
-                                     '1','2','8',' ','\\','\\','?','\\','u','n','i','x' };
-
     const char *config_dir = wine_get_config_dir();
     char *inf_path = get_wine_inf_path();
     int fd;
@@ -887,14 +923,13 @@ static void update_wineprefix( int force )
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
-        WCHAR *buffer;
-        DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(cmdlineW) + len*sizeof(WCHAR) ))) goto done;
-        memcpy( buffer, cmdlineW, sizeof(cmdlineW) );
-        MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, buffer + sizeof(cmdlineW)/sizeof(WCHAR), len );
+        HANDLE process;
 
-        InstallHinfSectionW( 0, 0, buffer, 0 );
-        HeapFree( GetProcessHeap(), 0, buffer );
+        if ((process = start_rundll32( inf_path )))
+        {
+            WaitForSingleObject( process, INFINITE );
+            CloseHandle( process );
+        }
         WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", config_dir );
     }
 
