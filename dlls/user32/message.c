@@ -125,12 +125,27 @@ struct packed_COMPAREITEMSTRUCT
     DWORD         __pad2;
 };
 
+struct packed_WINDOWPOS
+{
+    user_handle_t hwnd;
+    DWORD         __pad1;
+    user_handle_t hwndInsertAfter;
+    DWORD         __pad2;
+    INT           x;
+    INT           y;
+    INT           cx;
+    INT           cy;
+    UINT          flags;
+    DWORD         __pad3;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_MEASUREITEMSTRUCT) >= sizeof(MEASUREITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_DELETEITEMSTRUCT) >= sizeof(DELETEITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
 
 union packed_structs
 {
@@ -139,6 +154,7 @@ union packed_structs
     struct packed_MEASUREITEMSTRUCT mis;
     struct packed_DELETEITEMSTRUCT dls;
     struct packed_COMPAREITEMSTRUCT cis;
+    struct packed_WINDOWPOS wp;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -731,8 +747,18 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
-        push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
-        return sizeof(WINDOWPOS);
+    {
+        WINDOWPOS *wp = (WINDOWPOS *)lparam;
+        data->ps.wp.hwnd            = wine_server_user_handle( wp->hwnd );
+        data->ps.wp.hwndInsertAfter = wine_server_user_handle( wp->hwndInsertAfter );
+        data->ps.wp.x               = wp->x;
+        data->ps.wp.y               = wp->y;
+        data->ps.wp.cx              = wp->cx;
+        data->ps.wp.cy              = wp->cy;
+        data->ps.wp.flags           = wp->flags;
+        push_data( data, &data->ps.wp, sizeof(data->ps.wp) );
+        return sizeof(data->ps.wp);
+    }
     case WM_COPYDATA:
     {
         COPYDATASTRUCT *cp = (COPYDATASTRUCT *)lparam;
@@ -1040,8 +1066,19 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
     case WM_WINE_SETWINDOWPOS:
-        minsize = sizeof(WINDOWPOS);
+    {
+        WINDOWPOS wp;
+        if (size < sizeof(ps->wp)) return FALSE;
+        wp.hwnd            = wine_server_ptr_handle( ps->wp.hwnd );
+        wp.hwndInsertAfter = wine_server_ptr_handle( ps->wp.hwndInsertAfter );
+        wp.x               = ps->wp.x;
+        wp.y               = ps->wp.y;
+        wp.cx              = ps->wp.cx;
+        wp.cy              = ps->wp.cy;
+        wp.flags           = ps->wp.flags;
+        memcpy( &ps->wp, &wp, sizeof(wp) );
         break;
+    }
     case WM_COPYDATA:
     {
         COPYDATASTRUCT *cp = *buffer;
@@ -1301,8 +1338,18 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     }
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
-        push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
+    {
+        WINDOWPOS *wp = (WINDOWPOS *)lparam;
+        data->ps.wp.hwnd            = wine_server_user_handle( wp->hwnd );
+        data->ps.wp.hwndInsertAfter = wine_server_user_handle( wp->hwndInsertAfter );
+        data->ps.wp.x               = wp->x;
+        data->ps.wp.y               = wp->y;
+        data->ps.wp.cx              = wp->cx;
+        data->ps.wp.cy              = wp->cy;
+        data->ps.wp.flags           = wp->flags;
+        push_data( data, &data->ps.wp, sizeof(data->ps.wp) );
         break;
+    }
     case WM_GETDLGCODE:
         if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
         break;
@@ -1408,7 +1455,17 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
-        memcpy( (WINDOWPOS *)lparam, buffer, min( sizeof(WINDOWPOS), size ));
+        if (size >= sizeof(ps->wp))
+        {
+            WINDOWPOS *wp = (WINDOWPOS *)lparam;
+            wp->hwnd            = wine_server_ptr_handle( ps->wp.hwnd );
+            wp->hwndInsertAfter = wine_server_ptr_handle( ps->wp.hwndInsertAfter );
+            wp->x               = ps->wp.x;
+            wp->y               = ps->wp.y;
+            wp->cx              = ps->wp.cx;
+            wp->cy              = ps->wp.cy;
+            wp->flags           = ps->wp.flags;
+        }
         break;
     case WM_GETDLGCODE:
         if (lparam) memcpy( (MSG *)lparam, buffer, min( sizeof(MSG), size ));
