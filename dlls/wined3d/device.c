@@ -5194,6 +5194,12 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (srcFormat != destFormat)
+    {
+        WARN("Source and destination surfaces should have the same format.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* This call loads the opengl surface directly, instead of copying the surface to the
      * destination's sysmem copy. If surface conversion is needed, use BltFast instead to
      * copy in sysmem and use regular surface loading.
@@ -5204,14 +5210,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                                         pDestPoint  ? pDestPoint->x : 0,
                                         pDestPoint  ? pDestPoint->y : 0,
                                         pSourceSurface, pSourceRect, 0);
-    }
-
-    if (destFormat == WINED3DFMT_UNKNOWN) {
-        TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", This);
-        IWineD3DSurface_SetFormat(pDestinationSurface, srcFormat);
-
-        /* Get the update surface description */
-        IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
     }
 
     context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
@@ -5292,15 +5290,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                 /* FIXME: The easy way to do this is to lock the destination, and copy the bits across. */
                 FIXME("Updating part of a compressed texture is not supported.\n");
             }
-            if (destFormat != srcFormat)
-            {
-                FIXME("Updating mixed format compressed textures is not supported.\n");
-            }
-            else
-            {
-                GL_EXTCALL(glCompressedTexImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                        dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
-            }
+
+            GL_EXTCALL(glCompressedTexImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
+                    dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
         }
         checkGLcall("glCompressedTexSubImage2DARB");
     }
