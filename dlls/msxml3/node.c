@@ -934,8 +934,9 @@ static HRESULT WINAPI xmlnode_get_specified(
     VARIANT_BOOL* isSpecified)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    FIXME("(%p)->(%p)\n", This, isSpecified);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%p) stub!\n", This, isSpecified);
+    *isSpecified = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_get_definition(
