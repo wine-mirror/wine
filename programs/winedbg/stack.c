@@ -84,6 +84,7 @@ static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
     memset(ihsf, 0, sizeof(*ihsf));
     ihsf->InstructionOffset = dbg_curr_thread->frames[nf].linear_pc;
     ihsf->FrameOffset = dbg_curr_thread->frames[nf].linear_frame;
+    ihsf->StackOffset = dbg_curr_thread->frames[nf].linear_stack;
     return TRUE;
 }
 
