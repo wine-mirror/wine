@@ -3550,61 +3550,37 @@ GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT w
     return GdipIsVisibleRect(graphics, (REAL)x, (REAL)y, (REAL)width, (REAL)height, result);
 }
 
-GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
-        GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
-        GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
-        INT regionCount, GpRegion** regions)
-{
-    FIXME("stub: %p %s %d %p %p %p %d %p\n", graphics, debugstr_w(string),
-            length, font, layoutRect, stringFormat, regionCount, regions);
+typedef GpStatus (*gdip_format_string_callback)(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *user_data);
 
-    if (!(graphics && string && font && layoutRect && stringFormat && regions))
-        return InvalidParameter;
-
-    return NotImplemented;
-}
-
-/* Find the smallest rectangle that bounds the text when it is printed in rect
- * according to the format options listed in format. If rect has 0 width and
- * height, then just find the smallest rectangle that bounds the text when it's
- * printed at location (rect->X, rect-Y). */
-GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
+static GpStatus gdip_format_string(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
-    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
-    INT *codepointsfitted, INT *linesfilled)
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    gdip_format_string_callback callback, void *user_data)
 {
-    HFONT oldfont;
     WCHAR* stringdup;
-    INT sum = 0, height = 0, fit, fitcpy, max_width = 0, i, j, lret, nwidth,
-        nheight, lineend;
+    INT sum = 0, height = 0, fit, fitcpy, i, j, lret, nwidth,
+        nheight, lineend, lineno = 0;
+    RectF bounds;
+    StringAlignment halign;
+    GpStatus stat = Ok;
     SIZE size;
-
-    TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
-        debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
-        bounds, codepointsfitted, linesfilled);
-
-    if(!graphics || !string || !font || !rect || !bounds)
-        return InvalidParameter;
-
-    if(linesfilled) *linesfilled = 0;
-    if(codepointsfitted) *codepointsfitted = 0;
-
-    if(format)
-        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
     if(length == -1) length = lstrlenW(string);
 
     stringdup = GdipAlloc((length + 1) * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
 
-    oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
     nwidth = roundr(rect->Width);
     nheight = roundr(rect->Height);
 
-    if((nwidth == 0) && (nheight == 0))
-        nwidth = nheight = INT_MAX;
+    if (nwidth == 0) nwidth = INT_MAX;
+    if (nheight == 0) nheight = INT_MAX;
 
     for(i = 0, j = 0; i < length; i++){
+        /* FIXME: This makes the indexes passed to callback inaccurate. */
         if(!isprintW(string[i]) && (string[i] != '\n'))
             continue;
 
@@ -3612,8 +3588,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         j++;
     }
 
-    stringdup[j] = 0;
     length = j;
+
+    if (format) halign = format->align;
+    else halign = StringAlignmentNear;
 
     while(sum < length){
         GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
@@ -3657,12 +3635,38 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         GetTextExtentExPointW(graphics->hdc, stringdup + sum, lineend,
                               nwidth, &j, NULL, &size);
 
-        sum += fit + (lret < fitcpy ? 1 : 0);
-        if(codepointsfitted) *codepointsfitted = sum;
+        bounds.Width = size.cx;
 
+        if(height + size.cy > nheight)
+            bounds.Height = nheight - (height + size.cy);
+        else
+            bounds.Height = size.cy;
+
+        bounds.Y = rect->Y + height;
+
+        switch (halign)
+        {
+        case StringAlignmentNear:
+        default:
+            bounds.X = rect->X;
+            break;
+        case StringAlignmentCenter:
+            bounds.X = rect->X + (rect->Width/2) - (bounds.Width/2);
+            break;
+        case StringAlignmentFar:
+            bounds.X = rect->X + rect->Width - bounds.Width;
+            break;
+        }
+
+        stat = callback(graphics, stringdup, sum, lineend,
+            font, rect, format, lineno, &bounds, user_data);
+
+        if (stat != Ok)
+            break;
+
+        sum += fit + (lret < fitcpy ? 1 : 0);
         height += size.cy;
-        if(linesfilled) *linesfilled += size.cy;
-        max_width = max(max_width, size.cx);
+        lineno++;
 
         if(height > nheight)
             break;
@@ -3672,12 +3676,92 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
             break;
     }
 
+    GdipFree(stringdup);
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
+        GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
+        GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
+        INT regionCount, GpRegion** regions)
+{
+    FIXME("stub: %p %s %d %p %p %p %d %p\n", graphics, debugstr_w(string),
+            length, font, layoutRect, stringFormat, regionCount, regions);
+
+    if (!(graphics && string && font && layoutRect && stringFormat && regions))
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
+struct measure_string_args {
+    RectF *bounds;
+    INT *codepointsfitted;
+    INT *linesfilled;
+};
+
+static GpStatus measure_string_callback(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *user_data)
+{
+    struct measure_string_args *args = user_data;
+
+    if (bounds->Width > args->bounds->Width)
+        args->bounds->Width = bounds->Width;
+
+    if (bounds->Height + bounds->Y > args->bounds->Height + args->bounds->Y)
+        args->bounds->Height = bounds->Height + bounds->Y - args->bounds->Y;
+
+    if (args->codepointsfitted)
+        *args->codepointsfitted = index + length;
+
+    if (args->linesfilled)
+        *args->linesfilled += bounds->Height;
+
+    return Ok;
+}
+
+/* Find the smallest rectangle that bounds the text when it is printed in rect
+ * according to the format options listed in format. If rect has 0 width and
+ * height, then just find the smallest rectangle that bounds the text when it's
+ * printed at location (rect->X, rect-Y). */
+GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
+    GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
+    INT *codepointsfitted, INT *linesfilled)
+{
+    HFONT oldfont;
+    struct measure_string_args args;
+
+    TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
+        debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
+        bounds, codepointsfitted, linesfilled);
+
+    if(!graphics || !string || !font || !rect || !bounds)
+        return InvalidParameter;
+
+    if(linesfilled) *linesfilled = 0;
+    if(codepointsfitted) *codepointsfitted = 0;
+
+    if(format)
+        TRACE("may be ignoring some format flags: attr %x\n", format->attr);
+
+    oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
+
     bounds->X = rect->X;
     bounds->Y = rect->Y;
-    bounds->Width = (REAL)max_width;
-    bounds->Height = (REAL) min(height, nheight);
+    bounds->Width = 0.0;
+    bounds->Height = 0.0;
 
-    GdipFree(stringdup);
+    args.bounds = bounds;
+    args.codepointsfitted = codepointsfitted;
+    args.linesfilled = linesfilled;
+
+    gdip_format_string(graphics, string, length, font, rect, format,
+        measure_string_callback, &args);
+
     DeleteObject(SelectObject(graphics->hdc, oldfont));
 
     return Ok;
