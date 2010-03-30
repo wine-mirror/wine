@@ -139,6 +139,13 @@ struct packed_WINDOWPOS
     DWORD         __pad3;
 };
 
+struct packed_COPYDATASTRUCT
+{
+    ULONGLONG dwData;
+    DWORD     cbData;
+    ULONGLONG lpData;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -146,6 +153,7 @@ C_ASSERT( sizeof(struct packed_MEASUREITEMSTRUCT) >= sizeof(MEASUREITEMSTRUCT) )
 C_ASSERT( sizeof(struct packed_DELETEITEMSTRUCT) >= sizeof(DELETEITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) );
 C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
+C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
 
 union packed_structs
 {
@@ -155,6 +163,7 @@ union packed_structs
     struct packed_DELETEITEMSTRUCT dls;
     struct packed_COMPAREITEMSTRUCT cis;
     struct packed_WINDOWPOS wp;
+    struct packed_COPYDATASTRUCT cds;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -761,9 +770,12 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     }
     case WM_COPYDATA:
     {
-        COPYDATASTRUCT *cp = (COPYDATASTRUCT *)lparam;
-        push_data( data, cp, sizeof(*cp) );
-        if (cp->lpData) push_data( data, cp->lpData, cp->cbData );
+        COPYDATASTRUCT *cds = (COPYDATASTRUCT *)lparam;
+        data->ps.cds.cbData = cds->cbData;
+        data->ps.cds.dwData = cds->dwData;
+        data->ps.cds.lpData = pack_ptr( cds->lpData );
+        push_data( data, &data->ps.cds, sizeof(data->ps.cds) );
+        if (cds->lpData) push_data( data, cds->lpData, cds->cbData );
         return 0;
     }
     case WM_NOTIFY:
@@ -1081,13 +1093,21 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     }
     case WM_COPYDATA:
     {
-        COPYDATASTRUCT *cp = *buffer;
-        if (size < sizeof(*cp)) return FALSE;
-        if (cp->lpData)
+        COPYDATASTRUCT cds;
+        if (size < sizeof(ps->cds)) return FALSE;
+        cds.dwData = (ULONG_PTR)unpack_ptr( ps->cds.dwData );
+        if (ps->cds.lpData)
         {
-            minsize = sizeof(*cp) + cp->cbData;
-            cp->lpData = cp + 1;
+            cds.cbData = ps->cds.cbData;
+            cds.lpData = &ps->cds + 1;
+            minsize = sizeof(ps->cds) + cds.cbData;
         }
+        else
+        {
+            cds.cbData = 0;
+            cds.lpData = 0;
+        }
+        memcpy( &ps->cds, &cds, sizeof(cds) );
         break;
     }
     case WM_NOTIFY:
