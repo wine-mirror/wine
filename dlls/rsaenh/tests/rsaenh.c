@@ -744,7 +744,6 @@ static void test_aes(int keylen)
 
     /* AES provider doesn't support salt */
     result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
-    todo_wine
     ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == ERROR_NO_TOKEN /* Win7 */),
        "expected NTE_BAD_KEY or ERROR_NO_TOKEN, got %08x\n", GetLastError());
 
@@ -1742,7 +1741,6 @@ static void test_rsa_encrypt(void)
 
     /* An RSA key doesn't support salt */
     result = CryptGetKeyParam(hRSAKey, KP_SALT, NULL, &dwLen, 0);
-    todo_wine
     ok(!result && GetLastError() == NTE_BAD_KEY,
        "expected NTE_BAD_KEY, got %08x\n", GetLastError());
 

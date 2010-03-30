@@ -3513,8 +3513,16 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
                               pCryptKey->dwBlockLen);
         
         case KP_SALT:
-            return copy_param(pbData, pdwDataLen, 
-                    &pCryptKey->abKeyValue[pCryptKey->dwKeyLen], pCryptKey->dwSaltLen);
+            switch (pCryptKey->aiAlgid) {
+                case CALG_RC2:
+                case CALG_RC4:
+                    return copy_param(pbData, pdwDataLen,
+                            &pCryptKey->abKeyValue[pCryptKey->dwKeyLen],
+                            pCryptKey->dwSaltLen);
+                default:
+                    SetLastError(NTE_BAD_KEY);
+                    return FALSE;
+            }
 
         case KP_PADDING:
             dwValue = PKCS5_PADDING;
