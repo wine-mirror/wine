@@ -3766,7 +3766,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
-    WINED3DRECT rect;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     RECT dst_rect, src_rect;
@@ -3803,17 +3802,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (DestRect) {
-        rect.x1 = DestRect->left;
-        rect.y1 = DestRect->top;
-        rect.x2 = DestRect->right;
-        rect.y2 = DestRect->bottom;
-    } else {
-        rect.x1 = 0;
-        rect.y1 = 0;
-        rect.x2 = This->currentDesc.Width;
-        rect.y2 = This->currentDesc.Height;
-    }
     surface_get_rect(This, DestRect, &dst_rect);
     if(Src) surface_get_rect(Src, SrcRect, &src_rect);
 
@@ -3845,8 +3833,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             mySrcRect.bottom = Src->currentDesc.Height;
 
             /* No stretching may occur */
-            if(mySrcRect.right != rect.x2 - rect.x1 ||
-               mySrcRect.bottom != rect.y2 - rect.y1) {
+            if(mySrcRect.right != dst_rect.right - dst_rect.left ||
+               mySrcRect.bottom != dst_rect.bottom - dst_rect.top) {
                 TRACE("No, stretching is done\n");
                 break;
             }
@@ -3857,10 +3845,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 RECT cliprect;
                 POINT pos[2];
                 GetClientRect(((IWineD3DClipperImpl *) This->clipper)->hWnd, &cliprect);
-                pos[0].x = rect.x1;
-                pos[0].y = rect.y1;
-                pos[1].x = rect.x2;
-                pos[1].y = rect.y2;
+                pos[0].x = dst_rect.left;
+                pos[0].y = dst_rect.top;
+                pos[1].x = dst_rect.right;
+                pos[1].y = dst_rect.bottom;
                 MapWindowPoints(GetDesktopWindow(), ((IWineD3DClipperImpl *) This->clipper)->hWnd,
                                 pos, 2);
 
@@ -3868,15 +3856,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                    pos[1].x != cliprect.right || pos[1].y != cliprect.bottom)
                 {
                     TRACE("No, dest rectangle doesn't match(clipper)\n");
-                    TRACE("Clip rect at (%d,%d)-(%d,%d)\n", cliprect.left, cliprect.top, cliprect.right, cliprect.bottom);
-                    TRACE("Blt dest: (%d,%d)-(%d,%d)\n", rect.x1, rect.y1, rect.x2, rect.y2);
+                    TRACE("Clip rect at %s\n", wine_dbgstr_rect(&cliprect));
+                    TRACE("Blt dest: %s\n", wine_dbgstr_rect(&dst_rect));
                     break;
                 }
             }
             else
             {
-                if(rect.x1 != 0 || rect.y1 != 0 ||
-                   rect.x2 != This->currentDesc.Width || rect.y2 != This->currentDesc.Height) {
+                if(dst_rect.left != 0 || dst_rect.top != 0 ||
+                   dst_rect.right != This->currentDesc.Width || dst_rect.bottom != This->currentDesc.Height) {
                     TRACE("No, dest rectangle doesn't match(surface size)\n");
                     break;
                 }
