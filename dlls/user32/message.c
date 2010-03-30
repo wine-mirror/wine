@@ -185,6 +185,16 @@ struct packed_MSG
     DWORD         __pad2;
 };
 
+struct packed_MDINEXTMENU
+{
+    user_handle_t hmenuIn;
+    DWORD         __pad1;
+    user_handle_t hmenuNext;
+    DWORD         __pad2;
+    user_handle_t hwndNext;
+    DWORD         __pad3;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -196,6 +206,7 @@ C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
 C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
 C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) );
 C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
+C_ASSERT( sizeof(struct packed_MDINEXTMENU) >= sizeof(MDINEXTMENU) );
 
 union packed_structs
 {
@@ -209,6 +220,7 @@ union packed_structs
     struct packed_HELPINFO hi;
     struct packed_NCCALCSIZE_PARAMS ncp;
     struct packed_MSG msg;
+    struct packed_MDINEXTMENU mnm;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -941,8 +953,14 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case LB_GETSELITEMS:
         return wparam * sizeof(UINT);
     case WM_NEXTMENU:
-        push_data( data, (MDINEXTMENU *)lparam, sizeof(MDINEXTMENU) );
-        return sizeof(MDINEXTMENU);
+    {
+        MDINEXTMENU *mnm = (MDINEXTMENU *)lparam;
+        data->ps.mnm.hmenuIn   = wine_server_user_handle( mnm->hmenuIn );
+        data->ps.mnm.hmenuNext = wine_server_user_handle( mnm->hmenuNext );
+        data->ps.mnm.hwndNext  = wine_server_user_handle( mnm->hwndNext );
+        push_data( data, &data->ps.mnm, sizeof(data->ps.mnm) );
+        return sizeof(data->ps.mnm);
+    }
     case WM_SIZING:
     case WM_MOVING:
         push_data( data, (RECT *)lparam, sizeof(RECT) );
@@ -1315,9 +1333,15 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!get_buffer_space( buffer, *wparam * sizeof(UINT) )) return FALSE;
         break;
     case WM_NEXTMENU:
-        minsize = sizeof(MDINEXTMENU);
-        if (!get_buffer_space( buffer, sizeof(MDINEXTMENU) )) return FALSE;
+    {
+        MDINEXTMENU mnm;
+        if (size < sizeof(ps->mnm)) return FALSE;
+        mnm.hmenuIn   = wine_server_ptr_handle( ps->mnm.hmenuIn );
+        mnm.hmenuNext = wine_server_ptr_handle( ps->mnm.hmenuNext );
+        mnm.hwndNext  = wine_server_ptr_handle( ps->mnm.hwndNext );
+        memcpy( &ps->mnm, &mnm, sizeof(mnm) );
         break;
+    }
     case WM_SIZING:
     case WM_MOVING:
         minsize = sizeof(RECT);
@@ -1538,8 +1562,14 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         if (lparam) push_data( data, (DWORD *)lparam, sizeof(DWORD) );
         break;
     case WM_NEXTMENU:
-        push_data( data, (MDINEXTMENU *)lparam, sizeof(MDINEXTMENU) );
+    {
+        MDINEXTMENU *mnm = (MDINEXTMENU *)lparam;
+        data->ps.mnm.hmenuIn   = wine_server_user_handle( mnm->hmenuIn );
+        data->ps.mnm.hmenuNext = wine_server_user_handle( mnm->hmenuNext );
+        data->ps.mnm.hwndNext  = wine_server_user_handle( mnm->hwndNext );
+        push_data( data, &data->ps.mnm, sizeof(data->ps.mnm) );
         break;
+    }
     case WM_MDICREATE:
         push_data( data, (MDICREATESTRUCTW *)lparam, sizeof(MDICREATESTRUCTW) );
         break;
@@ -1650,7 +1680,13 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         memcpy( (WCHAR *)lparam, buffer, size );
         break;
     case WM_NEXTMENU:
-        memcpy( (MDINEXTMENU *)lparam, buffer, min( sizeof(MDINEXTMENU), size ));
+        if (size >= sizeof(ps->mnm))
+        {
+            MDINEXTMENU *mnm = (MDINEXTMENU *)lparam;
+            mnm->hmenuIn   = wine_server_ptr_handle( ps->mnm.hmenuIn );
+            mnm->hmenuNext = wine_server_ptr_handle( ps->mnm.hmenuNext );
+            mnm->hwndNext  = wine_server_ptr_handle( ps->mnm.hwndNext );
+        }
         break;
     case WM_MDIGETACTIVE:
         if (lparam) memcpy( (BOOL *)lparam, buffer, min( sizeof(BOOL), size ));
