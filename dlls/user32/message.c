@@ -173,6 +173,18 @@ struct packed_NCCALCSIZE_PARAMS
     DWORD         __pad4;
 };
 
+struct packed_MSG
+{
+    user_handle_t hwnd;
+    DWORD         __pad1;
+    UINT          message;
+    ULONGLONG     wParam;
+    ULONGLONG     lParam;
+    DWORD         time;
+    POINT         pt;
+    DWORD         __pad2;
+};
+
 /* the structures are unpacked on top of the packed ones, so make sure they fit */
 C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
 C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
@@ -183,6 +195,7 @@ C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
 C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
 C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
 C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) );
+C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
 
 union packed_structs
 {
@@ -195,6 +208,7 @@ union packed_structs
     struct packed_COPYDATASTRUCT cds;
     struct packed_HELPINFO hi;
     struct packed_NCCALCSIZE_PARAMS ncp;
+    struct packed_MSG msg;
 };
 
 /* description of the data fields that need to be packed along with a sent message */
@@ -851,8 +865,19 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
             return sizeof(data->ps.ncp);
         }
     case WM_GETDLGCODE:
-        if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
-        return sizeof(MSG);
+        if (lparam)
+        {
+            MSG *msg = (MSG *)lparam;
+            data->ps.msg.hwnd    = wine_server_user_handle( msg->hwnd );
+            data->ps.msg.message = msg->message;
+            data->ps.msg.wParam  = msg->wParam;
+            data->ps.msg.lParam  = msg->lParam;
+            data->ps.msg.time    = msg->time;
+            data->ps.msg.pt      = msg->pt;
+            push_data( data, &data->ps.msg, sizeof(data->ps.msg) );
+            return sizeof(data->ps.msg);
+        }
+        return 0;
     case SBM_SETSCROLLINFO:
         push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
         return 0;
@@ -1201,9 +1226,20 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         }
         break;
     case WM_GETDLGCODE:
-        if (!*lparam) return TRUE;
-        minsize = sizeof(MSG);
-        break;
+        if (*lparam)
+        {
+            MSG msg;
+            if (size < sizeof(ps->msg)) return FALSE;
+            msg.hwnd    = wine_server_ptr_handle( ps->msg.hwnd );
+            msg.message = ps->msg.message;
+            msg.wParam  = (ULONG_PTR)unpack_ptr( ps->msg.wParam );
+            msg.lParam  = (ULONG_PTR)unpack_ptr( ps->msg.lParam );
+            msg.time    = ps->msg.time;
+            msg.pt      = ps->msg.pt;
+            memcpy( &ps->msg, &msg, sizeof(msg) );
+            break;
+        }
+        return TRUE;
     case SBM_SETSCROLLINFO:
         minsize = sizeof(SCROLLINFO);
         break;
@@ -1442,7 +1478,17 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     }
     case WM_GETDLGCODE:
-        if (lparam) push_data( data, (MSG *)lparam, sizeof(MSG) );
+        if (lparam)
+        {
+            MSG *msg = (MSG *)lparam;
+            data->ps.msg.hwnd    = wine_server_user_handle( msg->hwnd );
+            data->ps.msg.message = msg->message;
+            data->ps.msg.wParam  = msg->wParam;
+            data->ps.msg.lParam  = msg->lParam;
+            data->ps.msg.time    = msg->time;
+            data->ps.msg.pt      = msg->pt;
+            push_data( data, &data->ps.msg, sizeof(data->ps.msg) );
+        }
         break;
     case SBM_GETSCROLLINFO:
         push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
@@ -1568,7 +1614,16 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         }
         break;
     case WM_GETDLGCODE:
-        if (lparam) memcpy( (MSG *)lparam, buffer, min( sizeof(MSG), size ));
+        if (lparam && size >= sizeof(ps->msg))
+        {
+            MSG *msg = (MSG *)lparam;
+            msg->hwnd    = wine_server_ptr_handle( ps->msg.hwnd );
+            msg->message = ps->msg.message;
+            msg->wParam  = (ULONG_PTR)unpack_ptr( ps->msg.wParam );
+            msg->lParam  = (ULONG_PTR)unpack_ptr( ps->msg.lParam );
+            msg->time    = ps->msg.time;
+            msg->pt      = ps->msg.pt;
+        }
         break;
     case SBM_GETSCROLLINFO:
         memcpy( (SCROLLINFO *)lparam, buffer, min( sizeof(SCROLLINFO), size ));
