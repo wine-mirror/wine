@@ -3504,7 +3504,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 
 /* Uses the hardware to stretch and flip the image */
 static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
-        IWineD3DSwapChainImpl *swapchain, const WINED3DRECT *srect, const WINED3DRECT *drect,
+        IWineD3DSwapChainImpl *swapchain, const RECT *src_rect, const RECT *dst_rect,
         BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
@@ -3606,7 +3606,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         glBindTexture(GL_TEXTURE_2D, src);
         checkGLcall("glBindTexture(GL_TEXTURE_2D, src)");
 
-        /* TODO: Only copy the part that will be read. Use srect->x1, srect->y2 as origin, but with the width watch
+        /* TODO: Only copy the part that will be read. Use src_rect->left, src_rect->bottom as origin, but with the width watch
          * out for power of 2 sizes
          */
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Src->pow2Width, Src->pow2Height, 0,
@@ -3634,15 +3634,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
     checkGLcall("glEnd and previous");
 
-    left = srect->x1;
-    right = srect->x2;
+    left = src_rect->left;
+    right = src_rect->right;
 
     if(upsidedown) {
-        top = Src->currentDesc.Height - srect->y1;
-        bottom = Src->currentDesc.Height - srect->y2;
+        top = Src->currentDesc.Height - src_rect->top;
+        bottom = Src->currentDesc.Height - src_rect->bottom;
     } else {
-        top = Src->currentDesc.Height - srect->y2;
-        bottom = Src->currentDesc.Height - srect->y1;
+        top = Src->currentDesc.Height - src_rect->bottom;
+        bottom = Src->currentDesc.Height - src_rect->top;
     }
 
     if(Src->Flags & SFLAG_NORMCOORD) {
@@ -3666,15 +3666,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
         /* top left */
         glTexCoord2f(left, top);
-        glVertex2i(0, fbheight - drect->y2 - drect->y1);
+        glVertex2i(0, fbheight - dst_rect->bottom - dst_rect->top);
 
         /* top right */
         glTexCoord2f(right, top);
-        glVertex2i(drect->x2 - drect->x1, fbheight - drect->y2 - drect->y1);
+        glVertex2i(dst_rect->right - dst_rect->left, fbheight - dst_rect->bottom - dst_rect->top);
 
         /* bottom right */
         glTexCoord2f(right, bottom);
-        glVertex2i(drect->x2 - drect->x1, fbheight);
+        glVertex2i(dst_rect->right - dst_rect->left, fbheight);
     glEnd();
     checkGLcall("glEnd and previous");
 
@@ -3690,9 +3690,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glBindTexture");
     glCopyTexSubImage2D(texture_target,
                         0,
-                        drect->x1, drect->y1, /* xoffset, yoffset */
+                        dst_rect->left, dst_rect->top, /* xoffset, yoffset */
                         0, 0, /* We blitted the image to the origin */
-                        drect->x2 - drect->x1, drect->y2 - drect->y1);
+                        dst_rect->right - dst_rect->left, dst_rect->bottom - dst_rect->top);
     checkGLcall("glCopyTexSubImage2D");
 
     if(drawBuffer == GL_BACK) {
@@ -3997,7 +3997,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, upsideDown, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
-            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, (WINED3DRECT*)&src_rect, (WINED3DRECT*)&dst_rect, upsideDown, Filter);
+            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &src_rect, &dst_rect, upsideDown, Filter);
         }
 
         /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
