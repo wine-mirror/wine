@@ -2416,6 +2416,11 @@ static void test_string_functions(void)
     const WCHAR teststring[] = {'o','o',' ','o','\n','o',0};
     REAL char_width, char_height;
     INT codepointsfitted, linesfilled;
+    GpStringFormat *format;
+    CharacterRange ranges[3] = {{0, 1}, {1, 3}, {5, 1}};
+    GpRegion *regions[4] = {0};
+    BOOL region_isempty[4];
+    int i;
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -2437,6 +2442,9 @@ static void test_string_functions(void)
     expect(Ok, status);
 
     status = GdipCreateSolidFill(color, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, status);
 
     rc.X = 0;
@@ -2548,6 +2556,78 @@ static void test_string_functions(void)
     expect(6, codepointsfitted);
     todo_wine expect(4, linesfilled);
 
+    status = GdipSetStringFormatMeasurableCharacterRanges(format, 3, ranges);
+    expect(Ok, status);
+
+    rc.Width = 100.0;
+
+    for (i=0; i<4; i++)
+    {
+        status = GdipCreateRegion(&regions[i]);
+        expect(Ok, status);
+    }
+
+    status = GdipMeasureCharacterRanges(NULL, teststring, 6, font, &rc, format, 3, regions);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureCharacterRanges(graphics, NULL, 6, font, &rc, format, 3, regions);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, NULL, &rc, format, 3, regions);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, NULL, format, 3, regions);
+    expect(InvalidParameter, status);
+
+    if (0)
+    {
+        /* Crashes on Windows XP */
+        status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, NULL, 3, regions);
+        expect(InvalidParameter, status);
+    }
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 3, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 2, regions);
+    todo_wine expect(InvalidParameter, status);
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 4, regions);
+    todo_wine expect(Ok, status);
+
+    for (i=0; i<4; i++)
+    {
+        status = GdipIsEmptyRegion(regions[i], graphics, &region_isempty[i]);
+        expect(Ok, status);
+    }
+
+    ok(!region_isempty[0], "region shouldn't be empty\n");
+    ok(!region_isempty[1], "region shouldn't be empty\n");
+    ok(!region_isempty[2], "region shouldn't be empty\n");
+    ok(!region_isempty[3], "region shouldn't be empty\n");
+
+    /* Cut off everything after the first space, and the second line. */
+    rc.Width = char_bounds.Width + char_width * 2.5;
+    rc.Height = char_bounds.Height + char_height * 0.5;
+
+    status = GdipMeasureCharacterRanges(graphics, teststring, 6, font, &rc, format, 3, regions);
+    todo_wine expect(Ok, status);
+
+    for (i=0; i<4; i++)
+    {
+        status = GdipIsEmptyRegion(regions[i], graphics, &region_isempty[i]);
+        expect(Ok, status);
+    }
+
+    ok(!region_isempty[0], "region shouldn't be empty\n");
+    ok(!region_isempty[1], "region shouldn't be empty\n");
+    todo_wine ok(region_isempty[2], "region should be empty\n");
+    ok(!region_isempty[3], "region shouldn't be empty\n");
+
+    for (i=0; i<4; i++)
+        GdipDeleteRegion(regions[i]);
+
+    GdipDeleteStringFormat(format);
     GdipDeleteBrush(brush);
     GdipDeleteFont(font);
     GdipDeleteFontFamily(family);
