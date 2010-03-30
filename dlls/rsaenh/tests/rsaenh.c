@@ -493,6 +493,10 @@ static void test_block_cipher_modes(void)
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
     ok(result, "%08x\n", GetLastError());
 
+    result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwLen == 11 || broken(dwLen == 0 /* Win9x/NT4 */), "unexpected salt length %d\n", dwLen);
+
     dwLen = 23;
     result = CryptEncrypt(hKey, 0, TRUE, 0, NULL, &dwLen, 24);
     ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
@@ -738,6 +742,12 @@ static void test_aes(int keylen)
 
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
 
+    /* AES provider doesn't support salt */
+    result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+    todo_wine
+    ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == ERROR_NO_TOKEN /* Win7 */),
+       "expected NTE_BAD_KEY or ERROR_NO_TOKEN, got %08x\n", GetLastError());
+
     dwLen = 13;
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
@@ -944,8 +954,13 @@ static void test_rc2(void)
 
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
+        /* The default salt length is always 11... */
+        ok(dwLen == 11, "unexpected salt length %d\n", dwLen);
+        /* and the default salt is always empty. */
         pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
         CryptGetKeyParam(hKey, KP_SALT, pbTemp, &dwLen, 0);
+        for (i=0; i<dwLen; i++)
+            ok(!pbTemp[i], "unexpected salt value %02x @ %d\n", pbTemp[i], i);
         HeapFree(GetProcessHeap(), 0, pbTemp);
 
         dwLen = sizeof(DWORD);
@@ -969,6 +984,16 @@ static void test_rc2(void)
         result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
 
+        /* Setting the salt also succeeds... */
+        result = CryptSetKeyParam(hKey, KP_SALT, pbData, 0);
+        todo_wine
+        ok(result, "setting salt failed: %08x\n", GetLastError());
+        /* but the resulting salt length is now zero? */
+        dwLen = 0;
+        result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        todo_wine
+        ok(dwLen == 0, "unexpected salt length %d\n", dwLen);
         /* What sizes salt can I set? */
         salt.pbData = pbData;
         for (i=0; i<24; i++)
@@ -976,6 +1001,10 @@ static void test_rc2(void)
             salt.cbData = i;
             result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
             ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
+            /* The returned salt length is the same as the set salt length */
+            result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+            ok(result, "%08x\n", GetLastError());
+            ok(dwLen == i, "size %d: unexpected salt length %d\n", i, dwLen);
         }
         salt.cbData = 25;
         SetLastError(0xdeadbeef);
@@ -1123,6 +1152,15 @@ static void test_rc4(void)
         result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
 
+        /* Setting the salt also succeeds... */
+        result = CryptSetKeyParam(hKey, KP_SALT, pbData, 0);
+        todo_wine
+        ok(result, "setting salt failed: %08x\n", GetLastError());
+        /* but the resulting salt length is now zero? */
+        dwLen = 0;
+        result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwLen == 0, "unexpected salt length %d\n", dwLen);
         /* What sizes salt can I set? */
         salt.pbData = pbData;
         for (i=0; i<24; i++)
@@ -1130,6 +1168,10 @@ static void test_rc4(void)
             salt.cbData = i;
             result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
             ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
+            /* The returned salt length is the same as the set salt length */
+            result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
+            ok(result, "%08x\n", GetLastError());
+            ok(dwLen == i, "size %d: unexpected salt length %d\n", i, dwLen);
         }
         salt.cbData = 25;
         SetLastError(0xdeadbeef);
@@ -1700,6 +1742,12 @@ static void test_rsa_encrypt(void)
         broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
+
+    /* An RSA key doesn't support salt */
+    result = CryptGetKeyParam(hRSAKey, KP_SALT, NULL, &dwLen, 0);
+    todo_wine
+    ok(!result && GetLastError() == NTE_BAD_KEY,
+       "expected NTE_BAD_KEY, got %08x\n", GetLastError());
 
     /* The key exchange key's public key may be exported.. */
     result = CryptExportKey(hRSAKey, 0, PUBLICKEYBLOB, 0, NULL, &dwLen);
