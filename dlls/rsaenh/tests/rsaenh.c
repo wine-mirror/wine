@@ -986,13 +986,11 @@ static void test_rc2(void)
 
         /* Setting the salt also succeeds... */
         result = CryptSetKeyParam(hKey, KP_SALT, pbData, 0);
-        todo_wine
         ok(result, "setting salt failed: %08x\n", GetLastError());
         /* but the resulting salt length is now zero? */
         dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        todo_wine
         ok(dwLen == 0, "unexpected salt length %d\n", dwLen);
         /* What sizes salt can I set? */
         salt.pbData = pbData;
@@ -1154,7 +1152,6 @@ static void test_rc4(void)
 
         /* Setting the salt also succeeds... */
         result = CryptSetKeyParam(hKey, KP_SALT, pbData, 0);
-        todo_wine
         ok(result, "setting salt failed: %08x\n", GetLastError());
         /* but the resulting salt length is now zero? */
         dwLen = 0;
