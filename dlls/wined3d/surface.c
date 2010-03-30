@@ -3817,24 +3817,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         /* Check rects - IWineD3DDevice_Present doesn't handle them */
         while(1)
         {
-            RECT mySrcRect;
             TRACE("Looking if a Present can be done...\n");
             /* Source Rectangle must be full surface */
-            if( SrcRect ) {
-                if(SrcRect->left != 0 || SrcRect->top != 0 ||
-                   SrcRect->right != Src->currentDesc.Width || SrcRect->bottom != Src->currentDesc.Height) {
-                    TRACE("No, Source rectangle doesn't match\n");
-                    break;
-                }
+            if(src_rect.left != 0 || src_rect.top != 0 ||
+                src_rect.right != Src->currentDesc.Width || src_rect.bottom != Src->currentDesc.Height) {
+                TRACE("No, Source rectangle doesn't match\n");
+                break;
             }
-            mySrcRect.left = 0;
-            mySrcRect.top = 0;
-            mySrcRect.right = Src->currentDesc.Width;
-            mySrcRect.bottom = Src->currentDesc.Height;
 
             /* No stretching may occur */
-            if(mySrcRect.right != dst_rect.right - dst_rect.left ||
-               mySrcRect.bottom != dst_rect.bottom - dst_rect.top) {
+            if(src_rect.right != dst_rect.right - dst_rect.left ||
+               src_rect.bottom != dst_rect.bottom - dst_rect.top) {
                 TRACE("No, stretching is done\n");
                 break;
             }
