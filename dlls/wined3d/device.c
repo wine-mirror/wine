@@ -5159,13 +5159,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     IWineD3DSurfaceImpl *pSrcSurface  = (IWineD3DSurfaceImpl *)pSourceSurface;
     IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)pDestinationSurface;
     int srcWidth, srcHeight;
-    unsigned int  srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
+    unsigned int  srcSurfaceWidth, srcSurfaceHeight;
     WINED3DFORMAT destFormat, srcFormat;
-    UINT          destSize;
     int srcLeft, destLeft, destTop;
     WINED3DPOOL       srcPool, destPool;
     int offset    = 0;
-    int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     GLenum dummy;
     DWORD sampler;
     int bpp;
@@ -5183,11 +5181,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     srcFormat = winedesc.format;
 
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
-    destSurfaceWidth = winedesc.width;
-    destSurfaceHeight = winedesc.height;
     destPool = winedesc.pool;
     destFormat = winedesc.format;
-    destSize = winedesc.size;
 
     if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
@@ -5233,15 +5228,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     destLeft   = pDestPoint  ? pDestPoint->x : 0;
     destTop    = pDestPoint  ? pDestPoint->y : 0;
 
-
-    /* This function doesn't support compressed textures
-    the pitch is just bytesPerPixel * width */
     if(srcWidth != srcSurfaceWidth  || srcLeft ){
-        rowoffset = srcSurfaceWidth * src_format_desc->byte_count;
         offset   += srcLeft * src_format_desc->byte_count;
         /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
     }
-    /* TODO DXT formats */
 
     if(pSourceRect != NULL && pSourceRect->top != 0){
        offset +=  pSourceRect->top * srcSurfaceWidth * src_format_desc->byte_count;
@@ -5262,19 +5252,28 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface));
+        UINT row_length = (srcWidth / src_format_desc->block_width) * src_format_desc->block_byte_count;
+        UINT row_count = srcHeight / src_format_desc->block_height;
+        UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
 
-        if (rowoffset)
+        if (pSourceRect)
         {
-            UINT row_length = (srcWidth / src_format_desc->block_width) * src_format_desc->block_byte_count;
-            UINT row_count = srcHeight / src_format_desc->block_height;
-            UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
-            UINT y = destTop;
-            UINT row;
-
             data += (pSourceRect->top / src_format_desc->block_height) * src_pitch;
             data += (pSourceRect->left / src_format_desc->block_width) * src_format_desc->block_byte_count;
+        }
 
-            for (row = 0; row < row_count; ++row)
+        if (row_length == src_pitch)
+        {
+            GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
+                    destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glInternal, row_count * row_length, data));
+        }
+        else
+        {
+            UINT row, y;
+
+            /* glCompressedTexSubImage2DARB() ignores pixel store state, so we
+             * can't use the unpack row length like below. */
+            for (row = 0, y = destTop; row < row_count; ++row)
             {
                 GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
                         destLeft, y, srcWidth, src_format_desc->block_height,
@@ -5282,17 +5281,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                 y += src_format_desc->block_height;
                 data += src_pitch;
             }
-        }
-        else
-        {
-            if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth)
-            {
-                /* FIXME: The easy way to do this is to lock the destination, and copy the bits across. */
-                FIXME("Updating part of a compressed texture is not supported.\n");
-            }
-
-            GL_EXTCALL(glCompressedTexImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                    dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
         }
         checkGLcall("glCompressedTexSubImage2DARB");
     }
