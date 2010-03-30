@@ -56,12 +56,41 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define SYS_TIMER_RATE  55   /* min. timer rate in ms (actually 54.925)*/
 
+/* the various structures that can be sent in messages, in platform-independent layout */
+struct packed_CREATESTRUCTW
+{
+    ULONGLONG     lpCreateParams;
+    ULONGLONG     hInstance;
+    user_handle_t hMenu;
+    DWORD         __pad1;
+    user_handle_t hwndParent;
+    DWORD         __pad2;
+    INT           cy;
+    INT           cx;
+    INT           y;
+    INT           x;
+    LONG          style;
+    ULONGLONG     lpszName;
+    ULONGLONG     lpszClass;
+    DWORD         dwExStyle;
+    DWORD         __pad3;
+};
+
+/* the structures are unpacked on top of the packed ones, so make sure they fit */
+C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
+
+union packed_structs
+{
+    struct packed_CREATESTRUCTW cs;
+};
+
 /* description of the data fields that need to be packed along with a sent message */
 struct packed_message
 {
-    int         count;
-    const void *data[MAX_PACK_COUNT];
-    size_t      size[MAX_PACK_COUNT];
+    union packed_structs ps;
+    int                  count;
+    const void          *data[MAX_PACK_COUNT];
+    size_t               size[MAX_PACK_COUNT];
 };
 
 /* info about the message currently being received by the current thread */
@@ -265,6 +294,19 @@ static inline BOOL check_string( LPCWSTR str, size_t size )
     for (size /= sizeof(WCHAR); size; size--, str++)
         if (!*str) return TRUE;
     return FALSE;
+}
+
+/* pack a pointer into a 32/64 portable format */
+static inline ULONGLONG pack_ptr( const void *ptr )
+{
+    return (ULONG_PTR)ptr;
+}
+
+/* unpack a potentially 64-bit pointer, returning 0 when truncated */
+static inline void *unpack_ptr( ULONGLONG ptr64 )
+{
+    if ((ULONG_PTR)ptr64 != ptr64) return 0;
+    return (void *)(ULONG_PTR)ptr64;
 }
 
 /* make sure that there is space for 'size' bytes in buffer, growing it if needed */
@@ -544,10 +586,22 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_CREATE:
     {
         CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
-        push_data( data, cs, sizeof(*cs) );
+        data->ps.cs.lpCreateParams = pack_ptr( cs->lpCreateParams );
+        data->ps.cs.hInstance      = pack_ptr( cs->hInstance );
+        data->ps.cs.hMenu          = wine_server_user_handle( cs->hMenu );
+        data->ps.cs.hwndParent     = wine_server_user_handle( cs->hwndParent );
+        data->ps.cs.cy             = cs->cy;
+        data->ps.cs.cx             = cs->cx;
+        data->ps.cs.y              = cs->y;
+        data->ps.cs.x              = cs->x;
+        data->ps.cs.style          = cs->style;
+        data->ps.cs.dwExStyle      = cs->dwExStyle;
+        data->ps.cs.lpszName       = pack_ptr( cs->lpszName );
+        data->ps.cs.lpszClass      = pack_ptr( cs->lpszClass );
+        push_data( data, &data->ps.cs, sizeof(data->ps.cs) );
         if (!IS_INTRESOURCE(cs->lpszName)) push_string( data, cs->lpszName );
         if (!IS_INTRESOURCE(cs->lpszClass)) push_string( data, cs->lpszClass );
-        return sizeof(*cs);
+        return sizeof(data->ps.cs);
     }
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
@@ -774,28 +828,42 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
                             void **buffer, size_t size )
 {
     size_t minsize = 0;
+    union packed_structs *ps = *buffer;
 
     switch(message)
     {
     case WM_NCCREATE:
     case WM_CREATE:
     {
-        CREATESTRUCTW *cs = *buffer;
-        WCHAR *str = (WCHAR *)(cs + 1);
-        if (size < sizeof(*cs)) return FALSE;
-        size -= sizeof(*cs);
-        if (!IS_INTRESOURCE(cs->lpszName))
+        CREATESTRUCTW cs;
+        WCHAR *str = (WCHAR *)(&ps->cs + 1);
+        if (size < sizeof(ps->cs)) return FALSE;
+        size -= sizeof(ps->cs);
+        cs.lpCreateParams = unpack_ptr( ps->cs.lpCreateParams );
+        cs.hInstance      = unpack_ptr( ps->cs.hInstance );
+        cs.hMenu          = wine_server_ptr_handle( ps->cs.hMenu );
+        cs.hwndParent     = wine_server_ptr_handle( ps->cs.hwndParent );
+        cs.cy             = ps->cs.cy;
+        cs.cx             = ps->cs.cx;
+        cs.y              = ps->cs.y;
+        cs.x              = ps->cs.x;
+        cs.style          = ps->cs.style;
+        cs.dwExStyle      = ps->cs.dwExStyle;
+        cs.lpszName       = unpack_ptr( ps->cs.lpszName );
+        cs.lpszClass      = unpack_ptr( ps->cs.lpszClass );
+        if (ps->cs.lpszName >> 16)
         {
             if (!check_string( str, size )) return FALSE;
-            cs->lpszName = str;
+            cs.lpszName = str;
             size -= (strlenW(str) + 1) * sizeof(WCHAR);
             str += strlenW(str) + 1;
         }
-        if (!IS_INTRESOURCE(cs->lpszClass))
+        if (ps->cs.lpszClass >> 16)
         {
             if (!check_string( str, size )) return FALSE;
-            cs->lpszClass = str;
+            cs.lpszClass = str;
         }
+        memcpy( &ps->cs, &cs, sizeof(cs) );
         break;
     }
     case WM_GETTEXT:
@@ -1053,8 +1121,23 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
     {
     case WM_NCCREATE:
     case WM_CREATE:
-        push_data( data, (CREATESTRUCTW *)lparam, sizeof(CREATESTRUCTW) );
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+        data->ps.cs.lpCreateParams = (ULONG_PTR)cs->lpCreateParams;
+        data->ps.cs.hInstance      = (ULONG_PTR)cs->hInstance;
+        data->ps.cs.hMenu          = wine_server_user_handle( cs->hMenu );
+        data->ps.cs.hwndParent     = wine_server_user_handle( cs->hwndParent );
+        data->ps.cs.cy             = cs->cy;
+        data->ps.cs.cx             = cs->cx;
+        data->ps.cs.y              = cs->y;
+        data->ps.cs.x              = cs->x;
+        data->ps.cs.style          = cs->style;
+        data->ps.cs.dwExStyle      = cs->dwExStyle;
+        data->ps.cs.lpszName       = (ULONG_PTR)cs->lpszName;
+        data->ps.cs.lpszClass      = (ULONG_PTR)cs->lpszClass;
+        push_data( data, &data->ps.cs, sizeof(data->ps.cs) );
         break;
+    }
     case WM_GETTEXT:
     case CB_GETLBTEXT:
     case LB_GETTEXT:
@@ -1132,18 +1215,28 @@ static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
 static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
                           void *buffer, size_t size )
 {
+    union packed_structs *ps = buffer;
+
     switch(message)
     {
     case WM_NCCREATE:
     case WM_CREATE:
-    {
-        CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
-        LPCWSTR name = cs->lpszName, class = cs->lpszClass;
-        memcpy( cs, buffer, min( sizeof(*cs), size ));
-        cs->lpszName = name;  /* restore the original pointers */
-        cs->lpszClass = class;
+        if (size >= sizeof(ps->cs))
+        {
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+            cs->lpCreateParams = unpack_ptr( ps->cs.lpCreateParams );
+            cs->hInstance      = unpack_ptr( ps->cs.hInstance );
+            cs->hMenu          = wine_server_ptr_handle( ps->cs.hMenu );
+            cs->hwndParent     = wine_server_ptr_handle( ps->cs.hwndParent );
+            cs->cy             = ps->cs.cy;
+            cs->cx             = ps->cs.cx;
+            cs->y              = ps->cs.y;
+            cs->x              = ps->cs.x;
+            cs->style          = ps->cs.style;
+            cs->dwExStyle      = ps->cs.dwExStyle;
+            /* don't allow changing name and class pointers */
+        }
         break;
-    }
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         memcpy( (WCHAR *)lparam, buffer, min( wparam*sizeof(WCHAR), size ));
@@ -1248,7 +1341,7 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
     if (info->flags & ISMEX_NOTIFY) return;  /* notify messages don't get replies */
     if (!remove && replied) return;  /* replied already */
 
-    data.count = 0;
+    memset( &data, 0, sizeof(data) );
     info->flags |= ISMEX_REPLIED;
 
     if (info->type == MSG_OTHER_PROCESS && !replied)
@@ -2315,7 +2408,7 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         timeout = (timeout_t)max( 0, (int)info->timeout ) * -10000;
     }
 
-    data.count = 0;
+    memset( &data, 0, sizeof(data) );
     if (info->type == MSG_OTHER_PROCESS)
     {
         *reply_size = pack_message( info->hwnd, info->msg, info->wparam, info->lparam, &data );
