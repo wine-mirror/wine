@@ -5161,14 +5161,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int srcWidth, srcHeight;
     unsigned int  srcSurfaceWidth, srcSurfaceHeight;
     WINED3DFORMAT destFormat, srcFormat;
-    int srcLeft, destLeft, destTop;
+    int destLeft, destTop;
     WINED3DPOOL       srcPool, destPool;
-    int offset    = 0;
     GLenum dummy;
     DWORD sampler;
     int bpp;
     CONVERT_TYPES convert = NO_CONVERSION;
     struct wined3d_context *context;
+    const unsigned char *data;
 
     WINED3DSURFACE_DESC  winedesc;
 
@@ -5224,34 +5224,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
     srcHeight  = pSourceRect ? pSourceRect->bottom - pSourceRect->top   : srcSurfaceHeight;
-    srcLeft    = pSourceRect ? pSourceRect->left : 0;
     destLeft   = pDestPoint  ? pDestPoint->x : 0;
     destTop    = pDestPoint  ? pDestPoint->y : 0;
 
-    if(srcWidth != srcSurfaceWidth  || srcLeft ){
-        offset   += srcLeft * src_format_desc->byte_count;
-        /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
-    }
-
-    if(pSourceRect != NULL && pSourceRect->top != 0){
-       offset +=  pSourceRect->top * srcSurfaceWidth * src_format_desc->byte_count;
-    }
-    TRACE("(%p) glTexSubImage2D, level %d, left %d, top %d, width %d, height %d, fmt %#x, type %#x, memory %p+%#x\n",
-            This, dst_impl->texture_level, destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glFormat,
-            dst_format_desc->glType, IWineD3DSurface_GetData(pSourceSurface), offset);
-
-    /* Sanity check */
-    if (IWineD3DSurface_GetData(pSourceSurface) == NULL) {
-
-        /* need to lock the surface to get the data */
-        FIXME("Surfaces has no allocated memory, but should be an in memory only surface\n");
-    }
+    data = IWineD3DSurface_GetData(pSourceSurface);
+    if (!data) ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
 
     ENTER_GL();
 
     if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface));
         UINT row_length = (srcWidth / src_format_desc->block_width) * src_format_desc->block_byte_count;
         UINT row_count = srcHeight / src_format_desc->block_height;
         UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
@@ -5261,6 +5243,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
             data += (pSourceRect->top / src_format_desc->block_height) * src_pitch;
             data += (pSourceRect->left / src_format_desc->block_width) * src_format_desc->block_byte_count;
         }
+
+        TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
+                "format %#x, image_size %#x, data %p.\n", dst_impl->texture_target, dst_impl->texture_level,
+                destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glFormat, row_count * row_length, data);
 
         if (row_length == src_pitch)
         {
@@ -5286,7 +5272,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     }
     else
     {
-        const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
+        if (pSourceRect)
+        {
+            data += pSourceRect->top * srcSurfaceWidth * src_format_desc->byte_count;
+            data += pSourceRect->left * src_format_desc->byte_count;
+        }
+
+        TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, data %p.\n",
+                dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
+                srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
 
         glPixelStorei(GL_UNPACK_ROW_LENGTH, srcSurfaceWidth);
         glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
