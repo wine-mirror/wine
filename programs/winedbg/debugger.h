@@ -192,6 +192,8 @@ struct dbg_thread
         DWORD_PTR               linear_pc;
         DWORD_PTR               linear_frame;
         DWORD_PTR               linear_stack;
+        CONTEXT                 context;        /* context we got out of stackwalk for this frame */
+        BOOL                    is_ctx_valid;   /* is the context above valid */
     }*                          frames;
     int                         num_frames;
     int                         curr_frame;
@@ -387,8 +389,8 @@ extern void             stack_info(void);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
 extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
-extern BOOL             stack_get_register_current_frame(unsigned regno, DWORD_PTR** pval);
-extern unsigned         stack_fetch_frames(void);
+extern BOOL             stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval);
+extern unsigned         stack_fetch_frames(const CONTEXT* ctx);
 extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
 
   /* symbol.c */

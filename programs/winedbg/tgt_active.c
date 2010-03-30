@@ -157,7 +157,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL first_chance, const EXC
      * Do a quiet backtrace so that we have an idea of what the situation
      * is WRT the source files.
      */
-    stack_fetch_frames();
+    stack_fetch_frames(&dbg_context);
 
     if (is_debug && !is_break && break_should_continue(&addr, rec->ExceptionCode))
 	return FALSE;

@@ -376,7 +376,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             memcpy(&dbg_context, (char*)data->mapping + mes->ThreadContext.Rva,
                    min(sizeof(dbg_context), mes->ThreadContext.DataSize));
             memory_get_current_pc(&addr);
-            stack_fetch_frames();
+            stack_fetch_frames(&dbg_context);
             be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0);
             stack_info();
             be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);

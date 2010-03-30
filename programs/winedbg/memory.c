@@ -694,16 +694,11 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
     {
         if (div->val == regno)
         {
-            if (dbg_curr_thread->curr_frame != 0)
+            if (!stack_get_register_frame(div, value))
             {
-                if (!stack_get_register_current_frame(regno, value))
-                {
-                    if (buffer) snprintf(buffer, len, "<register %s not in topmost frame>", div->name);
-                    return FALSE;
-                }
+                if (buffer) snprintf(buffer, len, "<register %s not accessible in this frame>", div->name);
+                return FALSE;
             }
-            else
-                *value = (DWORD_PTR*)((char*)&dbg_context + (DWORD_PTR)div->pval);
 
             if (buffer) lstrcpynA(buffer, div->name, len);
             return TRUE;
