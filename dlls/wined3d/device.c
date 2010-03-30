@@ -5261,14 +5261,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     ENTER_GL();
 
-    /* TODO: Cube and volume support */
-    if (rowoffset) /* Not a whole row so we have to do it a line at a time. */
+    if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+        const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface));
+
+        if (rowoffset)
         {
-            const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface));
             UINT row_length = (srcWidth / src_format_desc->block_width) * src_format_desc->block_byte_count;
-            UINT row_count = srcHeight /  src_format_desc->block_height;
+            UINT row_count = srcHeight / src_format_desc->block_height;
             UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
             UINT y = destTop;
             UINT row;
@@ -5279,31 +5279,13 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
             for (row = 0; row < row_count; ++row)
             {
                 GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                            destLeft, y, srcWidth, src_format_desc->block_height,
-                            dst_format_desc->glInternal, row_length, data));
+                        destLeft, y, srcWidth, src_format_desc->block_height,
+                        dst_format_desc->glInternal, row_length, data));
                 y += src_format_desc->block_height;
                 data += src_pitch;
             }
-            checkGLcall("glCompressedTexSubImage2DARB");
         }
         else
-        {
-            const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
-            unsigned int j;
-
-            for (j = destTop; j < (srcHeight + destTop); ++j)
-            {
-                glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, j,
-                        srcWidth, 1, dst_format_desc->glFormat, dst_format_desc->glType,data);
-                data += rowoffset;
-            }
-        }
-    }
-    else /* Full width, so just write out the whole texture. */
-    {
-        const unsigned char* data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
-
-        if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
         {
             if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth)
             {
@@ -5320,13 +5302,18 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                         dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
             }
         }
-        else
-        {
-            glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
-                    srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
-        }
-     }
-    checkGLcall("glTexSubImage2D");
+        checkGLcall("glCompressedTexSubImage2DARB");
+    }
+    else
+    {
+        const unsigned char *data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
+
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, srcSurfaceWidth);
+        glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
+                srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        checkGLcall("glTexSubImage2D");
+    }
 
     LEAVE_GL();
     context_release(context);
