@@ -38,6 +38,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
 static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d','\0'};
 
+struct notify_data  /* platform-independent format for NOTIFYICONDATA */
+{
+    LONG  hWnd;
+    UINT  uID;
+    UINT  uFlags;
+    UINT  uCallbackMessage;
+    WCHAR szTip[128];
+    DWORD dwState;
+    DWORD dwStateMask;
+    WCHAR szInfo[256];
+    union {
+        UINT uTimeout;
+        UINT uVersion;
+    } u;
+    WCHAR szInfoTitle[64];
+    DWORD dwInfoFlags;
+    GUID  guidItem;
+    /* data for the icon bitmap */
+    UINT width;
+    UINT height;
+    UINT planes;
+    UINT bpp;
+};
+
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
  * Shell_NotifyIconA			[SHELL32.297]
@@ -103,7 +127,8 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
 {
     HWND tray;
     COPYDATASTRUCT cds;
-    char *buffer = NULL;
+    struct notify_data data_buffer;
+    struct notify_data *data = &data_buffer;
     BOOL ret;
 
     TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
@@ -127,6 +152,8 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     if (!tray) return FALSE;
 
     cds.dwData = dwMessage;
+    cds.cbData = sizeof(*data);
+    memset( data, 0, sizeof(*data) );
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
@@ -137,6 +164,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         BITMAP bmColour;
         LONG cbMaskBits;
         LONG cbColourBits;
+        char *buffer;
 
         if (!GetIconInfo(nid->hIcon, &iconinfo))
             goto noicon;
@@ -149,9 +177,9 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
             goto noicon;
         }
 
-        cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel) / 8;
-        cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel) / 8;
-        cds.cbData = nid->cbSize + 2*sizeof(BITMAP) + cbMaskBits + cbColourBits;
+        cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel + 15) / 16 * 2;
+        cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
+        cds.cbData = sizeof(*data) + cbMaskBits + cbColourBits;
         buffer = HeapAlloc(GetProcessHeap(), 0, cds.cbData);
         if (!buffer)
         {
@@ -159,38 +187,47 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
             DeleteObject(iconinfo.hbmColor);
             return FALSE;
         }
-        cds.lpData = buffer;
 
-        memcpy(buffer, nid, nid->cbSize);
-        buffer += nid->cbSize;
-        memcpy(buffer, &bmMask, sizeof(bmMask));
-        buffer += sizeof(bmMask);
-        memcpy(buffer, &bmColour, sizeof(bmColour));
-        buffer += sizeof(bmColour);
+        data = (struct notify_data *)buffer;
+        memset( data, 0, sizeof(*data) );
+        data->width  = bmColour.bmWidth;
+        data->height = bmColour.bmHeight;
+        data->planes = bmColour.bmPlanes;
+        data->bpp    = bmColour.bmBitsPixel;
+        buffer += sizeof(*data);
         GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
         buffer += cbMaskBits;
         GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
-
-        /* Reset pointer to allocated block so it can be freed later.
-         * Note that cds.lpData cannot be passed to HeapFree since it
-         * points to nid when no icon info is found. */
-        buffer = cds.lpData;
-
         DeleteObject(iconinfo.hbmMask);
         DeleteObject(iconinfo.hbmColor);
     }
-    else
-    {
+
 noicon:
-        cds.cbData = nid->cbSize;
-        cds.lpData = nid;
+    data->hWnd   = HandleToLong( nid->hWnd );
+    data->uID    = nid->uID;
+    data->uFlags = nid->uFlags;
+    if (data->uFlags & NIF_MESSAGE)
+        data->uCallbackMessage = nid->uCallbackMessage;
+    if (data->uFlags & NIF_TIP)
+        lstrcpynW( data->szTip, nid->szTip, sizeof(data->szTip)/sizeof(WCHAR) );
+    if (data->uFlags & NIF_STATE)
+    {
+        data->dwState     = nid->dwState;
+        data->dwStateMask = nid->dwStateMask;
     }
+    if (data->uFlags & NIF_INFO)
+    {
+        lstrcpynW( data->szInfo, nid->szInfo, sizeof(data->szInfo)/sizeof(WCHAR) );
+        lstrcpynW( data->szInfoTitle, nid->szInfoTitle, sizeof(data->szInfoTitle)/sizeof(WCHAR) );
+        data->u.uTimeout  = nid->u.uTimeout;
+        data->dwInfoFlags = nid->dwInfoFlags;
+    }
+    if (data->uFlags & NIF_GUID)
+        data->guidItem = nid->guidItem;
+    /* FIXME: balloon icon */
 
+    cds.lpData = data;
     ret = SendMessageW(tray, WM_COPYDATA, (WPARAM)nid->hWnd, (LPARAM)&cds);
-
-    /* FIXME: if statement only needed because we don't support interprocess
-     * icon handles */
-    HeapFree(GetProcessHeap(), 0, buffer);
-
+    if (data != &data_buffer) HeapFree( GetProcessHeap(), 0, data );
     return ret;
 }

@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #define UNICODE
+#define NONAMELESSUNION
 #define _WIN32_IE 0x500
 #include <windows.h>
 #include <commctrl.h>
@@ -34,6 +35,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
+struct notify_data  /* platform-independent format for NOTIFYICONDATA */
+{
+    LONG  hWnd;
+    UINT  uID;
+    UINT  uFlags;
+    UINT  uCallbackMessage;
+    WCHAR szTip[128];
+    DWORD dwState;
+    DWORD dwStateMask;
+    WCHAR szInfo[256];
+    union {
+        UINT uTimeout;
+        UINT uVersion;
+    } u;
+    WCHAR szInfoTitle[64];
+    DWORD dwInfoFlags;
+    GUID  guidItem;
+    /* data for the icon bitmap */
+    UINT width;
+    UINT height;
+    UINT planes;
+    UINT bpp;
+};
 
 static int (CDECL *wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
 
@@ -346,52 +371,46 @@ static void cleanup_destroyed_windows(void)
 static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 {
     struct icon *icon = NULL;
+    const struct notify_data *data;
     NOTIFYICONDATAW nid;
-    DWORD cbSize;
     int ret = FALSE;
 
-    if (cds->cbData < NOTIFYICONDATAW_V1_SIZE) return FALSE;
-    cbSize = ((PNOTIFYICONDATAW)cds->lpData)->cbSize;
-    if (cbSize < NOTIFYICONDATAW_V1_SIZE) return FALSE;
+    if (cds->cbData < sizeof(*data)) return FALSE;
+    data = cds->lpData;
 
-    ZeroMemory(&nid, sizeof(nid));
-    memcpy(&nid, cds->lpData, min(sizeof(nid), cbSize));
+    nid.cbSize           = sizeof(nid);
+    nid.hWnd             = LongToHandle( data->hWnd );
+    nid.uID              = data->uID;
+    nid.uFlags           = data->uFlags;
+    nid.uCallbackMessage = data->uCallbackMessage;
+    nid.hIcon            = 0;
+    nid.dwState          = data->dwState;
+    nid.dwStateMask      = data->dwStateMask;
+    nid.u.uTimeout       = data->u.uTimeout;
+    nid.dwInfoFlags      = data->dwInfoFlags;
+    nid.guidItem         = data->guidItem;
+    lstrcpyW( nid.szTip, data->szTip );
+    lstrcpyW( nid.szInfo, data->szInfo );
+    lstrcpyW( nid.szInfoTitle, data->szInfoTitle );
+    nid.hBalloonIcon     = 0;
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
-    if ((nid.uFlags & NIF_ICON) && (cds->cbData >= nid.cbSize + 2 * sizeof(BITMAP)))
+    if ((nid.uFlags & NIF_ICON) && cds->cbData > sizeof(*data))
     {
         LONG cbMaskBits;
         LONG cbColourBits;
-        BITMAP bmMask;
-        BITMAP bmColour;
-        const char *buffer = cds->lpData;
+        const char *buffer = (const char *)(data + 1);
 
-        buffer += nid.cbSize;
+        cbMaskBits = (data->width * data->height + 15) / 16 * 2;
+        cbColourBits = (data->planes * data->width * data->height * data->bpp + 15) / 16 * 2;
 
-        memcpy(&bmMask, buffer, sizeof(bmMask));
-        buffer += sizeof(bmMask);
-        memcpy(&bmColour, buffer, sizeof(bmColour));
-        buffer += sizeof(bmColour);
-
-        cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel) / 8;
-        cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel) / 8;
-
-        if (cds->cbData < nid.cbSize + 2 * sizeof(BITMAP) + cbMaskBits + cbColourBits)
+        if (cds->cbData < sizeof(*data) + cbMaskBits + cbColourBits)
         {
             WINE_ERR("buffer underflow\n");
             return FALSE;
         }
-
-        /* sanity check */
-        if ((bmColour.bmWidth != bmMask.bmWidth) || (bmColour.bmHeight != bmMask.bmHeight))
-        {
-            WINE_ERR("colour and mask bitmaps aren't consistent\n");
-            return FALSE;
-        }
-
-        nid.hIcon = CreateIcon(NULL, bmColour.bmWidth, bmColour.bmHeight,
-                               bmColour.bmPlanes, bmColour.bmBitsPixel,
+        nid.hIcon = CreateIcon(NULL, data->width, data->height, data->planes, data->bpp,
                                buffer, buffer + cbMaskBits);
     }
 
@@ -400,7 +419,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     {
         if (wine_notify_icon && ((ret = wine_notify_icon( cds->dwData, &nid )) != -1))
         {
-            if (nid.uFlags & NIF_ICON) DestroyIcon( nid.hIcon );
+            if (nid.hIcon) DestroyIcon( nid.hIcon );
             return ret;
         }
         ret = FALSE;
@@ -422,11 +441,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         break;
     }
 
-    /* FIXME: if statement only needed because we don't support interprocess
-     * icon handles */
-    if (nid.uFlags & NIF_ICON)
-        DestroyIcon(nid.hIcon);
-
+    if (nid.hIcon) DestroyIcon( nid.hIcon );
     return ret;
 }
 
