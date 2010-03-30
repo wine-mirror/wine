@@ -3516,7 +3516,7 @@ static GpStatus measure_string_callback(GpGraphics *graphics,
         *args->codepointsfitted = index + length;
 
     if (args->linesfilled)
-        *args->linesfilled += bounds->Height;
+        (*args->linesfilled)++;
 
     return Ok;
 }

@@ -2490,7 +2490,7 @@ static void test_string_functions(void)
     ok(char_bounds.Width > 0, "got %0.2f\n", bounds.Width);
     ok(char_bounds.Height > 0, "got %0.2f\n", bounds.Height);
     expect(1, codepointsfitted);
-    todo_wine expect(1, linesfilled);
+    expect(1, linesfilled);
 
     status = GdipMeasureString(graphics, teststring, 2, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
     expect(Ok, status);
@@ -2499,7 +2499,7 @@ static void test_string_functions(void)
     ok(bounds.Width > char_bounds.Width, "got %0.2f, expected at least %0.2f\n", bounds.Width, char_bounds.Width);
     expectf(char_bounds.Height, bounds.Height);
     expect(2, codepointsfitted);
-    todo_wine expect(1, linesfilled);
+    expect(1, linesfilled);
     char_width = bounds.Width - char_bounds.Width;
 
     status = GdipMeasureString(graphics, teststring, 6, font, &rc, NULL, &bounds, &codepointsfitted, &linesfilled);
@@ -2509,7 +2509,7 @@ static void test_string_functions(void)
     expectf_(char_bounds.Width + char_width * 3, bounds.Width, 0.01);
     ok(bounds.Height > char_bounds.Height, "got %0.2f, expected at least %0.2f\n", bounds.Height, char_bounds.Height);
     expect(6, codepointsfitted);
-    todo_wine expect(2, linesfilled);
+    expect(2, linesfilled);
     char_height = bounds.Height - char_bounds.Height;
 
     /* Cut off everything after the first space. */
@@ -2522,7 +2522,7 @@ static void test_string_functions(void)
     expectf_(char_bounds.Width + char_width, bounds.Width, 0.01);
     expectf_(char_bounds.Height + char_height * 2, bounds.Height, 0.01);
     expect(6, codepointsfitted);
-    todo_wine expect(3, linesfilled);
+    expect(3, linesfilled);
 
     /* Cut off everything including the first space. */
     rc.Width = char_bounds.Width + char_width * 1.5;
@@ -2534,7 +2534,7 @@ static void test_string_functions(void)
     expectf_(char_bounds.Width + char_width, bounds.Width, 0.01);
     expectf_(char_bounds.Height + char_height * 2, bounds.Height, 0.01);
     expect(6, codepointsfitted);
-    todo_wine expect(3, linesfilled);
+    expect(3, linesfilled);
 
     /* Cut off everything after the first character. */
     rc.Width = char_bounds.Width + char_width * 0.5;
