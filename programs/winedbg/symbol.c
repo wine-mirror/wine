@@ -227,7 +227,7 @@ enum sym_get_lval symbol_picker_interactive(const char* name, const struct sgv_d
         if (sgv->num - sgv->num_thunks > 1 && (sgv->syms[i].flags & SYMFLAG_THUNK) && !DBG_IVAR(AlwaysShowThunks))
             continue;
         dbg_printf("[%d]: ", i + 1);
-        if (sgv->syms[i].flags & SYMFLAG_LOCAL)
+        if (sgv->syms[i].flags & (SYMFLAG_LOCAL | SYMFLAG_PARAMETER))
         {
             dbg_printf("%s %sof %s\n",
                        sgv->syms[i].flags & SYMFLAG_PARAMETER ? "Parameter" : "Local variable",
@@ -276,7 +276,7 @@ enum sym_get_lval symbol_picker_scoped(const char* name, const struct sgv_data* 
     {
         if (sgv->num - sgv->num_thunks > 1 && (sgv->syms[i].flags & SYMFLAG_THUNK) && !DBG_IVAR(AlwaysShowThunks))
             continue;
-        if (sgv->syms[i].flags & SYMFLAG_LOCAL)
+        if (sgv->syms[i].flags & (SYMFLAG_LOCAL | SYMFLAG_PARAMETER))
         {
             if (local == -1)
                 local = i;
