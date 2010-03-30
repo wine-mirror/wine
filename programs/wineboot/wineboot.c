@@ -81,6 +81,7 @@
 #include <shobjidl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
@@ -859,6 +860,44 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
+static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        {
+            WCHAR *buffer, text[1024];
+            const WCHAR *name = (WCHAR *)lp;
+            HICON icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 48, 48, LR_SHARED );
+            SendDlgItemMessageW( hwnd, IDC_WAITICON, STM_SETICON, (WPARAM)icon, 0 );
+            SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_GETTEXT, 1024, (LPARAM)text );
+            buffer = HeapAlloc( GetProcessHeap(), 0, (strlenW(text) + strlenW(name) + 1) * sizeof(WCHAR) );
+            sprintfW( buffer, text, name );
+            SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_SETTEXT, 0, (LPARAM)buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
+        }
+        break;
+    }
+    return 0;
+}
+
+static HWND show_wait_window(void)
+{
+    const char *config_dir = wine_get_config_dir();
+    WCHAR *name;
+    HWND hwnd;
+    DWORD len;
+
+    len = MultiByteToWideChar( CP_UNIXCP, 0, config_dir, -1, NULL, 0 );
+    name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_UNIXCP, 0, config_dir, -1, name, len );
+    hwnd = CreateDialogParamW( GetModuleHandleW(0), MAKEINTRESOURCEW(IDD_WAITDLG), 0,
+                               wait_dlgproc, (LPARAM)name );
+    ShowWindow( hwnd, SW_SHOWNORMAL );
+    HeapFree( GetProcessHeap(), 0, name );
+    return hwnd;
+}
+
 static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
 {
     static const WCHAR rundll[] = {'\\','r','u','n','d','l','l','3','2','.','e','x','e',0};
@@ -930,16 +969,23 @@ static void update_wineprefix( int force )
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
         HANDLE process;
+        DWORD count = 0;
 
         if ((process = start_rundll32( inf_path, FALSE )))
         {
-            WaitForSingleObject( process, INFINITE );
-            CloseHandle( process );
-        }
-        if ((process = start_rundll32( inf_path, TRUE )))
-        {
-            WaitForSingleObject( process, INFINITE );
-            CloseHandle( process );
+            HWND hwnd = show_wait_window();
+            for (;;)
+            {
+                MSG msg;
+                DWORD res = MsgWaitForMultipleObjects( 1, &process, FALSE, INFINITE, QS_ALLINPUT );
+                if (res == WAIT_OBJECT_0)
+                {
+                    CloseHandle( process );
+                    if (count++ || !(process = start_rundll32( inf_path, TRUE ))) break;
+                }
+                else while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+            }
+            DestroyWindow( hwnd );
         }
         WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", config_dir );
     }

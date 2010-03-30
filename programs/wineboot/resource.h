@@ -20,4 +20,8 @@
 #include "winuser.h"
 
 #define IDC_STATIC          -1
+#define IDC_WAITICON         1
+#define IDC_WAITTEXT         2
+
 #define IDD_ENDTASK         100
+#define IDD_WAITDLG         101
