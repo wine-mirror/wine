@@ -28,6 +28,9 @@ static NTSTATUS (WINAPI * pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PV
 static NTSTATUS (WINAPI * pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtSetInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
+static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+
+static BOOL is_wow64;
 
 /* one_before_last_pid is used to be able to compare values of a still running process
    with the output of the test_query_process_times and test_query_process_handlecount tests.
@@ -59,6 +62,8 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtSetInformationThread);
     NTDLL_GET_PROC(NtReadVirtualMemory);
 
+    pIsWow64Process = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "IsWow64Process");
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
     return TRUE;
 }
 
@@ -129,21 +134,25 @@ static void test_query_performance(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-    ULONGLONG buffer[sizeof(SYSTEM_PERFORMANCE_INFORMATION)/sizeof(ULONGLONG) + 1];
+    ULONGLONG buffer[sizeof(SYSTEM_PERFORMANCE_INFORMATION)/sizeof(ULONGLONG) + 5];
+    DWORD size = sizeof(SYSTEM_PERFORMANCE_INFORMATION);
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, 0, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer,
-                                       sizeof(SYSTEM_PERFORMANCE_INFORMATION), &ReturnLength);
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, size, &ReturnLength);
+    if (status == STATUS_INFO_LENGTH_MISMATCH && is_wow64)
+    {
+        /* size is larger on wow64 under w2k8/win7 */
+        size += 16;
+        status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, size, &ReturnLength);
+    }
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION), "Inconsistent length %d\n", ReturnLength);
+    ok( ReturnLength == size, "Inconsistent length %d\n", ReturnLength);
 
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer,
-                                       sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 2, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, size + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION) ||
-        ReturnLength == sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 2,
+    ok( ReturnLength == size || ReturnLength == size + 2,
         "Inconsistent length %d\n", ReturnLength);
 
     /* Not return values yet, as struct members are unknown */
@@ -748,7 +757,9 @@ static void test_query_process_times(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, sizeof(spti) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( sizeof(spti) == ReturnLength || ReturnLength == 0 /* vista */,
+    ok( sizeof(spti) == ReturnLength ||
+        ReturnLength == 0 /* vista */ ||
+        broken(is_wow64),  /* returns garbage on wow64 */
         "Inconsistent length %d\n", ReturnLength);
 }
 
@@ -1001,7 +1012,7 @@ static void test_affinity(void)
     ok( tbi.AffinityMask == 1, "Unexpected thread affinity\n" );
 
     /* NOTE: Pre-Vista does not recognize the "all processors" flag (all bits set) */
-    thread_affinity = ~0UL;
+    thread_affinity = ~(DWORD_PTR)0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
     ok( broken(status == STATUS_INVALID_PARAMETER) || status == STATUS_SUCCESS,
         "Expected STATUS_SUCCESS, got %08x\n", status);
