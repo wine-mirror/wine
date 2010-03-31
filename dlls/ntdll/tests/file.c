@@ -247,7 +247,6 @@ static void create_file_test(void)
     todo_wine
     ok( status == STATUS_INVALID_PARAMETER,
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
-    pRtlFreeUnicodeString( &nameW );
 }
 
 static void open_file_test(void)
