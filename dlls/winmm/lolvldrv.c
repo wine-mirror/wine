@@ -43,31 +43,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 typedef struct tagWINE_LLTYPE {
     /* those attributes depend on the specification of the type */
     LPCSTR		typestr;	/* name (for debugging) */
-    BOOL		bSupportMapper;	/* if type is allowed to support mapper */
     /* those attributes reflect the loaded/current situation for the type */
     UINT		wMaxId;		/* number of loaded devices (sum across all loaded drivers) */
     LPWINE_MLD		lpMlds;		/* "static" mlds to access the part though device IDs */
     int			nMapper;	/* index to mapper */
 } WINE_LLTYPE;
 
+static WINE_LLTYPE llTypes[MMDRV_MAX] = {
+    { "Aux", 0, 0, -1 },
+    { "Mixer", 0, 0, -1 },
+    { "MidiIn", 0, 0, -1 },
+    { "MidiOut", 0, 0, -1 },
+    { "WaveIn", 0, 0, -1 },
+    { "WaveOut", 0, 0, -1 }
+};
+
 static int drivers_loaded, MMDrvsHi;
 static WINE_MM_DRIVER	MMDrvs[8];
 static LPWINE_MLD	MM_MLDrvs[40];
 #define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
-
-#define A(_x,_y) {#_y, _x, 0, NULL, -1}
-/* Note: the indices of this array must match the definitions
- *	 of the MMDRV_???? manifest constants
- */
-static WINE_LLTYPE	llTypes[MMDRV_MAX] = {
-    A(TRUE,  Aux),
-    A(FALSE, Mixer),
-    A(FALSE, MidiIn),
-    A(TRUE,  MidiOut),
-    A(TRUE,  WaveIn),
-    A(TRUE,  WaveOut),
-};
-#undef A
 
 static void MMDRV_Init(void);
 
@@ -106,11 +100,11 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 	  mld->dwDriverInstance, dwParam1, dwParam2);
 
     if (mld->uDeviceID == (UINT16)-1) {
-	if (!llType->bSupportMapper) {
-	    WARN("uDev=-1 requested on non-mappable ll type %s\n",
+        if (llType->nMapper == -1) {
+	    WARN("uDev=-1 requested on non-mapped ll type %s\n",
 		 llTypes[mld->type].typestr);
 	    return MMSYSERR_BADDEVICEID;
-	}
+        }
 	devID = -1;
     } else {
 	if (mld->uDeviceID >= llType->wMaxId) {
@@ -206,26 +200,15 @@ DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
     mld->dwDriverInstance = (DWORD_PTR)&dwInstance;
 
     if (mld->uDeviceID == (UINT)-1 || mld->uDeviceID == (UINT16)-1) {
-	TRACE("MAPPER mode requested !\n");
-	/* check if mapper is supported by type */
-	if (llType->bSupportMapper) {
-	    if (llType->nMapper == -1) {
-		/* no driver for mapper has been loaded, try a dumb implementation */
-		TRACE("No mapper loaded, doing it by hand\n");
-		for (mld->uDeviceID = 0; mld->uDeviceID < llType->wMaxId; mld->uDeviceID++) {
-		    if ((dwRet = MMDRV_Open(mld, wMsg, dwParam1, dwFlags)) == MMSYSERR_NOERROR) {
-			/* to share this function epilog */
-			dwInstance = mld->dwDriverInstance;
-			break;
-		    }
-		}
-	    } else {
-		mld->uDeviceID = (UINT16)-1;
-		mld->mmdIndex = llType->lpMlds[-1].mmdIndex;
-		TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
-		dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags);
-	    }
-	}
+        TRACE("MAPPER mode requested !\n");
+        if (llType->nMapper == -1) {
+            WARN("Mapper not supported for type %s\n", llTypes[mld->type].typestr);
+            return MMSYSERR_BADDEVICEID;
+        }
+        mld->uDeviceID = (UINT16)-1;
+        mld->mmdIndex = llType->lpMlds[-1].mmdIndex;
+        TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
+        dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags);
     } else {
 	if (mld->uDeviceID < llType->wMaxId) {
 	    mld->mmdIndex = llType->lpMlds[mld->uDeviceID].mmdIndex;
@@ -399,13 +382,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 
     /* got some drivers */
     if (lpDrv->bIsMapper) {
-	/* it seems native mappers return 0 devices :-( */
-	if (llTypes[type].nMapper != -1)
-	    ERR("Two mappers for type %s (%d, %s)\n",
-		llTypes[type].typestr, llTypes[type].nMapper, lpDrv->drvname);
-	if (count > 1)
-	    ERR("Strange: mapper with %d > 1 devices\n", count);
-	llTypes[type].nMapper = MMDrvsHi;
+        llTypes[type].nMapper = MMDrvsHi;
     } else {
 	if (count == 0)
 	    return FALSE;
@@ -427,7 +404,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
 
     /* re-build the translation table */
-    if (llTypes[type].nMapper != -1) {
+    if (lpDrv->bIsMapper) {
 	TRACE("%s:Trans[%d] -> %s\n", llTypes[type].typestr, -1, MMDrvs[llTypes[type].nMapper].drvname);
 	llTypes[type].lpMlds[-1].uDeviceID = (UINT16)-1;
 	llTypes[type].lpMlds[-1].type = type;
