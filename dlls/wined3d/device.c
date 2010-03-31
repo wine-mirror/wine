@@ -5150,44 +5150,47 @@ static float WINAPI IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface)
     return 0.0f;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface, CONST POINT* pDestPoint) {
-    IWineD3DDeviceImpl  *This         = (IWineD3DDeviceImpl *) iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
+        IWineD3DSurface *src_surface, const RECT *src_rect,
+        IWineD3DSurface *dst_surface, const POINT *dst_point)
+{
+    IWineD3DSurfaceImpl *src_impl = (IWineD3DSurfaceImpl *)src_surface;
+    IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)dst_surface;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_format_desc *src_format;
     const struct wined3d_format_desc *dst_format;
-    /** TODO: remove casts to IWineD3DSurfaceImpl
-     *       NOTE: move code to surface to accomplish this
-      ****************************************/
-    IWineD3DSurfaceImpl *pSrcSurface  = (IWineD3DSurfaceImpl *)pSourceSurface;
-    IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)pDestinationSurface;
-    int srcWidth, srcHeight;
-    unsigned int  srcSurfaceWidth, srcSurfaceHeight;
-    int destLeft, destTop;
-    WINED3DPOOL       srcPool, destPool;
-    GLenum dummy;
-    DWORD sampler;
-    int bpp;
     CONVERT_TYPES convert = NO_CONVERSION;
     struct wined3d_context *context;
+    WINED3DPOOL src_pool, dst_pool;
+    WINED3DSURFACE_DESC winedesc;
     const unsigned char *data;
+    UINT update_w, update_h;
+    UINT src_w, src_h;
+    UINT dst_x, dst_y;
+    DWORD sampler;
+    GLenum dummy;
+    int bpp;
 
-    WINED3DSURFACE_DESC  winedesc;
+    TRACE("iface %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s",
+            iface, src_surface, wine_dbgstr_rect(src_rect),
+            dst_surface, wine_dbgstr_point(dst_point));
 
-    TRACE("(%p) : Source (%p)  Rect (%p) Destination (%p) Point(%p)\n", This, pSourceSurface, pSourceRect, pDestinationSurface, pDestPoint);
+    IWineD3DSurface_GetDesc(src_surface, &winedesc);
+    src_w = winedesc.width;
+    src_h = winedesc.height;
+    src_pool = winedesc.pool;
 
-    IWineD3DSurface_GetDesc(pSourceSurface, &winedesc);
-    srcSurfaceWidth = winedesc.width;
-    srcSurfaceHeight = winedesc.height;
-    srcPool = winedesc.pool;
+    IWineD3DSurface_GetDesc(dst_surface, &winedesc);
+    dst_pool = winedesc.pool;
 
-    IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
-    destPool = winedesc.pool;
-
-    if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
-        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
+    if (src_pool != WINED3DPOOL_SYSTEMMEM || dst_pool != WINED3DPOOL_DEFAULT)
+    {
+        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
+                src_surface, dst_surface);
         return WINED3DERR_INVALIDCALL;
     }
 
-    src_format = pSrcSurface->resource.format_desc;
+    src_format = src_impl->resource.format_desc;
     dst_format = dst_impl->resource.format_desc;
 
     if (src_format->format != dst_format->format)
@@ -5196,17 +5199,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* This call loads the opengl surface directly, instead of copying the surface to the
-     * destination's sysmem copy. If surface conversion is needed, use BltFast instead to
-     * copy in sysmem and use regular surface loading.
-     */
+    dst_x = dst_point ? dst_point->x : 0;
+    dst_y = dst_point ? dst_point->y : 0;
+
+    /* This call loads the OpenGL surface directly, instead of copying the
+     * surface to the destination's sysmem copy. If surface conversion is
+     * needed, use BltFast instead to copy in sysmem and use regular surface
+     * loading. */
     d3dfmt_get_conv(dst_impl, FALSE, TRUE, &dummy, &dummy, &dummy, &convert, &bpp, FALSE);
-    if(convert != NO_CONVERSION) {
-        return IWineD3DSurface_BltFast(pDestinationSurface,
-                                        pDestPoint  ? pDestPoint->x : 0,
-                                        pDestPoint  ? pDestPoint->y : 0,
-                                        pSourceSurface, pSourceRect, 0);
-    }
+    if (convert != NO_CONVERSION)
+        return IWineD3DSurface_BltFast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
     context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
 
@@ -5216,40 +5218,37 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     LEAVE_GL();
 
     /* Make sure the surface is loaded and up to date */
-    surface_internal_preload(pDestinationSurface, SRGB_RGB);
-    IWineD3DSurface_BindTexture(pDestinationSurface, FALSE);
+    surface_internal_preload(dst_surface, SRGB_RGB);
+    IWineD3DSurface_BindTexture(dst_surface, FALSE);
 
-    /* this needs to be done in lines if the sourceRect != the sourceWidth */
-    srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
-    srcHeight  = pSourceRect ? pSourceRect->bottom - pSourceRect->top   : srcSurfaceHeight;
-    destLeft   = pDestPoint  ? pDestPoint->x : 0;
-    destTop    = pDestPoint  ? pDestPoint->y : 0;
+    update_w = src_rect ? src_rect->right - src_rect->left : src_w;
+    update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
 
-    data = IWineD3DSurface_GetData(pSourceSurface);
+    data = IWineD3DSurface_GetData(src_surface);
     if (!data) ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
 
     ENTER_GL();
 
     if (dst_format->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT row_length = (srcWidth / src_format->block_width) * src_format->block_byte_count;
-        UINT row_count = srcHeight / src_format->block_height;
-        UINT src_pitch = IWineD3DSurface_GetPitch(pSourceSurface);
+        UINT row_length = (update_w / src_format->block_width) * src_format->block_byte_count;
+        UINT row_count = update_h / src_format->block_height;
+        UINT src_pitch = IWineD3DSurface_GetPitch(src_surface);
 
-        if (pSourceRect)
+        if (src_rect)
         {
-            data += (pSourceRect->top / src_format->block_height) * src_pitch;
-            data += (pSourceRect->left / src_format->block_width) * src_format->block_byte_count;
+            data += (src_rect->top / src_format->block_height) * src_pitch;
+            data += (src_rect->left / src_format->block_width) * src_format->block_byte_count;
         }
 
         TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
                 "format %#x, image_size %#x, data %p.\n", dst_impl->texture_target, dst_impl->texture_level,
-                destLeft, destTop, srcWidth, srcHeight, dst_format->glFormat, row_count * row_length, data);
+                dst_x, dst_y, update_w, update_h, dst_format->glFormat, row_count * row_length, data);
 
         if (row_length == src_pitch)
         {
             GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                    destLeft, destTop, srcWidth, srcHeight, dst_format->glInternal, row_count * row_length, data));
+                    dst_x, dst_y, update_w, update_h, dst_format->glInternal, row_count * row_length, data));
         }
         else
         {
@@ -5257,11 +5256,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
             /* glCompressedTexSubImage2DARB() ignores pixel store state, so we
              * can't use the unpack row length like below. */
-            for (row = 0, y = destTop; row < row_count; ++row)
+            for (row = 0, y = dst_y; row < row_count; ++row)
             {
                 GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
-                        destLeft, y, srcWidth, src_format->block_height,
-                        dst_format->glInternal, row_length, data));
+                        dst_x, y, update_w, src_format->block_height, dst_format->glInternal, row_length, data));
                 y += src_format->block_height;
                 data += src_pitch;
             }
@@ -5270,19 +5268,19 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     }
     else
     {
-        if (pSourceRect)
+        if (src_rect)
         {
-            data += pSourceRect->top * srcSurfaceWidth * src_format->byte_count;
-            data += pSourceRect->left * src_format->byte_count;
+            data += src_rect->top * src_w * src_format->byte_count;
+            data += src_rect->left * src_format->byte_count;
         }
 
         TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, data %p.\n",
-                dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
-                srcWidth, srcHeight, dst_format->glFormat, dst_format->glType, data);
+                dst_impl->texture_target, dst_impl->texture_level, dst_x, dst_y,
+                update_w, update_h, dst_format->glFormat, dst_format->glType, data);
 
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, srcSurfaceWidth);
-        glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, destLeft, destTop,
-                srcWidth, srcHeight, dst_format->glFormat, dst_format->glType, data);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, src_w);
+        glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, dst_x, dst_y,
+                update_w, update_h, dst_format->glFormat, dst_format->glType, data);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         checkGLcall("glTexSubImage2D");
     }
@@ -5290,7 +5288,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     LEAVE_GL();
     context_release(context);
 
-    IWineD3DSurface_ModifyLocation(pDestinationSurface, SFLAG_INTEXTURE, TRUE);
+    IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INTEXTURE, TRUE);
     sampler = This->rev_tex_unit_map[0];
     if (sampler != WINED3D_UNMAPPED_STAGE)
     {
