@@ -989,17 +989,6 @@ void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect)
     }
 }
 
-static inline BOOL surface_can_stretch_rect(IWineD3DSurfaceImpl *src, IWineD3DSurfaceImpl *dst)
-{
-    return ((src->resource.format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-            || (src->resource.usage & WINED3DUSAGE_RENDERTARGET))
-            && ((dst->resource.format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-            || (dst->resource.usage & WINED3DUSAGE_RENDERTARGET))
-            && (src->resource.format_desc->format == dst->resource.format_desc->format
-            || (is_identity_fixup(src->resource.format_desc->color_fixup)
-            && is_identity_fixup(dst->resource.format_desc->color_fixup)));
-}
-
 static BOOL surface_convert_color_to_argb(IWineD3DSurfaceImpl *This, DWORD color, DWORD *argb_color)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
@@ -3606,6 +3595,13 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
 }
 
+/* Until the blit_shader is ready, define some prototypes here. */
+static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+                               const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
+                               const struct wined3d_format_desc *src_format_desc,
+                               const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
+                               const struct wined3d_format_desc *dst_format_desc);
+
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const RECT *DestRect,
         IWineD3DSurface *SrcSurface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
@@ -3801,9 +3797,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-                && myDevice->adapter->gl_info.fbo_ops.glBlitFramebuffer
-                && surface_can_stretch_rect(Src, This))
+        if (fbo_blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
+                               &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                               &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
                     (IWineD3DSurface *)This, &dst_rect, Filter);
@@ -3845,10 +3841,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             Src->palette = This->palette;
         }
 
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-                && myDevice->adapter->gl_info.fbo_ops.glBlitFramebuffer
-                && !(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && surface_can_stretch_rect(Src, This))
+        if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
+            && fbo_blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
+                                  &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                                  &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
             TRACE("Using stretch_rect_fbo\n");
             /* The source is always a texture, but never the currently active render target, and the texture
@@ -5125,3 +5121,38 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_supported,
     cpu_blit_color_fill
 };
+
+static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+                               const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
+                               const struct wined3d_format_desc *src_format_desc,
+                               const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
+                               const struct wined3d_format_desc *dst_format_desc)
+{
+    if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
+        return FALSE;
+
+    /* We only support blitting. Things like color keying / color fill should
+     * be handled by other blitters.
+     */
+    if (blit_op != BLIT_OP_BLIT)
+        return FALSE;
+
+    /* Source and/or destination need to be on the GL side */
+    if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
+        return FALSE;
+
+    if(!((src_format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET))
+        && ((dst_format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+        return FALSE;
+
+    if (!is_identity_fixup(src_format_desc->color_fixup) ||
+        !is_identity_fixup(dst_format_desc->color_fixup))
+        return FALSE;
+
+    if (!(src_format_desc->format == dst_format_desc->format
+        || (is_identity_fixup(src_format_desc->color_fixup)
+        && is_identity_fixup(dst_format_desc->color_fixup))))
+        return FALSE;
+
+    return TRUE;
+}
