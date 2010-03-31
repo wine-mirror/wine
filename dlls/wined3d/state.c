@@ -3780,27 +3780,19 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
 static void state_vertexblend_w(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    static BOOL once = FALSE;
+    WINED3DVERTEXBLENDFLAGS f = stateblock->renderState[WINED3DRS_VERTEXBLEND];
+    static unsigned int once;
 
-    switch(stateblock->renderState[WINED3DRS_VERTEXBLEND]) {
-        case WINED3DVBF_1WEIGHTS:
-        case WINED3DVBF_2WEIGHTS:
-        case WINED3DVBF_3WEIGHTS:
-            if(!once) {
-                once = TRUE;
-                /* TODO: Implement vertex blending in drawStridedSlow */
-                FIXME("Vertex blending enabled, but not supported by hardware\n");
-            }
-            break;
+    if (f == WINED3DVBF_DISABLE) return;
 
-        case WINED3DVBF_TWEENING:
-            WARN("Tweening not supported yet\n");
-    }
+    if (!once++) FIXME("Vertex blend flags %#x not supported.\n", f);
+    else WARN("Vertex blend flags %#x not supported.\n", f);
 }
 
 static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     WINED3DVERTEXBLENDFLAGS val = stateblock->renderState[WINED3DRS_VERTEXBLEND];
+    static unsigned int once;
 
     switch(val) {
         case WINED3DVBF_1WEIGHTS:
@@ -3828,18 +3820,14 @@ static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, s
             }
             break;
 
+        case WINED3DVBF_TWEENING:
+        case WINED3DVBF_0WEIGHTS: /* Indexed vertex blending, not supported. */
+            if (!once++) FIXME("Vertex blend flags %#x not supported.\n", val);
+            else WARN("Vertex blend flags %#x not supported.\n", val);
+            /* Fall through. */
         case WINED3DVBF_DISABLE:
-        case WINED3DVBF_0WEIGHTS: /* for Indexed vertex blending - not supported */
             glDisable(GL_VERTEX_BLEND_ARB);
             checkGLcall("glDisable(GL_VERTEX_BLEND_ARB)");
-            break;
-
-        case WINED3DVBF_TWEENING:
-            /* Just set the vertex weight for weight 0, enable vertex blending and hope the app doesn't have
-             * vertex weights in the vertices?
-             * For now we don't report that as supported, so a warn should suffice
-             */
-            WARN("Tweening not supported yet\n");
             break;
     }
 }
