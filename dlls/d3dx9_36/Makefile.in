@@ -21,7 +21,8 @@ C_SRCS = \
 	sprite.c \
 	surface.c \
 	texture.c \
-	util.c
+	util.c \
+	volume.c
 
 LEX_SRCS = asmshader.l
 BISON_SRCS = asmshader.y

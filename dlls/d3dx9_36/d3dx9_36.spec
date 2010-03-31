@@ -192,7 +192,7 @@
 @ stub D3DXLoadVolumeFromFileA
 @ stub D3DXLoadVolumeFromFileInMemory
 @ stub D3DXLoadVolumeFromFileW
-@ stub D3DXLoadVolumeFromMemory
+@ stdcall D3DXLoadVolumeFromMemory(ptr ptr ptr ptr long long long ptr ptr long long)
 @ stub D3DXLoadVolumeFromResourceA
 @ stub D3DXLoadVolumeFromResourceW
 @ stub D3DXLoadVolumeFromVolume
