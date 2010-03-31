@@ -137,7 +137,6 @@ BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz);
 LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2);
 void            DRIVER_UnloadAll(void);
 
-BOOL		MMDRV_Init(void);
 void            MMDRV_Exit(void);
 UINT		MMDRV_GetNum(UINT);
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,

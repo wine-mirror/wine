@@ -47,7 +47,7 @@ typedef struct tagWINE_LLTYPE {
     int			nMapper;	/* index to mapper */
 } WINE_LLTYPE;
 
-static int		MMDrvsHi /* = 0 */;
+static int drivers_loaded, MMDrvsHi;
 static WINE_MM_DRIVER	MMDrvs[8];
 static LPWINE_MLD	MM_MLDrvs[40];
 #define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
@@ -66,6 +66,15 @@ static WINE_LLTYPE	llTypes[MMDRV_MAX] = {
 };
 #undef A
 
+static void MMDRV_Init(void);
+
+static void MMDRV_InitSingleType(UINT type) {
+    if (!drivers_loaded) {
+        drivers_loaded = 1;
+        MMDRV_Init();
+    }
+}
+
 /**************************************************************************
  * 			MMDRV_GetNum				[internal]
  */
@@ -73,6 +82,7 @@ UINT	MMDRV_GetNum(UINT type)
 {
     TRACE("(%04x)\n", type);
     assert(type < MMDRV_MAX);
+    MMDRV_InitSingleType(type);
     return llTypes[type].wMaxId;
 }
 
@@ -109,7 +119,6 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 
     lpDrv = &MMDrvs[mld->mmdIndex];
     part = &lpDrv->parts[mld->type];
-
 #if 0
     /* some sanity checks */
     if (!(part->nIDMin <= devID))
@@ -265,6 +274,7 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
     TRACE("(%p, %04x, %c)\n", _hndl, type, bCanBeID ? 'Y' : 'N');
 
     assert(type < MMDRV_MAX);
+    MMDRV_InitSingleType(type);
 
     if (hndl >= llTypes[type].wMaxId &&
 	hndl != (UINT16)-1 && hndl != (UINT)-1) {
@@ -528,7 +538,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 /**************************************************************************
  * 				MMDRV_Init
  */
-BOOL	MMDRV_Init(void)
+static void MMDRV_Init(void)
 {
     HKEY	hKey;
     char	driver_buffer[256];
@@ -564,7 +574,6 @@ BOOL	MMDRV_Init(void)
 
     ret |= MMDRV_Install("wavemapper", WINE_DEFAULT_WINMM_MAPPER, TRUE);
     ret |= MMDRV_Install("midimapper", WINE_DEFAULT_WINMM_MIDI, TRUE);
-    return ret;
 }
 
 /******************************************************************
@@ -595,7 +604,7 @@ static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
  *
  *
  */
-void    MMDRV_Exit(void)
+void MMDRV_Exit(void)
 {
     unsigned int i;
     TRACE("()\n");

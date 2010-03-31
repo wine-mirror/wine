@@ -155,10 +155,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	if (!WINMM_CreateIData(hInstDLL))
 	    return FALSE;
-        if (!MMDRV_Init()) {
-            WINMM_DeleteIData();
-            return FALSE;
-	}
 	break;
     case DLL_PROCESS_DETACH:
         /* close all opened MCI drivers */
