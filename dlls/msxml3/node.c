@@ -1294,8 +1294,6 @@ static HRESULT WINAPI xmlnode_put_dataType(
 
 static BSTR EnsureCorrectEOL(BSTR sInput)
 {
-    static const WCHAR SZ_RETURN[] = {'\n',0};
-    static const WCHAR SZ_LINEFEED[] = {'\r',0};
     int nNum = 0;
     BSTR sNew;
     int nLen;
@@ -1305,7 +1303,7 @@ static BSTR EnsureCorrectEOL(BSTR sInput)
     /* Count line endings */
     for(i=0; i < nLen; i++)
     {
-        if(sInput[i] == SZ_RETURN[0])
+        if(sInput[i] == '\n')
             nNum++;
     }
 
@@ -1318,9 +1316,9 @@ static BSTR EnsureCorrectEOL(BSTR sInput)
         sNew = SysAllocStringLen(NULL, nLen + nNum+1);
         for(i=0; i < nLen; i++)
         {
-            if(sInput[i] == SZ_RETURN[0])
+            if(sInput[i] == '\n')
             {
-                sNew[i+nPlace] = SZ_LINEFEED[0];
+                sNew[i+nPlace] = '\r';
                 nPlace++;
             }
             sNew[i+nPlace] = sInput[i];
