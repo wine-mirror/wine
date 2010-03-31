@@ -1224,6 +1224,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 {
     LPWSTR		verb, dev, args;
     LPWINE_MCIDRIVER	wmd = 0;
+    MCIDEVICEID		uDevID;
     DWORD		dwFlags = 0, dwRet = 0;
     int			offset = 0;
     DWORD_PTR		data[MCI_DATA_SIZE];
@@ -1252,6 +1253,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     if ((dwRet = MCI_GetString(&dev, &args))) {
 	goto errCleanUp;
     }
+    uDevID = strcmpiW(dev, wszAll) ? 0 : MCI_ALL_DEVICE_ID;
 
     /* Determine devType from open */
     if (!strcmpW(verb, wszOpen)) {
@@ -1307,6 +1309,10 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD_PTR)dev;
 	}
+	if (MCI_ALL_DEVICE_ID == uDevID) {
+	    dwRet = MCIERR_CANNOT_USE_ALL;
+	    goto errCleanUp;
+	}
 	if (!strstrW(args, wszSAliasS) && !dev) {
 	    dwRet = MCIERR_NEW_REQUIRES_ALIAS;
 	    goto errCleanUp;
@@ -1320,7 +1326,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    MCI_UnLoadMciDriver(wmd);
 	    goto errCleanUp;
 	}
-    } else if (!(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
+    } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
         static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
 	WCHAR   buf[128];
@@ -1384,7 +1390,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
     TRACE("[%d, %s, %08x, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
-	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
+	  wmd ? wmd->wDeviceID : uDevID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
 	  data[0], debugstr_w((WCHAR *)data[0]), data[1], debugstr_w((WCHAR *)data[1]),
 	  data[2], debugstr_w((WCHAR *)data[2]), data[3], debugstr_w((WCHAR *)data[3]),
 	  data[4], debugstr_w((WCHAR *)data[4]), data[5], debugstr_w((WCHAR *)data[5]));
@@ -1394,7 +1400,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    MCI_UnLoadMciDriver(wmd);
 	/* FIXME: notification is not properly shared across two opens */
     } else {
-	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD_PTR)data);
+	dwRet = MCI_SendCommand(wmd ? wmd->wDeviceID : uDevID, MCI_GetMessage(lpCmd), dwFlags, (DWORD_PTR)data);
     }
     TRACE("=> 1/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
     dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, data, lpstrRet, uRetLen);

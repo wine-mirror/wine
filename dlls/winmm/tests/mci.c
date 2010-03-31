@@ -217,11 +217,11 @@ static void test_openCloseWAVE(HWND hwnd)
     }
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
-    todo_wine ok(!err,"mci %s (without buffer) returned %s\n", command_close_all, dbg_mcierr(err));
+    ok(!err,"mci %s (without buffer) returned %s\n", command_close_all, dbg_mcierr(err));
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_close_all, buf, sizeof(buf), hwnd);
-    todo_wine ok(!err,"mci %s (with output buffer) returned %s\n", command_close_all, dbg_mcierr(err));
+    ok(!err,"mci %s (with output buffer) returned %s\n", command_close_all, dbg_mcierr(err));
     ok(buf[0] == 0, "mci %s changed output buffer: %s\n", command_close_all, buf);
     /* No notification left, everything closed already */
     test_notification(hwnd, command_close_all, 0);
@@ -864,7 +864,7 @@ START_TEST(mci)
     test_AutoOpenWAVE(hwnd);
     /* Win9X hangs when exiting with something still open. */
     err = mciSendString("close all", NULL, 0, hwnd);
-    todo_wine ok(!err,"final close all returned %s\n", dbg_mcierr(err));
+    ok(!err,"final close all returned %s\n", dbg_mcierr(err));
     ok(DeleteFile("tempfile.wav")||ok_saved,"Delete tempfile.wav (cause auto-open?)\n");
     DestroyWindow(hwnd);
 }
