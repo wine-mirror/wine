@@ -119,13 +119,6 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 
     lpDrv = &MMDrvs[mld->mmdIndex];
     part = &lpDrv->parts[mld->type];
-#if 0
-    /* some sanity checks */
-    if (!(part->nIDMin <= devID))
-	ERR("!(part->nIDMin(%d) <= devID(%d))\n", part->nIDMin, devID);
-    if (!(devID < part->nIDMax))
-	ERR("!(devID(%d) < part->nIDMax(%d))\n", devID, part->nIDMax);
-#endif
 
     assert(part->fnMessage32);
 
