@@ -286,8 +286,8 @@ Statusberichte für viele Anwendungen sind unter
 Fehler können unter
 .I http://bugs.winehq.org
 gemeldet werden. Wenn Sie einen Fehler melden möchten, lesen Sie
-bitte vorher die Datei
-.I documentation/bugs.sgml
+bitte vorher
+.I http://wiki.winehq.org/Bugs
 im
 .B wine
 -Quellcode, um zu sehen, welche Informationen benötigt werden.

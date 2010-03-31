@@ -281,8 +281,8 @@ there is no entry for this application.
 .PP
 Bug reports may be posted to Wine Bugzilla
 .I http://bugs.winehq.org
-If you want to post a bug report, please read the file
-.I documentation/bugs.sgml
+If you want to post a bug report, please see
+.I http://wiki.winehq.org/Bugs
 in the 
 .B wine 
 source to see what information is necessary

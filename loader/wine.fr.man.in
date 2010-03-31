@@ -277,8 +277,8 @@ N'hésitez pas à y ajouter les applications que vous exécutez actuellement.
 .PP
 Les rapports d'anomalie peuvent être postés sur le Bugzilla de Wine
 .I http://bugs.winehq.org
-Si vous souhaitez envoyer un rapport d'anomalie, veuillez vous référer au fichier
-.I documentation/bugs.sgml
+Si vous souhaitez envoyer un rapport d'anomalie, veuillez vous référer à
+.I http://wiki.winehq.org/Bugs
 dans les sources de
 .B wine
 pour voir quelles informations sont nécessaires
