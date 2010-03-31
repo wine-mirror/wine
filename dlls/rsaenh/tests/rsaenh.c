@@ -320,8 +320,9 @@ static void test_hashes(void)
     unsigned char pbData[2048];
     BOOL result;
     HCRYPTHASH hHash, hHashClone;
+    HCRYPTPROV prov;
     BYTE pbHashValue[36];
-    DWORD hashlen, len;
+    DWORD hashlen, len, error;
     int i;
 
     for (i=0; i<2048; i++) pbData[i] = (unsigned char)i;
@@ -463,6 +464,57 @@ static void test_hashes(void)
     result = CryptCreateHash(hProv, CALG_SHA_512, 0, 0, &hHash);
     ok(!result && GetLastError() == NTE_BAD_ALGID,
        "expected NTE_BAD_ALGID, got %08x\n", GetLastError());
+
+    result = CryptAcquireContextW(&prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(result, "CryptAcquireContext failed 0x%08x\n", GetLastError());
+
+    result = CryptCreateHash(prov, CALG_SHA1, 0, 0, &hHash);
+    ok(result, "CryptCreateHash failed 0x%08x\n", GetLastError());
+
+    /* release provider before using the hash */
+    result = CryptReleaseContext(prov, 0);
+    ok(result, "CryptReleaseContext failed 0x%08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptHashData(hHash, (BYTE *)"data", sizeof("data"), 0);
+    error = GetLastError();
+    ok(!result, "CryptHashData succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    result = CryptDestroyHash(hHash);
+    error = GetLastError();
+    ok(!result, "CryptDestroyHash succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    result = CryptAcquireContextW(&prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(result, "CryptAcquireContext failed 0x%08x\n", GetLastError());
+
+    result = CryptCreateHash(hProv, CALG_SHA1, 0, 0, &hHash);
+    ok(result, "CryptCreateHash failed 0x%08x\n", GetLastError());
+
+    result = CryptHashData(hHash, (BYTE *)"data", sizeof("data"), 0);
+    ok(result, "CryptHashData failed 0x%08x\n", GetLastError());
+
+    result = CryptDuplicateHash(hHash, NULL, 0, &hHashClone);
+    ok(result, "CryptDuplicateHash failed 0x%08x\n", GetLastError());
+
+    len = 20;
+    result = CryptGetHashParam(hHashClone, HP_HASHVAL, pbHashValue, &len, 0);
+    ok(result, "CryptGetHashParam failed 0x%08x\n", GetLastError());
+
+    /* add data after duplicating the hash */
+    result = CryptHashData(hHash, (BYTE *)"more data", sizeof("more data"), 0);
+    ok(result, "CryptHashData failed 0x%08x\n", GetLastError());
+
+    result = CryptDestroyHash(hHash);
+    ok(result, "CryptDestroyHash failed 0x%08x\n", GetLastError());
+
+    result = CryptDestroyHash(hHashClone);
+    ok(result, "CryptDestroyHash failed 0x%08x\n", GetLastError());
+
+    result = CryptReleaseContext(prov, 0);
+    ok(result, "CryptReleaseContext failed 0x%08x\n", GetLastError());
 }
 
 static void test_block_cipher_modes(void)
