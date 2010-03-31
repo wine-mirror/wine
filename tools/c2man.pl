@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-# Generate API documentation. See documentation/documentation.sgml for details.
+# Generate API documentation. See http://www.winehq.org/docs/winedev-guide/api-docs for details.
 #
 # Copyright (C) 2000 Mike McCormack
 # Copyright (C) 2003 Jon Griffiths
