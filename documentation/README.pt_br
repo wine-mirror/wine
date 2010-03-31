@@ -186,8 +186,7 @@ Bugs:	Relate erros ao Wine Bugzilla em http://bugs.winehq.org
 	Por favor pesquise a base de dados do bugzilla para verificar se 
 	seu problema já tenha sido encontrado, antes de enviar um 
 	relatório do erro. Você pode também afixar relatórios do erro em
-	comp.emulators.ms-windows.wine. Por favor leia o arquivo 
-	documentation/bugs.sgml para ver qual informação é requerida. 
+	comp.emulators.ms-windows.wine.
 
 IRC:	A ajuda online está disponível em #WineHQ em irc.freenode.net.
 

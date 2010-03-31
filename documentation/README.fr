@@ -174,8 +174,6 @@ Bogues	Rapportez les bogues sur le Bugzilla Wine sur http://bugs.winehq.org
 	que le problème n'a pas déjà été découvert.
 	Vous pouvez aussi rapporter des bogues sur le forum de
 	discussion comp.emulators.ms-windows.wine.
-	Veuillez également lire le fichier documentation/bugs.sgml pour
-	connaître les informations indispensables à fournir.
 
 IRC	L'aide en ligne est disponible sur le canal #WineHQ sur
 	irc.freenode.net.

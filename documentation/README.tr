@@ -192,8 +192,7 @@ Hatalar:
 	ile raporlayabilirsiniz. Lütfen bir hata raporlamadan önce
 	hatanın önceden girilip girilmediğini öğrenmek için bugzilla'da
 	arama yapınız. Hata raporlarını ayrıca comp.emulators.ms-windows.wine
-	haber grubuna gönderebilirsiniz. Lütfen hangi bilgilerin gerekli
-	olduğunu öğrenmek için documentation/bugs.sgml dosyasını okuyunuz.
+	haber grubuna gönderebilirsiniz.
 
 IRC:	irc.freenode.net sunucusundan #WineHQ kanalı ile çevrimiçi yardım
 	alabilirsiniz.
