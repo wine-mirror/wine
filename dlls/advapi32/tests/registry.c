@@ -1945,6 +1945,32 @@ static void test_deleted_key(void)
     setup_main_key();
 }
 
+static void test_delete_value(void)
+{
+    LONG res;
+    char longname[401];
+
+    res = RegSetValueExA( hkey_main, "test", 0, REG_SZ, (const BYTE*)"value", 6 );
+    ok(res == ERROR_SUCCESS, "expect ERROR_SUCCESS, got %i\n", res);
+
+    res = RegQueryValueExA( hkey_main, "test", NULL, NULL, NULL, NULL);
+    ok(res == ERROR_SUCCESS, "expect ERROR_SUCCESS, got %i\n", res);
+
+    res = RegDeleteValueA( hkey_main, "test" );
+    ok(res == ERROR_SUCCESS, "expect ERROR_SUCCESS, got %i\n", res);
+
+    res = RegQueryValueExA( hkey_main, "test", NULL, NULL, NULL, NULL);
+    ok(res == ERROR_FILE_NOT_FOUND, "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
+
+    res = RegDeleteValueA( hkey_main, "test" );
+    ok(res == ERROR_FILE_NOT_FOUND, "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
+
+    memset(longname, 'a', 400);
+    longname[400] = 0;
+    res = RegDeleteValueA( hkey_main, longname );
+    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -1980,6 +2006,7 @@ START_TEST(registry)
     test_reg_delete_tree();
     test_rw_order();
     test_deleted_key();
+    test_delete_value();
 
     /* cleanup */
     delete_key( hkey_main );
