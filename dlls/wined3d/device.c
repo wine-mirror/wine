@@ -5161,8 +5161,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     const struct wined3d_format_desc *dst_format;
     CONVERT_TYPES convert = NO_CONVERSION;
     struct wined3d_context *context;
-    WINED3DPOOL src_pool, dst_pool;
-    WINED3DSURFACE_DESC winedesc;
     const unsigned char *data;
     UINT update_w, update_h;
     UINT src_w, src_h;
@@ -5175,15 +5173,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
             iface, src_surface, wine_dbgstr_rect(src_rect),
             dst_surface, wine_dbgstr_point(dst_point));
 
-    IWineD3DSurface_GetDesc(src_surface, &winedesc);
-    src_w = winedesc.width;
-    src_h = winedesc.height;
-    src_pool = winedesc.pool;
-
-    IWineD3DSurface_GetDesc(dst_surface, &winedesc);
-    dst_pool = winedesc.pool;
-
-    if (src_pool != WINED3DPOOL_SYSTEMMEM || dst_pool != WINED3DPOOL_DEFAULT)
+    if (src_impl->resource.pool != WINED3DPOOL_SYSTEMMEM || dst_impl->resource.pool != WINED3DPOOL_DEFAULT)
     {
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
                 src_surface, dst_surface);
@@ -5221,6 +5211,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     surface_internal_preload(dst_surface, SRGB_RGB);
     IWineD3DSurface_BindTexture(dst_surface, FALSE);
 
+    src_w = src_impl->currentDesc.Width;
+    src_h = src_impl->currentDesc.Height;
     update_w = src_rect ? src_rect->right - src_rect->left : src_w;
     update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
 
