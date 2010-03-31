@@ -2220,7 +2220,7 @@ static void stretchrect_test(IDirect3DDevice9 *device)
     IDirect3DSurface9 *surf_offscreen32 = NULL, *surf_offscreen64 = NULL, *surf_offscreen_dest64 = NULL;
     IDirect3DSurface9 *surf_temp32 = NULL, *surf_temp64 = NULL;
     IDirect3DSurface9 *orig_rt = NULL;
-    IDirect3DSurface9 *backbuffer;
+    IDirect3DSurface9 *backbuffer = NULL;
     DWORD color;
 
     RECT src_rect64 = {0, 0, 64, 64};
