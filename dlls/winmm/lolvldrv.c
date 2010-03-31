@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
+/* Default set of drivers to be loaded */
+#define WINE_DEFAULT_WINMM_DRIVER "alsa,oss,coreaudio,esd"
+
 /* each known type of driver has an instance of this structure */
 typedef struct tagWINE_LLTYPE {
     /* those attributes depend on the specification of the type */
@@ -535,38 +538,32 @@ static void MMDRV_Init(void)
 {
     HKEY	hKey;
     char	driver_buffer[256];
-    char	mapper_buffer[256];
-    char	midi_buffer[256];
-    char*	p;
-    DWORD	type, size;
-    BOOL	ret = FALSE;
+    char *p, *next;
     TRACE("()\n");
 
     strcpy(driver_buffer, WINE_DEFAULT_WINMM_DRIVER);
-    strcpy(mapper_buffer, WINE_DEFAULT_WINMM_MAPPER);
-    strcpy(midi_buffer, WINE_DEFAULT_WINMM_MIDI);
 
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
     if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hKey))
     {
-        size = sizeof(driver_buffer);
-        if (RegQueryValueExA(hKey, "Audio", 0, &type, (LPVOID)driver_buffer, &size))
+        DWORD size = sizeof(driver_buffer);
+        if (RegQueryValueExA(hKey, "Audio", 0, NULL, (BYTE*)driver_buffer, &size))
             strcpy(driver_buffer, WINE_DEFAULT_WINMM_DRIVER);
     }
 
-    p = driver_buffer;
-    while (p)
+    for (p = driver_buffer; p; p = next)
     {
         char filename[sizeof(driver_buffer)+10];
-        char *next = strchr(p, ',');
+        next = strchr(p, ',');
         if (next) *next++ = 0;
         sprintf( filename, "wine%s.drv", p );
-        if ((ret = MMDRV_Install( filename, filename, FALSE ))) break;
+        if (MMDRV_Install(filename, filename, FALSE))
+            break;
         p = next;
     }
 
-    ret |= MMDRV_Install("wavemapper", WINE_DEFAULT_WINMM_MAPPER, TRUE);
-    ret |= MMDRV_Install("midimapper", WINE_DEFAULT_WINMM_MIDI, TRUE);
+    MMDRV_Install("wavemapper", "msacm32.drv", TRUE);
+    MMDRV_Install("midimapper", "midimap.dll", TRUE);
 }
 
 /******************************************************************
