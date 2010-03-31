@@ -5159,10 +5159,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_format_desc *src_format;
     const struct wined3d_format_desc *dst_format;
-    CONVERT_TYPES convert = NO_CONVERSION;
     struct wined3d_context *context;
     const unsigned char *data;
     UINT update_w, update_h;
+    CONVERT_TYPES convert;
     UINT src_w, src_h;
     UINT dst_x, dst_y;
     DWORD sampler;
