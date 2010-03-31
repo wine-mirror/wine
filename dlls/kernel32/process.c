@@ -1618,9 +1618,9 @@ static const char *get_alternate_loader( char **ret_env )
             if ((loader = strrchr( env, '/' ))) loader++;
             else loader = env;
         }
+        *ret_env = env;
     }
     if (!loader) loader = is_win64 ? "wine32" : "wine";
-    *ret_env = env;
     return loader;
 }
 
