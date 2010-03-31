@@ -411,8 +411,6 @@ typedef enum _WINED3DRENDERSTATETYPE
     WINED3DRS_COLORWRITEENABLE              = 168,
     WINED3DRS_TWEENFACTOR                   = 170,
     WINED3DRS_BLENDOP                       = 171,
-    WINED3DRS_POSITIONORDER                 = 172,
-    WINED3DRS_NORMALORDER                   = 173,
     WINED3DRS_POSITIONDEGREE                = 172,
     WINED3DRS_NORMALDEGREE                  = 173,
     WINED3DRS_SCISSORTESTENABLE             = 174,
