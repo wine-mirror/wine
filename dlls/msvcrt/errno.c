@@ -286,3 +286,22 @@ void CDECL _seterrormode(int mode)
 {
     SetErrorMode( mode );
 }
+
+/* _get_invalid_parameter_handler - not exported in native msvcrt, added in msvcr80 */
+MSVCRT_invalid_parameter_handler CDECL _get_invalid_parameter_handler(void)
+{
+    TRACE("\n");
+    return MSVCRT_invalid_parameter;
+}
+
+/* _set_invalid_parameter_handler - not exproted in native msvcrt, added in msvcr80 */
+MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
+        MSVCRT_invalid_parameter_handler handler)
+{
+    MSVCRT_invalid_parameter_handler old = MSVCRT_invalid_parameter;
+
+    TRACE("(%p)\n", handler);
+
+    MSVCRT_invalid_parameter = handler;
+    return old;
+}

@@ -27,7 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcr90);
 
 typedef int (CDECL *_INITTERM_E_FN)(void);
-typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, unsigned*);
 
 /*********************************************************************
  *  DllMain (MSVCR90.@)
@@ -75,30 +74,6 @@ void * CDECL _encoded_null(void)
     TRACE("\n");
 
     return MSVCR90_encode_pointer(NULL);
-}
-
-/*********************************************************************
- *  _get_invalid_parameter_handler (MSVCR90.@)
- */
-_invalid_parameter_handler CDECL _get_invalid_parameter_handler(void)
-{
-    TRACE("\n");
-    return *((_invalid_parameter_handler*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_invalid_parameter"));
-}
-
-/*********************************************************************
- *  _set_invalid_parameter_handler (MSVCR90.@)
- */
-_invalid_parameter_handler CDECL _set_invalid_parameter_handler(_invalid_parameter_handler handler)
-{
-    _invalid_parameter_handler *ptr = (_invalid_parameter_handler*)GetProcAddress(
-            GetModuleHandleA("msvcrt.dll"), "_invalid_parameter");
-    _invalid_parameter_handler old = *ptr;
-
-    TRACE("(%p)\n", handler);
-
-    *ptr = handler;
-    return old;
 }
 
 /*********************************************************************

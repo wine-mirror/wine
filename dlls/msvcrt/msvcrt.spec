@@ -479,7 +479,7 @@
 @ stub _inp #(long) -i386
 @ stub _inpd #(long) -i386
 @ stub _inpw #(long) -i386
-@ extern _invalid_parameter MSVCRT_invalid_parameter
+@ stub _invalid_parameter
 @ extern _iob MSVCRT__iob
 # stub _isalnum_l
 # stub _isalpha_l
@@ -1409,3 +1409,7 @@
 # stub wprintf_s
 @ varargs wscanf(wstr) MSVCRT_wscanf
 # stub wscanf_s
+
+# Functions not exported in native dll:
+@ cdecl _get_invalid_parameter_handler()
+@ cdecl _set_invalid_parameter_handler(ptr)
