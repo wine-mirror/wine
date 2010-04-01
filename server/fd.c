@@ -1628,6 +1628,7 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
         if (!closed) goto failed;
         if ((fd->unix_fd = dup( orig->unix_fd )) == -1)
         {
+            file_set_error();
             free( closed );
             goto failed;
         }
@@ -1637,8 +1638,11 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
         fd->inode = (struct inode *)grab_object( orig->inode );
         list_add_head( &fd->inode->open, &fd->inode_entry );
     }
-    else if ((fd->unix_fd = dup( orig->unix_fd )) == -1) goto failed;
-
+    else if ((fd->unix_fd = dup( orig->unix_fd )) == -1)
+    {
+        file_set_error();
+        goto failed;
+    }
     return fd;
 
 failed:
