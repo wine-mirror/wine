@@ -35,6 +35,8 @@ static int *p_sys_nerr;
 static int* (__cdecl *p__sys_nerr)(void);
 static char **p_sys_errlist;
 static char** (__cdecl *p__sys_errlist)(void);
+static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
+static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 
 int cb_called[4];
 
@@ -193,6 +195,37 @@ static void test_error_messages(void)
     ok(*p_sys_errlist == *(p__sys_errlist()), "p_sys_errlist != p__sys_errlist()\n");
 }
 
+static void test__strtoi64(void)
+{
+    __int64 res;
+    unsigned __int64 ures;
+
+    if(!p_strtoi64 || !p_strtoui64) {
+        win_skip("_strtoi64 or _strtoui64 not found\n");
+        return;
+    }
+
+    if(!p_set_invalid_parameter_handler) {
+        win_skip("_set_invalid_parameter_handler not found\n");
+        return;
+    }
+
+    errno = 0xdeadbeef;
+    res = p_strtoi64(NULL, NULL, 10);
+    ok(res == 0, "res != 0\n");
+    res = p_strtoi64("123", NULL, 1);
+    ok(res == 0, "res != 0\n");
+    res = p_strtoi64("123", NULL, 37);
+    ok(res == 0, "res != 0\n");
+    ures = p_strtoui64(NULL, NULL, 10);
+    ok(ures == 0, "res = %d\n", (int)ures);
+    ures = p_strtoui64("123", NULL, 1);
+    ok(ures == 0, "res = %d\n", (int)ures);
+    ures = p_strtoui64("123", NULL, 37);
+    ok(ures == 0, "res = %d\n", (int)ures);
+    ok(errno == 0xdeadbeef, "errno = %x\n", errno);
+}
+
 /* ########## */
 
 START_TEST(msvcr90)
@@ -219,8 +252,11 @@ START_TEST(msvcr90)
     p__sys_nerr = (void *) GetProcAddress(hcrt, "__sys_nerr");
     p_sys_errlist = (void *) GetProcAddress(hcrt, "_sys_errlist");
     p__sys_errlist = (void *) GetProcAddress(hcrt, "__sys_errlist");
+    p_strtoi64 = (void *) GetProcAddress(hcrt, "_strtoi64");
+    p_strtoui64 = (void *) GetProcAddress(hcrt, "_strtoui64");
 
     test__initterm_e();
     test__encode_pointer();
     test_error_messages();
+    test__strtoi64();
 }
