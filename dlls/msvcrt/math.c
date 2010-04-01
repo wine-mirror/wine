@@ -702,6 +702,27 @@ unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
 }
 
 /*********************************************************************
+ *              _controlfp_s (MSVCRT.@)
+ */
+int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask)
+{
+    unsigned int flags;
+#ifdef __i386__
+    FIXME("(%p %u %u) semi-stub\n", cur, newval, mask);
+
+    flags = _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
+
+    if(cur)
+        *cur = flags;
+
+    return 0;
+#else
+    FIXME(":Not Implemented!\n");
+    return 0;
+#endif
+}
+
+/*********************************************************************
  *		_copysign (MSVCRT.@)
  */
 double CDECL _copysign(double num, double sign)

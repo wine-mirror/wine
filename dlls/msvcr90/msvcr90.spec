@@ -319,7 +319,7 @@
 @ stub _configthreadlocale
 @ cdecl _control87(long long) msvcrt._control87
 @ cdecl _controlfp(long long) msvcrt._controlfp
-@ stub _controlfp_s
+@ cdecl _controlfp_s(ptr long long) msvcrt._controlfp_s
 @ cdecl _copysign( double double ) msvcrt._copysign
 @ varargs _cprintf(str) msvcrt._cprintf
 @ stub _cprintf_l
