@@ -1873,13 +1873,6 @@ static void state_stippleenable(DWORD state, IWineD3DStateBlockImpl *stateblock,
     }
 }
 
-static void state_bordercolor(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
-{
-    if(stateblock->renderState[WINED3DRS_BORDERCOLOR]) {
-        FIXME("Render state WINED3DRS_BORDERCOLOR not implemented yet\n");
-    }
-}
-
 static void state_mipmaplodbias(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     if(stateblock->renderState[WINED3DRS_MIPMAPLODBIAS]) {
@@ -5528,7 +5521,6 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          }, WINED3D_GL_EXT_NONE             },
     { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  apply_pixelshader   }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_BORDERCOLOR),                { STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_FOGCOLOR),                   { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_FOGDENSITY),                 { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    }, WINED3D_GL_EXT_NONE             },

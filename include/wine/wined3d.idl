@@ -315,7 +315,6 @@ typedef enum _WINED3DRENDERSTATETYPE
     WINED3DRS_STIPPLEENABLE                 = 39, /* d3d7 */
     WINED3DRS_EDGEANTIALIAS                 = 40, /* d3d7, d3d8 */
     WINED3DRS_COLORKEYENABLE                = 41, /* d3d7 */
-    WINED3DRS_BORDERCOLOR                   = 43, /* d3d7 */
     WINED3DRS_MIPMAPLODBIAS                 = 46, /* d3d7 */
     WINED3DRS_ZBIAS                         = 47, /* d3d7, d3d8 */
     WINED3DRS_RANGEFOGENABLE                = 48,

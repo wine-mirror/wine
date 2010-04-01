@@ -2441,6 +2441,11 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                                                 Value);
             break;
 
+        case D3DRENDERSTATE_BORDERCOLOR:
+            FIXME("Unhandled render state D3DRENDERSTATE_BORDERCOLOR.\n");
+            hr = E_NOTIMPL;
+            break;
+
         default:
             /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
             hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
@@ -2721,6 +2726,13 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
                                                 0, WINED3DSAMP_ADDRESSV,
                                                 Value);
+            break;
+
+        case D3DRENDERSTATE_BORDERCOLOR:
+            /* This should probably just forward to the corresponding sampler
+             * state. Needs tests. */
+            FIXME("Unhandled render state D3DRENDERSTATE_BORDERCOLOR.\n");
+            hr = E_NOTIMPL;
             break;
 
         default:
