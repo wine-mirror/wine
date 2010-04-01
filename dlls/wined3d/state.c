@@ -5665,7 +5665,7 @@ static void validate_state_table(struct StateEntry *state_table)
         DWORD rep = state_table[i].representative;
         if (rep)
         {
-            if (!state_table[rep].representative)
+            if (state_table[rep].representative != rep)
             {
                 ERR("State %s (%#x) has invalid representative %s (%#x).\n",
                         debug_d3dstate(i), i, debug_d3dstate(rep), rep);
