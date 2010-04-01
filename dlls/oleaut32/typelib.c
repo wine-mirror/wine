@@ -835,19 +835,23 @@ HRESULT WINAPI UnRegisterTypeLib(
             goto enddeleteloop;
         }
 
-        /* the path to the type */
-        get_interface_key( &typeAttr->guid, subKeyName );
+        if ((kind == TKIND_INTERFACE && (typeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
+            kind == TKIND_DISPATCH)
+        {
+            /* the path to the type */
+            get_interface_key( &typeAttr->guid, subKeyName );
 
-        /* Delete its bits */
-        if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != ERROR_SUCCESS) {
-            goto enddeleteloop;
+            /* Delete its bits */
+            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != ERROR_SUCCESS)
+                goto enddeleteloop;
+
+            RegDeleteKeyW(subKey, ProxyStubClsidW);
+            RegDeleteKeyW(subKey, ProxyStubClsid32W);
+            RegDeleteKeyW(subKey, TypeLibW);
+            RegCloseKey(subKey);
+            subKey = NULL;
+            RegDeleteKeyW(HKEY_CLASSES_ROOT, subKeyName);
         }
-        RegDeleteKeyW(subKey, ProxyStubClsidW);
-        RegDeleteKeyW(subKey, ProxyStubClsid32W);
-        RegDeleteKeyW(subKey, TypeLibW);
-        RegCloseKey(subKey);
-        subKey = NULL;
-        RegDeleteKeyW(HKEY_CLASSES_ROOT, subKeyName);
 
 enddeleteloop:
         if (typeAttr) ITypeInfo_ReleaseTypeAttr(typeInfo, typeAttr);
