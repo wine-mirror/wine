@@ -2447,7 +2447,14 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             break;
 
         default:
-            /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+            if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00
+                    && RenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)
+            {
+                FIXME("Unhandled stipple pattern render state (%#x).\n",
+                        RenderStateType);
+                hr = E_NOTIMPL;
+                break;
+            }
             hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
                                                RenderStateType,
                                                Value);
@@ -2736,8 +2743,14 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             break;
 
         default:
-
-            /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+            if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00
+                    && RenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)
+            {
+                FIXME("Unhandled stipple pattern render state (%#x).\n",
+                        RenderStateType);
+                hr = E_NOTIMPL;
+                break;
+            }
 
             hr = IWineD3DDevice_SetRenderState(This->wineD3DDevice,
                                                RenderStateType,
