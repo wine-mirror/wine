@@ -2317,7 +2317,35 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         return SOCKET_ERROR;
 
     case WS_IPPROTO_IPV6:
-        FIXME("IPPROTO_IPV6 unimplemented (optname 0x%08x)\n", optname);
+        switch(optname)
+        {
+#ifdef IPV6_ADD_MEMBERSHIP
+        case WS_IPV6_ADD_MEMBERSHIP:
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
+        case WS_IPV6_DROP_MEMBERSHIP:
+#endif
+        case WS_IPV6_MULTICAST_IF:
+        case WS_IPV6_MULTICAST_HOPS:
+        case WS_IPV6_MULTICAST_LOOP:
+        case WS_IPV6_UNICAST_HOPS:
+        case WS_IPV6_V6ONLY:
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+            convert_sockopt(&level, &optname);
+            if (getsockopt(fd, level, optname, optval, (unsigned int *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            release_sock_fd( s, fd );
+            return ret;
+        case WS_IPV6_DONTFRAG:
+            FIXME("WS_IPV6_DONTFRAG is always false!\n");
+            *(BOOL*)optval = FALSE;
+            return 0;
+        }
+        FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
         return SOCKET_ERROR;
 
     default:
