@@ -5723,7 +5723,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
              * applying later lines, but do not record anything in the state
              * table
              */
-            if(!cur[i].content.apply) continue;
+            if (!cur[i].content.representative) continue;
 
             handlers = num_handlers(multistate_funcs[cur[i].state]);
             multistate_funcs[cur[i].state][handlers] = cur[i].content.apply;
