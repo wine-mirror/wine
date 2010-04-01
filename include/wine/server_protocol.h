@@ -142,10 +142,10 @@ typedef struct
     {
         struct { unsigned int eip, ebp, esp, eflags, cs, ss; } i386_regs;
         struct { unsigned __int64 rip, rbp, rsp;
-                 unsigned int cs, ss, flags; } x86_64_regs;
+                 unsigned int cs, ss, flags, __pad; } x86_64_regs;
         struct { unsigned __int64 fir;
-                 unsigned int psr; } alpha_regs;
-        struct { unsigned int iar, msr, ctr, lr, dar, dsisr, trap; } powerpc_regs;
+                 unsigned int psr, __pad; } alpha_regs;
+        struct { unsigned int iar, msr, ctr, lr, dar, dsisr, trap, __pad; } powerpc_regs;
         struct { unsigned int psr, pc, npc, y, wim, tbr; } sparc_regs;
     } ctl;
     union
@@ -5418,6 +5418,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 397
+#define SERVER_PROTOCOL_VERSION 398
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
