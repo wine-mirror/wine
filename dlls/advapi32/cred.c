@@ -474,10 +474,10 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
 
     GetSystemTimeAsFileTime(&LastWritten);
 
-    ret = RegSetValueExW(hkey, wszFlagsValue, 0, REG_DWORD, (LPVOID)&credential->Flags,
+    ret = RegSetValueExW(hkey, wszFlagsValue, 0, REG_DWORD, (const BYTE*)&credential->Flags,
                          sizeof(credential->Flags));
     if (ret != ERROR_SUCCESS) return ret;
-    ret = RegSetValueExW(hkey, wszTypeValue, 0, REG_DWORD, (LPVOID)&credential->Type,
+    ret = RegSetValueExW(hkey, wszTypeValue, 0, REG_DWORD, (const BYTE*)&credential->Type,
                          sizeof(credential->Type));
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegSetValueExW(hkey, NULL, 0, REG_SZ, (LPVOID)credential->TargetName,
@@ -492,7 +492,7 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
     ret = RegSetValueExW(hkey, wszLastWrittenValue, 0, REG_BINARY, (LPVOID)&LastWritten,
                          sizeof(LastWritten));
     if (ret != ERROR_SUCCESS) return ret;
-    ret = RegSetValueExW(hkey, wszPersistValue, 0, REG_DWORD, (LPVOID)&credential->Persist,
+    ret = RegSetValueExW(hkey, wszPersistValue, 0, REG_DWORD, (const BYTE*)&credential->Persist,
                          sizeof(credential->Persist));
     if (ret != ERROR_SUCCESS) return ret;
     /* FIXME: Attributes */
