@@ -3515,12 +3515,12 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 
 /* Uses the hardware to stretch and flip the image */
 static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
-        IWineD3DSwapChainImpl *swapchain, const RECT *src_rect, const RECT *dst_rect_in,
-        WINED3DTEXTUREFILTERTYPE Filter)
+        const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
     GLuint src, backup = 0;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
+    IWineD3DSwapChainImpl *src_swapchain = NULL;
     float left, right, top, bottom; /* Texture coordinates */
     UINT fbwidth = Src->currentDesc.Width;
     UINT fbheight = Src->currentDesc.Height;
@@ -3618,7 +3618,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    if(!swapchain || (IWineD3DSurface *) Src == swapchain->backBuffer[0]) {
+    IWineD3DSurface_GetContainer((IWineD3DSurface *)SrcSurface, &IID_IWineD3DSwapChain, (void **)&src_swapchain);
+    if (src_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)src_swapchain);
+    if (!src_swapchain || (IWineD3DSurface *) Src == src_swapchain->backBuffer[0]) {
         src = backup ? backup : Src->texture_name;
     } else {
         glReadBuffer(GL_FRONT);
@@ -3991,7 +3993,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
-            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &src_rect, &dst_rect, Filter);
+            fb_copy_to_texture_hwstretch(This, SrcSurface, &src_rect, &dst_rect, Filter);
         }
 
         /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
