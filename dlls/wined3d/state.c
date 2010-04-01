@@ -5405,6 +5405,7 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              NULL                }, EXT_POINT_PARAMETERS            },
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_TWEENFACTOR),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3DRS_INDEXEDVERTEXBLENDENABLE),   { STATE_RENDER(WINED3DRS_VERTEXBLEND),                NULL                }, WINED3D_GL_EXT_NONE             },
 
     /* Samplers for NP2 texture matrix adjustions. They are not needed if GL_ARB_texture_non_power_of_two is supported,
      * so register a NULL state handler in that case to get the vertex part of sampler() skipped(VTF is handled in the misc states.
