@@ -1247,8 +1247,8 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
 
 
 
-enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-            unsigned int *vidmem )
+enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
      * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
@@ -1491,8 +1491,8 @@ enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *
 
 }
 
-enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-    unsigned int *vidmem )
+enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
@@ -1647,8 +1647,8 @@ enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_
 
 }
 
-enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-    unsigned int *vidmem )
+enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     if (strstr(gl_renderer, "X3100"))
     {
@@ -1673,8 +1673,8 @@ enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *g
 
 }
 
-enum wined3d_pci_device (select_card_ati_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-            unsigned int *vidmem )
+enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
@@ -1882,8 +1882,8 @@ enum wined3d_pci_device (select_card_ati_mesa)(const struct wined3d_gl_info *gl_
 
 }
 
-enum wined3d_pci_device (select_card_nvidia_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-    unsigned int *vidmem )
+enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     FIXME_(d3d_caps)("Card selection not handled for Mesa Nouveau driver\n");
     if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
@@ -1893,8 +1893,8 @@ enum wined3d_pci_device (select_card_nvidia_mesa)(const struct wined3d_gl_info *
     return CARD_NVIDIA_RIVA_128;
 }
 
-enum wined3d_pci_device (select_card_intel_mesa)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-    unsigned int *vidmem )
+enum wined3d_pci_device select_card_intel_mesa(const struct wined3d_gl_info *gl_info,
+        const char *gl_renderer, unsigned int *vidmem)
 {
     FIXME_(d3d_caps)("Card selection not handled for Mesa Intel driver\n");
     return CARD_INTEL_I915G;
