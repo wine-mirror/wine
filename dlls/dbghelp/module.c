@@ -167,6 +167,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->module.SourceIndexed = FALSE;
     module->module.Publics = FALSE;
 
+    module->reloc_delta       = 0;
     module->type              = type;
     module->is_virtual        = virtual ? TRUE : FALSE;
     for (i = 0; i < DFI_LAST; i++) module->format_info[i] = NULL;

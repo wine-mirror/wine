@@ -1080,6 +1080,7 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
             HeapFree(GetProcessHeap(), 0, modfmt);
             goto leave;
         }
+        elf_info->module->reloc_delta = elf_info->module->module.BaseOfImage - fmap.u.elf.elf_start;
         elf_module_info = (void*)(modfmt + 1);
         elf_info->module->format_info[DFI_ELF] = modfmt;
         modfmt->module      = elf_info->module;
