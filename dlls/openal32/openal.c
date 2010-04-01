@@ -39,6 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(openal32);
 
+static ALCboolean  (ALC_APIENTRY*alcSetThreadContext)(ALCcontext *context);
+static ALCcontext* (ALC_APIENTRY*alcGetThreadContext)(ALCvoid);
+
 static ALboolean loaded_procs;
 
 static ALvoid (AL_APIENTRY*alBufferDataStatic)(const ALuint bid, ALenum format, const ALvoid* data, ALsizei size, ALsizei freq);
@@ -103,12 +106,56 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinst);
+#define LOADFUNC(x) x = alcGetProcAddress(NULL, #x)
+        LOADFUNC(alcSetThreadContext);
+        LOADFUNC(alcGetThreadContext);
+#undef LOADFUNC
         break;
     }
 
     return TRUE;
 }
 
+
+static void LoadProcs(void)
+{
+#define LOADFUNC(x) x = alGetProcAddress(#x)
+    LOADFUNC(alBufferDataStatic);
+    LOADFUNC(alGenFilters);
+    LOADFUNC(alDeleteFilters);
+    LOADFUNC(alIsFilter);
+    LOADFUNC(alFilterf);
+    LOADFUNC(alFilterfv);
+    LOADFUNC(alFilteri);
+    LOADFUNC(alFilteriv);
+    LOADFUNC(alGetFilterf);
+    LOADFUNC(alGetFilterfv);
+    LOADFUNC(alGetFilteri);
+    LOADFUNC(alGetFilteriv);
+    LOADFUNC(alGenEffects);
+    LOADFUNC(alDeleteEffects);
+    LOADFUNC(alIsEffect);
+    LOADFUNC(alEffectf);
+    LOADFUNC(alEffectfv);
+    LOADFUNC(alEffecti);
+    LOADFUNC(alEffectiv);
+    LOADFUNC(alGetEffectf);
+    LOADFUNC(alGetEffectfv);
+    LOADFUNC(alGetEffecti);
+    LOADFUNC(alGetEffectiv);
+    LOADFUNC(alGenAuxiliaryEffectSlots);
+    LOADFUNC(alDeleteAuxiliaryEffectSlots);
+    LOADFUNC(alIsAuxiliaryEffectSlot);
+    LOADFUNC(alAuxiliaryEffectSlotf);
+    LOADFUNC(alAuxiliaryEffectSlotfv);
+    LOADFUNC(alAuxiliaryEffectSloti);
+    LOADFUNC(alAuxiliaryEffectSlotiv);
+    LOADFUNC(alGetAuxiliaryEffectSlotf);
+    LOADFUNC(alGetAuxiliaryEffectSlotfv);
+    LOADFUNC(alGetAuxiliaryEffectSloti);
+    LOADFUNC(alGetAuxiliaryEffectSlotiv);
+#undef LOADFUNC
+}
 
 /***********************************************************************
  *           OpenAL thunk routines
@@ -133,43 +180,7 @@ ALCboolean CDECL wine_alcMakeContextCurrent(ALCcontext *context)
     if(context && !loaded_procs)
     {
         loaded_procs = AL_TRUE;
-
-#define LOADFUNC(x) x = alGetProcAddress(#x)
-        LOADFUNC(alBufferDataStatic);
-        LOADFUNC(alGenFilters);
-        LOADFUNC(alDeleteFilters);
-        LOADFUNC(alIsFilter);
-        LOADFUNC(alFilterf);
-        LOADFUNC(alFilterfv);
-        LOADFUNC(alFilteri);
-        LOADFUNC(alFilteriv);
-        LOADFUNC(alGetFilterf);
-        LOADFUNC(alGetFilterfv);
-        LOADFUNC(alGetFilteri);
-        LOADFUNC(alGetFilteriv);
-        LOADFUNC(alGenEffects);
-        LOADFUNC(alDeleteEffects);
-        LOADFUNC(alIsEffect);
-        LOADFUNC(alEffectf);
-        LOADFUNC(alEffectfv);
-        LOADFUNC(alEffecti);
-        LOADFUNC(alEffectiv);
-        LOADFUNC(alGetEffectf);
-        LOADFUNC(alGetEffectfv);
-        LOADFUNC(alGetEffecti);
-        LOADFUNC(alGetEffectiv);
-        LOADFUNC(alGenAuxiliaryEffectSlots);
-        LOADFUNC(alDeleteAuxiliaryEffectSlots);
-        LOADFUNC(alIsAuxiliaryEffectSlot);
-        LOADFUNC(alAuxiliaryEffectSlotf);
-        LOADFUNC(alAuxiliaryEffectSlotfv);
-        LOADFUNC(alAuxiliaryEffectSloti);
-        LOADFUNC(alAuxiliaryEffectSlotiv);
-        LOADFUNC(alGetAuxiliaryEffectSlotf);
-        LOADFUNC(alGetAuxiliaryEffectSlotfv);
-        LOADFUNC(alGetAuxiliaryEffectSloti);
-        LOADFUNC(alGetAuxiliaryEffectSlotiv);
-#undef LOADFUNC
+        LoadProcs();
     }
     LeaveCriticalSection(&openal_cs);
 
@@ -846,6 +857,33 @@ ALvoid CDECL wine_alGetAuxiliaryEffectSlotiv(ALuint sid, ALenum param, ALint* va
 }
 
 
+/* Thread-local context functions */
+ALCboolean CDECL wine_alcSetThreadContext(ALCcontext *context)
+{
+    EnterCriticalSection(&openal_cs);
+    if(alcSetThreadContext(context) == ALC_FALSE)
+    {
+        WARN("Failed to make context %p current\n", context);
+        LeaveCriticalSection(&openal_cs);
+        return ALC_FALSE;
+    }
+
+    if(context && !loaded_procs)
+    {
+        loaded_procs = AL_TRUE;
+        LoadProcs();
+    }
+    LeaveCriticalSection(&openal_cs);
+
+    return ALC_TRUE;
+}
+
+ALCcontext* CDECL wine_alcGetThreadContext(ALCvoid)
+{
+    return alcGetThreadContext();
+}
+
+
 static const struct FuncList ALCFuncs[] = {
     { "alcCreateContext",           wine_alcCreateContext        },
     { "alcMakeContextCurrent",      wine_alcMakeContextCurrent   },
@@ -867,6 +905,8 @@ static const struct FuncList ALCFuncs[] = {
     { "alcCaptureStart",            wine_alcCaptureStart         },
     { "alcCaptureStop",             wine_alcCaptureStop          },
     { "alcCaptureSamples",          wine_alcCaptureSamples       },
+    { "alcSetThreadContext",        wine_alcSetThreadContext     },
+    { "alcGetThreadContext",        wine_alcGetThreadContext     },
     { NULL,                         NULL                         }
 };
 static const struct FuncList ALFuncs[] = {
