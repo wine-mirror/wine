@@ -537,7 +537,8 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
         for (i = ++parent->last_subkey; i > index; i--)
             parent->subkeys[i] = parent->subkeys[i-1];
         parent->subkeys[index] = key;
-        if (is_wow6432node( key->name, key->namelen )) parent->flags |= KEY_WOW64;
+        if (is_wow6432node( key->name, key->namelen ) && !is_wow6432node( parent->name, parent->namelen ))
+            parent->flags |= KEY_WOW64;
     }
     return key;
 }
