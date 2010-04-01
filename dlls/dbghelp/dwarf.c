@@ -2383,6 +2383,8 @@ static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info*
         case 'P':
         {
             unsigned char encoding = dwarf2_parse_byte(ctx);
+            /* throw away the indirect bit, as we don't care for the result */
+            encoding &= ~DW_EH_PE_indirect;
             dwarf2_parse_augmentation_ptr(ctx, encoding); /* handler */
             continue;
         }
