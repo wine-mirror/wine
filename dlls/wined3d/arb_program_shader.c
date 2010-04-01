@@ -5377,9 +5377,8 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
              * anyway
              */
-            if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT)) {
-                device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
-            }
+            if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
+                stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
         }
 
         if(device->shader_backend == &arb_program_shader_backend) {
@@ -5414,9 +5413,8 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
             /* The pixel shader has to know the luminance offset. Do a constants update if it
              * isn't scheduled anyway
              */
-            if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT)) {
-                device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
-            }
+            if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
+                stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
         }
 
         if(device->shader_backend == &arb_program_shader_backend) {
@@ -6007,13 +6005,10 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
         device->shader_backend->shader_select(context, use_pshader, use_vshader);
 
-        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
-            device->StateTable[STATE_VERTEXSHADERCONSTANT].apply(STATE_VERTEXSHADERCONSTANT, stateblock, context);
-        }
+        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader))
+            stateblock_apply_state(STATE_VERTEXSHADERCONSTANT, stateblock, context);
     }
-    if(use_pshader) {
-        device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
-    }
+    if (use_pshader) stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
 }
 
 /* We can't link the fog states to the fragment state directly since the vertex pipeline links them

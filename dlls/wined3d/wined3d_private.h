@@ -2432,6 +2432,14 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock,
         IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type) DECLSPEC_HIDDEN;
 void stateblock_init_contained_states(IWineD3DStateBlockImpl *object) DECLSPEC_HIDDEN;
 
+static inline void stateblock_apply_state(DWORD state, IWineD3DStateBlockImpl *stateblock,
+        struct wined3d_context *context)
+{
+    const struct StateEntry *statetable = stateblock->device->StateTable;
+    DWORD rep = statetable[state].representative;
+    statetable[rep].apply(rep, stateblock, context);
+}
+
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
  * allows GetData on a created issue, but opengl doesn't
