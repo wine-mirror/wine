@@ -1730,6 +1730,12 @@ static void state_depthbias(DWORD state, IWineD3DStateBlockImpl *stateblock, str
     }
 }
 
+static void state_zvisible(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
+    if (stateblock->renderState[WINED3DRS_ZVISIBLE])
+        FIXME("WINED3DRS_ZVISIBLE not implemented.\n");
+}
+
 static void state_perspective(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     if (stateblock->renderState[WINED3DRS_TEXTUREPERSPECTIVE]) {
@@ -5016,6 +5022,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor   }, EXT_BLEND_COLOR                 },
     { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3DRS_ZVISIBLE),                   { STATE_RENDER(WINED3DRS_ZVISIBLE),                   state_zvisible      }, WINED3D_GL_EXT_NONE             },
     /* Samplers */
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler             }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler             }, WINED3D_GL_EXT_NONE             },
