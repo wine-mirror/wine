@@ -3409,14 +3409,25 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
  * with single pixel copy calls
  */
 static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
-        const RECT *src_rect, const RECT *dst_rect, BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
+        const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
     float xrel, yrel;
     UINT row;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     struct wined3d_context *context;
+    BOOL upsidedown = FALSE;
+    RECT dst_rect = *dst_rect_in;
 
+    /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
+     * glCopyTexSubImage is a bit picky about the parameters we pass to it
+     */
+    if(dst_rect.top > dst_rect.bottom) {
+        UINT tmp = dst_rect.bottom;
+        dst_rect.bottom = dst_rect.top;
+        dst_rect.top = tmp;
+        upsidedown = TRUE;
+    }
 
     context = context_acquire(myDevice, SrcSurface, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
@@ -3436,8 +3447,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     }
     checkGLcall("glReadBuffer");
 
-    xrel = (float) (src_rect->right - src_rect->left) / (float) (dst_rect->right - dst_rect->left);
-    yrel = (float) (src_rect->bottom - src_rect->top) / (float) (dst_rect->bottom - dst_rect->top);
+    xrel = (float) (src_rect->right - src_rect->left) / (float) (dst_rect.right - dst_rect.left);
+    yrel = (float) (src_rect->bottom - src_rect->top) / (float) (dst_rect.bottom - dst_rect.top);
 
     if ((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
     {
@@ -3460,18 +3471,18 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do */
 
         glCopyTexSubImage2D(This->texture_target, This->texture_level,
-                dst_rect->left /*xoffset */, dst_rect->top /* y offset */,
+                dst_rect.left /*xoffset */, dst_rect.top /* y offset */,
                 src_rect->left, Src->currentDesc.Height - src_rect->bottom,
-                dst_rect->right - dst_rect->left, dst_rect->bottom - dst_rect->top);
+                dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
     } else {
-        UINT yoffset = Src->currentDesc.Height - src_rect->top + dst_rect->top - 1;
+        UINT yoffset = Src->currentDesc.Height - src_rect->top + dst_rect.top - 1;
         /* I have to process this row by row to swap the image,
          * otherwise it would be upside down, so stretching in y direction
          * doesn't cost extra time
          *
          * However, stretching in x direction can be avoided if not necessary
          */
-        for(row = dst_rect->top; row < dst_rect->bottom; row++) {
+        for(row = dst_rect.top; row < dst_rect.bottom; row++) {
             if ((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
             {
                 /* Well, that stuff works, but it's very slow.
@@ -3479,15 +3490,15 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
                  */
                 UINT col;
 
-                for(col = dst_rect->left; col < dst_rect->right; col++) {
+                for(col = dst_rect.left; col < dst_rect.right; col++) {
                     glCopyTexSubImage2D(This->texture_target, This->texture_level,
-                            dst_rect->left + col /* x offset */, row /* y offset */,
+                            dst_rect.left + col /* x offset */, row /* y offset */,
                             src_rect->left + col * xrel, yoffset - (int) (row * yrel), 1, 1);
                 }
             } else {
                 glCopyTexSubImage2D(This->texture_target, This->texture_level,
-                        dst_rect->left /* x offset */, row /* y offset */,
-                        src_rect->left, yoffset - (int) (row * yrel), dst_rect->right-dst_rect->left, 1);
+                        dst_rect.left /* x offset */, row /* y offset */,
+                        src_rect->left, yoffset - (int) (row * yrel), dst_rect.right - dst_rect.left, 1);
             }
         }
     }
@@ -3504,8 +3515,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 
 /* Uses the hardware to stretch and flip the image */
 static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
-        IWineD3DSwapChainImpl *swapchain, const RECT *src_rect, const RECT *dst_rect,
-        BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
+        IWineD3DSwapChainImpl *swapchain, const RECT *src_rect, const RECT *dst_rect_in,
+        WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.device;
     GLuint src, backup = 0;
@@ -3518,6 +3529,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     GLenum texture_target;
     BOOL noBackBufferBackup;
     BOOL src_offscreen;
+    BOOL upsidedown = FALSE;
+    RECT dst_rect = *dst_rect_in;
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
@@ -3565,6 +3578,16 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
         /* For now invalidate the texture copy of the back buffer. Drawable and sysmem copy are untouched */
         Src->Flags &= ~SFLAG_INTEXTURE;
+    }
+
+    /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
+     * glCopyTexSubImage is a bit picky about the parameters we pass to it
+     */
+    if(dst_rect.top > dst_rect.bottom) {
+        UINT tmp = dst_rect.bottom;
+        dst_rect.bottom = dst_rect.top;
+        dst_rect.top = tmp;
+        upsidedown = TRUE;
     }
 
     if (src_offscreen)
@@ -3666,15 +3689,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
         /* top left */
         glTexCoord2f(left, top);
-        glVertex2i(0, fbheight - dst_rect->bottom - dst_rect->top);
+        glVertex2i(0, fbheight - dst_rect.bottom - dst_rect.top);
 
         /* top right */
         glTexCoord2f(right, top);
-        glVertex2i(dst_rect->right - dst_rect->left, fbheight - dst_rect->bottom - dst_rect->top);
+        glVertex2i(dst_rect.right - dst_rect.left, fbheight - dst_rect.bottom - dst_rect.top);
 
         /* bottom right */
         glTexCoord2f(right, bottom);
-        glVertex2i(dst_rect->right - dst_rect->left, fbheight);
+        glVertex2i(dst_rect.right - dst_rect.left, fbheight);
     glEnd();
     checkGLcall("glEnd and previous");
 
@@ -3690,9 +3713,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glBindTexture");
     glCopyTexSubImage2D(texture_target,
                         0,
-                        dst_rect->left, dst_rect->top, /* xoffset, yoffset */
+                        dst_rect.left, dst_rect.top, /* xoffset, yoffset */
                         0, 0, /* We blitted the image to the origin */
-                        dst_rect->right - dst_rect->left, dst_rect->bottom - dst_rect->top);
+                        dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
     checkGLcall("glCopyTexSubImage2D");
 
     if(drawBuffer == GL_BACK) {
@@ -3917,23 +3940,13 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
     if((srcSwapchain || SrcSurface == myDevice->render_targets[0]) && !dstSwapchain) {
         /* Blit from render target to texture */
-        BOOL upsideDown = FALSE, stretchx;
+        BOOL stretchx;
         BOOL paletteOverride = FALSE;
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             TRACE("Color keying not supported by frame buffer to texture blit\n");
             return WINED3DERR_INVALIDCALL;
             /* Destination color key is checked above */
-        }
-
-        /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
-         * glCopyTexSubImage is a bit picky about the parameters we pass to it
-         */
-        if(dst_rect.top > dst_rect.bottom) {
-            UINT tmp = dst_rect.bottom;
-            dst_rect.bottom = dst_rect.top;
-            dst_rect.top = tmp;
-            upsideDown = TRUE;
         }
 
         if(dst_rect.right - dst_rect.left != src_rect.right - src_rect.left) {
@@ -3971,14 +3984,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 && surface_can_stretch_rect(Src, This))
         {
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
-                    (IWineD3DSurface *)This, &dst_rect, Filter, upsideDown);
+                    (IWineD3DSurface *)This, &dst_rect, Filter);
         } else if((!stretchx) || dst_rect.right - dst_rect.left > Src->currentDesc.Width ||
                                     dst_rect.bottom - dst_rect.top > Src->currentDesc.Height) {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
-            fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, upsideDown, Filter);
+            fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
-            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &src_rect, &dst_rect, upsideDown, Filter);
+            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &src_rect, &dst_rect, Filter);
         }
 
         /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
@@ -4024,7 +4037,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
              * contents are never upside down
              */
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
-                              (IWineD3DSurface *)This, &dst_rect, Filter, FALSE);
+                              (IWineD3DSurface *)This, &dst_rect, Filter);
 
             /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
             if(paletteOverride)

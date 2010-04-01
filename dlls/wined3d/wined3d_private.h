@@ -3033,7 +3033,7 @@ static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface,
         const RECT *src_rect, IWineD3DSurface *dst_surface, const RECT *dst_rect,
-        const WINED3DTEXTUREFILTERTYPE filter, BOOL flip) DECLSPEC_HIDDEN;
+        const WINED3DTEXTUREFILTERTYPE filter) DECLSPEC_HIDDEN;
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
