@@ -5662,11 +5662,24 @@ static void validate_state_table(struct StateEntry *state_table)
     for (i = 0; i < STATE_HIGHEST + 1; ++i)
     {
         DWORD rep = state_table[i].representative;
-        if (rep && !state_table[rep].representative)
+        if (rep)
         {
-            ERR("State %s (%#x) has invalid representative %s (%#x).\n",
-                    debug_d3dstate(i), i, debug_d3dstate(rep), rep);
-            state_table[i].representative = 0;
+            if (!state_table[rep].representative)
+            {
+                ERR("State %s (%#x) has invalid representative %s (%#x).\n",
+                        debug_d3dstate(i), i, debug_d3dstate(rep), rep);
+                state_table[i].representative = 0;
+            }
+
+            if (rep != i)
+            {
+                if (state_table[i].apply)
+                    ERR("State %s (%#x) has both a handler and representative.\n", debug_d3dstate(i), i);
+            }
+            else if (!state_table[i].apply)
+            {
+                ERR("Self representing state %s (%#x) has no handler.\n", debug_d3dstate(i), i);
+            }
         }
     }
 }
