@@ -2403,14 +2403,17 @@ static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info*
 
 static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR delta,
                            dwarf2_traverse_context_t* fde_ctx, dwarf2_traverse_context_t* cie_ctx,
-                           struct frame_info* info)
+                           struct frame_info* info, BOOL in_eh_frame)
 {
     const unsigned char*        ptr_blk;
     const unsigned char*        cie_ptr;
     const unsigned char*        last_cie_ptr = (const unsigned char*)~0;
     unsigned                    len, id;
     unsigned long               start, range;
+    unsigned                    cie_id;
+    const BYTE*                 start_data = fde_ctx->data;
 
+    cie_id = in_eh_frame ? 0 : DW_CIE_ID;
     for (; fde_ctx->data + 2 * 4 < fde_ctx->end_data; fde_ctx->data = ptr_blk)
     {
         /* find the FDE for address addr (skip CIE) */
@@ -2418,7 +2421,7 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
         if (len == 0xffffffff) FIXME("Unsupported yet 64-bit CIEs\n");
         ptr_blk = fde_ctx->data + len;
         id  = dwarf2_parse_u4(fde_ctx);
-        if (id == 0) /* FIXME DW_CIE_ID */
+        if (id == cie_id)
         {
             last_cie_ptr = fde_ctx->data - 8;
             /* we need some bits out of the CIE in order to parse all contents */
@@ -2428,7 +2431,7 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
             cie_ctx->word_size = fde_ctx->word_size;
             continue;
         }
-        cie_ptr = fde_ctx->data - id - 4;
+        cie_ptr = (in_eh_frame) ? fde_ctx->data - id - 4 : start_data + id;
         if (cie_ptr != last_cie_ptr)
         {
             last_cie_ptr = cie_ptr;
@@ -2436,7 +2439,7 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
             cie_ctx->word_size = fde_ctx->word_size;
             cie_ctx->end_data = cie_ptr + 4;
             cie_ctx->end_data = cie_ptr + 4 + dwarf2_parse_u4(cie_ctx);
-            if (dwarf2_parse_u4(cie_ctx) != 0) /* FIXME DW_CIE_ID */
+            if (dwarf2_parse_u4(cie_ctx) != cie_id)
             {
                 FIXME("wrong CIE pointer\n");
                 return FALSE;
@@ -2925,10 +2928,17 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk* csw, ULONG_PTR ip, CONTEXT* co
      */
     delta = pair.effective->module.BaseOfImage + modfmt->u.dwarf2_info->eh_frame.rva -
         (DWORD_PTR)modfmt->u.dwarf2_info->eh_frame.address;
-    if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info))
+    if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info, TRUE))
     {
-        TRACE("Couldn't find information for %lx\n", ip);
-        return FALSE;
+        fde_ctx.data = modfmt->u.dwarf2_info->debug_frame.address;
+        fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->debug_frame.size;
+        fde_ctx.word_size = modfmt->u.dwarf2_info->word_size;
+        delta = pair.effective->reloc_delta;
+        if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info, FALSE))
+        {
+            TRACE("Couldn't find information for %lx\n", ip);
+            return FALSE;
+        }
     }
 
     TRACE("function %lx/%lx code_align %lu data_align %ld retaddr %s\n",

@@ -107,6 +107,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     DWORD               p;
     WORD                val;
     BOOL                do_switch;
+    unsigned            deltapc = 1;
 
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
@@ -132,6 +133,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
 
         /* Init done */
         curr_mode = (frame->AddrPC.Mode == AddrModeFlat) ? stm_32bit : stm_16bit;
+        deltapc = 0;
 
         /* cur_switch holds address of WOW32Reserved field in TEB in debuggee
          * address space
@@ -191,6 +193,21 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
          * we will get it in the next frame
          */
         memset(&frame->AddrBStore, 0, sizeof(frame->AddrBStore));
+#ifdef __i386__
+        if (curr_mode == stm_32bit)
+        {
+            DWORD_PTR       xframe;
+
+            if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
+            {
+                frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
+                frame->AddrStack.Offset = context->Esp = xframe;
+                frame->AddrFrame.Offset = context->Ebp;
+                frame->AddrReturn.Offset = context->Eip;
+                goto done_pep;
+            }
+        }
+#endif
     }
     else
     {
@@ -317,6 +334,18 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
             }
             else
             {
+#ifdef __i386__
+                DWORD_PTR       xframe;
+
+                if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
+                {
+                    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
+                    frame->AddrStack.Offset = context->Esp = xframe;
+                    frame->AddrFrame.Offset = context->Ebp;
+                    frame->AddrReturn.Offset = context->Eip;
+                    goto done_pep;
+                }
+#endif
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(DWORD);
                 /* "pop up" previous EBP value */
                 if (!sw_read_mem(csw, frame->AddrFrame.Offset,
@@ -381,6 +410,8 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         sw_read_mem(csw, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
                     frame->Params, sizeof(frame->Params));
     }
+    goto done_pep; /* just to ensure done_pep label is referenced */
+done_pep:
 
     frame->Far = TRUE;
     frame->Virtual = TRUE;
