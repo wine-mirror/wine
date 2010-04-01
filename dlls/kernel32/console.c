@@ -307,7 +307,6 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
         req->access     = access;
         req->attributes = inherit ? OBJ_INHERIT : 0;
         req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        SetLastError(0);
         wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
