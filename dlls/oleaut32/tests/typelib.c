@@ -32,6 +32,8 @@
 #include "shlwapi.h"
 #include "tmarshal.h"
 
+#include "test_reg.h"
+
 #define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
 #define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
 #define expect_hex(expr, value) expect_eq(expr, (int)(value), int, "0x%x")
@@ -1883,7 +1885,7 @@ static void test_dump_typelib(const char *name)
 
 #endif
 
-static const char *create_test_typelib(void)
+static const char *create_test_typelib(int res_no)
 {
     static char filename[MAX_PATH];
     HANDLE file;
@@ -1895,7 +1897,7 @@ static const char *create_test_typelib(void)
     file = CreateFile( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
     if (file == INVALID_HANDLE_VALUE) return NULL;
-    res = FindResource( GetModuleHandle(0), MAKEINTRESOURCE(2), "TYPELIB" );
+    res = FindResource( GetModuleHandle(0), MAKEINTRESOURCE(res_no), "TYPELIB" );
     ok( res != 0, "couldn't find resource\n" );
     ptr = LockResource( LoadResource( GetModuleHandle(0), res ));
     WriteFile( file, ptr, SizeofResource( GetModuleHandle(0), res ), &written, NULL );
@@ -1956,6 +1958,112 @@ static void test_create_typelibs(void)
     test_create_typelib_lcid(0x407);
 }
 
+
+static void test_register_typelib(void)
+{
+    HRESULT hr;
+    WCHAR filename[MAX_PATH];
+    const char *filenameA;
+    ITypeLib *typelib;
+    WCHAR key_name[MAX_PATH], uuid[40];
+    static const WCHAR formatW[] = {'I','n','t','e','r','f','a','c','e','\\','%','s',0};
+    LONG ret, expect_ret;
+    UINT count, i;
+    HKEY hkey;
+    struct
+    {
+        TYPEKIND kind;
+        WORD flags;
+    } attrs[11] =
+    {
+        { TKIND_INTERFACE, 0 },
+        { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
+        { TKIND_INTERFACE, TYPEFLAG_FOLEAUTOMATION },
+        { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FOLEAUTOMATION },
+        { TKIND_DISPATCH,  0 /* TYPEFLAG_FDUAL - widl clears this flag for non-IDispatch derived interfaces */ },
+        { TKIND_DISPATCH,  0 /* TYPEFLAG_FDUAL - widl clears this flag for non-IDispatch derived interfaces */ },
+        { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL },
+        { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL },
+        { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
+        { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
+        { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE }
+    };
+
+    filenameA = create_test_typelib(3);
+    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
+
+    hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
+    ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+    hr = RegisterTypeLib(typelib, filename, NULL);
+    ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+    count = ITypeLib_GetTypeInfoCount(typelib);
+    ok(count == 11, "got %d\n", count);
+
+    for(i = 0; i < count; i++)
+    {
+        ITypeInfo *typeinfo;
+        TYPEATTR *attr;
+
+        hr = ITypeLib_GetTypeInfo(typelib, i, &typeinfo);
+        ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+        hr = ITypeInfo_GetTypeAttr(typeinfo, &attr);
+        ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+        ok(attr->typekind == attrs[i].kind, "%d: got kind %d\n", i, attr->typekind);
+        ok(attr->wTypeFlags == attrs[i].flags, "%d: got flags %04x\n", i, attr->wTypeFlags);
+
+        if(attr->typekind == TKIND_DISPATCH && (attr->wTypeFlags & TYPEFLAG_FDUAL))
+        {
+            HREFTYPE reftype;
+            ITypeInfo *dual_info;
+            TYPEATTR *dual_attr;
+
+            hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, -1, &reftype);
+            ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+            hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, &dual_info);
+            ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+            hr = ITypeInfo_GetTypeAttr(dual_info, &dual_attr);
+            ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+            ok(dual_attr->typekind == TKIND_INTERFACE, "%d: got kind %d\n", i, dual_attr->typekind);
+            ok(dual_attr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FOLEAUTOMATION | TYPEFLAG_FDUAL), "%d: got flags %04x\n", i, dual_attr->wTypeFlags);
+
+            ITypeInfo_ReleaseTypeAttr(dual_info, dual_attr);
+            ITypeInfo_Release(dual_info);
+
+        }
+
+        StringFromGUID2(&attr->guid, uuid, sizeof(uuid) / sizeof(uuid[0]));
+        wsprintfW(key_name, formatW, uuid);
+
+        /* All dispinterfaces will be registered (this includes dual interfaces) as well
+           as oleautomation interfaces */
+        if((attr->typekind == TKIND_INTERFACE && (attr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
+           attr->typekind == TKIND_DISPATCH)
+            expect_ret = ERROR_SUCCESS;
+        else
+            expect_ret = ERROR_FILE_NOT_FOUND;
+
+        ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
+        ok(ret == expect_ret, "%d: got %d\n", i, ret);
+        if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+
+        ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
+    ok(SUCCEEDED(hr), "got %08x\n", hr);
+
+    ITypeLib_Release(typelib);
+    DeleteFileA( filenameA );
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -1968,12 +2076,13 @@ START_TEST(typelib)
     test_inheritance();
     test_CreateTypeLib();
 
-    if ((filename = create_test_typelib()))
+    if ((filename = create_test_typelib(2)))
     {
         test_dump_typelib( filename );
         DeleteFile( filename );
     }
 
+    test_register_typelib();
     test_create_typelibs();
 
 }

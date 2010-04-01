@@ -99,6 +99,9 @@ dlls/oleaut32/oleaut32_oaidl.h
 dlls/oleaut32/oleaut32_oaidl_p.c
 dlls/oleaut32/oleaut32_ocidl.h
 dlls/oleaut32/oleaut32_ocidl_p.c
+dlls/oleaut32/tests/test_reg.h
+dlls/oleaut32/tests/test_reg.tlb
+dlls/oleaut32/tests/test_reg_i.c
 dlls/oleaut32/tests/test_tlb.tlb
 dlls/oleaut32/tests/tmarshal.h
 dlls/oleaut32/tests/tmarshal.tlb

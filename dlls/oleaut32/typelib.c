@@ -691,7 +691,10 @@ HRESULT WINAPI RegisterTypeLib(
 			MESSAGE("\n");
 		    }
 
-		    if (tattr->wTypeFlags & (TYPEFLAG_FOLEAUTOMATION|TYPEFLAG_FDUAL|TYPEFLAG_FDISPATCHABLE))
+                    /* Register all dispinterfaces (which includes dual interfaces) and
+                       oleautomation interfaces */
+		    if ((kind == TKIND_INTERFACE && (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
+                        kind == TKIND_DISPATCH)
 		    {
 			/* register interface<->typelib coupling */
 			get_interface_key( &tattr->guid, keyName );
