@@ -5657,7 +5657,39 @@ static void prune_invalid_states(struct StateEntry *state_table, const struct wi
 
 static void validate_state_table(struct StateEntry *state_table)
 {
-    unsigned int i;
+    static const struct
+    {
+        DWORD first;
+        DWORD last;
+    }
+    rs_holes[] =
+    {
+        {  1,   1},
+        {  3,   3},
+        { 17,  18},
+        { 21,  21},
+        { 42,  45},
+        { 61, 127},
+        {149, 150},
+        {169, 169},
+        {177, 177},
+        {196, 197},
+        {  0,   0},
+    };
+    unsigned int i, current;
+
+    for (i = STATE_RENDER(1), current = 0; i <= STATE_RENDER(WINEHIGHEST_RENDER_STATE); ++i)
+    {
+        if (!rs_holes[current].first || i < STATE_RENDER(rs_holes[current].first))
+        {
+            if (!state_table[i].representative)
+                ERR("State %s (%#x) should have a representative.\n", debug_d3dstate(i), i);
+        }
+        else if (state_table[i].representative)
+            ERR("State %s (%#x) shouldn't have a representative.\n", debug_d3dstate(i), i);
+
+        if (i == STATE_RENDER(rs_holes[current].last)) ++current;
+    }
 
     for (i = 0; i < STATE_HIGHEST + 1; ++i)
     {
