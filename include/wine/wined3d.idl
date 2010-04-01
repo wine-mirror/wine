@@ -279,9 +279,7 @@ typedef enum _WINED3DFORMAT
 
 typedef enum _WINED3DRENDERSTATETYPE
 {
-    WINED3DRS_TEXTUREHANDLE                 = 1, /* d3d7 */
     WINED3DRS_ANTIALIAS                     = 2, /* d3d7 */
-    WINED3DRS_TEXTUREADDRESS                = 3, /* d3d7 */
     WINED3DRS_TEXTUREPERSPECTIVE            = 4, /* d3d7 */
     WINED3DRS_WRAPU                         = 5, /* d3d7 */
     WINED3DRS_WRAPV                         = 6, /* d3d7 */
@@ -295,11 +293,8 @@ typedef enum _WINED3DRENDERSTATETYPE
     WINED3DRS_ZWRITEENABLE                  = 14,
     WINED3DRS_ALPHATESTENABLE               = 15,
     WINED3DRS_LASTPIXEL                     = 16,
-    WINED3DRS_TEXTUREMAG                    = 17, /* d3d7 */
-    WINED3DRS_TEXTUREMIN                    = 18, /* d3d7 */
     WINED3DRS_SRCBLEND                      = 19,
     WINED3DRS_DESTBLEND                     = 20,
-    WINED3DRS_TEXTUREMAPBLEND               = 21, /* d3d7 */
     WINED3DRS_CULLMODE                      = 22,
     WINED3DRS_ZFUNC                         = 23,
     WINED3DRS_ALPHAREF                      = 24,
@@ -321,8 +316,6 @@ typedef enum _WINED3DRENDERSTATETYPE
     WINED3DRS_EDGEANTIALIAS                 = 40, /* d3d7, d3d8 */
     WINED3DRS_COLORKEYENABLE                = 41, /* d3d7 */
     WINED3DRS_BORDERCOLOR                   = 43, /* d3d7 */
-    WINED3DRS_TEXTUREADDRESSU               = 44, /* d3d7 */
-    WINED3DRS_TEXTUREADDRESSV               = 45, /* d3d7 */
     WINED3DRS_MIPMAPLODBIAS                 = 46, /* d3d7 */
     WINED3DRS_ZBIAS                         = 47, /* d3d7, d3d8 */
     WINED3DRS_RANGEFOGENABLE                = 48,

@@ -1497,9 +1497,7 @@ const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType) {
 const char* debug_d3drenderstate(DWORD state) {
   switch (state) {
 #define D3DSTATE_TO_STR(u) case u: return #u
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREHANDLE             );
     D3DSTATE_TO_STR(WINED3DRS_ANTIALIAS                 );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREADDRESS            );
     D3DSTATE_TO_STR(WINED3DRS_TEXTUREPERSPECTIVE        );
     D3DSTATE_TO_STR(WINED3DRS_WRAPU                     );
     D3DSTATE_TO_STR(WINED3DRS_WRAPV                     );
@@ -1513,11 +1511,8 @@ const char* debug_d3drenderstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DRS_ZWRITEENABLE              );
     D3DSTATE_TO_STR(WINED3DRS_ALPHATESTENABLE           );
     D3DSTATE_TO_STR(WINED3DRS_LASTPIXEL                 );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREMAG                );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREMIN                );
     D3DSTATE_TO_STR(WINED3DRS_SRCBLEND                  );
     D3DSTATE_TO_STR(WINED3DRS_DESTBLEND                 );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREMAPBLEND           );
     D3DSTATE_TO_STR(WINED3DRS_CULLMODE                  );
     D3DSTATE_TO_STR(WINED3DRS_ZFUNC                     );
     D3DSTATE_TO_STR(WINED3DRS_ALPHAREF                  );
@@ -1539,8 +1534,6 @@ const char* debug_d3drenderstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DRS_EDGEANTIALIAS             );
     D3DSTATE_TO_STR(WINED3DRS_COLORKEYENABLE            );
     D3DSTATE_TO_STR(WINED3DRS_BORDERCOLOR               );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREADDRESSU           );
-    D3DSTATE_TO_STR(WINED3DRS_TEXTUREADDRESSV           );
     D3DSTATE_TO_STR(WINED3DRS_MIPMAPLODBIAS             );
     D3DSTATE_TO_STR(WINED3DRS_ZBIAS                     );
     D3DSTATE_TO_STR(WINED3DRS_RANGEFOGENABLE            );
