@@ -42,8 +42,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-/* maximum length of a key/value name in bytes (without terminating null) */
-#define MAX_NAME_LENGTH ((MAX_PATH-1) * sizeof(WCHAR))
+/* maximum length of a key name in bytes (without terminating null) */
+#define MAX_NAME_LENGTH  (255 * sizeof(WCHAR))
+/* maximum length of a value name in bytes (without terminating null) */
+#define MAX_VALUE_LENGTH (16383 * sizeof(WCHAR))
 
 /******************************************************************************
  * NtCreateKey [NTDLL.@]
@@ -188,7 +190,7 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
     NTSTATUS ret;
 
     TRACE( "(%p,%s)\n", hkey, debugstr_us(name) );
-    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     SERVER_START_REQ( delete_key_value )
     {
@@ -481,7 +483,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 
     TRACE( "(%p,%s,%d,%p,%d)\n", handle, debugstr_us(name), info_class, info, length );
 
-    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     /* compute the length we want to retrieve */
     switch(info_class)
@@ -769,7 +771,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
 
     TRACE( "(%p,%s,%d,%p,%d)\n", hkey, debugstr_us(name), type, data, count );
 
-    if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     SERVER_START_REQ( set_key_value )
     {

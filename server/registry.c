@@ -100,8 +100,8 @@ struct key_value
 #define MIN_SUBKEYS  8   /* min. number of allocated subkeys per key */
 #define MIN_VALUES   8   /* min. number of allocated values per key */
 
-#define MAX_NAME_LEN  MAX_PATH  /* max. length of a key name */
-#define MAX_VALUE_LEN MAX_PATH  /* max. length of a value name */
+#define MAX_NAME_LEN  255    /* max. length of a key name */
+#define MAX_VALUE_LEN 16383  /* max. length of a value name */
 
 /* the root of the registry tree */
 static struct key *root_key;
