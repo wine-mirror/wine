@@ -964,6 +964,7 @@ extern UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterFonts(MSIPACKAGE *package);
 extern UINT ACTION_UnregisterClassInfo(MSIPACKAGE *package);
 extern UINT ACTION_UnregisterFonts(MSIPACKAGE *package);
+extern UINT ACTION_UnregisterProgIdInfo(MSIPACKAGE *package);
 
 /* Helpers */
 extern DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
@@ -1086,6 +1087,9 @@ static const WCHAR szAppSearch[] = {'A','p','p','S','e','a','r','c','h',0};
 static const WCHAR szMoveFiles[] = {'M','o','v','e','F','i','l','e','s',0};
 static const WCHAR szCCPSearch[] = {'C','C','P','S','e','a','r','c','h',0};
 static const WCHAR szUnregisterClassInfo[] = {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+static const WCHAR szUnregisterProgIdInfo[] = {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+static const WCHAR szRegisterFonts[] = {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
+static const WCHAR szUnregisterFonts[] = {'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
 static const WCHAR szCLSID[] = {'C','L','S','I','D',0};
 static const WCHAR szProgID[] = {'P','r','o','g','I','D',0};
 static const WCHAR szVIProgID[] = {'V','e','r','s','i','o','n','I','n','d','e','p','e','n','d','e','n','t','P','r','o','g','I','D',0};

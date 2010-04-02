@@ -124,8 +124,6 @@ static const WCHAR szPublishComponents[] =
     {'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szRegisterComPlus[] =
     {'R','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
-static const WCHAR szRegisterFonts[] =
-    {'R','e','g','i','s','t','e','r','F','o','n','t','s',0};
 static const WCHAR szRegisterUser[] =
     {'R','e','g','i','s','t','e','r','U','s','e','r',0};
 static const WCHAR szRemoveEnvironmentStrings[] =
@@ -162,12 +160,8 @@ static const WCHAR szUnregisterComPlus[] =
     {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 static const WCHAR szUnregisterExtensionInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','E','x','t','e','n','s','i','o','n','I','n','f','o',0};
-static const WCHAR szUnregisterFonts[] =
-    {'U','n','r','e','g','i','s','t','e','r','F','o','n','t','s',0};
 static const WCHAR szUnregisterMIMEInfo[] =
     {'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
-static const WCHAR szUnregisterProgIdInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
 static const WCHAR szUnregisterTypeLibraries[] =
     {'U','n','r','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
 static const WCHAR szValidateProductID[] =
@@ -6965,12 +6959,6 @@ static UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'M','I','M','E',0 };
     return msi_unimplemented_action_stub( package, "UnregisterMIMEInfo", table );
-}
-
-static UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'P','r','o','g','I','d',0 };
-    return msi_unimplemented_action_stub( package, "UnregisterProgIdInfo", table );
 }
 
 typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);

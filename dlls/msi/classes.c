@@ -25,7 +25,7 @@
  * RegisterExtensionInfo
  * RegisterMIMEInfo
  * UnRegisterClassInfo
- * UnRegisterProgIdInfo (TODO)
+ * UnRegisterProgIdInfo
  * UnRegisterExtensionInfo (TODO)
  * UnRegisterMIMEInfo (TODO)
  */
@@ -1099,6 +1099,41 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, progid->ProgID );
         ui_actiondata( package, szRegisterProgIdInfo, uirow );
+        msiobj_release( &uirow->hdr );
+    }
+
+    return ERROR_SUCCESS;
+}
+
+UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
+{
+    MSIPROGID *progid;
+    MSIRECORD *uirow;
+    LONG res;
+
+    load_classes_and_such( package );
+
+    LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
+    {
+        /* check if this progid is to be removed */
+        if (progid->Class && !progid->Class->Installed)
+            progid->InstallMe = FALSE;
+
+        if (progid->InstallMe)
+        {
+            TRACE("progid %s not scheduled to be removed\n", debugstr_w(progid->ProgID));
+            continue;
+        }
+
+        TRACE("Unregistering progid %s\n", debugstr_w(progid->ProgID));
+
+        res = RegDeleteTreeW( HKEY_CLASSES_ROOT, progid->ProgID );
+        if (res != ERROR_SUCCESS)
+            WARN("Failed to delete progid key %d\n", res);
+
+        uirow = MSI_CreateRecord( 1 );
+        MSI_RecordSetStringW( uirow, 1, progid->ProgID );
+        ui_actiondata( package, szUnregisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
