@@ -78,6 +78,7 @@ static const WCHAR * const root_key_names[NB_SPECIAL_ROOT_KEYS] =
     name_DYN_DATA
 };
 
+static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline int is_string( DWORD type )
@@ -91,34 +92,84 @@ static inline int is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+static BOOL is_wow6432node( const UNICODE_STRING *name )
+{
+    static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e'};
+
+    return (name->Length == sizeof(wow6432nodeW) &&
+            !memicmpW( name->Buffer, wow6432nodeW, sizeof(wow6432nodeW)/sizeof(WCHAR) ));
+}
+
+/* open the Wow6432Node subkey of the specified key */
+static HANDLE open_wow6432node( HANDLE key, const UNICODE_STRING *name )
+{
+    static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = key;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, wow6432nodeW );
+    if (NtOpenKey( &ret, MAXIMUM_ALLOWED, &attr )) ret = 0;
+    return ret;
+}
+
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
 static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                             const UNICODE_STRING *class, ULONG options, PULONG dispos )
 {
-    NTSTATUS status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class, options, dispos );
+    BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    if (!force_wow32) status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class, options, dispos );
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        DWORD attrs, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+        HANDLE subkey, root = attr->RootDirectory;
+        WCHAR *buffer = attr->ObjectName->Buffer;
+        DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+        UNICODE_STRING str;
 
-        while (i < len && attr->ObjectName->Buffer[i] != '\\') i++;
-        if (i == len) return status;
+        while (i < len && buffer[i] != '\\') i++;
+        if (i == len && !force_wow32) return status;
+
         attrs = attr->Attributes;
         attr->Attributes &= ~OBJ_OPENLINK;
+        attr->ObjectName = &str;
 
         while (i < len)
         {
-            attr->ObjectName->Length = i * sizeof(WCHAR);
-            status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class,
+            str.Buffer = buffer + pos;
+            str.Length = (i - pos) * sizeof(WCHAR);
+            if (force_wow32 && pos)
+            {
+                if (is_wow6432node( &str )) force_wow32 = FALSE;
+                else if ((subkey = open_wow6432node( attr->RootDirectory, &str )))
+                {
+                    if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+                    attr->RootDirectory = subkey;
+                    force_wow32 = FALSE;
+                }
+            }
+            status = NtCreateKey( &subkey, access, attr, 0, class,
                                   options & ~REG_OPTION_CREATE_LINK, dispos );
+            if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
             if (status) return status;
-            NtClose( *retkey );
-            while (i < len && attr->ObjectName->Buffer[i] == '\\') i++;
-            while (i < len && attr->ObjectName->Buffer[i] != '\\') i++;
+            attr->RootDirectory = subkey;
+            while (i < len && buffer[i] == '\\') i++;
+            pos = i;
+            while (i < len && buffer[i] != '\\') i++;
         }
+        str.Buffer = buffer + pos;
+        str.Length = (i - pos) * sizeof(WCHAR);
         attr->Attributes = attrs;
-        attr->ObjectName->Length = len * sizeof(WCHAR);
         status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, class, options, dispos );
+        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
     }
     return status;
 }

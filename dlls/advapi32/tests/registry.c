@@ -1862,7 +1862,9 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %u\n", err );
     check_key_value( key, "Winetest", 0, ptr_size );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, is_vista ? 64 : ptr_size );
-    check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
+    dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
+    if (ptr_size == 32) ok( dw == 32, "wrong value %u\n", dw );
+    else todo_wine ok( dw == 32, "wrong value %u\n", dw );
     RegCloseKey( key );
 
     if (ptr_size == 32)
