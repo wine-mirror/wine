@@ -242,34 +242,33 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 {
   int is_const, is_volatile, is_struct, is_signed, is_unsigned, ptrs = 0;
-  const char *iter, *type_str, *base_type, *catch_unsigned;
-  char dest_type, *type_str_tmp;
+  const char *iter, *base_type, *catch_unsigned, *proto_str;
+  char dest_type, *type_str;
 
   assert (sym && sym->symbol);
   assert (proto && *proto);
   assert (arg < 0 || (unsigned)arg == sym->argc);
 
-  type_str = proto;
 
-  proto = str_match (proto, "const", &is_const);
-  proto = str_match (proto, "volatile", &is_volatile);
-  proto = str_match (proto, "struct", &is_struct);
+  proto_str = str_match (proto, "const", &is_const);
+  proto_str = str_match (proto_str, "volatile", &is_volatile);
+  proto_str = str_match (proto_str, "struct", &is_struct);
   if (!is_struct)
-    proto = str_match (proto, "union", &is_struct);
+    proto_str = str_match (proto_str, "union", &is_struct);
 
-  catch_unsigned = proto;
+  catch_unsigned = proto_str;
 
-  proto = str_match (proto, "unsigned", &is_unsigned);
-  proto = str_match (proto, "signed", &is_signed);
+  proto_str = str_match (proto_str, "unsigned", &is_unsigned);
+  proto_str = str_match (proto_str, "signed", &is_signed);
 
   /* Can have 'unsigned const' or 'const unsigned' etc */
   if (!is_const)
-    proto = str_match (proto, "const", &is_const);
+    proto_str = str_match (proto_str, "const", &is_const);
   if (!is_volatile)
-    proto = str_match (proto, "volatile", &is_volatile);
+    proto_str = str_match (proto_str, "volatile", &is_volatile);
 
-  base_type = proto;
-  iter = str_find_set (proto, " ,*)");
+  base_type = proto_str;
+  iter = str_find_set (proto_str, " ,*)");
   if (!iter)
     return NULL;
 
@@ -279,7 +278,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     if (strncmp (base_type, "int", 3) && strncmp (base_type, "long", 4) &&
         strncmp (base_type, "short", 5) && strncmp (base_type, "char", 4))
     {
-      iter = proto;
+      iter = proto_str;
       base_type = catch_unsigned;
     } else
       catch_unsigned = NULL;
@@ -288,22 +287,22 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     catch_unsigned = NULL;
 
   /* FIXME: skip const/volatile here too */
-  for (proto = iter; *proto; proto++)
-    if (*proto == '*')
+  for (proto_str = iter; *proto_str; proto_str++)
+    if (*proto_str == '*')
       ptrs++;
-    else if (*proto != ' ')
+    else if (*proto_str != ' ')
       break;
 
-  if (!*proto)
+  if (!*proto_str)
     return NULL;
 
-  type_str = type_str_tmp = str_substring (type_str, proto);
+  type_str = str_substring (proto, proto_str);
   if (iter == base_type || catch_unsigned)
   {
     /* 'unsigned' with no type */
     char *tmp = str_create (2, type_str, " int");
-    free (type_str_tmp);
-    type_str = type_str_tmp = tmp;
+    free (type_str);
+    type_str = tmp;
   }
   symbol_clean_string (type_str);
 
@@ -319,23 +318,23 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     sym->arg_type [arg] = dest_type;
     sym->arg_flag [arg] = is_const ? CT_CONST : is_volatile ? CT_VOLATILE : 0;
 
-    if (*proto == ',' || *proto == ')')
+    if (*proto_str == ',' || *proto_str == ')')
       sym->arg_name [arg] = str_create_num (1, arg, "arg");
     else
     {
-      iter = str_find_set (proto, " ,)");
+      iter = str_find_set (proto_str, " ,)");
       if (!iter)
       {
-        free (type_str_tmp);
+        free (type_str);
         return NULL;
       }
-      sym->arg_name [arg] = str_substring (proto, iter);
-      proto = iter;
+      sym->arg_name [arg] = str_substring (proto_str, iter);
+      proto_str = iter;
     }
     sym->arg_text [arg] = (char*)type_str;
 
   }
-  return proto;
+  return proto_str;
 }
 
 

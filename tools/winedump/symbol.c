@@ -287,10 +287,9 @@ int   symbol_get_type (const char *string)
  *
  * Make a type string more Wine-friendly. Logically const :-)
  */
-void  symbol_clean_string (const char *string)
+void  symbol_clean_string (char *str)
 {
   const char * const *tab = swap_after;
-  char *str = (char *)string;
 
 #define SWAP(i, p, x, y) do { i = p; while ((i = str_replace (i, x, y))); } while(0)
 

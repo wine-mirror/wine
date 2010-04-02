@@ -176,7 +176,7 @@ const char *symbol_get_call_convention(const parsed_symbol *sym);
 
 const char *symbol_get_spec_type (const parsed_symbol *sym, size_t arg);
 
-void  symbol_clean_string (const char *string);
+void  symbol_clean_string (char *string);
 
 int   symbol_get_type (const char *string);
 
