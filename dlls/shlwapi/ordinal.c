@@ -2595,27 +2595,27 @@ HRESULT WINAPI IUnknown_GetSite(LPUNKNOWN lpUnknown, REFIID iid, PVOID *lppSite)
  *  dwExStyle  [I] Extra style flags
  *  dwStyle    [I] Style flags
  *  hMenu      [I] Window menu
- *  msg_result [I] New DWLP_MSGRESULT value
+ *  wnd_extra  [I] Window extra bytes value
  *
  * RETURNS
  *  Success: The window handle of the newly created window.
  *  Failure: 0.
  */
 HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
-                        DWORD dwStyle, HMENU hMenu, LONG msg_result)
+                                  DWORD dwStyle, HMENU hMenu, LONG_PTR wnd_extra)
 {
   static const char szClass[] = "WorkerA";
   WNDCLASSA wc;
   HWND hWnd;
 
-  TRACE("(0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08x)\n",
-         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, msg_result);
+  TRACE("(0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08lx)\n",
+         wndProc, hWndParent, dwExStyle, dwStyle, hMenu, wnd_extra);
 
   /* Create Window class */
   wc.style         = 0;
   wc.lpfnWndProc   = DefWindowProcA;
   wc.cbClsExtra    = 0;
-  wc.cbWndExtra    = 4;
+  wc.cbWndExtra    = sizeof(LONG_PTR);
   wc.hInstance     = shlwapi_hInstance;
   wc.hIcon         = NULL;
   wc.hCursor       = LoadCursorA(NULL, (LPSTR)IDC_ARROW);
@@ -2629,7 +2629,7 @@ HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle
                          hWndParent, hMenu, shlwapi_hInstance, 0);
   if (hWnd)
   {
-    SetWindowLongPtrW(hWnd, DWLP_MSGRESULT, msg_result);
+    SetWindowLongPtrW(hWnd, 0, wnd_extra);
 
     if (wndProc) SetWindowLongPtrA(hWnd, GWLP_WNDPROC, wndProc);
   }

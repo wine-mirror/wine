@@ -55,7 +55,7 @@ static DWORD  (WINAPI *pSHGetObjectCompatFlags)(IUnknown*, const CLSID*);
 static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
 static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
 static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServiceProvider*, DWORD*);
-static HWND   (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG);
+static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG_PTR);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2318,7 +2318,7 @@ static void test_SHCreateWorkerWindowA(void)
     WNDCLASSA cliA;
     char classA[20];
     HWND hwnd;
-    LONG ret;
+    LONG_PTR ret;
     BOOL res;
 
     if (is_win2k_and_lower)
@@ -2333,8 +2333,8 @@ static void test_SHCreateWorkerWindowA(void)
     GetClassName(hwnd, classA, 20);
     ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
 
-    ret = GetWindowLongA(hwnd, DWLP_MSGRESULT);
-    ok(ret == 0, "got %d\n", ret);
+    ret = GetWindowLongPtrA(hwnd, 0);
+    ok(ret == 0, "got %ld\n", ret);
 
     /* class info */
     memset(&cliA, 0, sizeof(cliA));
@@ -2342,30 +2342,30 @@ static void test_SHCreateWorkerWindowA(void)
     ok(res, "failed to get class info\n");
     ok(cliA.style == 0, "got 0x%08x\n", cliA.style);
     ok(cliA.cbClsExtra == 0, "got %d\n", cliA.cbClsExtra);
-    ok(cliA.cbWndExtra == 4, "got %d\n", cliA.cbWndExtra);
+    ok(cliA.cbWndExtra == sizeof(LONG_PTR), "got %d\n", cliA.cbWndExtra);
     ok(cliA.lpszMenuName == 0, "got %s\n", cliA.lpszMenuName);
 
     DestroyWindow(hwnd);
 
-    /* set DWLP_MSGRESULT */
+    /* set extra bytes */
     hwnd = pSHCreateWorkerWindowA(0, NULL, 0, 0, 0, 0xdeadbeef);
     ok(hwnd != 0, "expected window\n");
 
     GetClassName(hwnd, classA, 20);
     ok(lstrcmpA(classA, "WorkerA") == 0, "expected WorkerA class, got %s\n", classA);
 
-    ret = GetWindowLongA(hwnd, DWLP_MSGRESULT);
-    ok(ret == 0xdeadbeef, "got %d\n", ret);
+    ret = GetWindowLongPtrA(hwnd, 0);
+    ok(ret == 0xdeadbeef, "got %ld\n", ret);
 
     /* test exstyle */
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(ret == WS_EX_WINDOWEDGE, "0x%08x\n", ret);
+    ok(ret == WS_EX_WINDOWEDGE, "0x%08lx\n", ret);
 
     DestroyWindow(hwnd);
 
     hwnd = pSHCreateWorkerWindowA(0, NULL, WS_EX_TOOLWINDOW, 0, 0, 0);
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW), "0x%08x\n", ret);
+    ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW), "0x%08lx\n", ret);
     DestroyWindow(hwnd);
 }
 
