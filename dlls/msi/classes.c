@@ -827,6 +827,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                   debugstr_w(feature->Feature), debugstr_w(cls->clsid));
             continue;
         }
+        feature->Action = feature->ActionRequest;
 
         file = get_loaded_file( package, comp->KeyPath );
         if (!file)
@@ -1220,6 +1221,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
                    debugstr_w(feature->Feature), debugstr_w(ext->Extension));
             continue;
         }
+        feature->Action = feature->ActionRequest;
 
         TRACE("Registering extension %s (%p)\n", debugstr_w(ext->Extension), ext);
 
