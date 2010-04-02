@@ -38,6 +38,8 @@ static char** (__cdecl *p__sys_errlist)(void);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 
+static void* (WINAPI *pEncodePointer)(void *);
+
 int cb_called[4];
 
 /* ########## */
@@ -152,6 +154,8 @@ static void test__initterm_e(void)
 
 }
 
+/* Beware that _encode_pointer is a NOP before XP
+   (the parameter is returned unchanged) */
 static void test__encode_pointer(void)
 {
     void *ptr, *res;
@@ -166,12 +170,20 @@ static void test__encode_pointer(void)
     res = p_decode_pointer(res);
     ok(res == ptr, "Pointers are different after encoding and decoding\n");
 
+    ok(p_encoded_null() == p_encode_pointer(NULL), "Error encoding null\n");
+
     ptr = p_encode_pointer(p_encode_pointer);
-    res = EncodePointer(p_encode_pointer);
-    ok(ptr == res, "_encode_pointer produced different result than EncodePointer\n");
     ok(p_decode_pointer(ptr) == p_encode_pointer, "Error decoding pointer\n");
 
-    ok(p_encoded_null() == p_encode_pointer(NULL), "Error encoding null\n");
+    /* Not present before XP */
+    if (!pEncodePointer) {
+        win_skip("EncodePointer not found\n");
+        return;
+    }
+
+    res = pEncodePointer(p_encode_pointer);
+    ok(ptr == res, "_encode_pointer produced different result than EncodePointer\n");
+
 }
 
 static void test_error_messages(void)
@@ -231,6 +243,7 @@ static void test__strtoi64(void)
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
+    HMODULE hkernel32;
 
     SetLastError(0xdeadbeef);
     hcrt = LoadLibraryA("msvcr90.dll");
@@ -254,6 +267,9 @@ START_TEST(msvcr90)
     p__sys_errlist = (void *) GetProcAddress(hcrt, "__sys_errlist");
     p_strtoi64 = (void *) GetProcAddress(hcrt, "_strtoi64");
     p_strtoui64 = (void *) GetProcAddress(hcrt, "_strtoui64");
+
+    hkernel32 = GetModuleHandleA("kernel32.dll");
+    pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
 
     test__initterm_e();
     test__encode_pointer();
