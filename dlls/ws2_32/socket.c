@@ -3524,8 +3524,12 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
+#ifdef IPV6_ADD_MEMBERSHIP
         case WS_IPV6_ADD_MEMBERSHIP:
+#endif
+#ifdef IPV6_DROP_MEMBERSHIP
         case WS_IPV6_DROP_MEMBERSHIP:
+#endif
         case WS_IPV6_MULTICAST_IF:
         case WS_IPV6_MULTICAST_HOPS:
         case WS_IPV6_MULTICAST_LOOP:
