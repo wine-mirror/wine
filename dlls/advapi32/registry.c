@@ -1103,6 +1103,7 @@ LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD typ
                             CONST BYTE *data, DWORD count )
 {
     ANSI_STRING nameA;
+    UNICODE_STRING nameW;
     WCHAR *dataW = NULL;
     NTSTATUS status;
 
@@ -1133,10 +1134,10 @@ LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD typ
     }
 
     RtlInitAnsiString( &nameA, name );
-    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
-                                                 &nameA, FALSE )))
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
     {
-        status = NtSetValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString, 0, type, data, count );
+        status = NtSetValueKey( hkey, &nameW, 0, type, data, count );
+        RtlFreeUnicodeString( &nameW );
     }
     HeapFree( GetProcessHeap(), 0, dataW );
     return RtlNtStatusToDosError( status );
@@ -1305,6 +1306,7 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
 {
     NTSTATUS status;
     ANSI_STRING nameA;
+    UNICODE_STRING nameW;
     DWORD total_size, datalen = 0;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
@@ -1323,12 +1325,11 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
     if (type) *type = REG_NONE;
 
     RtlInitAnsiString( &nameA, name );
-    if ((status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
-                                                &nameA, FALSE )))
+    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
         return RtlNtStatusToDosError(status);
 
-    status = NtQueryValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString,
-                              KeyValuePartialInformation, buffer, sizeof(buffer), &total_size );
+    status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                              buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
     /* we need to fetch the contents for a string type even if not requested,
@@ -1345,8 +1346,8 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
                 goto done;
             }
             info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
-            status = NtQueryValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString,
-                                    KeyValuePartialInformation, buf_ptr, total_size, &total_size );
+            status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      buf_ptr, total_size, &total_size );
         }
 
         if (status) goto done;
@@ -1384,6 +1385,7 @@ LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWO
 
  done:
     if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    RtlFreeUnicodeString( &nameW );
     return RtlNtStatusToDosError(status);
 }
 
@@ -1955,15 +1957,18 @@ LSTATUS WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
  */
 LSTATUS WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
-    STRING nameA;
+    ANSI_STRING nameA;
+    UNICODE_STRING nameW;
     NTSTATUS status;
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     RtlInitAnsiString( &nameA, name );
-    if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
-                                                 &nameA, FALSE )))
-        status = NtDeleteValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString );
+    if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+    {
+        status = NtDeleteValueKey( hkey, &nameW );
+        RtlFreeUnicodeString( &nameW );
+    }
     return RtlNtStatusToDosError( status );
 }
 

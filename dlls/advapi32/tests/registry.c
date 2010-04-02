@@ -1968,7 +1968,8 @@ static void test_delete_value(void)
     memset(longname, 'a', 400);
     longname[400] = 0;
     res = RegDeleteValueA( hkey_main, longname );
-    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
+    ok(res == ERROR_FILE_NOT_FOUND || broken(res == ERROR_MORE_DATA), /* nt4, win2k */
+       "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
 }
 
 START_TEST(registry)
