@@ -69,7 +69,7 @@
 @ stub D3DXCreateFragmentLinker
 @ stub D3DXCreateFragmentLinkerEx
 @ stub D3DXCreateKeyframedAnimationSet
-@ stub D3DXCreateLine
+@ stdcall D3DXCreateLine(ptr ptr)
 @ stdcall D3DXCreateMatrixStack(long ptr)
 @ stub D3DXCreateMesh
 @ stub D3DXCreateMeshFVF

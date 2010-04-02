@@ -15,6 +15,7 @@ C_SRCS = \
 	d3dx9_36_main.c \
 	effect.c \
 	font.c \
+	line.c \
 	math.c \
 	mesh.c \
 	shader.c \

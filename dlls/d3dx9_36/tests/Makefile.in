@@ -9,6 +9,7 @@ C_SRCS = \
 	asm.c \
 	core.c \
 	effect.c \
+	line.c \
 	math.c \
 	mesh.c \
 	shader.c \
