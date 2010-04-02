@@ -463,8 +463,15 @@ typedef struct {
     char *content_type;
     char *charset;
     PRUint32 response_status;
+    struct list response_headers;
     UINT url_scheme;
 } nsChannel;
+
+struct ResponseHeader {
+    struct list entry;
+    WCHAR *header;
+    WCHAR *data;
+};
 
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);

@@ -363,6 +363,8 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
+        struct ResponseHeader *header, *next_hdr;
+
         nsIURI_Release(NSURI(This->uri));
         if(This->owner)
             nsISupports_Release(This->owner);
@@ -376,6 +378,14 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIURI_Release(This->original_uri);
         heap_free(This->content_type);
         heap_free(This->charset);
+
+        LIST_FOR_EACH_ENTRY_SAFE(header, next_hdr, &This->response_headers, struct ResponseHeader, entry) {
+            list_remove(&header->entry);
+            heap_free(header->header);
+            heap_free(header->data);
+            heap_free(header);
+        }
+
         heap_free(This);
     }
 
@@ -1066,10 +1076,34 @@ static nsresult NSAPI nsChannel_GetResponseHeader(nsIHttpChannel *iface,
          const nsACString *header, nsACString *_retval)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    const char *header_str;
+    WCHAR *header_wstr;
+    struct ResponseHeader *this_header;
 
-    FIXME("(%p)->(%p %p)\n", This, header, _retval);
+    nsACString_GetData(header, &header_str);
+    TRACE("(%p)->(%p(%s) %p)\n", This, header, header_str, _retval);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    header_wstr = heap_strdupAtoW(header_str);
+    if(!header_wstr)
+        return NS_ERROR_UNEXPECTED;
+
+    LIST_FOR_EACH_ENTRY(this_header, &This->response_headers, struct ResponseHeader, entry) {
+        if(!strcmpW(this_header->header, header_wstr)) {
+            char *data = heap_strdupWtoA(this_header->data);
+            if(!data) {
+                heap_free(header_wstr);
+                return NS_ERROR_UNEXPECTED;
+            }
+            nsACString_SetData(_retval, data);
+            heap_free(data);
+            heap_free(header_wstr);
+            return NS_OK;
+        }
+    }
+
+    heap_free(header_wstr);
+
+    return NS_ERROR_NOT_AVAILABLE;
 }
 
 static nsresult NSAPI nsChannel_SetResponseHeader(nsIHttpChannel *iface,
@@ -2521,6 +2555,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->lpIHttpChannelInternalVtbl = &nsHttpChannelInternalVtbl;
     ret->ref = 1;
     ret->uri = wine_uri;
+    list_init(&ret->response_headers);
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
