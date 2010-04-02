@@ -27,7 +27,7 @@
  * UnregisterClassInfo
  * UnregisterProgIdInfo
  * UnregisterExtensionInfo
- * UnregisterMIMEInfo (TODO)
+ * UnregisterMIMEInfo
  */
 
 #include <stdarg.h>
@@ -1429,11 +1429,6 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
     LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
     {
         LPWSTR extension;
-        LPCWSTR exten;
-        LPCWSTR mime;
-        static const WCHAR fmt[] = 
-            {'M','I','M','E','\\','D','a','t','a','b','a','s','e','\\',
-             'C','o','n','t','e','n','t',' ','T','y','p','e','\\', '%','s',0};
         LPWSTR key;
 
         /* 
@@ -1446,33 +1441,80 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
         if (!mt->InstallMe)
         {
-            TRACE("MIME %s not scheduled to be installed\n",
-                             debugstr_w(mt->ContentType));
+            TRACE("MIME %s not scheduled to be installed\n", debugstr_w(mt->ContentType));
             continue;
         }
-        
-        mime = mt->ContentType;
-        exten = mt->Extension->Extension;
 
-        extension = msi_alloc( (lstrlenW( exten ) + 2)*sizeof(WCHAR) );
-        extension[0] = '.';
-        lstrcpyW(extension+1,exten);
+        TRACE("Registering MIME type %s\n", debugstr_w(mt->ContentType));
 
-        key = msi_alloc( (strlenW(mime)+strlenW(fmt)+1) * sizeof(WCHAR) );
-        sprintfW(key,fmt,mime);
-        msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExten, extension );
+        extension = msi_alloc( (strlenW( mt->Extension->Extension ) + 2) * sizeof(WCHAR) );
+        key = msi_alloc( (strlenW( mt->ContentType ) + strlenW( szMIMEDatabase ) + 1) * sizeof(WCHAR) );
 
-        msi_free(extension);
-        msi_free(key);
+        if (extension && key)
+        {
+            extension[0] = '.';
+            strcpyW( extension + 1, mt->Extension->Extension );
 
-        if (mt->clsid)
-            FIXME("Handle non null for field 3\n");
+            strcpyW( key, szMIMEDatabase );
+            strcatW( key, mt->ContentType );
+            msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExten, extension );
 
-        uirow = MSI_CreateRecord(2);
-        MSI_RecordSetStringW(uirow,1,mt->ContentType);
-        MSI_RecordSetStringW(uirow,2,exten);
-        ui_actiondata(package,szRegisterMIMEInfo,uirow);
-        msiobj_release(&uirow->hdr);
+            if (mt->clsid)
+                msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szCLSID, mt->clsid );
+        }
+        msi_free( extension );
+        msi_free( key );
+
+        uirow = MSI_CreateRecord( 2 );
+        MSI_RecordSetStringW( uirow, 1, mt->ContentType );
+        MSI_RecordSetStringW( uirow, 2, mt->Extension->Extension );
+        ui_actiondata( package, szRegisterMIMEInfo, uirow );
+        msiobj_release( &uirow->hdr );
+    }
+
+    return ERROR_SUCCESS;
+}
+
+UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
+{
+    MSIRECORD *uirow;
+    MSIMIME *mime;
+
+    load_classes_and_such( package );
+
+    LIST_FOR_EACH_ENTRY( mime, &package->mimes, MSIMIME, entry )
+    {
+        LONG res;
+        LPWSTR mime_key;
+
+        mime->InstallMe = (mime->InstallMe ||
+                          (mime->Class && mime->Class->Installed) ||
+                          (mime->Extension && mime->Extension->Installed));
+
+        if (mime->InstallMe)
+        {
+            TRACE("MIME %s not scheduled to be removed\n", debugstr_w(mime->ContentType));
+            continue;
+        }
+
+        TRACE("Unregistering MIME type %s\n", debugstr_w(mime->ContentType));
+
+        mime_key = msi_alloc( (strlenW( szMIMEDatabase ) + strlenW( mime->ContentType ) + 1) * sizeof(WCHAR) );
+        if (mime_key)
+        {
+            strcpyW( mime_key, szMIMEDatabase );
+            strcatW( mime_key, mime->ContentType );
+            res = RegDeleteKeyW( HKEY_CLASSES_ROOT, mime_key );
+            if (res != ERROR_SUCCESS)
+                WARN("Failed to delete MIME key %d\n", res);
+            msi_free( mime_key );
+        }
+
+        uirow = MSI_CreateRecord( 2 );
+        MSI_RecordSetStringW( uirow, 1, mime->ContentType );
+        MSI_RecordSetStringW( uirow, 2, mime->Extension->Extension );
+        ui_actiondata( package, szUnregisterMIMEInfo, uirow );
+        msiobj_release( &uirow->hdr );
     }
 
     return ERROR_SUCCESS;

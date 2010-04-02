@@ -158,8 +158,6 @@ static const WCHAR szUnpublishFeatures[] =
     {'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
 static const WCHAR szUnregisterComPlus[] =
     {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
-static const WCHAR szUnregisterMIMEInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r','M','I','M','E','I','n','f','o',0};
 static const WCHAR szUnregisterTypeLibraries[] =
     {'U','n','r','e','g','i','s','t','e','r','T','y','p','e','L','i','b','r','a','r','i','e','s',0};
 static const WCHAR szValidateProductID[] =
@@ -6945,12 +6943,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'M','I','M','E',0 };
-    return msi_unimplemented_action_stub( package, "UnregisterMIMEInfo", table );
 }
 
 typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
