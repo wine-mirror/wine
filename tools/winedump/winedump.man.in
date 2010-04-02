@@ -211,9 +211,8 @@ This is a template for 'configure' to produce a makefile. It
 is designed for a DLL that will be inserted into the Wine
 source tree.
 .SH BUGS
-C++ name demangling is currently under development. Since the
-algorithm used is not documented, it must be decoded. Many simple
-prototypes are already working however.
+C++ name demangling is not fully in sync with the implementation in msvcrt.
+It might be useful to submit your C++ name to the testsuite for msvcrt.
 .SH AUTHORS
 Jon P. Griffiths <jon_p_griffiths at yahoo dot com>
 .nf
