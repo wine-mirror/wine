@@ -933,9 +933,9 @@ static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aRequestMethod);
+    TRACE("(%p)->(%p): Returning NS_OK\n", This, aRequestMethod);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetReferrer(nsIHttpChannel *iface, nsIURI **aReferrer)
