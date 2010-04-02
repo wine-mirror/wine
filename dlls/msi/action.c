@@ -158,8 +158,6 @@ static const WCHAR szUnpublishComponents[] =
     {'U','n','p','u','b','l','i','s','h', 'C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szUnpublishFeatures[] =
     {'U','n','p','u','b','l','i','s','h','F','e','a','t','u','r','e','s',0};
-static const WCHAR szUnregisterClassInfo[] =
-    {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
 static const WCHAR szUnregisterComPlus[] =
     {'U','n','r','e','g','i','s','t','e','r','C','o','m','P','l','u','s',0};
 static const WCHAR szUnregisterExtensionInfo[] =
@@ -6955,12 +6953,6 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'U','p','g','r','a','d','e',0 };
     return msi_unimplemented_action_stub( package, "RemoveExistingProducts", table );
-}
-
-static UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'A','p','p','I','d',0 };
-    return msi_unimplemented_action_stub( package, "UnregisterClassInfo", table );
 }
 
 static UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )

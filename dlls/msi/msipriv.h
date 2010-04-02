@@ -962,6 +962,7 @@ extern UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
 extern UINT ACTION_RegisterFonts(MSIPACKAGE *package);
+extern UINT ACTION_UnregisterClassInfo(MSIPACKAGE *package);
 extern UINT ACTION_UnregisterFonts(MSIPACKAGE *package);
 
 /* Helpers */
@@ -1084,6 +1085,14 @@ static const WCHAR szWindowsFolder[] = {'W','i','n','d','o','w','s','F','o','l',
 static const WCHAR szAppSearch[] = {'A','p','p','S','e','a','r','c','h',0};
 static const WCHAR szMoveFiles[] = {'M','o','v','e','F','i','l','e','s',0};
 static const WCHAR szCCPSearch[] = {'C','C','P','S','e','a','r','c','h',0};
+static const WCHAR szUnregisterClassInfo[] = {'U','n','r','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
+static const WCHAR szCLSID[] = {'C','L','S','I','D',0};
+static const WCHAR szProgID[] = {'P','r','o','g','I','D',0};
+static const WCHAR szVIProgID[] = {'V','e','r','s','i','o','n','I','n','d','e','p','e','n','d','e','n','t','P','r','o','g','I','D',0};
+static const WCHAR szAppID[] = {'A','p','p','I','D',0};
+static const WCHAR szDefaultIcon[] = {'D','e','f','a','u','l','t','I','c','o','n',0};
+static const WCHAR szInprocHandler[] = {'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
+static const WCHAR szInprocHandler32[] = {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

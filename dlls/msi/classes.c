@@ -18,12 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* actions handled in this module
+/* Actions handled in this module:
+ *
  * RegisterClassInfo
  * RegisterProgIdInfo
  * RegisterExtensionInfo
  * RegisterMIMEInfo
- * UnRegisterClassInfo (TODO)
+ * UnRegisterClassInfo
  * UnRegisterProgIdInfo (TODO)
  * UnRegisterExtensionInfo (TODO)
  * UnRegisterMIMEInfo (TODO)
@@ -720,6 +721,25 @@ static void mark_progid_for_install( MSIPACKAGE* package, MSIPROGID *progid )
     }
 }
 
+static void mark_progid_for_uninstall( MSIPACKAGE *package, MSIPROGID *progid )
+{
+    MSIPROGID *child;
+
+    if (!progid)
+        return;
+
+    if (!progid->InstallMe)
+        return;
+
+    progid->InstallMe = FALSE;
+
+    LIST_FOR_EACH_ENTRY( child, &package->progids, MSIPROGID, entry )
+    {
+        if (child->Parent == progid)
+            mark_progid_for_uninstall( package, child );
+    }
+}
+
 static void mark_mime_for_install( MSIMIME *mime )
 {
     if (!mime)
@@ -729,7 +749,6 @@ static void mark_mime_for_install( MSIMIME *mime )
 
 static UINT register_appid(const MSIAPPID *appid, LPCWSTR app )
 {
-    static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     static const WCHAR szRemoteServerName[] =
          {'R','e','m','o','t','e','S','e','r','v','e','r','N','a','m','e',0};
     static const WCHAR szLocalService[] =
@@ -776,24 +795,13 @@ static UINT register_appid(const MSIAPPID *appid, LPCWSTR app )
 
 UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 {
-    /* 
-     * Again I am assuming the words, "Whose key file represents" when referring
-     * to a Component as to meaning that Components KeyPath file
-     */
-    
-    UINT rc;
-    MSIRECORD *uirow;
-    static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
-    static const WCHAR szProgID[] = { 'P','r','o','g','I','D',0 };
-    static const WCHAR szVIProgID[] = { 'V','e','r','s','i','o','n','I','n','d','e','p','e','n','d','e','n','t','P','r','o','g','I','D',0 };
-    static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     static const WCHAR szFileType_fmt[] = {'F','i','l','e','T','y','p','e','\\','%','s','\\','%','i',0};
+    MSIRECORD *uirow;
     HKEY hkey,hkey2,hkey3;
     MSICLASS *cls;
 
     load_classes_and_such(package);
-    rc = RegCreateKeyW(HKEY_CLASSES_ROOT,szCLSID,&hkey);
-    if (rc != ERROR_SUCCESS)
+    if (RegCreateKeyW(HKEY_CLASSES_ROOT, szCLSID, &hkey) != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
     LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
@@ -812,14 +820,18 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (!feature)
             continue;
 
-        /*
-         * MSDN says that these are based on Feature not on Component.
-         */
         if (feature->ActionRequest != INSTALLSTATE_LOCAL &&
             feature->ActionRequest != INSTALLSTATE_ADVERTISED )
         {
-            TRACE("Feature %s not scheduled for installation, skipping regstration of class %s\n",
+            TRACE("Feature %s not scheduled for installation, skipping registration of class %s\n",
                   debugstr_w(feature->Feature), debugstr_w(cls->clsid));
+            continue;
+        }
+
+        file = get_loaded_file( package, comp->KeyPath );
+        if (!file)
+        {
+            TRACE("COM server not provided, skipping class %s\n", debugstr_w(cls->clsid));
             continue;
         }
 
@@ -834,12 +846,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             msi_reg_set_val_str( hkey2, NULL, cls->Description );
 
         RegCreateKeyW( hkey2, cls->Context, &hkey3 );
-        file = get_loaded_file( package, comp->KeyPath );
-        if (!file)
-        {
-            TRACE("COM server not provided, skipping class %s\n", debugstr_w(cls->clsid));
-            continue;
-        }
 
         /*
          * FIXME: Implement install on demand (advertised components).
@@ -887,35 +893,18 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (cls->AppID)
         {
             MSIAPPID *appid = cls->AppID;
-
             msi_reg_set_val_str( hkey2, szAppID, appid->AppID );
-
             register_appid( appid, cls->Description );
         }
 
         if (cls->IconPath)
-        {
-            static const WCHAR szDefaultIcon[] = 
-                {'D','e','f','a','u','l','t','I','c','o','n',0};
-
             msi_reg_set_subkey_val( hkey2, szDefaultIcon, NULL, cls->IconPath );
-        }
 
         if (cls->DefInprocHandler)
-        {
-            static const WCHAR szInproc[] =
-                {'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
-
-            msi_reg_set_subkey_val( hkey2, szInproc, NULL, cls->DefInprocHandler );
-        }
+            msi_reg_set_subkey_val( hkey2, szInprocHandler, NULL, cls->DefInprocHandler );
 
         if (cls->DefInprocHandler32)
-        {
-            static const WCHAR szInproc32[] =
-                {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
-
-            msi_reg_set_subkey_val( hkey2, szInproc32, NULL, cls->DefInprocHandler32 );
-        }
+            msi_reg_set_subkey_val( hkey2, szInprocHandler32, NULL, cls->DefInprocHandler32 );
         
         RegCloseKey(hkey2);
 
@@ -947,14 +936,92 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
         
         uirow = MSI_CreateRecord(1);
-
         MSI_RecordSetStringW( uirow, 1, cls->clsid );
         ui_actiondata(package,szRegisterClassInfo,uirow);
         msiobj_release(&uirow->hdr);
     }
 
     RegCloseKey(hkey);
-    return rc;
+    return ERROR_SUCCESS;
+}
+
+UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
+{
+    static const WCHAR szFileType[] = {'F','i','l','e','T','y','p','e','\\',0};
+    MSIRECORD *uirow;
+    MSICLASS *cls;
+    HKEY hkey, hkey2;
+
+    load_classes_and_such( package );
+    if (RegOpenKeyW( HKEY_CLASSES_ROOT, szCLSID, &hkey ) != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
+    {
+        MSIFEATURE *feature;
+        MSICOMPONENT *comp;
+        LPWSTR filetype;
+        LONG res;
+
+        comp = cls->Component;
+        if (!comp)
+            continue;
+
+        feature = cls->Feature;
+        if (!feature)
+            continue;
+
+        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+        {
+            TRACE("Feature %s not scheduled for removal, skipping unregistration of class %s\n",
+                  debugstr_w(feature->Feature), debugstr_w(cls->clsid));
+            continue;
+        }
+        feature->Action = feature->ActionRequest;
+
+        TRACE("Unregistering class %s (%p)\n", debugstr_w(cls->clsid), cls);
+
+        cls->Installed = FALSE;
+        mark_progid_for_uninstall( package, cls->ProgID );
+
+        res = RegDeleteTreeW( hkey, cls->clsid );
+        if (res != ERROR_SUCCESS)
+            WARN("Failed to delete class key %d\n", res);
+
+        if (cls->AppID)
+        {
+            res = RegOpenKeyW( HKEY_CLASSES_ROOT, szAppID, &hkey2 );
+            if (res == ERROR_SUCCESS)
+            {
+                res = RegDeleteKeyW( hkey2, cls->AppID->AppID );
+                if (res != ERROR_SUCCESS)
+                    WARN("Failed to delete appid key %d\n", res);
+                RegCloseKey( hkey2 );
+            }
+        }
+        if (cls->FileTypeMask)
+        {
+            filetype = msi_alloc( (strlenW( szFileType ) + strlenW( cls->clsid ) + 1) * sizeof(WCHAR) );
+            if (filetype)
+            {
+                strcpyW( filetype, szFileType );
+                strcatW( filetype, cls->clsid );
+                res = RegDeleteTreeW( HKEY_CLASSES_ROOT, filetype );
+                msi_free( filetype );
+
+                if (res != ERROR_SUCCESS)
+                    WARN("Failed to delete file type %d\n", res);
+            }
+        }
+
+        uirow = MSI_CreateRecord( 1 );
+        MSI_RecordSetStringW( uirow, 1, cls->clsid );
+        ui_actiondata( package, szUnregisterClassInfo, uirow );
+        msiobj_release( &uirow->hdr );
+    }
+
+    RegCloseKey( hkey );
+    return ERROR_SUCCESS;
 }
 
 static LPCWSTR get_clsid_of_progid( const MSIPROGID *progid )
@@ -972,11 +1039,7 @@ static LPCWSTR get_clsid_of_progid( const MSIPROGID *progid )
 
 static UINT register_progid( const MSIPROGID* progid )
 {
-    static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
-    static const WCHAR szDefaultIcon[] =
-        {'D','e','f','a','u','l','t','I','c','o','n',0};
-    static const WCHAR szCurVer[] =
-        {'C','u','r','V','e','r',0};
+    static const WCHAR szCurVer[] = {'C','u','r','V','e','r',0};
     HKEY hkey = 0;
     UINT rc;
 
