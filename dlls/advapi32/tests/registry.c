@@ -1924,16 +1924,24 @@ static void test_deleted_key(void)
 
     delete_key( hkey_main );
 
-    val_count = 20;
+    val_count = sizeof(value);
     type = 0;
     res = RegEnumValueA( hkey, 0, value, &val_count, NULL, &type, 0, 0 );
-    todo_wine ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
+
+    res = RegEnumKeyA( hkey, 0, value, sizeof(value) );
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
+
+    val_count = sizeof(value);
+    type = 0;
+    res = RegQueryValueExA( hkey, "test", NULL, &type, (BYTE *)value, &val_count );
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
 
     res = RegSetValueExA( hkey, "test", 0, REG_SZ, (const BYTE*)"value", 6);
-    todo_wine ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
 
     res = RegOpenKeyA( hkey, "test", &hkey2 );
-    todo_wine ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
     if (res == 0)
         RegCloseKey( hkey2 );
 
@@ -1941,6 +1949,9 @@ static void test_deleted_key(void)
     ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
     if (res == 0)
         RegCloseKey( hkey2 );
+
+    res = RegFlushKey( hkey );
+    ok(res == ERROR_KEY_DELETED, "expect ERROR_KEY_DELETED, got %i\n", res);
 
     RegCloseKey( hkey );
 

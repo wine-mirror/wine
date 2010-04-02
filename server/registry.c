@@ -712,12 +712,6 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     int index;
     struct unicode_str token, next;
 
-    if (key->flags & KEY_DELETED) /* we cannot create a subkey under a deleted key */
-    {
-        set_error( STATUS_KEY_DELETED );
-        return NULL;
-    }
-
     *created = 0;
     if (!(key = open_key_prefix( key, name, access, &token, &index ))) return NULL;
 
@@ -902,7 +896,7 @@ static void enum_key( const struct key *key, int index, int info_class,
 static int delete_key( struct key *key, int recurse )
 {
     int index;
-    struct key *parent;
+    struct key *parent = key->parent;
 
     /* must find parent and index */
     if (key == root_key)
@@ -910,11 +904,7 @@ static int delete_key( struct key *key, int recurse )
         set_error( STATUS_ACCESS_DENIED );
         return -1;
     }
-    if (!(parent = key->parent) || (key->flags & KEY_DELETED))
-    {
-        set_error( STATUS_KEY_DELETED );
-        return -1;
-    }
+    assert( parent );
 
     while (recurse && (key->last_subkey>=0))
         if (0 > delete_key(key->subkeys[key->last_subkey], 1))
@@ -1165,16 +1155,24 @@ static void delete_value( struct key *key, const struct unicode_str *name )
 }
 
 /* get the registry key corresponding to an hkey handle */
-static inline struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
+static struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
 {
-    return (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
+    struct key *key = (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
+
+    if (key && key->flags & KEY_DELETED)
+    {
+        set_error( STATUS_KEY_DELETED );
+        release_object( key );
+        key = NULL;
+    }
+    return key;
 }
 
 /* get the registry key corresponding to a parent key handle */
 static inline struct key *get_parent_hkey_obj( obj_handle_t hkey )
 {
     if (!hkey) return (struct key *)grab_object( root_key );
-    return (struct key *)get_handle_obj( current->process, hkey, 0, &key_ops );
+    return get_hkey_obj( hkey, 0 );
 }
 
 /* read a line from the input file */
@@ -1698,11 +1696,6 @@ static void save_registry( struct key *key, obj_handle_t handle )
     struct file *file;
     int fd;
 
-    if (key->flags & KEY_DELETED)
-    {
-        set_error( STATUS_KEY_DELETED );
-        return;
-    }
     if (!(file = get_file_obj( current->process, handle, FILE_WRITE_DATA ))) return;
     fd = dup( get_file_unix_fd( file ) );
     release_object( file );
