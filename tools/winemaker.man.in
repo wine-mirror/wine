@@ -63,7 +63,7 @@ encounters something out of the ordinary, winemaker will warn you about it.
 .PP
 - winemaker can also scan a complete directory tree at once, guess what are
 the executables and libraries you are trying to build, match them with
-source files, and generate the corresponding Makefile.in files.
+source files, and generate the corresponding Makefile.
 .PP
 - finally winemaker will generate a global Makefile for normal use.
 .PP
@@ -170,7 +170,7 @@ target specific options.
 Specifies that there is only one target, and that it is called "name".
 .TP
 .I --generated-files
-Tells winemaker to generate the build the Makefile. This is the default.
+Tells winemaker to generate the Makefile. This is the default.
 .TP
 .I --nogenerated-files
 Tells winemaker not to generate the Makefile.
