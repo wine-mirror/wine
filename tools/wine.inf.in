@@ -480,6 +480,7 @@ HKCU,%Desktop%,"MenuShowDelay",2,"400"
 
 [DotNet]
 HKLM,Software\Microsoft\.NETFramework\policy\v1.0
+HKLM,Software\Microsoft\.NETFramework\policy\v1.1
 HKLM,Software\Microsoft\.NETFramework\policy\v2.0
 HKLM,Software\Microsoft\.NETFramework\policy\v3.0
 HKLM,Software\Microsoft\NET Framework Setup\NDP\v1.1.4322,Install,0x10003,1
