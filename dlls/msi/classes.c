@@ -24,10 +24,10 @@
  * RegisterProgIdInfo
  * RegisterExtensionInfo
  * RegisterMIMEInfo
- * UnRegisterClassInfo
- * UnRegisterProgIdInfo
- * UnRegisterExtensionInfo (TODO)
- * UnRegisterMIMEInfo (TODO)
+ * UnregisterClassInfo
+ * UnregisterProgIdInfo
+ * UnregisterExtensionInfo
+ * UnregisterMIMEInfo (TODO)
  */
 
 #include <stdarg.h>
@@ -747,6 +747,13 @@ static void mark_mime_for_install( MSIMIME *mime )
     mime->InstallMe = TRUE;
 }
 
+static void mark_mime_for_uninstall( MSIMIME *mime )
+{
+    if (!mime)
+        return;
+    mime->InstallMe = FALSE;
+}
+
 static UINT register_appid(const MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szRemoteServerName[] =
@@ -1221,10 +1228,11 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 {
     static const WCHAR szContentType[] = 
         {'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
-    HKEY hkey;
+    HKEY hkey = NULL;
     MSIEXTENSION *ext;
     MSIRECORD *uirow;
     BOOL install_on_demand = TRUE;
+    LONG res;
 
     load_classes_and_such(package);
 
@@ -1270,12 +1278,16 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         mark_mime_for_install(ext->Mime);
 
-        extension = msi_alloc( (lstrlenW( ext->Extension ) + 2)*sizeof(WCHAR) );
-        extension[0] = '.';
-        lstrcpyW(extension+1,ext->Extension);
-
-        RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
-        msi_free( extension );
+        extension = msi_alloc( (strlenW( ext->Extension ) + 2) * sizeof(WCHAR) );
+        if (extension)
+        {
+            extension[0] = '.';
+            strcpyW( extension + 1, ext->Extension );
+            res = RegCreateKeyW( HKEY_CLASSES_ROOT, extension, &hkey );
+            msi_free( extension );
+            if (res != ERROR_SUCCESS)
+                WARN("Failed to create extension key %d\n", res);
+        }
 
         if (ext->Mime)
             msi_reg_set_val_str( hkey, szContentType, ext->Mime->ContentType );
@@ -1320,6 +1332,86 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         MSI_RecordSetStringW( uirow, 1, ext->Extension );
         ui_actiondata(package,szRegisterExtensionInfo,uirow);
         msiobj_release(&uirow->hdr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
+{
+    MSIEXTENSION *ext;
+    MSIRECORD *uirow;
+    LONG res;
+
+    load_classes_and_such( package );
+
+    LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
+    {
+        LPWSTR extension;
+        MSIFEATURE *feature;
+
+        if (!ext->Component)
+            continue;
+
+        feature = ext->Feature;
+        if (!feature)
+            continue;
+
+        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+        {
+            TRACE("Feature %s not scheduled for removal, skipping unregistration of extension %s\n",
+                   debugstr_w(feature->Feature), debugstr_w(ext->Extension));
+            continue;
+        }
+
+        TRACE("Unregistering extension %s\n", debugstr_w(ext->Extension));
+
+        ext->Installed = FALSE;
+
+        if (ext->ProgID && !list_empty( &ext->verbs ))
+            mark_progid_for_uninstall( package, ext->ProgID );
+
+        mark_mime_for_uninstall( ext->Mime );
+
+        extension = msi_alloc( (strlenW( ext->Extension ) + 2) * sizeof(WCHAR) );
+        if (extension)
+        {
+            extension[0] = '.';
+            strcpyW( extension + 1, ext->Extension );
+            res = RegDeleteTreeW( HKEY_CLASSES_ROOT, extension );
+            msi_free( extension );
+            if (res != ERROR_SUCCESS)
+                WARN("Failed to delete extension key %d\n", res);
+        }
+
+        if (ext->ProgID || ext->ProgIDText)
+        {
+            static const WCHAR shellW[] = {'\\','s','h','e','l','l',0};
+            LPCWSTR progid;
+            LPWSTR progid_shell;
+
+            if (ext->ProgID)
+                progid = ext->ProgID->ProgID;
+            else
+                progid = ext->ProgIDText;
+
+            progid_shell = msi_alloc( (strlenW( progid ) + strlenW( shellW ) + 1) * sizeof(WCHAR) );
+            if (progid_shell)
+            {
+                strcpyW( progid_shell, progid );
+                strcatW( progid_shell, shellW );
+                res = RegDeleteTreeW( HKEY_CLASSES_ROOT, progid_shell );
+                msi_free( progid_shell );
+                if (res != ERROR_SUCCESS)
+                    WARN("Failed to delete shell key %d\n", res);
+                RegDeleteKeyW( HKEY_CLASSES_ROOT, progid );
+            }
+        }
+
+        uirow = MSI_CreateRecord( 1 );
+        MSI_RecordSetStringW( uirow, 1, ext->Extension );
+        ui_actiondata( package, szUnregisterExtensionInfo, uirow );
+        msiobj_release( &uirow->hdr );
     }
 
     return ERROR_SUCCESS;
