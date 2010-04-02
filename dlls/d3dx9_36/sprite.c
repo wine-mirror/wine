@@ -49,7 +49,7 @@ static ULONG WINAPI ID3DXSpriteImpl_AddRef(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     ULONG ref=InterlockedIncrement(&This->ref);
-    TRACE("(%p): AddRef from %d\n", This, ref-1);
+    TRACE("(%p)->(): AddRef from %d\n", This, ref-1);
     return ref;
 }
 
@@ -57,7 +57,8 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     ULONG ref=InterlockedDecrement(&This->ref);
-    TRACE("(%p): ReleaseRef to %d\n", This, ref);
+
+    TRACE("(%p)->(): ReleaseRef to %d\n", This, ref);
 
     if(ref==0) {
         if(This->sprites) {
@@ -79,7 +80,8 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(LPD3DXSPRITE iface, LPDIRECT3DDEVICE9 *device)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    TRACE("(%p): relay\n", This);
+
+    TRACE("(%p)->(%p): relay\n", This, device);
 
     if(device==NULL) return D3DERR_INVALIDCALL;
     *device=This->device;
@@ -91,7 +93,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(LPD3DXSPRITE iface, LPDIRECT3DDE
 static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(LPD3DXSPRITE iface, D3DXMATRIX *transform)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    TRACE("(%p)\n", This);
+
+    TRACE("(%p)->(%p)\n", This, transform);
 
     if(transform==NULL) return D3DERR_INVALIDCALL;
     *transform=This->transform;
@@ -102,7 +105,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(LPD3DXSPRITE iface, D3DXMATRI
 static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(LPD3DXSPRITE iface, CONST D3DXMATRIX *transform)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    TRACE("(%p)\n", This);
+
+    TRACE("(%p)->(%p)\n", This, transform);
 
     if(transform==NULL) return D3DERR_INVALIDCALL;
     This->transform=*transform;
@@ -113,14 +117,14 @@ static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(LPD3DXSPRITE iface, CONST D3D
 static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewRH(LPD3DXSPRITE iface, CONST D3DXMATRIX *world, CONST D3DXMATRIX *view)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
+    FIXME("(%p)->(%p, %p): stub\n", This, world, view);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(LPD3DXSPRITE iface, CONST D3DXMATRIX *world, CONST D3DXMATRIX *view)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
+    FIXME("(%p)->(%p, %p): stub\n", This, world, view);
     return E_NOTIMPL;
 }
 
@@ -269,7 +273,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     D3DSURFACE_DESC texdesc;
-    TRACE("(%p): relay\n", This);
+
+    TRACE("(%p)->(%p, %p, %p, %p, %#x): relay\n", This, texture, rect, center, position, color);
 
     if(texture==NULL) return D3DERR_INVALIDCALL;
     if(!This->ready) return D3DERR_INVALIDCALL;
@@ -328,7 +333,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     SPRITEVERTEX *vertices;
     int i;
-    TRACE("(%p): relay\n", This);
+    TRACE("(%p)->(): relay\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
     if(!This->sprite_count) return D3D_OK;
@@ -395,7 +400,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    TRACE("(%p): relay\n", This);
+
+    TRACE("(%p)->(): relay\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
 
@@ -412,7 +418,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    TRACE("(%p)\n", This);
+
+    TRACE("(%p)->()\n", This);
 
     if(This->stateblock) IDirect3DStateBlock9_Release(This->stateblock);
     if(This->vdecl) IDirect3DVertexDeclaration9_Release(This->vdecl);
@@ -430,7 +437,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_OnResetDevice(LPD3DXSPRITE iface)
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     int i;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->()\n", This);
 
     for(i=0;i<This->sprite_count;i++)
         if(This->sprites[i].texture)
@@ -471,7 +478,8 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
 {
     ID3DXSpriteImpl *object;
     D3DCAPS9 caps;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p): relay\n", device, sprite);
 
     if(device==NULL || sprite==NULL) return D3DERR_INVALIDCALL;
 
