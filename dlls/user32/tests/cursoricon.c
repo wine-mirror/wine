@@ -963,7 +963,7 @@ static HICON create_test_icon(HDC hdc, int width, int height, int bpp,
 {
     ICONINFO iconInfo;
     BITMAPINFO bitmapInfo;
-    UINT32 *buffer = NULL;
+    void *buffer = NULL;
     UINT32 mask = maskvalue ? 0xFFFFFFFF : 0x00000000;
 
     memset(&bitmapInfo, 0, sizeof(bitmapInfo));
@@ -982,7 +982,7 @@ static HICON create_test_icon(HDC hdc, int width, int height, int bpp,
     iconInfo.hbmMask = CreateBitmap( width, height, 1, 1, &mask );
     if(!iconInfo.hbmMask) return NULL;
 
-    iconInfo.hbmColor = CreateDIBSection(hdc, &bitmapInfo, DIB_RGB_COLORS, (void**)&buffer, NULL, 0);
+    iconInfo.hbmColor = CreateDIBSection(hdc, &bitmapInfo, DIB_RGB_COLORS, &buffer, NULL, 0);
     if(!iconInfo.hbmColor || !buffer)
     {
         DeleteObject(iconInfo.hbmMask);
@@ -1074,7 +1074,7 @@ static void test_DrawIcon(void)
     HDC hdcDst = NULL;
     HBITMAP bmpDst = NULL;
     HBITMAP bmpOld = NULL;
-    UINT32 *bits = 0;
+    void *bits = 0;
 
     hdcDst = CreateCompatibleDC(0);
     ok(hdcDst != 0, "CreateCompatibleDC(0) failed to return a valid DC\n");
@@ -1096,7 +1096,7 @@ static void test_DrawIcon(void)
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
     bitmapInfo.bmiHeader.biSizeImage = sizeof(UINT32);
 
-    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, &bits, NULL, 0);
     ok (bmpDst && bits, "CreateDIBSection failed to return a valid bitmap and buffer\n");
     if (!bmpDst || !bits)
         goto cleanup;
@@ -1158,7 +1158,7 @@ static void test_DrawIconEx(void)
     HDC hdcDst = NULL;
     HBITMAP bmpDst = NULL;
     HBITMAP bmpOld = NULL;
-    UINT32 bits = 0;
+    void *bits = 0;
 
     hdcDst = CreateCompatibleDC(0);
     ok(hdcDst != 0, "CreateCompatibleDC(0) failed to return a valid DC\n");
@@ -1179,7 +1179,7 @@ static void test_DrawIconEx(void)
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
     bitmapInfo.bmiHeader.biSizeImage = sizeof(UINT32);
-    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, &bits, NULL, 0);
     ok (bmpDst && bits, "CreateDIBSection failed to return a valid bitmap and buffer\n");
     if (!bmpDst || !bits)
         goto cleanup;
@@ -1310,7 +1310,7 @@ static void test_DrawState(void)
     HDC hdcDst = NULL;
     HBITMAP bmpDst = NULL;
     HBITMAP bmpOld = NULL;
-    UINT32 bits = 0;
+    void *bits = 0;
 
     hdcDst = CreateCompatibleDC(0);
     ok(hdcDst != 0, "CreateCompatibleDC(0) failed to return a valid DC\n");
@@ -1331,7 +1331,7 @@ static void test_DrawState(void)
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
     bitmapInfo.bmiHeader.biSizeImage = sizeof(UINT32);
-    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    bmpDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, &bits, NULL, 0);
     ok (bmpDst && bits, "CreateDIBSection failed to return a valid bitmap and buffer\n");
     if (!bmpDst || !bits)
         goto cleanup;
