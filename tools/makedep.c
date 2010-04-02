@@ -204,7 +204,7 @@ static char *get_line( FILE *file )
         while (p == buffer + size - 1 && p[-1] != '\n')
         {
             buffer = xrealloc( buffer, size * 2 );
-            fgets( buffer + size - 1, size + 1, file );
+            if (!fgets( buffer + size - 1, size + 1, file )) break;
             p = buffer + strlen(buffer);
             size *= 2;
         }
@@ -216,7 +216,7 @@ static char *get_line( FILE *file )
             {
                 *(--p) = 0;
                 /* line ends in backslash, read continuation line */
-                fgets( p, size - (p - buffer), file );
+                if (!fgets( p, size - (p - buffer), file )) return buffer;
                 input_line++;
                 continue;
             }
