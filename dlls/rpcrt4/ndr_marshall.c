@@ -93,7 +93,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /* _Align must be the desired alignment,
  * e.g. ALIGN_LENGTH(len, 4) to align on a dword boundary. */
-#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align)-1)&~((_Align)-1))
+#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align)-1)&~((ULONG_PTR)(_Align)-1))
 #define ALIGNED_POINTER(_Ptr, _Align) ((LPVOID)ALIGNED_LENGTH((ULONG_PTR)(_Ptr), _Align))
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
