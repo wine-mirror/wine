@@ -2573,6 +2573,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,notepad.exe
 11,,winetest.exe,-
 12,,mountmgr.sys
+10,Microsoft.NET\Framework\v1.1.4322,ngen.exe
+10,Microsoft.NET\Framework\v2.0.50727,ngen.exe
 16422,Internet Explorer,iexplore.exe
 11,,*
 
