@@ -2957,8 +2957,6 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
 
 GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
 {
-    static int calls;
-
     TRACE("(%p,%u)\n", graphics, intention);
 
     if(!graphics)
@@ -2967,10 +2965,12 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    /* We have no internal operation queue, so there's no need to clear it. */
 
-    return NotImplemented;
+    if (graphics->hdc)
+        GdiFlush();
+
+    return Ok;
 }
 
 /*****************************************************************************
