@@ -1052,9 +1052,14 @@ static nsresult NSAPI nsChannel_GetRequestSucceeded(nsIHttpChannel *iface,
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aRequestSucceeded);
+    TRACE("(%p)->(%p)\n", This, aRequestSucceeded);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(!This->response_status)
+        return NS_ERROR_NOT_AVAILABLE;
+
+    *aRequestSucceeded = (This->response_status < 400);
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetResponseHeader(nsIHttpChannel *iface,

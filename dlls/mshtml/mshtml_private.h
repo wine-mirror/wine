@@ -38,6 +38,7 @@
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
+#define NS_ERROR_NOT_AVAILABLE    ((nsresult)0x80040111L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
 #define NS_ERROR_UNKNOWN_PROTOCOL ((nsresult)0x804b0012L)
