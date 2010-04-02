@@ -2041,7 +2041,7 @@ UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     DWORD idx = 0;
     UINT r;
 
-    static int last_index = 0;
+    static DWORD last_index;
 
     TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p)\n",
           debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext, dwFilter,
@@ -2077,6 +2077,8 @@ UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
     if (r == ERROR_SUCCESS)
         last_index = dwIndex;
+    else
+        last_index = 0;
 
     return r;
 }
