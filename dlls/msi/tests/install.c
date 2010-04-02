@@ -1745,6 +1745,60 @@ static const CHAR rci_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "PublishProduct\t\t5200\n"
                                                "InstallFinalize\t\t6000\n";
 
+static const CHAR rei_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "extension.txt\textension\textension.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR rei_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "extension\t\t\textension feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR rei_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "extension\textension\n";
+
+static const CHAR rei_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "extension\t{9A3060D4-60BA-4A82-AB55-9FB148AD013C}\tMSITESTDIR\t0\t\textension.txt\n";
+
+static const CHAR rei_extension_dat[] = "Extension\tComponent_\tProgId_\tMIME_\tFeature_\n"
+                                        "s255\ts72\tS255\tS64\ts38\n"
+                                        "Extension\tExtension\tComponent_\n"
+                                        "extension\textension\tProg.Id.1\t\textension\n";
+
+static const CHAR rei_verb_dat[] = "Extension_\tVerb\tSequence\tCommand\tArgument\n"
+                                   "s255\ts32\tI2\tL255\tL255\n"
+                                   "Verb\tExtension_\tVerb\n"
+                                   "extension\tOpen\t1\t&Open\t/argument\n";
+
+static const CHAR rei_progid_dat[] = "ProgId\tProgId_Parent\tClass_\tDescription\tIcon_\tIconIndex\n"
+                                     "s255\tS255\tS38\tL255\tS72\tI2\n"
+                                     "ProgId\tProgId\n"
+                                     "Prog.Id.1\t\t\tdescription\t\t\n";
+
+static const CHAR rei_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "ProcessComponents\t\t1600\n"
+                                               "RemoveFiles\t\t1700\n"
+                                               "InstallFiles\t\t2000\n"
+                                               "UnregisterExtensionInfo\t\t3000\n"
+                                               "RegisterExtensionInfo\t\t4000\n"
+                                               "RegisterProduct\t\t5000\n"
+                                               "PublishFeatures\t\t5100\n"
+                                               "PublishProduct\t\t5200\n"
+                                               "InstallFinalize\t\t6000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2673,6 +2727,21 @@ static const msi_table rci_tables[] =
     ADD_TABLE(rci_appid),
     ADD_TABLE(rci_class),
     ADD_TABLE(rci_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table rei_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(rei_component),
+    ADD_TABLE(rei_feature),
+    ADD_TABLE(rei_feature_comp),
+    ADD_TABLE(rei_file),
+    ADD_TABLE(rei_extension),
+    ADD_TABLE(rei_verb),
+    ADD_TABLE(rei_progid),
+    ADD_TABLE(rei_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -9038,6 +9107,43 @@ static void test_register_class_info(void)
     delete_test_files();
 }
 
+static void test_register_extension_info(void)
+{
+    UINT r;
+    LONG res;
+    HKEY hkey;
+
+    create_test_files();
+    create_file("msitest\\extension.txt", 1000);
+    create_database(msifile, rei_tables, sizeof(rei_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, ".extension", &hkey);
+    ok(res == ERROR_SUCCESS, "key not created\n");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Prog.Id.1\\shell\\Open\\command", &hkey);
+    ok(res == ERROR_SUCCESS, "key not created\n");
+    RegCloseKey(hkey);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, ".extension", &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Prog.Id.1", &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    ok(!delete_pf("msitest\\extension.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+    delete_test_files();
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -9146,6 +9252,7 @@ START_TEST(install)
     test_remove_ini_values();
     test_remove_env_strings();
     test_register_class_info();
+    test_register_extension_info();
 
     DeleteFileA(log_file);
 
