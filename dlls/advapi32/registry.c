@@ -174,6 +174,55 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
     return status;
 }
 
+/* wrapper for NtOpenKey to handle Wow6432 nodes */
+static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS status;
+    BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
+    HANDLE subkey, root = attr->RootDirectory;
+    WCHAR *buffer = attr->ObjectName->Buffer;
+    DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+    UNICODE_STRING str;
+
+    if (!force_wow32) return NtOpenKey( (HANDLE *)retkey, access, attr );
+
+    if (len && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
+    while (i < len && buffer[i] != '\\') i++;
+    attrs = attr->Attributes;
+    attr->Attributes &= ~OBJ_OPENLINK;
+    attr->ObjectName = &str;
+
+    while (i < len)
+    {
+        str.Buffer = buffer + pos;
+        str.Length = (i - pos) * sizeof(WCHAR);
+        if (force_wow32 && pos)
+        {
+            if (is_wow6432node( &str )) force_wow32 = FALSE;
+            else if ((subkey = open_wow6432node( attr->RootDirectory, &str )))
+            {
+                if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+                attr->RootDirectory = subkey;
+                force_wow32 = FALSE;
+            }
+        }
+        status = NtOpenKey( &subkey, access, attr );
+        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+        if (status) return status;
+        attr->RootDirectory = subkey;
+        while (i < len && buffer[i] == '\\') i++;
+        pos = i;
+        while (i < len && buffer[i] != '\\') i++;
+    }
+    str.Buffer = buffer + pos;
+    str.Length = (i - pos) * sizeof(WCHAR);
+    attr->Attributes = attrs;
+    status = NtOpenKey( (PHANDLE)retkey, access, attr );
+    if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+    return status;
+
+}
+
 /* create one of the HKEY_* special root keys */
 static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
 {
@@ -404,7 +453,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
     attr.SecurityQualityOfService = NULL;
     if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
     RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtOpenKey( (PHANDLE)retkey, access, &attr ) );
+    return RtlNtStatusToDosError( open_key( retkey, access, &attr ) );
 }
 
 
@@ -455,7 +504,7 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM acce
     if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
                                                  &nameA, FALSE )))
     {
-        status = NtOpenKey( (PHANDLE)retkey, access, &attr );
+        status = open_key( retkey, access, &attr );
     }
     return RtlNtStatusToDosError( status );
 }
