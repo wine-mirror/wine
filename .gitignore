@@ -277,6 +277,7 @@ tools/winegcc/winecpp
 tools/winegcc/wineg++
 tools/winegcc/winegcc
 tools/winegcc/winegcc.man
+tools/winemaker.de.man
 tools/winemaker.man
 tools/wineprefixcreate
 tools/wineprefixcreate.man

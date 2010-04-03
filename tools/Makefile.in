@@ -20,6 +20,7 @@ PROGRAMS = \
 
 MANPAGES = \
 	winemaker.man \
+	winemaker.de.man \
 	wineprefixcreate.man
 
 C_SRCS = \
@@ -36,7 +37,8 @@ INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(datadir)/applications \
 	$(DESTDIR)$(datadir)/wine \
-	$(DESTDIR)$(mandir)/man$(prog_manext)
+	$(DESTDIR)$(mandir)/man$(prog_manext) \
+	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
@@ -82,9 +84,10 @@ install install-lib:: wine.inf wineprefixcreate $(INSTALLDIRS)
 install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(DESTDIR)$(bindir)/winemaker
 	$(INSTALL_DATA) winemaker.man $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
+	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
 depend: makedep$(EXEEXT)
