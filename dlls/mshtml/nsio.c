@@ -2453,7 +2453,6 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     HTMLWindow *window = NULL;
     nsIURI *uri = NULL;
     LPCWSTR base_wine_url = NULL;
-    BOOL is_wine_uri = FALSE;
     nsresult nsres;
 
     nsACString_GetData(aSpec, &spec);
@@ -2464,10 +2463,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     if(is_gecko_special_uri(spec))
         return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
 
-    if(!strncmp(spec, "wine:", 5)) {
+    if(!strncmp(spec, "wine:", 5))
         spec += 5;
-        is_wine_uri = TRUE;
-    }
 
     if(aBaseURI) {
         PARSEDURLA parsed_url = {sizeof(PARSEDURLA)};
@@ -2512,7 +2509,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             set_wine_url(wine_uri, url);
         else
              WARN("CoCombineUrl failed: %08x\n", hres);
-    }else if(is_wine_uri) {
+    }else {
         WCHAR url[INTERNET_MAX_URL_LENGTH];
 
         MultiByteToWideChar(CP_ACP, 0, spec, -1, url, sizeof(url)/sizeof(WCHAR));
