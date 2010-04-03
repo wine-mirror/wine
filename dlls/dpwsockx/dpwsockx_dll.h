@@ -47,13 +47,13 @@ typedef struct tagDPWS_DATA
 
 #ifdef WORDS_BIGENDIAN
 
-static inline u_short __dpws_ushort_swap(u_short s)
+static inline USHORT __dpws_ushort_swap(USHORT s)
 {
     return (s >> 8) | (s << 8);
 }
-static inline u_long __dpws_ulong_swap(u_long l)
+static inline ULONG __dpws_ulong_swap(ULONG l)
 {
-    return ((u_long)__dpws_ushort_swap((u_short)l) << 16) | __dpws_ushort_swap((u_short)(l >> 16));
+    return ((ULONG)__dpws_ushort_swap((USHORT)l) << 16) | __dpws_ushort_swap((USHORT)(l >> 16));
 }
 
 #define dpws_letohl(l) __dpws_ulong_swap(l)
@@ -63,10 +63,10 @@ static inline u_long __dpws_ulong_swap(u_long l)
 
 #else /* WORDS_BIGENDIAN */
 
-#define dpws_letohl(l) ((u_long)(l))
-#define dpws_letohs(s) ((u_short)(s))
-#define dpws_htolel(l) ((u_long)(l))
-#define dpws_htoles(s) ((u_short)(s))
+#define dpws_letohl(l) ((ULONG)(l))
+#define dpws_letohs(s) ((USHORT)(s))
+#define dpws_htolel(l) ((ULONG)(l))
+#define dpws_htoles(s) ((USHORT)(s))
 
 #endif /* WORDS_BIGENDIAN */
 
