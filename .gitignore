@@ -253,6 +253,7 @@ programs/winetest/build.rc
 programs/winhlp32/macro.lex.yy.c
 server/wineserver
 server/wineserver-installed
+server/wineserver.de.man
 server/wineserver.fr.man
 server/wineserver.man
 tools/fnt2bdf

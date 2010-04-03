@@ -1,0 +1,113 @@
+.\" -*- nroff -*-
+.TH WINESERVER 1 "April 2010" "@PACKAGE_STRING@" "Windows on Unix"
+.SH NAME
+wineserver \- Der Wine Server
+.SH ÜBERSICHT
+.BI wineserver\  [options]
+.SH BESCHREIBUNG
+.B wineserver
+ist ein Hintergrundprozess der Wine grob die gleichen Dienste bereitstellt,
+die der Windows Kernel unter Windows bereitstellt.
+.PP
+.B wineserver
+startet normal automatisch mit \fBwine(1)\fR, deswegen müssten Sie
+sich nicht damit beschäftigen. In einigen Fällen kann es nützlich sein
+\fBwineserver\fR direkt mit verschiedenen Parametern zu starten wie
+weiter unten beschrieben.
+.SH ARGUMENTE
+.TP
+.BI \-d [n] ,\ --debug [=n]
+Setzt das Debuglevel auf
+.I n.
+0 gibt keine Debuginfos aus, 1 ist normal und 2 steht für
+detaillierte Debuginfos. Wenn
+.I n
+nicht angegeben wird, ist 1 der Standardwert. Die Debugausgabe wird
+an stderr geleitet. \fBwine(1)\fR wird beim starten von \fBwineserver\fR
+automatisch das Debuglevel setzen, wenn +server in der WINEDEBUG
+Umgebungsvariable gesetzt ist.
+.TP
+.B \-f, --foreground
+Lässt den Server für einfachere Fehlersuche im Vordergrund laufen.
+Beispielsweise für den Betrieb im Debugger.
+.TP
+.B \-h, --help
+Zeigt den Hilfetext an.
+.TP
+.BI \-k [n] ,\ --kill [=n]
+Beendet den gerade laufenden
+.B wineserver,
+optional mit Signal \fIn\fR. Wenn kein Signal angegeben wurde, wird
+erst ein SIGINT und darauf ein SIGKILL gesendet. Die \fBwineserver\fR
+Instanz die beendet wird, wird durch die Umgebungsvariable WINEPREFIX
+bestimmt.
+.TP
+.BI \-p [n] ,\ --persistent [=n]
+Gibt die Zeit an, die \fBwineserver\fR weiterläuft nach dem sich alle Clients
+beendet haben. Damit kann man das beenden und wieder starten sparen,
+wenn Anwendungen schnell hintereinander gestartet werden. Die Zeit \fIn\fR ist
+in Sekunden, der Standardwert ist 3. Wenn \fIn\fR nicht angegeben wird, läuft
+der Server ewig weiter.
+.TP
+.B \-v, --version
+Zeigt Versionsinformationen an und beendet sich wieder.
+.TP
+.B \-w, --wait
+Wartet bis sich der gerade laufende
+.B wineserver
+beendet hat.
+.SH UMGEBUNGSVARIABLEN
+.TP
+.I WINEPREFIX
+Durch setzen dieser Variable wird der Inhalt als Pfad zu einem Verzeichnis
+interpretiert, in dem
+.B wineserver
+seine Daten ablegt (Standardmäßig in \fI$HOME/.wine\fR). Alle
+.B wine
+Prozesse nutzen den gleichen
+.B wineserver
+(z.B.: beim gleichen Nutzer), teilen einige Sachen wie Registry, gemeinsamer Speicher
+und Kernel Objekte.
+Durch setzen von
+.I WINEPREFIX
+zu unterschiedlichen Pfaden für verschiedene Wine Prozesse ist es möglich unabhängige
+Wine Sitzungen zu betreiben.
+.TP
+.I WINESERVER
+Gibt den Pfad und Namen der
+.B wineserver
+Datei an, die automatisch von \fBwine\fR gestartet wird. Wenn diese
+Variable nicht gesetzt ist wird \fBwine\fR versuchen
+.I @bindir@/wineserver,
+zu laden. Existiert dieser Pfad nicht wird nach einer Datei namens
+\fIwineserver\fR im Pfad und ähnlichen Orten gesucht.
+.SH DATEIEN
+.TP
+.B ~/.wine
+Verzeichnis mit Benutzerspezifischen Daten die zu
+.B wine
+gehören.
+.TP
+.BI /tmp/.wine- uid
+Das Verzeichnis enthält den Server Unix Socket und die lock-Datei.
+Die Dateien werden in einem Unterverzeichnis angelegt welches sich aus
+Geräte- und Inodenummer des WINEPREFIX zusammensetzt.
+.SH AUTOREN
+Der ursprüngliche Autor von
+.B wineserver
+ist Alexandre Julliard. Viele andere Leute haben neue Funktionen hinzugefügt
+und Fehler behoben. Bitte für mehr Informationen die Datei Changelog lesen.
+.SH FEHLER
+Wenn Sie einen Fehler finden, melden Sie ihn bitte unter
+.UR http://bugs.winehq.org
+.B http://bugs.winehq.org.
+.UE
+.SH VERFÜGBARKEIT
+.B wineserver
+ist Teil der Wine Distribution, welche über WineHQ, dem Wine Entwicklungs Hauptquartier,
+verfügbar ist unter
+.UR http://www.winehq.org/
+.B http://www.winehq.org/.
+.UE
+.SH "SIEHE AUCH"
+.BR wine (1).
