@@ -562,6 +562,10 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                   (DWORD) lParam2 );
         break;
 
+    case ICM_DECOMPRESS_END:
+        r = ICERR_OK;
+        break;
+
     case ICM_COMPRESS_QUERY:
         FIXME("compression not implemented\n");
         r = ICERR_BADFORMAT;
