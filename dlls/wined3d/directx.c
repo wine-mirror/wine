@@ -571,7 +571,7 @@ static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const 
 static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    return (gl_vendor == GL_VENDOR_ATI);
+    return gl_vendor == GL_VENDOR_FGLRX;
 
 }
 
@@ -1197,7 +1197,7 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl
         return GL_VENDOR_NVIDIA;
 
     if (strstr(gl_vendor_string, "ATI"))
-        return GL_VENDOR_ATI;
+        return GL_VENDOR_FGLRX;
 
     if (strstr(gl_vendor_string, "Intel(R)")
             || strstr(gl_renderer, "Intel(R)")
@@ -1214,9 +1214,10 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl
             || strstr(gl_renderer, "Gallium"))
         return GL_VENDOR_MESA;
 
-    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning GL_VENDOR_WINE.\n", debugstr_a(gl_vendor_string));
+    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning GL_VENDOR_UNKNOWN.\n",
+            debugstr_a(gl_vendor_string));
 
-    return GL_VENDOR_WINE;
+    return GL_VENDOR_UNKNOWN;
 }
 
 static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_string, const char *gl_renderer)
@@ -1916,7 +1917,7 @@ static const struct vendor_card_selection vendor_card_select_table[] =
     {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_ATI,     "Apple OSX AMD/ATI binary driver",  select_card_ati_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel_binary},
-    {GL_VENDOR_ATI,    HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
+    {GL_VENDOR_FGLRX,  HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
     {GL_VENDOR_MESA,   HW_VENDOR_ATI,     "Mesa AMD/ATI driver",      select_card_ati_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa}

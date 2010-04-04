@@ -1259,9 +1259,9 @@ typedef struct WineD3D_PixelFormat
 
 enum wined3d_gl_vendor
 {
-    GL_VENDOR_WINE,
+    GL_VENDOR_UNKNOWN,
     GL_VENDOR_APPLE,
-    GL_VENDOR_ATI,
+    GL_VENDOR_FGLRX,
     GL_VENDOR_INTEL,
     GL_VENDOR_MESA,
     GL_VENDOR_NVIDIA,
