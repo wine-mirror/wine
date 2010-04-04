@@ -5020,7 +5020,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     }
 }
 
-BOOL InitAdapters(IWineD3DImpl *This)
+static BOOL InitAdapters(IWineD3DImpl *This)
 {
     static HMODULE mod_gl;
     BOOL ret;
@@ -5318,7 +5318,7 @@ nogl_adapter:
  * IWineD3D VTbl follows
  **********************************************************/
 
-const IWineD3DVtbl IWineD3D_Vtbl =
+static const struct IWineD3DVtbl IWineD3D_Vtbl =
 {
     /* IUnknown */
     IWineD3DImpl_QueryInterface,
@@ -5348,3 +5348,23 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 {
     wined3d_null_wined3d_object_destroyed,
 };
+
+HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, IUnknown *parent)
+{
+    wined3d->lpVtbl = &IWineD3D_Vtbl;
+    wined3d->dxVersion = version;
+    wined3d->ref = 1;
+    wined3d->parent = parent;
+
+    if (!InitAdapters(wined3d))
+    {
+        WARN("Failed to initialize adapters.\n");
+        if (version > 7)
+        {
+            MESSAGE("Direct3D%u is not available without OpenGL.\n", version);
+            return E_FAIL;
+        }
+    }
+
+    return WINED3D_OK;
+}

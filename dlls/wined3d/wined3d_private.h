@@ -1567,11 +1567,9 @@ typedef struct IWineD3DImpl
     struct wined3d_adapter adapters[1];
 } IWineD3DImpl;
 
-extern const IWineD3DVtbl IWineD3D_Vtbl DECLSPEC_HIDDEN;
-
+HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, IUnknown *parent) DECLSPEC_HIDDEN;
 BOOL wined3d_register_window(HWND window, struct IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
-BOOL InitAdapters(IWineD3DImpl *This) DECLSPEC_HIDDEN;
 
 /* A helper function that dumps a resource list */
 void dumpResources(struct list *list) DECLSPEC_HIDDEN;
