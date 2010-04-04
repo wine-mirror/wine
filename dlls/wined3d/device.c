@@ -6250,9 +6250,9 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
     return FALSE;
 }
 
-void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
+static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     IWineD3DBaseShaderImpl *shader;
@@ -6294,9 +6294,9 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
     swapchain->num_contexts = 0;
 }
 
-HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
+static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
     struct wined3d_context *context;
     HRESULT hr;
     IWineD3DSurfaceImpl *target;
@@ -6453,7 +6453,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
     IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
 
-    delete_opengl_contexts(iface, (IWineD3DSwapChain *) swapchain);
+    delete_opengl_contexts(iface, swapchain);
 
     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
@@ -6581,7 +6581,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         }
     }
 
-    hr = create_primary_opengl_context(iface, (IWineD3DSwapChain *) swapchain);
+    hr = create_primary_opengl_context(iface, swapchain);
     IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
