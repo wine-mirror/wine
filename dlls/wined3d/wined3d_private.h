@@ -1270,7 +1270,7 @@ enum wined3d_gl_vendor
 
 enum wined3d_pci_vendor
 {
-    HW_VENDOR_WINE                     = 0x0000,
+    HW_VENDOR_SOFTWARE                 = 0x0000,
     HW_VENDOR_ATI                      = 0x1002,
     HW_VENDOR_NVIDIA                   = 0x10de,
     HW_VENDOR_INTEL                    = 0x8086,
