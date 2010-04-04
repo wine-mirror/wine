@@ -247,11 +247,3 @@ HRESULT resource_get_parent(IWineD3DResource *iface, IUnknown **pParent)
     *pParent = This->resource.parent;
     return WINED3D_OK;
 }
-
-void dumpResources(struct list *list) {
-    IWineD3DResourceImpl *resource;
-
-    LIST_FOR_EACH_ENTRY(resource, list, IWineD3DResourceImpl, resource.resource_list_entry) {
-        FIXME("Leftover resource %p with type %d,%s\n", resource, IWineD3DResource_GetType((IWineD3DResource *) resource), debug_d3dresourcetype(IWineD3DResource_GetType((IWineD3DResource *) resource)));
-    }
-}

@@ -610,9 +610,17 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
 
-        if (!list_empty(&This->resources)) {
+        if (!list_empty(&This->resources))
+        {
+            IWineD3DResourceImpl *resource;
             FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
-            dumpResources(&This->resources);
+
+            LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+            {
+                WINED3DRESOURCETYPE type = IWineD3DResource_GetType((IWineD3DResource *)resource);
+                FIXME("Leftover resource %p with type %s (%#x).\n",
+                        resource, debug_d3dresourcetype(type), type);
+            }
         }
 
         if(This->contexts) ERR("Context array not freed!\n");

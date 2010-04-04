@@ -1571,9 +1571,6 @@ HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, IUnknown *parent) DECL
 BOOL wined3d_register_window(HWND window, struct IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
-/* A helper function that dumps a resource list */
-void dumpResources(struct list *list) DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */
