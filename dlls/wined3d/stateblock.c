@@ -757,7 +757,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         TRACE("Updating scissor rect.\n");
 
-        targetStateBlock->scissorRect = This->scissorRect;
+        This->scissorRect = targetStateBlock->scissorRect;
     }
 
     map = This->changed.streamSource;
