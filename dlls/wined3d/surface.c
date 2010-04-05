@@ -2343,7 +2343,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     return WINED3D_OK;
 }
 
-static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey)
+void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
     IWineD3DPaletteImpl *pal = This->palette;
@@ -2867,7 +2867,6 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface,
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     BYTE table[256][4];
-    IWineD3DDeviceImpl *device = This->resource.device;
 
     d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
 
@@ -2877,31 +2876,6 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface,
         TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
         ENTER_GL();
         GL_EXTCALL(glColorTableEXT(This->texture_target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
-        LEAVE_GL();
-    }
-    else
-    {
-        /* Let a fragment shader do the color conversion by uploading the palette to a 1D texture.
-         * The 8bit pixel data will be used as an index in this palette texture to retrieve the final color. */
-        TRACE("Using fragment shaders for emulating 8-bit paletted texture support\n");
-
-        device->blitter->set_shader((IWineD3DDevice *) device, This->resource.format_desc,
-                This->texture_target, This->pow2Width, This->pow2Height);
-
-        ENTER_GL();
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE1));
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /* Make sure we have discrete color levels. */
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, table); /* Upload the palette */
-
-        /* Switch back to unit 0 in which the 2D texture will be stored. */
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0));
-
-        /* Rebind the texture because it isn't bound anymore */
-        glBindTexture(This->texture_target, This->texture_name);
         LEAVE_GL();
     }
 }
@@ -4103,8 +4077,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             dump_color_fixup_desc(Src->resource.format_desc->color_fixup);
         }
 
-        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc,
-                Src->texture_target, Src->pow2Width, Src->pow2Height);
+        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src);
 
         ENTER_GL();
 
@@ -4739,9 +4712,13 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         dst_rect = src_rect;
     }
 
+    device->blitter->set_shader((IWineD3DDevice *) device, This);
+
     ENTER_GL();
     draw_textured_quad(This, &src_rect, &dst_rect, WINED3DTEXF_POINT);
     LEAVE_GL();
+
+    device->blitter->set_shader((IWineD3DDevice *) device, This);
 
     wglFlush(); /* Flush to ensure ordering across contexts. */
 
@@ -5143,12 +5120,11 @@ static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
-        GLenum textype, UINT width, UINT height)
+static HRESULT ffp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
 {
     ENTER_GL();
-    glEnable(textype);
-    checkGLcall("glEnable(textype)");
+    glEnable(surface->texture_target);
+    checkGLcall("glEnable(surface->texture_target)");
     LEAVE_GL();
     return WINED3D_OK;
 }
@@ -5229,8 +5205,7 @@ static void cpu_blit_free(IWineD3DDevice *iface)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
-        GLenum textype, UINT width, UINT height)
+static HRESULT cpu_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
 {
     return WINED3D_OK;
 }

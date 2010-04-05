@@ -161,9 +161,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         /* Set up the texture. The surface is not in a IWineD3D*Texture container,
          * so there are no d3d texture settings to dirtify
          */
-        device->blitter->set_shader((IWineD3DDevice *) device, backbuffer->resource.format_desc,
-                                    backbuffer->texture_target, backbuffer->pow2Width,
-                                    backbuffer->pow2Height);
+        device->blitter->set_shader((IWineD3DDevice *) device, backbuffer);
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
 

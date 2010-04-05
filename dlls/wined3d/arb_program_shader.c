@@ -6225,6 +6225,7 @@ struct arbfp_blit_priv {
     GLenum uyvy_rect_shader, uyvy_2d_shader;
     GLenum yv12_rect_shader, yv12_2d_shader;
     GLenum p8_rect_shader, p8_2d_shader;
+    GLuint palette_texture;
 };
 
 static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
@@ -6252,6 +6253,8 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->p8_rect_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->p8_2d_shader));
     checkGLcall("Delete yuv and p8 programs");
+
+    if(priv->palette_texture) glDeleteTextures(1, &priv->palette_texture);
     LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, device->blit_priv);
@@ -6559,6 +6562,38 @@ static GLuint gen_p8_shader(IWineD3DDeviceImpl *device, GLenum textype)
 }
 
 /* Context activation is done by the caller. */
+static void upload_palette(IWineD3DSurfaceImpl *surface)
+{
+    BYTE table[256][4];
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct arbfp_blit_priv *priv = device->blit_priv;
+    BOOL colorkey = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
+
+    d3dfmt_p8_init_palette(surface, table, colorkey);
+
+    ENTER_GL();
+    if (!priv->palette_texture)
+        glGenTextures(1, &priv->palette_texture);
+
+    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE1));
+    glBindTexture(GL_TEXTURE_1D, priv->palette_texture);
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    /* Make sure we have discrete color levels. */
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    /* Upload the palette */
+    /* TODO: avoid unneeed uploads in the future by adding some SFLAG_PALETTE_DIRTY mechanism */
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, table);
+
+    /* Switch back to unit 0 in which the 2D texture will be stored. */
+    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0));
+    LEAVE_GL();
+}
+
+/* Context activation is done by the caller. */
 static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_fixup, GLenum textype)
 {
     GLenum shader;
@@ -6715,19 +6750,19 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum complex_fixup yuv_
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct wined3d_format_desc *format_desc,
-        GLenum textype, UINT width, UINT height)
+static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
 {
     GLenum shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    float size[4] = {width, height, 1, 1};
+    float size[4] = {surface->pow2Width, surface->pow2Height, 1, 1};
     struct arbfp_blit_priv *priv = device->blit_priv;
     enum complex_fixup fixup;
+    GLenum textype = surface->texture_target;
 
-    if (!is_complex_fixup(format_desc->color_fixup))
+    if (!is_complex_fixup(surface->resource.format_desc->color_fixup))
     {
         TRACE("Fixup:\n");
-        dump_color_fixup_desc(format_desc->color_fixup);
+        dump_color_fixup_desc(surface->resource.format_desc->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
         ENTER_GL();
         glEnable(textype);
@@ -6736,7 +6771,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct wined3d_format
         return WINED3D_OK;
     }
 
-    fixup = get_complex_fixup(format_desc->color_fixup);
+    fixup = get_complex_fixup(surface->resource.format_desc->color_fixup);
 
     switch(fixup)
     {
@@ -6755,6 +6790,8 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct wined3d_format
         case COMPLEX_FIXUP_P8:
             shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->p8_rect_shader : priv->p8_2d_shader;
             if (!shader) shader = gen_p8_shader(device, textype);
+
+            upload_palette(surface);
             break;
 
         default:
