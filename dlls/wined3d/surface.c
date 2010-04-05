@@ -2166,14 +2166,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     *convert = CONVERT_PALETTED;
                 }
             }
-            /* TODO: this check is evil and should die (it basically checks which blitter backend is used) */
-            else if (!gl_info->supported[EXT_PALETTED_TEXTURE] && device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup))
-            {
-                *format = GL_ALPHA;
-                *type = GL_UNSIGNED_BYTE;
-                *target_bpp = 1;
-            }
-
             break;
 
         case WINED3DFMT_B2G3R3_UNORM:

@@ -336,7 +336,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_TEXTURE_FLOAT},
     /* Palettized formats */
     {WINED3DFMT_P8_UINT,                GL_RGBA,                          GL_RGBA,                                0,
-            GL_RGBA,                    GL_UNSIGNED_BYTE,
+            GL_ALPHA,                   GL_UNSIGNED_BYTE,
             0,
             ARB_FRAGMENT_PROGRAM},
     {WINED3DFMT_P8_UINT,                GL_COLOR_INDEX8_EXT,              GL_COLOR_INDEX8_EXT,                    0,
