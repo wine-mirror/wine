@@ -287,7 +287,32 @@ if test "${enable_maintainer_mode+set}" = set
 then
   if test "$FONTFORGE" = "false"; then WINE_WARNING([fontforge is missing, fonts can't be rebuilt.]); fi
   if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
-  if test "$ICOTOOL" = "false"; then WINE_WARNING([icotool is missing, icons can't be rebuilt.]); fi
+
+  dnl Check the icotool version
+  if test "$ICOTOOL" = false
+  then
+    WINE_WARNING([icotool is missing, icons can't be rebuilt.])
+  else
+    AC_MSG_CHECKING([for recent enough icotool])
+    icotool_version=`icotool --version | head -n1`
+    if test "x$icotool_version" != "x"
+    then
+      icotool_version_major=`expr "$icotool_version" : '.* \([[0-9]]*\).[[0-9]]*'`
+      icotool_version_minor=`expr "$icotool_version" : '.* [[0-9]]*.\([[0-9]]*\)'`
+      if test "$icotool_version_major" -eq 0 -a "$icotool_version_minor" -lt 29
+      then
+        ICOTOOL=false
+        WINE_WARNING([icotool version 0.29.0 or newer is needed to rebuild icons.])
+      fi
+    fi
+    if test "$ICOTOOL" = false
+    then
+      AC_MSG_RESULT([no ($icotool_version_major.$icotool_version_minor)])
+    else
+      AC_MSG_RESULT([yes ($icotool_version_major.$icotool_version_minor)])
+    fi
+  fi
+
 fi
 
 case $host_cpu in
