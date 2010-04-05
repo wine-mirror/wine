@@ -89,9 +89,9 @@ static HRESULT WINAPI IMediaStreamImpl_QueryInterface(IMediaStream* iface, REFII
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IMediaStream))
     {
-      IClassFactory_AddRef(iface);
-      *ppvObject = This;
-      return S_OK;
+        IUnknown_AddRef(iface);
+        *ppvObject = This;
+        return S_OK;
     }
 
     ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
@@ -229,9 +229,9 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMedia
         IsEqualGUID(riid, &IID_IMediaStream) ||
         IsEqualGUID(riid, &IID_IDirectDrawMediaStream))
     {
-      IClassFactory_AddRef(iface);
-      *ppvObject = This;
-      return S_OK;
+        IUnknown_AddRef(iface);
+        *ppvObject = This;
+        return S_OK;
     }
 
     ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);

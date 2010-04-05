@@ -82,7 +82,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_QueryInterface(IAMMultiMediaStream
         IsEqualGUID(riid, &IID_IMultiMediaStream) ||
         IsEqualGUID(riid, &IID_IAMMultiMediaStream))
     {
-        IClassFactory_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppvObject = This;
         return S_OK;
     }
