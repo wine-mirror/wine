@@ -1172,6 +1172,17 @@ static void test_converttowstr(void)
 
 
 
+    memset(src, 0, sizeof(src));
+    ((CY*)src)->int64 = 43210000;
+    memset(dst, 0xcc, sizeof(dst));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_CY, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 8, "got %d\n", dst_len);
+    ok(!lstrcmpW(dst, fourthreetwoone), "got %s\n", wine_dbgstr_w(dst));
+
+
+
     b = SysAllocString(ten);
     *(BSTR *)src = b;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
@@ -1460,6 +1471,17 @@ static void test_converttostr(void)
     ok(dst[2] == '2', "got %02x\n", dst[2]);
     ok(dst[3] == 0, "got %02x\n", dst[3]);
     ok(dst[4] == (char)0xcc, "got %02x\n", dst[4]);
+
+
+
+    memset(src, 0, sizeof(src));
+    ((CY*)src)->int64 = 43210000;
+    memset(dst, 0xcc, sizeof(dst));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_CY, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 4, "got %d\n", dst_len);
+    ok(!lstrcmpA(dst, fourthreetwoone), "got %s\n", dst);
 
 
 
