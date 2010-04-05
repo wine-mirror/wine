@@ -576,7 +576,7 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
         D3DVSD_END()
     };
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff336699, 0.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rcp_test, &shader, 0);
@@ -606,7 +606,7 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     IDirect3DDevice8_SetVertexShader(device, 0);
     IDirect3DDevice8_DeleteVertexShader(device, shader);
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff996633, 0.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rsq_test, &shader, 0);
