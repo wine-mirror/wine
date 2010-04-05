@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
 extern void MMDevEnum_Free(void);
 
@@ -37,15 +41,6 @@ typedef struct MMDevice {
 
 #ifdef HAVE_OPENAL
 
-#ifdef HAVE_AL_AL_H
-#include <AL/al.h>
-#include <AL/alc.h>
-#elif defined(HAVE_OPENAL_AL_H)
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#else
-#error No OpenAL headers found?
-#endif
 #include "alext.h"
 
 /* All openal functions */

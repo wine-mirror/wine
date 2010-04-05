@@ -21,6 +21,14 @@
 
 #include <stdarg.h>
 
+#ifdef HAVE_AL_AL_H
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif defined(HAVE_OPENAL_AL_H)
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+#endif
+
 #define CINTERFACE
 #define COBJMACROS
 #include "windef.h"

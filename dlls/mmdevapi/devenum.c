@@ -16,11 +16,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
 #include "config.h"
 
 #include <stdarg.h>
 
+#ifdef HAVE_AL_AL_H
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif defined(HAVE_OPENAL_AL_H)
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+#endif
+
+#define NONAMELESSUNION
 #define CINTERFACE
 #define COBJMACROS
 #include "windef.h"
