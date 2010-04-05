@@ -27,6 +27,7 @@
  *  - Checks for integer addition overflow in user marshall functions
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -2046,7 +2047,8 @@ static inline void array_write_variance_and_marshall(
 static inline ULONG array_read_conformance(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
 {
-  DWORD esize;
+  DWORD def, esize;
+  unsigned char alignment;
 
   switch (fc)
   {
@@ -2070,6 +2072,21 @@ static inline ULONG array_read_conformance(
     else
       ReadConformance(pStubMsg, NULL);
     return safe_multiply(esize, pStubMsg->MaxCount);
+  case RPC_FC_BOGUS_ARRAY:
+    alignment = pFormat[1] + 1;
+    def = *(const WORD *)(pFormat + 2);
+    pFormat += 4;
+    if (IsConformanceOrVariancePresent(pFormat)) pFormat = ReadConformance(pStubMsg, pFormat);
+    else
+    {
+        pStubMsg->MaxCount = def;
+        pFormat = SkipConformance( pStubMsg, pFormat );
+    }
+    pFormat = SkipVariance( pStubMsg, pFormat );
+
+    align_pointer(&pStubMsg->Buffer, alignment);
+    esize = ComplexStructSize(pStubMsg, pFormat);
+    return safe_multiply(pStubMsg->MaxCount, esize);
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2084,8 +2101,8 @@ static inline ULONG array_read_variance_and_unmarshall(
   ULONG bufsize, memsize;
   WORD esize;
   unsigned char alignment;
-  unsigned char *saved_buffer;
-  ULONG offset;
+  unsigned char *saved_buffer, *pMemory;
+  ULONG i, offset, count;
 
   switch (fc)
   {
@@ -2204,6 +2221,31 @@ static inline ULONG array_read_variance_and_unmarshall(
         TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
     }
     return bufsize;
+
+  case RPC_FC_BOGUS_ARRAY:
+    alignment = pFormat[1] + 1;
+    pFormat = SkipConformance(pStubMsg, pFormat + 4);
+    pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
+
+    esize = ComplexStructSize(pStubMsg, pFormat);
+    memsize = safe_multiply(esize, pStubMsg->MaxCount);
+
+    assert( fUnmarshall );
+
+    if (!fMustAlloc && !*ppMemory)
+      fMustAlloc = TRUE;
+    if (fMustAlloc)
+      *ppMemory = NdrAllocate(pStubMsg, memsize);
+
+    align_pointer(&pStubMsg->Buffer, alignment);
+    saved_buffer = pStubMsg->Buffer;
+
+    pMemory = *ppMemory;
+    count = pStubMsg->ActualCount;
+    for (i = 0; i < count; i++)
+        pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
+    return pStubMsg->Buffer - saved_buffer;
+
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2214,6 +2256,7 @@ static inline void array_memory_size(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
     unsigned char fHasPointers)
 {
+  ULONG i, count, SavedMemorySize;
   ULONG bufsize, memsize;
   DWORD esize;
   unsigned char alignment;
@@ -2286,6 +2329,24 @@ static inline void array_memory_size(
     safe_buffer_increment(pStubMsg, bufsize);
     pStubMsg->MemorySize += memsize;
     break;
+  case RPC_FC_BOGUS_ARRAY:
+    alignment = pFormat[1] + 1;
+    pFormat = SkipConformance(pStubMsg, pFormat + 4);
+    pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
+
+    align_pointer(&pStubMsg->Buffer, alignment);
+
+    SavedMemorySize = pStubMsg->MemorySize;
+
+    esize = ComplexStructSize(pStubMsg, pFormat);
+    memsize = safe_multiply(pStubMsg->MaxCount, esize);
+
+    count = pStubMsg->ActualCount;
+    for (i = 0; i < count; i++)
+        ComplexStructMemorySize(pStubMsg, pFormat, NULL);
+
+    pStubMsg->MemorySize = SavedMemorySize + memsize;
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2296,6 +2357,8 @@ static inline void array_free(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg,
     unsigned char *pMemory, PFORMAT_STRING pFormat, unsigned char fHasPointers)
 {
+  DWORD i, count;
+
   switch (fc)
   {
   case RPC_FC_CARRAY:
@@ -2312,6 +2375,15 @@ static inline void array_free(
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
     /* No embedded pointers so nothing to do */
+    break;
+  case RPC_FC_BOGUS_ARRAY:
+      count = *(const WORD *)(pFormat + 2);
+      pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 4, count);
+      pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
+
+      count = pStubMsg->ActualCount;
+      for (i = 0; i < count; i++)
+          pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
     break;
   default:
     ERR("unknown array format 0x%x\n", fc);
@@ -4048,9 +4120,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  ULONG i, count, size;
-  unsigned char alignment;
-  unsigned char *pMemory;
+  ULONG size;
   unsigned char *saved_buffer;
   int pointer_buffer_mark_set = 0;
   int saved_ignore_embedded;
@@ -4063,8 +4133,6 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       RpcRaiseException(RPC_S_INTERNAL_ERROR);
       return NULL;
   }
-
-  alignment = pFormat[1] + 1;
 
   saved_ignore_embedded = pStubMsg->IgnoreEmbeddedPointers;
   /* save buffer pointer */
@@ -4087,22 +4155,9 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   /* restore the original buffer */
   pStubMsg->Buffer = saved_buffer;
 
-  pFormat += 4;
-
-  pFormat = ReadConformance(pStubMsg, pFormat);
-  pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
-
-  if (!fMustAlloc && !*ppMemory)
-    fMustAlloc = TRUE;
-  if (fMustAlloc)
-    *ppMemory = NdrAllocate(pStubMsg, size);
-
-  align_pointer(&pStubMsg->Buffer, alignment);
-
-  pMemory = *ppMemory;
-  count = pStubMsg->ActualCount;
-  for (i = 0; i < count; i++)
-    pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
+  array_read_conformance(RPC_FC_BOGUS_ARRAY, pStubMsg, pFormat);
+  array_read_variance_and_unmarshall(RPC_FC_BOGUS_ARRAY, pStubMsg, ppMemory, pFormat, fMustAlloc,
+                                     TRUE /* fUseBufferMemoryServer */, TRUE /* fUnmarshall */);
 
   if (pointer_buffer_mark_set)
   {
@@ -4174,9 +4229,6 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 ULONG WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                        PFORMAT_STRING pFormat)
 {
-  ULONG i, count, esize, SavedMemorySize, MemorySize;
-  unsigned char alignment;
-
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
   if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
@@ -4186,29 +4238,9 @@ ULONG WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       return 0;
   }
 
-  alignment = pFormat[1] + 1;
-
-  pFormat += 4;
-
-  pFormat = ReadConformance(pStubMsg, pFormat);
-  pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
-
-  align_pointer(&pStubMsg->Buffer, alignment);
-
-  SavedMemorySize = pStubMsg->MemorySize;
-
-  esize = ComplexStructSize(pStubMsg, pFormat);
-
-  MemorySize = safe_multiply(pStubMsg->MaxCount, esize);
-
-  count = pStubMsg->ActualCount;
-  for (i = 0; i < count; i++)
-    ComplexStructMemorySize(pStubMsg, pFormat, NULL);
-
-  pStubMsg->MemorySize = SavedMemorySize;
-
-  pStubMsg->MemorySize += MemorySize;
-  return MemorySize;
+  array_read_conformance(RPC_FC_BOGUS_ARRAY, pStubMsg, pFormat);
+  array_memory_size(RPC_FC_BOGUS_ARRAY, pStubMsg, pFormat, TRUE /* fHasPointers */);
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
