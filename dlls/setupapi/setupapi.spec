@@ -412,7 +412,7 @@
 @ stdcall SetupGetFileCompressionInfoW(wstr ptr ptr ptr ptr)
 @ stdcall SetupGetFileQueueCount(long long ptr)
 @ stdcall SetupGetFileQueueFlags(long ptr)
-@ stub SetupGetInfFileListA
+@ stdcall SetupGetInfFileListA(str long ptr long ptr)
 @ stdcall SetupGetInfFileListW(wstr long ptr long ptr)
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
 @ stdcall SetupGetInfInformationW(ptr long ptr long ptr)

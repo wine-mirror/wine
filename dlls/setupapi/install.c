@@ -1463,6 +1463,40 @@ BOOL WINAPI SetupInstallServicesFromInfSectionA( HINF Inf, PCSTR SectionName, DW
 
 
 /***********************************************************************
+ *              SetupGetInfFileListA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfFileListA(PCSTR dir, DWORD style, PSTR buffer,
+                                 DWORD insize, PDWORD outsize)
+{
+    UNICODE_STRING dirW;
+    PWSTR bufferW = NULL;
+    BOOL ret = FALSE;
+    DWORD outsizeA, outsizeW;
+
+    if ( dir )
+        RtlCreateUnicodeStringFromAsciiz( &dirW, dir );
+    else
+        dirW.Buffer = NULL;
+
+    if ( buffer )
+        bufferW = HeapAlloc( GetProcessHeap(), 0, insize * sizeof( WCHAR ));
+
+    ret = SetupGetInfFileListW( dirW.Buffer, style, bufferW, insize, &outsizeW);
+
+    if ( ret )
+    {
+        outsizeA = WideCharToMultiByte( CP_ACP, 0, bufferW, outsizeW,
+                                        buffer, insize, NULL, NULL);
+        if ( outsize ) *outsize = outsizeA;
+    }
+
+    HeapFree( GetProcessHeap(), 0, bufferW );
+    RtlFreeUnicodeString( &dirW );
+    return ret;
+}
+
+
+/***********************************************************************
  *              SetupGetInfFileListW  (SETUPAPI.@)
  */
 BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
