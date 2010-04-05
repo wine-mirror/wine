@@ -1418,6 +1418,7 @@ struct wined3d_gl_limits
 
 struct wined3d_gl_info
 {
+    DWORD glsl_version;
     UINT vidmem;
     struct wined3d_gl_limits limits;
     DWORD reserved_glsl_constants;
@@ -3033,5 +3034,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface,
 #define WINEMAKEFOURCC(ch0, ch1, ch2, ch3) \
         ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
         ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+
+#define MAKEDWORD_VERSION(maj, min) (((maj & 0xffff) << 16) | (min & 0xffff))
 
 #endif

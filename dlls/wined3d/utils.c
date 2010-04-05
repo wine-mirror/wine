@@ -2766,8 +2766,10 @@ UINT wined3d_log2i(UINT32 x)
  * and the user preferences in wined3d_settings. */
 void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected)
 {
+    BOOL glsl = wined3d_settings.glslRequested && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
+
     if (wined3d_settings.vs_mode == VS_NONE) *vs_selected = SHADER_NONE;
-    else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested)
+    else if (gl_info->supported[ARB_VERTEX_SHADER] && glsl)
     {
         /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
          * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
@@ -2779,7 +2781,7 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
     else *vs_selected = SHADER_NONE;
 
     if (wined3d_settings.ps_mode == PS_NONE) *ps_selected = SHADER_NONE;
-    else if (gl_info->supported[ARB_FRAGMENT_SHADER] && wined3d_settings.glslRequested) *ps_selected = SHADER_GLSL;
+    else if (gl_info->supported[ARB_FRAGMENT_SHADER] && glsl) *ps_selected = SHADER_GLSL;
     else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) *ps_selected = SHADER_ARB;
     else if (gl_info->supported[ATI_FRAGMENT_SHADER]) *ps_selected = SHADER_ATI;
     else *ps_selected = SHADER_NONE;

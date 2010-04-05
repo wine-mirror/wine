@@ -24,6 +24,7 @@
  */
 
 #include "config.h"
+#include <stdio.h>
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -31,7 +32,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define GLINFO_LOCATION (*gl_info)
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
-#define MAKEDWORD_VERSION(maj, min)  ((maj & 0xffff) << 16) | (min & 0xffff)
 
 /* The d3d device ID */
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
@@ -2414,7 +2414,13 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
     {
         const char *str = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
+        unsigned int major, minor;
+
         TRACE_(d3d_caps)("GLSL version string: %s.\n", debugstr_a(str));
+
+        /* The format of the GLSL version string is "major.minor[.release] [vendor info]". */
+        sscanf(str, "%u.%u", &major, &minor);
+        gl_info->glsl_version = MAKEDWORD_VERSION(major, minor);
     }
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
     {
