@@ -1,0 +1,129 @@
+#! /usr/bin/perl -w
+#
+# Render SVG files containing multiple images
+#
+# Copyright (C) 2010 Joel Holdsworth
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+
+use strict;
+use warnings;
+use XML::Parser;
+use MIME::Base64;
+
+# Parse the parameters
+my $svgFileName = $ARGV[0];
+my $icoFileName = $ARGV[1];
+die "Cannot open SVG file" unless defined($svgFileName);
+die "Cannot open ICO file" unless defined($icoFileName);
+
+my $renderedSVGFileName = "$svgFileName.ico";
+$icoFileName =~ m/(.*)\.ico/;
+my $icoName = $1;
+
+my @pngFiles;
+
+# Get the programs from the environment variables
+my $convert = $ENV{"CONVERT"};
+$convert = "convert" if $convert eq "";
+my $rsvg = $ENV{"RSVG"};
+$rsvg = "rsvg" if $rsvg eq "";
+my $icotool = $ENV{"ICOTOOL"};
+$icotool = "icotool" if $icotool eq "";
+
+sub svg_element_start
+{
+    my($expat, $element, %attr) = @_;
+
+    # Parse the id for icon format
+    my $id = $attr{'id'};
+    return unless defined($id);
+    return unless $id =~ /icon:(\d*)-(\d*)/;
+    my $size = $1;
+    my $depth = $2;
+    return unless defined($size) and defined($depth);
+
+    warn "Unexpected icon depth" unless
+        $depth == 4 or $depth == 8 or $depth == 32;
+    my $pngFileName = "$icoName-$size-$depth.png";
+
+    if($element eq "rect") {
+
+        # Extract SVG vector images
+        my $x = $attr{'x'};
+        my $y = $attr{'y'};
+
+        if(defined($x) and defined($x)) {
+            if($x =~ /\d*/ and $y =~ /\d*/) {
+                system "$convert $renderedSVGFileName -crop '$size x$size+$x+$y' $pngFileName";
+            }
+        }
+
+    } elsif($element eq "image" ) {
+
+        # Extract Base64 encoded PNG data to files
+        my $xlinkHref = $attr{'xlink:href'};
+        if(defined($xlinkHref)) {
+            $xlinkHref =~ /data:image\/png;base64(.*)/;
+            my $imageEncodedData = $1;
+            if(defined $imageEncodedData) {
+                open(FILE, '>' . $pngFileName) or die "$!";
+                print FILE decode_base64($imageEncodedData);
+                close FILE;
+            }
+        }
+    } else {
+        return;
+    }
+
+    push(@pngFiles, $pngFileName);
+}
+
+sub resize_image
+{
+    # Use ImageMagick to stretch the image
+    my($size) = @_;
+    my $pngFileName = "$icoName-$size.png";
+    system "$convert $renderedSVGFileName -resize '$size x$size' $pngFileName";
+    push(@pngFiles, $pngFileName);
+}
+
+sub fallback_render
+{
+    resize_image(16);
+    resize_image(32);
+    resize_image(48);
+}
+
+# Render the SVG image
+system 'rsvg', $svgFileName, $renderedSVGFileName;
+
+# Render the images in the SVG
+my $parser = new XML::Parser(
+    Handlers => {Start => \&svg_element_start});
+$parser->parsefile("$svgFileName");
+
+# If no render directives were found, this is an old-style icon
+# which should be rendered with the old build rule
+fallback_render unless(@pngFiles);
+
+# Combine them into an ICO file
+my $icotoolCommand = "$icotool -c -o $icoFileName";
+$icotoolCommand .= " $_" foreach(@pngFiles);
+system $icotoolCommand;
+
+# Delete the intermediate images
+unlink $renderedSVGFileName;
+unlink $_ foreach(@pngFiles);
