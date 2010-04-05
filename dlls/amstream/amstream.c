@@ -79,6 +79,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_QueryInterface(IAMMultiMediaStream
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IMultiMediaStream) ||
         IsEqualGUID(riid, &IID_IAMMultiMediaStream))
     {
         IClassFactory_AddRef(iface);
