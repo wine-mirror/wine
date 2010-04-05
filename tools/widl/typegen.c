@@ -1344,6 +1344,100 @@ unsigned int type_memsize(const type_t *t)
     return type_memsize_and_alignment( t, &align );
 }
 
+static unsigned int type_buffer_alignment(const type_t *t)
+{
+    const var_list_t *fields;
+    const var_t *var;
+    unsigned int max = 0, align;
+
+    switch (type_get_type(t))
+    {
+    case TYPE_BASIC:
+        switch (get_basic_fc(t))
+        {
+        case RPC_FC_BYTE:
+        case RPC_FC_CHAR:
+        case RPC_FC_USMALL:
+        case RPC_FC_SMALL:
+            return 1;
+        case RPC_FC_WCHAR:
+        case RPC_FC_USHORT:
+        case RPC_FC_SHORT:
+            return 2;
+        case RPC_FC_ULONG:
+        case RPC_FC_LONG:
+        case RPC_FC_ERROR_STATUS_T:
+        case RPC_FC_FLOAT:
+        case RPC_FC_INT3264:
+        case RPC_FC_UINT3264:
+            return 4;
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
+            return 8;
+        default:
+            error("type_buffer_alignment: Unknown type 0x%x\n", get_basic_fc(t));
+        }
+        break;
+    case TYPE_ENUM:
+        switch (get_enum_fc(t))
+        {
+        case RPC_FC_ENUM16:
+            return 2;
+        case RPC_FC_ENUM32:
+            return 4;
+        default:
+            error("type_buffer_alignment: Unknown enum type\n");
+        }
+        break;
+    case TYPE_STRUCT:
+        if (!(fields = type_struct_get_fields(t))) break;
+        LIST_FOR_EACH_ENTRY( var, fields, const var_t, entry )
+        {
+            if (!var->type) continue;
+            align = type_buffer_alignment( var->type );
+            if (max < align) max = align;
+        }
+        break;
+    case TYPE_ENCAPSULATED_UNION:
+        if (!(fields = type_encapsulated_union_get_fields(t))) break;
+        LIST_FOR_EACH_ENTRY( var, fields, const var_t, entry )
+        {
+            if (!var->type) continue;
+            align = type_buffer_alignment( var->type );
+            if (max < align) max = align;
+        }
+        break;
+    case TYPE_UNION:
+        if (!(fields = type_union_get_cases(t))) break;
+        LIST_FOR_EACH_ENTRY( var, fields, const var_t, entry )
+        {
+            if (!var->type) continue;
+            align = type_buffer_alignment( var->type );
+            if (max < align) max = align;
+        }
+        break;
+    case TYPE_ARRAY:
+        if (!type_array_is_decl_as_ptr(t))
+            return type_buffer_alignment( type_array_get_element(t) );
+        /* else fall through */
+    case TYPE_POINTER:
+        return 4;
+    case TYPE_INTERFACE:
+    case TYPE_ALIAS:
+    case TYPE_VOID:
+    case TYPE_COCLASS:
+    case TYPE_MODULE:
+    case TYPE_FUNCTION:
+    case TYPE_BITFIELD:
+        /* these types should not be encountered here due to language
+         * restrictions (interface, void, coclass, module), logical
+         * restrictions (alias - due to type_get_type call above) or
+         * checking restrictions (function, bitfield). */
+        assert(0);
+    }
+    return max;
+}
+
 int is_full_pointer_function(const var_t *func)
 {
     const var_t *var;
@@ -1511,10 +1605,10 @@ static int user_type_has_variable_size(const type_t *t)
 static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 {
     unsigned int start, absoff, flags;
-    unsigned int ualign = 0;
     const char *name = NULL;
     type_t *utype = get_user_type(type, &name);
-    unsigned int usize = type_memsize_and_alignment(utype, &ualign);
+    unsigned int usize = type_memsize(utype);
+    unsigned int ualign = type_buffer_alignment(utype);
     unsigned int size = type_memsize(type);
     unsigned short funoff = user_type_offset(name);
     short reloff;
@@ -2168,7 +2262,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
 {
     const expr_t *length_is = type_array_get_variance(type);
     const expr_t *size_is = type_array_get_conformance(type);
-    unsigned int align = 0;
+    unsigned int align;
     unsigned int size;
     unsigned int start_offset;
     unsigned char fc;
@@ -2183,8 +2277,8 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
 
     write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
 
-    align = 0;
-    size = type_memsize_and_alignment((is_conformant_array(type) ? type_array_get_element(type) : type), &align);
+    size = type_memsize(is_conformant_array(type) ? type_array_get_element(type) : type);
+    align = type_buffer_alignment(is_conformant_array(type) ? type_array_get_element(type) : type);
     fc = get_array_fc(type);
 
     start_offset = *typestring_offset;
@@ -2359,7 +2453,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     const var_t *array;
     unsigned int start_offset;
     unsigned int array_offset;
-    unsigned int align = 0;
+    unsigned int align;
     unsigned int corroff;
     var_t *f;
     unsigned char fc = get_struct_fc(type);
@@ -2368,7 +2462,8 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     guard_rec(type);
     current_structure = type;
 
-    total_size = type_memsize_and_alignment(type, &align);
+    total_size = type_memsize(type);
+    align = type_buffer_alignment(type);
     if (total_size > USHRT_MAX)
         error("structure size for %s exceeds %d bytes by %d bytes\n",
               name, USHRT_MAX, total_size - USHRT_MAX);
