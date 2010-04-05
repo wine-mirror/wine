@@ -1067,7 +1067,7 @@ static nsresult NSAPI nsChannel_GetRequestSucceeded(nsIHttpChannel *iface,
     if(!This->response_status)
         return NS_ERROR_NOT_AVAILABLE;
 
-    *aRequestSucceeded = (This->response_status < 400);
+    *aRequestSucceeded = This->response_status/100 == 2;
 
     return NS_OK;
 }
