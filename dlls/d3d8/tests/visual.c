@@ -534,7 +534,6 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     HRESULT hr;
     DWORD shader;
     DWORD color;
-    unsigned char c1, c2, c3;
     float constant[4] = {1.0, 1.0, 1.0, 2.0};
 
     static const float quad[][3] = {
@@ -598,12 +597,8 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     }
 
     color = getPixelColor(device, 320, 240);
-    c1 = (color & 0x00ff0000 )>> 16;
-    c2 = (color & 0x0000ff00 )>>  8;
-    c3 = (color & 0x000000ff )>>  0;
-    ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
-       c1, c2, c3);
-    ok(c1 >= 0x7c && c1 <= 0x84, "Color component value is %02x\n", c1);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80), 4),
+            "RCP test returned color 0x%08x, expected 0x00808080.\n", color);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
@@ -632,12 +627,8 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     }
 
     color = getPixelColor(device, 320, 240);
-    c1 = (color & 0x00ff0000 )>> 16;
-    c2 = (color & 0x0000ff00 )>>  8;
-    c3 = (color & 0x000000ff )>>  0;
-    ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
-       c1, c2, c3);
-    ok(c1 >= 0xb0 && c1 <= 0xb8, "Color component value is %02x\n", c1);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4), 4),
+            "RSQ test returned color 0x%08x, expected 0x00b4b4b4.\n", color);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
