@@ -206,9 +206,8 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
         /* only do this for types that should be the same on all platforms */
         if (is_integer_type(tref) || is_float_type(tref))
         {
-            unsigned int align = 0;
             e->is_const = TRUE;
-            e->cval = type_memsize(tref, &align);
+            e->cval = type_memsize(tref);
         }
     }
     /* check for cast of constant expression */
@@ -216,8 +215,7 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
     {
         if (is_integer_type(tref))
         {
-            unsigned int align = 0;
-            unsigned int cast_type_bits = type_memsize(tref, &align) * 8;
+            unsigned int cast_type_bits = type_memsize(tref) * 8;
             unsigned int cast_mask;
 
             e->is_const = TRUE;

@@ -1485,8 +1485,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
       /* FIXME: should use a type_memsize that allows us to pass in a pointer size */
       if (0)
       {
-        unsigned int align = 0;
-        unsigned int size = type_memsize(v->type, &align);
+        unsigned int size = type_memsize(v->type);
 
         if (0xffffffffu / size < dim->cval)
           error_loc("%s: total array size is too large\n", v->name);
@@ -2263,14 +2262,12 @@ static int is_allowed_conf_type(const type_t *type)
 
 static int is_ptr_guid_type(const type_t *type)
 {
-    unsigned int align = 0;
-
     /* first, make sure it is a pointer to something */
     if (!is_ptr(type)) return FALSE;
 
     /* second, make sure it is a pointer to something of size sizeof(GUID),
      * i.e. 16 bytes */
-    return (type_memsize(type_pointer_get_ref(type), &align) == 16);
+    return (type_memsize(type_pointer_get_ref(type)) == 16);
 }
 
 static void check_conformance_expr_list(const char *attr_name, const var_t *arg, const type_t *container_type, expr_list_t *expr_list)
