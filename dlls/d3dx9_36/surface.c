@@ -71,7 +71,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileA(LPCSTR file, D3DXIMAGE_INFO *info)
     LPWSTR widename;
     HRESULT hr;
     int strlength;
-    TRACE("(void): relay\n");
+
+    TRACE("(%s, %p): relay\n", debugstr_a(file), info);
 
     if( !file ) return D3DERR_INVALIDCALL;
 
@@ -90,7 +91,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileW(LPCWSTR file, D3DXIMAGE_INFO *info)
     HRESULT hr;
     DWORD size;
     LPVOID buffer;
-    TRACE("(void): relay\n");
+
+    TRACE("(%s, %p): relay\n", debugstr_w(file), info);
 
     if( !file ) return D3DERR_INVALIDCALL;
 
@@ -115,7 +117,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileW(LPCWSTR file, D3DXIMAGE_INFO *info)
 HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, LPCSTR resource, D3DXIMAGE_INFO *info)
 {
     HRSRC resinfo;
-    TRACE("(void)\n");
+
+    TRACE("(%p, %s, %p)\n", module, debugstr_a(resource), info);
 
     resinfo = FindResourceA(module, resource, (LPCSTR)RT_RCDATA);
     if(resinfo) {
@@ -139,7 +142,8 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, LPCSTR resource, D3
 HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, LPCWSTR resource, D3DXIMAGE_INFO *info)
 {
     HRSRC resinfo;
-    TRACE("(void)\n");
+
+    TRACE("(%p, %s, %p)\n", module, debugstr_w(resource), info);
 
     resinfo = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA);
     if(resinfo) {
@@ -215,7 +219,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(LPDIRECT3DSURFACE9 pDestSurface,
     LPWSTR pWidename;
     HRESULT hr;
     int strlength;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p, %p, %s, %p, %u, %#x, %p): relay\n", pDestSurface, pDestPalette, pDestRect, debugstr_a(pSrcFile),
+        pSrcRect, dwFilter, Colorkey, pSrcInfo);
 
     if( !pSrcFile || !pDestSurface ) return D3DERR_INVALIDCALL;
 
@@ -241,7 +247,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileW(LPDIRECT3DSURFACE9 pDestSurface,
     HRESULT hr;
     DWORD dwSize;
     LPVOID pBuffer;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p, %p, %s, %p, %u, %#x, %p): relay\n", pDestSurface, pDestPalette, pDestRect, debugstr_w(pSrcFile),
+        pSrcRect, Filter, Colorkey, pSrcInfo);
 
     if( !pSrcFile || !pDestSurface ) return D3DERR_INVALIDCALL;
 
@@ -268,7 +276,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(LPDIRECT3DSURFACE9 pDestSurface,
                                             D3DXIMAGE_INFO *pSrcInfo)
 {
     HRSRC hResInfo;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p, %p, %p, %s, %p, %u, %#x, %p): relay\n", pDestSurface, pDestPalette, pDestRect, hSrcModule,
+        debugstr_a(pResource), pSrcRect, dwFilter, Colorkey, pSrcInfo);
 
     if( !pDestSurface ) return D3DERR_INVALIDCALL;
 
@@ -302,7 +312,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(LPDIRECT3DSURFACE9 pDestSurface,
                                             D3DXIMAGE_INFO *pSrcInfo)
 {
     HRSRC hResInfo;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p, %p, %p, %s, %p, %u, %#x, %p): relay\n", pDestSurface, pDestPalette, pDestRect, hSrcModule,
+        debugstr_w(pResource), pSrcRect, dwFilter, Colorkey, pSrcInfo);
 
     if( !pDestSurface ) return D3DERR_INVALIDCALL;
 
@@ -450,7 +462,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
     D3DLOCKED_RECT lockrect;
     POINT srcsize, destsize;
     HRESULT hr;
-    TRACE("(void)\n");
+
+    TRACE("(%p, %p, %p, %p, %x, %u, %p, %p %u, %#x)\n", pDestSurface, pDestPalette, pDestRect, pSrcMemory,
+        SrcFormat, SrcPitch, pSrcPalette, pSrcRect, dwFilter, Colorkey);
 
     if( !pDestSurface || !pSrcMemory || !pSrcRect ) return D3DERR_INVALIDCALL;
     if(SrcFormat == D3DFMT_UNKNOWN || pSrcRect->left >= pSrcRect->right || pSrcRect->top >= pSrcRect->bottom) return E_FAIL;
@@ -520,7 +534,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(LPDIRECT3DSURFACE9 pDestSurface,
     D3DLOCKED_RECT lock;
     D3DSURFACE_DESC SrcDesc;
     HRESULT hr;
-    TRACE("(void): relay\n");
+
+    TRACE("(%p, %p, %p, %p, %p, %p, %u, %#x): relay\n", pDestSurface, pDestPalette, pDestRect,
+        pSrcSurface, pSrcPalette, pSrcRect, dwFilter, Colorkey);
 
     if( !pDestSurface || !pSrcSurface ) return D3DERR_INVALIDCALL;
 
