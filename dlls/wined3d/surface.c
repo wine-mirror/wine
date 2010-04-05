@@ -2857,29 +2857,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
     return WINED3D_OK;
 }
 
-/* This function is used in case of 8bit paletted textures to upload the palette.
-   It supports GL_EXT_paletted_texture and GL_ARB_fragment_program, support for other
-   extensions like ATI_fragment_shaders is possible.
-*/
-/* Context activation is done by the caller. */
-static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface,
-        const struct wined3d_gl_info *gl_info, CONVERT_TYPES convert)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    BYTE table[256][4];
-
-    d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
-
-    /* Try to use the paletted texture extension */
-    if (gl_info->supported[EXT_PALETTED_TEXTURE])
-    {
-        TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
-        ENTER_GL();
-        GL_EXTCALL(glColorTableEXT(This->texture_target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
-        LEAVE_GL();
-    }
-}
-
 BOOL palette9_changed(IWineD3DSurfaceImpl *This)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
@@ -4317,18 +4294,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
         if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) &&
             device->blitter->color_fixup_supported(&device->adapter->gl_info, This->resource.format_desc->color_fixup))
         {
-            struct wined3d_context *context;
-
             /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
             IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL);
 
             /* We want to force a palette refresh, so mark the drawable as not being up to date */
             IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
 
-            /* Re-upload the palette */
-            context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
-            d3dfmt_p8_upload_palette(iface, context->gl_info, NO_CONVERSION);
-            context_release(context);
+            /* Force a palette refresh by re-uploading to the drawable */
+            IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
@@ -4937,12 +4910,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                     return WINED3DERR_OUTOFVIDEOMEMORY;
                 }
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
-            }
-            else if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
-                    && (device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup)))
-            {
-                d3dfmt_p8_upload_palette(iface, gl_info, convert);
-                mem = This->resource.allocatedMemory;
             } else {
                 mem = This->resource.allocatedMemory;
             }
@@ -5119,9 +5086,34 @@ static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
+/* This function is used in case of 8bit paletted textures using GL_EXT_paletted_texture */
+/* Context activation is done by the caller. */
+static void ffp_blit_p8_upload_palette(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
+{
+    BYTE table[256][4];
+    BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
+
+    d3dfmt_p8_init_palette(surface, table, colorkey_active);
+
+    TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
+    ENTER_GL();
+    GL_EXTCALL(glColorTableEXT(surface->texture_target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
+    LEAVE_GL();
+}
+
 /* Context activation is done by the caller. */
 static HRESULT ffp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface)
 {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    enum complex_fixup fixup = get_complex_fixup(surface->resource.format_desc->color_fixup);
+
+    /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
+     * else the surface is converted in software at upload time in LoadLocation.
+     */
+    if(fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
+        ffp_blit_p8_upload_palette(surface, gl_info);
+
     ENTER_GL();
     glEnable(surface->texture_target);
     checkGLcall("glEnable(surface->texture_target)");
