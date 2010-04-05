@@ -1240,12 +1240,11 @@ static void test_converttowstr(void)
     memcpy(src, &IID_IDataConvert, sizeof(GUID));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_WSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 76, "got %d\n", dst_len);
     ok(!lstrcmpW(dst, guid_str), "got %s\n", wine_dbgstr_w(dst));
-    }
+
 
 
     b = SysAllocString(ten);
@@ -1605,12 +1604,11 @@ static void test_converttostr(void)
     memcpy(src, &IID_IDataConvert, sizeof(GUID));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_STR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 38, "got %d\n", dst_len);
     ok(!lstrcmpA(dst, guid_str), "got %s\n", dst);
-    }
+
 
 
     b = SysAllocString(ten);

@@ -336,6 +336,22 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         hr = VarBstrFromUI4(*(DWORD*)src, LOCALE_USER_DEFAULT, 0, d);         break;
         case DBTYPE_I8:          hr = VarBstrFromI8(*(LONGLONG*)src, LOCALE_USER_DEFAULT, 0, d);       break;
         case DBTYPE_UI8:         hr = VarBstrFromUI8(*(ULONGLONG*)src, LOCALE_USER_DEFAULT, 0, d);     break;
+        case DBTYPE_GUID:
+        {
+            WCHAR szBuff[39];
+            const GUID *id = (const GUID *)src;
+            WCHAR format[] = {
+                '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
+                '%','0','2','X','%','0','2','X','-',
+                '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0};
+            wsprintfW(szBuff, format,
+                id->Data1, id->Data2, id->Data3,
+                id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+            *d = SysAllocString(szBuff);
+            hr = *d ? S_OK : E_OUTOFMEMORY;
+        }
+        break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
         }
         break;
