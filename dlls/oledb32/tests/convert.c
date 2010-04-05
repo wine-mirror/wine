@@ -923,6 +923,9 @@ static void test_converttowstr(void)
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
     static const WCHAR fourthreetwoone[] = {'4','3','2','1',0};
+    static const WCHAR guid_str[] = {
+        '{','0','C','7','3','3','A','8','D','-','2','A','1','C','-','1','1','C','E','-',
+        'A','D','E','5','-','0','0','A','A','0','0','4','4','7','7','3','D','}',0};
     BSTR b;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
@@ -1233,6 +1236,18 @@ static void test_converttowstr(void)
 
 
 
+    memset(src, 0, sizeof(src));
+    memcpy(src, &IID_IDataConvert, sizeof(GUID));
+    memset(dst, 0xcc, sizeof(dst));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_WSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    todo_wine {
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 76, "got %d\n", dst_len);
+    ok(!lstrcmpW(dst, guid_str), "got %s\n", wine_dbgstr_w(dst));
+    }
+
+
     b = SysAllocString(ten);
     *(BSTR *)src = b;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
@@ -1278,6 +1293,7 @@ static void test_converttostr(void)
     static const WCHAR ten[] = {'1','0',0};
     static const char ten_a[] = "10";
     static const char fourthreetwoone[] = "4321";
+    static const char guid_str[] = "{0C733A8D-2A1C-11CE-ADE5-00AA0044773D}";
     BSTR b;
 
     hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER, &IID_IDataConvert, (void**)&convert);
@@ -1583,6 +1599,18 @@ static void test_converttostr(void)
     ok(dst_len == 4, "got %d\n", dst_len);
     ok(!lstrcmpA(dst, fourthreetwoone), "got %s\n", dst);
 
+
+
+    memset(src, 0, sizeof(src));
+    memcpy(src, &IID_IDataConvert, sizeof(GUID));
+    memset(dst, 0xcc, sizeof(dst));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_STR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    todo_wine {
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 38, "got %d\n", dst_len);
+    ok(!lstrcmpA(dst, guid_str), "got %s\n", dst);
+    }
 
 
     b = SysAllocString(ten);
