@@ -316,3 +316,11 @@ BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST
     if ( ( d <= 0.0f ) || ( sqrt(d) <= b ) ) return FALSE;
     return TRUE;
 }
+
+HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
+                             FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+{
+    FIXME("(%p, %f, %f, %f, %p, %p): stub\n", device, width, height, depth, mesh, adjacency);
+
+    return E_NOTIMPL;
+}

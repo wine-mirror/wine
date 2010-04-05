@@ -173,6 +173,7 @@ SRCDIR_INCLUDES = \
 	d3dx9math.inl \
 	d3dx9mesh.h \
 	d3dx9shader.h \
+	d3dx9shape.h \
 	d3dx9tex.h \
 	dbccmd.idl \
 	dbcses.idl \
