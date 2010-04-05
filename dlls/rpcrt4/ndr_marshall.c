@@ -2405,20 +2405,18 @@ unsigned char *  WINAPI NdrNonConformantStringMarshall(PMIDL_STUB_MESSAGE pStubM
 
   if (*pFormat == RPC_FC_CSTRING)
   {
-    ULONG i;
+    ULONG i = 0;
     const char *str = (const char *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
+    while (i < maxsize && str[i]) i++;
     TRACE("string=%s\n", debugstr_an(str, i));
     pStubMsg->ActualCount = i + 1;
     esize = 1;
   }
   else if (*pFormat == RPC_FC_WSTRING)
   {
-    ULONG i;
+    ULONG i = 0;
     const WCHAR *str = (const WCHAR *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
+    while (i < maxsize && str[i]) i++;
     TRACE("string=%s\n", debugstr_wn(str, i));
     pStubMsg->ActualCount = i + 1;
     esize = 2;
@@ -2507,20 +2505,18 @@ void WINAPI NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   if (*pFormat == RPC_FC_CSTRING)
   {
-    ULONG i;
+    ULONG i = 0;
     const char *str = (const char *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
+    while (i < maxsize && str[i]) i++;
     TRACE("string=%s\n", debugstr_an(str, i));
     pStubMsg->ActualCount = i + 1;
     esize = 1;
   }
   else if (*pFormat == RPC_FC_WSTRING)
   {
-    ULONG i;
+    ULONG i = 0;
     const WCHAR *str = (const WCHAR *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
+    while (i < maxsize && str[i]) i++;
     TRACE("string=%s\n", debugstr_wn(str, i));
     pStubMsg->ActualCount = i + 1;
     esize = 2;
