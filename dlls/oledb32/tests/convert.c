@@ -1059,10 +1059,10 @@ static void test_converttostr(void)
 
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
-    todo_wine ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 0, "got %d\n", dst_len);
-    todo_wine ok(dst[0] == 0, "got %02x\n", dst[0]);
+    ok(dst[0] == 0, "got %02x\n", dst[0]);
     ok(dst[1] == (char)0xcc, "got %02x\n", dst[1]);
 
     memset(dst, 0xcc, sizeof(dst));
@@ -1074,60 +1074,49 @@ static void test_converttostr(void)
 
     *(short *)src = 4321;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
     ok(!lstrcmpA(dst, fourthreetwoone), "got %s\n", dst);
-    }
 
     *(short *)src = 4321;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, dst, 0, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
-    }
     ok(dst[0] == (char)0xcc, "got %02x\n", dst[0]);
 
     *(short *)src = 4321;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, NULL, 0, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
-    }
     ok(dst[0] == (char)0xcc, "got %02x\n", dst[0]);
 
     *(short *)src = 4321;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, dst, 2, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
     ok(dst[0] == '4', "got %02x\n", dst[0]);
     ok(dst[1] == 0, "got %02x\n", dst[1]);
-    }
     ok(dst[2] == (char)0xcc, "got %02x\n", dst[2]);
 
     *(short *)src = 4321;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, dst, 1, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
     ok(dst[0] == 0, "got %02x\n", dst[0]);
-    }
     ok(dst[1] == (char)0xcc, "got %02x\n", dst[1]);
 
     *(short *)src = 4321;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR, 0, &dst_len, src, dst, 4, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
@@ -1135,84 +1124,69 @@ static void test_converttostr(void)
     ok(dst[1] == '3', "got %02x\n", dst[1]);
     ok(dst[2] == '2', "got %02x\n", dst[2]);
     ok(dst[3] == 0, "got %02x\n", dst[3]);
-    }
     ok(dst[4] == (char)0xcc, "got %02x\n", dst[4]);
 
     b = SysAllocString(ten);
     *(BSTR *)src = b;
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2, "got %d\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
-    }
     SysFreeString(b);
 
     memcpy(src, ten, sizeof(ten));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR, 2, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 1, "got %d\n", dst_len);
     ok(dst[0] == '1', "got %02x\n", dst[0]);
     ok(dst[1] == 0, "got %02x\n", dst[1]);
-    }
 
     memcpy(src, ten, sizeof(ten));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR, 4, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2, "got %d\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
-    }
 
     memcpy(src, ten, sizeof(ten));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2, "got %d\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
-    }
 
     memcpy(src, ten_a, sizeof(ten_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, 2, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2, "got %d\n", dst_len);
     ok(dst[0] == '1', "got %02x\n", dst[0]);
     ok(dst[1] == '0', "got %02x\n", dst[1]);
     ok(dst[2] == 0, "got %02x\n", dst[2]);
-    }
     ok(dst[3] == (char)0xcc, "got %02x\n", dst[3]);
 
     memcpy(src, ten_a, sizeof(ten_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, 4, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 4, "got %d\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
-    }
 
     memcpy(src, ten_a, sizeof(ten_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2, "got %d\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
-    }
 
     IDataConvert_Release(convert);
 }

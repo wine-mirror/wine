@@ -136,6 +136,7 @@ static int get_length(DBTYPE type)
     case DBTYPE_GUID:
         return sizeof(GUID);
     case DBTYPE_WSTR:
+    case DBTYPE_STR:
     case DBTYPE_BYREF | DBTYPE_WSTR:
         return 0;
     default:
@@ -462,6 +463,37 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 memcpy(dst, b, bytes_to_copy - sizeof(WCHAR));
                 *((WCHAR*)dst + bytes_to_copy / sizeof(WCHAR) - 1) = 0;
                 if(bytes_to_copy < *dst_len + sizeof(WCHAR))
+                    *dst_status = DBSTATUS_S_TRUNCATED;
+            }
+            else
+            {
+                *dst_status = DBSTATUS_E_DATAOVERFLOW;
+                hr = DB_E_ERRORSOCCURRED;
+            }
+        }
+        SysFreeString(b);
+        return hr;
+    }
+    case DBTYPE_STR:
+    {
+        BSTR b;
+        DBLENGTH bstr_len;
+        INT bytes_to_copy;
+        hr = IDataConvert_DataConvert(iface, src_type, DBTYPE_BSTR, src_len, &bstr_len,
+                                      src, &b, sizeof(BSTR), src_status, dst_status,
+                                      precision, scale, flags);
+        if(hr != S_OK) return hr;
+        bstr_len = SysStringLen(b);
+        *dst_len = bstr_len * sizeof(char); /* Doesn't include size for '\0' */
+        *dst_status = DBSTATUS_S_OK;
+        bytes_to_copy = min(*dst_len + sizeof(char), dst_max_len);
+        if(dst)
+        {
+            if(bytes_to_copy >= sizeof(char))
+            {
+                WideCharToMultiByte(CP_ACP, 0, b, bytes_to_copy - sizeof(char), dst, dst_max_len, NULL, NULL);
+                *((char *)dst + bytes_to_copy / sizeof(char) - 1) = 0;
+                if(bytes_to_copy < *dst_len + sizeof(char))
                     *dst_status = DBSTATUS_S_TRUNCATED;
             }
             else
