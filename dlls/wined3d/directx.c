@@ -3404,12 +3404,12 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
             return FALSE;
 
         /*****
-         *  supported: Palettized
+         *  Not supported: Palettized
+         *  Only some Geforce/Voodoo3/G400 cards offer 8-bit textures in case of <=Direct3D7.
+         *  Since it is not widely available, don't offer it. Further no Windows driver offers
+         *  WINED3DFMT_P8_UINT_A8_NORM, so don't offer it either.
          */
         case WINED3DFMT_P8_UINT:
-            TRACE_(d3d_caps)("[OK]\n");
-            return TRUE;
-        /* No Windows driver offers WINED3DFMT_P8_UINT_A8_UNORM, so don't offer it either */
         case WINED3DFMT_P8_UINT_A8_UNORM:
             return FALSE;
 
