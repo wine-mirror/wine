@@ -21,6 +21,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
+                                            UINT* width,
+                                            UINT* height,
+                                            UINT* miplevels,
+                                            DWORD usage,
+                                            D3DFORMAT* format,
+                                            D3DPOOL pool)
+{
+    FIXME("(%p, %p, %p, %p, %u, %p, %u): stub\n", device, width, height, miplevels, usage, format, pool);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXCreateTexture(LPDIRECT3DDEVICE9 pDevice,
                                  UINT width,
                                  UINT height,
