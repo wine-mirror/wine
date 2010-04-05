@@ -281,12 +281,14 @@ dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 AC_CHECK_PROGS(RSVG, rsvg, false)
+AC_CHECK_PROGS(CONVERT, convert, false)
 AC_CHECK_PROGS(ICOTOOL, icotool, false)
 
 if test "${enable_maintainer_mode+set}" = set
 then
   if test "$FONTFORGE" = "false"; then WINE_WARNING([fontforge is missing, fonts can't be rebuilt.]); fi
   if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
+  if test "$CONVERT" = "false"; then WINE_WARNING([imagemagick is missing, icons can't be rebuilt.]); fi
 
   dnl Check the icotool version
   if test "$ICOTOOL" = false
