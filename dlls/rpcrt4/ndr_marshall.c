@@ -644,14 +644,16 @@ finish_conf:
 static inline PFORMAT_STRING SkipConformance(PMIDL_STUB_MESSAGE pStubMsg,
                                              PFORMAT_STRING pFormat)
 {
-  if (IsConformanceOrVariancePresent(pFormat))
-  {
     if (pStubMsg->fHasNewCorrDesc)
       pFormat += 6;
     else
       pFormat += 4;
-  }
-  return pFormat;
+    return pFormat;
+}
+
+static inline PFORMAT_STRING SkipVariance(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
+{
+    return SkipConformance( pStubMsg, pFormat );
 }
 
 /* multiply two numbers together, raising an RPC_S_INVALID_BOUND exception if
@@ -1842,7 +1844,7 @@ static inline void array_buffer_size(
     alignment = pFormat[1] + 1;
 
     pFormat = SkipConformance(pStubMsg, pFormat + 4);
-    pFormat = SkipConformance(pStubMsg, pFormat);
+    pFormat = SkipVariance(pStubMsg, pFormat);
 
     SizeVariance(pStubMsg);
 
@@ -1942,10 +1944,8 @@ static inline void array_write_variance_and_marshall(
     esize = *(const WORD*)(pFormat+2);
     alignment = pFormat[1] + 1;
 
-    /* conformance */
     pFormat = SkipConformance(pStubMsg, pFormat + 4);
-    /* variance */
-    pFormat = SkipConformance(pStubMsg, pFormat);
+    pFormat = SkipVariance(pStubMsg, pFormat);
 
     WriteVariance(pStubMsg);
 
