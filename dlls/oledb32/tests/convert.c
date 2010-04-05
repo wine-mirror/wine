@@ -1286,82 +1286,68 @@ static void test_converttowstr(void)
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, sizeof(hexpacked_w), &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_w) * 4, "got %d\n", dst_len);
     ok(!lstrcmpW(hexunpacked_w, dst), "got %s\n", wine_dbgstr_w(dst));
-    }
     ok(dst[sizeof(hexpacked_w)/sizeof(WCHAR) * 4 + 1] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    }
     ok(dst_len == 0, "got %d\n", dst_len);
-    todo_wine ok(dst[0] == 0, "not null terminated\n");
+    ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, 4, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2 * sizeof(WCHAR) * 4, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_w, dst, 2 * sizeof(WCHAR) * 4 ), "got %s\n", wine_dbgstr_w(dst));
     ok(dst[2 * 4] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4 + 1] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, sizeof(hexpacked_w), &dst_len, src, dst, 2 * sizeof(WCHAR) * 4 + sizeof(WCHAR), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_w) * 4, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_w, dst, 2 * sizeof(WCHAR) * 4 ), "got %s\n", wine_dbgstr_w(dst));
     ok(dst[2 * 4] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4 + 1] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, sizeof(hexpacked_w), &dst_len, src, dst, 2 * sizeof(WCHAR) * 4 +1, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_w) * 4, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_w, dst, 2 * sizeof(WCHAR) * 4 - 2 ), "got %s\n", wine_dbgstr_w(dst));
     ok(dst[2 * 4 - 1] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, sizeof(hexpacked_w), &dst_len, src, dst, 2 * sizeof(WCHAR) * 4, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_w) * 4, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_w, dst, 2 * sizeof(WCHAR) * 4 - 2 ), "got %s\n", wine_dbgstr_w(dst));
     ok(dst[2 * 4 - 1] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    }
     ok(dst_len == 0, "got %d\n", dst_len);
-    todo_wine ok(dst[0] == 0, "not null terminated\n");
+    ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == 0xcccc, "clobbered buffer\n");
 
 
@@ -1768,70 +1754,58 @@ static void test_converttostr(void)
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, sizeof(hexpacked_a), &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_a) * 2, "got %d\n", dst_len);
     ok(!lstrcmpA(hexunpacked_a, dst), "got %s\n", dst);
-    }
     ok(dst[sizeof(hexpacked_a)/sizeof(char) * 4 + 1] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    }
     ok(dst_len == 0, "got %d\n", dst_len);
-    todo_wine ok(dst[0] == 0, "not null terminated\n");
+    ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, 4, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 2 * sizeof(char) * 4, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_a, dst, 2 * sizeof(char) * 4 ), "got %s\n", dst);
     ok(dst[2 * 4] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4 + 1] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, sizeof(hexpacked_a), &dst_len, src, dst, 2 * sizeof(char) * 4 + sizeof(char), 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_a) * 2, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_a, dst, 2 * sizeof(char) * 4 ), "got %s\n", dst);
     ok(dst[2 * 4] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4 + 1] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, sizeof(hexpacked_a), &dst_len, src, dst, 2 * sizeof(char) * 4, 0, &dst_status, 0, 0, 0);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_a) * 2, "got %d\n", dst_len);
     ok(!memcmp(hexunpacked_a, dst, 2 * sizeof(char) * 4 - 2 ), "got %s\n", dst);
     ok(dst[2 * 4 - 1] == 0, "not null terminated\n");
-    }
     ok(dst[2 * 4] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
     hr = IDataConvert_DataConvert(convert, DBTYPE_BYTES, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
-    todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    }
     ok(dst_len == 0, "got %d\n", dst_len);
-    todo_wine ok(dst[0] == 0, "not null terminated\n");
+    ok(dst[0] == 0, "not null terminated\n");
     ok(dst[1] == (char)0xcc, "clobbered buffer\n");
 
     IDataConvert_Release(convert);

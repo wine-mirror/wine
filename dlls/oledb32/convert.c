@@ -352,6 +352,26 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             hr = *d ? S_OK : E_OUTOFMEMORY;
         }
         break;
+        case DBTYPE_BYTES:
+        {
+            *d = SysAllocStringLen(NULL, 2 * src_len);
+            if (*d == NULL)
+                hr = E_OUTOFMEMORY;
+            else
+            {
+                const char hexchars[] = "0123456789ABCDEF";
+                WCHAR *s = *d;
+                unsigned char *p = src;
+                while (src_len > 0)
+                {
+                    *s++ = hexchars[(*p >> 4) & 0x0F];
+                    *s++ = hexchars[(*p)      & 0x0F];
+                    src_len--; p++;
+                }
+                hr = S_OK;
+            }
+        }
+        break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
         }
         break;
