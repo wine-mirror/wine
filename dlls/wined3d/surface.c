@@ -4276,18 +4276,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
     if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
             || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
     {
-        IWineD3DDeviceImpl *device = This->resource.device;
-        if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) &&
-            device->blitter->color_fixup_supported(&device->adapter->gl_info, This->resource.format_desc->color_fixup))
+        if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
         {
             /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
             IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL);
 
             /* We want to force a palette refresh, so mark the drawable as not being up to date */
             IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
-
-            /* Force a palette refresh by re-uploading to the drawable */
-            IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
