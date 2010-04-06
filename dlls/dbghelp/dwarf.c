@@ -2672,6 +2672,14 @@ static void execute_cfa_instructions(dwarf2_traverse_context_t* ctx,
             ctx->data += len;
             break;
         }
+        case DW_CFA_GNU_args_size:
+        /* FIXME: should check that GCC is the compiler for this CU */
+        {
+            ULONG_PTR   args = dwarf2_leb128_as_unsigned(ctx);
+            TRACE("%lx: DW_CFA_GNU_args_size %lu\n", info->ip, args);
+            /* ignored */
+            break;
+        }
         default:
             FIXME("%lx: unknown CFA opcode %02x\n", info->ip, op);
             break;

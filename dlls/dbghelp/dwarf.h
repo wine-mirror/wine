@@ -449,6 +449,11 @@ enum dwarf_call_frame_info
     DW_CFA_val_offset = 0x14,
     DW_CFA_val_offset_sf = 0x15,
     DW_CFA_val_expression = 0x16,
+    /* GNU extensions */
+    DW_CFA_GNU_window_save = 0x2d,
+    DW_CFA_GNU_args_size = 0x2e,
+    DW_CFA_GNU_negative_offset_extended = 0x2f,
+
 };
 
 #define DW_EH_PE_native   0x00
