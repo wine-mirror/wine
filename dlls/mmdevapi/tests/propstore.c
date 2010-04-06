@@ -74,7 +74,7 @@ START_TEST(propstore)
     }
     store = NULL;
     hr = IMMDevice_OpenPropertyStore(dev, 3, &store);
-    todo_wine ok(hr == E_INVALIDARG, "Wrong hr returned: %08x\n", hr);
+    ok(hr == E_INVALIDARG, "Wrong hr returned: %08x\n", hr);
     if (hr != S_OK)
         /* It seems on windows returning with E_INVALIDARG doesn't
          * set store to NULL, so just don't set store to non-null
@@ -84,11 +84,11 @@ START_TEST(propstore)
     else if (store)
         IPropertyStore_Release(store);
     hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, NULL);
-    todo_wine ok(hr == E_POINTER, "Wrong hr returned: %08x\n", hr);
+    ok(hr == E_POINTER, "Wrong hr returned: %08x\n", hr);
 
     store = NULL;
     hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &store);
-    todo_wine ok(hr == S_OK, "Opening valid store returned %08x\n", hr);
+    ok(hr == S_OK, "Opening valid store returned %08x\n", hr);
     if (store)
     {
         test_propertystore(store);
