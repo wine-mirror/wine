@@ -252,7 +252,7 @@ START_TEST(render)
     }
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
-    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Activation failed with %08x\n", hr);
     if (ac)
     {
         test_audioclient(ac);
