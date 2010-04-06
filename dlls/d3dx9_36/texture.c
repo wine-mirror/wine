@@ -107,3 +107,12 @@ HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
 
     return hr;
 }
+
+HRESULT WINAPI D3DXCreateTextureFromFileA(LPDIRECT3DDEVICE9 device,
+                                          LPCSTR srcfile,
+                                          LPDIRECT3DTEXTURE9 *texture)
+{
+    FIXME("(%p, %s, %p): stub\n", device, debugstr_a(srcfile), texture);
+
+    return E_NOTIMPL;
+}
