@@ -1108,11 +1108,39 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice 
     return WINED3D_OK;
 }
 
-static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL info, which has the type table */
-                                            DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
+struct wined3d_fvf_convert_state
+{
+    const struct wined3d_gl_info *gl_info;
+    WINED3DVERTEXELEMENT *elements;
+    UINT offset;
+    UINT idx;
+};
 
-    unsigned int idx, idx2;
-    unsigned int offset;
+static void append_decl_element(struct wined3d_fvf_convert_state *state,
+        WINED3DFORMAT format, WINED3DDECLUSAGE usage, UINT usage_idx)
+{
+    WINED3DVERTEXELEMENT *elements = state->elements;
+    const struct wined3d_format_desc *format_desc;
+    UINT offset = state->offset;
+    UINT idx = state->idx;
+
+    elements[idx].format = format;
+    elements[idx].input_slot = 0;
+    elements[idx].offset = offset;
+    elements[idx].output_slot = 0;
+    elements[idx].method = WINED3DDECLMETHOD_DEFAULT;
+    elements[idx].usage = usage;
+    elements[idx].usage_idx = usage_idx;
+
+    format_desc = getFormatDescEntry(format, state->gl_info);
+    state->offset += format_desc->component_count * format_desc->component_size;
+    ++state->idx;
+}
+
+static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the GL info, which has the type table */
+        DWORD fvf, WINED3DVERTEXELEMENT **ppVertexElements)
+{
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     BOOL has_pos = (fvf & WINED3DFVF_POSITION_MASK) != 0;
     BOOL has_blend = (fvf & WINED3DFVF_XYZB5) > WINED3DFVF_XYZRHW;
     BOOL has_blend_idx = has_blend &&
@@ -1126,9 +1154,9 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 
     DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
     DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
-    WINED3DVERTEXELEMENT *elements = NULL;
-
+    struct wined3d_fvf_convert_state state;
     unsigned int size;
+    unsigned int idx;
     DWORD num_blends = 1 + (((fvf & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
     if (has_blend_idx) num_blends--;
 
@@ -1136,113 +1164,84 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     size = has_pos + (has_blend && num_blends > 0) + has_blend_idx + has_normal +
            has_psize + has_diffuse + has_specular + num_textures;
 
-    /* convert the declaration */
-    elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WINED3DVERTEXELEMENT));
-    if (!elements) return ~0U;
+    state.gl_info = gl_info;
+    state.elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*state.elements));
+    if (!state.elements) return ~0U;
+    state.offset = 0;
+    state.idx = 0;
 
-    idx = 0;
-    if (has_pos) {
-        if (!has_blend && (fvf & WINED3DFVF_XYZRHW)) {
-            elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
-            elements[idx].usage = WINED3DDECLUSAGE_POSITIONT;
-        }
-        else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW) {
-            elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
-            elements[idx].usage = WINED3DDECLUSAGE_POSITION;
-        }
-        else {
-            elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
-            elements[idx].usage = WINED3DDECLUSAGE_POSITION;
-        }
-        elements[idx].usage_idx = 0;
-        idx++;
+    if (has_pos)
+    {
+        if (!has_blend && (fvf & WINED3DFVF_XYZRHW))
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITIONT, 0);
+        else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW)
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
+        else
+            append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
     }
-    if (has_blend && (num_blends > 0)) {
-        if (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
-            elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
-        else {
-            switch(num_blends) {
-                case 1: elements[idx].format = WINED3DFMT_R32_FLOAT; break;
-                case 2: elements[idx].format = WINED3DFMT_R32G32_FLOAT; break;
-                case 3: elements[idx].format = WINED3DFMT_R32G32B32_FLOAT; break;
-                case 4: elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT; break;
+
+    if (has_blend && (num_blends > 0))
+    {
+        if ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+        else
+        {
+            switch (num_blends)
+            {
+                case 1:
+                    append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 2:
+                    append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 3:
+                    append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 4:
+                    append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
                 default:
                     ERR("Unexpected amount of blend values: %u\n", num_blends);
             }
         }
-        elements[idx].usage = WINED3DDECLUSAGE_BLENDWEIGHT;
-        elements[idx].usage_idx = 0;
-        idx++;
     }
-    if (has_blend_idx) {
-        if (fvf & WINED3DFVF_LASTBETA_UBYTE4 ||
-            (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
-            elements[idx].format = WINED3DFMT_R8G8B8A8_UINT;
+
+    if (has_blend_idx)
+    {
+        if ((fvf & WINED3DFVF_LASTBETA_UBYTE4)
+                || ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
+            append_decl_element(&state, WINED3DFMT_R8G8B8A8_UINT, WINED3DDECLUSAGE_BLENDINDICES, 0);
         else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
-            elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDINDICES, 0);
         else
-            elements[idx].format = WINED3DFMT_R32_FLOAT;
-        elements[idx].usage = WINED3DDECLUSAGE_BLENDINDICES;
-        elements[idx].usage_idx = 0;
-        idx++;
+            append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDINDICES, 0);
     }
-    if (has_normal) {
-        elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
-        elements[idx].usage = WINED3DDECLUSAGE_NORMAL;
-        elements[idx].usage_idx = 0;
-        idx++;
-    }
-    if (has_psize) {
-        elements[idx].format = WINED3DFMT_R32_FLOAT;
-        elements[idx].usage = WINED3DDECLUSAGE_PSIZE;
-        elements[idx].usage_idx = 0;
-        idx++;
-    }
-    if (has_diffuse) {
-        elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
-        elements[idx].usage = WINED3DDECLUSAGE_COLOR;
-        elements[idx].usage_idx = 0;
-        idx++;
-    }
-    if (has_specular) {
-        elements[idx].format = WINED3DFMT_B8G8R8A8_UNORM;
-        elements[idx].usage = WINED3DDECLUSAGE_COLOR;
-        elements[idx].usage_idx = 1;
-        idx++;
-    }
-    for (idx2 = 0; idx2 < num_textures; idx2++) {
-        unsigned int numcoords = (texcoords >> (idx2*2)) & 0x03;
-        switch (numcoords) {
+
+    if (has_normal) append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_NORMAL, 0);
+    if (has_psize) append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_PSIZE, 0);
+    if (has_diffuse) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 0);
+    if (has_specular) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 1);
+
+    for (idx = 0; idx < num_textures; ++idx)
+    {
+        switch ((texcoords >> (idx * 2)) & 0x03)
+        {
             case WINED3DFVF_TEXTUREFORMAT1:
-                elements[idx].format = WINED3DFMT_R32_FLOAT;
+                append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT2:
-                elements[idx].format = WINED3DFMT_R32G32_FLOAT;
+                append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT3:
-                elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
+                append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT4:
-                elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
+                append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
                 break;
         }
-        elements[idx].usage = WINED3DDECLUSAGE_TEXCOORD;
-        elements[idx].usage_idx = idx2;
-        idx++;
     }
 
-    /* Now compute offsets, and initialize the rest of the fields */
-    for (idx = 0, offset = 0; idx < size; ++idx)
-    {
-        const struct wined3d_format_desc *format_desc = getFormatDescEntry(elements[idx].format,
-                &This->adapter->gl_info);
-        elements[idx].input_slot = 0;
-        elements[idx].method = WINED3DDECLMETHOD_DEFAULT;
-        elements[idx].offset = offset;
-        offset += format_desc->component_count * format_desc->component_size;
-    }
-
-    *ppVertexElements = elements;
+    *ppVertexElements = state.elements;
     return size;
 }
 
