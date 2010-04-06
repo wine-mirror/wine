@@ -3856,7 +3856,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 dstSwapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
 
                 TRACE("Full screen back buffer -> front buffer blt, performing a flip instead\n");
-                IWineD3DSwapChain_Present((IWineD3DSwapChain *) dstSwapchain, NULL, NULL, 0, NULL, 0);
+                IWineD3DSwapChain_Present((IWineD3DSwapChain *)dstSwapchain,
+                        NULL, NULL, dstSwapchain->win_handle, NULL, 0);
 
                 dstSwapchain->presentParms.SwapEffect = orig_swap;
 
