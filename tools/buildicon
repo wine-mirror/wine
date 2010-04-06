@@ -36,12 +36,27 @@ my $icoName = $1;
 my @pngFiles;
 
 # Get the programs from the environment variables
-my $convert = $ENV{"CONVERT"};
-$convert = "convert" if $convert eq "";
-my $rsvg = $ENV{"RSVG"};
-$rsvg = "rsvg" if $rsvg eq "";
-my $icotool = $ENV{"ICOTOOL"};
-$icotool = "icotool" if $icotool eq "";
+my $convert = $ENV{"CONVERT"} || "convert";
+my $rsvg = $ENV{"RSVG"} || "rsvg";
+my $icotool = $ENV{"ICOTOOL"} || "icotool";
+
+sub cleanup()
+{
+    unlink $renderedSVGFileName;
+    unlink $_ foreach(@pngFiles);
+}
+
+$SIG{"INT"} = "cleanup";
+$SIG{"HUP"} = "cleanup";
+$SIG{"TERM"} = "cleanup";
+$SIG{"__DIE__"} = "cleanup";
+
+# run a shell command and die on error
+sub shell(@)
+{
+    my @args = @_;
+    system(@args) == 0 or die "@args failed: $?";
+}
 
 sub svg_element_start
 {
@@ -67,7 +82,7 @@ sub svg_element_start
 
         if(defined($x) and defined($x)) {
             if($x =~ /\d*/ and $y =~ /\d*/) {
-                system "$convert $renderedSVGFileName -crop '$size x$size+$x+$y' $pngFileName";
+                shell $convert, $renderedSVGFileName, "-crop", "${size}x${size}+$x+$y", $pngFileName;
             }
         }
 
@@ -96,7 +111,7 @@ sub resize_image
     # Use ImageMagick to stretch the image
     my($size) = @_;
     my $pngFileName = "$icoName-$size.png";
-    system "$convert $renderedSVGFileName -resize '$size x$size' $pngFileName";
+    shell $convert, $renderedSVGFileName, "-resize", "${size}x${size}", $pngFileName;
     push(@pngFiles, $pngFileName);
 }
 
@@ -108,7 +123,7 @@ sub fallback_render
 }
 
 # Render the SVG image
-system 'rsvg', $svgFileName, $renderedSVGFileName;
+shell 'rsvg', $svgFileName, $renderedSVGFileName;
 
 # Render the images in the SVG
 my $parser = new XML::Parser(
@@ -120,9 +135,7 @@ $parser->parsefile("$svgFileName");
 fallback_render unless(@pngFiles);
 
 # Combine them into an ICO file
-my $icotoolCommand = "$icotool -c -o $icoFileName";
-$icotoolCommand .= " $_" foreach(@pngFiles);
-system $icotoolCommand;
+shell $icotool, "-c", "-o", $icoFileName, @pngFiles;
 
 # Delete the intermediate images
 unlink $renderedSVGFileName;
