@@ -227,9 +227,10 @@ static	unsigned dbg_save_internal_vars(void)
     {
         /* FIXME: type should be inferred from basic type -if any- of intvar */
         if (dbg_internal_vars[i].pval == &dbg_internal_vars[i].val)
-            RegSetValueExA(hkey, dbg_internal_vars[i].name, 0,
-                           REG_DWORD, (const void*)dbg_internal_vars[i].pval, 
-                           sizeof(*dbg_internal_vars[i].pval));
+        {
+            DWORD val = dbg_internal_vars[i].val;
+            RegSetValueExA(hkey, dbg_internal_vars[i].name, 0, REG_DWORD, (BYTE *)&val, sizeof(val));
+        }
     }
     RegCloseKey(hkey);
     return TRUE;
