@@ -2096,6 +2096,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     switch (siginfo->si_code)
     {
     case TRAP_TRACE:  /* Single-step exception */
+    case 4 /* TRAP_HWBKPT */: /* Hardware breakpoint exception */
         rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:   /* Breakpoint exception */
