@@ -137,7 +137,7 @@ static	int init_xpoint(int type, const ADDRESS64* addr)
  *
  * Returns the value watched by watch point 'num'.
  */
-static	BOOL	get_watched_value(int num, LPDWORD val)
+static	BOOL	get_watched_value(int num, DWORD64* val)
 {
     BYTE        buf[4];
 
@@ -147,6 +147,7 @@ static	BOOL	get_watched_value(int num, LPDWORD val)
 
     switch (dbg_curr_process->bp[num].w.len + 1)
     {
+    case 8:	*val = *(DWORD64*)buf;	break;
     case 4:	*val = *(DWORD*)buf;	break;
     case 2:	*val = *(WORD*)buf;	break;
     case 1:	*val = *(BYTE*)buf;	break;
@@ -554,7 +555,7 @@ static int find_triggered_watch(void)
      */
     for (i = 0; i < dbg_curr_process->next_bp; i++)
     {
-        DWORD val = 0;
+        DWORD64 val = 0;
 
         if (bp[i].refcount && bp[i].enabled && !is_xpoint_break(i) &&
             (be_cpu->is_watchpoint_set(&dbg_context, bp[i].info)))
@@ -577,7 +578,7 @@ static int find_triggered_watch(void)
      */
     for (i = 0; i < dbg_curr_process->next_bp; i++)
     {
-        DWORD val = 0;
+        DWORD64 val = 0;
 
         if (bp[i].refcount && bp[i].enabled && !is_xpoint_break(i) &&
             get_watched_value(i, &val))
@@ -740,8 +741,8 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code)
         case be_xpoint_watch_write:
             dbg_printf("Stopped on watchpoint %d at ", dbg_curr_thread->stopped_xpoint);
             print_address(addr, TRUE);
-            dbg_printf(" new value %u\n",
-                       dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
+            dbg_printf(" new value %s\n",
+                       wine_dbgstr_longlong(dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval));
         }
         return FALSE;
     }

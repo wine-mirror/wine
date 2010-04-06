@@ -355,6 +355,7 @@ extern void be_x86_64_disasm_one_insn(ADDRESS64* addr, int display);
 #define DR7_LEN_1		(0x0)
 #define DR7_LEN_2		(0x4)
 #define DR7_LEN_4		(0xC)
+#define DR7_LEN_8		(0x8)
 
 #define DR7_LOCAL_ENABLE_SHIFT	0
 #define DR7_GLOBAL_ENABLE_SHIFT 1
@@ -429,10 +430,11 @@ static unsigned be_x86_64_insert_Xpoint(HANDLE hProcess, const struct be_process
         *pr = (DWORD64)addr;
         if (type != be_xpoint_watch_exec) switch (size)
         {
+        case 8: bits |= DR7_LEN_8; break;
         case 4: bits |= DR7_LEN_4; break;
         case 2: bits |= DR7_LEN_2; break;
         case 1: bits |= DR7_LEN_1; break;
-        default: return 0;
+        default: WINE_FIXME("Unsupported xpoint_watch of size %d\n", size); return 0;
         }
         *val = reg;
         /* clear old values */

@@ -139,7 +139,7 @@ struct dbg_breakpoint
     struct              /* only used for watchpoints */
     {
         BYTE		len : 2;
-        DWORD		oldval;
+        DWORD64		oldval;
     } w;
     struct expr*        condition;
 };
