@@ -2120,6 +2120,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     const struct wined3d_format_desc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    BOOL blit_supported = FALSE;
+    RECT rect = {0, 0, This->pow2Width, This->pow2Height};
 
     /* Default values: From the surface */
     *format = glDesc->glFormat;
@@ -2146,14 +2148,18 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 Paletted Texture
                 **************** */
 
+            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                                                             &rect, This->resource.usage, This->resource.pool,
+                                                             This->resource.format_desc, &rect, This->resource.usage,
+                                                             This->resource.pool, This->resource.format_desc);
+
             /* Use conversion when the blit_shader backend supports it. It only supports this in case of
              * texturing. Further also use conversion in case of color keying.
              * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!((device->blitter->color_fixup_supported(gl_info, This->resource.format_desc->color_fixup)
-                    && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
+            if (!((blit_supported && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
                 *format = GL_RGBA;
@@ -4028,18 +4034,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             dst_rect.top += This->currentDesc.Height - h; dst_rect.bottom += This->currentDesc.Height - h;
         }
 
-        if (!is_identity_fixup(This->resource.format_desc->color_fixup))
+        if (!myDevice->blitter->blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
+                                               &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                                               &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
-            FIXME("Destination format %s has a fixup, this is not supported.\n",
-                    debug_d3dformat(This->resource.format_desc->format));
-            dump_color_fixup_desc(This->resource.format_desc->color_fixup);
-        }
+            FIXME("Unsupported blit operation falling back to software\n");
 
-        if (!myDevice->blitter->color_fixup_supported(&myDevice->adapter->gl_info, Src->resource.format_desc->color_fixup))
-        {
-            FIXME("Source format %s has an unsupported fixup:\n",
-                    debug_d3dformat(Src->resource.format_desc->format));
-            dump_color_fixup_desc(Src->resource.format_desc->color_fixup);
+            /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
+            if(paletteOverride)
+                Src->palette = NULL;
+
+            return WINED3DERR_INVALIDCALL;
         }
 
         myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src);
@@ -5126,27 +5131,42 @@ static void ffp_blit_unset(IWineD3DDevice *iface)
     LEAVE_GL();
 }
 
-static BOOL ffp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
+static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+                               const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
+                               const struct wined3d_format_desc *src_format_desc,
+                               const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
+                               const struct wined3d_format_desc *dst_format_desc)
 {
-    enum complex_fixup complex_fixup;
+    enum complex_fixup src_fixup = get_complex_fixup(src_format_desc->color_fixup);
 
     if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
     {
         TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(fixup);
+        dump_color_fixup_desc(src_format_desc->color_fixup);
     }
 
-    /* We only support identity conversions. */
-    if (is_identity_fixup(fixup))
+    if (blit_op != BLIT_OP_BLIT)
     {
-        TRACE("[OK]\n");
+        TRACE("Unsupported blit_op=%d\n", blit_op);
+        return FALSE;
+     }
+
+    if (!is_identity_fixup(dst_format_desc->color_fixup))
+    {
+        TRACE("Destination fixups are not supported\n");
+        return FALSE;
+    }
+
+    if (src_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
+    {
+        TRACE("P8 fixup supported\n");
         return TRUE;
     }
 
-    complex_fixup = get_complex_fixup(fixup);
-    if(complex_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
+    /* We only support identity conversions. */
+    if (is_identity_fixup(src_format_desc->color_fixup))
     {
-        TRACE("P8 fixup supported\n");
+        TRACE("[OK]\n");
         return TRUE;
     }
 
@@ -5165,7 +5185,7 @@ const struct blit_shader ffp_blit =  {
     ffp_blit_free,
     ffp_blit_set,
     ffp_blit_unset,
-    ffp_blit_color_fixup_supported,
+    ffp_blit_supported,
     ffp_blit_color_fill
 };
 
@@ -5190,7 +5210,11 @@ static void cpu_blit_unset(IWineD3DDevice *iface)
 {
 }
 
-static BOOL cpu_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
+static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+                               const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
+                               const struct wined3d_format_desc *src_format_desc,
+                               const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
+                               const struct wined3d_format_desc *dst_format_desc)
 {
     return FALSE;
 }
@@ -5209,6 +5233,6 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_free,
     cpu_blit_set,
     cpu_blit_unset,
-    cpu_blit_color_fixup_supported,
+    cpu_blit_supported,
     cpu_blit_color_fill
 };

@@ -3643,7 +3643,9 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
     if (CheckDepthStencilCapability(adapter, adapter_format_desc, check_format_desc)) return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
-    if (adapter->blitter->color_fixup_supported(&adapter->gl_info, check_format_desc->color_fixup))
+    if (adapter->blitter->blit_supported(&adapter->gl_info, BLIT_OP_BLIT,
+                                         NULL, WINED3DPOOL_DEFAULT, 0, check_format_desc,
+                                         NULL, WINED3DPOOL_DEFAULT, 0, adapter_format_desc))
     {
         TRACE_(d3d_caps)("[OK]\n");
         return TRUE;

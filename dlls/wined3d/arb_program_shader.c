@@ -6840,31 +6840,46 @@ static void arbfp_blit_unset(IWineD3DDevice *iface) {
     LEAVE_GL();
 }
 
-static BOOL arbfp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup)
+static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+                                 const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
+                                 const struct wined3d_format_desc *src_format_desc,
+                                 const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
+                                 const struct wined3d_format_desc *dst_format_desc)
 {
-    enum complex_fixup complex_fixup;
+    enum complex_fixup src_fixup = get_complex_fixup(src_format_desc->color_fixup);
 
     if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
     {
         TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(fixup);
+        dump_color_fixup_desc(src_format_desc->color_fixup);
     }
 
-    if (is_identity_fixup(fixup))
+    if (blit_op != BLIT_OP_BLIT)
+    {
+        TRACE("Unsupported blit_op=%d\n", blit_op);
+        return FALSE;
+    }
+
+    if (!is_identity_fixup(dst_format_desc->color_fixup))
+    {
+        TRACE("Destination fixups are not supported\n");
+        return FALSE;
+    }
+
+    if (is_identity_fixup(src_format_desc->color_fixup))
     {
         TRACE("[OK]\n");
         return TRUE;
     }
 
-    /* We only support YUV conversions. */
-    if (!is_complex_fixup(fixup))
+     /* We only support YUV conversions. */
+    if (!is_complex_fixup(src_format_desc->color_fixup))
     {
         TRACE("[FAILED]\n");
         return FALSE;
     }
 
-    complex_fixup = get_complex_fixup(fixup);
-    switch(complex_fixup)
+    switch(src_fixup)
     {
         case COMPLEX_FIXUP_YUY2:
         case COMPLEX_FIXUP_UYVY:
@@ -6874,7 +6889,7 @@ static BOOL arbfp_blit_color_fixup_supported(const struct wined3d_gl_info *gl_in
             return TRUE;
 
         default:
-            FIXME("Unsupported YUV fixup %#x\n", complex_fixup);
+            FIXME("Unsupported YUV fixup %#x\n", src_fixup);
             TRACE("[FAILED]\n");
             return FALSE;
     }
@@ -6891,7 +6906,7 @@ const struct blit_shader arbfp_blit = {
     arbfp_blit_free,
     arbfp_blit_set,
     arbfp_blit_unset,
-    arbfp_blit_color_fixup_supported,
+    arbfp_blit_supported,
     arbfp_blit_color_fill
 };
 
