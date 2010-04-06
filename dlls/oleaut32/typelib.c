@@ -5703,7 +5703,8 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     if (TRACE_ON(ole)) {
 	int i;
 	TRACE("Calling %p(",func);
-	for (i=0;i<nrargs;i++) TRACE("%08x,",args[i]);
+	for (i=0;i<min(nrargs,30);i++) TRACE("%08x,",args[i]);
+	if (nrargs > 30) TRACE("...");
 	TRACE(")\n");
     }
 
