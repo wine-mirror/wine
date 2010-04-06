@@ -689,8 +689,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
                 SUCCEEDED(IFilterMapper2_QueryInterface(pFileMapper, &IID_IAMFilterData, (void **)&pFilterData)))
             {
               DWORD array_size;
-              BYTE *tmp;
-              REGFILTER2 *pRF = NULL;
+              REGFILTER2 *pRF;
 
               if (SUCCEEDED(IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL)) &&
                   SUCCEEDED(SafeArrayAccessData(V_UNION(&v, parray), (LPVOID*) &pData)))
@@ -698,10 +697,8 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
                 ULONG j;
                 array_size = V_UNION(&v, parray)->rgsabound->cElements;
 
-                if (SUCCEEDED(IAMFilterData_ParseFilterData(pFilterData, pData, array_size, &tmp)))
+                if (SUCCEEDED(IAMFilterData_ParseFilterData(pFilterData, pData, array_size, (BYTE **)&pRF)))
                 {
-                  pRF = ((REGFILTER2 **)tmp)[0];
-
                   snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, pRF->dwVersion);
                   if (pRF->dwVersion == 1)
                   {
@@ -721,7 +718,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
                   }
 
                   dwMerit = pRF->dwMerit;
-                  CoTaskMemFree(tmp);
+                  CoTaskMemFree(pRF);
                 }
 
                 SafeArrayUnaccessData(V_UNION(&v, parray));
