@@ -1089,6 +1089,69 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
     HeapFree(GetProcessHeap(), 0, msg.Buffer);
     IRpcStubBuffer_Release(pstub);
 }
+static const CInterfaceProxyVtbl *cstub_ProxyVtblList2[] =
+{
+    NULL
+};
+
+static const CInterfaceStubVtbl *cstub_StubVtblList2[] =
+{
+    NULL
+};
+
+static PCInterfaceName const if_name_list2[] =
+{
+    NULL
+};
+
+static const IID *base_iid_list2[] =
+{
+    NULL,
+};
+
+static const ExtendedProxyFileInfo my_proxy_file_info2 =
+{
+    (const PCInterfaceProxyVtblList *) &cstub_ProxyVtblList2,
+    (const PCInterfaceStubVtblList *) &cstub_StubVtblList2,
+    (const PCInterfaceName *) &if_name_list2,
+    (const IID **) &base_iid_list2,
+    &iid_lookup,
+    0,
+    1,
+    NULL,
+    0,
+    0,
+    0
+};
+
+static const ProxyFileInfo *proxy_file_list2[] = {
+    &my_proxy_file_info2,
+    NULL
+};
+
+static void test_NdrDllRegisterProxy( void )
+{
+    HRESULT res;
+    const ExtendedProxyFileInfo *pf;
+    HMODULE hmod = GetModuleHandleA(NULL);
+
+
+    res = NdrDllRegisterProxy(NULL, NULL, NULL);
+    ok(res == E_HANDLE, "Incorrect return code %x\n",res);
+    pf = NULL;
+    res = NdrDllRegisterProxy(hmod, &pf, NULL);
+    ok(res == E_NOINTERFACE, "Incorrect return code %x\n",res);
+    res = NdrDllRegisterProxy(hmod, proxy_file_list2, NULL);
+    ok(res == E_NOINTERFACE, "Incorrect return code %x\n",res);
+    /* This fails on Vista and Windows 7 due to permissions */
+    res = NdrDllRegisterProxy(hmod, proxy_file_list, NULL);
+    ok(res == S_OK || res == E_ACCESSDENIED, "NdrDllRegisterProxy failed %x\n",res);
+    if (res == S_OK)
+    {
+        res = NdrDllUnregisterProxy(hmod,proxy_file_list, NULL);
+        ok(res == S_OK, "NdrDllUnregisterProxy failed %x\n",res);
+    }
+}
 
 START_TEST( cstub )
 {
@@ -1104,6 +1167,7 @@ START_TEST( cstub )
     test_Disconnect(ppsf);
     test_Release(ppsf);
     test_delegating_Invoke(ppsf);
+    test_NdrDllRegisterProxy();
 
     OleUninitialize();
 }
