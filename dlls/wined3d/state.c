@@ -4682,6 +4682,8 @@ static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if(!isStateDirty(context, STATE_RENDER(WINED3DRS_POINTSCALEENABLE))) {
         state_pscale(STATE_RENDER(WINED3DRS_POINTSCALEENABLE), stateblock, context);
     }
+    if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
+        shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
 }
 
 static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
