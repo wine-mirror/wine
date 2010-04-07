@@ -42,6 +42,8 @@ use tests qw($tests);
 use type;
 use util qw(replace_file);
 
+my $pointer_size = 4;
+
 my @tests = ();
 if ($options->pack) {
     push @tests, "pack";
@@ -172,9 +174,9 @@ sub _find_align_kind_size($) {
     my $kind;
     my $size;
     if (/\*+$/) {
-	$align = 4;
+	$align = $pointer_size;
 	$kind = "pointer";
-	$size = 4;
+	$size = $pointer_size;
     } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char|byte)$/) {
 	$align = 1;
 	$kind = defined($1) ? $1 : "signed";
@@ -191,10 +193,14 @@ sub _find_align_kind_size($) {
 	$align = 4;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 4;
-    } elsif (/^(?:(signed|unsigned)\s+)?(?:__int32|int|long(?:\s+int)?)$/) {
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:__int32|int)$/) {
 	$align = 4;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 4;
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:long(?:\s+int)?)$/) {
+	$align = $pointer_size;
+	$kind = defined($1) ? $1 : "signed";
+	$size = $pointer_size;
     } elsif (/^(?:float)$/) {
 	$align = 4;
 	$kind = "float";
@@ -212,13 +218,13 @@ sub _find_align_kind_size($) {
 	$kind = "float";
 	$size = 12;
     } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|WND)$/) {
-	$align = 4;
+	$align = $pointer_size;
 	$kind = "pointer";
-	$size = 4;
+	$size = $pointer_size;
     } elsif (/^LP(?:BYTE|CSTR|CWSTR|DWORD|STR|VOID|WSTR)$/) {
-	$align = 4;
+	$align = $pointer_size;
 	$kind = "pointer";
-	$size = 4;
+	$size = $pointer_size;
     } elsif (/^(?:FILETIME)$/) {
 	$align = 4;
 	$kind = "struct";
@@ -270,13 +276,13 @@ sub _find_align_kind_size($) {
 	    $size_parse_reported{$_} = 1;
 	}
     } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
-	$align = 4;
+	$align = $pointer_size;
 	$kind = "pointer";
-	$size = 4;
+	$size = $pointer_size;
     }
 
     my $align2;
-    if (defined(my $type = $type_name2type{$_})) {
+    if (defined(my $type = $type_name2type{$pointer_size}{$_})) {
 	$align2 = $type->align;
     }
 
@@ -292,7 +298,7 @@ sub _find_align_kind_size($) {
     }
 
     my $size2;
-    if (defined(my $type = $type_name2type{$_})) {
+    if (defined(my $type = $type_name2type{$pointer_size}{$_})) {
 	$size2 = $type->size;
     }
 
@@ -331,7 +337,9 @@ sub find_count($) {
 }
 
 foreach my $file (@files) {
-    $progress_current++;
+  $progress_current++;
+  foreach my $ptr (4, 8) {
+    $pointer_size = $ptr;
 
     {
 	open(IN, "< $wine_dir/$file") || die "Error: Can't open $wine_dir/$file: $!\n";
@@ -351,14 +359,14 @@ foreach my $file (@files) {
 
     my $line;
     my $type;
-    my @packs = (4);
+    my @packs = ();
     my @ifdefs = ();
 
     my $update_output = sub {
 	my $progress = "";
 	my $prefix = "";
 
-	$progress .= "$file (file $progress_current of $progress_max)";
+	$progress .= "$file (file $progress_current of $progress_max" . sprintf ", %u-bit)", $pointer_size * 8;
 	$prefix .= "$file: ";
 
 	if(defined($line)) {
@@ -391,11 +399,11 @@ foreach my $file (@files) {
 	    pop @packs unless @ifdefs && !$ifdefs[$#ifdefs];
             #print "found poppack on line $begin_line\n";
 	} elsif ($preprocessor =~ /^\#\s*ifdef\s+_WIN64/) {
-            push @ifdefs, 0;
+            push @ifdefs, ($pointer_size == 8);
 	} elsif ($preprocessor =~ /^\#\s*ifndef\s+_WIN64/) {
-            push @ifdefs, 1;
+            push @ifdefs, ($pointer_size == 4);
 	} elsif ($preprocessor =~ /^\#\s*elif\s+defined(_WIN64)/) {
-            $ifdefs[$#ifdefs] = 0;
+            $ifdefs[$#ifdefs] = ($pointer_size == 8);
 	} elsif ($preprocessor =~ /^\#\s*ifdef\s/) {
             push @ifdefs, 2;
 	} elsif ($preprocessor =~ /^\#\s*ifndef\s/) {
@@ -420,7 +428,7 @@ foreach my $file (@files) {
 	&$update_output();
 
 	my $name = $type->name;
-	$file2types{$file}{$name} = $type;
+	$file2types{$pointer_size}{$file}{$name} = $type;
 
 	$type->set_find_align_callback(\&find_align);
 	$type->set_find_kind_callback(\&find_kind);
@@ -447,7 +455,7 @@ foreach my $file (@files) {
 	    }
 	    # $output->write("$name: $size\n");
 
-	    $type_name2type{$name} = $type;
+	    $type_name2type{$pointer_size}{$name} = $type;
 	} else {
 	    # $output->write("$name: can't find size\n");
 	}
@@ -465,6 +473,7 @@ foreach my $file (@files) {
     }
 
     $output->prefix("");
+  }
 }
 
 ########################################################################
@@ -544,35 +553,23 @@ sub output_header($$$) {
     print OUT " * Test helper macros\n";
     print OUT " */\n";
     print OUT "\n";
-    print OUT "#ifdef _WIN64\n";
+    print OUT "#define TEST_TYPE_SIZE(type, size)             C_ASSERT(sizeof(type) == size);\n";
     print OUT "\n";
-    print OUT "# define TEST_TYPE_SIZE(type, size)\n";
+    print OUT "#ifdef TYPE_ALIGNMENT\n";
+    print OUT "# define TEST_TYPE_ALIGN(type, align)          C_ASSERT(TYPE_ALIGNMENT(type) == align);\n";
+    print OUT "#else\n";
     print OUT "# define TEST_TYPE_ALIGN(type, align)\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#ifdef _TYPE_ALIGNMENT\n";
+    print OUT "# define TEST_TARGET_ALIGN(type, align)        C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);\n";
+    print OUT "# define TEST_FIELD_ALIGN(type, field, align)  C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);\n";
+    print OUT "#else\n";
     print OUT "# define TEST_TARGET_ALIGN(type, align)\n";
     print OUT "# define TEST_FIELD_ALIGN(type, field, align)\n";
-    print OUT "# define TEST_FIELD_OFFSET(type, field, offset)\n";
-    print OUT "\n";
-    print OUT "#else\n";
-    print OUT "\n";
-    print OUT "# define TEST_TYPE_SIZE(type, size)             C_ASSERT(sizeof(type) == size);\n";
-    print OUT "\n";
-    print OUT "# ifdef TYPE_ALIGNMENT\n";
-    print OUT "#  define TEST_TYPE_ALIGN(type, align)          C_ASSERT(TYPE_ALIGNMENT(type) == align);\n";
-    print OUT "# else\n";
-    print OUT "#  define TEST_TYPE_ALIGN(type, align)\n";
-    print OUT "# endif\n";
-    print OUT "\n";
-    print OUT "# ifdef _TYPE_ALIGNMENT\n";
-    print OUT "#  define TEST_TARGET_ALIGN(type, align)        C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);\n";
-    print OUT "#  define TEST_FIELD_ALIGN(type, field, align)  C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);\n";
-    print OUT "# else\n";
-    print OUT "#  define TEST_TARGET_ALIGN(type, align)\n";
-    print OUT "#  define TEST_FIELD_ALIGN(type, field, align)\n";
-    print OUT "# endif\n";
-    print OUT "\n";
-    print OUT "# define TEST_FIELD_OFFSET(type, field, offset) C_ASSERT(FIELD_OFFSET(type, field) == offset);\n";
-    print OUT "\n";
     print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#define TEST_FIELD_OFFSET(type, field, offset) C_ASSERT(FIELD_OFFSET(type, field) == offset);\n";
     print OUT "\n";
     print OUT "#define TEST_TARGET_SIZE(type, size)            TEST_TYPE_SIZE(*(type)0, size)\n";
     print OUT "#define TEST_FIELD_SIZE(type, field, size)      TEST_TYPE_SIZE((((type*)0)->field), size)\n";
@@ -594,11 +591,7 @@ sub output_footer($$$) {
     print OUT "START_TEST(generated)\n";
     print OUT "{\n";
     foreach my $test (@tests) {
-	print OUT "#ifdef _WIN64\n";
-	print OUT "    ok(0, \"The type size / alignment tests don't support Win64 yet\\n\");\n";
-	print OUT "#else\n";
 	print OUT "    test_$test();\n";
-	print OUT "#endif\n";
     }
     print OUT "}\n";
 }
@@ -781,7 +774,7 @@ sub output_test_pack($$$$) {
     }
 
     foreach my $header (@headers) {
-	my $type_name2type = $file2types{"include/$header"};
+	my $type_name2type = $file2types{$pointer_size}{"include/$header"};
 	
 	foreach my $_type_name (@type_names) {
 	    my $type_name = $_type_name;
@@ -825,7 +818,13 @@ sub output_file($$$$) {
 	my %type_names_used2;
 
 	if ($test eq "pack") {
-	    output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
+            print OUT "#ifdef _WIN64\n\n";
+            $pointer_size = 8;
+            output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
+            print OUT "#else /* _WIN64 */\n\n";
+            $pointer_size = 4;
+            output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
+            print OUT "#endif /* _WIN64 */\n\n";
 	} else {
 	    die "no such test ($test)\n";
 	}
@@ -858,10 +857,10 @@ foreach my $test_dir (@test_dirs) {
     replace_file($file, \&output_file, $test_dir, \@tests, \%type_names_used);
 }
 
-foreach my $header (sort(keys(%file2types))) {
+foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
     $output->prefix("$header: ");
     $header =~ s%^include/%%;
-    my $type_name2type = $file2types{"include/$header"};
+    my $type_name2type = $file2types{$pointer_size}{"include/$header"};
     foreach my $_type_name (sort(keys(%$type_name2type))) {
 	my $type_name = $_type_name;
 
@@ -874,8 +873,8 @@ foreach my $header (sort(keys(%file2types))) {
 $output->prefix("$winapi_dir/tests.dat: ");
 foreach my $type_name (sort(keys(%type_names_used))) {
     my $found = 0;
-    foreach my $header (sort(keys(%file2types))) {
-	my $type_name2type = $file2types{"include/$header"};
+    foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
+	my $type_name2type = $file2types{$pointer_size}{"include/$header"};
 	if (exists($type_name2type{$type_name})) {
 	    $found = 1;
 	}
