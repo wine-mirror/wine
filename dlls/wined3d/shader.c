@@ -1150,7 +1150,11 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
         if (ins.dst_count) fe->shader_read_dst_param(fe_data, &ptr, &dst_param, &dst_rel_addr);
 
         /* Predication token */
-        if (ins.predicate) ins.predicate = *ptr++;
+        if (ins.predicate)
+        {
+            FIXME("Predicates not implemented.\n");
+            ins.predicate = *ptr++;
+        }
 
         /* Other source tokens */
         for (i = 0; i < ins.src_count; ++i)
