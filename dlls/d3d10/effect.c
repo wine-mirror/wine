@@ -1576,7 +1576,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     e->anonymous_shaders = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->anonymous_shader_count * sizeof(*e->anonymous_shaders));
     if (!e->anonymous_shaders)
     {
-        ERR("Failed to allocate techniques memory\n");
+        ERR("Failed to allocate anonymous shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
