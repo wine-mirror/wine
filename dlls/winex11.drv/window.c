@@ -1073,9 +1073,12 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
     mwm_hints.functions = MWM_FUNC_MOVE;
     if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
-    if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
-    if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
-    if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
+    if (!(style & WS_DISABLED))
+    {
+        if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+        if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+        if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
+    }
 
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
@@ -1660,13 +1663,8 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
     if (offset == GWL_STYLE && (changed & WS_DISABLED))
     {
         data = X11DRV_get_win_data( hwnd );
-        if (data && data->wm_hints)
-        {
-            wine_tsx11_lock();
-            data->wm_hints->input = !(style->styleNew & WS_DISABLED);
-            XSetWMHints( thread_display(), data->whole_window, data->wm_hints );
-            wine_tsx11_unlock();
-        }
+        if (data && data->whole_window)
+            set_wm_hints( thread_display(), data );
     }
 
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED))
