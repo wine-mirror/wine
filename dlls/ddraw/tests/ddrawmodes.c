@@ -388,6 +388,9 @@ static void enumdisplaymodes(void)
 static void setdisplaymode(int i)
 {
     HRESULT rc;
+    RECT orig_rect;
+
+    SetRect(&orig_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
@@ -402,14 +405,21 @@ static void setdisplaymode(int i)
             ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %x\n",rc);
             if (rc == DD_OK)
             {
-                RECT r, scrn, virt;
+                RECT r, scrn, test, virt;
 
                 SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
                 OffsetRect(&virt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
                 SetRect(&scrn, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
                 trace("Mode (%dx%d) [%dx%d] (%d %d)x(%d %d)\n", modes[i].dwWidth, modes[i].dwHeight,
                       scrn.right, scrn.bottom, virt.left, virt.top, virt.right, virt.bottom);
-
+                if (!EqualRect(&scrn, &orig_rect))
+                {
+                    /* Check that the client rect was resized */
+                    rc = GetClientRect(hwnd, &test);
+                    ok(rc!=0, "GetClientRect returned %x\n", rc);
+                    rc = EqualRect(&scrn, &test);
+                    todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
+                }
                 ok(GetClipCursor(&r), "GetClipCursor() failed\n");
                 /* ddraw sets clip rect here to the screen size, even for
                    multiple monitors */
