@@ -2286,16 +2286,14 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R16G16_FLOAT:
+            if (gl_info->supported[ARB_TEXTURE_RG]) break;
             *convert = CONVERT_R16G16F;
-            *format = GL_RGB;
-            *type = GL_HALF_FLOAT_ARB;
             *target_bpp = 6;
             break;
 
         case WINED3DFMT_R32G32_FLOAT:
+            if (gl_info->supported[ARB_TEXTURE_RG]) break;
             *convert = CONVERT_R32G32F;
-            *format = GL_RGB;
-            *type = GL_FLOAT;
             *target_bpp = 12;
             break;
 
