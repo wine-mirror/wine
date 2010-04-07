@@ -31,6 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 
 #define D3D10_FX10_TYPE_COLUMN_SHIFT    11
 #define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
@@ -288,11 +289,15 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
     switch(tag)
     {
         case TAG_ISGN:
+        case TAG_OSGN:
         {
             /* 32 (DXBC header) + 1 * 4 (chunk index) + 2 * 4 (chunk header) + data_size (chunk data) */
             UINT size = 44 + data_size;
-            struct d3d10_effect_shader_signature *sig = &s->input_signature;
+            struct d3d10_effect_shader_signature *sig;
             char *ptr;
+
+            if (tag == TAG_ISGN) sig = &s->input_signature;
+            else sig = &s->output_signature;
 
             sig->signature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
             if (!sig->signature)
@@ -325,7 +330,7 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
             write_dword(&ptr, (ptr - sig->signature) + 4);
 
             /* chunk */
-            write_dword(&ptr, TAG_ISGN);
+            write_dword(&ptr, tag);
             write_dword(&ptr, data_size);
             memcpy(ptr, data, data_size);
 
@@ -1864,6 +1869,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
             case D3D10_SVT_PIXELSHADER:
             case D3D10_SVT_GEOMETRYSHADER:
                 shader_free_signature(&((struct d3d10_effect_shader_variable *)v->data)->input_signature);
+                shader_free_signature(&((struct d3d10_effect_shader_variable *)v->data)->output_signature);
                 break;
 
             default:
@@ -5296,10 +5302,56 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
         ID3D10EffectShaderVariable *iface, UINT shader_index, UINT element_index,
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    FIXME("iface %p, shader_index %u, element_index %u, desc %p stub!\n",
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_shader_variable *s;
+    D3D10_SIGNATURE_PARAMETER_DESC *d;
+
+    TRACE("iface %p, shader_index %u, element_index %u, desc %p\n",
             iface, shader_index, element_index, desc);
 
-    return E_NOTIMPL;
+    if (!iface->lpVtbl->IsValid(iface))
+    {
+        WARN("Null variable specified\n");
+        return E_FAIL;
+    }
+
+    /* Check shader_index, this crashes on W7/DX10 */
+    if (shader_index >= This->effect->used_shader_count)
+    {
+        WARN("This should crash on W7/DX10!\n");
+        return E_FAIL;
+    }
+
+    s = This->effect->used_shaders[shader_index]->data;
+    if (!s->output_signature.signature)
+    {
+        WARN("No shader signature\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Check desc for NULL, this crashes on W7/DX10 */
+    if (!desc)
+    {
+        WARN("This should crash on W7/DX10!\n");
+        return E_FAIL;
+    }
+
+    if (element_index >= s->output_signature.element_count)
+    {
+        WARN("Invalid element index specified\n");
+        return E_INVALIDARG;
+    }
+
+    d = &s->output_signature.elements[element_index];
+    desc->SemanticName = d->SemanticName;
+    desc->SemanticIndex  =  d->SemanticIndex;
+    desc->SystemValueType =  d->SystemValueType;
+    desc->ComponentType =  d->ComponentType;
+    desc->Register =  d->Register;
+    desc->ReadWriteMask  =  d->ReadWriteMask;
+    desc->Mask =  d->Mask;
+
+    return S_OK;
 }
 
 
