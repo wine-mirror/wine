@@ -1037,9 +1037,8 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
                                       &((struct symt_function*)sym)->vchildren);
         regfree(&preg);
         return ret;
-        
     }
-    return send_symbol(se, &pair, NULL, &sym->symt);
+    return FALSE;
 }
 
 /******************************************************************
