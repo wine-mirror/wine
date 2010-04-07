@@ -240,7 +240,12 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   DWORD len;
 
   TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
-  format_clsid( clsid, pclsid );
+  if (pclsid)
+      format_clsid( clsid, pclsid );
+  else if ((*pProxyFileList)->TableSize > 0)
+      format_clsid( clsid,(*pProxyFileList)->pStubVtblList[0]->header.piid);
+  else
+      return E_NOINTERFACE;
 
   /* register interfaces to point to clsid */
   while (*pProxyFileList) {
@@ -297,8 +302,15 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
   static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
   static const WCHAR interfaceW[] = {'I','n','t','e','r','f','a','c','e','\\',0};
   WCHAR keyname[50];
+  WCHAR clsid[39];
 
   TRACE("(%p,%p,%s)\n", hDll, pProxyFileList, debugstr_guid(pclsid));
+  if (pclsid)
+      format_clsid( clsid, pclsid );
+  else if ((*pProxyFileList)->TableSize > 0)
+      format_clsid( clsid,(*pProxyFileList)->pStubVtblList[0]->header.piid);
+  else
+      return E_NOINTERFACE;
 
   /* unregister interfaces */
   while (*pProxyFileList) {
@@ -318,7 +330,7 @@ HRESULT WINAPI NdrDllUnregisterProxy(HMODULE hDll,
 
   /* unregister clsid */
   strcpyW( keyname, clsidW );
-  format_clsid( keyname + strlenW(keyname), pclsid );
+  strcatW( keyname, clsid );
   RegDeleteTreeW(HKEY_CLASSES_ROOT, keyname);
 
   return S_OK;
