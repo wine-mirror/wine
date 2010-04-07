@@ -1447,5 +1447,5 @@ static const struct error_table error_table[] =
     { 0xc00a0001, 0xc00a0037, table_c00a0001 },
     { 0xc0130001, 0xc0130017, table_c0130001 },
     { 0xc0150001, 0xc015000f, table_c0150001 },
-    { 0, 0, 0 }  /* last entry */
+    { 0, 0, NULL }  /* last entry */
 };
