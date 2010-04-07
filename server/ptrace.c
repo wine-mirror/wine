@@ -549,12 +549,28 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
             goto done;
         }
     }
-    context->debug.i386_regs.dr0 = data[0];
-    context->debug.i386_regs.dr1 = data[1];
-    context->debug.i386_regs.dr2 = data[2];
-    context->debug.i386_regs.dr3 = data[3];
-    context->debug.i386_regs.dr6 = data[6];
-    context->debug.i386_regs.dr7 = data[7];
+    switch (context->cpu)
+    {
+    case CPU_x86:
+        context->debug.i386_regs.dr0 = data[0];
+        context->debug.i386_regs.dr1 = data[1];
+        context->debug.i386_regs.dr2 = data[2];
+        context->debug.i386_regs.dr3 = data[3];
+        context->debug.i386_regs.dr6 = data[6];
+        context->debug.i386_regs.dr7 = data[7];
+        break;
+    case CPU_x86_64:
+        context->debug.x86_64_regs.dr0 = data[0];
+        context->debug.x86_64_regs.dr1 = data[1];
+        context->debug.x86_64_regs.dr2 = data[2];
+        context->debug.x86_64_regs.dr3 = data[3];
+        context->debug.x86_64_regs.dr6 = data[6];
+        context->debug.x86_64_regs.dr7 = data[7];
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        goto done;
+    }
     context->flags |= SERVER_CTX_DEBUG_REGISTERS;
 done:
     resume_after_ptrace( thread );
@@ -570,18 +586,39 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 
     if (!suspend_for_ptrace( thread )) return;
 
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.i386_regs.dr0 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr0 = context->debug.i386_regs.dr0;
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.i386_regs.dr1 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr1 = context->debug.i386_regs.dr1;
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->debug.i386_regs.dr2 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr2 = context->debug.i386_regs.dr2;
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->debug.i386_regs.dr3 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr3 = context->debug.i386_regs.dr3;
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.i386_regs.dr6 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr6 = context->debug.i386_regs.dr6;
-    if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
-    if (thread->context) thread->context->debug.i386_regs.dr7 = context->debug.i386_regs.dr7;
+    switch (context->cpu)
+    {
+    case CPU_x86:
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.i386_regs.dr0 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr0 = context->debug.i386_regs.dr0;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.i386_regs.dr1 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr1 = context->debug.i386_regs.dr1;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->debug.i386_regs.dr2 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr2 = context->debug.i386_regs.dr2;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->debug.i386_regs.dr3 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr3 = context->debug.i386_regs.dr3;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.i386_regs.dr6 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr6 = context->debug.i386_regs.dr6;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
+        if (thread->context) thread->context->debug.i386_regs.dr7 = context->debug.i386_regs.dr7;
+        break;
+    case CPU_x86_64:
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.x86_64_regs.dr0 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr0 = context->debug.x86_64_regs.dr0;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.x86_64_regs.dr1 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr1 = context->debug.x86_64_regs.dr1;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->debug.x86_64_regs.dr2 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr2 = context->debug.x86_64_regs.dr2;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->debug.x86_64_regs.dr3 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr3 = context->debug.x86_64_regs.dr3;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.x86_64_regs.dr6 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr6 = context->debug.x86_64_regs.dr6;
+        if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 ) == -1) goto error;
+        if (thread->context) thread->context->debug.x86_64_regs.dr7 = context->debug.x86_64_regs.dr7;
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+    }
     resume_after_ptrace( thread );
     return;
  error:
