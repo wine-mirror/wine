@@ -330,30 +330,35 @@ sub new($$$)
 sub align($)
 {
     my ($self) = @_;
+    return undef unless defined $self->{TYPE}->field_aligns();
     return $self->{TYPE}->field_aligns()->[$self->{NUMBER}];
 }
 
 sub base_size($)
 {
     my ($self) = @_;
+    return undef unless defined $self->{TYPE}->field_base_sizes();
     return $self->{TYPE}->field_base_sizes()->[$self->{NUMBER}];
 }
 
 sub name($)
 {
     my ($self) = @_;
+    return undef unless defined $self->{TYPE}->field_names();
     return $self->{TYPE}->field_names()->[$self->{NUMBER}];
 }
 
 sub offset($)
 {
     my ($self) = @_;
+    return undef unless defined $self->{TYPE}->field_offsets();
     return $self->{TYPE}->field_offsets()->[$self->{NUMBER}];
 }
 
 sub size($)
 {
     my ($self) = @_;
+    return undef unless defined $self->{TYPE}->field_sizes();
     return $self->{TYPE}->field_sizes()->[$self->{NUMBER}];
 }
 

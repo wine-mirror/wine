@@ -352,6 +352,7 @@ foreach my $file (@files) {
     my $line;
     my $type;
     my @packs = (4);
+    my @ifdefs = ();
 
     my $update_output = sub {
 	my $progress = "";
@@ -384,19 +385,37 @@ foreach my $file (@files) {
 
         #print "found_preprocessor: $begin_line: [$_]\n";
 	if ($preprocessor =~ /^\#\s*include\s+[\"<]pshpack(\d+)\.h[\">]$/) {
-	    push @packs, $1;
+	    push @packs, $1 unless @ifdefs && !$ifdefs[$#ifdefs];
             #print "found pack $1 on line $begin_line\n";
 	} elsif($preprocessor =~ /^\#\s*include\s+[\"<]poppack\.h[\">]$/) {
-	    pop @packs;
+	    pop @packs unless @ifdefs && !$ifdefs[$#ifdefs];
             #print "found poppack on line $begin_line\n";
-	}
-
+	} elsif ($preprocessor =~ /^\#\s*ifdef\s+_WIN64/) {
+            push @ifdefs, 0;
+	} elsif ($preprocessor =~ /^\#\s*ifndef\s+_WIN64/) {
+            push @ifdefs, 1;
+	} elsif ($preprocessor =~ /^\#\s*elif\s+defined(_WIN64)/) {
+            $ifdefs[$#ifdefs] = 0;
+	} elsif ($preprocessor =~ /^\#\s*ifdef\s/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*ifndef\s/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*if/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*else/) {
+            $ifdefs[$#ifdefs] = $ifdefs[$#ifdefs] ^ 1;
+	} elsif ($preprocessor =~ /^\#\s*elif/) {
+            $ifdefs[$#ifdefs] = 2;
+	} elsif ($preprocessor =~ /^\#\s*endif/) {
+            pop @ifdefs;
+        }
 	return 1;
     };
     $parser->set_found_preprocessor_callback($found_preprocessor);
 
     my $found_type = sub {
 	$type = shift;
+        return if @ifdefs && !$ifdefs[$#ifdefs];
 
 	&$update_output();
 
