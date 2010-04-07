@@ -2237,8 +2237,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             } else {
                 /* Load it into unsigned R5G6B5, swap L and V channels, and revert that in the shader */
                 *target_bpp = 2;
-                *format = GL_RGB;
-                *type = GL_UNSIGNED_SHORT_5_6_5;
             }
             break;
 
@@ -2253,9 +2251,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                  * the needed type and format parameter, so the internal format contains a
                  * 4th component, which is returned as alpha
                  */
-            } else {
-                *format = GL_BGRA;
-                *type = GL_UNSIGNED_INT_8_8_8_8_REV;
             }
             break;
 
