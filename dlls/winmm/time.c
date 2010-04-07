@@ -436,21 +436,3 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
     }
     return 0;
 }
-
-/**************************************************************************
- * 				timeGetTime    [WINMM.@]
- */
-DWORD WINAPI timeGetTime(void)
-{
-#if defined(COMMENTOUTPRIORTODELETING)
-    DWORD       count;
-
-    /* FIXME: releasing the win16 lock here is a temporary hack (I hope)
-     * that lets mciavi32.dll run correctly
-     */
-    if (pFnReleaseThunkLock) pFnReleaseThunkLock(&count);
-    if (pFnRestoreThunkLock) pFnRestoreThunkLock(count);
-#endif
-
-    return GetTickCount();
-}

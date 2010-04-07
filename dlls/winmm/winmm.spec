@@ -147,7 +147,7 @@
 @ stdcall timeEndPeriod(long)
 @ stdcall timeGetDevCaps(ptr long)
 @ stdcall timeGetSystemTime(ptr long)
-@ stdcall timeGetTime()
+@ stdcall timeGetTime() kernel32.GetTickCount
 @ stdcall timeKillEvent(long)
 @ stdcall timeSetEvent(long long ptr long long)
 @ stdcall waveInAddBuffer(long ptr long)
