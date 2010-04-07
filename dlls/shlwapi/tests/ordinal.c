@@ -2023,7 +2023,7 @@ static HRESULT WINAPI IOleCommandTargetImpl_Exec(
     VARIANT *pvaIn,
     VARIANT *pvaOut)
 {
-    add_call(&trace_got, 3, CmdGroup, (void*)nCmdID, (void*)nCmdexecopt, pvaIn, pvaOut);
+    add_call(&trace_got, 3, CmdGroup, (void*)(DWORD_PTR)nCmdID, (void*)(DWORD_PTR)nCmdexecopt, pvaIn, pvaOut);
     return S_OK;
 }
 
@@ -2237,7 +2237,7 @@ static HRESULT WINAPI IProfferServiceImpl_ProfferService(IProfferService *iface,
 
 static HRESULT WINAPI IProfferServiceImpl_RevokeService(IProfferService *iface, DWORD cookie)
 {
-    add_call(&trace_got, 4, (void*)cookie, 0, 0, 0, 0);
+    add_call(&trace_got, 4, (void*)(DWORD_PTR)cookie, 0, 0, 0, 0);
     return S_OK;
 }
 
@@ -2300,7 +2300,7 @@ static void test_IUnknown_ProfferService(void)
 
     add_call(&trace_expected, 1, proff, &IID_IServiceProvider, 0, 0, 0);
     add_call(&trace_expected, 2, &IID_IProfferService, &IID_IProfferService, 0, 0, 0);
-    add_call(&trace_expected, 4, (void*)cookie, 0, 0, 0, 0);
+    add_call(&trace_expected, 4, (void*)(DWORD_PTR)cookie, 0, 0, 0, 0);
 
     init_call_trace(&trace_got);
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, 0, &cookie);
