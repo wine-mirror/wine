@@ -5670,6 +5670,20 @@ static void validate_state_table(struct StateEntry *state_table)
         {196, 197},
         {  0,   0},
     };
+    static const DWORD simple_states[] =
+    {
+        STATE_MATERIAL,
+        STATE_VDECL,
+        STATE_STREAMSRC,
+        STATE_INDEXBUFFER,
+        STATE_VERTEXSHADERCONSTANT,
+        STATE_PIXELSHADERCONSTANT,
+        STATE_VSHADER,
+        STATE_PIXELSHADER,
+        STATE_VIEWPORT,
+        STATE_SCISSORRECT,
+        STATE_FRONTFACE,
+    };
     unsigned int i, current;
 
     for (i = STATE_RENDER(1), current = 0; i <= STATE_RENDER(WINEHIGHEST_RENDER_STATE); ++i)
@@ -5683,6 +5697,13 @@ static void validate_state_table(struct StateEntry *state_table)
             ERR("State %s (%#x) shouldn't have a representative.\n", debug_d3dstate(i), i);
 
         if (i == STATE_RENDER(rs_holes[current].last)) ++current;
+    }
+
+    for (i = 0; i < sizeof(simple_states) / sizeof(*simple_states); ++i)
+    {
+        if (!state_table[simple_states[i]].representative)
+            ERR("State %s (%#x) should have a representative.\n",
+                    debug_d3dstate(simple_states[i]), simple_states[i]);
     }
 
     for (i = 0; i < STATE_HIGHEST + 1; ++i)
