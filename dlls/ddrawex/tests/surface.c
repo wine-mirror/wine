@@ -317,6 +317,11 @@ static void test_surface_from_dc4(void)
 
     dd1 = createDD();
     hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw4, (void **)&dd4);
+    if (hr == E_NOINTERFACE) {
+        win_skip("DirectDraw4 is not supported\n");
+        IDirectDraw_Release(dd1);
+        return;
+    }
     ok(SUCCEEDED(hr), "IDirectDraw_QueryInterface failed, hr %#x.\n", hr);
     IDirectDraw_Release(dd1);
 
