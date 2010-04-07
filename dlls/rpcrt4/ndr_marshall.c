@@ -2822,12 +2822,15 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 2;
       break;
     case RPC_FC_ENUM16:
+    {
+      USHORT val = *(DWORD *)pMemory;
       TRACE("enum16=%d <= %p\n", *(DWORD*)pMemory, pMemory);
       if (32767 < *(DWORD*)pMemory)
         RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
-      safe_copy_to_buffer(pStubMsg, pMemory, 2);
+      safe_copy_to_buffer(pStubMsg, &val, 2);
       pMemory += 4;
       break;
+    }
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
@@ -2969,13 +2972,16 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 2;
       break;
     case RPC_FC_ENUM16:
-      safe_copy_from_buffer(pStubMsg, pMemory, 2);
-      *(DWORD*)pMemory &= 0xffff;
+    {
+      WORD val;
+      safe_copy_from_buffer(pStubMsg, &val, 2);
+      *(DWORD*)pMemory = val;
       TRACE("enum16=%d => %p\n", *(DWORD*)pMemory, pMemory);
       if (32767 < *(DWORD*)pMemory)
         RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
       pMemory += 4;
       break;
+    }
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
@@ -6544,16 +6550,16 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
         TRACE("value: %s\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory));
         break;
     case RPC_FC_ENUM16:
+    {
+        USHORT val = *(UINT *)pMemory;
         /* only 16-bits on the wire, so do a sanity check */
         if (*(UINT *)pMemory > SHRT_MAX)
             RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
         align_pointer_clear(&pStubMsg->Buffer, sizeof(USHORT));
-        if (pStubMsg->Buffer + sizeof(USHORT) > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        *(USHORT *)pStubMsg->Buffer = *(UINT *)pMemory;
-        pStubMsg->Buffer += sizeof(USHORT);
+        safe_copy_to_buffer(pStubMsg, &val, sizeof(val));
         TRACE("value: 0x%04x\n", *(UINT *)pMemory);
         break;
+    }
     case RPC_FC_IGNORE:
         break;
     default:
@@ -6575,7 +6581,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
 {
     TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
 
-#define BASE_TYPE_UNMARSHALL(type) \
+#define BASE_TYPE_UNMARSHALL(type) do { \
         align_pointer(&pStubMsg->Buffer, sizeof(type)); \
         if (!fMustAlloc && !pStubMsg->IsClient && !*ppMemory) \
         { \
@@ -6589,7 +6595,8 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
                 *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
             TRACE("*ppMemory: %p\n", *ppMemory); \
             safe_copy_from_buffer(pStubMsg, *ppMemory, sizeof(type)); \
-        }
+        } \
+    } while (0)
 
     switch(*pFormat)
     {
@@ -6626,19 +6633,19 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         TRACE("value: %s\n", wine_dbgstr_longlong(**(ULONGLONG **)ppMemory));
         break;
     case RPC_FC_ENUM16:
+    {
+        USHORT val;
         align_pointer(&pStubMsg->Buffer, sizeof(USHORT));
         if (!fMustAlloc && !*ppMemory)
             fMustAlloc = TRUE;
         if (fMustAlloc)
             *ppMemory = NdrAllocate(pStubMsg, sizeof(UINT));
-        if (pStubMsg->Buffer + sizeof(USHORT) > pStubMsg->BufferEnd)
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        TRACE("*ppMemory: %p\n", *ppMemory);
+        safe_copy_from_buffer(pStubMsg, &val, sizeof(USHORT));
         /* 16-bits on the wire, but int in memory */
-        **(UINT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(USHORT);
+        **(UINT **)ppMemory = val;
         TRACE("value: 0x%08x\n", **(UINT **)ppMemory);
         break;
+    }
     case RPC_FC_IGNORE:
         break;
     default:
