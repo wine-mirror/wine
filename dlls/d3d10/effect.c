@@ -223,9 +223,63 @@ static BOOL copy_name(const char *ptr, char **name)
     return TRUE;
 }
 
+static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct d3d10_effect_shader_signature *s)
+{
+    D3D10_SIGNATURE_PARAMETER_DESC *e;
+    const char *ptr = data;
+    unsigned int i;
+    DWORD count;
+
+    read_dword(&ptr, &count);
+    TRACE("%u elements\n", count);
+
+    skip_dword_unknown(&ptr, 1);
+
+    e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
+    if (!e)
+    {
+        ERR("Failed to allocate signature memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        UINT name_offset;
+        UINT mask;
+
+        read_dword(&ptr, &name_offset);
+        e[i].SemanticName = data + name_offset;
+        read_dword(&ptr, &e[i].SemanticIndex);
+        read_dword(&ptr, &e[i].SystemValueType);
+        read_dword(&ptr, &e[i].ComponentType);
+        read_dword(&ptr, &e[i].Register);
+        read_dword(&ptr, &mask);
+
+        e[i].ReadWriteMask = mask >> 8;
+        e[i].Mask = mask & 0xff;
+
+        TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
+                "type %u, register idx: %u, use_mask %#x, input_mask %#x\n",
+                debugstr_a(e[i].SemanticName), e[i].SemanticIndex, e[i].SystemValueType,
+                e[i].ComponentType, e[i].Register, e[i].Mask, e[i].ReadWriteMask);
+    }
+
+    s->elements = e;
+    s->element_count = count;
+
+    return S_OK;
+}
+
+static void shader_free_signature(struct d3d10_effect_shader_signature *s)
+{
+    HeapFree(GetProcessHeap(), 0, s->signature);
+    HeapFree(GetProcessHeap(), 0, s->elements);
+}
+
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_effect_shader_variable *s = ctx;
+    HRESULT hr;
 
     TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
@@ -274,6 +328,14 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
             write_dword(&ptr, TAG_ISGN);
             write_dword(&ptr, data_size);
             memcpy(ptr, data, data_size);
+
+            hr = shader_parse_signature(ptr, data_size, sig);
+            if (FAILED(hr))
+            {
+                ERR("Failed to parse shader, hr %#x\n", hr);
+                shader_free_signature(sig);
+            }
+
             break;
         }
 
@@ -301,6 +363,15 @@ static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
     }
 
     v->data = s;
+
+    if (v->effect->used_shader_current >= v->effect->used_shader_count)
+    {
+        WARN("Invalid shader? Used shader current(%u) >= used shader count(%u)\n", v->effect->used_shader_current, v->effect->used_shader_count);
+        return E_FAIL;
+    }
+
+    v->effect->used_shaders[v->effect->used_shader_current] = v;
+    ++v->effect->used_shader_current;
 
     if (!ptr) return S_OK;
 
@@ -1581,6 +1652,13 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         return E_OUTOFMEMORY;
     }
 
+    e->used_shaders = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->used_shader_count * sizeof(*e->used_shaders));
+    if (!e->used_shaders)
+    {
+        ERR("Failed to allocate used shaders memory\n");
+        return E_OUTOFMEMORY;
+    }
+
     e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
     if (!e->techniques)
     {
@@ -1683,8 +1761,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->depthstencilview_count);
     TRACE("Depthstencilview count: %u\n", e->depthstencilview_count);
 
-    read_dword(&ptr, &e->shader_call_count);
-    TRACE("Shader call count: %u\n", e->shader_call_count);
+    read_dword(&ptr, &e->used_shader_count);
+    TRACE("Used shader count: %u\n", e->used_shader_count);
 
     read_dword(&ptr, &e->anonymous_shader_count);
     TRACE("Anonymous shader count: %u\n", e->anonymous_shader_count);
@@ -1785,7 +1863,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
             case D3D10_SVT_VERTEXSHADER:
             case D3D10_SVT_PIXELSHADER:
             case D3D10_SVT_GEOMETRYSHADER:
-                HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)v->data)->input_signature.signature);
+                shader_free_signature(&((struct d3d10_effect_shader_variable *)v->data)->input_signature);
                 break;
 
             default:
@@ -1956,6 +2034,8 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             }
             HeapFree(GetProcessHeap(), 0, This->anonymous_shaders);
         }
+
+        HeapFree(GetProcessHeap(), 0, This->used_shaders);
 
         wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
 
@@ -5160,10 +5240,56 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureE
         ID3D10EffectShaderVariable *iface, UINT shader_index, UINT element_index,
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    FIXME("iface %p, shader_index %u, element_index %u, desc %p stub!\n",
+    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_shader_variable *s;
+    D3D10_SIGNATURE_PARAMETER_DESC *d;
+
+    TRACE("iface %p, shader_index %u, element_index %u, desc %p\n",
             iface, shader_index, element_index, desc);
 
-    return E_NOTIMPL;
+    if (!iface->lpVtbl->IsValid(iface))
+    {
+        WARN("Null variable specified\n");
+        return E_FAIL;
+    }
+
+    /* Check shader_index, this crashes on W7/DX10 */
+    if (shader_index >= This->effect->used_shader_count)
+    {
+        WARN("This should crash on W7/DX10!\n");
+        return E_FAIL;
+    }
+
+    s = This->effect->used_shaders[shader_index]->data;
+    if (!s->input_signature.signature)
+    {
+        WARN("No shader signature\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Check desc for NULL, this crashes on W7/DX10 */
+    if (!desc)
+    {
+        WARN("This should crash on W7/DX10!\n");
+        return E_FAIL;
+    }
+
+    if (element_index >= s->input_signature.element_count)
+    {
+        WARN("Invalid element index specified\n");
+        return E_INVALIDARG;
+    }
+
+    d = &s->input_signature.elements[element_index];
+    desc->SemanticName = d->SemanticName;
+    desc->SemanticIndex  =  d->SemanticIndex;
+    desc->SystemValueType =  d->SystemValueType;
+    desc->ComponentType =  d->ComponentType;
+    desc->Register =  d->Register;
+    desc->ReadWriteMask  =  d->ReadWriteMask;
+    desc->Mask =  d->Mask;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignatureElementDesc(

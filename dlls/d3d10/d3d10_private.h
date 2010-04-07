@@ -29,6 +29,13 @@
 
 #include "d3d10.h"
 
+/*
+ * This doesn't belong here, but for some functions it is possible to return that value,
+ * see http://msdn.microsoft.com/en-us/library/bb205278%28v=VS.85%29.aspx
+ * The original definition is in D3DX10core.h.
+ */
+#define D3DERR_INVALIDCALL 0x8876086c
+
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type) DECLSPEC_HIDDEN;
 const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
@@ -66,6 +73,8 @@ struct d3d10_effect_shader_signature
 {
     char *signature;
     UINT signature_size;
+    UINT element_count;
+    D3D10_SIGNATURE_PARAMETER_DESC *elements;
 };
 
 struct d3d10_effect_shader_variable
@@ -188,15 +197,17 @@ struct d3d10_effect
     DWORD samplerstate_count;
     DWORD rendertargetview_count;
     DWORD depthstencilview_count;
-    DWORD shader_call_count;
+    DWORD used_shader_count;
     DWORD anonymous_shader_count;
 
+    DWORD used_shader_current;
     DWORD anonymous_shader_current;
 
     struct wine_rb_tree types;
     struct d3d10_effect_variable *local_buffers;
     struct d3d10_effect_variable *local_variables;
     struct d3d10_effect_anonymous_shader *anonymous_shaders;
+    struct d3d10_effect_variable **used_shaders;
     struct d3d10_effect_technique *techniques;
 };
 
