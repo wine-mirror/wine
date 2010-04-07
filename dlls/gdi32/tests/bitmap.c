@@ -411,7 +411,7 @@ static void test_dib_bits_access( HBITMAP hdib, void *bits )
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     DWORD data[256];
     BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
-    HDC hdc = GetDC(0);
+    HDC hdc;
     char filename[MAX_PATH];
     HANDLE file;
     DWORD written;
@@ -435,10 +435,14 @@ static void test_dib_bits_access( HBITMAP hdib, void *bits )
     pbmi->bmiHeader.biPlanes = 1;
     pbmi->bmiHeader.biCompression = BI_RGB;
 
+    hdc = GetDC(0);
+
     ret = SetDIBits( hdc, hdib, 0, 16, data, pbmi, DIB_RGB_COLORS );
     ok(ret == 16 ||
        broken(ret == 0), /* win9x */
        "SetDIBits failed: expected 16 got %d\n", ret);
+
+    ReleaseDC(0, hdc);
 
     ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
         "VirtualQuery failed\n");
@@ -864,8 +868,8 @@ static void test_dibsections(void)
     DeleteObject(hdib);
     DeleteObject(hpal);
 
-
     DeleteDC(hdcmem);
+    DeleteDC(hdcmem2);
     ReleaseDC(0, hdc);
 }
 
