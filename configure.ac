@@ -190,7 +190,6 @@ then
     fi
     AC_SUBST([WOW64_DISABLE],[\#])
     enable_fonts=${enable_fonts:-no}
-    enable_include=${enable_include:-no}
     enable_rpcss=${enable_rpcss:-no}
     enable_server=${enable_server:-no}
     enable_tools=${enable_tools:-no}
