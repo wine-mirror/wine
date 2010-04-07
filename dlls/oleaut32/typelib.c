@@ -1908,7 +1908,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                     {
                        if (!IS_INTRESOURCE(pFuncRec->OptAttr[2]))
                            ERR("ordinal 0x%08x invalid, IS_INTRESOURCE is false\n", pFuncRec->OptAttr[2]);
-                       (*pptfd)->Entry = (BSTR)pFuncRec->OptAttr[2];
+                       (*pptfd)->Entry = (BSTR)(DWORD_PTR)LOWORD(pFuncRec->OptAttr[2]);
                     }
                     else
                     {
@@ -2934,7 +2934,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	    else if(td[0] == VT_CARRAY)
             {
 	        /* array descr table here */
-	        pTypeLibImpl->pTypeDesc[i].u.lpadesc = (void *)((int) td[2]);  /* temp store offset in*/
+	        pTypeLibImpl->pTypeDesc[i].u.lpadesc = (void *)(INT_PTR)td[2];  /* temp store offset in*/
             }
             else if(td[0] == VT_USERDEFINED)
 	    {
@@ -2949,7 +2949,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             if(pTypeLibImpl->pTypeDesc[i].vt != VT_CARRAY) continue;
             if(tlbSegDir.pArrayDescriptions.offset>0)
 	    {
-                MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (int) pTypeLibImpl->pTypeDesc[i].u.lpadesc);
+                MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (INT_PTR)pTypeLibImpl->pTypeDesc[i].u.lpadesc);
                 pTypeLibImpl->pTypeDesc[i].u.lpadesc = TLB_Alloc(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
 
                 if(td[1]<0)
@@ -4786,13 +4786,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                 &subtypeinfo, &subdesckind, &subbindptr);
             if (SUCCEEDED(hr) && (subdesckind != DESCKIND_NONE))
             {
-                TYPEDESC tdesc_appobject =
-                {
-                    {
-                        (TYPEDESC *)pTypeInfo->hreftype
-                    },
-                    VT_USERDEFINED
-                };
+                TYPEDESC tdesc_appobject;
                 const VARDESC vardesc_appobject =
                 {
                     -2,         /* memid */
@@ -4813,6 +4807,9 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
                     0,          /* wVarFlags */
                     VAR_STATIC  /* varkind */
                 };
+
+                tdesc_appobject.u.hreftype = pTypeInfo->hreftype;
+                tdesc_appobject.vt = VT_USERDEFINED;
 
                 TRACE("found in implicit app object: %s\n", debugstr_w(szName));
 
@@ -6606,7 +6603,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
 	    if (pBstrName)
 		*pBstrName = NULL;
 	    if (pwOrdinal)
-		*pwOrdinal = (DWORD)pFDesc->Entry;
+		*pwOrdinal = LOWORD(pFDesc->Entry);
 	    return S_OK;
         }
     return TYPE_E_ELEMENTNOTFOUND;
