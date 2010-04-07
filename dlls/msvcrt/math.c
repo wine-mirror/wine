@@ -706,8 +706,9 @@ unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
  */
 int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask)
 {
-    unsigned int flags;
 #ifdef __i386__
+    unsigned int flags;
+
     FIXME("(%p %u %u) semi-stub\n", cur, newval, mask);
 
     flags = _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
