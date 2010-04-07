@@ -1681,6 +1681,20 @@ void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char*
         pStubMsg->Buffer += sizeof(USHORT);
         TRACE("value: 0x%08x\n", *(UINT *)pMemory);
         break;
+    case RPC_FC_INT3264:
+        align_pointer(&pStubMsg->Buffer, sizeof(INT));
+        /* 32-bits on the wire, but int_ptr in memory */
+        *(INT_PTR *)pMemory = *(INT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(INT);
+        TRACE("value: 0x%08lx\n", *(INT_PTR *)pMemory);
+        break;
+    case RPC_FC_UINT3264:
+        align_pointer(&pStubMsg->Buffer, sizeof(UINT));
+        /* 32-bits on the wire, but int_ptr in memory */
+        *(UINT_PTR *)pMemory = *(UINT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(UINT);
+        TRACE("value: 0x%08lx\n", *(UINT_PTR *)pMemory);
+        break;
     case RPC_FC_IGNORE:
         break;
     default:
@@ -2746,6 +2760,8 @@ static ULONG EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
         return sizeof(ULONG);
     case RPC_FC_FLOAT:
         return sizeof(float);
@@ -2838,6 +2854,15 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       safe_copy_to_buffer(pStubMsg, pMemory, 4);
       pMemory += 4;
       break;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+    {
+      UINT val = *(UINT_PTR *)pMemory;
+      TRACE("int3264=%ld <= %p\n", *(UINT_PTR *)pMemory, pMemory);
+      safe_copy_to_buffer(pStubMsg, &val, sizeof(UINT));
+      pMemory += sizeof(UINT_PTR);
+      break;
+    }
     case RPC_FC_FLOAT:
       TRACE("float=%f <= %p\n", *(float*)pMemory, pMemory);
       safe_copy_to_buffer(pStubMsg, pMemory, sizeof(float));
@@ -2989,6 +3014,24 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("long=%d => %p\n", *(DWORD*)pMemory, pMemory);
       pMemory += 4;
       break;
+    case RPC_FC_INT3264:
+    {
+      INT val;
+      safe_copy_from_buffer(pStubMsg, &val, 4);
+      *(INT_PTR *)pMemory = val;
+      TRACE("int3264=%ld => %p\n", *(INT_PTR*)pMemory, pMemory);
+      pMemory += sizeof(INT_PTR);
+      break;
+    }
+    case RPC_FC_UINT3264:
+    {
+      UINT val;
+      safe_copy_from_buffer(pStubMsg, &val, 4);
+      *(UINT_PTR *)pMemory = val;
+      TRACE("uint3264=%ld => %p\n", *(UINT_PTR*)pMemory, pMemory);
+      pMemory += sizeof(UINT_PTR);
+      break;
+    }
     case RPC_FC_FLOAT:
       safe_copy_from_buffer(pStubMsg, pMemory, sizeof(float));
       TRACE("float=%f => %p\n", *(float*)pMemory, pMemory);
@@ -3137,6 +3180,11 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       safe_buffer_length_increment(pStubMsg, 4);
       pMemory += 4;
       break;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+      safe_buffer_length_increment(pStubMsg, 4);
+      pMemory += sizeof(INT_PTR);
+      break;
     case RPC_FC_HYPER:
     case RPC_FC_DOUBLE:
       safe_buffer_length_increment(pStubMsg, 8);
@@ -3250,6 +3298,10 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_FLOAT:
       pMemory += 4;
       break;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+      pMemory += sizeof(INT_PTR);
+      break;
     case RPC_FC_HYPER:
     case RPC_FC_DOUBLE:
       pMemory += 8;
@@ -3348,6 +3400,11 @@ static ULONG ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_ENUM32:
     case RPC_FC_FLOAT:
       size += 4;
+      safe_buffer_increment(pStubMsg, 4);
+      break;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+      size += sizeof(INT_PTR);
       safe_buffer_increment(pStubMsg, 4);
       break;
     case RPC_FC_HYPER:
@@ -3454,6 +3511,10 @@ ULONG ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
     case RPC_FC_ENUM32:
     case RPC_FC_FLOAT:
       size += 4;
+      break;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+      size += sizeof(INT_PTR);
       break;
     case RPC_FC_HYPER:
     case RPC_FC_DOUBLE:
@@ -5585,6 +5646,9 @@ static ULONG get_discriminant(unsigned char fc, const unsigned char *pMemory)
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
         return *(const ULONG *)pMemory;
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+        return *(const ULONG_PTR *)pMemory;
     default:
         FIXME("Unhandled base type: 0x%02x\n", fc);
         return 0;
@@ -6560,6 +6624,14 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
         TRACE("value: 0x%04x\n", *(UINT *)pMemory);
         break;
     }
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+    {
+        UINT val = *(UINT_PTR *)pMemory;
+        align_pointer_clear(&pStubMsg->Buffer, sizeof(UINT));
+        safe_copy_to_buffer(pStubMsg, &val, sizeof(val));
+        break;
+    }
     case RPC_FC_IGNORE:
         break;
     default:
@@ -6646,6 +6718,36 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         TRACE("value: 0x%08x\n", **(UINT **)ppMemory);
         break;
     }
+    case RPC_FC_INT3264:
+        if (sizeof(INT_PTR) == sizeof(INT)) BASE_TYPE_UNMARSHALL(INT);
+        else
+        {
+            INT val;
+            align_pointer(&pStubMsg->Buffer, sizeof(INT));
+            if (!fMustAlloc && !*ppMemory)
+                fMustAlloc = TRUE;
+            if (fMustAlloc)
+                *ppMemory = NdrAllocate(pStubMsg, sizeof(INT_PTR));
+            safe_copy_from_buffer(pStubMsg, &val, sizeof(INT));
+            **(INT_PTR **)ppMemory = val;
+            TRACE("value: 0x%08lx\n", **(INT_PTR **)ppMemory);
+        }
+        break;
+    case RPC_FC_UINT3264:
+        if (sizeof(UINT_PTR) == sizeof(UINT)) BASE_TYPE_UNMARSHALL(UINT);
+        else
+        {
+            UINT val;
+            align_pointer(&pStubMsg->Buffer, sizeof(UINT));
+            if (!fMustAlloc && !*ppMemory)
+                fMustAlloc = TRUE;
+            if (fMustAlloc)
+                *ppMemory = NdrAllocate(pStubMsg, sizeof(UINT_PTR));
+            safe_copy_from_buffer(pStubMsg, &val, sizeof(UINT));
+            **(UINT_PTR **)ppMemory = val;
+            TRACE("value: 0x%08lx\n", **(UINT_PTR **)ppMemory);
+        }
+        break;
     case RPC_FC_IGNORE:
         break;
     default:
@@ -6686,6 +6788,8 @@ static void WINAPI NdrBaseTypeBufferSize(
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
         align_length(&pStubMsg->BufferLength, sizeof(ULONG));
         safe_buffer_length_increment(pStubMsg, sizeof(ULONG));
         break;
@@ -6776,6 +6880,13 @@ static ULONG WINAPI NdrBaseTypeMemorySize(
         align_length(&pStubMsg->MemorySize, sizeof(UINT));
         pStubMsg->MemorySize += sizeof(UINT);
         return sizeof(UINT);
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+        align_pointer(&pStubMsg->Buffer, sizeof(UINT));
+        safe_buffer_increment(pStubMsg, sizeof(UINT));
+        align_length(&pStubMsg->MemorySize, sizeof(UINT_PTR));
+        pStubMsg->MemorySize += sizeof(UINT_PTR);
+        return sizeof(UINT_PTR);
     case RPC_FC_IGNORE:
         align_length(&pStubMsg->MemorySize, sizeof(void *));
         pStubMsg->MemorySize += sizeof(void *);
