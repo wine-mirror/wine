@@ -55,19 +55,19 @@ void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(res == NULL, "res = %p\n", res);
 }
 
-static int initterm_cb0(void)
+static int __cdecl initterm_cb0(void)
 {
     cb_called[0]++;
     return 0;
 }
 
-static int initterm_cb1(void)
+static int __cdecl initterm_cb1(void)
 {
     cb_called[1]++;
     return 1;
 }
 
-static int initterm_cb2(void)
+static int __cdecl initterm_cb2(void)
 {
     cb_called[2]++;
     return 2;
