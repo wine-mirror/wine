@@ -2225,8 +2225,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         case WINED3DFMT_R8G8_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V8U8;
-            *format = GL_BGR;
-            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 3;
             break;
 
@@ -2264,16 +2262,12 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         case WINED3DFMT_R8G8B8A8_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_Q8W8V8U8;
-            *format = GL_BGRA;
-            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 4;
             break;
 
         case WINED3DFMT_R16G16_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V16U16;
-            *format = GL_BGR;
-            *type = GL_UNSIGNED_SHORT;
             *target_bpp = 6;
             break;
 
@@ -2283,15 +2277,11 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * with A4L4 internal, but A8L8 format+type
              */
             *convert = CONVERT_A4L4;
-            *format = GL_LUMINANCE_ALPHA;
-            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 2;
             break;
 
         case WINED3DFMT_R16G16_UNORM:
             *convert = CONVERT_G16R16;
-            *format = GL_RGB;
-            *type = GL_UNSIGNED_SHORT;
             *target_bpp = 6;
             break;
 
