@@ -62,10 +62,15 @@ struct d3d10_effect_object
     void *data;
 };
 
+struct d3d10_effect_shader_signature
+{
+    char *signature;
+    UINT signature_size;
+};
+
 struct d3d10_effect_shader_variable
 {
-    char *input_signature;
-    UINT input_signature_size;
+    struct d3d10_effect_shader_signature input_signature;
     union
     {
         ID3D10VertexShader *vs;

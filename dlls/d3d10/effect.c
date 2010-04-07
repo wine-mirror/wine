@@ -237,17 +237,18 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
         {
             /* 32 (DXBC header) + 1 * 4 (chunk index) + 2 * 4 (chunk header) + data_size (chunk data) */
             UINT size = 44 + data_size;
+            struct d3d10_effect_shader_signature *sig = &s->input_signature;
             char *ptr;
 
-            s->input_signature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-            if (!s->input_signature)
+            sig->signature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+            if (!sig->signature)
             {
                 ERR("Failed to allocate input signature data\n");
                 return E_OUTOFMEMORY;
             }
-            s->input_signature_size = size;
+            sig->signature_size = size;
 
-            ptr = s->input_signature;
+            ptr = sig->signature;
 
             write_dword(&ptr, TAG_DXBC);
 
@@ -267,7 +268,7 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
             write_dword(&ptr, 1);
 
             /* chunk index */
-            write_dword(&ptr, (ptr - s->input_signature) + 4);
+            write_dword(&ptr, (ptr - sig->signature) + 4);
 
             /* chunk */
             write_dword(&ptr, TAG_ISGN);
@@ -1784,7 +1785,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
             case D3D10_SVT_VERTEXSHADER:
             case D3D10_SVT_PIXELSHADER:
             case D3D10_SVT_GEOMETRYSHADER:
-                HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)v->data)->input_signature);
+                HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)v->data)->input_signature.signature);
                 break;
 
             default:
@@ -2387,8 +2388,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         {
             struct d3d10_effect_variable *v = o->data;
             struct d3d10_effect_shader_variable *s = v->data;
-            desc->pIAInputSignature = (BYTE *)s->input_signature;
-            desc->IAInputSignatureSize = s->input_signature_size;
+            desc->pIAInputSignature = (BYTE *)s->input_signature.signature;
+            desc->IAInputSignatureSize = s->input_signature.signature_size;
             break;
         }
     }
