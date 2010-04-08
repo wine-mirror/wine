@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
-.TH WINE 1 "Janvier 2008" "@PACKAGE_STRING@" "Windows sur Unix"
+.TH WINE 1 "avril 2010" "@PACKAGE_STRING@" "Windows sur Unix"
 .SH NOM
-wine \- exécute des programmes Windows sur Unix
+wine \- exécuter des programmes Windows sur Unix
 .SH SYNOPSIS
 .BI "wine " PROGRAMME
 [ARGUMENTS ... ]
@@ -16,18 +16,16 @@ PROGRAMME/ARGUMENTS
 de la page de manuel.
 .SH DESCRIPTION
 .B wine
-charge et exécute le programme indiqué ; le programme peut être un exécutable DOS, Windows
-3.x, ou Win32 (binaires x86 uniquement).
+charge et exécute le programme indiqué, qui peut être un exécutable DOS, Windows
+3.x ou Win32 (binaires x86 uniquement).
 .PP
-Pour déboguer wine, utilisez
-.B winedbg
-à la place de wine.
+Pour déboguer wine, utilisez plutôt
+.BR winedbg .
 .PP
-Pour exécuter des applications en ligne de commande (programmes Windows console), utilisez
-.B wineconsole
-à la place de
-.BR wine .
-Ceci affichera la sortie dans une fenêtre séparée (nécessite que X11 soit exécuté)
+Pour exécuter des applications en ligne de commande (programmes Windows
+console), préférez
+.BR wineconsole .
+Cela permet d'afficher la sortie dans une fenêtre séparée (nécessite X11).
 Si vous n'utilisez pas
 .B wineconsole
 pour les programmes en ligne de commande, le support console sera très limité et votre
@@ -37,8 +35,7 @@ Lorsque wine est invoqué avec
 .B --help
 ou
 .B --version
-comme seul argument,
-.B wine
+pour seul argument, il
 affichera seulement un petit message d'aide ou, respectivement, sa version, puis se terminera.
 .SH PROGRAMME/ARGUMENTS
 Le nom du programme peut être spécifié au format DOS
@@ -48,8 +45,9 @@ ou au format Unix
 Vous pouvez passer des arguments au programme exécuté en les ajoutant
 à la fin de la ligne de commande invoquant
 .B wine
-(par exemple : wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT).
-Notez que vous devrez '\(rs' protéger les caractères spéciaux (et les espaces) lorsque vous invoquez Wine depuis
+(par exemple : wine notepad C:\(rs\(rsTEMP\(rs\(rsLISEZMOI.TXT).
+Notez que vous devrez protéger les caractères spéciaux (et les espaces)
+en utilisant un '\(rs' lorsque vous invoquez Wine depuis
 un shell, par exemple :
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMyPrg\(rs\(rstest.exe
@@ -62,7 +60,7 @@ est lancé accessibles au processus Windows/DOS exécuté. Utilisez donc la synt
 appropriée pour votre shell pour déclarer les variables d'environnement dont vous avez besoin.
 .TP
 .I WINEPREFIX
-Si défini, le contenu de cette variable est pris comme le nom du répertoire où
+Si définie, le contenu de cette variable est pris comme le nom du répertoire où
 .B wine
 stocke ses données (la valeur par défaut est
 .IR $HOME/.wine ).
@@ -71,38 +69,38 @@ communiquer avec
 .IR wineserver .
 Tous les processus
 .B wine
-utilisent le même
+utilisant le même
 .B wineserver
-(c'est-à-dire le même utilisateur) et partages certains éléments comme la base de registre,
+(c'est-à-dire le même utilisateur) partagent certains éléments comme la base de registre,
 la mémoire partagée et les objets du noyau.
-En définissant
+En donnant à
 .I WINEPREFIX
-à une valeur différente pour différent processus
+une valeur spécifique pour différents processus
+.BR wine ,
+il est possible d'exécuter plusieurs sessions de
 .B wine
-, il est possible d'exécuter plusieurs sessions de
-.B wine
-indépendantes.
+totalement indépendantes.
 .TP
 .I WINESERVER
 Spécifie le chemin et le nom de l'exécutable
-.B wineserver
-S'il n'est pas défini, Wine essaiera de charger
-.BR @bindir@/wineserver ,
-et, s'il n'existe pas, il cherchera alors un fichier nommé
-"wineserver" dans le chemin et dans quelques autres emplacements potentiels.
+.BR wineserver .
+Si cette variable n'est pas définie, Wine essaiera de charger
+.B @bindir@/wineserver
+ou, à défaut, un fichier nommé
+\fIwineserver\fR dans le chemin système ou quelques autres emplacements potentiels.
 .TP
 .I WINELOADER
 Spécifie le chemin et le nom de l'exécutable
 .B wine
 à utiliser pour exécuter de nouveaux processus Windows. S'il n'est pas défini, Wine
 essaiera de charger
-.BR @bindir@/wine ,
-et, s'il n'existe pas, il cherchera alors un fichier nommé "wine" dans
-le chemin et dans quelques autres emplacements potentiels.
+.B @bindir@/wine
+ou, à défaut, un fichier nommé
+"wine" dans le chemin système ou quelques autres emplacements potentiels.
 .TP
 .I WINEDEBUG
-Active ou désactive les messages de débogage. La syntaxe de cette variable est
-la suivante
+Active ou désactive les messages de débogage. La syntaxe est
+la suivante :
 .RI [ classe ][+/-] canal [,[ classe2 ][+/-] canal2 ].
 .RS +7
 .PP
@@ -110,7 +108,7 @@ la suivante
 est optionnel et peut avoir une des valeurs suivantes :
 .BR err ,
 .BR warn ,
-.BR fixme ,
+.B fixme
 ou
 .BR trace .
 Si
@@ -119,20 +117,20 @@ n'est pas spécifié, tous les messages de débogage pour le canal
 spécifié seront activés. Chaque canal imprimera des messages à propos
 d'un composant particulier de
 .BR wine .
-Le caractères suivante peuvent être + ou - pour activer ou désactiver
-le canal spéficié. S'il n'y a pas de partie
+Le caractère suivant peut être + ou - pour activer/désactiver
+le canal spécifié. Si aucune
 .I classe
-avant, le caractère + peut être omis. Notez que les espaces ne sont pas
-autorisés dans cette chaîne de caractères.
+n'est spécifiée, le caractère + peut être omis. Notez que les espaces ne sont pas
+autorisées dans cette chaîne de caractères.
 .PP
 Exemples :
 .TP
 WINEDEBUG=warn+all
-activera tous les messages de débogage (recommandé pour le débogage).
+activera tous les messages d'avertissement (recommandé pour le débogage).
 .br
 .TP
 WINEDEBUG=warn+dll,+heap
-will turn on DLL warning messages and all heap messages.
+activera tous messages d'avertissement sur les DLL, et tous les messages sur le tas.
 .br
 .TP
 WINEDEBUG=fixme-all,warn+cursor,+relay
@@ -142,7 +140,7 @@ activera tous les messages du canal relay (appels de l'API).
 .TP
 WINEDEBUG=relay
 activera tous les messages du canal relay. Pour un contrôle plus fin sur l'inclusion et
-l'exclusion des fonctions et dlls des traces relay, référez-vous à la secion [Debug] du
+l'exclusion des fonctions et DLL des traces relay, référez-vous à la section [Debug] du
 fichier de configuration de Wine.
 .PP
 Pour plus d'informations sur les messages de débogage, référez-vous au chapitre
@@ -151,20 +149,21 @@ du guide de l'utilisateur de Wine.
 .RE
 .TP
 .I WINEDLLPATH
-Spécifie le(s) chemin(s) dans le(s)quel(s) chercher les dlls fournies et les applications
-Winelib. Il s'agit d'une liste de répertoires séparés par « : ». En plus des répertoires
-spécifiés dans
+Spécifie le(s) chemin(s) où chercher les DLL intégrées et les applications
+Winelib. C'est une liste de répertoires séparés par des « : ». En plus des
+répertoires spécifiés dans
 .IR WINEDLLPATH ,
-Wine cherchera aussi dans le répertoire
+Wine utilisera aussi le répertoire
 .BR @dlldir@ .
 .TP
 .I WINEDLLOVERRIDES
-Définit le type de surclassage et l'ordre de chargement des dlls utilisées lors du chargement
-d'un processus pour chaque dll. La valeur par défaut est définie dans le fichier de
-configuration. Il y a actuellement deux types de librairies qui peuvent être chargées
-dans l'espace d'adressage d'un processus : Les dlls natives de Windows
+Définit le type de remplacement et l'ordre de chargement des DLL utilisées lors du
+processus de chargement d'une DLL. Le comportement par défaut est spécifié dans le
+fichier de configuration. Deux types de bibliothèques peuvent actuellement être chargés
+dans l'espace d'adressage d'un processus : les DLL natives de
+Windows
 .RI ( native ),
-et les dlls fournies par
+et les DLL fournies par
 .B wine
 .RI ( builtin ).
 Le type peut être abrégé avec la première lettre du type
@@ -172,26 +171,26 @@ Le type peut être abrégé avec la première lettre du type
 La bibliothèque peut également être désactivée (''). Chaque séquence d'ordre doit être séparé par une virgule.
 .RS
 .PP
-Chaque dll peut avoir son ordre de chargement propre. L'orde de chargement
-détermine quelle version de la dll doit être chargé dans l'espace
+Chaque DLL peut avoir son ordre de chargement propre. L'ordre de chargement
+détermine quelle version de la DLL doit être chargée dans l'espace
 d'adressage. Si la première tentative échoue, la suivante est essayée et
 ainsi de suite. Plusieurs bibliothèques avec le même ordre de chargement
 peuvent être séparées par une virgule. Il est également possible de spécifier
 différents ordres de chargements pour différentes bibliothèques en séparant les
 entrées par « ; ».
 .PP
-L'ordre de chargement pour une dll 16-bit est toujours défini par l'ordre de chargement
-de la dll 32-bit qui la contient (qui peut être identifié en observant le lien symbolique
+L'ordre de chargement pour une DLL 16-bit est toujours défini par l'ordre de chargement
+de la DLL 32-bit qui la contient (qui peut être identifié en observant le lien symbolique
 du fichier .dll.so 16-bit). Par exemple, si
-ole32.dll est configuré comme builtin, storage.dll sera également chargé comme
-builtin puisque la dll 32-bit ole32.dll contient la dll 16-bit
+ole32.dll est configurée comme builtin, storage.dll sera également chargée comme
+builtin puisque la DLL 32-bit ole32.dll contient la DLL 16-bit
 storage.dll.
 .PP
 Exemples :
 .TP
 WINEDLLOVERRIDES="comdlg32,shell32=n,b"
 .br
-Tente de charger comdlg32 et shell32 comme des dlls windows natives en premier, puis essaie
+Tente de charger comdlg32 et shell32 comme des DLL windows natives en premier, puis essaie
 la version fournie si le chargement de la version native échoue.
 .TP
 WINEDLLOVERRIDES="comdlg32,shell32=n;c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b"
@@ -208,7 +207,7 @@ version native de comctl32 sera chargée. Oleaut32 sera désactivée.
 .RE
 .TP
 .I DISPLAY
-Spécifie l'écran X11 à utiliser.
+Spécifie l'affichage X11 à utiliser.
 .TP
 Variables de configuration du pilote audio OSS
 .TP
@@ -227,23 +226,22 @@ Définit le périphérique pour le séquenceur MIDI. La valeur par défaut est
 .TP
 .I @bindir@/wine
 Le chargeur de programme de
-.B wine
-.
+.BR wine .
 .TP
 .I @bindir@/wineconsole
 Le chargeur de programme pour les applications en mode console (CUI).
 .TP
 .I @bindir@/wineserver
 Le serveur
-.B wine
+.BR wine .
 .TP
 .I @bindir@/winedbg
 Le débogueur de
-.B wine
+.BR wine .
 .TP
 .I @dlldir@
 Répertoire contenant les bibliothèques partagées de
-.B wine
+.BR wine .
 .TP
 .I $WINEPREFIX/dosdevices
 Répertoire contenant le mapping des périphériques DOS. Chaque fichier dans ce
@@ -251,7 +249,7 @@ répertoire est un lien symbolique vers le fichier périphérique Unix qui impl�
 un périphérique donné. Par exemple, si COM1 est mappé sur /dev/ttyS0, vous aurez un
 lien symbolique de la forme $WINEPREFIX/dosdevices/com1 -> /dev/ttyS0.
 .br
-Les disques DOS sont aussi définis à l'aide de liens symboliques ; par exemple, si le
+Les lecteurs DOS sont aussi définis à l'aide de liens symboliques ; par exemple, si le
 lecteur D: correspond au CDROM monté sur /mnt/cdrom, vous aurez un lien symbolique
 $WINEPREFIX/dosdevices/d: -> /mnt/cdrom. Le périphérique Unix correspondant à un lecteur
 DOS peut être spécifié de la même façon, à l'exception du fait qu'il faut utiliser « :: » à
@@ -274,28 +272,28 @@ licence se trouve dans le fichier
 .PP
 Un rapport sur la compatibilité de nombreuses applications est disponible sur
 .IR http://appdb.winehq.org .
-N'hésitez pas à y ajouter les applications que vous exécutez actuellement.
+N'hésitez pas à y ajouter des entrées pour les applications que vous
+exécutez en ce moment.
 .PP
 Les rapports d'anomalie peuvent être postés sur le Bugzilla de Wine
-.I http://bugs.winehq.org
+.IR http://bugs.winehq.org .
 Si vous souhaitez envoyer un rapport d'anomalie, veuillez vous référer à
 .I http://wiki.winehq.org/Bugs
 dans les sources de
 .B wine
-pour voir quelles informations sont nécessaires
+pour voir quelles informations sont nécessaires.
 .PP
 Les problèmes et suggestions concernant cette page du manuel peuvent également être rapportés sur
-.I http://bugs.winehq.org
+.IR http://bugs.winehq.org .
 .SH DISPONIBILITÉ
 La version publique la plus récente de
 .B wine
 peut être téléchargée depuis
-.I http://www.winehq.org/download
+.IR http://www.winehq.org/download .
 .PP
 Le dernier développement du code peut être obtenu par git.  Pour des informations
 détaillées, veuillez vous référer à
-.I
-http://www.winehq.org/site/git
+.IR http://www.winehq.org/site/git .
 .PP
 WineHQ, le quartier général du développement de
 .B wine
@@ -305,11 +303,11 @@ Le site Web contient de nombreuses informations sur
 .BR wine .
 .PP
 Pour plus d'informations sur le développement de
-.B wine
+.BR wine ,
 vous pouvez vous inscrire aux mailing-lists de
 .B wine
 sur
-.I http://www.winehq.org/forums
+.IR http://www.winehq.org/forums .
 
 .SH "VOIR AUSSI"
 .BR wineserver (1),
