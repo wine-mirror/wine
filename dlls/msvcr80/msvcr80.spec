@@ -72,7 +72,7 @@
 @ stub ?vswprintf@@YAHPA_WIPB_WPAD@Z
 @ stub ?what@exception@std@@UBEPBDXZ
 @ stub @_calloc_crt@8
-@ cdecl _malloc_crt@4(long) msvcrt.malloc
+@ cdecl @_malloc_crt@4(long) msvcrt.malloc
 @ stub @_realloc_crt@8
 @ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
