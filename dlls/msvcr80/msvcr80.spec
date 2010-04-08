@@ -338,7 +338,7 @@
 @ cdecl _cputs(str) msvcrt._cputs
 @ stub _cputws
 @ cdecl _creat(str long) msvcrt._creat
-@ stub _create_locale
+@ cdecl _create_locale(long str) msvcrt._create_locale
 @ stub _crt_debugger_hook
 @ varargs _cscanf(str) msvcrt._cscanf
 @ stub _cscanf_l
@@ -428,7 +428,7 @@
 @ cdecl _fputwchar(long) msvcrt._fputwchar
 @ stub _fread_nolock
 @ stub _fread_nolock_s
-@ stub _free_locale
+@ cdecl _free_locale(ptr) msvcrt._free_locale
 @ stub _freea
 @ stub _freea_s
 @ stub _freefls

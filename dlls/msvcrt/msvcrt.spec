@@ -1413,3 +1413,5 @@
 # Functions not exported in native dll:
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _set_invalid_parameter_handler(ptr)
+@ cdecl _create_locale(long str)
+@ cdecl _free_locale(ptr)

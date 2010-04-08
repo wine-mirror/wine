@@ -765,14 +765,24 @@ typedef struct MSVCRT_threadlocaleinfostruct {
     int *lconv_intl_refcount;
     int *lconv_num_refcount;
     int *lconv_mon_refcount;
-    struct lconv *lconv;
+    struct MSVCRT_lconv *lconv;
     int *ctype1_refcount;
     unsigned short *ctype1;
-    const unsigned short *pctype;
-    const unsigned char *pclmap;
-    const unsigned char *pcumap;
-    struct __lc_time_data *lc_time_curr;
+    unsigned short *pctype;
+    unsigned char *pclmap;
+    unsigned char *pcumap;
+    struct MSVCRT___lc_time_data *lc_time_curr;
 } MSVCRT_threadlocinfo;
+
+typedef struct MSVCRT_threadmbcinfostruct {
+    int refcount;
+    int mbcodepage;
+    int ismbcodepage;
+    int mblcid;
+    unsigned short mbulinfo[6];
+    char mbctype[257];
+    char mbcasemap[256];
+} MSVCRT_threadmbcinfo;
 
 typedef struct MSVCRT_threadlocaleinfostruct *MSVCRT_pthreadlocinfo;
 typedef struct MSVCRT_threadmbcinfostruct *MSVCRT_pthreadmbcinfo;
