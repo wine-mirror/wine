@@ -9,6 +9,7 @@ C_SRCS = \
 	dll_entry.c \
 	dll_main.c \
 	drv_entry.c \
+	exception.c \
 	exe16_entry.c \
 	exe_entry.c \
 	exe_main.c \
