@@ -263,6 +263,28 @@ static void convert_r8g8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT widt
     }
 }
 
+static void convert_r8g8b8a8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const DWORD *Source;
+    unsigned char *Dest;
+
+    for(y = 0; y < height; y++)
+    {
+        Source = (const DWORD *)(src + y * pitch);
+        Dest = dst + y * pitch;
+        for (x = 0; x < width; x++ )
+        {
+            long color = (*Source++);
+            /* B */ Dest[0] = ((color >> 16) & 0xff) + 128; /* W */
+            /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
+            /* R */ Dest[2] = (color         & 0xff) + 128; /* U */
+            /* A */ Dest[3] = ((color >> 24) & 0xff) + 128; /* Q */
+            Dest += 4;
+        }
+    }
+}
+
 static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -493,9 +515,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             NV_TEXTURE_SHADER,          NULL},
     {WINED3DFMT_R8G8B8A8_SNORM,         GL_RGBA8,                         GL_RGBA8,                               0,
-            GL_BGRA,                    GL_UNSIGNED_BYTE,                 0,
+            GL_BGRA,                    GL_UNSIGNED_BYTE,                 4,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            WINED3D_GL_EXT_NONE,        NULL},
+            WINED3D_GL_EXT_NONE,        &convert_r8g8b8a8_snorm},
     {WINED3DFMT_R8G8B8A8_SNORM,         GL_SIGNED_RGBA8_NV,               GL_SIGNED_RGBA8_NV,                     0,
             GL_RGBA,                    GL_BYTE,                          0,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,

@@ -2261,12 +2261,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R8G8B8A8_SNORM:
-            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
-            *convert = CONVERT_Q8W8V8U8;
-            desc->conv_byte_count = 4;
-            break;
-
         case WINED3DFMT_L4A4_UNORM:
             /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
              * format+type combination to load it. Thus convert it to A8L8, then load it
@@ -2562,26 +2556,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             }
         }
         break;
-
-        case CONVERT_Q8W8V8U8:
-        {
-            unsigned int x, y;
-            const DWORD *Source;
-            unsigned char *Dest;
-            for(y = 0; y < height; y++) {
-                Source = (const DWORD *)(src + y * pitch);
-                Dest = dst + y * outpitch;
-                for (x = 0; x < width; x++ ) {
-                    long color = (*Source++);
-                    /* B */ Dest[0] = ((color >> 16) & 0xff) + 128; /* W */
-                    /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
-                    /* R */ Dest[2] = (color         & 0xff) + 128; /* U */
-                    /* A */ Dest[3] = ((color >> 24) & 0xff) + 128; /* Q */
-                    Dest += 4;
-                }
-            }
-            break;
-        }
 
         case CONVERT_L6V5U5:
         {
