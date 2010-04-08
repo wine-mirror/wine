@@ -88,6 +88,7 @@ RC_SRCS = \
 
 SVG_SRCS = \
 	resources/oic_bang.svg \
+	resources/oic_hand.svg \
 	resources/oic_winlogo.svg
 
 EXTRASUBDIRS = resources
