@@ -263,6 +263,56 @@ static void convert_r8g8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT widt
     }
 }
 
+static void convert_r8g8_snorm_l8x8_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const DWORD *Source;
+    unsigned char *Dest;
+
+    /* Doesn't work correctly with the fixed function pipeline, but can work in
+     * shaders if the shader is adjusted. (There's no use for this format in gl's
+     * standard fixed function pipeline anyway).
+     */
+    for(y = 0; y < height; y++)
+    {
+        Source = (const DWORD *)(src + y * pitch);
+        Dest = dst + y * pitch;
+        for (x = 0; x < width; x++ )
+        {
+            long color = (*Source++);
+            /* B */ Dest[0] = ((color >> 16) & 0xff);       /* L */
+            /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
+            /* R */ Dest[2] = (color         & 0xff) + 128; /* U */
+            Dest += 4;
+        }
+    }
+}
+
+static void convert_r8g8_snorm_l8x8_unorm_nv(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const DWORD *Source;
+    unsigned char *Dest;
+
+    /* This implementation works with the fixed function pipeline and shaders
+     * without further modification after converting the surface.
+     */
+    for(y = 0; y < height; y++)
+    {
+        Source = (const DWORD *)(src + y * pitch);
+        Dest = dst + y * pitch;
+        for (x = 0; x < width; x++ )
+        {
+            long color = (*Source++);
+            /* L */ Dest[2] = ((color >> 16) & 0xff);   /* L */
+            /* V */ Dest[1] = ((color >> 8 ) & 0xff);   /* V */
+            /* U */ Dest[0] = (color         & 0xff);   /* U */
+            /* I */ Dest[3] = 255;                      /* X */
+            Dest += 4;
+        }
+    }
+}
+
 static void convert_r8g8b8a8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -507,13 +557,13 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             NV_TEXTURE_SHADER,          NULL},
     {WINED3DFMT_R8G8_SNORM_L8X8_UNORM,  GL_RGB8,                          GL_RGB8,                                0,
-            GL_BGRA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
+            GL_BGRA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      4,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            WINED3D_GL_EXT_NONE,        NULL},
+            WINED3D_GL_EXT_NONE,        &convert_r8g8_snorm_l8x8_unorm},
     {WINED3DFMT_R8G8_SNORM_L8X8_UNORM,  GL_DSDT8_MAG8_INTENSITY8_NV,      GL_DSDT8_MAG8_INTENSITY8_NV,            0,
-            GL_DSDT_MAG_VIB_NV,         GL_UNSIGNED_INT_8_8_S8_S8_REV_NV, 0,
+            GL_DSDT_MAG_VIB_NV,         GL_UNSIGNED_INT_8_8_S8_S8_REV_NV, 4,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            NV_TEXTURE_SHADER,          NULL},
+            NV_TEXTURE_SHADER,          &convert_r8g8_snorm_l8x8_unorm_nv},
     {WINED3DFMT_R8G8B8A8_SNORM,         GL_RGBA8,                         GL_RGBA8,                               0,
             GL_BGRA,                    GL_UNSIGNED_BYTE,                 4,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,

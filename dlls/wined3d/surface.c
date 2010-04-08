@@ -2247,20 +2247,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
-            *convert = CONVERT_X8L8V8U8;
-            desc->conv_byte_count = 4;
-            if (gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                /* Use formats from gl table. It is a bit unfortunate, but the conversion
-                 * is needed to set the X format to 255 to get 1.0 for alpha when sampling
-                 * the texture. OpenGL can't use GL_DSDT8_MAG8_NV as internal format with
-                 * the needed type and format parameter, so the internal format contains a
-                 * 4th component, which is returned as alpha
-                 */
-            }
-            break;
-
         case WINED3DFMT_L4A4_UNORM:
             /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
              * format+type combination to load it. Thus convert it to A8L8, then load it
@@ -2606,49 +2592,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
                         *Dest_s = ((v_conv << 11) & 0xf800) | ((l << 5) & 0x7e0) | (u_conv & 0x1f);
                         Dest_s += 1;
-                    }
-                }
-            }
-            break;
-        }
-
-        case CONVERT_X8L8V8U8:
-        {
-            unsigned int x, y;
-            const DWORD *Source;
-            unsigned char *Dest;
-
-            if (gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                /* This implementation works with the fixed function pipeline and shaders
-                 * without further modification after converting the surface.
-                 */
-                for(y = 0; y < height; y++) {
-                    Source = (const DWORD *)(src + y * pitch);
-                    Dest = dst + y * outpitch;
-                    for (x = 0; x < width; x++ ) {
-                        long color = (*Source++);
-                        /* L */ Dest[2] = ((color >> 16) & 0xff);   /* L */
-                        /* V */ Dest[1] = ((color >> 8 ) & 0xff);   /* V */
-                        /* U */ Dest[0] = (color         & 0xff);   /* U */
-                        /* I */ Dest[3] = 255;                      /* X */
-                        Dest += 4;
-                    }
-                }
-            } else {
-                /* Doesn't work correctly with the fixed function pipeline, but can work in
-                 * shaders if the shader is adjusted. (There's no use for this format in gl's
-                 * standard fixed function pipeline anyway).
-                 */
-                for(y = 0; y < height; y++) {
-                    Source = (const DWORD *)(src + y * pitch);
-                    Dest = dst + y * outpitch;
-                    for (x = 0; x < width; x++ ) {
-                        long color = (*Source++);
-                        /* B */ Dest[0] = ((color >> 16) & 0xff);       /* L */
-                        /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
-                        /* R */ Dest[2] = (color         & 0xff) + 128;  /* U */
-                        Dest += 4;
                     }
                 }
             }
