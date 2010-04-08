@@ -1138,7 +1138,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
             if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
             req_aff = *(const ULONG_PTR *)data;
-            if (req_aff == ~0UL) req_aff = affinity_mask;
+            if ((ULONG)req_aff == ~0u) req_aff = affinity_mask;
             else if (req_aff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
             else if (!req_aff) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
