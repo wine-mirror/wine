@@ -554,7 +554,7 @@
 # stub _isspace_l
 # stub _isupper_l
 # stub _iswalnum_l
-# stub _iswalpha_l
+@ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 # stub _iswcntrl_l
 # stub _iswctype_l
 # stub _iswdigit_l
