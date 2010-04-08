@@ -3,7 +3,8 @@
 .SH NAME
 wine \- Windows-Programme auf Unix-Systemen ausführen
 .SH ÜBERSICHT
-.BI "wine " "Programm " "[Argumente ... ]"
+.BI "wine " Programm
+[Argumente ... ]
 .br
 .B wine --help
 .br
@@ -21,12 +22,12 @@ beliebiges DOS/Win3.1/Win32-Programm sein; es wird nur die
 x86-Architektur unterstützt.
 .PP
 Um wine zu debuggen, nutzen Sie anstelledessen das Kommando
-.B winedbg.
+.BR winedbg .
 .PP
 Um rein kommandozeilenbasierte Programme auszuführen, nutzen Sie
 .B wineconsole
 anstelle von
-.B wine.
+.BR wine .
 Wenn Sie nicht
 .B wineconsole
 für CLI-Programme nutzen, kann dies dazu führen, dass das Programm
@@ -40,15 +41,13 @@ als Argument aufgerufen wird, wird
 .B wine
 nur einen kleinen Hilfetext oder die Version ausgeben und sich beenden.
 .SH PROGRAMM/ARGUMENTE
-Der Programmname kann auf DOS-Art (
-.I
-C:\(rs\(rsWINDOWS\(rs\(rsSOL.EXE
-) oder auf UNIX-Art angegeben werden (
-.I /msdos/windows/sol.exe
-).  Sie können Argumente an die Windows-Anwendung übergeben, indem Sie
+Der Programmname kann auf DOS-Art
+.RI ( C:\(rs\(rsWINDOWS\(rs\(rsSOL.EXE )
+oder auf UNIX-Art angegeben werden
+.RI ( /msdos/windows/sol.exe ).
+Sie können Argumente an die Windows-Anwendung übergeben, indem Sie
 sie einfach an den wine-Befehl anhängen (z. B.:
-.I wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT
-).
+.IR "wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT" ).
 Sie müssen unter Umständen Sonderzeichen und/oder Leerzeichen
 mit '\(rs' maskieren, wenn Sie wine über die Kommandokonsole aufrufen,
 z.B.
@@ -67,9 +66,9 @@ Wenn gesetzt, wird dieser Ordner als Speicherort für die
 Konfigurationsdateien von
 .B wine
 genutzt. Die Standardeinstellung ist
-.I $HOME/.wine.
+.IR $HOME/.wine .
 Dieser Ordner wird auch für den UNIX-Socket zur Kommunikation mit
-.I wineserver.
+.IR wineserver .
 genutzt. Alle
 .B wine
 -Prozesse, die den gleichen
@@ -109,14 +108,16 @@ Wählt die Stufe der Debug-Meldungen aus. Die Variable hat das Format
 .PP
 .I Klasse
 ist optional und kann z.B. folgende Werte annehmen:
-.B err, warn, fixme,
+.BR err ,
+.BR warn ,
+.BR fixme ,
 oder
-.B trace.
+.BR trace .
 Wenn
 .I class
 nicht angegeben ist, werden alle Debugmeldungen dieses Kanals
 ausgegeben. Jeder Kanal gibt Meldungen einer bestimmten
-.B wine.
+.BR wine .
 -Komponente aus. Das folgende Zeichen kann entweder + oder - sein, je
 nachdem ob der Kanal ein- oder ausgeschaltet werden soll.  Wenn keine
 .I Klasse
@@ -162,15 +163,15 @@ Definiert die Bibliotheksüberschreibung und Ladereihenfolge der DLLs,
 die beim Laden jeder DLL berücksichtigt wird. Die Standardwerte sind
 in der Konfigurationsdatei enthalten.  Derzeit gibt es zwei Typen von
 DLLs, die in den Speicher eines Prozesses geladen werden können:
-Native Windows-DLLs (
-.I native
-) und
+Native Windows-DLLs
+.RI ( native ),
+und
 .B wine
--interne DLLs (
-.I builtin
-). Der Typ kann mit dem ersten Buchstaben abgekürzt werden (
-.I n, b
-). Jede Anweisungssequenz muss mit einem Komma abgeschlossen werden.
+-interne DLLs
+.RI ( builtin ).
+Der Typ kann mit dem ersten Buchstaben abgekürzt werden
+.RI ( n ", " b ).
+Jede Anweisungssequenz muss mit einem Komma abgeschlossen werden.
 .RS
 .PP
 Jede DLL kann ihre eigene Ladereihenfolge besitzen. Die
@@ -217,15 +218,15 @@ OSS sound driver configuration variables
 .TP
 .I AUDIODEV
 Gerät für Audio-Ein-/Ausgabe festlegen. Standard:
-.B /dev/dsp.
+.BR /dev/dsp .
 .TP
 .I MIXERDEV
 Audiomixer-Gerät festlegen. Standard:
-.B /dev/mixer.
+.BR /dev/mixer .
 .TP
 .I MIDIDEV
 MIDI-Sequencergerät festlegen. Standard:
-.B /dev/sequencer.
+.BR /dev/sequencer .
 .SH DATEIEN
 .TP
 .I @bindir@/wine
@@ -308,9 +309,9 @@ http://www.winehq.org/site/git
 WineHQ, die Hauptseite der
 .B wine
 -Entwicklung, befindet sich auf
-.I http://www.winehq.org.
+.IR http://www.winehq.org .
 Diese Website bietet viele Informationen und Ressourcen zu
-.B wine.
+.BR wine .
 .PP
 Für nähere Informationen zur Entwicklung von
 .B wine

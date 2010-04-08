@@ -12,7 +12,7 @@ WINEPREFIX variable, hence the name of this tool.
 .PP
 .B wineprefixcreate
 is launched automatically by
-.B wine(1)
+.BR wine (1)
 if you don't have an existing configuration. However, it can sometimes
 be useful to run it explicitly to create a different directory, or
 update an existing one.
@@ -28,13 +28,13 @@ environment variable, or to
 .I $HOME/.wine
 if not set.
 .TP
-.B \-h, \--help
+.BR \-h ", " \--help
 Display a usage message.
 .TP
-.B \-q, \--quiet
+.BR \-q ", " \--quiet
 Don't display any status messages.
 .TP
-.B \-w, \--wait
+.BR \-w ", " \--wait
 Wait for
 .B wineserver
 to save everything before returning. This is necessary for instance if
@@ -65,14 +65,14 @@ the file Changelog in the Wine distribution for the complete details.
 .SH BUGS
 If you find a bug, please submit a bug report at
 .UR http://bugs.winehq.org
-.B http://bugs.winehq.org.
+.BR http://bugs.winehq.org .
 .UE
 .SH AVAILABILITY
 .B wineprefixcreate
 is part of the Wine distribution, which is available through WineHQ,
 the Wine development headquarters, at
 .UR http://www.winehq.org/
-.B http://www.winehq.org/.
+.BR http://www.winehq.org/ .
 .UE
 .br
 It is distributed under the terms of the GNU Lesser General Public

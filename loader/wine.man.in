@@ -3,7 +3,8 @@
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " "program " "[arguments ... ]"
+.BI "wine " program
+[arguments ... ]
 .br
 .B wine --help
 .br
@@ -25,7 +26,7 @@ instead.
 For running CUI executables (Windows console programs), use
 .B wineconsole
 instead of
-.B wine.
+.BR wine .
 This will display all the output in a separate windows (this requires X11 to
 run). Not using
 .B wineconsole
@@ -40,13 +41,12 @@ as the only argument,
 .B wine
 will simply print a small help message or its version respectively and exit.
 .SH PROGRAM/ARGUMENTS
-The program name may be specified in DOS format (
-.I
-C:\(rs\(rsWINDOWS\(rs\(rsSOL.EXE)
-or in Unix format (
-.I /msdos/windows/sol.exe
-).  You may pass arguments to the program being executed by adding them 
-to the end of the command line invoking
+The program name may be specified in DOS format
+.RI ( C:\(rs\(rsWINDOWS\(rs\(rsSOL.EXE )
+or in Unix format
+.RI ( /msdos/windows/sol.exe ).
+You may pass arguments to the program being executed by adding them to the
+end of the command line invoking
 .B wine
 (such as: wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT).
 Note that you need to '\(rs' escape special characters (and spaces) when invoking Wine via
@@ -65,10 +65,10 @@ appropriate syntax for your shell to enter environment variables you need.
 If set, the content of this variable is taken as the name of the directory where
 .B wine
 stores its data (the default is 
-.I $HOME/.wine
-). This directory is also used to identify the socket which is used to
+.IR $HOME/.wine ).
+This directory is also used to identify the socket which is used to
 communicate with the
-.I wineserver.
+.IR wineserver .
 All 
 .B wine
 processes using the same 
@@ -87,7 +87,7 @@ processes.
 Specifies the path and name of the
 .B wineserver
 binary. If not set, Wine will try to load
-.B @bindir@/wineserver,
+.BR @bindir@/wineserver ,
 and if this doesn't exist it will then look for a file named
 "wineserver" in the path and in a few other likely locations.
 .TP
@@ -96,7 +96,7 @@ Specifies the path and name of the
 .B wine
 binary to use to launch new Windows processes. If not set, Wine will
 try to load
-.B @bindir@/wine,
+.BR @bindir@/wine ,
 and if this doesn't exist it will then look for a file named "wine" in
 the path and in a few other likely locations.
 .TP
@@ -108,15 +108,17 @@ of the form
 .PP
 .I class
 is optional and can be one of the following: 
-.B err, warn, fixme,
+.BR err ,
+.BR warn ,
+.BR fixme ,
 or 
-.B trace. 
+.BR trace .
 If
 .I class
 is not specified, all debugging messages for the specified
 channel are turned on.  Each channel will print messages about a particular
 component of 
-.B wine.  
+.BR wine .
 The following character can be either + or - to switch the specified
 channel on or off respectively.  If there is no
 .I class
@@ -152,23 +154,22 @@ chapter of the Wine User Guide.
 Specifies the path(s) in which to search for builtin dlls and Winelib
 applications. This is a list of directories separated by ":". In
 addition to any directory specified in
-.I WINEDLLPATH,
+.IR WINEDLLPATH ,
 Wine will also look in
-.B @dlldir@.
+.BR @dlldir@ .
 .TP
 .I WINEDLLOVERRIDES
 Defines the override type and load order of dlls used in the loading
 process for any dll. The default is set in the configuration
 file. There are currently two types of libraries that can be loaded
-into a process' address space: Native windows dlls (
-.I native
-), 
+into a process' address space: native windows dlls
+.RI ( native ),
 .B wine 
-internal dlls (
-.I builtin
-). The type may be abbreviated with the first letter of the type (
-.I n, b
-). The library may also be disabled (''). Each sequence of orders must be separated by commas.
+internal dlls
+.RI ( builtin ).
+The type may be abbreviated with the first letter of the type
+.RI ( n ", " b ).
+The library may also be disabled (''). Each sequence of orders must be separated by commas.
 .RS
 .PP
 Each dll may have its own specific load order. The load order
@@ -211,15 +212,15 @@ OSS sound driver configuration variables
 .TP
 .I AUDIODEV
 Set the device for audio input / output. Default
-.B /dev/dsp.
+.BR /dev/dsp .
 .TP
 .I MIXERDEV
 Set the device for mixer controls. Default
-.B /dev/mixer.
+.BR /dev/mixer .
 .TP
 .I MIDIDEV
 Set the MIDI (sequencer) device. Default
-.B /dev/sequencer.
+.BR /dev/sequencer .
 .SH FILES
 .TP
 .I @bindir@/wine
@@ -244,7 +245,7 @@ debugger
 .TP 
 .I @dlldir@
 Directory containing 
-.B wine's
+.BR wine 's
 shared libraries 
 .TP
 .I $WINEPREFIX/dosdevices
@@ -275,7 +276,7 @@ in the top-level directory of the source distribution.
 .SH BUGS
 .PP
 A status report on many applications is available from
-.I http://appdb.winehq.org.
+.IR http://appdb.winehq.org .
 Please add entries to this list for applications you currently run, if
 there is no entry for this application.
 .PP
@@ -303,9 +304,9 @@ http://www.winehq.org/site/git
 WineHQ, the
 .B wine
 development headquarters, is at
-.I http://www.winehq.org.
+.IR http://www.winehq.org .
 This website contains a great deal of information about
-.B wine.
+.BR wine .
 .PP
 For further information about 
 .B wine
@@ -315,4 +316,5 @@ mailing lists at
 .I http://www.winehq.org/forums
 
 .SH "SEE ALSO"
-.BR wineserver (1),\  winedbg (1)
+.BR wineserver (1),
+.BR winedbg (1)
