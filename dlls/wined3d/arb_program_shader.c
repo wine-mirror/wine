@@ -6895,6 +6895,61 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum bli
     }
 }
 
+HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
+                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
+                           DWORD Filter)
+{
+    struct wined3d_context *context;
+    IWineD3DSwapChainImpl *dst_swapchain = NULL;
+    RECT dst_rect = *dst_rect_in;
+
+    /* Now load the surface */
+    surface_internal_preload((IWineD3DSurface *)src_surface, SRGB_RGB);
+
+    /* Activate the destination context, set it up for blitting */
+    context = context_acquire(device, (IWineD3DSurface *)dst_surface, CTXUSAGE_BLIT);
+
+    /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
+     * while OpenGL coordinates are window relative.
+     * Also beware of the origin difference(top left vs bottom left).
+     * Also beware that the front buffer's surface size is screen width x screen height,
+     * whereas the real gl drawable size is the size of the window.
+     */
+    IWineD3DSurface_GetContainer((IWineD3DSurface *)dst_surface, &IID_IWineD3DSwapChain, (void **)&dst_swapchain);
+    if (dst_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)dst_swapchain);
+    if (dst_swapchain && (IWineD3DSurface *)dst_surface == dst_swapchain->frontBuffer)
+    {
+        RECT windowsize;
+        POINT offset = {0,0};
+        UINT h;
+        ClientToScreen(context->win_handle, &offset);
+        GetClientRect(context->win_handle, &windowsize);
+        h = windowsize.bottom - windowsize.top;
+        dst_rect.left -= offset.x; dst_rect.right -=offset.x;
+        dst_rect.top -= offset.y; dst_rect.bottom -=offset.y;
+        dst_rect.top += dst_surface->currentDesc.Height - h; dst_rect.bottom += dst_surface->currentDesc.Height - h;
+    }
+
+    arbfp_blit_set((IWineD3DDevice *)device, src_surface);
+
+    ENTER_GL();
+
+    /* Draw a textured quad */
+    draw_textured_quad(src_surface, src_rect, &dst_rect, Filter);
+
+    LEAVE_GL();
+
+    /* Leave the opengl state valid for blitting */
+    arbfp_blit_unset((IWineD3DDevice *)device);
+
+    wglFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
+
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, TRUE);
+    return WINED3D_OK;
+}
+
 static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
 {
     FIXME("Color filling not implemented by arbfp_blit\n");

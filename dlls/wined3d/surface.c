@@ -287,7 +287,7 @@ static inline void surface_get_rect(IWineD3DSurfaceImpl *This, const RECT *rect_
 }
 
 /* GL locking and context activation is done by the caller */
-static void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
+void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DBaseTextureImpl *texture;
     struct blt_info info;
@@ -3857,6 +3857,20 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             if(paletteOverride)
                 Src->palette = NULL;
             return WINED3D_OK;
+        }
+
+        if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
+            && arbfp_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
+                                         &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                                         &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+        {
+            HRESULT hr = arbfp_blit_surface(myDevice, Src, &src_rect, This, &dst_rect, BLIT_OP_BLIT, Filter);
+
+            /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
+            if(paletteOverride)
+                Src->palette = NULL;
+
+            return hr;
         }
 
         /* Color keying: Check if we have to do a color keyed blt,

@@ -1190,6 +1190,11 @@ extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader arbfp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader cpu_blit DECLSPEC_HIDDEN;
 
+/* Temporary blit_shader helper functions */
+HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
+                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
+                           DWORD Filter) DECLSPEC_HIDDEN;
+
 typedef enum ContextUsage {
     CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
     CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfaces */
@@ -2160,6 +2165,8 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
 void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
+void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
+                        const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
