@@ -2235,12 +2235,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R8G8_SNORM:
-            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
-            *convert = CONVERT_V8U8;
-            desc->conv_byte_count = 3;
-            break;
-
         case WINED3DFMT_R5G5_SNORM_L6_UNORM:
             *convert = CONVERT_L6V5U5;
             if (gl_info->supported[NV_TEXTURE_SHADER])
@@ -2271,12 +2265,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_Q8W8V8U8;
             desc->conv_byte_count = 4;
-            break;
-
-        case WINED3DFMT_R16G16_SNORM:
-            if (gl_info->supported[NV_TEXTURE_SHADER]) break;
-            *convert = CONVERT_V16U16;
-            desc->conv_byte_count = 6;
             break;
 
         case WINED3DFMT_L4A4_UNORM:
@@ -2574,44 +2562,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             }
         }
         break;
-
-        case CONVERT_V8U8:
-        {
-            unsigned int x, y;
-            const short *Source;
-            unsigned char *Dest;
-            for(y = 0; y < height; y++) {
-                Source = (const short *)(src + y * pitch);
-                Dest = dst + y * outpitch;
-                for (x = 0; x < width; x++ ) {
-                    long color = (*Source++);
-                    /* B */ Dest[0] = 0xff;
-                    /* G */ Dest[1] = (color >> 8) + 128; /* V */
-                    /* R */ Dest[2] = (color) + 128;      /* U */
-                    Dest += 3;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_V16U16:
-        {
-            unsigned int x, y;
-            const DWORD *Source;
-            unsigned short *Dest;
-            for(y = 0; y < height; y++) {
-                Source = (const DWORD *)(src + y * pitch);
-                Dest = (unsigned short *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    DWORD color = (*Source++);
-                    /* B */ Dest[0] = 0xffff;
-                    /* G */ Dest[1] = (color >> 16) + 32768; /* V */
-                    /* R */ Dest[2] = (color      ) + 32768; /* U */
-                    Dest += 3;
-                }
-            }
-            break;
-        }
 
         case CONVERT_Q8W8V8U8:
         {
@@ -4890,7 +4840,23 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 surface_remove_pbo(This, gl_info);
             }
 
-            if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
+            if(desc.convert) {
+                /* This code is entered for texture formats which need a fixup. */
+                int height = This->currentDesc.Height;
+
+                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+                outpitch = width * desc.conv_byte_count;
+                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
+                if(!mem) {
+                    ERR("Out of memory %d, %d!\n", outpitch, height);
+                    if (context) context_release(context);
+                    return WINED3DERR_OUTOFVIDEOMEMORY;
+                }
+                desc.convert(This->resource.allocatedMemory, mem, pitch, width, height);
+            } else if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
+                /* This code is only entered for color keying fixups */
                 int height = This->currentDesc.Height;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */

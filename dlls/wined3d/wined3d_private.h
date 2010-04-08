@@ -3011,6 +3011,7 @@ struct wined3d_format_desc
     unsigned int Flags;
     float heightscale;
     struct color_fixup_desc color_fixup;
+    void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
 
 const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt,
