@@ -2160,7 +2160,9 @@ esac
 
 dnl **** Generate output files ****
 
-AH_TOP([#define __WINE_CONFIG_H])
+AH_TOP([#ifndef WINE_CROSSTEST
+#define __WINE_CONFIG_H])
+AH_BOTTOM([#endif /* WINE_CROSSTEST */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 

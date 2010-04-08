@@ -143,7 +143,7 @@ filter: dummy
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
 
 .c.cross.o:
-	$(CROSSCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 .y.tab.c:
 	$(BISON) $(BISONFLAGS) -p $*_ -o $@ $<
