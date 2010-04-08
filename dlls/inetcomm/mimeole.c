@@ -1419,7 +1419,7 @@ static HRESULT create_sub_stream(IStream *stream, ULARGE_INTEGER start, ULARGE_I
 typedef struct body_t
 {
     struct list entry;
-    HBODY hbody;
+    DWORD index;
     IMimeBody *mime_body;
 
     struct body_t *parent;
@@ -1434,7 +1434,7 @@ typedef struct MimeMessage
     IStream *stream;
 
     struct list body_tree;
-    HBODY next_hbody;
+    DWORD next_index;
 } MimeMessage;
 
 static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID riid, void **ppv)
@@ -1512,13 +1512,13 @@ static HRESULT WINAPI MimeMessage_IsDirty(
     return E_NOTIMPL;
 }
 
-static body_t *new_body_entry(IMimeBody *mime_body, HBODY hbody, body_t *parent)
+static body_t *new_body_entry(IMimeBody *mime_body, DWORD index, body_t *parent)
 {
     body_t *body = HeapAlloc(GetProcessHeap(), 0, sizeof(*body));
     if(body)
     {
         body->mime_body = mime_body;
-        body->hbody = hbody;
+        body->index = index;
         list_init(&body->children);
         body->parent = parent;
     }
@@ -1630,8 +1630,7 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
     offset->cbBodyStart = cur.u.LowPart + offset->cbHeaderStart;
     if(parent) MimeBody_set_offsets(impl_from_IMimeBody(mime_body), offset);
     IMimeBody_SetData(mime_body, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
-    body = new_body_entry(mime_body, msg->next_hbody, parent);
-    msg->next_hbody = (HBODY)((DWORD)msg->next_hbody + 1);
+    body = new_body_entry(mime_body, msg->next_index++, parent);
 
     if(IMimeBody_IsContentType(mime_body, "multipart", NULL) == S_OK)
     {
@@ -1812,7 +1811,7 @@ static HRESULT find_body(struct list *list, HBODY hbody, body_t **body)
 
     LIST_FOR_EACH_ENTRY(cur, list, body_t, entry)
     {
-        if(cur->hbody == hbody)
+        if(cur->index == HandleToUlong(hbody))
         {
             *body = cur;
             return S_OK;
@@ -1948,7 +1947,7 @@ static HRESULT WINAPI MimeMessage_GetBody(
 
     hr = get_body(This, location, hPivot, &body);
 
-    if(hr == S_OK) *phBody = body->hbody;
+    if(hr == S_OK) *phBody = UlongToHandle(body->index);
 
     return hr;
 }
@@ -2562,7 +2561,7 @@ HRESULT MimeMessage_create(IUnknown *outer, void **obj)
     This->refs = 1;
     This->stream = NULL;
     list_init(&This->body_tree);
-    This->next_hbody = (HBODY)1;
+    This->next_index = 1;
 
     *obj = &This->lpVtbl;
     return S_OK;
