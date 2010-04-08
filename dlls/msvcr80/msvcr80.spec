@@ -45,7 +45,7 @@
 @ stub ?_invalid_parameter@@YAXPBG00II@Z
 @ stub ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z
 @ stub ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z
-@ stub ?_open@@YAHPBDHH@Z
+@ varargs ?_open@@YAHPBDHH@Z(str long) msvcrt._open
 @ cdecl ?_query_new_handler@@YAP6AHI@ZXZ() msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
 @ cdecl ?_query_new_mode@@YAHXZ() msvcrt.?_query_new_mode@@YAHXZ
 @ stub ?_set_new_handler@@YAP6AHI@ZH@Z
