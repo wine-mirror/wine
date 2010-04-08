@@ -3270,6 +3270,12 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
     HideCaret(0);
 
+    /* This makes the menus of applications built with Delphi work.
+     * It also enables menus to be displayed in more than one window,
+     * but there are some bugs left that need to be fixed in this case.
+     */
+    if ((menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
+
     /* Send WM_ENTERMENULOOP and WM_INITMENU message only if TPM_NONOTIFY flag is not specified */
     if (!(wFlags & TPM_NONOTIFY))
        SendMessageW( hWnd, WM_ENTERMENULOOP, bPopup, 0 );
@@ -3283,13 +3289,7 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
         * menu sizes will be recalculated once the menu created/shown.
         */
     }
-    
-    /* This makes the menus of applications built with Delphi work.
-     * It also enables menus to be displayed in more than one window,
-     * but there are some bugs left that need to be fixed in this case.
-     */
-    if ((menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
-    
+
     return TRUE;
 }
 /***********************************************************************
@@ -3393,6 +3393,7 @@ track_menu:
 BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
                               HWND hWnd, LPTPMPARAMS lpTpm )
 {
+    POPUPMENU *menu;
     BOOL ret = FALSE;
 
     TRACE("hmenu %p flags %04x (%d,%d) hwnd %p lpTpm %p rect %s\n",
@@ -3402,9 +3403,15 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
     /* Parameter check */
     /* FIXME: this check is performed several times, here and in the called
        functions. That could be optimized */
-    if (!MENU_GetMenu( hMenu ))
+    if (!(menu = MENU_GetMenu( hMenu )))
     {
         SetLastError( ERROR_INVALID_MENU_HANDLE );
+        return FALSE;
+    }
+
+    if (IsWindow(menu->hWnd))
+    {
+        SetLastError( ERROR_POPUP_ALREADY_ACTIVE );
         return FALSE;
     }
 
