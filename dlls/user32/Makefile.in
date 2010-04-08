@@ -86,7 +86,9 @@ RC_SRCS = \
 	resources/user32_bin.rc \
 	resources/version.rc
 
-SVG_SRCS = resources/oic_winlogo.svg
+SVG_SRCS = \
+	resources/oic_bang.svg \
+	resources/oic_winlogo.svg
 
 EXTRASUBDIRS = resources
 
