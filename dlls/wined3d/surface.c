@@ -720,9 +720,23 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
  * correct texture. */
 /* Context activation is done by the caller. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format_desc *format_desc, GLsizei width, GLsizei height, const GLvoid *data)
+        const struct wined3d_format_desc *format_desc, BOOL srgb, GLsizei width, GLsizei height, const GLvoid *data)
 {
-    GLenum internal = format_desc->glInternal;
+    GLenum internal;
+
+    if (srgb)
+    {
+        internal = format_desc->glGammaInternal;
+    }
+    else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
+            && surface_is_offscreen((IWineD3DSurface *)This))
+    {
+        internal = format_desc->rtInternal;
+    }
+    else
+    {
+        internal = format_desc->glInternal;
+    }
 
     TRACE("This %p, internal %#x, width %d, height %d, format %#x, type %#x, data %p.\n",
             This, internal, width, height, format_desc->glFormat, format_desc->glType, data);
@@ -783,11 +797,25 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
  * the correct texture. */
 /* Context activation is done by the caller. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format_desc *format_desc, GLsizei width, GLsizei height)
+        const struct wined3d_format_desc *format_desc, BOOL srgb, GLsizei width, GLsizei height)
 {
     BOOL enable_client_storage = FALSE;
     const BYTE *mem = NULL;
-    GLenum internal = format_desc->glInternal;
+    GLenum internal;
+
+    if (srgb)
+    {
+        internal = format_desc->glGammaInternal;
+    }
+    else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
+            && surface_is_offscreen((IWineD3DSurface *)This))
+    {
+        internal = format_desc->rtInternal;
+    }
+    else
+    {
+        internal = format_desc->glInternal;
+    }
 
     if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
 
@@ -1475,7 +1503,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     GLint prevRead;
     BOOL alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
 
-    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &desc, &convert, srgb);
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &desc, &convert);
 
     /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
@@ -1518,7 +1546,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 
     if (!(This->Flags & alloc_flag))
     {
-        surface_allocate_surface(This, gl_info,  &desc, This->pow2Width, This->pow2Height);
+        surface_allocate_surface(This, gl_info,  &desc, srgb, This->pow2Width, This->pow2Height);
         This->Flags |= alloc_flag;
     }
 
@@ -1553,7 +1581,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
 
     if (surface->Flags & alloc_flag) return;
 
-    d3dfmt_get_conv(surface, TRUE, TRUE, &desc, &convert, srgb);
+    d3dfmt_get_conv(surface, TRUE, TRUE, &desc, &convert);
     if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
     else surface->Flags &= ~SFLAG_CONVERTED;
 
@@ -1569,7 +1597,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     }
 
     surface_bind_and_dirtify(surface, srgb);
-    surface_allocate_surface(surface, gl_info, &desc, width, height);
+    surface_allocate_surface(surface, gl_info, &desc, srgb, width, height);
     surface->Flags |= alloc_flag;
 }
 
@@ -2113,10 +2141,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
 
-HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, struct wined3d_format_desc *desc, CONVERT_TYPES *convert, BOOL srgb_mode)
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, struct wined3d_format_desc *desc, CONVERT_TYPES *convert)
 {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
-    const struct wined3d_format_desc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL blit_supported = FALSE;
@@ -2125,18 +2152,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     /* Copy the default values from the surface. Below we might perform fixups */
     *desc = *This->resource.format_desc;
     *convert = NO_CONVERSION;
-
-    /* TODO: the caller should perform this check */
-    if(srgb_mode) {
-        desc->glInternal = glDesc->glGammaInternal;
-    }
-    else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
-            && surface_is_offscreen((IWineD3DSurface *) This))
-    {
-        desc->glInternal = glDesc->rtInternal;
-    } else {
-        desc->glInternal = glDesc->glInternal;
-    }
 
     /* Ok, now look if we have to do any conversion */
     switch(This->resource.format_desc->format)
@@ -4773,7 +4788,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
 
-            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &desc, &convert, FALSE);
+            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &desc, &convert);
 
             /* The width is in 'length' not in bytes */
             width = This->currentDesc.Width;
@@ -4831,7 +4846,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             struct wined3d_context *context = NULL;
 
             d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */,
-                    &desc, &convert, FALSE);
+                    &desc, &convert);
 
             if(srgb) {
                 if((This->Flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)) == SFLAG_INTEXTURE) {
@@ -4902,7 +4917,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 TRACE("non power of two support\n");
                 if (mem || (This->Flags & SFLAG_PBO))
                 {
-                    surface_upload_data(This, gl_info, &desc,
+                    surface_upload_data(This, gl_info, &desc, srgb,
                             This->currentDesc.Width, This->currentDesc.Height, mem);
                 }
             } else {
@@ -4911,7 +4926,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                  */
                 if (mem || (This->Flags & SFLAG_PBO))
                 {
-                    surface_upload_data(This, gl_info, &desc, This->glRect.right - This->glRect.left,
+                    surface_upload_data(This, gl_info, &desc, srgb, This->glRect.right - This->glRect.left,
                             This->glRect.bottom - This->glRect.top, mem);
                 }
             }
