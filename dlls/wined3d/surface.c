@@ -720,12 +720,12 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
  * correct texture. */
 /* Context activation is done by the caller. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data)
+        const struct wined3d_format_desc *format_desc, GLsizei width, GLsizei height, const GLvoid *data)
 {
-    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
+    GLenum internal = format_desc->glInternal;
 
     TRACE("This %p, internal %#x, width %d, height %d, format %#x, type %#x, data %p.\n",
-            This, internal, width, height, format, type, data);
+            This, internal, width, height, format_desc->glFormat, format_desc->glType, data);
     TRACE("target %#x, level %u, resource size %u.\n",
             This->texture_target, This->texture_level, This->resource.size);
 
@@ -755,7 +755,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
         TRACE("Calling glTexSubImage2D.\n");
 
         glTexSubImage2D(This->texture_target, This->texture_level,
-                0, 0, width, height, format, type, data);
+                0, 0, width, height, format_desc->glFormat, format_desc->glType, data);
         checkGLcall("glTexSubImage2D");
     }
 
@@ -783,17 +783,17 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
  * the correct texture. */
 /* Context activation is done by the caller. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type)
+        const struct wined3d_format_desc *format_desc, GLsizei width, GLsizei height)
 {
-    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
     BOOL enable_client_storage = FALSE;
     const BYTE *mem = NULL;
+    GLenum internal = format_desc->glInternal;
 
     if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
             This, This->texture_target, This->texture_level, debug_d3dformat(format_desc->format),
-            internal, width, height, format, type);
+            internal, width, height, format_desc->glFormat, format_desc->glType);
 
     ENTER_GL();
 
@@ -828,7 +828,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
     else
     {
         glTexImage2D(This->texture_target, This->texture_level,
-                internal, width, height, 0, format, type, mem);
+                internal, width, height, 0, format_desc->glFormat, format_desc->glType, mem);
         checkGLcall("glTexImage2D");
     }
 
@@ -1470,13 +1470,12 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    int bpp;
-    GLenum format, internal, type;
+    struct wined3d_format_desc desc;
     CONVERT_TYPES convert;
     GLint prevRead;
     BOOL alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
 
-    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, srgb);
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &desc, &convert, srgb);
 
     /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
@@ -1519,7 +1518,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 
     if (!(This->Flags & alloc_flag))
     {
-        surface_allocate_surface(This, gl_info, internal, This->pow2Width, This->pow2Height, format, type);
+        surface_allocate_surface(This, gl_info,  &desc, This->pow2Width, This->pow2Height);
         This->Flags |= alloc_flag;
     }
 
@@ -1548,14 +1547,13 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
-    GLenum format, internal, type;
     GLsizei width, height;
     CONVERT_TYPES convert;
-    int bpp;
+    struct wined3d_format_desc desc;
 
     if (surface->Flags & alloc_flag) return;
 
-    d3dfmt_get_conv(surface, TRUE, TRUE, &format, &internal, &type, &convert, &bpp, srgb);
+    d3dfmt_get_conv(surface, TRUE, TRUE, &desc, &convert, srgb);
     if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
     else surface->Flags &= ~SFLAG_CONVERTED;
 
@@ -1571,7 +1569,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     }
 
     surface_bind_and_dirtify(surface, srgb);
-    surface_allocate_surface(surface, gl_info, internal, width, height, format, type);
+    surface_allocate_surface(surface, gl_info, &desc, width, height);
     surface->Flags |= alloc_flag;
 }
 
@@ -2115,7 +2113,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
 
-HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, struct wined3d_format_desc *desc, CONVERT_TYPES *convert, BOOL srgb_mode)
+{
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const struct wined3d_format_desc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.device;
@@ -2123,21 +2122,20 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     BOOL blit_supported = FALSE;
     RECT rect = {0, 0, This->pow2Width, This->pow2Height};
 
-    /* Default values: From the surface */
-    *format = glDesc->glFormat;
-    *type = glDesc->glType;
+    /* Copy the default values from the surface. Below we might perform fixups */
+    *desc = *This->resource.format_desc;
     *convert = NO_CONVERSION;
-    *target_bpp = glDesc->byte_count;
 
+    /* TODO: the caller should perform this check */
     if(srgb_mode) {
-        *internal = glDesc->glGammaInternal;
+        desc->glInternal = glDesc->glGammaInternal;
     }
     else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
             && surface_is_offscreen((IWineD3DSurface *) This))
     {
-        *internal = glDesc->rtInternal;
+        desc->glInternal = glDesc->rtInternal;
     } else {
-        *internal = glDesc->glInternal;
+        desc->glInternal = glDesc->glInternal;
     }
 
     /* Ok, now look if we have to do any conversion */
@@ -2162,10 +2160,10 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (!((blit_supported && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
-                *format = GL_RGBA;
-                *internal = GL_RGBA;
-                *type = GL_UNSIGNED_BYTE;
-                *target_bpp = 4;
+                desc->glFormat = GL_RGBA;
+                desc->glInternal = GL_RGBA;
+                desc->glType = GL_UNSIGNED_BYTE;
+                desc->conv_byte_count = 4;
                 if(colorkey_active) {
                     *convert = CONVERT_PALETTED_CK;
                 } else {
@@ -2188,61 +2186,61 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         case WINED3DFMT_B5G6R5_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_565;
-                *format = GL_RGBA;
-                *internal = GL_RGB5_A1;
-                *type = GL_UNSIGNED_SHORT_5_5_5_1;
+                desc->glFormat = GL_RGBA;
+                desc->glInternal = GL_RGB5_A1;
+                desc->glType = GL_UNSIGNED_SHORT_5_5_5_1;
             }
             break;
 
         case WINED3DFMT_B5G5R5X1_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_5551;
-                *format = GL_BGRA;
-                *internal = GL_RGB5_A1;
-                *type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+                desc->glFormat = GL_BGRA;
+                desc->glInternal = GL_RGB5_A1;
+                desc->glType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
             }
             break;
 
         case WINED3DFMT_B8G8R8_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_CK_RGB24;
-                *format = GL_RGBA;
-                *internal = GL_RGBA8;
-                *type = GL_UNSIGNED_INT_8_8_8_8;
-                *target_bpp = 4;
+                desc->glFormat = GL_RGBA;
+                desc->glInternal = GL_RGBA8;
+                desc->glType = GL_UNSIGNED_INT_8_8_8_8;
+                desc->conv_byte_count = 4;
             }
             break;
 
         case WINED3DFMT_B8G8R8X8_UNORM:
             if (colorkey_active) {
                 *convert = CONVERT_RGB32_888;
-                *format = GL_RGBA;
-                *internal = GL_RGBA8;
-                *type = GL_UNSIGNED_INT_8_8_8_8;
+                desc->glFormat = GL_RGBA;
+                desc->glInternal = GL_RGBA8;
+                desc->glType = GL_UNSIGNED_INT_8_8_8_8;
             }
             break;
 
         case WINED3DFMT_R8G8_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V8U8;
-            *target_bpp = 3;
+            desc->conv_byte_count = 3;
             break;
 
         case WINED3DFMT_R5G5_SNORM_L6_UNORM:
             *convert = CONVERT_L6V5U5;
             if (gl_info->supported[NV_TEXTURE_SHADER])
             {
-                *target_bpp = 3;
+                desc->conv_byte_count = 3;
                 /* Use format and types from table */
             } else {
                 /* Load it into unsigned R5G6B5, swap L and V channels, and revert that in the shader */
-                *target_bpp = 2;
+                desc->conv_byte_count = 2;
             }
             break;
 
         case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
             *convert = CONVERT_X8L8V8U8;
-            *target_bpp = 4;
+            desc->conv_byte_count = 4;
             if (gl_info->supported[NV_TEXTURE_SHADER])
             {
                 /* Use formats from gl table. It is a bit unfortunate, but the conversion
@@ -2257,13 +2255,13 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
         case WINED3DFMT_R8G8B8A8_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_Q8W8V8U8;
-            *target_bpp = 4;
+            desc->conv_byte_count = 4;
             break;
 
         case WINED3DFMT_R16G16_SNORM:
             if (gl_info->supported[NV_TEXTURE_SHADER]) break;
             *convert = CONVERT_V16U16;
-            *target_bpp = 6;
+            desc->conv_byte_count = 6;
             break;
 
         case WINED3DFMT_L4A4_UNORM:
@@ -2272,24 +2270,24 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * with A4L4 internal, but A8L8 format+type
              */
             *convert = CONVERT_A4L4;
-            *target_bpp = 2;
+            desc->conv_byte_count = 2;
             break;
 
         case WINED3DFMT_R16G16_UNORM:
             *convert = CONVERT_G16R16;
-            *target_bpp = 6;
+            desc->conv_byte_count = 6;
             break;
 
         case WINED3DFMT_R16G16_FLOAT:
             if (gl_info->supported[ARB_TEXTURE_RG]) break;
             *convert = CONVERT_R16G16F;
-            *target_bpp = 6;
+            desc->conv_byte_count = 6;
             break;
 
         case WINED3DFMT_R32G32_FLOAT:
             if (gl_info->supported[ARB_TEXTURE_RG]) break;
             *convert = CONVERT_R32G32F;
-            *target_bpp = 12;
+            desc->conv_byte_count = 12;
             break;
 
         case WINED3DFMT_S1_UINT_D15_UNORM:
@@ -2297,7 +2295,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                     || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
             {
                 *convert = CONVERT_D15S1;
-                *target_bpp = 4;
+                desc->conv_byte_count = 4;
             }
             break;
 
@@ -2313,13 +2311,21 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (gl_info->supported[ARB_DEPTH_BUFFER_FLOAT])
             {
                 *convert = CONVERT_D24FS8;
-                *target_bpp = 8;
+                desc->conv_byte_count = 8;
             }
             break;
 
         default:
             break;
     }
+
+    /* At the moment we don't override the byte_count when it is the same before
+     * and after conversion. Until that is fixed (which mostly applies to non-ck formats),
+     * make sure we explicitly set conv_byte_count.
+     * TODO: get rid of this.
+     */
+    if(!desc->conv_byte_count)
+        desc->conv_byte_count = desc->byte_count;
 
     return WINED3D_OK;
 }
@@ -4694,9 +4700,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    GLenum format, internal, type;
+    struct wined3d_format_desc desc;
     CONVERT_TYPES convert;
-    int bpp;
     int width, pitch, outpitch;
     BYTE *mem;
     BOOL drawable_read_ok = TRUE;
@@ -4759,6 +4764,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         if(This->Flags & SFLAG_INTEXTURE) {
             surface_blt_to_drawable(This, rect);
         } else {
+            int byte_count;
             if((This->Flags & SFLAG_LOCATIONS) == SFLAG_INSRGBTEX) {
                 /* This needs a shader to convert the srgb data sampled from the GL texture into RGB
                  * values, otherwise we get incorrect values in the target. For now go the slow way
@@ -4767,7 +4773,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
 
-            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &format, &internal, &type, &convert, &bpp, FALSE);
+            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &desc, &convert, FALSE);
 
             /* The width is in 'length' not in bytes */
             width = This->currentDesc.Width;
@@ -4788,9 +4794,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
                 int height = This->currentDesc.Height;
+                byte_count = desc.conv_byte_count;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-                outpitch = width * bpp;
+                outpitch = width * byte_count;
                 outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
 
                 mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
@@ -4804,9 +4811,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             } else {
                 This->Flags &= ~SFLAG_CONVERTED;
                 mem = This->resource.allocatedMemory;
+                byte_count = desc.byte_count;
             }
 
-            flush_to_framebuffer_drawpixels(This, format, type, bpp, mem);
+            flush_to_framebuffer_drawpixels(This, desc.glFormat, desc.glType, byte_count, mem);
 
             /* Don't delete PBO memory */
             if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
@@ -4823,7 +4831,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             struct wined3d_context *context = NULL;
 
             d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */,
-                    &format, &internal, &type, &convert, &bpp, srgb);
+                    &desc, &convert, FALSE);
 
             if(srgb) {
                 if((This->Flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)) == SFLAG_INTEXTURE) {
@@ -4871,7 +4879,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 int height = This->currentDesc.Height;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-                outpitch = width * bpp;
+                outpitch = width * desc.conv_byte_count;
                 outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
 
                 mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
@@ -4894,8 +4902,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 TRACE("non power of two support\n");
                 if (mem || (This->Flags & SFLAG_PBO))
                 {
-                    surface_upload_data(This, gl_info, internal,
-                            This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
+                    surface_upload_data(This, gl_info, &desc,
+                            This->currentDesc.Width, This->currentDesc.Height, mem);
                 }
             } else {
                 /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
@@ -4903,8 +4911,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                  */
                 if (mem || (This->Flags & SFLAG_PBO))
                 {
-                    surface_upload_data(This, gl_info, internal, This->glRect.right - This->glRect.left,
-                            This->glRect.bottom - This->glRect.top, format, type, mem);
+                    surface_upload_data(This, gl_info, &desc, This->glRect.right - This->glRect.left,
+                            This->glRect.bottom - This->glRect.top, mem);
                 }
             }
 
