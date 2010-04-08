@@ -256,7 +256,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
 	written = 0;
 
     wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->pcm, written);
-    if ( wwo->dwPartialOffset >= lpWaveHdr->dwBufferLength) {
+    if (wwo->dwPartialOffset + wwo->format.Format.nBlockAlign - 1 >= lpWaveHdr->dwBufferLength) {
 	/* this will be used to check if the given wave header has been fully played or not... */
 	wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
 	/* If we wrote all current wavehdr, skip to the next one */
