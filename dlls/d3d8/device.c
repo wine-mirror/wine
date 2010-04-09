@@ -171,18 +171,19 @@ static DWORD d3d8_allocate_handle(struct d3d8_handle_table *t, void *object, enu
 
     if (t->free_entries)
     {
+        DWORD index = t->free_entries - t->entries;
         /* Use a free handle */
         entry = t->free_entries;
         if (entry->type != D3D8_HANDLE_FREE)
         {
-            ERR("Handle %u(%p) is in the free list, but has type %#x.\n", (entry - t->entries), entry, entry->type);
+            ERR("Handle %u(%p) is in the free list, but has type %#x.\n", index, entry, entry->type);
             return D3D8_INVALID_HANDLE;
         }
         t->free_entries = entry->object;
         entry->object = object;
         entry->type = type;
 
-        return entry - t->entries;
+        return index;
     }
 
     if (!(t->entry_count < t->table_size))
