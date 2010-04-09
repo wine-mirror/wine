@@ -75,6 +75,7 @@ typedef struct BmpDecoder {
     INT stride;
     BYTE *imagedata;
     BYTE *imagedatastart;
+    CRITICAL_SECTION lock; /* must be held when initialized/imagedata is set or stream is accessed */
 } BmpDecoder;
 
 static inline BmpDecoder *impl_from_frame(IWICBitmapFrameDecode *iface)
@@ -190,6 +191,8 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 
     TRACE("(%p,%p)\n", iface, pIPalette);
 
+    EnterCriticalSection(&This->lock);
+
     if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
     {
         BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)&This->bih;
@@ -231,7 +234,8 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
         }
         else
         {
-            return WINCODEC_ERR_PALETTEUNAVAILABLE;
+            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+            goto end;
         }
     }
     else
@@ -249,7 +253,11 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 
             tablesize = sizeof(WICColor) * count;
             wiccolors = HeapAlloc(GetProcessHeap(), 0, tablesize);
-            if (!wiccolors) return E_OUTOFMEMORY;
+            if (!wiccolors)
+            {
+                hr = E_OUTOFMEMORY;
+                goto end;
+            }
 
             offset.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
             hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
@@ -268,13 +276,18 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
         }
         else
         {
-            return WINCODEC_ERR_PALETTEUNAVAILABLE;
+            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+            goto end;
         }
     }
 
-    hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
-
 end:
+
+    LeaveCriticalSection(&This->lock);
+
+    if (SUCCEEDED(hr))
+        hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
+
     HeapFree(GetProcessHeap(), 0, wiccolors);
     HeapFree(GetProcessHeap(), 0, bgrcolors);
     return hr;
@@ -284,15 +297,17 @@ static HRESULT WINAPI BmpFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
     BmpDecoder *This = impl_from_frame(iface);
-    HRESULT hr;
+    HRESULT hr=S_OK;
     UINT width, height;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
+    EnterCriticalSection(&This->lock);
     if (!This->imagedata)
     {
         hr = This->read_data_func(This);
-        if (FAILED(hr)) return hr;
     }
+    LeaveCriticalSection(&This->lock);
+    if (FAILED(hr)) return hr;
 
     hr = BmpFrameDecode_GetSize(iface, &width, &height);
     if (FAILED(hr)) return hr;
@@ -854,6 +869,8 @@ static ULONG WINAPI BmpDecoder_Release(IWICBitmapDecoder *iface)
     {
         if (This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This->imagedata);
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -866,7 +883,9 @@ static HRESULT WINAPI BmpDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     HRESULT hr;
     BmpDecoder *This = (BmpDecoder*)iface;
 
+    EnterCriticalSection(&This->lock);
     hr = BmpDecoder_ReadHeaders(This, pIStream);
+    LeaveCriticalSection(&This->lock);
     if (FAILED(hr)) return hr;
 
     if (This->read_data_func == BmpFrameDecode_ReadUnsupported)
@@ -883,6 +902,7 @@ static HRESULT WINAPI BmpDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     HRESULT hr;
     BmpDecoder *This = (BmpDecoder*)iface;
 
+    EnterCriticalSection(&This->lock);
     hr = BmpDecoder_ReadHeaders(This, pIStream);
 
     if (SUCCEEDED(hr))
@@ -890,6 +910,7 @@ static HRESULT WINAPI BmpDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         This->stream = pIStream;
         IStream_AddRef(pIStream);
     }
+    LeaveCriticalSection(&This->lock);
 
     return hr;
 }
@@ -1015,6 +1036,8 @@ HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->initialized = FALSE;
     This->stream = NULL;
     This->imagedata = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BmpDecoder.lock");
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
