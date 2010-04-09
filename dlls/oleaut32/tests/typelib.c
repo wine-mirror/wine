@@ -1967,8 +1967,8 @@ static void test_register_typelib(void)
     WCHAR filename[MAX_PATH];
     const char *filenameA;
     ITypeLib *typelib;
-    WCHAR key_name[MAX_PATH], uuid[40];
-    static const WCHAR formatW[] = {'I','n','t','e','r','f','a','c','e','\\','%','s',0};
+    WCHAR uuidW[40];
+    char key_name[MAX_PATH], uuid[40];
     LONG ret, expect_ret;
     UINT count, i;
     HKEY hkey;
@@ -2040,8 +2040,9 @@ static void test_register_typelib(void)
 
         }
 
-        StringFromGUID2(&attr->guid, uuid, sizeof(uuid) / sizeof(uuid[0]));
-        wsprintfW(key_name, formatW, uuid);
+        StringFromGUID2(&attr->guid, uuidW, sizeof(uuidW) / sizeof(uuidW[0]));
+        WideCharToMultiByte(CP_ACP, 0, uuidW, -1, uuid, sizeof(uuid), NULL, NULL);
+        sprintf(key_name, "Interface\\%s", uuid);
 
         /* All dispinterfaces will be registered (this includes dual interfaces) as well
            as oleautomation interfaces */
@@ -2051,7 +2052,7 @@ static void test_register_typelib(void)
         else
             expect_ret = ERROR_FILE_NOT_FOUND;
 
-        ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
+        ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
         ok(ret == expect_ret, "%d: got %d\n", i, ret);
         if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
 
