@@ -643,12 +643,14 @@ GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily* FontFamily, GpFontFamily**
 GpStatus WINGDIPAPI GdipGetFamilyName (GDIPCONST GpFontFamily *family,
                                        WCHAR *name, LANGID language)
 {
+    static int lang_fixme;
+
     if (family == NULL)
          return InvalidParameter;
 
     TRACE("%p, %p, %d\n", family, name, language);
 
-    if (language != LANG_NEUTRAL)
+    if (language != LANG_NEUTRAL && !lang_fixme++)
         FIXME("No support for handling of multiple languages!\n");
 
     lstrcpynW (name, family->FamilyName, LF_FACESIZE);
