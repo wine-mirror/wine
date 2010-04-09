@@ -139,7 +139,7 @@
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
 @ extern __badioinfo msvcrt.__badioinfo
-@ stub __clean_type_info_names_internal
+@ cdecl __clean_type_info_names_internal(ptr)
 @ stub __control87_2
 @ stub __create_locale
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA

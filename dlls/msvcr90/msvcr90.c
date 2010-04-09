@@ -114,3 +114,11 @@ char** CDECL __sys_errlist(void)
 {
     return (char**)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_sys_errlist");
 }
+
+/*********************************************************************
+ * __clean_type_info_names_internal (MSVCR90.@)
+ */
+void CDECL __clean_type_info_names_internal(void *p)
+{
+    FIXME("(%p) stub\n", p);
+}
