@@ -739,7 +739,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"WIC PNG Decoder",
 	NULL,
 	"windowscodecs.dll",
-	"Apartment"
+	"Both"
     },
     {   &CLSID_WICPngEncoder,
 	"WIC PNG Encoder",

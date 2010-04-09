@@ -162,6 +162,7 @@ typedef struct {
     UINT stride;
     const WICPixelFormatGUID *format;
     BYTE *image_bits;
+    CRITICAL_SECTION lock; /* must be held when png structures are accessed or initialized is set */
 } PngDecoder;
 
 static inline PngDecoder *impl_from_frame(IWICBitmapFrameDecode *iface)
@@ -214,6 +215,8 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
     {
         if (This->png_ptr)
             ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This->image_bits);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -246,7 +249,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 {
     PngDecoder *This = (PngDecoder*)iface;
     LARGE_INTEGER seek;
-    HRESULT hr;
+    HRESULT hr=S_OK;
     png_bytep *row_pointers=NULL;
     UINT image_size;
     UINT i;
@@ -259,16 +262,23 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
+    EnterCriticalSection(&This->lock);
+
     /* initialize libpng */
     This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!This->png_ptr) return E_FAIL;
+    if (!This->png_ptr)
+    {
+        hr = E_FAIL;
+        goto end;
+    }
 
     This->info_ptr = ppng_create_info_struct(This->png_ptr);
     if (!This->info_ptr)
     {
         ppng_destroy_read_struct(&This->png_ptr, NULL, NULL);
         This->png_ptr = NULL;
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     This->end_info = ppng_create_info_struct(This->png_ptr);
@@ -276,7 +286,8 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     {
         ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
         This->png_ptr = NULL;
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     /* set up setjmp/longjmp error handling */
@@ -285,14 +296,15 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
         HeapFree(GetProcessHeap(), 0, row_pointers);
         This->png_ptr = NULL;
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
     ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
     hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr)) goto end;
 
     /* set up custom i/o handling */
     ppng_set_read_fn(This->png_ptr, pIStream, user_read_data);
@@ -340,7 +352,8 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         case 16: This->format = &GUID_WICPixelFormat16bppGray; break;
         default:
             ERR("invalid grayscale bit depth: %i\n", bit_depth);
-            return E_FAIL;
+            hr = E_FAIL;
+            goto end;
         }
         break;
     case PNG_COLOR_TYPE_GRAY_ALPHA:
@@ -357,7 +370,8 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         case 16: This->format = &GUID_WICPixelFormat64bppRGBA; break;
         default:
             ERR("invalid RGBA bit depth: %i\n", bit_depth);
-            return E_FAIL;
+            hr = E_FAIL;
+            goto end;
         }
         break;
     case PNG_COLOR_TYPE_PALETTE:
@@ -370,7 +384,8 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         case 8: This->format = &GUID_WICPixelFormat8bppIndexed; break;
         default:
             ERR("invalid indexed color bit depth: %i\n", bit_depth);
-            return E_FAIL;
+            hr = E_FAIL;
+            goto end;
         }
         break;
     case PNG_COLOR_TYPE_RGB:
@@ -384,12 +399,14 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         case 16: This->format = &GUID_WICPixelFormat48bppRGB; break;
         default:
             ERR("invalid RGB color bit depth: %i\n", bit_depth);
-            return E_FAIL;
+            hr = E_FAIL;
+            goto end;
         }
         break;
     default:
         ERR("invalid color type %i\n", color_type);
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     /* read the image data */
@@ -399,10 +416,18 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     image_size = This->stride * This->height;
 
     This->image_bits = HeapAlloc(GetProcessHeap(), 0, image_size);
-    if (!This->image_bits) return E_OUTOFMEMORY;
+    if (!This->image_bits)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
 
     row_pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(png_bytep)*This->height);
-    if (!row_pointers) return E_OUTOFMEMORY;
+    if (!row_pointers)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
 
     for (i=0; i<This->height; i++)
         row_pointers[i] = This->image_bits + i * This->stride;
@@ -416,7 +441,11 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 
     This->initialized = TRUE;
 
-    return S_OK;
+end:
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI PngDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -570,6 +599,8 @@ static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
     png_uint_32 ret, xres, yres;
     int unit_type;
 
+    EnterCriticalSection(&This->lock);
+
     ret = ppng_get_pHYs(This->png_ptr, This->info_ptr, &xres, &yres, &unit_type);
 
     if (ret && unit_type == PNG_RESOLUTION_METER)
@@ -582,6 +613,8 @@ static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
         WARN("no pHYs block present\n");
         *pDpiX = *pDpiY = 96.0;
     }
+
+    LeaveCriticalSection(&This->lock);
 
     TRACE("(%p)->(%0.2f,%0.2f)\n", iface, *pDpiX, *pDpiY);
 
@@ -600,16 +633,24 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     int num_trans;
     png_color_16p trans_values;
     int i;
+    HRESULT hr=S_OK;
 
     TRACE("(%p,%p)\n", iface, pIPalette);
 
+    EnterCriticalSection(&This->lock);
+
     ret = ppng_get_PLTE(This->png_ptr, This->info_ptr, &png_palette, &num_palette);
-    if (!ret) return WINCODEC_ERR_PALETTEUNAVAILABLE;
+    if (!ret)
+    {
+        hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+        goto end;
+    }
 
     if (num_palette > 256)
     {
         ERR("palette has %i colors?!\n", num_palette);
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     for (i=0; i<num_palette; i++)
@@ -629,7 +670,14 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
         }
     }
 
-    return IWICPalette_InitializeCustom(pIPalette, palette, num_palette);
+end:
+
+    LeaveCriticalSection(&This->lock);
+
+    if (SUCCEEDED(hr))
+        hr = IWICPalette_InitializeCustom(pIPalette, palette, num_palette);
+
+    return hr;
 }
 
 static HRESULT WINAPI PngDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
@@ -706,6 +754,8 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->end_info = NULL;
     This->initialized = FALSE;
     This->image_bits = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PngDecoder.lock");
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
