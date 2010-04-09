@@ -2975,7 +2975,7 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
  *
  * I'm not sure whether this implementation is 100% correct. [AM]
  */
-DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DWORD n)
+DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DWORD_PTR n)
 {
     DWORD i;
 
@@ -2994,7 +2994,7 @@ DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DW
             SysColorBrushes[i] = pBrushes[i];
         }
 
-        return (DWORD)pOldCol; /* FIXME: pointer truncation */
+        return (DWORD_PTR)pOldCol;
     }
     if (!pPens && !pBrushes) /* "restore" call */
     {
