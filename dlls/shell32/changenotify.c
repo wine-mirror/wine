@@ -54,10 +54,11 @@ typedef struct _NOTIFICATIONLIST
 	LONG wSignalledEvent;   /* event that occurred */
 	DWORD dwFlags;		/* client flags */
 	LPCITEMIDLIST pidlSignaled; /*pidl of the path that caused the signal*/
-    
+	ULONG id;
 } NOTIFICATIONLIST, *LPNOTIFICATIONLIST;
 
 static struct list notifications = LIST_INIT( notifications );
+static LONG next_id;
 
 #define SHCNE_NOITEMEVENTS ( \
    SHCNE_ASSOCCHANGED )
@@ -115,15 +116,6 @@ static const char * NodeName(const NOTIFICATIONLIST *item)
     else
         str = wine_dbg_sprintf("<not a disk file>" );
     return str;
-}
-
-static LPNOTIFICATIONLIST FindNode( HANDLE hitem )
-{
-    LPNOTIFICATIONLIST ptr;
-    LIST_FOR_EACH_ENTRY( ptr, &notifications, NOTIFICATIONLIST, entry )
-        if( ptr == hitem )
-            return ptr;
-    return NULL;
 }
 
 static void DeleteNode(LPNOTIFICATIONLIST item)
@@ -195,6 +187,7 @@ SHChangeNotifyRegister(
     item->wEventMask = wEventMask;
     item->wSignalledEvent = 0;
     item->dwFlags = fSources;
+    item->id = InterlockedIncrement( &next_id );
 
     TRACE("new node: %s\n", NodeName( item ));
 
@@ -204,7 +197,7 @@ SHChangeNotifyRegister(
 
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
-    return (ULONG)item;
+    return item->id;
 }
 
 /*************************************************************************
@@ -218,13 +211,17 @@ BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
-    node = FindNode((HANDLE)hNotify);
-    if( node )
-        DeleteNode(node);
-
+    LIST_FOR_EACH_ENTRY( node, &notifications, NOTIFICATIONLIST, entry )
+    {
+        if (node->id == hNotify)
+        {
+            DeleteNode( node );
+            LeaveCriticalSection(&SHELL32_ChangenotifyCS);
+            return TRUE;
+        }
+    }
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
-
-    return node?TRUE:FALSE;
+    return FALSE;
 }
 
 /*************************************************************************
@@ -429,22 +426,25 @@ HANDLE WINAPI SHChangeNotification_Lock(
 
     /* EnterCriticalSection(&SHELL32_ChangenotifyCS); */
 
-    node = FindNode( hChange );
-    if( node )
+    LIST_FOR_EACH_ENTRY( node, &notifications, NOTIFICATIONLIST, entry )
     {
-        idlist = SHAlloc( sizeof(LPCITEMIDLIST *) * node->cidl );
-        for(i=0; i<node->cidl; i++)
-            idlist[i] = node->pidlSignaled;
-        *lpwEventId = node->wSignalledEvent;
-        *lppidls = (LPITEMIDLIST*)idlist;
-        node->wSignalledEvent = 0;
+        if (node == hChange)
+        {
+            idlist = SHAlloc( sizeof(LPCITEMIDLIST *) * node->cidl );
+            for(i=0; i<node->cidl; i++)
+                idlist[i] = node->pidlSignaled;
+            *lpwEventId = node->wSignalledEvent;
+            *lppidls = (LPITEMIDLIST*)idlist;
+            node->wSignalledEvent = 0;
+            /* LeaveCriticalSection(&SHELL32_ChangenotifyCS); */
+            return node;
+        }
     }
-    else
-        ERR("Couldn't find %p\n", hChange );
+    ERR("Couldn't find %p\n", hChange );
 
     /* LeaveCriticalSection(&SHELL32_ChangenotifyCS); */
 
-    return node;
+    return 0;
 }
 
 /*************************************************************************
