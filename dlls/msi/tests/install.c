@@ -9175,6 +9175,8 @@ static void test_register_class_info(void)
 
     ok(!delete_pf("msitest\\class.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\class.txt");
     delete_test_files();
 }
 
@@ -9212,6 +9214,8 @@ static void test_register_extension_info(void)
 
     ok(!delete_pf("msitest\\extension.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\extension.txt");
     delete_test_files();
 }
 
@@ -9242,6 +9246,8 @@ static void test_register_mime_info(void)
 
     ok(!delete_pf("msitest\\mime.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\mime.txt");
     delete_test_files();
 }
 
