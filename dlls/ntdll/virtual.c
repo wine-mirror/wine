@@ -1683,9 +1683,10 @@ static int free_reserved_memory( void *base, size_t size, void *arg )
  */
 void virtual_release_address_space( BOOL free_high_mem )
 {
-#ifdef __i386__
     struct free_range range;
     sigset_t sigset;
+
+    if (user_space_limit == address_space_limit) return;  /* no need to free anything */
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
@@ -1707,7 +1708,6 @@ void virtual_release_address_space( BOOL free_high_mem )
     }
 
     server_leave_uninterrupted_section( &csVirtual, &sigset );
-#endif
 }
 
 
