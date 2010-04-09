@@ -477,7 +477,13 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     InitializeCriticalSection(&pObject->lock);
     pObject->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": StreamOnMemory.lock");
 
-    This->pStream = (IStream*)pObject;
+    if (InterlockedCompareExchangePointer((void**)&This->pStream, pObject, NULL))
+    {
+        /* Some other thread set the stream first. */
+        IStream_Release((IStream*)pObject);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
     return S_OK;
 }
 
