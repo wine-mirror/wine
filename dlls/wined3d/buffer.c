@@ -612,7 +612,7 @@ static inline void fixup_transformed_pos(float *p)
 }
 
 /* Context activation is done by the caller. */
-const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object)
+const BYTE *buffer_get_memory(IWineD3DBuffer *iface, GLuint *buffer_object)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
@@ -626,14 +626,14 @@ const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer
             if (This->buffer_object)
             {
                 *buffer_object = This->buffer_object;
-                return (const BYTE *)offset;
+                return NULL;
             }
         }
-        return This->resource.allocatedMemory + offset;
+        return This->resource.allocatedMemory;
     }
     else
     {
-        return (const BYTE *)offset;
+        return NULL;
     }
 }
 
