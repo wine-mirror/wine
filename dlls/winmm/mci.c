@@ -37,11 +37,6 @@
  * - command table handling isn't thread safe
  */
 
-/* to be cross checked:
- * - heapalloc for *sizeof(WCHAR) when needed
- * - size of string in WCHAR or bytes? (#chars for MCI_INFO, #bytes for MCI_SYSINFO)
- */
-
 #include "config.h"
 #include "wine/port.h"
 
@@ -359,8 +354,9 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             if (dwParam1 & MCI_NOTIFY)
                 mci_sysinfoW->dwCallback = mci_sysinfoA->dwCallback;
 
+            /* Size is measured in numbers of characters, despite what MSDN says. */
             mci_sysinfoW->dwRetSize = mci_sysinfoA->dwRetSize;
-            mci_sysinfoW->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mci_sysinfoW->dwRetSize);
+            mci_sysinfoW->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mci_sysinfoW->dwRetSize * sizeof(WCHAR));
             mci_sysinfoW->dwNumber = mci_sysinfoA->dwNumber;
             mci_sysinfoW->wDeviceType = mci_sysinfoA->wDeviceType;
             return 1;
@@ -383,7 +379,7 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
                 mci_infoW->dwCallback = mci_infoA->dwCallback;
 
             /* Size is measured in numbers of characters. */
-            mci_infoW->dwRetSize = mci_infoA->dwRetSize; /* it's not the same as SYSINFO !!! */
+            mci_infoW->dwRetSize = mci_infoA->dwRetSize;
             mci_infoW->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mci_infoW->dwRetSize * sizeof(WCHAR));
             return 1;
         }
@@ -1726,7 +1722,6 @@ static DWORD MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr)
     DWORD	ret = 0;
 
     if (lpSrcStr) {
-        dstSize /= sizeof(WCHAR);
 	if (dstSize <= strlenW(lpSrcStr)) {
 	    lstrcpynW(lpDstStr, lpSrcStr, dstSize - 1);
 	    ret = MCIERR_PARAM_OVERFLOW;
@@ -1830,7 +1825,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 		}
 	    }
 	    LeaveCriticalSection(&WINMM_cs);
-	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR), s) : MCIERR_OUTOFRANGE;
+	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, s) : MCIERR_OUTOFRANGE;
 	} else if (MCI_ALL_DEVICE_ID == uDevID) {
 	    TRACE("MCI_SYSINFO_NAME: device #%d\n", lpParms->dwNumber);
 	    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, wszHklmMci, 0, 
@@ -1856,7 +1851,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 		    }
 		}
 	    }
-	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR), s) : MCIERR_OUTOFRANGE;
+	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, s) : MCIERR_OUTOFRANGE;
 	} else {
 	    FIXME("MCI_SYSINFO_NAME: nth device of type %d\n", lpParms->wDeviceType);
 	    /* Cheating: what is asked for is the nth device from the registry. */
@@ -1865,7 +1860,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 		ret = MCIERR_OUTOFRANGE;
 	    else {
 		LoadStringW(hWinMM32Instance, LOWORD(lpParms->wDeviceType),
-			    lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR));
+			    lpParms->lpstrReturn, lpParms->dwRetSize);
 		ret = 0;
 	    }
 	}

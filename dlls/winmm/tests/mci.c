@@ -212,6 +212,7 @@ static void test_openCloseWAVE(HWND hwnd)
         else trace("locale-dependent time format: %s (ms)\n", buf);
     }
 
+    memset(buf, 0, sizeof(buf));
     parm.sys.dwNumber = 1;
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
     parm.sys.lpstrReturn = buf;
@@ -219,8 +220,44 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.dwCallback = (DWORD_PTR)hwnd;
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err,"mciCommand MCI_SYSINFO all name 1 open notify: %s\n", dbg_mcierr(err));
-    if(!err) ok(!strcmp(buf,"mysound"),"sysinfo name returned %s\n", buf);
+    if(!err) ok(!strcmp(buf,"mysound"), "sysinfo name returned %s\n", buf);
     test_notification(hwnd, "SYSINFO name notify\n", MCI_NOTIFY_SUCCESSFUL);
+
+    memset(buf, 0, sizeof(buf));
+    parm.sys.dwNumber = 1;
+    parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
+    parm.sys.lpstrReturn = buf;
+    parm.sys.dwRetSize = 8; /* mysound\0 */
+    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    ok(!err,"mciCommand MCI_SYSINFO all name 1 open buffer[8]: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf,"mysound"), "sysinfo name returned %s\n", buf);
+
+    /* dwRetSize counts characters, not bytes, despite what MSDN says. */
+    parm.sys.dwNumber = 1;
+    parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
+    parm.sys.lpstrReturn = buf;
+    parm.sys.dwRetSize = 8; /* mysound\0 */
+    /* MCI_..._PARMSA and PARMSW share the same layout, use one for both tests. */
+    err = mciSendCommandW(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    ok(!err || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommandW MCI_SYSINFO all name 1 open buffer[8]: %s\n", dbg_mcierr(err));
+    /* TODO strcmpW((LPWSTR)buf,"mysound") */
+
+    parm.sys.dwNumber = 1;
+    parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
+    parm.sys.lpstrReturn = buf;
+    parm.sys.dwRetSize = 7; /* too short for mysound\0 */
+    err = mciSendCommandW(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    ok(err==MCIERR_PARAM_OVERFLOW || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommandW MCI_SYSINFO all name 1 open too small: %s\n", dbg_mcierr(err));
+
+    /* Win9x overwrites the tiny buffer and returns success, newer versions signal overflow. */
+    memset(buf, 0, sizeof(buf));
+    parm.sys.dwNumber = 1;
+    parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
+    parm.sys.lpstrReturn = buf;
+    parm.sys.dwRetSize = 2; /* too short for mysound\0 */
+    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    ok(err==MCIERR_PARAM_OVERFLOW || broken(!err /* Win9x */),"mciCommand MCI_SYSINFO all name 1 open too small: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf,"mysound"), "sysinfo short name returned %s\n", buf);
 
     err = mciGetDeviceID("all");
     ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(UINT16)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);
