@@ -1643,10 +1643,15 @@ UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 {
   InputContextData *data = hIMC;
+  static int i;
 
     if (!data)
         return FALSE;
-  FIXME("(%p): semi-stub\n", hIMC);
+
+    TRACE("(%p): semi-stub\n", hIMC);
+
+    if (!i++)
+      FIXME("(%p): semi-stub\n", hIMC);
 
   return data->IMC.fOpen;
 }
