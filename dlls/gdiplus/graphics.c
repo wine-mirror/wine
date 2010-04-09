@@ -4481,7 +4481,12 @@ GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace
 
 HPALETTE WINGDIPAPI GdipCreateHalftonePalette(void)
 {
-    FIXME("\n");
+    static int calls;
+
+    TRACE("\n");
+
+    if (!calls++)
+      FIXME("stub\n");
 
     return NULL;
 }
