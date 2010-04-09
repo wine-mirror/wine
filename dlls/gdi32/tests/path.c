@@ -260,9 +260,9 @@ static const path_test_t anglearc_path[] = {
     {245, 200, PT_BEZIERTO, 0, 0}, /* 5 */
     {200, 245, PT_BEZIERTO, 0, 0}, /* 6 */
     {200, 300, PT_BEZIERTO, 0, 0}, /* 7 */
-    {200, 300, PT_BEZIERTO, 0, 2}, /* 8 */
-    {200, 300, PT_BEZIERTO, 0, 2}, /* 9 */
-    {200, 300, PT_BEZIERTO, 0, 2}, /* 10 */
+    {200, 300, PT_BEZIERTO, 0, 0}, /* 8 */
+    {200, 300, PT_BEZIERTO, 0, 0}, /* 9 */
+    {200, 300, PT_BEZIERTO, 0, 0}, /* 10 */
     {231, 260, PT_LINETO, 0, 0}, /* 11 */
     {245, 235, PT_BEZIERTO, 0, 0}, /* 12 */
     {271, 220, PT_BEZIERTO, 0, 0}, /* 13 */
@@ -289,7 +289,7 @@ static void test_anglearc(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 1);
+    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 0);
 done:
     ReleaseDC(0, hdc);
 }
