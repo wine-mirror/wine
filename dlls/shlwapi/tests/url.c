@@ -1048,6 +1048,15 @@ static void test_UrlCreateFromPath(void)
 
 /* ########################### */
 
+static void test_UrlIs_null(DWORD flag)
+{
+    BOOL ret;
+    ret = pUrlIsA(NULL, flag);
+    ok(ret == FALSE, "pUrlIsA(NULL, %d) failed\n", flag);
+    ret = pUrlIsW(NULL, flag);
+    ok(ret == FALSE, "pUrlIsW(NULL, %d) failed\n", flag);
+}
+
 static void test_UrlIs(void)
 {
     BOOL ret;
@@ -1058,6 +1067,14 @@ static void test_UrlIs(void)
         win_skip("UrlIsA not found\n");
         return;
     }
+
+    test_UrlIs_null(URLIS_APPLIABLE);
+    test_UrlIs_null(URLIS_DIRECTORY);
+    test_UrlIs_null(URLIS_FILEURL);
+    test_UrlIs_null(URLIS_HASQUERY);
+    test_UrlIs_null(URLIS_NOHISTORY);
+    test_UrlIs_null(URLIS_OPAQUE);
+    test_UrlIs_null(URLIS_URL);
 
     for(i = 0; i < sizeof(TEST_PATH_IS_URL) / sizeof(TEST_PATH_IS_URL[0]); i++) {
 	MultiByteToWideChar(CP_ACP, 0, TEST_PATH_IS_URL[i].path, -1, wurl, 80);

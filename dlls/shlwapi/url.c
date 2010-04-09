@@ -1719,6 +1719,9 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 
     TRACE("(%s %d)\n", debugstr_a(pszUrl), Urlis);
 
+    if(!pszUrl)
+        return FALSE;
+
     switch (Urlis) {
 
     case URLIS_OPAQUE:
@@ -1768,6 +1771,9 @@ BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
     LPCWSTR last;
 
     TRACE("(%s %d)\n", debugstr_w(pszUrl), Urlis);
+
+    if(!pszUrl)
+        return FALSE;
 
     switch (Urlis) {
 
