@@ -283,30 +283,9 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
 static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, ITypeLib2 **ppTypeLib);
 
 
-/****************************************************************************
- *		QueryPathOfRegTypeLib	[OLEAUT32.164]
- *
- * Gets the path to a registered type library.
- *
- * PARAMS
- *  guid [I] referenced guid
- *  wMaj [I] major version
- *  wMin [I] minor version
- *  lcid [I] locale id
- *  path [O] path of typelib
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: If the type library is not registered then TYPE_E_LIBNOTREGISTERED
- *  or TYPE_E_REGISTRYACCESS if the type library registration key couldn't be
- *  opened.
- */
-HRESULT WINAPI QueryPathOfRegTypeLib(
-	REFGUID guid,
-	WORD wMaj,
-	WORD wMin,
-	LCID lcid,
-	LPBSTR path )
+/* Get the path to a registered type library. Helper for QueryPathOfRegTypeLib. */
+static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
+                                   SYSKIND syskind, LCID lcid, LPBSTR path )
 {
     HRESULT hr = TYPE_E_LIBNOTREGISTERED;
     LCID myLCID = lcid;
@@ -336,7 +315,7 @@ HRESULT WINAPI QueryPathOfRegTypeLib(
     {
         LONG dwPathLen = sizeof(Path);
 
-        get_lcid_subkey( myLCID, SYS_WIN32, buffer );
+        get_lcid_subkey( myLCID, syskind, buffer );
 
         if (RegQueryValueW(hkey, buffer, Path, &dwPathLen))
         {
@@ -366,6 +345,29 @@ HRESULT WINAPI QueryPathOfRegTypeLib(
     RegCloseKey( hkey );
     TRACE_(typelib)("-- 0x%08x\n", hr);
     return hr;
+}
+
+/****************************************************************************
+ *		QueryPathOfRegTypeLib	[OLEAUT32.164]
+ *
+ * Gets the path to a registered type library.
+ *
+ * PARAMS
+ *  guid [I] referenced guid
+ *  wMaj [I] major version
+ *  wMin [I] minor version
+ *  lcid [I] locale id
+ *  path [O] path of typelib
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: If the type library is not registered then TYPE_E_LIBNOTREGISTERED
+ *  or TYPE_E_REGISTRYACCESS if the type library registration key couldn't be
+ *  opened.
+ */
+HRESULT WINAPI QueryPathOfRegTypeLib( REFGUID guid, WORD wMaj, WORD wMin, LCID lcid, LPBSTR path )
+{
+    return query_typelib_path( guid, wMaj, wMin, SYS_WIN32, lcid, path );
 }
 
 /******************************************************************************
@@ -799,7 +801,7 @@ HRESULT WINAPI UnRegisterTypeLib(
     }
 
     /* get the path to the typelib on disk */
-    if (QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid, &tlibPath) != S_OK) {
+    if (query_typelib_path(libid, wVerMajor, wVerMinor, syskind, lcid, &tlibPath) != S_OK) {
         result = E_INVALIDARG;
         goto end;
     }
