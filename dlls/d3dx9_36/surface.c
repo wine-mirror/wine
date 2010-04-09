@@ -21,6 +21,9 @@
 #include "wine/unicode.h"
 #include "d3dx9_36_private.h"
 
+#include "initguid.h"
+#include "wincodec.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 
@@ -47,12 +50,114 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
  */
 HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3DXIMAGE_INFO *info)
 {
-    FIXME("(%p, %d, %p): stub\n", data, datasize, info);
+    IWICImagingFactory *factory;
+    IWICBitmapDecoder *decoder = NULL;
+    IWICStream *stream;
+    HRESULT hr;
+    HRESULT initresult;
 
-    if(data && datasize && !info) return D3D_OK;
-    if( !data || !datasize ) return D3DERR_INVALIDCALL;
+    FIXME("(%p, %d, %p): partially implemented\n", data, datasize, info);
 
-    return E_NOTIMPL;
+    /* TODO: Add support for (or at least detect) TGA, DDS, PPM and DIB */
+
+    if (!data || !datasize)
+        return D3DERR_INVALIDCALL;
+
+    if (!info)
+        return D3D_OK;
+
+    initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory);
+
+    if (SUCCEEDED(hr)) {
+        IWICImagingFactory_CreateStream(factory, &stream);
+        IWICStream_InitializeFromMemory(stream, (BYTE*)data, datasize);
+        hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
+        IStream_Release(stream);
+        IWICImagingFactory_Release(factory);
+    }
+
+    if (SUCCEEDED(hr)) {
+        GUID container_format;
+        UINT frame_count;
+
+        hr = IWICBitmapDecoder_GetContainerFormat(decoder, &container_format);
+        if (SUCCEEDED(hr)) {
+            if (IsEqualGUID(&container_format, &GUID_ContainerFormatBmp)) {
+                TRACE("File type is BMP\n");
+                info->ImageFileFormat = D3DXIFF_BMP;
+            } else if (IsEqualGUID(&container_format, &GUID_ContainerFormatPng)) {
+                TRACE("File type is PNG\n");
+                info->ImageFileFormat = D3DXIFF_PNG;
+            } else if(IsEqualGUID(&container_format, &GUID_ContainerFormatJpeg)) {
+                TRACE("File type is JPG\n");
+                info->ImageFileFormat = D3DXIFF_JPG;
+            } else {
+                WARN("Unsupported image file format %s\n", debugstr_guid(&container_format));
+                hr = D3DXERR_INVALIDDATA;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+        if (SUCCEEDED(hr) && !frame_count)
+            hr = D3DXERR_INVALIDDATA;
+
+        if (SUCCEEDED(hr)) {
+            IWICBitmapFrameDecode *frame = NULL;
+
+            hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapFrameDecode_GetSize(frame, &info->Width, &info->Height);
+
+            if (SUCCEEDED(hr)) {
+                WICPixelFormatGUID pixel_format;
+
+                hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &pixel_format);
+                if (SUCCEEDED(hr)) {
+                    if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat1bppIndexed))
+                        info->Format = D3DFMT_L8;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat4bppIndexed))
+                        info->Format = D3DFMT_L8;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat8bppIndexed))
+                        info->Format = D3DFMT_L8;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat16bppBGR555))
+                        info->Format = D3DFMT_X1R5G5B5;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat24bppBGR))
+                        info->Format = D3DFMT_R8G8B8;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat32bppBGR))
+                        info->Format = D3DFMT_X8R8G8B8;
+                    else {
+                        WARN("Unsupported pixel format %s\n", debugstr_guid(&pixel_format));
+                        hr = D3DXERR_INVALIDDATA;
+                    }
+                }
+            }
+
+            if (frame)
+                 IWICBitmapFrameDecode_Release(frame);
+
+            info->Depth = 1;
+            info->MipLevels = 1;
+            info->ResourceType = D3DRTYPE_TEXTURE;
+        }
+    }
+
+    if (decoder)
+        IWICBitmapDecoder_Release(decoder);
+
+    if (SUCCEEDED(initresult))
+        CoUninitialize();
+
+    if (FAILED(hr)) {
+        /* Missing formats are not detected yet and will fail silently without the FIXME */
+        FIXME("Invalid or unsupported image file\n");
+        return D3DXERR_INVALIDDATA;
+    }
+
+    return D3D_OK;
 }
 
 /************************************************************
