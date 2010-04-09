@@ -1048,7 +1048,9 @@ static void test_rc2(void)
         dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        ok(dwLen == 0, "unexpected salt length %d\n", dwLen);
+        ok(dwLen == 0 ||
+           broken(dwLen == 11), /* Win9x/WinMe/NT4 */
+           "unexpected salt length %d\n", dwLen);
         /* What sizes salt can I set? */
         salt.pbData = pbData;
         for (i=0; i<24; i++)
@@ -1214,7 +1216,9 @@ static void test_rc4(void)
         dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        ok(dwLen == 0, "unexpected salt length %d\n", dwLen);
+        ok(dwLen == 0 ||
+           broken(dwLen == 11), /* Win9x/WinMe/NT4 */
+           "unexpected salt length %d\n", dwLen);
         /* What sizes salt can I set? */
         salt.pbData = pbData;
         for (i=0; i<24; i++)
