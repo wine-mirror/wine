@@ -129,18 +129,19 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
 
     if (schan_free_handles)
     {
+        DWORD index = schan_free_handles - schan_handle_table;
         /* Use a free handle */
         handle = schan_free_handles;
         if (handle->type != SCHAN_HANDLE_FREE)
         {
-            ERR("Handle %d(%p) is in the free list, but has type %#x.\n", (handle-schan_handle_table), handle, handle->type);
+            ERR("Handle %d(%p) is in the free list, but has type %#x.\n", index, handle, handle->type);
             return SCHAN_INVALID_HANDLE;
         }
         schan_free_handles = handle->object;
         handle->object = object;
         handle->type = type;
 
-        return handle - schan_handle_table;
+        return index;
     }
     if (!(schan_handle_count < schan_handle_table_size))
     {
