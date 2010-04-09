@@ -172,10 +172,10 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
         err = compare_line(out_ptr, out_nl, exp_ptr, exp_nl);
         if(err == out_nl)
             ok(0, "unexpected end of line %d (got '%.*s', wanted '%.*s')\n",
-               line, out_nl-out_ptr, out_ptr, exp_nl-exp_ptr, exp_ptr);
+               line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
         else if(err)
             ok(0, "unexpected char 0x%x position %d in line %d (got '%.*s', wanted '%.*s')\n",
-               *err, err-out_ptr, line, out_nl-out_ptr, out_ptr, exp_nl-exp_ptr, exp_ptr);
+               *err, (int)(err-out_ptr), line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
 
         exp_ptr = exp_nl+1;
         out_ptr = out_nl+1;
