@@ -25,6 +25,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "shell32_main.h"
 
@@ -44,8 +45,7 @@ typedef SHChangeNotifyEntry *LPNOTIFYREGISTER;
 /* internal list of notification clients (internal) */
 typedef struct _NOTIFICATIONLIST
 {
-	struct _NOTIFICATIONLIST *next;
-	struct _NOTIFICATIONLIST *prev;
+	struct list entry;
 	HWND hwnd;		/* window to notify */
 	DWORD uMsg;		/* message to send */
 	LPNOTIFYREGISTER apidl; /* array of entries to watch*/
@@ -57,7 +57,7 @@ typedef struct _NOTIFICATIONLIST
     
 } NOTIFICATIONLIST, *LPNOTIFICATIONLIST;
 
-static NOTIFICATIONLIST *head, *tail;
+static struct list notifications = LIST_INIT( notifications );
 
 #define SHCNE_NOITEMEVENTS ( \
    SHCNE_ASSOCCHANGED )
@@ -117,24 +117,10 @@ static const char * NodeName(const NOTIFICATIONLIST *item)
     return str;
 }
 
-static void AddNode(LPNOTIFICATIONLIST item)
-{
-    TRACE("item %p\n", item );
-
-    /* link items */
-    item->prev = tail;
-    item->next = NULL;
-    if( tail )
-        tail->next = item;
-    else
-        head = item;
-    tail = item;
-}
-
 static LPNOTIFICATIONLIST FindNode( HANDLE hitem )
 {
     LPNOTIFICATIONLIST ptr;
-    for( ptr = head; ptr; ptr = ptr->next )
+    LIST_FOR_EACH_ENTRY( ptr, &notifications, NOTIFICATIONLIST, entry )
         if( ptr == hitem )
             return ptr;
     return NULL;
@@ -144,17 +130,10 @@ static void DeleteNode(LPNOTIFICATIONLIST item)
 {
     UINT i;
 
-    TRACE("item=%p prev=%p next=%p\n", item, item->prev, item->next);
+    TRACE("item=%p\n", item);
 
     /* remove item from list */
-    if( item->prev )
-        item->prev->next = item->next;
-    else
-        head = item->next;
-    if( item->next )
-        item->next->prev = item->prev;
-    else
-        tail = item->prev;
+    list_remove( &item->entry );
 
     /* free the item */
     for (i=0; i<item->cidl; i++)
@@ -169,12 +148,14 @@ void InitChangeNotifications(void)
 
 void FreeChangeNotifications(void)
 {
+    LPNOTIFICATIONLIST ptr, next;
+
     TRACE("\n");
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
-    while( head )
-        DeleteNode( head );
+    LIST_FOR_EACH_ENTRY_SAFE( ptr, next, &notifications, NOTIFICATIONLIST, entry )
+        DeleteNode( ptr );
 
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
@@ -202,8 +183,6 @@ SHChangeNotifyRegister(
     TRACE("(%p,0x%08x,0x%08x,0x%08x,%d,%p) item=%p\n",
 	hwnd, fSources, wEventMask, uMsg, cItems, lpItems, item);
 
-    item->next = NULL;
-    item->prev = NULL;
     item->cidl = cItems;
     item->apidl = SHAlloc(sizeof(SHChangeNotifyEntry) * cItems);
     for(i=0;i<cItems;i++)
@@ -221,7 +200,7 @@ SHChangeNotifyRegister(
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
-    AddNode(item);
+    list_add_tail( &notifications, &item->entry );
 
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
@@ -349,7 +328,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
     /* loop through the list */
-    for( ptr = head; ptr; ptr = ptr->next )
+    LIST_FOR_EACH_ENTRY( ptr, &notifications, NOTIFICATIONLIST, entry )
     {
         BOOL notify;
         DWORD i;
