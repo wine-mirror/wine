@@ -435,7 +435,7 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG IoControlCode,
     instance->irp = irp;
     list_add_tail( &Irps, &instance->entry );
 
-    irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation - 1;
+    irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = InternalDeviceIoControl ?
             IRP_MJ_INTERNAL_DEVICE_CONTROL : IRP_MJ_DEVICE_CONTROL;
     irpsp->Parameters.DeviceIoControl.IoControlCode = IoControlCode;
