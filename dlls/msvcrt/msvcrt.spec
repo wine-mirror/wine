@@ -815,8 +815,9 @@
 # stub _set_output_format
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
-@ cdecl -i386 -norelay _setjmp(ptr) MSVCRT__setjmp
-@ cdecl -i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) MSVCRT__setjmp
+@ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -arch=x86_64 -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
 @ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
@@ -1299,6 +1300,7 @@
 @ varargs scanf(str) MSVCRT_scanf
 # stub scanf_s
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
+@ cdecl -arch=x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long) MSVCRT_signal

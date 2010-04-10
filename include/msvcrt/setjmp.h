@@ -42,12 +42,53 @@ typedef struct __JUMP_BUFFER
     unsigned long UnwindData[6];
 } _JUMP_BUFFER;
 
-#endif /* __i386__ */
+#define _JBLEN 16
+#define _JBTYPE int
 
-#define _JBLEN                     16
-#define _JBTYPE                    int
-typedef _JBTYPE                    jmp_buf[_JBLEN];
+#elif defined(__x86_64__)
 
+typedef struct _SETJMP_FLOAT128
+{
+    unsigned __int64 DECLSPEC_ALIGN(16) Part[2];
+} SETJMP_FLOAT128;
+
+typedef struct _JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Rbx;
+    unsigned __int64 Rsp;
+    unsigned __int64 Rbp;
+    unsigned __int64 Rsi;
+    unsigned __int64 Rdi;
+    unsigned __int64 R12;
+    unsigned __int64 R13;
+    unsigned __int64 R14;
+    unsigned __int64 R15;
+    unsigned __int64 Rip;
+    unsigned __int64 Spare;
+    SETJMP_FLOAT128  Xmm6;
+    SETJMP_FLOAT128  Xmm7;
+    SETJMP_FLOAT128  Xmm8;
+    SETJMP_FLOAT128  Xmm9;
+    SETJMP_FLOAT128  Xmm10;
+    SETJMP_FLOAT128  Xmm11;
+    SETJMP_FLOAT128  Xmm12;
+    SETJMP_FLOAT128  Xmm13;
+    SETJMP_FLOAT128  Xmm14;
+    SETJMP_FLOAT128  Xmm15;
+} _JUMP_BUFFER;
+
+#define _JBLEN  16
+typedef SETJMP_FLOAT128 _JBTYPE;
+
+#else
+
+#define _JBLEN 1
+#define _JBTYPE int
+
+#endif
+
+typedef _JBTYPE jmp_buf[_JBLEN];
 
 #ifdef __cplusplus
 extern "C" {
