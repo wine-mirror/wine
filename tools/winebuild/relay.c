@@ -984,46 +984,46 @@ static void build_call_from_regs_x86_64(void)
     output( "\t.text\n" );
     function_header( "__wine_call_from_regs" );
 
-    output( "\t.cfi_startproc\n" );
+    output_cfi( ".cfi_startproc" );
     output( "\tsubq $%u,%%rsp\n", STACK_SPACE );
-    output( "\t.cfi_adjust_cfa_offset %u\n", STACK_SPACE );
+    output_cfi( ".cfi_adjust_cfa_offset %u", STACK_SPACE );
 
     /* save registers into the context */
 
     output( "\tmovq %%rax,0x78(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rax,0x78\n" );
+    output_cfi( ".cfi_rel_offset %%rax,0x78" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 16 );  /* saved %rcx on stack */
     output( "\tmovq %%rax,0x80(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rcx,0x80\n" );
+    output_cfi( ".cfi_rel_offset %%rcx,0x80" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 24 );  /* saved %rdx on stack */
-    output( "\t.cfi_rel_offset %%rdx,0x88\n" );
+    output_cfi( ".cfi_rel_offset %%rdx,0x88" );
     output( "\tmovq %%rax,0x88(%%rsp)\n" );
     output( "\tmovq %%rbx,0x90(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rbx,0x90\n" );
+    output_cfi( ".cfi_rel_offset %%rbx,0x90" );
     output( "\tleaq %u(%%rsp),%%rax\n", STACK_SPACE + 16 );
     output( "\tmovq %%rax,0x98(%%rsp)\n" );
     output( "\tmovq %%rbp,0xa0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rbp,0xa0\n" );
+    output_cfi( ".cfi_rel_offset %%rbp,0xa0" );
     output( "\tmovq %%rsi,0xa8(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rsi,0xa8\n" );
+    output_cfi( ".cfi_rel_offset %%rsi,0xa8" );
     output( "\tmovq %%rdi,0xb0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%rdi,0xb0\n" );
+    output_cfi( ".cfi_rel_offset %%rdi,0xb0" );
     output( "\tmovq %%r8,0xb8(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r8,0xb8\n" );
+    output_cfi( ".cfi_rel_offset %%r8,0xb8" );
     output( "\tmovq %%r9,0xc0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r9,0xc0\n" );
+    output_cfi( ".cfi_rel_offset %%r9,0xc0" );
     output( "\tmovq %%r10,0xc8(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r10,0xc8\n" );
+    output_cfi( ".cfi_rel_offset %%r10,0xc8" );
     output( "\tmovq %%r11,0xd0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r11,0xd0\n" );
+    output_cfi( ".cfi_rel_offset %%r11,0xd0" );
     output( "\tmovq %%r12,0xd8(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r12,0xd8\n" );
+    output_cfi( ".cfi_rel_offset %%r12,0xd8" );
     output( "\tmovq %%r13,0xe0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r13,0xe0\n" );
+    output_cfi( ".cfi_rel_offset %%r13,0xe0" );
     output( "\tmovq %%r14,0xe8(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r14,0xe8\n" );
+    output_cfi( ".cfi_rel_offset %%r14,0xe8" );
     output( "\tmovq %%r15,0xf0(%%rsp)\n" );
-    output( "\t.cfi_rel_offset %%r15,0xf0\n" );
+    output_cfi( ".cfi_rel_offset %%r15,0xf0" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 8 );
     output( "\tmovq %%rax,0xf8(%%rsp)\n" );
 
@@ -1032,7 +1032,7 @@ static void build_call_from_regs_x86_64(void)
     for (i = 0; i < 16; i++)
     {
         output( "\tmovdqa %%xmm%u,0x%x(%%rsp)\n", i, 0x1a0 + 16 * i );
-        output( "\t.cfi_rel_offset %%xmm%u,0x%x\n", i, 0x1a0 + 16 * i );
+        output_cfi( ".cfi_rel_offset %%xmm%u,0x%x", i, 0x1a0 + 16 * i );
     }
 
     output( "\tmovw %%cs,0x38(%%rsp)\n" );
@@ -1056,7 +1056,7 @@ static void build_call_from_regs_x86_64(void)
     output( "\tcmpq %%rax,%%rcx\n" );
     output( "\tcmovgq %%rcx,%%rax\n" );
     output( "\tmovq %%rsp,%%rbx\n" );
-    output( "\t.cfi_def_cfa_register %%rbx\n" );
+    output_cfi( ".cfi_def_cfa_register %%rbx" );
     output( "\tleaq 16(,%%rax,8),%%rax\n" );  /* add 8 for context arg and 8 for rounding */
     output( "\tandq $~15,%%rax\n" );
     output( "\tsubq %%rax,%%rsp\n" );
@@ -1078,36 +1078,36 @@ static void build_call_from_regs_x86_64(void)
     /* restore the context structure */
 
     output( "1:\tmovq 0x80(%%rbx),%%rcx\n" );
-    output( "\t.cfi_same_value %%rcx\n" );
+    output_cfi( ".cfi_same_value %%rcx" );
     output( "\tmovq 0x88(%%rbx),%%rdx\n" );
-    output( "\t.cfi_same_value %%rdx\n" );
+    output_cfi( ".cfi_same_value %%rdx" );
     output( "\tmovq 0xa0(%%rbx),%%rbp\n" );
-    output( "\t.cfi_same_value %%rbp\n" );
+    output_cfi( ".cfi_same_value %%rbp" );
     output( "\tmovq 0xa8(%%rbx),%%rsi\n" );
-    output( "\t.cfi_same_value %%rsi\n" );
+    output_cfi( ".cfi_same_value %%rsi" );
     output( "\tmovq 0xb0(%%rbx),%%rdi\n" );
-    output( "\t.cfi_same_value %%rdi\n" );
+    output_cfi( ".cfi_same_value %%rdi" );
     output( "\tmovq 0xb8(%%rbx),%%r8\n" );
-    output( "\t.cfi_same_value %%r8\n" );
+    output_cfi( ".cfi_same_value %%r8" );
     output( "\tmovq 0xc0(%%rbx),%%r9\n" );
-    output( "\t.cfi_same_value %%r9\n" );
+    output_cfi( ".cfi_same_value %%r9" );
     output( "\tmovq 0xc8(%%rbx),%%r10\n" );
-    output( "\t.cfi_same_value %%r10\n" );
+    output_cfi( ".cfi_same_value %%r10" );
     output( "\tmovq 0xd0(%%rbx),%%r11\n" );
-    output( "\t.cfi_same_value %%r11\n" );
+    output_cfi( ".cfi_same_value %%r11" );
     output( "\tmovq 0xd8(%%rbx),%%r12\n" );
-    output( "\t.cfi_same_value %%r12\n" );
+    output_cfi( ".cfi_same_value %%r12" );
     output( "\tmovq 0xe0(%%rbx),%%r13\n" );
-    output( "\t.cfi_same_value %%r13\n" );
+    output_cfi( ".cfi_same_value %%r13" );
     output( "\tmovq 0xe8(%%rbx),%%r14\n" );
-    output( "\t.cfi_same_value %%r14\n" );
+    output_cfi( ".cfi_same_value %%r14" );
     output( "\tmovq 0xf0(%%rbx),%%r15\n" );
-    output( "\t.cfi_same_value %%r15\n" );
+    output_cfi( ".cfi_same_value %%r15" );
 
     for (i = 0; i < 16; i++)
     {
         output( "\tmovdqa 0x%x(%%rbx),%%xmm%u\n", 0x1a0 + 16 * i, i );
-        output( "\t.cfi_same_value %%xmm%u\n", i );
+        output_cfi( ".cfi_same_value %%xmm%u", i );
     }
     output( "\tfxrstor 0x100(%%rbx)\n" );
     output( "\tldmxcsr 0x34(%%rbx)\n" );
@@ -1125,15 +1125,15 @@ static void build_call_from_regs_x86_64(void)
     output( "\tmovq 0x78(%%rbx),%%rax\n" );
     output( "\tmovq 0x90(%%rbx),%%rbx\n" );
     output( "\tiretq\n" );
-    output( "\t.cfi_endproc\n" );
+    output_cfi( ".cfi_endproc" );
 
     output_function_size( "__wine_call_from_regs" );
 
     function_header( "__wine_restore_regs" );
-    output( "\t.cfi_startproc\n" );
+    output_cfi( ".cfi_startproc" );
     output( "\tmovq %%rcx,%%rbx\n" );
     output( "\tjmp 1b\n" );
-    output( "\t.cfi_endproc\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_restore_regs" );
 }
 

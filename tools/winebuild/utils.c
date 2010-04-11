@@ -874,6 +874,18 @@ void output_function_size( const char *name )
     }
 }
 
+/* output a .cfi directive */
+void output_cfi( const char *format, ... )
+{
+    va_list valist;
+
+    va_start( valist, format );
+    fputc( '\t', output_file );
+    vfprintf( output_file, format, valist );
+    fputc( '\n', output_file );
+    va_end( valist );
+}
+
 /* output the GNU note for non-exec stack */
 void output_gnu_stack_note(void)
 {

@@ -209,6 +209,8 @@ extern void warning( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void output_cfi( const char *format, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
 extern char *find_tool( const char *name, const char * const *names );
 extern const char *get_as_command(void);
 extern const char *get_ld_command(void);

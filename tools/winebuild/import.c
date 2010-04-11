@@ -672,9 +672,9 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         }
         break;
     case CPU_x86_64:
-        output( "\t.cfi_startproc\n" );
+        output_cfi( ".cfi_startproc" );
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
-        output( "\t.cfi_endproc\n" );
+        output_cfi( ".cfi_endproc" );
         break;
     case CPU_SPARC:
         if ( !UsePIC )
@@ -980,9 +980,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjmp *%%eax\n" );
         break;
     case CPU_x86_64:
-        output( "\t.cfi_startproc\n" );
+        output_cfi( ".cfi_startproc" );
         output( "\tsubq $88,%%rsp\n" );
-        output( "\t.cfi_adjust_cfa_offset 88\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 88" );
         output( "\tmovq %%rdx,80(%%rsp)\n" );
         output( "\tmovq %%rcx,72(%%rsp)\n" );
         output( "\tmovq %%r8,64(%%rsp)\n" );
@@ -998,9 +998,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tmovq 72(%%rsp),%%rcx\n" );
         output( "\tmovq 80(%%rsp),%%rdx\n" );
         output( "\taddq $88,%%rsp\n" );
-        output( "\t.cfi_adjust_cfa_offset -88\n" );
+        output_cfi( ".cfi_adjust_cfa_offset -88" );
         output( "\tjmp *%%rax\n" );
-        output( "\t.cfi_endproc\n" );
+        output_cfi( ".cfi_endproc" );
         break;
     case CPU_SPARC:
         output( "\tsave %%sp, -96, %%sp\n" );
@@ -1087,10 +1087,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_x86_64:
-                output( "\t.cfi_startproc\n" );
+                output_cfi( ".cfi_startproc" );
                 output( "\tmovq $%d,%%rax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
-                output( "\t.cfi_endproc\n" );
+                output_cfi( ".cfi_endproc" );
                 break;
             case CPU_SPARC:
                 output( "\tset %d, %%g1\n", (idx << 16) | j );
@@ -1259,9 +1259,9 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_x86_64:
-            output( "\t.cfi_startproc\n" );
+            output_cfi( ".cfi_startproc" );
             output( "\tsubq $8,%%rsp\n" );
-            output( "\t.cfi_adjust_cfa_offset 8\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 8" );
             output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
             if (exp_name)
             {
@@ -1271,7 +1271,7 @@ void output_stubs( DLLSPEC *spec )
             else
                 output( "\tmovq $%d,%%rsi\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output( "\t.cfi_endproc\n" );
+            output_cfi( ".cfi_endproc" );
             break;
         default:
             assert(0);
