@@ -3292,14 +3292,15 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
     return TRUE;
 }
+
 /***********************************************************************
  *           MENU_ExitTracking
  */
-static BOOL MENU_ExitTracking(HWND hWnd)
+static BOOL MENU_ExitTracking(HWND hWnd, BOOL bPopup)
 {
     TRACE("hwnd=%p\n", hWnd);
 
-    SendMessageW( hWnd, WM_EXITMENULOOP, 0, 0 );
+    SendMessageW( hWnd, WM_EXITMENULOOP, bPopup, 0 );
     ShowCaret(0);
     top_popup = 0;
     top_popup_hmenu = NULL;
@@ -3322,7 +3323,7 @@ void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
     {
 	MENU_InitTracking( hWnd, hMenu, FALSE, wFlags );
 	MENU_TrackMenu( hMenu, wFlags, pt.x, pt.y, hWnd, NULL );
-	MENU_ExitTracking(hWnd);
+	MENU_ExitTracking(hWnd, FALSE);
     }
 }
 
@@ -3384,7 +3385,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 
 track_menu:
     MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
-    MENU_ExitTracking( hwnd );
+    MENU_ExitTracking( hwnd, FALSE );
 }
 
 /**********************************************************************
@@ -3424,7 +3425,7 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
     if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
         ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
                               lpTpm ? &lpTpm->rcExclude : NULL );
-    MENU_ExitTracking(hWnd);
+    MENU_ExitTracking(hWnd, TRUE);
 
     return ret;
 }
