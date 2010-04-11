@@ -47,6 +47,7 @@ int verbose = 0;
 int save_temps = 0;
 int link_ext_symbols = 0;
 int force_pointer_size = 0;
+int unwind_tables = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -237,7 +238,7 @@ static const char usage_str[] =
 "   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
 "   -E, --export=FILE         Export the symbols defined in the .spec or .def file\n"
 "       --external-symbols    Allow linking to external symbols\n"
-"   -f FLAGS                  Compiler flags (only -fPIC is supported)\n"
+"   -f FLAGS                  Compiler flags (-fPIC and -fasynchronous-unwind-tables are supported)\n"
 "   -F, --filename=DLLFILE    Set the DLL filename (default: from input file name)\n"
 "       --fake-module         Create a fake binary module\n"
 "   -h, --help                Display this help message\n"
@@ -404,6 +405,8 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case 'f':
             if (!strcmp( optarg, "PIC") || !strcmp( optarg, "pic")) UsePIC = 1;
+            else if (!strcmp( optarg, "asynchronous-unwind-tables")) unwind_tables = 1;
+            else if (!strcmp( optarg, "no-asynchronous-unwind-tables")) unwind_tables = 0;
             /* ignore all other flags */
             break;
         case 'h':

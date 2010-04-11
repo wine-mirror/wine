@@ -101,8 +101,10 @@ another Unix library (for symbols defined in another dll, a
 .I forward
 specification must be used instead).
 .TP
-.BI \-f\  flags
-Ignored for compatibility with the C compiler.
+.BI \-f\  option
+Specify a code generation option. Currently \fB\-fPIC\fR and
+\fB\-fasynchronous-unwind-tables\fR are supported. Other options are
+ignored for compatibility with the C compiler.
 .TP
 .B \--fake-module
 Create a fake PE module for a dll or exe, instead of the normal

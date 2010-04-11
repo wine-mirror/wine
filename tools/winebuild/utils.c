@@ -879,6 +879,7 @@ void output_cfi( const char *format, ... )
 {
     va_list valist;
 
+    if (!unwind_tables) return;
     va_start( valist, format );
     fputc( '\t', output_file );
     vfprintf( output_file, format, valist );

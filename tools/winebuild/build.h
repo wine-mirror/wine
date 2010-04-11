@@ -315,6 +315,7 @@ extern int verbose;
 extern int save_temps;
 extern int link_ext_symbols;
 extern int force_pointer_size;
+extern int unwind_tables;
 
 extern char *input_file_name;
 extern char *spec_file_name;
