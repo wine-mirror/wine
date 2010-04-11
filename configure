@@ -607,6 +607,7 @@ SOCKETLIBS
 CRTLIBS
 TOOLSEXT
 LDPATH
+UNWINDFLAGS
 BUILTINFLAG
 EXTRACFLAGS
 LIBKSTAT
@@ -12195,6 +12196,8 @@ then
 
 $as_echo "#define __ASM_CFI(str) str" >>confdefs.h
 
+   UNWINDFLAGS=-fasynchronous-unwind-tables
+
 else
    $as_echo "#define __ASM_CFI(str) \"\"" >>confdefs.h
 
@@ -13928,6 +13931,7 @@ if test $ac_cv_cpp_def___sun__ = yes; then :
   LINTFLAGS="$LINTFLAGS -D__sun__"
 fi ;;
 esac
+
 
 
 

@@ -61,7 +61,6 @@ ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLA
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
 TARGETFLAGS  = @TARGETFLAGS@
-WINEBUILDFLAGS = $(TARGETFLAGS) $(DLLFLAGS)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi/winapi_check
 BUILDICON    = $(TOPSRCDIR)/tools/buildicon
@@ -73,7 +72,7 @@ MAKECTESTS   = $(TOOLSDIR)/tools/make_ctests$(TOOLSEXT)
 WRC          = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
 WMC          = $(TOOLSDIR)/tools/wmc/wmc$(TOOLSEXT)
 WIDL         = $(TOOLSDIR)/tools/widl/widl$(TOOLSEXT)
-WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR)
+WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR) @UNWINDFLAGS@
 CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc $(CROSSTARGET:%=-b %) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR) --lib-suffix=.cross.a
 RELPATH      = $(TOOLSDIR)/tools/relpath$(TOOLSEXT)
 SFNT2FNT     = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)
