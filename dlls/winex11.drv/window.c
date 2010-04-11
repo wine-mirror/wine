@@ -1951,16 +1951,16 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     escape.pixmap      = 0;
     escape.gl_copy     = FALSE;
 
-    if (top == hwnd && data && IsIconic( hwnd ) && data->icon_window)
-    {
-        escape.drawable = data->icon_window;
-    }
-    else if (top == hwnd)
+    if (top == hwnd)
     {
         escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
         /* GL draws to the client area even for window DCs */
         escape.gl_drawable = data ? data->client_window : X11DRV_get_client_window( hwnd );
-        if (flags & DCX_WINDOW)
+        if (data && IsIconic( hwnd ) && data->icon_window)
+        {
+            escape.drawable = data->icon_window;
+        }
+        else if (flags & DCX_WINDOW)
             escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
         else
             escape.drawable = escape.gl_drawable;

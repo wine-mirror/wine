@@ -650,6 +650,75 @@ static void test_opengl3(HDC hdc)
     }
 }
 
+static void test_minimized(void)
+{
+    PIXELFORMATDESCRIPTOR pf_desc =
+    {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,                    /* 24-bit color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        32,                    /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+    int pixel_format;
+    HWND window;
+    LONG style;
+    HGLRC ctx;
+    BOOL ret;
+    HDC dc;
+
+    window = CreateWindowA("static", "opengl32_test",
+            WS_POPUP | WS_MINIMIZE, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create window, last error %#x.\n", GetLastError());
+
+    dc = GetDC(window);
+    ok(!!dc, "Failed to get DC.\n");
+
+    pixel_format = ChoosePixelFormat(dc, &pf_desc);
+    if (!pixel_format)
+    {
+        win_skip("Failed to find pixel format.\n");
+        ReleaseDC(window, dc);
+        DestroyWindow(window);
+        return;
+    }
+
+    ret = SetPixelFormat(dc, pixel_format, &pf_desc);
+    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+
+    style = GetWindowLongA(window, GWL_STYLE);
+    ok(style & WS_MINIMIZE, "Window should be minimized, got style %#x.\n", style);
+
+    ctx = wglCreateContext(dc);
+    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+
+    ret = wglMakeCurrent(dc, ctx);
+    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+
+    style = GetWindowLongA(window, GWL_STYLE);
+    ok(style & WS_MINIMIZE, "window should be minimized, got style %#x.\n", style);
+
+    ret = wglMakeCurrent(NULL, NULL);
+    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+
+    ret = wglDeleteContext(ctx);
+    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+
+    ReleaseDC(window, dc);
+    DestroyWindow(window);
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -704,6 +773,7 @@ START_TEST(opengl)
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
 
+        test_minimized();
         test_dc(hwnd, hdc);
 
         hglrc = wglCreateContext(hdc);
