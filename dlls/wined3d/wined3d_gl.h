@@ -3919,7 +3919,7 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glUniform3iARB,                             ARB_SHADER_OBJECTS,             NULL) \
     USE_GL_FUNC(WINED3D_PFNGLUNIFORM4IARBPROC, \
             glUniform4iARB,                             ARB_SHADER_OBJECTS,             NULL) \
-    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IARBPROC, \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1FARBPROC, \
             glUniform1fARB,                             ARB_SHADER_OBJECTS,             NULL) \
     USE_GL_FUNC(WINED3D_PFNGLUNIFORM2FARBPROC, \
             glUniform2fARB,                             ARB_SHADER_OBJECTS,             NULL) \
