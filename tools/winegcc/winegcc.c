@@ -195,6 +195,7 @@ struct options
     int compile_only;
     int force_pointer_size;
     int large_address_aware;
+    int unwind_tables;
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
@@ -488,6 +489,8 @@ static strarray *get_winebuild_args(struct options *opts)
         strarray_add( spec_args, "--target" );
         strarray_add( spec_args, opts->target );
     }
+    if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
+    else strarray_add( spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;
 }
 
@@ -1224,6 +1227,10 @@ int main(int argc, char **argv)
 		case 'f':
 		    if (strcmp("-fno-short-wchar", argv[i]) == 0)
                         opts.noshortwchar = 1;
+		    else if (!strcmp("-fasynchronous-unwind-tables", argv[i]))
+                        opts.unwind_tables = 1;
+		    else if (!strcmp("-fno-asynchronous-unwind-tables", argv[i]))
+                        opts.unwind_tables = 0;
 		    break;
 		case 'l':
 		    strarray_add(opts.files, strmake("-l%s", option_arg));
