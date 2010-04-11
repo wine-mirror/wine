@@ -2149,6 +2149,22 @@ UINT WINAPI MsiMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
     return MessageBoxExW(hWnd,lpText,lpCaption,uType,wLanguageId); 
 }
 
+UINT WINAPI MsiMessageBoxExA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType,
+                DWORD unknown, WORD wLanguageId, DWORD f)
+{
+    FIXME("(%p, %s, %s, %u, 0x%08x, 0x%08x, 0x%08x): semi-stub\n", hWnd, debugstr_a(lpText),
+            debugstr_a(lpCaption), uType, unknown, wLanguageId, f);
+    return MessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId);
+}
+
+UINT WINAPI MsiMessageBoxExW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType,
+                DWORD unknown, WORD wLanguageId, DWORD f)
+{
+    FIXME("(%p, %s, %s, %u, 0x%08x, 0x%08x, 0x%08x): semi-stub\n", hWnd, debugstr_w(lpText),
+            debugstr_w(lpCaption), uType, unknown, wLanguageId, f);
+    return MessageBoxExW(hWnd, lpText, lpCaption, uType, wLanguageId);
+}
+
 UINT WINAPI MsiProvideAssemblyA( LPCSTR szAssemblyName, LPCSTR szAppContext,
                 DWORD dwInstallMode, DWORD dwAssemblyInfo, LPSTR lpPathBuf,
                 LPDWORD pcchPathBuf )
