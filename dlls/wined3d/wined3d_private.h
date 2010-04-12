@@ -1171,7 +1171,8 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
 
 enum blit_operation
 {
-    BLIT_OP_BLIT
+    BLIT_OP_BLIT,
+    BLIT_OP_COLOR_FILL
 };
 
 /* Shaders for color conversions in blits */

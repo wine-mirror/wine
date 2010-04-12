@@ -3759,16 +3759,19 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 return WINED3DERR_INVALIDCALL;
             }
 
-            /* This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0] || dstSwapchain
-                must be true if we are here */
-            if (This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0] &&
-                    !(This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer ||
-                      (dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]))) {
-                TRACE("Surface is higher back buffer, falling back to software\n");
+            if (ffp_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_COLOR_FILL,
+                                        NULL, 0, 0, NULL,
+                                        &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+            {
+                return ffp_blit.color_fill(myDevice, This, &dst_rect, color);
+            }
+            else if (cpu_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_COLOR_FILL,
+                                             NULL, 0, 0, NULL,
+                                             &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+            {
                 return cpu_blit.color_fill(myDevice, This, &dst_rect, color);
             }
-
-            return ffp_blit.color_fill(myDevice, This, &dst_rect, color);
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
@@ -4801,8 +4804,20 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
                                const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
                                const struct wined3d_format_desc *dst_format_desc)
 {
-    enum complex_fixup src_fixup = get_complex_fixup(src_format_desc->color_fixup);
+    enum complex_fixup src_fixup;
 
+    if (blit_op == BLIT_OP_COLOR_FILL)
+    {
+        if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
+        {
+            TRACE("Color fill not supported\n");
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    src_fixup = get_complex_fixup(src_format_desc->color_fixup);
     if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
     {
         TRACE("Checking support for fixup:\n");
@@ -4880,6 +4895,11 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
                                const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
                                const struct wined3d_format_desc *dst_format_desc)
 {
+    if (blit_op == BLIT_OP_COLOR_FILL)
+    {
+        return TRUE;
+    }
+
     return FALSE;
 }
 
