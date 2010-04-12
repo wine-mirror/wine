@@ -46,12 +46,28 @@ char template[] =
 "DWORD flags;\n"
 "}\n";
 
+/* Same version as above compressed with mszip */
+char compressed_template[] =
+"xof 0302tzip0064\x71\x00\x00\x00\x61\x00\x5a\x00"
+"\x43\x4B\x2B\x49\xCD\x2D\xC8\x49\x2C\x49\x55\xF0\x48\x4D\x4C\x49"
+"\x2D\xE2\xAA\xE6\xB2\x31\x76\xB1\x30\x72\x74\x32\x31\xD6\x35\x33"
+"\x72\x71\xD4\x35\x34\x74\x76\xD3\x75\x74\x32\xB6\xD4\x35\x30\x30"
+"\x32\x70\x74\x33\x37\x74\x35\x31\x36\xB6\xE3\x0A\xF7\x0F\x72\x51"
+"\xC8\x4D\xCC\xCA\x2F\xB2\x86\xB2\x33\xF3\x40\x6C\x17\x30\x27\x2D"
+"\x27\x31\xBD\xD8\x9A\xAB\x96\x8B\x0B\x00";
+
 char object[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"
 "1; 2; 3;\n"
 "}\n";
+
+/* Same version as above compressed with mszip */
+char compressed_object[] =
+"xof 0302tzip0064\x2c\x00\x00\x00\x1c\x00\x20\x00"
+"\x43\x4b\xf3\x48\x4d\x4c\x49\x2d\x52\xf0\x4f\xca\x4a\x4d\x2e\xe1"
+"\xaa\xe6\x32\xb4\x56\x30\xb2\x56\x30\xb6\xe6\xaa\xe5\xe2\x02\x00";
 
 char empty_txt_file[]  = "xof 0302txt 0064";
 char empty_bin_file[]  = "xof 0302bin 0064";
@@ -232,10 +248,10 @@ static void test_file_types(void)
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_tzip_file, sizeof(empty_tzip_file) - 1);
-    todo_wine ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_bzip_file, sizeof(empty_bzip_file) - 1);
-    todo_wine ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_cmp_file, sizeof(empty_cmp_file) - 1);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
@@ -258,13 +274,13 @@ static void test_file_types(void)
     lminfo.lpMemory = empty_tzip_file;
     lminfo.dSize = sizeof(empty_tzip_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    todo_wine ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_bzip_file;
     lminfo.dSize = sizeof(empty_bzip_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    todo_wine ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_cmp_file;
@@ -277,6 +293,52 @@ static void test_file_types(void)
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
     ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
 
+    IDirectXFile_Release(dxfile);
+}
+
+static void test_compressed_files(void)
+{
+    HRESULT hr;
+    LPDIRECTXFILE dxfile = NULL;
+    LPDIRECTXFILEENUMOBJECT enum_object;
+    LPDIRECTXFILEDATA file_data;
+    DXFILELOADMEMORY lminfo;
+    BYTE* data;
+    DWORD size;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    if (!dxfile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, compressed_template, sizeof(compressed_template) - 1);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    lminfo.lpMemory = compressed_object;
+    lminfo.dSize = sizeof(compressed_object) - 1;
+    hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+
+    hr = IDirectXFileData_GetData(file_data, NULL, &size, (void**)&data);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+
+    ok(size == 8, "Retrieved data size is wrong\n");
+    ok((*((WORD*)data) == 1) && (*((WORD*)(data+2)) == 2) && (*((DWORD*)(data+4)) == 3), "Retrieved data is wrong\n");
+
+    IDirectXFileData_Release(file_data);
+    IDirectXFileEnumObject_Release(enum_object);
     IDirectXFile_Release(dxfile);
 }
 
@@ -455,6 +517,7 @@ START_TEST(d3dxof)
     test_refcount();
     test_CreateEnumObject();
     test_file_types();
+    test_compressed_files();
     test_dump();
 
     FreeLibrary(hd3dxof);

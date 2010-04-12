@@ -1,7 +1,7 @@
 /*
  * Implementation of DirectX File Interfaces
  *
- * Copyright 2004, 2008 Christian Costa
+ * Copyright 2004, 2008, 2010 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -140,6 +140,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   HANDLE file_mapping = 0;
   LPBYTE buffer = NULL;
   HGLOBAL resource_data = 0;
+  LPBYTE decomp_buffer = NULL;
+  DWORD decomp_size = 0;
   LPBYTE file_buffer;
   DWORD file_size;
 
@@ -265,9 +267,32 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   if ((header[2] == XOFFILE_FORMAT_BINARY_MSZIP) || (header[2] == XOFFILE_FORMAT_TEXT_MSZIP))
   {
-    FIXME("Compressed format %s not supported yet\n", debugstr_fourcc(header[2]));
-    hr = DXFILEERR_BADALLOC;
-    goto error;
+    int err;
+    DWORD comp_size;
+
+    /*  0-15 -> xfile header, 16-17 -> decompressed size w/ header, 18-19 -> null,
+       20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
+       24-xx -> compressed MSZIP data */
+    decomp_size = ((WORD*)file_buffer)[10];
+    comp_size = ((WORD*)file_buffer)[11];
+
+    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
+        debugstr_fourcc(header[2]), comp_size, decomp_size);
+
+    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
+    if (!decomp_buffer)
+    {
+        ERR("Out of memory\n");
+        hr = DXFILEERR_BADALLOC;
+        goto error;
+    }
+    err = mszip_decompress(comp_size, decomp_size, (char*)file_buffer + 24, (char*)decomp_buffer);
+    if (err)
+    {
+        WARN("Error while decomrpessing mszip archive %d\n", err);
+        hr = DXFILEERR_BADALLOC;
+        goto error;
+    }
   }
 
   if ((header[3] != XOFFILE_FORMAT_FLOAT_BITS_32) && (header[3] != XOFFILE_FORMAT_FLOAT_BITS_64))
@@ -286,16 +311,26 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->hFile = hFile;
   object->file_mapping = file_mapping;
   object->buffer = buffer;
+  object->decomp_buffer = decomp_buffer;
   object->pDirectXFile = This;
   object->buf.pdxf = This;
-  object->buf.txt = (header[2] == XOFFILE_FORMAT_TEXT);
+  object->buf.txt = (header[2] == XOFFILE_FORMAT_TEXT) || (header[2] == XOFFILE_FORMAT_TEXT_MSZIP);
   object->buf.token_present = FALSE;
 
   TRACE("File size is %d bytes\n", file_size);
 
-  /* Go to data after header */
-  object->buf.buffer = file_buffer + 16;
-  object->buf.rem_bytes = file_size - 16;
+  if (decomp_size)
+  {
+    /* Use decompressed data */
+    object->buf.buffer = decomp_buffer;
+    object->buf.rem_bytes = decomp_size;
+  }
+  else
+  {
+    /* Go to data after header */
+    object->buf.buffer = file_buffer + 16;
+    object->buf.rem_bytes = file_size - 16;
+  }
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
 
@@ -334,6 +369,7 @@ error:
     CloseHandle(hFile);
   if (resource_data)
     FreeResource(resource_data);
+  HeapFree(GetProcessHeap(), 0, decomp_buffer);
   *ppEnumObj = NULL;
 
   return hr;
@@ -356,6 +392,8 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
   DWORD token_header;
   parse_buffer buf;
+  LPBYTE decomp_buffer = NULL;
+  DWORD decomp_size = 0;
 
   buf.buffer = pvData;
   buf.rem_bytes = cbSize;
@@ -400,11 +438,34 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   if ((token_header == XOFFILE_FORMAT_BINARY_MSZIP) || (token_header == XOFFILE_FORMAT_TEXT_MSZIP))
   {
-    FIXME("Compressed format %s not supported yet\n", debugstr_fourcc(token_header));
-    return DXFILEERR_BADALLOC;
+    int err;
+    DWORD comp_size;
+
+    /*  0-15 -> xfile header, 16-17 -> decompressed size w/ header, 18-19 -> null,
+       20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
+       24-xx -> compressed MSZIP data */
+    decomp_size = ((WORD*)pvData)[10];
+    comp_size = ((WORD*)pvData)[11];
+
+    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
+        debugstr_fourcc(token_header), comp_size, decomp_size);
+
+    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
+    if (!decomp_buffer)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+    err = mszip_decompress(comp_size, decomp_size, (char*)pvData + 24, (char*)decomp_buffer);
+    if (err)
+    {
+        WARN("Error while decomrpessing mszip archive %d\n", err);
+        HeapFree(GetProcessHeap(), 0, decomp_buffer);
+        return DXFILEERR_BADALLOC;
+    }
   }
 
-  if (token_header == XOFFILE_FORMAT_TEXT)
+  if ((token_header == XOFFILE_FORMAT_TEXT) || (token_header == XOFFILE_FORMAT_TEXT_MSZIP))
     buf.txt = TRUE;
 
   read_bytes(&buf, &token_header, 4);
@@ -414,7 +475,13 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   TRACE("Header is correct\n");
 
-  while (buf.rem_bytes)
+  if (decomp_size)
+  {
+    buf.buffer = decomp_buffer;
+    buf.rem_bytes = decomp_size;
+  }
+
+  while (buf.rem_bytes && is_template_available(&buf))
   {
     if (!parse_template(&buf))
     {
@@ -436,6 +503,8 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
     for (i = 0; i < This->nb_xtemplates; i++)
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
   }
+
+  HeapFree(GetProcessHeap(), 0, decomp_buffer);
 
   return DXFILE_OK;
 }
@@ -1024,6 +1093,7 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
     }
     else if (This->source == DXFILELOAD_FROMRESOURCE)
       FreeResource(This->resource_data);
+    HeapFree(GetProcessHeap(), 0, This->decomp_buffer);
     HeapFree(GetProcessHeap(), 0, This);
   }
 

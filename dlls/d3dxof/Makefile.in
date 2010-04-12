@@ -9,6 +9,7 @@ IMPORTS   = dxguid uuid ole32 advapi32 kernel32
 C_SRCS = \
 	d3dxof.c \
 	main.c \
+	mszip.c \
 	parsing.c \
 	regsvr.c
 

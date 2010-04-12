@@ -151,6 +151,7 @@ typedef struct {
     HANDLE file_mapping;
     LPBYTE buffer;
     HGLOBAL resource_data;
+    LPBYTE decomp_buffer;
     parse_buffer buf;
     IDirectXFileImpl* pDirectXFile;
     ULONG nb_xobjects;
@@ -172,5 +173,7 @@ BOOL parse_template(parse_buffer * buf);
 void dump_template(xtemplate* templates_array, xtemplate* ptemplate);
 BOOL is_template_available(parse_buffer * buf);
 BOOL parse_object(parse_buffer * buf);
+
+int mszip_decompress(int inlen, int outlen, char* inbuffer, char* outbuffer);
 
 #endif /* __D3DXOF_PRIVATE_INCLUDED__ */
