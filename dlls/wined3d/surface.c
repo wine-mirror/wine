@@ -2224,18 +2224,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_R5G5_SNORM_L6_UNORM:
-            *convert = CONVERT_L6V5U5;
-            if (gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                desc->conv_byte_count = 3;
-                /* Use format and types from table */
-            } else {
-                /* Load it into unsigned R5G6B5, swap L and V channels, and revert that in the shader */
-                desc->conv_byte_count = 2;
-            }
-            break;
-
         case WINED3DFMT_L4A4_UNORM:
             /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
              * format+type combination to load it. Thus convert it to A8L8, then load it
@@ -2385,8 +2373,6 @@ void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL 
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width,
         UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *This)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const BYTE *source;
     BYTE *dest;
     TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert,This);
@@ -2531,61 +2517,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             }
         }
         break;
-
-        case CONVERT_L6V5U5:
-        {
-            unsigned int x, y;
-            const WORD *Source;
-            unsigned char *Dest;
-
-            if (gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                /* This makes the gl surface bigger(24 bit instead of 16), but it works with
-                 * fixed function and shaders without further conversion once the surface is
-                 * loaded
-                 */
-                for(y = 0; y < height; y++) {
-                    Source = (const WORD *)(src + y * pitch);
-                    Dest = dst + y * outpitch;
-                    for (x = 0; x < width; x++ ) {
-                        short color = (*Source++);
-                        unsigned char l = ((color >> 10) & 0xfc);
-                                  char v = ((color >>  5) & 0x3e);
-                                  char u = ((color      ) & 0x1f);
-
-                        /* 8 bits destination, 6 bits source, 8th bit is the sign. gl ignores the sign
-                         * and doubles the positive range. Thus shift left only once, gl does the 2nd
-                         * shift. GL reads a signed value and converts it into an unsigned value.
-                         */
-                        /* M */ Dest[2] = l << 1;
-
-                        /* Those are read as signed, but kept signed. Just left-shift 3 times to scale
-                         * from 5 bit values to 8 bit values.
-                         */
-                        /* V */ Dest[1] = v << 3;
-                        /* U */ Dest[0] = u << 3;
-                        Dest += 3;
-                    }
-                }
-            } else {
-                for(y = 0; y < height; y++) {
-                    unsigned short *Dest_s = (unsigned short *) (dst + y * outpitch);
-                    Source = (const WORD *)(src + y * pitch);
-                    for (x = 0; x < width; x++ ) {
-                        short color = (*Source++);
-                        unsigned char l = ((color >> 10) & 0xfc);
-                                 short v = ((color >>  5) & 0x3e);
-                                 short u = ((color      ) & 0x1f);
-                        short v_conv = v + 16;
-                        short u_conv = u + 16;
-
-                        *Dest_s = ((v_conv << 11) & 0xf800) | ((l << 5) & 0x7e0) | (u_conv & 0x1f);
-                        Dest_s += 1;
-                    }
-                }
-            }
-            break;
-        }
 
         case CONVERT_A4L4:
         {

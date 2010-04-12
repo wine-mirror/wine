@@ -241,6 +241,66 @@ struct wined3d_format_texture_info
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
 
+static void convert_r5g5_snorm_l6_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const WORD *Source;
+
+    for(y = 0; y < height; y++)
+    {
+        unsigned short *Dest_s = (unsigned short *) (dst + y * pitch);
+        Source = (const WORD *)(src + y * pitch);
+        for (x = 0; x < width; x++ )
+        {
+            short color = (*Source++);
+            unsigned char l = ((color >> 10) & 0xfc);
+                    short v = ((color >>  5) & 0x3e);
+                    short u = ((color      ) & 0x1f);
+            short v_conv = v + 16;
+            short u_conv = u + 16;
+
+            *Dest_s = ((v_conv << 11) & 0xf800) | ((l << 5) & 0x7e0) | (u_conv & 0x1f);
+            Dest_s += 1;
+        }
+    }
+}
+
+static void convert_r5g5_snorm_l6_unorm_nv(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const WORD *Source;
+    unsigned char *Dest;
+    UINT outpitch = (pitch * 3)/2;
+
+    /* This makes the gl surface bigger(24 bit instead of 16), but it works with
+     * fixed function and shaders without further conversion once the surface is
+     * loaded
+     */
+    for(y = 0; y < height; y++) {
+        Source = (const WORD *)(src + y * pitch);
+        Dest = dst + y * outpitch;
+        for (x = 0; x < width; x++ ) {
+            short color = (*Source++);
+            unsigned char l = ((color >> 10) & 0xfc);
+                     char v = ((color >>  5) & 0x3e);
+                     char u = ((color      ) & 0x1f);
+
+            /* 8 bits destination, 6 bits source, 8th bit is the sign. gl ignores the sign
+             * and doubles the positive range. Thus shift left only once, gl does the 2nd
+             * shift. GL reads a signed value and converts it into an unsigned value.
+             */
+            /* M */ Dest[2] = l << 1;
+
+            /* Those are read as signed, but kept signed. Just left-shift 3 times to scale
+             * from 5 bit values to 8 bit values.
+             */
+            /* V */ Dest[1] = v << 3;
+            /* U */ Dest[0] = u << 3;
+            Dest += 3;
+        }
+    }
+}
+
 static void convert_r8g8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -549,13 +609,13 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             NV_TEXTURE_SHADER,          NULL},
     {WINED3DFMT_R5G5_SNORM_L6_UNORM,    GL_RGB5,                          GL_RGB5,                                0,
-            GL_RGB,                     GL_UNSIGNED_SHORT_5_6_5,          0,
+            GL_RGB,                     GL_UNSIGNED_SHORT_5_6_5,          2,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            WINED3D_GL_EXT_NONE,        NULL},
+            WINED3D_GL_EXT_NONE,        &convert_r5g5_snorm_l6_unorm},
     {WINED3DFMT_R5G5_SNORM_L6_UNORM,    GL_DSDT8_MAG8_NV,                 GL_DSDT8_MAG8_NV,                       0,
-            GL_DSDT_MAG_NV,             GL_BYTE,                          0,
+            GL_DSDT_MAG_NV,             GL_BYTE,                          3,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            NV_TEXTURE_SHADER,          NULL},
+            NV_TEXTURE_SHADER,          &convert_r5g5_snorm_l6_unorm_nv},
     {WINED3DFMT_R8G8_SNORM_L8X8_UNORM,  GL_RGB8,                          GL_RGB8,                                0,
             GL_BGRA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      4,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
