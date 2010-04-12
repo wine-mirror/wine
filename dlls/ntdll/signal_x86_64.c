@@ -1610,10 +1610,10 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 
 extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   ".cfi_signal_frame\n\t"
-                   ".cfi_def_cfa %rbp,144\n\t"  /* red zone + rip + rbp */
-                   ".cfi_rel_offset %rip,8\n\t"
-                   ".cfi_rel_offset %rbp,0\n\t"
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   __ASM_CFI(".cfi_def_cfa %rbp,144\n\t")  /* red zone + rip + rbp */
+                   __ASM_CFI(".cfi_rel_offset %rip,8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "call *%rdx\n\t"
                    "int $3")
 
@@ -2975,14 +2975,14 @@ void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 extern void DECLSPEC_NORETURN call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg );
 __ASM_GLOBAL_FUNC( call_thread_entry_point,
                    "subq $8,%rsp\n\t"
-                   ".cfi_adjust_cfa_offset 8\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "movq %rsp,%rdx\n\t"
                    "call " __ASM_NAME("call_thread_func") );
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "subq $8,%rsp\n\t"
-                   ".cfi_adjust_cfa_offset 8\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "movq %rdx,%rsp\n\t"
                    "call *%rsi" );
 

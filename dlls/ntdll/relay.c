@@ -353,14 +353,14 @@ __ASM_GLOBAL_FUNC( call_entry_point,
 #else
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "pushq %rbp\n\t"
-                   ".cfi_adjust_cfa_offset 8\n\t"
-                   ".cfi_rel_offset %rbp,0\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
-                   ".cfi_def_cfa_register %rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "pushq %rsi\n\t"
-                   ".cfi_rel_offset %rsi,-8\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
                    "pushq %rdi\n\t"
-                   ".cfi_rel_offset %rdi,-16\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
                    "movq %rcx,%rax\n\t"
                    "movq $4,%rcx\n\t"
                    "cmp %rcx,%rdx\n\t"
@@ -378,13 +378,13 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "callq *%rax\n\t"
                    "leaq -16(%rbp),%rsp\n\t"
                    "popq %rdi\n\t"
-                   ".cfi_same_value %rdi\n\t"
+                   __ASM_CFI(".cfi_same_value %rdi\n\t")
                    "popq %rsi\n\t"
-                   ".cfi_same_value %rsi\n\t"
-                   ".cfi_def_cfa_register %rsp\n\t"
+                   __ASM_CFI(".cfi_same_value %rsi\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
                    "popq %rbp\n\t"
-                   ".cfi_adjust_cfa_offset -8\n\t"
-                   ".cfi_same_value %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 #endif
 
