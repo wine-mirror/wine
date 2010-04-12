@@ -312,12 +312,17 @@ static void output_call16_function( ORDDEF *odp )
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration(name) );
     output( "%s:\n", name );
+    output_cfi( ".cfi_startproc" );
     output( "\tpushl %%ebp\n" );
+    output_cfi( ".cfi_adjust_cfa_offset 4" );
+    output_cfi( ".cfi_rel_offset %%ebp,0" );
     output( "\tmovl %%esp,%%ebp\n" );
+    output_cfi( ".cfi_def_cfa_register %%ebp" );
     stack_words = 2;
     if (needs_ldt)
     {
         output( "\tpushl %%esi\n" );
+        output_cfi( ".cfi_rel_offset %%esi,-4" );
         stack_words++;
         if (UsePIC)
         {
@@ -390,10 +395,16 @@ static void output_call16_function( ORDDEF *odp )
 
     output( "\tcall *8(%%ebp)\n" );
 
-    if (needs_ldt) output( "\tmovl -4(%%ebp),%%esi\n" );
-
+    if (needs_ldt)
+    {
+        output( "\tmovl -4(%%ebp),%%esi\n" );
+        output_cfi( ".cfi_same_value %%esi" );
+    }
     output( "\tleave\n" );
+    output_cfi( ".cfi_def_cfa %%esp,4" );
+    output_cfi( ".cfi_same_value %%ebp" );
     output( "\tret\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( name );
 }
 

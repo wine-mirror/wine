@@ -386,13 +386,20 @@ static void BuildCallTo16Core( int reg_func )
     function_header( name );
 
     /* Function entry sequence */
+    output_cfi( ".cfi_startproc" );
     output( "\tpushl %%ebp\n" );
+    output_cfi( ".cfi_adjust_cfa_offset 4" );
+    output_cfi( ".cfi_rel_offset %%ebp,0" );
     output( "\tmovl %%esp, %%ebp\n" );
+    output_cfi( ".cfi_def_cfa_register %%ebp" );
 
     /* Save the 32-bit registers */
     output( "\tpushl %%ebx\n" );
+    output_cfi( ".cfi_rel_offset %%ebx,-4" );
     output( "\tpushl %%esi\n" );
+    output_cfi( ".cfi_rel_offset %%esi,-8" );
     output( "\tpushl %%edi\n" );
+    output_cfi( ".cfi_rel_offset %%edi,-12" );
     output( "\t.byte 0x64\n\tmov %%gs,(%d)\n", GS_OFFSET );
 
     /* Setup exception frame */
@@ -443,12 +450,18 @@ static void BuildCallTo16Core( int reg_func )
 
     /* Restore the 32-bit registers */
     output( "\tpopl %%edi\n" );
+    output_cfi( ".cfi_same_value %%edi" );
     output( "\tpopl %%esi\n" );
+    output_cfi( ".cfi_same_value %%esi" );
     output( "\tpopl %%ebx\n" );
+    output_cfi( ".cfi_same_value %%ebx" );
 
     /* Function exit sequence */
     output( "\tpopl %%ebp\n" );
+    output_cfi( ".cfi_def_cfa %%esp,4" );
+    output_cfi( ".cfi_same_value %%ebp" );
     output( "\tret $12\n" );
+    output_cfi( ".cfi_endproc" );
 
 
     /* Start of the actual CallTo16 routine */
@@ -652,11 +665,18 @@ static void BuildCallTo32CBClient( int isEx )
 
     /* Entry code */
 
+    output_cfi( ".cfi_startproc" );
     output( "\tpushl %%ebp\n" );
+    output_cfi( ".cfi_adjust_cfa_offset 4" );
+    output_cfi( ".cfi_rel_offset %%ebp,0" );
     output( "\tmovl %%esp,%%ebp\n" );
+    output_cfi( ".cfi_def_cfa_register %%ebp" );
     output( "\tpushl %%edi\n" );
+    output_cfi( ".cfi_rel_offset %%edi,-4" );
     output( "\tpushl %%esi\n" );
+    output_cfi( ".cfi_rel_offset %%esi,-8" );
     output( "\tpushl %%ebx\n" );
+    output_cfi( ".cfi_rel_offset %%ebx,-12" );
 
     /* Get pointer to temporary area and save the 32-bit stack pointer */
 
@@ -694,10 +714,16 @@ static void BuildCallTo32CBClient( int isEx )
     /* Restore registers and return */
 
     output( "\tpopl %%ebx\n" );
+    output_cfi( ".cfi_same_value %%ebx" );
     output( "\tpopl %%esi\n" );
+    output_cfi( ".cfi_same_value %%esi" );
     output( "\tpopl %%edi\n" );
+    output_cfi( ".cfi_same_value %%edi" );
     output( "\tpopl %%ebp\n" );
+    output_cfi( ".cfi_def_cfa %%esp,4" );
+    output_cfi( ".cfi_same_value %%ebp" );
     output( "\tret\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
 
     /* '16-bit' return stub */
@@ -757,8 +783,12 @@ static void build_call_from_regs_x86(void)
 
     /* Allocate some buffer space on the stack */
 
+    output_cfi( ".cfi_startproc" );
     output( "\tpushl %%ebp\n" );
-    output( "\tmovl %%esp,%%ebp\n ");
+    output_cfi( ".cfi_adjust_cfa_offset 4" );
+    output_cfi( ".cfi_rel_offset %%ebp,0" );
+    output( "\tmovl %%esp,%%ebp\n" );
+    output_cfi( ".cfi_def_cfa_register %%ebp" );
     output( "\tleal -%d(%%esp),%%esp\n", STACK_SPACE );
 
     /* Build the context structure */
@@ -846,11 +876,14 @@ static void build_call_from_regs_x86(void)
 
     output( "\tpopl %%ds\n" );
     output( "\tiret\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_call_from_regs" );
 
     function_header( "__wine_restore_regs" );
+    output_cfi( ".cfi_startproc" );
     output( "\tmovl 4(%%esp),%%ecx\n" );
     output( "\tjmp 2b\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_restore_regs" );
 }
 
