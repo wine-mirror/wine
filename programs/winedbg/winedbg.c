@@ -91,7 +91,7 @@ DWORD_PTR	        dbg_curr_pid = 0;
 CONTEXT                 dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 
-static struct dbg_process*      dbg_process_list = NULL;
+static struct list      dbg_process_list = LIST_INIT(dbg_process_list);
 
 struct dbg_internal_var         dbg_internal_vars[DBG_IV_LAST];
 static HANDLE                   dbg_houtput;
@@ -259,30 +259,25 @@ const struct dbg_internal_var* dbg_get_internal_var(const char* name)
 
 unsigned         dbg_num_processes(void)
 {
-    struct dbg_process*	p;
-    unsigned            num = 0;
-
-    for (p = dbg_process_list; p; p = p->next)
-	num++;
-    return num;
+    return list_count(&dbg_process_list);
 }
 
 struct dbg_process*     dbg_get_process(DWORD pid)
 {
     struct dbg_process*	p;
 
-    for (p = dbg_process_list; p; p = p->next)
-	if (p->pid == pid) break;
-    return p;
+    LIST_FOR_EACH_ENTRY(p, &dbg_process_list, struct dbg_process, entry)
+	if (p->pid == pid) return p;
+    return NULL;
 }
 
 struct dbg_process*     dbg_get_process_h(HANDLE h)
 {
     struct dbg_process*	p;
 
-    for (p = dbg_process_list; p; p = p->next)
-	if (p->handle == h) break;
-    return p;
+    LIST_FOR_EACH_ENTRY(p, &dbg_process_list, struct dbg_process, entry)
+	if (p->handle == h) return p;
+    return NULL;
 }
 
 struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h)
@@ -323,10 +318,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->source_start_line = -1;
     p->source_end_line = -1;
 
-    p->next = dbg_process_list;
-    p->prev = NULL;
-    if (dbg_process_list) dbg_process_list->prev = p;
-    dbg_process_list = p;
+    list_add_head(&dbg_process_list, &p->entry);
     return p;
 }
 
@@ -353,9 +345,7 @@ void dbg_del_process(struct dbg_process* p)
     HeapFree(GetProcessHeap(), 0, p->delayed_bp);
     source_nuke_path(p);
     source_free_files(p);
-    if (p->prev) p->prev->next = p->next;
-    if (p->next) p->next->prev = p->prev;
-    if (p == dbg_process_list) dbg_process_list = p->next;
+    list_remove(&p->entry);
     if (p == dbg_curr_process) dbg_curr_process = NULL;
     HeapFree(GetProcessHeap(), 0, (char*)p->imageName);
     HeapFree(GetProcessHeap(), 0, p);
@@ -541,14 +531,16 @@ void dbg_set_option(const char* option, const char* val)
 
 BOOL dbg_interrupt_debuggee(void)
 {
-    if (!dbg_process_list) return FALSE;
+    struct dbg_process* p;
+    if (list_empty(&dbg_process_list)) return FALSE;
     /* FIXME: since we likely have a single process, signal the first process
      * in list
      */
-    if (dbg_process_list->next) dbg_printf("Ctrl-C: only stopping the first process\n");
+    p = LIST_ENTRY(list_head(&dbg_process_list), struct dbg_process, entry);
+    if (list_next(&dbg_process_list, &p->entry)) dbg_printf("Ctrl-C: only stopping the first process\n");
     else dbg_printf("Ctrl-C: stopping debuggee\n");
-    dbg_process_list->continue_on_first_exception = FALSE;
-    return DebugBreakProcess(dbg_process_list->handle);
+    p->continue_on_first_exception = FALSE;
+    return DebugBreakProcess(p->handle);
 }
 
 static BOOL WINAPI ctrl_c_handler(DWORD dwCtrlType)
@@ -596,6 +588,9 @@ static int dbg_winedbg_usage(BOOL advanced)
 
 void dbg_start_interactive(HANDLE hFile)
 {
+    struct dbg_process* p;
+    struct dbg_process* p2;
+
     if (dbg_curr_process)
     {
         dbg_printf("WineDbg starting on pid %04lx\n", dbg_curr_pid);
@@ -605,8 +600,8 @@ void dbg_start_interactive(HANDLE hFile)
     dbg_interactiveP = TRUE;
     parser_handle(hFile);
 
-    while (dbg_process_list)
-        dbg_process_list->process_io->close_process(dbg_process_list, FALSE);
+    LIST_FOR_EACH_ENTRY_SAFE(p, p2, &dbg_process_list, struct dbg_process, entry)
+        p->process_io->close_process(p, FALSE);
 
     dbg_save_internal_vars();
 }

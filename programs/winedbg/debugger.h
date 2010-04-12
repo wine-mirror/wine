@@ -37,6 +37,7 @@
 #include "cvconst.h"
 #include "objbase.h"
 #include "oaidl.h"
+#include <wine/list.h>
 
 #define ADDRSIZE        (be_cpu->pointer_size)
 #define ADDRWIDTH       (ADDRSIZE * 2)
@@ -217,6 +218,7 @@ struct dbg_delayed_bp
 #define MAX_BREAKPOINTS 100
 struct dbg_process
 {
+    struct list                 entry;
     HANDLE			handle;
     DWORD			pid;
     const struct be_process_io* process_io;
@@ -234,8 +236,6 @@ struct dbg_process
     char                        source_current_file[MAX_PATH];
     int                         source_start_line;
     int                         source_end_line;
-    struct dbg_process* 	next;
-    struct dbg_process* 	prev;
 };
 
 /* describes the way the debugger interacts with a given process */
