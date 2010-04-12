@@ -511,3 +511,32 @@ void * CDECL _aligned_realloc(void *memblock, MSVCRT_size_t size, MSVCRT_size_t 
     TRACE("(%p, %lu, %lu)\n", memblock, size, alignment);
     return _aligned_offset_realloc(memblock, size, alignment, 0);
 }
+
+/*********************************************************************
+ *		memmove_s (MSVCRT.@)
+ */
+int CDECL memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
+{
+    TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
+
+    if(!count)
+        return 0;
+
+    if(!dest || !src) {
+        if(dest)
+            memset(dest, 0, numberOfElements);
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(count > numberOfElements) {
+        memset(dest, 0, numberOfElements);
+
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    memmove(dest, src, count);
+    return 0;
+}

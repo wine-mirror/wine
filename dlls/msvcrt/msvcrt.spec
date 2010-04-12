@@ -1267,9 +1267,9 @@
 @ cdecl memchr(ptr long long) ntdll.memchr
 @ cdecl memcmp(ptr ptr long) ntdll.memcmp
 @ cdecl memcpy(ptr ptr long) ntdll.memcpy
-# stub memcpy_s
+@ cdecl memcpy_s(ptr long ptr long) memmove_s
 @ cdecl memmove(ptr ptr long) ntdll.memmove
-# stub memmove_s
+@ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long) ntdll.memset
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf

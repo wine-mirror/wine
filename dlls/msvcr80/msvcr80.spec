@@ -1335,9 +1335,9 @@
 @ cdecl memchr(ptr long long) msvcrt.memchr
 @ cdecl memcmp(ptr ptr long) msvcrt.memcmp
 @ cdecl memcpy(ptr ptr long) msvcrt.memcpy
-@ stub memcpy_s
+@ cdecl memcpy_s(ptr long ptr long) msvcrt.memcpy_s
 @ cdecl memmove(ptr ptr long) msvcrt.memmove
-@ stub memmove_s
+@ cdecl memmove_s(ptr long ptr long) msvcrt.memmove_s
 @ cdecl memset(ptr long long) msvcrt.memset
 @ cdecl modf(double ptr) msvcrt.modf
 @ cdecl perror(str) msvcrt.perror
