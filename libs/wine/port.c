@@ -139,20 +139,20 @@ __declspec(naked) int wine_call_on_stack( int (*func)(void *), void *arg, void *
 #elif defined(__x86_64__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "pushq %rbp\n\t"
-                   ".cfi_adjust_cfa_offset 8\n\t"
-                   ".cfi_rel_offset %rbp,0\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
-                   ".cfi_def_cfa_register %rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "movq %rdi,%rax\n\t" /* func */
                    "movq %rsi,%rdi\n\t" /* arg */
                    "andq $~15,%rdx\n\t" /* stack */
                    "movq %rdx,%rsp\n\t"
                    "callq *%rax\n\t"    /* call func */
                    "movq %rbp,%rsp\n\t"
-                   ".cfi_def_cfa_register %rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
                    "popq %rbp\n\t"
-                   ".cfi_adjust_cfa_offset -8\n\t"
-                   ".cfi_same_value %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 #elif defined(__powerpc__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_call_on_stack,
