@@ -645,9 +645,10 @@ void output_get_pc_thunk(void)
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
     output( "%s:\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-    output( "\tpopl %%eax\n" );
-    output( "\tpushl %%eax\n" );
+    output_cfi( ".cfi_startproc" );
+    output( "\tmovl (%%esp),%%eax\n" );
     output( "\tret\n" );
+    output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_spec_get_pc_thunk_eax" );
 }
 
@@ -657,6 +658,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     output( "\n\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration(name) );
     output( "%s\n", asm_globl(name) );
+    output_cfi( ".cfi_startproc" );
 
     switch(target_cpu)
     {
@@ -672,9 +674,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         }
         break;
     case CPU_x86_64:
-        output_cfi( ".cfi_startproc" );
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
-        output_cfi( ".cfi_endproc" );
         break;
     case CPU_SPARC:
         if ( !UsePIC )
@@ -725,6 +725,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tbctr\n" );
         break;
     }
+    output_cfi( ".cfi_endproc" );
     output_function_size( name );
 }
 
@@ -968,19 +969,25 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "%s:\n", asm_name(delayed_import_loaders));
     output( "\t%s\n", func_declaration("__wine_delay_load_asm") );
     output( "%s:\n", asm_name("__wine_delay_load_asm") );
+    output_cfi( ".cfi_startproc" );
     switch(target_cpu)
     {
     case CPU_x86:
         output( "\tpushl %%ecx\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 4" );
         output( "\tpushl %%edx\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 4" );
         output( "\tpushl %%eax\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 4" );
         output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+        output_cfi( ".cfi_adjust_cfa_offset -4" );
         output( "\tpopl %%edx\n" );
+        output_cfi( ".cfi_adjust_cfa_offset -4" );
         output( "\tpopl %%ecx\n" );
+        output_cfi( ".cfi_adjust_cfa_offset -4" );
         output( "\tjmp *%%eax\n" );
         break;
     case CPU_x86_64:
-        output_cfi( ".cfi_startproc" );
         output( "\tsubq $88,%%rsp\n" );
         output_cfi( ".cfi_adjust_cfa_offset 88" );
         output( "\tmovq %%rdx,80(%%rsp)\n" );
@@ -1000,7 +1007,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\taddq $88,%%rsp\n" );
         output_cfi( ".cfi_adjust_cfa_offset -88" );
         output( "\tjmp *%%rax\n" );
-        output_cfi( ".cfi_endproc" );
         break;
     case CPU_SPARC:
         output( "\tsave %%sp, -96, %%sp\n" );
@@ -1068,6 +1074,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tbctr\n");
         break;
     }
+    output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_delay_load_asm" );
     output( "\n" );
 
@@ -1080,6 +1087,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             const char *name = odp->name ? odp->name : odp->export_name;
 
             output( ".L__wine_delay_imp_%d_%s:\n", i, name );
+            output_cfi( ".cfi_startproc" );
             switch(target_cpu)
             {
             case CPU_x86:
@@ -1087,10 +1095,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_x86_64:
-                output_cfi( ".cfi_startproc" );
                 output( "\tmovq $%d,%%rax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
-                output_cfi( ".cfi_endproc" );
                 break;
             case CPU_SPARC:
                 output( "\tset %d, %%g1\n", (idx << 16) | j );
@@ -1132,6 +1138,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 }
                 break;
             }
+            output_cfi( ".cfi_endproc" );
         }
         idx++;
     }
@@ -1214,6 +1221,7 @@ void output_stubs( DLLSPEC *spec )
         output( "\t.align %d\n", get_alignment(4) );
         output( "\t%s\n", func_declaration(name) );
         output( "%s:\n", asm_name(name) );
+        output_cfi( ".cfi_startproc" );
 
         switch (target_cpu)
         {
@@ -1229,7 +1237,8 @@ void output_stubs( DLLSPEC *spec )
             output(" \tnop\n" );
             output(" \tnop\n" );
 
-            output( "\tsubl $4,%%esp\n" );
+            output( "\tsubl $12,%%esp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 12" );
             if (UsePIC)
             {
                 output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
@@ -1237,29 +1246,28 @@ void output_stubs( DLLSPEC *spec )
                 if (exp_name)
                 {
                     output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
-                    output( "\tpushl %%ecx\n" );
+                    output( "\tmovl %%ecx,4(%%esp)\n" );
                     count++;
                 }
                 else
-                    output( "\tpushl $%d\n", odp->ordinal );
+                    output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
                 output( "\tleal .L__wine_spec_file_name-1b(%%eax),%%ecx\n" );
-                output( "\tpushl %%ecx\n" );
+                output( "\tmovl %%ecx,(%%esp)\n" );
             }
             else
             {
                 if (exp_name)
                 {
-                    output( "\tpushl $.L%s_string\n", name );
+                    output( "\tmovl $.L%s_string,4(%%esp)\n", name );
                     count++;
                 }
                 else
-                    output( "\tpushl $%d\n", odp->ordinal );
-                output( "\tpushl $.L__wine_spec_file_name\n" );
+                    output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
+                output( "\tmovl $.L__wine_spec_file_name,(%%esp)\n" );
             }
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_x86_64:
-            output_cfi( ".cfi_startproc" );
             output( "\tsubq $8,%%rsp\n" );
             output_cfi( ".cfi_adjust_cfa_offset 8" );
             output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
@@ -1271,11 +1279,11 @@ void output_stubs( DLLSPEC *spec )
             else
                 output( "\tmovq $%d,%%rsi\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output_cfi( ".cfi_endproc" );
             break;
         default:
             assert(0);
         }
+        output_cfi( ".cfi_endproc" );
         output_function_size( name );
     }
 
