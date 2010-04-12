@@ -417,6 +417,29 @@ static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT wi
     }
 }
 
+static void convert_r32g32_float(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const float *Source;
+    float *Dest;
+    UINT outpitch = (pitch * 3)/2;
+
+    for(y = 0; y < height; y++)
+    {
+        Source = (const float *)(src + y * pitch);
+        Dest = (float *) (dst + y * outpitch);
+        for (x = 0; x < width; x++ )
+        {
+            float green = (*Source++);
+            float red = (*Source++);
+            Dest[0] = green;
+            Dest[1] = red;
+            Dest[2] = 1.0f;
+            Dest += 3;
+        }
+    }
+}
+
 static void convert_s1_uint_d15_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -538,9 +561,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_R32G32_FLOAT,           GL_RGB32F_ARB,                    GL_RGB32F_ARB,                          0,
-            GL_RGB,                     GL_FLOAT,                         0,
+            GL_RGB,                     GL_FLOAT,                         12,
             WINED3DFMT_FLAG_RENDERTARGET,
-            ARB_TEXTURE_FLOAT,          NULL},
+            ARB_TEXTURE_FLOAT,          &convert_r32g32_float},
     {WINED3DFMT_R32G32_FLOAT,           GL_RG32F,                         GL_RG32F,                               0,
             GL_RG,                      GL_FLOAT,                         0,
             WINED3DFMT_FLAG_RENDERTARGET,

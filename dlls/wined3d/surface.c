@@ -2244,12 +2244,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             desc->conv_byte_count = 6;
             break;
 
-        case WINED3DFMT_R32G32_FLOAT:
-            if (gl_info->supported[ARB_TEXTURE_RG]) break;
-            *convert = CONVERT_R32G32F;
-            desc->conv_byte_count = 12;
-            break;
-
         default:
             break;
     }
@@ -2530,26 +2524,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                      * shader overwrites it anyway
                      */
                     Dest[2] = 0xffff;
-                    Dest += 3;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_R32G32F:
-        {
-            unsigned int x, y;
-            const float *Source;
-            float *Dest;
-            for(y = 0; y < height; y++) {
-                Source = (const float *)(src + y * pitch);
-                Dest = (float *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    float green = (*Source++);
-                    float red = (*Source++);
-                    Dest[0] = green;
-                    Dest[1] = red;
-                    Dest[2] = 1.0f;
                     Dest += 3;
                 }
             }
