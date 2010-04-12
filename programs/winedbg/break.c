@@ -139,7 +139,7 @@ static	int init_xpoint(int type, const ADDRESS64* addr)
  */
 static	BOOL	get_watched_value(int num, DWORD64* val)
 {
-    BYTE        buf[4];
+    DWORD64     buf[1];
 
     if (!dbg_read_memory(memory_to_linear_addr(&dbg_curr_process->bp[num].addr),
                          buf, dbg_curr_process->bp[num].w.len + 1))
