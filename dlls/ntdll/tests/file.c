@@ -332,17 +332,20 @@ static void open_file_test(void)
         nameW.Length = sizeof(info->FileId);
         info->FileName[info->FileNameLength/sizeof(WCHAR)] = 0;
         attr.RootDirectory = dir;
+        /* We skip 'open' files by not specifying FILE_SHARE_WRITE */
         status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
-                              FILE_SHARE_READ|FILE_SHARE_WRITE,
+                              FILE_SHARE_READ,
                               FILE_OPEN_BY_FILE_ID |
                               ((info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? FILE_DIRECTORY_FILE : 0) );
-        ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED || status == STATUS_NOT_IMPLEMENTED,
+        ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED || status == STATUS_NOT_IMPLEMENTED || status == STATUS_SHARING_VIOLATION,
             "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
         if (status == STATUS_NOT_IMPLEMENTED)
         {
             win_skip( "FILE_OPEN_BY_FILE_ID not supported\n" );
             break;
         }
+        if (status == STATUS_SHARING_VIOLATION)
+            trace( "%s is currently open\n", wine_dbgstr_w(info->FileName) );
         if (!status)
         {
             BYTE buf[sizeof(FILE_ALL_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
@@ -351,11 +354,15 @@ static void open_file_test(void)
             {
                 FILE_ALL_INFORMATION *fai = (FILE_ALL_INFORMATION *)buf;
 
-                /* check that it's the same file */
-                ok( info->EndOfFile.QuadPart == fai->StandardInformation.EndOfFile.QuadPart,
-                    "mismatched file size for %s\n", wine_dbgstr_w(info->FileName));
-                ok( info->LastWriteTime.QuadPart == fai->BasicInformation.LastWriteTime.QuadPart,
-                    "mismatched write time for %s\n", wine_dbgstr_w(info->FileName));
+                /* check that it's the same file/directory */
+
+                /* don't check the size for directories */
+                if (!(info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                    ok( info->EndOfFile.QuadPart == fai->StandardInformation.EndOfFile.QuadPart,
+                        "mismatched file size for %s\n", wine_dbgstr_w(info->FileName));
+
+                ok( info->CreationTime.QuadPart == fai->BasicInformation.CreationTime.QuadPart,
+                    "mismatched creation time for %s\n", wine_dbgstr_w(info->FileName));
             }
             CloseHandle( handle );
 
