@@ -1,5 +1,5 @@
 /*
- * Tests for the D3DX9 texture functions
+ * Tests for the D3DX9 surface functions
  *
  * Copyright 2009 Tony Wasserka
  *
@@ -489,7 +489,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
-START_TEST(texture)
+START_TEST(surface)
 {
     HWND wnd;
     IDirect3D9 *d3d;

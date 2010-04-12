@@ -13,7 +13,7 @@ C_SRCS = \
 	math.c \
 	mesh.c \
 	shader.c \
-	texture.c
+	surface.c
 
 RC_SRCS = rsrc.rc
 
