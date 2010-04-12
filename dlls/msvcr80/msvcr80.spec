@@ -307,7 +307,7 @@
 @ cdecl _c_exit() msvcrt._c_exit
 @ cdecl _cabs(long) msvcrt._cabs
 @ cdecl _callnewh(long) msvcrt._callnewh
-@ stub _calloc_crt
+@ cdecl _calloc_crt(long long) msvcrt.calloc
 @ cdecl _cexit() msvcrt._cexit
 @ cdecl _cgets(str) msvcrt._cgets
 @ stub _cgets_s
