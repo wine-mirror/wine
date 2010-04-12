@@ -2583,6 +2583,7 @@ static HRESULT StorageImpl_Construct(
   DWORD        openFlags,
   BOOL         fileBased,
   BOOL         create,
+  ULONG        sector_size,
   StorageImpl** result)
 {
   StorageImpl* This;
@@ -2634,7 +2635,7 @@ static HRESULT StorageImpl_Construct(
   /*
    * Initialize the big block cache.
    */
-  This->bigBlockSize   = DEF_BIG_BLOCK_SIZE;
+  This->bigBlockSize   = sector_size;
   This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
   This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile,
                                                 pLkbyt,
@@ -2667,7 +2668,10 @@ static HRESULT StorageImpl_Construct(
     This->rootStartBlock        = 1;
     This->smallBlockLimit       = LIMIT_TO_USE_SMALL_BLOCK;
     This->smallBlockDepotStart  = BLOCK_END_OF_CHAIN;
-    This->bigBlockSizeBits      = DEF_BIG_BLOCK_SIZE_BITS;
+    if (sector_size == 4096)
+      This->bigBlockSizeBits      = MAX_BIG_BLOCK_SIZE_BITS;
+    else
+      This->bigBlockSizeBits      = MIN_BIG_BLOCK_SIZE_BITS;
     This->smallBlockSizeBits    = DEF_SMALL_BLOCK_SIZE_BITS;
     This->extBigBlockDepotStart = BLOCK_END_OF_CHAIN;
     This->extBigBlockDepotCount = 0;
@@ -4355,13 +4359,14 @@ static HRESULT Storage_Construct(
   DWORD        openFlags,
   BOOL         fileBased,
   BOOL         create,
+  ULONG        sector_size,
   StorageBaseImpl** result)
 {
   StorageImpl *newStorage;
   StorageBaseImpl *newTransactedStorage;
   HRESULT hr;
 
-  hr = StorageImpl_Construct(hFile, pwcsName, pLkbyt, openFlags, fileBased, create, &newStorage);
+  hr = StorageImpl_Construct(hFile, pwcsName, pLkbyt, openFlags, fileBased, create, sector_size, &newStorage);
   if (FAILED(hr)) goto end;
 
   if (openFlags & STGM_TRANSACTED)
@@ -6311,30 +6316,13 @@ static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
   return chainEntry.size;
 }
 
-/******************************************************************************
- *    StgCreateDocfile  [OLE32.@]
- * Creates a new compound file storage object
- *
- * PARAMS
- *  pwcsName  [ I] Unicode string with filename (can be relative or NULL)
- *  grfMode   [ I] Access mode for opening the new storage object (see STGM_ constants)
- *  reserved  [ ?] unused?, usually 0
- *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
- *
- * RETURNS
- *  S_OK if the file was successfully created
- *  some STG_E_ value if error
- * NOTES
- *  if pwcsName is NULL, create file with new unique name
- *  the function can returns
- *  STG_S_CONVERTED if the specified file was successfully converted to storage format
- *  (unrealized now)
- */
-HRESULT WINAPI StgCreateDocfile(
+static HRESULT create_storagefile(
   LPCOLESTR pwcsName,
   DWORD       grfMode,
-  DWORD       reserved,
-  IStorage  **ppstgOpen)
+  DWORD       grfAttrs,
+  STGOPTIONS* pStgOptions,
+  REFIID      riid,
+  void**      ppstgOpen)
 {
   StorageBaseImpl* newStorage = 0;
   HANDLE       hFile      = INVALID_HANDLE_VALUE;
@@ -6345,13 +6333,10 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD          fileAttributes;
   WCHAR          tempFileName[MAX_PATH];
 
-  TRACE("(%s, %x, %d, %p)\n",
-	debugstr_w(pwcsName), grfMode,
-	reserved, ppstgOpen);
-
   if (ppstgOpen == 0)
     return STG_E_INVALIDPOINTER;
-  if (reserved != 0)
+
+  if (pStgOptions->ulSectorSize != MIN_BIG_BLOCK_SIZE && pStgOptions->ulSectorSize != MAX_BIG_BLOCK_SIZE)
     return STG_E_INVALIDPARAMETER;
 
   /* if no share mode given then DENY_NONE is the default */
@@ -6453,6 +6438,7 @@ HRESULT WINAPI StgCreateDocfile(
          grfMode,
          TRUE,
          TRUE,
+         pStgOptions->ulSectorSize,
          &newStorage);
 
   if (FAILED(hr))
@@ -6460,15 +6446,53 @@ HRESULT WINAPI StgCreateDocfile(
     goto end;
   }
 
-  /*
-   * Get an "out" pointer for the caller.
-   */
-  *ppstgOpen = (IStorage*)newStorage;
+  hr = IStorage_QueryInterface((IStorage*)newStorage, riid, ppstgOpen);
+
+  IStorage_Release((IStorage*)newStorage);
 
 end:
   TRACE("<-- %p  r = %08x\n", *ppstgOpen, hr);
 
   return hr;
+}
+
+/******************************************************************************
+ *    StgCreateDocfile  [OLE32.@]
+ * Creates a new compound file storage object
+ *
+ * PARAMS
+ *  pwcsName  [ I] Unicode string with filename (can be relative or NULL)
+ *  grfMode   [ I] Access mode for opening the new storage object (see STGM_ constants)
+ *  reserved  [ ?] unused?, usually 0
+ *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
+ *
+ * RETURNS
+ *  S_OK if the file was successfully created
+ *  some STG_E_ value if error
+ * NOTES
+ *  if pwcsName is NULL, create file with new unique name
+ *  the function can returns
+ *  STG_S_CONVERTED if the specified file was successfully converted to storage format
+ *  (unrealized now)
+ */
+HRESULT WINAPI StgCreateDocfile(
+  LPCOLESTR pwcsName,
+  DWORD       grfMode,
+  DWORD       reserved,
+  IStorage  **ppstgOpen)
+{
+  STGOPTIONS stgoptions = {1, 0, 512};
+
+  TRACE("(%s, %x, %d, %p)\n",
+	debugstr_w(pwcsName), grfMode,
+	reserved, ppstgOpen);
+
+  if (ppstgOpen == 0)
+    return STG_E_INVALIDPOINTER;
+  if (reserved != 0)
+    return STG_E_INVALIDPARAMETER;
+
+  return create_storagefile(pwcsName, grfMode, 0, &stgoptions, &IID_IStorage, (void**)ppstgOpen);
 }
 
 /******************************************************************************
@@ -6499,9 +6523,9 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
 
     if (stgfmt == STGFMT_STORAGE || stgfmt == STGFMT_DOCFILE)
     {
-        FIXME("Stub: calling StgCreateDocfile, but ignoring pStgOptions and grfAttrs\n");
-        return StgCreateDocfile(pwcsName, grfMode, 0, (IStorage **)ppObjectOpen); 
+        return create_storagefile(pwcsName, grfMode, grfAttrs, pStgOptions, riid, ppObjectOpen);
     }
+
 
     ERR("Invalid stgfmt argument\n");
     return STG_E_INVALIDPARAMETER;
@@ -6725,6 +6749,7 @@ HRESULT WINAPI StgOpenStorage(
          grfMode,
          TRUE,
          FALSE,
+         512,
          &newStorage);
 
   if (FAILED(hr))
@@ -6772,6 +6797,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
          grfMode,
          FALSE,
          TRUE,
+         512,
          &newStorage);
 
   if (FAILED(hr))
@@ -6819,6 +6845,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
          grfMode,
          FALSE,
          FALSE,
+         512,
          &newStorage);
 
   if (FAILED(hr))
