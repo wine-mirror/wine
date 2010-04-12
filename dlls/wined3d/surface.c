@@ -2267,14 +2267,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_S8_UINT_D24_FLOAT:
-            if (gl_info->supported[ARB_DEPTH_BUFFER_FLOAT])
-            {
-                *convert = CONVERT_D24FS8;
-                desc->conv_byte_count = 8;
-            }
-            break;
-
         default:
             break;
     }
@@ -2616,25 +2608,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 {
                     /* Just need to clear out the X4 part. */
                     dest[x] = source[x] & ~0xf0;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_D24FS8:
-        {
-            unsigned int x, y;
-
-            for (y = 0; y < height; ++y)
-            {
-                const DWORD *source = (const DWORD *)(src + y * pitch);
-                float *dest_f = (float *)(dst + y * outpitch);
-                DWORD *dest_s = (DWORD *)(dst + y * outpitch);
-
-                for (x = 0; x < width; ++x)
-                {
-                    dest_f[x * 2] = float_24_to_32((source[x] & 0xffffff00) >> 8);
-                    dest_s[x * 2 + 1] = source[x] & 0xff;
                 }
             }
             break;

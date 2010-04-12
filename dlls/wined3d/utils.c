@@ -417,6 +417,25 @@ static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT wi
     }
 }
 
+static void convert_s8_uint_d24_float(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    UINT outpitch = pitch * 2;
+
+    for (y = 0; y < height; ++y)
+    {
+        const DWORD *source = (const DWORD *)(src + y * pitch);
+        float *dest_f = (float *)(dst + y * outpitch);
+        DWORD *dest_s = (DWORD *)(dst + y * outpitch);
+
+        for (x = 0; x < width; ++x)
+        {
+            dest_f[x * 2] = float_24_to_32((source[x] & 0xffffff00) >> 8);
+            dest_s[x * 2 + 1] = source[x] & 0xff;
+        }
+    }
+}
+
 static const struct wined3d_format_texture_info format_texture_info[] =
 {
     /* WINED3DFORMAT                    internal                          srgbInternal                       rtInternal
@@ -702,9 +721,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_DEPTH,
             ARB_DEPTH_BUFFER_FLOAT,     NULL},
     {WINED3DFMT_S8_UINT_D24_FLOAT,      GL_DEPTH32F_STENCIL8,             GL_DEPTH32F_STENCIL8,                   0,
-            GL_DEPTH_STENCIL,           GL_FLOAT_32_UNSIGNED_INT_24_8_REV, 0,
+            GL_DEPTH_STENCIL,           GL_FLOAT_32_UNSIGNED_INT_24_8_REV, 8,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
-            ARB_DEPTH_BUFFER_FLOAT,     NULL},
+            ARB_DEPTH_BUFFER_FLOAT,     &convert_s8_uint_d24_float},
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N,                  GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, 0,
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
