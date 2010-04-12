@@ -732,11 +732,18 @@ static void openal_setformat(MMDevice *This, DWORD freq)
     }
 }
 
+static int blacklist(const char *dev) {
+    if (strstr(dev, "ALSA") && strstr(dev, "hw:"))
+        return 1;
+    return 0;
+}
+
 static void openal_scanrender(void)
 {
     WCHAR name[MAX_PATH];
     ALCdevice *dev;
     const ALCchar *devstr, *defaultstr;
+    int defblacklisted;
     EnterCriticalSection(&openal_crst);
     if (palcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT")) {
         defaultstr = palcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
@@ -745,12 +752,20 @@ static void openal_scanrender(void)
         defaultstr = palcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
         devstr = palcGetString(NULL, ALC_DEVICE_SPECIFIER);
     }
-    if (devstr && *devstr)
-        do {
+    defblacklisted = blacklist(defaultstr);
+    if (defblacklisted)
+        WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
+    if (devstr)
+        for (; *devstr; devstr += strlen(devstr)+1) {
             MMDevice *mmdev;
             MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
                                  name, sizeof(name)/sizeof(*name)-1 );
             name[sizeof(name)/sizeof(*name)-1] = 0;
+            /* Only enable blacklist if the default device isn't blacklisted */
+            if (!defblacklisted && blacklist(devstr)) {
+                WARN("Not adding %s: device is blacklisted\n", devstr);
+                continue;
+            }
             TRACE("Adding %s\n", devstr);
             dev = palcOpenDevice(devstr);
             MMDevice_Create(&mmdev, name, NULL, eRender, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
@@ -763,8 +778,7 @@ static void openal_scanrender(void)
             }
             else
                 WARN("Could not open device: %04x\n", palcGetError(NULL));
-            devstr += strlen(devstr)+1;
-        } while (*devstr);
+        }
     LeaveCriticalSection(&openal_crst);
 }
 
@@ -773,16 +787,24 @@ static void openal_scancapture(void)
     WCHAR name[MAX_PATH];
     ALCdevice *dev;
     const ALCchar *devstr, *defaultstr;
+    int defblacklisted;
 
     EnterCriticalSection(&openal_crst);
     devstr = palcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
     defaultstr = palcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
+    defblacklisted = blacklist(defaultstr);
+    if (defblacklisted)
+        WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
     if (devstr && *devstr)
-        do {
+        for (; *devstr; devstr += strlen(devstr)+1) {
             ALint freq = 44100;
             MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
                                  name, sizeof(name)/sizeof(*name)-1 );
             name[sizeof(name)/sizeof(*name)-1] = 0;
+            if (!defblacklisted && blacklist(devstr)) {
+                WARN("Not adding %s: device is blacklisted\n", devstr);
+                continue;
+            }
             TRACE("Adding %s\n", devstr);
             dev = palcCaptureOpenDevice(devstr, freq, AL_FORMAT_MONO16, 65536);
             MMDevice_Create(NULL, name, NULL, eCapture, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
@@ -790,8 +812,7 @@ static void openal_scancapture(void)
                 palcCaptureCloseDevice(dev);
             else
                 WARN("Could not open device: %04x\n", palcGetError(NULL));
-            devstr += strlen(devstr)+1;
-        } while (*devstr);
+        }
     LeaveCriticalSection(&openal_crst);
 }
 #endif /*HAVE_OPENAL*/
