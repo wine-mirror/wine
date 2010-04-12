@@ -375,7 +375,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         break;
     case EXPR_TYPE_PSTRUCT:
         exp1 = expr_eval(exp->un.structure.exp1);
-        if (exp1.type.id == dbg_itype_none || !types_deref(&exp1, &rtn) ||
+        if (exp1.type.id == dbg_itype_none || !types_array_index(&exp1, 0, &rtn) ||
             rtn.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         if (!types_udt_find_element(&rtn, exp->un.structure.element_name,
@@ -626,7 +626,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             exp->un.unop.result = ~types_extract_as_integer(&exp1);
             break;
 	case EXP_OP_DEREF:
-            if (!types_deref(&exp1, &rtn))
+            if (!types_array_index(&exp1, 0, &rtn))
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             break;
 	case EXP_OP_FORCE_DEREF:

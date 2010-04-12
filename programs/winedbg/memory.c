@@ -416,7 +416,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         }
         break;
     case SymTagPointerType:
-        if (!types_deref(lvalue, &sub_lvalue))
+        if (!types_array_index(lvalue, 0, &sub_lvalue))
         {
             dbg_printf("Internal symbol error: unable to access memory location %p",
                        memory_to_linear_addr(&lvalue->addr));

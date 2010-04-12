@@ -55,8 +55,6 @@
  *      + all computations should be made on long long
  *              o expr computations are in int:s
  *              o bitfield size is on a 4-bytes
- *      + array_index and deref should be the same function (or should share the same
- *        core)
  * - execution:
  *      + set a better fix for gdb (proxy mode) than the step-mode hack
  *      + implement function call in debuggee

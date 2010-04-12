@@ -155,45 +155,6 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
 }
 
 /******************************************************************
- *		types_deref
- *
- */
-BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
-{
-    struct dbg_type     type = lvalue->type;
-    DWORD               tag;
-
-    memset(result, 0, sizeof(*result));
-    result->type.id = dbg_itype_none;
-    result->type.module = 0;
-
-    /*
-     * Make sure that this really makes sense.
-     */
-    if (!types_get_real_type(&type, &tag) || tag != SymTagPointerType ||
-        !memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
-        !types_get_info(&type, TI_GET_TYPE, &result->type.id))
-        return FALSE;
-    result->type.module = type.module;
-    result->cookie = DLV_TARGET;
-    /* FIXME: this is currently buggy.
-     * there is no way to tell were the deref:ed value is...
-     * for example:
-     *	x is a pointer to struct s, x being on the stack
-     *		=> lvalue is in debuggee, result is in debugger
-     *	x is a pointer to struct s, x being optimized into a reg
-     *		=> lvalue is debugger, result is debuggee
-     *	x is a pointer to internal variable x
-     *	       	=> lvalue is debugger, result is debuggee
-     * so we force debuggee address space, because dereferencing pointers to
-     * internal variables is very unlikely. A correct fix would be
-     * rather large.
-     */
-    result->addr.Mode = AddrModeFlat;
-    return TRUE;
-}
-
-/******************************************************************
  *		types_get_udt_element_lvalue
  *
  * Implement a structure derefencement
@@ -301,24 +262,32 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long in
  *
  * Grab an element from an array
  */
-BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, 
-                       struct dbg_lvalue* result)
+BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lvalue* result)
 {
     struct dbg_type     type = lvalue->type;
     DWORD               tag, count;
-    DWORD64             length;
+
+    memset(result, 0, sizeof(*result));
+    result->type.id = dbg_itype_none;
+    result->type.module = 0;
 
     if (!types_get_real_type(&type, &tag)) return FALSE;
-    /* Contents of array share same data (addr mode, module...) */
-    *result = *lvalue;
     switch (tag)
     {
     case SymTagArrayType:
-        types_get_info(&type, TI_GET_COUNT, &count);
+        if (!types_get_info(&type, TI_GET_COUNT, &count)) return FALSE;
         if (index < 0 || index >= count) return FALSE;
+        result->addr = lvalue->addr;
         break;
     case SymTagPointerType:
-        memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
+        if (!memory_read_value(lvalue, be_cpu->pointer_size, &result->addr.Offset)) return FALSE;
+        result->addr.Mode = AddrModeFlat;
+        switch (be_cpu->pointer_size)
+        {
+        case 4: result->addr.Offset = (DWORD)result->addr.Offset; break;
+        case 8: break;
+        default: assert(0);
+        }
         break;
     default:
         assert(FALSE);
@@ -326,9 +295,28 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
     /*
      * Get the base type, so we know how much to index by.
      */
-    types_get_info(&type, TI_GET_TYPE, &result->type.id);
-    types_get_info(&result->type, TI_GET_LENGTH, &length);
-    result->addr.Offset += index * (DWORD)length;
+    if (!types_get_info(&type, TI_GET_TYPE, &result->type.id)) return FALSE;
+    result->type.module = type.module;
+    if (index)
+    {
+        DWORD64             length;
+        if (!types_get_info(&result->type, TI_GET_LENGTH, &length)) return FALSE;
+        result->addr.Offset += index * (DWORD)length;
+    }
+    /* FIXME: the following statement is not always true (and can lead to buggy behavior).
+     * There is no way to tell were the deref:ed value is...
+     * For example:
+     *	x is a pointer to struct s, x being on the stack
+     *		=> lvalue is in debuggee, result is in debugger
+     *	x is a pointer to struct s, x being optimized into a reg
+     *		=> lvalue is debugger, result is debuggee
+     *	x is a pointer to internal variable x
+     *	       	=> lvalue is debugger, result is debuggee
+     * So we always force debuggee address space, because dereferencing pointers to
+     * internal variables is very unlikely. A correct fix would be
+     * rather large.
+     */
+    result->cookie = DLV_TARGET;
     return TRUE;
 }
 
