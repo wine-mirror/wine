@@ -269,8 +269,8 @@ static void open_file_test(void)
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    status = pNtOpenFile( &dir, GENERIC_READ, &attr, &io,
-                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    status = pNtOpenFile( &dir, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT );
     ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     pRtlFreeUnicodeString( &nameW );
 
