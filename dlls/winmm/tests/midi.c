@@ -233,7 +233,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
 
     /* The W95 ESFM Synthesis device reports NOTENABLED although
      * GetVolume by handle works and music plays. */
-    rc = midiOutGetVolume((HMIDIOUT)udev, &ovolume);
+    rc = midiOutGetVolume(UlongToHandle(udev), &ovolume);
     ok((capsA.dwSupport & MIDICAPS_VOLUME) ? rc==MMSYSERR_NOERROR || broken(rc==MMSYSERR_NOTENABLED) : rc==MMSYSERR_NOTSUPPORTED, "midiOutGetVolume(dev=%d) rc=%s\n", udev, mmsys_error(rc));
 
     /* Tests with midiOutSetvolume show that the midi mapper forwards
