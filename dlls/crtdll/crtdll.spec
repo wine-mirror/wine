@@ -77,7 +77,7 @@
 @ extern _environ_dll msvcrt._environ
 @ cdecl _eof(long) msvcrt._eof
 @ cdecl _errno() msvcrt._errno
-@ cdecl _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
+@ cdecl -i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
 @ varargs _execl(str str) msvcrt._execl
 @ varargs _execle(str str) msvcrt._execle
 @ varargs _execlp(str str) msvcrt._execlp
@@ -128,7 +128,7 @@
 @ cdecl _getpid() msvcrt._getpid
 @ cdecl _getsystime(ptr) msvcrt._getsystime
 @ cdecl _getw(ptr) msvcrt._getw
-@ cdecl _global_unwind2(ptr) msvcrt._global_unwind2
+@ cdecl -i386 _global_unwind2(ptr) msvcrt._global_unwind2
 @ cdecl _heapchk() msvcrt._heapchk
 @ cdecl _heapmin() msvcrt._heapmin
 @ cdecl _heapset(long) msvcrt._heapset

@@ -166,8 +166,6 @@ void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
     msvcrt_local_unwind2( frame, trylevel, &frame->_ebp );
 }
 
-#endif  /* __i386__ */
-
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)
  */
@@ -198,7 +196,6 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
                            MSVCRT_EXCEPTION_FRAME* frame,
                            PCONTEXT context, void* dispatcher)
 {
-#if defined(__GNUC__) && defined(__i386__)
   int retval, trylevel;
   EXCEPTION_POINTERS exceptPtrs;
   PSCOPETABLE pScopeTable;
@@ -258,29 +255,15 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
       trylevel = pScopeTable[trylevel].previousTryLevel;
     }
   }
-#else
-  FIXME("exception %x flags=%x at %p handler=%p %p %p stub\n",
-        rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-        frame->handler, context, dispatcher);
-#endif
   TRACE("reached TRYLEVEL_END, returning ExceptionContinueSearch\n");
   return ExceptionContinueSearch;
 }
 
-/*********************************************************************
- *		_abnormal_termination (MSVCRT.@)
- */
-int CDECL _abnormal_termination(void)
-{
-  FIXME("(void)stub\n");
-  return 0;
-}
 
 /*
  * setjmp/longjmp implementation
  */
 
-#ifdef __i386__
 #define MSVCRT_JMP_MAGIC 0x56433230 /* ID value for new jump structure */
 typedef void (__stdcall *MSVCRT_unwind_function)(const struct MSVCRT___JUMP_BUFFER *);
 
@@ -649,6 +632,15 @@ int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
     TRACE("(%08x,%p)\n", ex, ptr);
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
     return msvcrt_exception_filter(ptr);
+}
+
+/*********************************************************************
+ *		_abnormal_termination (MSVCRT.@)
+ */
+int CDECL _abnormal_termination(void)
+{
+  FIXME("(void)stub\n");
+  return 0;
 }
 
 /******************************************************************

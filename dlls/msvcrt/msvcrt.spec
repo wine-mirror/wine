@@ -346,8 +346,8 @@
 @ extern _environ MSVCRT__environ
 @ cdecl _eof(long)
 @ cdecl _errno() MSVCRT__errno
-@ cdecl _except_handler2(ptr ptr ptr ptr)
-@ cdecl _except_handler3(ptr ptr ptr ptr)
+@ cdecl -i386 _except_handler2(ptr ptr ptr ptr)
+@ cdecl -i386 _except_handler3(ptr ptr ptr ptr)
 # stub _except_handler4_common
 @ varargs _execl(str str)
 @ varargs _execle(str str)
@@ -458,7 +458,7 @@
 # stub _getwch
 # stub _getwche
 @ cdecl _getws(ptr) MSVCRT__getws
-@ cdecl _global_unwind2(ptr)
+@ cdecl -i386 _global_unwind2(ptr)
 @ cdecl _gmtime32(ptr) MSVCRT__gmtime32
 # stub _gmtime32_s
 @ cdecl _gmtime64(ptr) MSVCRT__gmtime64

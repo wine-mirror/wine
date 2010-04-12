@@ -1406,9 +1406,9 @@
 @ stub _aulldvrm
 @ stdcall -private -ret64 _aullrem(double double) ntdll._aullrem
 @ stub _aullshr
-@ cdecl -private _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
-@ cdecl -private _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
-@ cdecl -private _global_unwind2(ptr) msvcrt._global_unwind2
+@ cdecl -private -i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
+@ cdecl -private -i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
+@ cdecl -private -i386 _global_unwind2(ptr) msvcrt._global_unwind2
 @ cdecl -private _itoa(long ptr long) msvcrt._itoa
 @ cdecl -private _itow(long ptr long) msvcrt._itow
 @ cdecl -private _local_unwind2(ptr long) msvcrt._local_unwind2
