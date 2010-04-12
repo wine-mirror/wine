@@ -417,6 +417,28 @@ static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT wi
     }
 }
 
+static void convert_s1_uint_d15_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    UINT outpitch = pitch * 2;
+
+    for (y = 0; y < height; ++y)
+    {
+        const WORD *source = (const WORD *)(src + y * pitch);
+        DWORD *dest = (DWORD *)(dst + y * outpitch);
+
+        for (x = 0; x < width; ++x)
+        {
+            /* The depth data is normalized, so needs to be scaled,
+             * the stencil data isn't.  Scale depth data by
+             *      (2^24-1)/(2^15-1) ~~ (2^9 + 2^-6). */
+            WORD d15 = source[x] >> 1;
+            DWORD d24 = (d15 << 9) + (d15 >> 6);
+            dest[x] = (d24 << 8) | (source[x] & 0x1);
+        }
+    }
+}
+
 static void convert_s4x4_uint_d24_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -690,13 +712,13 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_DEPTH,
             ARB_DEPTH_TEXTURE,          NULL},
     {WINED3DFMT_S1_UINT_D15_UNORM,      GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
-            GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,         0,
+            GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,         4,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
-            EXT_PACKED_DEPTH_STENCIL,   NULL},
+            EXT_PACKED_DEPTH_STENCIL,   &convert_s1_uint_d15_unorm},
     {WINED3DFMT_S1_UINT_D15_UNORM,      GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
-            GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             0,
+            GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             4,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL,
-            ARB_FRAMEBUFFER_OBJECT,     NULL},
+            ARB_FRAMEBUFFER_OBJECT,     &convert_s1_uint_d15_unorm},
     {WINED3DFMT_D24_UNORM_S8_UINT,      GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_INT,                  0,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH,

@@ -2250,15 +2250,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             desc->conv_byte_count = 12;
             break;
 
-        case WINED3DFMT_S1_UINT_D15_UNORM:
-            if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
-                    || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
-            {
-                *convert = CONVERT_D15S1;
-                desc->conv_byte_count = 4;
-            }
-            break;
-
         default:
             break;
     }
@@ -2560,28 +2551,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     Dest[1] = red;
                     Dest[2] = 1.0f;
                     Dest += 3;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_D15S1:
-        {
-            unsigned int x, y;
-
-            for (y = 0; y < height; ++y)
-            {
-                const WORD *source = (const WORD *)(src + y * pitch);
-                DWORD *dest = (DWORD *)(dst + y * outpitch);
-
-                for (x = 0; x < width; ++x)
-                {
-                    /* The depth data is normalized, so needs to be scaled,
-                     * the stencil data isn't.  Scale depth data by
-                     *      (2^24-1)/(2^15-1) ~~ (2^9 + 2^-6). */
-                    WORD d15 = source[x] >> 1;
-                    DWORD d24 = (d15 << 9) + (d15 >> 6);
-                    dest[x] = (d24 << 8) | (source[x] & 0x1);
                 }
             }
             break;
