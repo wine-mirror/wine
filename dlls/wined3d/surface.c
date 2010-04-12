@@ -2259,14 +2259,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_S4X4_UINT_D24_UNORM:
-            if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
-                    || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
-            {
-                *convert = CONVERT_D24X4S4;
-            }
-            break;
-
         default:
             break;
     }
@@ -2590,24 +2582,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     WORD d15 = source[x] >> 1;
                     DWORD d24 = (d15 << 9) + (d15 >> 6);
                     dest[x] = (d24 << 8) | (source[x] & 0x1);
-                }
-            }
-            break;
-        }
-
-        case CONVERT_D24X4S4:
-        {
-            unsigned int x, y;
-
-            for (y = 0; y < height; ++y)
-            {
-                const DWORD *source = (const DWORD *)(src + y * pitch);
-                DWORD *dest = (DWORD *)(dst + y * outpitch);
-
-                for (x = 0; x < width; ++x)
-                {
-                    /* Just need to clear out the X4 part. */
-                    dest[x] = source[x] & ~0xf0;
                 }
             }
             break;
