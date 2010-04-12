@@ -129,6 +129,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
                         info->Format = D3DFMT_R8G8B8;
                     else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat32bppBGR))
                         info->Format = D3DFMT_X8R8G8B8;
+                    else if (IsEqualGUID(&pixel_format, &GUID_WICPixelFormat32bppBGRA))
+                        info->Format = D3DFMT_A8R8G8B8;
                     else {
                         WARN("Unsupported pixel format %s\n", debugstr_guid(&pixel_format));
                         hr = D3DXERR_INVALIDDATA;
