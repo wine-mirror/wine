@@ -597,7 +597,7 @@
 @ stub KeRemoveQueue
 @ stub KeRemoveQueueDpc
 @ stub KeRemoveSystemServiceTable
-@ stub KeResetEvent
+@ stdcall KeResetEvent(ptr)
 @ stub KeRestoreFloatingPointState
 @ stub KeRevertToUserAffinityThread
 @ stub KeRundownQueue
@@ -607,7 +607,7 @@
 @ stub KeSetAffinityThread
 @ stub KeSetBasePriorityThread
 @ stub KeSetDmaIoCoherency
-@ stub KeSetEvent
+@ stdcall KeSetEvent(ptr long long)
 @ stub KeSetEventBoostPriority
 @ stub KeSetIdealProcessorThread
 @ stub KeSetImportanceDpc
