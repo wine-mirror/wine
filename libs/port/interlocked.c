@@ -164,8 +164,8 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "ret")
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg128,
                   "push %rbx\n\t"
-                   ".cfi_adjust_cfa_offset 8\n\t"
-                   ".cfi_rel_offset %rbx,0\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rbx,0\n\t")
                   "mov %rcx,%r8\n\t"  /* compare */
                   "mov %rdx,%rbx\n\t" /* xchg_low */
                   "mov %rsi,%rcx\n\t" /* xchg_high */
@@ -176,8 +176,8 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg128,
                   "mov %rdx,8(%r8)\n\t"
                   "setz %al\n\t"
                   "pop %rbx\n\t"
-                   ".cfi_adjust_cfa_offset -8\n\t"
-                   ".cfi_same_value %rbx\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                  __ASM_CFI(".cfi_same_value %rbx\n\t")
                   "ret")
 
 #elif defined(__powerpc__)
