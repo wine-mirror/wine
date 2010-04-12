@@ -345,14 +345,16 @@ static void open_file_test(void)
         }
         if (!status)
         {
-            FILE_ALL_INFORMATION all_info;
+            BYTE buf[sizeof(FILE_ALL_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
 
-            if (!pNtQueryInformationFile( handle, &io, &all_info, sizeof(all_info), FileAllInformation ))
+            if (!pNtQueryInformationFile( handle, &io, buf, sizeof(buf), FileAllInformation ))
             {
+                FILE_ALL_INFORMATION *fai = (FILE_ALL_INFORMATION *)buf;
+
                 /* check that it's the same file */
-                ok( info->EndOfFile.QuadPart == all_info.StandardInformation.EndOfFile.QuadPart,
+                ok( info->EndOfFile.QuadPart == fai->StandardInformation.EndOfFile.QuadPart,
                     "mismatched file size for %s\n", wine_dbgstr_w(info->FileName));
-                ok( info->LastWriteTime.QuadPart == all_info.BasicInformation.LastWriteTime.QuadPart,
+                ok( info->LastWriteTime.QuadPart == fai->BasicInformation.LastWriteTime.QuadPart,
                     "mismatched write time for %s\n", wine_dbgstr_w(info->FileName));
             }
             CloseHandle( handle );
