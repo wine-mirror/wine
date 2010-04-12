@@ -1105,7 +1105,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     /* Now, I have this default action thing that needs to be applied to all non counted threads */
 
     /* go through all the threads and stick their ids in the to be done list. */
-    for (thd = gdbctx->process->threads; thd; thd = thd->next)
+    LIST_FOR_EACH_ENTRY(thd, &gdbctx->process->threads, struct dbg_thread, entry)
     {
         threadIDs[threadCount++] = thd->tid;
         /* check to see if we have more threads than I counted on, and tell the user what to do
@@ -1725,10 +1725,10 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
 
             packet_reply_open(gdbctx);
             packet_reply_add(gdbctx, "m", 1);
-            for (thd = gdbctx->process->threads; thd; thd = thd->next)
+            LIST_FOR_EACH_ENTRY(thd, &gdbctx->process->threads, struct dbg_thread, entry)
             {
                 packet_reply_val(gdbctx, thd->tid, 4);
-                if (thd->next != NULL)
+                if (list_next(&gdbctx->process->threads, &thd->entry) != NULL)
                     packet_reply_add(gdbctx, ",", 1);
             }
             packet_reply_close(gdbctx);
@@ -1764,8 +1764,8 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             struct dbg_thread*  thd;
             /* FIXME: doc says 16 bit val ??? */
             /* grab first created thread, aka last in list */
-            assert(gdbctx->process && gdbctx->process->threads);
-            for (thd = gdbctx->process->threads; thd->next; thd = thd->next);
+            assert(gdbctx->process && !list_empty(&gdbctx->process->threads));
+            thd = LIST_ENTRY(list_tail(&gdbctx->process->threads), struct dbg_thread, entry);
             packet_reply_open(gdbctx);
             packet_reply_add(gdbctx, "QC", 2);
             packet_reply_val(gdbctx, thd->tid, 4);

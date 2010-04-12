@@ -171,6 +171,7 @@ typedef struct tagTHREADNAME_INFO
 
 struct dbg_thread
 {
+    struct list                 entry;
     struct dbg_process* 	process;
     HANDLE			handle;
     DWORD			tid;
@@ -181,8 +182,6 @@ struct dbg_thread
     int                         stopped_xpoint; /* xpoint on which the thread has stopped (-1 if none) */
     struct dbg_breakpoint	step_over_bp;
     char                        name[9];
-    struct dbg_thread*   	next;
-    struct dbg_thread*   	prev;
     BOOL                        in_exception;   /* TRUE if thread stopped with an exception */
     EXCEPTION_RECORD            excpt_record;   /* only valid when in_exception is TRUE */
     struct
@@ -224,7 +223,7 @@ struct dbg_process
     const struct be_process_io* process_io;
     void*                       pio_data;
     const WCHAR*		imageName;
-    struct dbg_thread*  	threads;
+    struct list           	threads;
     unsigned			continue_on_first_exception : 1,
                                 active_debuggee : 1;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];

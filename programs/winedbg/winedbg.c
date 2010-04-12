@@ -79,7 +79,6 @@
  *        every function call to catch the errors
  *      + BTW check also whether the exception mechanism is the best way to return
  *        errors (or find a proper fix for MinGW port)
- *      + use Wine standard list mechanism for all list handling
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
@@ -305,7 +304,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->process_io = pio;
     p->pio_data = NULL;
     p->imageName = NULL;
-    p->threads = NULL;
+    list_init(&p->threads);
     p->continue_on_first_exception = FALSE;
     p->active_debuggee = FALSE;
     p->next_bp = 1;  /* breakpoint 0 is reserved for step-over */
@@ -334,9 +333,12 @@ void dbg_set_process_name(struct dbg_process* p, const WCHAR* imageName)
 
 void dbg_del_process(struct dbg_process* p)
 {
+    struct dbg_thread*  t;
+    struct dbg_thread*  t2;
     int	i;
 
-    while (p->threads) dbg_del_thread(p->threads);
+    LIST_FOR_EACH_ENTRY_SAFE(t, t2, &p->threads, struct dbg_thread, entry)
+        dbg_del_thread(t);
 
     for (i = 0; i < p->num_delayed_bp; i++)
         if (p->delayed_bp[i].is_symbol)
@@ -447,9 +449,9 @@ struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid)
     struct dbg_thread*	t;
 
     if (!p) return NULL;
-    for (t = p->threads; t; t = t->next)
-	if (t->tid == tid) break;
-    return t;
+    LIST_FOR_EACH_ENTRY(t, &p->threads, struct dbg_thread, entry)
+	if (t->tid == tid) return t;
+    return NULL;
 }
 
 struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
@@ -477,10 +479,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
 
     snprintf(t->name, sizeof(t->name), "%04x", tid);
 
-    t->next = p->threads;
-    t->prev = NULL;
-    if (p->threads) p->threads->prev = t;
-    p->threads = t;
+    list_add_head(&p->threads, &t->entry);
 
     return t;
 }
@@ -488,9 +487,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
 void dbg_del_thread(struct dbg_thread* t)
 {
     HeapFree(GetProcessHeap(), 0, t->frames);
-    if (t->prev) t->prev->next = t->next;
-    if (t->next) t->next->prev = t->prev;
-    if (t == t->process->threads) t->process->threads = t->next;
+    list_remove(&t->entry);
     if (t == dbg_curr_thread) dbg_curr_thread = NULL;
     HeapFree(GetProcessHeap(), 0, t);
 }

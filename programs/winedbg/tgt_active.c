@@ -46,8 +46,7 @@ static void dbg_init_current_thread(void* start)
 {
     if (start)
     {
-	if (dbg_curr_process->threads &&
-            !dbg_curr_process->threads->next && /* first thread ? */
+	if (list_count(&dbg_curr_process->threads) == 1 /* first thread ? */ &&
 	    DBG_IVAR(BreakAllThreadsStartup))
         {
 	    ADDRESS64   addr;
