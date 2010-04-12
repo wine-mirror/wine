@@ -23,7 +23,8 @@ enum be_xpoint_type {be_xpoint_break, be_xpoint_watch_exec, be_xpoint_watch_read
                      be_xpoint_watch_write};
 struct backend_cpu
 {
-    DWORD               machine;
+    const DWORD         machine;
+    const DWORD         pointer_size;
     /* ------------------------------------------------------------------------------
      * address manipulation
      * ------------------------------------------------------------------------------ */

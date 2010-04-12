@@ -547,6 +547,7 @@ static int be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 struct backend_cpu be_x86_64 =
 {
     IMAGE_FILE_MACHINE_AMD64,
+    8,
     be_cpu_linearize,
     be_cpu_build_addr,
     be_x86_64_get_addr,

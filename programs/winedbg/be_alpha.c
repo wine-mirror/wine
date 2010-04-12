@@ -146,6 +146,7 @@ static int be_alpha_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 struct backend_cpu be_alpha =
 {
     IMAGE_FILE_MACHINE_ALPHA,
+    8,
     be_cpu_linearize,
     be_cpu_build_addr,
     be_alpha_get_addr,

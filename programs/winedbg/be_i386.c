@@ -738,6 +738,7 @@ static int be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 struct backend_cpu be_i386 =
 {
     IMAGE_FILE_MACHINE_I386,
+    4,
     be_i386_linearize,
     be_i386_build_addr,
     be_i386_get_addr,

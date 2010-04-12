@@ -38,7 +38,7 @@
 #include "objbase.h"
 #include "oaidl.h"
 
-#define ADDRSIZE        ((unsigned)sizeof(void*))
+#define ADDRSIZE        (be_cpu->pointer_size)
 #define ADDRWIDTH       (ADDRSIZE * 2)
 
 /* the debugger uses these exceptions for it's internal use */
