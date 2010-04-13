@@ -711,7 +711,17 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_INVALID_COMMAND_LINE                         1639
 #define ERROR_INSTALL_REMOTE_DISALLOWED                    1640
 #define ERROR_SUCCESS_REBOOT_INITIATED                     1641
+#define ERROR_PATCH_TARGET_NOT_FOUND                       1642
+#define ERROR_PATCH_PACKAGE_REJECTED                       1643
+#define ERROR_INSTALL_TRANSFORM_REJECTED                   1644
+#define ERROR_INSTALL_REMOTE_PROHIBITED                    1645
+#define ERROR_PATCH_REMOVAL_UNSUPPORTED                    1646
 #define ERROR_UNKNOWN_PATCH                                1647
+#define ERROR_PATCH_NO_SEQUENCE                            1648
+#define ERROR_PATCH_REMOVAL_DISALLOWED                     1649
+#define ERROR_INVALID_PATCH_XML                            1650
+#define ERROR_PATCH_MANAGED_ADVERTISED_PRODUCT             1651
+#define ERROR_INSTALL_SERVICE_SAFEBOOT                     1652
 #define RPC_S_INVALID_STRING_BINDING                       1700
 #define RPC_S_WRONG_KIND_OF_BINDING                        1701
 #define RPC_S_INVALID_BINDING                              1702
