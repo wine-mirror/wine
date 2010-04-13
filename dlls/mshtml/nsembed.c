@@ -80,8 +80,6 @@ static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','
 
 static ATOM nscontainer_class;
 
-#define WM_RESETFOCUS_HACK WM_USER+600
-
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     NSContainer *This;
@@ -106,20 +104,13 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             WARN("SetSize failed: %08x\n", nsres);
         break;
 
-    case WM_RESETFOCUS_HACK:
-        /*
-         * FIXME
-         * Gecko grabs focus in edit mode and some apps don't like it.
-         * We should somehow prevent grabbing focus.
-         */
+    case WM_PARENTNOTIFY:
+        TRACE("WM_PARENTNOTIFY %x\n", (unsigned)wParam);
 
-        TRACE("WM_RESETFOCUS_HACK\n");
-
-        if(This->reset_focus) {
-            SetFocus(This->reset_focus);
-            This->reset_focus = NULL;
-            if(This->doc)
-                This->doc->focus = FALSE;
+        switch(wParam) {
+        case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+            nsIWebBrowserFocus_Activate(This->focus);
         }
     }
 
@@ -1315,9 +1306,6 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *ifa
     NSContainer *This = NSEMBWNDS_THIS(iface);
 
     TRACE("(%p)\n", This);
-
-    if(This->reset_focus)
-        PostMessageW(This->hwnd, WM_RESETFOCUS_HACK, 0, 0);
 
     return nsIBaseWindow_SetFocus(This->window);
 }

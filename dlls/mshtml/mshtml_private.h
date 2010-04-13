@@ -437,8 +437,6 @@ struct NSContainer {
     nsIURIContentListener *content_listener;
 
     HWND hwnd;
-
-    HWND reset_focus; /* hack */
 };
 
 typedef struct nsWineURI nsWineURI;
