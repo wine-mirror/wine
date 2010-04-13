@@ -5647,6 +5647,14 @@ static void prune_invalid_states(struct StateEntry *state_table, const struct wi
         state_table[i].representative = 0;
         state_table[i].apply = state_undefined;
     }
+
+    start = STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(gl_info->limits.blends));
+    last = STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255));
+    for (i = start; i <= last; ++i)
+    {
+        state_table[i].representative = 0;
+        state_table[i].apply = state_undefined;
+    }
 }
 
 static void validate_state_table(struct StateEntry *state_table)
