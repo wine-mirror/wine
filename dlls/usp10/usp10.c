@@ -3,6 +3,7 @@
  *
  * Copyright 2005 Steven Edwards for CodeWeavers
  * Copyright 2006 Hans Leidekker
+ * Copyright 2010 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,8 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "usp10.h"
+
+#include "usp10_internal.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -524,12 +527,31 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 
     int   cnt = 0, index = 0;
     int   New_Script = SCRIPT_UNDEFINED;
+    WORD  *levels = NULL;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
+
+    if (psState && psControl)
+    {
+        int i;
+        levels = heap_alloc_zero(cInChars * sizeof(WORD));
+        if (!levels)
+            return E_OUTOFMEMORY;
+
+        BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels);
+        for (i = 0; i < cInChars; i++)
+            if (levels[i]!=levels[0])
+                break;
+        if (i >= cInChars)
+        {
+            heap_free(levels);
+            levels = NULL;
+        }
+    }
 
     pItems[index].iCharPos = 0;
     memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
@@ -549,15 +571,29 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     if  (pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
         pItems[index].a.eScript = Script_Latin;
 
-    if  (pItems[index].a.eScript  == Script_Arabic)
+    if (levels)
+    {
+        pItems[index].a.fRTL = odd(levels[cnt]);
+        pItems[index].a.fLayoutRTL = odd(levels[cnt]);
+        pItems[index].a.s.uBidiLevel = levels[cnt];
+    }
+    else if (pItems[index].a.eScript  == Script_Arabic)
+    {
         pItems[index].a.s.uBidiLevel = 1;
+        pItems[index].a.fRTL = 1;
+        pItems[index].a.fLayoutRTL = 1;
+    }
 
-    TRACE("New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
-          New_Script, pItems[index].a.eScript, index, cnt,
+
+    TRACE("New_Level=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
+          levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript, index, cnt,
           pItems[index].iCharPos);
 
     for (cnt=1; cnt < cInChars; cnt++)
     {
+        if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel))
+            continue;
+
         if  (pwcInChars[cnt] == '\r')
             New_Script = Script_CR;
         else
@@ -578,9 +614,9 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         else
             New_Script = SCRIPT_UNDEFINED;
 
-        if  (New_Script != pItems[index].a.eScript)
+        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel)) || New_Script != pItems[index].a.eScript)
         {
-            TRACE("New_Script=%d, eScript=%d ", New_Script, pItems[index].a.eScript);
+            TRACE("New_Level = %i, New_Script=%d, eScript=%d ", levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript);
             index++;
             if  (index+1 > cMaxItems)
                 return E_OUTOFMEMORY;
@@ -588,9 +624,18 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             pItems[index].iCharPos = cnt;
             memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
-            if  (New_Script == Script_Arabic)
+            if (levels)
+            {
+                pItems[index].a.fRTL = odd(levels[cnt]);
+                pItems[index].a.fLayoutRTL = odd(levels[cnt]);
+                pItems[index].a.s.uBidiLevel = levels[cnt];
+            }
+            else if  (New_Script == Script_Arabic)
+            {
                 pItems[index].a.s.uBidiLevel = 1;
-
+                pItems[index].a.fRTL = 1;
+                pItems[index].a.fLayoutRTL = 1;
+            }
             pItems[index].a.eScript = New_Script;
 
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
@@ -610,6 +655,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /*  Set SCRIPT_ITEM                                     */
     pItems[index+1].iCharPos = cnt;       /* the last + 1 item
                                              contains the ptr to the lastchar */
+    heap_free(levels);
     return S_OK;
 }
 

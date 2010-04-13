@@ -3,6 +3,7 @@
  *
  * Copyright 2003 Shachar Shemesh
  * Copyright 2007 Maarten Lankhorst
+ * Copyright 2010 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,13 +48,11 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "usp10.h"
 #include "wine/debug.h"
 #include "gdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
-
-#define ASSERT(x) do { if (!(x)) FIXME("assert failed: %s\n", #x); } while(0)
-#define MAX_LEVEL 61
 
 /* HELPER FUNCTIONS AND DECLARATIONS */
 
@@ -248,571 +247,6 @@ static int resolveParagraphs(WORD *types, int cch)
     if (ich < cch && types[ich] == B)
         types[ich++] = BN;
     return ich;
-}
-
-/* RESOLVE EXPLICIT */
-
-static WORD GreaterEven(int i)
-{
-    return odd(i) ? i + 1 : i + 2;
-}
-
-static WORD GreaterOdd(int i)
-{
-    return odd(i) ? i + 2 : i + 1;
-}
-
-static WORD EmbeddingDirection(int level)
-{
-    return odd(level) ? R : L;
-}
-
-/*------------------------------------------------------------------------
-    Function: resolveExplicit
-
-    Recursively resolves explicit embedding levels and overrides.
-    Implements rules X1-X9, of the Unicode Bidirectional Algorithm.
-
-    Input: Base embedding level and direction
-           Character count
-
-    Output: Array of embedding levels
-
-    In/Out: Array of direction classes
-
-
-    Note: The function uses two simple counters to keep track of
-          matching explicit codes and PDF. Use the default argument for
-          the outermost call. The nesting counter counts the recursion
-          depth and not the embedding level.
-------------------------------------------------------------------------*/
-
-static int resolveExplicit(int level, int dir, WORD *pcls, WORD *plevel, int cch, int nNest)
-{
-    /* always called with a valid nesting level
-       nesting levels are != embedding levels */
-    int nLastValid = nNest;
-    int ich = 0;
-
-    /* check input values */
-    ASSERT(nNest >= 0 && level >= 0 && level <= MAX_LEVEL);
-
-    /* process the text */
-    for (; ich < cch; ich++)
-    {
-        WORD cls = pcls[ich];
-        switch (cls)
-        {
-        case LRO:
-        case LRE:
-            nNest++;
-            if (GreaterEven(level) <= MAX_LEVEL - (cls == LRO ? 2 : 0))
-            {
-                plevel[ich] = GreaterEven(level);
-                pcls[ich] = BN;
-                ich += resolveExplicit(plevel[ich], (cls == LRE ? N : L),
-                            &pcls[ich+1], &plevel[ich+1],
-                             cch - (ich+1), nNest);
-                nNest--;
-                continue;
-            }
-            cls = pcls[ich] = BN;
-            break;
-
-        case RLO:
-        case RLE:
-            nNest++;
-            if (GreaterOdd(level) <= MAX_LEVEL - (cls == RLO ? 2 : 0))
-            {
-                plevel[ich] = GreaterOdd(level);
-                pcls[ich] = BN;
-                ich += resolveExplicit(plevel[ich], (cls == RLE ? N : R),
-                                &pcls[ich+1], &plevel[ich+1],
-                                 cch - (ich+1), nNest);
-                nNest--;
-                continue;
-            }
-            cls = pcls[ich] = BN;
-            break;
-
-        case PDF:
-            cls = pcls[ich] = BN;
-            if (nNest)
-            {
-                if (nLastValid < nNest)
-                {
-                    nNest--;
-                }
-                else
-                {
-                    cch = ich; /* break the loop, but complete body */
-                }
-            }
-        }
-
-        /* Apply the override */
-        if (dir != N)
-        {
-            cls = dir;
-        }
-        plevel[ich] = level;
-        if (pcls[ich] != BN)
-            pcls[ich] = cls;
-    }
-
-    return ich;
-}
-
-/* RESOLVE WEAK TYPES */
-
-enum states /* possible states */
-{
-    xa,        /*  arabic letter */
-    xr,        /*  right letter */
-    xl,        /*  left letter */
-
-    ao,        /*  arabic lett. foll by ON */
-    ro,        /*  right lett. foll by ON */
-    lo,        /*  left lett. foll by ON */
-
-    rt,        /*  ET following R */
-    lt,        /*  ET following L */
-
-    cn,        /*  EN, AN following AL */
-    ra,        /*  arabic number foll R */
-    re,        /*  european number foll R */
-    la,        /*  arabic number foll L */
-    le,        /*  european number foll L */
-
-    ac,        /*  CS following cn */
-    rc,        /*  CS following ra */
-    rs,        /*  CS,ES following re */
-    lc,        /*  CS following la */
-    ls,        /*  CS,ES following le */
-
-    ret,    /*  ET following re */
-    let,    /*  ET following le */
-} ;
-
-static const int stateWeak[][10] =
-{
-    /*    N,  L,  R, AN, EN, AL,NSM, CS, ES, ET */
-/*xa*/ { ao, xl, xr, cn, cn, xa, xa, ao, ao, ao }, /* arabic letter          */
-/*xr*/ { ro, xl, xr, ra, re, xa, xr, ro, ro, rt }, /* right letter           */
-/*xl*/ { lo, xl, xr, la, le, xa, xl, lo, lo, lt }, /* left letter            */
-
-/*ao*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* arabic lett. foll by ON*/
-/*ro*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* right lett. foll by ON */
-/*lo*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* left lett. foll by ON  */
-
-/*rt*/ { ro, xl, xr, ra, re, xa, rt, ro, ro, rt }, /* ET following R         */
-/*lt*/ { lo, xl, xr, la, le, xa, lt, lo, lo, lt }, /* ET following L         */
-
-/*cn*/ { ao, xl, xr, cn, cn, xa, cn, ac, ao, ao }, /* EN, AN following AL    */
-/*ra*/ { ro, xl, xr, ra, re, xa, ra, rc, ro, rt }, /* arabic number foll R   */
-/*re*/ { ro, xl, xr, ra, re, xa, re, rs, rs,ret }, /* european number foll R */
-/*la*/ { lo, xl, xr, la, le, xa, la, lc, lo, lt }, /* arabic number foll L   */
-/*le*/ { lo, xl, xr, la, le, xa, le, ls, ls,let }, /* european number foll L */
-
-/*ac*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* CS following cn        */
-/*rc*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS following ra        */
-/*rs*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS,ES following re     */
-/*lc*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS following la        */
-/*ls*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS,ES following le     */
-
-/*ret*/{ ro, xl, xr, ra, re, xa,ret, ro, ro,ret }, /* ET following re        */
-/*let*/{ lo, xl, xr, la, le, xa,let, lo, lo,let }, /* ET following le        */
-};
-
-enum actions /* possible actions */
-{
-    /* primitives */
-    IX = 0x100,                    /* increment */
-    XX = 0xF,                    /* no-op */
-
-    /* actions */
-    xxx = (XX << 4) + XX,        /* no-op */
-    xIx = IX + xxx,                /* increment run */
-    xxN = (XX << 4) + ON,        /* set current to N */
-    xxE = (XX << 4) + EN,        /* set current to EN */
-    xxA = (XX << 4) + AN,        /* set current to AN */
-    xxR = (XX << 4) + R,        /* set current to R */
-    xxL = (XX << 4) + L,        /* set current to L */
-    Nxx = (ON << 4) + 0xF,        /* set run to neutral */
-    Axx = (AN << 4) + 0xF,        /* set run to AN */
-    ExE = (EN << 4) + EN,        /* set run to EN, set current to EN */
-    NIx = (ON << 4) + 0xF + IX, /* set run to N, increment */
-    NxN = (ON << 4) + ON,        /* set run to N, set current to N */
-    NxR = (ON << 4) + R,        /* set run to N, set current to R */
-    NxE = (ON << 4) + EN,        /* set run to N, set current to EN */
-
-    AxA = (AN << 4) + AN,        /* set run to AN, set current to AN */
-    NxL = (ON << 4) + L,        /* set run to N, set current to L */
-    LxL = (L << 4) + L,            /* set run to L, set current to L */
-}  ;
-
-static const int actionWeak[][10] =
-{
-       /*  N,   L,   R,  AN,  EN,  AL, NSM,  CS,  ES,  ET */
-/*xa*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxR, xxN, xxN, xxN }, /* arabic letter           */
-/*xr*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxR, xxN, xxN, xIx }, /* right letter            */
-/*xl*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xIx }, /* left letter             */
-
-/*ao*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxN, xxN, xxN, xxN }, /* arabic lett. foll by ON */
-/*ro*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxN, xxN, xxN, xIx }, /* right lett. foll by ON  */
-/*lo*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxN, xxN, xxN, xIx }, /* left lett. foll by ON   */
-
-/*rt*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, xIx, NxN, NxN, xIx }, /* ET following R         */
-/*lt*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, xIx, NxN, NxN, xIx }, /* ET following L         */
-
-/*cn*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxA, xIx, xxN, xxN }, /* EN, AN following  AL    */
-/*ra*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxA, xIx, xxN, xIx }, /* arabic number foll R   */
-/*re*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxE, xIx, xIx, xxE }, /* european number foll R */
-/*la*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxA, xIx, xxN, xIx }, /* arabic number foll L   */
-/*le*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xIx, xIx, xxL }, /* european number foll L */
-
-/*ac*/ { Nxx, Nxx, Nxx, Axx, AxA, NxR, NxN, NxN, NxN, NxN }, /* CS following cn         */
-/*rc*/ { Nxx, Nxx, Nxx, Axx, NxE, NxR, NxN, NxN, NxN, NIx }, /* CS following ra         */
-/*rs*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following re      */
-/*lc*/ { Nxx, Nxx, Nxx, Axx, NxL, NxR, NxN, NxN, NxN, NIx }, /* CS following la         */
-/*ls*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following le      */
-
-/*ret*/{ xxx, xxx, xxx, xxx, xxE, xxR, xxE, xxN, xxN, xxE }, /* ET following re            */
-/*let*/{ xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xxL }, /* ET following le            */
-};
-
-static int GetDeferredType(int action)
-{
-    return (action >> 4) & 0xF;
-}
-
-static int GetResolvedType(int action)
-{
-    return action & 0xF;
-}
-
-/* Note on action table:
-
-  States can be of two kinds:
-     - Immediate Resolution State, where each input token
-       is resolved as soon as it is seen. These states have
-       only single action codes (xxN) or the no-op (xxx)
-       for static input tokens.
-     - Deferred Resolution State, where input tokens either
-       either extend the run (xIx) or resolve its Type (e.g. Nxx).
-
-   Input classes are of three kinds
-     - Static Input Token, where the class of the token remains
-       unchanged on output (AN, L, N, R)
-     - Replaced Input Token, where the class of the token is
-       always replaced on output (AL, BN, NSM, CS, ES, ET)
-     - Conditional Input Token, where the class of the token is
-       changed on output in some, but not all, cases (EN)
-
-     Where tokens are subject to change, a double action
-     (e.g. NxA, or NxN) is _required_ after deferred states,
-     resolving both the deferred state and changing the current token.
-*/
-
-/*------------------------------------------------------------------------
-    Function: resolveWeak
-
-    Resolves the directionality of numeric and other weak character types
-
-    Implements rules X10 and W1-W6 of the Unicode Bidirectional Algorithm.
-
-    Input: Array of embedding levels
-           Character count
-
-    In/Out: Array of directional classes
-
-    Note: On input only these directional classes are expected
-          AL, HL, R, L,  ON, BN, NSM, AN, EN, ES, ET, CS,
-------------------------------------------------------------------------*/
-static void resolveWeak(int baselevel, WORD *pcls, WORD *plevel, int cch)
-{
-    int state = odd(baselevel) ? xr : xl;
-    int cls;
-
-    int level = baselevel;
-    int action, clsRun, clsNew;
-    int cchRun = 0;
-    int ich = 0;
-
-    for (; ich < cch; ich++)
-    {
-        /* ignore boundary neutrals */
-        if (pcls[ich] == BN)
-        {
-            /* must flatten levels unless at a level change; */
-            plevel[ich] = level;
-
-            /* lookahead for level changes */
-            if (ich + 1 == cch && level != baselevel)
-            {
-                /* have to fixup last BN before end of the loop, since
-                 * its fix-upped value will be needed below the assert */
-                pcls[ich] = EmbeddingDirection(level);
-            }
-            else if (ich + 1 < cch && level != plevel[ich+1] && pcls[ich+1] != BN)
-            {
-                /* fixup LAST BN in front / after a level run to make
-                 * it act like the SOR/EOR in rule X10 */
-                int newlevel = plevel[ich+1];
-                if (level > newlevel) {
-                    newlevel = level;
-                }
-                plevel[ich] = newlevel;
-
-                /* must match assigned level */
-                pcls[ich] = EmbeddingDirection(newlevel);
-                level = plevel[ich+1];
-            }
-            else
-            {
-                /* don't interrupt runs */
-                if (cchRun)
-                {
-                    cchRun++;
-                }
-                continue;
-            }
-        }
-
-        ASSERT(pcls[ich] <= BN);
-        cls = pcls[ich];
-
-        action = actionWeak[state][cls];
-
-        /* resolve the directionality for deferred runs */
-        clsRun = GetDeferredType(action);
-        if (clsRun != XX)
-        {
-            SetDeferredRun(pcls, cchRun, ich, clsRun);
-            cchRun = 0;
-        }
-
-        /* resolve the directionality class at the current location */
-        clsNew = GetResolvedType(action);
-        if (clsNew != XX)
-            pcls[ich] = clsNew;
-
-        /* increment a deferred run */
-        if (IX & action)
-            cchRun++;
-
-        state = stateWeak[state][cls];
-    }
-
-    /* resolve any deferred runs
-     * use the direction of the current level to emulate PDF */
-    cls = EmbeddingDirection(level);
-
-    /* resolve the directionality for deferred runs */
-    clsRun = GetDeferredType(actionWeak[state][cls]);
-    if (clsRun != XX)
-        SetDeferredRun(pcls, cchRun, ich, clsRun);
-}
-
-/* RESOLVE NEUTRAL TYPES */
-
-/* action values */
-enum neutralactions
-{
-    /* action to resolve previous input */
-    nL = L,         /* resolve EN to L */
-    En = 3 << 4,    /* resolve neutrals run to embedding level direction */
-    Rn = R << 4,    /* resolve neutrals run to strong right */
-    Ln = L << 4,    /* resolved neutrals run to strong left */
-    In = (1<<8),    /* increment count of deferred neutrals */
-    LnL = (1<<4)+L, /* set run and EN to L */
-};
-
-static int GetDeferredNeutrals(int action, int level)
-{
-    action = (action >> 4) & 0xF;
-    if (action == (En >> 4))
-        return EmbeddingDirection(level);
-    else
-        return action;
-}
-
-static int GetResolvedNeutrals(int action)
-{
-    action = action & 0xF;
-    if (action == In)
-        return 0;
-    else
-        return action;
-}
-
-/* state values */
-enum resolvestates
-{
-    /* new temporary class */
-    r,  /* R and characters resolved to R */
-    l,  /* L and characters resolved to L */
-    rn, /* N preceded by right */
-    ln, /* N preceded by left */
-    a,  /* AN preceded by left (the abbreviation 'la' is used up above) */
-    na, /* N preceded by a */
-} ;
-
-
-/*------------------------------------------------------------------------
-  Notes:
-
-  By rule W7, whenever a EN is 'dominated' by an L (including start of
-  run with embedding direction = L) it is resolved to, and further treated
-  as L.
-
-  This leads to the need for 'a' and 'na' states.
-------------------------------------------------------------------------*/
-
-static const int actionNeutrals[][5] =
-{
-/*   N,  L,  R,  AN, EN = cls */
-  { In,  0,  0,  0,  0 }, /* r    right */
-  { In,  0,  0,  0,  L }, /* l    left */
-
-  { In, En, Rn, Rn, Rn }, /* rn   N preceded by right */
-  { In, Ln, En, En, LnL}, /* ln   N preceded by left */
-
-  { In,  0,  0,  0,  L }, /* a   AN preceded by left */
-  { In, En, Rn, Rn, En }, /* na   N  preceded by a */
-} ;
-
-static const int stateNeutrals[][5] =
-{
-/*   N, L,  R, AN, EN */
-  { rn, l,  r,  r,  r }, /* r   right */
-  { ln, l,  r,  a,  l }, /* l   left */
-
-  { rn, l,  r,  r,  r }, /* rn  N preceded by right */
-  { ln, l,  r,  a,  l }, /* ln  N preceded by left */
-
-  { na, l,  r,  a,  l }, /* a  AN preceded by left */
-  { na, l,  r,  a,  l }, /* na  N preceded by la */
-} ;
-
-/*------------------------------------------------------------------------
-    Function: resolveNeutrals
-
-    Resolves the directionality of neutral character types.
-
-    Implements rules W7, N1 and N2 of the Unicode Bidi Algorithm.
-
-    Input: Array of embedding levels
-           Character count
-           Baselevel
-
-    In/Out: Array of directional classes
-
-    Note: On input only these directional classes are expected
-          R,  L,  N, AN, EN and BN
-
-          W8 resolves a number of ENs to L
-------------------------------------------------------------------------*/
-static void resolveNeutrals(int baselevel, WORD *pcls, const WORD *plevel, int cch)
-{
-    /* the state at the start of text depends on the base level */
-    int state = odd(baselevel) ? r : l;
-    int cls;
-
-    int cchRun = 0;
-    int level = baselevel;
-
-    int action, clsRun, clsNew;
-    int ich = 0;
-    for (; ich < cch; ich++)
-    {
-        /* ignore boundary neutrals */
-        if (pcls[ich] == BN)
-        {
-            /* include in the count for a deferred run */
-            if (cchRun)
-                cchRun++;
-
-            /* skip any further processing */
-            continue;
-        }
-
-        ASSERT(pcls[ich] < 5); /* "Only N, L, R,  AN, EN are allowed" */
-        cls = pcls[ich];
-
-        action = actionNeutrals[state][cls];
-
-        /* resolve the directionality for deferred runs */
-        clsRun = GetDeferredNeutrals(action, level);
-        if (clsRun != N)
-        {
-            SetDeferredRun(pcls, cchRun, ich, clsRun);
-            cchRun = 0;
-        }
-
-        /* resolve the directionality class at the current location */
-        clsNew = GetResolvedNeutrals(action);
-        if (clsNew != N)
-            pcls[ich] = clsNew;
-
-        if (In & action)
-            cchRun++;
-
-        state = stateNeutrals[state][cls];
-        level = plevel[ich];
-    }
-
-    /* resolve any deferred runs */
-    cls = EmbeddingDirection(level);    /* eor has type of current level */
-
-    /* resolve the directionality for deferred runs */
-    clsRun = GetDeferredNeutrals(actionNeutrals[state][cls], level);
-    if (clsRun != N)
-        SetDeferredRun(pcls, cchRun, ich, clsRun);
-}
-
-/* RESOLVE IMPLICIT */
-
-/*------------------------------------------------------------------------
-    Function: resolveImplicit
-
-    Recursively resolves implicit embedding levels.
-    Implements rules I1 and I2 of the Unicode Bidirectional Algorithm.
-
-    Input: Array of direction classes
-           Character count
-           Base level
-
-    In/Out: Array of embedding levels
-
-    Note: levels may exceed 15 on output.
-          Accepted subset of direction classes
-          R, L, AN, EN
-------------------------------------------------------------------------*/
-static const WORD addLevel[][4] =
-{
-          /* L,  R, AN, EN */
-/* even */ { 0,  1,  2,  2, },
-/* odd  */ { 1,  0,  1,  1, }
-
-};
-
-static void resolveImplicit(const WORD * pcls, WORD *plevel, int cch)
-{
-    int ich = 0;
-    for (; ich < cch; ich++)
-    {
-        /* cannot resolve bn here, since some bn were resolved to strong
-         * types in resolveWeak. To remove these we need the original
-         * types, which are available again in resolveWhiteSpace */
-        if (pcls[ich] == BN)
-        {
-            continue;
-        }
-        ASSERT(pcls[ich] > 0); /* "No Neutrals allowed to survive here." */
-        ASSERT(pcls[ich] < 5); /* "Out of range." */
-        plevel[ich] += addLevel[odd(plevel[ich])][pcls[ich] - 1];
-    }
 }
 
 /* REORDER */
@@ -1057,12 +491,23 @@ BOOL BIDI_Reorder(
                 UINT *lpOrder /* [out] Logical -> Visual order map */
     )
 {
-    WORD *levels;
     WORD *chartype;
-    unsigned i, baselevel = 0, done;
+    WORD *levels;
+    unsigned i, done;
+
+    int maxItems;
+    int nItems;
+    SCRIPT_CONTROL Control;
+    SCRIPT_STATE State;
+    SCRIPT_ITEM *pItems;
+    HRESULT res;
+
     TRACE("%s, %d, 0x%08x lpOutString=%p, lpOrder=%p\n",
           debugstr_wn(lpString, uCount), uCount, dwFlags,
           lpOutString, lpOrder);
+
+    memset(&Control, 0, sizeof(Control));
+    memset(&State, 0, sizeof(State));
 
     if (!(dwFlags & GCP_REORDER))
     {
@@ -1076,8 +521,7 @@ BOOL BIDI_Reorder(
         return FALSE;
     }
 
-    chartype = HeapAlloc(GetProcessHeap(), 0, uCount * 2 * sizeof(WORD));
-    levels = chartype + uCount;
+    chartype = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
     if (!chartype)
     {
         WARN("Out of memory\n");
@@ -1087,8 +531,48 @@ BOOL BIDI_Reorder(
     if (lpOutString)
         memcpy(lpOutString, lpString, uCount * sizeof(WCHAR));
 
-    if (WINE_GCPW_FORCE_RTL == (dwWineGCP_Flags&WINE_GCPW_DIR_MASK))
-        baselevel = 1;
+    /* Verify reordering will be required */
+    if ((WINE_GCPW_FORCE_RTL == (dwWineGCP_Flags&WINE_GCPW_DIR_MASK)) ||
+        ((dwWineGCP_Flags&WINE_GCPW_DIR_MASK) == WINE_GCPW_LOOSE_RTL))
+        State.uBidiLevel = 1;
+    else
+    {
+        done = 1;
+        classify(lpString, chartype, uCount);
+        for (i = 0; i < uCount; i++)
+            switch (chartype[i])
+            {
+                case R:
+                case AL:
+                case RLE:
+                case RLO:
+                    done = 0;
+                    break;
+            }
+        if (done)
+        {
+            HeapFree(GetProcessHeap(), 0, chartype);
+            return TRUE;
+        }
+    }
+
+    levels = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
+    if (!levels)
+    {
+        WARN("Out of memory\n");
+        HeapFree(GetProcessHeap(), 0, chartype);
+        return FALSE;
+    }
+
+    maxItems = 5;
+    pItems = HeapAlloc(GetProcessHeap(),0, maxItems * sizeof(SCRIPT_ITEM));
+    if (!pItems)
+    {
+        WARN("Out of memory\n");
+        HeapFree(GetProcessHeap(), 0, chartype);
+        HeapFree(GetProcessHeap(), 0, levels);
+        return FALSE;
+    }
 
     done = 0;
     while (done < uCount)
@@ -1108,42 +592,53 @@ BOOL BIDI_Reorder(
             }
 
         if ((dwWineGCP_Flags&WINE_GCPW_DIR_MASK) == WINE_GCPW_LOOSE_RTL)
-            baselevel = 1;
+            State.uBidiLevel = 1;
         else if ((dwWineGCP_Flags&WINE_GCPW_DIR_MASK) == WINE_GCPW_LOOSE_LTR)
-            baselevel = 0;
+            State.uBidiLevel = 0;
 
         if (dwWineGCP_Flags & WINE_GCPW_LOOSE_MASK)
         {
             for (j = 0; j < i; ++j)
                 if (chartype[j] == L)
                 {
-                    baselevel = 0;
+                    State.uBidiLevel = 0;
                     break;
                 }
                 else if (chartype[j] == R || chartype[j] == AL)
                 {
-                    baselevel = 1;
+                    State.uBidiLevel = 1;
                     break;
                 }
         }
 
-        /* resolve explicit */
-        resolveExplicit(baselevel, N, chartype, levels, i, 0);
+        res = ScriptItemize(lpString + done, i, maxItems, &Control, &State, pItems, &nItems);
+        while (res == E_OUTOFMEMORY)
+        {
+            maxItems = maxItems * 2;
+            pItems = HeapReAlloc(GetProcessHeap(), 0, pItems, sizeof(SCRIPT_ITEM) * maxItems);
+            if (!pItems)
+            {
+                WARN("Out of memory\n");
+                HeapFree(GetProcessHeap(), 0, chartype);
+                HeapFree(GetProcessHeap(), 0, levels);
+                return FALSE;
+            }
+            res = ScriptItemize(lpString + done, i, maxItems, &Control, &State, pItems, &nItems);
+        }
 
-        /* resolve weak */
-        resolveWeak(baselevel, chartype, levels, i);
-
-        /* resolve neutrals */
-        resolveNeutrals(baselevel, chartype, levels, i);
-
-        /* resolveImplicit */
-        resolveImplicit(chartype, levels, i);
+        for (j = 0; j < nItems; j++)
+        {
+            int k;
+            for (k = pItems[j].iCharPos; k < pItems[j+1].iCharPos; k++)
+                levels[k] = pItems[j].a.s.uBidiLevel;
+        }
 
         /* assign directional types again, but for WS, S this time */
         classify(lpString + done, chartype, i);
 
-        BidiLines(baselevel, lpOutString ? lpOutString + done : NULL, lpString + done,
+        BidiLines(State.uBidiLevel, lpOutString ? lpOutString + done : NULL, lpString + done,
                     chartype, levels, i, !(dwFlags & GCP_SYMSWAPOFF), 0);
+
 
         if (lpOrder)
         {
@@ -1171,5 +666,7 @@ BOOL BIDI_Reorder(
     }
 
     HeapFree(GetProcessHeap(), 0, chartype);
+    HeapFree(GetProcessHeap(), 0, levels);
+    HeapFree(GetProcessHeap(), 0, pItems);
     return TRUE;
 }
