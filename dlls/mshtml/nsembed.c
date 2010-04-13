@@ -767,46 +767,6 @@ void get_editor_controller(NSContainer *This)
     }
 }
 
-void set_ns_editmode(NSContainer *This)
-{
-    nsIEditingSession *editing_session = NULL;
-    nsIURIContentListener *listener = NULL;
-    nsIDOMWindow *dom_window = NULL;
-    nsresult nsres;
-
-    nsres = get_nsinterface((nsISupports*)This->webbrowser, &IID_nsIEditingSession,
-            (void**)&editing_session);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIEditingSession: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get content DOM window: %08x\n", nsres);
-        nsIEditingSession_Release(editing_session);
-        return;
-    }
-
-    nsres = nsIEditingSession_MakeWindowEditable(editing_session, dom_window,
-            NULL, FALSE, TRUE, TRUE);
-    nsIEditingSession_Release(editing_session);
-    nsIDOMWindow_Release(dom_window);
-    if(NS_FAILED(nsres)) {
-        ERR("MakeWindowEditable failed: %08x\n", nsres);
-        return;
-    }
-
-    /* MakeWindowEditable changes WebBrowser's parent URI content listener.
-     * It seams to be a bug in Gecko. To workaround it we set our content
-     * listener again and Gecko's one as its parent.
-     */
-    nsIWebBrowser_GetParentURIContentListener(This->webbrowser, &listener);
-    nsIURIContentListener_SetParentContentListener(NSURICL(This), listener);
-    nsIURIContentListener_Release(listener);
-    nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
-}
-
 void close_gecko(void)
 {
     TRACE("()\n");

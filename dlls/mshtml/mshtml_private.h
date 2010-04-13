@@ -843,7 +843,6 @@ void update_title(HTMLDocumentObj*);
 
 /* editor */
 void init_editor(HTMLDocument*);
-void set_ns_editmode(NSContainer*);
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
