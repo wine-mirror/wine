@@ -94,6 +94,7 @@ SVG_SRCS = \
 	desktop.svg \
 	document.svg \
 	drive.svg \
+	floppy.svg \
 	folder.svg \
 	folder_open.svg \
 	mycomputer.svg \
