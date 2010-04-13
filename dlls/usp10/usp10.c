@@ -1619,28 +1619,45 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
  */
 HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *logtovis)
 {
-    int i, j = runs - 1, k = 0;
+    int* indexs;
+    int ich;
 
     TRACE("(%d, %p, %p, %p)\n", runs, level, vistolog, logtovis);
 
     if (!level || (!vistolog && !logtovis))
         return E_INVALIDARG;
 
-    for (i = 0; i < runs; i++)
+    indexs = heap_alloc(sizeof(int) * runs);
+    if (!indexs)
+        return E_OUTOFMEMORY;
+
+
+    if (vistolog)
     {
-        if (level[i] % 2)
-        {
-            if (vistolog) *vistolog++ = j;
-            if (logtovis) *logtovis++ = j;
-            j--;
-        }
-        else
-        {
-            if (vistolog) *vistolog++ = k;
-            if (logtovis) *logtovis++ = k;
-            k++;
-        }
+        for( ich = 0; ich < runs; ich++)
+            indexs[ich] = ich;
+
+        ich = 0;
+        while (ich < runs)
+            ich += BIDI_ReorderV2lLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
+        for (ich = 0; ich < runs; ich++)
+            vistolog[ich] = indexs[ich];
     }
+
+
+    if (logtovis)
+    {
+        for( ich = 0; ich < runs; ich++)
+            indexs[ich] = ich;
+
+        ich = 0;
+        while (ich < runs)
+            ich += BIDI_ReorderL2vLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
+        for (ich = 0; ich < runs; ich++)
+            logtovis[ich] = indexs[ich];
+    }
+    heap_free(indexs);
+
     return S_OK;
 }
 

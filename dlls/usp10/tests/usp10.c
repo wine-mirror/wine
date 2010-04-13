@@ -1379,20 +1379,55 @@ static void test_ScriptGetGlyphABCWidth(HDC hdc)
 static void test_ScriptLayout(void)
 {
     HRESULT hr;
-    static const BYTE levels[][5] =
+    static const BYTE levels[][10] =
     {
-        { 0, 0, 0, 0, 0 },
-        { 1, 1, 1, 1, 1 },
-        { 2, 2, 2, 2, 2 },
-        { 3, 3, 3, 3, 3 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+        { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+        { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
+
+        { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+        { 1, 1, 1, 2, 2, 2, 1, 1, 1, 1 },
+        { 2, 2, 2, 1, 1, 1, 2, 2, 2, 2 },
+        { 0, 0, 1, 1, 2, 2, 1, 1, 0, 0 },
+        { 1, 1, 2, 2, 3, 3, 2, 2, 1, 1 },
+
+        { 0, 0, 1, 1, 2, 2, 1, 1, 0, 1 },
+        { 1, 0, 1, 2, 2, 1, 2, 1, 0, 1 },
     };
-    static const int expect[][5] =
+    static const int expect_l2v[][10] =
     {
-        { 0, 1, 2, 3, 4 },
-        { 4, 3, 2, 1, 0 },
-        { 0, 1, 2, 3, 4 },
-        { 4, 3, 2, 1, 0 }
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
+
+        { 0, 1, 2, 3, 4, 9, 8 ,7 ,6, 5},
+/**/    { 9, 8, 7, 4, 5, 6, 3 ,2 ,1, 0},
+/**/    { 7, 8, 9, 6, 5, 4, 0 ,1 ,2, 3},
+        { 0, 1, 7, 6, 4, 5, 3 ,2 ,8, 9},
+        { 9, 8, 2, 3, 5, 4, 6 ,7 ,1, 0},
+
+        { 0, 1, 7, 6, 4, 5, 3 ,2 ,8, 9},
+/**/    { 0, 1, 7, 5, 6, 4, 3 ,2 ,8, 9},
     };
+    static const int expect_v2l[][10] =
+    {
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
+
+        { 0, 1, 2, 3, 4, 9, 8 ,7 ,6, 5},
+        { 9, 8, 7, 6, 3, 4, 5 ,2 ,1, 0},
+        { 6, 7, 8, 9, 5, 4, 3 ,0 ,1, 2},
+        { 0, 1, 7, 6, 4, 5, 3 ,2 ,8, 9},
+        { 9, 8, 2, 3, 5, 4, 6 ,7 ,1, 0},
+
+        { 0, 1, 7, 6, 4, 5, 3 ,2 ,8, 9},
+        { 0, 1, 7, 6, 5, 3, 4 ,2 ,8, 9},
+    };
+
     int i, j, vistolog[sizeof(levels[0])], logtovis[sizeof(levels[0])];
 
     hr = ScriptLayout(sizeof(levels[0]), NULL, vistolog, logtovis);
@@ -1408,14 +1443,14 @@ static void test_ScriptLayout(void)
 
         for (j = 0; j < sizeof(levels[i]); j++)
         {
-            ok(expect[i][j] == vistolog[j],
+            ok(expect_v2l[i][j] == vistolog[j],
                "failure: levels[%d][%d] = %d, vistolog[%d] = %d\n",
                i, j, levels[i][j], j, vistolog[j] );
         }
 
         for (j = 0; j < sizeof(levels[i]); j++)
         {
-            ok(expect[i][j] == logtovis[j],
+            ok(expect_l2v[i][j] == logtovis[j],
                "failure: levels[%d][%d] = %d, logtovis[%d] = %d\n",
                i, j, levels[i][j], j, logtovis[j] );
         }

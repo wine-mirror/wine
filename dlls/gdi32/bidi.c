@@ -192,22 +192,9 @@ static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount)
         }
 }
 
-/* reverse cch characters */
-static void reverse(LPWSTR psz, int cch)
-{
-    WCHAR chTemp;
-    int ich = 0;
-    for (; ich < --cch; ich++)
-    {
-        chTemp = psz[ich];
-        psz[ich] = psz[cch];
-        psz[cch] = chTemp;
-    }
-}
-
 /* Set a run of cval values at locations all prior to, but not including */
 /* iStart, to the new value nval. */
-static void SetDeferredRun(WORD *pval, int cval, int iStart, int nval)
+static void SetDeferredRun(BYTE *pval, int cval, int iStart, int nval)
 {
     int i = iStart - 1;
     for (; i >= iStart - cval; i--)
@@ -299,10 +286,10 @@ static int resolveLines(LPCWSTR pszInput, BOOL * pbrk, int cch)
           a real implementation, cch and the initial pointer values
           would have to be adjusted.
 ------------------------------------------------------------------------*/
-static void resolveWhitespace(int baselevel, const WORD *pcls, WORD *plevel, int cch)
+static void resolveWhitespace(int baselevel, const WORD *pcls, BYTE *plevel, int cch)
 {
     int cchrun = 0;
-    int oldlevel = baselevel;
+    BYTE oldlevel = baselevel;
 
     int ich = 0;
     for (; ich < cch; ich++)
@@ -340,67 +327,6 @@ static void resolveWhitespace(int baselevel, const WORD *pcls, WORD *plevel, int
     SetDeferredRun(plevel, cchrun, ich, baselevel);
 }
 
-
-/*------------------------------------------------------------------------
-    Functions: reorder/reorderLevel
-
-    Recursively reorders the display string
-    "From the highest level down, reverse all characters at that level and
-    higher, down to the lowest odd level"
-
-    Implements rule L2 of the Unicode bidi Algorithm.
-
-    Input: Array of embedding levels
-           Character count
-           Flag enabling reversal (set to false by initial caller)
-
-    In/Out: Text to reorder
-
-    Note: levels may exceed 15 resp. 61 on input.
-
-    Rule L3 - reorder combining marks is not implemented here
-    Rule L4 - glyph mirroring is implemented as a display option below
-
-    Note: this should be applied a line at a time
--------------------------------------------------------------------------*/
-static int reorderLevel(int level, LPWSTR pszText, const WORD* plevel, int cch, BOOL fReverse)
-{
-    int ich = 0;
-
-    /* true as soon as first odd level encountered */
-    fReverse = fReverse || odd(level);
-
-    for (; ich < cch; ich++)
-    {
-        if (plevel[ich] < level)
-        {
-            break;
-        }
-        else if (plevel[ich] > level)
-        {
-            ich += reorderLevel(level + 1, pszText + ich, plevel + ich,
-                cch - ich, fReverse) - 1;
-        }
-    }
-    if (fReverse)
-    {
-        reverse(pszText, ich);
-    }
-    return ich;
-}
-
-static int reorder(int baselevel, LPWSTR pszText, const WORD* plevel, int cch)
-{
-    int ich = 0;
-
-    while (ich < cch)
-    {
-        ich += reorderLevel(baselevel, pszText + ich, plevel + ich,
-            cch - ich, FALSE);
-    }
-    return ich;
-}
-
 /* DISPLAY OPTIONS */
 /*-----------------------------------------------------------------------
    Function:    mirror
@@ -418,7 +344,7 @@ static int reorder(int baselevel, LPWSTR pszText, const WORD* plevel, int cch)
     A full implementation would need to substitute mirrored glyphs even
     for characters that are not paired (e.g. integral sign).
 -----------------------------------------------------------------------*/
-static void mirror(LPWSTR pszInput, const WORD* plevel, int cch)
+static void mirror(LPWSTR pszInput, const BYTE* plevel, int cch)
 {
     static int warn_once;
     int i;
@@ -448,9 +374,18 @@ static void mirror(LPWSTR pszInput, const WORD* plevel, int cch)
 
 ------------------------------------------------------------------------*/
 static void BidiLines(int baselevel, LPWSTR pszOutLine, LPCWSTR pszLine, WORD * pclsLine,
-                      WORD * plevelLine, int cchPara, int fMirror, BOOL * pbrk)
+                      BYTE * plevelLine, int cchPara, int fMirror, BOOL * pbrk)
 {
     int cchLine = 0;
+    int done = 0;
+    int *run;
+
+    run = HeapAlloc(GetProcessHeap(), 0, cchPara * sizeof(int));
+    if (!run)
+    {
+        WARN("Out of memory\n");
+        return;
+    }
 
     do
     {
@@ -462,11 +397,14 @@ static void BidiLines(int baselevel, LPWSTR pszOutLine, LPCWSTR pszLine, WORD * 
 
         if (pszOutLine)
         {
+            int i;
             if (fMirror)
                 mirror(pszOutLine, plevelLine, cchLine);
 
             /* reorder each line in place */
-            reorder(baselevel, pszOutLine, plevelLine, cchLine);
+            ScriptLayout(cchLine, plevelLine, run, NULL);
+            for (i = 0; i < cchLine; i++)
+                pszOutLine[done+run[i]] = pszLine[i];
         }
 
         pszLine += cchLine;
@@ -474,8 +412,11 @@ static void BidiLines(int baselevel, LPWSTR pszOutLine, LPCWSTR pszLine, WORD * 
         pbrk += pbrk ? cchLine : 0;
         pclsLine += cchLine;
         cchPara -= cchLine;
+        done += cchLine;
 
     } while (cchPara);
+
+    HeapFree(GetProcessHeap(), 0, run);
 }
 
 /*************************************************************
@@ -492,7 +433,7 @@ BOOL BIDI_Reorder(
     )
 {
     WORD *chartype;
-    WORD *levels;
+    BYTE *levels;
     unsigned i, done;
 
     int maxItems;
@@ -556,7 +497,7 @@ BOOL BIDI_Reorder(
         }
     }
 
-    levels = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
+    levels = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(BYTE));
     if (!levels)
     {
         WARN("Out of memory\n");

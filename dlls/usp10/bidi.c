@@ -827,3 +827,98 @@ BOOL BIDI_DetermineLevels(
     HeapFree(GetProcessHeap(), 0, chartype);
     return TRUE;
 }
+
+/* reverse cch indexes */
+static void reverse(int *pidx, int cch)
+{
+    int temp;
+    int ich = 0;
+    for (; ich < --cch; ich++)
+    {
+        temp = pidx[ich];
+        pidx[ich] = pidx[cch];
+        pidx[cch] = temp;
+    }
+}
+
+
+/*------------------------------------------------------------------------
+    Functions: reorder/reorderLevel
+
+    Recursively reorders the display string
+    "From the highest level down, reverse all characters at that level and
+    higher, down to the lowest odd level"
+
+    Implements rule L2 of the Unicode bidi Algorithm.
+
+    Input: Array of embedding levels
+           Character count
+           Flag enabling reversal (set to false by initial caller)
+
+    In/Out: Text to reorder
+
+    Note: levels may exceed 15 resp. 61 on input.
+
+    Rule L3 - reorder combining marks is not implemented here
+    Rule L4 - glyph mirroring is implemented as a display option below
+
+    Note: this should be applied a line at a time
+-------------------------------------------------------------------------*/
+int BIDI_ReorderV2lLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse)
+{
+    int ich = 0;
+
+    /* true as soon as first odd level encountered */
+    fReverse = fReverse || odd(level);
+
+    for (; ich < cch; ich++)
+    {
+        if (plevel[ich] < level)
+        {
+            break;
+        }
+        else if (plevel[ich] > level)
+        {
+            ich += BIDI_ReorderV2lLevel(level + 1, pIndexs + ich, plevel + ich,
+                cch - ich, fReverse) - 1;
+        }
+    }
+    if (fReverse)
+    {
+        reverse(pIndexs, ich);
+    }
+    return ich;
+}
+
+/* Applies the reorder in reverse. Taking an already reordered string and returing the original */
+int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse)
+{
+    int ich = 0;
+    int newlevel = -1;
+
+    /* true as soon as first odd level encountered */
+    fReverse = fReverse || odd(level);
+
+    for (; ich < cch; ich++)
+    {
+        if (plevel[ich] < level)
+            break;
+        else if (plevel[ich] > level)
+            newlevel = ich;
+    }
+    if (fReverse)
+    {
+        reverse(pIndexs, ich);
+    }
+
+    if (newlevel > 1)
+    {
+        ich = 0;
+        for (; ich < cch; ich++)
+            if (plevel[ich] > level)
+                ich += BIDI_ReorderL2vLevel(level + 1, pIndexs + ich, plevel + ich,
+                cch - ich, fReverse) - 1;
+    }
+
+    return ich;
+}
