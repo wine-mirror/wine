@@ -501,16 +501,23 @@ static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db 
     if (msi_check_patch_applicable( package, si ) != ERROR_SUCCESS)
     {
         TRACE("Patch not applicable\n");
+        msiobj_release( &si->hdr );
         return ERROR_SUCCESS;
     }
 
     package->patch = msi_alloc(sizeof(MSIPATCHINFO));
     if (!package->patch)
+    {
+        msiobj_release( &si->hdr );
         return ERROR_OUTOFMEMORY;
+    }
 
     package->patch->patchcode = msi_suminfo_dup_string(si, PID_REVNUMBER);
     if (!package->patch->patchcode)
+    {
+        msiobj_release( &si->hdr );
         return ERROR_OUTOFMEMORY;
+    }
 
     /* enumerate the substorage */
     str = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
