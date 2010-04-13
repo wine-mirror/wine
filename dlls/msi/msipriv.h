@@ -660,7 +660,7 @@ enum StringPersistence
     StringNonPersistent = 1
 };
 
-extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, UINT refcount, enum StringPersistence persistence );
+extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, USHORT refcount, enum StringPersistence persistence );
 
 extern UINT msi_string2idW( const string_table *st, LPCWSTR buffer, UINT *id );
 extern VOID msi_destroy_stringtable( string_table *st );
