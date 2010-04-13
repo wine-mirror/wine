@@ -491,8 +491,7 @@ done:
 static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db )
 {
     MSISUMMARYINFO *si;
-    LPWSTR str, *substorage;
-    UINT i, r = ERROR_SUCCESS;
+    UINT r = ERROR_SUCCESS;
 
     si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
     if (!si)
@@ -519,26 +518,22 @@ static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db 
         return ERROR_OUTOFMEMORY;
     }
 
-    /* enumerate the substorage */
-    str = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
-    package->patch->transforms = str;
+    package->patch->transforms = msi_suminfo_dup_string(si, PID_LASTAUTHOR);
+    if (!package->patch->transforms)
+    {
+        msiobj_release( &si->hdr );
+        return ERROR_OUTOFMEMORY;
+    }
 
-    substorage = msi_split_string( str, ';' );
-    for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
-        r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
-
-    msi_free( substorage );
     msiobj_release( &si->hdr );
-
-    msi_set_media_source_prop(package);
-
     return r;
 }
 
 static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 {
     MSIDATABASE *patch_db = NULL;
-    UINT r;
+    LPWSTR *substorage;
+    UINT i, r;
 
     TRACE("%p %s\n", package, debugstr_w( file ) );
 
@@ -555,6 +550,14 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
     }
 
     msi_parse_patch_summary( package, patch_db );
+
+    /* apply substorage transforms */
+    substorage = msi_split_string( package->patch->transforms, ';' );
+    for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
+        r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
+
+    msi_free( substorage );
+    msi_set_media_source_prop( package );
 
     /*
      * There might be a CAB file in the patch package,
