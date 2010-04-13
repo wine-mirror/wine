@@ -2966,8 +2966,8 @@ struct IWineD3DPaletteImpl {
     DWORD                      Flags;
 };
 
-extern const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl DECLSPEC_HIDDEN;
-DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags) DECLSPEC_HIDDEN;
+HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *device,
+        DWORD flags, const PALETTEENTRY *entries, IUnknown *parent) DECLSPEC_HIDDEN;
 
 /* DirectDraw utility functions */
 extern WINED3DFORMAT pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN;

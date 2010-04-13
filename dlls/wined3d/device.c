@@ -1360,35 +1360,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DPaletteImpl *object;
     HRESULT hr;
-    TRACE("(%p)->(%x, %p, %p, %p)\n", This, Flags, PalEnt, Palette, Parent);
 
-    /* Create the new object */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DPaletteImpl));
-    if(!object) {
-        ERR("Out of memory when allocating memory for a IWineD3DPalette implementation\n");
+    TRACE("iface %p, flags %#x, entries %p, palette %p, parent %p.\n",
+            iface, Flags, PalEnt, Palette, Parent);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate palette memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DPalette_Vtbl;
-    object->ref = 1;
-    object->Flags = Flags;
-    object->parent = Parent;
-    object->device = This;
-    object->palNumEntries = IWineD3DPaletteImpl_Size(Flags);
-    object->hpal = CreatePalette((const LOGPALETTE*)&(object->palVersion));
-
-    if(!object->hpal) {
-        HeapFree( GetProcessHeap(), 0, object);
-        return E_OUTOFMEMORY;
-    }
-
-    hr = IWineD3DPalette_SetEntries((IWineD3DPalette *) object, 0, 0, IWineD3DPaletteImpl_Size(Flags), PalEnt);
-    if(FAILED(hr)) {
-        IWineD3DPalette_Release((IWineD3DPalette *) object);
+    hr = wined3d_palette_init(object, This, Flags, PalEnt, Parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize palette, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    *Palette = (IWineD3DPalette *) object;
+    TRACE("Created palette %p.\n", object);
+    *Palette = (IWineD3DPalette *)object;
 
     return WINED3D_OK;
 }
