@@ -834,8 +834,6 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (pushedState)
        OffsetRect(&r, 1, 1);
 
-    IntersectClipRect(hDC, rc.left, rc.top, rc.right, rc.bottom);
-
     oldTxtColor = SetTextColor( hDC, GetSysColor(COLOR_BTNTEXT) );
 
     BUTTON_DrawLabel(hwnd, hDC, dtFlags, &r);
@@ -847,7 +845,6 @@ draw_focus:
         ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
     {
         InflateRect( &focus_rect, -1, -1 );
-        IntersectRect(&focus_rect, &focus_rect, &rc);
         DrawFocusRect( hDC, &focus_rect );
     }
 
