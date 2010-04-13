@@ -323,7 +323,7 @@
 @ stdcall IoBuildDeviceIoControlRequest(long ptr ptr long ptr long long ptr ptr)
 @ stub IoBuildPartialMdl
 @ stub IoBuildSynchronousFsdRequest
-@ stub IoCallDriver
+@ stdcall IoCallDriver(ptr ptr)
 @ stub IoCancelFileOpen
 @ stub IoCancelIrp
 @ stub IoCheckDesiredAccess

@@ -632,14 +632,9 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 
 
 /***********************************************************************
- *           IofCallDriver   (NTOSKRNL.EXE.@)
+ *           IoCallDriver   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( IofCallDriver )
-NTSTATUS WINAPI __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
-#else
-NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
-#endif
+NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
 {
     PDRIVER_DISPATCH dispatch;
     IO_STACK_LOCATION *irpsp;
@@ -653,6 +648,21 @@ NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
     status = dispatch( device, irp );
 
     return status;
+}
+
+
+/***********************************************************************
+ *           IofCallDriver   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( IofCallDriver )
+NTSTATUS WINAPI __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
+#else
+NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
+#endif
+{
+    TRACE( "%p %p\n", device, irp );
+    return IoCallDriver( device, irp );
 }
 
 
