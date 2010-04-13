@@ -2101,6 +2101,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
      *  with Default values
      */
     memset(gl_info->supported, 0, sizeof(gl_info->supported));
+    gl_info->limits.blends = 1;
     gl_info->limits.buffers = 1;
     gl_info->limits.textures = 1;
     gl_info->limits.fragment_samplers = 1;
