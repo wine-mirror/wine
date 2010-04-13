@@ -838,6 +838,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
 {
     struct wined3d_rendertarget_view *object;
 
+    TRACE("iface %p, resource %p, parent %p, rendertarget_view %p.\n",
+            iface, resource, parent, rendertarget_view);
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -845,12 +848,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &wined3d_rendertarget_view_vtbl;
-    object->refcount = 1;
-    IWineD3DResource_AddRef(resource);
-    object->resource = resource;
-    object->parent = parent;
+    wined3d_rendertarget_view_init(object, resource, parent);
 
+    TRACE("Created render target view %p.\n", object);
     *rendertarget_view = (IWineD3DRendertargetView *)object;
 
     return WINED3D_OK;
