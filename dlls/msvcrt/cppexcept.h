@@ -21,8 +21,10 @@
 #ifndef __MSVCRT_CPPEXCEPT_H
 #define __MSVCRT_CPPEXCEPT_H
 
-#define CXX_FRAME_MAGIC    0x19930520
-#define CXX_EXCEPTION      0xe06d7363
+#define CXX_FRAME_MAGIC_VC6 0x19930520
+#define CXX_FRAME_MAGIC_VC7 0x19930521
+#define CXX_FRAME_MAGIC_VC8 0x19930522
+#define CXX_EXCEPTION       0xe06d7363
 
 typedef void (*vtable_ptr)(void);
 
@@ -87,8 +89,13 @@ typedef struct __cxx_function_descr
     const unwind_info   *unwind_table;   /* array of unwind handlers */
     UINT                 tryblock_count; /* number of try blocks */
     const tryblock_info *tryblock;       /* array of try blocks */
-    UINT                 unknown[3];
+    UINT                 ipmap_count;
+    const void          *ipmap;
+    const void          *expect_list;    /* expected exceptions list when magic >= VC7 */
+    UINT                 flags;          /* flags when magic >= VC8 */
 } cxx_function_descr;
+
+#define FUNC_DESCR_SYNCHRONOUS  1        /* synchronous exceptions only (built with /EHs) */
 
 typedef void (*cxx_copy_ctor)(void);
 

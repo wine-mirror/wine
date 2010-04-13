@@ -138,6 +138,10 @@ static void dump_function_descr( const cxx_function_descr *descr )
                      ptr->type_info, dbgstr_type_info( ptr->type_info ) );
         }
     }
+    if (descr->magic <= CXX_FRAME_MAGIC_VC6) return;
+    TRACE( "expect list: %p\n", descr->expect_list );
+    if (descr->magic <= CXX_FRAME_MAGIC_VC7) return;
+    TRACE( "flags: %08x\n", descr->flags );
 }
 
 /* check if the exception type is caught by a given catch block, and return the type that matched */
@@ -363,11 +367,16 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
 {
     cxx_exception_type *exc_type;
 
-    if (descr->magic != CXX_FRAME_MAGIC)
+    if (descr->magic < CXX_FRAME_MAGIC_VC6 || descr->magic > CXX_FRAME_MAGIC_VC8)
     {
         ERR( "invalid frame magic %x\n", descr->magic );
         return ExceptionContinueSearch;
     }
+    if (descr->magic >= CXX_FRAME_MAGIC_VC8 &&
+        (descr->flags & FUNC_DESCR_SYNCHRONOUS) &&
+        (rec->ExceptionCode != CXX_EXCEPTION))
+        return ExceptionContinueSearch;  /* handle only c++ exceptions */
+
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
     {
         if (descr->unwind_count && !nested_trylevel) cxx_local_unwind( frame, descr, -1 );
@@ -379,7 +388,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
     {
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
 
-        if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC &&
+        if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8 &&
                 exc_type->custom_handler)
         {
             return exc_type->custom_handler( rec, frame, context, dispatch,
@@ -466,7 +475,7 @@ void CDECL _CxxThrowException( exception *object, const cxx_exception_type *type
 {
     ULONG_PTR args[3];
 
-    args[0] = CXX_FRAME_MAGIC;
+    args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
     RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
@@ -486,7 +495,7 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 
   if (rec->ExceptionCode == CXX_EXCEPTION &&
       rec->NumberParameters == 3 &&
-      rec->ExceptionInformation[0] == CXX_FRAME_MAGIC &&
+      rec->ExceptionInformation[0] == CXX_FRAME_MAGIC_VC6 &&
       rec->ExceptionInformation[2])
   {
     ptrs->ExceptionRecord = msvcrt_get_thread_data()->exc_record;
