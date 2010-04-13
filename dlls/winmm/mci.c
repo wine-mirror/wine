@@ -1036,7 +1036,7 @@ static	DWORD	MCI_ParseOptArgs(DWORD_PTR* data, int _offset, LPCWSTR lpCmd,
 
 	/* skip any leading white space(s) */
 	while (*args == ' ') args++;
-	TRACE("args=%s offset=%d\n", debugstr_w(args), offset);
+	TRACE("args=%s\n", debugstr_w(args));
 
 	do { /* loop on options for command table for the requested verb */
 	    str = (LPCWSTR)lmem;
@@ -1056,6 +1056,11 @@ static	DWORD	MCI_ParseOptArgs(DWORD_PTR* data, int _offset, LPCWSTR lpCmd,
 		}
 		inCst = FALSE;	cflg = 0;
 		break;
+	    case MCI_RETURN:
+		if (offset != _offset) {
+		    ERR("MCI_RETURN not in first position\n");
+		    return MCIERR_PARSER_INTERNAL;
+		}
 	    }
 
 	    if (strncmpiW(args, str, len) == 0 &&
@@ -1075,17 +1080,20 @@ static	DWORD	MCI_ParseOptArgs(DWORD_PTR* data, int _offset, LPCWSTR lpCmd,
 		    break;
 		case MCI_FLAG:
 		    *dwFlags |= flg;
+		    TRACE("flag=%08x\n", flg);
 		    break;
 		case MCI_INTEGER:
 		    if (inCst) {
 			data[offset] |= flg;
 			*dwFlags |= cflg;
 			inCst = FALSE;
+			TRACE("flag=%08x constant=%08x\n", cflg, flg);
 		    } else {
 			*dwFlags |= flg;
 			if (!MCI_GetDWord(&(data[offset]), &args)) {
 			    return MCIERR_BAD_INTEGER;
 			}
+			TRACE("flag=%08x int=%ld\n", flg, data[offset]);
 		    }
 		    break;
 		case MCI_RECT:
@@ -1098,11 +1106,13 @@ static	DWORD	MCI_ParseOptArgs(DWORD_PTR* data, int _offset, LPCWSTR lpCmd,
 			ERR("Bad rect %s\n", debugstr_w(args));
 			return MCIERR_BAD_INTEGER;
 		    }
+		    TRACE("flag=%08x for rectangle\n", flg);
 		    break;
 		case MCI_STRING:
 		    *dwFlags |= flg;
 		    if ((dwRet = MCI_GetString((LPWSTR*)&data[offset], &args)))
 			return dwRet;
+		    TRACE("flag=%08x string=%s\n", flg, debugstr_w((LPWSTR)data[offset]));
 		    break;
 		default:	ERR("oops\n");
 		}
@@ -1401,11 +1411,10 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
      */
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
-    TRACE("[%d, %s, %08x, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
+    TRACE("[%d, %s, %08x, %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx]\n",
 	  wmd ? wmd->wDeviceID : uDevID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
-	  data[0], debugstr_w((WCHAR *)data[0]), data[1], debugstr_w((WCHAR *)data[1]),
-	  data[2], debugstr_w((WCHAR *)data[2]), data[3], debugstr_w((WCHAR *)data[3]),
-	  data[4], debugstr_w((WCHAR *)data[4]), data[5], debugstr_w((WCHAR *)data[5]));
+	  data[0], data[1], data[2], data[3], data[4],
+	  data[5], data[6], data[7], data[8], data[9]);
 
     if (strcmpW(verb, wszOpen) == 0) {
 	if ((dwRet = MCI_FinishOpen(wmd, (LPMCI_OPEN_PARMSW)data, dwFlags)))
