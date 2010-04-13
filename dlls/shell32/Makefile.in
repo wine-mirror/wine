@@ -99,6 +99,7 @@ SVG_SRCS = \
 	folder_open.svg \
 	mycomputer.svg \
 	mydocs.svg \
+	netdrive.svg \
 	trash_file.svg
 
 EXTRA_OBJS = authors.o
