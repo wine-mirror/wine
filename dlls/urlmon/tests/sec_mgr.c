@@ -631,7 +631,9 @@ static void test_InternetSecurityMarshalling(void)
     ok(hres == S_OK, "CreateStreamOnHGlobal returned: %08x\n", hres);
 
     hres = CoMarshalInterface(stream, &IID_IInternetSecurityManager, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hres == S_OK, "CoMarshalInterface returned: %08x\n", hres);
+    /* Not supported in W98 */
+    ok(hres == S_OK || broken(hres == REGDB_E_IIDNOTREG),
+        "CoMarshalInterface returned: %08x\n", hres);
 
     IStream_Release(stream);
     IUnknown_Release(unk);
