@@ -44,8 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
 typedef struct _msistring
 {
-    UINT persistent_refcount;
-    UINT nonpersistent_refcount;
+    USHORT persistent_refcount;
+    USHORT nonpersistent_refcount;
     LPWSTR str;
 } msistring;
 
@@ -188,7 +188,7 @@ static void insert_string_sorted( string_table *st, UINT string_id )
     st->sortcount++;
 }
 
-static void set_st_entry( string_table *st, UINT n, LPWSTR str, UINT refcount, enum StringPersistence persistence )
+static void set_st_entry( string_table *st, UINT n, LPWSTR str, USHORT refcount, enum StringPersistence persistence )
 {
     if (persistence == StringPersistent)
     {
@@ -237,7 +237,7 @@ static UINT msi_string2idA( const string_table *st, LPCSTR buffer, UINT *id )
     return r;
 }
 
-static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount, enum StringPersistence persistence )
+static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, USHORT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
     int sz;
@@ -288,7 +288,7 @@ static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, U
     return n;
 }
 
-int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT refcount, enum StringPersistence persistence )
+int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, USHORT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
 
