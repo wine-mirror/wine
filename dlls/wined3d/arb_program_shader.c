@@ -6899,8 +6899,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
                            IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
                            DWORD Filter)
 {
+    IWineD3DSwapChainImpl *dst_swapchain;
     struct wined3d_context *context;
-    IWineD3DSwapChainImpl *dst_swapchain = NULL;
     RECT dst_rect = *dst_rect_in;
 
     /* Now load the surface */
@@ -6913,10 +6913,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
      * while OpenGL coordinates are window relative.
      * Also beware of the origin difference(top left vs bottom left).
      * Also beware that the front buffer's surface size is screen width x screen height,
-     * whereas the real gl drawable size is the size of the window.
-     */
-    IWineD3DSurface_GetContainer((IWineD3DSurface *)dst_surface, &IID_IWineD3DSwapChain, (void **)&dst_swapchain);
-    if (dst_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)dst_swapchain);
+     * whereas the real gl drawable size is the size of the window. */
+    dst_swapchain = (dst_surface->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)dst_surface->container : NULL;
     if (dst_swapchain && (IWineD3DSurface *)dst_surface == dst_swapchain->frontBuffer)
     {
         RECT windowsize;
@@ -6942,7 +6940,10 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset((IWineD3DDevice *)device);
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering || (dst_swapchain
+            && ((IWineD3DSurface *)dst_surface == dst_swapchain->frontBuffer
+            || dst_swapchain->num_contexts > 1)))
+        wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 

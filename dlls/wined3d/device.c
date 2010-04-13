@@ -4496,7 +4496,9 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
     LEAVE_GL();
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering || ((target->Flags & SFLAG_SWAPCHAIN)
+            && ((IWineD3DSwapChainImpl *)target->container)->frontBuffer == (IWineD3DSurface *)target))
+        wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
@@ -5467,7 +5469,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
     LEAVE_GL();
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
@@ -5811,7 +5813,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
     LEAVE_GL();
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 

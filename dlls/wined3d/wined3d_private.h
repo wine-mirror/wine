@@ -268,6 +268,7 @@ typedef struct wined3d_settings_s {
   unsigned int emulated_textureram;
   char *logo;
   int allow_multisampling;
+  BOOL strict_draw_ordering;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings DECLSPEC_HIDDEN;

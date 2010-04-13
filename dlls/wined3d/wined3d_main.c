@@ -72,7 +72,8 @@ wined3d_settings_t wined3d_settings =
     PCI_DEVICE_NONE,/* PCI Device ID */
     0,              /* The default of memory is set in FillGLCaps */
     NULL,           /* No wine logo by default */
-    FALSE           /* Disable multisampling for now due to Nvidia driver bugs which happens for some users */
+    FALSE,          /* Disable multisampling for now due to Nvidia driver bugs which happens for some users */
+    FALSE,          /* No strict draw ordering. */
 };
 
 IWineD3D * WINAPI WineDirect3DCreate(UINT version, IUnknown *parent)
@@ -318,6 +319,12 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 TRACE("Allow multisampling\n");
                 wined3d_settings.allow_multisampling = TRUE;
             }
+        }
+        if (!get_config_key(hkey, appkey, "StrictDrawOrdering", buffer, size)
+                && !strcmp(buffer,"enabled"))
+        {
+            TRACE("Enforcing strict draw ordering.\n");
+            wined3d_settings.strict_draw_ordering = TRUE;
         }
     }
     if (wined3d_settings.vs_mode == VS_HW)

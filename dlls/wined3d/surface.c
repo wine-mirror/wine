@@ -3406,7 +3406,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     LEAVE_GL();
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
@@ -3793,7 +3793,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         /* Leave the opengl state valid for blitting */
         myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
-        wglFlush(); /* Flush to ensure ordering across contexts. */
+        if (wined3d_settings.strict_draw_ordering || (dstSwapchain
+                && ((IWineD3DSurface *)This == dstSwapchain->frontBuffer
+                || dstSwapchain->num_contexts > 1)))
+            wglFlush(); /* Flush to ensure ordering across contexts. */
 
         context_release(context);
 
@@ -4266,7 +4269,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 
             LEAVE_GL();
 
-            wglFlush(); /* Flush to ensure ordering across contexts. */
+            if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
         }
         else
         {
@@ -4287,7 +4290,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
 
             LEAVE_GL();
 
-            wglFlush(); /* Flush to ensure ordering across contexts. */
+            if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
         }
         else
         {
@@ -4357,6 +4360,7 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DSwapChainImpl *swapchain;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
 
@@ -4383,7 +4387,11 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     device->blitter->set_shader((IWineD3DDevice *) device, This);
 
-    wglFlush(); /* Flush to ensure ordering across contexts. */
+    swapchain = (This->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)This->container : NULL;
+    if (wined3d_settings.strict_draw_ordering || (swapchain
+            && ((IWineD3DSurface *)This == swapchain->frontBuffer
+            || swapchain->num_contexts > 1)))
+        wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 }
