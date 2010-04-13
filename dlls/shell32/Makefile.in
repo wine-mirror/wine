@@ -89,6 +89,7 @@ RC_SRCS = \
 	version.rc
 
 SVG_SRCS = \
+	cdrom.svg \
 	desktop.svg \
 	document.svg \
 	folder.svg \
