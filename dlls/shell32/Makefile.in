@@ -101,6 +101,7 @@ SVG_SRCS = \
 	mydocs.svg \
 	netdrive.svg \
 	netdrive2.svg \
+	printer.svg \
 	trash_file.svg
 
 EXTRA_OBJS = authors.o
