@@ -53,10 +53,10 @@
 @ cdecl ?_set_new_mode@@YAHH@Z(long) msvcrt.?_set_new_mode@@YAHH@Z
 @ stub ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZH@Z
 @ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
-@ stub ?_sopen@@YAHPBDHHH@Z
+@ cdecl ?_sopen@@YAHPBDHHH@Z(str long long long) msvcrt._sopen
 @ stub ?_type_info_dtor_internal_method@type_info@@QAEXXZ
-@ stub ?_wopen@@YAHPB_WHH@Z
-@ stub ?_wsopen@@YAHPB_WHHH@Z
+@ cdecl ?_wopen@@YAHPB_WHH@Z(wstr long long) msvcrt._wopen
+@ cdecl ?_wsopen@@YAHPB_WHHH@Z(wstr long long long) msvcrt._wsopen
 @ cdecl -i386 -norelay ?before@type_info@@QBEHABV1@@Z(ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
 @ stub ?name@type_info@@QBEPBDPAU__type_info_node@@@Z
 @ cdecl -i386 -norelay ?raw_name@type_info@@QBEPBDXZ() msvcrt.?raw_name@type_info@@QBEPBDXZ
@@ -65,11 +65,11 @@
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
 @ stub ?set_unexpected@@YAP6AXXZH@Z
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
-@ stub ?swprintf@@YAHPAGIPBGZZ
-@ stub ?swprintf@@YAHPA_WIPB_WZZ
+@ varargs ?swprintf@@YAHPAGIPBGZZ(ptr long wstr) msvcrt._snwprintf
+@ varargs ?swprintf@@YAHPA_WIPB_WZZ(ptr long wstr) msvcrt._snwprintf
 @ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
-@ stub ?vswprintf@@YAHPA_WIPB_WPAD@Z
+@ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) msvcrt._vsnwprintf
 @ cdecl -i386 -norelay ?what@exception@std@@UBEPBDXZ() msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
