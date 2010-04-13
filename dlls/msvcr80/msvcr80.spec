@@ -1,37 +1,37 @@
 # MS VC++2005 runtime library
 
-@ stub ??0__non_rtti_object@std@@QAE@ABV01@@Z
-@ stub ??0bad_cast@std@@QAE@ABV01@@Z
-@ stub ??0bad_cast@std@@QAE@PBD@Z
-@ stub ??0bad_typeid@std@@QAE@ABV01@@Z
-@ stub ??0bad_typeid@std@@QAE@PBD@Z
-@ stub ??0exception@std@@QAE@ABQBD@Z
-@ stub ??0exception@std@@QAE@ABQBDH@Z
-@ stub ??0exception@std@@QAE@ABV01@@Z
-@ stub ??0exception@std@@QAE@XZ
-@ stub ??1__non_rtti_object@std@@UAE@XZ
-@ stub ??1bad_cast@std@@UAE@XZ
-@ stub ??1bad_typeid@std@@UAE@XZ
-@ stub ??1exception@std@@UAE@XZ
+@ cdecl -i386 -norelay ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
+@ cdecl -i386 -norelay ??0bad_cast@std@@QAE@ABV01@@Z(ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
+@ cdecl -i386 -norelay ??0bad_cast@std@@QAE@PBD@Z(ptr) msvcrt.??0bad_cast@@QAE@PBD@Z
+@ cdecl -i386 -norelay ??0bad_typeid@std@@QAE@ABV01@@Z(ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
+@ cdecl -i386 -norelay ??0bad_typeid@std@@QAE@PBD@Z(ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
+@ cdecl -i386 -norelay ??0exception@std@@QAE@ABQBD@Z(ptr) msvcrt.??0exception@@QAE@ABQBD@Z
+@ cdecl -i386 -norelay ??0exception@std@@QAE@ABQBDH@Z(ptr long) msvcrt.??0exception@@QAE@ABQBDH@Z
+@ cdecl -i386 -norelay ??0exception@std@@QAE@ABV01@@Z(ptr) msvcrt.??0exception@@QAE@ABV0@@Z
+@ cdecl -i386 -norelay ??0exception@std@@QAE@XZ() msvcrt.??0exception@@QAE@XZ
+@ cdecl -i386 -norelay ??1__non_rtti_object@std@@UAE@XZ() msvcrt.??1__non_rtti_object@@UAE@XZ
+@ cdecl -i386 -norelay ??1bad_cast@std@@UAE@XZ() msvcrt.??1bad_cast@@UAE@XZ
+@ cdecl -i386 -norelay ??1bad_typeid@std@@UAE@XZ() msvcrt.??1bad_typeid@@UAE@XZ
+@ cdecl -i386 -norelay ??1exception@std@@UAE@XZ() msvcrt.??1exception@@UAE@XZ
 @ cdecl -i386 -norelay ??1type_info@@UAE@XZ() msvcrt.??1type_info@@UAE@XZ
 @ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
-@ stub ??2@YAPAXIHPBDH@Z
+@ cdecl ??2@YAPAXIHPBDH@Z(long long str long) msvcrt.??2@YAPAXIHPBDH@Z
 @ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
-@ stub ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z
-@ stub ??4bad_cast@std@@QAEAAV01@ABV01@@Z
-@ stub ??4bad_typeid@std@@QAEAAV01@ABV01@@Z
-@ stub ??4exception@std@@QAEAAV01@ABV01@@Z
-@ stub ??8type_info@@QBE_NABV0@@Z
-@ stub ??9type_info@@QBE_NABV0@@Z
-@ stub ??_7__non_rtti_object@std@@6B@
-@ stub ??_7bad_cast@std@@6B@
-@ stub ??_7bad_typeid@std@@6B@
+@ cdecl -i386 -norelay ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 -norelay ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 -norelay ??4bad_typeid@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 -norelay ??4exception@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
+@ cdecl -i386 -norelay ??8type_info@@QBE_NABV0@@Z(ptr) msvcrt.??8type_info@@QBEHABV0@@Z
+@ cdecl -i386 -norelay ??9type_info@@QBE_NABV0@@Z(ptr) msvcrt.??9type_info@@QBEHABV0@@Z
+@ extern -i386 ??_7__non_rtti_object@std@@6B@ msvcrt.??_7__non_rtti_object@@6B@
+@ extern -i386 ??_7bad_cast@std@@6B@ msvcrt.??_7bad_cast@@6B@
+@ extern -i386 ??_7bad_typeid@std@@6B@ msvcrt.??_7bad_typeid@@6B@
 @ extern -i386 ??_7exception@@6B@ msvcrt.??_7exception@@6B@
-@ stub ??_7exception@std@@6B@
-@ stub ??_Fbad_cast@std@@QAEXXZ
-@ stub ??_Fbad_typeid@std@@QAEXXZ
+@ extern -i386 ??_7exception@std@@6B@ msvcrt.??_7exception@@6B@
+@ cdecl -i386 -norelay ??_Fbad_cast@std@@QAEXXZ() msvcrt.??_Fbad_cast@@QAEXXZ
+@ cdecl -i386 -norelay ??_Fbad_typeid@std@@QAEXXZ() msvcrt.??_Fbad_typeid@@QAEXXZ
 @ cdecl ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
-@ stub ??_U@YAPAXIHPBDH@Z
+@ cdecl ??_U@YAPAXIHPBDH@Z(long long str long) msvcrt.??_U@YAPAXIHPBDH@Z
 @ cdecl ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
 @ stub ?_Name_base@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
 @ stub ?_Name_base_internal@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
@@ -70,7 +70,7 @@
 @ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
 @ stub ?vswprintf@@YAHPA_WIPB_WPAD@Z
-@ stub ?what@exception@std@@UBEPBDXZ
+@ cdecl -i386 -norelay ?what@exception@std@@UBEPBDXZ() msvcrt.?what@exception@@UBEPBDXZ
 @ stub @_calloc_crt@8
 @ cdecl @_malloc_crt@4(long) msvcrt.malloc
 @ stub @_realloc_crt@8

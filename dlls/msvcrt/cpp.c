@@ -160,6 +160,19 @@ exception * __stdcall MSVCRT_exception_ctor(exception * _this, const char ** nam
 }
 
 /******************************************************************
+ *		??0exception@@QAE@ABQBDH@Z (MSVCRT.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_ctor_noalloc,12)
+exception * __stdcall MSVCRT_exception_ctor_noalloc(exception * _this, char ** name, int noalloc)
+{
+  TRACE("(%p,%s)\n", _this, *name);
+  _this->vtable = &MSVCRT_exception_vtable;
+  _this->name = *name;
+  _this->do_free = FALSE;
+  return _this;
+}
+
+/******************************************************************
  *		??0exception@@QAE@ABV0@@Z (MSVCRT.@)
  */
 DEFINE_THISCALL_WRAPPER(MSVCRT_exception_copy_ctor,8)
@@ -286,6 +299,15 @@ bad_typeid * __stdcall MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * n
   EXCEPTION_ctor(_this, &name);
   _this->vtable = &MSVCRT_bad_typeid_vtable;
   return _this;
+}
+
+/******************************************************************
+ *		??_Fbad_typeid@@QAEXXZ (MSVCRT.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_default_ctor,4)
+bad_typeid * __stdcall MSVCRT_bad_typeid_default_ctor(bad_typeid * _this)
+{
+  return MSVCRT_bad_typeid_ctor( _this, "bad typeid" );
 }
 
 /******************************************************************
@@ -428,6 +450,7 @@ void * __stdcall MSVCRT___non_rtti_object_scalar_dtor(__non_rtti_object * _this,
 }
 
 /******************************************************************
+ *		??0bad_cast@@AAE@PBQBD@Z (MSVCRT.@)
  *		??0bad_cast@@QAE@ABQBD@Z (MSVCRT.@)
  */
 DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_ctor,8)
@@ -449,6 +472,27 @@ bad_cast * __stdcall MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast 
   MSVCRT_exception_copy_ctor(_this, rhs);
   _this->vtable = &MSVCRT_bad_cast_vtable;
   return _this;
+}
+
+/******************************************************************
+ *		??0bad_cast@@QAE@PBD@Z (MSVCRT.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_ctor_charptr,8)
+bad_cast * __stdcall MSVCRT_bad_cast_ctor_charptr(bad_cast * _this, const char * name)
+{
+  TRACE("(%p %s)\n", _this, name);
+  EXCEPTION_ctor(_this, &name);
+  _this->vtable = &MSVCRT_bad_cast_vtable;
+  return _this;
+}
+
+/******************************************************************
+ *		??_Fbad_cast@@QAEXXZ (MSVCRT.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_default_ctor,4)
+bad_cast * __stdcall MSVCRT_bad_cast_default_ctor(bad_cast * _this)
+{
+  return MSVCRT_bad_cast_ctor_charptr( _this, "bad cast" );
 }
 
 /******************************************************************

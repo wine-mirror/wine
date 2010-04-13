@@ -2,10 +2,10 @@
 
 @ cdecl -i386 -norelay ??0__non_rtti_object@@QAE@ABV0@@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
 @ cdecl -i386 -norelay ??0__non_rtti_object@@QAE@PBD@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
-@ stub ??0bad_cast@@AAE@PBQBD@Z
+@ cdecl -i386 -norelay ??0bad_cast@@AAE@PBQBD@Z(ptr) msvcrt.??0bad_cast@@AAE@PBQBD@Z
 @ cdecl -i386 -norelay ??0bad_cast@@QAE@ABQBD@Z(ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
 @ cdecl -i386 -norelay ??0bad_cast@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ stub ??0bad_cast@@QAE@PBD@Z
+@ cdecl -i386 -norelay ??0bad_cast@@QAE@PBD@Z(ptr) msvcrt.??0bad_cast@@QAE@PBD@Z
 @ cdecl -i386 -norelay ??0bad_typeid@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
 @ cdecl -i386 -norelay ??0bad_typeid@@QAE@PBD@Z(ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
 @ cdecl -i386 -norelay ??0exception@@QAE@ABQBD@Z(ptr) msvcrt.??0exception@@QAE@ABQBD@Z
@@ -32,8 +32,8 @@
 @ cdecl -i386 -norelay ??_Ebad_cast@@UAEPAXI@Z(long) msvcrt.??_Ebad_cast@@UAEPAXI@Z
 @ cdecl -i386 -norelay ??_Ebad_typeid@@UAEPAXI@Z(long) msvcrt.??_Ebad_typeid@@UAEPAXI@Z
 @ cdecl -i386 -norelay ??_Eexception@@UAEPAXI@Z(long) msvcrt.??_Eexception@@UAEPAXI@Z
-@ stub ??_Fbad_cast@@QAEXXZ
-@ stub ??_Fbad_typeid@@QAEXXZ
+@ cdecl -i386 -norelay ??_Fbad_cast@@QAEXXZ() msvcrt.??_Fbad_cast@@QAEXXZ
+@ cdecl -i386 -norelay ??_Fbad_typeid@@QAEXXZ() msvcrt.??_Fbad_typeid@@QAEXXZ
 @ cdecl -i386 -norelay ??_G__non_rtti_object@@UAEPAXI@Z(long) msvcrt.??_G__non_rtti_object@@UAEPAXI@Z
 @ cdecl -i386 -norelay ??_Gbad_cast@@UAEPAXI@Z(long) msvcrt.??_Gbad_cast@@UAEPAXI@Z
 @ cdecl -i386 -norelay ??_Gbad_typeid@@UAEPAXI@Z(long) msvcrt.??_Gbad_typeid@@UAEPAXI@Z

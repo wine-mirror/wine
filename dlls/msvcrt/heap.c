@@ -64,6 +64,16 @@ void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
   return retval;
 }
 
+
+/*********************************************************************
+ *		??2@YAPAXIHPBDH@Z (MSVCRT.@)
+ */
+void* CDECL MSVCRT_operator_new_dbg(MSVCRT_size_t size, int type, const char *file, int line)
+{
+    return MSVCRT_operator_new( size );
+}
+
+
 /*********************************************************************
  *		??3@YAXPAX@Z (MSVCRT.@)
  */

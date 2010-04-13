@@ -1,9 +1,9 @@
 @ cdecl -i386 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
 @ cdecl -i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
-@ stub ??0bad_cast@@AAE@PBQBD@Z
+@ cdecl -i386 ??0bad_cast@@AAE@PBQBD@Z(ptr) msvcrt.??0bad_cast@@AAE@PBQBD@Z
 @ cdecl -i386 ??0bad_cast@@QAE@ABQBD@Z(ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
 @ cdecl -i386 ??0bad_cast@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ stub ??0bad_cast@@QAE@PBD@Z
+@ cdecl -i386 ??0bad_cast@@QAE@PBD@Z(ptr) msvcrt.??0bad_cast@@QAE@PBD@Z
 @ cdecl -i386 ??0bad_typeid@@QAE@ABV0@@Z(ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
 @ cdecl -i386 ??0bad_typeid@@QAE@PBD@Z(ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
 @ cdecl -i386 ??0exception@@QAE@ABQBD@Z(ptr) msvcrt.??0exception@@QAE@ABQBD@Z
@@ -26,8 +26,8 @@
 @ extern -i386 ??_7bad_cast@@6B@ msvcrt.??_7bad_cast@@6B@
 @ extern -i386 ??_7bad_typeid@@6B@ msvcrt.??_7bad_typeid@@6B@
 @ extern -i386 ??_7exception@@6B@ msvcrt.??_7exception@@6B@
-@ stub ??_Fbad_cast@@QAEXXZ
-@ stub ??_Fbad_typeid@@QAEXXZ
+@ cdecl -i386 ??_Fbad_cast@@QAEXXZ() msvcrt.??_Fbad_cast@@QAEXXZ
+@ cdecl -i386 ??_Fbad_typeid@@QAEXXZ() msvcrt.??_Fbad_typeid@@QAEXXZ
 @ cdecl ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
 @ cdecl ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
 @ cdecl __uncaught_exception() msvcrt.__uncaught_exception
