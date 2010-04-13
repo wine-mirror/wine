@@ -1617,13 +1617,14 @@ static inline void get_valid_rects( const RECT *old_client, const RECT *new_clie
  */
 static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 {
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     HWND owner, *list = NULL;
     unsigned int i;
 
     TRACE("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
 
-    if ((style & WS_POPUP) && (owner = GetWindow( hwnd, GW_OWNER )))
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) return hwndInsertAfter;
+
+    if ((owner = GetWindow( hwnd, GW_OWNER )))
     {
         /* make sure this popup stays above the owner */
 
@@ -1650,7 +1651,6 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
             }
         }
     }
-    else if (style & WS_CHILD) return hwndInsertAfter;
 
     if (hwndInsertAfter == HWND_BOTTOM) goto done;
     if (!list && !(list = WIN_ListChildren( GetDesktopWindow() ))) goto done;
@@ -1677,7 +1677,6 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
     for ( ; list[i]; i++)
     {
         if (list[i] == hwnd) break;
-        if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_POPUP)) continue;
         if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
         TRACE( "moving %p owned by %p after %p\n", list[i], hwnd, hwndInsertAfter );
         SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,

@@ -2181,7 +2181,7 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
                     hwnd, topmost ? "" : "NOT ");
 }
 
-static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
+static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E, DWORD style)
 {
     HWND hwnd_A, hwnd_B, hwnd_C, hwnd_F;
 
@@ -2205,7 +2205,7 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
     check_z_order(hwnd_D, hwnd_E, 0, 0, FALSE);
 
     hwnd_C = CreateWindowEx(0, "MainWindowClass", NULL,
-                            WS_POPUP,
+                            style,
                             100, 100, 100, 100,
                             hwnd_F, 0, GetModuleHandle(0), NULL);
     trace("hwnd_C %p\n", hwnd_C);
@@ -2215,7 +2215,7 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
     check_z_order(hwnd_C, hwnd_D, 0, hwnd_F, FALSE);
 
     hwnd_B = CreateWindowEx(WS_EX_TOPMOST, "MainWindowClass", NULL,
-                            WS_POPUP,
+                            style,
                             100, 100, 100, 100,
                             hwnd_F, 0, GetModuleHandle(0), NULL);
     trace("hwnd_B %p\n", hwnd_B);
@@ -2226,7 +2226,7 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
     check_z_order(hwnd_B, hwnd_C, 0, hwnd_F, TRUE);
 
     hwnd_A = CreateWindowEx(WS_EX_TOPMOST, "MainWindowClass", NULL,
-                            WS_POPUP,
+                            style,
                             100, 100, 100, 100,
                             0, 0, GetModuleHandle(0), NULL);
     trace("hwnd_A %p\n", hwnd_A);
@@ -2262,7 +2262,7 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
     /* make hwnd_C owned by a topmost window */
     DestroyWindow( hwnd_C );
     hwnd_C = CreateWindowEx(0, "MainWindowClass", NULL,
-                            WS_POPUP,
+                            style,
                             100, 100, 100, 100,
                             hwnd_A, 0, GetModuleHandle(0), NULL);
     trace("hwnd_C %p\n", hwnd_C);
@@ -6073,7 +6073,8 @@ START_TEST(win)
     test_NCRedraw();
 
     test_children_zorder(hwndMain);
-    test_popup_zorder(hwndMain2, hwndMain);
+    test_popup_zorder(hwndMain2, hwndMain, WS_POPUP);
+    test_popup_zorder(hwndMain2, hwndMain, 0);
     test_keyboard_input(hwndMain);
     test_mouse_input(hwndMain);
     test_validatergn(hwndMain);
