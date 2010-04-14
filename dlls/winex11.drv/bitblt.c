@@ -1165,20 +1165,33 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE 
     rect.top    = dst->y;
     rect.right  = dst->x + dst->width;
     rect.bottom = dst->y + dst->height;
+    LPtoDP( physDevDst->hdc, (POINT *)&rect, 2 );
+    dst->x      = rect.left;
+    dst->y      = rect.top;
+    dst->width  = rect.right - rect.left;
+    dst->height = rect.bottom - rect.top;
     if (dst->width < 0) SWAP_INT32( &rect.left, &rect.right );
     if (dst->height < 0) SWAP_INT32( &rect.top, &rect.bottom );
+
     GetRgnBox( physDevDst->region, &clipRect );
     if (!IntersectRect( &dst->visrect, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
 
     if (!physDevSrc) return TRUE;
+
     rect.left   = src->x;
     rect.top    = src->y;
     rect.right  = src->x + src->width;
     rect.bottom = src->y + src->height;
+    LPtoDP( physDevSrc->hdc, (POINT *)&rect, 2 );
+    src->x      = rect.left;
+    src->y      = rect.top;
+    src->width  = rect.right - rect.left;
+    src->height = rect.bottom - rect.top;
     if (src->width < 0) SWAP_INT32( &rect.left, &rect.right );
     if (src->height < 0) SWAP_INT32( &rect.top, &rect.bottom );
+
     /* Apparently the clipping and visible regions are only for output,
        so just check against dc extent here to avoid BadMatch errors */
     clipRect = physDevSrc->drawable_rect;
@@ -1376,7 +1389,6 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
-    POINT pts[2];
 
     /* compensate for off-by-one shifting for negative widths and heights */
     if (widthDst < 0)
@@ -1393,64 +1405,38 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
     if (!physDevSrc && useSrc) return FALSE;
 
-      /* Map the coordinates to device coords */
-
-    pts[0].x = xDst;
-    pts[0].y = yDst;
-    pts[1].x = xDst + widthDst;
-    pts[1].y = yDst + heightDst;
-    LPtoDP(physDevDst->hdc, pts, 2);
-    xDst      = pts[0].x;
-    yDst      = pts[0].y;
-    widthDst  = pts[1].x - pts[0].x;
-    heightDst = pts[1].y - pts[0].y;
-
-    TRACE("    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
-                    xDst, yDst, widthDst, heightDst,
-                    physDevDst->dc_rect.left, physDevDst->dc_rect.top );
+    src.x      = xSrc;
+    src.y      = ySrc;
+    src.width  = widthSrc;
+    src.height = heightSrc;
+    dst.x      = xDst;
+    dst.y      = yDst;
+    dst.width  = widthDst;
+    dst.height = heightDst;
 
     if (useSrc)
     {
-        pts[0].x = xSrc;
-        pts[0].y = ySrc;
-        pts[1].x = xSrc + widthSrc;
-        pts[1].y = ySrc + heightSrc;
-        LPtoDP(physDevSrc->hdc, pts, 2);
-        xSrc      = pts[0].x;
-        ySrc      = pts[0].y;
-        widthSrc  = pts[1].x - pts[0].x;
-        heightSrc = pts[1].y - pts[0].y;
-
-        fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
-        TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
-                        xSrc, ySrc, widthSrc, heightSrc,
-                        physDevSrc->dc_rect.left, physDevSrc->dc_rect.top );
-        src.x      = xSrc;
-        src.y      = ySrc;
-        src.width  = widthSrc;
-        src.height = heightSrc;
-        dst.x      = xDst;
-        dst.y      = yDst;
-        dst.width  = widthDst;
-        dst.height = heightDst;
         if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src ))
             return TRUE;
-        TRACE("    vissrc=%s visdst=%s\n",
-              wine_dbgstr_rect( &src.visrect ), wine_dbgstr_rect( &dst.visrect ) );
+        fStretch = (src.width != dst.width) || (src.height != dst.height);
+
         if (physDevDst != physDevSrc)
             sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
     }
     else
     {
         fStretch = FALSE;
-        dst.x      = xDst;
-        dst.y      = yDst;
-        dst.width  = widthDst;
-        dst.height = heightDst;
         if (!BITBLT_GetVisRectangles( physDevDst, NULL, &dst, NULL ))
             return TRUE;
-        TRACE("    vissrc=none visdst=%s\n", wine_dbgstr_rect( &dst.visrect ) );
     }
+
+    TRACE("    rectdst=%d,%d %dx%d orgdst=%d,%d visdst=%s\n",
+          dst.x, dst.y, dst.width, dst.height,
+          physDevDst->dc_rect.left, physDevDst->dc_rect.top, wine_dbgstr_rect( &dst.visrect ) );
+    if (useSrc)
+        TRACE("    rectsrc=%d,%d %dx%d orgsrc=%d,%d vissrc=%s\n",
+              src.x, src.y, src.width, src.height,
+              physDevSrc->dc_rect.left, physDevSrc->dc_rect.top, wine_dbgstr_rect( &src.visrect ) );
 
     width  = dst.visrect.right - dst.visrect.left;
     height = dst.visrect.bottom - dst.visrect.top;
