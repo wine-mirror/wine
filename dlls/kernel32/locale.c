@@ -2261,6 +2261,26 @@ DWORD WINAPI VerLanguageNameW( DWORD wLang, LPWSTR szLang, DWORD nSize )
  */
 BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {
+    static const unsigned char type2_map[16] =
+    {
+        C2_NOTAPPLICABLE,      /* unassigned */
+        C2_LEFTTORIGHT,        /* L */
+        C2_RIGHTTOLEFT,        /* R */
+        C2_EUROPENUMBER,       /* EN */
+        C2_EUROPESEPARATOR,    /* ES */
+        C2_EUROPETERMINATOR,   /* ET */
+        C2_ARABICNUMBER,       /* AN */
+        C2_COMMONSEPARATOR,    /* CS */
+        C2_BLOCKSEPARATOR,     /* B */
+        C2_SEGMENTSEPARATOR,   /* S */
+        C2_WHITESPACE,         /* WS */
+        C2_OTHERNEUTRAL,       /* ON */
+        C2_RIGHTTOLEFT,        /* AL */
+        C2_NOTAPPLICABLE,      /* NSM */
+        C2_NOTAPPLICABLE,      /* BN */
+        C2_OTHERNEUTRAL        /* LRE, LRO, RLE, RLO, PDF */
+    };
+
     if (count == -1) count = strlenW(src) + 1;
     switch(type)
     {
@@ -2268,7 +2288,7 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
         while (count--) *chartype++ = get_char_typeW( *src++ ) & 0xfff;
         break;
     case CT_CTYPE2:
-        while (count--) *chartype++ = get_char_typeW( *src++ ) >> 12;
+        while (count--) *chartype++ = type2_map[get_char_typeW( *src++ ) >> 12];
         break;
     case CT_CTYPE3:
     {
