@@ -49,6 +49,7 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "usp10.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "usp10_internal.h"
@@ -107,97 +108,57 @@ enum directions
 
 /* HELPER FUNCTIONS */
 
-/* grep -r ';BN;' data.txt  | grep -v [0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F] | sed -e s@\;.*@@ -e s/^..../0x\&,\ / | xargs echo */
-static const WCHAR BNs[] = {
-    0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008,
-    0x000E, 0x000F, 0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016,
-    0x0017, 0x0018, 0x0019, 0x001A, 0x001B, 0x007F, 0x0080, 0x0081, 0x0082,
-    0x0083, 0x0084, 0x0086, 0x0087, 0x0088, 0x0089, 0x008A, 0x008B, 0x008C,
-    0x008D, 0x008E, 0x008F, 0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095,
-    0x0096, 0x0097, 0x0098, 0x0099, 0x009A, 0x009B, 0x009C, 0x009D, 0x009E,
-    0x009F, 0x00AD, 0x070F, 0x200B, 0x200C, 0x200D, 0x2060, 0x2061, 0x2062,
-    0x2063, 0x206A, 0x206B, 0x206C, 0x206D, 0x206E, 0x206F, 0xFEFF
-};
-
-/* Idem, but with ';R;' instead of ';BN;' */
-static const WCHAR Rs[] = {
-    0x05BE, 0x05C0, 0x05C3, 0x05C6, 0x05D0, 0x05D1, 0x05D2, 0x05D3, 0x05D4,
-    0x05D5, 0x05D6, 0x05D7, 0x05D8, 0x05D9, 0x05DA, 0x05DB, 0x05DC, 0x05DD,
-    0x05DE, 0x05DF, 0x05E0, 0x05E1, 0x05E2, 0x05E3, 0x05E4, 0x05E5, 0x05E6,
-    0x05E7, 0x05E8, 0x05E9, 0x05EA, 0x05F0, 0x05F1, 0x05F2, 0x05F3, 0x05F4,
-    0x07C0, 0x07C1, 0x07C2, 0x07C3, 0x07C4, 0x07C5, 0x07C6, 0x07C7, 0x07C8,
-    0x07C9, 0x07CA, 0x07CB, 0x07CC, 0x07CD, 0x07CE, 0x07CF, 0x07D0, 0x07D1,
-    0x07D2, 0x07D3, 0x07D4, 0x07D5, 0x07D6, 0x07D7, 0x07D8, 0x07D9, 0x07DA,
-    0x07DB, 0x07DC, 0x07DD, 0x07DE, 0x07DF, 0x07E0, 0x07E1, 0x07E2, 0x07E3,
-    0x07E4, 0x07E5, 0x07E6, 0x07E7, 0x07E8, 0x07E9, 0x07EA, 0x07F4, 0x07F5,
-    0x07FA, 0x200F, 0xFB1D, 0xFB1F, 0xFB20, 0xFB21, 0xFB22, 0xFB23, 0xFB24,
-    0xFB25, 0xFB26, 0xFB27, 0xFB28, 0xFB2A, 0xFB2B, 0xFB2C, 0xFB2D, 0xFB2E,
-    0xFB2F, 0xFB30, 0xFB31, 0xFB32, 0xFB33, 0xFB34, 0xFB35, 0xFB36, 0xFB38,
-    0xFB39, 0xFB3A, 0xFB3B, 0xFB3C, 0xFB3E, 0xFB40, 0xFB41, 0xFB43, 0xFB44,
-    0xFB46, 0xFB47, 0xFB48, 0xFB49, 0xFB4A, 0xFB4B, 0xFB4C, 0xFB4D, 0xFB4E,
-    0xFB4F
-};
-
-/* Convert the incomplete win32 table to some slightly more useful data */
+/* Convert the libwine information to the direction enum */
 static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount, const SCRIPT_CONTROL *c)
 {
-    unsigned i, j;
-    GetStringTypeW(CT_CTYPE2, lpString, uCount, chartype);
+    static const enum directions dir_map[16] =
+    {
+        L,  /* unassigned defaults to L */
+        L,
+        R,
+        EN,
+        ES,
+        ET,
+        AN,
+        CS,
+        B,
+        S,
+        WS,
+        ON,
+        AL,
+        NSM,
+        BN,
+        PDF  /* also LRE, LRO, RLE, RLO */
+    };
+
+    unsigned i;
+
     for (i = 0; i < uCount; ++i)
+    {
+        chartype[i] = dir_map[get_char_typeW(lpString[i]) >> 12];
         switch (chartype[i])
         {
-            case C2_LEFTTORIGHT: chartype[i] = L; break;
-            case C2_RIGHTTOLEFT:
-                chartype[i] = AL;
-                for (j = 0; j < sizeof(Rs)/sizeof(WCHAR); ++j)
-                    if (Rs[j] == lpString[i])
-                    {
-                        chartype[i] = R;
-                        break;
-                    }
-                break;
-
-            case C2_EUROPENUMBER: chartype[i] = EN; break;
-            case C2_EUROPESEPARATOR:
-                    if (c->fLegacyBidiClass && (lpString[i] == '-' || lpString[i] =='+'))
-                        chartype[i] = N;
-                    else if (c->fLegacyBidiClass && lpString[i] == '/')
-                        chartype[i] = CS;
-                    else
-                        chartype[i] = ES; break;
-            case C2_EUROPETERMINATOR: chartype[i] = ET; break;
-            case C2_ARABICNUMBER: chartype[i] = AN; break;
-            case C2_COMMONSEPARATOR: chartype[i] = CS; break;
-            case C2_BLOCKSEPARATOR: chartype[i] = B; break;
-            case C2_SEGMENTSEPARATOR: chartype[i] = S; break;
-            case C2_WHITESPACE: chartype[i] = WS; break;
-            case C2_OTHERNEUTRAL:
-                switch (lpString[i])
-                {
-                    case 0x202A: chartype[i] = LRE; break;
-                    case 0x202B: chartype[i] = RLE; break;
-                    case 0x202C: chartype[i] = PDF; break;
-                    case 0x202D: chartype[i] = LRO; break;
-                    case 0x202E: chartype[i] = RLO; break;
-                    default: chartype[i] = ON; break;
-                }
-                break;
-            case C2_NOTAPPLICABLE:
-                chartype[i] = NSM;
-                for (j = 0; j < sizeof(BNs)/sizeof(WCHAR); ++j)
-                    if (BNs[j] == lpString[i])
-                    {
-                        chartype[i] = BN;
-                        break;
-                    }
-                break;
-
-            default:
-                /* According to BiDi spec, unassigned characters default to L */
-                FIXME("Unhandled character type: %04x\n", chartype[i]);
-                chartype[i] = L;
-                break;
+        case ES:
+            if (!c->fLegacyBidiClass) break;
+            switch (lpString[i])
+            {
+            case '-':
+            case '+': chartype[i] = N; break;
+            case '/': chartype[i] = CS; break;
+            }
+            break;
+        case PDF:
+            switch (lpString[i])
+            {
+            case 0x202A: chartype[i] = LRE; break;
+            case 0x202B: chartype[i] = RLE; break;
+            case 0x202C: chartype[i] = PDF; break;
+            case 0x202D: chartype[i] = LRO; break;
+            case 0x202E: chartype[i] = RLO; break;
+            }
+            break;
         }
+    }
 }
 
 /* Set a run of cval values at locations all prior to, but not including */
