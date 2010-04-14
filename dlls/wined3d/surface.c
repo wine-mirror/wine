@@ -2223,15 +2223,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_L4A4_UNORM:
-            /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
-             * format+type combination to load it. Thus convert it to A8L8, then load it
-             * with A4L4 internal, but A8L8 format+type
-             */
-            *convert = CONVERT_A4L4;
-            desc->conv_byte_count = 2;
-            break;
-
         default:
             break;
     }
@@ -2474,24 +2465,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             }
         }
         break;
-
-        case CONVERT_A4L4:
-        {
-            unsigned int x, y;
-            const unsigned char *Source;
-            unsigned char *Dest;
-            for(y = 0; y < height; y++) {
-                Source = src + y * pitch;
-                Dest = dst + y * outpitch;
-                for (x = 0; x < width; x++ ) {
-                    unsigned char color = (*Source++);
-                    /* A */ Dest[1] = (color & 0xf0) << 0;
-                    /* L */ Dest[0] = (color & 0x0f) << 4;
-                    Dest += 2;
-                }
-            }
-            break;
-        }
 
         default:
             ERR("Unsupported conversion type %#x.\n", convert);

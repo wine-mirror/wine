@@ -241,6 +241,29 @@ struct wined3d_format_texture_info
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
 
+static void convert_l4a4_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    /* WINED3DFMT_L4A4_UNORM exists as an internal gl format, but for some reason there is not
+     * format+type combination to load it. Thus convert it to A8L8, then load it
+     * with A4L4 internal, but A8L8 format+type
+     */
+    unsigned int x, y;
+    const unsigned char *Source;
+    unsigned char *Dest;
+    UINT outpitch = pitch * 2;
+
+    for(y = 0; y < height; y++) {
+        Source = src + y * pitch;
+        Dest = dst + y * outpitch;
+        for (x = 0; x < width; x++ ) {
+            unsigned char color = (*Source++);
+            /* A */ Dest[1] = (color & 0xf0) << 0;
+            /* L */ Dest[0] = (color & 0x0f) << 4;
+            Dest += 2;
+        }
+    }
+}
+
 static void convert_r5g5_snorm_l6_unorm(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -703,9 +726,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_EXT_NONE,        NULL},
     {WINED3DFMT_L4A4_UNORM,             GL_LUMINANCE4_ALPHA4,             GL_LUMINANCE4_ALPHA4,                   0,
-            GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
+            GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 2,
             0,
-            WINED3D_GL_EXT_NONE,        NULL},
+            WINED3D_GL_EXT_NONE,        &convert_l4a4_unorm},
     /* Bump mapping stuff */
     {WINED3DFMT_R8G8_SNORM,             GL_RGB8,                          GL_RGB8,                                0,
             GL_BGR,                     GL_UNSIGNED_BYTE,                 3,
