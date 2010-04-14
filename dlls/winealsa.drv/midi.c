@@ -1135,14 +1135,11 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	MidiOutDev[MODM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
 	/* Product Version. We simply say "1" */
 	MidiOutDev[MODM_NumDevs].caps.vDriverVersion = 0x001;
+	/* The following are mandatory for MOD_MIDIPORT */
 	MidiOutDev[MODM_NumDevs].caps.wChannelMask   = 0xFFFF;
-
-	/* FIXME Do we have this information?
-	 * Assuming the soundcards can handle
-	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
-	 * not MIDICAPS_CACHE.
-	 */
-	MidiOutDev[MODM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	MidiOutDev[MODM_NumDevs].caps.wVoices        = 0;
+	MidiOutDev[MODM_NumDevs].caps.wNotes         = 0;
+	MidiOutDev[MODM_NumDevs].caps.dwSupport      = 0;
 
 	/* Try to use both client and port names, if this is too long take the port name only.
            In the second case the port name should be explicit enough due to its big size.
@@ -1150,22 +1147,30 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
 	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
 	} else {
-	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
-	    midiPortName[MAXPNAMELEN-1] = 0;
+	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
 	}
 	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
                             MidiOutDev[MODM_NumDevs].caps.szPname,
                             sizeof(MidiOutDev[MODM_NumDevs].caps.szPname) / sizeof(WCHAR));
 
 	MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
-	MidiOutDev[MODM_NumDevs].caps.wVoices     = 16;
 
-        /* FIXME Is it possible to know the maximum
-         * number of simultaneous notes of a soundcard ?
-         * I believe we don't have this information, but
-         * it's probably equal or more than wVoices
-         */
-	MidiOutDev[MODM_NumDevs].caps.wNotes = 16;
+	if (MOD_MIDIPORT != MidiOutDev[MODM_NumDevs].caps.wTechnology) {
+	    /* FIXME Do we have this information?
+	     * Assuming the soundcards can handle
+	     * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
+	     * not MIDICAPS_CACHE.
+	     */
+	    MidiOutDev[MODM_NumDevs].caps.dwSupport = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	    MidiOutDev[MODM_NumDevs].caps.wVoices   = 16;
+
+            /* FIXME Is it possible to know the maximum
+             * number of simultaneous notes of a soundcard ?
+             * I believe we don't have this information, but
+             * it's probably equal or more than wVoices
+             */
+	    MidiOutDev[MODM_NumDevs].caps.wNotes    = 16;
+	}
 	MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
 
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
@@ -1201,13 +1206,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	MidiInDev[MIDM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
 	/* Product Version. We simply say "1" */
 	MidiInDev[MIDM_NumDevs].caps.vDriverVersion = 0x001;
-
-	/* FIXME Do we have this information?
-	 * Assuming the soundcards can handle
-	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
-	 * not MIDICAPS_CACHE.
-	 */
-	MidiInDev[MIDM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	MidiInDev[MIDM_NumDevs].caps.dwSupport = 0; /* mandatory with MIDIINCAPS */
 
 	/* Try to use both client and port names, if this is too long take the port name only.
            In the second case the port name should be explicit enough due to its big size.
@@ -1215,8 +1214,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
 	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
 	} else {
-	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
-	    midiPortName[MAXPNAMELEN-1] = 0;
+	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
         }
 	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
                             MidiInDev[MIDM_NumDevs].caps.szPname,
