@@ -20,8 +20,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winternl.h"
 #include "msvcrt.h"
+#include "excpt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -117,7 +123,8 @@ char *MSVCRT__sys_errlist[] =
 };
 
 unsigned int MSVCRT__sys_nerr = sizeof(MSVCRT__sys_errlist)/sizeof(MSVCRT__sys_errlist[0]) - 1;
-MSVCRT_invalid_parameter_handler MSVCRT_invalid_parameter = NULL;
+
+static MSVCRT_invalid_parameter_handler invalid_parameter_handler = NULL;
 
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
 void msvcrt_set_errno(int err)
@@ -287,21 +294,35 @@ void CDECL _seterrormode(int mode)
     SetErrorMode( mode );
 }
 
+/******************************************************************************
+ *		_invalid_parameter (MSVCRT.@)
+ */
+void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
+                                       const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg)
+{
+    if (invalid_parameter_handler) invalid_parameter_handler( expr, func, file, line, arg );
+    else
+    {
+        ERR( "%s:%u %s: %s %lx\n", debugstr_w(file), line, debugstr_w(func), debugstr_w(expr), arg );
+        RaiseException( STATUS_INVALID_CRUNTIME_PARAMETER, EXCEPTION_NONCONTINUABLE, 0, NULL );
+    }
+}
+
 /* _get_invalid_parameter_handler - not exported in native msvcrt, added in msvcr80 */
 MSVCRT_invalid_parameter_handler CDECL _get_invalid_parameter_handler(void)
 {
     TRACE("\n");
-    return MSVCRT_invalid_parameter;
+    return invalid_parameter_handler;
 }
 
 /* _set_invalid_parameter_handler - not exproted in native msvcrt, added in msvcr80 */
 MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
         MSVCRT_invalid_parameter_handler handler)
 {
-    MSVCRT_invalid_parameter_handler old = MSVCRT_invalid_parameter;
+    MSVCRT_invalid_parameter_handler old = invalid_parameter_handler;
 
     TRACE("(%p)\n", handler);
 
-    MSVCRT_invalid_parameter = handler;
+    invalid_parameter_handler = handler;
     return old;
 }

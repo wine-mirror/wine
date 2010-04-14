@@ -46,13 +46,13 @@ int cb_called[4];
 
 void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
-        unsigned line, unsigned *res)
+        unsigned line, uintptr_t arg)
 {
     ok(expression == NULL, "expression is not NULL\n");
     ok(function == NULL, "function is not NULL\n");
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
-    ok(res == NULL, "res = %p\n", res);
+    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
 }
 
 static int __cdecl initterm_cb0(void)

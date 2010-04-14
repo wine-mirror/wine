@@ -78,7 +78,7 @@ typedef void (*__cdecl MSVCRT__se_translator_function)(unsigned int code, struct
 typedef void (*__cdecl MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);
 typedef int (*__cdecl MSVCRT__onexit_t)(void);
-typedef void (__cdecl *MSVCRT_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, unsigned*);
+typedef void (__cdecl *MSVCRT_invalid_parameter_handler)(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, unsigned, MSVCRT_uintptr_t);
 
 typedef struct {long double x;} MSVCRT__LDOUBLE;
 
@@ -128,7 +128,6 @@ extern LCID MSVCRT_current_lc_all_lcid;
 extern WORD MSVCRT__ctype [257];
 extern WORD MSVCRT_current_ctype[257];
 extern WORD* MSVCRT__pctype;
-extern MSVCRT_invalid_parameter_handler MSVCRT_invalid_parameter;
 
 void   msvcrt_set_errno(int);
 
@@ -825,6 +824,8 @@ int     __cdecl MSVCRT__pipe(int *, unsigned int, int);
 MSVCRT_wchar_t* __cdecl _wgetenv(const MSVCRT_wchar_t*);
 void __cdecl    _wsearchenv(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, MSVCRT_wchar_t*);
 MSVCRT_intptr_t __cdecl MSVCRT__spawnvpe(int, const char*, const char* const*, const char* const*);
+void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
+                                       const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg);
 #endif
 
 #endif /* __WINE_MSVCRT_H */

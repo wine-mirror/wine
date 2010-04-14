@@ -341,7 +341,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
 
     if(!nptr || base<0 || base>36 || base==1) {
-        MSVCRT_invalid_parameter(NULL, NULL, NULL, 0, NULL);
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
         return 0;
     }
 
@@ -421,7 +421,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
 
     if(!nptr || base<0 || base>36 || base==1) {
-        MSVCRT_invalid_parameter(NULL, NULL, NULL, 0, NULL);
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
         return 0;
     }
 

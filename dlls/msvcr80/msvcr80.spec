@@ -42,7 +42,7 @@
 @ stub ?_ValidateWrite@@YAHPAXI@Z
 @ cdecl __uncaught_exception() msvcrt.__uncaught_exception
 @ stub ?_inconsistency@@YAXXZ
-@ stub ?_invalid_parameter@@YAXPBG00II@Z
+@ cdecl ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) msvcrt._invalid_parameter
 @ stub ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z
 @ stub ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z
 @ varargs ?_open@@YAHPBDHH@Z(str long) msvcrt._open
@@ -533,7 +533,7 @@
 @ stub _inp
 @ stub _inpd
 @ stub _inpw
-@ stub _invalid_parameter
+@ cdecl _invalid_parameter(wstr wstr wstr long long) msvcrt._invalid_parameter
 @ stub _invalid_parameter_noinfo
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
