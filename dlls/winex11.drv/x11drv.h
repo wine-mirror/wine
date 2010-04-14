@@ -304,6 +304,9 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
                                       Pixmap pixmap, GC gc,
                                       const struct bitblt_coords *src, const struct bitblt_coords *dst );
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
+extern BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
+                                struct bitblt_coords *dst, struct bitblt_coords *src,
+                                BLENDFUNCTION blendfn );
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);

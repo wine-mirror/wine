@@ -1947,11 +1947,10 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
 }
 
 /******************************************************************************
- * AlphaBlend         (x11drv.@)
+ * AlphaBlend
  */
-BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                             X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                             BLENDFUNCTION blendfn)
+BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
+                         struct bitblt_coords *dst, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
     XRenderPictureAttributes pa;
     Picture dst_pict, src_pict;
@@ -1962,7 +1961,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     XGCValues gcv;
     DWORD *dstbits, *data;
     int y, y2;
-    POINT pts[2];
     BOOL top_down = FALSE;
     const WineXRenderFormat *src_format;
     int repeat_src;
@@ -1971,26 +1969,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         FIXME("Unable to AlphaBlend without Xrender\n");
         return FALSE;
     }
-    pts[0].x = xDst;
-    pts[0].y = yDst;
-    pts[1].x = xDst + widthDst;
-    pts[1].y = yDst + heightDst;
-    LPtoDP(devDst->hdc, pts, 2);
-    xDst      = pts[0].x;
-    yDst      = pts[0].y;
-    widthDst  = pts[1].x - pts[0].x;
-    heightDst = pts[1].y - pts[0].y;
-
-    pts[0].x = xSrc;
-    pts[0].y = ySrc;
-    pts[1].x = xSrc + widthSrc;
-    pts[1].y = ySrc + heightSrc;
-    LPtoDP(devSrc->hdc, pts, 2);
-    xSrc      = pts[0].x;
-    ySrc      = pts[0].y;
-    widthSrc  = pts[1].x - pts[0].x;
-    heightSrc = pts[1].y - pts[0].y;
-    if (!widthDst || !heightDst || !widthSrc || !heightSrc) return TRUE;
 
 #ifndef HAVE_XRENDERSETPICTURETRANSFORM
     if(widthDst != widthSrc || heightDst != heightSrc)
@@ -2017,30 +1995,22 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         tiling is much faster. Therefore, we do no stretching in this case. */
     repeat_src = dib.dsBmih.biWidth == 1 && dib.dsBmih.biHeight == 1;
 
-    if (xSrc < 0 || ySrc < 0 || widthSrc < 0 || heightSrc < 0 || xSrc + widthSrc > dib.dsBmih.biWidth
-        || ySrc + heightSrc > dib.dsBmih.biHeight)
-    {
-        WARN("Invalid src coords: (%d,%d), size %dx%d\n", xSrc, ySrc, widthSrc, heightSrc);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
     if(dib.dsBm.bmBitsPixel != 32) {
         FIXME("not a 32 bpp dibsection\n");
         return FALSE;
     }
-    dstbits = data = HeapAlloc(GetProcessHeap(), 0, heightSrc * widthSrc * 4);
+    dstbits = data = HeapAlloc(GetProcessHeap(), 0, src->height * src->width * 4);
 
     if (devSrc->bitmap->topdown) { /* top-down dib */
         top_down = TRUE;
-        dstbits += widthSrc * (heightSrc - 1);
-        y2 = ySrc;
-        y = y2 + heightSrc - 1;
+        dstbits += src->width * (src->height - 1);
+        y2 = src->y;
+        y = y2 + src->height - 1;
     }
     else
     {
-        y = dib.dsBmih.biHeight - ySrc - 1;
-        y2 = y - heightSrc + 1;
+        y = dib.dsBmih.biHeight - src->y - 1;
+        y2 = y - src->height + 1;
     }
 
     if (blendfn.AlphaFormat & AC_SRC_ALPHA)
@@ -2049,9 +2019,9 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         {
             for (; y >= y2; y--)
             {
-                memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
-                       widthSrc * 4);
-                dstbits += (top_down ? -1 : 1) * widthSrc;
+                memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + src->x * 4,
+                       src->width * 4);
+                dstbits += (top_down ? -1 : 1) * src->width;
             }
         }
         else
@@ -2060,8 +2030,8 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
             for (; y >= y2; y--)
             {
                 int x;
-                DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + xSrc;
-                for (x = 0; x < widthSrc; x++)
+                DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + src->x;
+                for (x = 0; x < src->width; x++)
                 {
                     DWORD argb = *srcbits++;
                     BYTE *s = (BYTE *) &argb;
@@ -2072,7 +2042,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
                     *dstbits++ = argb;
                 }
                 if (top_down)  /* we traversed the row forward so we should go back by two rows */
-                    dstbits -= 2 * widthSrc;
+                    dstbits -= 2 * src->width;
             }
         }
     }
@@ -2083,15 +2053,15 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
         for(; y >= y2; y--)
         {
-            DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + xSrc;
-            for (x = 0; x < widthSrc; x++)
+            DWORD *srcbits = (DWORD *)((char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes) + src->x;
+            for (x = 0; x < src->width; x++)
             {
                 DWORD argb = *srcbits++;
                 argb = (argb & 0xffffff) | source_alpha;
                 *dstbits++ = argb;
             }
             if (top_down)  /* we traversed the row forward so we should go back by two rows */
-                dstbits -= 2 * widthSrc;
+                dstbits -= 2 * src->width;
         }
 
     }
@@ -2110,16 +2080,16 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     }
 
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
-                         (char*) data, widthSrc, heightSrc, 32, widthSrc * 4);
+                         (char*) data, src->width, src->height, 32, src->width * 4);
 
     TRACE("src_drawable = %08lx\n", devSrc->drawable);
     xpm = XCreatePixmap(gdi_display,
                         root_window,
-                        widthSrc, heightSrc, 32);
+                        src->width, src->height, 32);
     gcv.graphics_exposures = False;
     gc = XCreateGC(gdi_display, xpm, GCGraphicsExposures, &gcv);
     TRACE("xpm = %08lx\n", xpm);
-    XPutImage(gdi_display, xpm, gc, image, 0, 0, 0, 0, widthSrc, heightSrc);
+    XPutImage(gdi_display, xpm, gc, image, 0, 0, 0, 0, src->width, src->height);
 
     pa.subwindow_mode = IncludeInferiors;
     pa.repeat = repeat_src ? RepeatNormal : RepeatNone;
@@ -2134,10 +2104,11 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     if (repeat_src)
         set_xrender_transformation(src_pict, 1.0, 1.0, 0, 0);
     else
-        set_xrender_transformation(src_pict, widthSrc/(double)widthDst, heightSrc/(double)heightDst, 0, 0);
+        set_xrender_transformation(src_pict, src->width/(double)dst->width, src->height/(double)dst->height, 0, 0);
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       0, 0, 0, 0,
-                      xDst + devDst->dc_rect.left, yDst + devDst->dc_rect.top, widthDst, heightDst);
+                      dst->x + devDst->dc_rect.left, dst->y + devDst->dc_rect.top,
+                      dst->width, dst->height);
 
 
     pXRenderFreePicture(gdi_display, src_pict);
@@ -2325,12 +2296,8 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
   return;
 }
 
-/******************************************************************************
- * AlphaBlend         (x11drv.@)
- */
-BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                       X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                       BLENDFUNCTION blendfn)
+BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
+                         struct bitblt_coords *dst, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
   FIXME("not supported - XRENDER headers were missing at compile time\n");
   return FALSE;

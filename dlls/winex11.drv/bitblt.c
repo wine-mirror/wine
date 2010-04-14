@@ -1652,3 +1652,36 @@ done:
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           X11DRV_AlphaBlend
+ */
+BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                              BLENDFUNCTION blendfn )
+{
+    struct bitblt_coords src, dst;
+
+    src.x      = xSrc;
+    src.y      = ySrc;
+    src.width  = widthSrc;
+    src.height = heightSrc;
+    dst.x      = xDst;
+    dst.y      = yDst;
+    dst.width  = widthDst;
+    dst.height = heightDst;
+
+    if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src )) return TRUE;
+
+    if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
+        src.width > physDevSrc->drawable_rect.right - physDevSrc->drawable_rect.left - src.x ||
+        src.height > physDevSrc->drawable_rect.bottom - physDevSrc->drawable_rect.top - src.y)
+    {
+        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    return XRender_AlphaBlend( physDevDst, physDevSrc, &dst, &src, blendfn );
+}
