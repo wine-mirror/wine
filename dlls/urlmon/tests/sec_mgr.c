@@ -35,6 +35,8 @@
 
 #include "initguid.h"
 
+static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, DWORD);
+
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
 static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
@@ -654,8 +656,13 @@ static void test_InternetGetSecurityUrl(void)
     DWORD i;
     HRESULT hres;
 
+    if (!pCoInternetGetSecurityUrl) {
+        win_skip("CoInternetGetSecurityUrl not found\n");
+        return;
+    }
+
     for(i=0; i<sizeof(in)/sizeof(WCHAR*); i++) {
-        hres = CoInternetGetSecurityUrl(in[i], &sec, PSU_DEFAULT, 0);
+        hres = pCoInternetGetSecurityUrl(in[i], &sec, PSU_DEFAULT, 0);
         ok(hres == S_OK, "(%d) CoInternetGetSecurityUrl returned: %08x\n", i, hres);
         if(hres == S_OK) {
             ok(!strcmp_w(sec, out_default[i]), "(%d) Got %s, expected %s\n",
@@ -663,7 +670,7 @@ static void test_InternetGetSecurityUrl(void)
             CoTaskMemFree(sec);
         }
 
-        hres = CoInternetGetSecurityUrl(in[i], &sec, PSU_SECURITY_URL_ONLY, 0);
+        hres = pCoInternetGetSecurityUrl(in[i], &sec, PSU_SECURITY_URL_ONLY, 0);
         ok(hres == S_OK, "(%d) CoInternetGetSecurityUrl returned: %08x\n", i, hres);
         if(hres == S_OK) {
             ok(!strcmp_w(sec, out_securl[i]), "(%d) Got %s, expected %s\n",
@@ -676,7 +683,12 @@ static void test_InternetGetSecurityUrl(void)
 
 START_TEST(sec_mgr)
 {
+    HMODULE hurlmon;
+
     OleInitialize(NULL);
+
+    hurlmon = GetModuleHandle("urlmon.dll");
+    pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
 
     test_InternetGetSecurityUrl();
     test_SecurityManager();
