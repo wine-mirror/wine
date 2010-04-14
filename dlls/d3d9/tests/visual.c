@@ -638,6 +638,71 @@ static void clear_test(IDirect3DDevice9 *device)
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 }
 
+static void color_fill_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DSurface9 *backbuffer = NULL;
+    IDirect3DSurface9 *rt_surface = NULL;
+    IDirect3DSurface9 *offscreen_surface = NULL;
+    DWORD fill_color, color;
+
+    /* Test ColorFill on a the backbuffer (should pass) */
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+    if(backbuffer)
+    {
+        fill_color = 0x112233;
+        hr = IDirect3DDevice9_ColorFill(device, backbuffer, NULL, fill_color);
+
+        color = getPixelColor(device, 0, 0);
+        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+        IDirect3DSurface9_Release(backbuffer);
+    }
+
+    /* Test ColorFill on a render target surface (should pass) */
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &rt_surface, NULL );
+    ok(hr == D3D_OK, "Unable to create render target surface, hr = %08x\n", hr);
+    if(rt_surface)
+    {
+        fill_color = 0x445566;
+        hr = IDirect3DDevice9_ColorFill(device, rt_surface, NULL, fill_color);
+
+        color = getPixelColorFromSurface(rt_surface, 0, 0);
+        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+        IDirect3DSurface9_Release(rt_surface);
+    }
+
+    /* Test ColorFill on a offscreen plain surface in D3DPOOL_DEFAULT (should pass) */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreen_surface, NULL);
+    ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
+    if(offscreen_surface)
+    {
+        fill_color = 0x778899;
+        hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, fill_color);
+
+        color = getPixelColorFromSurface(offscreen_surface, 0, 0);
+        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+        IDirect3DSurface9_Release(offscreen_surface);
+    }
+
+    /* Try ColorFill on a offscreen surface in sysmem (should fail) */
+    offscreen_surface = NULL;
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
+    ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
+    if(offscreen_surface)
+    {
+        hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, 0);
+        ok(hr == D3DERR_INVALIDCALL, "ColorFill on offscreen sysmem surface failed with hr = %08x\n", hr);
+
+        IDirect3DSurface9_Release(offscreen_surface);
+    }
+}
+
 typedef struct {
     float in[4];
     DWORD out;
@@ -11041,6 +11106,7 @@ START_TEST(visual)
     stretchrect_test(device_ptr);
     lighting_test(device_ptr);
     clear_test(device_ptr);
+    color_fill_test(device_ptr);
     fog_test(device_ptr);
     if(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
     {
