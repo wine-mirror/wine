@@ -125,11 +125,9 @@ static HRESULT WINAPI StreamOnMemory_Write(IStream *iface,
         hr = STG_E_MEDIUMFULL;
     }
     else {
-        if (cb) {
-            memcpy(This->pbMemory + This->dwCurPos, pv, cb);
-            This->dwCurPos += cb;
-            hr = S_OK;
-        }
+        memcpy(This->pbMemory + This->dwCurPos, pv, cb);
+        This->dwCurPos += cb;
+        hr = S_OK;
         if (pcbWritten) *pcbWritten = cb;
     }
     LeaveCriticalSection(&This->lock);
