@@ -383,7 +383,7 @@
 @ stub IoGetDeviceInterfaceAlias
 @ stub IoGetDeviceInterfaces
 @ stdcall IoGetDeviceObjectPointer(ptr long ptr ptr)
-@ stub IoGetDeviceProperty
+@ stdcall IoGetDeviceProperty(ptr long long ptr ptr)
 @ stub IoGetDeviceToVerify
 @ stub IoGetDiskDeviceObject
 @ stub IoGetDmaAdapter

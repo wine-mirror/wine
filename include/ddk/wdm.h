@@ -689,6 +689,29 @@ typedef enum _BUS_QUERY_ID_TYPE {
   BusQueryDeviceSerialNumber
 } BUS_QUERY_ID_TYPE, *PBUS_QUERY_ID_TYPE;
 
+typedef enum {
+  DevicePropertyDeviceDescription,
+  DevicePropertyHardwareID,
+  DevicePropertyCompatibleIDs,
+  DevicePropertyBootConfiguration,
+  DevicePropertyBootConfigurationTranslated,
+  DevicePropertyClassName,
+  DevicePropertyClassGuid,
+  DevicePropertyDriverKeyName,
+  DevicePropertyManufacturer,
+  DevicePropertyFriendlyName,
+  DevicePropertyLocationInformation,
+  DevicePropertyPhysicalDeviceObjectName,
+  DevicePropertyBusTypeGuid,
+  DevicePropertyLegacyBusType,
+  DevicePropertyBusNumber,
+  DevicePropertyEnumeratorName,
+  DevicePropertyAddress,
+  DevicePropertyUINumber,
+  DevicePropertyInstallState,
+  DevicePropertyRemovalPolicy
+} DEVICE_REGISTRY_PROPERTY;
+
 typedef enum _DEVICE_TEXT_TYPE {
   DeviceTextDescription,
   DeviceTextLocationInformation
@@ -1074,6 +1097,7 @@ NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
 void      WINAPI IoFreeIrp(IRP*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
 NTSTATUS  WINAPI IoGetDeviceObjectPointer(UNICODE_STRING*,ACCESS_MASK,PFILE_OBJECT*,PDEVICE_OBJECT*);
+NTSTATUS  WINAPI IoGetDeviceProperty(PDEVICE_OBJECT,DEVICE_REGISTRY_PROPERTY,ULONG,PVOID,PULONG);
 PVOID     WINAPI IoGetDriverObjectExtension(PDRIVER_OBJECT,PVOID);
 PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject(PFILE_OBJECT);
 void      WINAPI IoInitializeIrp(IRP*,USHORT,CCHAR);

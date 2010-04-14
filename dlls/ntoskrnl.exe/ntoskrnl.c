@@ -632,6 +632,18 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 
 
 /***********************************************************************
+ *           IoGetDeviceProperty   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROPERTY device_property,
+                                     ULONG buffer_length, PVOID property_buffer, PULONG result_length )
+{
+    FIXME( "%p %d %u %p %p: stub\n", device, device_property, buffer_length,
+           property_buffer, result_length );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           IoCallDriver   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
