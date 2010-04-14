@@ -169,6 +169,15 @@ typedef struct
     struct xrender_info *xrender;
 } X11DRV_PDEVICE;
 
+struct bitblt_coords
+{
+    int  x;      /* original position and width */
+    int  y;
+    int  width;
+    int  height;
+    RECT visrect;   /* rectangle clipped to the visible part */
+};
+
 
 extern X_PHYSBITMAP BITMAP_stock_phys_bitmap;  /* phys bitmap for the default stock bitmap */
 
@@ -293,9 +302,7 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib);
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
-                                      INT widthSrc, INT heightSrc,
-                                      INT widthDst, INT heightDst,
-                                      RECT *visRectSrc, RECT *visRectDst);
+                                      const struct bitblt_coords *src, const struct bitblt_coords *dst );
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
