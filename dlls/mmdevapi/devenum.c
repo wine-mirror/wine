@@ -732,14 +732,38 @@ static void openal_setformat(MMDevice *This, DWORD freq)
     }
 }
 
+static int blacklist_pulse;
+
 static int blacklist(const char *dev) {
 #ifdef __linux__
     if (strncmp(dev, "OSS ", 4))
         return 1;
 #endif
+    if (blacklist_pulse && !strncmp(dev, "PulseAudio ", 11))
+        return 1;
     if (strstr(dev, "ALSA") && strstr(dev, "hw:"))
         return 1;
     return 0;
+}
+
+static void pulse_fixup(const char *devstr, const char **defstr) {
+    static int warned;
+
+    if (!blacklist_pulse && !local_contexts)
+        blacklist_pulse = 1;
+
+    if (!blacklist_pulse || !devstr || strncmp(*defstr, "PulseAudio ", 11))
+        return;
+
+    if (!warned++) {
+        ERR("Disabling pulseaudio because of old openal version\n");
+        ERR("Please upgrade to openal-soft v1.12 or newer\n");
+    }
+    while (*devstr && !strncmp(devstr, "PulseAudio ", 11)) {
+        devstr += strlen(devstr) + 1;
+    }
+    TRACE("New default: %s\n", devstr);
+    *defstr = devstr;
 }
 
 static void openal_scanrender(void)
@@ -756,6 +780,7 @@ static void openal_scanrender(void)
         defaultstr = palcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
         devstr = palcGetString(NULL, ALC_DEVICE_SPECIFIER);
     }
+    pulse_fixup(devstr, &defaultstr);
     defblacklisted = blacklist(defaultstr);
     if (defblacklisted)
         WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
@@ -796,6 +821,7 @@ static void openal_scancapture(void)
     EnterCriticalSection(&openal_crst);
     devstr = palcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
     defaultstr = palcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
+    pulse_fixup(devstr, &defaultstr);
     defblacklisted = blacklist(defaultstr);
     if (defblacklisted)
         WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
