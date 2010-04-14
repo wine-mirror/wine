@@ -1234,6 +1234,7 @@ void context_surface_update(struct wined3d_context *context, IWineD3DSurfaceImpl
 #define WINE_D3D7_CAPABLE(gl_info) (gl_info->supported[ARB_TEXTURE_COMPRESSION] && gl_info->supported[ARB_TEXTURE_CUBE_MAP] && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
 #define WINE_D3D8_CAPABLE(gl_info) WINE_D3D7_CAPABLE(gl_info) && (gl_info->supported[ARB_MULTISAMPLE] && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
 #define WINE_D3D9_CAPABLE(gl_info) WINE_D3D8_CAPABLE(gl_info) && (gl_info->supported[ARB_FRAGMENT_PROGRAM] && gl_info->supported[ARB_VERTEX_SHADER])
+#define WINE_D3D10_CAPABLE(gl_info) WINE_D3D9_CAPABLE(gl_info) && (gl_info->supported[EXT_GPU_SHADER4])
 
 /*****************************************************************************
  * Internal representation of a light

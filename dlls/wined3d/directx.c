@@ -1251,10 +1251,7 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
 static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer, unsigned int *vidmem)
 {
-    /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
-     * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
-     */
-    if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
+    if (WINE_D3D10_CAPABLE(gl_info))
     {
         /* Geforce 200 - highend */
         if (strstr(gl_renderer, "GTX 280")
@@ -1360,6 +1357,16 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             return CARD_NVIDIA_GEFORCE_8300GS;
         }
 
+        /* Geforce8-compatible fall back if the GPU is not in the list yet */
+        *vidmem = 128;
+        return CARD_NVIDIA_GEFORCE_8300GS;
+    }
+
+    /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
+     * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
+     */
+    if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
+    {
         /* Geforce7 - highend */
         if (strstr(gl_renderer, "7800")
                 || strstr(gl_renderer, "7900")
