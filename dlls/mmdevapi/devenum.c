@@ -733,6 +733,10 @@ static void openal_setformat(MMDevice *This, DWORD freq)
 }
 
 static int blacklist(const char *dev) {
+#ifdef __linux__
+    if (strncmp(dev, "OSS ", 4))
+        return 1;
+#endif
     if (strstr(dev, "ALSA") && strstr(dev, "hw:"))
         return 1;
     return 0;
