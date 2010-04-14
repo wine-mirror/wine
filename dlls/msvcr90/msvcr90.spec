@@ -371,7 +371,7 @@
 @ cdecl _errno() msvcrt._errno
 @ cdecl -i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
 @ cdecl -i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
-@ stub _except_handler4_common
+@ cdecl -i386 _except_handler4_common(ptr ptr ptr ptr ptr ptr) msvcrt._except_handler4_common
 @ varargs _execl(str str) msvcrt._execl
 @ varargs _execle(str str) msvcrt._execle
 @ varargs _execlp(str str) msvcrt._execlp
@@ -625,7 +625,7 @@
 @ stub _lfind_s
 @ cdecl _loaddll(str) msvcrt._loaddll
 @ cdecl -i386 _local_unwind2(ptr long) msvcrt._local_unwind2
-@ stub _local_unwind4
+@ cdecl -i386 _local_unwind4(ptr ptr long) msvcrt._local_unwind4
 @ cdecl _localtime32(ptr) msvcrt._localtime32
 @ stub _localtime32_s
 @ cdecl _localtime64(ptr) msvcrt._localtime64

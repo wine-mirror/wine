@@ -56,6 +56,15 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
   PEXCEPTION_POINTERS xpointers;
 } MSVCRT_EXCEPTION_FRAME;
 
+typedef struct
+{
+  int   gs_cookie_offset;
+  ULONG gs_cookie_xor;
+  int   eh_cookie_offset;
+  ULONG eh_cookie_xor;
+  SCOPETABLE entries[1];
+} SCOPETABLE_V4;
+
 #define TRYLEVEL_END (-1) /* End of trylevel list */
 
 #if defined(__GNUC__) && defined(__i386__)
@@ -98,6 +107,11 @@ static inline int call_unwind_func( int (*func)(void), void *ebp )
 
 
 #ifdef __i386__
+
+static const SCOPETABLE_V4 *get_scopetable_v4( MSVCRT_EXCEPTION_FRAME *frame, ULONG_PTR cookie )
+{
+    return (const SCOPETABLE_V4 *)((ULONG_PTR)frame->scopetable ^ cookie);
+}
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
                                    EXCEPTION_REGISTRATION_RECORD* frame,
@@ -158,12 +172,47 @@ static void msvcrt_local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel, vo
   TRACE("unwound OK\n");
 }
 
+static void msvcrt_local_unwind4( ULONG *cookie, MSVCRT_EXCEPTION_FRAME* frame, int trylevel, void *ebp )
+{
+    EXCEPTION_REGISTRATION_RECORD reg;
+    const SCOPETABLE_V4 *scopetable = get_scopetable_v4( frame, *cookie );
+
+    TRACE("(%p,%d,%d)\n",frame, frame->trylevel, trylevel);
+
+    /* Register a handler in case of a nested exception */
+    reg.Handler = MSVCRT_nested_handler;
+    reg.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    __wine_push_frame(&reg);
+
+    while (frame->trylevel != -2 && frame->trylevel != trylevel)
+    {
+        int level = frame->trylevel;
+        frame->trylevel = scopetable->entries[level].previousTryLevel;
+        if (!scopetable->entries[level].lpfnFilter)
+        {
+            TRACE( "__try block cleanup level %d handler %p ebp %p\n",
+                   level, scopetable->entries[level].lpfnHandler, ebp );
+            call_unwind_func( scopetable->entries[level].lpfnHandler, ebp );
+        }
+    }
+    __wine_pop_frame(&reg);
+    TRACE("unwound OK\n");
+}
+
 /*******************************************************************
  *		_local_unwind2 (MSVCRT.@)
  */
 void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 {
     msvcrt_local_unwind2( frame, trylevel, &frame->_ebp );
+}
+
+/*******************************************************************
+ *		_local_unwind4 (MSVCRT.@)
+ */
+void CDECL _local_unwind4( ULONG *cookie, MSVCRT_EXCEPTION_FRAME* frame, int trylevel )
+{
+    msvcrt_local_unwind4( cookie, frame, trylevel, &frame->_ebp );
 }
 
 /*******************************************************************
@@ -257,6 +306,78 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
   }
   TRACE("reached TRYLEVEL_END, returning ExceptionContinueSearch\n");
   return ExceptionContinueSearch;
+}
+
+/*********************************************************************
+ *		_except_handler4_common (MSVCRT.@)
+ */
+int CDECL _except_handler4_common( ULONG *cookie, void (*check_cookie)(void),
+                                   EXCEPTION_RECORD *rec, MSVCRT_EXCEPTION_FRAME *frame,
+                                   CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    int retval, trylevel;
+    EXCEPTION_POINTERS exceptPtrs;
+    const SCOPETABLE_V4 *scope_table = get_scopetable_v4( frame, *cookie );
+
+    TRACE( "exception %x flags=%x at %p handler=%p %p %p cookie=%x scope table=%p cookies=%d/%x,%d/%x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           frame->handler, context, dispatcher, *cookie, scope_table,
+           scope_table->gs_cookie_offset, scope_table->gs_cookie_xor,
+           scope_table->eh_cookie_offset, scope_table->eh_cookie_xor );
+
+    /* FIXME: no cookie validation yet */
+
+    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    {
+        /* Unwinding the current frame */
+        msvcrt_local_unwind4( cookie, frame, -2, &frame->_ebp );
+        TRACE("unwound current frame, returning ExceptionContinueSearch\n");
+        return ExceptionContinueSearch;
+    }
+    else
+    {
+        /* Hunting for handler */
+        exceptPtrs.ExceptionRecord = rec;
+        exceptPtrs.ContextRecord = context;
+        *((DWORD *)frame-1) = (DWORD)&exceptPtrs;
+        trylevel = frame->trylevel;
+
+        while (trylevel != -2)
+        {
+            TRACE( "level %d prev %d filter %p\n", trylevel,
+                   scope_table->entries[trylevel].previousTryLevel,
+                   scope_table->entries[trylevel].lpfnFilter );
+            if (scope_table->entries[trylevel].lpfnFilter)
+            {
+                retval = call_filter( scope_table->entries[trylevel].lpfnFilter, &exceptPtrs, &frame->_ebp );
+
+                TRACE("filter returned %s\n", retval == EXCEPTION_CONTINUE_EXECUTION ?
+                      "CONTINUE_EXECUTION" : retval == EXCEPTION_EXECUTE_HANDLER ?
+                      "EXECUTE_HANDLER" : "CONTINUE_SEARCH");
+
+                if (retval == EXCEPTION_CONTINUE_EXECUTION)
+                    return ExceptionContinueExecution;
+
+                if (retval == EXCEPTION_EXECUTE_HANDLER)
+                {
+                    /* Unwind all higher frames, this one will handle the exception */
+                    _global_unwind2((EXCEPTION_REGISTRATION_RECORD*)frame);
+                    msvcrt_local_unwind4( cookie, frame, trylevel, &frame->_ebp );
+
+                    /* Set our trylevel to the enclosing block, and call the __finally
+                     * code, which won't return
+                     */
+                    frame->trylevel = scope_table->entries[trylevel].previousTryLevel;
+                    TRACE("__finally block %p\n",scope_table->entries[trylevel].lpfnHandler);
+                    call_finally_block(scope_table->entries[trylevel].lpfnHandler, &frame->_ebp);
+                    ERR("Returned from __finally block - expect crash!\n");
+                }
+            }
+            trylevel = scope_table->entries[trylevel].previousTryLevel;
+        }
+    }
+    TRACE("reached -2, returning ExceptionContinueSearch\n");
+    return ExceptionContinueSearch;
 }
 
 
