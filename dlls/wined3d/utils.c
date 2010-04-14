@@ -417,6 +417,32 @@ static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT wi
     }
 }
 
+static void convert_r16g16(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
+{
+    unsigned int x, y;
+    const WORD *Source;
+    WORD *Dest;
+    UINT outpitch = (pitch * 3)/2;
+
+    for(y = 0; y < height; y++)
+    {
+        Source = (const WORD *)(src + y * pitch);
+        Dest = (WORD *) (dst + y * outpitch);
+        for (x = 0; x < width; x++ )
+        {
+            WORD green = (*Source++);
+            WORD red = (*Source++);
+            Dest[0] = green;
+            Dest[1] = red;
+            /* Strictly speaking not correct for R16G16F, but it doesn't matter because the
+             * shader overwrites it anyway
+             */
+            Dest[2] = 0xffff;
+            Dest += 3;
+        }
+    }
+}
+
 static void convert_r32g32_float(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height)
 {
     unsigned int x, y;
@@ -582,9 +608,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_R16G16_FLOAT,           GL_RGB16F_ARB,                    GL_RGB16F_ARB,                          0,
-            GL_RGB,                     GL_HALF_FLOAT_ARB,                0,
+            GL_RGB,                     GL_HALF_FLOAT_ARB,                6,
             WINED3DFMT_FLAG_RENDERTARGET,
-            ARB_TEXTURE_FLOAT,          NULL},
+            ARB_TEXTURE_FLOAT,          &convert_r16g16},
     {WINED3DFMT_R16G16_FLOAT,           GL_RG16F,                         GL_RG16F,                               0,
             GL_RG,                      GL_HALF_FLOAT_ARB,                0,
             WINED3DFMT_FLAG_RENDERTARGET,
@@ -656,9 +682,9 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_EXT_NONE,        NULL},
     {WINED3DFMT_R16G16_UNORM,           GL_RGB16,                         GL_RGB16,                       GL_RGBA16,
-            GL_RGB,                     GL_UNSIGNED_SHORT,                0,
+            GL_RGB,                     GL_UNSIGNED_SHORT,                6,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            WINED3D_GL_EXT_NONE,        NULL},
+            WINED3D_GL_EXT_NONE,        &convert_r16g16},
     {WINED3DFMT_B10G10R10A2_UNORM,      GL_RGB10_A2,                      GL_RGB10_A2,                            0,
             GL_BGRA,                    GL_UNSIGNED_INT_2_10_10_10_REV,   0,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,

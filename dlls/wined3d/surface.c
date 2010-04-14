@@ -2134,7 +2134,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     IWineD3DDeviceImpl *device = This->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL blit_supported = FALSE;
     RECT rect = {0, 0, This->pow2Width, This->pow2Height};
 
@@ -2231,17 +2230,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              */
             *convert = CONVERT_A4L4;
             desc->conv_byte_count = 2;
-            break;
-
-        case WINED3DFMT_R16G16_UNORM:
-            *convert = CONVERT_G16R16;
-            desc->conv_byte_count = 6;
-            break;
-
-        case WINED3DFMT_R16G16_FLOAT:
-            if (gl_info->supported[ARB_TEXTURE_RG]) break;
-            *convert = CONVERT_R16G16F;
-            desc->conv_byte_count = 6;
             break;
 
         default:
@@ -2500,31 +2488,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     /* A */ Dest[1] = (color & 0xf0) << 0;
                     /* L */ Dest[0] = (color & 0x0f) << 4;
                     Dest += 2;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_G16R16:
-        case CONVERT_R16G16F:
-        {
-            unsigned int x, y;
-            const WORD *Source;
-            WORD *Dest;
-
-            for(y = 0; y < height; y++) {
-                Source = (const WORD *)(src + y * pitch);
-                Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    WORD green = (*Source++);
-                    WORD red = (*Source++);
-                    Dest[0] = green;
-                    Dest[1] = red;
-                    /* Strictly speaking not correct for R16G16F, but it doesn't matter because the
-                     * shader overwrites it anyway
-                     */
-                    Dest[2] = 0xffff;
-                    Dest += 3;
                 }
             }
             break;
