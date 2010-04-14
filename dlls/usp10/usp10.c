@@ -1332,6 +1332,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 {
     HRESULT hr;
     unsigned int i;
+    BOOL rtl;
 
     TRACE("(%p, %p, %s, %d, %d, %p, %p, %p, %p, %p)\n", hdc, psc, debugstr_wn(pwcChars, cChars),
           cChars, cMaxGlyphs, psa, pwOutGlyphs, pwLogClust, psva, pcGlyphs);
@@ -1341,6 +1342,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     if (!psva || !pcGlyphs) return E_INVALIDARG;
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+    rtl = (!psa->fLogicalOrder && psa->fRTL);
 
     *pcGlyphs = cChars;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
@@ -1350,33 +1352,42 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     {
         for (i = 0; i < cChars; i++)
         {
-            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, pwcChars[i])))
+            int idx = i;
+            if (rtl) idx = cChars - 1 - i;
+            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, pwcChars[idx])))
             {
                 WORD glyph;
                 if (!hdc) return E_PENDING;
-                if (GetGlyphIndicesW(hdc, &pwcChars[i], 1, &glyph, 0) == GDI_ERROR) return S_FALSE;
-                pwOutGlyphs[i] = set_cache_glyph(psc, pwcChars[i], glyph);
+                if (GetGlyphIndicesW(hdc, &pwcChars[idx], 1, &glyph, 0) == GDI_ERROR) return S_FALSE;
+                pwOutGlyphs[i] = set_cache_glyph(psc, pwcChars[idx], glyph);
             }
         }
     }
     else
     {
         TRACE("no glyph translation\n");
-        for (i = 0; i < cChars; i++) pwOutGlyphs[i] = pwcChars[i];
+        for (i = 0; i < cChars; i++)
+        {
+            int idx = i;
+            if (rtl) idx = cChars - 1 - i;
+            pwOutGlyphs[i] = pwcChars[idx];
+        }
     }
 
     /* set up a valid SCRIPT_VISATTR and LogClust for each char in this run */
     for (i = 0; i < cChars; i++)
     {
+        int idx = i;
+        if (rtl) idx = cChars - 1 - i;
         /* FIXME: set to better values */
-        psva[i].uJustification = (pwcChars[i] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
+        psva[i].uJustification = (pwcChars[idx] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
         psva[i].fClusterStart  = 1;
         psva[i].fDiacritic     = 0;
         psva[i].fZeroWidth     = 0;
         psva[i].fReserved      = 0;
         psva[i].fShapeReserved = 0;
 
-        pwLogClust[i] = i;
+        pwLogClust[i] = idx;
     }
     return S_OK;
 }
