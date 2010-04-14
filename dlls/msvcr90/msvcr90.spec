@@ -522,7 +522,7 @@
 @ stub _inpd
 @ stub _inpw
 @ cdecl _invalid_parameter(wstr wstr wstr long long) msvcrt._invalid_parameter
-@ stub _invalid_parameter_noinfo
+@ cdecl _invalid_parameter_noinfo()
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
 @ stub _isalnum_l

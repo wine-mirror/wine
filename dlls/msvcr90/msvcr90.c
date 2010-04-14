@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#include "stdlib.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -97,6 +98,14 @@ int CDECL _initterm_e(_INITTERM_E_FN *table, _INITTERM_E_FN *end)
         table++;
     }
     return res;
+}
+
+/*********************************************************************
+ * _invalid_parameter_noinfo (MSVCR90.@)
+ */
+void CDECL _invalid_parameter_noinfo(void)
+{
+    _invalid_parameter( NULL, NULL, NULL, 0, 0 );
 }
 
 /*********************************************************************
