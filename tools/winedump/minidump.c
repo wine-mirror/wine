@@ -287,11 +287,14 @@ void mdmp_dump(void)
             case PROCESSOR_ARCHITECTURE_ARM:
                 str = "ARM";
                 break;
+            case PROCESSOR_ARCHITECTURE_AMD64:
+                str = "X86_64";
+                break;
             default:
                 str = "???";
                 break;
             }
-            printf("  Processor: %s, #%d CPUs)\n", str, msi->u.s.NumberOfProcessors);
+            printf("  Processor: %s (#%d CPUs)\n", str, msi->u.s.NumberOfProcessors);
             switch (msi->MajorVersion)
             {
             case 3:
