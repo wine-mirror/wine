@@ -1862,9 +1862,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->stencilBufferTarget = NULL;
 
     TRACE("Releasing the render target at %p\n", This->render_targets[0]);
-    if(IWineD3DSurface_Release(This->render_targets[0]) >0){
-          /* This check is a bit silly, it should be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
-    }
+    IWineD3DSurface_Release(This->render_targets[0]);
+
     TRACE("Setting rendertarget to NULL\n");
     This->render_targets[0] = NULL;
 
