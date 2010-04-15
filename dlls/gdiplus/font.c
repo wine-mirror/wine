@@ -829,15 +829,21 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamily)
 {
-    /* FIXME: On Windows this is called Microsoft Sans Serif, this shouldn't
-     * affect anything */
-    static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+    GpStatus stat;
+    static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+    static const WCHAR Tahoma[] = {'T','a','h','o','m','a','\0'};
 
     TRACE("(%p)\n", nativeFamily);
 
     if (nativeFamily == NULL) return InvalidParameter;
 
-    return GdipCreateFontFamilyFromName(MSSansSerif, NULL, nativeFamily);
+    stat = GdipCreateFontFamilyFromName(MicrosoftSansSerif, NULL, nativeFamily);
+
+    if (stat == FontFamilyNotFound)
+        /* FIXME: Microsoft Sans Serif is not installed on Wine. */
+        stat = GdipCreateFontFamilyFromName(Tahoma, NULL, nativeFamily);
+
+    return stat;
 }
 
 /*****************************************************************************
