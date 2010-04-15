@@ -797,9 +797,11 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
  * the correct texture. */
 /* Context activation is done by the caller. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format_desc *format_desc, BOOL srgb, GLsizei width, GLsizei height)
+        const struct wined3d_format_desc *format_desc, BOOL srgb)
 {
     BOOL enable_client_storage = FALSE;
+    GLsizei width = This->pow2Width;
+    GLsizei height = This->pow2Height;
     const BYTE *mem = NULL;
     GLenum internal;
 
@@ -1531,7 +1533,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 
     if (!(This->Flags & alloc_flag))
     {
-        surface_allocate_surface(This, gl_info, This->resource.format_desc, srgb, This->pow2Width, This->pow2Height);
+        surface_allocate_surface(This, gl_info, This->resource.format_desc, srgb);
         This->Flags |= alloc_flag;
     }
 
@@ -1570,8 +1572,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     else surface->Flags &= ~SFLAG_CONVERTED;
 
     surface_bind_and_dirtify(surface, srgb);
-    surface_allocate_surface(surface, gl_info, &desc, srgb,
-            surface->pow2Width, surface->pow2Height);
+    surface_allocate_surface(surface, gl_info, &desc, srgb);
     surface->Flags |= alloc_flag;
 }
 
