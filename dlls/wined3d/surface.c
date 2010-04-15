@@ -720,8 +720,10 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
  * correct texture. */
 /* Context activation is done by the caller. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format_desc *format_desc, BOOL srgb, GLsizei width, GLsizei height, const GLvoid *data)
+        const struct wined3d_format_desc *format_desc, BOOL srgb, const GLvoid *data)
 {
+    GLsizei width = This->currentDesc.Width;
+    GLsizei height = This->currentDesc.Height;
     GLenum internal;
 
     if (srgb)
@@ -4517,10 +4519,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             LEAVE_GL();
 
             if (mem || (This->Flags & SFLAG_PBO))
-            {
-                surface_upload_data(This, gl_info, &desc, srgb,
-                        This->currentDesc.Width, This->currentDesc.Height, mem);
-            }
+                surface_upload_data(This, gl_info, &desc, srgb, mem);
 
             /* Restore the default pitch */
             ENTER_GL();
