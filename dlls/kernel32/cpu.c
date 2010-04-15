@@ -153,6 +153,9 @@ VOID WINAPI GetSystemInfo(
         default: si->dwProcessorType = 0;
         }
         break;
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        si->dwProcessorType = PROCESSOR_AMD_X8664;
+        break;
     default: FIXME("Unknown processor architecture %x\n", sci.Architecture);
     }
     si->dwAllocationGranularity     = sbi.AllocationGranularity;
