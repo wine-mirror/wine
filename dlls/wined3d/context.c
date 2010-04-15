@@ -308,7 +308,7 @@ static void context_check_fbo_status(struct wined3d_context *context)
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
-        attachment = (IWineD3DSurfaceImpl *)context->current_fbo->depth_stencil;
+        attachment = context->current_fbo->depth_stencil;
         if (attachment)
         {
             FIXME("\tDepth attachment: (%p) %s %ux%u\n",
@@ -327,7 +327,7 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
     entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->limits.buffers * sizeof(*entry->render_targets));
     memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = device->stencilBufferTarget;
+    entry->depth_stencil = (IWineD3DSurfaceImpl *)device->stencilBufferTarget;
     entry->attached = FALSE;
     entry->id = 0;
 
@@ -344,7 +344,7 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_
     context_clean_fbo_attachments(gl_info);
 
     memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = device->stencilBufferTarget;
+    entry->depth_stencil = (IWineD3DSurfaceImpl *)device->stencilBufferTarget;
     entry->attached = FALSE;
 }
 
@@ -374,7 +374,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
     {
         if (!memcmp(entry->render_targets,
                 device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets))
-                && entry->depth_stencil == device->stencilBufferTarget)
+                && entry->depth_stencil == (IWineD3DSurfaceImpl *)device->stencilBufferTarget)
         {
             list_remove(&entry->entry);
             list_add_head(&context->fbo_list, &entry->entry);
@@ -629,7 +629,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                 {
                     UINT j;
 
-                    if (entry->depth_stencil == (IWineD3DSurface *)resource)
+                    if (entry->depth_stencil == (IWineD3DSurfaceImpl *)resource)
                     {
                         list_remove(&entry->entry);
                         list_add_head(&context->fbo_destroy_list, &entry->entry);
@@ -674,7 +674,7 @@ void context_surface_update(struct wined3d_context *context, IWineD3DSurfaceImpl
         }
     }
 
-    if (surface == (IWineD3DSurfaceImpl *)entry->depth_stencil)
+    if (surface == entry->depth_stencil)
     {
         TRACE("Updated surface %p is bound as depth attachment to the current FBO.\n", surface);
         context->rebind_fbo = TRUE;

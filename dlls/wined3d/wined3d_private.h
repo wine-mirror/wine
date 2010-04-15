@@ -2023,7 +2023,7 @@ struct fbo_entry
 {
     struct list entry;
     IWineD3DSurfaceImpl **render_targets;
-    IWineD3DSurface *depth_stencil;
+    IWineD3DSurfaceImpl *depth_stencil;
     BOOL attached;
     GLuint id;
 };
