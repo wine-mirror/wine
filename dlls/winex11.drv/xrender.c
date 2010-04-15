@@ -1884,8 +1884,8 @@ static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, 
      * xscale/yscale contain the scaling factors for the width and height. In case of mirroring
      * we also need a x- and y-offset because without the pixels will be in the wrong quadrant of the x-y plane.
      */
-    int x_offset = (xscale<0) ? width : 0;
-    int y_offset = (yscale<0) ? height : 0;
+    int x_offset = (xscale<0) ? -width : 0;
+    int y_offset = (yscale<0) ? -height : 0;
 
     /* When we are using a mask, 'src_pict' contains a 1x1 picture for tiling, the actual source data is in mask_pict.
      * The 'src_pict' data effectively acts as an alpha channel to the tile data. We need PictOpOver for correct rendering. */
@@ -1897,11 +1897,17 @@ static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, 
     if(xscale != 1.0 || yscale != 1.0)
     {
         if(mask_pict)
-            set_xrender_transformation(mask_pict, xscale, yscale, x_src + x_offset, y_src + y_offset);
+        {
+            set_xrender_transformation(mask_pict, xscale, yscale, x_src, y_src);
+            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict,
+                              0, 0, x_offset, y_offset, 0, 0, width, height);
+        }
         else
-            set_xrender_transformation(src_pict, xscale, yscale, x_src + x_offset, y_src + y_offset);
-
-        pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, 0, 0, 0, 0, 0, 0, width, height);
+        {
+            set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
+            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict,
+                              x_offset, y_offset, 0, 0, 0, 0, width, height);
+        }
     }
     else
     {
