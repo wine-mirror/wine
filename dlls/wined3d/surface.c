@@ -2138,6 +2138,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     RECT rect = {0, 0, This->pow2Width, This->pow2Height};
 
     /* Copy the default values from the surface. Below we might perform fixups */
+    /* TODO: get rid of color keying desc fixups by using e.g. a table. */
     *desc = *This->resource.format_desc;
     *convert = NO_CONVERSION;
 
@@ -2192,6 +2193,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 desc->glFormat = GL_RGBA;
                 desc->glInternal = GL_RGB5_A1;
                 desc->glType = GL_UNSIGNED_SHORT_5_5_5_1;
+                desc->conv_byte_count = 2;
             }
             break;
 
@@ -2201,6 +2203,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 desc->glFormat = GL_BGRA;
                 desc->glInternal = GL_RGB5_A1;
                 desc->glType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+                desc->conv_byte_count = 2;
             }
             break;
 
@@ -2220,20 +2223,13 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 desc->glFormat = GL_RGBA;
                 desc->glInternal = GL_RGBA8;
                 desc->glType = GL_UNSIGNED_INT_8_8_8_8;
+                desc->conv_byte_count = 4;
             }
             break;
 
         default:
             break;
     }
-
-    /* At the moment we don't override the byte_count when it is the same before
-     * and after conversion. Until that is fixed (which mostly applies to non-ck formats),
-     * make sure we explicitly set conv_byte_count.
-     * TODO: get rid of this.
-     */
-    if(!desc->conv_byte_count)
-        desc->conv_byte_count = desc->byte_count;
 
     return WINED3D_OK;
 }
