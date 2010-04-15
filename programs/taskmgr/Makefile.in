@@ -48,4 +48,7 @@ RC_SRCS = \
 	Zh.rc \
 	taskmgr.rc
 
+SVG_SRCS = \
+	taskmgr.svg
+
 @MAKE_PROG_RULES@
