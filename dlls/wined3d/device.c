@@ -6196,10 +6196,6 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
         while (surface->pow2Width < pPresentationParameters->BackBufferWidth) surface->pow2Width <<= 1;
         while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
-    surface->glRect.left = 0;
-    surface->glRect.top = 0;
-    surface->glRect.right = surface->pow2Width;
-    surface->glRect.bottom = surface->pow2Height;
 
     if (surface->texture_name)
     {

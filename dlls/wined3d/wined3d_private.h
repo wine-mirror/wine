@@ -2065,9 +2065,6 @@ struct IWineD3DSurfaceImpl
     /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
     void (*get_drawable_size)(struct wined3d_context *context, UINT *width, UINT *height);
 
-    /* Oversized texture */
-    RECT                      glRect;
-
     /* PBO */
     GLuint                    pbo;
     GLuint texture_name;

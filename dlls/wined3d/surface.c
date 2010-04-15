@@ -1560,7 +1560,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
-    GLsizei width, height;
     CONVERT_TYPES convert;
     struct wined3d_format_desc desc;
 
@@ -1570,19 +1569,9 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
     else surface->Flags &= ~SFLAG_CONVERTED;
 
-    if (surface->Flags & SFLAG_NONPOW2)
-    {
-        width = surface->pow2Width;
-        height = surface->pow2Height;
-    }
-    else
-    {
-        width = surface->glRect.right - surface->glRect.left;
-        height = surface->glRect.bottom - surface->glRect.top;
-    }
-
     surface_bind_and_dirtify(surface, srgb);
-    surface_allocate_surface(surface, gl_info, &desc, srgb, width, height);
+    surface_allocate_surface(surface, gl_info, &desc, srgb,
+            surface->pow2Width, surface->pow2Height);
     surface->Flags |= alloc_flag;
 }
 
@@ -3981,13 +3970,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
 
         /* We should never use this surface in combination with OpenGL! */
         TRACE("(%p) Creating an oversized surface: %ux%u\n", This, This->pow2Width, This->pow2Height);
-
-        /* This will be initialized on the first blt */
-        This->glRect.left = 0;
-        This->glRect.top = 0;
-        This->glRect.right = 0;
-        This->glRect.bottom = 0;
-    } else {
+    }
+    else
+    {
         /* Don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
            is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
            doesn't work in combination with ARB_TEXTURE_RECTANGLE.
@@ -4002,11 +3987,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
             This->pow2Height = This->currentDesc.Height;
             This->Flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
         }
-
-        This->glRect.left = 0;
-        This->glRect.top = 0;
-        This->glRect.right = This->pow2Width;
-        This->glRect.bottom = This->pow2Height;
     }
 
     if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
@@ -4548,8 +4528,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                  */
                 if (mem || (This->Flags & SFLAG_PBO))
                 {
-                    surface_upload_data(This, gl_info, &desc, srgb, This->glRect.right - This->glRect.left,
-                            This->glRect.bottom - This->glRect.top, mem);
+                    surface_upload_data(This, gl_info, &desc, srgb,
+                            This->pow2Width, This->pow2Height, mem);
                 }
             }
 

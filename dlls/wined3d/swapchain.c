@@ -256,10 +256,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         cursor.texture_level = 0;
         cursor.currentDesc.Width = This->device->cursorWidth;
         cursor.currentDesc.Height = This->device->cursorHeight;
-        cursor.glRect.left = 0;
-        cursor.glRect.top = 0;
-        cursor.glRect.right = cursor.currentDesc.Width;
-        cursor.glRect.bottom = cursor.currentDesc.Height;
         /* The cursor must have pow2 sizes */
         cursor.pow2Width = cursor.currentDesc.Width;
         cursor.pow2Height = cursor.currentDesc.Height;
