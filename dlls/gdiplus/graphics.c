@@ -1273,10 +1273,10 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     (*metafile)->bounds.X = ((REAL) placeable->BoundingBox.Left) / ((REAL) placeable->Inch);
     (*metafile)->bounds.Y = ((REAL) placeable->BoundingBox.Top) / ((REAL) placeable->Inch);
     (*metafile)->bounds.Width = ((REAL) (placeable->BoundingBox.Right
-                    - placeable->BoundingBox.Left)) / ((REAL) placeable->Inch);
+                    - placeable->BoundingBox.Left));
     (*metafile)->bounds.Height = ((REAL) (placeable->BoundingBox.Bottom
-                   - placeable->BoundingBox.Top)) / ((REAL) placeable->Inch);
-    (*metafile)->unit = UnitInch;
+                   - placeable->BoundingBox.Top));
+    (*metafile)->unit = UnitPixel;
 
     if(delete)
         DeleteMetaFile(hwmf);
