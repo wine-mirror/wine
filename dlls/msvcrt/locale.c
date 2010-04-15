@@ -462,38 +462,7 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
  */
 struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void)
 {
-    static struct MSVCRT_lconv xlconv;
-    struct lconv *ylconv = localeconv();
-
-    xlconv.decimal_point     = ylconv->decimal_point;
-    xlconv.thousands_sep     = ylconv->thousands_sep;
-    xlconv.grouping          = ylconv->grouping;  /* FIXME: fixup charmax here too */
-    xlconv.int_curr_symbol   = ylconv->int_curr_symbol;
-    xlconv.currency_symbol   = ylconv->currency_symbol;
-    xlconv.mon_decimal_point = ylconv->mon_decimal_point;
-    xlconv.mon_thousands_sep = ylconv->mon_thousands_sep;
-    xlconv.mon_grouping      = ylconv->mon_grouping;
-    xlconv.positive_sign     = ylconv->positive_sign;
-    xlconv.negative_sign     = ylconv->negative_sign;
-    xlconv.int_frac_digits   = ylconv->int_frac_digits;
-    xlconv.frac_digits       = ylconv->frac_digits;
-    xlconv.p_cs_precedes     = ylconv->p_cs_precedes;
-    xlconv.p_sep_by_space    = ylconv->p_sep_by_space;
-    xlconv.n_cs_precedes     = ylconv->n_cs_precedes;
-    xlconv.n_sep_by_space    = ylconv->n_sep_by_space;
-    xlconv.p_sign_posn       = ylconv->p_sign_posn;
-    xlconv.n_sign_posn       = ylconv->n_sign_posn;
-
-    if (ylconv->int_frac_digits == CHAR_MAX) xlconv.int_frac_digits = charmax;
-    if (ylconv->frac_digits == CHAR_MAX)     xlconv.frac_digits = charmax;
-    if (ylconv->p_cs_precedes == CHAR_MAX)   xlconv.p_cs_precedes = charmax;
-    if (ylconv->p_sep_by_space == CHAR_MAX)  xlconv.p_sep_by_space = charmax;
-    if (ylconv->n_cs_precedes == CHAR_MAX)   xlconv.n_cs_precedes = charmax;
-    if (ylconv->n_sep_by_space == CHAR_MAX)  xlconv.n_sep_by_space = charmax;
-    if (ylconv->p_sign_posn == CHAR_MAX)     xlconv.p_sign_posn = charmax;
-    if (ylconv->n_sign_posn == CHAR_MAX)     xlconv.n_sign_posn = charmax;
-
-    return &xlconv;
+    return get_locale()->locinfo->lconv;
 }
 
 /*********************************************************************
