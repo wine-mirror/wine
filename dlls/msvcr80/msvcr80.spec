@@ -611,7 +611,7 @@
 @ stub _isspace_l
 @ stub _isupper_l
 @ stub _iswalnum_l
-@ stub _iswalpha_l
+@ cdecl _iswalpha_l(long ptr) msvcrt._iswalpha_l
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
