@@ -2532,7 +2532,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wintrust.dll,1
 11,,wmiutils.dll,1
 11,,wuapi.dll,1
-16422,Internet Explorer,iexplore.exe,1
+11,,iexplore.exe,1
 
 ; 32bit-only fake dlls
 [FakeDllsWin32]
