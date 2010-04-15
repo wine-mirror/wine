@@ -55,7 +55,6 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #define RepeatReflect 3
 #endif
 
-#define MAX_FORMATS 10
 typedef enum wine_xrformat
 {
   WXR_FORMAT_MONO,
@@ -67,7 +66,10 @@ typedef enum wine_xrformat
   WXR_FORMAT_R8G8B8,
   WXR_FORMAT_B8G8R8,
   WXR_FORMAT_A8R8G8B8,
+  WXR_FORMAT_B8G8R8A8,
   WXR_FORMAT_X8R8G8B8,
+  WXR_FORMAT_B8G8R8X8,
+  WXR_NB_FORMATS
 } WXRFormat;
 
 typedef struct wine_xrender_format_template
@@ -84,7 +86,7 @@ typedef struct wine_xrender_format_template
     unsigned int blueMask;
 } WineXRenderFormatTemplate;
 
-static const WineXRenderFormatTemplate wxr_formats_template[] =
+static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 {
     /* Format               depth   alpha   mask    red     mask    green   mask    blue    mask*/
     {WXR_FORMAT_MONO,       1,      0,      0x01,   0,      0,      0,      0,      0,      0       },
@@ -96,7 +98,9 @@ static const WineXRenderFormatTemplate wxr_formats_template[] =
     {WXR_FORMAT_R8G8B8,     24,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
     {WXR_FORMAT_B8G8R8,     24,     0,      0,      0,      0xff,   8,      0xff,   16,     0xff    },
     {WXR_FORMAT_A8R8G8B8,   32,     24,     0xff,   16,     0xff,   8,      0xff,   0,      0xff    },
-    {WXR_FORMAT_X8R8G8B8,   32,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    }
+    {WXR_FORMAT_B8G8R8A8,   32,     0,      0xff,   8,      0xff,   16,     0xff,   24,     0xff    },
+    {WXR_FORMAT_X8R8G8B8,   32,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
+    {WXR_FORMAT_B8G8R8X8,   32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
 typedef struct wine_xrender_format
@@ -105,7 +109,7 @@ typedef struct wine_xrender_format
     XRenderPictFormat       *pict_format;
 } WineXRenderFormat;
 
-static WineXRenderFormat wxr_formats[MAX_FORMATS];
+static WineXRenderFormat wxr_formats[WXR_NB_FORMATS];
 static int WineXRenderFormatsListSize = 0;
 static WineXRenderFormat *default_format = NULL;
 
@@ -207,6 +211,16 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define get_be_word(x) RtlUshortByteSwap(x)
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
+
+static WXRFormat get_format_without_alpha( WXRFormat format )
+{
+    switch (format)
+    {
+    case WXR_FORMAT_A8R8G8B8: return WXR_FORMAT_X8R8G8B8;
+    case WXR_FORMAT_B8G8R8A8: return WXR_FORMAT_B8G8R8X8;
+    default: return format;
+    }
+}
 
 static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPictFormat *templ, unsigned long *mask)
 {
@@ -1510,7 +1524,7 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, int text_pixel
         Pixmap xpm;
         Picture pict;
         int current_color;
-    } tiles[MAX_FORMATS], *tile;
+    } tiles[WXR_NB_FORMATS], *tile;
     XRenderColor col;
 
     tile = &tiles[wxr_format->format];
@@ -1992,7 +2006,7 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
 BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
                          struct bitblt_coords *dst, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
-    Picture dst_pict, src_pict, mask_pict = 0, tmp_pict = 0;
+    Picture dst_pict, src_pict = 0, mask_pict = 0, tmp_pict = 0;
     struct xrender_info *src_info = get_xrender_info( devSrc );
     double xscale, yscale;
     BOOL use_repeat;
@@ -2015,22 +2029,26 @@ BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
-    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) &&
-        src_info->format && src_info->format->format == WXR_FORMAT_A8R8G8B8)
+    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && src_info->format)
     {
         /* we need a source picture with no alpha */
-        XRenderPictureAttributes pa;
-        const WineXRenderFormat *fmt = get_xrender_format( WXR_FORMAT_X8R8G8B8 );
+        WXRFormat format = get_format_without_alpha( src_info->format->format );
+        if (format != src_info->format->format)
+        {
+            XRenderPictureAttributes pa;
+            const WineXRenderFormat *fmt = get_xrender_format( format );
 
-        wine_tsx11_lock();
-        pa.subwindow_mode = IncludeInferiors;
-        pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
-        tmp_pict = pXRenderCreatePicture( gdi_display, devSrc->drawable, fmt->pict_format,
-                                          CPSubwindowMode|CPRepeat, &pa );
-        wine_tsx11_unlock();
-        src_pict = tmp_pict;
+            wine_tsx11_lock();
+            pa.subwindow_mode = IncludeInferiors;
+            pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
+            tmp_pict = pXRenderCreatePicture( gdi_display, devSrc->drawable, fmt->pict_format,
+                                              CPSubwindowMode|CPRepeat, &pa );
+            wine_tsx11_unlock();
+            src_pict = tmp_pict;
+        }
     }
-    else src_pict = get_xrender_picture_source( devSrc, use_repeat );
+
+    if (!src_pict) src_pict = get_xrender_picture_source( devSrc, use_repeat );
 
     EnterCriticalSection( &xrender_cs );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );
