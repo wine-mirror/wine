@@ -4425,7 +4425,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
 
-            d3dfmt_get_conv(This, TRUE /* We need color keying */, FALSE /* We won't use textures */, &desc, &convert);
+            d3dfmt_get_conv(This, FALSE /* We need color keying */, FALSE /* We won't use textures */, &desc, &convert);
 
             /* The width is in 'length' not in bytes */
             width = This->currentDesc.Width;
