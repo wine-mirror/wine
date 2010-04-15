@@ -699,16 +699,10 @@ int CDECL ___lc_collate_cp_func(void)
 void CDECL _free_locale(MSVCRT__locale_t locale)
 {
     int i;
-    BOOL localeC = TRUE;
 
     for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++) {
-        if(locale->locinfo->lc_category[i].refcount) {
-            MSVCRT_free(locale->locinfo->lc_category[i].locale);
-            MSVCRT_free(locale->locinfo->lc_category[i].refcount);
-        } else if(localeC) {
-            MSVCRT_free(locale->locinfo->lc_category[i].locale);
-            localeC = FALSE;
-        }
+        MSVCRT_free(locale->locinfo->lc_category[i].locale);
+        MSVCRT_free(locale->locinfo->lc_category[i].refcount);
     }
 
     if(locale->locinfo->lconv) {
@@ -744,7 +738,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 {
     MSVCRT__locale_t loc;
     LCID lcid;
-    char buf[256], *localeC;
+    char buf[256];
     int i;
 
     TRACE("(%d %s)\n", category, locale);
@@ -807,21 +801,6 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
     memset(loc->locinfo, 0, sizeof(MSVCRT_threadlocinfo));
     memset(loc->mbcinfo, 0, sizeof(MSVCRT_threadmbcinfo));
 
-    if(category!=MSVCRT_LC_ALL || !lcid) {
-        localeC = MSVCRT_malloc(sizeof(char[2]));
-
-        if(localeC) {
-            localeC[0] = 'C';
-            localeC[1] = '\0';
-
-            for(i=MSVCRT_LC_ALL+1; i<=MSVCRT_LC_MAX; i++)
-                loc->locinfo->lc_category[i].locale = localeC;
-        } else {
-            _free_locale(loc);
-            return NULL;
-        }
-    }
-
     loc->locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
     if(!loc->locinfo->lconv) {
         _free_locale(loc);
@@ -843,7 +822,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             _free_locale(loc);
             return NULL;
         }
-    }
+    } else
+        loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale = strdup("C");
 
     if(lcid && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_CTYPE)) {
         CPINFO cp;
@@ -883,6 +863,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->lc_clike = 1;
         loc->locinfo->mb_cur_max = 1;
         loc->locinfo->pctype = MSVCRT__ctype+1;
+        loc->locinfo->lc_category[MSVCRT_LC_CTYPE].locale = strdup("C");
     }
 
     for(i=0; i<256; i++)
@@ -1069,6 +1050,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->lconv->n_sep_by_space = 127;
         loc->locinfo->lconv->p_sign_posn = 127;
         loc->locinfo->lconv->n_sign_posn = 127;
+
+        loc->locinfo->lc_category[MSVCRT_LC_MONETARY].locale = strdup("C");
     }
 
     if(lcid && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
@@ -1131,6 +1114,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->lconv->decimal_point[1] = '\0';
         loc->locinfo->lconv->thousands_sep[0] = '\0';
         loc->locinfo->lconv->grouping[0] = '\0';
+
+        loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale = strdup("C");
     }
 
     if(lcid && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
@@ -1138,7 +1123,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             _free_locale(loc);
             return NULL;
         }
-    }
+    } else
+        loc->locinfo->lc_category[MSVCRT_LC_TIME].locale = strdup("C");
 
     return loc;
 }
