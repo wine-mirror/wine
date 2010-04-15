@@ -498,11 +498,11 @@ START_TEST(surface)
     HRESULT hr;
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
     if (!wnd) {
         skip("Couldn't create application window\n");
         return;
     }
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
     if (!d3d) {
         skip("Couldn't create IDirect3D9 object\n");
         DestroyWindow(wnd);
@@ -525,5 +525,5 @@ START_TEST(surface)
 
     check_release((IUnknown*)device, 0);
     check_release((IUnknown*)d3d, 0);
-    if (wnd) DestroyWindow(wnd);
+    DestroyWindow(wnd);
 }
