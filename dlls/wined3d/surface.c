@@ -4515,22 +4515,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
             LEAVE_GL();
 
-            if (This->Flags & SFLAG_NONPOW2) {
-                TRACE("non power of two support\n");
-                if (mem || (This->Flags & SFLAG_PBO))
-                {
-                    surface_upload_data(This, gl_info, &desc, srgb,
-                            This->currentDesc.Width, This->currentDesc.Height, mem);
-                }
-            } else {
-                /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
-                 * changed. So also keep track of memory changes. In this case the texture has to be reallocated
-                 */
-                if (mem || (This->Flags & SFLAG_PBO))
-                {
-                    surface_upload_data(This, gl_info, &desc, srgb,
-                            This->pow2Width, This->pow2Height, mem);
-                }
+            if (mem || (This->Flags & SFLAG_PBO))
+            {
+                surface_upload_data(This, gl_info, &desc, srgb,
+                        This->currentDesc.Width, This->currentDesc.Height, mem);
             }
 
             /* Restore the default pitch */
