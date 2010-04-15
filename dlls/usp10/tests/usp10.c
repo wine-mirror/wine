@@ -289,16 +289,14 @@ static void test_ScriptItemize( void )
 
 static void test_ScriptShape(HDC hdc)
 {
-    static const WCHAR test1[] = {'t', 'e', 's', 't',0};
-    BOOL ret;
+    static const WCHAR test1[] = {'w', 'i', 'n', 'e',0};
+    static const WCHAR test2[] = {0x202B, 'i', 'n', 0x202C,0};
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    WORD glyphs[4], logclust[4];
+    WORD glyphs[4], glyphs2[4], logclust[4];
     SCRIPT_VISATTR attrs[4];
     SCRIPT_ITEM items[2];
-    int nb, widths[4];
-    GOFFSET offset[4];
-    ABC abc[4];
+    int nb;
 
     hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
     ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
@@ -324,8 +322,122 @@ static void test_ScriptShape(HDC hdc)
     ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
+
+    memset(glyphs,-1,sizeof(glyphs));
+    memset(logclust,-1,sizeof(logclust));
+    memset(attrs,-1,sizeof(attrs));
     hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
     ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(logclust[0] == 0, "clusters out of order\n");
+    ok(logclust[1] == 1, "clusters out of order\n");
+    ok(logclust[2] == 2, "clusters out of order\n");
+    ok(logclust[3] == 3, "clusters out of order\n");
+    ok(attrs[0].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[1].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[2].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[3].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[0].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[1].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[2].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[3].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[0].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[1].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[2].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[3].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[0].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[1].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[2].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[3].fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    ScriptFreeCache(&sc);
+    sc = NULL;
+
+    memset(glyphs2,-1,sizeof(glyphs2));
+    memset(logclust,-1,sizeof(logclust));
+    memset(attrs,-1,sizeof(attrs));
+    hr = ScriptShape(hdc, &sc, test2, 4, 4, &items[0].a, glyphs2, logclust, attrs, &nb);
+    ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(glyphs2[0] == 0, "Incorrect glyph for 0x202B\n");
+    ok(glyphs2[3] == 0, "Incorrect glyph for 0x202C\n");
+    ok(logclust[0] == 0, "clusters out of order\n");
+    ok(logclust[1] == 1, "clusters out of order\n");
+    ok(logclust[2] == 2, "clusters out of order\n");
+    ok(logclust[3] == 3, "clusters out of order\n");
+    ok(attrs[0].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[1].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[2].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[3].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[0].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[1].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[2].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[3].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[0].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[1].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[2].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[3].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[0].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[1].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[2].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[3].fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    /* modify LTR to RTL */
+    items[0].a.fRTL = 1;
+    memset(glyphs2,-1,sizeof(glyphs2));
+    memset(logclust,-1,sizeof(logclust));
+    memset(attrs,-1,sizeof(attrs));
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs2, logclust, attrs, &nb);
+    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(glyphs2[0] == glyphs[3], "Glyphs not reordered properly\n");
+    ok(glyphs2[1] == glyphs[2], "Glyphs not reordered properly\n");
+    ok(glyphs2[2] == glyphs[1], "Glyphs not reordered properly\n");
+    ok(glyphs2[3] == glyphs[0], "Glyphs not reordered properly\n");
+    ok(logclust[0] == 3, "clusters out of order\n");
+    ok(logclust[1] == 2, "clusters out of order\n");
+    ok(logclust[2] == 1, "clusters out of order\n");
+    ok(logclust[3] == 0, "clusters out of order\n");
+    ok(attrs[0].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[1].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[2].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[3].uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(attrs[0].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[1].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[2].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[3].fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(attrs[0].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[1].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[2].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[3].fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(attrs[0].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[1].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[2].fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(attrs[3].fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    ScriptFreeCache(&sc);
+}
+
+static void test_ScriptPlace(HDC hdc)
+{
+    static const WCHAR test1[] = {'t', 'e', 's', 't',0};
+    BOOL ret;
+    HRESULT hr;
+    SCRIPT_CACHE sc = NULL;
+    WORD glyphs[4], logclust[4];
+    SCRIPT_VISATTR attrs[4];
+    SCRIPT_ITEM items[2];
+    int nb, widths[4];
+    GOFFSET offset[4];
+    ABC abc[4];
+
+    hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
+    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = ScriptPlace(hdc, &sc, glyphs, 4, NULL, &items[0].a, widths, NULL, NULL);
     ok(hr == E_INVALIDARG, "ScriptPlace should return E_INVALIDARG not %08x\n", hr);
@@ -1667,6 +1779,7 @@ START_TEST(usp10)
     test_ScriptCacheGetHeight(hdc);
     test_ScriptGetGlyphABCWidth(hdc);
     test_ScriptShape(hdc);
+    test_ScriptPlace(hdc);
 
     test_ScriptGetFontProperties(hdc);
     test_ScriptTextOut(hdc);
