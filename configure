@@ -4121,12 +4121,8 @@ then
     WOW64_DISABLE=\#
 
     enable_fonts=${enable_fonts:-no}
-    enable_rpcss=${enable_rpcss:-no}
     enable_server=${enable_server:-no}
     enable_tools=${enable_tools:-no}
-    enable_wineboot=${enable_wineboot:-no}
-    enable_winedbg=${enable_winedbg:-no}
-    enable_winemenubuilder=${enable_winemenubuilder:-no}
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32"
 fi
 
