@@ -86,14 +86,20 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   switch (fdwReason)
   {
   case DLL_PROCESS_ATTACH:
-    if (!msvcrt_init_tls())
-      return FALSE;
     msvcrt_init_mt_locks();
+    if(!MSVCRT_setlocale(0, "C")) {
+        msvcrt_free_mt_locks();
+        return FALSE;
+    }
+    if (!msvcrt_init_tls()) {
+      _free_locale(MSVCRT_locale);
+      msvcrt_free_mt_locks();
+      return FALSE;
+    }
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();
     msvcrt_init_signals();
-    MSVCRT_setlocale(0, "C");
     _setmbcp(_MB_CP_LOCALE);
     TRACE("finished process init\n");
     break;
@@ -108,6 +114,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_tls_mem();
     if (!msvcrt_free_tls())
       return FALSE;
+    _free_locale(MSVCRT_locale);
     TRACE("finished process free\n");
     break;
   case DLL_THREAD_DETACH:
