@@ -4394,7 +4394,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, (IWineD3DSurface *)target);
+            context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, target);
             context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
             LEAVE_GL();
         }
@@ -5458,7 +5458,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, surface);
+        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)surface);
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
     }
 
@@ -5784,7 +5784,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
         TRACE("Source surface %p is offscreen\n", src_surface);
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
-        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, src_surface);
+        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)src_surface);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
         checkGLcall("glReadBuffer()");
         context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
@@ -5823,7 +5823,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
         ENTER_GL();
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_DRAW_FRAMEBUFFER, 0, dst_surface);
+        context_attach_surface_fbo(context, GL_DRAW_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)dst_surface);
         context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
         context_attach_depth_stencil_fbo(context, GL_DRAW_FRAMEBUFFER, NULL, FALSE);
     }

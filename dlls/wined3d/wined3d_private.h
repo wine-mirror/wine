@@ -1216,7 +1216,7 @@ void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fb
 void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_attach_surface_fbo(const struct wined3d_context *context,
-        GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) DECLSPEC_HIDDEN;
+        GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
         const struct wined3d_format_desc *ds_format_desc) DECLSPEC_HIDDEN;
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;

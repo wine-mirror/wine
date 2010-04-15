@@ -118,7 +118,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     {
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
-        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, This->backBuffer[0]);
+        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, backbuffer);
         context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);

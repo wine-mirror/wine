@@ -255,20 +255,19 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
 /* GL locking is done by the caller */
 void context_attach_surface_fbo(const struct wined3d_context *context,
-        GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
+        GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Attach surface %p to %u\n", surface, idx);
 
     if (surface)
     {
-        surface_prepare_texture(surface_impl, gl_info, FALSE);
-        context_apply_attachment_filter_states(surface_impl);
+        surface_prepare_texture(surface, gl_info, FALSE);
+        context_apply_attachment_filter_states(surface);
 
-        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx, surface_impl->texture_target,
-                surface_impl->texture_name, surface_impl->texture_level);
+        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx, surface->texture_target,
+                surface->texture_name, surface->texture_level);
         checkGLcall("glFramebufferTexture2D()");
     }
     else
@@ -415,7 +414,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         /* Apply render targets */
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            IWineD3DSurface *render_target = device->render_targets[i];
+            IWineD3DSurfaceImpl *render_target = (IWineD3DSurfaceImpl *)device->render_targets[i];
             context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, render_target);
         }
 
@@ -2011,7 +2010,7 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
 
                     ENTER_GL();
                     context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-                    context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, context->current_rt);
+                    context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)context->current_rt);
                     context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
                     LEAVE_GL();
                 } else {
