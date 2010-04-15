@@ -2030,11 +2030,11 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             }
 
             m11 = (ptf[1].X - ptf[0].X) / srcwidth;
-            m12 = (ptf[2].X - ptf[0].X) / srcheight;
-            mdx = ptf[0].X - m11 * srcx - m12 * srcy;
-            m21 = (ptf[1].Y - ptf[0].Y) / srcwidth;
+            m21 = (ptf[2].X - ptf[0].X) / srcheight;
+            mdx = ptf[0].X - m11 * srcx - m21 * srcy;
+            m12 = (ptf[1].Y - ptf[0].Y) / srcwidth;
             m22 = (ptf[2].Y - ptf[0].Y) / srcheight;
-            mdy = ptf[0].Y - m21 * srcx - m22 * srcy;
+            mdy = ptf[0].Y - m12 * srcx - m22 * srcy;
 
             stat = GdipCreateMatrix2(m11, m12, m21, m22, mdx, mdy, &dst_to_src);
             if (stat != Ok) return stat;
