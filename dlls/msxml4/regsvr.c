@@ -353,6 +353,38 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Msxml2.SAXXMLReader",
 	"4.0"
     },
+    {   &CLSID_XMLSchemaCache40,
+    "XML Schema Cache 4.0",
+    NULL,
+    "msxml4.dll",
+    "Both",
+    "Msxml2.XMLSchemaCache",
+    "4.0"
+    },
+    {   &CLSID_MXXMLWriter40,
+    "IMXWriter interface 4.0",
+    NULL,
+    "msxml4.dll",
+    "Both",
+    "Msxml2.MXXMLWriter",
+    "4.0"
+    },
+    {   &CLSID_SAXAttributes40,
+    "SAX Attribute 4.0",
+    NULL,
+    "msxml4.dll",
+    "Both",
+    "Msxml2.SAXAttributes",
+    "4.0"
+    },
+    {   &CLSID_FreeThreadedDOMDocument40,
+    "Free Threaded XML DOM Document 4.0",
+    NULL,
+    "msxml4.dll",
+    "Both",
+    "Microsoft.FreeThreadedDOMDocument4.0",
+    "4.0"
+    },
     { NULL }			/* list terminator */
 };
 
@@ -369,6 +401,26 @@ static struct progid const progid_list[] = {
 	"SAX XML Reader 4.0",
 	&CLSID_SAXXMLReader40,
 	NULL
+    },
+    {   "Msxml2.XMLSchemaCache.4.0",
+    "XML Schema Cache 4.0",
+    &CLSID_XMLSchemaCache40,
+    NULL
+    },
+    {   "Msxml2.MXXMLWriter.4.0",
+    "MXXMLWriter 4.0",
+    &CLSID_MXXMLWriter40,
+    NULL
+    },
+    {   "Msxml2.SAXAttributes.4.0",
+    "SAX Attribute 4.0",
+    &CLSID_SAXAttributes40,
+    NULL
+    },
+    {   "MSXML.FreeThreadedDOMDocument40",
+    "Free threaded XML DOM Document 4.0",
+    &CLSID_FreeThreadedDOMDocument40,
+    NULL
     },
     { NULL }			/* list terminator */
 };

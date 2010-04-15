@@ -1280,6 +1280,15 @@ coclass FreeThreadedDOMDocument30
 }
 
 [
+    uuid(88d969c1-f192-11d4-a65f-0040963251e5),
+]
+coclass FreeThreadedDOMDocument40
+{
+    [default] interface IXMLDOMDocument2;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+};
+
+[
     uuid(373984c9-b845-449b-91e7-45ac83036ade)
 ]
 coclass XMLSchemaCache
@@ -1302,6 +1311,14 @@ coclass XMLSchemaCache30
 {
     [default] interface IXMLDOMSchemaCollection;
 }
+
+[
+    uuid(88d969c2-f192-11d4-a65f-0040963251e5)
+]
+coclass XMLSchemaCache40
+{
+    [default] interface IXMLDOMSchemaCollection2;
+};
 
 [
     uuid(2933BF94-7B36-11d2-B20E-00C04F983E60)
@@ -2639,6 +2656,26 @@ coclass MXXMLWriter30
 };
 
 [
+    uuid(88d969c8-f192-11d4-a65f-0040963251e5),
+]
+coclass MXXMLWriter40
+{
+    [default] interface IMXWriter;
+
+    interface ISAXContentHandler;
+    interface ISAXDeclHandler;
+    interface ISAXDTDHandler;
+    interface ISAXErrorHandler;
+    interface ISAXLexicalHandler;
+
+    interface IVBSAXContentHandler;
+    interface IVBSAXDeclHandler;
+    interface IVBSAXDTDHandler;
+    interface IVBSAXErrorHandler;
+    interface IVBSAXLexicalHandler;
+};
+
+[
     uuid(4dd441ad-526d-4a77-9f1b-9841ed802fb0)
 ]
 coclass SAXAttributes
@@ -2652,6 +2689,16 @@ coclass SAXAttributes
     uuid(3e784a01-f3ae-4dc0-9354-9526b9370eba)
 ]
 coclass SAXAttributes30
+{
+    [default] interface IMXAttributes;
+    interface IVBSAXAttributes;
+    interface ISAXAttributes;
+};
+
+[
+    uuid(88d969ca-f192-11d4-a65f-0040963251e5),
+]
+coclass SAXAttributes40
 {
     [default] interface IMXAttributes;
     interface IVBSAXAttributes;
