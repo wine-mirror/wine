@@ -2080,6 +2080,14 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (imageAttributes)
             {
+                if (imageAttributes->colorkeys[ColorAdjustTypeBitmap].enabled ||
+                    imageAttributes->colorkeys[ColorAdjustTypeDefault].enabled)
+                {
+                    static int fixme;
+                    if (!fixme++)
+                        FIXME("Color keying not implemented\n");
+                }
+
                 if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled ||
                     imageAttributes->colorremaptables[ColorAdjustTypeDefault].enabled)
                 {
@@ -2104,6 +2112,22 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                                 }
                             }
                         }
+                }
+
+                if (imageAttributes->colormatrices[ColorAdjustTypeBitmap].enabled ||
+                    imageAttributes->colormatrices[ColorAdjustTypeDefault].enabled)
+                {
+                    static int fixme;
+                    if (!fixme++)
+                        FIXME("Color transforms not implemented\n");
+                }
+
+                if (imageAttributes->gamma_enabled[ColorAdjustTypeBitmap] ||
+                    imageAttributes->gamma_enabled[ColorAdjustTypeDefault])
+                {
+                    static int fixme;
+                    if (!fixme++)
+                        FIXME("Gamma adjustment not implemented\n");
                 }
             }
 
