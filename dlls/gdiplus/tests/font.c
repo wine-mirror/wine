@@ -192,12 +192,9 @@ static void test_fontfamily (void)
     expect (FontFamilyNotFound, stat);
 
     /* Bitmap fonts are not found */
-todo_wine
-{
     stat = GdipCreateFontFamilyFromName (MSSansSerif, NULL, &family);
     expect (FontFamilyNotFound, stat);
     if(stat == Ok) GdipDeleteFontFamily(family);
-}
 
     stat = GdipCreateFontFamilyFromName (arial, NULL, &family);
     if(stat == FontFamilyNotFound)

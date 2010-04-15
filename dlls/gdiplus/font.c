@@ -521,7 +521,7 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
 static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
 {
-    if (!ntm)
+    if (!ntm || type == RASTER_FONTTYPE)
     {
         return 1;
     }
@@ -965,6 +965,9 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
 {
     GpFontCollection* fonts = (GpFontCollection*)lParam;
     int i;
+
+    if (type == RASTER_FONTTYPE)
+        return 1;
 
     /* skip duplicates */
     for (i=0; i<fonts->count; i++)
