@@ -1996,16 +1996,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             return NotImplemented;
 
         if (imageAttributes ||
+            (graphics->image && graphics->image->type == ImageTypeBitmap) ||
             ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
             use_software = 1;
-        else if (graphics->image && graphics->image->type == ImageTypeBitmap)
-        {
-            GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
-            if (!(dst_bitmap->format == PixelFormat16bppRGB555 ||
-                  dst_bitmap->format == PixelFormat24bppRGB ||
-                  dst_bitmap->format == PixelFormat32bppRGB))
-                use_software = 1;
-        }
 
         if (use_software)
         {
