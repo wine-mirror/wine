@@ -1035,22 +1035,24 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 {
     static char current_lc_all[MAX_LOCALE_LENGTH];
 
-    MSVCRT__locale_t loc;
+    MSVCRT__locale_t loc, cur;
+
+    cur = get_locale();
 
     if(locale == NULL) {
         if(category == MSVCRT_LC_ALL) {
             sprintf(current_lc_all,
                     "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
-                    MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
-                    MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
-                    MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
-                    MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
-                    MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_TIME].locale);
+                    cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
+                    cur->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
+                    cur->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
+                    cur->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
+                    cur->locinfo->lc_category[MSVCRT_LC_TIME].locale);
 
             return current_lc_all;
         }
 
-        return MSVCRT_locale->locinfo->lc_category[category].locale;
+        return cur->locinfo->lc_category[category].locale;
     }
 
     loc = _create_locale(category, locale);
@@ -1061,118 +1063,120 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
     switch(category) {
         case MSVCRT_LC_ALL:
-            if(!MSVCRT_locale)
+            if(!cur)
                 break;
         case MSVCRT_LC_COLLATE:
-            MSVCRT_locale->locinfo->lc_handle[MSVCRT_LC_COLLATE] =
+            cur->locinfo->lc_handle[MSVCRT_LC_COLLATE] =
                 loc->locinfo->lc_handle[MSVCRT_LC_COLLATE];
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_COLLATE].refcount,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_COLLATE].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_COLLATE].refcount);
 
             if(category != MSVCRT_LC_ALL)
                 break;
         case MSVCRT_LC_CTYPE:
-            MSVCRT_locale->locinfo->lc_handle[MSVCRT_LC_CTYPE] =
+            cur->locinfo->lc_handle[MSVCRT_LC_CTYPE] =
                 loc->locinfo->lc_handle[MSVCRT_LC_CTYPE];
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_CTYPE].locale);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_CTYPE].refcount,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_CTYPE].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_CTYPE].refcount);
 
-            MSVCRT_locale->locinfo->lc_codepage = loc->locinfo->lc_codepage;
-            MSVCRT_locale->locinfo->lc_collate_cp = loc->locinfo->lc_collate_cp;
-            MSVCRT_locale->locinfo->lc_clike = loc->locinfo->lc_clike;
-            MSVCRT_locale->locinfo->mb_cur_max = loc->locinfo->mb_cur_max;
+            cur->locinfo->lc_codepage = loc->locinfo->lc_codepage;
+            cur->locinfo->lc_collate_cp = loc->locinfo->lc_collate_cp;
+            cur->locinfo->lc_clike = loc->locinfo->lc_clike;
+            cur->locinfo->mb_cur_max = loc->locinfo->mb_cur_max;
 
-            swap_pointers((void**)&MSVCRT_locale->locinfo->ctype1_refcount,
+            swap_pointers((void**)&cur->locinfo->ctype1_refcount,
                     (void**)&loc->locinfo->ctype1_refcount);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->ctype1, (void**)&loc->locinfo->ctype1);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->pctype, (void**)&loc->locinfo->pctype);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->pclmap, (void**)&loc->locinfo->pclmap);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->pcumap, (void**)&loc->locinfo->pcumap);
+            swap_pointers((void**)&cur->locinfo->ctype1, (void**)&loc->locinfo->ctype1);
+            swap_pointers((void**)&cur->locinfo->pctype, (void**)&loc->locinfo->pctype);
+            swap_pointers((void**)&cur->locinfo->pclmap, (void**)&loc->locinfo->pclmap);
+            swap_pointers((void**)&cur->locinfo->pcumap, (void**)&loc->locinfo->pcumap);
 
-            memcpy(MSVCRT_locale->mbcinfo, loc->mbcinfo, sizeof(MSVCRT_threadmbcinfo));
+            memcpy(cur->mbcinfo, loc->mbcinfo, sizeof(MSVCRT_threadmbcinfo));
 
             if(category != MSVCRT_LC_ALL)
                 break;
         case MSVCRT_LC_MONETARY:
-            MSVCRT_locale->locinfo->lc_handle[MSVCRT_LC_MONETARY] =
+            cur->locinfo->lc_handle[MSVCRT_LC_MONETARY] =
                 loc->locinfo->lc_handle[MSVCRT_LC_MONETARY];
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_MONETARY].locale);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_MONETARY].refcount,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_MONETARY].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_MONETARY].refcount);
 
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->int_curr_symbol,
+            swap_pointers((void**)&cur->locinfo->lconv->int_curr_symbol,
                     (void**)&loc->locinfo->lconv->int_curr_symbol);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->currency_symbol,
+            swap_pointers((void**)&cur->locinfo->lconv->currency_symbol,
                     (void**)&loc->locinfo->lconv->currency_symbol);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->mon_decimal_point,
+            swap_pointers((void**)&cur->locinfo->lconv->mon_decimal_point,
                     (void**)&loc->locinfo->lconv->mon_decimal_point);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->mon_thousands_sep,
+            swap_pointers((void**)&cur->locinfo->lconv->mon_thousands_sep,
                     (void**)&loc->locinfo->lconv->mon_thousands_sep);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->mon_grouping,
+            swap_pointers((void**)&cur->locinfo->lconv->mon_grouping,
                     (void**)&loc->locinfo->lconv->mon_grouping);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->positive_sign,
+            swap_pointers((void**)&cur->locinfo->lconv->positive_sign,
                     (void**)&loc->locinfo->lconv->positive_sign);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->negative_sign,
+            swap_pointers((void**)&cur->locinfo->lconv->negative_sign,
                     (void**)&loc->locinfo->lconv->negative_sign);
-            MSVCRT_locale->locinfo->lconv->int_frac_digits = loc->locinfo->lconv->int_frac_digits;
-            MSVCRT_locale->locinfo->lconv->frac_digits = loc->locinfo->lconv->frac_digits;
-            MSVCRT_locale->locinfo->lconv->p_cs_precedes = loc->locinfo->lconv->p_cs_precedes;
-            MSVCRT_locale->locinfo->lconv->p_sep_by_space = loc->locinfo->lconv->p_sep_by_space;
-            MSVCRT_locale->locinfo->lconv->n_cs_precedes = loc->locinfo->lconv->n_cs_precedes;
-            MSVCRT_locale->locinfo->lconv->n_sep_by_space = loc->locinfo->lconv->n_sep_by_space;
-            MSVCRT_locale->locinfo->lconv->p_sign_posn = loc->locinfo->lconv->p_sign_posn;
-            MSVCRT_locale->locinfo->lconv->n_sign_posn = loc->locinfo->lconv->n_sign_posn;
+            cur->locinfo->lconv->int_frac_digits = loc->locinfo->lconv->int_frac_digits;
+            cur->locinfo->lconv->frac_digits = loc->locinfo->lconv->frac_digits;
+            cur->locinfo->lconv->p_cs_precedes = loc->locinfo->lconv->p_cs_precedes;
+            cur->locinfo->lconv->p_sep_by_space = loc->locinfo->lconv->p_sep_by_space;
+            cur->locinfo->lconv->n_cs_precedes = loc->locinfo->lconv->n_cs_precedes;
+            cur->locinfo->lconv->n_sep_by_space = loc->locinfo->lconv->n_sep_by_space;
+            cur->locinfo->lconv->p_sign_posn = loc->locinfo->lconv->p_sign_posn;
+            cur->locinfo->lconv->n_sign_posn = loc->locinfo->lconv->n_sign_posn;
 
             if(category != MSVCRT_LC_ALL)
                 break;
         case MSVCRT_LC_NUMERIC:
-            MSVCRT_locale->locinfo->lc_handle[MSVCRT_LC_NUMERIC] =
+            cur->locinfo->lc_handle[MSVCRT_LC_NUMERIC] =
                 loc->locinfo->lc_handle[MSVCRT_LC_NUMERIC];
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_NUMERIC].refcount,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_NUMERIC].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].refcount);
 
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->decimal_point,
+            swap_pointers((void**)&cur->locinfo->lconv->decimal_point,
                     (void**)&loc->locinfo->lconv->decimal_point);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->thousands_sep,
+            swap_pointers((void**)&cur->locinfo->lconv->thousands_sep,
                     (void**)&loc->locinfo->lconv->thousands_sep);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lconv->grouping,
+            swap_pointers((void**)&cur->locinfo->lconv->grouping,
                     (void**)&loc->locinfo->lconv->grouping);
 
             if(category != MSVCRT_LC_ALL)
                 break;
         case MSVCRT_LC_TIME:
-            MSVCRT_locale->locinfo->lc_handle[MSVCRT_LC_TIME] =
+            cur->locinfo->lc_handle[MSVCRT_LC_TIME] =
                 loc->locinfo->lc_handle[MSVCRT_LC_TIME];
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_TIME].locale,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_TIME].locale,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_TIME].locale);
-            swap_pointers((void**)&MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_TIME].refcount,
+            swap_pointers((void**)&cur->locinfo->lc_category[MSVCRT_LC_TIME].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_TIME].refcount);
 
             if(category != MSVCRT_LC_ALL)
                 break;
     }
 
-    if(!MSVCRT_locale)
-        MSVCRT_locale = loc;
+    if(!cur)
+        MSVCRT_locale = cur = loc;
     else
         _free_locale(loc);
 
     UNLOCK_LOCALE;
 
-    MSVCRT___lc_codepage = MSVCRT_locale->locinfo->lc_codepage;
-    MSVCRT___lc_collate_cp = MSVCRT_locale->locinfo->lc_collate_cp;
-    MSVCRT___mb_cur_max = MSVCRT_locale->locinfo->mb_cur_max;
-    MSVCRT__pctype = MSVCRT_locale->locinfo->pctype;
+    if(cur == MSVCRT_locale) {
+        MSVCRT___lc_codepage = cur->locinfo->lc_codepage;
+        MSVCRT___lc_collate_cp = cur->locinfo->lc_collate_cp;
+        MSVCRT___mb_cur_max = cur->locinfo->mb_cur_max;
+        MSVCRT__pctype = cur->locinfo->pctype;
+    }
 
     if(category == MSVCRT_LC_ALL)
-        return MSVCRT_locale->locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
+        return cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
 
-    return MSVCRT_locale->locinfo->lc_category[category].locale;
+    return cur->locinfo->lc_category[category].locale;
 }
