@@ -480,6 +480,14 @@ static void set_xrender_transformation(Picture src_pict, double xscale, double y
 #endif
 }
 
+/* check if we can use repeating instead of scaling for the specified source DC */
+static BOOL use_source_repeat( X11DRV_PDEVICE *physDev )
+{
+    return (physDev->bitmap &&
+            physDev->drawable_rect.right - physDev->drawable_rect.left == 1 &&
+            physDev->drawable_rect.bottom - physDev->drawable_rect.top == 1);
+}
+
 static struct xrender_info *get_xrender_info(X11DRV_PDEVICE *physDev)
 {
     if(!physDev->xrender)
@@ -525,7 +533,7 @@ static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
     return info->pict;
 }
 
-static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev)
+static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev, BOOL repeat)
 {
     struct xrender_info *info = get_xrender_info(physDev);
     if (!info) return 0;
@@ -536,11 +544,13 @@ static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev)
 
         wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
+        pa.repeat = repeat ? RepeatNormal : RepeatNone;
         info->pict_src = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
-                                               CPSubwindowMode, &pa);
+                                               CPSubwindowMode|CPRepeat, &pa);
         wine_tsx11_unlock();
 
-        TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx\n", info->pict_src, physDev->hdc, physDev->drawable);
+        TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx repeat=%u\n",
+              info->pict_src, physDev->hdc, physDev->drawable, pa.repeat);
     }
 
     return info->pict_src;
@@ -2189,9 +2199,8 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     struct xrender_info *src_info = get_xrender_info(physDevSrc);
     const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
-
-    double xscale = widthSrc/(double)widthDst;
-    double yscale = heightSrc/(double)heightDst;
+    BOOL use_repeat;
+    double xscale, yscale;
 
     XRenderPictureAttributes pa;
     pa.subwindow_mode = IncludeInferiors;
@@ -2224,6 +2233,14 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         return TRUE;
     }
 
+    use_repeat = use_source_repeat( physDevSrc );
+    if (!use_repeat)
+    {
+        xscale = widthSrc / (double)widthDst;
+        yscale = heightSrc / (double)heightDst;
+    }
+    else xscale = yscale = 1;  /* no scaling needed with a repeating source */
+
     /* mono -> color */
     if(physDevSrc->depth == 1 && physDevDst->depth > 1)
     {
@@ -2231,7 +2248,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         get_xrender_color(dst_format, physDevDst->textPixel, &col);
 
         /* We use the source drawable as a mask */
-        mask_pict = get_xrender_picture_source(physDevSrc);
+        mask_pict = get_xrender_picture_source( physDevSrc, use_repeat );
 
         /* Use backgroundPixel as the foreground color */
         EnterCriticalSection( &xrender_cs );
@@ -2250,7 +2267,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     }
     else /* color -> color (can be at different depths) or mono -> mono */
     {
-        src_pict = get_xrender_picture_source(physDevSrc);
+        src_pict = get_xrender_picture_source( physDevSrc, use_repeat );
 
         wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture(gdi_display,
