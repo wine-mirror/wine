@@ -197,8 +197,47 @@ static GpStatus alpha_blend_pixels(GpGraphics *graphics, INT dst_x, INT dst_y,
     }
     else
     {
-        ERR("Not implemented for non-bitmap DC's\n");
-        return GenericError;
+        HDC hdc;
+        HBITMAP hbitmap, old_hbm=NULL;
+        BITMAPINFOHEADER bih;
+        BYTE *temp_bits;
+        BLENDFUNCTION bf;
+
+        hdc = CreateCompatibleDC(0);
+
+        bih.biSize = sizeof(BITMAPINFOHEADER);
+        bih.biWidth = src_width;
+        bih.biHeight = -src_height;
+        bih.biPlanes = 1;
+        bih.biBitCount = 32;
+        bih.biCompression = BI_RGB;
+        bih.biSizeImage = 0;
+        bih.biXPelsPerMeter = 0;
+        bih.biYPelsPerMeter = 0;
+        bih.biClrUsed = 0;
+        bih.biClrImportant = 0;
+
+        hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
+            (void**)&temp_bits, NULL, 0);
+
+        convert_32bppARGB_to_32bppPARGB(src_width, src_height, temp_bits,
+            4 * src_width, src, src_stride);
+
+        old_hbm = SelectObject(hdc, hbitmap);
+
+        bf.BlendOp = AC_SRC_OVER;
+        bf.BlendFlags = 0;
+        bf.SourceConstantAlpha = 255;
+        bf.AlphaFormat = AC_SRC_ALPHA;
+
+        GdiAlphaBlend(graphics->hdc, dst_x, dst_y, src_width, src_height,
+            hdc, 0, 0, src_width, src_height, bf);
+
+        SelectObject(hdc, old_hbm);
+        DeleteDC(hdc);
+        DeleteObject(hbitmap);
+
+        return Ok;
     }
 }
 
@@ -1895,7 +1934,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsI(GpGraphics *graphics, GpImage *image,
     return NotImplemented;
 }
 
-/* FIXME: partially implemented (only works for rectangular parallelograms) */
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
      REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
@@ -1923,6 +1961,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
     if (image->picture)
     {
+        /* FIXME: partially implemented (only works for rectangular parallelograms) */
         if(srcUnit == UnitInch)
             dx = dy = (REAL) INCH_HIMETRIC;
         else if(srcUnit == UnitPixel){
@@ -1956,7 +1995,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        if (graphics->image && graphics->image->type == ImageTypeBitmap)
+        if (ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
+            use_software = 1;
+        else if (graphics->image && graphics->image->type == ImageTypeBitmap)
         {
             GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
             if (!(dst_bitmap->format == PixelFormat16bppRGB555 ||
