@@ -552,6 +552,21 @@ static void get_colors(X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE *physDevSrc,
     }
 }
 
+/* return a mask for meaningful bits when doing an XGetPixel on an image */
+static unsigned long image_pixel_mask( X11DRV_PDEVICE *physDev )
+{
+    unsigned long ret;
+    ColorShifts *shifts = physDev->color_shifts;
+
+    if (!shifts) shifts = &X11DRV_PALETTE_default_shifts;
+    ret = (shifts->physicalRed.max << shifts->physicalRed.shift) |
+        (shifts->physicalGreen.max << shifts->physicalGreen.shift) |
+        (shifts->physicalBlue.max << shifts->physicalBlue.shift);
+    if (!ret) ret = (1 << physDev->depth) - 1;
+    return ret;
+}
+
+
 /***********************************************************************
  *           BITBLT_StretchRow
  *
@@ -617,7 +632,7 @@ static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
  */
 static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
                            INT start, INT width, INT depthDst,
-                           int fg, int bg, BOOL swap)
+                           int fg, int bg, unsigned long pixel_mask, BOOL swap)
 {
     register INT i;
 
@@ -655,9 +670,9 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
         else  /* color -> monochrome */
         {
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
+                *pdata-- = ((XGetPixel( image, i, row ) & pixel_mask) == bg) ? 1 : 0;
             else for (i = 0; i < width; i++)
-                *pdata++ = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
+                *pdata++ = ((XGetPixel( image, i, row ) & pixel_mask) == bg) ? 1 : 0;
         }
     }
 }
@@ -673,7 +688,8 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                                  INT widthSrc, INT heightSrc,
                                  INT widthDst, INT heightDst,
                                  RECT *visRectSrc, RECT *visRectDst,
-                                 int foreground, int background, WORD mode )
+                                 int foreground, int background,
+                                 unsigned long pixel_mask, WORD mode )
 {
     int *rowSrc, *rowDst, *pixel;
     char *pdata;
@@ -740,7 +756,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                            hswap ? widthSrc - visRectSrc->right
                                  : visRectSrc->left,
                            visRectSrc->right - visRectSrc->left,
-                           dstImage->depth, foreground, background, hswap );
+                           dstImage->depth, foreground, background, pixel_mask, hswap );
 
             /* Stretch or shrink it */
             if (hstretch)
@@ -799,7 +815,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                            hswap ? widthSrc - visRectSrc->right
                                  : visRectSrc->left,
                            visRectSrc->right - visRectSrc->left,
-                           dstImage->depth, foreground, background, hswap );
+                           dstImage->depth, foreground, background, pixel_mask, hswap );
 
             /* Stretch or shrink it */
             if (hstretch)
@@ -901,9 +917,8 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
                                         rectDst.bottom - rectDst.top, physDevDst->depth );
     BITBLT_StretchImage( imageSrc, imageDst, src->width, src->height,
                          dst->width, dst->height, &rectSrc, &rectDst,
-                         fg, physDevDst->depth != 1 ?
-                         bg : physDevSrc->backgroundPixel,
-                         GetStretchBltMode(physDevDst->hdc) );
+                         fg, physDevDst->depth != 1 ? bg : physDevSrc->backgroundPixel,
+                         image_pixel_mask( physDevSrc ), GetStretchBltMode(physDevDst->hdc) );
     wine_tsx11_lock();
     XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
@@ -1013,6 +1028,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
         }
         else  /* color -> monochrome */
         {
+            unsigned long pixel_mask;
             wine_tsx11_lock();
             /* FIXME: avoid BadMatch error */
             imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
@@ -1031,10 +1047,11 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                 wine_tsx11_unlock();
                 return exposures;
             }
+            pixel_mask = image_pixel_mask( physDevSrc );
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
-                    XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
-                                               physDevSrc->backgroundPixel) );
+                    XPutPixel(imageDst, x, y,
+                              !((XGetPixel(imageSrc,x,y) ^ physDevSrc->backgroundPixel) & pixel_mask));
             XPutImage( gdi_display, pixmap, gc, imageDst,
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
