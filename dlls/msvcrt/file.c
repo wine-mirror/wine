@@ -2467,7 +2467,7 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
     }
     
   c = MSVCRT_fgetc(file);
-  if ((MSVCRT___mb_cur_max > 1) && MSVCRT_isleadbyte(c))
+  if ((get_locale()->locinfo->mb_cur_max > 1) && MSVCRT_isleadbyte(c))
     {
       FIXME("Treat Multibyte characters\n");
     }

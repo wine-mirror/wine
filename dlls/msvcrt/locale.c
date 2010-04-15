@@ -526,7 +526,7 @@ int CDECL ___lc_codepage_func(void)
  */
 int CDECL ___lc_collate_cp_func(void)
 {
-    return MSVCRT___lc_collate_cp;
+    return get_locale()->locinfo->lc_collate_cp;
 }
 
 /* _free_locale - not exported in native msvcrt */
