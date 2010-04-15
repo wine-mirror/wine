@@ -467,7 +467,7 @@ static const WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, 
 }
 
 /* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
-static void set_xrender_transformation(Picture src_pict, float xscale, float yscale, int xoffset, int yoffset)
+static void set_xrender_transformation(Picture src_pict, double xscale, double yscale, int xoffset, int yoffset)
 {
 #ifdef HAVE_XRENDERSETPICTURETRANSFORM
     XTransform xform = {{
@@ -1878,51 +1878,62 @@ done_unlock:
 }
 
 /* Helper function for (stretched) blitting using xrender */
-static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, int x_src, int y_src, float xscale, float yscale, int width, int height)
+static void xrender_blit( Picture src_pict, Picture mask_pict, Picture dst_pict,
+                          int x_src, int y_src, double xscale, double yscale, int width, int height )
 {
-    /* Further down a transformation matrix is used for stretching and mirroring the source data.
-     * xscale/yscale contain the scaling factors for the width and height. In case of mirroring
-     * we also need a x- and y-offset because without the pixels will be in the wrong quadrant of the x-y plane.
-     */
-    int x_offset = (xscale<0) ? -width : 0;
-    int y_offset = (yscale<0) ? -height : 0;
-
-    /* When we are using a mask, 'src_pict' contains a 1x1 picture for tiling, the actual source data is in mask_pict.
-     * The 'src_pict' data effectively acts as an alpha channel to the tile data. We need PictOpOver for correct rendering. */
-    int op = mask_pict ? PictOpOver : PictOpSrc;
+    int x_offset, y_offset;
 
     /* When we need to scale we perform scaling and source_x / source_y translation using a transformation matrix.
      * This is needed because XRender is inaccurate in combination with scaled source coordinates passed to XRenderComposite.
      * In all other cases we do use XRenderComposite for translation as it is faster than using a transformation matrix. */
     if(xscale != 1.0 || yscale != 1.0)
     {
-        if(mask_pict)
-        {
-            set_xrender_transformation(mask_pict, xscale, yscale, x_src, y_src);
-            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict,
-                              0, 0, x_offset, y_offset, 0, 0, width, height);
-        }
-        else
-        {
-            set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
-            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict,
-                              x_offset, y_offset, 0, 0, 0, 0, width, height);
-        }
+        /* In case of mirroring we need a source x- and y-offset because without the pixels will be
+         * in the wrong quadrant of the x-y plane.
+         */
+        x_offset = (xscale < 0) ? -width : 0;
+        y_offset = (yscale < 0) ? -height : 0;
+        set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
     }
     else
     {
-        if(mask_pict)
-        {
-            set_xrender_transformation(mask_pict, 1, 1, 0, 0);
-            /* Note since the 'source data' is in the mask picture, we have to pass x_src / y_src using mask_x / mask_y */
-            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, 0, 0, x_src, y_src, 0, 0, width, height);
-        }
-        else
-        {
-            set_xrender_transformation(src_pict, 1, 1, 0, 0);
-            pXRenderComposite(gdi_display, op, src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0, 0, 0, width, height);
-        }
+        x_offset = x_src;
+        y_offset = y_src;
+        set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
+    pXRenderComposite( gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict,
+                       x_offset, y_offset, 0, 0, 0, 0, width, height );
+}
+
+/* Helper function for (stretched) mono->color blitting using xrender */
+static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_pict,
+                               int x_src, int y_src, double xscale, double yscale, int width, int height )
+{
+    int x_offset, y_offset;
+
+    /* When doing a mono->color blit, 'src_pict' contains a 1x1 picture for tiling, the actual
+     * source data is in mask_pict.  The 'src_pict' data effectively acts as an alpha channel to the
+     * tile data. We need PictOpOver for correct rendering.
+     * Note since the 'source data' is in the mask picture, we have to pass x_src / y_src using
+     * mask_x / mask_y
+     */
+    if (xscale != 1.0 || yscale != 1.0)
+    {
+        /* In case of mirroring we need a source x- and y-offset because without the pixels will be
+         * in the wrong quadrant of the x-y plane.
+         */
+        x_offset = (xscale < 0) ? -width : 0;
+        y_offset = (yscale < 0) ? -height : 0;
+        set_xrender_transformation(mask_pict, xscale, yscale, x_src, y_src);
+    }
+    else
+    {
+        x_offset = x_src;
+        y_offset = y_src;
+        set_xrender_transformation(mask_pict, 1, 1, 0, 0);
+    }
+    pXRenderComposite(gdi_display, PictOpOver, src_pict, mask_pict, dst_pict,
+                      0, 0, x_offset, y_offset, 0, 0, width, height);
 }
 
 /******************************************************************************
@@ -2231,7 +2242,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
         pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &col, 0, 0, width, height);
 
-        xrender_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
+        xrender_mono_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
