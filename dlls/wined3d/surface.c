@@ -4140,7 +4140,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *co
             gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
                     GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, device->depth_blt_rb);
             checkGLcall("glFramebufferRenderbufferEXT");
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, iface, FALSE);
+            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, This, FALSE);
 
             /* Do the actual blit */
             surface_depth_blt(This, gl_info, device->depth_blt_texture,

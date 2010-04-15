@@ -1214,7 +1214,7 @@ void context_resource_released(IWineD3DDevice *iface,
         IWineD3DResource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
 void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
 void context_attach_depth_stencil_fbo(struct wined3d_context *context,
-        GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
+        GLenum fbo_target, IWineD3DSurfaceImpl *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
