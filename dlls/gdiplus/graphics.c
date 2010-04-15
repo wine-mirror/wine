@@ -1995,7 +1995,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
-        if (ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
+        if (imageAttributes ||
+            ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
             use_software = 1;
         else if (graphics->image && graphics->image->type == ImageTypeBitmap)
         {
@@ -2083,6 +2084,35 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             }
 
             GdipDeleteMatrix(dst_to_src);
+
+            if (imageAttributes)
+            {
+                if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled ||
+                    imageAttributes->colorremaptables[ColorAdjustTypeDefault].enabled)
+                {
+                    const struct color_remap_table *table;
+
+                    if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled)
+                        table = &imageAttributes->colorremaptables[ColorAdjustTypeBitmap];
+                    else
+                        table = &imageAttributes->colorremaptables[ColorAdjustTypeDefault];
+
+                    for (x=dst_area.left; x<dst_area.right; x++)
+                        for (y=dst_area.top; y<dst_area.bottom; y++)
+                        {
+                            ARGB *src_color;
+                            src_color = (ARGB*)(data + stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
+                            for (i=0; i<table->mapsize; i++)
+                            {
+                                if (*src_color == table->colormap[i].oldColor.Argb)
+                                {
+                                    *src_color = table->colormap[i].newColor.Argb;
+                                    break;
+                                }
+                            }
+                        }
+                }
+            }
 
             stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
                 data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, stride);
