@@ -3575,20 +3575,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         DWORD oldCKeyFlags = Src->CKeyFlags;
         WINEDDCOLORKEY oldBltCKey = Src->SrcBltCKey;
         struct wined3d_context *context;
-        BOOL paletteOverride = FALSE;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
-
-        /* When blitting from an offscreen surface to a rendertarget, the source
-         * surface is not required to have a palette. Our rendering / conversion
-         * code further down the road retrieves the palette from the surface, so
-         * it must have a palette set. */
-        if (Src->resource.format_desc->format == WINED3DFMT_P8_UINT && !Src->palette)
-        {
-            paletteOverride = TRUE;
-            TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
-            Src->palette = This->palette;
-        }
 
         if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
             && fbo_blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
@@ -3601,10 +3589,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
              */
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
                               (IWineD3DSurface *)This, &dst_rect, Filter);
-
-            /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
-            if(paletteOverride)
-                Src->palette = NULL;
             return WINED3D_OK;
         }
 
@@ -3613,13 +3597,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                                          &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
                                          &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
-            HRESULT hr = arbfp_blit_surface(myDevice, Src, &src_rect, This, &dst_rect, BLIT_OP_BLIT, Filter);
-
-            /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
-            if(paletteOverride)
-                Src->palette = NULL;
-
-            return hr;
+            return arbfp_blit_surface(myDevice, Src, &src_rect, This, &dst_rect, BLIT_OP_BLIT, Filter);
         }
 
         /* Color keying: Check if we have to do a color keyed blt,
@@ -3669,11 +3647,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                                                &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
             FIXME("Unsupported blit operation falling back to software\n");
-
-            /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
-            if(paletteOverride)
-                Src->palette = NULL;
-
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -3711,10 +3684,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
         Src->SrcBltCKey = oldBltCKey;
-
-        /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
-        if(paletteOverride)
-            Src->palette = NULL;
 
         LEAVE_GL();
 
