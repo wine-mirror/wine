@@ -3878,6 +3878,87 @@ HRESULT create_regexp_var(script_ctx_t *ctx, VARIANT *src_arg, VARIANT *flags_ar
     return create_regexp(ctx, src, -1, flags, ret);
 }
 
+HRESULT regexp_string_match(script_ctx_t *ctx, DispatchEx *re, BSTR str,
+        VARIANT *retv, jsexcept_t *ei)
+{
+    RegExpInstance *regexp = (RegExpInstance*)re;
+    match_result_t *match_result;
+    DWORD match_cnt, i, length;
+    DispatchEx *array;
+    VARIANT var;
+    HRESULT hres;
+
+    length = SysStringLen(str);
+
+    if(!(regexp->jsregexp->flags & JSREG_GLOB)) {
+        match_result_t match, *parens = NULL;
+        DWORD parens_cnt, parens_size = 0;
+        const WCHAR *cp = str;
+
+        hres = regexp_match_next(ctx, &regexp->dispex, 0, str, length, &cp, &parens, &parens_size, &parens_cnt, &match);
+        if(FAILED(hres))
+            return hres;
+
+        if(retv) {
+            if(hres == S_OK) {
+                IDispatch *ret;
+
+                hres = create_match_array(ctx, str, &match, parens, parens_cnt, ei, &ret);
+                if(SUCCEEDED(hres)) {
+                    V_VT(retv) = VT_DISPATCH;
+                    V_DISPATCH(retv) = ret;
+                }
+            }else {
+                V_VT(retv) = VT_NULL;
+            }
+        }
+
+        heap_free(parens);
+        return S_OK;
+    }
+
+    hres = regexp_match(ctx, &regexp->dispex, str, length, FALSE, &match_result, &match_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    if(!match_cnt) {
+        TRACE("no match\n");
+
+        if(retv)
+            V_VT(retv) = VT_NULL;
+        return S_OK;
+    }
+
+    hres = create_array(ctx, match_cnt, &array);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&var) = VT_BSTR;
+
+    for(i=0; i < match_cnt; i++) {
+        V_BSTR(&var) = SysAllocStringLen(match_result[i].str, match_result[i].len);
+        if(!V_BSTR(&var)) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        hres = jsdisp_propput_idx(array, i, &var, ei, NULL/*FIXME*/);
+        SysFreeString(V_BSTR(&var));
+        if(FAILED(hres))
+            break;
+    }
+
+    heap_free(match_result);
+
+    if(SUCCEEDED(hres) && retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
+    }else {
+        jsdisp_release(array);
+    }
+    return hres;
+}
+
 static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
