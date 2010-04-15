@@ -3637,25 +3637,25 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, VARIANT *arg, jsexce
         hres = to_string(ctx, arg, ei, &string);
         if(FAILED(hres))
             return hres;
+        length = SysStringLen(string);
     }else {
-        string = SysAllocStringLen(NULL, 0);
-        if(!string)
-            return E_OUTOFMEMORY;
+        string = NULL;
+        length = 0;
     }
 
-    if(regexp->last_index < 0) {
-        SysFreeString(string);
-        set_last_index(regexp, 0);
-        *ret = VARIANT_FALSE;
-        if(input) {
-            *input = NULL;
+    if(regexp->jsregexp->flags & JSREG_GLOB) {
+        if(regexp->last_index < 0) {
+            SysFreeString(string);
+            set_last_index(regexp, 0);
+            *ret = VARIANT_FALSE;
+            if(input) {
+                *input = NULL;
+            }
+            return S_OK;
         }
-        return S_OK;
-    }
 
-    length = SysStringLen(string);
-    if(regexp->jsregexp->flags & JSREG_GLOB)
         last_index = regexp->last_index;
+    }
 
     cp = string + last_index;
     hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string, length, &cp, parens,

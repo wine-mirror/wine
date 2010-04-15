@@ -410,6 +410,19 @@ m = re.exec("  ");
 ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
 ok(m === null, "m = " + m + " expected null");
 
+re = /a/;
+re.lastIndex = -3;
+ok(re.lastIndex === -3, "re.lastIndex = " + re.lastIndex + " expected -3");
+m = re.exec(" a a ");
+ok(re.lastIndex === 2, "re.lastIndex = " + re.lastIndex + " expected 0");
+ok(m.index === 1, "m = " + m + " expected 1");
+
+re.lastIndex = -1;
+ok(re.lastIndex === -1, "re.lastIndex = " + re.lastIndex + " expected -1");
+m = re.exec("  ");
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex + " expected 0");
+ok(m === null, "m = " + m + " expected null");
+
 re = /aa/g;
 i = 'baacd'.search(re);
 ok(i === 1, "'baacd'.search(re) = " + i);
