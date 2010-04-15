@@ -114,15 +114,15 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_attachment_filter_states(IWineD3DSurface *surface)
+static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface)
 {
     IWineD3DBaseTextureImpl *texture_impl;
 
     /* Update base texture states array */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(surface, &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
+            &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
     {
-        IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
-        IWineD3DDeviceImpl *device = surface_impl->resource.device;
+        IWineD3DDeviceImpl *device = surface->resource.device;
         BOOL update_minfilter = FALSE;
         BOOL update_magfilter = FALSE;
 
@@ -153,7 +153,7 @@ static void context_apply_attachment_filter_states(IWineD3DSurface *surface)
             GLenum target, bind_target;
             GLint old_binding;
 
-            target = surface_impl->texture_target;
+            target = surface->texture_target;
             if (target == GL_TEXTURE_2D)
             {
                 bind_target = GL_TEXTURE_2D;
@@ -170,7 +170,7 @@ static void context_apply_attachment_filter_states(IWineD3DSurface *surface)
                 glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
             }
 
-            glBindTexture(bind_target, surface_impl->texture_name);
+            glBindTexture(bind_target, surface->texture_name);
             if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             if (update_magfilter) glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glBindTexture(bind_target, old_binding);
@@ -212,7 +212,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         else
         {
             surface_prepare_texture(depth_stencil_impl, gl_info, FALSE);
-            context_apply_attachment_filter_states(depth_stencil);
+            context_apply_attachment_filter_states(depth_stencil_impl);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -265,7 +265,7 @@ void context_attach_surface_fbo(const struct wined3d_context *context,
     if (surface)
     {
         surface_prepare_texture(surface_impl, gl_info, FALSE);
-        context_apply_attachment_filter_states(surface);
+        context_apply_attachment_filter_states(surface_impl);
 
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx, surface_impl->texture_target,
                 surface_impl->texture_name, surface_impl->texture_level);
@@ -436,10 +436,10 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             if (device->render_targets[i])
-                context_apply_attachment_filter_states(device->render_targets[i]);
+                context_apply_attachment_filter_states((IWineD3DSurfaceImpl *)device->render_targets[i]);
         }
         if (device->stencilBufferTarget)
-            context_apply_attachment_filter_states(device->stencilBufferTarget);
+            context_apply_attachment_filter_states((IWineD3DSurfaceImpl *)device->stencilBufferTarget);
     }
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
