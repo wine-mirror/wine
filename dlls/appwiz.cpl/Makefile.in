@@ -27,4 +27,7 @@ RC_SRCS = \
 	Zh.rc \
 	appwiz.rc
 
+SVG_SRCS = \
+	appwiz.svg
+
 @MAKE_DLL_RULES@
