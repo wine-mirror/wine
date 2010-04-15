@@ -87,15 +87,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   switch (fdwReason)
   {
   case DLL_PROCESS_ATTACH:
+    if (!msvcrt_init_tls())
+      return FALSE;
     msvcrt_init_mt_locks();
     if(!MSVCRT_setlocale(0, "C")) {
         msvcrt_free_mt_locks();
+        msvcrt_free_tls_mem();
         return FALSE;
-    }
-    if (!msvcrt_init_tls()) {
-      _free_locale(MSVCRT_locale);
-      msvcrt_free_mt_locks();
-      return FALSE;
     }
     msvcrt_init_io();
     msvcrt_init_console();
