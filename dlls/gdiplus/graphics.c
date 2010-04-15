@@ -173,6 +173,35 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     }
 }
 
+/* Draw non-premultiplied ARGB data to the given graphics object */
+static GpStatus alpha_blend_pixels(GpGraphics *graphics, INT dst_x, INT dst_y,
+    const BYTE *src, INT src_width, INT src_height, INT src_stride)
+{
+    if (graphics->image && graphics->image->type == ImageTypeBitmap)
+    {
+        GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
+        INT x, y;
+
+        for (x=0; x<src_width; x++)
+        {
+            for (y=0; y<src_height; y++)
+            {
+                ARGB dst_color, src_color;
+                GdipBitmapGetPixel(dst_bitmap, x+dst_x, y+dst_y, &dst_color);
+                src_color = ((ARGB*)(src + src_stride * y))[x];
+                GdipBitmapSetPixel(dst_bitmap, x+dst_x, y+dst_y, color_over(dst_color, src_color));
+            }
+        }
+
+        return Ok;
+    }
+    else
+    {
+        ERR("Not implemented for non-bitmap DC's\n");
+        return GenericError;
+    }
+}
+
 static ARGB blend_colors(ARGB start, ARGB end, REAL position)
 {
     ARGB result=0;
@@ -1939,9 +1968,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         if (use_software)
         {
             RECT src_area, dst_area;
-            int i, x, y;
+            int i, x, y, stride;
             GpMatrix *dst_to_src;
             REAL m11, m12, m21, m22, mdx, mdy;
+            LPBYTE data;
 
             src_area.left = srcx*dx;
             src_area.top = srcy*dy;
@@ -1975,13 +2005,22 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 return stat;
             }
 
+            data = GdipAlloc(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
+            if (!data)
+            {
+                GdipDeleteMatrix(dst_to_src);
+                return OutOfMemory;
+            }
+
+            stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
+
             for (x=dst_area.left; x<dst_area.right; x++)
             {
                 for (y=dst_area.top; y<dst_area.bottom; y++)
                 {
                     GpPointF src_pointf;
                     int src_x, src_y;
-                    ARGB src_color, dst_color;
+                    ARGB *src_color;
 
                     src_pointf.X = x;
                     src_pointf.Y = y;
@@ -1991,18 +2030,25 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                     src_x = roundr(src_pointf.X);
                     src_y = roundr(src_pointf.Y);
 
+                    src_color = (ARGB*)(data + stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
+
                     if (src_x < src_area.left || src_x >= src_area.right ||
                         src_y < src_area.top || src_y >= src_area.bottom)
                         /* FIXME: Use wrapmode */
-                        continue;
-
-                    GdipBitmapGetPixel(bitmap, src_x, src_y, &src_color);
-                    GdipBitmapGetPixel((GpBitmap*)graphics->image, x, y, &dst_color);
-                    GdipBitmapSetPixel((GpBitmap*)graphics->image, x, y, color_over(dst_color, src_color));
+                        *src_color = 0;
+                    else
+                        GdipBitmapGetPixel(bitmap, src_x, src_y, src_color);
                 }
             }
 
             GdipDeleteMatrix(dst_to_src);
+
+            stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
+                data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, stride);
+
+            GdipFree(data);
+
+            return stat;
         }
         else
         {
