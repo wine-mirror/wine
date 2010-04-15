@@ -193,66 +193,86 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
 extern int atoi(const char *);
 
 /* Internal: Find the LCID for a locale specification */
-static LCID MSVCRT_locale_to_LCID(locale_search_t* locale)
+static LCID MSVCRT_locale_to_LCID(const char *locale)
 {
-  LCID lcid;
-  EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
-			 (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
-			 (LONG_PTR)locale);
+    LCID lcid;
+    locale_search_t search;
+    char *cp, *region;
 
-  if (!locale->match_flags)
-    return 0;
+    memset(&search, 0, sizeof(locale_search_t));
 
-  /* If we were given something that didn't match, fail */
-  if (locale->search_country[0] && !(locale->match_flags & FOUND_COUNTRY))
-    return 0;
+    cp = strchr(locale, '.');
+    region = strchr(locale, '_');
 
-  lcid =  MAKELCID(locale->found_lang_id, SORT_DEFAULT);
+    lstrcpynA(search.search_language, locale, MAX_ELEM_LEN);
+    if(region) {
+        lstrcpynA(search.search_country, region+1, MAX_ELEM_LEN);
+        if(region-locale < MAX_ELEM_LEN)
+            search.search_language[region-locale] = '\0';
+    } else
+        search.search_country[0] = '\0';
 
-  /* Populate partial locale, translating LCID to locale string elements */
-  if (!locale->found_codepage[0])
-  {
-    /* Even if a codepage is not enumerated for a locale
-     * it can be set if valid */
-    if (locale->search_codepage[0])
-    {
-      if (IsValidCodePage(atoi(locale->search_codepage)))
-        memcpy(locale->found_codepage,locale->search_codepage,MAX_ELEM_LEN);
-      else
-      {
-        /* Special codepage values: OEM & ANSI */
-        if (strcasecmp(locale->search_codepage,"OCP"))
-        {
-          GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
-                         locale->found_codepage, MAX_ELEM_LEN);
+    if(cp) {
+        lstrcpynA(search.search_codepage, cp+1, MAX_ELEM_LEN);
+        if(cp-region < MAX_ELEM_LEN)
+          search.search_country[cp-region] = '\0';
+        if(cp-locale < MAX_ELEM_LEN)
+            search.search_language[cp-locale] = '\0';
+    } else
+        search.search_codepage[0] = '\0';
+
+    /* FIXME:  MSVCRT_locale_to_LCID is not finding remaped values */
+    remap_synonym(search.search_country);
+
+    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
+            (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
+            (LONG_PTR)&search);
+
+    if (!search.match_flags)
+        return 0;
+
+    /* If we were given something that didn't match, fail */
+    if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
+        return 0;
+
+    lcid =  MAKELCID(search.found_lang_id, SORT_DEFAULT);
+
+    /* Populate partial locale, translating LCID to locale string elements */
+    if (!search.found_codepage[0]) {
+        /* Even if a codepage is not enumerated for a locale
+         * it can be set if valid */
+        if (search.search_codepage[0]) {
+            if (IsValidCodePage(atoi(search.search_codepage)))
+                memcpy(search.found_codepage,search.search_codepage,MAX_ELEM_LEN);
+            else {
+                /* Special codepage values: OEM & ANSI */
+                if (strcasecmp(search.search_codepage,"OCP")) {
+                    GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
+                            search.found_codepage, MAX_ELEM_LEN);
+                } else if (strcasecmp(search.search_codepage,"ACP")) {
+                    GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
+                            search.found_codepage, MAX_ELEM_LEN);
+                } else
+                    return 0;
+
+                if (!atoi(search.found_codepage))
+                    return 0;
+            }
+        } else {
+            /* Prefer ANSI codepages if present */
+            GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
+                    search.found_codepage, MAX_ELEM_LEN);
+            if (!search.found_codepage[0] || !atoi(search.found_codepage))
+                GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
+                        search.found_codepage, MAX_ELEM_LEN);
         }
-        else if (strcasecmp(locale->search_codepage,"ACP"))
-        {
-          GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
-                         locale->found_codepage, MAX_ELEM_LEN);
-        }
-        else
-          return 0;
+    }
 
-        if (!atoi(locale->found_codepage))
-           return 0;
-      }
-    }
-    else
-    {
-      /* Prefer ANSI codepages if present */
-      GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
-                     locale->found_codepage, MAX_ELEM_LEN);
-      if (!locale->found_codepage[0] || !atoi(locale->found_codepage))
-          GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
-                         locale->found_codepage, MAX_ELEM_LEN);
-    }
-  }
-  GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
-                 locale->found_language, MAX_ELEM_LEN);
-  GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY|LOCALE_NOUSEROVERRIDE,
-                 locale->found_country, MAX_ELEM_LEN);
-  return lcid;
+    GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
+            search.found_language, MAX_ELEM_LEN);
+    GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY|LOCALE_NOUSEROVERRIDE,
+            search.found_country, MAX_ELEM_LEN);
+    return lcid;
 }
 
 /* INTERNAL: Set lc_handle, lc_id and lc_category in threadlocinfo struct */
@@ -572,35 +592,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
          */
         return NULL;
     } else {
-        locale_search_t search;
-        char *cp, *region;
-
-        memset(&search, 0, sizeof(locale_search_t));
-
-        cp = strchr(locale, '.');
-        region = strchr(locale, '_');
-
-        lstrcpynA(search.search_language, locale, MAX_ELEM_LEN);
-        if(region) {
-            lstrcpynA(search.search_country, region+1, MAX_ELEM_LEN);
-            if(region-locale < MAX_ELEM_LEN)
-                search.search_language[region-locale] = '\0';
-        } else
-            search.search_country[0] = '\0';
-
-        if(cp) {
-            lstrcpynA(search.search_codepage, cp+1, MAX_ELEM_LEN);
-            if(cp-region < MAX_ELEM_LEN)
-                search.search_country[cp-region] = '\0';
-            if(cp-locale < MAX_ELEM_LEN)
-                search.search_language[cp-locale] = '\0';
-        } else
-            search.search_codepage[0] = '\0';
-
-        /* FIXME:  MSVCRT_locale_to_LCID is not finding remaped values */
-        remap_synonym(search.search_country);
-
-        lcid = MSVCRT_locale_to_LCID(&search);
+        lcid = MSVCRT_locale_to_LCID(locale);
         if(!lcid)
             return NULL;
     }
