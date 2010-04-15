@@ -2467,15 +2467,14 @@ typedef struct _NT_TIB
 struct _TEB;
 
 #if defined(__i386__) && defined(__GNUC__)
-extern inline struct _TEB * WINAPI NtCurrentTeb(void);
-extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+static inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
 }
 #elif defined(__i386__) && defined(_MSC_VER)
-extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+static inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
   struct _TEB *teb;
   __asm mov eax, fs:[0x18];
@@ -2490,7 +2489,7 @@ static inline struct _TEB * WINAPI NtCurrentTeb(void)
     return teb;
 }
 #elif defined(__x86_64__) && defined (_MSC_VER)
-extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+static inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
   struct _TEB *teb;
   __asm mov rax, gs:[0x30];

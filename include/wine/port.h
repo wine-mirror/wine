@@ -355,14 +355,9 @@ extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare );
-extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
 extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
-extern inline int interlocked_xchg( int *dest, int val );
-extern inline void *interlocked_xchg_ptr( void **dest, void *val );
-extern inline int interlocked_xchg_add( int *dest, int incr );
 
-extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
+static inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
     int ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -370,7 +365,7 @@ extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
     return ret;
 }
 
-extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+static inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
 {
     void *ret;
 #ifdef __x86_64__
@@ -383,7 +378,7 @@ extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *comp
     return ret;
 }
 
-extern inline int interlocked_xchg( int *dest, int val )
+static inline int interlocked_xchg( int *dest, int val )
 {
     int ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -391,7 +386,7 @@ extern inline int interlocked_xchg( int *dest, int val )
     return ret;
 }
 
-extern inline void *interlocked_xchg_ptr( void **dest, void *val )
+static inline void *interlocked_xchg_ptr( void **dest, void *val )
 {
     void *ret;
 #ifdef __x86_64__
@@ -404,7 +399,7 @@ extern inline void *interlocked_xchg_ptr( void **dest, void *val )
     return ret;
 }
 
-extern inline int interlocked_xchg_add( int *dest, int incr )
+static inline int interlocked_xchg_add( int *dest, int incr )
 {
     int ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
@@ -413,9 +408,7 @@ extern inline int interlocked_xchg_add( int *dest, int incr )
 }
 
 #ifdef __x86_64__
-extern inline unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
-                                                    __int64 xchg_low, __int64 *compare );
-extern inline unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
+static inline unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
                                                     __int64 xchg_low, __int64 *compare )
 {
     unsigned char ret;

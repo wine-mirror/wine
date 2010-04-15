@@ -2194,12 +2194,15 @@ WINBASEAPI DWORD       WINAPI WriteTapemark(HANDLE,DWORD,DWORD,BOOL);
 #define                       Yield()
 WINBASEAPI BOOL        WINAPI ZombifyActCtx(HANDLE);
 
-WINBASEAPI LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
-WINBASEAPI LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
 WINBASEAPI INT         WINAPI lstrcmpA(LPCSTR,LPCSTR);
 WINBASEAPI INT         WINAPI lstrcmpW(LPCWSTR,LPCWSTR);
 WINBASEAPI INT         WINAPI lstrcmpiA(LPCSTR,LPCSTR);
 WINBASEAPI INT         WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
+
+#if !defined(__WINESRC__) || defined(WINE_NO_INLINE_STRING)
+
+WINBASEAPI LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
+WINBASEAPI LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
 WINBASEAPI LPSTR       WINAPI lstrcpyA(LPSTR,LPCSTR);
 WINBASEAPI LPWSTR      WINAPI lstrcpyW(LPWSTR,LPCWSTR);
 WINBASEAPI LPSTR       WINAPI lstrcpynA(LPSTR,LPCSTR,INT);
@@ -2207,11 +2210,11 @@ WINBASEAPI LPWSTR      WINAPI lstrcpynW(LPWSTR,LPCWSTR,INT);
 WINBASEAPI INT         WINAPI lstrlenA(LPCSTR);
 WINBASEAPI INT         WINAPI lstrlenW(LPCWSTR);
 
-#if !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__)
+#else
 
 /* string functions without the exception handler */
 
-extern inline LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+static inline LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR d = dst;
     LPCWSTR s = src;
@@ -2226,7 +2229,7 @@ extern inline LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
     return dst;
 }
 
-extern inline LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+static inline LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR d = dst;
     LPCSTR s = src;
@@ -2241,31 +2244,31 @@ extern inline LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
     return dst;
 }
 
-extern inline INT WINAPI lstrlenW( LPCWSTR str )
+static inline INT WINAPI lstrlenW( LPCWSTR str )
 {
     const WCHAR *s = str;
     while (*s) s++;
     return s - str;
 }
 
-extern inline INT WINAPI lstrlenA( LPCSTR str )
+static inline INT WINAPI lstrlenA( LPCSTR str )
 {
     return strlen( str );
 }
 
-extern inline LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
+static inline LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     WCHAR *p = dst;
     while ((*p++ = *src++));
     return dst;
 }
 
-extern inline LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
+static inline LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
     return strcpy( dst, src );
 }
 
-extern inline LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
+static inline LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     WCHAR *p = dst;
     while (*p) p++;
@@ -2273,7 +2276,7 @@ extern inline LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
     return dst;
 }
 
-extern inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
+static inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
     return strcat( dst, src );
 }
@@ -2282,7 +2285,7 @@ extern inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 #undef strncpy
 #define strncpy(d,s,n) error do_not_use_strncpy_use_lstrcpynA_or_memcpy_instead
 
-#endif /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
+#endif /* !defined(__WINESRC__) || defined(WINE_NO_INLINE_STRING) */
 
 #define     lstrcat WINELIB_NAME_AW(lstrcat)
 #define     lstrcmp WINELIB_NAME_AW(lstrcmp)
@@ -2317,8 +2320,7 @@ extern WCHAR * CDECL wine_get_dos_file_name( LPCSTR str );
 #ifdef __i386__
 # if defined(__GNUC__) && !defined(_NTSYSTEM_)
 
-extern inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare );
-extern inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
+static inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
     LONG ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -2326,8 +2328,7 @@ extern inline LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG 
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val );
-extern inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
+static inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -2335,8 +2336,7 @@ extern inline LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr );
-extern inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+static inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
     LONG ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
@@ -2344,14 +2344,12 @@ extern inline LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr
     return ret;
 }
 
-extern inline LONG WINAPI InterlockedIncrement( LONG volatile *dest );
-extern inline LONG WINAPI InterlockedIncrement( LONG volatile *dest )
+static inline LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
     return InterlockedExchangeAdd( dest, 1 ) + 1;
 }
 
-extern inline LONG WINAPI InterlockedDecrement( LONG volatile *dest );
-extern inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
+static inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return InterlockedExchangeAdd( dest, -1 ) - 1;
 }
@@ -2474,8 +2472,7 @@ static inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 #if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || defined(__x86_64__))
 
-extern inline DWORD WINAPI GetLastError(void);
-extern inline DWORD WINAPI GetLastError(void)
+static inline DWORD WINAPI GetLastError(void)
 {
     DWORD ret;
 #ifdef __x86_64__
@@ -2486,8 +2483,7 @@ extern inline DWORD WINAPI GetLastError(void)
     return ret;
 }
 
-extern inline DWORD WINAPI GetCurrentProcessId(void);
-extern inline DWORD WINAPI GetCurrentProcessId(void)
+static inline DWORD WINAPI GetCurrentProcessId(void)
 {
     DWORD ret;
 #ifdef __x86_64__
@@ -2498,8 +2494,7 @@ extern inline DWORD WINAPI GetCurrentProcessId(void)
     return ret;
 }
 
-extern inline DWORD WINAPI GetCurrentThreadId(void);
-extern inline DWORD WINAPI GetCurrentThreadId(void)
+static inline DWORD WINAPI GetCurrentThreadId(void)
 {
     DWORD ret;
 #ifdef __x86_64__
@@ -2510,8 +2505,7 @@ extern inline DWORD WINAPI GetCurrentThreadId(void)
     return ret;
 }
 
-extern inline void WINAPI SetLastError( DWORD err );
-extern inline void WINAPI SetLastError( DWORD err )
+static inline void WINAPI SetLastError( DWORD err )
 {
 #ifdef __x86_64__
     __asm__ __volatile__( ".byte 0x65\n\tmovl %0,0x68" : : "r" (err) : "memory" );
@@ -2520,8 +2514,7 @@ extern inline void WINAPI SetLastError( DWORD err )
 #endif
 }
 
-extern inline HANDLE WINAPI GetProcessHeap(void);
-extern inline HANDLE WINAPI GetProcessHeap(void)
+static inline HANDLE WINAPI GetProcessHeap(void)
 {
     HANDLE *pdb;
 #ifdef __x86_64__
