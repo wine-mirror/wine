@@ -317,6 +317,16 @@ static inline void swap_pointers(void **p1, void **p2) {
     *p2 = hlp;
 }
 
+/* INTERNAL: returns _locale_t struct for current locale */
+MSVCRT__locale_t get_locale(void) {
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!data || !data->locale)
+        return MSVCRT_locale;
+
+    return data->locale;
+}
+
 
 /*********************************************************************
  *		wsetlocale (MSVCRT.@)

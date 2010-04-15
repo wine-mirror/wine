@@ -115,6 +115,7 @@ struct __thread_data {
     MSVCRT_unexpected_function      unexpected_handler;
     MSVCRT__se_translator_function  se_translator;
     EXCEPTION_RECORD               *exc_record;
+    struct MSVCRT_localeinfo_struct *locale;
 };
 
 typedef struct __thread_data thread_data_t;
@@ -791,6 +792,7 @@ typedef struct MSVCRT_localeinfo_struct
 } MSVCRT__locale_tstruct, *MSVCRT__locale_t;
 
 extern MSVCRT__locale_t MSVCRT_locale;
+MSVCRT__locale_t get_locale(void);
 void __cdecl _free_locale(MSVCRT__locale_t);
 
 #ifndef __WINE_MSVCRT_TEST
