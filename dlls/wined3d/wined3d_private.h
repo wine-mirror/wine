@@ -2022,7 +2022,7 @@ typedef struct {
 struct fbo_entry
 {
     struct list entry;
-    IWineD3DSurface **render_targets;
+    IWineD3DSurfaceImpl **render_targets;
     IWineD3DSurface *depth_stencil;
     BOOL attached;
     GLuint id;

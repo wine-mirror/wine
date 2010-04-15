@@ -300,7 +300,7 @@ static void context_check_fbo_status(struct wined3d_context *context)
         /* Dump the FBO attachments */
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            attachment = (IWineD3DSurfaceImpl *)context->current_fbo->render_targets[i];
+            attachment = context->current_fbo->render_targets[i];
             if (attachment)
             {
                 FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
@@ -638,7 +638,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 
                     for (j = 0; j < gl_info->limits.buffers; ++j)
                     {
-                        if (entry->render_targets[j] == (IWineD3DSurface *)resource)
+                        if (entry->render_targets[j] == (IWineD3DSurfaceImpl *)resource)
                         {
                             list_remove(&entry->entry);
                             list_add_head(&context->fbo_destroy_list, &entry->entry);
@@ -666,7 +666,7 @@ void context_surface_update(struct wined3d_context *context, IWineD3DSurfaceImpl
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        if (surface == (IWineD3DSurfaceImpl *)entry->render_targets[i])
+        if (surface == entry->render_targets[i])
         {
             TRACE("Updated surface %p is bound as color attachment %u to the current FBO.\n", surface, i);
             context->rebind_fbo = TRUE;
