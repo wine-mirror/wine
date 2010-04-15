@@ -324,7 +324,7 @@
 @ cdecl _close(long) msvcrt._close
 @ cdecl _commit(long) msvcrt._commit
 @ extern _commode msvcrt._commode
-@ stub _configthreadlocale
+@ cdecl _configthreadlocale(long) msvcrt._configthreadlocale
 @ cdecl _control87(long long) msvcrt._control87
 @ cdecl _controlfp(long long) msvcrt._controlfp
 @ cdecl _controlfp_s(ptr long long) msvcrt._controlfp_s

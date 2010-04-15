@@ -791,6 +791,9 @@ typedef struct MSVCRT_localeinfo_struct
     MSVCRT_pthreadmbcinfo mbcinfo;
 } MSVCRT__locale_tstruct, *MSVCRT__locale_t;
 
+#define MSVCRT__ENABLE_PER_THREAD_LOCALE 1
+#define MSVCRT__DISABLE_PER_THREAD_LOCALE 2
+
 extern MSVCRT__locale_t MSVCRT_locale;
 MSVCRT__locale_t get_locale(void);
 void __cdecl _free_locale(MSVCRT__locale_t);

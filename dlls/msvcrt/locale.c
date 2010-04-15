@@ -954,6 +954,43 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
     return loc;
 }
 
+/* _configthreadlocale - not exported in native msvcrt */
+int CDECL _configthreadlocale(int type)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    int ret;
+
+    if(!data)
+        return -1;
+
+    ret = (data->locale ? MSVCRT__ENABLE_PER_THREAD_LOCALE : MSVCRT__DISABLE_PER_THREAD_LOCALE);
+
+    if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE) {
+        if(!data->locale) {
+            /* Copy current global locale */
+            data->locale = _create_locale(MSVCRT_LC_ALL, MSVCRT_setlocale(MSVCRT_LC_ALL, NULL));
+            if(!data->locale)
+                return -1;
+        }
+
+        return ret;
+    }
+
+    if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE) {
+        if(data->locale) {
+            _free_locale(data->locale);
+            data->locale = NULL;
+        }
+
+        return ret;
+    }
+
+    if(!type)
+        return ret;
+
+    return -1;
+}
+
 /*********************************************************************
  *             setlocale (MSVCRT.@)
  */

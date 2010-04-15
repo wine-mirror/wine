@@ -1417,3 +1417,4 @@
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _create_locale(long str)
 @ cdecl _free_locale(ptr)
+@ cdecl _configthreadlocale(long)
