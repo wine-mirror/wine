@@ -899,6 +899,17 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
     return FALSE;
 }
 
+static int CALLBACK propsheet_callback( HWND hwnd, UINT msg, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case PSCB_INITIALIZED:
+        SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( hInst, MAKEINTRESOURCEW(ICO_MAIN) ));
+        break;
+    }
+    return 0;
+}
+
 /******************************************************************************
  * Name       : StartApplet
  * Description: Main routine for applet
@@ -928,14 +939,14 @@ static void StartApplet(HWND hWnd)
 
     /* Fill out the PROPSHEETHEADER */
     psh.dwSize = sizeof (PROPSHEETHEADERW);
-    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID;
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
     psh.hwndParent = hWnd;
     psh.hInstance = hInst;
-    psh.u.pszIcon = NULL;
+    psh.u.pszIcon = MAKEINTRESOURCEW(ICO_MAIN);
     psh.pszCaption = app_title;
     psh.nPages = 1;
     psh.u3.ppsp = &psp;
-    psh.pfnCallback = NULL;
+    psh.pfnCallback = propsheet_callback;
     psh.u2.nStartPage = 0;
 
     /* Display the property sheet */
