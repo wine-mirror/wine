@@ -4394,7 +4394,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
             context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, target);
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
+            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, depth_stencil, TRUE);
             LEAVE_GL();
         }
     }
