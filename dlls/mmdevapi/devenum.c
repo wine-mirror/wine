@@ -736,12 +736,12 @@ static int blacklist_pulse;
 
 static int blacklist(const char *dev) {
 #ifdef __linux__
-    if (strncmp(dev, "OSS ", 4))
+    if (!strncmp(dev, "OSS ", 4))
         return 1;
 #endif
     if (blacklist_pulse && !strncmp(dev, "PulseAudio ", 11))
         return 1;
-    if (strstr(dev, "ALSA") && strstr(dev, "hw:"))
+    if (!strncmp(dev, "ALSA ", 5) && strstr(dev, "hw:"))
         return 1;
     return 0;
 }
