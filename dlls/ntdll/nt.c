@@ -888,8 +888,18 @@ void fill_cpu_info(void)
     /* choose sensible defaults ...
      * FIXME: perhaps overridable with precompiler flags?
      */
+#ifdef __i386__
     cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_INTEL;
     cached_sci.Level		= 5; /* 586 */
+#elif defined(__x86_64__)
+    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_AMD64;
+#elif defined(__powerpc__)
+    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_PPC;
+#elif defined(__ALPHA__)
+    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_ALPHA;
+#else
+#error Unknown CPU
+#endif
     cached_sci.Revision   	= 0;
     cached_sci.Reserved         = 0;
     cached_sci.FeatureSet       = 0x1fff; /* FIXME: set some sensible defaults out of ProcessFeatures[] */
