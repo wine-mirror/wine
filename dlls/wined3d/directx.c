@@ -1506,7 +1506,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
      *
      * Beware: renderer string do not match exact card model,
      * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
-    if (WINE_D3D9_CAPABLE(gl_info))
+    if (WINE_D3D10_CAPABLE(gl_info))
     {
         /* Radeon EG CYPRESS XT / PRO HD5800 - highend */
         if (strstr(gl_renderer, "HD 5800")          /* Radeon EG CYPRESS HD58xx generic renderer string */
@@ -1603,6 +1603,13 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
             return CARD_ATI_RADEON_HD3200;
         }
 
+        /* Default for when no GPU has been found */
+        *vidmem = 128; /* 128MB */
+        return CARD_ATI_RADEON_HD3200;
+    }
+
+    if (WINE_D3D8_CAPABLE(gl_info))
+    {
         /* Radeon R5xx */
         if (strstr(gl_renderer, "X1600")
                 || strstr(gl_renderer, "X1650")
