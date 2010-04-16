@@ -156,8 +156,9 @@ static HRESULT WINAPI IShellFolder_Printers_fnCreateViewObject(IShellFolder2 *if
                HWND hwndOwner, REFIID riid, LPVOID *ppvOut)
 {
     IPrintersFolderImpl *This = (IPrintersFolderImpl *)iface;
+    HRESULT hr = E_NOTIMPL;
 
-    FIXME("(%p)->(hwnd=%p,%s,%p) stub\n", This,
+    TRACE("(%p)->(hwnd=%p,%s,%p)\n", This,
           hwndOwner, shdebugstr_guid (riid), ppvOut);
 
     if (!ppvOut)
@@ -165,7 +166,19 @@ static HRESULT WINAPI IShellFolder_Printers_fnCreateViewObject(IShellFolder2 *if
 
     *ppvOut = NULL;
 
-    return E_NOTIMPL;
+    if (IsEqualIID (riid, &IID_IShellView))
+    {
+        IShellView *pShellView = IShellView_Constructor ((IShellFolder *) iface);
+        if (pShellView)
+        {
+            hr = IShellView_QueryInterface (pShellView, riid, ppvOut);
+            IShellView_Release (pShellView);
+        }
+    }
+    else
+        WARN("unsupported interface %s\n", shdebugstr_guid (riid));
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellFolder_Printers_fnGetAttributesOf (IShellFolder2 * iface,
