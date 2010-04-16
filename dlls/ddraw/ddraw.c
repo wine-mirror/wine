@@ -264,8 +264,8 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 void
 IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
 {
-    /* Clear the cooplevel to restore window and display mode */
     IDirectDraw7_SetCooperativeLevel((IDirectDraw7 *)This, NULL, DDSCL_NORMAL);
+    IDirectDraw7_RestoreDisplayMode((IDirectDraw7 *)This);
 
     /* Destroy the device window if we created one */
     if(This->devicewindow != 0)
@@ -441,9 +441,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         /* Switching from fullscreen? */
         if(This->cooperative_level & DDSCL_FULLSCREEN)
         {
-            /* Restore the display mode */
-            IDirectDraw7_RestoreDisplayMode(iface);
-
             This->cooperative_level &= ~DDSCL_FULLSCREEN;
             This->cooperative_level &= ~DDSCL_EXCLUSIVE;
             This->cooperative_level &= ~DDSCL_ALLOWMODEX;

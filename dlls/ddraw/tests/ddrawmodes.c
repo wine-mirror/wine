@@ -37,6 +37,8 @@ static HWND hwnd;
 static int modes_cnt;
 static int modes_size;
 static LPDDSURFACEDESC modes;
+static RECT rect_before_create;
+static RECT rect_after_delete;
 
 static HRESULT (WINAPI *pDirectDrawEnumerateA)(LPDDENUMCALLBACKA,LPVOID);
 static HRESULT (WINAPI *pDirectDrawEnumerateW)(LPDDENUMCALLBACKW,LPVOID);
@@ -83,6 +85,8 @@ static BOOL createdirectdraw(void)
 {
     HRESULT rc;
 
+    SetRect(&rect_before_create, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
     ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", rc);
     if (!lpDD) {
@@ -95,11 +99,16 @@ static BOOL createdirectdraw(void)
 
 static void releasedirectdraw(void)
 {
-	if( lpDD != NULL )
-	{
-		IDirectDraw_Release(lpDD);
-		lpDD = NULL;
-	}
+    if( lpDD != NULL )
+    {
+        IDirectDraw_Release(lpDD);
+        lpDD = NULL;
+        SetRect(&rect_after_delete, 0, 0,
+                GetSystemMetrics(SM_CXSCREEN),
+                GetSystemMetrics(SM_CYSCREEN));
+        ok(EqualRect(&rect_before_create, &rect_after_delete) != 0,
+           "Original display mode was not restored\n");
+    }
 }
 
 static BOOL WINAPI crash_callbackA(GUID *lpGUID, LPSTR lpDriverDescription,
@@ -414,11 +423,36 @@ static void setdisplaymode(int i)
                       scrn.right, scrn.bottom, virt.left, virt.top, virt.right, virt.bottom);
                 if (!EqualRect(&scrn, &orig_rect))
                 {
+                    HRESULT rect_result;
+
                     /* Check that the client rect was resized */
                     rc = GetClientRect(hwnd, &test);
                     ok(rc!=0, "GetClientRect returned %x\n", rc);
                     rc = EqualRect(&scrn, &test);
                     todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
+
+                    /* Check that switching to normal cooperative level
+                       does not restore the display mode */
+                    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_NORMAL);
+                    ok(rc==DD_OK, "SetCooperativeLevel returned %x\n", rc);
+                    SetRect(&test, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+                    rect_result = EqualRect(&scrn, &test);
+                    ok(rect_result!=0, "Setting cooperative level to DDSCL_NORMAL changed the display mode\n");
+
+                    /* Go back to fullscreen */
+                    rc = IDirectDraw_SetCooperativeLevel(lpDD,
+                        hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+                    ok(rc==DD_OK, "SetCooperativeLevel returned: %x\n",rc);
+
+                    /* If the display mode was changed, set the correct mode
+                       to avoid irrelevant failures */
+                    if (rect_result == 0)
+                    {
+                        rc = IDirectDraw_SetDisplayMode(lpDD,
+                            modes[i].dwWidth, modes[i].dwHeight,
+                            U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
+                        ok(DD_OK==rc, "SetDisplayMode returned: %x\n",rc);
+                    }
                 }
                 ok(GetClipCursor(&r), "GetClipCursor() failed\n");
                 /* ddraw sets clip rect here to the screen size, even for
