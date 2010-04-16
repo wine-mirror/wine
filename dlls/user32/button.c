@@ -769,7 +769,7 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, const RECT *rc)
  */
 static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
 {
-    RECT     rc, focus_rect, r;
+    RECT     rc, r;
     UINT     dtFlags, uState;
     HPEN     hOldPen;
     HBRUSH   hOldBrush;
@@ -802,12 +802,10 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
 	InflateRect( &rc, -1, -1 );
     }
 
-    focus_rect = rc;
-
     /* completely skip the drawing if only focus has changed */
     if (action == ODA_FOCUS) goto draw_focus;
 
-    uState = DFCS_BUTTONPUSH | DFCS_ADJUSTRECT;
+    uState = DFCS_BUTTONPUSH;
 
     if (style & BS_FLAT)
         uState |= DFCS_MONO;
@@ -844,8 +842,8 @@ draw_focus:
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
     {
-        InflateRect( &focus_rect, -1, -1 );
-        DrawFocusRect( hDC, &focus_rect );
+        InflateRect( &rc, -2, -2 );
+        DrawFocusRect( hDC, &rc );
     }
 
  cleanup:
