@@ -1301,7 +1301,7 @@ enum wined3d_pci_device
     CARD_ATI_RADEON_XPRESS_200M     = 0x5955,
     CARD_ATI_RADEON_X700            = 0x5e4c,
     CARD_ATI_RADEON_X1600           = 0x71c2,
-    CARD_ATI_RADEON_HD2300          = 0x7210,
+    CARD_ATI_RADEON_HD2350          = 0x94c7,
     CARD_ATI_RADEON_HD2600          = 0x9581,
     CARD_ATI_RADEON_HD2900          = 0x9400,
     CARD_ATI_RADEON_HD3200          = 0x9620,

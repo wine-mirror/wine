@@ -1021,7 +1021,7 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          14, 10, 6764    },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      14, 10, 6764    },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               14, 10, 6764    },
@@ -1581,16 +1581,17 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
             return CARD_ATI_RADEON_HD2600;
         }
 
-        /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
-        if (strstr(gl_renderer, "HD 2300")
+        /* Radeon R6xx HD2350/HD2400/HD3400 - lowend
+         * Note HD2300=DX9, HD2350=DX10 */
+        if (strstr(gl_renderer, "HD 2350")
                 || strstr(gl_renderer, "HD 2400")
                 || strstr(gl_renderer, "HD 3470")
                 || strstr(gl_renderer, "HD 3450")
                 || strstr(gl_renderer, "HD 3430")
                 || strstr(gl_renderer, "HD 3400"))
         {
-            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
-            return CARD_ATI_RADEON_HD2300;
+            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
+            return CARD_ATI_RADEON_HD2350;
         }
 
         /* Radeon R6xx/R7xx integrated */
@@ -1613,14 +1614,19 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
             return CARD_ATI_RADEON_X1600;
         }
 
-        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
+        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
+         * Note X2300/X2500/HD2300 are R5xx GPUs with a 2xxx naming but they are still DX9-only */
         if (strstr(gl_renderer, "X700")
                 || strstr(gl_renderer, "X800")
                 || strstr(gl_renderer, "X850")
                 || strstr(gl_renderer, "X1300")
                 || strstr(gl_renderer, "X1400")
                 || strstr(gl_renderer, "X1450")
-                || strstr(gl_renderer, "X1550"))
+                || strstr(gl_renderer, "X1550")
+                || strstr(gl_renderer, "X2300")
+                || strstr(gl_renderer, "X2500")
+                || strstr(gl_renderer, "HD 2300")
+                )
         {
             *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
             return CARD_ATI_RADEON_X700;
@@ -1737,12 +1743,12 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
             return CARD_ATI_RADEON_HD2600;
         }
 
-        /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
+        /* Radeon R6xx HD2350/HD2400/HD3400 - lowend */
         if (strstr(gl_renderer, "RV610")
                 || strstr(gl_renderer, "RV620"))
         {
-            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
-            return CARD_ATI_RADEON_HD2300;
+            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
+            return CARD_ATI_RADEON_HD2350;
         }
 
         /* Radeon R6xx/R7xx integrated */
@@ -1860,8 +1866,8 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "(RV610")
                 || strstr(gl_renderer, "(RV620"))
         {
-            *vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
-            return CARD_ATI_RADEON_HD2300;
+            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
+            return CARD_ATI_RADEON_HD2350;
         }
 
         /* Radeon R6xx/R7xx integrated */
