@@ -36,8 +36,14 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
 typedef struct {
     const IShellFolder2Vtbl   *lpVtbl;
-    LONG                ref;
+    const IPersistFolder2Vtbl *lpvtblPersistFolder2;
+    LONG ref;
 } IPrintersFolderImpl;
+
+static inline IPrintersFolderImpl *impl_from_IPersistFolder2(IPersistFolder2 *iface)
+{
+    return (IPrintersFolderImpl *)((char*)iface - FIELD_OFFSET(IPrintersFolderImpl, lpvtblPersistFolder2));
+}
 
 static HRESULT WINAPI IShellFolder_Printers_fnQueryInterface(IShellFolder2 *iface,
                REFIID riid, LPVOID *ppvObj)
@@ -53,6 +59,12 @@ static HRESULT WINAPI IShellFolder_Printers_fnQueryInterface(IShellFolder2 *ifac
         IsEqualIID (riid, &IID_IShellFolder2))
     {
         *ppvObj = This;
+    }
+    else if (IsEqualIID (riid, &IID_IPersist) ||
+             IsEqualIID (riid, &IID_IPersistFolder) ||
+             IsEqualIID (riid, &IID_IPersistFolder2))
+    {
+        *ppvObj = &This->lpvtblPersistFolder2;
     }
 
     if (*ppvObj)
@@ -288,6 +300,62 @@ static const IShellFolder2Vtbl vtbl_ShellFolder2 =
     IShellFolder_Printers_fnMapColumnToSCID
 };
 
+/*** IPersistFolder2 ***/
+static HRESULT WINAPI IPersistFolder2_Printers_fnQueryInterface(IPersistFolder2 * iface,
+               REFIID iid, LPVOID * ppvObj)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+    return IUnknown_QueryInterface( (IUnknown*) This, iid, ppvObj);
+}
+
+static ULONG WINAPI IPersistFolder2_Printers_fnAddRef(IPersistFolder2 *iface)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+    return IUnknown_AddRef( (IUnknown*) This);
+}
+
+static ULONG WINAPI IPersistFolder2_Printers_fnRelease(IPersistFolder2 *iface)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+    return IUnknown_Release( (IUnknown*) This);
+}
+
+static HRESULT WINAPI IPersistFolder2_Printers_fnGetClassID(IPersistFolder2 *iface, CLSID *classId)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+
+    FIXME("(%p) stub\n", This);
+
+    if (!classId)
+        return E_POINTER;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IPersistFolder2_Printers_fnInitialize(IPersistFolder2 *iface, LPCITEMIDLIST pidl)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IPersistFolder2_Printers_fnGetCurFolder(IPersistFolder2 *iface, LPITEMIDLIST *pidl)
+{
+    IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const IPersistFolder2Vtbl vtbl_PersistFolder2 =
+{
+    IPersistFolder2_Printers_fnQueryInterface,
+    IPersistFolder2_Printers_fnAddRef,
+    IPersistFolder2_Printers_fnRelease,
+    IPersistFolder2_Printers_fnGetClassID,
+    IPersistFolder2_Printers_fnInitialize,
+    IPersistFolder2_Printers_fnGetCurFolder
+};
+
 HRESULT WINAPI Printers_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 {
     IPrintersFolderImpl *sf;
@@ -305,6 +373,7 @@ HRESULT WINAPI Printers_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * 
 
     sf->ref = 0;
     sf->lpVtbl = &vtbl_ShellFolder2;
+    sf->lpvtblPersistFolder2 = &vtbl_PersistFolder2;
 
     if (IUnknown_QueryInterface((IShellFolder2 *)sf, riid, ppv) != S_OK)
     {
