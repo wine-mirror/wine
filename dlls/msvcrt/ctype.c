@@ -55,7 +55,7 @@ WORD MSVCRT__ctype [257] = {
  * changes to affect ctypes (i.e. isleadbyte), we use a second table
  * and update its flags whenever the current locale changes.
  */
-WORD* MSVCRT__pctype;
+WORD* MSVCRT__pctype = NULL;
 
 /*********************************************************************
  *		__pctype_func (MSVCRT.@)

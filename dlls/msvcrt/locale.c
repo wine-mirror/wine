@@ -44,8 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MAX_ELEM_LEN 64 /* Max length of country/language/CP string */
 #define MAX_LOCALE_LENGTH 256
 MSVCRT__locale_t MSVCRT_locale = NULL;
-int MSVCRT___lc_codepage;
-int MSVCRT___lc_collate_cp;
+int MSVCRT___lc_codepage = 0;
+int MSVCRT___lc_collate_cp = 0;
 HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
 unsigned char charmax = CHAR_MAX;
 
