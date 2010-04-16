@@ -459,9 +459,7 @@ void  output_makefile (void)
   if (globals.forward_dll)
     fprintf (makefile, " %s", globals.forward_dll);
 
-  fprintf (makefile,
-           "\n\nC_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n"
-           "@DEPENDENCIES@  # everything below this line is overwritten by make depend",
+  fprintf (makefile, "\n\nC_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n",
            OUTPUT_DLL_NAME);
 
   if (globals.forward_dll)
