@@ -3493,7 +3493,7 @@ static GpStatus gdip_format_string(GpGraphics *graphics,
     gdip_format_string_callback callback, void *user_data)
 {
     WCHAR* stringdup;
-    INT sum = 0, height = 0, fit, fitcpy, i, j, lret, nwidth,
+    int sum = 0, height = 0, fit, fitcpy, i, j, lret, nwidth,
         nheight, lineend, lineno = 0;
     RectF bounds;
     StringAlignment halign;
@@ -3508,8 +3508,8 @@ static GpStatus gdip_format_string(GpGraphics *graphics,
     nwidth = roundr(rect->Width);
     nheight = roundr(rect->Height);
 
-    if (nwidth == 0) nwidth = INT_MAX;
-    if (nheight == 0) nheight = INT_MAX;
+    if (nwidth == 0 || rect->Width >= INT_MAX) nwidth = INT_MAX;
+    if (nheight == 0 || rect->Height >= INT_MAX) nheight = INT_MAX;
 
     for(i = 0, j = 0; i < length; i++){
         /* FIXME: This makes the indexes passed to callback inaccurate. */
