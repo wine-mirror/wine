@@ -95,7 +95,7 @@ LTEXT    "&Inferiore:",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
-PUSHBUTTON    "Cancella",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Annulla",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Aiuto",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
@@ -112,7 +112,7 @@ STRINGTABLE DISCARDABLE
 STRING_PAGESETUP_HEADERVALUE,   "&f"
 STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
 
-STRING_NOTEPAD,                                 "Blocco note"
+STRING_NOTEPAD,                                 "Blocco Note"
 STRING_ERROR,                                   "ERRORE"
 STRING_WARNING,                                 "ATTENZIONE"
 STRING_INFO,                                    "Info"
@@ -139,7 +139,7 @@ STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Questo file contiene caratteri Unicode che verranno persi se\n\
+Questo file contiene caratteri Unicode che andranno persi se\n\
 salvi questo file nella codifica %s.\n\
 Per mantenere questi caratteri, clicca Annulla e scegli\n\
 una delle opzioni Unicode nel menu a tendina Codifica.\n\
