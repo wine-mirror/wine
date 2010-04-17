@@ -108,7 +108,7 @@ PUSHBUTTON    "&Aiuto",            PM_HELP,           185, 45,  60, 15, WS_TABST
 DIALOG_COPY DIALOG 0, 0, 250, 65
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Copy Program"
+CAPTION "Copia Programma"
 {
 LTEXT         "Copia programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
@@ -234,19 +234,19 @@ IDS_LICENSE,
 "Questo programma è software libero; puoi redistribuirlo e/o \
 modificarlo sotto i termini della GNU Lesser General Public \
 License come pubblicata dalla Free Software Foundation; sia la \
-versione 2.1 della LGPL, che (a tua scelta) una versione più nuova.\n\
-Questo programma è distribuito nella speranza che sarà utile, \
+versione 2.1 della LGPL, sia (a tua scelta) una versione più nuova.\n\
+Questo programma è distribuito nella speranza che sia utile, \
 ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
 COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
 Lesser General Public License per più informazioni.\n\
 Dovresti aver ricevuto una copia della GNU Lesser General Public \
-License insieme a questo programma; sennò, scrivi alla Free Software \
+License insieme a questo programma; altrimenti, scrivi alla Free Software \
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
 
 IDS_WARRANTY_CAPTION, "NESSUNA GARANZIA"
 IDS_WARRANTY,
-"Questo programma è distribuito nella speranza che sarà utile, \
+"Questo programma è distribuito nella speranza che sia utile, \
 ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
 COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
-Lesser General Public License per più informazioni."
+Lesser General Public License per ulteriori informazioni."
 }
