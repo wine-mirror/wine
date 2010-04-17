@@ -794,7 +794,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
     REAL height, GpTexture **texture)
 {
-    HBITMAP hbm;
+    HBITMAP hbm=NULL;
     GpStatus status;
     GpImage *new_image=NULL;
 
@@ -815,7 +815,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     if (status != Ok)
         return status;
 
-    hbm = ((GpBitmap*)new_image)->hbitmap;
+    status = GdipCreateHBITMAPFromBitmap((GpBitmap*)new_image, &hbm, 0);
     if(!hbm)
     {
         status = GenericError;
@@ -860,6 +860,8 @@ exit:
         GdipDisposeImage(new_image);
         TRACE("<-- error %u\n", status);
     }
+
+    DeleteObject(hbm);
 
     return status;
 }
