@@ -94,9 +94,9 @@ static inline ARGB color_over(ARGB bg, ARGB fg)
     if (bg_alpha == 0) return fg;
 
     a = bg_alpha + fg_alpha;
-    b = ((bg&0xff)*bg_alpha + (fg&0xff)*fg_alpha)*0xff/a;
-    g = (((bg>>8)&0xff)*bg_alpha + ((fg>>8)&0xff)*fg_alpha)*0xff/a;
-    r = (((bg>>16)&0xff)*bg_alpha + ((fg>>16)&0xff)*fg_alpha)*0xff/a;
+    b = ((bg&0xff)*bg_alpha + (fg&0xff)*fg_alpha)/a;
+    g = (((bg>>8)&0xff)*bg_alpha + ((fg>>8)&0xff)*fg_alpha)/a;
+    r = (((bg>>16)&0xff)*bg_alpha + ((fg>>16)&0xff)*fg_alpha)/a;
 
     return (a<<24)|(r<<16)|(g<<8)|b;
 }
