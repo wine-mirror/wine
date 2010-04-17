@@ -28,20 +28,20 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    STRING_USAGE, "La sistassi di questo comando è:\n\nNET [ HELP | START | STOP | USE ]\n"
+    STRING_USAGE, "La sintassi di questo comando è:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Specificare il nome del servizio da avviare.\n"
     STRING_STOP_USAGE, "Specificare il nome del servizio da fermare.\n"
     STRING_STOP_DEP, "Fermando il servizio dipendente: %s\n"
     STRING_CANT_STOP, "Impossibile fermare il servizio %s\n"
-    STRING_NO_SCM, "Impossibile ottenere l'handle del service control manager.\n"
-    STRING_NO_SVCHANDLE, "Impossibile ottenere l'handle del service.\n"
+    STRING_NO_SCM, "Impossibile ottenere l'handle del gestore del controllo del servizio.\n"
+    STRING_NO_SVCHANDLE, "Impossibile ottenere l'handle del servizio.\n"
     STRING_START_SVC, "Il servizio %s sarà avviato.\n"
     STRING_START_SVC_SUCCESS, "Il servizio %s è stato avviato con successo.\n"
     STRING_START_SVC_FAIL, "Impossibile avviare il servizio %s.\n"
     STRING_STOP_SVC, "Il servizio %s sarà fermato.\n"
     STRING_STOP_SVC_SUCCESS, "Il servizio %s è stato fermato con successo.\n"
-    STRING_STOP_SVC_FAIL, "IMpossibile fermare il servizio %s.\n"
-    STRING_HELP_USAGE, "La sistassi di questo comando è:\n\nNET HELP comando\n    -o-\nNET comando /HELP\n\n"\
+    STRING_STOP_SVC_FAIL, "Impossibile fermare il servizio %s.\n"
+    STRING_HELP_USAGE, "La sintassi di questo comando è:\n\nNET HELP comando\n    -o-\nNET comando /HELP\n\n"\
                        "   Comandi disponibili:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Non ci sono elementi nella lista.\n"
     STRING_USE_HEADER, "\nStato  Locale   Remoto\n---------------------------------------------------------------\n"
