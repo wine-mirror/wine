@@ -422,6 +422,21 @@ typedef struct
 } FOLDERSETTINGS, *PFOLDERSETTINGS, *LPFOLDERSETTINGS;
 typedef const FOLDERSETTINGS *LPCFOLDERSETTINGS;
 
+/*****************************************************************************
+ * IShellIcon interface
+ */
+[
+    uuid(000214e5-0000-0000-c000-000000000046),
+    object,
+    pointer_default(unique)
+]
+interface IShellIcon : IUnknown
+{
+    HRESULT GetIconOf(
+        [in] PCUITEMID_CHILD pidl,
+        [in] UINT flags,
+        [out] int *pIconIndex);
+}
 
 /*****************************************************************************
  * IShellView interface

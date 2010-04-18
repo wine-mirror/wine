@@ -369,33 +369,6 @@ DECLARE_INTERFACE_(IShellDetails, IUnknown)
 #define IShellDetails_ColumnClick(p,a)         (p)->lpVtbl->ColumnClick(p,a)
 #endif
 
-/****************************************************************************
- * IShellIcon interface
- */
-
-#define INTERFACE IShellIcon
-DECLARE_INTERFACE_(IShellIcon,IUnknown)
-{
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** IShellIcon methods ***/
-    STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT flags, LPINT lpIconIndex) PURE;
-};
-#undef INTERFACE
-
-#if !defined(__cplusplus) || defined(CINTERFACE)
-/*** IUnknown methods ***/
-#define IShellIcon_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
-#define IShellIcon_AddRef(p)                  (p)->lpVtbl->AddRef(p)
-#define IShellIcon_Release(p)                 (p)->lpVtbl->Release(p)
-/*** IShellIcon methods ***/
-#define IShellIcon_GetIconOf(p,a,b,c)         (p)->lpVtbl->GetIconOf(p,a,b,c)
-#endif
-
-typedef IShellIcon *LPSHELLICON;
-
 /* IQueryInfo interface */
 #define INTERFACE IQueryInfo
 DECLARE_INTERFACE_(IQueryInfo,IUnknown)
