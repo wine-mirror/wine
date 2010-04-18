@@ -72,9 +72,9 @@ static const WCHAR PCNTFMTWSTR[] = { '%','%','%','s',0 };
 static const WCHAR FMTWSTR[] = { '%','s',0 };
 
 /**********************************************************************
- *	load_messageW		(internal)
+ *	load_message    (internal)
  */
-static LPWSTR load_messageW( HMODULE module, UINT id, WORD lang )
+static LPWSTR load_message( HMODULE module, UINT id, WORD lang )
 {
     const MESSAGE_RESOURCE_ENTRY *mre;
     WCHAR *buffer;
@@ -426,9 +426,9 @@ DWORD WINAPI FormatMessageA(
     }
     else {
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
-            from = load_messageW( (HMODULE)lpSource, dwMessageId, dwLanguageId );
+            from = load_message( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
-            from = load_messageW( kernel32_handle, dwMessageId, dwLanguageId );
+            from = load_message( kernel32_handle, dwMessageId, dwLanguageId );
         if (!from) return 0;
     }
 
@@ -514,11 +514,10 @@ DWORD WINAPI FormatMessageW(
         strcpyW( from, lpSource );
     }
     else {
-        from = NULL;
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
-            from = load_messageW( (HMODULE)lpSource, dwMessageId, dwLanguageId );
+            from = load_message( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
-            from = load_messageW( kernel32_handle, dwMessageId, dwLanguageId );
+            from = load_message( kernel32_handle, dwMessageId, dwLanguageId );
         if (!from) return 0;
     }
 
