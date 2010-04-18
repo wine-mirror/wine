@@ -734,6 +734,32 @@ static void test_message_null_buffer(void)
 {
     DWORD ret, error;
 
+    /* Without FORMAT_MESSAGE_ALLOCATE_BUFFER, only the specified buffer size is checked. */
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 0, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageA returned %u\n", ret);
+    ok(error == ERROR_INSUFFICIENT_BUFFER ||
+       error == ERROR_INVALID_PARAMETER, /* win9x */
+       "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 1, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageA returned %u\n", ret);
+    ok(error == ERROR_INSUFFICIENT_BUFFER ||
+       error == ERROR_INVALID_PARAMETER, /* win9x */
+       "last error %u\n", error);
+
+    if (0) /* crashes on Windows */
+    {
+        SetLastError(0xdeadbeef);
+        ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 256, NULL);
+        error = GetLastError();
+        ok(!ret, "FormatMessageA returned %u\n", ret);
+        trace("last error %u\n", error);
+    }
+
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
     error = GetLastError();
@@ -743,7 +769,28 @@ static void test_message_null_buffer(void)
        "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 1, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageA returned %u\n", ret);
+    ok(error == ERROR_NOT_ENOUGH_MEMORY ||
+       error == ERROR_INVALID_PARAMETER, /* win9x */
+       "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 256, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageA returned %u\n", ret);
+    ok(error == ERROR_NOT_ENOUGH_MEMORY ||
+       error == ERROR_INVALID_PARAMETER, /* win9x */
+       "last error %u\n", error);
+}
+
+static void test_message_null_buffer_wide(void)
+{
+    DWORD ret, error;
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 0, NULL);
     error = GetLastError();
     if (!ret && error == ERROR_CALL_NOT_IMPLEMENTED)
     {
@@ -751,6 +798,39 @@ static void test_message_null_buffer(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 0, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 1, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 256, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 0, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 1, NULL);
+    error = GetLastError();
+    ok(!ret, "FormatMessageW returned %u\n", ret);
+    ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, 0, 0, NULL, 256, NULL);
+    error = GetLastError();
     ok(!ret, "FormatMessageW returned %u\n", ret);
     ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
 }
@@ -822,5 +902,6 @@ START_TEST(format_msg)
     test_message_insufficient_buffer();
     test_message_insufficient_buffer_wide();
     test_message_null_buffer();
+    test_message_null_buffer_wide();
     test_message_from_hmodule();
 }

@@ -434,7 +434,7 @@ DWORD WINAPI FormatMessageA(
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
-    if (!lpBuffer)
+    if ((dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) && !lpBuffer)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return 0;
