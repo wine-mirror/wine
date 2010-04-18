@@ -1242,7 +1242,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
 /* Read the framebuffer back into the surface */
 static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, void *dest, UINT pitch)
 {
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BYTE *mem;
@@ -1271,7 +1271,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
      * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
      * context->last_was_blit set on the unlock.
      */
-    context = context_acquire(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -1286,7 +1286,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
          * Read from the back buffer
          */
         TRACE("Locking offscreen render target\n");
-        glReadBuffer(myDevice->offscreenBuffer);
+        glReadBuffer(device->offscreenBuffer);
         srcIsUpsideDown = TRUE;
     }
     else
@@ -1314,7 +1314,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     {
         case WINED3DFMT_P8_UINT:
         {
-            if(primary_render_target_is_p8(myDevice)) {
+            if (primary_render_target_is_p8(device))
+            {
                 /* In case of P8 render targets the index is stored in the alpha component */
                 fmt = GL_ALPHA;
                 type = GL_UNSIGNED_BYTE;
@@ -1449,7 +1450,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
      * the same color but we have no choice.
      * In case of P8 render targets, the index is stored in the alpha component so no conversion is needed.
      */
-    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT && !primary_render_target_is_p8(myDevice))
+    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT && !primary_render_target_is_p8(device))
     {
         const PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
@@ -1654,7 +1655,7 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     const RECT *pass_rect = pRect;
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
@@ -1698,7 +1699,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     }
 
     if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-            && ((This->Flags & SFLAG_SWAPCHAIN) || iface == myDevice->render_targets[0])))
+            && ((This->Flags & SFLAG_SWAPCHAIN) || iface == device->render_targets[0])))
     {
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pass_rect);
     }
@@ -1709,7 +1710,7 @@ lock_end:
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
-        context = context_acquire(myDevice, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         gl_info = context->gl_info;
 
         ENTER_GL();
@@ -1760,12 +1761,12 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
     UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
     /* Activate the correct context for the render target */
-    context = context_acquire(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -1780,7 +1781,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     {
         /* Primary offscreen render target */
         TRACE("Offscreen render target.\n");
-        context_set_draw_buffer(context, myDevice->offscreenBuffer);
+        context_set_draw_buffer(context, device->offscreenBuffer);
     }
 
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
@@ -1853,7 +1854,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     BOOL fullsurface;
 
     if (!(This->Flags & SFLAG_LOCKED)) {
@@ -1868,7 +1869,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
         TRACE("Freeing PBO memory\n");
 
-        context = context_acquire(myDevice, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
         gl_info = context->gl_info;
 
         ENTER_GL();
@@ -1889,7 +1890,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         goto unlock_end;
     }
 
-    if ((This->Flags & SFLAG_SWAPCHAIN) || (myDevice->render_targets && iface == myDevice->render_targets[0]))
+    if ((This->Flags & SFLAG_SWAPCHAIN) || (device->render_targets && iface == device->render_targets[0]))
     {
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
@@ -1936,7 +1937,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         This->dirtyRect.top    = This->currentDesc.Height;
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
-    } else if(iface == myDevice->stencilBufferTarget) {
+    }
+    else if (iface == device->stencilBufferTarget)
+    {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     } else {
         /* The rest should be a normal texture */
@@ -1946,9 +1949,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
          * states need resetting
          */
         if(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&impl) == WINED3D_OK) {
-            if(impl->baseTexture.bindCount) {
-                IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_SAMPLER(impl->baseTexture.sampler));
-            }
+            if (impl->baseTexture.bindCount)
+                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(impl->baseTexture.sampler));
             IWineD3DBaseTexture_Release((IWineD3DBaseTexture *) impl);
         }
     }
@@ -2962,7 +2964,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
 static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     float xrel, yrel;
     UINT row;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
@@ -2980,7 +2982,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         upsidedown = TRUE;
     }
 
-    context = context_acquire(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    context = context_acquire(device, SrcSurface, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
     ENTER_GL();
 
@@ -2990,7 +2992,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     if(surface_is_offscreen(SrcSurface)) {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
-        glReadBuffer(myDevice->offscreenBuffer);
+        glReadBuffer(device->offscreenBuffer);
     }
     else
     {
@@ -3068,7 +3070,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     GLuint src, backup = 0;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     IWineD3DSwapChainImpl *src_swapchain = NULL;
@@ -3085,7 +3087,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    context = context_acquire(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    context = context_acquire(device, SrcSurface, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
 
     src_offscreen = surface_is_offscreen(SrcSurface);
@@ -3105,7 +3107,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* Got more than one aux buffer? Use the 2nd aux buffer */
         drawBuffer = GL_AUX1;
     }
-    else if ((!src_offscreen || myDevice->offscreenBuffer == GL_BACK) && context->aux_buffers >= 1)
+    else if ((!src_offscreen || device->offscreenBuffer == GL_BACK) && context->aux_buffers >= 1)
     {
         /* Only one aux buffer, but it isn't used (Onscreen rendering, or non-aux orm)? Use it! */
         drawBuffer = GL_AUX0;
@@ -3145,7 +3147,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
-        glReadBuffer(myDevice->offscreenBuffer);
+        glReadBuffer(device->offscreenBuffer);
     }
     else
     {
@@ -3348,7 +3350,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         IWineD3DSurface *SrcSurface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
         WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     RECT dst_rect, src_rect;
@@ -3372,8 +3374,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     }
 
     /* Early sort out of cases where no render target is used */
-    if(!dstSwapchain && !srcSwapchain &&
-        SrcSurface != myDevice->render_targets[0] && This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
+    if (!dstSwapchain && !srcSwapchain
+            && SrcSurface != device->render_targets[0]
+            && This != (IWineD3DSurfaceImpl *)device->render_targets[0])
+    {
         TRACE("No surface is render target, not using hardware blit. Src = %p, dst = %p\n", Src, This);
         return WINED3DERR_INVALIDCALL;
     }
@@ -3489,17 +3493,21 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     } else if(dstSwapchain && srcSwapchain) {
         FIXME("Implement hardware blit between two different swapchains\n");
         return WINED3DERR_INVALIDCALL;
-    } else if(dstSwapchain) {
-        if(SrcSurface == myDevice->render_targets[0]) {
+    }
+    else if (dstSwapchain)
+    {
+        /* Handled with regular texture -> swapchain blit. */
+        if (SrcSurface == device->render_targets[0])
             TRACE("Blit from active render target to a swapchain\n");
-            /* Handled with regular texture -> swapchain blit */
-        }
-    } else if(srcSwapchain && This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
+    }
+    else if (srcSwapchain && This == (IWineD3DSurfaceImpl *)device->render_targets[0])
+    {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if((srcSwapchain || SrcSurface == myDevice->render_targets[0]) && !dstSwapchain) {
+    if ((srcSwapchain || SrcSurface == device->render_targets[0]) && !dstSwapchain)
+    {
         /* Blit from render target to texture */
         BOOL stretchx;
 
@@ -3538,11 +3546,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (fbo_blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
-                               &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
-                               &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+        if (fbo_blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
-            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
+            stretch_rect_fbo((IWineD3DDevice *)device, SrcSurface, &src_rect,
                     (IWineD3DSurface *)This, &dst_rect, Filter);
         } else if((!stretchx) || dst_rect.right - dst_rect.left > Src->currentDesc.Width ||
                                     dst_rect.bottom - dst_rect.top > Src->currentDesc.Height) {
@@ -3571,25 +3579,24 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
 
         if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-            && fbo_blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
-                                  &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
-                                  &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+                && fbo_blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                        &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                        &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
             TRACE("Using stretch_rect_fbo\n");
             /* The source is always a texture, but never the currently active render target, and the texture
-             * contents are never upside down
-             */
-            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &src_rect,
-                              (IWineD3DSurface *)This, &dst_rect, Filter);
+             * contents are never upside down. */
+            stretch_rect_fbo((IWineD3DDevice *)device, SrcSurface, &src_rect,
+                    (IWineD3DSurface *)This, &dst_rect, Filter);
             return WINED3D_OK;
         }
 
         if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-            && arbfp_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
-                                         &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
-                                         &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+                && arbfp_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                        &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                        &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
-            return arbfp_blit_surface(myDevice, Src, &src_rect, This, &dst_rect, BLIT_OP_BLIT, Filter);
+            return arbfp_blit_surface(device, Src, &src_rect, This, &dst_rect, BLIT_OP_BLIT, Filter);
         }
 
         /* Color keying: Check if we have to do a color keyed blt,
@@ -3614,7 +3621,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         surface_internal_preload((IWineD3DSurface *) Src, SRGB_RGB);
 
         /* Activate the destination context, set it up for blitting */
-        context = context_acquire(myDevice, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
+        context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
 
         /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
          * while OpenGL coordinates are window relative.
@@ -3634,15 +3641,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             dst_rect.top += This->currentDesc.Height - h; dst_rect.bottom += This->currentDesc.Height - h;
         }
 
-        if (!myDevice->blitter->blit_supported(&myDevice->adapter->gl_info, BLIT_OP_BLIT,
-                                               &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
-                                               &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+        if (!device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
+                &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
             FIXME("Unsupported blit operation falling back to software\n");
             return WINED3DERR_INVALIDCALL;
         }
 
-        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src);
+        device->blitter->set_shader((IWineD3DDevice *)device, Src);
 
         ENTER_GL();
 
@@ -3654,7 +3661,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* When the primary render target uses P8, the alpha component contains the palette index.
              * Which means that the colorkey is one of the palette entries. In other cases pixels that
              * should be masked away have alpha set to 0. */
-            if(primary_render_target_is_p8(myDevice))
+            if (primary_render_target_is_p8(device))
                 glAlphaFunc(GL_NOTEQUAL, (float)Src->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
             else
                 glAlphaFunc(GL_NOTEQUAL, 0.0f);
@@ -3680,7 +3687,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         LEAVE_GL();
 
         /* Leave the opengl state valid for blitting */
-        myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
+        device->blitter->unset_shader((IWineD3DDevice *)device);
 
         if (wined3d_settings.strict_draw_ordering || (dstSwapchain
                 && ((IWineD3DSurface *)This == dstSwapchain->frontBuffer
@@ -3712,17 +3719,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (ffp_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_COLOR_FILL,
-                                        NULL, 0, 0, NULL,
-                                        &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+            if (ffp_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+                    NULL, 0, 0, NULL,
+                    &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
             {
-                return ffp_blit.color_fill(myDevice, This, &dst_rect, color);
+                return ffp_blit.color_fill(device, This, &dst_rect, color);
             }
-            else if (cpu_blit.blit_supported(&myDevice->adapter->gl_info, BLIT_OP_COLOR_FILL,
-                                             NULL, 0, 0, NULL,
-                                             &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
+            else if (cpu_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+                    NULL, 0, 0, NULL,
+                    &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
             {
-                return cpu_blit.color_fill(myDevice, This, &dst_rect, color);
+                return cpu_blit.color_fill(device, This, &dst_rect, color);
             }
             return WINED3DERR_INVALIDCALL;
         }
@@ -3736,7 +3743,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *DestRect,
         IWineD3DSurface *SrcSurface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx)
 {
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
     float depth;
 
     if (Flags & WINEDDBLT_DEPTHFILL) {
@@ -3760,13 +3767,8 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
                 ERR("Unexpected format for depth fill: %s\n", debug_d3dformat(This->resource.format_desc->format));
         }
 
-        return IWineD3DDevice_Clear((IWineD3DDevice *) myDevice,
-                                    DestRect == NULL ? 0 : 1,
-                                    (const WINED3DRECT *)DestRect,
-                                    WINED3DCLEAR_ZBUFFER,
-                                    0x00000000,
-                                    depth,
-                                    0x00000000);
+        return IWineD3DDevice_Clear((IWineD3DDevice *)device, DestRect ? 1 : 0, (const WINED3DRECT *)DestRect,
+                WINED3DCLEAR_ZBUFFER, 0x00000000, depth, 0x00000000);
     }
 
     FIXME("(%p): Unsupp depthstencil blit\n", This);
@@ -3777,7 +3779,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
         const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
 
     TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
     TRACE("(%p): Usage is %s\n", This, debug_d3dusage(This->resource.usage));
@@ -3791,8 +3793,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
     /* Accessing the depth stencil is supposed to fail between a BeginScene and EndScene pair,
      * except depth blits, which seem to work
      */
-    if(iface == myDevice->stencilBufferTarget || (SrcSurface && SrcSurface == myDevice->stencilBufferTarget)) {
-        if(myDevice->inScene && !(Flags & WINEDDBLT_DEPTHFILL)) {
+    if (iface == device->stencilBufferTarget || (SrcSurface && SrcSurface == device->stencilBufferTarget))
+    {
+        if (device->inScene && !(Flags & WINEDDBLT_DEPTHFILL))
+        {
             TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
             return WINED3DERR_INVALIDCALL;
         } else if(IWineD3DSurfaceImpl_BltZ(This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx) == WINED3D_OK) {
@@ -3819,7 +3823,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *srcImpl = (IWineD3DSurfaceImpl *) Source;
-    IWineD3DDeviceImpl *myDevice = This->resource.device;
+    IWineD3DDeviceImpl *device = This->resource.device;
 
     TRACE("(%p)->(%d, %d, %p, %p, %08x\n", iface, dstx, dsty, Source, rsrc, trans);
 
@@ -3829,9 +3833,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if(myDevice->inScene &&
-       (iface == myDevice->stencilBufferTarget ||
-       (Source == myDevice->stencilBufferTarget))) {
+    if (device->inScene && (iface == device->stencilBufferTarget
+            || (Source == device->stencilBufferTarget)))
+    {
         TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
