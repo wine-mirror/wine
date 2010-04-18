@@ -565,9 +565,6 @@ DWORD WINAPI FormatMessageA(
         *t='\0';
     }
     talloced = strlen(target)+1;
-    if (nSize && talloced<nSize) {
-        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
-    }
     TRACE("-- %s\n",debugstr_a(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT,max(nSize, talloced));
@@ -744,8 +741,6 @@ DWORD WINAPI FormatMessageW(
         *t='\0';
     }
     talloced = strlenW(target)+1;
-    if (nSize && talloced<nSize)
-        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize*sizeof(WCHAR));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
         DWORD len = strlenW(target) + 1;
