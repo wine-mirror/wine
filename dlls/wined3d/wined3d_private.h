@@ -2677,7 +2677,8 @@ void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
 void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
-void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+void surface_load_ds_location(IWineD3DSurfaceImpl *surface,
+        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
