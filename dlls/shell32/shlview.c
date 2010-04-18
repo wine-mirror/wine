@@ -389,40 +389,47 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 */
 static void ShellView_InitList(IShellViewImpl *This)
 {
+    IShellDetails *details = NULL;
     LVCOLUMNW lvColumn;
     SHELLDETAILS sd;
     WCHAR nameW[50];
+    HRESULT hr;
+    INT i;
 
     TRACE("(%p)\n", This);
 
     SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
 
     lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
     lvColumn.pszText = nameW;
 
-    if (This->pSF2Parent)
+    if (!This->pSF2Parent)
     {
-        HRESULT hr;
-        INT i;
-
-        for (i = 0; 1; i++)
+        hr = IShellFolder_QueryInterface(This->pSFParent, &IID_IShellDetails, (void**)&details);
+        if (hr != S_OK)
         {
-            hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd);
-            if (FAILED(hr)) break;
-
-	    lvColumn.fmt = sd.fmt;
-	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */
-	    StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
-	    SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
+            WARN("IShellFolder2/IShellDetails not supported\n");
+            return;
         }
     }
-    else
+
+    for (i = 0; 1; i++)
     {
-        FIXME("no SF2\n");
+        if (This->pSFParent)
+            hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd);
+        else
+            hr = IShellDetails_GetDetailsOf(details, NULL, i, &sd);
+        if (FAILED(hr)) break;
+
+        lvColumn.fmt = sd.fmt;
+	lvColumn.cx = sd.cxChar*8; /* chars->pixel */
+	StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
+	SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
     }
 
-    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
-    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
+    if (details) IShellDetails_Release(details);
 }
 
 /**********************************************************

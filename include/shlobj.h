@@ -346,6 +346,28 @@ typedef struct
 #define FCIDM_TOOLBAR      (FCIDM_BROWSERFIRST + 0)
 #define FCIDM_STATUS       (FCIDM_BROWSERFIRST + 1)
 
+#define INTERFACE IShellDetails
+DECLARE_INTERFACE_(IShellDetails, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface) (THIS_ REFIID riid, void **ppv) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IShellDetails methods ***/
+    STDMETHOD(GetDetailsOf)(THIS_ PCUITEMID_CHILD pidl, UINT iColumn, SHELLDETAILS *pDetails) PURE;
+    STDMETHOD(ColumnClick)(THIS_ UINT iColumn) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IShellDetails_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellDetails_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IShellDetails_Release(p)               (p)->lpVtbl->Release(p)
+/*** IShellDetails methods ***/
+#define IShellDetails_GetDetailsOf(p,a,b,c)    (p)->lpVtbl->GetDetailsOf(p,a,b,c)
+#define IShellDetails_ColumnClick(p,a)         (p)->lpVtbl->ColumnClick(p,a)
+#endif
 
 /****************************************************************************
  * IShellIcon interface
