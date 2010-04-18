@@ -570,13 +570,20 @@ DWORD WINAPI FormatMessageA(
         *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT,max(nSize, talloced));
         memcpy(*(LPSTR*)lpBuffer,target,talloced);
     } else {
-        lstrcpynA(lpBuffer,target,nSize);
+        if (nSize < talloced)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            goto failure;
+        }
+        strcpy(lpBuffer, target);
     }
+
+    ret = talloced - 1; /* null terminator */
+failure:
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
     if (!(dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)) HeapFree( GetProcessHeap(), 0, format_args.args );
-    ret = (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? strlen(*(LPSTR*)lpBuffer) : strlen(lpBuffer);
-    TRACE("-- returning %d\n", ret);
+    TRACE("-- returning %u\n", ret);
     return ret;
 }
 #undef ADD_TO_T
@@ -595,6 +602,7 @@ DWORD WINAPI FormatMessageW(
 	__ms_va_list* args )
 {
     struct format_args format_args;
+    DWORD ret = 0;
     LPWSTR target,t;
     DWORD talloced;
     LPWSTR from;
@@ -741,21 +749,29 @@ DWORD WINAPI FormatMessageW(
         *t='\0';
     }
     talloced = strlenW(target)+1;
+    TRACE("-- %s\n",debugstr_w(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
         DWORD len = strlenW(target) + 1;
         *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT,len*sizeof(WCHAR));
         strcpyW(*(LPWSTR*)lpBuffer, target);
     }
-    else lstrcpynW(lpBuffer, target, nSize);
+    else
+    {
+        if (nSize < talloced)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            goto failure;
+        }
+        strcpyW(lpBuffer, target);
+    }
 
+    ret = talloced - 1; /* null terminator */
+failure:
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
     if (!(dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)) HeapFree( GetProcessHeap(), 0, format_args.args );
-    TRACE("ret=%s\n", wine_dbgstr_w((dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
-        *(LPWSTR*)lpBuffer : lpBuffer));
-    return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
-        strlenW(*(LPWSTR*)lpBuffer):
-            strlenW(lpBuffer);
+    TRACE("-- returning %u\n", ret);
+    return ret;
 }
 #undef ADD_TO_T

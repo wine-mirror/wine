@@ -638,6 +638,98 @@ static void test_message_from_string(void)
     ok(r==2,"failed: r=%d\n",r);
 }
 
+static void test_message_insufficient_buffer(void)
+{
+    static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
+    static const char expected_buf[] = {'x', 'x', 'x', 'x', 'x'};
+    DWORD ret;
+    CHAR out[5];
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test", 0, 0, out, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
+       "Expected the buffer to be untouched\n");
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test", 0, 0, out, 1, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
+       "Expected the buffer to be untouched\n");
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test", 0, 0, out, sizeof(out)/sizeof(out[0]) - 1, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
+       "Expected the buffer to be untouched\n");
+}
+
+static void test_message_insufficient_buffer_wide(void)
+{
+    static const WCHAR test[] = {'t','e','s','t',0};
+    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x'};
+    static const WCHAR expected_buf[] = {'x', 'x', 'x', 'x', 'x'};
+    static const WCHAR broken_buf[] = {0, 'x', 'x', 'x', 'x'};
+    static const WCHAR broken2_buf[] = {'t','e','s',0,'x'};
+
+    DWORD ret;
+    WCHAR out[5];
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
+       "Expected the buffer to be untouched\n");
+
+    /* Windows Server 2003 and newer report failure but copy a
+     * truncated string to the buffer for non-zero buffer sizes. */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, 1, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)) ||
+       broken(!memcmp(broken_buf, out, sizeof(broken_buf))), /* W2K3+ */
+       "Expected the buffer to be untouched\n");
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, sizeof(out)/sizeof(out[0]) - 1, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
+       GetLastError());
+    ok(!memcmp(expected_buf, out, sizeof(expected_buf)) ||
+       broken(!memcmp(broken2_buf, out, sizeof(broken2_buf))), /* W2K3+ */
+       "Expected the buffer to be untouched\n");
+}
+
 static void test_message_null_buffer(void)
 {
     DWORD ret, error;
@@ -727,6 +819,8 @@ START_TEST(format_msg)
 {
     test_message_from_string();
     test_message_from_string_wide();
+    test_message_insufficient_buffer();
+    test_message_insufficient_buffer_wide();
     test_message_null_buffer();
     test_message_from_hmodule();
 }
