@@ -15,6 +15,7 @@ C_SRCS = \
 	path.c \
 	shreg.c \
 	string.c \
+	thread.c \
 	url.c
 
 @MAKE_TEST_RULES@
