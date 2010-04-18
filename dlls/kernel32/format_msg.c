@@ -752,8 +752,7 @@ DWORD WINAPI FormatMessageW(
     TRACE("-- %s\n",debugstr_w(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
-        DWORD len = strlenW(target) + 1;
-        *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT,len*sizeof(WCHAR));
+        *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT, max(nSize, talloced)*sizeof(WCHAR));
         strcpyW(*(LPWSTR*)lpBuffer, target);
     }
     else
