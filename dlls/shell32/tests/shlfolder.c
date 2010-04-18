@@ -102,6 +102,7 @@ static void test_ParseDisplayName(void)
     BOOL bRes;
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
+    ok(hr == S_OK, "Expected SHGetDesktopFolder to return S_OK, got 0x%08x\n", hr);
     if(hr != S_OK) return;
 
     /* Tests crash on W2K and below (SHCreateShellItem available as of XP) */
@@ -147,7 +148,11 @@ static void test_ParseDisplayName(void)
     }
 
     res = GetFileAttributesA(cNonExistDir1A);
-    if(res != INVALID_FILE_ATTRIBUTES) return;
+    if(res != INVALID_FILE_ATTRIBUTES)
+    {
+        skip("Test directory unexpectedly exists\n");
+        goto finished;
+    }
 
     MultiByteToWideChar(CP_ACP, 0, cNonExistDir1A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
@@ -156,7 +161,11 @@ static void test_ParseDisplayName(void)
         "ParseDisplayName returned %08x, expected 80070002 or E_FAIL\n", hr);
 
     res = GetFileAttributesA(cNonExistDir2A);
-    if(res != INVALID_FILE_ATTRIBUTES) return;
+    if(res != INVALID_FILE_ATTRIBUTES)
+    {
+        skip("Test directory unexpectedly exists\n");
+        goto finished;
+    }
 
     MultiByteToWideChar(CP_ACP, 0, cNonExistDir2A, -1, cTestDirW, MAX_PATH);
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, 
@@ -167,8 +176,12 @@ static void test_ParseDisplayName(void)
     /* I thought that perhaps the DesktopFolder's ParseDisplayName would recognize the
      * path corresponding to CSIDL_PERSONAL and return a CLSID_MyDocuments PIDL. Turns
      * out it doesn't. The magic seems to happen in the file dialogs, then. */
-    if (!pSHGetSpecialFolderPathW || !pILFindLastID) goto finished;
-    
+    if (!pSHGetSpecialFolderPathW || !pILFindLastID)
+    {
+        win_skip("SHGetSpecialFolderPathW and/or ILFindLastID are not available\n");
+        goto finished;
+    }
+
     bRes = pSHGetSpecialFolderPathW(NULL, cTestDirW, CSIDL_PERSONAL, FALSE);
     ok(bRes, "SHGetSpecialFolderPath(CSIDL_PERSONAL) failed! %u\n", GetLastError());
     if (!bRes) goto finished;
