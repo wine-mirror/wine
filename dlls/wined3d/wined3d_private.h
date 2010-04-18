@@ -2679,7 +2679,7 @@ void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect) DECL
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 void surface_load_ds_location(IWineD3DSurfaceImpl *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
-void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) DECLSPEC_HIDDEN;
+void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;

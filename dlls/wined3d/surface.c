@@ -4054,17 +4054,15 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     device->shader_backend->shader_deselect_depth_blt((IWineD3DDevice *)device);
 }
 
-void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location)
+{
+    TRACE("surface %p, new location %#x.\n", surface, location);
 
-    TRACE("(%p) New location %#x\n", This, location);
+    if (location & ~SFLAG_DS_LOCATIONS)
+        FIXME("Invalid location (%#x) specified.\n", location);
 
-    if (location & ~SFLAG_DS_LOCATIONS) {
-        FIXME("(%p) Invalid location (%#x) specified\n", This, location);
-    }
-
-    This->Flags &= ~SFLAG_DS_LOCATIONS;
-    This->Flags |= location;
+    surface->Flags &= ~SFLAG_DS_LOCATIONS;
+    surface->Flags |= location;
 }
 
 /* Context activation is done by the caller. */

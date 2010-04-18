@@ -614,7 +614,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 || This->stateBlock->renderState[WINED3DRS_ZENABLE])
             surface_load_ds_location((IWineD3DSurfaceImpl *)This->stencilBufferTarget, context, location);
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
-            surface_modify_ds_location(This->stencilBufferTarget, location);
+            surface_modify_ds_location((IWineD3DSurfaceImpl *)This->stencilBufferTarget, location);
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
