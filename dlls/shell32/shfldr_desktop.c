@@ -81,7 +81,7 @@ static inline IDesktopFolderImpl *impl_from_IPersist( IPersist *iface )
     return (IDesktopFolderImpl *)((char*)iface - FIELD_OFFSET(IDesktopFolderImpl, lpVtblIPersist));
 }
 
-static const shvheader DesktopSFHeader[] = {
+static const shvheader desktop_header[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
     {IDS_SHV_COLUMN2, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
     {IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
@@ -89,7 +89,7 @@ static const shvheader DesktopSFHeader[] = {
     {IDS_SHV_COLUMN5, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 5}
 };
 
-#define DESKTOPSHELLVIEWCOLUMNS 5
+#define DESKTOPSHELLVIEWCOLUMNS sizeof(desktop_header)/sizeof(shvheader)
 
 /**************************************************************************
  *    ISF_Desktop_fnQueryInterface
@@ -775,7 +775,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDefaultColumnState (
     if (!pcsFlags || iColumn >= DESKTOPSHELLVIEWCOLUMNS)
     return E_INVALIDARG;
 
-    *pcsFlags = DesktopSFHeader[iColumn].pcsFlags;
+    *pcsFlags = desktop_header[iColumn].pcsFlags;
 
     return S_OK;
 }
@@ -801,14 +801,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
         return E_INVALIDARG;
 
     if (!pidl)
-    {
-        psd->fmt = DesktopSFHeader[iColumn].fmt;
-        psd->cxChar = DesktopSFHeader[iColumn].cxChar;
-        psd->str.uType = STRRET_CSTR;
-        LoadStringA (shell32_hInstance, DesktopSFHeader[iColumn].colnameid,
-                     psd->str.u.cStr, MAX_PATH);
-        return S_OK;
-    }
+        return SHELL32_GetColumnDetails(desktop_header, iColumn, psd);
 
     /* the data from the pidl */
     psd->str.uType = STRRET_CSTR;

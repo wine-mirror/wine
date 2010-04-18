@@ -303,14 +303,7 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsOf (IShellFolder2 *iface
         return E_NOTIMPL;
 
     if (!pidl)
-    {
-        psd->fmt = printers_header[iColumn].fmt;
-        psd->cxChar = printers_header[iColumn].cxChar;
-        psd->str.uType = STRRET_CSTR;
-        LoadStringA (shell32_hInstance, printers_header[iColumn].colnameid,
-                     psd->str.u.cStr, MAX_PATH);
-        return S_OK;
-    }
+        return SHELL32_GetColumnDetails(printers_header, iColumn, psd);
 
     FIXME("unimplemented for supplied pidl\n");
 

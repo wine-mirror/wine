@@ -1,4 +1,3 @@
-
 /*
  *	Virtual Folder
  *	common definitions
@@ -29,6 +28,8 @@ typedef struct {
     int fmt;
     int cxChar;
 } shvheader;
+
+HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details);
 
 #define GET_SHGDN_FOR(dwFlags)         ((DWORD)dwFlags & (DWORD)0x0000FF00)
 #define GET_SHGDN_RELATION(dwFlags)    ((DWORD)dwFlags & (DWORD)0x000000FF)

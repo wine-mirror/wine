@@ -1315,7 +1315,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
     HRESULT hr = E_FAIL;
     struct passwd *pPasswd;
     struct group *pGroup;
-    static const shvheader SFHeader[SHELLVIEWCOLUMNS] = {
+    struct stat statItem;
+
+    static const shvheader unixfs_header[SHELLVIEWCOLUMNS] = {
         {IDS_SHV_COLUMN1,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
         {IDS_SHV_COLUMN2,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
         {IDS_SHV_COLUMN3,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
@@ -1330,59 +1332,55 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
     if (!psd || iColumn >= SHELLVIEWCOLUMNS)
         return E_INVALIDARG;
 
-    if (!pidl) {
-        psd->fmt = SFHeader[iColumn].fmt;
-        psd->cxChar = SFHeader[iColumn].cxChar;
-        psd->str.uType = STRRET_CSTR;
-        LoadStringA(shell32_hInstance, SFHeader[iColumn].colnameid, psd->str.u.cStr, MAX_PATH);
-        return S_OK;
-    } else {
-        struct stat statItem;
-        if (iColumn == 4 || iColumn == 5 || iColumn == 6) {
-            char szPath[FILENAME_MAX];
-            strcpy(szPath, This->m_pszPath);
-            if (!UNIXFS_filename_from_shitemid(pidl, szPath + strlen(szPath)))
-                return E_INVALIDARG;
-            if (stat(szPath, &statItem)) 
-                return E_INVALIDARG;
-        }
-        psd->str.u.cStr[0] = '\0';
-        psd->str.uType = STRRET_CSTR;
-        switch (iColumn) {
-            case 0:
-                hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL|SHGDN_INFOLDER, &psd->str);
-                break;
-            case 1:
-                _ILGetFileSize(pidl, psd->str.u.cStr, MAX_PATH);
-                break;
-            case 2:
-                _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
-                break;
-            case 3:
-                _ILGetFileDate(pidl, psd->str.u.cStr, MAX_PATH);
-                break;
-            case 4:
-                psd->str.u.cStr[0] = S_ISDIR(statItem.st_mode) ? 'd' : '-';
-                psd->str.u.cStr[1] = (statItem.st_mode & S_IRUSR) ? 'r' : '-';
-                psd->str.u.cStr[2] = (statItem.st_mode & S_IWUSR) ? 'w' : '-';
-                psd->str.u.cStr[3] = (statItem.st_mode & S_IXUSR) ? 'x' : '-';
-                psd->str.u.cStr[4] = (statItem.st_mode & S_IRGRP) ? 'r' : '-';
-                psd->str.u.cStr[5] = (statItem.st_mode & S_IWGRP) ? 'w' : '-';
-                psd->str.u.cStr[6] = (statItem.st_mode & S_IXGRP) ? 'x' : '-';
-                psd->str.u.cStr[7] = (statItem.st_mode & S_IROTH) ? 'r' : '-';
-                psd->str.u.cStr[8] = (statItem.st_mode & S_IWOTH) ? 'w' : '-';
-                psd->str.u.cStr[9] = (statItem.st_mode & S_IXOTH) ? 'x' : '-';
-                psd->str.u.cStr[10] = '\0';
-                break;
-            case 5:
-                pPasswd = getpwuid(statItem.st_uid);
-                if (pPasswd) strcpy(psd->str.u.cStr, pPasswd->pw_name);
-                break;
-            case 6:
-                pGroup = getgrgid(statItem.st_gid);
-                if (pGroup) strcpy(psd->str.u.cStr, pGroup->gr_name);
-                break;
-        }
+    if (!pidl)
+        return SHELL32_GetColumnDetails(unixfs_header, iColumn, psd);
+
+    if (iColumn == 4 || iColumn == 5 || iColumn == 6) {
+        char szPath[FILENAME_MAX];
+        strcpy(szPath, This->m_pszPath);
+        if (!UNIXFS_filename_from_shitemid(pidl, szPath + strlen(szPath)))
+            return E_INVALIDARG;
+        if (stat(szPath, &statItem))
+            return E_INVALIDARG;
+    }
+
+    psd->str.u.cStr[0] = '\0';
+    psd->str.uType = STRRET_CSTR;
+
+    switch (iColumn) {
+        case 0:
+            hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL|SHGDN_INFOLDER, &psd->str);
+            break;
+        case 1:
+            _ILGetFileSize(pidl, psd->str.u.cStr, MAX_PATH);
+            break;
+        case 2:
+            _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
+            break;
+        case 3:
+            _ILGetFileDate(pidl, psd->str.u.cStr, MAX_PATH);
+            break;
+        case 4:
+            psd->str.u.cStr[0] = S_ISDIR(statItem.st_mode) ? 'd' : '-';
+            psd->str.u.cStr[1] = (statItem.st_mode & S_IRUSR) ? 'r' : '-';
+            psd->str.u.cStr[2] = (statItem.st_mode & S_IWUSR) ? 'w' : '-';
+            psd->str.u.cStr[3] = (statItem.st_mode & S_IXUSR) ? 'x' : '-';
+            psd->str.u.cStr[4] = (statItem.st_mode & S_IRGRP) ? 'r' : '-';
+            psd->str.u.cStr[5] = (statItem.st_mode & S_IWGRP) ? 'w' : '-';
+            psd->str.u.cStr[6] = (statItem.st_mode & S_IXGRP) ? 'x' : '-';
+            psd->str.u.cStr[7] = (statItem.st_mode & S_IROTH) ? 'r' : '-';
+            psd->str.u.cStr[8] = (statItem.st_mode & S_IWOTH) ? 'w' : '-';
+            psd->str.u.cStr[9] = (statItem.st_mode & S_IXOTH) ? 'x' : '-';
+            psd->str.u.cStr[10] = '\0';
+            break;
+        case 5:
+            pPasswd = getpwuid(statItem.st_uid);
+            if (pPasswd) strcpy(psd->str.u.cStr, pPasswd->pw_name);
+            break;
+        case 6:
+            pGroup = getgrgid(statItem.st_gid);
+            if (pGroup) strcpy(psd->str.u.cStr, pGroup->gr_name);
+            break;
     }
     
     return hr;

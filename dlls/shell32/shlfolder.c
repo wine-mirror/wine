@@ -30,6 +30,8 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "winerror.h"
 #include "windef.h"
@@ -540,6 +542,16 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
     }
     ILFree (firstpidl);
     return nReturn;
+}
+
+HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details)
+{
+    details->fmt = data[column].fmt;
+    details->cxChar = data[column].cxChar;
+    details->str.uType = STRRET_CSTR;
+    LoadStringA (shell32_hInstance, data[column].colnameid, details->str.u.cStr, MAX_PATH);
+
+    return S_OK;
 }
 
 /***********************************************************************

@@ -65,20 +65,21 @@ typedef struct {
 static const IShellFolder2Vtbl vt_ShellFolder2;
 static const IPersistFolder2Vtbl vt_NP_PersistFolder2;
 
-
-#define _ICOM_THIS_From_IPersistFolder2(class, name) class* This = \
-    (class*)(((char*)name) - FIELD_OFFSET(IGenericSFImpl, lpVtblPersistFolder2))
+static inline IGenericSFImpl *impl_from_IPersistFolder2(IPersistFolder2 *iface)
+{
+    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpVtblPersistFolder2));
+}
 
 #define _IUnknown_(This)        ((IUnknown*)&(This)->lpVtbl)
 #define _IShellFolder_(This)    ((IShellFolder*)&(This)->lpVtbl)
 #define _IPersistFolder2_(This) (&(This)->lpVtblPersistFolder2)
 
-static const shvheader NetworkPlacesSFHeader[] = {
+static const shvheader networkplaces_header[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
     {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10}
 };
 
-#define NETWORKPLACESSHELLVIEWCOLUMNS 2
+#define NETWORKPLACESSHELLVIEWCOLUMNS sizeof(networkplaces_header)/sizeof(shvheader)
 
 /**************************************************************************
 *	ISF_NetworkPlaces_Constructor
@@ -534,11 +535,13 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnGetDefaultColumnState (
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
-    TRACE ("(%p)\n", This);
+    TRACE ("(%p)->(%d %p)\n", This, iColumn, pcsFlags);
 
     if (!pcsFlags || iColumn >= NETWORKPLACESSHELLVIEWCOLUMNS)
         return E_INVALIDARG;
-    *pcsFlags = NetworkPlacesSFHeader[iColumn].pcsFlags;
+
+    *pcsFlags = networkplaces_header[iColumn].pcsFlags;
+
     return S_OK;
 }
 
@@ -600,7 +603,7 @@ static const IShellFolder2Vtbl vt_ShellFolder2 = {
 static HRESULT WINAPI INPFldr_PersistFolder2_QueryInterface (IPersistFolder2 * iface,
                REFIID iid, LPVOID * ppvObj)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)\n", This);
 
@@ -612,7 +615,7 @@ static HRESULT WINAPI INPFldr_PersistFolder2_QueryInterface (IPersistFolder2 * i
  */
 static ULONG WINAPI INPFldr_PersistFolder2_AddRef (IPersistFolder2 * iface)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
@@ -624,7 +627,7 @@ static ULONG WINAPI INPFldr_PersistFolder2_AddRef (IPersistFolder2 * iface)
  */
 static ULONG WINAPI INPFldr_PersistFolder2_Release (IPersistFolder2 * iface)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
@@ -637,7 +640,7 @@ static ULONG WINAPI INPFldr_PersistFolder2_Release (IPersistFolder2 * iface)
 static HRESULT WINAPI INPFldr_PersistFolder2_GetClassID (
                IPersistFolder2 * iface, CLSID * lpClassId)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)\n", This);
 
@@ -657,7 +660,7 @@ static HRESULT WINAPI INPFldr_PersistFolder2_GetClassID (
 static HRESULT WINAPI INPFldr_PersistFolder2_Initialize (
                IPersistFolder2 * iface, LPCITEMIDLIST pidl)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)->(%p)\n", This, pidl);
 
@@ -670,7 +673,7 @@ static HRESULT WINAPI INPFldr_PersistFolder2_Initialize (
 static HRESULT WINAPI INPFldr_PersistFolder2_GetCurFolder (
                IPersistFolder2 * iface, LPITEMIDLIST * pidl)
 {
-    _ICOM_THIS_From_IPersistFolder2 (IGenericSFImpl, iface);
+    IGenericSFImpl *This = impl_from_IPersistFolder2(iface);
 
     TRACE ("(%p)->(%p)\n", This, pidl);
 

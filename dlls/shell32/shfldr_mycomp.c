@@ -86,14 +86,14 @@ static inline IMyComputerFolderImpl *impl_from_IPersistFolder2( IPersistFolder2 
 *   IShellFolder [MyComputer] implementation
 */
 
-static const shvheader MyComputerSFHeader[] = {
+static const shvheader mycomputer_header[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
     {IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
     {IDS_SHV_COLUMN6, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
     {IDS_SHV_COLUMN7, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
 };
 
-#define MYCOMPUTERSHELLVIEWCOLUMNS 4
+#define MYCOMPUTERSHELLVIEWCOLUMNS sizeof(mycomputer_header)/sizeof(shvheader)
 
 /**************************************************************************
 *    ISF_MyComputer_Constructor
@@ -809,11 +809,13 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDefaultColumnState (
 {
     IMyComputerFolderImpl *This = (IMyComputerFolderImpl *)iface;
 
-    TRACE ("(%p)\n", This);
+    TRACE ("(%p)->(%d %p)\n", This, iColumn, pcsFlags);
 
     if (!pcsFlags || iColumn >= MYCOMPUTERSHELLVIEWCOLUMNS)
         return E_INVALIDARG;
-    *pcsFlags = MyComputerSFHeader[iColumn].pcsFlags;
+
+    *pcsFlags = mycomputer_header[iColumn].pcsFlags;
+
     return S_OK;
 }
 
@@ -826,11 +828,13 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsEx (IShellFolder2 * iface,
 }
 
 /* FIXME: drive size >4GB is rolling over */
-static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 * iface,
-               LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS * psd)
+static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
+               LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
 {
     IMyComputerFolderImpl *This = (IMyComputerFolderImpl *)iface;
-    HRESULT hr;
+    char szPath[MAX_PATH];
+    ULARGE_INTEGER ulBytes;
+    HRESULT hr = S_OK;
 
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
@@ -838,23 +842,13 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 * iface,
         return E_INVALIDARG;
 
     if (!pidl)
-    {
-        psd->fmt = MyComputerSFHeader[iColumn].fmt;
-        psd->cxChar = MyComputerSFHeader[iColumn].cxChar;
-        psd->str.uType = STRRET_CSTR;
-        LoadStringA (shell32_hInstance, MyComputerSFHeader[iColumn].colnameid,
-                     psd->str.u.cStr, MAX_PATH);
-        return S_OK;
-    }
-    else
-    {
-        char szPath[MAX_PATH];
-        ULARGE_INTEGER ulBytes;
+        return SHELL32_GetColumnDetails(mycomputer_header, iColumn, psd);
 
-        psd->str.u.cStr[0] = 0x00;
-        psd->str.uType = STRRET_CSTR;
-        switch (iColumn)
-        {
+    psd->str.u.cStr[0] = 0;
+    psd->str.uType = STRRET_CSTR;
+
+    switch (iColumn)
+    {
         case 0:        /* name */
             hr = IShellFolder_GetDisplayNameOf (iface, pidl,
                        SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
@@ -878,8 +872,6 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 * iface,
                 StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
             }
             break;
-        }
-        hr = S_OK;
     }
 
     return hr;
