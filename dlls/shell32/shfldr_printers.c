@@ -42,6 +42,8 @@ typedef struct {
     const IShellFolder2Vtbl   *lpVtbl;
     const IPersistFolder2Vtbl *lpvtblPersistFolder2;
     LONG ref;
+
+    LPITEMIDLIST pidl;
 } IPrintersFolderImpl;
 
 static inline IPrintersFolderImpl *impl_from_IPersistFolder2(IPersistFolder2 *iface)
@@ -111,6 +113,7 @@ static ULONG WINAPI IShellFolder_Printers_fnRelease (IShellFolder2 * iface)
     if (!refCount)
     {
         TRACE ("-- destroying IShellFolder(%p)\n", This);
+        SHFree(This->pidl);
         LocalFree (This);
     }
     return refCount;
@@ -380,15 +383,24 @@ static HRESULT WINAPI IPersistFolder2_Printers_fnGetClassID(IPersistFolder2 *ifa
 static HRESULT WINAPI IPersistFolder2_Printers_fnInitialize(IPersistFolder2 *iface, LPCITEMIDLIST pidl)
 {
     IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pidl);
+
+    SHFree(This->pidl);
+    This->pidl = ILClone(pidl);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IPersistFolder2_Printers_fnGetCurFolder(IPersistFolder2 *iface, LPITEMIDLIST *pidl)
 {
     IPrintersFolderImpl *This = impl_from_IPersistFolder2(iface);
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pidl);
+
+    *pidl = ILClone(This->pidl);
+
+    return *pidl ? S_OK : S_FALSE;
 }
 
 static const IPersistFolder2Vtbl vtbl_PersistFolder2 =
@@ -417,6 +429,7 @@ HRESULT WINAPI Printers_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * 
         return E_OUTOFMEMORY;
 
     sf->ref = 0;
+    sf->pidl = NULL;
     sf->lpVtbl = &vtbl_ShellFolder2;
     sf->lpvtblPersistFolder2 = &vtbl_PersistFolder2;
 

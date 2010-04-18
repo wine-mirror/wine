@@ -125,8 +125,10 @@ static void test_parse_for_control_panel(void)
 static void test_printers_folder(void)
 {
     IShellFolder2 *folder;
+    IPersistFolder2 *pf;
     SHELLDETAILS details;
     SHCOLSTATEF state;
+    LPITEMIDLIST pidl1, pidl2;
     INT i;
     HRESULT hr;
 
@@ -145,6 +147,7 @@ if (0)
     /* crashes on XP */
     hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, NULL);
     hr = IShellFolder2_GetDefaultColumnState(folder, 0, NULL);
+    hr = IPersistFolder2_GetCurFolder(pf, NULL);
 }
 
     /* 5 columns defined */
@@ -173,6 +176,30 @@ if (0)
             ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
     }
 
+    /* default pidl */
+    hr = IShellFolder2_QueryInterface(folder, &IID_IPersistFolder2, (void**)&pf);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* not initialized */
+    pidl1 = (void*)0xdeadbeef;
+    hr = IPersistFolder2_GetCurFolder(pf, &pidl1);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(pidl1 == NULL, "got %p\n", pidl1);
+
+    hr = SHGetSpecialFolderLocation(NULL, CSIDL_PRINTERS, &pidl2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IPersistFolder2_Initialize(pf, pidl2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IPersistFolder2_GetCurFolder(pf, &pidl1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(ILIsEqual(pidl1, pidl2), "expected same PIDL\n");
+    IPersistFolder2_Release(pf);
+
+    ILFree(pidl1);
+    ILFree(pidl2);
     IShellFolder2_Release(folder);
 
     CoUninitialize();
