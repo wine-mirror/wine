@@ -30,6 +30,48 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pSHGetThreadRef)(IUnknown**);
+static HRESULT (WINAPI *pSHSetThreadRef)(IUnknown*);
+
+static DWORD AddRef_called;
+
+typedef struct
+{
+  void* lpVtbl;
+  LONG  *ref;
+} threadref;
+
+static HRESULT WINAPI threadref_QueryInterface(threadref *This, REFIID riid, LPVOID *ppvObj)
+{
+    trace("unexpected QueryInterface(%p, %p, %p) called\n", This, riid, ppvObj);
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI threadref_AddRef(threadref *This)
+{
+    AddRef_called++;
+    return InterlockedIncrement(This->ref);
+}
+
+static ULONG WINAPI threadref_Release(threadref *This)
+{
+    trace("unexpected Release(%p) called\n", This);
+    return InterlockedDecrement(This->ref);
+}
+
+/* VTable */
+static void* threadref_vt[] =
+{
+  threadref_QueryInterface,
+  threadref_AddRef,
+  threadref_Release
+};
+
+static void init_threadref(threadref* iface, LONG *refcount)
+{
+  iface->lpVtbl = (void*)threadref_vt;
+  iface->ref = refcount;
+}
 
 /* ##### */
 
@@ -55,12 +97,46 @@ static void test_SHGetThreadRef(void)
     }
 }
 
+static void test_SHSetThreadRef(void)
+{
+    threadref ref;
+    IUnknown *punk;
+    HRESULT hr;
+    LONG refcount;
+
+    /* Not present before IE 5 */
+    if (!pSHSetThreadRef) {
+        win_skip("SHSetThreadRef not found\n");
+        return;
+    }
+
+    init_threadref(&ref, &refcount);
+    AddRef_called = 0;
+    refcount = 1;
+    hr = pSHSetThreadRef( (IUnknown *)&ref);
+    ok( (hr == S_OK) && (refcount == 1) && (!AddRef_called),
+        "got 0x%x with %d, %d (expected S_OK with 1, 0)\n",
+        hr, refcount, AddRef_called);
+
+    /* Read back IUnkonwn */
+    AddRef_called = 0;
+    refcount = 1;
+    punk = NULL;
+    hr = pSHGetThreadRef(&punk);
+    ok( (hr == S_OK) && (punk == (IUnknown *)&ref) && (refcount == 2) && (AddRef_called == 1),
+        "got 0x%x and %p with %d, %d (expected S_OK and %p with 2, 1)\n",
+        hr, punk, refcount, AddRef_called, &ref);
+
+}
+
 START_TEST(thread)
 {
     HMODULE hshlwapi = GetModuleHandleA("shlwapi.dll");
 
     pSHGetThreadRef = (void *) GetProcAddress(hshlwapi, "SHGetThreadRef");
+    pSHSetThreadRef = (void *) GetProcAddress(hshlwapi, "SHSetThreadRef");
 
     test_SHGetThreadRef();
+    test_SHSetThreadRef();
 
 }
