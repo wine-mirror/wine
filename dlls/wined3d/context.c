@@ -423,7 +423,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
             unsigned int w = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Width;
             unsigned int h = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Height;
 
-            surface_set_compatible_renderbuffer(device->stencilBufferTarget, w, h);
+            surface_set_compatible_renderbuffer((IWineD3DSurfaceImpl *)device->stencilBufferTarget, w, h);
         }
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, (IWineD3DSurfaceImpl *)device->stencilBufferTarget, TRUE);
 

@@ -873,15 +873,15 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
 /* GL locking is done by the caller */
-void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
+void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, unsigned int width, unsigned int height)
+{
+    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
     renderbuffer_entry_t *entry;
     GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
 
-    src_width = This->pow2Width;
-    src_height = This->pow2Height;
+    src_width = surface->pow2Width;
+    src_height = surface->pow2Height;
 
     /* A depth stencil smaller than the render target is not valid */
     if (width > src_width || height > src_height) return;
@@ -890,32 +890,35 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
             || (width == src_width && height == src_height))
     {
-        This->current_renderbuffer = NULL;
+        surface->current_renderbuffer = NULL;
         return;
     }
 
     /* Look if we've already got a renderbuffer of the correct dimensions */
-    LIST_FOR_EACH_ENTRY(entry, &This->renderbuffers, renderbuffer_entry_t, entry) {
-        if (entry->width == width && entry->height == height) {
+    LIST_FOR_EACH_ENTRY(entry, &surface->renderbuffers, renderbuffer_entry_t, entry)
+    {
+        if (entry->width == width && entry->height == height)
+        {
             renderbuffer = entry->id;
-            This->current_renderbuffer = entry;
+            surface->current_renderbuffer = entry;
             break;
         }
     }
 
-    if (!renderbuffer) {
+    if (!renderbuffer)
+    {
         gl_info->fbo_ops.glGenRenderbuffers(1, &renderbuffer);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
         gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER,
-                This->resource.format_desc->glInternal, width, height);
+                surface->resource.format_desc->glInternal, width, height);
 
         entry = HeapAlloc(GetProcessHeap(), 0, sizeof(renderbuffer_entry_t));
         entry->width = width;
         entry->height = height;
         entry->id = renderbuffer;
-        list_add_head(&This->renderbuffers, &entry->entry);
+        list_add_head(&surface->renderbuffers, &entry->entry);
 
-        This->current_renderbuffer = entry;
+        surface->current_renderbuffer = entry;
     }
 
     checkGLcall("set_compatible_renderbuffer");

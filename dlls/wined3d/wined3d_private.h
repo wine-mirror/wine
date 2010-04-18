@@ -2680,7 +2680,7 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 void surface_load_ds_location(IWineD3DSurfaceImpl *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location) DECLSPEC_HIDDEN;
-void surface_set_compatible_renderbuffer(IWineD3DSurface *iface,
+void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target) DECLSPEC_HIDDEN;
