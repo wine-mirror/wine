@@ -835,6 +835,172 @@ static void test_message_null_buffer_wide(void)
     ok(error == ERROR_INVALID_PARAMETER, "last error %u\n", error);
 }
 
+static void test_message_allocate_buffer(void)
+{
+    DWORD ret;
+    char *buf;
+
+    /* While MSDN suggests that FormatMessageA allocates a buffer whose size is
+     * the larger of the output string and the requested buffer size, the tests
+     * will not try to determine the actual size of the buffer allocated, as
+     * the return value of LocalSize cannot be trusted for the purpose, and it should
+     * in any case be safe for FormatMessageA to allocate in the manner that
+     * MSDN suggests. */
+
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "test", 0, 0, (char *)&buf, 0, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (char *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (char *)0xdeadbeef)
+    {
+        ok(!strcmp("test", buf),
+           "Expected buffer to contain \"test\", got %s\n", buf);
+        LocalFree(buf);
+    }
+
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "test", 0, 0, (char *)&buf, strlen("test"), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (char *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (char *)0xdeadbeef)
+    {
+        ok(!strcmp("test", buf),
+           "Expected buffer to contain \"test\", got %s\n", buf);
+        LocalFree(buf);
+    }
+
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "test", 0, 0, (char *)&buf, strlen("test") + 1, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (char *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+   if (buf != NULL && buf != (char *)0xdeadbeef)
+    {
+        ok(!strcmp("test", buf),
+           "Expected buffer to contain \"test\", got %s\n", buf);
+        LocalFree(buf);
+    }
+
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "test", 0, 0, (char *)&buf, strlen("test") + 2, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (char *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (char *)0xdeadbeef)
+    {
+        ok(!strcmp("test", buf),
+           "Expected buffer to contain \"test\", got %s\n", buf);
+        LocalFree(buf);
+    }
+
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "test", 0, 0, (char *)&buf, 1024, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (char *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (char *)0xdeadbeef)
+    {
+        ok(!strcmp("test", buf),
+           "Expected buffer to contain \"test\", got %s\n", buf);
+        LocalFree(buf);
+    }
+}
+
+static void test_message_allocate_buffer_wide(void)
+{
+    static const WCHAR test[] = {'t','e','s','t',0};
+
+    DWORD ret;
+    WCHAR *buf;
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
+    /* While MSDN suggests that FormatMessageA allocates a buffer whose size is
+     * the larger of the output string and the requested buffer size, the tests
+     * will not try to determine the actual size of the buffer allocated, as
+     * the return value of LocalSize cannot be trusted for the purpose, and it should
+     * in any case be safe for FormatMessageA to allocate in the manner that
+     * MSDN suggests. */
+
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         test, 0, 0, (WCHAR *)&buf, 0, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
+    {
+        ok(!lstrcmpW(test, buf),
+           "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
+        LocalFree(buf);
+    }
+
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         test, 0, 0, (WCHAR *)&buf, sizeof(test)/sizeof(WCHAR) - 1, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
+    {
+        ok(!lstrcmpW(test, buf),
+           "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
+        LocalFree(buf);
+    }
+
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         test, 0, 0, (WCHAR *)&buf, sizeof(test)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
+    {
+        ok(!lstrcmpW(test, buf),
+           "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
+        LocalFree(buf);
+    }
+
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         test, 0, 0, (WCHAR *)&buf, sizeof(test)/sizeof(WCHAR) + 1, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
+    {
+        ok(!lstrcmpW(test, buf),
+           "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
+        LocalFree(buf);
+    }
+
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         test, 0, 0, (WCHAR *)&buf, 1024, NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
+       "Expected output buffer pointer to be valid\n");
+    if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
+    {
+        ok(!lstrcmpW(test, buf),
+           "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
+        LocalFree(buf);
+    }
+}
+
 static void test_message_from_hmodule(void)
 {
     DWORD ret, error;
@@ -903,5 +1069,7 @@ START_TEST(format_msg)
     test_message_insufficient_buffer_wide();
     test_message_null_buffer();
     test_message_null_buffer_wide();
+    test_message_allocate_buffer();
+    test_message_allocate_buffer_wide();
     test_message_from_hmodule();
 }
