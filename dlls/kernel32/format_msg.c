@@ -260,118 +260,10 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
 }
 
 /**********************************************************************
- *	format_messageA    (internal)
+ *	format_message    (internal)
  */
-static LPWSTR format_messageA( DWORD dwFlags, LPCWSTR fmtstr, struct format_args *format_args )
-{
-    LPWSTR target,t;
-    DWORD talloced;
-    LPCWSTR f;
-    DWORD width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
-    BOOL eos = FALSE;
-    WCHAR ch;
-
-    target = t = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 * sizeof(WCHAR));
-    talloced = 100;
-
-#define ADD_TO_T(c) do { \
-        *t++=c;\
-        if ((DWORD)(t-target) == talloced) {\
-            target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2*sizeof(WCHAR));\
-            t = target+talloced;\
-            talloced*=2;\
-      }\
-} while (0)
-
-    f = fmtstr;
-    if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS) {
-        while (*f && !eos)
-            ADD_TO_T(*f++);
-    }
-    else {
-        while (*f && !eos) {
-            if (*f=='%') {
-                int insertnr;
-                WCHAR *str,*x;
-
-                f++;
-                if (!*f) {
-                    ADD_TO_T('%');
-                    continue;
-                }
-                switch (*f) {
-                case '1':case '2':case '3':case '4':case '5':
-                case '6':case '7':case '8':case '9':
-                    insertnr = *f-'0';
-                    switch (f[1]) {
-                    case '0':case '1':case '2':case '3':
-                    case '4':case '5':case '6':case '7':
-                    case '8':case '9':
-                        f++;
-                        insertnr = insertnr*10 + *f-'0';
-                        f++;
-                        break;
-                    default:
-                        f++;
-                        break;
-                    }
-                    f = format_insert( FALSE, insertnr, f, dwFlags, format_args, &str );
-                    for (x = str; *x; x++) ADD_TO_T(*x);
-                    HeapFree( GetProcessHeap(), 0, str );
-                    break;
-                case 'n':
-                    ADD_TO_T('\r');
-                    ADD_TO_T('\n');
-                    f++;
-                    break;
-                case '0':
-                    eos = TRUE;
-                    f++;
-                    break;
-                default:
-                    ADD_TO_T(*f++);
-                    break;
-                }
-            } else {
-                ch = *f;
-                f++;
-                if (ch == '\r') {
-                    if (*f == '\n')
-                        f++;
-                    if(width)
-                        ADD_TO_T(' ');
-                    else
-                    {
-                        ADD_TO_T('\r');
-                        ADD_TO_T('\n');
-                    }
-                } else {
-                    if (ch == '\n')
-                    {
-                        if(width)
-                            ADD_TO_T(' ');
-                        else
-                        {
-                            ADD_TO_T('\r');
-                            ADD_TO_T('\n');
-                        }
-                    }
-                    else
-                        ADD_TO_T(ch);
-                }
-            }
-        }
-    }
-    *t = '\0';
-
-    return target;
-}
-#undef ADD_TO_T
-
-/**********************************************************************
- *	format_messageW    (internal)
- */
-static LPWSTR format_messageW( DWORD dwFlags, LPCWSTR fmtstr, struct format_args *format_args )
+static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr,
+                              struct format_args *format_args )
 {
     LPWSTR target,t;
     DWORD talloced;
@@ -425,7 +317,7 @@ static LPWSTR format_messageW( DWORD dwFlags, LPCWSTR fmtstr, struct format_args
                         f++;
                         break;
                     }
-                    f = format_insert( TRUE, insertnr, f, dwFlags, format_args, &str );
+                    f = format_insert( unicode_caller, insertnr, f, dwFlags, format_args, &str );
                     for (x = str; *x; x++) ADD_TO_T(*x);
                     HeapFree( GetProcessHeap(), 0, str );
                     break;
@@ -540,7 +432,7 @@ DWORD WINAPI FormatMessageA(
         if (!from) return 0;
     }
 
-    target = format_messageA( dwFlags, from, &format_args );
+    target = format_message( FALSE, dwFlags, from, &format_args );
 
     TRACE("-- %s\n", debugstr_w(target));
     destlength = WideCharToMultiByte(CP_ACP, 0, target, -1, NULL, 0, NULL, NULL);
@@ -630,7 +522,7 @@ DWORD WINAPI FormatMessageW(
         if (!from) return 0;
     }
 
-    target = format_messageW( dwFlags, from, &format_args );
+    target = format_message( TRUE, dwFlags, from, &format_args );
 
     talloced = strlenW(target)+1;
     TRACE("-- %s\n",debugstr_w(target));
