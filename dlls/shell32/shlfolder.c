@@ -548,8 +548,20 @@ HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS
 {
     details->fmt = data[column].fmt;
     details->cxChar = data[column].cxChar;
-    details->str.uType = STRRET_CSTR;
-    LoadStringA (shell32_hInstance, data[column].colnameid, details->str.u.cStr, MAX_PATH);
+
+    if (SHELL_OsIsUnicode())
+    {
+        details->str.u.pOleStr = CoTaskMemAlloc(MAX_PATH * sizeof(WCHAR));
+        if (!details->str.u.pOleStr) return E_OUTOFMEMORY;
+
+        details->str.uType = STRRET_WSTR;
+        LoadStringW(shell32_hInstance, data[column].colnameid, details->str.u.pOleStr, MAX_PATH);
+    }
+    else
+    {
+        details->str.uType = STRRET_CSTR;
+        LoadStringA(shell32_hInstance, data[column].colnameid, details->str.u.cStr, MAX_PATH);
+    }
 
     return S_OK;
 }

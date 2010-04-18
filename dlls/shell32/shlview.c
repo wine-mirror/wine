@@ -387,42 +387,44 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 *
 * - adds all needed columns to the shellview
 */
-static BOOL ShellView_InitList(IShellViewImpl * This)
+static void ShellView_InitList(IShellViewImpl *This)
 {
-	LVCOLUMNW	lvColumn;
-	SHELLDETAILS	sd;
-	int	i;
-	WCHAR	szTemp[50];
+    LVCOLUMNW lvColumn;
+    SHELLDETAILS sd;
+    WCHAR nameW[50];
 
-	TRACE("%p\n",This);
+    TRACE("(%p)\n", This);
 
-	SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
+    SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
 
-	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
-	lvColumn.pszText = szTemp;
+    lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
+    lvColumn.pszText = nameW;
 
-	if (This->pSF2Parent)
-	{
-	  for (i=0; 1; i++)
-	  {
-            if (FAILED(IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd)))
-	      break;
+    if (This->pSF2Parent)
+    {
+        HRESULT hr;
+        INT i;
+
+        for (i = 0; 1; i++)
+        {
+            hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd);
+            if (FAILED(hr)) break;
+
 	    lvColumn.fmt = sd.fmt;
 	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */
-	    StrRetToStrNW( szTemp, 50, &sd.str, NULL);
+	    StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
 	    SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
-	  }
-	}
-	else
-	{
-	  FIXME("no SF2\n");
-	}
+        }
+    }
+    else
+    {
+        FIXME("no SF2\n");
+    }
 
-	SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
-	SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
-
-	return TRUE;
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
 }
+
 /**********************************************************
 * ShellView_CompareItems()
 *
@@ -688,10 +690,8 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
 
     if (ShellView_CreateList(This))
     {
-        if (ShellView_InitList(This))
-        {
-	    ShellView_FillList(This);
-        }
+        ShellView_InitList(This);
+        ShellView_FillList(This);
     }
 
     hr = IShellView2_QueryInterface(iface, &IID_IDropTarget, (LPVOID*)&pdt);
