@@ -110,6 +110,11 @@ static void test_SHSetThreadRef(void)
         return;
     }
 
+    /* start with a clean state */
+    hr = pSHSetThreadRef(NULL);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+    /* build and set out object */
     init_threadref(&ref, &refcount);
     AddRef_called = 0;
     refcount = 1;
@@ -118,7 +123,7 @@ static void test_SHSetThreadRef(void)
         "got 0x%x with %d, %d (expected S_OK with 1, 0)\n",
         hr, refcount, AddRef_called);
 
-    /* Read back IUnkonwn */
+    /* read back our object */
     AddRef_called = 0;
     refcount = 1;
     punk = NULL;
@@ -126,6 +131,15 @@ static void test_SHSetThreadRef(void)
     ok( (hr == S_OK) && (punk == (IUnknown *)&ref) && (refcount == 2) && (AddRef_called == 1),
         "got 0x%x and %p with %d, %d (expected S_OK and %p with 2, 1)\n",
         hr, punk, refcount, AddRef_called, &ref);
+
+    /* clear the onject pointer */
+    hr = pSHSetThreadRef(NULL);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+    /* verify, that our object is no longer known as ThreadRef */
+    hr = pSHGetThreadRef(&punk);
+    ok( (hr == E_NOINTERFACE) && (punk == NULL),
+        "got 0x%x and %p (expected E_NOINTERFACE and NULL)\n", hr, punk);
 
 }
 

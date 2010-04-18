@@ -131,13 +131,13 @@ typedef struct tagSHLWAPI_THREAD_INFO
  *
  * RETURNS
  *   Success: S_OK. lppUnknown is set to the object reference.
- *   Failure: E_NOINTERFACE, if an error occurs or lppUnknown is NULL.
+ *   Failure: E_NOINTERFACE, if an error occurs or no object is set
  */
 HRESULT WINAPI SHGetThreadRef(IUnknown **lppUnknown)
 {
   TRACE("(%p)\n", lppUnknown);
 
-  if (!lppUnknown || SHLWAPI_ThreadRef_index == TLS_OUT_OF_INDEXES)
+  if (SHLWAPI_ThreadRef_index == TLS_OUT_OF_INDEXES)
     return E_NOINTERFACE;
 
   *lppUnknown = TlsGetValue(SHLWAPI_ThreadRef_index);
@@ -159,13 +159,13 @@ HRESULT WINAPI SHGetThreadRef(IUnknown **lppUnknown)
  *
  * RETURNS
  *   Success: S_OK. lpUnknown is stored and can be retrieved by SHGetThreadRef()
- *   Failure: E_NOINTERFACE, if an error occurs or lpUnknown is NULL.
+ *   Failure: E_NOINTERFACE, if an error occurs
  */
 HRESULT WINAPI SHSetThreadRef(IUnknown *lpUnknown)
 {
   TRACE("(%p)\n", lpUnknown);
 
-  if (!lpUnknown || SHLWAPI_ThreadRef_index  == TLS_OUT_OF_INDEXES)
+  if (SHLWAPI_ThreadRef_index == TLS_OUT_OF_INDEXES)
     return E_NOINTERFACE;
 
   TlsSetValue(SHLWAPI_ThreadRef_index, lpUnknown);
