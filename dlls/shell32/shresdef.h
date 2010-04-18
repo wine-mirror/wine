@@ -42,6 +42,10 @@
 #define IDS_SHV_COLUMN11	17
 #define IDS_SHV_COLUMN_DELFROM  18
 #define IDS_SHV_COLUMN_DELDATE  19
+#define IDS_SHV_COL_DOCS        80
+#define IDS_SHV_COL_STATUS      81
+#define IDS_SHV_COL_LOCATION    82
+#define IDS_SHV_COL_MODEL       83
 
 #define IDS_DESKTOP		20
 #define IDS_MYCOMPUTER		21

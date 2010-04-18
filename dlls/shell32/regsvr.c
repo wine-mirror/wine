@@ -674,6 +674,13 @@ static struct regsvr_coclass const coclass_list[] = {
 	SHELLFOLDER_WANTSFORDISPLAY|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_HIDEASDELETE,
         SFGAO_FOLDER|SFGAO_HASSUBFOLDER,
     },
+    {   &CLSID_Printers,
+        "Printers and Faxes",
+        0,
+        NULL,
+        "shell32.dll",
+        "Apartment"
+    },
     { NULL }			/* list terminator */
 };
 

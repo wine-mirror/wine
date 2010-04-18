@@ -23,6 +23,9 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "shellapi.h"
@@ -119,9 +122,65 @@ static void test_parse_for_control_panel(void)
     ILFree(pidl);
 }
 
+static void test_printers_folder(void)
+{
+    IShellFolder2 *folder;
+    SHELLDETAILS details;
+    SHCOLSTATEF state;
+    INT i;
+    HRESULT hr;
+
+    CoInitialize( NULL );
+
+    hr = CoCreateInstance(&CLSID_Printers, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder2, (void**)&folder);
+    if (hr != S_OK)
+    {
+        win_skip("Failed to created IShellFolder2 for Printers folder\n");
+        CoUninitialize();
+        return;
+    }
+
+if (0)
+{
+    /* crashes on XP */
+    hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, NULL);
+    hr = IShellFolder2_GetDefaultColumnState(folder, 0, NULL);
+}
+
+    /* 5 columns defined */
+    hr = IShellFolder2_GetDetailsOf(folder, NULL, 6, &details);
+    ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
+
+    hr = IShellFolder2_GetDefaultColumnState(folder, 6, &state);
+    ok(broken(hr == E_NOTIMPL) || hr == E_INVALIDARG /* Win7 */, "got 0x%08x\n", hr);
+
+    for(i = 0; i < 6; i++)
+    {
+        hr = IShellFolder2_GetDetailsOf(folder, NULL, i, &details);
+        /* doesn't work on W2K */
+        if (hr == E_NOTIMPL) break;
+
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        /* all columns are left-aligned */
+        ok(details.fmt == LVCFMT_LEFT, "got 0x%x\n", details.fmt);
+
+        hr = IShellFolder2_GetDefaultColumnState(folder, i, &state);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        /* all columns are string except document count */
+        if (i == 1)
+            ok(state == (SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+        else
+            ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+    }
+
+    IShellFolder2_Release(folder);
+
+    CoUninitialize();
+}
 
 START_TEST(shfldr_special)
 {
     test_parse_for_entire_network();
     test_parse_for_control_panel();
+    test_printers_folder();
 }

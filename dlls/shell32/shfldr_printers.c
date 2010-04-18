@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -32,6 +33,9 @@
 #include "wine/debug.h"
 #include "debughlp.h"
 
+#include "shresdef.h"
+#include "shfldr.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
 typedef struct {
@@ -44,6 +48,17 @@ static inline IPrintersFolderImpl *impl_from_IPersistFolder2(IPersistFolder2 *if
 {
     return (IPrintersFolderImpl *)((char*)iface - FIELD_OFFSET(IPrintersFolderImpl, lpvtblPersistFolder2));
 }
+
+static const shvheader printers_header[] = {
+    { IDS_SHV_COLUMN8,      SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
+    { IDS_SHV_COL_DOCS,     SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
+    { IDS_SHV_COL_STATUS,   SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
+    { IDS_SHV_COLUMN9,      SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 30 },
+    { IDS_SHV_COL_LOCATION, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
+    { IDS_SHV_COL_MODEL,    SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 }
+};
+
+#define PRINTERS_FOLDER_COL_NUM sizeof(printers_header)/sizeof(shvheader)
 
 static HRESULT WINAPI IShellFolder_Printers_fnQueryInterface(IShellFolder2 *iface,
                REFIID riid, LPVOID *ppvObj)
@@ -255,11 +270,18 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultColumn (
 }
 
 static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultColumnState (
-               IShellFolder2 * iface, UINT iColumn, DWORD * pcsFlags)
+               IShellFolder2 *iface, UINT iColumn, DWORD *pcsFlags)
 {
     IPrintersFolderImpl *This = (IPrintersFolderImpl *)iface;
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, iColumn, pcsFlags);
+
+    if (iColumn >= PRINTERS_FOLDER_COL_NUM)
+        return E_INVALIDARG;
+
+    *pcsFlags = printers_header[iColumn].pcsFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsEx (IShellFolder2 * iface,
@@ -270,11 +292,28 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsEx (IShellFolder2 * ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsOf (IShellFolder2 * iface,
-               LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS * psd)
+static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsOf (IShellFolder2 *iface,
+               LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
 {
     IPrintersFolderImpl *This = (IPrintersFolderImpl *)iface;
-    FIXME("(%p)->(%p %i %p) stub\n", This, pidl, iColumn, psd);
+
+    TRACE("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
+
+    if (iColumn >= PRINTERS_FOLDER_COL_NUM)
+        return E_NOTIMPL;
+
+    if (!pidl)
+    {
+        psd->fmt = printers_header[iColumn].fmt;
+        psd->cxChar = printers_header[iColumn].cxChar;
+        psd->str.uType = STRRET_CSTR;
+        LoadStringA (shell32_hInstance, printers_header[iColumn].colnameid,
+                     psd->str.u.cStr, MAX_PATH);
+        return S_OK;
+    }
+
+    FIXME("unimplemented for supplied pidl\n");
+
     return E_NOTIMPL;
 }
 
