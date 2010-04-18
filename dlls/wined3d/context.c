@@ -1353,7 +1353,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     ret->current_rt = (IWineD3DSurface *)target;
     ret->tid = GetCurrentThreadId();
 
-    ret->render_offscreen = surface_is_offscreen((IWineD3DSurface *) target);
+    ret->render_offscreen = surface_is_offscreen(target);
     ret->draw_buffer_dirty = TRUE;
     ret->valid = 1;
 
@@ -1881,7 +1881,7 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
     IWineD3DDeviceImpl *device;
 
     device = ((IWineD3DSurfaceImpl *)rt)->resource.device;
-    if (!surface_is_offscreen(rt))
+    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)rt))
     {
         ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(rt));
@@ -2099,7 +2099,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_cont
 
     if (!target) return;
     else if (context->current_rt == target) return;
-    render_offscreen = surface_is_offscreen(target);
+    render_offscreen = surface_is_offscreen((IWineD3DSurfaceImpl *)target);
 
     context_set_render_offscreen(context, StateTable, render_offscreen);
 

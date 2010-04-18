@@ -4378,7 +4378,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     context = context_acquire(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!surface_is_offscreen((IWineD3DSurface *)target))
+        if (!surface_is_offscreen(target))
         {
             TRACE("Surface %p is onscreen\n", target);
 
@@ -5441,7 +5441,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     if (rect) IWineD3DSurface_LoadLocation(surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_ModifyLocation(surface, SFLAG_INDRAWABLE, TRUE);
 
-    if (!surface_is_offscreen(surface))
+    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)surface))
     {
         TRACE("Surface %p is onscreen\n", surface);
 
@@ -5463,12 +5463,11 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
     if (rect) {
         glEnable(GL_SCISSOR_TEST);
-        if(surface_is_offscreen(surface)) {
+        if (surface_is_offscreen((IWineD3DSurfaceImpl *)surface))
             glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
-        } else {
+        else
             glScissor(rect->x1, ((IWineD3DSurfaceImpl *)surface)->currentDesc.Height - rect->y2,
                     rect->x2 - rect->x1, rect->y2 - rect->y1);
-        }
         checkGLcall("glScissor");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
     } else {
@@ -5742,8 +5741,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
 
-    if (!surface_is_offscreen(src_surface)) context = context_acquire(This, src_surface, CTXUSAGE_RESOURCELOAD);
-    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(This, dst_surface, CTXUSAGE_RESOURCELOAD);
+    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)src_surface)) context = context_acquire(This, src_surface, CTXUSAGE_RESOURCELOAD);
+    else if (!surface_is_offscreen((IWineD3DSurfaceImpl *)dst_surface)) context = context_acquire(This, dst_surface, CTXUSAGE_RESOURCELOAD);
     else context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
 
     if (!context->valid)
@@ -5755,7 +5754,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
     gl_info = context->gl_info;
 
-    if (!surface_is_offscreen(src_surface))
+    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)src_surface))
     {
         GLenum buffer = surface_get_gl_buffer(src_surface);
 
@@ -5791,7 +5790,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     LEAVE_GL();
 
     /* Attach dst surface to dst fbo */
-    if (!surface_is_offscreen(dst_surface))
+    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)dst_surface))
     {
         GLenum buffer = surface_get_gl_buffer(dst_surface);
 
