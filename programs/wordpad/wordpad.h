@@ -185,11 +185,8 @@
 #define IDB_FORMATBAR 101
 
 #define IDI_WORDPAD 102
-#define IDI_RTF 103
-#define IDI_WRI 104
-#define IDI_TXT 105
 
-#define IDC_ZOOM 106
+#define IDC_ZOOM 103
 
 #define STRING_ALL_FILES 1400
 #define STRING_TEXT_FILES_TXT 1401

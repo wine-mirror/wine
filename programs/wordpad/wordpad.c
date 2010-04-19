@@ -703,16 +703,7 @@ static void preview_exit(HWND hMainWnd)
 
 static void set_fileformat(WPARAM format)
 {
-    HICON hIcon;
-    HINSTANCE hInstance = GetModuleHandleW(0);
     fileFormat = format;
-
-    if(format & SF_TEXT)
-        hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_TXT));
-    else
-        hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_RTF));
-
-    SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 
     set_bar_states();
     set_default_font();
@@ -2618,7 +2609,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 {
     INITCOMMONCONTROLSEX classes = {8, ICC_BAR_CLASSES|ICC_COOL_CLASSES|ICC_USEREX_CLASSES};
     HACCEL hAccel;
-    WNDCLASSW wc;
+    WNDCLASSEXW wc;
     MSG msg;
     RECT rc;
     UINT_PTR hPrevRulerProc;
@@ -2638,11 +2629,13 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.cbWndExtra = 4;
     wc.hInstance = hInstance;
     wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
+    wc.hIconSm = LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD), IMAGE_ICON,
+                            GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
     wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MAINMENU);
     wc.lpszClassName = wszMainWndClass;
-    RegisterClassW(&wc);
+    RegisterClassExW(&wc);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = preview_proc;
@@ -2650,11 +2643,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.cbWndExtra = 0;
     wc.hInstance = hInstance;
     wc.hIcon = NULL;
+    wc.hIconSm = NULL;
     wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = wszPreviewWndClass;
-    RegisterClassW(&wc);
+    RegisterClassExW(&wc);
 
     registry_read_winrect(&rc);
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_CLIPCHILDREN|WS_OVERLAPPEDWINDOW,

@@ -52,14 +52,5 @@ IDB_FORMATBAR BITMAP "formatbar.bmp"
 /* @makedep: wordpad.ico */
 IDI_WORDPAD ICON "wordpad.ico"
 
-/* @makedep: rtf.ico */
-IDI_RTF ICON "rtf.ico"
-
-/* @makedep: wri.ico */
-IDI_WRI ICON "wri.ico"
-
-/* @makedep: txt.ico */
-IDI_TXT ICON "txt.ico"
-
 /* @makedep: zoom.cur */
 IDC_ZOOM CURSOR "zoom.cur"
