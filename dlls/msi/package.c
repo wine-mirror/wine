@@ -1357,6 +1357,7 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 {
     MSIPACKAGE *package;
     MSIHANDLE handle = 0;
+    IUnknown *remote_unk;
     IWineMsiRemotePackage *remote_package;
 
     TRACE("(%d)\n",hInstall);
@@ -1367,10 +1368,19 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
         handle = alloc_msihandle( &package->db->hdr );
         msiobj_release( &package->hdr );
     }
-    else if ((remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall )))
+    else if ((remote_unk = msi_get_remote(hInstall)))
     {
-        IWineMsiRemotePackage_GetActiveDatabase(remote_package, &handle);
-        IWineMsiRemotePackage_Release(remote_package);
+        if (IUnknown_QueryInterface(remote_unk, &IID_IWineMsiRemotePackage,
+                                        (LPVOID *)&remote_package) == S_OK)
+        {
+            IWineMsiRemotePackage_GetActiveDatabase(remote_package, &handle);
+            IWineMsiRemotePackage_Release(remote_package);
+        }
+        else
+        {
+            WARN("remote handle %d is not a package\n", hInstall);
+        }
+        IUnknown_Release(remote_unk);
     }
 
     return handle;
