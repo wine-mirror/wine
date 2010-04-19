@@ -1048,13 +1048,13 @@
 @ stub _vsprintf_p
 @ stub _vsprintf_p_l
 @ stub _vsprintf_s_l
-@ stub _vswprintf
-@ stub _vswprintf_c
-@ stub _vswprintf_c_l
-@ stub _vswprintf_l
-@ stub _vswprintf_p
-@ stub _vswprintf_p_l
-@ stub _vswprintf_s_l
+@ cdecl _vswprintf(ptr long wstr ptr) msvcrt._vswprintf
+@ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
+@ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
+@ cdecl _vswprintf_l(ptr long wstr ptr ptr) msvcrt._vswprintf_l
+@ cdecl _vswprintf_p(ptr long wstr ptr) msvcrt._vswprintf
+@ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcrt._vswprintf_p_l
+@ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcrt._vswprintf_s_l
 @ stub _vwprintf_l
 @ stub _vwprintf_p
 @ stub _vwprintf_p_l
