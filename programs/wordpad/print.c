@@ -789,7 +789,6 @@ static void update_scaled_preview(HWND hMainWnd)
 
 void init_preview(HWND hMainWnd, LPWSTR wszFileName)
 {
-    HWND hwndPreview;
     HINSTANCE hInstance = GetModuleHandleW(0);
     preview.page = 1;
     preview.hdc = 0;
@@ -799,7 +798,7 @@ void init_preview(HWND hMainWnd, LPWSTR wszFileName)
     preview.zoomlevel = 0;
     preview_bar_show(hMainWnd, TRUE);
 
-    hwndPreview = CreateWindowExW(0, wszPreviewWndClass, NULL,
+    CreateWindowExW(0, wszPreviewWndClass, NULL,
             WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL,
             0, 0, 200, 10, hMainWnd, (HMENU)IDC_PREVIEW, hInstance, NULL);
 }
