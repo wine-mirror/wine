@@ -1224,7 +1224,7 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
 
 static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    static const WCHAR szCombo[] = { 'C','O','M','B','O','B','O','X',0 };
+    msi_control *control;
     DWORD attributes, style;
 
     style = CBS_AUTOHSCROLL | WS_TABSTOP | WS_GROUP | WS_CHILD;
@@ -1236,7 +1236,10 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
     else
         style |= CBS_DROPDOWN;
 
-    msi_dialog_add_control( dialog, rec, szCombo, style );
+    control = msi_dialog_add_control( dialog, rec, WC_COMBOBOXW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
     return ERROR_SUCCESS;
 }
 
