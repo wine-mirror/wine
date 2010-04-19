@@ -856,20 +856,20 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     if (present_parameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL)
     {
         TRACE("Creating depth/stencil buffer.\n");
-        if (!device->auto_depth_stencil_buffer)
+        if (!device->auto_depth_stencil)
         {
             hr = IWineD3DDeviceParent_CreateDepthStencilSurface(device->device_parent, parent,
                     swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
                     swapchain->presentParms.AutoDepthStencilFormat, swapchain->presentParms.MultiSampleType,
                     swapchain->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,
-                    &device->auto_depth_stencil_buffer);
+                    (IWineD3DSurface **)&device->auto_depth_stencil);
             if (FAILED(hr))
             {
                 WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
                 goto err;
             }
 
-            IWineD3DSurface_SetContainer(device->auto_depth_stencil_buffer, NULL);
+            IWineD3DSurface_SetContainer((IWineD3DSurface *)device->auto_depth_stencil, NULL);
         }
     }
 

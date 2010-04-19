@@ -1621,7 +1621,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     IWineD3DSurface_AddRef((IWineD3DSurface *)This->render_targets[0]);
 
     /* Depth Stencil support */
-    This->stencilBufferTarget = This->auto_depth_stencil_buffer;
+    This->stencilBufferTarget = (IWineD3DSurface *)This->auto_depth_stencil;
     if (NULL != This->stencilBufferTarget) {
         IWineD3DSurface_AddRef(This->stencilBufferTarget);
     }
@@ -1855,8 +1855,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 
     /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
-    if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
-        if(This->auto_depth_stencil_buffer != This->stencilBufferTarget)
+    if (This->stencilBufferTarget != NULL && IWineD3DSurface_Release(This->stencilBufferTarget))
+    {
+        if (This->auto_depth_stencil != (IWineD3DSurfaceImpl *)This->stencilBufferTarget)
             FIXME("(%p) Something's still holding the stencilBufferTarget\n",This);
     }
     This->stencilBufferTarget = NULL;
@@ -1867,12 +1868,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     TRACE("Setting rendertarget to NULL\n");
     This->render_targets[0] = NULL;
 
-    if (This->auto_depth_stencil_buffer) {
-        if (IWineD3DSurface_Release(This->auto_depth_stencil_buffer) > 0)
+    if (This->auto_depth_stencil)
+    {
+        if (IWineD3DSurface_Release((IWineD3DSurface *)This->auto_depth_stencil))
         {
             FIXME("(%p) Something's still holding the auto depth stencil buffer\n", This);
         }
-        This->auto_depth_stencil_buffer = NULL;
+        This->auto_depth_stencil = NULL;
     }
 
     context_release(context);
@@ -6436,7 +6438,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         pPresentationParameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow) {
         ERR("Cannot change the device window yet\n");
     }
-    if (pPresentationParameters->EnableAutoDepthStencil && !This->auto_depth_stencil_buffer) {
+    if (pPresentationParameters->EnableAutoDepthStencil && !This->auto_depth_stencil)
+    {
         HRESULT hrc;
 
         TRACE("Creating the depth stencil buffer\n");
@@ -6449,7 +6452,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
                 pPresentationParameters->MultiSampleType,
                 pPresentationParameters->MultiSampleQuality,
                 FALSE,
-                &This->auto_depth_stencil_buffer);
+                (IWineD3DSurface **)&This->auto_depth_stencil);
 
         if (FAILED(hrc)) {
             ERR("Failed to create the depth stencil buffer\n");
@@ -6460,7 +6463,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
 
     /* Reset the depth stencil */
     if (pPresentationParameters->EnableAutoDepthStencil)
-        IWineD3DDevice_SetDepthStencilSurface(iface, This->auto_depth_stencil_buffer);
+        IWineD3DDevice_SetDepthStencilSurface(iface, (IWineD3DSurface *)This->auto_depth_stencil);
     else
         IWineD3DDevice_SetDepthStencilSurface(iface, NULL);
 
@@ -6510,8 +6513,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
                 return hr;
             }
         }
-        if(This->auto_depth_stencil_buffer) {
-            hr = updateSurfaceDesc((IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer, pPresentationParameters);
+        if (This->auto_depth_stencil)
+        {
+            hr = updateSurfaceDesc(This->auto_depth_stencil, pPresentationParameters);
             if(FAILED(hr))
             {
                 IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);

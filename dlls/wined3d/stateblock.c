@@ -1083,11 +1083,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
 
     TRACE("Render states\n");
     /* Render states: */
-    if (ThisDevice->auto_depth_stencil_buffer != NULL) {
+    if (ThisDevice->auto_depth_stencil)
        IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_TRUE);
-    } else {
+    else
        IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_FALSE);
-    }
     IWineD3DDevice_SetRenderState(device, WINED3DRS_FILLMODE,         WINED3DFILL_SOLID);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SHADEMODE,        WINED3DSHADE_GOURAUD);
     lp.lp.wRepeatFactor = 0;

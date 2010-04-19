@@ -1667,7 +1667,7 @@ struct IWineD3DDeviceImpl
 
     /* Render Target Support */
     IWineD3DSurfaceImpl **render_targets;
-    IWineD3DSurface        *auto_depth_stencil_buffer;
+    IWineD3DSurfaceImpl *auto_depth_stencil;
     IWineD3DSurface        *stencilBufferTarget;
 
     /* palettes texture management */
