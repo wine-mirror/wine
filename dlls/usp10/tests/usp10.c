@@ -34,19 +34,28 @@
 static void test_ScriptItemize( void )
 {
     static const WCHAR test1[] = {'t', 'e', 's', 't',0};
+    /* Arabic, English*/
     static const WCHAR test2[] = {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0};
+    /* Thai */
     static const WCHAR test3[] =
 {0x0e04,0x0e27,0x0e32,0x0e21,0x0e1e,0x0e22,0x0e32,0x0e22,0x0e32, 0x0e21
 ,0x0e2d,0x0e22,0x0e39,0x0e48,0x0e17,0x0e35,0x0e48,0x0e44,0x0e2b,0x0e19
 ,0x0e04,0x0e27,0x0e32,0x0e21,0x0e2a, 0x0e33,0x0e40,0x0e23,0x0e47,0x0e08,
  0x0e2d,0x0e22,0x0e39,0x0e48,0x0e17,0x0e35,0x0e48,0x0e19,0x0e31,0x0e48,0x0e19,0};
     static const WCHAR test4[]  = {'1','2','3','-','5','2',' ','i','s',' ','7','1','.',0};
+    /* Arabic */
     static const WCHAR test5[]  =
 {0x0627,0x0644,0x0635,0x0651,0x0650,0x062d,0x0629,0x064f,' ',0x062a,0x064e,
 0x0627,0x062c,0x064c,' ',0x0639,0x064e,0x0644,0x0649,' ',
 0x0631,0x064f,0x0624,0x0648,0x0633,0x0650,' ',0x0627,0x0644
 ,0x0623,0x0635,0x0650,0x062d,0x0651,0x064e,0x0627,0x0621,0x0650,0};
-    SCRIPT_ITEM items[10];
+
+    /* Hebrew */
+    static const WCHAR test6[]  = {0x05e9, 0x05dc, 0x05d5, 0x05dd, '.',0};
+    static const WCHAR test7[]  = {'p','a','r','t',' ','o','n','e',' ',0x05d7, 0x05dc, 0x05e7, ' ', 0x05e9, 0x05ea, 0x05d9, 0x05d9, 0x05dd, ' ','p','a','r','t',' ','t','h','r','e','e', 0};
+    static const WCHAR test8[] = {0x0633, 0x0644, 0x0627, 0x0645,0};
+
+    SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
     HRESULT hr;
@@ -278,6 +287,120 @@ static void test_ScriptItemize( void )
 
     State.uBidiLevel = 1;
     hr = ScriptItemize(test5, 38, 10, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 1, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+
+    hr = ScriptItemize(test6, 5, 10, NULL, NULL, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 2, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 4, "Wrong CharPos \n");
+    ok(items[1].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[1].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[1].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 0;
+    hr = ScriptItemize(test6, 5, 10, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 2, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 4, "Wrong CharPos \n");
+    ok(items[1].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[1].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[1].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 1;
+    hr = ScriptItemize(test6, 5, 10, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 2, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 4, "Wrong CharPos \n");
+    todo_wine ok(items[1].a.fRTL == 1, "Wrong fRTL\n");
+    todo_wine ok(items[1].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    todo_wine ok(items[1].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+
+    hr = ScriptItemize(test7, 29, 15, NULL, NULL, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 3, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 9, "Wrong CharPos \n");
+    ok(items[1].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[1].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[1].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[2].iCharPos == 19, "Wrong CharPos \n");
+    ok(items[2].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[2].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[2].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 0;
+    hr = ScriptItemize(test7, 29, 15, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 3, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 9, "Wrong CharPos \n");
+    ok(items[1].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[1].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[1].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[2].iCharPos == 18, "Wrong CharPos\n");
+    ok(items[2].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[2].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[2].a.s.uBidiLevel == 0, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 1;
+    hr = ScriptItemize(test7, 29, 15, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 3, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 2, "Wrong BidiLevel\n");
+    ok(items[1].iCharPos == 8, "Wrong CharPos\n");
+    ok(items[1].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[1].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[1].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+    ok(items[2].iCharPos == 19, "Wrong CharPos \n");
+    ok(items[2].a.fRTL == 0, "Wrong fRTL\n");
+    ok(items[2].a.fLayoutRTL == 0, "Wrong fLayoutRTL\n");
+    ok(items[2].a.s.uBidiLevel == 2, "Wrong BidiLevel\n");
+
+    hr = ScriptItemize(test8, 4, 10, NULL, NULL, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 1, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 0;
+    hr = ScriptItemize(test8, 4, 10, &Control, &State, items, &nItems);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(nItems == 1, "Wrong number of items\n");
+    ok(items[0].iCharPos == 0, "Wrong CharPos \n");
+    ok(items[0].a.fRTL == 1, "Wrong fRTL\n");
+    ok(items[0].a.fLayoutRTL == 1, "Wrong fLayoutRTL\n");
+    ok(items[0].a.s.uBidiLevel == 1, "Wrong BidiLevel\n");
+
+    State.uBidiLevel = 1;
+    hr = ScriptItemize(test8, 4, 10, &Control, &State, items, &nItems);
     ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
     ok(nItems == 1, "Wrong number of items\n");
     ok(items[0].iCharPos == 0, "Wrong CharPos \n");

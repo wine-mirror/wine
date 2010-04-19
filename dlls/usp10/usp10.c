@@ -517,8 +517,11 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 #define Numeric_space 0x0020
 #define Arabic_start  0x0600
 #define Arabic_stop   0x06ff
+#define Hebrew_start  0x0590
+#define Hebrew_stop   0x05ff
 #define Latin_start   0x0001
 #define Latin_stop    0x024f
+#define Script_Hebrew  7
 #define Script_Arabic  6
 #define Script_Latin   1
 #define Script_Numeric 5
@@ -568,6 +571,9 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     if  (pwcInChars[cnt] >= Arabic_start && pwcInChars[cnt] <= Arabic_stop)
         pItems[index].a.eScript = Script_Arabic;
     else
+    if  (pwcInChars[cnt] >= Hebrew_start && pwcInChars[cnt] <= Hebrew_stop)
+        pItems[index].a.eScript = Script_Hebrew;
+    else
     if  (pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
         pItems[index].a.eScript = Script_Latin;
 
@@ -577,7 +583,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         pItems[index].a.fLayoutRTL = odd(levels[cnt]);
         pItems[index].a.s.uBidiLevel = levels[cnt];
     }
-    else if (pItems[index].a.eScript  == Script_Arabic)
+    else if ((pItems[index].a.eScript  == Script_Arabic) ||
+             (pItems[index].a.eScript  == Script_Hebrew))
     {
         pItems[index].a.s.uBidiLevel = 1;
         pItems[index].a.fRTL = 1;
@@ -608,6 +615,10 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
              || (New_Script == Script_Arabic && pwcInChars[cnt] == Numeric_space))
             New_Script = Script_Arabic;
         else
+        if  ((pwcInChars[cnt] >= Hebrew_start && pwcInChars[cnt] <= Hebrew_stop)
+             || (New_Script == Script_Hebrew && pwcInChars[cnt] == Numeric_space))
+            New_Script = Script_Hebrew;
+        else
         if  ((pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
              || (New_Script == Script_Latin && pwcInChars[cnt] == Numeric_space))
             New_Script = Script_Latin;
@@ -630,7 +641,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                 pItems[index].a.fLayoutRTL = odd(levels[cnt]);
                 pItems[index].a.s.uBidiLevel = levels[cnt];
             }
-            else if  (New_Script == Script_Arabic)
+            else if  ((New_Script == Script_Arabic) ||
+                      (New_Script == Script_Hebrew))
             {
                 pItems[index].a.s.uBidiLevel = 1;
                 pItems[index].a.fRTL = 1;
