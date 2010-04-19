@@ -330,7 +330,7 @@ static long read_thread_long( struct thread *thread, long *addr, long *data )
 static long write_thread_long( struct thread *thread, long *addr, long data, unsigned long mask )
 {
     long res;
-    if (mask != ~0u)
+    if (mask != ~0ul)
     {
         if (read_thread_long( thread, addr, &res ) == -1) return -1;
         data = (data & mask) | (res & ~mask);
