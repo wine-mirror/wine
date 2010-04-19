@@ -873,6 +873,15 @@ static int solaris_sigaction( int sig, const struct sigaction *new, struct sigac
 
 typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
+extern void clear_alignment_flag(void);
+__ASM_GLOBAL_FUNC( clear_alignment_flag,
+                   "pushfl\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   "andl $~0x40000,(%esp)\n\t"
+                   "popfl\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   "ret" )
+
 
 /***********************************************************************
  *           init_handler
@@ -883,6 +892,8 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
     TEB *teb = get_current_teb();
+
+    clear_alignment_flag();
 
     /* get %fs and %gs at time of the fault */
 #ifdef FS_sig
