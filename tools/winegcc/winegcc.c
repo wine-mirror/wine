@@ -360,6 +360,7 @@ static void compile(struct options* opts, const char* lang)
 
     if (gcc_defs)
     {
+        int fastcall_done = 0;
         if (opts->target_cpu == CPU_x86_64)
         {
             strarray_add(comp_args, "-D__stdcall=__attribute__((ms_abi))");
@@ -368,6 +369,7 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-D_cdecl=__attribute__((ms_abi))");
             strarray_add(comp_args, "-D__fastcall=__attribute__((ms_abi))");
             strarray_add(comp_args, "-D_fastcall=__attribute__((ms_abi))");
+            fastcall_done = 1;
         }
         else if (opts->target_platform == PLATFORM_APPLE)
         {
@@ -385,8 +387,11 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
         }
 
-	strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
-	strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
+	if (!fastcall_done)
+        {
+            strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
+            strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
+        }
 	strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
 	strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
 	strarray_add(comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
