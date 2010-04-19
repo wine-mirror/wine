@@ -138,7 +138,7 @@
 @ cdecl __crtCompareStringA(long long str long str long)
 @ cdecl __crtCompareStringW(long long wstr long wstr long)
 @ cdecl __crtGetLocaleInfoW(long long ptr long)
-# stub __crtGetStringTypeW
+@ cdecl __crtGetStringTypeW(long long wstr long ptr)
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
 # stub __crtLCMapStringW
 # stub __daylight

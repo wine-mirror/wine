@@ -54,6 +54,7 @@ unsigned char charmax = CHAR_MAX;
 #define UNLOCK_LOCALE _munlock(_SETLOCALE_LOCK);
 
 #define MSVCRT_LEADBYTE  0x8000
+#define MSVCRT_C1_DEFINED 0x200
 
 /* Friendly country strings & iso codes for synonym support.
  * Based on MS documentation for setlocale().
@@ -455,6 +456,21 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
     FIXME("(lcid %x, type %x, %p(%d), partial stub\n", lcid, type, buffer, len );
     /* FIXME: probably not entirely right */
     return GetLocaleInfoW( lcid, type, buffer, len );
+}
+
+/*********************************************************************
+ *              __crtGetStringTypeW(MSVCRT.@)
+ *
+ * This function was accepting different number of arguments in older
+ * versions of msvcrt.
+ */
+BOOL CDECL __crtGetStringTypeW(DWORD unk, DWORD type,
+        MSVCRT_wchar_t *buffer, int len, WORD *out)
+{
+    FIXME("(unk %x, type %x, wstr %p(%d), %p) partial stub\n",
+            unk, type, buffer, len, out);
+
+    return GetStringTypeW(type, buffer, len, out);
 }
 
 /*********************************************************************
