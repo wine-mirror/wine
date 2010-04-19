@@ -1054,9 +1054,9 @@
 @ cdecl _vsnprintf_s(ptr long long str ptr) msvcrt._vsnprintf_s
 @ cdecl _vsnprintf_s_l(ptr long long str ptr ptr) msvcrt._vsnprintf_s_l
 @ cdecl _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
-@ stub _vsnwprintf_l
-@ stub _vsnwprintf_s
-@ stub _vsnwprintf_s_l
+@ cdecl _vsnwprintf_l(ptr long wstr ptr ptr) msvcrt._vsnwprintf_l
+@ cdecl _vsnwprintf_s(ptr long long wstr ptr) msvcrt._vsnwprintf_s
+@ cdecl _vsnwprintf_s_l(ptr long long wstr ptr ptr) msvcrt._vsnwprintf_s_l
 @ stub _vsprintf_l
 @ stub _vsprintf_p
 @ stub _vsprintf_p_l

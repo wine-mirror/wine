@@ -738,7 +738,7 @@ MSVCRT___time64_t __cdecl MSVCRT__time64(MSVCRT___time64_t*);
 MSVCRT_FILE*   __cdecl MSVCRT__fdopen(int, const char *);
 MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
 int            __cdecl MSVCRT_vsnprintf(char *str, MSVCRT_size_t len, const char *format, __ms_va_list valist);
-int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
+int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, MSVCRT_size_t len,
                                        const MSVCRT_wchar_t *format, __ms_va_list valist );
 int            __cdecl MSVCRT_raise(int sig);
 
