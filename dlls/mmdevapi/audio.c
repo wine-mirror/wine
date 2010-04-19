@@ -77,6 +77,7 @@ typedef struct ACImpl {
 
     ACRender *render;
     ACCapture *capture;
+    AClock *clock;
 } ACImpl;
 
 struct ACRender {
@@ -91,14 +92,25 @@ struct ACCapture {
     ACImpl *parent;
 };
 
+struct AClock {
+    const IAudioClockVtbl *lpVtbl;
+    const IAudioClock2Vtbl *lp2Vtbl;
+    LONG ref;
+    ACImpl *parent;
+};
+
 static const IAudioClientVtbl ACImpl_Vtbl;
 static const IAudioRenderClientVtbl ACRender_Vtbl;
 static const IAudioCaptureClientVtbl ACCapture_Vtbl;
+static const IAudioClockVtbl AClock_Vtbl;
+static const IAudioClock2Vtbl AClock2_Vtbl;
 
 static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv);
 static void AudioRenderClient_Destroy(ACRender *This);
 static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv);
 static void AudioCaptureClient_Destroy(ACCapture *This);
+static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv);
+static void AudioClock_Destroy(AClock *This);
 
 static int get_format_PCM(WAVEFORMATEX *format)
 {
@@ -277,6 +289,8 @@ static void AudioClient_Destroy(ACImpl *This)
         AudioRenderClient_Destroy(This->render);
     if (This->capture)
         AudioCaptureClient_Destroy(This->capture);
+    if (This->clock)
+        AudioClock_Destroy(This->clock);
     if (This->parent->flow == eRender && This->init) {
         setALContext(This->parent->ctx);
         IAudioClient_Stop((IAudioClient*)This);
@@ -846,6 +860,10 @@ static HRESULT WINAPI AC_GetService(IAudioClient *iface, REFIID riid, void **ppv
         if (!This->capture)
             hr = AudioCaptureClient_Create(This, &This->capture);
         *ppv = This->capture;
+    } else if (IsEqualIID(riid, &IID_IAudioClock)) {
+        if (!This->clock)
+            hr = AudioClock_Create(This, &This->clock);
+        *ppv = This->clock;
     }
 
     if (FAILED(hr))
@@ -1210,6 +1228,153 @@ static const IAudioCaptureClientVtbl ACCapture_Vtbl =
     ACC_GetBuffer,
     ACC_ReleaseBuffer,
     ACC_GetNextPacketSize
+};
+
+static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv)
+{
+    AClock *This;
+    This = *ppv = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &AClock_Vtbl;
+    This->lp2Vtbl = &AClock2_Vtbl;
+    This->ref = 0;
+    This->parent = parent;
+    return S_OK;
+}
+
+static void AudioClock_Destroy(AClock *This)
+{
+    This->parent->clock = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI AClock_QueryInterface(IAudioClock *iface, REFIID riid, void **ppv)
+{
+    AClock *This = (AClock*)iface;
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IAudioClock))
+        *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IAudioClock2))
+        *ppv = &This->lp2Vtbl;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AClock_AddRef(IAudioClock *iface)
+{
+    AClock *This = (AClock*)iface;
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI AClock_Release(IAudioClock *iface)
+{
+    AClock *This = (AClock*)iface;
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        AudioClock_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI AClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
+{
+    AClock *This = (AClock*)iface;
+    TRACE("(%p)->(%p)\n", This, freq);
+
+    *freq = (UINT64)This->parent->pwfx->nSamplesPerSec;
+    return S_OK;
+}
+
+static HRESULT WINAPI AClock_GetPosition(IAudioClock *iface, UINT64 *pos, UINT64 *qpctime)
+{
+    AClock *This = (AClock*)iface;
+    DWORD pad;
+
+    TRACE("(%p)->(%p,%p)\n", This, pos, qpctime);
+
+    if (!pos)
+        return E_POINTER;
+
+    EnterCriticalSection(This->parent->crst);
+    AC_GetCurrentPadding((IAudioClient*)This->parent, &pad);
+    *pos = This->parent->frameswritten - pad;
+    if (qpctime)
+        *qpctime = gettime();
+    LeaveCriticalSection(This->parent->crst);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI AClock_GetCharacteristics(IAudioClock *iface, DWORD *chars)
+{
+    AClock *This = (AClock*)iface;
+    TRACE("(%p)->(%p)\n", This, chars);
+
+    if (!chars)
+        return E_POINTER;
+    *chars = AUDIOCLOCK_CHARACTERISTIC_FIXED_FREQ;
+    return S_OK;
+}
+
+static const IAudioClockVtbl AClock_Vtbl =
+{
+    AClock_QueryInterface,
+    AClock_AddRef,
+    AClock_Release,
+    AClock_GetFrequency,
+    AClock_GetPosition,
+    AClock_GetCharacteristics
+};
+
+static AClock *get_clock_from_clock2(IAudioClock2 *iface)
+{
+    return (AClock*)((char*)iface - offsetof(AClock,lp2Vtbl));
+}
+
+static HRESULT WINAPI AClock2_QueryInterface(IAudioClock2 *iface, REFIID riid, void **ppv)
+{
+    AClock *This = get_clock_from_clock2(iface);
+    return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
+}
+
+static ULONG WINAPI AClock2_AddRef(IAudioClock2 *iface)
+{
+    AClock *This = get_clock_from_clock2(iface);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI AClock2_Release(IAudioClock2 *iface)
+{
+    AClock *This = get_clock_from_clock2(iface);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI AClock2_GetPosition(IAudioClock2 *iface, UINT64 *pos, UINT64 *qpctime)
+{
+    AClock *This = get_clock_from_clock2(iface);
+    return AClock_GetPosition((IAudioClock*)This, pos, qpctime);
+}
+
+static const IAudioClock2Vtbl AClock2_Vtbl =
+{
+    AClock2_QueryInterface,
+    AClock2_AddRef,
+    AClock2_Release,
+    AClock2_GetPosition
 };
 
 #endif
