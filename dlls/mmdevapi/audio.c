@@ -78,10 +78,153 @@ typedef struct ACImpl {
 
 static const IAudioClientVtbl ACImpl_Vtbl;
 
+static int get_format_PCM(WAVEFORMATEX *format)
+{
+    if (format->nChannels > 2) {
+        FIXME("nChannels > 2 not documented for WAVE_FORMAT_PCM!\n");
+        return 0;
+    }
+
+    format->cbSize = 0;
+
+    if (format->nBlockAlign != format->wBitsPerSample/8*format->nChannels) {
+        WARN("Invalid nBlockAlign %u, from %u %u\n",
+             format->nBlockAlign, format->wBitsPerSample, format->nChannels);
+        return 0;
+    }
+
+    switch (format->wBitsPerSample) {
+        case 8: {
+            switch (format->nChannels) {
+            case 1: return AL_FORMAT_MONO8;
+            case 2: return AL_FORMAT_STEREO8;
+            }
+        }
+        case 16: {
+            switch (format->nChannels) {
+            case 1: return AL_FORMAT_MONO16;
+            case 2: return AL_FORMAT_STEREO16;
+            }
+        }
+    }
+
+    if (!(format->wBitsPerSample % 8))
+        WARN("Could not get OpenAL format (%d-bit, %d channels)\n",
+             format->wBitsPerSample, format->nChannels);
+    return 0;
+}
+
+/* Speaker configs */
+#define MONO SPEAKER_FRONT_CENTER
+#define STEREO (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT)
+#define REAR (SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT)
+#define QUAD (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT)
+#define X5DOT1 (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY|SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT)
+#define X6DOT1 (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY|SPEAKER_BACK_CENTER|SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT)
+#define X7DOT1 (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY|SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT|SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT)
+
+static int get_format_EXT(WAVEFORMATEX *format)
+{
+    WAVEFORMATEXTENSIBLE *wfe;
+
+    if(format->cbSize < sizeof(WAVEFORMATEXTENSIBLE)-sizeof(WAVEFORMATEX)) {
+        WARN("Invalid cbSize specified for WAVE_FORMAT_EXTENSIBLE (%d)\n", format->cbSize);
+        return 0;
+    }
+
+    wfe = (WAVEFORMATEXTENSIBLE*)format;
+    wfe->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE)-sizeof(WAVEFORMATEX);
+    if (wfe->Samples.wValidBitsPerSample &&
+        wfe->Samples.wValidBitsPerSample != format->wBitsPerSample) {
+        FIXME("wValidBitsPerSample(%u) != wBitsPerSample(%u) unsupported\n",
+              wfe->Samples.wValidBitsPerSample, format->wBitsPerSample);
+        return 0;
+    }
+
+    TRACE("Extensible values:\n"
+          "    Samples     = %d\n"
+          "    ChannelMask = 0x%08x\n"
+          "    SubFormat   = %s\n",
+          wfe->Samples.wReserved, wfe->dwChannelMask,
+          debugstr_guid(&wfe->SubFormat));
+
+    if (wfe->dwChannelMask != MONO
+        && wfe->dwChannelMask != STEREO
+        && !palIsExtensionPresent("AL_EXT_MCFORMATS")) {
+        /* QUAD PCM might still work, special case */
+        if (palIsExtensionPresent("AL_LOKI_quadriphonic")
+            && IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)
+            && wfe->dwChannelMask == QUAD) {
+            if (format->wBitsPerSample == 16)
+                return AL_FORMAT_QUAD16_LOKI;
+            else if (format->wBitsPerSample == 8)
+                return AL_FORMAT_QUAD8_LOKI;
+        }
+        WARN("Not all formats available\n");
+        return 0;
+    }
+
+    if(IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+        if (format->wBitsPerSample == 8) {
+            switch (wfe->dwChannelMask) {
+            case   MONO: return AL_FORMAT_MONO8;
+            case STEREO: return AL_FORMAT_STEREO8;
+            case   REAR: return AL_FORMAT_REAR8;
+            case   QUAD: return AL_FORMAT_QUAD8;
+            case X5DOT1: return AL_FORMAT_51CHN8;
+            case X6DOT1: return AL_FORMAT_61CHN8;
+            case X7DOT1: return AL_FORMAT_71CHN8;
+            default: break;
+            }
+        } else if (format->wBitsPerSample  == 16) {
+            switch (wfe->dwChannelMask) {
+            case   MONO: return AL_FORMAT_MONO16;
+            case STEREO: return AL_FORMAT_STEREO16;
+            case   REAR: return AL_FORMAT_REAR16;
+            case   QUAD: return AL_FORMAT_QUAD16;
+            case X5DOT1: return AL_FORMAT_51CHN16;
+            case X6DOT1: return AL_FORMAT_61CHN16;
+            case X7DOT1: return AL_FORMAT_71CHN16;
+            default: break;
+            }
+        }
+        else if (!(format->wBitsPerSample  % 8))
+            ERR("Could not get OpenAL PCM format (%d-bit, mask 0x%08x)\n",
+                format->wBitsPerSample, wfe->dwChannelMask);
+        return 0;
+    }
+    else if(IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
+        if (format->wBitsPerSample != 32) {
+            WARN("Invalid valid bits %u/32\n", format->wBitsPerSample);
+            return 0;
+        }
+        switch (wfe->dwChannelMask) {
+        case   MONO: return AL_FORMAT_MONO_FLOAT32;
+        case STEREO: return AL_FORMAT_STEREO_FLOAT32;
+        case   REAR: return AL_FORMAT_REAR32;
+        case   QUAD: return AL_FORMAT_QUAD32;
+        case X5DOT1: return AL_FORMAT_51CHN32;
+        case X6DOT1: return AL_FORMAT_61CHN32;
+        case X7DOT1: return AL_FORMAT_71CHN32;
+        default:
+            ERR("Could not get OpenAL float format (%d-bit, mask 0x%08x)\n",
+                format->wBitsPerSample, wfe->dwChannelMask);
+            return 0;
+        }
+    }
+    else if (!IsEqualGUID(&wfe->SubFormat, &GUID_NULL))
+        ERR("Unhandled extensible format: %s\n", debugstr_guid(&wfe->SubFormat));
+    return 0;
+}
+
 static ALint get_format(WAVEFORMATEX *in)
 {
-    FIXME("stub\n");
-    return AL_FORMAT_STEREO_FLOAT32;
+    int ret = 0;
+    if (in->wFormatTag == WAVE_FORMAT_PCM)
+        ret = get_format_PCM(in);
+    else if (in->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        ret = get_format_EXT(in);
+    return ret;
 }
 
 static REFERENCE_TIME gettime(void) {
