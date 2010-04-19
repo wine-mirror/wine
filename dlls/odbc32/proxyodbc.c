@@ -959,9 +959,9 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle,
         if (TRACE_ON(odbc))
         {
            TRACE("returns: %d \t", ret);
-           if (*NameLength1 > 0)
+           if (NameLength1 && *NameLength1 > 0)
              TRACE("DataSource = %s,", ServerName);
-           if (*NameLength2 > 0)
+           if (NameLength2 && *NameLength2 > 0)
              TRACE(" Description = %s", Description);
            TRACE("\n");
         }
