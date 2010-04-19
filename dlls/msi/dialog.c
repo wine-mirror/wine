@@ -171,6 +171,8 @@ static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control );
 static DWORD uiThreadId;
 static HWND hMsiHiddenWindow;
 
+static LPWSTR msi_get_window_text( HWND hwnd );
+
 static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
     return MulDiv( val, dialog->scale, 12 );
@@ -1311,6 +1313,69 @@ static UINT msi_combobox_add_items( struct msi_combobox_info *info, LPCWSTR prop
     return r;
 }
 
+static UINT msi_dialog_combobox_handler( msi_dialog *dialog,
+                                         msi_control *control, WPARAM param )
+{
+    struct msi_combobox_info *info;
+    int index;
+    LPWSTR value;
+
+    if (HIWORD(param) != CBN_SELCHANGE && HIWORD(param) != CBN_EDITCHANGE)
+        return ERROR_SUCCESS;
+
+    info = GetPropW( control->hwnd, szButtonData );
+    index = SendMessageW( control->hwnd, CB_GETCURSEL, 0, 0 );
+    if (index == CB_ERR)
+        value = msi_get_window_text( control->hwnd );
+    else
+        value = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, index, 0 );
+
+    MSI_SetPropertyW( info->dialog->package,
+                      control->property, value );
+    msi_dialog_evaluate_control_conditions( info->dialog );
+
+    if (index == CB_ERR)
+        msi_free( value );
+
+    return ERROR_SUCCESS;
+}
+
+static void msi_dialog_combobox_update( msi_dialog *dialog,
+                msi_control *control )
+{
+    struct msi_combobox_info *info;
+    LPWSTR value, tmp;
+    DWORD j;
+
+    info = GetPropW( control->hwnd, szButtonData );
+
+    value = msi_dup_property( dialog->package, control->property );
+    if (!value)
+    {
+        SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
+        return;
+    }
+
+    for (j = 0; j < info->num_items; j++)
+    {
+        tmp = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
+        if (!lstrcmpW( value, tmp ))
+            break;
+    }
+
+    if (j < info->num_items)
+    {
+        SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
+    }
+    else
+    {
+        SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
+        SetWindowTextW( control->hwnd, value );
+    }
+
+    msi_free(value);
+}
+
 static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     struct msi_combobox_info *info;
@@ -1338,6 +1403,9 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
         return ERROR_FUNCTION_FAILED;
     }
 
+    control->handler = msi_dialog_combobox_handler;
+    control->update = msi_dialog_combobox_update;
+
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
@@ -1352,6 +1420,8 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 
     if (control->property)
         msi_combobox_add_items( info, control->property );
+
+    msi_dialog_combobox_update( dialog, control );
 
     return ERROR_SUCCESS;
 }
