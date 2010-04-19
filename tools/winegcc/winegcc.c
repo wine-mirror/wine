@@ -1257,6 +1257,8 @@ int main(int argc, char **argv)
 			opts.unicode_app = 1;
 		    else if (strcmp("-m32", argv[i]) == 0)
                     {
+                        if (opts.target_cpu == CPU_x86_64)
+                            opts.target_cpu = CPU_x86;
                         opts.force_pointer_size = 4;
 			raw_linker_arg = 1;
                     }
