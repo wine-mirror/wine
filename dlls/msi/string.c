@@ -288,42 +288,28 @@ static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, U
     return n;
 }
 
-int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, USHORT refcount, enum StringPersistence persistence )
+int msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcount, enum StringPersistence persistence )
 {
+    UINT n;
     LPWSTR str;
-
-    /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
     if( !data )
         return 0;
     if( !data[0] )
         return 0;
-    if( n > 0 )
+
+    if( msi_string2idW( st, data, &n ) == ERROR_SUCCESS )
     {
-        if( st->strings[n].persistent_refcount ||
-            st->strings[n].nonpersistent_refcount )
-            return -1;
-    }
-    else
-    {
-        if( ERROR_SUCCESS == msi_string2idW( st, data, &n ) )
-        {
-            if (persistence == StringPersistent)
-                st->strings[n].persistent_refcount += refcount;
-            else
-                st->strings[n].nonpersistent_refcount += refcount;
-            return n;
-        }
-        n = st_find_free_entry( st );
-        if( n == -1 )
-            return -1;
+        if (persistence == StringPersistent)
+            st->strings[n].persistent_refcount += refcount;
+        else
+            st->strings[n].nonpersistent_refcount += refcount;
+        return n;
     }
 
-    if( n < 1 )
-    {
-        ERR("invalid index adding %s (%d)\n", debugstr_w( data ), n );
+    n = st_find_free_entry( st );
+    if( n == -1 )
         return -1;
-    }
 
     /* allocate a new string */
     if(len<0)
