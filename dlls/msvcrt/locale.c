@@ -214,8 +214,8 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
 
     if(cp) {
         lstrcpynA(search.search_codepage, cp+1, MAX_ELEM_LEN);
-        if(cp-region < MAX_ELEM_LEN)
-          search.search_country[cp-region] = '\0';
+        if(cp-region-1 < MAX_ELEM_LEN)
+          search.search_country[cp-region-1] = '\0';
         if(cp-locale < MAX_ELEM_LEN)
             search.search_language[cp-locale] = '\0';
     } else
@@ -229,11 +229,11 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
             (LONG_PTR)&search);
 
     if (!search.match_flags)
-        return 0;
+        return -1;
 
     /* If we were given something that didn't match, fail */
     if (search.search_country[0] && !(search.match_flags & FOUND_COUNTRY))
-        return 0;
+        return -1;
 
     lcid =  MAKELCID(search.found_lang_id, SORT_DEFAULT);
 
@@ -253,10 +253,10 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
                 } else
-                    return 0;
+                    return -1;
 
                 if (!atoi(search.found_codepage))
-                    return 0;
+                    return -1;
             }
         } else {
             /* Prefer ANSI codepages if present */
@@ -583,23 +583,25 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                 return NULL;
 
             p = strchr(locale, ';');
-            if(p) {
+            if(locale[0]=='C' && (locale[1]==';' || locale[1]=='\0'))
+                lcid[i] = 0;
+            else if(p) {
                 memcpy(buf, locale, p-locale);
                 lcid[i] = MSVCRT_locale_to_LCID(buf);
             } else
                 lcid[i] = MSVCRT_locale_to_LCID(locale);
 
-            if(!lcid[i])
+            if(lcid[i] == -1)
                 return NULL;
 
             if(!p || *(p+1)!='L' || *(p+2)!='C' || *(p+3)!='_')
                 break;
 
-            locale = p+4;
+            locale = p+1;
         }
     } else {
         lcid[0] = MSVCRT_locale_to_LCID(locale);
-        if(!lcid[0])
+        if(lcid[0] == -1)
             return NULL;
     }
 
