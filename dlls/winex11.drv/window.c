@@ -812,6 +812,51 @@ static void destroy_icon_window( Display *display, struct x11drv_win_data *data 
 
 
 /***********************************************************************
+ *              get_bitmap_argb
+ *
+ * Return the bitmap bits in ARGB format. Helper for setting icon hints.
+ */
+static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsigned int *size )
+{
+    BITMAP bm;
+    BITMAPINFO *info;
+    unsigned int *bits = NULL;
+    int i;
+
+    if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) return NULL;
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = bm.bmWidth;
+    info->bmiHeader.biHeight = -bm.bmHeight;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * 4;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
+    *size = bm.bmWidth * bm.bmHeight + 2;
+    if (!(bits = HeapAlloc( GetProcessHeap(), 0, *size * sizeof(long) ))) goto failed;
+    if (!GetDIBits( hdc, color, 0, bm.bmHeight, bits + 2, info, DIB_RGB_COLORS )) goto failed;
+
+    bits[0] = bm.bmWidth;
+    bits[1] = bm.bmHeight;
+
+    /* convert to array of longs */
+    if (bits && sizeof(long) > sizeof(int))
+        for (i = *size - 1; i >= 0; i--) ((unsigned long *)bits)[i] = bits[i];
+
+    return (unsigned long *)bits;
+
+failed:
+    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, bits );
+    return NULL;
+}
+
+
+/***********************************************************************
  *              set_icon_hints
  *
  * Set the icon wm hints
@@ -838,6 +883,8 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         BITMAP bm;
         ICONINFO ii;
         HDC hDC;
+        unsigned int size;
+        unsigned long *bits;
 
         GetIconInfo(hIcon, &ii);
 
@@ -852,41 +899,15 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         InvertRect(hDC, &rcMask);
         SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
 
-        GetObjectW(ii.hbmColor, sizeof(bm), &bm);
-        if (bm.bmBitsPixel == 32)  /* FIXME: do this for other depths too */
-        {
-            BITMAPINFO info;
-            unsigned int size, *bits;
-
-            info.bmiHeader.biSize = sizeof(info);
-            info.bmiHeader.biWidth = bm.bmWidth;
-            info.bmiHeader.biHeight = -bm.bmHeight;
-            info.bmiHeader.biPlanes = 1;
-            info.bmiHeader.biBitCount = 32;
-            info.bmiHeader.biCompression = BI_RGB;
-            info.bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * 4;
-            info.bmiHeader.biXPelsPerMeter = 0;
-            info.bmiHeader.biYPelsPerMeter = 0;
-            info.bmiHeader.biClrUsed = 0;
-            info.bmiHeader.biClrImportant = 0;
-            size = bm.bmWidth * bm.bmHeight + 2;
-            bits = HeapAlloc( GetProcessHeap(), 0, size * sizeof(long) );
-            if (bits && GetDIBits( hDC, ii.hbmColor, 0, bm.bmHeight, bits + 2, &info, DIB_RGB_COLORS ))
-            {
-                bits[0] = bm.bmWidth;
-                bits[1] = bm.bmHeight;
-                if (sizeof(long) > sizeof(int))  /* convert to array of longs */
-                {
-                    int i = size;
-                    while (--i >= 0) ((unsigned long *)bits)[i] = bits[i];
-                }
-                wine_tsx11_lock();
-                XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
-                                 XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
-                wine_tsx11_unlock();
-            }
-            HeapFree( GetProcessHeap(), 0, bits );
-        }
+        bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
+        wine_tsx11_lock();
+        if (bits)
+            XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
+                             XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
+        else
+            XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, bits );
         SelectObject(hDC, hbmOrig);
         DeleteDC(hDC);
 
