@@ -840,6 +840,7 @@ static void openal_scancapture(void)
         WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
     if (devstr && *devstr)
         for (; *devstr; devstr += strlen(devstr)+1) {
+            MMDevice *mmdev;
             ALint freq = 44100;
             MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
                                  name, sizeof(name)/sizeof(*name)-1 );
@@ -850,10 +851,11 @@ static void openal_scancapture(void)
             }
             TRACE("Adding %s\n", devstr);
             dev = palcCaptureOpenDevice(devstr, freq, AL_FORMAT_MONO16, 65536);
-            MMDevice_Create(NULL, name, NULL, eCapture, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
-            if (dev)
+            MMDevice_Create(&mmdev, name, NULL, eCapture, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
+            if (dev) {
+                openal_setformat(mmdev, freq);
                 palcCaptureCloseDevice(dev);
-            else
+            } else
                 WARN("Could not open device: %04x\n", palcGetError(NULL));
         }
     LeaveCriticalSection(&openal_crst);
