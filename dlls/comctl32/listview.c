@@ -5209,7 +5209,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     HIMAGELIST dragList = 0;
     TRACE("iItem=%d Count=%d\n", iItem, infoPtr->nItemCount);
 
-    if (iItem < 0 || iItem >= infoPtr->nItemCount)
+    if (iItem < 0 || iItem >= infoPtr->nItemCount || !lppt)
         return 0;
 
     rcItem.left = LVIR_BOUNDS;

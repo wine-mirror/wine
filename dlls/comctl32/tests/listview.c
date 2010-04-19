@@ -4344,6 +4344,28 @@ static void test_header_notification(void)
     DestroyWindow(list);
 }
 
+static void test_createdragimage(void)
+{
+    HIMAGELIST himl;
+    POINT pt;
+    HWND list;
+
+    list = create_listview_control(LVS_ICON);
+    ok(list != 0, "failed to create listview window\n");
+
+    insert_item(list, 0);
+
+    /* NULL point */
+    himl = (HIMAGELIST)SendMessageA(list, LVM_CREATEDRAGIMAGE, 0, 0);
+    ok(himl == NULL, "got %p\n", himl);
+
+    himl = (HIMAGELIST)SendMessageA(list, LVM_CREATEDRAGIMAGE, 0, (LPARAM)&pt);
+    ok(himl != NULL, "got %p\n", himl);
+    ImageList_Destroy(himl);
+
+    DestroyWindow(list);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4406,6 +4428,7 @@ START_TEST(listview)
     test_finditem();
     test_hover();
     test_destroynotify();
+    test_createdragimage();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
