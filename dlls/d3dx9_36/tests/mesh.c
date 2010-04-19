@@ -225,6 +225,100 @@ static void D3DXComputeBoundingSphereTest(void)
     ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
 }
 
+static void D3DXDeclaratorFromFVFTest(void)
+{
+    D3DVERTEXELEMENT9 decl[MAX_FVF_DECL_SIZE];
+    HRESULT hr;
+    int i;
+
+    static const D3DVERTEXELEMENT9 exp1[6] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 0xC, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 0x18, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        {0, 0x1C,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 1},
+        {0, 0x20, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END(), };
+
+    static const D3DVERTEXELEMENT9 exp2[3] = {
+        {0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT, 0},
+        {0, 0x10, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_PSIZE, 0},
+        D3DDECL_END(), };
+
+    static const D3DVERTEXELEMENT9 exp3[4] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 0xC, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0},
+        {0, 0x1C, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0},
+        D3DDECL_END(), };
+
+    /* Note: passing NULL as declaration segfaults */
+    todo_wine
+    {
+        hr = D3DXDeclaratorFromFVF(0, decl);
+        ok(hr == D3D_OK, "D3DXDeclaratorFromFVF returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(decl[0].Stream == 0xFF, "D3DXDeclaratorFromFVF returned an incorrect vertex declaration\n"); /* end element */
+
+        hr = D3DXDeclaratorFromFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1, decl);
+        ok(hr == D3D_OK, "D3DXDeclaratorFromFVF returned %#x, expected %#x\n", hr, D3D_OK);
+
+        if (hr == D3D_OK)
+        {
+            for (i=0; i<4; i++)
+            {
+                ok(decl[i].Stream == exp1[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp1[i].Stream);
+                ok(decl[i].Type == exp1[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp1[i].Type);
+                ok(decl[i].Method == exp1[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp1[i].Method);
+                ok(decl[i].Usage == exp1[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp1[i].Usage);
+                ok(decl[i].UsageIndex == exp1[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp1[i].UsageIndex);
+	        ok(decl[i].Offset == exp1[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp1[i].Offset);
+            }
+            ok(decl[5].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+        }
+    }
+
+    todo_wine
+    {
+        hr = D3DXDeclaratorFromFVF(D3DFVF_XYZRHW | D3DFVF_PSIZE, decl);
+        ok(hr == D3D_OK, "D3DXDeclaratorFromFVF returned %#x, expected %#x\n", hr, D3D_OK);
+
+        if (hr == D3D_OK)
+        {
+            for (i=0; i<1; i++)
+            {
+                ok(decl[i].Stream == exp2[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp2[i].Stream);
+                ok(decl[i].Type == exp2[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp1[i].Type);
+                ok(decl[i].Method == exp2[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp2[i].Method);
+                ok(decl[i].Usage == exp2[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp2[i].Usage);
+                ok(decl[i].UsageIndex == exp2[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp2[i].UsageIndex);
+                ok(decl[i].Offset == exp2[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp2[i].Offset);
+            }
+            ok(decl[2].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+        }
+    }
+
+    todo_wine
+    {
+        hr = D3DXDeclaratorFromFVF(D3DFVF_XYZB5, decl);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXDeclaratorFromFVF returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = D3DXDeclaratorFromFVF(D3DFVF_XYZB5 | D3DFVF_LASTBETA_UBYTE4, decl);
+        ok(hr == D3D_OK, "D3DXDeclaratorFromFVF returned %#x, expected %#x\n", hr, D3D_OK);
+
+        if (hr == D3D_OK)
+        {
+            for (i=0; i<2; i++)
+            {
+                ok(decl[i].Stream == exp3[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp3[i].Stream);
+                ok(decl[i].Type == exp3[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp3[i].Type);
+                ok(decl[i].Method == exp3[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp3[i].Method);
+                ok(decl[i].Usage == exp3[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp3[i].Usage);
+                ok(decl[i].UsageIndex == exp3[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp3[i].UsageIndex);
+                ok(decl[i].Offset == exp3[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp3[i].Offset);
+            }
+            ok(decl[3].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+        }
+    }
+}
+
 static void D3DXGetFVFVertexSizeTest(void)
 {
     UINT got;
@@ -459,6 +553,7 @@ START_TEST(mesh)
     D3DXBoundProbeTest();
     D3DXComputeBoundingBoxTest();
     D3DXComputeBoundingSphereTest();
+    D3DXDeclaratorFromFVFTest();
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
     test_get_decl_vertex_size();
