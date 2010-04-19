@@ -977,11 +977,11 @@
 # stub _vscwprintf_l
 # stub _vscwprintf_p_l
 @ cdecl _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
-# stub _vsnprintf_c
-# stub _vsnprintf_c_l
-# stub _vsnprintf_l
-# stub _vsnprintf_s
-# stub _vsnprintf_s_l
+@ cdecl _vsnprintf_c(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl _vsnprintf_c_l(ptr long str ptr ptr) MSVCRT_vsnprintf_l
+@ cdecl _vsnprintf_l(ptr long str ptr ptr) MSVCRT_vsnprintf_l
+@ cdecl _vsnprintf_s(ptr long long str ptr) MSVCRT_vsnprintf_s
+@ cdecl _vsnprintf_s_l(ptr long long str ptr ptr) MSVCRT_vsnprintf_s_l
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 # stub _vsnwprintf_l
 # stub _vsnwprintf_s

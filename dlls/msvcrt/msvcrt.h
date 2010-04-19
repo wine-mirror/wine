@@ -707,6 +707,8 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 #define _MB_CP_ANSI     -3
 #define _MB_CP_LOCALE   -4
 
+#define _TRUNCATE ((MSVCRT_size_t)-1)
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);
@@ -735,7 +737,7 @@ MSVCRT___time32_t __cdecl MSVCRT__time32(MSVCRT___time32_t*);
 MSVCRT___time64_t __cdecl MSVCRT__time64(MSVCRT___time64_t*);
 MSVCRT_FILE*   __cdecl MSVCRT__fdopen(int, const char *);
 MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
-int            __cdecl MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, __ms_va_list valist);
+int            __cdecl MSVCRT_vsnprintf(char *str, MSVCRT_size_t len, const char *format, __ms_va_list valist);
 int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
                                        const MSVCRT_wchar_t *format, __ms_va_list valist );
 int            __cdecl MSVCRT_raise(int sig);
