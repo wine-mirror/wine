@@ -2760,6 +2760,7 @@ static HRESULT StorageImpl_Construct(
    * There is no block depot cached yet.
    */
   This->indexBlockDepotCached = 0xFFFFFFFF;
+  This->indexExtBlockDepotCached = 0xFFFFFFFF;
 
   /*
    * Start searching for free blocks with block 0.
@@ -3134,17 +3135,32 @@ static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
   ULONG extBlockOffset         = numExtBlocks % depotBlocksPerExtBlock;
   ULONG blockIndex             = BLOCK_UNUSED;
   ULONG extBlockIndex;
+  BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
+  int index, num_blocks;
 
   assert(depotIndex >= COUNT_BBDEPOTINHEADER);
 
   if (extBlockCount >= This->extBigBlockDepotCount)
     return BLOCK_UNUSED;
 
-  extBlockIndex = This->extBigBlockDepotLocations[extBlockCount];
+  if (This->indexExtBlockDepotCached != extBlockCount)
+  {
+    extBlockIndex = This->extBigBlockDepotLocations[extBlockCount];
 
-  if (extBlockIndex != BLOCK_UNUSED)
-    StorageImpl_ReadDWordFromBigBlock(This, extBlockIndex,
-                        extBlockOffset * sizeof(ULONG), &blockIndex);
+    StorageImpl_ReadBigBlock(This, extBlockIndex, depotBuffer);
+
+    num_blocks = This->bigBlockSize / 4;
+
+    for (index = 0; index < num_blocks; index++)
+    {
+      StorageUtl_ReadDWord(depotBuffer, index*sizeof(ULONG), &blockIndex);
+      This->extBlockDepotCached[index] = blockIndex;
+    }
+
+    This->indexExtBlockDepotCached = extBlockCount;
+  }
+
+  blockIndex = This->extBlockDepotCached[extBlockOffset];
 
   return blockIndex;
 }
@@ -3175,6 +3191,11 @@ static void Storage32Impl_SetExtDepotBlock(StorageImpl* This, ULONG depotIndex, 
     StorageImpl_WriteDWordToBigBlock(This, extBlockIndex,
                         extBlockOffset * sizeof(ULONG),
                         blockIndex);
+  }
+
+  if (This->indexExtBlockDepotCached == extBlockCount)
+  {
+    This->extBlockDepotCached[extBlockOffset] = blockIndex;
   }
 }
 

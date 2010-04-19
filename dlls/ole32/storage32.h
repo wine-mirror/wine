@@ -358,6 +358,9 @@ struct StorageImpl
   ULONG extBigBlockDepotCount;
   ULONG bigBlockDepotStart[COUNT_BBDEPOTINHEADER];
 
+  ULONG extBlockDepotCached[MAX_BIG_BLOCK_SIZE / 4];
+  ULONG indexExtBlockDepotCached;
+
   ULONG blockDepotCached[MAX_BIG_BLOCK_SIZE / 4];
   ULONG indexBlockDepotCached;
   ULONG prevFreeBlock;
