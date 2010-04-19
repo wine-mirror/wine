@@ -327,7 +327,7 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
     entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->limits.buffers * sizeof(*entry->render_targets));
     memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = (IWineD3DSurfaceImpl *)device->stencilBufferTarget;
+    entry->depth_stencil = device->depth_stencil;
     entry->attached = FALSE;
     entry->id = 0;
 
@@ -344,7 +344,7 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_
     context_clean_fbo_attachments(gl_info);
 
     memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = (IWineD3DSurfaceImpl *)device->stencilBufferTarget;
+    entry->depth_stencil = device->depth_stencil;
     entry->attached = FALSE;
 }
 
@@ -374,7 +374,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
     {
         if (!memcmp(entry->render_targets,
                 device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets))
-                && entry->depth_stencil == (IWineD3DSurfaceImpl *)device->stencilBufferTarget)
+                && entry->depth_stencil == device->depth_stencil)
         {
             list_remove(&entry->entry);
             list_add_head(&context->fbo_list, &entry->entry);
@@ -417,12 +417,12 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         }
 
         /* Apply depth targets */
-        if (device->stencilBufferTarget)
+        if (device->depth_stencil)
         {
-            surface_set_compatible_renderbuffer((IWineD3DSurfaceImpl *)device->stencilBufferTarget,
+            surface_set_compatible_renderbuffer(device->depth_stencil,
                     device->render_targets[0]->pow2Width, device->render_targets[0]->pow2Height);
         }
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, (IWineD3DSurfaceImpl *)device->stencilBufferTarget, TRUE);
+        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, device->depth_stencil, TRUE);
 
         entry->attached = TRUE;
     }
@@ -433,8 +433,8 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
             if (device->render_targets[i])
                 context_apply_attachment_filter_states(device->render_targets[i]);
         }
-        if (device->stencilBufferTarget)
-            context_apply_attachment_filter_states((IWineD3DSurfaceImpl *)device->stencilBufferTarget);
+        if (device->depth_stencil)
+            context_apply_attachment_filter_states(device->depth_stencil);
     }
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
@@ -1958,8 +1958,8 @@ static BOOL match_depth_stencil_format(const struct wined3d_format_desc *existin
 static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct wined3d_context *context)
 {
     /* Onscreen surfaces are always in a swapchain */
-    IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) device->stencilBufferTarget;
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) ((IWineD3DSurfaceImpl *)context->current_rt)->container;
+    IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)((IWineD3DSurfaceImpl *)context->current_rt)->container;
 
     if (!depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;

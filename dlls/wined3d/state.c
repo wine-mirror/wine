@@ -99,7 +99,7 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     /* No z test without depth stencil buffers */
-    if (!stateblock->device->stencilBufferTarget)
+    if (!stateblock->device->depth_stencil)
     {
         TRACE("No Z buffer - disabling depth test\n");
         glDisable(GL_DEPTH_TEST); /* This also disables z writing in gl */
@@ -816,7 +816,7 @@ static void state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
     GLint stencilPass_ccw = GL_KEEP;
 
     /* No stencil test without a stencil buffer. */
-    if (!stateblock->device->stencilBufferTarget)
+    if (!stateblock->device->depth_stencil)
     {
         glDisable(GL_STENCIL_TEST);
         checkGLcall("glDisable GL_STENCIL_TEST");
@@ -899,7 +899,7 @@ static void state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
 
 static void state_stencilwrite2s(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->stencilBufferTarget ? stateblock->renderState[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = stateblock->device->depth_stencil ? stateblock->renderState[WINED3DRS_STENCILWRITEMASK] : 0;
 
     GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
     checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
@@ -912,7 +912,7 @@ static void state_stencilwrite2s(DWORD state, IWineD3DStateBlockImpl *stateblock
 
 static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->stencilBufferTarget ? stateblock->renderState[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = stateblock->device->depth_stencil ? stateblock->renderState[WINED3DRS_STENCILWRITEMASK] : 0;
 
     glStencilMask(mask);
     checkGLcall("glStencilMask");

@@ -1940,7 +1940,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
     }
-    else if (iface == device->stencilBufferTarget)
+    else if (This == device->depth_stencil)
     {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     } else {
@@ -3796,7 +3796,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
     /* Accessing the depth stencil is supposed to fail between a BeginScene and EndScene pair,
      * except depth blits, which seem to work
      */
-    if (iface == device->stencilBufferTarget || (SrcSurface && SrcSurface == device->stencilBufferTarget))
+    if (This == device->depth_stencil || (Src && Src == device->depth_stencil))
     {
         if (device->inScene && !(Flags & WINEDDBLT_DEPTHFILL))
         {
@@ -3836,8 +3836,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if (device->inScene && (iface == device->stencilBufferTarget
-            || (Source == device->stencilBufferTarget)))
+    if (device->inScene && (This == device->depth_stencil || srcImpl == device->depth_stencil))
     {
         TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
