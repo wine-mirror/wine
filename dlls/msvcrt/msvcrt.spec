@@ -1190,7 +1190,7 @@
 @ cdecl floor(double) MSVCRT_floor
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl fopen(str str) MSVCRT_fopen
-# stub fopen_s
+@ cdecl fopen_s(ptr str str) MSVCRT_fopen_s
 @ varargs fprintf(ptr str) MSVCRT_fprintf
 # stub fprintf_s
 @ cdecl fputc(long ptr) MSVCRT_fputc

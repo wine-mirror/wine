@@ -218,6 +218,7 @@ static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
   if (fd >= MSVCRT_MAX_FILES)
   {
     WARN(":files exhausted!\n");
+    *MSVCRT__errno() = MSVCRT_ENFILE;
     return -1;
   }
   MSVCRT_fdesc[fd].handle = hand;
@@ -1033,6 +1034,8 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
     break;
   default:
+    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
 
@@ -2649,10 +2652,16 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
     MSVCRT_FILE *ret;
     MSVCRT_wchar_t *pathW = NULL, *modeW = NULL;
 
-    if (path && !(pathW = msvcrt_wstrdupa(path))) return NULL;
+    if (path && !(pathW = msvcrt_wstrdupa(path))) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return NULL;
+    }
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
         MSVCRT_free(pathW);
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
         return NULL;
     }
 
@@ -2669,6 +2678,25 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
 MSVCRT_FILE * CDECL MSVCRT_fopen(const char *path, const char *mode)
 {
     return MSVCRT__fsopen( path, mode, MSVCRT__SH_DENYNO );
+}
+
+/*********************************************************************
+ *              fopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_fopen_s(MSVCRT_FILE** pFile,
+        const char *filename, const char *mode)
+{
+    if(!pFile) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *pFile = MSVCRT_fopen(filename, mode);
+
+    if(!*pFile)
+        return *MSVCRT__errno();
+    return 0;
 }
 
 /*********************************************************************

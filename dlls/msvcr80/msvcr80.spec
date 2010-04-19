@@ -1259,7 +1259,7 @@
 @ cdecl floor(double) msvcrt.floor
 @ cdecl fmod(double double) msvcrt.fmod
 @ cdecl fopen(str str) msvcrt.fopen
-@ stub fopen_s
+@ cdecl fopen_s(ptr str str) msvcrt.fopen_s
 @ varargs fprintf(ptr str) msvcrt.fprintf
 @ stub fprintf_s
 @ cdecl fputc(long ptr) msvcrt.fputc
