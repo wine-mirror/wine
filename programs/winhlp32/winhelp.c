@@ -817,7 +817,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     }
 
     hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;
-    if (!hIcon) hIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_WINHELP));
+    if (!hIcon) hIcon = LoadImage(Globals.hInstance, MAKEINTRESOURCE(IDI_WINHELP), IMAGE_ICON,
+                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
     SendMessage(win->hMainWnd, WM_SETICON, ICON_SMALL, (DWORD_PTR)hIcon);
 
     /* Initialize file specific pushbuttons */
@@ -1633,8 +1634,9 @@ BOOL WINHELP_CreateIndexWindow(BOOL is_search)
  */
 static BOOL WINHELP_RegisterWinClasses(void)
 {
-    WNDCLASS class_main, class_button_box, class_shadow, class_history;
+    WNDCLASSEX class_main, class_button_box, class_shadow, class_history;
 
+    class_main.cbSize              = sizeof(class_main);
     class_main.style               = CS_HREDRAW | CS_VREDRAW;
     class_main.lpfnWndProc         = WINHELP_MainWndProc;
     class_main.cbClsExtra          = 0;
@@ -1645,6 +1647,9 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_main.hbrBackground       = (HBRUSH)(COLOR_WINDOW+1);
     class_main.lpszMenuName        = 0;
     class_main.lpszClassName       = MAIN_WIN_CLASS_NAME;
+    class_main.hIconSm             = LoadImage(Globals.hInstance, MAKEINTRESOURCE(IDI_WINHELP), IMAGE_ICON,
+                                               GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                               LR_SHARED);
 
     class_button_box               = class_main;
     class_button_box.lpfnWndProc   = WINHELP_ButtonBoxWndProc;
@@ -1662,10 +1667,10 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_history.lpfnWndProc      = WINHELP_HistoryWndProc;
     class_history.lpszClassName    = HISTORY_WIN_CLASS_NAME;
 
-    return (RegisterClass(&class_main) &&
-            RegisterClass(&class_button_box) &&
-            RegisterClass(&class_shadow) &&
-            RegisterClass(&class_history));
+    return (RegisterClassEx(&class_main) &&
+            RegisterClassEx(&class_button_box) &&
+            RegisterClassEx(&class_shadow) &&
+            RegisterClassEx(&class_history));
 }
 
 /***********************************************************************
