@@ -158,6 +158,7 @@ static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flo
     cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
     cur->flow = flow;
     cur->state = state;
+    cur->device = NULL;
     if (!id)
     {
         id = &cur->devguid;
@@ -215,6 +216,10 @@ static void MMDevice_Destroy(MMDevice *This)
             break;
         }
     }
+#ifdef HAVE_OPENAL
+    if (This->device)
+        palcCloseDevice(This->device);
+#endif
     This->crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crst);
     HeapFree(GetProcessHeap(), 0, This->alname);
@@ -267,14 +272,22 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
 {
     MMDevice *This = (MMDevice *)iface;
     HRESULT hr = E_NOINTERFACE;
-    TRACE("(%p)->(%p,%x,%p,%p)\n", This, riid, clsctx, params, ppv);
+    TRACE("(%p)->(%p,%x,%p,%p)\n", iface, riid, clsctx, params, ppv);
 
     if (!ppv)
         return E_POINTER;
 
     if (IsEqualIID(riid, &IID_IAudioClient))
     {
-        FIXME("IID_IAudioClient unsupported\n");
+#ifdef HAVE_OPENAL
+        if (openal_loaded)
+            hr = AudioClient_Create(This, (IAudioClient**)ppv);
+        else
+#endif
+        {
+            ERR("Trying to open a device with openal not available\n");
+            hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
+        }
     }
     else if (IsEqualIID(riid, &IID_IAudioEndpointVolume))
     {

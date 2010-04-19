@@ -174,13 +174,13 @@ static void test_audioclient(IAudioClient *ac)
     ok(hr == E_POINTER, "Invalid GetDevicePeriod call returns %08x\n", hr);
 
     hr = IAudioClient_GetDevicePeriod(ac, &t1, NULL);
-    ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
 
     hr = IAudioClient_GetDevicePeriod(ac, NULL, &t2);
-    ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
 
     hr = IAudioClient_GetDevicePeriod(ac, &t1, &t2);
-    ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
     trace("Returned periods: %u.%05u ms %u.%05u ms\n",
           (UINT)(t1/10000), (UINT)(t1 % 10000),
           (UINT)(t2/10000), (UINT)(t2 % 10000));
@@ -189,28 +189,28 @@ static void test_audioclient(IAudioClient *ac)
     ok(hr == E_POINTER, "GetMixFormat returns %08x\n", hr);
 
     hr = IAudioClient_GetMixFormat(ac, &pwfx);
-    ok(hr == S_OK, "Valid GetMixFormat returns %08x\n", hr);
-
-    trace("Tag: %04x\n", pwfx->wFormatTag);
-    trace("bits: %u\n", pwfx->wBitsPerSample);
-    trace("chan: %u\n", pwfx->nChannels);
-    trace("rate: %u\n", pwfx->nSamplesPerSec);
-    trace("align: %u\n", pwfx->nBlockAlign);
-    trace("extra: %u\n", pwfx->cbSize);
-    ok(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE, "wFormatTag is %x\n", pwfx->wFormatTag);
-    if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-    {
-        WAVEFORMATEXTENSIBLE *pwfxe = (void*)pwfx;
-        trace("Res: %u\n", pwfxe->Samples.wReserved);
-        trace("Mask: %x\n", pwfxe->dwChannelMask);
-        trace("Alg: %s\n",
-              IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)?"PCM":
-              (IsEqualGUID(&pwfxe->SubFormat,
-                           &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)?"FLOAT":"Other"));
-    }
+    todo_wine ok(hr == S_OK, "Valid GetMixFormat returns %08x\n", hr);
 
     if (hr == S_OK)
     {
+        trace("Tag: %04x\n", pwfx->wFormatTag);
+        trace("bits: %u\n", pwfx->wBitsPerSample);
+        trace("chan: %u\n", pwfx->nChannels);
+        trace("rate: %u\n", pwfx->nSamplesPerSec);
+        trace("align: %u\n", pwfx->nBlockAlign);
+        trace("extra: %u\n", pwfx->cbSize);
+        ok(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE, "wFormatTag is %x\n", pwfx->wFormatTag);
+        if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        {
+            WAVEFORMATEXTENSIBLE *pwfxe = (void*)pwfx;
+            trace("Res: %u\n", pwfxe->Samples.wReserved);
+            trace("Mask: %x\n", pwfxe->dwChannelMask);
+            trace("Alg: %s\n",
+                  IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)?"PCM":
+                  (IsEqualGUID(&pwfxe->SubFormat,
+                               &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)?"FLOAT":"Other"));
+        }
+
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &pwfx2);
         ok(hr == S_OK, "Valid IsFormatSupported(Shared) call returns %08x\n", hr);
         ok(pwfx2 == NULL, "pwfx2 is non-null\n");
@@ -236,19 +236,19 @@ static void test_audioclient(IAudioClient *ac)
     test_uninitialized(ac);
 
     hr = IAudioClient_Initialize(ac, 3, 0, 5000000, 0, pwfx, NULL);
-    ok(hr == AUDCLNT_E_NOT_INITIALIZED, "Initialize with invalid sharemode returns %08x\n", hr);
+    todo_wine ok(hr == AUDCLNT_E_NOT_INITIALIZED, "Initialize with invalid sharemode returns %08x\n", hr);
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0xffffffff, 5000000, 0, pwfx, NULL);
-    ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
 
     /* It seems that if length > 2s or periodicity != 0 the length is ignored and call succeeds
      * Since we can only initialize succesfully once skip those tests
      */
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, NULL, NULL);
-    ok(hr == E_POINTER, "Initialize with null format returns %08x\n", hr);
+    todo_wine ok(hr == E_POINTER, "Initialize with null format returns %08x\n", hr);
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 5000000, 0, pwfx, NULL);
-    ok(hr == S_OK, "Valid Initialize returns %08x\n", hr);
+    todo_wine ok(hr == S_OK, "Valid Initialize returns %08x\n", hr);
 
     if (hr != S_OK)
     {
@@ -319,7 +319,7 @@ START_TEST(capture)
     }
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
-    todo_wine ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
     if (ac)
     {
         test_audioclient(ac);

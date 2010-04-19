@@ -37,7 +37,10 @@ typedef struct MMDevice {
     DWORD state;
     GUID devguid;
     WCHAR *alname;
+    void *device, *ctx;
 } MMDevice;
+
+extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv);
 
 #ifdef HAVE_OPENAL
 
