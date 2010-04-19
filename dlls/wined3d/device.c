@@ -5913,37 +5913,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     if (This->depth_stencil == (IWineD3DSurfaceImpl *)pNewZStencil)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
+        return WINED3D_OK;
     }
-    else
+
+    if (This->depth_stencil)
     {
-        if (This->depth_stencil)
+        if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+                || This->depth_stencil->Flags & SFLAG_DISCARD)
         {
-            if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                    || This->depth_stencil->Flags & SFLAG_DISCARD)
-            {
-                surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED);
-            }
-            else
-            {
-                struct wined3d_context *context = context_acquire(This,
-                        (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_RESOURCELOAD);
-                surface_load_ds_location(This->depth_stencil, context, SFLAG_DS_OFFSCREEN);
-                surface_modify_ds_location(This->depth_stencil, SFLAG_DS_OFFSCREEN);
-                context_release(context);
-            }
+            surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED);
         }
-
-        tmp = This->depth_stencil;
-        This->depth_stencil = (IWineD3DSurfaceImpl *)pNewZStencil;
-        if (This->depth_stencil) IWineD3DSurface_AddRef((IWineD3DSurface *)This->depth_stencil);
-        if (tmp) IWineD3DSurface_Release((IWineD3DSurface *)tmp);
-
-        if((!tmp && pNewZStencil) || (!pNewZStencil && tmp)) {
-            /* Swapping NULL / non NULL depth stencil affects the depth and tests */
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZENABLE));
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILENABLE));
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        else
+        {
+            struct wined3d_context *context = context_acquire(This,
+                    (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+            surface_load_ds_location(This->depth_stencil, context, SFLAG_DS_OFFSCREEN);
+            surface_modify_ds_location(This->depth_stencil, SFLAG_DS_OFFSCREEN);
+            context_release(context);
         }
+    }
+
+    tmp = This->depth_stencil;
+    This->depth_stencil = (IWineD3DSurfaceImpl *)pNewZStencil;
+    if (This->depth_stencil) IWineD3DSurface_AddRef((IWineD3DSurface *)This->depth_stencil);
+    if (tmp) IWineD3DSurface_Release((IWineD3DSurface *)tmp);
+
+    if ((!tmp && pNewZStencil) || (!pNewZStencil && tmp))
+    {
+        /* Swapping NULL / non NULL depth stencil affects the depth and tests */
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZENABLE));
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILENABLE));
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
     }
 
     return WINED3D_OK;
