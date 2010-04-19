@@ -353,6 +353,8 @@ struct StorageImpl
   ULONG smallBlockLimit;
   ULONG smallBlockDepotStart;
   ULONG extBigBlockDepotStart;
+  ULONG *extBigBlockDepotLocations;
+  ULONG extBigBlockDepotLocationsSize;
   ULONG extBigBlockDepotCount;
   ULONG bigBlockDepotStart[COUNT_BBDEPOTINHEADER];
 

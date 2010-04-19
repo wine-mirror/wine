@@ -2768,6 +2768,40 @@ static HRESULT StorageImpl_Construct(
 
   This->firstFreeSmallBlock = 0;
 
+  /* Read the extended big block depot locations. */
+  if (This->extBigBlockDepotCount != 0)
+  {
+    ULONG current_block = This->extBigBlockDepotStart;
+    ULONG cache_size = This->extBigBlockDepotCount * 2;
+    int i;
+
+    This->extBigBlockDepotLocations = HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG) * cache_size);
+    if (!This->extBigBlockDepotLocations)
+    {
+      hr = E_OUTOFMEMORY;
+      goto end;
+    }
+
+    This->extBigBlockDepotLocationsSize = cache_size;
+
+    for (i=0; i<This->extBigBlockDepotCount; i++)
+    {
+      if (current_block == BLOCK_END_OF_CHAIN)
+      {
+        WARN("File has too few extended big block depot blocks.\n");
+        hr = STG_E_DOCFILECORRUPT;
+        goto end;
+      }
+      This->extBigBlockDepotLocations[i] = current_block;
+      current_block = Storage32Impl_GetNextExtendedBlock(This, current_block);
+    }
+  }
+  else
+  {
+    This->extBigBlockDepotLocations = NULL;
+    This->extBigBlockDepotLocationsSize = 0;
+  }
+
   /*
    * Create the block chain abstractions.
    */
@@ -2883,6 +2917,8 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   StorageImpl_Flush(iface);
 
   StorageImpl_Invalidate(iface);
+
+  HeapFree(GetProcessHeap(), 0, This->extBigBlockDepotLocations);
 
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
@@ -3097,18 +3133,14 @@ static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex)
   ULONG extBlockCount          = numExtBlocks / depotBlocksPerExtBlock;
   ULONG extBlockOffset         = numExtBlocks % depotBlocksPerExtBlock;
   ULONG blockIndex             = BLOCK_UNUSED;
-  ULONG extBlockIndex          = This->extBigBlockDepotStart;
+  ULONG extBlockIndex;
 
   assert(depotIndex >= COUNT_BBDEPOTINHEADER);
 
-  if (This->extBigBlockDepotStart == BLOCK_END_OF_CHAIN)
+  if (extBlockCount >= This->extBigBlockDepotCount)
     return BLOCK_UNUSED;
 
-  while (extBlockCount > 0)
-  {
-    extBlockIndex = Storage32Impl_GetNextExtendedBlock(This, extBlockIndex);
-    extBlockCount--;
-  }
+  extBlockIndex = This->extBigBlockDepotLocations[extBlockCount];
 
   if (extBlockIndex != BLOCK_UNUSED)
     StorageImpl_ReadDWordFromBigBlock(This, extBlockIndex,
@@ -3130,15 +3162,13 @@ static void Storage32Impl_SetExtDepotBlock(StorageImpl* This, ULONG depotIndex, 
   ULONG numExtBlocks           = depotIndex - COUNT_BBDEPOTINHEADER;
   ULONG extBlockCount          = numExtBlocks / depotBlocksPerExtBlock;
   ULONG extBlockOffset         = numExtBlocks % depotBlocksPerExtBlock;
-  ULONG extBlockIndex          = This->extBigBlockDepotStart;
+  ULONG extBlockIndex;
 
   assert(depotIndex >= COUNT_BBDEPOTINHEADER);
 
-  while (extBlockCount > 0)
-  {
-    extBlockIndex = Storage32Impl_GetNextExtendedBlock(This, extBlockIndex);
-    extBlockCount--;
-  }
+  assert(extBlockCount < This->extBigBlockDepotCount);
+
+  extBlockIndex = This->extBigBlockDepotLocations[extBlockCount];
 
   if (extBlockIndex != BLOCK_UNUSED)
   {
@@ -3175,14 +3205,10 @@ static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
   }
   else
   {
-    unsigned int i;
     /*
-     * Follow the chain to the last one.
+     * Find the last existing extended block.
      */
-    for (i = 0; i < (numExtBlocks - 1); i++)
-    {
-      nextExtBlock = Storage32Impl_GetNextExtendedBlock(This, nextExtBlock);
-    }
+    nextExtBlock = This->extBigBlockDepotLocations[This->extBigBlockDepotCount-1];
 
     /*
      * Add the new extended block to the chain.
@@ -3196,6 +3222,20 @@ static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
    */
   memset(depotBuffer, BLOCK_UNUSED, This->bigBlockSize);
   StorageImpl_WriteBigBlock(This, index, depotBuffer);
+
+  /* Add the block to our cache. */
+  if (This->extBigBlockDepotLocationsSize == numExtBlocks)
+  {
+    ULONG new_cache_size = (This->extBigBlockDepotLocationsSize+1)*2;
+    ULONG *new_cache = HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG) * new_cache_size);
+
+    memcpy(new_cache, This->extBigBlockDepotLocations, sizeof(ULONG) * This->extBigBlockDepotLocationsSize);
+    HeapFree(GetProcessHeap(), 0, This->extBigBlockDepotLocations);
+
+    This->extBigBlockDepotLocations = new_cache;
+    This->extBigBlockDepotLocationsSize = new_cache_size;
+  }
+  This->extBigBlockDepotLocations[numExtBlocks] = index;
 
   return index;
 }
