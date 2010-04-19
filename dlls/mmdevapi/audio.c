@@ -78,6 +78,7 @@ typedef struct ACImpl {
     ACRender *render;
     ACCapture *capture;
     ACSession *session;
+    ASVolume *svolume;
     AClock *clock;
 } ACImpl;
 
@@ -99,6 +100,12 @@ struct ACSession {
     ACImpl *parent;
 };
 
+struct ASVolume {
+    const ISimpleAudioVolumeVtbl *lpVtbl;
+    LONG ref;
+    ACImpl *parent;
+};
+
 struct AClock {
     const IAudioClockVtbl *lpVtbl;
     const IAudioClock2Vtbl *lp2Vtbl;
@@ -110,6 +117,7 @@ static const IAudioClientVtbl ACImpl_Vtbl;
 static const IAudioRenderClientVtbl ACRender_Vtbl;
 static const IAudioCaptureClientVtbl ACCapture_Vtbl;
 static const IAudioSessionControl2Vtbl ACSession_Vtbl;
+static const ISimpleAudioVolumeVtbl ASVolume_Vtbl;
 static const IAudioClockVtbl AClock_Vtbl;
 static const IAudioClock2Vtbl AClock2_Vtbl;
 
@@ -119,6 +127,8 @@ static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv);
 static void AudioCaptureClient_Destroy(ACCapture *This);
 static HRESULT AudioSessionControl_Create(ACImpl *parent, ACSession **ppv);
 static void AudioSessionControl_Destroy(ACSession *This);
+static HRESULT AudioSimpleVolume_Create(ACImpl *parent, ASVolume **ppv);
+static void AudioSimpleVolume_Destroy(ASVolume *This);
 static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv);
 static void AudioClock_Destroy(AClock *This);
 
@@ -301,6 +311,8 @@ static void AudioClient_Destroy(ACImpl *This)
         AudioCaptureClient_Destroy(This->capture);
     if (This->session)
         AudioSessionControl_Destroy(This->session);
+    if (This->svolume)
+        AudioSimpleVolume_Destroy(This->svolume);
     if (This->clock)
         AudioClock_Destroy(This->clock);
     if (This->parent->flow == eRender && This->init) {
@@ -876,6 +888,10 @@ static HRESULT WINAPI AC_GetService(IAudioClient *iface, REFIID riid, void **ppv
         if (!This->session)
             hr = AudioSessionControl_Create(This, &This->session);
         *ppv = This->session;
+    } else if (IsEqualIID(riid, &IID_ISimpleAudioVolume)) {
+        if (!This->svolume)
+            hr = AudioSimpleVolume_Create(This, &This->svolume);
+        *ppv = This->svolume;
     } else if (IsEqualIID(riid, &IID_IAudioClock)) {
         if (!This->clock)
             hr = AudioClock_Create(This, &This->clock);
@@ -1450,6 +1466,111 @@ static const IAudioSessionControl2Vtbl ACSession_Vtbl =
     ACS_GetProcessId,
     ACS_IsSystemSoundsSession,
     ACS_SetDuckingPreference
+};
+
+static HRESULT AudioSimpleVolume_Create(ACImpl *parent, ASVolume **ppv)
+{
+    ASVolume *This;
+    This = *ppv = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &ASVolume_Vtbl;
+    This->ref = 0;
+    This->parent = parent;
+    return S_OK;
+}
+
+static void AudioSimpleVolume_Destroy(ASVolume *This)
+{
+    This->parent->svolume = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI ASV_QueryInterface(ISimpleAudioVolume *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_ISimpleAudioVolume))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ASV_AddRef(ISimpleAudioVolume *iface)
+{
+    ASVolume *This = (ASVolume*)iface;
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI ASV_Release(ISimpleAudioVolume *iface)
+{
+    ASVolume *This = (ASVolume*)iface;
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        AudioSimpleVolume_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI ASV_SetMasterVolume(ISimpleAudioVolume *iface, float level, const GUID *context)
+{
+    ASVolume *This = (ASVolume*)iface;
+    TRACE("(%p)->(%f,%p)\n", This, level, context);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ASV_GetMasterVolume(ISimpleAudioVolume *iface, float *level)
+{
+    ASVolume *This = (ASVolume*)iface;
+    TRACE("(%p)->(%p)\n", This, level);
+
+    *level = 1.f;
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ASV_SetMute(ISimpleAudioVolume *iface, BOOL mute, const GUID *context)
+{
+    ASVolume *This = (ASVolume*)iface;
+    TRACE("(%p)->(%u,%p)\n", This, mute, context);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ASV_GetMute(ISimpleAudioVolume *iface, BOOL *mute)
+{
+    ASVolume *This = (ASVolume*)iface;
+    TRACE("(%p)->(%p)\n", This, mute);
+
+    *mute = 0;
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static const ISimpleAudioVolumeVtbl ASVolume_Vtbl  =
+{
+    ASV_QueryInterface,
+    ASV_AddRef,
+    ASV_Release,
+    ASV_SetMasterVolume,
+    ASV_GetMasterVolume,
+    ASV_SetMute,
+    ASV_GetMute
 };
 
 static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv)
