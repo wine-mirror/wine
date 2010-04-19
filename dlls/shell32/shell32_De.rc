@@ -208,6 +208,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Gruppe"
 	IDS_SHV_COLUMN_DELFROM	"Ursprung"
 	IDS_SHV_COLUMN_DELDATE	"Gelöscht am"
+	IDS_SHV_COL_DOCS	"Dokumente"
+	IDS_SHV_COL_STATUS	"Status"
+	IDS_SHV_COL_LOCATION	"Ort"
+	IDS_SHV_COL_MODEL	"Modell"
 
         /* special folders */
 	IDS_DESKTOP		"Desktop"
