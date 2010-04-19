@@ -132,7 +132,7 @@ static void test_SHSetThreadRef(void)
         "got 0x%x and %p with %d, %d (expected S_OK and %p with 2, 1)\n",
         hr, punk, refcount, AddRef_called, &ref);
 
-    /* clear the onject pointer */
+    /* clear the object pointer */
     hr = pSHSetThreadRef(NULL);
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 
