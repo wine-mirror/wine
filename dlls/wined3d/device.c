@@ -5907,7 +5907,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *pNewZStencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *tmp;
-    HRESULT hr = WINED3D_OK;
 
     TRACE("device %p, depth_stencil %p, old depth_stencil %p.\n", This, pNewZStencil, This->depth_stencil);
 
@@ -5938,7 +5937,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         This->depth_stencil = (IWineD3DSurfaceImpl *)pNewZStencil;
         if (This->depth_stencil) IWineD3DSurface_AddRef((IWineD3DSurface *)This->depth_stencil);
         if (tmp) IWineD3DSurface_Release((IWineD3DSurface *)tmp);
-        hr = WINED3D_OK;
 
         if((!tmp && pNewZStencil) || (!pNewZStencil && tmp)) {
             /* Swapping NULL / non NULL depth stencil affects the depth and tests */
@@ -5948,7 +5946,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         }
     }
 
-    return hr;
+    return WINED3D_OK;
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, UINT XHotSpot,
