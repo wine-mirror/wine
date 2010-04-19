@@ -74,9 +74,21 @@ typedef struct ACImpl {
     HANDLE timer_id;
     ALCdevice *capdev;
     ALint format;
+
+    ACRender *render;
 } ACImpl;
 
+struct ACRender {
+    const IAudioRenderClientVtbl *lpVtbl;
+    LONG ref;
+    ACImpl *parent;
+};
+
 static const IAudioClientVtbl ACImpl_Vtbl;
+static const IAudioRenderClientVtbl ACRender_Vtbl;
+
+static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv);
+static void AudioRenderClient_Destroy(ACRender *This);
 
 static int get_format_PCM(WAVEFORMATEX *format)
 {
@@ -251,6 +263,8 @@ static void AudioClient_Destroy(ACImpl *This)
 {
     if (This->timer_id)
         DeleteTimerQueueTimer(NULL, This->timer_id, INVALID_HANDLE_VALUE);
+    if (This->render)
+        AudioRenderClient_Destroy(This->render);
     if (This->parent->flow == eRender && This->init) {
         setALContext(This->parent->ctx);
         IAudioClient_Stop((IAudioClient*)This);
@@ -808,6 +822,14 @@ static HRESULT WINAPI AC_GetService(IAudioClient *iface, REFIID riid, void **ppv
         return E_POINTER;
     *ppv = NULL;
 
+    if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
+        if (This->parent->flow != eRender)
+            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        if (!This->render)
+            hr = AudioRenderClient_Create(This, &This->render);
+        *ppv = This->render;
+    }
+
     if (FAILED(hr))
         return hr;
 
@@ -837,6 +859,208 @@ static const IAudioClientVtbl ACImpl_Vtbl =
     AC_Reset,
     AC_SetEventHandle,
     AC_GetService
+};
+
+static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv)
+{
+    ACRender *This;
+
+    This = *ppv = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &ACRender_Vtbl;
+    This->ref = 0;
+    This->parent = parent;
+    return S_OK;
+}
+
+static void AudioRenderClient_Destroy(ACRender *This)
+{
+    This->parent->render = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI ACR_QueryInterface(IAudioRenderClient *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IAudioRenderClient))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ACR_AddRef(IAudioRenderClient *iface)
+{
+    ACRender *This = (ACRender*)iface;
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI ACR_Release(IAudioRenderClient *iface)
+{
+    ACRender *This = (ACRender*)iface;
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        AudioRenderClient_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI ACR_GetBuffer(IAudioRenderClient *iface, UINT32 frames, BYTE **data)
+{
+    ACRender *This = (ACRender*)iface;
+    DWORD free, framesize;
+    TRACE("(%p)->(%u,%p)\n", This, frames, data);
+
+    if (!data)
+        return E_POINTER;
+    if (!frames)
+        return S_OK;
+    *data = NULL;
+    if (This->parent->locked) {
+        ERR("Locked\n");
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+    AC_GetCurrentPadding((IAudioClient*)This->parent, &free);
+    if (This->parent->bufsize-free < frames) {
+        ERR("Too large: %u %u %u\n", This->parent->bufsize, free, frames);
+        return AUDCLNT_E_BUFFER_TOO_LARGE;
+    }
+    EnterCriticalSection(This->parent->crst);
+    This->parent->locked = frames;
+    framesize = This->parent->pwfx->nBlockAlign;
+
+    /* Exact offset doesn't matter, offset could be 0 forever
+     * but increasing it is easier to debug */
+    if (This->parent->ofs + frames > This->parent->bufsize)
+        This->parent->ofs = 0;
+    *data = This->parent->buffer + This->parent->ofs * framesize;
+
+    LeaveCriticalSection(This->parent->crst);
+    return S_OK;
+}
+
+static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 written, DWORD flags)
+{
+    ACRender *This = (ACRender*)iface;
+    BYTE *buf = This->parent->buffer;
+    DWORD framesize = This->parent->pwfx->nBlockAlign;
+    DWORD ofs = This->parent->ofs;
+    DWORD bufsize = This->parent->bufsize;
+    DWORD locked = This->parent->locked;
+    DWORD freq = This->parent->pwfx->nSamplesPerSec;
+    DWORD bpp = This->parent->pwfx->wBitsPerSample;
+    ALuint albuf;
+
+    TRACE("(%p)->(%u,%x)\n", This, written, flags);
+
+    if (locked < written)
+        return AUDCLNT_E_INVALID_SIZE;
+
+    if (flags & ~AUDCLNT_BUFFERFLAGS_SILENT)
+        return E_INVALIDARG;
+
+    if (!written) {
+        FIXME("Handled right?\n");
+        This->parent->locked = 0;
+        return S_OK;
+    }
+
+    if (!This->parent->locked)
+        return AUDCLNT_E_OUT_OF_ORDER;
+
+    EnterCriticalSection(This->parent->crst);
+    setALContext(This->parent->parent->ctx);
+
+    This->parent->ofs += written;
+    This->parent->ofs %= bufsize;
+    This->parent->pad += written;
+    This->parent->frameswritten += written;
+
+    ofs *= framesize;
+    written *= framesize;
+    bufsize *= framesize;
+    locked *= framesize;
+
+    if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+        memset(buf+ofs, bpp != 8 ? 0 : 128, written);
+    TRACE("buf: %p, ofs: %x, written %u, freq %u\n", buf, ofs, written, freq);
+
+    palGenBuffers(1, &albuf);
+    palBufferData(albuf, This->parent->format, buf+ofs, written, freq);
+    palSourceQueueBuffers(This->parent->source, 1, &albuf);
+    TRACE("Queued %u\n", albuf);
+
+    if (This->parent->running) {
+        ALint state = AL_PLAYING, done = 0, padpart = 0;
+
+        palGetSourcei(This->parent->source, AL_BUFFERS_PROCESSED, &done);
+        palGetSourcei(This->parent->source, AL_BYTE_OFFSET, &padpart);
+        palGetSourcei(This->parent->source, AL_SOURCE_STATE, &state);
+        padpart /= framesize;
+
+        if (state == AL_STOPPED) {
+            padpart = This->parent->pad;
+            /* Buffer might have been processed in the small window
+             * between first and third call */
+            palGetSourcei(This->parent->source, AL_BUFFERS_PROCESSED, &done);
+        }
+        if (done || This->parent->padpartial != padpart)
+            This->parent->laststamp = gettime();
+        This->parent->padpartial = padpart;
+
+        while (done--) {
+            ALint size, bits, chan;
+            ALuint which;
+
+            palSourceUnqueueBuffers(This->parent->source, 1, &which);
+            palGetBufferi(which, AL_SIZE, &size);
+            palGetBufferi(which, AL_BITS, &bits);
+            palGetBufferi(which, AL_CHANNELS, &chan);
+            size /= bits * chan / 8;
+            if (size > This->parent->pad) {
+                ERR("Overflow!\n");
+                size = This->parent->pad;
+            }
+            This->parent->pad -= size;
+            This->parent->padpartial -= size;
+            TRACE("Unqueued %u\n", which);
+            palDeleteBuffers(1, &which);
+        }
+
+        if (state != AL_PLAYING) {
+            ERR("Starting from %x\n", state);
+            palSourcePlay(This->parent->source);
+        }
+        getALError();
+    }
+    This->parent->locked = 0;
+
+    getALError();
+    popALContext();
+    LeaveCriticalSection(This->parent->crst);
+
+    return S_OK;
+}
+
+static const IAudioRenderClientVtbl ACRender_Vtbl = {
+    ACR_QueryInterface,
+    ACR_AddRef,
+    ACR_Release,
+    ACR_GetBuffer,
+    ACR_ReleaseBuffer
 };
 
 #endif
