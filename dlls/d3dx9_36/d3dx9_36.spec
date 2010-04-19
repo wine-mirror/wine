@@ -118,7 +118,7 @@
 @ stub D3DXCreateVolumeTextureFromResourceExW
 @ stub D3DXCreateVolumeTextureFromResourceW
 @ stdcall D3DXDebugMute(long)
-@ stub D3DXDeclaratorFromFVF
+@ stdcall D3DXDeclaratorFromFVF(long ptr)
 @ stub D3DXDisassembleEffect
 @ stub D3DXDisassembleShader
 @ stub D3DXFileCreate

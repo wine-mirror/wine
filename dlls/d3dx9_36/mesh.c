@@ -2,6 +2,7 @@
  * Mesh operations specific to D3DX9.
  *
  * Copyright (C) 2009 David Adam
+ * Copyright (C) 2010 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -164,6 +165,16 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
         if ( d > *pradius ) *pradius = d;
     }
     return D3D_OK;
+}
+
+/*************************************************************************
+ * D3DXDeclaratorFromFVF
+ */
+HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 Declaration[MAX_FVF_DECL_SIZE])
+{
+    FIXME("(%d, %p): stub\n", fvf, Declaration);
+
+    return E_NOTIMPL;
 }
 
 /*************************************************************************
