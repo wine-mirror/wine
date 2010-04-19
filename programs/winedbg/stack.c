@@ -50,7 +50,9 @@ void stack_info(void)
     dbg_printf("Stack dump:\n");
     switch (lvalue.addr.Mode)
     {
-    case AddrModeFlat: /* 32-bit mode */
+    case AddrModeFlat: /* 32-bit or 64-bit mode */
+        memory_examine(&lvalue, 24, 'a');
+        break;
     case AddrMode1632: /* 32-bit mode */
         memory_examine(&lvalue, 24, 'x');
         break;
