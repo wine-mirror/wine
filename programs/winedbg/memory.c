@@ -121,9 +121,13 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     BOOL        ret = TRUE;
     DWORD64     os;
 
-    os = ~(DWORD64)size;
-    types_get_info(&lvalue->type, TI_GET_LENGTH, &os);
-    assert(size == os);
+    if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &os)) return FALSE;
+    if (size != os)
+    {
+        dbg_printf("Size mismatch in memory_write_value, got %u from type while expecting %u\n",
+                   (DWORD)os, size);
+        return FALSE;
+    }
 
     /* FIXME: only works on little endian systems */
     if (lvalue->cookie == DLV_TARGET)
