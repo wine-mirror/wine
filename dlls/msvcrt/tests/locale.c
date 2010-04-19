@@ -51,7 +51,7 @@ static void test_setlocale(void)
     ok(!strcmp(ret, "C"), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, NULL);
-    todo_wine ok(!strcmp(ret, "C"), "ret = %s\n", ret);
+    ok(!strcmp(ret, "C"), "ret = %s\n", ret);
 
     if(!setlocale(LC_NUMERIC, "Polish")
             || !setlocale(LC_NUMERIC, "Greek")
@@ -72,7 +72,7 @@ static void test_setlocale(void)
 
     strcpy(buf, ret);
     ret = setlocale(LC_ALL, buf);
-    todo_wine ok(!strcmp(ret, lc_all), "ret = %s\n", ret);
+    ok(!strcmp(ret, lc_all), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "German");
     todo_wine ok(!strcmp(ret, "German_Germany.1252"), "ret = %s\n", ret);

@@ -348,6 +348,32 @@ MSVCRT__locale_t get_locale(void) {
     return data->locale;
 }
 
+/* INTERNAL: constructs string returned by setlocale */
+static inline char* construct_lc_all(MSVCRT__locale_t cur) {
+    static char current_lc_all[MAX_LOCALE_LENGTH];
+
+    int i;
+
+    for(i=MSVCRT_LC_MIN+1; i<MSVCRT_LC_MAX; i++) {
+        if(strcmp(cur->locinfo->lc_category[i].locale,
+                    cur->locinfo->lc_category[i+1].locale))
+            break;
+    }
+
+    if(i==MSVCRT_LC_MAX)
+        return cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
+
+    sprintf(current_lc_all,
+            "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
+            cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
+            cur->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
+            cur->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
+            cur->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
+            cur->locinfo->lc_category[MSVCRT_LC_TIME].locale);
+
+    return current_lc_all;
+}
+
 
 /*********************************************************************
  *		wsetlocale (MSVCRT.@)
@@ -1020,31 +1046,25 @@ int CDECL _configthreadlocale(int type)
  */
 char* CDECL MSVCRT_setlocale(int category, const char* locale)
 {
-    static char current_lc_all[MAX_LOCALE_LENGTH];
-
     MSVCRT__locale_t loc, cur;
 
     cur = get_locale();
 
-    if(locale == NULL) {
-        if(category == MSVCRT_LC_ALL) {
-            sprintf(current_lc_all,
-                    "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
-                    cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
-                    cur->locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
-                    cur->locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
-                    cur->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
-                    cur->locinfo->lc_category[MSVCRT_LC_TIME].locale);
+    if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX)
+        return NULL;
 
-            return current_lc_all;
-        }
+    if(!locale) {
+        if(category == MSVCRT_LC_ALL)
+            return construct_lc_all(cur);
 
         return cur->locinfo->lc_category[category].locale;
     }
 
     loc = _create_locale(category, locale);
-    if(!loc)
+    if(!loc) {
+        WARN("%d %s failed\n", category, locale);
         return NULL;
+    }
 
     LOCK_LOCALE;
 
@@ -1163,7 +1183,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     }
 
     if(category == MSVCRT_LC_ALL)
-        return cur->locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
+        return construct_lc_all(cur);
 
     return cur->locinfo->lc_category[category].locale;
 }
