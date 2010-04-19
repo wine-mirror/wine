@@ -411,9 +411,7 @@ static int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, L
 
 static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
 {
-    int             idctrl;
     LPNMHDR         pnmh;
-    LPNM_LISTVIEW   pnmv;
     LV_DISPINFOW*   pnmdi;
     LPAPPLICATION_PAGE_LIST_ITEM pAPLI;
 
@@ -423,9 +421,7 @@ static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
     LoadStringW(hInst, IDS_APPLICATION_NOT_RESPONDING, wszNotResponding, sizeof(wszNotResponding)/sizeof(WCHAR));
     LoadStringW(hInst, IDS_APPLICATION_RUNNING, wszRunning, sizeof(wszRunning)/sizeof(WCHAR));
 
-    idctrl = (int) wParam;
     pnmh = (LPNMHDR) lParam;
-    pnmv = (LPNM_LISTVIEW) lParam;
     pnmdi = (LV_DISPINFOW*) lParam;
 
     if (pnmh->hwndFrom == hApplicationPageListCtrl) {
