@@ -1222,10 +1222,105 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** Combo Box ***************************************/
+
+struct msi_combobox_info
+{
+    msi_dialog *dialog;
+    HWND hwnd;
+    WNDPROC oldproc;
+    DWORD num_items;
+    DWORD addpos_items;
+    LPWSTR *items;
+};
+
+static LRESULT WINAPI MSIComboBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_combobox_info *info;
+    LRESULT r;
+    DWORD j;
+
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
+
+    info = GetPropW( hWnd, szButtonData );
+    if (!info)
+        return 0;
+
+    r = CallWindowProcW( info->oldproc, hWnd, msg, wParam, lParam );
+
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        for (j = 0; j < info->num_items; j++)
+            msi_free( info->items[j] );
+        msi_free( info->items );
+        msi_free( info );
+        RemovePropW( hWnd, szButtonData );
+        break;
+    }
+
+    return r;
+}
+
+static UINT msi_combobox_add_item( MSIRECORD *rec, LPVOID param )
+{
+    struct msi_combobox_info *info = param;
+    LPCWSTR value, text;
+    int pos;
+
+    value = MSI_RecordGetString( rec, 3 );
+    text = MSI_RecordGetString( rec, 4 );
+
+    info->items[info->addpos_items] = strdupW( value );
+
+    pos = SendMessageW( info->hwnd, CB_ADDSTRING, 0, (LPARAM)text );
+    SendMessageW( info->hwnd, CB_SETITEMDATA, pos, (LPARAM)info->items[info->addpos_items] );
+    info->addpos_items++;
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_combobox_add_items( struct msi_combobox_info *info, LPCWSTR property )
+{
+    UINT r;
+    MSIQUERY *view = NULL;
+    DWORD count;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','C','o','m','b','o','B','o','x','`',' ',
+        'W','H','E','R','E',' ',
+        '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0
+    };
+
+    r = MSI_OpenQuery( info->dialog->package->db, &view, query, property );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    /* just get the number of records */
+    count = 0;
+    r = MSI_IterateRecords( view, &count, NULL, NULL );
+
+    info->num_items = count;
+    info->items = msi_alloc( sizeof(*info->items) * count );
+
+    r = MSI_IterateRecords( view, NULL, msi_combobox_add_item, info );
+    msiobj_release( &view->hdr );
+
+    return r;
+}
+
 static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 {
+    struct msi_combobox_info *info;
     msi_control *control;
     DWORD attributes, style;
+    LPCWSTR prop;
+
+    info = msi_alloc( sizeof *info );
+    if (!info)
+        return ERROR_FUNCTION_FAILED;
 
     style = CBS_AUTOHSCROLL | WS_TABSTOP | WS_GROUP | WS_CHILD;
     attributes = MSI_RecordGetInteger( rec, 8 );
@@ -1238,7 +1333,25 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 
     control = msi_dialog_add_control( dialog, rec, WC_COMBOBOXW, style );
     if (!control)
+    {
+        msi_free( info );
         return ERROR_FUNCTION_FAILED;
+    }
+
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    /* subclass */
+    info->dialog = dialog;
+    info->hwnd = control->hwnd;
+    info->items = NULL;
+    info->addpos_items = 0;
+    info->oldproc = (WNDPROC)SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                                (LONG_PTR)MSIComboBox_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
+
+    if (control->property)
+        msi_combobox_add_items( info, control->property );
 
     return ERROR_SUCCESS;
 }
