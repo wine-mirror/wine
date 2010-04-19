@@ -162,31 +162,33 @@ if (0)
     hr = IShellFolder2_GetDefaultColumnState(folder, 6, &state);
     ok(broken(hr == E_NOTIMPL) || hr == E_INVALIDARG /* Win7 */, "got 0x%08x\n", hr);
 
-    for(i = 0; i < 6; i++)
-    {
-        hr = IShellFolder2_GetDetailsOf(folder, NULL, i, &details);
-        /* doesn't work on W2K */
-        if (hr == E_NOTIMPL) break;
-
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        /* all columns are left-aligned */
-        ok(details.fmt == LVCFMT_LEFT, "got 0x%x\n", details.fmt);
-        /* can't be on w9x at this point, IShellFolder2 unsupported there,
-           check present for running Wine with w9x setup */
-        if (SHELL_OsIsUnicode()) SHFree(details.str.u.pOleStr);
-
-        hr = IShellFolder2_GetDefaultColumnState(folder, i, &state);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        /* all columns are string except document count */
-        if (i == 1)
-            ok(state == (SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
-        else
-            ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
-    }
-
     hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, &details);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(details.str.uType == STRRET_WSTR, "got %d\n", details.str.uType);
+    ok(hr == S_OK || broken(E_NOTIMPL) /* W2K */, "got 0x%08x\n", hr);
+    /* test every column if method is implemented */
+    if (hr == S_OK)
+    {
+        ok(details.str.uType == STRRET_WSTR, "got %d\n", details.str.uType);
+
+        for(i = 0; i < 6; i++)
+        {
+            hr = IShellFolder2_GetDetailsOf(folder, NULL, i, &details);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            /* all columns are left-aligned */
+            ok(details.fmt == LVCFMT_LEFT, "got 0x%x\n", details.fmt);
+            /* can't be on w9x at this point, IShellFolder2 unsupported there,
+               check present for running Wine with w9x setup */
+            if (SHELL_OsIsUnicode()) SHFree(details.str.u.pOleStr);
+
+            hr = IShellFolder2_GetDefaultColumnState(folder, i, &state);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            /* all columns are string except document count */
+            if (i == 1)
+                ok(state == (SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+            else
+                ok(state == (SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT), "got 0x%x\n", state);
+        }
+    }
 
     /* default pidl */
     hr = IShellFolder2_QueryInterface(folder, &IID_IPersistFolder2, (void**)&pf);
