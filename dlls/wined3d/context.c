@@ -413,17 +413,14 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         /* Apply render targets */
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            IWineD3DSurfaceImpl *render_target = (IWineD3DSurfaceImpl *)device->render_targets[i];
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, render_target);
+            context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, device->render_targets[i]);
         }
 
         /* Apply depth targets */
         if (device->stencilBufferTarget)
         {
-            unsigned int w = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Width;
-            unsigned int h = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Height;
-
-            surface_set_compatible_renderbuffer((IWineD3DSurfaceImpl *)device->stencilBufferTarget, w, h);
+            surface_set_compatible_renderbuffer((IWineD3DSurfaceImpl *)device->stencilBufferTarget,
+                    device->render_targets[0]->pow2Width, device->render_targets[0]->pow2Height);
         }
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, (IWineD3DSurfaceImpl *)device->stencilBufferTarget, TRUE);
 
@@ -434,7 +431,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             if (device->render_targets[i])
-                context_apply_attachment_filter_states((IWineD3DSurfaceImpl *)device->render_targets[i]);
+                context_apply_attachment_filter_states(device->render_targets[i]);
         }
         if (device->stencilBufferTarget)
             context_apply_attachment_filter_states((IWineD3DSurfaceImpl *)device->stencilBufferTarget);

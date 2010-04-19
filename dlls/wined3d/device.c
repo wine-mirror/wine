@@ -1554,7 +1554,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(IWineD3DSurface *) * gl_info->limits.buffers);
+            sizeof(*This->render_targets) * gl_info->limits.buffers);
     This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(GLenum) * gl_info->limits.buffers);
 
@@ -1612,13 +1612,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
-        This->render_targets[0] = swapchain->backBuffer[0];
+        This->render_targets[0] = (IWineD3DSurfaceImpl *)swapchain->backBuffer[0];
     }
     else {
         TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
-        This->render_targets[0] = swapchain->frontBuffer;
+        This->render_targets[0] = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
     }
-    IWineD3DSurface_AddRef(This->render_targets[0]);
+    IWineD3DSurface_AddRef((IWineD3DSurface *)This->render_targets[0]);
 
     /* Depth Stencil support */
     This->stencilBufferTarget = This->auto_depth_stencil_buffer;
@@ -1862,7 +1862,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->stencilBufferTarget = NULL;
 
     TRACE("Releasing the render target at %p\n", This->render_targets[0]);
-    IWineD3DSurface_Release(This->render_targets[0]);
+    IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[0]);
 
     TRACE("Setting rendertarget to NULL\n");
     This->render_targets[0] = NULL;
@@ -4527,10 +4527,10 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST WINED3DRECT* pRects,
-                                        DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) {
+static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count,
+        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *)This->render_targets[0];
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Color (0x%08x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, Color, Z, Stencil);
@@ -4541,7 +4541,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DDeviceImpl_ClearSurface(This, target, Count, pRects, Flags, Color, Z, Stencil);
+    return IWineD3DDeviceImpl_ClearSurface(This, This->render_targets[0], Count, pRects, Flags, Color, Z, Stencil);
 }
 
 /*****
@@ -5586,7 +5586,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface
         return WINED3DERR_INVALIDCALL;
     }
 
-    *ppRenderTarget = This->render_targets[RenderTargetIndex];
+    *ppRenderTarget = (IWineD3DSurface *)This->render_targets[RenderTargetIndex];
     TRACE("(%p) : RenderTarget %d Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
     /* Note inc ref on returned surface */
     if(*ppRenderTarget != NULL)
@@ -5868,13 +5868,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     }
 
     /* If we are trying to set what we already have, don't bother */
-    if (pRenderTarget == This->render_targets[RenderTargetIndex]) {
+    if (pRenderTarget == (IWineD3DSurface *)This->render_targets[RenderTargetIndex])
+    {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
         return WINED3D_OK;
     }
-    if(pRenderTarget) IWineD3DSurface_AddRef(pRenderTarget);
-    if(This->render_targets[RenderTargetIndex]) IWineD3DSurface_Release(This->render_targets[RenderTargetIndex]);
-    This->render_targets[RenderTargetIndex] = pRenderTarget;
+    if (pRenderTarget)
+        IWineD3DSurface_AddRef(pRenderTarget);
+    if (This->render_targets[RenderTargetIndex])
+        IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[RenderTargetIndex]);
+    This->render_targets[RenderTargetIndex] = (IWineD3DSurfaceImpl *)pRenderTarget;
 
     /* Render target 0 is special */
     if(RenderTargetIndex == 0 && set_viewport) {
@@ -5882,8 +5885,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
          * Tests show that stateblock recording is ignored, the change goes
          * directly into the primary stateblock.
          */
-        This->stateBlock->viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
-        This->stateBlock->viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
+        This->stateBlock->viewport.Height = This->render_targets[0]->currentDesc.Height;
+        This->stateBlock->viewport.Width  = This->render_targets[0]->currentDesc.Width;
         This->stateBlock->viewport.X      = 0;
         This->stateBlock->viewport.Y      = 0;
         This->stateBlock->viewport.MaxZ   = 1.0f;
@@ -5920,8 +5923,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
             if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                     || ((IWineD3DSurfaceImpl *)This->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
                 surface_modify_ds_location((IWineD3DSurfaceImpl *)This->stencilBufferTarget, SFLAG_DS_DISCARDED);
-            } else {
-                struct wined3d_context *context = context_acquire(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+            }
+            else
+            {
+                struct wined3d_context *context = context_acquire(This,
+                        (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_RESOURCELOAD);
                 surface_load_ds_location((IWineD3DSurfaceImpl *)This->stencilBufferTarget, context, SFLAG_DS_OFFSCREEN);
                 surface_modify_ds_location((IWineD3DSurfaceImpl *)This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
                 context_release(context);
@@ -6680,9 +6686,8 @@ void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resour
             {
                 for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
                 {
-                    if (This->render_targets[i] == (IWineD3DSurface *)resource) {
+                    if (This->render_targets[i] == (IWineD3DSurfaceImpl *)resource)
                         This->render_targets[i] = NULL;
-                    }
                 }
                 if (This->stencilBufferTarget == (IWineD3DSurface *)resource) {
                     This->stencilBufferTarget = NULL;

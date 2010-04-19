@@ -572,7 +572,6 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl          *target;
     struct wined3d_context *context;
     unsigned int i;
 
@@ -583,11 +582,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
         {
-            target = (IWineD3DSurfaceImpl *)This->render_targets[i];
+            IWineD3DSurface *target = (IWineD3DSurface *)This->render_targets[i];
             if (target)
             {
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
-                IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
+                IWineD3DSurface_LoadLocation(target, SFLAG_INDRAWABLE, NULL);
+                IWineD3DSurface_ModifyLocation(target, SFLAG_INDRAWABLE, TRUE);
             }
         }
     }
@@ -595,7 +594,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
-    context = context_acquire(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    context = context_acquire(This, (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_DRAWPRIM);
     if (!context->valid)
     {
         context_release(context);

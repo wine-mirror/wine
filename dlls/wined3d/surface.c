@@ -554,8 +554,9 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
 /* This function checks if the primary render target uses the 8bit paletted format. */
 static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 {
-    if (device->render_targets && device->render_targets[0]) {
-        IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
+    if (device->render_targets && device->render_targets[0])
+    {
+        IWineD3DSurfaceImpl *render_target = device->render_targets[0];
         if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
                 && (render_target->resource.format_desc->format == WINED3DFMT_P8_UINT))
             return TRUE;
@@ -1700,7 +1701,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     }
 
     if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-            && ((This->Flags & SFLAG_SWAPCHAIN) || iface == device->render_targets[0])))
+            && ((This->Flags & SFLAG_SWAPCHAIN) || This == device->render_targets[0])))
     {
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pass_rect);
     }
@@ -1891,7 +1892,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         goto unlock_end;
     }
 
-    if ((This->Flags & SFLAG_SWAPCHAIN) || (device->render_targets && iface == device->render_targets[0]))
+    if ((This->Flags & SFLAG_SWAPCHAIN) || (device->render_targets && This == device->render_targets[0]))
     {
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
@@ -2152,7 +2153,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!((blit_supported && device->render_targets && This == (IWineD3DSurfaceImpl*)device->render_targets[0]))
+            if (!((blit_supported && device->render_targets && This == device->render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
                 desc->glFormat = GL_RGBA;
@@ -3377,8 +3378,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
     /* Early sort out of cases where no render target is used */
     if (!dstSwapchain && !srcSwapchain
-            && SrcSurface != device->render_targets[0]
-            && This != (IWineD3DSurfaceImpl *)device->render_targets[0])
+            && Src != device->render_targets[0]
+            && This != device->render_targets[0])
     {
         TRACE("No surface is render target, not using hardware blit. Src = %p, dst = %p\n", Src, This);
         return WINED3DERR_INVALIDCALL;
@@ -3498,17 +3499,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
     }
     else if (dstSwapchain)
     {
-        /* Handled with regular texture -> swapchain blit. */
-        if (SrcSurface == device->render_targets[0])
+        /* Handled with regular texture -> swapchain blit */
+        if (Src == device->render_targets[0])
             TRACE("Blit from active render target to a swapchain\n");
     }
-    else if (srcSwapchain && This == (IWineD3DSurfaceImpl *)device->render_targets[0])
+    else if (srcSwapchain && This == device->render_targets[0])
     {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((srcSwapchain || SrcSurface == device->render_targets[0]) && !dstSwapchain)
+    if ((srcSwapchain || Src == device->render_targets[0]) && !dstSwapchain)
     {
         /* Blit from render target to texture */
         BOOL stretchx;

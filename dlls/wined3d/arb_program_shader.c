@@ -509,7 +509,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         */
         float val[4];
         val[0] = context->render_offscreen ? 0.0f
-                : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+                : deviceImpl->render_targets[0]->currentDesc.Height;
         val[1] = context->render_offscreen ? 1.0f : -1.0f;
         val[2] = 1.0f;
         val[3] = 0.0f;

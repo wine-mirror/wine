@@ -1666,7 +1666,7 @@ struct IWineD3DDeviceImpl
     unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
 
     /* Render Target Support */
-    IWineD3DSurface       **render_targets;
+    IWineD3DSurfaceImpl **render_targets;
     IWineD3DSurface        *auto_depth_stencil_buffer;
     IWineD3DSurface        *stencilBufferTarget;
 

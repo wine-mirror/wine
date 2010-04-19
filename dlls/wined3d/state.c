@@ -233,7 +233,7 @@ static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock, struc
 
 static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *)stateblock->device->render_targets[0];
+    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
     int srcBlend = GL_ZERO;
     int dstBlend = GL_ZERO;
 
@@ -4644,7 +4644,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
 static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *)stateblock->device->render_targets[0];
+    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
     UINT width, height;
     WINED3DVIEWPORT vp = stateblock->viewport;
 
@@ -4802,7 +4802,7 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3
 
 static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *)stateblock->device->render_targets[0];
+    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
     RECT *pRect = &stateblock->scissorRect;
     UINT height;
     UINT width;
