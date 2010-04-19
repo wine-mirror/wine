@@ -68,7 +68,7 @@ static BOOL streams_set_table_size(MSISTREAMSVIEW *sv, UINT size)
     return TRUE;
 }
 
-static STREAM *create_stream(MSISTREAMSVIEW *sv, LPWSTR name, BOOL encoded, IStream *stm)
+static STREAM *create_stream(MSISTREAMSVIEW *sv, LPCWSTR name, BOOL encoded, IStream *stm)
 {
     STREAM *stream;
     WCHAR decoded[MAX_STREAM_NAME_LEN];

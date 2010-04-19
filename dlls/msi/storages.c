@@ -69,7 +69,7 @@ static BOOL storages_set_table_size(MSISTORAGESVIEW *sv, UINT size)
     return TRUE;
 }
 
-static STORAGE *create_storage(MSISTORAGESVIEW *sv, LPWSTR name, IStorage *stg)
+static STORAGE *create_storage(MSISTORAGESVIEW *sv, LPCWSTR name, IStorage *stg)
 {
     STORAGE *storage;
 
