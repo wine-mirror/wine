@@ -820,8 +820,9 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
 {
     BITMAP bm;
     BITMAPINFO *info;
-    unsigned int *bits = NULL;
-    int i;
+    unsigned int *ptr, *bits = NULL;
+    unsigned char *mask_bits = NULL;
+    int i, j, has_alpha = 0;
 
     if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
     if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) return NULL;
@@ -843,6 +844,23 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
     bits[0] = bm.bmWidth;
     bits[1] = bm.bmHeight;
 
+    for (i = 0; i < bm.bmWidth * bm.bmHeight; i++)
+        if ((has_alpha = (bits[i + 2] & 0xff000000) != 0)) break;
+
+    if (!has_alpha)
+    {
+        unsigned int width_bytes = (bm.bmWidth + 31) / 32 * 4;
+        /* generate alpha channel from the mask */
+        info->bmiHeader.biBitCount = 1;
+        info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
+        if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
+        if (!GetDIBits( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS )) goto failed;
+        ptr = bits + 2;
+        for (i = 0; i < bm.bmHeight; i++)
+            for (j = 0; j < bm.bmWidth; j++, ptr++)
+                if ((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80) *ptr |= 0xff000000;
+    }
+
     /* convert to array of longs */
     if (bits && sizeof(long) > sizeof(int))
         for (i = *size - 1; i >= 0; i--) ((unsigned long *)bits)[i] = bits[i];
@@ -852,6 +870,7 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
 failed:
     HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, bits );
+    HeapFree( GetProcessHeap(), 0, mask_bits );
     return NULL;
 }
 
