@@ -81,7 +81,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     UINT64 devpos, qpcpos;
 
     hr = IAudioClient_GetService(ac, &IID_IAudioCaptureClient, (void**)&acc);
-    todo_wine ok(hr == S_OK, "IAudioClient_GetService(IID_IAudioCaptureClient) returns %08x\n", hr);
+    ok(hr == S_OK, "IAudioClient_GetService(IID_IAudioCaptureClient) returns %08x\n", hr);
     if (hr != S_OK)
         return;
 
@@ -118,6 +118,8 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         ok(frames, "Amount of frames locked is 0!\n");
     else if (hr == AUDCLNT_S_BUFFER_EMPTY)
         ok(!frames, "Amount of frames locked with empty buffer is %u!\n", frames);
+    else
+        ok(0, "GetBuffer returned %08x\n", hr);
     trace("Device position is at %u, amount of frames locked: %u\n", (DWORD)devpos, frames);
 
     if (frames) {

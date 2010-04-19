@@ -76,6 +76,7 @@ typedef struct ACImpl {
     ALint format;
 
     ACRender *render;
+    ACCapture *capture;
 } ACImpl;
 
 struct ACRender {
@@ -84,11 +85,20 @@ struct ACRender {
     ACImpl *parent;
 };
 
+struct ACCapture {
+    const IAudioCaptureClientVtbl *lpVtbl;
+    LONG ref;
+    ACImpl *parent;
+};
+
 static const IAudioClientVtbl ACImpl_Vtbl;
 static const IAudioRenderClientVtbl ACRender_Vtbl;
+static const IAudioCaptureClientVtbl ACCapture_Vtbl;
 
 static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv);
 static void AudioRenderClient_Destroy(ACRender *This);
+static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv);
+static void AudioCaptureClient_Destroy(ACCapture *This);
 
 static int get_format_PCM(WAVEFORMATEX *format)
 {
@@ -265,6 +275,8 @@ static void AudioClient_Destroy(ACImpl *This)
         DeleteTimerQueueTimer(NULL, This->timer_id, INVALID_HANDLE_VALUE);
     if (This->render)
         AudioRenderClient_Destroy(This->render);
+    if (This->capture)
+        AudioCaptureClient_Destroy(This->capture);
     if (This->parent->flow == eRender && This->init) {
         setALContext(This->parent->ctx);
         IAudioClient_Stop((IAudioClient*)This);
@@ -828,6 +840,12 @@ static HRESULT WINAPI AC_GetService(IAudioClient *iface, REFIID riid, void **ppv
         if (!This->render)
             hr = AudioRenderClient_Create(This, &This->render);
         *ppv = This->render;
+    } else if (IsEqualIID(riid, &IID_IAudioCaptureClient)) {
+        if (This->parent->flow != eCapture)
+            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        if (!This->capture)
+            hr = AudioCaptureClient_Create(This, &This->capture);
+        *ppv = This->capture;
     }
 
     if (FAILED(hr))
@@ -1061,6 +1079,137 @@ static const IAudioRenderClientVtbl ACRender_Vtbl = {
     ACR_Release,
     ACR_GetBuffer,
     ACR_ReleaseBuffer
+};
+
+static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv)
+{
+    ACCapture *This;
+    This = *ppv = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &ACCapture_Vtbl;
+    This->ref = 0;
+    This->parent = parent;
+    return S_OK;
+}
+
+static void AudioCaptureClient_Destroy(ACCapture *This)
+{
+    This->parent->capture = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI ACC_QueryInterface(IAudioCaptureClient *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IAudioCaptureClient))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ACC_AddRef(IAudioCaptureClient *iface)
+{
+    ACCapture *This = (ACCapture*)iface;
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI ACC_Release(IAudioCaptureClient *iface)
+{
+    ACCapture *This = (ACCapture*)iface;
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        AudioCaptureClient_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UINT32 *frames, DWORD *flags, UINT64 *devpos, UINT64 *qpcpos)
+{
+    ACCapture *This = (ACCapture*)iface;
+    HRESULT hr;
+    DWORD block = This->parent->pwfx->nBlockAlign;
+    DWORD ofs, bufsize;
+    TRACE("(%p)->(%p,%p,%p,%p,%p)\n", This, data, frames, flags, devpos, qpcpos);
+
+    if (!data)
+        return E_POINTER;
+    if (!frames)
+        return E_POINTER;
+    if (!flags) {
+        FIXME("Flags can be null?\n");
+        return E_POINTER;
+    }
+    EnterCriticalSection(This->parent->crst);
+    hr = AUDCLNT_E_OUT_OF_ORDER;
+    if (This->parent->locked)
+        goto out;
+    IAudioCaptureClient_GetNextPacketSize(iface, frames);
+    ofs = This->parent->ofs;
+    bufsize = This->parent->bufsize;
+    if ( (ofs*block) % This->parent->psize)
+        ERR("Unaligned offset %u with %u\n", ofs*block, This->parent->psize);
+    *data = This->parent->buffer + ofs * block;
+    This->parent->locked = *frames;
+    if (devpos)
+        *devpos = This->parent->frameswritten - This->parent->pad;
+    if (qpcpos)
+        *qpcpos = This->parent->laststamp;
+    if (*frames)
+        hr = S_OK;
+    else
+        hr = AUDCLNT_S_BUFFER_EMPTY;
+out:
+    LeaveCriticalSection(This->parent->crst);
+    return hr;
+}
+
+static HRESULT WINAPI ACC_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 written)
+{
+    ACCapture *This = (ACCapture*)iface;
+    HRESULT hr = S_OK;
+    EnterCriticalSection(This->parent->crst);
+    if (!written || written == This->parent->locked)
+        This->parent->locked = 0;
+    else if (!This->parent->locked)
+        hr = AUDCLNT_E_OUT_OF_ORDER;
+    else
+        hr = AUDCLNT_E_INVALID_SIZE;
+    This->parent->ofs += written;
+    This->parent->ofs %= This->parent->bufsize;
+    This->parent->pad -= written;
+    LeaveCriticalSection(This->parent->crst);
+    return hr;
+}
+
+static HRESULT WINAPI ACC_GetNextPacketSize(IAudioCaptureClient *iface, UINT32 *frames)
+{
+    ACCapture *This = (ACCapture*)iface;
+
+    return AC_GetCurrentPadding((IAudioClient*)This->parent, frames);
+}
+
+static const IAudioCaptureClientVtbl ACCapture_Vtbl =
+{
+    ACC_QueryInterface,
+    ACC_AddRef,
+    ACC_Release,
+    ACC_GetBuffer,
+    ACC_ReleaseBuffer,
+    ACC_GetNextPacketSize
 };
 
 #endif
