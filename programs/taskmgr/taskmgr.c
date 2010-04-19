@@ -131,6 +131,10 @@ static BOOL OnCreate(HWND hWnd)
     LoadStringW(hInst, IDS_PERFORMANCE, wszPerformance, sizeof(wszPerformance)/sizeof(WCHAR));
 
     SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_TASKMANAGER)));
+    SendMessageW(hMainWnd, WM_SETICON, ICON_SMALL,
+                 (LPARAM)LoadImage(hInst, MAKEINTRESOURCE(IDI_TASKMANAGER), IMAGE_ICON,
+                                   GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                   LR_SHARED));
 
     /* Initialize the Windows Common Controls DLL */
     InitCommonControls();
