@@ -1042,7 +1042,7 @@ static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEn
     MMDevEnumImpl *This = (MMDevEnumImpl*)iface;
     TRACE("(%p)->(%p)\n", This, client);
     FIXME("stub\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
@@ -1050,7 +1050,7 @@ static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDevice
     MMDevEnumImpl *This = (MMDevEnumImpl*)iface;
     TRACE("(%p)->(%p)\n", This, client);
     FIXME("stub\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
