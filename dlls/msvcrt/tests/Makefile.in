@@ -16,6 +16,7 @@ C_SRCS = \
 	file.c \
 	headers.c \
 	heap.c \
+	locale.c \
 	misc.c \
 	printf.c \
 	scanf.c \
