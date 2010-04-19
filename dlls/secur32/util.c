@@ -121,7 +121,7 @@ ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc)
   return ~crc;
 }
 
-SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE session_key)
+SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key)
 {
     MD4_CTX ctx;
     BYTE ntlm_hash[16];
@@ -143,7 +143,7 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE se
     return SEC_E_OK;
 }
 
-static void SECUR32_CalcNTLMv2Subkey(const BYTE *session_key, const char *magic, PBYTE subkey)
+static void SECUR32_CalcNTLM2Subkey(const BYTE *session_key, const char *magic, PBYTE subkey)
 {
     MD5_CTX ctx;
 
@@ -155,7 +155,7 @@ static void SECUR32_CalcNTLMv2Subkey(const BYTE *session_key, const char *magic,
 }
 
 /* This assumes we do have a valid NTLM2 user session key */
-SECURITY_STATUS SECUR32_CreateNTLMv2SubKeys(PNegoHelper helper)
+SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper)
 {
     helper->crypt.ntlm2.send_sign_key = HeapAlloc(GetProcessHeap(), 0, 16);
     helper->crypt.ntlm2.send_seal_key = HeapAlloc(GetProcessHeap(), 0, 16);
@@ -164,24 +164,24 @@ SECURITY_STATUS SECUR32_CreateNTLMv2SubKeys(PNegoHelper helper)
 
     if(helper->mode == NTLM_CLIENT)
     {
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_sign_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, client_to_server_sign_constant,
                 helper->crypt.ntlm2.send_sign_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_seal_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, client_to_server_seal_constant,
                 helper->crypt.ntlm2.send_seal_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_sign_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, server_to_client_sign_constant,
                 helper->crypt.ntlm2.recv_sign_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_seal_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, server_to_client_seal_constant,
                 helper->crypt.ntlm2.recv_seal_key);
     }
     else
     {
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_sign_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, server_to_client_sign_constant,
                 helper->crypt.ntlm2.send_sign_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_seal_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, server_to_client_seal_constant,
                 helper->crypt.ntlm2.send_seal_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_sign_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, client_to_server_sign_constant,
                 helper->crypt.ntlm2.recv_sign_key);
-        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_seal_constant,
+        SECUR32_CalcNTLM2Subkey(helper->session_key, client_to_server_seal_constant,
                 helper->crypt.ntlm2.recv_seal_key);
     }
 

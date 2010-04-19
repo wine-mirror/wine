@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * This file implements RFC 2104 (HMAC) for the MD5 provider.
- * It is needed for NTLMv2 signing and sealing.
+ * It is needed for NTLM2 signing and sealing.
  */
 
 #include "hmac_md5.h"

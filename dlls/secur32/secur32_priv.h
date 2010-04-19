@@ -138,7 +138,7 @@ void cleanup_helper(PNegoHelper helper);
 void check_version(PNegoHelper helper);
 
 /* Functions from base64_codec.c used elsewhere */
-SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf, 
+SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf,
         int max_len, int *out_len);
 
 SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
@@ -146,8 +146,8 @@ SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
 
 /* Functions from util.c */
 ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc);
-SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE session_key);
-SECURITY_STATUS SECUR32_CreateNTLMv2SubKeys(PNegoHelper helper);
+SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key);
+SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper);
 arc4_info *SECUR32_arc4Alloc(void);
 void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);
 void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length);
