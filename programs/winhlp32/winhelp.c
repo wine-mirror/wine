@@ -1307,12 +1307,9 @@ static INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
  */
 static INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    static struct index_data* id;
-
     switch (msg)
     {
     case WM_INITDIALOG:
-        id = (struct index_data*)((PROPSHEETPAGE*)lParam)->lParam;
         return TRUE;
     case WM_NOTIFY:
 	switch (((NMHDR*)lParam)->code)
