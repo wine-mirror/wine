@@ -880,16 +880,28 @@ failed:
  *
  * Set the icon wm hints
  */
-static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICON hIcon )
+static void set_icon_hints( Display *display, struct x11drv_win_data *data,
+                            HICON icon_big, HICON icon_small )
 {
     XWMHints *hints = data->wm_hints;
+
+    if (!icon_big)
+    {
+        icon_big = (HICON)SendMessageW( data->hwnd, WM_GETICON, ICON_BIG, 0 );
+        if (!icon_big) icon_big = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON );
+    }
+    if (!icon_small)
+    {
+        icon_small = (HICON)SendMessageW( data->hwnd, WM_GETICON, ICON_SMALL, 0 );
+        if (!icon_small) icon_small = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICONSM );
+    }
 
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     data->hWMIconBitmap = 0;
     data->hWMIconMask = 0;
 
-    if (!hIcon)
+    if (!icon_big)
     {
         if (!data->icon_window) create_icon_window( display, data );
         hints->icon_window = data->icon_window;
@@ -905,7 +917,7 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         unsigned int size;
         unsigned long *bits;
 
-        GetIconInfo(hIcon, &ii);
+        GetIconInfo(icon_big, &ii);
 
         GetObjectW(ii.hbmMask, sizeof(bm), &bm);
         rcMask.top    = 0;
@@ -917,18 +929,7 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         hbmOrig = SelectObject(hDC, ii.hbmMask);
         InvertRect(hDC, &rcMask);
         SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
-
-        bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
-        wine_tsx11_lock();
-        if (bits)
-            XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
-                             XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
-        else
-            XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
-        wine_tsx11_unlock();
-        HeapFree( GetProcessHeap(), 0, bits );
         SelectObject(hDC, hbmOrig);
-        DeleteDC(hDC);
 
         data->hWMIconBitmap = ii.hbmColor;
         data->hWMIconMask = ii.hbmMask;
@@ -937,6 +938,37 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
         destroy_icon_window( display, data );
         hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
+
+        bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
+        if (GetIconInfo( icon_small, &ii ))
+        {
+            unsigned int size_small;
+            unsigned long *bits_small, *new;
+
+            if ((bits_small = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size_small )))
+            {
+                if ((new = HeapReAlloc( GetProcessHeap(), 0, bits,
+                                        (size + size_small) * sizeof(unsigned long) )))
+                {
+                    bits = new;
+                    memcpy( bits + size, bits_small, size_small * sizeof(unsigned long) );
+                    size += size_small;
+                }
+                HeapFree( GetProcessHeap(), 0, bits_small );
+            }
+            DeleteObject( ii.hbmColor );
+            DeleteObject( ii.hbmMask );
+        }
+        wine_tsx11_lock();
+        if (bits)
+            XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON),
+                             XA_CARDINAL, 32, PropModeReplace, (unsigned char *)bits, size );
+        else
+            XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, bits );
+
+        DeleteDC(hDC);
     }
 }
 
@@ -1060,10 +1092,8 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 
     if (data->wm_hints)
     {
-        HICON icon = (HICON)SendMessageW( data->hwnd, WM_GETICON, ICON_BIG, 0 );
-        if (!icon) icon = (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON );
         data->wm_hints->flags = 0;
-        set_icon_hints( display, data, icon );
+        set_icon_hints( display, data, 0, 0 );
     }
 }
 
@@ -2388,7 +2418,6 @@ void CDECL X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
     Display *display = thread_display();
     struct x11drv_win_data *data;
 
-    if (type != ICON_BIG) return;  /* nothing to do here */
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->whole_window) return;
@@ -2396,7 +2425,8 @@ void CDECL X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 
     if (data->wm_hints)
     {
-        set_icon_hints( display, data, icon );
+        if (type == ICON_BIG) set_icon_hints( display, data, icon, 0 );
+        else set_icon_hints( display, data, 0, icon );
         wine_tsx11_lock();
         XSetWMHints( display, data->whole_window, data->wm_hints );
         wine_tsx11_unlock();
