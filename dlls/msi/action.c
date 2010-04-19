@@ -2002,7 +2002,10 @@ static UINT msi_check_file_install_states( MSIPACKAGE *package )
             msi_free( file_version );
         }
         else
-            file->state = msifs_present;
+        {
+            file->state = msifs_overwrite;
+            comp->Cost += file->FileSize;
+        }
     }
 
     return ERROR_SUCCESS;

@@ -706,7 +706,7 @@ static void test_simple_patch( void )
     }
 
     size = get_pf_file_size( "msitest\\patch.txt" );
-    todo_wine ok( size == 1002, "expected 1002, got %u\n", size );
+    ok( size == 1002, "expected 1002, got %u\n", size );
 
     strcpy( path, CURR_DIR );
     strcat( path, "\\" );
