@@ -723,6 +723,48 @@ static void test_simple_patch( void )
     RemoveDirectoryA( "msitest" );
 }
 
+static void test_MsiOpenDatabase( void )
+{
+    UINT r;
+    MSIHANDLE hdb;
+
+    r = MsiOpenDatabase( mspfile, MSIDBOPEN_CREATE, &hdb );
+    ok(r == ERROR_SUCCESS, "failed to open database %u\n", r);
+
+    r = MsiDatabaseCommit( hdb );
+    ok(r == ERROR_SUCCESS, "failed to commit database %u\n", r);
+    MsiCloseHandle( hdb );
+
+    r = MsiOpenDatabase( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    ok(r == ERROR_OPEN_FAILED, "expected ERROR_OPEN_FAILED, got %u\n", r);
+    DeleteFileA( mspfile );
+
+    r = MsiOpenDatabase( mspfile, MSIDBOPEN_CREATE + MSIDBOPEN_PATCHFILE, &hdb );
+    ok(r == ERROR_SUCCESS , "failed to open database %u\n", r);
+
+    r = MsiDatabaseCommit( hdb );
+    ok(r == ERROR_SUCCESS, "failed to commit database %u\n", r);
+    MsiCloseHandle( hdb );
+
+    r = MsiOpenDatabase( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    ok(r == ERROR_SUCCESS, "failed to open database %u\n", r);
+    MsiCloseHandle( hdb );
+    DeleteFileA( mspfile );
+
+    create_database( msifile, tables, sizeof(tables) / sizeof(struct msi_table) );
+    create_patch( mspfile );
+
+    r = MsiOpenDatabase( msifile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    ok(r == ERROR_OPEN_FAILED, "failed to open database %u\n", r );
+
+    r = MsiOpenDatabase( mspfile, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &hdb );
+    ok(r == ERROR_SUCCESS, "failed to open database %u\n", r );
+    MsiCloseHandle( hdb );
+
+    DeleteFileA( msifile );
+    DeleteFileA( mspfile );
+}
+
 START_TEST(patch)
 {
     DWORD len;
@@ -743,6 +785,7 @@ START_TEST(patch)
     get_program_files_dir( PROG_FILES_DIR, COMMON_FILES_DIR );
 
     test_simple_patch();
+    test_MsiOpenDatabase();
 
     SetCurrentDirectoryA( prev_path );
 }

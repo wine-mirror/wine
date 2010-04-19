@@ -262,7 +262,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     UINT ret = ERROR_FUNCTION_FAILED;
     LPCWSTR szMode, save_path;
     STATSTG stat;
-    BOOL created = FALSE;
+    BOOL created = FALSE, patch = FALSE;
     WCHAR path[MAX_PATH];
 
     static const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
@@ -277,6 +277,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     {
         TRACE("Database is a patch\n");
         szPersist -= MSIDBOPEN_PATCHFILE;
+        patch = TRUE;
     }
 
     save_path = szDBPath;
@@ -304,7 +305,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
               STGM_CREATE|STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
         if( r == ERROR_SUCCESS )
         {
-            IStorage_SetClass( stg, &CLSID_MsiDatabase );
+            IStorage_SetClass( stg, patch ? &CLSID_MsiPatch : &CLSID_MsiDatabase );
             /* create the _Tables stream */
             r = write_stream_data(stg, szTables, NULL, 0, TRUE);
             if (SUCCEEDED(r))
@@ -349,6 +350,14 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     {
         ERR("storage GUID is not a MSI database GUID %s\n",
              debugstr_guid(&stat.clsid) );
+        goto end;
+    }
+
+    if ( patch && !IsEqualGUID( &stat.clsid, &CLSID_MsiPatch ) )
+    {
+        ERR("storage GUID is not the MSI patch GUID %s\n",
+             debugstr_guid(&stat.clsid) );
+        ret = ERROR_OPEN_FAILED;
         goto end;
     }
 
