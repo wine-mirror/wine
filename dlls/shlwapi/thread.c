@@ -120,6 +120,93 @@ typedef struct tagSHLWAPI_THREAD_INFO
   IUnknown *refIE;                      /* Reference to the IE process */
 } SHLWAPI_THREAD_INFO, *LPSHLWAPI_THREAD_INFO;
 
+typedef struct
+{
+  const IUnknownVtbl* lpVtbl;
+  LONG  *ref;
+} threadref;
+
+static HRESULT WINAPI threadref_QueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
+{
+  threadref * This = (threadref *)iface;
+
+  TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppvObj);
+
+  if (ppvObj == NULL)
+    return E_POINTER;
+
+  if (IsEqualGUID(&IID_IUnknown, riid)) {
+    TRACE("(%p)->(IID_IUnknown %p)\n", This, ppvObj);
+    *ppvObj = This;
+    IUnknown_AddRef((IUnknown*)*ppvObj);
+    return S_OK;
+  }
+
+  *ppvObj = NULL;
+  FIXME("(%p, %s, %p) interface not supported\n", This, debugstr_guid(riid), ppvObj);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI threadref_AddRef(IUnknown *iface)
+{
+  threadref * This = (threadref *)iface;
+
+  TRACE("(%p)\n", This);
+  return InterlockedIncrement(This->ref);
+}
+
+static ULONG WINAPI threadref_Release(IUnknown *iface)
+{
+  LONG refcount;
+  threadref * This = (threadref *)iface;
+
+  TRACE("(%p)\n", This);
+
+  refcount = InterlockedDecrement(This->ref);
+  if (!refcount)
+      HeapFree(GetProcessHeap(), 0, This);
+
+  return refcount;
+}
+
+/* VTable */
+static const IUnknownVtbl threadref_vt =
+{
+  threadref_QueryInterface,
+  threadref_AddRef,
+  threadref_Release,
+};
+
+/*************************************************************************
+ * SHCreateThreadRef [SHLWAPI.@]
+ *
+ * Create a per-thread IUnknown object
+ *
+ * PARAMS
+ *   lprefcount [I] Pointer to a LONG to be used as refcount
+ *   lppUnknown [O] Destination to receive the created object reference
+ *
+ * RETURNS
+ *   Success: S_OK. lppUnknown is set to the object reference.
+ *   Failure: E_INVALIDARG, if a parameter is NULL
+ */
+HRESULT WINAPI SHCreateThreadRef(LONG *lprefcount, IUnknown **lppUnknown)
+{
+  threadref * This;
+  TRACE("(%p, %p)\n", lprefcount, lppUnknown);
+
+  if (!lprefcount || !lppUnknown)
+    return E_INVALIDARG;
+
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(threadref));
+  This->lpVtbl = &threadref_vt;
+  This->ref = lprefcount;
+
+  *lprefcount = 1;
+  *lppUnknown = (IUnknown *) This;
+  TRACE("=> returning S_OK with %p\n", This);
+  return S_OK;
+}
 
 /*************************************************************************
  * SHGetThreadRef	[SHLWAPI.@]

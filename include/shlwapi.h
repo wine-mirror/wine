@@ -974,6 +974,7 @@ HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,struct IStream**);
 HRESULT WINAPI SHAutoComplete(HWND,DWORD);
 
 /* Threads */
+HRESULT WINAPI SHCreateThreadRef(LONG*, IUnknown**);
 HRESULT WINAPI SHGetThreadRef(IUnknown**);
 HRESULT WINAPI SHSetThreadRef(IUnknown*);
 HRESULT WINAPI SHReleaseThreadRef(void);
