@@ -77,6 +77,7 @@ typedef struct ACImpl {
 
     ACRender *render;
     ACCapture *capture;
+    ACSession *session;
     AClock *clock;
 } ACImpl;
 
@@ -92,6 +93,12 @@ struct ACCapture {
     ACImpl *parent;
 };
 
+struct ACSession {
+    const IAudioSessionControl2Vtbl *lpVtbl;
+    LONG ref;
+    ACImpl *parent;
+};
+
 struct AClock {
     const IAudioClockVtbl *lpVtbl;
     const IAudioClock2Vtbl *lp2Vtbl;
@@ -102,6 +109,7 @@ struct AClock {
 static const IAudioClientVtbl ACImpl_Vtbl;
 static const IAudioRenderClientVtbl ACRender_Vtbl;
 static const IAudioCaptureClientVtbl ACCapture_Vtbl;
+static const IAudioSessionControl2Vtbl ACSession_Vtbl;
 static const IAudioClockVtbl AClock_Vtbl;
 static const IAudioClock2Vtbl AClock2_Vtbl;
 
@@ -109,6 +117,8 @@ static HRESULT AudioRenderClient_Create(ACImpl *parent, ACRender **ppv);
 static void AudioRenderClient_Destroy(ACRender *This);
 static HRESULT AudioCaptureClient_Create(ACImpl *parent, ACCapture **ppv);
 static void AudioCaptureClient_Destroy(ACCapture *This);
+static HRESULT AudioSessionControl_Create(ACImpl *parent, ACSession **ppv);
+static void AudioSessionControl_Destroy(ACSession *This);
 static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv);
 static void AudioClock_Destroy(AClock *This);
 
@@ -289,6 +299,8 @@ static void AudioClient_Destroy(ACImpl *This)
         AudioRenderClient_Destroy(This->render);
     if (This->capture)
         AudioCaptureClient_Destroy(This->capture);
+    if (This->session)
+        AudioSessionControl_Destroy(This->session);
     if (This->clock)
         AudioClock_Destroy(This->clock);
     if (This->parent->flow == eRender && This->init) {
@@ -860,6 +872,10 @@ static HRESULT WINAPI AC_GetService(IAudioClient *iface, REFIID riid, void **ppv
         if (!This->capture)
             hr = AudioCaptureClient_Create(This, &This->capture);
         *ppv = This->capture;
+    } else if (IsEqualIID(riid, &IID_IAudioSessionControl)) {
+        if (!This->session)
+            hr = AudioSessionControl_Create(This, &This->session);
+        *ppv = This->session;
     } else if (IsEqualIID(riid, &IID_IAudioClock)) {
         if (!This->clock)
             hr = AudioClock_Create(This, &This->clock);
@@ -1228,6 +1244,212 @@ static const IAudioCaptureClientVtbl ACCapture_Vtbl =
     ACC_GetBuffer,
     ACC_ReleaseBuffer,
     ACC_GetNextPacketSize
+};
+
+static HRESULT AudioSessionControl_Create(ACImpl *parent, ACSession **ppv)
+{
+    ACSession *This;
+    This = *ppv = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &ACSession_Vtbl;
+    This->ref = 0;
+    This->parent = parent;
+    return S_OK;
+}
+
+static void AudioSessionControl_Destroy(ACSession *This)
+{
+    This->parent->session = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI ACS_QueryInterface(IAudioSessionControl2 *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IAudioSessionControl)
+        || IsEqualIID(riid, &IID_IAudioSessionControl2))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ACS_AddRef(IAudioSessionControl2 *iface)
+{
+    ACSession *This = (ACSession*)iface;
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    return ref;
+}
+
+static ULONG WINAPI ACS_Release(IAudioSessionControl2 *iface)
+{
+    ACSession *This = (ACSession*)iface;
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("Refcount now %i\n", ref);
+    if (!ref)
+        AudioSessionControl_Destroy(This);
+    return ref;
+}
+
+static HRESULT WINAPI ACS_GetState(IAudioSessionControl2 *iface, AudioSessionState *state)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, state);
+
+    if (!state)
+        return E_POINTER;
+    *state = This->parent->parent->state;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_GetDisplayName(IAudioSessionControl2 *iface, WCHAR **name)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, name);
+    FIXME("stub\n");
+    if (name)
+        *name = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_SetDisplayName(IAudioSessionControl2 *iface, const WCHAR *name, const GUID *session)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p,%s)\n", This, name, debugstr_guid(session));
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_GetIconPath(IAudioSessionControl2 *iface, WCHAR **path)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, path);
+    FIXME("stub\n");
+    if (path)
+        *path = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_SetIconPath(IAudioSessionControl2 *iface, const WCHAR *path, const GUID *session)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p,%s)\n", This, path, debugstr_guid(session));
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_GetGroupingParam(IAudioSessionControl2 *iface, GUID *group)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, group);
+    FIXME("stub\n");
+    if (group)
+        *group = GUID_NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_SetGroupingParam(IAudioSessionControl2 *iface, GUID *group, const GUID *session)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%s,%s)\n", This, debugstr_guid(group), debugstr_guid(session));
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_RegisterAudioSessionNotification(IAudioSessionControl2 *iface, IAudioSessionEvents *events)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, events);
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ACS_UnregisterAudioSessionNotification(IAudioSessionControl2 *iface, IAudioSessionEvents *events)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, events);
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ACS_GetSessionIdentifier(IAudioSessionControl2 *iface, WCHAR **id)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, id);
+    FIXME("stub\n");
+    if (id)
+        *id = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_GetSessionInstanceIdentifier(IAudioSessionControl2 *iface, WCHAR **id)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, id);
+    FIXME("stub\n");
+    if (id)
+        *id = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ACS_GetProcessId(IAudioSessionControl2 *iface, DWORD *pid)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)->(%p)\n", This, pid);
+
+    if (!pid)
+        return E_POINTER;
+    *pid = GetCurrentProcessId();
+    return S_OK;
+}
+
+static HRESULT WINAPI ACS_IsSystemSoundsSession(IAudioSessionControl2 *iface)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)\n", This);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI ACS_SetDuckingPreference(IAudioSessionControl2 *iface, BOOL optout)
+{
+    ACSession *This = (ACSession*)iface;
+    TRACE("(%p)\n", This);
+
+    return S_OK;
+}
+
+static const IAudioSessionControl2Vtbl ACSession_Vtbl =
+{
+    ACS_QueryInterface,
+    ACS_AddRef,
+    ACS_Release,
+    ACS_GetState,
+    ACS_GetDisplayName,
+    ACS_SetDisplayName,
+    ACS_GetIconPath,
+    ACS_SetIconPath,
+    ACS_GetGroupingParam,
+    ACS_SetGroupingParam,
+    ACS_RegisterAudioSessionNotification,
+    ACS_UnregisterAudioSessionNotification,
+    ACS_GetSessionIdentifier,
+    ACS_GetSessionInstanceIdentifier,
+    ACS_GetProcessId,
+    ACS_IsSystemSoundsSession,
+    ACS_SetDuckingPreference
 };
 
 static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv)
