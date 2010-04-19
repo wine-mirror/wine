@@ -9493,15 +9493,11 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
 {
     INT gcWheelDelta = 0;
     INT pulScrollLines = 3;
-    SCROLLINFO scrollInfo;
 
     TRACE("(wheelDelta=%d)\n", wheelDelta);
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
     gcWheelDelta -= wheelDelta;
-
-    scrollInfo.cbSize = sizeof(SCROLLINFO);
-    scrollInfo.fMask = SIF_POS;
 
     switch(infoPtr->uView)
     {
