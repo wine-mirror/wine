@@ -4431,6 +4431,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
             surface_load_ds_location(depth_stencil, context, location);
+        surface_modify_ds_location(depth_stencil, location);
 
         glDepthMask(GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
@@ -4441,6 +4442,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
     if (Flags & WINED3DCLEAR_TARGET)
     {
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
+
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
@@ -4505,16 +4508,6 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             glClear(glMask);
             checkGLcall("glClear");
         }
-    }
-
-    if (Flags & WINED3DCLEAR_TARGET)
-    {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
-    }
-    if (Flags & WINED3DCLEAR_ZBUFFER) {
-        /* Note that WINED3DCLEAR_ZBUFFER implies a depth stencil exists on the device */
-        DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        surface_modify_ds_location(depth_stencil, location);
     }
 
     LEAVE_GL();
