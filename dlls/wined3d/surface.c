@@ -3552,10 +3552,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 &src_rect, Src->resource.usage, Src->resource.pool, Src->resource.format_desc,
                 &dst_rect, This->resource.usage, This->resource.pool, This->resource.format_desc))
         {
-            stretch_rect_fbo((IWineD3DDevice *)device, SrcSurface, &src_rect,
-                    (IWineD3DSurface *)This, &dst_rect, Filter);
-        } else if((!stretchx) || dst_rect.right - dst_rect.left > Src->currentDesc.Width ||
-                                    dst_rect.bottom - dst_rect.top > Src->currentDesc.Height) {
+            stretch_rect_fbo(device, Src, &src_rect, This, &dst_rect, Filter);
+        }
+        else if (!stretchx || dst_rect.right - dst_rect.left > Src->currentDesc.Width
+                || dst_rect.bottom - dst_rect.top > Src->currentDesc.Height)
+        {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
             fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, Filter);
         } else {
@@ -3588,8 +3589,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             TRACE("Using stretch_rect_fbo\n");
             /* The source is always a texture, but never the currently active render target, and the texture
              * contents are never upside down. */
-            stretch_rect_fbo((IWineD3DDevice *)device, SrcSurface, &src_rect,
-                    (IWineD3DSurface *)This, &dst_rect, Filter);
+            stretch_rect_fbo(device, Src, &src_rect, This, &dst_rect, Filter);
             return WINED3D_OK;
         }
 

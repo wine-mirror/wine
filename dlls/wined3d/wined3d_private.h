@@ -3045,8 +3045,8 @@ static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
     return (stateblock->pixelShader && stateblock->device->ps_selected_mode != SHADER_NONE);
 }
 
-void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface,
-        const RECT *src_rect, IWineD3DSurface *dst_surface, const RECT *dst_rect,
+void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface,
+        const RECT *src_rect, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect,
         const WINED3DTEXTUREFILTERTYPE filter) DECLSPEC_HIDDEN;
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
