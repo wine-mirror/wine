@@ -4403,7 +4403,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-            context_set_draw_buffer(context, surface_get_gl_buffer((IWineD3DSurface *)target));
+            context_set_draw_buffer(context, surface_get_gl_buffer(target));
             LEAVE_GL();
         }
         else
@@ -5465,7 +5465,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-        context_set_draw_buffer(context, surface_get_gl_buffer(surface));
+        context_set_draw_buffer(context, surface_get_gl_buffer((IWineD3DSurfaceImpl *)surface));
     }
     else
     {
@@ -5773,7 +5773,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
     if (!surface_is_offscreen((IWineD3DSurfaceImpl *)src_surface))
     {
-        GLenum buffer = surface_get_gl_buffer(src_surface);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurfaceImpl *)src_surface);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
 
@@ -5809,7 +5809,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     /* Attach dst surface to dst fbo */
     if (!surface_is_offscreen((IWineD3DSurfaceImpl *)dst_surface))
     {
-        GLenum buffer = surface_get_gl_buffer(dst_surface);
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurfaceImpl *)dst_surface);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
 

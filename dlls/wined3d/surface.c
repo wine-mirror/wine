@@ -925,20 +925,19 @@ void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, unsigned 
     checkGLcall("set_compatible_renderbuffer");
 }
 
-GLenum surface_get_gl_buffer(IWineD3DSurface *iface)
+GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->container;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)surface->container;
 
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
-    if (!(This->Flags & SFLAG_SWAPCHAIN))
+    if (!(surface->Flags & SFLAG_SWAPCHAIN))
     {
-        ERR("Surface %p is not on a swapchain.\n", iface);
+        ERR("Surface %p is not on a swapchain.\n", surface);
         return GL_NONE;
     }
 
-    if (swapchain->backBuffer && swapchain->backBuffer[0] == iface)
+    if (swapchain->backBuffer && (IWineD3DSurfaceImpl *)swapchain->backBuffer[0] == surface)
     {
         if (swapchain->render_to_fbo)
         {
@@ -948,7 +947,7 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface)
         TRACE("Returning GL_BACK\n");
         return GL_BACK;
     }
-    else if (swapchain->frontBuffer == iface)
+    else if ((IWineD3DSurfaceImpl *)swapchain->frontBuffer == surface)
     {
         TRACE("Returning GL_FRONT\n");
         return GL_FRONT;
@@ -1294,7 +1293,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     else
     {
         /* Onscreen surfaces are always part of a swapchain */
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
+        GLenum buffer = surface_get_gl_buffer(This);
         TRACE("Locking %#x buffer\n", buffer);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
@@ -1516,7 +1515,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      */
     if (!surface_is_offscreen(This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
+        GLenum buffer = surface_get_gl_buffer(This);
         TRACE("Locking %#x buffer\n", buffer);
 
         ENTER_GL();
@@ -1775,7 +1774,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 
     if (!surface_is_offscreen(This))
     {
-        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This);
+        GLenum buffer = surface_get_gl_buffer(This);
         TRACE("Unlocking %#x buffer.\n", buffer);
         context_set_draw_buffer(context, buffer);
     }
@@ -2999,7 +2998,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     }
     else
     {
-        glReadBuffer(surface_get_gl_buffer(SrcSurface));
+        glReadBuffer(surface_get_gl_buffer(Src));
     }
     checkGLcall("glReadBuffer");
 
@@ -3154,7 +3153,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
     else
     {
-        glReadBuffer(surface_get_gl_buffer(SrcSurface));
+        glReadBuffer(surface_get_gl_buffer(Src));
     }
 
     /* TODO: Only back up the part that will be overwritten */

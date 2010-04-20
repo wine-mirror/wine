@@ -1874,11 +1874,11 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DSurface *rt = context->current_rt;
+    IWineD3DSurfaceImpl *rt = (IWineD3DSurfaceImpl *)context->current_rt;
     IWineD3DDeviceImpl *device;
 
-    device = ((IWineD3DSurfaceImpl *)rt)->resource.device;
-    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)rt))
+    device = rt->resource.device;
+    if (!surface_is_offscreen(rt))
     {
         ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(rt));
