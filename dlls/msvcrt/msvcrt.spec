@@ -1328,7 +1328,7 @@
 # stub strncat_s
 @ cdecl strncmp(str str long) ntdll.strncmp
 @ cdecl strncpy(ptr str long) ntdll.strncpy
-# stub strncpy_s
+@ cdecl strncpy_s(ptr long str long)
 @ cdecl strnlen(str long) MSVCRT_strnlen
 @ cdecl strpbrk(str str) ntdll.strpbrk
 @ cdecl strrchr(str long) ntdll.strrchr

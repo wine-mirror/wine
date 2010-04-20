@@ -550,3 +550,41 @@ int CDECL memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src,
     memmove(dest, src, count);
     return 0;
 }
+
+/*********************************************************************
+ *		strncpy_s (MSVCRT.@)
+ */
+int CDECL strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
+        const char *src, MSVCRT_size_t count)
+{
+    MSVCRT_size_t i, end;
+
+    TRACE("(%s %lu %s %lu)\n", dest, numberOfElements, src, count);
+
+    if(!count)
+        return 0;
+
+    if(!dest || !src || !numberOfElements) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(count!=_TRUNCATE && count<numberOfElements)
+        end = count;
+    else
+        end = numberOfElements-1;
+
+    for(i=0; i<end && src[i]; i++)
+        dest[i] = src[i];
+
+    if(!src[i] || end==count || count==_TRUNCATE) {
+        dest[i] = '\0';
+        return 0;
+    }
+
+    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    dest[0] = '\0';
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+}
