@@ -326,9 +326,9 @@ fail:
 }
 
 /* Adjust the amount of used texture memory */
-long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram)
+long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *device, long glram)
 {
-    struct wined3d_adapter *adapter = D3DDevice->adapter;
+    struct wined3d_adapter *adapter = device->adapter;
 
     adapter->UsedTextureRam += glram;
     TRACE("Adjusted gl ram by %ld to %d\n", glram, adapter->UsedTextureRam);

@@ -2602,7 +2602,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *ifac
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface,
         WINED3DDISPLAYMODE *pMode) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDevice(IWineD3DSwapChain *iface,
-        IWineD3DDevice **ppDevice) DECLSPEC_HIDDEN;
+        IWineD3DDevice **device) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface,
         WINED3DPRESENT_PARAMETERS *pPresentationParameters) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
