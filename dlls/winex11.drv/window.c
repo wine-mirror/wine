@@ -859,7 +859,9 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
         for (i = 0; i < bm.bmHeight; i++)
             for (j = 0; j < bm.bmWidth; j++, ptr++)
                 if ((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80) *ptr |= 0xff000000;
+        HeapFree( GetProcessHeap(), 0, mask_bits );
     }
+    HeapFree( GetProcessHeap(), 0, info );
 
     /* convert to array of longs */
     if (bits && sizeof(long) > sizeof(int))
