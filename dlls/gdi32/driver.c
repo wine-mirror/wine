@@ -33,20 +33,20 @@
 
 #include "gdi_private.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
 struct graphics_driver
 {
-    struct graphics_driver *next;
-    struct graphics_driver *prev;
+    struct list             entry;
     HMODULE                 module;  /* module handle */
     unsigned int            count;   /* reference count */
     DC_FUNCTIONS            funcs;
 };
 
-static struct graphics_driver *first_driver;
+static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
 
 static CRITICAL_SECTION driver_section;
@@ -68,8 +68,6 @@ static struct graphics_driver *create_driver( HMODULE module )
     struct graphics_driver *driver;
 
     if (!(driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver)))) return NULL;
-    driver->next   = NULL;
-    driver->prev   = NULL;
     driver->module = module;
     driver->count  = 1;
 
@@ -213,10 +211,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     }
     else memset( &driver->funcs, 0, sizeof(driver->funcs) );
 
-    /* add it to the list */
-    driver->prev = NULL;
-    if ((driver->next = first_driver)) driver->next->prev = driver;
-    first_driver = driver;
+    list_add_head( &drivers, &driver->entry );
     return driver;
 }
 
@@ -293,7 +288,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
 
     if ((module = GetModuleHandleW( name )))
     {
-        for (driver = first_driver; driver; driver = driver->next)
+        LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         {
             if (driver->module == module)
             {
@@ -333,9 +328,9 @@ const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
     struct graphics_driver *driver;
 
     EnterCriticalSection( &driver_section );
-    for (driver = first_driver; driver; driver = driver->next)
+    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         if (&driver->funcs == funcs) break;
-    if (!driver) ERR( "driver not found, trouble ahead\n" );
+    if (&driver->entry == &drivers) ERR( "driver not found, trouble ahead\n" );
     driver->count++;
     LeaveCriticalSection( &driver_section );
     return funcs;
@@ -353,21 +348,16 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
 
     EnterCriticalSection( &driver_section );
 
-    for (driver = first_driver; driver; driver = driver->next)
-        if (&driver->funcs == funcs) break;
-
-    if (!driver) goto done;
-    if (--driver->count) goto done;
-
-    /* removed last reference, free it */
-    if (driver->next) driver->next->prev = driver->prev;
-    if (driver->prev) driver->prev->next = driver->next;
-    else first_driver = driver->next;
-    if (driver == display_driver) display_driver = NULL;
-
-    FreeLibrary( driver->module );
-    HeapFree( GetProcessHeap(), 0, driver );
- done:
+    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
+    {
+        if (&driver->funcs != funcs) continue;
+        if (--driver->count) break;
+        list_remove( &driver->entry );
+        if (driver == display_driver) display_driver = NULL;
+        FreeLibrary( driver->module );
+        HeapFree( GetProcessHeap(), 0, driver );
+        break;
+    }
     LeaveCriticalSection( &driver_section );
 }
 
