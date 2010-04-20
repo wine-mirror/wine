@@ -1384,7 +1384,7 @@
 @ cdecl strtol(str ptr long) msvcrt.strtol
 @ cdecl strtoul(str ptr long) msvcrt.strtoul
 @ cdecl strxfrm(ptr str long) msvcrt.strxfrm
-@ stub swprintf_s
+@ varargs swprintf_s(ptr long wstr) msvcrt.swprintf_s
 @ varargs swscanf(wstr wstr) msvcrt.swscanf
 @ stub swscanf_s
 @ cdecl system(str) msvcrt.system
