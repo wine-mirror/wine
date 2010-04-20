@@ -4,6 +4,7 @@
  *
  * Copyright 1998 Juergen Schmied
  * Copyright 2006-2009 Jonathan Ernst
+ * Copyright 2010 Frédéric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -211,6 +212,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Groupe"
 	IDS_SHV_COLUMN_DELFROM	"Emplacement d'origine"
 	IDS_SHV_COLUMN_DELDATE	"Date de suppression"
+	IDS_SHV_COL_DOCS	"Documents"
+	IDS_SHV_COL_STATUS	"Statut"
+	IDS_SHV_COL_LOCATION	"Emplacement"
+	IDS_SHV_COL_MODEL	"Modèle"
 
         /* special folders */
 	IDS_DESKTOP		"Bureau"
