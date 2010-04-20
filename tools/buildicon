@@ -79,10 +79,12 @@ sub svg_element_start
         # Extract SVG vector images
         my $x = $attr{'x'};
         my $y = $attr{'y'};
+        my $width = $attr{'width'};
+        my $height = $attr{'height'};
 
         if(defined($x) and defined($x)) {
             if($x =~ /\d*/ and $y =~ /\d*/) {
-                shell $convert, $renderedSVGFileName, "-crop", "${size}x${size}+$x+$y", $pngFileName;
+                shell $convert, $renderedSVGFileName, "-crop", "${width}x${height}+$x+$y", $pngFileName;
             }
         }
 
