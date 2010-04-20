@@ -44,8 +44,6 @@ MAIN_MENU MENU
   MENUITEM "&Sempre in primo piano", IDM_ONTOP
  }
  POPUP "Inf&o" {
-  MENUITEM "&Licenza...", IDM_LICENSE
-  MENUITEM "&Garanzia...", IDM_NOWARRANTY
   MENUITEM "&Informazioni sull'orologio...", IDM_ABOUT
  }
 }
@@ -53,28 +51,4 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "Orologio"
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
-{
-IDS_LICENSE_CAPTION,            "LICENSE"
-IDS_LICENSE,
-"Questo programma è software libero; puoi redistribuirlo e/o \
-modificarlo sotto i termini della GNU Lesser General Public \
-License come pubblicata dalla Free Software Foundation; sia \
-la versione 2.1 della Licenza, o (a tua scelta) qualunque altra versione più recente.\n\
-Questo programma è distribuito nella speranza che sia utile, \
-ma SENZA ALCUNA GARANZIA; anche senza la garanzia implicita di \
-COMMERCIABILITÀ o IDONEITÀ PER UNO SCOPO PARTICOLARE. Leggere la GNU \
-Lesser General Public License per maggiori dettagli.\n\
-Dovresti aver ricevuto una copia della GNU Lesser General Public \
-License insieme a questo programma; altrimenti, scrivi alla Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
-IDS_WARRANTY_CAPTION, "NESSUNA GARANZIA"
-IDS_WARRANTY,
-"Questo programma è distribuito nella speranza che sia utile, \
-ma SENZA ALCUNA GARANZIA; anche senza la garanzia implicita di \
-COMMERCIABILITÀ o IDONEITÀ PER UNO SCOPO PARTICOLARE. Leggere la GNU \
-Lesser General Public License per maggiori dettagli."
 }

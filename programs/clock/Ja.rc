@@ -42,8 +42,6 @@ MAIN_MENU MENU
   MENUITEM "常に手前に表示(&A)", IDM_ONTOP
  }
  POPUP "情報(&O)" {
-  MENUITEM "ライセンス(&L)...", IDM_LICENSE
-  MENUITEM "無保証(&N)...", IDM_NOWARRANTY
   MENUITEM "時計について(&A)...", IDM_ABOUT
  }
 }
@@ -51,28 +49,4 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "時計"
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
-{
-IDS_LICENSE_CAPTION,            "ライセンス"
-IDS_LICENSE,
-"This program is free software; you can redistribute it and/or \
-modify it under the terms of the GNU Lesser General Public \
-License as published by the Free Software Foundation; either \
-version 2.1 of the License, or (at your option) any later version.\n\
-This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details.\n\
-You should have received a copy of the GNU Lesser General Public \
-License along with this program; if not, write to the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
-IDS_WARRANTY_CAPTION, "無保証"
-IDS_WARRANTY,
-"This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }

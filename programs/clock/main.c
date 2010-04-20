@@ -36,22 +36,6 @@
 
 CLOCK_GLOBALS Globals;
 
-static VOID WineLicense(HWND Wnd)
-{
-  WCHAR cap[20], text[1024];
-  LoadStringW(Globals.hInstance, IDS_LICENSE, text, sizeof(text)/sizeof(WCHAR));
-  LoadStringW(Globals.hInstance, IDS_LICENSE_CAPTION, cap, sizeof(cap)/sizeof(WCHAR));
-  MessageBoxW(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
-}
-
-static VOID WineWarranty(HWND Wnd)
-{
-  WCHAR cap[20], text[1024];
-  LoadStringW(Globals.hInstance, IDS_WARRANTY, text, sizeof(text)/sizeof(WCHAR));
-  LoadStringW(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, sizeof(cap)/sizeof(WCHAR));
-  MessageBoxW(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
-}
-
 static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 {
     HMENU hPropertiesMenu;
@@ -266,16 +250,6 @@ static int CLOCK_MenuCommand (WPARAM wParam)
             Globals.bDate = !Globals.bDate;
             CLOCK_UpdateMenuCheckmarks();
             CLOCK_UpdateWindowCaption();
-            break;
-        }
-            /* show license */
-        case IDM_LICENSE: {
-            WineLicense(Globals.hMainWnd);
-            break;
-        }
-            /* show warranties */
-        case IDM_NOWARRANTY: {
-            WineWarranty(Globals.hMainWnd);
             break;
         }
             /* show "about" box */

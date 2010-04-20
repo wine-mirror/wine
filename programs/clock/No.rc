@@ -38,8 +38,6 @@ MAIN_MENU MENU
   MENUITEM "&Alltid øverst", IDM_ONTOP
  }
  POPUP "Inf&ormasjon" {
-  MENUITEM "&Lisens...", IDM_LICENSE
-  MENUITEM "I&NGEN GARANTI...", IDM_NOWARRANTY
   MENUITEM "&Om Klokke...", IDM_ABOUT
  }
 }
@@ -47,28 +45,4 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "Klokke"
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
-{
-IDS_LICENSE_CAPTION,            "LISENS"
-IDS_LICENSE,
-"Dette biblioteket er fri programvare; du kan redistribuere det \
-og/eller endre det under vilkårene i «GNU Lesser General Public \
-License», utgitt av the Free Software Foundation; enten \
-versjon 2.1 av Lisensen, eller (hvis du ønsker det) en nyere versjon.\n\
-Dette biblioteket distribueres i det håp at det er nyttig, \
-men UTEN ENHVER GARANTI; ikke engang den uttrykte garantien for \
-HANDELSDYKTIGHET eller EGNETHET FOR ET SPESIELT FORMÅL. Se «GNU \
-Lesser General Public License» for flere detaljer.\n\
-Du skal ha mottatt et eksempal av «GNU Lesser General Public \
-License» sammen med dette biblioteket; hvis ikke, skriv til: the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
-IDS_WARRANTY_CAPTION, "INGEN GARANTI"
-IDS_WARRANTY,
-"Dette biblioteket distribueres i det håp at det er nyttig, \
-men UTEN ENHVER GARANTI; ikke engang den uttrykte garantien for \
-HANDELSDYKTIGHET eller EGNETHET FOR ET SPESIELT FORMÅL. Se «GNU \
-Lesser General Public License» for flere detaljer."
 }

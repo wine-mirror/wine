@@ -38,8 +38,6 @@ MAIN_MENU MENU
   MENUITEM "&Æiam supre", IDM_ONTOP
  }
  POPUP "Inf&o" {
-  MENUITEM "&Licenco", IDM_LICENSE
-  MENUITEM "&SEN GARANTIO...", IDM_NOWARRANTY
   MENUITEM "&Pri Horloøo", IDM_ABOUT
  }
 }

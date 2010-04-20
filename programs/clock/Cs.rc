@@ -43,8 +43,6 @@ MAIN_MENU MENU
   MENUITEM "Vždy n&a vrchu", IDM_ONTOP
  }
  POPUP "&O aplikaci" {
-  MENUITEM "&Licence...", IDM_LICENSE
-  MENUITEM "&BEZ ZÁRUKY...", IDM_NOWARRANTY
   MENUITEM "O &aplikaci...", IDM_ABOUT
  }
 }

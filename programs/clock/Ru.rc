@@ -41,8 +41,6 @@ MAIN_MENU MENU
   MENUITEM "&Поверх всех", IDM_ONTOP
  }
  POPUP "&Сведения" {
-  MENUITEM "&Лицензия...", IDM_LICENSE
-  MENUITEM "&БЕЗ ГАРАНТИЙ...", IDM_NOWARRANTY
   MENUITEM "&О программе...", IDM_ABOUT
  }
 }

@@ -38,35 +38,8 @@ MAIN_MENU MENU
   MENUITEM "&Altijd op de voorgrond", IDM_ONTOP
  }
  POPUP "Inf&o" {
-  MENUITEM "&Licentie...", IDM_LICENSE
-  MENUITEM "&GEEN GARANTIE...", IDM_NOWARRANTY
   MENUITEM "&Over Klok...", IDM_ABOUT
  }
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
-{
-IDS_LICENSE_CAPTION,            "LICENTIE"
-IDS_LICENSE,
-"Dit is vrij beschikbare software; u kunt dit verspreiden en/of \
-aanpassen onder de voorwaarden van de GNU Lesser General Public \
-License zoals gepubliceerd door de Free Software Foundation; zowel \
-versie 2.1 van de Licentie, of een latere versie.\n\
-Deze software wordt verspreid in de hoop dat het bruikbaar is, \
-maar ZONDER ENIGE GARANTIE; zonder zelfs een impliciete garantie van \
-VERKOOPBAARHEID of GESCHIKHEID VOOR PARTICULIERE DOELEINDEN.  Zie de GNU \
-Lesser General Public License voor meer details.\n\
-U heeft een kopie van de GNU Lesser General Public \
-License ontvangen samen met dit programma; zoniet, schrijf dan naar de \
-Free Software Foundation, 51 Franklin St, Fifth Floor, \
-Boston, MA  02110-1301  USA"
-
-IDS_WARRANTY_CAPTION, "GEEN GARANTIE"
-IDS_WARRANTY,
-"Deze software wordt verspreid in de hoop dat het bruikbaar is, \
-maar ZONDER ENIGE GARANTIE; zonder zelfs een impliciete garantie van \
-VERKOOPBAARHEID of GESCHIKHEID VOOR PARTICULIERE DOELEINDEN.  Zie de GNU \
-Lesser General Public License voor meer details."
 }
 
 STRINGTABLE DISCARDABLE

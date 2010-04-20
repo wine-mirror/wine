@@ -42,8 +42,6 @@ MAIN_MENU MENU
   MENUITEM "总是在最前面(&A)", IDM_ONTOP
  }
  POPUP "资料信息(&O)" {
-  MENUITEM "用户许可协议(&L)...", IDM_LICENSE
-  MENUITEM "责任无关(&N)...", IDM_NOWARRANTY
   MENUITEM "关于 Wine(&A)...", IDM_ABOUT
  }
 }
@@ -71,8 +69,6 @@ MAIN_MENU MENU
   MENUITEM "總是在最上面(&A)", IDM_ONTOP
  }
  POPUP "資料資訊(&O)" {
-  MENUITEM "用戶許可協議(&L)...", IDM_LICENSE
-  MENUITEM "責任無關(&N)...", IDM_NOWARRANTY
   MENUITEM "關於 Wine(&A)...", IDM_ABOUT
  }
 }

@@ -26,15 +26,8 @@
 #define IDM_SECONDS               0x105
 #define IDM_DATE                  0x106
 
-#define IDM_LICENSE               0x110
-#define IDM_NOWARRANTY            0x111
-#define IDM_ABOUT                 0x112
+#define IDM_ABOUT                 0x110
 
 #define IDM_ONTOP                 0x113
 
 #define IDS_CLOCK                 0x10C
-
-#define IDS_LICENSE_CAPTION       0x120
-#define IDS_LICENSE               0x121
-#define IDS_WARRANTY_CAPTION      0x122
-#define IDS_WARRANTY              0x123
