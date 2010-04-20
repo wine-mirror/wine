@@ -23,6 +23,9 @@
 #include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
+/* @makedep: winecfg.ico */
+IDI_WINECFG ICON winecfg.ico
+
 /* @makedep: idb_wine.bmp */
 IDB_WINE BITMAP idb_wine.bmp
 

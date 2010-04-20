@@ -45,6 +45,7 @@
 #define IDS_SHELL_FOLDER                16
 #define IDS_LINKS_TO                    17
 #define IDS_WINECFG_TITLE_APP           18   /* App specific title */
+#define IDI_WINECFG                     100
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107

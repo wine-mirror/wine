@@ -44,4 +44,7 @@ RC_SRCS = \
 	Zh.rc \
 	winecfg.rc
 
+SVG_SRCS = \
+	winecfg.svg
+
 @MAKE_PROG_RULES@

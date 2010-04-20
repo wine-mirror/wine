@@ -48,6 +48,10 @@ PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 	break;
 
     case PSCB_INITIALIZED:
+        /* Set the window icon */
+        SendMessageW( hWnd, WM_SETICON, ICON_BIG,
+                      (LPARAM)LoadIconW( (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE),
+                                         MAKEINTRESOURCEW(IDI_WINECFG) ));
 	break;
 
     default:
@@ -218,7 +222,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
     psh.hwndParent = hOwner;
     psh.hInstance = hInstance;
-    psh.u.pszIcon = NULL;
+    psh.u.pszIcon = MAKEINTRESOURCEW (IDI_WINECFG);
     psh.pszCaption =  load_string (IDS_WINECFG_TITLE);
     psh.nPages = NUM_PROPERTY_PAGES;
     psh.u3.ppsp = psp;
