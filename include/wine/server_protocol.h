@@ -2751,6 +2751,8 @@ struct send_hardware_message_request
 struct send_hardware_message_reply
 {
     struct reply_header __header;
+    user_handle_t   cursor;
+    int             count;
 };
 
 
@@ -5481,6 +5483,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 399
+#define SERVER_PROTOCOL_VERSION 400
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

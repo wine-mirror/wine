@@ -1262,12 +1262,11 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
 }
 
 /* queue a hardware message into a given thread input */
-static void queue_hardware_message( struct msg_queue *queue, struct message *msg,
+static void queue_hardware_message( struct thread_input *input, struct message *msg,
                                     struct hardware_msg_data *data )
 {
     user_handle_t win;
     struct thread *thread;
-    struct thread_input *input = queue ? queue->input : foreground_input;
     unsigned int msg_code;
 
     last_input_time = get_tick_count();
@@ -1704,20 +1703,20 @@ DECL_HANDLER(send_message)
 DECL_HANDLER(send_hardware_message)
 {
     struct message *msg;
-    struct msg_queue *recv_queue = NULL;
     struct thread *thread = NULL;
     struct hardware_msg_data *data;
+    struct thread_input *input = foreground_input;
 
     if (req->id)
     {
         if (!(thread = get_thread_from_id( req->id ))) return;
-    }
-
-    if (thread && !(recv_queue = thread->queue))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        release_object( thread );
-        return;
+        if (!thread->queue)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            release_object( thread );
+            return;
+        }
+        input = thread->queue->input;
     }
 
     if (!(data = mem_alloc( sizeof(*data) )))
@@ -1741,11 +1740,16 @@ DECL_HANDLER(send_hardware_message)
         msg->result    = NULL;
         msg->data      = data;
         msg->data_size = sizeof(*data);
-        queue_hardware_message( recv_queue, msg, data );
+        queue_hardware_message( input, msg, data );
     }
     else free( data );
 
-    if (thread) release_object( thread );
+    if (thread)
+    {
+        reply->cursor = input->cursor;
+        reply->count  = input->cursor_count;
+        release_object( thread );
+    }
 }
 
 /* post a quit message to the current queue */

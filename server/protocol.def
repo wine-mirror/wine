@@ -1992,6 +1992,9 @@ enum message_type
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
+@REPLY
+    user_handle_t   cursor;    /* current cursor for the target thread input */
+    int             count;     /* current cursor count */
 @END
 
 
