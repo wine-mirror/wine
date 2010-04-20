@@ -187,25 +187,20 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             hFont = (HFONT)GetWindowLongPtr(hWnd, 0L);
             if (hFont)
             {
-                WCHAR	buf1[256];
-                WCHAR	buf2[256];
-                int	len1, len2;
+                WCHAR ascii[] = {'A','S','C','I','I',':',' ','a','b','c','X','Y','Z','\0'};
+                WCHAR buf[256];
+                int   len;
 
-                len1 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_1,
-                                  buf1, sizeof(buf1) / sizeof(WCHAR));
-                len2 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_2,
-                                  buf2, sizeof(buf2) / sizeof(WCHAR));
-                buf1[len1] = buf2[len2] = 0;
-                if (len1)
-                {
-                    hOldFont = SelectObject(ps.hdc, hFont);
-                    SetBkColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)]);
-                    SetTextColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_FG), 0)]);
-                    TextOut(ps.hdc, 0, 0, buf1, len1);
-                    if (len2)
-                        TextOut(ps.hdc, 0, di->font[size_idx].height, buf2, len2);
-                    SelectObject(ps.hdc, hOldFont);
-                }
+                hOldFont = SelectObject(ps.hdc, hFont);
+                SetBkColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)]);
+                SetTextColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_FG), 0)]);
+                len = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW,
+                                 buf, sizeof(buf) / sizeof(buf[0]));
+                if (len)
+                    TextOut(ps.hdc, 0, 0, buf, len);
+                TextOut(ps.hdc, 0, di->font[size_idx].height, ascii,
+                        sizeof(ascii)/sizeof(ascii[0]) - 1);
+                SelectObject(ps.hdc, hOldFont);
             }
             EndPaint(hWnd, &ps);
         }
