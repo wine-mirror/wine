@@ -7323,6 +7323,14 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	    }
 	}
 	TRACE("lpht->iSubItem=%d\n", lpht->iSubItem);
+
+	/* if we're outside horizontal columns bounds there's nothing to test further */
+	if (lpht->iSubItem == -1)
+	{
+	    lpht->iItem = -1;
+	    lpht->flags = LVHT_NOWHERE;
+	    return -1;
+	}
     }
 
     TRACE("lpht->flags=0x%x\n", lpht->flags);
