@@ -168,11 +168,37 @@ static inline void update_button_state( unsigned int state )
 }
 
 /***********************************************************************
+ *		get_empty_cursor
+ */
+static Cursor get_empty_cursor(void)
+{
+    static Cursor cursor;
+    static const char data[] = { 0 };
+
+    if (!cursor)
+    {
+        XColor bg;
+        Pixmap pixmap;
+
+        bg.red = bg.green = bg.blue = 0x0000;
+        pixmap = XCreateBitmapFromData( gdi_display, root_window, data, 1, 1 );
+        if (pixmap)
+        {
+            cursor = XCreatePixmapCursor( gdi_display, pixmap, pixmap, &bg, &bg, 0, 0 );
+            XFreePixmap( gdi_display, pixmap );
+        }
+    }
+    return cursor;
+}
+
+/***********************************************************************
  *		get_x11_cursor
  */
 static Cursor get_x11_cursor( HCURSOR handle )
 {
     Cursor cursor;
+
+    if (!handle) return get_empty_cursor();
 
     if (cursor_context && !XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
         return cursor;
@@ -596,18 +622,6 @@ static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
     Cursor cursor;
     XcursorImage *image;
 
-    if (!ptr) /* Create an empty cursor */
-    {
-        image = pXcursorImageCreate( 1, 1 );
-        image->xhot = 0;
-        image->yhot = 0;
-        *(image->pixels) = 0;
-        cursor = pXcursorImageLoadCursor( display, image );
-        pXcursorImageDestroy( image );
-
-        return cursor;
-    }
-
     image = create_cursor_image( ptr );
     if (!image) return 0;
 
@@ -646,24 +660,13 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
     char *bitMask32 = NULL;
     BOOL alpha_zero = TRUE;
 
+    if (!ptr) return get_empty_cursor();
+
 #ifdef SONAME_LIBXCURSOR
     if (pXcursorImageLoadCursor) return create_xcursor_cursor( display, ptr );
 #endif
 
-    if (!ptr)  /* Create an empty cursor */
-    {
-        static const char data[] = { 0 };
-
-        bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = XCreateBitmapFromData( display, root_window, data, 1, 1 );
-        if (pixmapBits)
-        {
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
-                                          &bg, &bg, 0, 0 );
-            XFreePixmap( display, pixmapBits );
-        }
-    }
-    else  /* Create the X cursor from the bits */
+    /* Create the X cursor from the bits */
     {
         XImage *image;
         GC gc;
