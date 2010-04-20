@@ -209,6 +209,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Groep"
 	IDS_SHV_COLUMN_DELFROM	"Originele locatie"
 	IDS_SHV_COLUMN_DELDATE	"Datum verwijderd"
+	IDS_SHV_COL_DOCS	"Documenten"
+	IDS_SHV_COL_STATUS	"Status"
+	IDS_SHV_COL_LOCATION	"Locatie"
+	IDS_SHV_COL_MODEL	"Model"
 
         /* special folders */
 	IDS_DESKTOP		"Bureaublad"
