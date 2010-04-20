@@ -2707,6 +2707,25 @@ MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wcha
     return MSVCRT__wfsopen( path, mode, MSVCRT__SH_DENYNO );
 }
 
+/*********************************************************************
+ *		_wfopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const MSVCRT_wchar_t *filename,
+        const MSVCRT_wchar_t *mode)
+{
+    if(!pFile) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *pFile = MSVCRT__wfopen(filename, mode);
+
+    if(!*pFile)
+        return *MSVCRT__errno();
+    return 0;
+}
+
 /* MSVCRT_fputc calls MSVCRT__flsbuf which calls MSVCRT_fputc */
 int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file);
 

@@ -1072,7 +1072,7 @@
 # stub _wfindnext64
 @ cdecl _wfindnexti64(long ptr) MSVCRT__wfindnexti64
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
-# stub _wfopen_s
+@ cdecl _wfopen_s(ptr wstr wstr) MSVCRT__wfopen_s
 @ cdecl _wfreopen(wstr wstr ptr) MSVCRT__wfreopen
 # stub _wfreopen_s
 @ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
