@@ -88,6 +88,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
 POINT cursor_pos;
 static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
+static XContext cursor_context;
 
 BOOL CDECL X11DRV_SetCursorPos( INT x, INT y );
 
@@ -166,6 +167,17 @@ static inline void update_button_state( unsigned int state )
     /* X-buttons are not reported from XQueryPointer */
 }
 
+/***********************************************************************
+ *		get_x11_cursor
+ */
+static Cursor get_x11_cursor( HCURSOR handle )
+{
+    Cursor cursor;
+
+    if (cursor_context && !XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
+        return cursor;
+    return 0;
+}
 
 /***********************************************************************
  *		update_mouse_state
@@ -945,6 +957,45 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
     return cursor;
 }
 
+/***********************************************************************
+ *		CreateCursorIcon (X11DRV.@)
+ */
+void CDECL X11DRV_CreateCursorIcon( HCURSOR handle, CURSORICONINFO *info )
+{
+    static const WORD ICON_HOTSPOT = 0x4242;
+    Cursor cursor;
+
+    /* ignore icons (FIXME: shouldn't use magic hotspot value) */
+    if (info->ptHotSpot.x == ICON_HOTSPOT && info->ptHotSpot.y == ICON_HOTSPOT) return;
+
+    wine_tsx11_lock();
+    cursor = create_cursor( gdi_display, info );
+    if (cursor)
+    {
+        if (!cursor_context) cursor_context = XUniqueContext();
+        XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
+        TRACE( "cursor %p %ux%u, planes %u, bpp %u -> xid %lx\n",
+               handle, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, cursor );
+    }
+    wine_tsx11_unlock();
+}
+
+/***********************************************************************
+ *		DestroyCursorIcon (X11DRV.@)
+ */
+void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
+{
+    Cursor cursor;
+
+    wine_tsx11_lock();
+    if ((cursor = get_x11_cursor( handle )))
+    {
+        TRACE( "%p xid %lx\n", handle, cursor );
+        XFreeCursor( gdi_display, cursor );
+        XDeleteContext( gdi_display, (XID)handle, cursor_context );
+    }
+    wine_tsx11_unlock();
+}
 
 /***********************************************************************
  *		SetCursor (X11DRV.@)
