@@ -612,6 +612,7 @@ struct new_thread_request
     unsigned int attributes;
     int          suspend;
     int          request_fd;
+    char __pad_28[4];
 };
 struct new_thread_reply
 {
@@ -625,6 +626,7 @@ struct new_thread_reply
 struct get_startup_info_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct get_startup_info_reply
 {
@@ -663,6 +665,7 @@ struct init_thread_request
     int          reply_fd;
     int          wait_fd;
     cpu_type_t   cpu;
+    char __pad_52[4];
 };
 struct init_thread_reply
 {
@@ -683,6 +686,7 @@ struct terminate_process_request
     struct request_header __header;
     obj_handle_t handle;
     int          exit_code;
+    char __pad_20[4];
 };
 struct terminate_process_reply
 {
@@ -698,6 +702,7 @@ struct terminate_thread_request
     struct request_header __header;
     obj_handle_t handle;
     int          exit_code;
+    char __pad_20[4];
 };
 struct terminate_thread_reply
 {
@@ -752,6 +757,7 @@ struct get_thread_info_request
     struct request_header __header;
     obj_handle_t handle;
     thread_id_t  tid_in;
+    char __pad_20[4];
 };
 struct get_thread_info_reply
 {
@@ -932,6 +938,7 @@ struct dup_handle_request
     unsigned int access;
     unsigned int attributes;
     unsigned int options;
+    char __pad_36[4];
 };
 struct dup_handle_reply
 {
@@ -1012,6 +1019,7 @@ struct create_event_request
     int          manual_reset;
     int          initial_state;
     /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
 };
 struct create_event_reply
 {
@@ -1109,6 +1117,7 @@ struct create_semaphore_request
     unsigned int initial;
     unsigned int max;
     /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
 };
 struct create_semaphore_reply
 {
@@ -1124,6 +1133,7 @@ struct release_semaphore_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int count;
+    char __pad_20[4];
 };
 struct release_semaphore_reply
 {
@@ -1162,6 +1172,7 @@ struct create_file_request
     unsigned int attrs;
     /* VARARG(objattr,object_attributes); */
     /* VARARG(filename,string); */
+    char __pad_36[4];
 };
 struct create_file_reply
 {
@@ -1306,6 +1317,7 @@ struct create_socket_request
     int          type;
     int          protocol;
     unsigned int flags;
+    char __pad_36[4];
 };
 struct create_socket_reply
 {
@@ -1487,6 +1499,7 @@ struct open_console_request
     unsigned int access;
     unsigned int attributes;
     int          share;
+    char __pad_28[4];
 };
 struct open_console_reply
 {
@@ -1500,6 +1513,7 @@ struct open_console_reply
 struct get_console_wait_event_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct get_console_wait_event_reply
 {
@@ -1605,6 +1619,7 @@ struct get_console_input_history_request
     struct request_header __header;
     obj_handle_t handle;
     int          index;
+    char __pad_20[4];
 };
 struct get_console_input_history_reply
 {
@@ -1623,6 +1638,7 @@ struct create_console_output_request
     unsigned int access;
     unsigned int attributes;
     unsigned int share;
+    char __pad_28[4];
 };
 struct create_console_output_reply
 {
@@ -1711,6 +1727,7 @@ struct read_console_input_request
     struct request_header __header;
     obj_handle_t handle;
     int          flush;
+    char __pad_20[4];
 };
 struct read_console_input_reply
 {
@@ -1860,6 +1877,7 @@ struct create_mapping_request
     mem_size_t   size;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
+    char __pad_36[4];
 };
 struct create_mapping_reply
 {
@@ -1906,6 +1924,7 @@ struct get_mapping_info_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int access;
+    char __pad_20[4];
 };
 struct get_mapping_info_reply
 {
@@ -1957,6 +1976,7 @@ struct create_snapshot_request
     struct request_header __header;
     unsigned int attributes;
     unsigned int flags;
+    char __pad_20[4];
 };
 struct create_snapshot_reply
 {
@@ -1972,6 +1992,7 @@ struct next_process_request
     struct request_header __header;
     obj_handle_t handle;
     int          reset;
+    char __pad_20[4];
 };
 struct next_process_reply
 {
@@ -1992,6 +2013,7 @@ struct next_thread_request
     struct request_header __header;
     obj_handle_t handle;
     int          reset;
+    char __pad_20[4];
 };
 struct next_thread_reply
 {
@@ -2034,6 +2056,7 @@ struct queue_exception_event_request
     data_size_t   len;
     /* VARARG(params,uints64,len); */
     /* VARARG(context,context); */
+    char __pad_44[4];
 };
 struct queue_exception_event_reply
 {
@@ -2367,6 +2390,7 @@ struct create_timer_request
     obj_handle_t rootdir;
     int          manual;
     /* VARARG(name,unicode_str); */
+    char __pad_28[4];
 };
 struct create_timer_reply
 {
@@ -2401,6 +2425,7 @@ struct set_timer_request
     client_ptr_t callback;
     client_ptr_t arg;
     int          period;
+    char __pad_44[4];
 };
 struct set_timer_reply
 {
@@ -2461,6 +2486,7 @@ struct set_thread_context_request
     obj_handle_t handle;
     int          suspend;
     /* VARARG(context,context); */
+    char __pad_20[4];
 };
 struct set_thread_context_reply
 {
@@ -2476,6 +2502,7 @@ struct get_selector_entry_request
     struct request_header __header;
     obj_handle_t  handle;
     int           entry;
+    char __pad_20[4];
 };
 struct get_selector_entry_reply
 {
@@ -2537,6 +2564,7 @@ struct get_atom_information_request
     struct request_header __header;
     obj_handle_t table;
     atom_t       atom;
+    char __pad_20[4];
 };
 struct get_atom_information_reply
 {
@@ -2595,6 +2623,7 @@ struct init_atom_table_reply
 struct get_msg_queue_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct get_msg_queue_reply
 {
@@ -2921,6 +2950,7 @@ struct ioctl_request
     async_data_t   async;
     int            blocking;
     /* VARARG(in_data,bytes); */
+    char __pad_60[4];
 };
 struct ioctl_reply
 {
@@ -2959,6 +2989,7 @@ struct create_named_pipe_request
     timeout_t      timeout;
     unsigned int   flags;
     /* VARARG(name,unicode_str); */
+    char __pad_52[4];
 };
 struct create_named_pipe_reply
 {
@@ -3044,6 +3075,7 @@ struct set_window_owner_request
     struct request_header __header;
     user_handle_t  handle;
     user_handle_t  owner;
+    char __pad_20[4];
 };
 struct set_window_owner_reply
 {
@@ -3113,6 +3145,7 @@ struct set_parent_request
     struct request_header __header;
     user_handle_t  handle;
     user_handle_t  parent;
+    char __pad_20[4];
 };
 struct set_parent_reply
 {
@@ -3146,6 +3179,7 @@ struct get_window_children_request
     atom_t         atom;
     thread_id_t    tid;
     /* VARARG(class,unicode_str); */
+    char __pad_28[4];
 };
 struct get_window_children_reply
 {
@@ -3258,6 +3292,7 @@ struct get_windows_offset_request
     struct request_header __header;
     user_handle_t  from;
     user_handle_t  to;
+    char __pad_20[4];
 };
 struct get_windows_offset_reply
 {
@@ -3273,6 +3308,7 @@ struct get_visible_region_request
     struct request_header __header;
     user_handle_t  window;
     unsigned int   flags;
+    char __pad_20[4];
 };
 struct get_visible_region_reply
 {
@@ -3393,6 +3429,7 @@ struct remove_window_property_request
     user_handle_t  window;
     atom_t         atom;
     /* VARARG(name,unicode_str); */
+    char __pad_20[4];
 };
 struct remove_window_property_reply
 {
@@ -3408,6 +3445,7 @@ struct get_window_property_request
     user_handle_t  window;
     atom_t         atom;
     /* VARARG(name,unicode_str); */
+    char __pad_20[4];
 };
 struct get_window_property_reply
 {
@@ -3455,6 +3493,7 @@ struct open_winstation_request
     unsigned int access;
     unsigned int attributes;
     /* VARARG(name,unicode_str); */
+    char __pad_20[4];
 };
 struct open_winstation_reply
 {
@@ -3480,6 +3519,7 @@ struct close_winstation_reply
 struct get_process_winstation_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct get_process_winstation_reply
 {
@@ -3542,6 +3582,7 @@ struct open_desktop_request
     unsigned int access;
     unsigned int attributes;
     /* VARARG(name,unicode_str); */
+    char __pad_28[4];
 };
 struct open_desktop_reply
 {
@@ -3595,6 +3636,7 @@ struct enum_desktop_request
     struct request_header __header;
     obj_handle_t winstation;
     unsigned int index;
+    char __pad_20[4];
 };
 struct enum_desktop_reply
 {
@@ -3662,6 +3704,7 @@ struct get_thread_input_reply
 struct get_last_input_time_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct get_last_input_time_reply
 {
@@ -3677,6 +3720,7 @@ struct get_key_state_request
     struct request_header __header;
     thread_id_t    tid;
     int            key;
+    char __pad_20[4];
 };
 struct get_key_state_reply
 {
@@ -3745,6 +3789,7 @@ struct set_capture_window_request
     struct request_header __header;
     user_handle_t  handle;
     unsigned int   flags;
+    char __pad_20[4];
 };
 struct set_capture_window_reply
 {
@@ -3785,6 +3830,7 @@ struct set_caret_info_request
     int            y;
     int            hide;
     int            state;
+    char __pad_36[4];
 };
 struct set_caret_info_reply
 {
@@ -3829,6 +3875,7 @@ struct remove_hook_request
     user_handle_t  handle;
     client_ptr_t   proc;
     int            id;
+    char __pad_28[4];
 };
 struct remove_hook_reply
 {
@@ -3884,6 +3931,7 @@ struct get_hook_info_request
     user_handle_t  window;
     int            object_id;
     int            child_id;
+    char __pad_36[4];
 };
 struct get_hook_info_reply
 {
@@ -4006,6 +4054,7 @@ struct open_token_request
     unsigned int   access;
     unsigned int   attributes;
     unsigned int   flags;
+    char __pad_28[4];
 };
 struct open_token_reply
 {
@@ -4077,6 +4126,7 @@ struct check_token_privileges_request
     obj_handle_t  handle;
     int           all_required;
     /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    char __pad_20[4];
 };
 struct check_token_privileges_reply
 {
@@ -4112,6 +4162,7 @@ struct access_check_request
     unsigned int    mapping_execute;
     unsigned int    mapping_all;
     /* VARARG(sd,security_descriptor); */
+    char __pad_36[4];
 };
 struct access_check_reply
 {
@@ -4128,6 +4179,7 @@ struct get_token_sid_request
     struct request_header __header;
     obj_handle_t    handle;
     unsigned int    which_sid;
+    char __pad_20[4];
 };
 struct get_token_sid_reply
 {
@@ -4192,6 +4244,7 @@ struct get_security_object_request
     struct request_header __header;
     obj_handle_t    handle;
     unsigned int    security_info;
+    char __pad_20[4];
 };
 struct get_security_object_reply
 {
@@ -4211,6 +4264,7 @@ struct create_mailslot_request
     timeout_t      read_timeout;
     unsigned int   max_msgsize;
     /* VARARG(name,unicode_str); */
+    char __pad_36[4];
 };
 struct create_mailslot_reply
 {
@@ -4227,6 +4281,7 @@ struct set_mailslot_info_request
     obj_handle_t   handle;
     timeout_t      read_timeout;
     unsigned int   flags;
+    char __pad_28[4];
 };
 struct set_mailslot_info_reply
 {
@@ -4278,6 +4333,7 @@ struct get_directory_entry_request
     struct request_header __header;
     obj_handle_t   handle;
     unsigned int   index;
+    char __pad_20[4];
 };
 struct get_directory_entry_reply
 {
@@ -4299,6 +4355,7 @@ struct create_symlink_request
     data_size_t    name_len;
     /* VARARG(name,unicode_str,name_len); */
     /* VARARG(target_name,unicode_str); */
+    char __pad_28[4];
 };
 struct create_symlink_reply
 {
@@ -4384,6 +4441,7 @@ struct get_token_impersonation_level_reply
 struct allocate_locally_unique_id_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct allocate_locally_unique_id_reply
 {
@@ -4398,6 +4456,7 @@ struct create_device_manager_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    char __pad_20[4];
 };
 struct create_device_manager_reply
 {
@@ -4417,6 +4476,7 @@ struct create_device_request
     client_ptr_t user_ptr;
     obj_handle_t manager;
     /* VARARG(name,unicode_str); */
+    char __pad_36[4];
 };
 struct create_device_reply
 {
@@ -4463,6 +4523,7 @@ struct get_next_device_request_reply
 struct make_process_system_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct make_process_system_reply
 {
@@ -4499,6 +4560,7 @@ struct create_completion_request
     unsigned int concurrent;
     obj_handle_t rootdir;
     /* VARARG(filename,string); */
+    char __pad_28[4];
 };
 struct create_completion_reply
 {
@@ -4637,6 +4699,7 @@ struct set_window_layered_info_reply
 struct alloc_user_handle_request
 {
     struct request_header __header;
+    char __pad_12[4];
 };
 struct alloc_user_handle_reply
 {
@@ -5418,6 +5481,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 398
+#define SERVER_PROTOCOL_VERSION 399
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -63,6 +63,18 @@ my $max_req_size = 64;
 
 my $warnings = scalar(@ARGV) && $ARGV[0] eq "-w";
 
+sub add_padding($$)
+{
+    my ($offset, $padding) = @_;
+    if ($offset % $padding)
+    {
+        my $count = $padding - ($offset % $padding);
+        print SERVER_PROT "    char __pad_$offset\[$count\];\n";
+        $offset += $count;
+    }
+    return $offset;
+}
+
 ### Generate a dumping function
 
 sub DO_DUMP_FUNC($$@)
@@ -151,6 +163,9 @@ sub PARSE_REQUESTS()
         if (/^\@REPLY/)
         {
             die "Misplaced \@REPLY" unless $state == 2;
+            $offset = add_padding( $offset, 8 ); # all requests should be 8-byte aligned
+            die "request $name too large ($offset)" if ($offset > $max_req_size);
+            push @asserts, "C_ASSERT( sizeof(struct ${name}_request) == $offset );\n";
             print SERVER_PROT "};\n";
             print SERVER_PROT "struct ${name}_reply\n{\n";
             print SERVER_PROT "    struct reply_header __header;\n";
@@ -164,12 +179,7 @@ sub PARSE_REQUESTS()
         {
             die "Misplaced \@END" unless ($state == 2 || $state == 3);
 
-            if ($offset & 7)  # all requests should be 8-byte aligned
-            {
-                my $count = 8 - ($offset & 7);
-                print SERVER_PROT "    char __pad_$offset\[$count\];\n";
-                $offset += $count;
-            }
+            $offset = add_padding( $offset, 8 ); # all requests should be 8-byte aligned
             print SERVER_PROT "};\n";
             if ($state == 2)  # build dummy reply struct
             {
