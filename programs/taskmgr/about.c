@@ -40,5 +40,5 @@ void OnAbout(void)
                             '<','b','r','i','a','n','p','@','r','e','a','c','t','o','s','.','o','r','g','>',0};
             LoadStringW( hInst, IDC_TASKMGR, appname, sizeof(appname)/sizeof(WCHAR) );
             ShellAboutW( hMainWnd, appname, copy,
-                         LoadImageA( hInst, (LPSTR)IDI_TASKMANAGER, IMAGE_ICON, 32, 32, LR_SHARED ));
+                         LoadImageA( hInst, (LPSTR)IDI_TASKMANAGER, IMAGE_ICON, 48, 48, LR_SHARED ));
 }
