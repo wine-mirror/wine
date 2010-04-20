@@ -123,7 +123,7 @@ sub fallback_render
 }
 
 # Render the SVG image
-shell 'rsvg', $svgFileName, $renderedSVGFileName;
+shell $rsvg, $svgFileName, $renderedSVGFileName;
 
 # Render the images in the SVG
 my $parser = new XML::Parser(
