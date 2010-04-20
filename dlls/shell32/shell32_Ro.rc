@@ -208,6 +208,10 @@ STRINGTABLE
         IDS_SHV_COLUMN11        "Grup"
         IDS_SHV_COLUMN_DELFROM  "Locația originală"
         IDS_SHV_COLUMN_DELDATE  "Data ștergerii"
+        IDS_SHV_COL_DOCS        "Documente"
+        IDS_SHV_COL_STATUS      "Stare"
+        IDS_SHV_COL_LOCATION    "Locație"
+        IDS_SHV_COL_MODEL       "Model"
 
         /* special folders */
         IDS_DESKTOP             "Birou"
