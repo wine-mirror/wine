@@ -1789,13 +1789,7 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
     if (!ret) return 0;
 
     /* Change the cursor shape only if it is visible */
-    if (show_count >= 0)
-    {
-        CURSORICONINFO *info = get_icon_ptr( hCursor );
-        /* release before calling driver (FIXME) */
-        if (info) release_icon_ptr( hCursor, info );
-        USER_Driver->pSetCursor( hCursor, info );
-    }
+    if (show_count >= 0) USER_Driver->pSetCursor( hCursor );
     return hOldCursor;
 }
 
@@ -1820,17 +1814,8 @@ INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
 
     TRACE("%d, count=%d\n", bShow, prev_count + increment );
 
-    if (!prev_count)
-    {
-        if (bShow)
-        {
-            CURSORICONINFO *info = get_icon_ptr( cursor );
-            /* release before calling driver (FIXME) */
-            if (info) release_icon_ptr( cursor, info );
-            USER_Driver->pSetCursor( cursor, info );
-        }
-        else USER_Driver->pSetCursor( 0, NULL );
-    }
+    if (!prev_count) USER_Driver->pSetCursor( bShow ? cursor : 0 );
+
     return prev_count + increment;
 }
 

@@ -66,8 +66,6 @@ typedef int Status;
 
 #define WINE_XDND_VERSION 4
 
-struct tagCURSORICONINFO;
-
 extern void CDECL wine_tsx11_lock(void);
 extern void CDECL wine_tsx11_unlock(void);
 
@@ -784,8 +782,6 @@ extern void X11DRV_Clipboard_Cleanup(void);
 extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
 extern Cursor get_x11_cursor( HCURSOR handle );
-extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
-extern void CDECL X11DRV_SetCursor( HCURSOR cursor, struct tagCURSORICONINFO *lpCursor );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
 extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,

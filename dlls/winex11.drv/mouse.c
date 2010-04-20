@@ -1007,7 +1007,7 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
 /***********************************************************************
  *		SetCursor (X11DRV.@)
  */
-void CDECL X11DRV_SetCursor( HCURSOR handle, CURSORICONINFO *lpCursor )
+void CDECL X11DRV_SetCursor( HCURSOR handle )
 {
     struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
     struct x11drv_win_data *data;

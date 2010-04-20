@@ -225,7 +225,7 @@ static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
 {
 }
 
-static void CDECL nulldrv_SetCursor( HCURSOR cursor, struct tagCURSORICONINFO *info )
+static void CDECL nulldrv_SetCursor( HCURSOR cursor )
 {
 }
 
@@ -580,9 +580,9 @@ static void CDECL loaderdrv_DestroyCursorIcon( HCURSOR cursor )
     load_driver()->pDestroyCursorIcon( cursor );
 }
 
-static void CDECL loaderdrv_SetCursor( HCURSOR cursor, struct tagCURSORICONINFO *info )
+static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
 {
-    load_driver()->pSetCursor( cursor, info );
+    load_driver()->pSetCursor( cursor );
 }
 
 static BOOL CDECL loaderdrv_GetCursorPos( LPPOINT pt )

@@ -70,7 +70,7 @@ typedef struct tagUSER_DRIVER {
     /* cursor/icon functions */
     void   (CDECL *pCreateCursorIcon)(HCURSOR,struct tagCURSORICONINFO *);
     void   (CDECL *pDestroyCursorIcon)(HCURSOR);
-    void   (CDECL *pSetCursor)(HCURSOR,struct tagCURSORICONINFO *);
+    void   (CDECL *pSetCursor)(HCURSOR);
     BOOL   (CDECL *pGetCursorPos)(LPPOINT);
     BOOL   (CDECL *pSetCursorPos)(INT,INT);
     BOOL   (CDECL *pClipCursor)(LPCRECT);
