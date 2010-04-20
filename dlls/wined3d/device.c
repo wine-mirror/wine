@@ -563,6 +563,18 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
     device->contexts = new_array;
 }
 
+void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
+        struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
+{
+    if (device->onscreen_depth_stencil)
+    {
+        surface_load_ds_location(device->onscreen_depth_stencil, context, SFLAG_DS_OFFSCREEN);
+        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_DS_OFFSCREEN);
+        IWineD3DSurface_Release((IWineD3DSurface *)device->onscreen_depth_stencil);
+    }
+    device->onscreen_depth_stencil = depth_stencil;
+    IWineD3DSurface_AddRef((IWineD3DSurface *)device->onscreen_depth_stencil);
+}
 
 /**********************************************************
  * IUnknown parts follows
@@ -1853,6 +1865,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->shader_backend->shader_free_private(iface);
 
     /* Release the buffers (with sanity checks)*/
+    if (This->onscreen_depth_stencil)
+    {
+        IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
+        This->onscreen_depth_stencil = NULL;
+    }
+
     TRACE("Releasing the depth stencil buffer at %p\n", This->depth_stencil);
     if (This->depth_stencil && IWineD3DSurface_Release((IWineD3DSurface *)This->depth_stencil))
     {
@@ -4429,6 +4447,10 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     if (Flags & WINED3DCLEAR_ZBUFFER)
     {
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+
+        if (location == SFLAG_DS_ONSCREEN && depth_stencil != This->onscreen_depth_stencil)
+            device_switch_onscreen_ds(This, context, depth_stencil);
+
         if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
             surface_load_ds_location(depth_stencil, context, location);
         surface_modify_ds_location(depth_stencil, location);
@@ -5915,14 +5937,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
                 || This->depth_stencil->Flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED);
-        }
-        else
-        {
-            struct wined3d_context *context = context_acquire(This,
-                    (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_RESOURCELOAD);
-            surface_load_ds_location(This->depth_stencil, context, SFLAG_DS_OFFSCREEN);
-            surface_modify_ds_location(This->depth_stencil, SFLAG_DS_OFFSCREEN);
-            context_release(context);
+            if (This->depth_stencil == This->onscreen_depth_stencil)
+            {
+                IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
+                This->onscreen_depth_stencil = NULL;
+            }
         }
     }
 
@@ -6447,6 +6466,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
             IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
             return WINED3DERR_INVALIDCALL;
         }
+    }
+
+    if (This->onscreen_depth_stencil)
+    {
+        IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
+        This->onscreen_depth_stencil = NULL;
     }
 
     /* Reset the depth stencil */

@@ -1668,6 +1668,7 @@ struct IWineD3DDeviceImpl
     /* Render Target Support */
     IWineD3DSurfaceImpl **render_targets;
     IWineD3DSurfaceImpl *auto_depth_stencil;
+    IWineD3DSurfaceImpl *onscreen_depth_stencil;
     IWineD3DSurfaceImpl *depth_stencil;
 
     /* palettes texture management */
@@ -1737,6 +1738,8 @@ void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource) D
 void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource) DECLSPEC_HIDDEN;
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup) DECLSPEC_HIDDEN;
+void device_switch_onscreen_ds(IWineD3DDeviceImpl *device, struct wined3d_context *context,
+        IWineD3DSurfaceImpl *depth_stencil) DECLSPEC_HIDDEN;
 void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) DECLSPEC_HIDDEN;

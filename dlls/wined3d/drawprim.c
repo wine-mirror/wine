@@ -612,7 +612,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE]
                 || This->stateBlock->renderState[WINED3DRS_ZENABLE])
+        {
+            if (location == SFLAG_DS_ONSCREEN && This->depth_stencil != This->onscreen_depth_stencil)
+                device_switch_onscreen_ds(This, context, This->depth_stencil);
             surface_load_ds_location(This->depth_stencil, context, location);
+        }
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
             surface_modify_ds_location(This->depth_stencil, location);
     }
