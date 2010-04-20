@@ -21,6 +21,8 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+#pragma code_page(65001)
+
 IDM_MAINMENU MENU DISCARDABLE
 BEGIN
     POPUP "&Bestand"
@@ -99,7 +101,7 @@ BEGIN
     POPUP ""
     BEGIN
         MENUITEM "K&nippen",             ID_EDIT_CUT
-        MENUITEM "&Kopieren",            ID_EDIT_COPY
+        MENUITEM "&Kopiëren",            ID_EDIT_COPY
         MENUITEM "&Plakken",            ID_EDIT_PASTE
         MENUITEM SEPARATOR
         MENUITEM "&Bullet points"        ID_BULLET
@@ -127,7 +129,7 @@ BEGIN
         MENUITEM "Fuchsiapaars"  ID_COLOR_FUCHSIA
         MENUITEM "Zeeblauw"      ID_COLOR_AQUA
         MENUITEM "Wit"           ID_COLOR_WHITE
-        MENUITEM "Automatic"     ID_COLOR_AUTOMATIC
+        MENUITEM "Automatisch"     ID_COLOR_AUTOMATIC
     END
 END
 
@@ -238,8 +240,8 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Zoom in"
     STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "Sluiten"
-    STRING_PREVIEW_PAGE,             "Page"
-    STRING_PREVIEW_PAGES,            "Pages"
+    STRING_PREVIEW_PAGE,             "Pagina"
+    STRING_PREVIEW_PAGES,            "Pagina's"
 END
 
 STRINGTABLE DISCARDABLE
@@ -251,17 +253,17 @@ STRINGTABLE DISCARDABLE
 BEGIN
     STRING_DEFAULT_FILENAME,     "Document"
     STRING_PROMPT_SAVE_CHANGES,  "Wijzigingen opslaan van '%s'?"
-    STRING_SEARCH_FINISHED,      "Doorzoeken van document beeindigd."
+    STRING_SEARCH_FINISHED,      "Doorzoeken van document beëindigd."
     STRING_LOAD_RICHED_FAILED,   "Laden van de RichEdit library is mislukt."
     STRING_SAVE_LOSEFORMATTING,  "U koos voor opslaan in gewoon tekst formaat, " \
                                  "waardoor alle formatering verloren zal gaan. " \
                                  "Weet u zeker dat u dit wilt?"
     STRING_INVALID_NUMBER,       "Foutief nummer formaat"
-    STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage documenten zijn niet ondersteund"
-    STRING_WRITE_FAILED,         "Bestand kon niet opgeslagen worden."
+    STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage documenten worden niet ondersteund"
+    STRING_WRITE_FAILED,         "Bestand kon niet worden opgeslagen."
     STRING_WRITE_ACCESS_DENIED,  "Onvoldoende rechten om het bestand op te slaan."
-    STRING_OPEN_FAILED,          "Bestand kon niet geopend worden."
+    STRING_OPEN_FAILED,          "Bestand kon niet worden geopend."
     STRING_OPEN_ACCESS_DENIED,   "Onvoldoende rechten om het bestand te openen."
-    STRING_PRINTING_NOT_IMPLEMENTED, "Printen is nog niet geimplementeerd"
+    STRING_PRINTING_NOT_IMPLEMENTED, "Printen is nog niet geïmplementeerd"
     STRING_MAX_TAB_STOPS,        "Onmogelijk om meer dan 32 tab stops toe te voegen."
 END
