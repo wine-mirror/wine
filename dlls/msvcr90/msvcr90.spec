@@ -461,7 +461,7 @@
 @ stub _get_dstbias
 @ stub _get_errno
 @ stub _get_fmode
-@ stub _get_heap_handle
+@ cdecl _get_heap_handle() msvcrt._get_heap_handle
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ stub _get_output_format

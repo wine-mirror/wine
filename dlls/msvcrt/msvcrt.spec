@@ -428,7 +428,7 @@
 # stub _get_errno
 # stub _get_fileinfo
 # stub _get_fmode
-# stub _get_heap_handle
+@ cdecl _get_heap_handle()
 @ cdecl _get_osfhandle(long)
 # stub _get_osplatform
 # stub _get_osver

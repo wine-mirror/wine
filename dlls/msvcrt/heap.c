@@ -253,6 +253,14 @@ int CDECL _heapadd(void* mem, MSVCRT_size_t size)
 }
 
 /*********************************************************************
+ *		_heapadd (MSVCRT.@)
+ */
+MSVCRT_intptr_t CDECL _get_heap_handle(void)
+{
+    return (MSVCRT_intptr_t)GetProcessHeap();
+}
+
+/*********************************************************************
  *		_msize (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _msize(void* mem)
