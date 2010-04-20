@@ -1049,7 +1049,7 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
     if((iPixelFormat > 0) && (iPixelFormat <= size) &&
        (!list[iPixelFormat-1].offscreenOnly || AllowOffscreen)) {
         res = &list[iPixelFormat-1];
-        TRACE("Returning FBConfig=%p for iPixelFormat=%d\n", res->fbconfig, iPixelFormat);
+        TRACE("Returning fmt_id=%#x for iPixelFormat=%d\n", res->fmt_id, iPixelFormat);
     }
 
     if(AllowOffscreen)
