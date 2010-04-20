@@ -106,22 +106,6 @@ sub svg_element_start
     push(@pngFiles, $pngFileName);
 }
 
-sub resize_image
-{
-    # Use ImageMagick to stretch the image
-    my($size) = @_;
-    my $pngFileName = "$icoName-$size.png";
-    shell $convert, $renderedSVGFileName, "-resize", "${size}x${size}", $pngFileName;
-    push(@pngFiles, $pngFileName);
-}
-
-sub fallback_render
-{
-    resize_image(16);
-    resize_image(32);
-    resize_image(48);
-}
-
 # Render the SVG image
 shell $rsvg, $svgFileName, $renderedSVGFileName;
 
@@ -130,9 +114,8 @@ my $parser = new XML::Parser(
     Handlers => {Start => \&svg_element_start});
 $parser->parsefile("$svgFileName");
 
-# If no render directives were found, this is an old-style icon
-# which should be rendered with the old build rule
-fallback_render unless(@pngFiles);
+# Die if no render directives were found
+die "No render directives found in icon" unless(@pngFiles);
 
 # Combine them into an ICO file
 shell $icotool, "-c", "-o", $icoFileName, @pngFiles;
