@@ -992,6 +992,21 @@ static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onsc
                     onscreen_size++;
                 }
             } else if(run && !visinfo) {
+                int window_drawable=0;
+                pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_DRAWABLE_TYPE, &window_drawable);
+
+                /* Recent Nvidia drivers and DRI drivers offer window drawable formats without a visual.
+                 * This are formats like 16-bit rgb on a 24-bit desktop. In order to support these formats
+                 * onscreen we would have to use glXCreateWindow instead of XCreateWindow. Further it will
+                 * likely make our child window opengl rendering more complicated since likely you can't use
+                 * XCopyArea on a GLX Window.
+                 * For now ignore fbconfigs which are window drawable but lack a visual. */
+                if(window_drawable & GLX_WINDOW_BIT)
+                {
+                    TRACE("Skipping FBCONFIG_ID 0x%x as an offscreen format because it is window_drawable\n", fmt_id);
+                    continue;
+                }
+
                 TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                 list[size].iPixelFormat = size+1; /* The index starts at 1 */
                 list[size].fbconfig = cfgs[i];
