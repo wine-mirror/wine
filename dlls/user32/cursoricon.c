@@ -955,6 +955,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
         GetBitmapBits( hAndBits, sizeAnd, info + 1 );
         GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
         release_icon_ptr( hObj, info );
+        USER_Driver->pCreateCursorIcon( hObj, info );
     }
 
     DeleteObject( hAndBits );
@@ -1566,6 +1567,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
     memcpy( ptrNew, ptrOld, size );
     release_icon_ptr( hIcon, ptrOld );
     release_icon_ptr( hNew, ptrNew );
+    USER_Driver->pCreateCursorIcon( hNew, ptrNew );
     return hNew;
 }
 
@@ -1578,7 +1580,10 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
     TRACE_(icon)("%p\n", hIcon );
 
     if (CURSORICON_DelSharedIcon( hIcon ) == -1)
+    {
+        USER_Driver->pDestroyCursorIcon( hIcon );
         free_icon_handle( hIcon );
+    }
     return TRUE;
 }
 
@@ -1789,7 +1794,7 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
         CURSORICONINFO *info = get_icon_ptr( hCursor );
         /* release before calling driver (FIXME) */
         if (info) release_icon_ptr( hCursor, info );
-        USER_Driver->pSetCursor( info );
+        USER_Driver->pSetCursor( hCursor, info );
     }
     return hOldCursor;
 }
@@ -1822,9 +1827,9 @@ INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
             CURSORICONINFO *info = get_icon_ptr( cursor );
             /* release before calling driver (FIXME) */
             if (info) release_icon_ptr( cursor, info );
-            USER_Driver->pSetCursor( info );
+            USER_Driver->pSetCursor( cursor, info );
         }
-        else USER_Driver->pSetCursor( NULL );
+        else USER_Driver->pSetCursor( 0, NULL );
     }
     return prev_count + increment;
 }
@@ -2195,6 +2200,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
             }
         }
         release_icon_ptr( hObj, info );
+        USER_Driver->pCreateCursorIcon( hObj, info );
     }
     return hObj;
 }
