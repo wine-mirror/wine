@@ -50,4 +50,8 @@ RC_SRCS = \
 	cdlg_Zh.rc \
 	cdlg_xx.rc
 
+SVG_SRCS = \
+	pd32_collate.svg \
+	pd32_nocollate.svg
+
 @MAKE_DLL_RULES@
