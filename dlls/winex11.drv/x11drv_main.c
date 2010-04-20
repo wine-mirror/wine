@@ -197,7 +197,10 @@ static inline BOOL ignore_error( Display *display, XErrorEvent *event )
     /* ignore a number of errors on gdi display caused by creating/destroying windows */
     if (display == gdi_display)
     {
-        if (event->error_code == BadDrawable || event->error_code == BadGC) return TRUE;
+        if (event->error_code == BadDrawable ||
+            event->error_code == BadGC ||
+            event->error_code == BadWindow)
+            return TRUE;
 #ifdef HAVE_X11_EXTENSIONS_XRENDER_H
         if (xrender_error_base)  /* check for XRender errors */
         {

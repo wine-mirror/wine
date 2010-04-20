@@ -328,7 +328,6 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
     attr->override_redirect = !data->managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
-    attr->cursor            = x11drv_thread_data()->cursor;
     attr->bit_gravity       = NorthWestGravity;
     attr->win_gravity       = StaticGravity;
     attr->backing_store     = NotUseful;
@@ -338,7 +337,7 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
                                KeymapStateMask | StructureNotifyMask);
     if (data->managed) attr->event_mask |= PropertyChangeMask;
 
-    return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWCursor |
+    return (CWOverrideRedirect | CWSaveUnder | CWColormap |
             CWEventMask | CWBitGravity | CWBackingStore);
 }
 
@@ -388,8 +387,6 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
 
     if (data->client_window)
     {
-        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (thread_data->cursor_window == data->client_window) thread_data->cursor_window = None;
         XDeleteContext( display, data->client_window, winContext );
         XDestroyWindow( display, data->client_window );
     }
@@ -800,8 +797,6 @@ static Window create_icon_window( Display *display, struct x11drv_win_data *data
 static void destroy_icon_window( Display *display, struct x11drv_win_data *data )
 {
     if (!data->icon_window) return;
-    if (x11drv_thread_data()->cursor_window == data->icon_window)
-        x11drv_thread_data()->cursor_window = None;
     wine_tsx11_lock();
     XDeleteContext( display, data->icon_window, winContext );
     XDestroyWindow( display, data->icon_window );
@@ -1057,6 +1052,7 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
     Atom dndVersion = WINE_XDND_VERSION;
     XClassHint *class_hints;
     char *process_name = get_process_name();
+    Cursor cursor;
 
     wine_tsx11_lock();
 
@@ -1088,6 +1084,9 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 
     XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
+
+    if ((cursor = get_x11_cursor( data->cursor )))
+        XDefineCursor( gdi_display, data->whole_window, cursor );
 
     data->wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
@@ -1694,14 +1693,9 @@ done:
  */
 static void destroy_whole_window( Display *display, struct x11drv_win_data *data, BOOL already_destroyed )
 {
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
-
     if (!data->whole_window) return;
 
     TRACE( "win %p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
-    if (thread_data->cursor_window == data->whole_window ||
-        thread_data->cursor_window == data->client_window)
-        thread_data->cursor_window = None;
     wine_tsx11_lock();
     XDeleteContext( display, data->whole_window, winContext );
     XDeleteContext( display, data->client_window, winContext );

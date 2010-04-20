@@ -194,7 +194,7 @@ static Cursor get_empty_cursor(void)
 /***********************************************************************
  *		get_x11_cursor
  */
-static Cursor get_x11_cursor( HCURSOR handle )
+Cursor get_x11_cursor( HCURSOR handle )
 {
     Cursor cursor;
 
@@ -216,15 +216,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 
     get_coords( hwnd, window, x, y, pt );
 
-    /* update the cursor */
-
-    if (data->cursor_window != window)
-    {
-        data->cursor_window = window;
-        wine_tsx11_lock();
-        if (data->cursor) XDefineCursor( data->display, window, data->cursor );
-        wine_tsx11_unlock();
-    }
+    data->cursor_window = hwnd;
 
     /* update the wine server Z-order */
 
@@ -279,6 +271,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
                                      DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
 {
     MSLLHOOKSTRUCT hook;
+    HCURSOR cursor;
 
     hook.pt.x        = x;
     hook.pt.y        = y;
@@ -302,9 +295,20 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
         req->time     = time;
         req->info     = extra_info;
         wine_server_call( req );
+        cursor = (reply->count >= 0) ? wine_server_ptr_handle(reply->cursor) : 0;
     }
     SERVER_END_REQ;
 
+    if (hwnd)
+    {
+        struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+        if (data && cursor != data->cursor)
+        {
+            Cursor xcursor = get_x11_cursor( cursor );
+            if (xcursor) XDefineCursor( gdi_display, data->whole_window, xcursor );
+            data->cursor = cursor;
+        }
+    }
 }
 
 
@@ -1005,29 +1009,20 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
  */
 void CDECL X11DRV_SetCursor( HCURSOR handle, CURSORICONINFO *lpCursor )
 {
-    struct x11drv_thread_data *data = x11drv_init_thread_data();
+    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
+    struct x11drv_win_data *data;
     Cursor cursor;
 
-    if (lpCursor)
-        TRACE("%ux%u, planes %u, bpp %u\n",
-              lpCursor->nWidth, lpCursor->nHeight, lpCursor->bPlanes, lpCursor->bBitsPerPixel);
-    else
-        TRACE("NULL\n");
-
-    /* set the same cursor for all top-level windows of the current thread */
+    if (!(data = X11DRV_get_win_data( thread_data->cursor_window ))) return;
 
     wine_tsx11_lock();
-    cursor = create_cursor( data->display, lpCursor );
-    if (cursor)
+    if ((cursor = get_x11_cursor( handle )))
     {
-        if (data->cursor) XFreeCursor( data->display, data->cursor );
-        data->cursor = cursor;
-        if (data->cursor_window)
-        {
-            XDefineCursor( data->display, data->cursor_window, cursor );
-            /* Make the change take effect immediately */
-            XFlush( data->display );
-        }
+        TRACE( "%p xid %lx\n", handle, cursor );
+        XDefineCursor( gdi_display, data->whole_window, cursor );
+        /* Make the change take effect immediately */
+        XFlush( gdi_display );
+        data->cursor = handle;
     }
     wine_tsx11_unlock();
 }

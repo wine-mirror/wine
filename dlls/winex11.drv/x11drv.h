@@ -548,8 +548,7 @@ struct x11drv_thread_data
 {
     Display *display;
     XEvent  *current_event;        /* event currently being processed */
-    Cursor   cursor;               /* current cursor */
-    Window   cursor_window;        /* current window that contains the cursor */
+    HWND     cursor_window;        /* current window that contains the cursor */
     Window   grab_window;          /* window that currently grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
@@ -747,6 +746,7 @@ struct x11drv_win_data
     RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT        client_rect;    /* client area relative to parent */
     XIC         xic;            /* X input context */
+    HCURSOR     cursor;         /* current cursor */
     XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
@@ -783,6 +783,7 @@ extern int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow);
 extern void X11DRV_Clipboard_Cleanup(void);
 extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
+extern Cursor get_x11_cursor( HCURSOR handle );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 extern void CDECL X11DRV_SetCursor( HCURSOR cursor, struct tagCURSORICONINFO *lpCursor );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
