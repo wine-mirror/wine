@@ -2241,6 +2241,7 @@ static void test_file_protocol(void) {
     static const WCHAR wszFile[] = {'f','i','l','e',':',0};
     static const WCHAR wszFile2[] = {'f','i','l','e',':','/','/',0};
     static const WCHAR wszFile3[] = {'f','i','l','e',':','/','/','/',0};
+    static const WCHAR wszFile4[] = {'f','i','l','e',':','\\','\\',0};
     static const char html_doc[] = "<HTML></HTML>";
 
     trace("Testing file protocol...\n");
@@ -2304,6 +2305,20 @@ static void test_file_protocol(void) {
     bindf = 0;
     test_file_protocol_url(buf);
     bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(buf);
+
+    memcpy(buf, wszFile4, sizeof(wszFile4));
+    len = GetCurrentDirectoryW(sizeof(file_name_buf)/sizeof(WCHAR), file_name_buf);
+    file_name_buf[len++] = '\\';
+    memcpy(file_name_buf+len, wszIndexHtml, sizeof(wszIndexHtml));
+    lstrcpyW(buf+sizeof(wszFile4)/sizeof(WCHAR)-1, file_name_buf);
+    file_name = file_name_buf;
+    bindf = 0;
+    test_file_protocol_url(buf);
+    bindf = BINDF_FROMURLMON;
+    test_file_protocol_url(buf);
+
+    buf[sizeof(wszFile4)/sizeof(WCHAR)] = '|';
     test_file_protocol_url(buf);
 
     DeleteFileW(wszIndexHtml);
