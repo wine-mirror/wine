@@ -660,11 +660,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PackageName = argvW[i];
 		}
-		else if(msi_option_prefix(argvW[i], "x"))
+		else if(msi_option_prefix(argvW[i], "x") || msi_option_equal(argvW[i], "uninstall"))
 		{
 			FunctionInstall = TRUE;
-			PackageName = argvW[i]+2;
-			if (!PackageName[0])
+			if(msi_option_prefix(argvW[i], "x")) PackageName = argvW[i]+2;
+			if(!PackageName || !PackageName[0])
 			{
 				i++;
 				if (i >= argc)
