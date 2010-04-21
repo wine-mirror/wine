@@ -71,6 +71,10 @@ static HRESULT (WINAPI *pCoInternetQueryInfo)(LPCWSTR, QUERYOPTION, DWORD, LPVOI
 static HRESULT (WINAPI *pCopyStgMedium)(const STGMEDIUM *, STGMEDIUM *);
 static HRESULT (WINAPI *pFindMimeFromData)(LPBC, LPCWSTR, LPVOID, DWORD, LPCWSTR,
                         DWORD, LPWSTR*, DWORD);
+static HRESULT (WINAPI *pObtainUserAgentString)(DWORD, LPSTR, DWORD*);
+static HRESULT (WINAPI *pReleaseBindInfo)(BINDINFO*);
+static HRESULT (WINAPI *pUrlMkGetSessionOption)(DWORD, LPVOID, DWORD, DWORD *, DWORD);
+
 
 static void test_CreateFormatEnum(void)
 {
@@ -1142,13 +1146,17 @@ static void test_ReleaseBindInfo(void)
     BINDINFO bi;
     IUnknown unk = { &unk_vtbl };
 
-    ReleaseBindInfo(NULL); /* shouldn't crash */
+    if (!pReleaseBindInfo) {
+        return;
+    }
+
+    pReleaseBindInfo(NULL); /* shouldn't crash */
 
     memset(&bi, 0, sizeof(bi));
     bi.cbSize = sizeof(BINDINFO);
     bi.pUnk = &unk;
     SET_EXPECT(unk_Release);
-    ReleaseBindInfo(&bi);
+    pReleaseBindInfo(&bi);
     ok(bi.cbSize == sizeof(BINDINFO), "bi.cbSize=%d\n", bi.cbSize);
     ok(bi.pUnk == NULL, "bi.pUnk=%p, expected NULL\n", bi.pUnk);
     CHECK_CALLED(unk_Release);
@@ -1156,13 +1164,13 @@ static void test_ReleaseBindInfo(void)
     memset(&bi, 0, sizeof(bi));
     bi.cbSize = offsetof(BINDINFO, pUnk);
     bi.pUnk = &unk;
-    ReleaseBindInfo(&bi);
+    pReleaseBindInfo(&bi);
     ok(bi.cbSize == offsetof(BINDINFO, pUnk), "bi.cbSize=%d\n", bi.cbSize);
     ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
 
     memset(&bi, 0, sizeof(bi));
     bi.pUnk = &unk;
-    ReleaseBindInfo(&bi);
+    pReleaseBindInfo(&bi);
     ok(!bi.cbSize, "bi.cbSize=%d, expected 0\n", bi.cbSize);
     ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
 }
@@ -1223,36 +1231,41 @@ static void test_UrlMkGetSessionOption(void)
     DWORD encoding, size;
     HRESULT hres;
 
+
+    if (!pUrlMkGetSessionOption) {
+        return;
+    }
+
     size = encoding = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
                                  sizeof(encoding), &size, 0);
     ok(hres == S_OK, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(encoding != 0xdeadbeef, "encoding not changed\n");
     ok(size == sizeof(encoding), "size=%d\n", size);
 
     size = encoding = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
                                  sizeof(encoding)+1, &size, 0);
     ok(hres == S_OK, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(encoding != 0xdeadbeef, "encoding not changed\n");
     ok(size == sizeof(encoding), "size=%d\n", size);
 
     size = encoding = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
                                  sizeof(encoding)-1, &size, 0);
     ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
     ok(size == 0xdeadbeef, "size=%d\n", size);
 
     size = encoding = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, NULL,
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, NULL,
                                  sizeof(encoding)-1, &size, 0);
     ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
     ok(size == 0xdeadbeef, "size=%d\n", size);
 
     encoding = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
                                  sizeof(encoding)-1, NULL, 0);
     ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
@@ -1268,34 +1281,38 @@ static void test_user_agent(void)
     HRESULT hres;
     DWORD size, saved;
 
-    hres = ObtainUserAgentString(0, NULL, NULL);
+    if (!pObtainUserAgentString || !pUrlMkGetSessionOption) {
+        return;
+    }
+
+    hres = pObtainUserAgentString(0, NULL, NULL);
     ok(hres == E_INVALIDARG, "ObtainUserAgentString failed: %08x\n", hres);
 
     size = 100;
-    hres = ObtainUserAgentString(0, NULL, &size);
+    hres = pObtainUserAgentString(0, NULL, &size);
     ok(hres == E_INVALIDARG, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size == 100, "size=%d, expected %d\n", size, 100);
 
     size = 0;
-    hres = ObtainUserAgentString(0, str, &size);
+    hres = pObtainUserAgentString(0, str, &size);
     ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size > 0, "size=%d, expected non-zero\n", size);
 
     size = 2;
     str[0] = 'a';
-    hres = ObtainUserAgentString(0, str, &size);
+    hres = pObtainUserAgentString(0, str, &size);
     ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size > 0, "size=%d, expected non-zero\n", size);
     ok(str[0] == 'a', "str[0]=%c, expected 'a'\n", str[0]);
 
     size = 0;
-    hres = ObtainUserAgentString(1, str, &size);
+    hres = pObtainUserAgentString(1, str, &size);
     ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size > 0, "size=%d, expected non-zero\n", size);
 
     str2 = HeapAlloc(GetProcessHeap(), 0, (size+20)*sizeof(CHAR));
     saved = size;
-    hres = ObtainUserAgentString(0, str2, &size);
+    hres = pObtainUserAgentString(0, str2, &size);
     ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size == saved, "size=%d, expected %d\n", size, saved);
     ok(strlen(expected) <= strlen(str2) &&
@@ -1304,23 +1321,23 @@ static void test_user_agent(void)
        str2, expected);
 
     size = saved+10;
-    hres = ObtainUserAgentString(0, str2, &size);
+    hres = pObtainUserAgentString(0, str2, &size);
     ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
     ok(size == saved, "size=%d, expected %d\n", size, saved);
 
     size = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 0, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 0, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size, "size == 0\n");
 
     size = 0xdeadbeef;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 1000, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 1000, &size, 0);
     ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size, "size == 0\n");
 
     saved = size;
     size = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved+10, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved+10, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == saved, "size = %d, expected %d\n", size, saved);
     ok(sizeof(expected) <= strlen(str2) && !memcmp(expected, str2, sizeof(expected)-1),
@@ -1329,7 +1346,7 @@ static void test_user_agent(void)
 
     size = 0;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == saved, "size = %d, expected %d\n", size, saved);
     ok(sizeof(expected) <= strlen(str2) && !memcmp(expected, str2, sizeof(expected)-1),
@@ -1338,14 +1355,14 @@ static void test_user_agent(void)
 
     size = saved;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved-1, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved-1, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == saved, "size = %d, expected %d\n", size, saved);
     ok(!str2[0], "buf changed\n");
 
     size = saved;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, NULL, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, NULL, 0);
     ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(!str2[0], "buf changed\n");
 
@@ -1354,7 +1371,7 @@ static void test_user_agent(void)
 
     size = 0;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == sizeof(test_str) && !memcmp(str2, test_str, sizeof(test_str)), "wrong user agent\n");
 
@@ -1363,7 +1380,7 @@ static void test_user_agent(void)
 
     size = 0;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == sizeof(test_str) && !memcmp(str2, test_str, sizeof(test_str)), "wrong user agent\n");
 
@@ -1372,7 +1389,7 @@ static void test_user_agent(void)
 
     size = 0;
     str2[0] = 0;
-    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    hres = pUrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
     ok(size == 3 && !strcmp(str2, "te"), "wrong user agent\n");
 
@@ -1458,6 +1475,9 @@ START_TEST(misc)
     pCoInternetQueryInfo = (void*) GetProcAddress(hurlmon, "CoInternetQueryInfo");
     pCopyStgMedium = (void*) GetProcAddress(hurlmon, "CopyStgMedium");
     pFindMimeFromData = (void*) GetProcAddress(hurlmon, "FindMimeFromData");
+    pObtainUserAgentString = (void*) GetProcAddress(hurlmon, "ObtainUserAgentString");
+    pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
+    pUrlMkGetSessionOption = (void*) GetProcAddress(hurlmon, "UrlMkGetSessionOption");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl) {
