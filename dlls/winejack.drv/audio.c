@@ -834,15 +834,19 @@ static void	JACK_CloseWaveInDevice(WINE_WAVEIN* wwi)
 #endif
 }
 
+static int WAVE_loadcount;
+
 /******************************************************************
  *		JACK_WaveRelease
  *
  *
  */
-LONG	JACK_WaveRelease(void)
+static LONG JACK_WaveRelease(void)
 { 
   int iDevice;
 
+  if (--WAVE_loadcount)
+      return 1;
   TRACE("closing all open waveout devices\n");
 
   /* close all open output devices */
@@ -887,12 +891,14 @@ LONG	JACK_WaveRelease(void)
  *
  * Initialize internal structures from JACK server info
  */
-LONG JACK_WaveInit(void)
+static LONG JACK_WaveInit(void)
 {
     int i;
     CHAR szPname[MAXPNAMELEN];
 
     TRACE("called\n");
+    if (WAVE_loadcount++)
+        return 1;
 
     /* setup function pointers */
 #define LOAD_FUNCPTR(f) if((fp_##f = wine_dlsym(jackhandle, #f, NULL, 0)) == NULL) goto sym_not_found;    
@@ -1665,7 +1671,9 @@ DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
   switch (wMsg) {
   case DRVM_INIT:
+    return JACK_WaveInit();
   case DRVM_EXIT:
+    return JACK_WaveRelease();
   case DRVM_ENABLE:
   case DRVM_DISABLE:
     /* FIXME: Pretend this is supported */
@@ -2362,7 +2370,9 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 
     switch (wMsg) {
     case DRVM_INIT:
+        return JACK_WaveInit();
     case DRVM_EXIT:
+        return JACK_WaveRelease();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */

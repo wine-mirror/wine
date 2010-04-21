@@ -22,7 +22,4 @@
 
 extern void *jackhandle; /* pointer to the libjack library */
 
-extern LONG JACK_WaveInit(void);
-extern LONG JACK_WaveRelease(void);
-
 #endif /* __WINE_JACK_H */

@@ -49,20 +49,17 @@ static LRESULT JACK_drvLoad(void)
   TRACE("()\n");
 
   /* dynamically load the jack library if not already loaded */
+  jackhandle = wine_dlopen(SONAME_LIBJACK, RTLD_NOW, NULL, 0);
+  TRACE("SONAME_LIBJACK == %s\n", SONAME_LIBJACK);
+  TRACE("jackhandle == %p\n", jackhandle);
   if(!jackhandle)
   {
-    jackhandle = wine_dlopen(SONAME_LIBJACK, RTLD_NOW, NULL, 0);
-    TRACE("SONAME_LIBJACK == %s\n", SONAME_LIBJACK);
-    TRACE("jackhandle == %p\n", jackhandle);
-    if(!jackhandle)
-    {
-      FIXME("error loading the jack library %s, please install this library to use jack\n", SONAME_LIBJACK);
-      jackhandle = (void*)-1;
-      return 0;
-    }
+    FIXME("error loading the jack library %s, please install this library to use jack\n",
+          SONAME_LIBJACK);
+    return 0;
   }
 
-  return JACK_WaveInit();
+  return 1;
 }
 
 /**************************************************************************
@@ -73,10 +70,8 @@ static LRESULT JACK_drvFree(void)
 {
   TRACE("()\n");
 
-  if(jackhandle && (jackhandle != (void*)-1))
+  if(jackhandle)
   {
-    JACK_WaveRelease();
-
     TRACE("calling wine_dlclose() on jackhandle\n");
     wine_dlclose(jackhandle, NULL, 0);
     jackhandle = NULL;
@@ -85,31 +80,6 @@ static LRESULT JACK_drvFree(void)
   return 1;
 }
 
-/**************************************************************************
- * 				JACK_drvOpen			[internal]	
- */
-static LRESULT JACK_drvOpen(LPSTR str)
-{
-  TRACE("(%s)\n", str);
-  /* if we were unable to load the jack library then fail the */
-  /* driver open */
-  if(!jackhandle)
-  {
-    FIXME("unable to open the jack library, returning 0\n");
-    return 0;
-  }
-
-  return 1;
-}
-
-/**************************************************************************
- * 				JACK_drvClose			[internal]	
- */
-static LRESULT JACK_drvClose(DWORD_PTR dwDevID)
-{
-  TRACE("(%08lx)\n", dwDevID);
-  return 1;
-}
 #endif /* #ifdef SONAME_LIBJACK */
 
 
@@ -136,16 +106,17 @@ LRESULT CALLBACK JACK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 #ifdef SONAME_LIBJACK
     case DRV_LOAD:		return JACK_drvLoad();
     case DRV_FREE:		return JACK_drvFree();
-    case DRV_OPEN:		return JACK_drvOpen((LPSTR)dwParam1);
-    case DRV_CLOSE:		return JACK_drvClose(dwDevID);
-    case DRV_ENABLE:		return 1;
-    case DRV_DISABLE:		return 1;
-    case DRV_QUERYCONFIGURE:	return 1;
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+        return 1;
     case DRV_CONFIGURE:		MessageBoxA(0, "jack audio driver!", "jack driver", MB_OK);	return 1;
-    case DRV_INSTALL:		return DRVCNF_RESTART;
-    case DRV_REMOVE:		return DRVCNF_RESTART;
 #endif
     default:
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return 0;
     }
 }
