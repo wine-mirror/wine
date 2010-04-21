@@ -633,7 +633,7 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
             if (ofs + avail <= This->bufsize)
                 palcCaptureSamples(This->capdev, buf1, avail);
             else {
-                DWORD part1 = This->bufsize - This->ofs;
+                DWORD part1 = This->bufsize - ofs;
                 palcCaptureSamples(This->capdev, buf1, part1);
                 palcCaptureSamples(This->capdev, This->buffer, avail - part1);
             }
@@ -648,7 +648,7 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
                 if (rest)
                     This->ofs += psize - rest;
                 This->ofs %= This->bufsize;
-                This->pad = This->bufsize - rest;
+                This->pad = This->bufsize;
             }
         }
         if (This->pad >= psize)
@@ -1224,6 +1224,7 @@ static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UIN
         hr = AUDCLNT_S_BUFFER_EMPTY;
 out:
     LeaveCriticalSection(This->parent->crst);
+    TRACE("Returning %08x %i\n", hr, *frames);
     return hr;
 }
 
@@ -1232,15 +1233,15 @@ static HRESULT WINAPI ACC_ReleaseBuffer(IAudioCaptureClient *iface, UINT32 writt
     ACCapture *This = (ACCapture*)iface;
     HRESULT hr = S_OK;
     EnterCriticalSection(This->parent->crst);
-    if (!written || written == This->parent->locked)
+    if (!written || written == This->parent->locked) {
         This->parent->locked = 0;
-    else if (!This->parent->locked)
+        This->parent->ofs += written;
+        This->parent->ofs %= This->parent->bufsize;
+        This->parent->pad -= written;
+    } else if (!This->parent->locked)
         hr = AUDCLNT_E_OUT_OF_ORDER;
     else
         hr = AUDCLNT_E_INVALID_SIZE;
-    This->parent->ofs += written;
-    This->parent->ofs %= This->parent->bufsize;
-    This->parent->pad -= written;
     LeaveCriticalSection(This->parent->crst);
     return hr;
 }
