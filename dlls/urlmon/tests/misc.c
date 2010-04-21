@@ -64,6 +64,9 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(unk_Release);
 
 static HRESULT (WINAPI *pCoInternetCompareUrl)(LPCWSTR, LPCWSTR, DWORD);
+static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, DWORD);
+static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession **, DWORD);
+static HRESULT (WINAPI *pCoInternetParseUrl)(LPCWSTR, PARSEACTION, DWORD, LPWSTR, DWORD, DWORD *, DWORD);
 
 static void test_CreateFormatEnum(void)
 {
@@ -306,27 +309,31 @@ static void test_CoInternetParseUrl(void)
 
     static WCHAR buf[4096];
 
+    if (!pCoInternetParseUrl) {
+        return;
+    }
+
     memset(buf, 0xf0, sizeof(buf));
-    hres = CoInternetParseUrl(parse_tests[0].url, PARSE_SCHEMA, 0, buf,
+    hres = pCoInternetParseUrl(parse_tests[0].url, PARSE_SCHEMA, 0, buf,
             3, &size, 0);
     ok(hres == E_POINTER, "schema failed: %08x, expected E_POINTER\n", hres);
 
     for(i=0; i < sizeof(parse_tests)/sizeof(parse_tests[0]); i++) {
         memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_SECURITY_URL, 0, buf,
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
         ok(hres == parse_tests[i].secur_hres, "[%d] security url failed: %08x, expected %08x\n",
                 i, hres, parse_tests[i].secur_hres);
 
         memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_ENCODE, 0, buf,
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_ENCODE, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
         ok(hres == S_OK, "[%d] encoding failed: %08x\n", i, hres);
         ok(size == lstrlenW(parse_tests[i].encoded_url), "[%d] wrong size\n", i);
         ok(!lstrcmpW(parse_tests[i].encoded_url, buf), "[%d] wrong encoded url\n", i);
 
         memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_PATH_FROM_URL, 0, buf,
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_PATH_FROM_URL, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
         ok(hres == parse_tests[i].path_hres, "[%d] path failed: %08x, expected %08x\n",
                 i, hres, parse_tests[i].path_hres);
@@ -336,7 +343,7 @@ static void test_CoInternetParseUrl(void)
         }
 
         memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_SCHEMA, 0, buf,
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_SCHEMA, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
         ok(hres == S_OK, "[%d] schema failed: %08x\n", i, hres);
         ok(size == lstrlenW(parse_tests[i].schema), "[%d] wrong size\n", i);
@@ -345,7 +352,7 @@ static void test_CoInternetParseUrl(void)
         if(memcmp(parse_tests[i].url, wszRes, 3*sizeof(WCHAR))
                 && memcmp(parse_tests[i].url, wszAbout, 5*sizeof(WCHAR))) {
             memset(buf, 0xf0, sizeof(buf));
-            hres = CoInternetParseUrl(parse_tests[i].url, PARSE_DOMAIN, 0, buf,
+            hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_DOMAIN, 0, buf,
                     sizeof(buf)/sizeof(WCHAR), &size, 0);
             ok(hres == parse_tests[i].domain_hres, "[%d] domain failed: %08x\n", i, hres);
             if(parse_tests[i].domain)
@@ -353,7 +360,7 @@ static void test_CoInternetParseUrl(void)
         }
 
         memset(buf, 0xf0, sizeof(buf));
-        hres = CoInternetParseUrl(parse_tests[i].url, PARSE_ROOTDOCUMENT, 0, buf,
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_ROOTDOCUMENT, 0, buf,
                 sizeof(buf)/sizeof(WCHAR), &size, 0);
         ok(hres == parse_tests[i].rootdocument_hres, "[%d] rootdocument failed: %08x\n", i, hres);
         if(parse_tests[i].rootdocument)
@@ -366,7 +373,6 @@ static void test_CoInternetCompareUrl(void)
     HRESULT hres;
 
     if (!pCoInternetCompareUrl) {
-        win_skip("CoInternetCompareUrl not found\n");
         return;
     }
 
@@ -748,7 +754,11 @@ static void register_protocols(void)
 
     static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
 
-    hres = CoInternetGetSession(0, &session, 0);
+    if (!pCoInternetGetSession) {
+        return;
+    }
+
+    hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -921,7 +931,11 @@ static void test_NameSpace(void)
 
     static const WCHAR wszTest[] = {'t','e','s','t',0};
 
-    hres = CoInternetGetSession(0, &session, 0);
+    if (!pCoInternetGetSession || !pCoInternetParseUrl) {
+        return;
+    }
+
+    hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -944,7 +958,7 @@ static void test_NameSpace(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -956,7 +970,7 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -966,7 +980,7 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_SECURITY_URL, 0, buf,
+    hres = pCoInternetParseUrl(url8, PARSE_SECURITY_URL, 0, buf,
             sizeof(buf)/sizeof(WCHAR), &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
     ok(size == sizeof(url1)/sizeof(WCHAR), "Size = %d\n", size);
@@ -979,22 +993,24 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetGetSecurityUrl(url8, &sec_url, PSU_SECURITY_URL_ONLY, 0);
-    ok(hres == S_OK, "CoInternetGetSecurityUrl failed: %08x\n", hres);
-    if(hres == S_OK) {
-        ok(lstrlenW(sec_url)>sizeof(wszFile)/sizeof(WCHAR) &&
-                !memcmp(sec_url, wszFile, sizeof(wszFile)-sizeof(WCHAR)),
-                "Encoded url = %s\n", wine_dbgstr_w(sec_url));
-        CoTaskMemFree(sec_url);
-    }
+    if (pCoInternetGetSecurityUrl) {
+        hres = pCoInternetGetSecurityUrl(url8, &sec_url, PSU_SECURITY_URL_ONLY, 0);
+        ok(hres == S_OK, "CoInternetGetSecurityUrl failed: %08x\n", hres);
+        if(hres == S_OK) {
+            ok(lstrlenW(sec_url)>sizeof(wszFile)/sizeof(WCHAR) &&
+                    !memcmp(sec_url, wszFile, sizeof(wszFile)-sizeof(WCHAR)),
+                    "Encoded url = %s\n", wine_dbgstr_w(sec_url));
+            CoTaskMemFree(sec_url);
+        }
 
-    CHECK_CALLED(QI_IInternetProtocolInfo);
-    CHECK_CALLED(ParseUrl);
+        CHECK_CALLED(QI_IInternetProtocolInfo);
+        CHECK_CALLED(ParseUrl);
+    }
 
     hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
     ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -1013,7 +1029,7 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -1026,7 +1042,7 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -1040,7 +1056,7 @@ static void test_NameSpace(void)
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -1059,7 +1075,7 @@ static void test_NameSpace(void)
     hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf2, wszTest);
     ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
 
-    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+    hres = pCoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
                               &size, 0);
     ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
 
@@ -1073,7 +1089,11 @@ static void test_MimeFilter(void)
 
     static const WCHAR mimeW[] = {'t','e','s','t','/','m','i','m','e',0};
 
-    hres = CoInternetGetSession(0, &session, 0);
+    if (!pCoInternetGetSession) {
+        return;
+    }
+
+    hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -1413,10 +1433,18 @@ START_TEST(misc)
 
     OleInitialize(NULL);
 
-    register_protocols();
-
     hurlmon = GetModuleHandle("urlmon.dll");
     pCoInternetCompareUrl = (void *) GetProcAddress(hurlmon, "CoInternetCompareUrl");
+    pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
+    pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
+    pCoInternetParseUrl = (void*) GetProcAddress(hurlmon, "CoInternetParseUrl");
+
+    if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
+        !pCoInternetGetSession || !pCoInternetParseUrl) {
+        win_skip("Various needed functions not present in IE 4.0\n");
+    }
+
+    register_protocols();
 
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
