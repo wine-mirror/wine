@@ -192,7 +192,9 @@ then
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
     enable_tools=${enable_tools:-no}
-    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32"
+elif test "x$enable_win64" = "xyes"
+then
+    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
 fi
 
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,

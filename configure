@@ -4123,7 +4123,9 @@ then
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
     enable_tools=${enable_tools:-no}
-    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32"
+elif test "x$enable_win64" = "xyes"
+then
+    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the directory containing the Wine tools" >&5
