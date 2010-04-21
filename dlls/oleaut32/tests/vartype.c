@@ -5338,7 +5338,6 @@ static void test_SysReAllocString(void)
   if (str)
   {
     LPINTERNAL_BSTR bstr;
-    BSTR oldstr = str;
     int changed;
 
     bstr = Get(str);
@@ -5353,7 +5352,6 @@ static void test_SysReAllocString(void)
     ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
 
-    oldstr = str;
     changed = SysReAllocString(&str, szLarger);
     ok (changed == 1, "Expected 1, got %d\n", changed);
     /* Early versions always make new strings rather than resizing */
@@ -5378,7 +5376,6 @@ static void test_SysReAllocStringLen(void)
   if (str)
   {
     LPINTERNAL_BSTR bstr;
-    BSTR oldstr = str;
     int changed;
 
     bstr = Get(str);
@@ -5393,7 +5390,6 @@ static void test_SysReAllocStringLen(void)
     ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
 
-    oldstr = str;
     changed = SysReAllocStringLen(&str, szLarger, 6);
     ok (changed == 1, "Expected 1, got %d\n", changed);
     /* Early versions always make new strings rather than resizing */
