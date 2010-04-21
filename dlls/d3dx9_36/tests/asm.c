@@ -1058,6 +1058,17 @@ static void vs_3_0_test(void) {
             "mov r2, r1_abs\n",
             {0xfffe0300, 0x02000001, 0x800f0002, 0x8be40001, 0x0000ffff}
         },*/
+        {   /* shader 9 */
+            "vs_3_0\n"
+            "mov r2, r1.xygb\n",
+            {0xfffe0300, 0x02000001, 0x800f0002, 0x80940001, 0x0000ffff}
+        },
+        {   /* shader 10 */
+            "vs_3_0\n"
+            "mov r2.xyb, r1\n",
+            {0xfffe0300, 0x02000001, 0x80070002, 0x80e40001, 0x0000ffff}
+        },
+
     };
 
     exec_tests("vs_3_0", tests, sizeof(tests) / sizeof(tests[0]));

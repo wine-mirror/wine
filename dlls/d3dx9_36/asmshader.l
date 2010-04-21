@@ -34,6 +34,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 %option prefix="asmshader_"
 %option noinput nounput
 
+/* Swizzles and writemasks consist of a dot and up to 4 x, y, z or w characters,
+ * or up to 4 a, r, g, b characters. There are different rules for swizzles and
+ * writemasks wrt repetition, those are handled in the grammar.
+ */
+DOT                     \.
+COMPONENT               [xyzw]|[rgba]
+
 /* Registers */
 REG_TEMP                r[0-9]+
 /* for relative addressing in the form o[x], v[x] and c[x] */
@@ -88,6 +95,29 @@ ps\.1\.4|ps_1_4         {return VER_PS14;       }
 ps_2_0                  {return VER_PS20;       }
 ps_2_x                  {return VER_PS2X;       }
 ps_3_0                  {return VER_PS30;       }
+
+{DOT}                   {return yytext[0];      }
+{COMPONENT}             {
+                            switch(yytext[0]) {
+                                case 'x':
+                                case 'r':
+                                    asmshader_lval.component = 0;
+                                    break;
+                                case 'y':
+                                case 'g':
+                                    asmshader_lval.component = 1;
+                                    break;
+                                case 'z':
+                                case 'b':
+                                    asmshader_lval.component = 2;
+                                    break;
+                                case 'w':
+                                case 'a':
+                                    asmshader_lval.component = 3;
+                                    break;
+                            }
+                            return COMPONENT;
+                        }
 
 {COMMA}                 {return yytext[0];          }
 -                       {return yytext[0];          }

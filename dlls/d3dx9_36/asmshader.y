@@ -45,12 +45,18 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %union {
     unsigned int        regnum;
     struct shader_reg   reg;
+    DWORD               writemask;
+    struct {
+        DWORD           writemask;
+        DWORD           idx;
+        DWORD           last;
+    } wm_components;
+    DWORD               swizzle;
     struct {
         DWORD           swizzle;
-        DWORD           writemask;
-    } swizzle_wmask;
-    DWORD               writemask;
-    DWORD               swizzle;
+        DWORD           idx;
+    } sw_components;
+    DWORD               component;
     struct {
         DWORD           mod;
         DWORD           shift;
@@ -82,12 +88,17 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token VER_PS2X
 %token VER_PS30
 
+/* Misc stuff */
+%token <component> COMPONENT
 
 %type <reg> dreg_name
 %type <reg> dreg
 %type <reg> sreg_name
 %type <reg> sreg
+%type <writemask> writemask
+%type <wm_components> wm_components
 %type <swizzle> swizzle
+%type <sw_components> sw_components
 %type <modshift> omods
 %type <rel_reg> rel_reg
 %type <sregs> sregs
@@ -202,16 +213,99 @@ dreg:                 dreg_name rel_reg
                                 $$.srcmod = BWRITERSPSM_NONE;
                                 set_rel_reg(&$$, &$2);
                             }
+                    | dreg_name writemask
+                            {
+                                $$.regnum = $1.regnum;
+                                $$.type = $1.type;
+                                $$.writemask = $2;
+                                $$.srcmod = BWRITERSPSM_NONE;
+                                $$.rel_reg = NULL;
+                            }
 
 dreg_name:            REG_TEMP
                         {
                             $$.regnum = $1; $$.type = BWRITERSPR_TEMP;
                         }
 
+writemask:            '.' wm_components
+                        {
+                            if($2.writemask == SWIZZLE_ERR) {
+                                asmparser_message(&asm_ctx, "Line %u: Invalid writemask specified\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                /* Provide a correct writemask to prevent following complaints */
+                                $$ = BWRITERSP_WRITEMASK_ALL;
+                            }
+                            else {
+                                $$ = $2.writemask;
+                                TRACE("Writemask: %x\n", $$);
+                            }
+                        }
+
+wm_components:        COMPONENT
+                        {
+                            $$.writemask = 1 << $1;
+                            $$.last = $1;
+                            $$.idx = 1;
+                        }
+                    | wm_components COMPONENT
+                        {
+                            if($1.writemask == SWIZZLE_ERR || $1.idx == 4)
+                                /* Wrong writemask */
+                                $$.writemask = SWIZZLE_ERR;
+                            else {
+                                if($2 <= $1.last)
+                                    $$.writemask = SWIZZLE_ERR;
+                                else {
+                                    $$.writemask = $1.writemask | (1 << $2);
+                                    $$.idx = $1.idx + 1;
+                                }
+                            }
+                        }
+
 swizzle:              /* empty */
                         {
                             $$ = BWRITERVS_NOSWIZZLE;
                             TRACE("Default swizzle: %08x\n", $$);
+                        }
+                    | '.' sw_components
+                        {
+                            if($2.swizzle == SWIZZLE_ERR) {
+                                asmparser_message(&asm_ctx, "Line %u: Invalid swizzle\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                /* Provide a correct swizzle to prevent following complaints */
+                                $$ = BWRITERVS_NOSWIZZLE;
+                            }
+                            else {
+                                DWORD last, i;
+
+                                $$ = $2.swizzle << BWRITERVS_SWIZZLE_SHIFT;
+                                /* Fill the swizzle by extending the last component */
+                                last = ($2.swizzle >> 2 * ($2.idx - 1)) & 0x03;
+                                for(i = $2.idx; i < 4; i++){
+                                    $$ |= last << (BWRITERVS_SWIZZLE_SHIFT + 2 * i);
+                                }
+                                TRACE("Got a swizzle: %08x\n", $$);
+                            }
+                        }
+
+sw_components:        COMPONENT
+                        {
+                            $$.swizzle = $1;
+                            $$.idx = 1;
+                        }
+                    | sw_components COMPONENT
+                        {
+                            if($1.idx == 4) {
+                                /* Too many sw_components */
+                                $$.swizzle = SWIZZLE_ERR;
+                                $$.idx = 4;
+                            }
+                            else {
+                                $$.swizzle = $1.swizzle | ($2 << 2 * $1.idx);
+                                $$.idx = $1.idx + 1;
+                            }
                         }
 
 omods:                 /* Empty */

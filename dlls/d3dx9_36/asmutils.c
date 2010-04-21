@@ -99,14 +99,66 @@ static const char *get_regname(const struct shader_reg *reg, shader_type st) {
     }
 }
 
+const char *debug_print_writemask(DWORD mask) {
+    char ret[6];
+    unsigned char pos = 1;
+
+    if(mask == BWRITERSP_WRITEMASK_ALL) return "";
+    ret[0] = '.';
+    if(mask & BWRITERSP_WRITEMASK_0) ret[pos++] = 'x';
+    if(mask & BWRITERSP_WRITEMASK_1) ret[pos++] = 'y';
+    if(mask & BWRITERSP_WRITEMASK_2) ret[pos++] = 'z';
+    if(mask & BWRITERSP_WRITEMASK_3) ret[pos++] = 'w';
+    ret[pos] = 0;
+    return wine_dbg_sprintf("%s", ret);
+}
+
 const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st) {
-    return get_regname(reg, st);
+    return wine_dbg_sprintf("%s%s", get_regname(reg, st),
+                            debug_print_writemask(reg->writemask));
+}
+
+const char *debug_print_swizzle(DWORD arg) {
+    char ret[6];
+    unsigned int i;
+    DWORD swizzle[4];
+
+    switch(arg) {
+        case BWRITERVS_NOSWIZZLE:
+            return "";
+        case BWRITERVS_SWIZZLE_X:
+            return ".x";
+        case BWRITERVS_SWIZZLE_Y:
+            return ".y";
+        case BWRITERVS_SWIZZLE_Z:
+            return ".z";
+        case BWRITERVS_SWIZZLE_W:
+            return ".w";
+    }
+
+    swizzle[0] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 0)) & 0x03;
+    swizzle[1] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 2)) & 0x03;
+    swizzle[2] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 4)) & 0x03;
+    swizzle[3] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 6)) & 0x03;
+
+    ret[0] = '.';
+    for(i = 0; i < 4; i++) {
+        switch(swizzle[i]) {
+            case 0: ret[1 + i] = 'x'; break;
+            case 1: ret[1 + i] = 'y'; break;
+            case 2: ret[1 + i] = 'z'; break;
+            case 3: ret[1 + i] = 'w'; break;
+        }
+    }
+    ret[5] = '\0';
+    return wine_dbg_sprintf("%s", ret);
 }
 
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st) {
     switch(reg->srcmod) {
         case BWRITERSPSM_NONE:
-            return get_regname(reg, st);
+            return wine_dbg_sprintf("%s%s", get_regname(reg, st),
+                                    debug_print_swizzle(reg->swizzle));
     }
     return "Unknown modifier";
 }

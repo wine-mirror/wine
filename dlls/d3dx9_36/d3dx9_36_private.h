@@ -342,6 +342,8 @@ struct bc_writer {
 /* Debug utility routines */
 const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st);
+const char *debug_print_swizzle(DWORD swizzle);
+const char *debug_print_writemask(DWORD mask);
 const char *debug_print_opcode(DWORD opcode);
 
 /* Utilities for internal->d3d constant mapping */
@@ -349,6 +351,9 @@ DWORD d3d9_swizzle(DWORD bwriter_swizzle);
 DWORD d3d9_writemask(DWORD bwriter_writemask);
 DWORD d3d9_register(DWORD bwriter_register);
 DWORD d3d9_opcode(DWORD bwriter_opcode);
+
+/* Used to signal an incorrect swizzle/writemask */
+#define SWIZZLE_ERR ~0U
 
 /*
   Enumerations and defines used in the bytecode writer
@@ -406,6 +411,11 @@ typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
 #define BWRITERVS_W_W       (3 << (BWRITERVS_SWIZZLE_SHIFT + 6))
 
 #define BWRITERVS_NOSWIZZLE (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z | BWRITERVS_W_W)
+
+#define BWRITERVS_SWIZZLE_X (BWRITERVS_X_X | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X)
+#define BWRITERVS_SWIZZLE_Y (BWRITERVS_X_Y | BWRITERVS_Y_Y | BWRITERVS_Z_Y | BWRITERVS_W_Y)
+#define BWRITERVS_SWIZZLE_Z (BWRITERVS_X_Z | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z)
+#define BWRITERVS_SWIZZLE_W (BWRITERVS_X_W | BWRITERVS_Y_W | BWRITERVS_Z_W | BWRITERVS_W_W)
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
 DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);
