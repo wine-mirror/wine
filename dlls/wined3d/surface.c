@@ -1272,7 +1272,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
      * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
      * context->last_was_blit set on the unlock.
      */
-    context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This, CTXUSAGE_BLIT);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -1500,7 +1500,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
      * states in the stateblock, and no driver was found yet that had bugs in that regard.
      */
-    context = context_acquire(device, (IWineD3DSurface *) This, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, This, CTXUSAGE_RESOURCELOAD);
     gl_info = context->gl_info;
 
     surface_bind_and_dirtify(This, srgb);
@@ -1767,7 +1767,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     struct wined3d_context *context;
 
     /* Activate the correct context for the render target */
-    context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This, CTXUSAGE_BLIT);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -2983,7 +2983,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         upsidedown = TRUE;
     }
 
-    context = context_acquire(device, SrcSurface, CTXUSAGE_BLIT);
+    context = context_acquire(device, Src, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
     ENTER_GL();
 
@@ -3089,7 +3089,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    context = context_acquire(device, SrcSurface, CTXUSAGE_BLIT);
+    context = context_acquire(device, Src, CTXUSAGE_BLIT);
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
 
     src_offscreen = surface_is_offscreen(Src);
@@ -3623,7 +3623,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         surface_internal_preload((IWineD3DSurface *) Src, SRGB_RGB);
 
         /* Activate the destination context, set it up for blitting */
-        context = context_acquire(device, (IWineD3DSurface *)This, CTXUSAGE_BLIT);
+        context = context_acquire(device, This, CTXUSAGE_BLIT);
 
         /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
          * while OpenGL coordinates are window relative.
@@ -4262,7 +4262,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     surface_get_rect(This, rect_in, &src_rect);
 
-    context = context_acquire(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This, CTXUSAGE_BLIT);
     if (context->render_offscreen)
     {
         dst_rect.left = src_rect.left;

@@ -142,7 +142,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         float tex_right = src_rect->right;
         float tex_bottom = src_rect->bottom;
 
-        context2 = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_BLIT);
+        context2 = context_acquire(This->device, (IWineD3DSurfaceImpl *)This->backBuffer[0], CTXUSAGE_BLIT);
 
         if(backbuffer->Flags & SFLAG_NORMCOORD)
         {
@@ -220,7 +220,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
 
-    context = context_acquire(This->device, This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This->device, (IWineD3DSurfaceImpl *)This->backBuffer[0], CTXUSAGE_RESOURCELOAD);
     if (!context->valid)
     {
         context_release(context);

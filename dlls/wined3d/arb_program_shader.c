@@ -6909,7 +6909,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     surface_internal_preload((IWineD3DSurface *)src_surface, SRGB_RGB);
 
     /* Activate the destination context, set it up for blitting */
-    context = context_acquire(device, (IWineD3DSurface *)dst_surface, CTXUSAGE_BLIT);
+    context = context_acquire(device, dst_surface, CTXUSAGE_BLIT);
 
     /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
      * while OpenGL coordinates are window relative.

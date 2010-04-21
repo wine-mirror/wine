@@ -2179,15 +2179,16 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
  *  usage: Prepares the context for blitting, drawing or other actions
  *
  *****************************************************************************/
-struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurface *target, enum ContextUsage usage)
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *target, enum ContextUsage usage)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
 
     TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
 
-    context = FindContext(device, (IWineD3DSurfaceImpl *)target);
-    context_setup_target(device, context, (IWineD3DSurfaceImpl *)target);
+    context = FindContext(device, target);
+    context_setup_target(device, context, target);
     context_enter(context);
     if (!context->valid) return context;
 

@@ -1205,7 +1205,7 @@ typedef enum ContextUsage {
 } ContextUsage;
 
 struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This,
-        IWineD3DSurface *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
+        IWineD3DSurfaceImpl *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,
         struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_alloc_occlusion_query(struct wined3d_context *context,

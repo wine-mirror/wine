@@ -594,7 +594,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
-    context = context_acquire(This, (IWineD3DSurface *)This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    context = context_acquire(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
     if (!context->valid)
     {
         context_release(context);

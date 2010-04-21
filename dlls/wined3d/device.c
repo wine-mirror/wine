@@ -1658,7 +1658,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 
-    context = context_acquire(This, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, (IWineD3DSurfaceImpl *)swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
 
     create_dummy_textures(This);
 
@@ -4394,7 +4394,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
     }
 
-    context = context_acquire(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
+    context = context_acquire(This, target, CTXUSAGE_CLEAR);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (!surface_is_offscreen(target))
@@ -5462,7 +5462,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     {
         TRACE("Surface %p is onscreen\n", surface);
 
-        context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(This, (IWineD3DSurfaceImpl *)surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, surface_get_gl_buffer((IWineD3DSurfaceImpl *)surface));
@@ -5756,8 +5756,8 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
     IWineD3DSurface_LoadLocation((IWineD3DSurface *)src_surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_LoadLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, NULL);
 
-    if (!surface_is_offscreen(src_surface)) context = context_acquire(device, (IWineD3DSurface *)src_surface, CTXUSAGE_RESOURCELOAD);
-    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, (IWineD3DSurface *)dst_surface, CTXUSAGE_RESOURCELOAD);
+    if (!surface_is_offscreen(src_surface)) context = context_acquire(device, src_surface, CTXUSAGE_RESOURCELOAD);
+    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, dst_surface, CTXUSAGE_RESOURCELOAD);
     else context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
     if (!context->valid)
