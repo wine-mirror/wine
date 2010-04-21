@@ -972,12 +972,6 @@ LONG ALSA_WaveInit(void)
     HKEY  key = 0;
     int   i;
 
-    if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
-    {
-        ERR("Error: ALSA lib needs to be loaded with flags RTLD_LAZY and RTLD_GLOBAL.\n");
-        return -1;
-    }
-
     /* @@ Wine registry key: HKCU\Software\Wine\Alsa Driver */
     rc = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Wine\\Alsa Driver", 0, KEY_QUERY_VALUE, &key);
     if (rc == ERROR_SUCCESS)
