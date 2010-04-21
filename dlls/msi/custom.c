@@ -163,17 +163,17 @@ static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
 
     end = strstrW(beg, sep);
     *end = '\0';
-    MSI_SetPropertyW(package, szCustomActionData, beg);
+    MSI_SetPropertyW(package->db, szCustomActionData, beg);
     beg = end + 3;
 
     end = strstrW(beg, sep);
     *end = '\0';
-    MSI_SetPropertyW(package, szUserSID, beg);
+    MSI_SetPropertyW(package->db, szUserSID, beg);
     beg = end + 3;
 
     end = strchrW(beg, ']');
     *end = '\0';
-    MSI_SetPropertyW(package, szProductCode, beg);
+    MSI_SetPropertyW(package->db, szProductCode, beg);
 }
 
 UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
@@ -276,9 +276,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
             else if (actiondata)
-                MSI_SetPropertyW(package, szCustomActionData, actiondata);
+                MSI_SetPropertyW(package->db, szCustomActionData, actiondata);
             else
-                MSI_SetPropertyW(package, szCustomActionData, szEmpty);
+                MSI_SetPropertyW(package->db, szCustomActionData, szEmpty);
 
             msi_free(actiondata);
         }
@@ -327,7 +327,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
                 break;
 
             deformat_string(package,target,&deformated);
-            rc = MSI_SetPropertyW(package,source,deformated);
+            rc = MSI_SetPropertyW( package->db, source, deformated );
+            if (rc == ERROR_SUCCESS && !strcmpW( source, cszSourceDir ))
+                msi_reset_folders( package, TRUE );
             msi_free(deformated);
             break;
 	case 37: /* JScript/VBScript text stored in target column. */

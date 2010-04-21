@@ -270,14 +270,14 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
             {
                 check_path = msi_dup_property( package->db, cszRootDrive );
                 if (set_prop)
-                    MSI_SetPropertyW(package,cszTargetDir,check_path);
+                    MSI_SetPropertyW( package->db, cszTargetDir, check_path );
             }
 
             /* correct misbuilt target dir */
             path = build_directory_name(2, check_path, NULL);
             clean_spaces_from_path( path );
             if (strcmpiW(path,check_path)!=0)
-                MSI_SetPropertyW(package,cszTargetDir,path);
+                MSI_SetPropertyW( package->db, cszTargetDir, path );
             msi_free(check_path);
 
             f->ResolvedTarget = path;
@@ -310,7 +310,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 
         TRACE("   internally set to %s\n",debugstr_w(path));
         if (set_prop)
-            MSI_SetPropertyW( package, name, path );
+            MSI_SetPropertyW( package->db, name, path );
         return path;
     }
 
@@ -338,7 +338,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         f->ResolvedTarget = strdupW( path );
         TRACE("target -> %s\n", debugstr_w(path));
         if (set_prop)
-            MSI_SetPropertyW(package,name,path);
+            MSI_SetPropertyW( package->db, name, path );
     }
     else
     {

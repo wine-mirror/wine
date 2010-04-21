@@ -380,7 +380,7 @@ static UINT ControlEvent_DirectoryListUp(MSIPACKAGE *package, LPCWSTR argument,
 static UINT ControlEvent_ReinstallMode(MSIPACKAGE *package, LPCWSTR argument,
                                        msi_dialog *dialog)
 {
-    return MSI_SetPropertyW( package, szReinstallMode, argument );
+    return MSI_SetPropertyW( package->db, szReinstallMode, argument );
 }
 
 static UINT ControlEvent_Reinstall( MSIPACKAGE *package, LPCWSTR argument,
@@ -413,7 +413,7 @@ static UINT ControlEvent_ValidateProductID(MSIPACKAGE *package, LPCWSTR argument
     if (key && template)
     {
         FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
-        ret = MSI_SetPropertyW( package, szProductID, key );
+        ret = MSI_SetPropertyW( package->db, szProductID, key );
     }
     msi_free( template );
     msi_free( key );

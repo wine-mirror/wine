@@ -1284,7 +1284,7 @@ UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel )
         return MSI_SetFeatureStates( package );
 
     sprintfW( level, fmt, iInstallLevel );
-    r = MSI_SetPropertyW( package, szInstallLevel, level );
+    r = MSI_SetPropertyW( package->db, szInstallLevel, level );
     if ( r == ERROR_SUCCESS )
         r = MSI_SetFeatureStates( package );
 

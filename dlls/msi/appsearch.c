@@ -1041,7 +1041,10 @@ static UINT iterate_appsearch(MSIRECORD *row, LPVOID param)
     r = ACTION_AppSearchSigName(package, sigName, &sig, &value);
     if (value)
     {
-        MSI_SetPropertyW(package, propName, value);
+        r = MSI_SetPropertyW( package->db, propName, value );
+        if (r == ERROR_SUCCESS && !strcmpW( propName, cszSourceDir ))
+            msi_reset_folders( package, TRUE );
+
         msi_free(value);
     }
     ACTION_FreeSignature(&sig);
@@ -1100,7 +1103,7 @@ static UINT ITERATE_CCPSearch(MSIRECORD *row, LPVOID param)
     if (value)
     {
         TRACE("Found signature %s\n", debugstr_w(signature));
-        MSI_SetPropertyW(package, success, szOne);
+        MSI_SetPropertyW(package->db, success, szOne);
         msi_free(value);
         r = ERROR_NO_MORE_ITEMS;
     }

@@ -61,6 +61,7 @@ static void append_productcode(MSIPACKAGE* package, LPCWSTR action_property,
     LPWSTR prop;
     LPWSTR newprop;
     DWORD len;
+    UINT r;
 
     prop = msi_dup_property(package->db, action_property );
     if (prop)
@@ -87,9 +88,13 @@ static void append_productcode(MSIPACKAGE* package, LPCWSTR action_property,
         newprop[0] = 0;
     strcatW(newprop,productid);
 
-    MSI_SetPropertyW(package, action_property, newprop);
-    TRACE("Found Related Product... %s now %s\n",debugstr_w(action_property),
-                    debugstr_w(newprop));
+    r = MSI_SetPropertyW( package->db, action_property, newprop );
+    if (r == ERROR_SUCCESS && !strcmpW( action_property, cszSourceDir ))
+        msi_reset_folders( package, TRUE );
+
+    TRACE("Found Related Product... %s now %s\n",
+          debugstr_w(action_property), debugstr_w(newprop));
+
     msi_free( prop );
     msi_free( newprop );
 }

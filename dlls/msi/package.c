@@ -388,7 +388,7 @@ static UINT set_installed_prop( MSIPACKAGE *package )
     if (r == ERROR_SUCCESS)
     {
         RegCloseKey( hkey );
-        MSI_SetPropertyW( package, szInstalled, szOne );
+        MSI_SetPropertyW( package->db, szInstalled, szOne );
     }
 
     return r;
@@ -431,7 +431,7 @@ static UINT set_user_sid_prop( MSIPACKAGE *package )
     if (!ConvertSidToStringSidW( psid, &sid_str ))
         goto done;
 
-    r = MSI_SetPropertyW( package, szUserSID, sid_str );
+    r = MSI_SetPropertyW( package->db, szUserSID, sid_str );
 
 done:
     LocalFree( sid_str );
@@ -563,7 +563,7 @@ static void set_msi_assembly_prop(MSIPACKAGE *package)
     if (!val_len || !verstr)
         goto done;
 
-    MSI_SetPropertyW(package, netasm, verstr);
+    MSI_SetPropertyW(package->db, netasm, verstr);
 
 done:
     msi_free(fusion);
@@ -689,96 +689,96 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, CFF, pth);
+    MSI_SetPropertyW(package->db, CFF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, PFF, pth);
+    MSI_SetPropertyW(package->db, PFF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_COMMON_APPDATA,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, CADF, pth);
+    MSI_SetPropertyW(package->db, CADF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_FAVORITES,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, FaF, pth);
+    MSI_SetPropertyW(package->db, FaF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_FONTS,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, FoF, pth);
+    MSI_SetPropertyW(package->db, FoF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_SENDTO,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, SendTF, pth);
+    MSI_SetPropertyW(package->db, SendTF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_STARTMENU,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, SMF, pth);
+    MSI_SetPropertyW(package->db, SMF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_STARTUP,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, StF, pth);
+    MSI_SetPropertyW(package->db, StF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_TEMPLATES,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, TemplF, pth);
+    MSI_SetPropertyW(package->db, TemplF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_DESKTOP,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, DF, pth);
+    MSI_SetPropertyW(package->db, DF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAMS,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, PMF, pth);
+    MSI_SetPropertyW(package->db, PMF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_ADMINTOOLS,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, ATF, pth);
+    MSI_SetPropertyW(package->db, ATF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_APPDATA,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, ADF, pth);
+    MSI_SetPropertyW(package->db, ADF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_SYSTEM,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, SF, pth);
-    MSI_SetPropertyW(package, SF16, pth);
+    MSI_SetPropertyW(package->db, SF, pth);
+    MSI_SetPropertyW(package->db, SF16, pth);
 
     SHGetFolderPathW(NULL,CSIDL_LOCAL_APPDATA,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, LADF, pth);
+    MSI_SetPropertyW(package->db, LADF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_MYPICTURES,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, MPF, pth);
+    MSI_SetPropertyW(package->db, MPF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_PERSONAL,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, PF, pth);
+    MSI_SetPropertyW(package->db, PF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
     strcatW(pth, szBackSlash);
-    MSI_SetPropertyW(package, WF, pth);
+    MSI_SetPropertyW(package->db, WF, pth);
     
     /* Physical Memory is specified in MB. Using total amount. */
     msex.dwLength = sizeof(msex);
     GlobalMemoryStatusEx( &msex );
     sprintfW( bufstr, szIntFormat, (int)(msex.ullTotalPhys/1024/1024));
-    MSI_SetPropertyW(package, szPhysicalMemory, bufstr);
+    MSI_SetPropertyW(package->db, szPhysicalMemory, bufstr);
 
     SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
     ptr = strchrW(pth,'\\');
     if (ptr)
 	*(ptr+1) = 0;
-    MSI_SetPropertyW(package, WV, pth);
+    MSI_SetPropertyW(package->db, WV, pth);
     
     GetTempPathW(MAX_PATH,pth);
-    MSI_SetPropertyW(package, TF, pth);
+    MSI_SetPropertyW(package->db, TF, pth);
 
 
     /* in a wine environment the user is always admin and privileged */
-    MSI_SetPropertyW(package,szAdminUser,szOne);
-    MSI_SetPropertyW(package,szPriv,szOne);
+    MSI_SetPropertyW(package->db, szAdminUser, szOne);
+    MSI_SetPropertyW(package->db, szPriv, szOne);
 
     /* set the os things */
     OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
@@ -788,39 +788,39 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     switch (OSVersion.dwPlatformId)
     {
         case VER_PLATFORM_WIN32_WINDOWS:    
-            MSI_SetPropertyW(package,v9x,verstr);
+            MSI_SetPropertyW(package->db, v9x, verstr);
             break;
         case VER_PLATFORM_WIN32_NT:
-            MSI_SetPropertyW(package,vNT,verstr);
+            MSI_SetPropertyW(package->db, vNT, verstr);
             sprintfW(verstr,szFormat,OSVersion.wProductType);
-            MSI_SetPropertyW(package,szMsiNTProductType,verstr);
+            MSI_SetPropertyW(package->db, szMsiNTProductType, verstr);
             break;
     }
     sprintfW(verstr,szFormat,OSVersion.dwBuildNumber);
-    MSI_SetPropertyW(package,szWinBuild,verstr);
+    MSI_SetPropertyW(package->db, szWinBuild, verstr);
     /* just fudge this */
-    MSI_SetPropertyW(package,szSPL,szSix);
+    MSI_SetPropertyW(package->db, szSPL, szSix);
 
     sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
-    MSI_SetPropertyW( package, szVersionMsi, bufstr );
+    MSI_SetPropertyW( package->db, szVersionMsi, bufstr );
     sprintfW( bufstr, szFormat, MSI_MAJORVERSION * 100);
-    MSI_SetPropertyW( package, szVersionDatabase, bufstr );
+    MSI_SetPropertyW( package->db, szVersionDatabase, bufstr );
 
     GetSystemInfo( &sys_info );
     if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
         sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
-        MSI_SetPropertyW( package, szIntel, bufstr );
+        MSI_SetPropertyW( package->db, szIntel, bufstr );
     }
 
     /* Screen properties. */
     dc = GetDC(0);
     sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, HORZRES ) );
-    MSI_SetPropertyW( package, szScreenX, bufstr );
+    MSI_SetPropertyW( package->db, szScreenX, bufstr );
     sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, VERTRES ));
-    MSI_SetPropertyW( package, szScreenY, bufstr );
+    MSI_SetPropertyW( package->db, szScreenY, bufstr );
     sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, BITSPIXEL ));
-    MSI_SetPropertyW( package, szColorBits, bufstr );
+    MSI_SetPropertyW( package->db, szColorBits, bufstr );
     ReleaseDC(0, dc);
 
     /* USERNAME and COMPANYNAME */
@@ -832,10 +832,10 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     {
         if (!username &&
             (username = msi_reg_get_val_str( hkey, szDefName )))
-            MSI_SetPropertyW( package, szUSERNAME, username );
+            MSI_SetPropertyW( package->db, szUSERNAME, username );
         if (!companyname &&
             (companyname = msi_reg_get_val_str( hkey, szDefCompany )))
-            MSI_SetPropertyW( package, szCOMPANYNAME, companyname );
+            MSI_SetPropertyW( package->db, szCOMPANYNAME, companyname );
         CloseHandle( hkey );
     }
     if ((!username || !companyname) &&
@@ -843,10 +843,10 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     {
         if (!username &&
             (username = msi_reg_get_val_str( hkey, szRegisteredUser )))
-            MSI_SetPropertyW( package, szUSERNAME, username );
+            MSI_SetPropertyW( package->db, szUSERNAME, username );
         if (!companyname &&
             (companyname = msi_reg_get_val_str( hkey, szRegisteredOrg )))
-            MSI_SetPropertyW( package, szCOMPANYNAME, companyname );
+            MSI_SetPropertyW( package->db, szCOMPANYNAME, companyname );
         CloseHandle( hkey );
     }
     msi_free( username );
@@ -859,7 +859,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     GetSystemTime( &systemtime );
     if (GetDateFormatW( LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systemtime,
                         NULL, bufstr, sizeof(bufstr)/sizeof(bufstr[0]) ))
-        MSI_SetPropertyW( package, szDate, bufstr );
+        MSI_SetPropertyW( package->db, szDate, bufstr );
     else
         ERR("Couldn't set Date property: GetDateFormat failed with error %d\n", GetLastError());
 
@@ -867,7 +867,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
                         TIME_FORCE24HOURFORMAT | TIME_NOTIMEMARKER,
                         &systemtime, NULL, bufstr,
                         sizeof(bufstr)/sizeof(bufstr[0]) ))
-        MSI_SetPropertyW( package, szTime, bufstr );
+        MSI_SetPropertyW( package->db, szTime, bufstr );
     else
         ERR("Couldn't set Time property: GetTimeFormat failed with error %d\n", GetLastError());
 
@@ -875,16 +875,14 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     langid = GetUserDefaultLangID();
     sprintfW(bufstr, szIntFormat, langid);
-
-    MSI_SetPropertyW( package, szUserLangID, bufstr );
+    MSI_SetPropertyW( package->db, szUserLangID, bufstr );
 
     langid = GetSystemDefaultLangID();
     sprintfW(bufstr, szIntFormat, langid);
-
-    MSI_SetPropertyW( package, szSystemLangID, bufstr );
+    MSI_SetPropertyW( package->db, szSystemLangID, bufstr );
 
     sprintfW(bufstr, szIntFormat, MsiQueryProductStateW(package->ProductCode));
-    MSI_SetPropertyW( package, szProductState, bufstr );
+    MSI_SetPropertyW( package->db, szProductState, bufstr );
 
     len = 0;
     if (!GetUserNameW( NULL, &len ) && GetLastError() == ERROR_MORE_DATA)
@@ -893,7 +891,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         if ((username = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         {
             if (GetUserNameW( username, &len ))
-                MSI_SetPropertyW( package, szLogonUser, username );
+                MSI_SetPropertyW( package->db, szLogonUser, username );
             HeapFree( GetProcessHeap(), 0, username );
         }
     }
@@ -952,7 +950,7 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
         goto done;
     }
 
-    MSI_SetPropertyW( package, szPackageCode, package_code );
+    MSI_SetPropertyW( package->db, szPackageCode, package_code );
     msi_free( package_code );
 
     /* load package attributes */
@@ -1016,7 +1014,7 @@ static void adjust_allusers_property( MSIPACKAGE *package )
     if (msi_get_property_int( package->db, szAllUsers, 0 ) == 2)
     {
         TRACE("resetting ALLUSERS property from 2 to 1\n");
-        MSI_SetPropertyW( package, szAllUsers, szOne );
+        MSI_SetPropertyW( package->db, szAllUsers, szOne );
     }
 }
 
@@ -1048,7 +1046,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         set_installer_properties( package );
 
         sprintfW(uilevel,szpi,gUILevel);
-        MSI_SetPropertyW(package, szLevel, uilevel);
+        MSI_SetPropertyW(package->db, szLevel, uilevel);
 
         r = msi_load_summary_properties( package );
         if (r != ERROR_SUCCESS)
@@ -1273,18 +1271,18 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if( file != szPackage )
         track_tempfile( package, file );
 
-    MSI_SetPropertyW( package, Database, db->path );
+    MSI_SetPropertyW( package->db, Database, db->path );
 
     if( UrlIsW( szPackage, URLIS_URL ) )
-        MSI_SetPropertyW( package, OriginalDatabase, szPackage );
+        MSI_SetPropertyW( package->db, OriginalDatabase, szPackage );
     else if( szPackage[0] == '#' )
-        MSI_SetPropertyW( package, OriginalDatabase, db->path );
+        MSI_SetPropertyW( package->db, OriginalDatabase, db->path );
     else
     {
         WCHAR fullpath[MAX_PATH];
 
         GetFullPathNameW( szPackage, MAX_PATH, fullpath, NULL );
-        MSI_SetPropertyW( package, OriginalDatabase, fullpath );
+        MSI_SetPropertyW( package->db, OriginalDatabase, fullpath );
     }
 
     package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
@@ -1631,7 +1629,7 @@ end:
     return r;
 }
 
-static void msi_reset_folders( MSIPACKAGE *package, BOOL source )
+void msi_reset_folders( MSIPACKAGE *package, BOOL source )
 {
     MSIFOLDER *folder;
 
@@ -1650,7 +1648,7 @@ static void msi_reset_folders( MSIPACKAGE *package, BOOL source )
     }
 }
 
-UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
+UINT MSI_SetPropertyW( MSIDATABASE *db, LPCWSTR szName, LPCWSTR szValue )
 {
     MSIQUERY *view;
     MSIRECORD *row = NULL;
@@ -1674,7 +1672,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
         '`','_','P','r','o','p','e','r','t','y','`',' ','W','H','E','R','E',' ',
         '`','_','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
 
-    TRACE("%p %s %s\n", package, debugstr_w(szName), debugstr_w(szValue));
+    TRACE("%p %s %s\n", db, debugstr_w(szName), debugstr_w(szValue));
 
     if (!szName)
         return ERROR_INVALID_PARAMETER;
@@ -1683,7 +1681,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
     if (!szName[0])
         return szValue ? ERROR_FUNCTION_FAILED : ERROR_SUCCESS;
 
-    rc = MSI_GetPropertyW(package->db, szName, 0, &sz);
+    rc = MSI_GetPropertyW(db, szName, 0, &sz);
     if (!szValue || !*szValue)
     {
         sprintfW(Query, Delete, szName);
@@ -1704,7 +1702,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
         MSI_RecordSetStringW(row, 2, szValue);
     }
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(db, Query, &view);
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, row);
@@ -1714,9 +1712,6 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
 
     if (row)
       msiobj_release(&row->hdr);
-
-    if (rc == ERROR_SUCCESS && (!lstrcmpW(szName, cszSourceDir)))
-        msi_reset_folders(package, TRUE);
 
     return rc;
 }
@@ -1764,7 +1759,10 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
         return ERROR_SUCCESS;
     }
 
-    ret = MSI_SetPropertyW( package, szName, szValue);
+    ret = MSI_SetPropertyW( package->db, szName, szValue );
+    if (ret == ERROR_SUCCESS && !strcmpW( szName, cszSourceDir ))
+        msi_reset_folders( package, TRUE );
+
     msiobj_release( &package->hdr );
     return ret;
 }

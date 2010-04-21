@@ -583,6 +583,13 @@ static void msi_dialog_update_controls( msi_dialog *dialog, LPCWSTR property )
     }
 }
 
+static void msi_dialog_set_property( MSIPACKAGE *package, LPCWSTR property, LPCWSTR value )
+{
+    UINT r = MSI_SetPropertyW( package->db, property, value );
+    if (r == ERROR_SUCCESS && !strcmpW( property, cszSourceDir ))
+        msi_reset_folders( package, TRUE );
+}
+
 /* called from the Control Event subscription code */
 void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control, 
                               LPCWSTR attribute, MSIRECORD *rec )
@@ -636,7 +643,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     else if ( !lstrcmpW(attribute, szProperty) )
     {
         MSIFEATURE *feature = msi_seltree_get_selected_feature( ctrl );
-        MSI_SetPropertyW( dialog->package, ctrl->property, feature->Directory );
+        msi_dialog_set_property( dialog->package, ctrl->property, feature->Directory );
     }
     else if ( !lstrcmpW(attribute, szSelectionPath) )
     {
@@ -1330,8 +1337,7 @@ static UINT msi_dialog_combobox_handler( msi_dialog *dialog,
     else
         value = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, index, 0 );
 
-    MSI_SetPropertyW( info->dialog->package,
-                      control->property, value );
+    msi_dialog_set_property( info->dialog->package, control->property, value );
     msi_dialog_evaluate_control_conditions( info->dialog );
 
     if (index == CB_ERR)
@@ -1538,10 +1544,9 @@ static void msi_mask_control_change( struct msi_maskedit_info *info )
 
     if( i == info->num_groups )
     {
-        TRACE("Set property %s to %s\n",
-              debugstr_w(info->prop), debugstr_w(val) );
+        TRACE("Set property %s to %s\n", debugstr_w(info->prop), debugstr_w(val));
         CharUpperBuffW( val, info->num_chars );
-        MSI_SetPropertyW( info->dialog->package, info->prop, val );
+        msi_dialog_set_property( info->dialog->package, info->prop, val );
         msi_dialog_evaluate_control_conditions( info->dialog );
     }
     msi_free( val );
@@ -1891,7 +1896,7 @@ static BOOL msi_dialog_onkillfocus( msi_dialog *dialog, msi_control *control )
     else
     {
         valid = TRUE;
-        MSI_SetPropertyW( dialog->package, prop, buf );
+        msi_dialog_set_property( dialog->package, prop, buf );
     }
 
     msi_dialog_update_pathedit( dialog, control );
@@ -2543,8 +2548,7 @@ static UINT msi_dialog_listbox_handler( msi_dialog *dialog,
     index = SendMessageW( control->hwnd, LB_GETCURSEL, 0, 0 );
     value = (LPCWSTR) SendMessageW( control->hwnd, LB_GETITEMDATA, index, 0 );
 
-    MSI_SetPropertyW( info->dialog->package,
-                      control->property, value );
+    msi_dialog_set_property( info->dialog->package, control->property, value );
     msi_dialog_evaluate_control_conditions( info->dialog );
 
     return ERROR_SUCCESS;
@@ -2707,7 +2711,7 @@ UINT msi_dialog_directorylist_up( msi_dialog *dialog )
     if (ptr != path) *(ptr - 1) = '\0';
     PathAddBackslashW( path );
 
-    MSI_SetPropertyW( dialog->package, prop, path );
+    msi_dialog_set_property( dialog->package, prop, path );
 
     msi_dialog_update_directory_list( dialog, NULL );
     msi_dialog_update_directory_combo( dialog, NULL );
@@ -2753,7 +2757,7 @@ static UINT msi_dialog_dirlist_handler( msi_dialog *dialog,
     lstrcatW( new_path, text );
     lstrcatW( new_path, szBackSlash );
 
-    MSI_SetPropertyW( dialog->package, prop, new_path );
+    msi_dialog_set_property( dialog->package, prop, new_path );
 
     msi_dialog_update_directory_list( dialog, NULL );
     msi_dialog_update_directory_combo( dialog, NULL );
@@ -2996,7 +3000,7 @@ static UINT msi_dialog_volsel_handler( msi_dialog *dialog,
     indirect = control->attributes & msidbControlAttributesIndirect;
     prop = msi_dialog_dup_property( dialog, control->property, indirect );
 
-    MSI_SetPropertyW( dialog->package, prop, text );
+    msi_dialog_set_property( dialog->package, prop, text );
 
     msi_free( prop );
     return ERROR_SUCCESS;
@@ -3399,7 +3403,7 @@ static UINT msi_dialog_send_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR ar
     return ERROR_SUCCESS;
 }
 
-static UINT msi_dialog_set_property( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
+static UINT msi_dialog_set_property_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
 {
     static const WCHAR szNullArg[] = { '{','}',0 };
     LPWSTR p, prop, arg_fmt = NULL;
@@ -3414,7 +3418,7 @@ static UINT msi_dialog_set_property( msi_dialog *dialog, LPCWSTR event, LPCWSTR 
         *p = 0;
         if( strcmpW( szNullArg, arg ) )
             deformat_string( dialog->package, arg, &arg_fmt );
-        MSI_SetPropertyW( dialog->package, prop, arg_fmt );
+        msi_dialog_set_property( dialog->package, prop, arg_fmt );
         msi_dialog_update_controls( dialog, prop );
         msi_free( arg_fmt );
     }
@@ -3437,7 +3441,7 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
         event = MSI_RecordGetString( rec, 3 );
         arg = MSI_RecordGetString( rec, 4 );
         if( event[0] == '[' )
-            msi_dialog_set_property( dialog, event, arg );
+            msi_dialog_set_property_event( dialog, event, arg );
         else
             msi_dialog_send_event( dialog, event, arg );
     }
@@ -3565,7 +3569,7 @@ static void msi_dialog_set_checkbox_state( msi_dialog *dialog,
     /* if uncheck then the property is set to NULL */
     if (!state)
     {
-        MSI_SetPropertyW( dialog->package, control->property, NULL );
+        msi_dialog_set_property( dialog->package, control->property, NULL );
         return;
     }
 
@@ -3575,7 +3579,7 @@ static void msi_dialog_set_checkbox_state( msi_dialog *dialog,
     else
         val = szState;
 
-    MSI_SetPropertyW( dialog->package, control->property, val );
+    msi_dialog_set_property( dialog->package, control->property, val );
 }
 
 static void msi_dialog_checkbox_sync_state( msi_dialog *dialog,
@@ -3619,8 +3623,7 @@ static UINT msi_dialog_edit_handler( msi_dialog *dialog,
           debugstr_w(control->property));
 
     buf = msi_get_window_text( control->hwnd );
-    MSI_SetPropertyW( dialog->package, control->property, buf );
-
+    msi_dialog_set_property( dialog->package, control->property, buf );
     msi_free( buf );
 
     return ERROR_SUCCESS;
@@ -3635,7 +3638,7 @@ static UINT msi_dialog_radiogroup_handler( msi_dialog *dialog,
     TRACE("clicked radio button %s, set %s\n", debugstr_w(control->name),
           debugstr_w(control->property));
 
-    MSI_SetPropertyW( dialog->package, control->property, control->name );
+    msi_dialog_set_property( dialog->package, control->property, control->name );
 
     return msi_dialog_button_handler( dialog, control, param );
 }
@@ -4021,7 +4024,7 @@ static UINT error_dialog_handler(MSIPACKAGE *package, LPCWSTR event,
     if ( !lstrcmpW( argument, error_abort ) || !lstrcmpW( argument, error_cancel ) ||
          !lstrcmpW( argument, error_no ) )
     {
-         MSI_SetPropertyW( package, result_prop, error_abort );
+         MSI_SetPropertyW( package->db, result_prop, error_abort );
     }
 
     ControlEvent_CleanupSubscriptions(package);
