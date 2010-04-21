@@ -674,6 +674,8 @@ static void test_simple_patch( void )
     UINT r;
     DWORD size;
     char path[MAX_PATH];
+    const char *query;
+    MSIHANDLE hpackage, hdb, hview, hrec;
 
     if (!pMsiApplyPatchA)
     {
@@ -711,6 +713,28 @@ static void test_simple_patch( void )
     strcpy( path, CURR_DIR );
     strcat( path, "\\" );
     strcat( path, msifile );
+
+    r = MsiOpenPackageA( path, &hpackage );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    hdb = MsiGetActiveDatabase( hpackage );
+    ok( hdb, "failed to get database handle\n" );
+
+    query = "SELECT * FROM `Property` where `Property` = 'PATCHNEWPACKAGECODE'";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+    MsiCloseHandle( hdb );
+    MsiCloseHandle( hpackage );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
