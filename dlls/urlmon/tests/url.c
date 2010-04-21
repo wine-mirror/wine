@@ -35,6 +35,10 @@
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pCreateAsyncBindCtxEx)(IBindCtx *, DWORD,
+                IBindStatusCallback *, IEnumFORMATETC *, IBindCtx **, DWORD);
+
+
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
@@ -1897,10 +1901,15 @@ static void test_CreateAsyncBindCtxEx(void)
 
     static WCHAR testW[] = {'t','e','s','t',0};
 
-    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, NULL, 0);
+    if (!pCreateAsyncBindCtxEx) {
+        win_skip("CreateAsyncBindCtxEx not present\n");
+        return;
+    }
+
+    hres = pCreateAsyncBindCtxEx(NULL, 0, NULL, NULL, NULL, 0);
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed: %08x, expected E_INVALIDARG\n", hres);
 
-    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
+    hres = pCreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     if(SUCCEEDED(hres)) {
@@ -1919,7 +1928,7 @@ static void test_CreateAsyncBindCtxEx(void)
     }
 
     CreateBindCtx(0, &bctx_arg);
-    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
+    hres = pCreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     if(SUCCEEDED(hres)) {
@@ -1940,7 +1949,7 @@ static void test_CreateAsyncBindCtxEx(void)
     IBindCtx_Release(bctx_arg);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtxEx(NULL, 0, (IBindStatusCallback*)&bsc, NULL, &bctx, 0);
+    hres = pCreateAsyncBindCtxEx(NULL, 0, (IBindStatusCallback*)&bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
@@ -1954,7 +1963,7 @@ static void test_CreateAsyncBindCtxEx(void)
     hres = CreateBindCtx(0, &bctx2);
     ok(hres == S_OK, "CreateBindCtx failed: %08x\n", hres);
 
-    hres = CreateAsyncBindCtxEx(bctx2, 0, NULL, NULL, &bctx, 0);
+    hres = pCreateAsyncBindCtxEx(bctx2, 0, NULL, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     hres = IBindCtx_RegisterObjectParam(bctx2, testW, (IUnknown*)&Protocol);
@@ -2823,7 +2832,7 @@ static void test_BindToStorage_fail(void)
     if(FAILED(hres))
         return;
 
-    hres = CreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
+    hres = pCreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
@@ -2863,6 +2872,11 @@ static void test_StdURLMoniker(void)
 
 START_TEST(url)
 {
+    HMODULE hurlmon;
+
+    hurlmon = GetModuleHandle("urlmon.dll");
+    pCreateAsyncBindCtxEx = (void*) GetProcAddress(hurlmon, "CreateAsyncBindCtxEx");
+
     complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
