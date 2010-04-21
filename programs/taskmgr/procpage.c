@@ -154,7 +154,6 @@ static void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
     LPNMHDR            pnmh;
     LPNMLISTVIEW       pnmv;
     NMLVDISPINFOW*     pnmdi;
-    LPNMHEADERW        pnmhdr;
     LVITEM             lvitem;
     ULONG              Index;
     ULONG              ColumnIndex;
@@ -168,7 +167,6 @@ static void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
     pnmh = (LPNMHDR) lParam;
     pnmv = (LPNMLISTVIEW) lParam;
     pnmdi = (NMLVDISPINFOW*) lParam;
-    pnmhdr = (LPNMHEADERW) lParam;
 
     if (pnmh->hwndFrom == hProcessPageListCtrl)
     {
