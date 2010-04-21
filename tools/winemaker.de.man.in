@@ -33,7 +33,7 @@ winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompi
 ]
 .br
   [
-.IR               "--wine64 " "]
+.IR               "--wine32 " "]
 .br
 .IR               "Arbeitsverzeichnis" "| " "Projektdatei" "| " "Workspacedatei"
 
@@ -174,8 +174,9 @@ Eine Makefile soll erzeugt werden. Diese Option ist Standard.
 .I --nogenerated-files
 Keine Makefile erstellen.
 .TP
-.I --wine64
-Eine Makefile für 64-Bit erstellen.
+.I --wine32
+Ein 32-Bit Target erstellen. Das ist nützlich unter wow64 Systemen.
+Ohne dieser Option wird die Standard Architektur genutzt.
 
 .SH BEISPIELE
 .PP

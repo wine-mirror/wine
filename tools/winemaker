@@ -67,6 +67,10 @@ my $OPT_ASK_SKIP=-1;
 # The following constants define the architecture
 
 ##
+# Default Architecture will be choosen
+my $OPT_ARCH_DEFAULT=0;
+
+##
 # 32-Bit Target
 my $OPT_ARCH_32=32;
 
@@ -1019,7 +1023,9 @@ sub source_scan_project_file($$$)
     }
     if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
         push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
-        push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
+        if ($opt_arch != $OPT_ARCH_DEFAULT) {
+            push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
+        }
     }
     push @{@$project[$P_TARGETS]},$target;
 
@@ -1082,6 +1088,10 @@ sub source_scan_project_file($$$)
     if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
         push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
         push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
+        if ($opt_arch != $OPT_ARCH_DEFAULT) {
+            push @{@$project_settings[$T_CEXTRA]},"-m$opt_arch";
+            push @{@$project_settings[$T_CXXEXTRA]},"-m$opt_arch";
+        }
     }
 
     if (@$project_settings[$T_FLAGS] & $TF_MFC) {
@@ -1506,7 +1516,9 @@ sub source_scan_directory($$$$)
     }
     if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
       push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
-      push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
+      if ($opt_arch != $OPT_ARCH_DEFAULT) {
+        push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
+      }
     }
     push @{@$project[$P_TARGETS]},$target;
 
@@ -1599,6 +1611,10 @@ sub source_scan_directory($$$$)
   if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
     push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
     push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
+      if ($opt_arch != $OPT_ARCH_DEFAULT) {
+        push @{@$project_settings[$T_CEXTRA]},"-m$opt_arch";
+        push @{@$project_settings[$T_CXXEXTRA]},"-m$opt_arch";
+      }
   }
 
   if (@$project_settings[$T_FLAGS] & $TF_MFC) {
@@ -2496,7 +2512,7 @@ $opt_work_dir=undef;
 $opt_single_target=undef;
 $opt_target_type=$TT_GUIEXE;
 $opt_flags=0;
-$opt_arch=$OPT_ARCH_32;
+$opt_arch=$OPT_ARCH_DEFAULT;
 $opt_is_interactive=$OPT_ASK_NO;
 $opt_ask_project_options=$OPT_ASK_NO;
 $opt_ask_target_options=$OPT_ASK_NO;
@@ -2530,7 +2546,7 @@ sub usage()
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
-  print STDERR "                 [--wine64]\n";
+  print STDERR "                 [--wine32]\n";
   print STDERR "                 work_directory|project_file|workspace_file\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
   print STDERR "the specified directory or project-file, so that they can be compiled with Winelib.\n";
@@ -2568,8 +2584,8 @@ while (@ARGV>0) {
     $opt_no_generated_files=0;
   } elsif ($arg eq "--nogenerated-files") {
     $opt_no_generated_files=1;
-  } elsif ($arg eq "--wine64") {
-    $opt_arch=$OPT_ARCH_64;
+  } elsif ($arg eq "--wine32") {
+    $opt_arch=$OPT_ARCH_32;
   } elsif ($arg =~ /^-D/) {
     push @{$global_settings[$T_DEFINES]},$arg;
   } elsif ($arg =~ /^-I/) {

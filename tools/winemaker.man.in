@@ -33,7 +33,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--wine64 " "]
+.IR               "--wine32 " "]
 .br
 .IR               "work_directory" "| " "project_file" "| " "workspace_file"
 
@@ -175,8 +175,9 @@ Tells winemaker to generate the Makefile. This is the default.
 .I --nogenerated-files
 Tells winemaker not to generate the Makefile.
 .TP
-.I --wine64
-Tells winemaker to generate a 64-bit Makefile.
+.I --wine32
+Tells winemaker to generate a 32-bit target. This is useful on a wow64 systems.
+Without that option the default architecture is used.
 
 .SH EXAMPLES
 .PP
