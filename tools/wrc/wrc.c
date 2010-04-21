@@ -44,10 +44,6 @@
 #include "parser.h"
 #include "wine/wpp.h"
 
-#ifndef INCLUDEDIR
-#define INCLUDEDIR "/usr/local/include/wine"
-#endif
-
 #ifdef WORDS_BIGENDIAN
 #define ENDIAN	"big"
 #else
