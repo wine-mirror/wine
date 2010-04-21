@@ -3309,7 +3309,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     char fragcolor[16];
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This), next_local, cur;
     struct shader_arb_ctx_priv priv_ctx;
-    BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
+    BOOL dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
     struct arb_pshader_private *shader_priv = This->baseShader.backend_data;
     GLint errPos;
@@ -3331,7 +3331,6 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     }
 
     switch(found) {
-        case 4: dcl_tmp = FALSE; break;
         case 0:
             sprintf(srgbtmp[0], "TA");
             sprintf(srgbtmp[1], "TB");
@@ -3350,6 +3349,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
             break;
         case 3:
             sprintf(srgbtmp[3], "TA");
+            break;
+        case 4:
             break;
     }
 
