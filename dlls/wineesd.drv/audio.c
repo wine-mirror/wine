@@ -1561,7 +1561,9 @@ DWORD WINAPI ESD_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
     switch (wMsg) {
     case DRVM_INIT:
+        return ESD_WaveInit();
     case DRVM_EXIT:
+        return ESD_WaveClose();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
@@ -2073,7 +2075,9 @@ DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
     case DRVM_INIT:
+        return ESD_WaveInit();
     case DRVM_EXIT:
+        return ESD_WaveClose();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
