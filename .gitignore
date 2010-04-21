@@ -280,8 +280,6 @@ tools/winegcc/winegcc
 tools/winegcc/winegcc.man
 tools/winemaker.de.man
 tools/winemaker.man
-tools/wineprefixcreate
-tools/wineprefixcreate.man
 tools/wmc/mcy.tab.c
 tools/wmc/mcy.tab.h
 tools/wmc/wmc

@@ -15,13 +15,11 @@ PROGRAMS = \
 	relpath$(EXEEXT) \
 	sfnt2fnt$(EXEEXT) \
 	wine.inf \
-	wineapploader \
-	wineprefixcreate
+	wineapploader
 
 MANPAGES = \
 	winemaker.man \
-	winemaker.de.man \
-	wineprefixcreate.man
+	winemaker.de.man
 
 C_SRCS = \
 	fnt2bdf.c \
@@ -70,15 +68,9 @@ wine.inf: wine.inf.in
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
 
-wineprefixcreate: wineprefixcreate.in relpath$(EXEEXT)
-	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)/wine`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
-	chmod +x wineprefixcreate
-
-install install-lib:: wine.inf wineprefixcreate $(INSTALLDIRS)
-	$(INSTALL_SCRIPT) wineprefixcreate $(DESTDIR)$(bindir)/wineprefixcreate
+install install-lib:: wine.inf $(INSTALLDIRS)
 	$(INSTALL_DATA) wine.inf $(DESTDIR)$(datadir)/wine/wine.inf
 	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
-	$(INSTALL_DATA) wineprefixcreate.man $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext)
 	-$(UPDATE_DESKTOP_DATABASE)
 
 install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
@@ -87,7 +79,7 @@ install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
+	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
 depend: makedep$(EXEEXT)
