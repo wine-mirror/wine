@@ -62,7 +62,7 @@ static void append_productcode(MSIPACKAGE* package, LPCWSTR action_property,
     LPWSTR newprop;
     DWORD len;
 
-    prop = msi_dup_property(package, action_property );
+    prop = msi_dup_property(package->db, action_property );
     if (prop)
         len = strlenW(prop);
     else
@@ -203,7 +203,7 @@ UINT ACTION_FindRelatedProducts(MSIPACKAGE *package)
     UINT rc = ERROR_SUCCESS;
     MSIQUERY *view;
 
-    if (msi_get_property_int(package, szInstalled, 0))
+    if (msi_get_property_int(package->db, szInstalled, 0))
     {
         TRACE("Skipping FindRelatedProducts action: product already installed\n");
         return ERROR_SUCCESS;

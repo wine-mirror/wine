@@ -226,7 +226,7 @@ static UINT ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument,
 static UINT ControlEvent_SetTargetPath(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog* dialog)
 {
-    LPWSTR path = msi_dup_property( package, argument );
+    LPWSTR path = msi_dup_property( package->db, argument );
     MSIRECORD *rec = MSI_CreateRecord( 1 );
     UINT r;
 
@@ -407,8 +407,8 @@ static UINT ControlEvent_ValidateProductID(MSIPACKAGE *package, LPCWSTR argument
     LPWSTR key, template;
     UINT ret = ERROR_SUCCESS;
 
-    template = msi_dup_property( package, szPIDTemplate );
-    key = msi_dup_property( package, szPIDKEY );
+    template = msi_dup_property( package->db, szPIDTemplate );
+    key = msi_dup_property( package->db, szPIDKEY );
 
     if (key && template)
     {

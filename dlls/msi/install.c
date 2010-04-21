@@ -709,7 +709,7 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         break;
 
     case MSIRUNMODE_MAINTENANCE:
-        r = msi_get_property_int( package, szInstalled, 0 ) != 0;
+        r = msi_get_property_int( package->db, szInstalled, 0 ) != 0;
         break;
 
     case MSIRUNMODE_REBOOTATEND:
@@ -1262,7 +1262,7 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
         return 0;
     }
 
-    langid = msi_get_property_int( package, szProductLanguage, 0 );
+    langid = msi_get_property_int( package->db, szProductLanguage, 0 );
     msiobj_release( &package->hdr );
     return langid;
 }

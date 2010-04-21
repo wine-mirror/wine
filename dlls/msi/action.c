@@ -333,7 +333,7 @@ static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch
     LPWSTR prod_code, patch_product, langid = NULL, template = NULL;
     UINT ret = ERROR_FUNCTION_FAILED;
 
-    prod_code = msi_dup_property( package, szProductCode );
+    prod_code = msi_dup_property( package->db, szProductCode );
     patch_product = msi_get_suminfo_product( patch );
 
     TRACE("db = %s patch = %s\n", debugstr_w(prod_code), debugstr_w(patch_product));
@@ -365,7 +365,7 @@ static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch
             goto end;
         }
 
-        langid = msi_dup_property( package, szSystemLanguageID );
+        langid = msi_dup_property( package->db, szSystemLanguageID );
         if (!langid)
         {
             msiobj_release( &si->hdr );
@@ -429,7 +429,7 @@ UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
     LPWSTR guid_list, *guids, product_code;
     UINT i, ret = ERROR_FUNCTION_FAILED;
 
-    product_code = msi_dup_property( package, szProductCode );
+    product_code = msi_dup_property( package->db, szProductCode );
     if (!product_code)
     {
         /* FIXME: the property ProductCode should be written into the DB somewhere */
@@ -476,7 +476,7 @@ static UINT msi_set_media_source_prop(MSIPACKAGE *package)
     if (MSI_ViewFetch(view, &rec) == ERROR_SUCCESS)
     {
         prop = MSI_RecordGetString(rec, 1);
-        patch = msi_dup_property(package, szPatch);
+        patch = msi_dup_property(package->db, szPatch);
         MSI_SetPropertyW(package, prop, patch);
         msi_free(patch);
     }
@@ -576,7 +576,7 @@ static UINT msi_apply_patches( MSIPACKAGE *package )
     LPWSTR patch_list, *patches;
     UINT i, r = ERROR_SUCCESS;
 
-    patch_list = msi_dup_property( package, szPatch );
+    patch_list = msi_dup_property( package->db, szPatch );
 
     TRACE("patches to be applied: %s\n", debugstr_w( patch_list ) );
 
@@ -597,7 +597,7 @@ static UINT msi_apply_transforms( MSIPACKAGE *package )
     LPWSTR xform_list, *xforms;
     UINT i, r = ERROR_SUCCESS;
 
-    xform_list = msi_dup_property( package, szTransforms );
+    xform_list = msi_dup_property( package->db, szTransforms );
     xforms = msi_split_string( xform_list, ';' );
 
     for( i=0; xforms && xforms[i] && r == ERROR_SUCCESS; i++ )
@@ -647,7 +647,7 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     static const WCHAR szOriginalDatabase[] =
         {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 
-    db = msi_dup_property( package, szOriginalDatabase );
+    db = msi_dup_property( package->db, szOriginalDatabase );
     if (!db)
         return ERROR_OUTOFMEMORY;
 
@@ -666,13 +666,13 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     source = msi_alloc( len * sizeof(WCHAR) );
     lstrcpynW( source, db, len );
 
-    check = msi_dup_property( package, cszSourceDir );
+    check = msi_dup_property( package->db, cszSourceDir );
     if (!check || replace)
         MSI_SetPropertyW( package, cszSourceDir, source );
 
     msi_free( check );
 
-    check = msi_dup_property( package, cszSOURCEDIR );
+    check = msi_dup_property( package->db, cszSOURCEDIR );
     if (!check || replace)
         MSI_SetPropertyW( package, cszSOURCEDIR, source );
 
@@ -685,7 +685,7 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
 static BOOL needs_ui_sequence(MSIPACKAGE *package)
 {
-    INT level = msi_get_property_int(package, szUILevel, 0);
+    INT level = msi_get_property_int(package->db, szUILevel, 0);
     return (level & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
 }
 
@@ -698,7 +698,7 @@ static UINT msi_set_context(MSIPACKAGE *package)
 
     package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
 
-    r = MSI_GetPropertyW(package, szAllUsers, val, &sz);
+    r = MSI_GetPropertyW(package->db, szAllUsers, val, &sz);
     if (r == ERROR_SUCCESS)
     {
         num = atolW(val);
@@ -1466,7 +1466,7 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
 
     folder->Parent = msi_dup_record_field( row, 2 );
 
-    folder->Property = msi_dup_property( package, folder->Directory );
+    folder->Property = msi_dup_property( package->db, folder->Directory );
 
     list_add_tail( &package->folders, &folder->entry );
 
@@ -1607,7 +1607,7 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
     LPWSTR override;
     MSIFEATURE *feature;
 
-    override = msi_dup_property( package, property );
+    override = msi_dup_property( package->db, property );
     if (!override)
         return FALSE;
 
@@ -1699,9 +1699,9 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     TRACE("Checking Install Level\n");
 
-    level = msi_get_property_int(package, szlevel, 1);
+    level = msi_get_property_int(package->db, szlevel, 1);
 
-    if (!msi_get_property_int( package, szPreselected, 0 ))
+    if (!msi_get_property_int( package->db, szPreselected, 0 ))
     {
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
@@ -2053,7 +2053,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("File calculations\n");
     msi_check_file_install_states( package );
 
-    if (!process_overrides( package, msi_get_property_int( package, szlevel, 1 ) ))
+    if (!process_overrides( package, msi_get_property_int( package->db, szlevel, 1 ) ))
     {
         TRACE("Evaluating Condition Table\n");
 
@@ -2079,7 +2079,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     MSI_SetPropertyW(package,szCosting,szOne);
     /* set default run level if not set */
-    level = msi_dup_property( package, szlevel );
+    level = msi_dup_property( package->db, szlevel );
     if (!level)
         MSI_SetPropertyW(package,szlevel, szOne);
     msi_free(level);
@@ -2219,7 +2219,7 @@ static const WCHAR *get_root_key( MSIPACKAGE *package, INT root, HKEY *root_key 
     switch (root)
     {
     case -1:
-        if (msi_get_property_int( package, szAllUsers, 0 ))
+        if (msi_get_property_int( package->db, szAllUsers, 0 ))
         {
             *root_key = HKEY_LOCAL_MACHINE;
             ret = szHLM;
@@ -3606,17 +3606,17 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
         {'C','l','i','e','n','t','s',0};
     static const WCHAR szColon[] = {':',0};
 
-    buffer = msi_dup_property(package, INSTALLPROPERTY_PRODUCTNAMEW);
+    buffer = msi_dup_property(package->db, INSTALLPROPERTY_PRODUCTNAMEW);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_PRODUCTNAMEW, buffer);
     msi_free(buffer);
 
-    langid = msi_get_property_int(package, szProductLanguage, 0);
+    langid = msi_get_property_int(package->db, szProductLanguage, 0);
     msi_reg_set_val_dword(hkey, INSTALLPROPERTY_LANGUAGEW, langid);
 
     /* FIXME */
     msi_reg_set_val_dword(hkey, INSTALLPROPERTY_AUTHORIZED_LUA_APPW, 0);
 
-    buffer = msi_dup_property(package, szARPProductIcon);
+    buffer = msi_dup_property(package->db, szARPProductIcon);
     if (buffer)
     {
         LPWSTR path = build_icon_path(package,buffer);
@@ -3625,7 +3625,7 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
         msi_free(buffer);
     }
 
-    buffer = msi_dup_property(package, szProductVersion);
+    buffer = msi_dup_property(package->db, szProductVersion);
     if (buffer)
     {
         DWORD verdword = msi_version_str_to_dword(buffer);
@@ -3673,7 +3673,7 @@ static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
     static const WCHAR szUpgradeCode[] =
         {'U','p','g','r','a','d','e','C','o','d','e',0};
 
-    upgrade = msi_dup_property(package, szUpgradeCode);
+    upgrade = msi_dup_property(package->db, szUpgradeCode);
     if (!upgrade)
         return ERROR_SUCCESS;
 
@@ -3832,10 +3832,10 @@ static WCHAR *get_ini_file_name( MSIPACKAGE *package, MSIRECORD *row )
     {
         folder = resolve_folder( package, dirprop, FALSE, FALSE, TRUE, NULL );
         if (!folder)
-            folder = msi_dup_property( package, dirprop );
+            folder = msi_dup_property( package->db, dirprop );
     }
     else
-        folder = msi_dup_property( package, szWindowsFolder );
+        folder = msi_dup_property( package->db, szWindowsFolder );
 
     if (!folder)
     {
@@ -4469,7 +4469,7 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     {
         prop = strdupAtoW(*p++);
         key = strdupAtoW(*p++);
-        val = msi_dup_property(package, prop);
+        val = msi_dup_property(package->db, prop);
         msi_reg_set_val_str(hkey, key, val);
         msi_free(val);
         msi_free(key);
@@ -4486,15 +4486,15 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     /* FIXME: Write real Estimated Size when we have it */
     msi_reg_set_val_dword(hkey, szEstimatedSize, 0);
 
-    buffer = msi_dup_property(package, szProductName);
+    buffer = msi_dup_property(package->db, szProductName);
     msi_reg_set_val_str(hkey, szDisplayName, buffer);
     msi_free(buffer);
 
-    buffer = msi_dup_property(package, cszSourceDir);
+    buffer = msi_dup_property(package->db, cszSourceDir);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_INSTALLSOURCEW, buffer);
     msi_free(buffer);
 
-    buffer = msi_dup_property(package, szManufacturer);
+    buffer = msi_dup_property(package->db, szManufacturer);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_PUBLISHERW, buffer);
     msi_free(buffer);
 
@@ -4502,10 +4502,10 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     sprintfW(date, date_fmt, systime.wYear, systime.wMonth, systime.wDay);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_INSTALLDATEW, date);
 
-    langid = msi_get_property_int(package, szProductLanguage, 0);
+    langid = msi_get_property_int(package->db, szProductLanguage, 0);
     msi_reg_set_val_dword(hkey, INSTALLPROPERTY_LANGUAGEW, langid);
 
-    buffer = msi_dup_property(package, szProductVersion);
+    buffer = msi_dup_property(package->db, szProductVersion);
     msi_reg_set_val_str(hkey, szDisplayVersion, buffer);
     if (buffer)
     {
@@ -4557,7 +4557,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto done;
 
-    upgrade_code = msi_dup_property(package, szUpgradeCode);
+    upgrade_code = msi_dup_property(package->db, szUpgradeCode);
     if (upgrade_code)
     {
         MSIREG_OpenUpgradeCodesKey(upgrade_code, &upgrade, TRUE);
@@ -4593,7 +4593,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     static const WCHAR szUpgradeCode[] =
         {'U','p','g','r','a','d','e','C','o','d','e',0};
 
-    remove = msi_dup_property(package, szRemove);
+    remove = msi_dup_property(package->db, szRemove);
     if (!remove)
         return ERROR_SUCCESS;
 
@@ -4634,7 +4634,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
         MSIREG_DeleteUserFeaturesKey(package->ProductCode);
     }
 
-    upgrade = msi_dup_property(package, szUpgradeCode);
+    upgrade = msi_dup_property(package->db, szUpgradeCode);
     if (upgrade)
     {
         MSIREG_DeleteUserUpgradeCodesKey(upgrade);
@@ -4801,7 +4801,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
         goto end;
     }
 
-    productid = msi_dup_property( package, INSTALLPROPERTY_PRODUCTIDW );
+    productid = msi_dup_property( package->db, INSTALLPROPERTY_PRODUCTIDW );
     if (!productid)
         goto end;
 
@@ -4812,7 +4812,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 
     for( i = 0; szPropKeys[i][0]; i++ )
     {
-        buffer = msi_dup_property( package, szPropKeys[i] );
+        buffer = msi_dup_property( package->db, szPropKeys[i] );
         msi_reg_set_val_str( hkey, szRegKeys[i], buffer );
         msi_free( buffer );
     }
@@ -6783,14 +6783,14 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
     LPWSTR key, template, id;
     UINT r = ERROR_SUCCESS;
 
-    id = msi_dup_property( package, szProductID );
+    id = msi_dup_property( package->db, szProductID );
     if (id)
     {
         msi_free( id );
         return ERROR_SUCCESS;
     }
-    template = msi_dup_property( package, szPIDTemplate );
-    key = msi_dup_property( package, szPIDKEY );
+    template = msi_dup_property( package->db, szPIDTemplate );
+    key = msi_dup_property( package->db, szPIDKEY );
 
     if (key && template)
     {
@@ -6814,7 +6814,7 @@ static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
     static const WCHAR szAvailableFreeReg[] =
         {'A','V','A','I','L','A','B','L','E','F','R','E','E','R','E','G',0};
     MSIRECORD *uirow;
-    int space = msi_get_property_int( package, szAvailableFreeReg, 0 );
+    int space = msi_get_property_int( package->db, szAvailableFreeReg, 0 );
 
     TRACE("%p %d kilobytes\n", package, space);
 
@@ -7254,7 +7254,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_apply_transforms( package );
     msi_apply_patches( package );
 
-    if (!szCommandLine && msi_get_property_int( package, szInstalled, 0 ))
+    if (!szCommandLine && msi_get_property_int( package->db, szInstalled, 0 ))
     {
         TRACE("setting reinstall property\n");
         MSI_SetPropertyW( package, szReinstall, szAll );

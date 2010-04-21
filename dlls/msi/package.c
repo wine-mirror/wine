@@ -824,8 +824,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     ReleaseDC(0, dc);
 
     /* USERNAME and COMPANYNAME */
-    username = msi_dup_property( package, szUSERNAME );
-    companyname = msi_dup_property( package, szCOMPANYNAME );
+    username = msi_dup_property( package->db, szUSERNAME );
+    companyname = msi_dup_property( package->db, szCOMPANYNAME );
 
     if ((!username || !companyname) &&
         RegOpenKeyW( HKEY_CURRENT_USER, szUserInfo, &hkey ) == ERROR_SUCCESS)
@@ -1013,7 +1013,7 @@ static UINT msi_load_admin_properties(MSIPACKAGE *package)
 static void adjust_allusers_property( MSIPACKAGE *package )
 {
     /* FIXME: this should depend on the user's privileges */
-    if (msi_get_property_int( package, szAllUsers, 0 ) == 2)
+    if (msi_get_property_int( package->db, szAllUsers, 0 ) == 2)
     {
         TRACE("resetting ALLUSERS property from 2 to 1\n");
         MSI_SetPropertyW( package, szAllUsers, szOne );
@@ -1043,7 +1043,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         create_temp_property_table( package );
         msi_clone_properties( package );
 
-        package->ProductCode = msi_dup_property( package, szProductCode );
+        package->ProductCode = msi_dup_property( package->db, szProductCode );
         set_installed_prop( package );
         set_installer_properties( package );
 
@@ -1683,7 +1683,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
     if (!szName[0])
         return szValue ? ERROR_FUNCTION_FAILED : ERROR_SUCCESS;
 
-    rc = MSI_GetPropertyW(package, szName, 0, &sz);
+    rc = MSI_GetPropertyW(package->db, szName, 0, &sz);
     if (!szValue || !*szValue)
     {
         sprintfW(Query, Delete, szName);
@@ -1769,7 +1769,7 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     return ret;
 }
 
-static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
+static MSIRECORD *MSI_GetPropertyRow( MSIDATABASE *db, LPCWSTR name )
 {
     MSIQUERY *view;
     MSIRECORD *rec, *row = NULL;
@@ -1790,7 +1790,7 @@ static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
 
     MSI_RecordSetStringW(rec, 1, name);
 
-    r = MSI_DatabaseOpenViewW(package->db, query, &view);
+    r = MSI_DatabaseOpenViewW(db, query, &view);
     if (r == ERROR_SUCCESS)
     {
         MSI_ViewExecute(view, rec);
@@ -1804,13 +1804,13 @@ static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
 }
 
 /* internal function, not compatible with MsiGetPropertyW */
-UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName, 
+UINT MSI_GetPropertyW( MSIDATABASE *db, LPCWSTR szName,
                        LPWSTR szValueBuf, LPDWORD pchValueBuf )
 {
     MSIRECORD *row;
     UINT rc = ERROR_FUNCTION_FAILED;
 
-    row = MSI_GetPropertyRow( package, szName );
+    row = MSI_GetPropertyRow( db, szName );
 
     if (*pchValueBuf > 0)
         szValueBuf[0] = 0;
@@ -1836,19 +1836,19 @@ UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName,
     return rc;
 }
 
-LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
+LPWSTR msi_dup_property(MSIDATABASE *db, LPCWSTR prop)
 {
     DWORD sz = 0;
     LPWSTR str;
     UINT r;
 
-    r = MSI_GetPropertyW(package, prop, NULL, &sz);
+    r = MSI_GetPropertyW(db, prop, NULL, &sz);
     if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
         return NULL;
 
     sz++;
     str = msi_alloc(sz * sizeof(WCHAR));
-    r = MSI_GetPropertyW(package, prop, str, &sz);
+    r = MSI_GetPropertyW(db, prop, str, &sz);
     if (r != ERROR_SUCCESS)
     {
         msi_free(str);
@@ -1858,9 +1858,9 @@ LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
     return str;
 }
 
-int msi_get_property_int(MSIPACKAGE *package, LPCWSTR prop, int def)
+int msi_get_property_int( MSIDATABASE *db, LPCWSTR prop, int def )
 {
-    LPWSTR str = msi_dup_property(package, prop);
+    LPWSTR str = msi_dup_property( db, prop );
     int val = str ? atoiW(str) : def;
     msi_free(str);
     return val;
@@ -1939,7 +1939,7 @@ done:
         return r;
     }
 
-    row = MSI_GetPropertyRow( package, name );
+    row = MSI_GetPropertyRow( package->db, name );
     if (row)
         val = MSI_RecordGetString( row, 1 );
 

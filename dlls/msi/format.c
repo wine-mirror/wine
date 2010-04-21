@@ -175,7 +175,7 @@ static LPWSTR deformat_property(FORMAT *format, FORMSTR *str)
     val = msi_alloc((str->len + 1) * sizeof(WCHAR));
     lstrcpynW(val, get_formstr_data(format, str), str->len + 1);
 
-    ret = msi_dup_property(format->package, val);
+    ret = msi_dup_property(format->package->db, val);
 
     msi_free(val);
     return ret;

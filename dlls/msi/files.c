@@ -557,11 +557,11 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     sourcename = MSI_RecordGetString(rec, 3);
     options = MSI_RecordGetInteger(rec, 7);
 
-    sourcedir = msi_dup_property(package, MSI_RecordGetString(rec, 5));
+    sourcedir = msi_dup_property(package->db, MSI_RecordGetString(rec, 5));
     if (!sourcedir)
         goto done;
 
-    destdir = msi_dup_property(package, MSI_RecordGetString(rec, 6));
+    destdir = msi_dup_property(package->db, MSI_RecordGetString(rec, 6));
     if (!destdir)
         goto done;
 
@@ -706,7 +706,7 @@ static WCHAR *get_duplicate_filename( MSIPACKAGE *package, MSIRECORD *row, const
         if (!dst_path)
         {
             /* try a property */
-            dst_path = msi_dup_property( package, dst_key );
+            dst_path = msi_dup_property( package->db, dst_key );
             if (!dst_path)
             {
                 FIXME("Unable to get destination folder, try AppSearch properties\n");
@@ -940,7 +940,7 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
-    dir = msi_dup_property(package, dirprop);
+    dir = msi_dup_property(package->db, dirprop);
     if (!dir)
         return ERROR_OUTOFMEMORY;
 

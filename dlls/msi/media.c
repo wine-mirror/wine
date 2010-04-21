@@ -79,13 +79,13 @@ static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 
     static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
 
-    if ((msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) ==
+    if ((msi_get_property_int(package->db, szUILevel, 0) & INSTALLUILEVEL_MASK) ==
          INSTALLUILEVEL_NONE && !gUIHandlerA && !gUIHandlerW && !gUIHandlerRecord)
         return ERROR_SUCCESS;
 
     error = generate_error_string(package, 1302, 1, mi->disk_prompt);
-    error_dialog = msi_dup_property(package, error_prop);
-    source_dir = msi_dup_property(package, cszSourceDir);
+    error_dialog = msi_dup_property(package->db, error_prop);
+    source_dir = msi_dup_property(package->db, cszSourceDir);
 
     while (r == ERROR_SUCCESS && !source_matches_volume(mi, source_dir))
     {
@@ -659,7 +659,7 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     if (!mi->first_volume)
         mi->first_volume = strdupW(mi->volume_label);
 
-    source_dir = msi_dup_property(package, cszSourceDir);
+    source_dir = msi_dup_property(package->db, cszSourceDir);
     lstrcpyW(mi->sourcedir, source_dir);
     mi->type = get_drive_type(source_dir);
 
@@ -807,7 +807,7 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     if (mi->volume_label && mi->disk_id > 1 &&
         lstrcmpW(mi->first_volume, mi->volume_label))
     {
-        LPWSTR source = msi_dup_property(package, cszSourceDir);
+        LPWSTR source = msi_dup_property(package->db, cszSourceDir);
         BOOL matches;
 
         matches = source_matches_volume(mi, source);

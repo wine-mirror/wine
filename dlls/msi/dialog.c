@@ -236,7 +236,7 @@ static LPWSTR msi_dialog_dup_property( msi_dialog *dialog, LPCWSTR property, BOO
         return NULL;
 
     if (indirect)
-        prop = msi_dup_property( dialog->package, property );
+        prop = msi_dup_property( dialog->package->db, property );
 
     if (!prop)
         prop = strdupW( property );
@@ -643,7 +643,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         LPWSTR prop = msi_dialog_dup_property( dialog, ctrl->property, TRUE );
         LPWSTR path;
         if (!prop) return;
-        path = msi_dup_property( dialog->package, prop );
+        path = msi_dup_property( dialog->package->db, prop );
         SetWindowTextW( ctrl->hwnd, path );
         msi_free(prop);
         msi_free(path);
@@ -886,7 +886,7 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
     if (ret)
         return ret;
 
-    ret = msi_dup_property( dialog->package, prop );
+    ret = msi_dup_property( dialog->package->db, prop );
     if( ret && !ret[0] )
     {
         msi_free( ret );
@@ -1349,7 +1349,7 @@ static void msi_dialog_combobox_update( msi_dialog *dialog,
 
     info = GetPropW( control->hwnd, szButtonData );
 
-    value = msi_dup_property( dialog->package, control->property );
+    value = msi_dup_property( dialog->package->db, control->property );
     if (!value)
     {
         SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
@@ -1462,7 +1462,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     if( prop )
         control->property = strdupW( prop );
 
-    val = msi_dup_property( dialog->package, control->property );
+    val = msi_dup_property( dialog->package->db, control->property );
     SetWindowTextW( control->hwnd, val );
     msi_free( val );
     return ERROR_SUCCESS;
@@ -1773,7 +1773,7 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 
     if( prop )
     {
-        val = msi_dup_property( dialog->package, prop );
+        val = msi_dup_property( dialog->package->db, prop );
         if( val )
         {
             msi_maskedit_set_text( info, val );
@@ -2041,7 +2041,7 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     group.dialog = dialog;
     group.parent = control;
     group.attributes = MSI_RecordGetInteger( rec, 8 );
-    group.propval = msi_dup_property( dialog->package, control->property );
+    group.propval = msi_dup_property( dialog->package->db, control->property );
 
     r = MSI_IterateRecords( view, 0, msi_dialog_create_radiobutton, &group );
     msiobj_release( &view->hdr );
@@ -3264,8 +3264,8 @@ static void msi_dialog_adjust_dialog_pos( msi_dialog *dialog, MSIRECORD *rec, LP
     sz.cx = msi_dialog_scale_unit( dialog, sz.cx );
     sz.cy = msi_dialog_scale_unit( dialog, sz.cy );
 
-    xres = msi_get_property_int( dialog->package, szScreenX, 0 );
-    yres = msi_get_property_int( dialog->package, szScreenY, 0 );
+    xres = msi_get_property_int( dialog->package->db, szScreenX, 0 );
+    yres = msi_get_property_int( dialog->package->db, szScreenY, 0 );
 
     center.x = MulDiv( center.x, xres, 100 );
     center.y = MulDiv( center.y, yres, 100 );
@@ -3358,7 +3358,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
 
-    dialog->default_font = msi_dup_property( dialog->package, df );
+    dialog->default_font = msi_dup_property( dialog->package->db, df );
     if (!dialog->default_font)
     {
         dialog->default_font = strdupW(dfv);
@@ -3552,7 +3552,7 @@ static UINT msi_dialog_get_checkbox_state( msi_dialog *dialog,
     WCHAR state[2] = { 0 };
     DWORD sz = 2;
 
-    MSI_GetPropertyW( dialog->package, control->property, state, &sz );
+    MSI_GetPropertyW( dialog->package->db, control->property, state, &sz );
     return state[0] ? 1 : 0;
 }
 
@@ -4064,12 +4064,12 @@ UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR er
         'M','S','I','E','r','r','o','r','D','i','a','l','o','g','R','e','s','u','l','t',0
     };
 
-    if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE )
+    if ( (msi_get_property_int( package->db, szUILevel, 0 ) & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE )
         return ERROR_SUCCESS;
 
     if ( !error_dialog )
     {
-        LPWSTR product_name = msi_dup_property( package, pn_prop );
+        LPWSTR product_name = msi_dup_property( package->db, pn_prop );
         WCHAR title[MAX_PATH];
 
         sprintfW( title, title_fmt, product_name );
@@ -4097,7 +4097,7 @@ UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR er
     if ( r != ERROR_SUCCESS )
         goto done;
 
-    r = MSI_GetPropertyW( package, result_prop, result, &size );
+    r = MSI_GetPropertyW( package->db, result_prop, result, &size );
     if ( r != ERROR_SUCCESS)
         r = ERROR_SUCCESS;
 
