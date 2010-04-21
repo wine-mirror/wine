@@ -5449,23 +5449,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3DERR_INVALIDCALL;
 }
 
-static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
+static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
         const WINED3DRECT *rect, const float color[4])
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct wined3d_context *context;
 
-    if (rect) IWineD3DSurface_LoadLocation(surface, SFLAG_INDRAWABLE, NULL);
-    IWineD3DSurface_ModifyLocation(surface, SFLAG_INDRAWABLE, TRUE);
+    if (rect) IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, NULL);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, TRUE);
 
-    if (!surface_is_offscreen((IWineD3DSurfaceImpl *)surface))
+    if (!surface_is_offscreen(surface))
     {
         TRACE("Surface %p is onscreen\n", surface);
 
-        context = context_acquire(This, (IWineD3DSurfaceImpl *)surface, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-        context_set_draw_buffer(context, surface_get_gl_buffer((IWineD3DSurfaceImpl *)surface));
+        context_set_draw_buffer(context, surface_get_gl_buffer(surface));
     }
     else
     {
@@ -5474,16 +5474,16 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)surface);
+        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, surface);
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
     }
 
     if (rect) {
         glEnable(GL_SCISSOR_TEST);
-        if (surface_is_offscreen((IWineD3DSurfaceImpl *)surface))
+        if (surface_is_offscreen(surface))
             glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
         else
-            glScissor(rect->x1, ((IWineD3DSurfaceImpl *)surface)->currentDesc.Height - rect->y2,
+            glScissor(rect->x1, surface->currentDesc.Height - rect->y2,
                     rect->x2 - rect->x1, rect->y2 - rect->y1);
         checkGLcall("glScissor");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
@@ -5527,7 +5527,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         const float c[4] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
-        color_fill_fbo(iface, pSurface, pRect, c);
+        color_fill_fbo(iface, surface, pRect, c);
         return WINED3D_OK;
     } else {
         /* Just forward this to the DirectDraw blitting engine */
@@ -5543,7 +5543,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         IWineD3DRendertargetView *rendertarget_view, const float color[4])
 {
     IWineD3DResource *resource;
-    IWineD3DSurface *surface;
+    IWineD3DSurfaceImpl *surface;
     HRESULT hr;
 
     hr = IWineD3DRendertargetView_GetResource(rendertarget_view, &resource);
@@ -5560,7 +5560,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         return;
     }
 
-    surface = (IWineD3DSurface *)resource;
+    surface = (IWineD3DSurfaceImpl *)resource;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
@@ -5581,8 +5581,9 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format_desc->format);
-        hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
+        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(c, surface->resource.format_desc->format);
+        hr = IWineD3DSurface_Blt((IWineD3DSurface *)surface, NULL, NULL, NULL,
+                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
         if (FAILED(hr))
         {
             ERR("Blt failed, hr %#x\n", hr);
