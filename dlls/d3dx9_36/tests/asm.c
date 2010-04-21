@@ -1053,11 +1053,11 @@ static void vs_3_0_test(void) {
             "add_sat r0, r0, r1\n",
             {0xfffe0300, 0x03000002, 0x801f0000, 0x80e40000, 0x80e40001, 0x0000ffff}
         },*/
-/*      {*/ /* shader 8 */
-/*          "vs_3_0\n"
+        {   /* shader 8 */
+            "vs_3_0\n"
             "mov r2, r1_abs\n",
             {0xfffe0300, 0x02000001, 0x800f0002, 0x8be40001, 0x0000ffff}
-        },*/
+        },
         {   /* shader 9 */
             "vs_3_0\n"
             "mov r2, r1.xygb\n",

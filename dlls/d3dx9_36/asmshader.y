@@ -45,6 +45,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %union {
     unsigned int        regnum;
     struct shader_reg   reg;
+    DWORD               srcmod;
     DWORD               writemask;
     struct {
         DWORD           writemask;
@@ -93,6 +94,9 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token MOD_PP
 %token MOD_CENTROID
 
+/* Source register modifiers */
+%token SMOD_ABS
+
 /* Misc stuff */
 %token <component> COMPONENT
 
@@ -100,6 +104,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <reg> dreg
 %type <reg> sreg_name
 %type <reg> sreg
+%type <srcmod> smod
 %type <writemask> writemask
 %type <wm_components> wm_components
 %type <swizzle> swizzle
@@ -372,11 +377,44 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.srcmod = BWRITERSPSM_NONE;
                             set_rel_reg(&$$, &$2);
                         }
+                    | sreg_name rel_reg smod swizzle
+                        {
+                            $$.type = $1.type;
+                            $$.regnum = $1.regnum;
+                            set_rel_reg(&$$, &$2);
+                            $$.srcmod = $3;
+                            $$.swizzle = $4;
+                        }
+                    | '-' sreg_name rel_reg swizzle
+                        {
+                            $$.type = $2.type;
+                            $$.regnum = $2.regnum;
+                            $$.srcmod = BWRITERSPSM_NEG;
+                            set_rel_reg(&$$, &$3);
+                            $$.swizzle = $4;
+                        }
+                    | '-' sreg_name rel_reg smod swizzle
+                        {
+                            $$.type = $2.type;
+                            $$.regnum = $2.regnum;
+                            set_rel_reg(&$$, &$3);
+                            switch($4) {
+                                case BWRITERSPSM_ABS:  $$.srcmod = BWRITERSPSM_ABSNEG;  break;
+                                default:
+                                    FIXME("Unhandled combination of NEGATE and %u\n", $4);
+                            }
+                            $$.swizzle = $5;
+                        }
 
 rel_reg:               /* empty */
                         {
                             $$.has_rel_reg = FALSE;
                             $$.additional_offset = 0;
+                        }
+
+smod:                 SMOD_ABS
+                        {
+                            $$ = BWRITERSPSM_ABS;
                         }
 
 sreg_name:            REG_TEMP

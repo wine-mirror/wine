@@ -129,6 +129,8 @@ ps_3_0                  {return VER_PS30;       }
 \(                      {return yytext[0];          }
 \)                      {return yytext[0];          }
 
+\_abs                   {return SMOD_ABS;           }
+
 {PREPROCESSORDIRECTIVE} {
                             /* TODO: update current line information */
                             TRACE("line info update: %s", yytext);

@@ -217,6 +217,7 @@ static void sm_3_srcreg(struct bc_writer *This,
     token |= reg->regnum & D3DSP_REGNUM_MASK;
 
     token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK;
+    token |= d3d9_srcmod(reg->srcmod);
 
     put_dword(buffer, token);
 }

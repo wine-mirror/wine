@@ -68,6 +68,18 @@ DWORD d3d9_writemask(DWORD bwriter_writemask) {
     return ret;
 }
 
+DWORD d3d9_srcmod(DWORD bwriter_srcmod) {
+    switch(bwriter_srcmod) {
+        case BWRITERSPSM_NONE:       return D3DSPSM_NONE;
+        case BWRITERSPSM_NEG:        return D3DSPSM_NEG;
+        case BWRITERSPSM_ABS:        return D3DSPSM_ABS;
+        case BWRITERSPSM_ABSNEG:     return D3DSPSM_ABSNEG;
+        default:
+            FIXME("Unhandled BWRITERSPSM token %u\n", bwriter_srcmod);
+            return 0;
+    }
+}
+
 DWORD d3d9_dstmod(DWORD bwriter_mod) {
     DWORD ret = 0;
 
@@ -96,6 +108,16 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         default:
             FIXME("Unhandled BWRITERSIO token %u\n", bwriter_opcode);
             return -1;
+    }
+}
+
+/* Debug print functions */
+const char *debug_print_srcmod(DWORD mod) {
+    switch(mod) {
+        case BWRITERSPSM_NEG:       return "D3DSPSM_NEG";
+        case BWRITERSPSM_ABS:       return "D3DSPSM_ABS";
+        case BWRITERSPSM_ABSNEG:    return "D3DSPSM_ABSNEG";
+        default:                    return "Unknown source modifier\n";
     }
 }
 
@@ -195,6 +217,15 @@ const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st) {
     switch(reg->srcmod) {
         case BWRITERSPSM_NONE:
             return wine_dbg_sprintf("%s%s", get_regname(reg, st),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_NEG:
+            return wine_dbg_sprintf("-%s%s", get_regname(reg, st),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_ABS:
+            return wine_dbg_sprintf("%s_abs%s", get_regname(reg, st),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_ABSNEG:
+            return wine_dbg_sprintf("-%s_abs%s", get_regname(reg, st),
                                     debug_print_swizzle(reg->swizzle));
     }
     return "Unknown modifier";

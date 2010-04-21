@@ -350,6 +350,7 @@ const char *debug_print_opcode(DWORD opcode);
 /* Utilities for internal->d3d constant mapping */
 DWORD d3d9_swizzle(DWORD bwriter_swizzle);
 DWORD d3d9_writemask(DWORD bwriter_writemask);
+DWORD d3d9_srcmod(DWORD bwriter_srcmod);
 DWORD d3d9_dstmod(DWORD bwriter_mod);
 DWORD d3d9_register(DWORD bwriter_register);
 DWORD d3d9_opcode(DWORD bwriter_opcode);
@@ -388,6 +389,9 @@ typedef enum _BWRITERSHADER_PARAM_DSTMOD_TYPE {
 
 typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
     BWRITERSPSM_NONE = 0,
+    BWRITERSPSM_NEG,
+    BWRITERSPSM_ABS,
+    BWRITERSPSM_ABSNEG,
 } BWRITERSHADER_PARAM_SRCMOD_TYPE;
 
 #define BWRITER_SM1_VS  0xfffe
