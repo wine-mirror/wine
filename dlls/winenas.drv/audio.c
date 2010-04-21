@@ -81,7 +81,6 @@
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#include "nas.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -396,7 +395,7 @@ static void NAS_CloseDevice(WINE_WAVEOUT* wwo)
 /******************************************************************
  *		NAS_WaveClose
  */
-LONG		NAS_WaveClose(void)
+static LONG NAS_WaveClose(void)
 {
     nas_end();    /* free up nas server */
     return 1;
@@ -407,7 +406,7 @@ LONG		NAS_WaveClose(void)
  *
  * Initialize internal structures from NAS server info
  */
-LONG NAS_WaveInit(void)
+static LONG NAS_WaveInit(void)
 {
     int 	i;
     if (!nas_init()) return MMSYSERR_ERROR;
@@ -1213,7 +1212,9 @@ DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
     switch (wMsg) {
     case DRVM_INIT:
+        return NAS_WaveInit();
     case DRVM_EXIT:
+        return NAS_WaveClose();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */

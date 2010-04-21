@@ -33,7 +33,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
-#include "nas.h"
 
 /**************************************************************************
  * 				DriverProc (WINENAS.@)
@@ -43,9 +42,8 @@ LRESULT CALLBACK NAS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 {
     switch(wMsg) {
 #ifdef HAVE_NAS
-    case DRV_LOAD:		NAS_WaveInit();
-				return 1;
-    case DRV_FREE:	        return NAS_WaveClose();
+    case DRV_LOAD:
+    case DRV_FREE:
     case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_ENABLE:
