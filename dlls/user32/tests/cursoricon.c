@@ -1005,11 +1005,9 @@ static BOOL color_match(COLORREF a, COLORREF b)
 static void check_alpha_draw(HDC hdc, BOOL drawiconex, BOOL alpha, int bpp, int line)
 {
     HICON hicon;
-    UINT32 mask;
     UINT32 color[2];
     COLORREF modern_expected, legacy_expected, result;
 
-    mask = 0x00000000;
     color[0] = 0x00A0B0C0;
     color[1] = alpha ? 0xFF000000 : 0x00000000;
     modern_expected = alpha ? 0x00FFFFFF : 0x00C0B0A0;
