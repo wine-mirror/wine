@@ -340,6 +340,7 @@ struct bc_writer {
 };
 
 /* Debug utility routines */
+const char *debug_print_dstmod(DWORD mod);
 const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_swizzle(DWORD swizzle);
@@ -349,6 +350,7 @@ const char *debug_print_opcode(DWORD opcode);
 /* Utilities for internal->d3d constant mapping */
 DWORD d3d9_swizzle(DWORD bwriter_swizzle);
 DWORD d3d9_writemask(DWORD bwriter_writemask);
+DWORD d3d9_dstmod(DWORD bwriter_mod);
 DWORD d3d9_register(DWORD bwriter_register);
 DWORD d3d9_opcode(DWORD bwriter_opcode);
 
@@ -376,6 +378,13 @@ typedef enum _BWRITERSHADER_PARAM_REGISTER_TYPE {
 #define BWRITERSP_WRITEMASK_2   0x4 /* .z b */
 #define BWRITERSP_WRITEMASK_3   0x8 /* .w a */
 #define BWRITERSP_WRITEMASK_ALL 0xf /* all */
+
+typedef enum _BWRITERSHADER_PARAM_DSTMOD_TYPE {
+    BWRITERSPDM_NONE = 0,
+    BWRITERSPDM_SATURATE = 1,
+    BWRITERSPDM_PARTIALPRECISION = 2,
+    BWRITERSPDM_MSAMPCENTROID = 4,
+} BWRITERSHADER_PARAM_DSTMOD_TYPE;
 
 typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
     BWRITERSPSM_NONE = 0,

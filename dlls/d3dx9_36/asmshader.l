@@ -119,6 +119,11 @@ ps_3_0                  {return VER_PS30;       }
                             return COMPONENT;
                         }
 
+    /* Output modifiers */
+\_sat                   {return MOD_SAT;            }
+\_pp                    {return MOD_PP;             }
+\_centroid              {return MOD_CENTROID;       }
+
 {COMMA}                 {return yytext[0];          }
 -                       {return yytext[0];          }
 \(                      {return yytext[0];          }

@@ -68,6 +68,16 @@ DWORD d3d9_writemask(DWORD bwriter_writemask) {
     return ret;
 }
 
+DWORD d3d9_dstmod(DWORD bwriter_mod) {
+    DWORD ret = 0;
+
+    if(bwriter_mod & BWRITERSPDM_SATURATE)          ret |= D3DSPDM_SATURATE;
+    if(bwriter_mod & BWRITERSPDM_PARTIALPRECISION)  ret |= D3DSPDM_PARTIALPRECISION;
+    if(bwriter_mod & BWRITERSPDM_MSAMPCENTROID)     ret |= D3DSPDM_MSAMPCENTROID;
+
+    return ret;
+}
+
 DWORD d3d9_register(DWORD bwriter_register) {
     if(bwriter_register == BWRITERSPR_TEMP)         return D3DSPR_TEMP;
     if(bwriter_register == BWRITERSPR_CONST)        return D3DSPR_CONST;
@@ -86,6 +96,33 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         default:
             FIXME("Unhandled BWRITERSIO token %u\n", bwriter_opcode);
             return -1;
+    }
+}
+
+const char *debug_print_dstmod(DWORD mod) {
+    switch(mod) {
+        case 0:
+            return "";
+
+        case BWRITERSPDM_SATURATE:
+            return "_sat";
+        case BWRITERSPDM_PARTIALPRECISION:
+            return "_pp";
+        case BWRITERSPDM_MSAMPCENTROID:
+            return "_centroid";
+
+        case BWRITERSPDM_SATURATE | BWRITERSPDM_PARTIALPRECISION:
+            return "_sat_pp";
+        case BWRITERSPDM_SATURATE | BWRITERSPDM_MSAMPCENTROID:
+            return "_sat_centroid";
+        case BWRITERSPDM_PARTIALPRECISION | BWRITERSPDM_MSAMPCENTROID:
+            return "_pp_centroid";
+
+        case BWRITERSPDM_SATURATE | BWRITERSPDM_PARTIALPRECISION | BWRITERSPDM_MSAMPCENTROID:
+            return "_sat_pp_centroid";
+
+        default:
+            return "Unexpected modifier\n";
     }
 }
 

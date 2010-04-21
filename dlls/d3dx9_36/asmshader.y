@@ -88,6 +88,11 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token VER_PS2X
 %token VER_PS30
 
+/* Output modifiers */
+%token MOD_SAT
+%token MOD_PP
+%token MOD_CENTROID
+
 /* Misc stuff */
 %token <component> COMPONENT
 
@@ -100,6 +105,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <swizzle> swizzle
 %type <sw_components> sw_components
 %type <modshift> omods
+%type <modshift> omodifier
 %type <rel_reg> rel_reg
 %type <sregs> sregs
 
@@ -311,6 +317,34 @@ sw_components:        COMPONENT
 omods:                 /* Empty */
                         {
                             $$.mod = 0;
+                            $$.shift = 0;
+                        }
+                    | omods omodifier
+                        {
+                            $$.mod = $1.mod | $2.mod;
+                            if($1.shift && $2.shift) {
+                                asmparser_message(&asm_ctx, "Line %u: More than one shift flag\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                                $$.shift = $1.shift;
+                            } else {
+                                $$.shift = $1.shift | $2.shift;
+                            }
+                        }
+
+omodifier:            MOD_SAT
+                        {
+                            $$.mod = BWRITERSPDM_SATURATE;
+                            $$.shift = 0;
+                        }
+                    | MOD_PP
+                        {
+                            $$.mod = BWRITERSPDM_PARTIALPRECISION;
+                            $$.shift = 0;
+                        }
+                    | MOD_CENTROID
+                        {
+                            $$.mod = BWRITERSPDM_MSAMPCENTROID;
                             $$.shift = 0;
                         }
 

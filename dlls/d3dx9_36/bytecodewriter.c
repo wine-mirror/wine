@@ -233,6 +233,8 @@ static void sm_3_dstreg(struct bc_writer *This,
     token |= (d3d9reg << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
     token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
 
+    token |= d3d9_dstmod(mod);
+
     token |= d3d9_writemask(reg->writemask);
     put_dword(buffer, token);
 }
