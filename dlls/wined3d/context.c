@@ -1807,7 +1807,7 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
  * Returns: The needed context
  *
  *****************************************************************************/
-static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target)
+static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target)
 {
     IWineD3DSwapChain *swapchain = NULL;
     struct wined3d_context *current_context = context_get_current();
@@ -1822,27 +1822,28 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
                 && current_context->current_rt
                 && current_context->swapchain->device == This)
         {
-            target = current_context->current_rt;
+            target = (IWineD3DSurfaceImpl *)current_context->current_rt;
         }
         else
         {
             IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->swapchains[0];
-            if (swapchain->backBuffer) target = swapchain->backBuffer[0];
-            else target = swapchain->frontBuffer;
+            if (swapchain->backBuffer) target = (IWineD3DSurfaceImpl *)swapchain->backBuffer[0];
+            else target = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
         }
     }
 
-    if (current_context && current_context->current_rt == target)
+    if (current_context && (IWineD3DSurfaceImpl *)current_context->current_rt == target)
     {
         context_validate(current_context);
         return current_context;
     }
 
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
+    if (target->Flags & SFLAG_SWAPCHAIN)
+    {
         TRACE("Rendering onscreen\n");
 
+        swapchain = (IWineD3DSwapChain *)target->container;
         context = findThreadContextForSwapChain(swapchain, tid);
-        IWineD3DSwapChain_Release(swapchain);
     }
     else
     {
@@ -2184,7 +2185,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
 
     TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
 
-    context = FindContext(device, target);
+    context = FindContext(device, (IWineD3DSurfaceImpl *)target);
     context_setup_target(device, context, target);
     context_enter(context);
     if (!context->valid) return context;
