@@ -304,10 +304,9 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     MSIHANDLE patch = 0, info = 0;
     UINT r = ERROR_SUCCESS, type;
     DWORD size = 0;
-    LPCWSTR cmd_ptr = szCommandLine;
-    LPCWSTR product_code = szProductCode;
-    LPWSTR beg, end;
-    LPWSTR cmd = NULL, codes = NULL;
+    LPCWSTR cmd_ptr = szCommandLine, product_code = szProductCode;
+    LPWSTR beg, end, cmd = NULL, codes = NULL;
+    BOOL succeeded = FALSE;
 
     static const WCHAR patcheq[] = {'P','A','T','C','H','=',0};
     static WCHAR empty[] = {0};
@@ -366,14 +365,17 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     while ((end = strchrW(beg, '}')))
     {
         *(end + 1) = '\0';
-
         r = MsiConfigureProductExW(beg, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
-        if (r != ERROR_SUCCESS)
-            goto done;
-
+        if (r == ERROR_SUCCESS)
+        {
+            TRACE("patch applied\n");
+            succeeded = TRUE;
+        }
         beg = end + 2;
     }
 
+    if (succeeded)
+        r = ERROR_SUCCESS;
 done:
     msi_free(cmd);
     msi_free(codes);
