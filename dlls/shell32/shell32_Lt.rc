@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -208,6 +208,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Grupė"
 	IDS_SHV_COLUMN_DELFROM	"Originali vieta"
 	IDS_SHV_COLUMN_DELDATE	"Pašalinimo data"
+	IDS_SHV_COL_DOCS	"Dokumentai"
+	IDS_SHV_COL_STATUS	"Būsena"
+	IDS_SHV_COL_LOCATION	"Vieta"
+	IDS_SHV_COL_MODEL	"Modelis"
 
         /* special folders */
 	IDS_DESKTOP		"Darbalaukis"
