@@ -957,9 +957,8 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
 
 void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->current_rt;
     /* The drawable size of an onscreen drawable is the surface size.
      * (Actually: The window size, but the surface is created in window size) */
-    *width = surface->currentDesc.Width;
-    *height = surface->currentDesc.Height;
+    *width = context->current_rt->currentDesc.Width;
+    *height = context->current_rt->currentDesc.Height;
 }

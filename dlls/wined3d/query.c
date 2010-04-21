@@ -59,7 +59,7 @@ enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_qu
         return WINED3D_EVENT_QUERY_WRONG_THREAD;
     }
 
-    context = context_acquire(device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, (IWineD3DSurface *)query->context->current_rt, CTXUSAGE_RESOURCELOAD);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -136,7 +136,7 @@ enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_
         return WINED3D_EVENT_QUERY_WRONG_THREAD;
     }
 
-    context = context_acquire(device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, (IWineD3DSurface *)query->context->current_rt, CTXUSAGE_RESOURCELOAD);
 
     ENTER_GL();
     if (gl_info->supported[ARB_SYNC])
@@ -195,7 +195,7 @@ void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDevice
         }
         else
         {
-            context = context_acquire(device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+            context = context_acquire(device, (IWineD3DSurface *)query->context->current_rt, CTXUSAGE_RESOURCELOAD);
         }
     }
     else
@@ -348,7 +348,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         return S_OK;
     }
 
-    context = context_acquire(This->device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This->device, (IWineD3DSurface *)query->context->current_rt, CTXUSAGE_RESOURCELOAD);
 
     ENTER_GL();
 
@@ -490,7 +490,8 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
                 }
                 else
                 {
-                    context = context_acquire(This->device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+                    context = context_acquire(This->device, (IWineD3DSurface *)query->context->current_rt,
+                            CTXUSAGE_RESOURCELOAD);
 
                     ENTER_GL();
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
@@ -525,7 +526,8 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
                 }
                 else
                 {
-                    context = context_acquire(This->device, query->context->current_rt, CTXUSAGE_RESOURCELOAD);
+                    context = context_acquire(This->device, (IWineD3DSurface *)query->context->current_rt,
+                            CTXUSAGE_RESOURCELOAD);
 
                     ENTER_GL();
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));

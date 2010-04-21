@@ -7069,10 +7069,9 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
 
 void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->current_rt;
     /* The drawable size of a fbo target is the opengl texture size, which is the power of two size. */
-    *width = surface->pow2Width;
-    *height = surface->pow2Height;
+    *width = context->current_rt->pow2Width;
+    *height = context->current_rt->pow2Height;
 }
 
 void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height)

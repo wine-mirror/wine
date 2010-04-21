@@ -1054,7 +1054,7 @@ struct wined3d_context
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
 
     IWineD3DSwapChainImpl *swapchain;
-    IWineD3DSurface *current_rt;
+    IWineD3DSurfaceImpl *current_rt;
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some information about the context state for optimization */

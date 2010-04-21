@@ -620,7 +620,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                 const struct wined3d_gl_info *gl_info = context->gl_info;
                 struct fbo_entry *entry, *entry2;
 
-                if (context->current_rt == (IWineD3DSurface *)resource) context->current_rt = NULL;
+                if (context->current_rt == (IWineD3DSurfaceImpl *)resource) context->current_rt = NULL;
 
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
                 {
@@ -1347,7 +1347,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     }
 
     ret->swapchain = swapchain;
-    ret->current_rt = (IWineD3DSurface *)target;
+    ret->current_rt = target;
     ret->tid = GetCurrentThreadId();
 
     ret->render_offscreen = surface_is_offscreen(target);
@@ -1579,8 +1579,8 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     int i;
     const struct StateEntry *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    UINT width = ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Width;
-    UINT height = ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Height;
+    UINT width = context->current_rt->currentDesc.Width;
+    UINT height = context->current_rt->currentDesc.Height;
     DWORD sampler;
 
     TRACE("Setting up context %p for blitting\n", context);
@@ -1822,7 +1822,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
                 && current_context->current_rt
                 && current_context->swapchain->device == This)
         {
-            target = (IWineD3DSurfaceImpl *)current_context->current_rt;
+            target = current_context->current_rt;
         }
         else
         {
@@ -1832,7 +1832,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         }
     }
 
-    if (current_context && (IWineD3DSurfaceImpl *)current_context->current_rt == target)
+    if (current_context && current_context->current_rt == target)
     {
         context_validate(current_context);
         return current_context;
@@ -1875,7 +1875,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DSurfaceImpl *rt = (IWineD3DSurfaceImpl *)context->current_rt;
+    IWineD3DSurfaceImpl *rt = context->current_rt;
     IWineD3DDeviceImpl *device;
 
     device = rt->resource.device;
@@ -1960,7 +1960,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct
 {
     /* Onscreen surfaces are always in a swapchain */
     IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)((IWineD3DSurfaceImpl *)context->current_rt)->container;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)context->current_rt->container;
 
     if (!depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;
@@ -1971,7 +1971,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct
     WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
 
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
-    IWineD3DSurface_LoadLocation(context->current_rt, SFLAG_INTEXTURE, NULL);
+    IWineD3DSurface_LoadLocation((IWineD3DSurface *)context->current_rt, SFLAG_INTEXTURE, NULL);
     swapchain->render_to_fbo = TRUE;
     context_set_render_offscreen(context, device->StateTable, TRUE);
 }
@@ -2003,11 +2003,11 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
                 if (context->render_offscreen)
                 {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
-                    surface_internal_preload(context->current_rt, SRGB_RGB);
+                    surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_RGB);
 
                     ENTER_GL();
                     context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-                    context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, (IWineD3DSurfaceImpl *)context->current_rt);
+                    context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, context->current_rt);
                     context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
                     LEAVE_GL();
                 } else {
@@ -2097,7 +2097,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     const struct StateEntry *StateTable = device->StateTable;
 
     if (!target) return;
-    else if ((IWineD3DSurfaceImpl *)context->current_rt == target) return;
+    else if (context->current_rt == target) return;
     render_offscreen = surface_is_offscreen(target);
 
     context_set_render_offscreen(context, StateTable, render_offscreen);
@@ -2110,7 +2110,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     }
     else
     {
-        const struct wined3d_format_desc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
+        const struct wined3d_format_desc *old = context->current_rt->resource.format_desc;
         const struct wined3d_format_desc *new = target->resource.format_desc;
 
         if (old->format != new->format)
@@ -2131,7 +2131,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
          * has to be called with the old rendertarget active, otherwise a
          * wrong drawable is read. */
         if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-                && old_render_offscreen && (IWineD3DSurfaceImpl *)context->current_rt != target)
+                && old_render_offscreen && context->current_rt != target)
         {
             BOOL oldInDraw = device->isInDraw;
 
@@ -2147,23 +2147,23 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
             device->isInDraw = TRUE;
 
             /* Read the back buffer of the old drawable into the destination texture. */
-            if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
+            if (context->current_rt->texture_name_srgb)
             {
-                surface_internal_preload(context->current_rt, SRGB_BOTH);
+                surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_BOTH);
             }
             else
             {
-                surface_internal_preload(context->current_rt, SRGB_RGB);
+                surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_RGB);
             }
 
-            IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
+            IWineD3DSurface_ModifyLocation((IWineD3DSurface *)context->current_rt, SFLAG_INDRAWABLE, FALSE);
 
             device->isInDraw = oldInDraw;
         }
     }
 
     context->draw_buffer_dirty = TRUE;
-    context->current_rt = (IWineD3DSurface *)target;
+    context->current_rt = target;
 }
 
 /*****************************************************************************
