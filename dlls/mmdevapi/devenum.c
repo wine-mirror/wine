@@ -270,29 +270,25 @@ static ULONG WINAPI MMDevice_Release(IMMDevice *iface)
 
 static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD clsctx, PROPVARIANT *params, void **ppv)
 {
-    MMDevice *This = (MMDevice *)iface;
     HRESULT hr = E_NOINTERFACE;
+
+#ifdef HAVE_OPENAL
+    MMDevice *This = (MMDevice *)iface;
+
     TRACE("(%p)->(%p,%x,%p,%p)\n", iface, riid, clsctx, params, ppv);
 
     if (!ppv)
         return E_POINTER;
 
-    if (IsEqualIID(riid, &IID_IAudioClient))
+    if (!openal_loaded)
     {
-#ifdef HAVE_OPENAL
-        if (openal_loaded)
-            hr = AudioClient_Create(This, (IAudioClient**)ppv);
-        else
-#endif
-        {
-            ERR("Trying to open a device with openal not available\n");
-            hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
-        }
+        WARN("OpenAL is still not loaded\n");
+        hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
     }
+    else if (IsEqualIID(riid, &IID_IAudioClient))
+        hr = AudioClient_Create(This, (IAudioClient**)ppv);
     else if (IsEqualIID(riid, &IID_IAudioEndpointVolume))
-    {
-        FIXME("IID_IAudioEndpointVolume unsupported\n");
-    }
+        hr = AudioEndpointVolume_Create(This, (IAudioEndpointVolume**)ppv);
     else if (IsEqualIID(riid, &IID_IAudioSessionManager)
              || IsEqualIID(riid, &IID_IAudioSessionManager2))
     {
@@ -355,6 +351,10 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     }
     else
         ERR("Invalid/unknown iid %s\n", debugstr_guid(riid));
+#else
+    if (!ppv) return E_POINTER;
+    hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
+#endif
 
     if (FAILED(hr))
         *ppv = NULL;

@@ -41,6 +41,7 @@ typedef struct MMDevice {
 } MMDevice;
 
 extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv);
+extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv);
 
 #ifdef HAVE_OPENAL
 
