@@ -503,9 +503,8 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         state = get_button_state( hWnd );
         if ((btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON))
         {
-            if (wParam) style |= WS_TABSTOP;
-            else style &= ~WS_TABSTOP;
-            SetWindowLongW( hWnd, GWL_STYLE, style );
+            if (wParam) WIN_SetStyle( hWnd, WS_TABSTOP, 0 );
+            else WIN_SetStyle( hWnd, 0, WS_TABSTOP );
         }
         if ((state & 3) != wParam)
         {
@@ -522,15 +521,10 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     case BM_SETSTATE:
         state = get_button_state( hWnd );
         if (wParam)
-        {
-            if (state & BUTTON_HIGHLIGHTED) break;
             set_button_state( hWnd, state | BUTTON_HIGHLIGHTED );
-        }
         else
-        {
-            if (!(state & BUTTON_HIGHLIGHTED)) break;
             set_button_state( hWnd, state & ~BUTTON_HIGHLIGHTED );
-        }
+
         paint_button( hWnd, btn_type, ODA_SELECT );
         break;
 
@@ -1066,8 +1060,6 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
     LONG state = get_button_state( hwnd );
     HWND parent;
 
-    if (action == ODA_SELECT) return;
-
     GetClientRect( hwnd, &rc);
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
@@ -1084,7 +1076,20 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
         ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
         DrawFocusRect( hDC, &rc );
 
-    BUTTON_NOTIFY_PARENT( hwnd, BN_PAINT );
+    switch (action)
+    {
+    case ODA_FOCUS:
+        BUTTON_NOTIFY_PARENT( hwnd, (state & BUTTON_HASFOCUS) ? BN_SETFOCUS : BN_KILLFOCUS );
+        break;
+
+    case ODA_SELECT:
+        BUTTON_NOTIFY_PARENT( hwnd, (state & BUTTON_HIGHLIGHTED) ? BN_HILITE : BN_UNHILITE );
+        break;
+
+    default:
+        BUTTON_NOTIFY_PARENT( hwnd, BN_PAINT );
+        break;
+    }
 }
 
 
