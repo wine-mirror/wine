@@ -891,7 +891,7 @@
 # stub _strset_s
 @ cdecl _strtime(ptr)
 # stub _strtime_s
-# stub _strtod_l
+@ cdecl _strtod_l(str ptr ptr) MSVCRT_strtod_l
 @ cdecl _strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 # stub _strtol_l

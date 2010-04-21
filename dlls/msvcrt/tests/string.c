@@ -1080,6 +1080,61 @@ static void test__strtoi64(void)
     ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
+static inline BOOL almost_equal(double d1, double d2) {
+    if(d1-d2>-1e-16 && d1-d2<1e-16)
+        return TRUE;
+    return FALSE;
+}
+
+static void test__strtod(void)
+{
+    const char double1[] = "12.1";
+    const char double2[] = "-13.721";
+    const char double3[] = "INF";
+    const char double4[] = ".21e12";
+    const char double5[] = "214353e-3";
+
+    char *end;
+    double d;
+
+    d = strtod(double1, &end);
+    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+    ok(end == double1+4, "incorrect end (%d)\n", end-double1);
+
+    d = strtod(double2, &end);
+    ok(almost_equal(d, -13.721), "d = %lf\n", d);
+    ok(end == double2+7, "incorrect end (%d)\n", end-double2);
+
+    d = strtod(double3, &end);
+    todo_wine ok(almost_equal(d, 0), "d = %lf\n", d);
+    todo_wine ok(end == double3, "incorrect end (%d)\n", end-double3);
+
+    d = strtod(double4, &end);
+    ok(almost_equal(d, 210000000000.0), "d = %lf\n", d);
+    ok(end == double4+6, "incorrect end (%d)\n", end-double4);
+
+    d = strtod(double5, &end);
+    ok(almost_equal(d, 214.353), "d = %lf\n", d);
+    ok(end == double5+9, "incorrect end (%d)\n", end-double5);
+
+    d = strtod("12.1d2", NULL);
+    ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
+
+    /* Set locale with non '.' decimal point (',') */
+    if(!setlocale(LC_ALL, "Polish")) {
+        win_skip("system with limited locales\n");
+        return;
+    }
+
+    d = strtod("12.1", NULL);
+    todo_wine ok(almost_equal(d, 12.0), "d = %lf\n", d);
+
+    d = strtod("12,1", NULL);
+    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1133,4 +1188,5 @@ START_TEST(string)
     test_strtol();
     test_strnlen();
     test__strtoi64();
+    test__strtod();
 }

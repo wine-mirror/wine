@@ -137,11 +137,71 @@ double CDECL MSVCRT_atof( const char *str )
 }
 
 /*********************************************************************
+ *		strtod_l  (MSVCRT.@)
+ */
+double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
+{
+    const char *p, *dec_point=NULL, *exp=NULL;
+    char *copy;
+    double ret;
+    int err = errno;
+
+    if(!locale)
+        locale = get_locale();
+
+    if(!str) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return 0;
+    }
+
+    /* FIXME: use *_l functions */
+    p = str;
+    while(isspace(*p))
+        p++;
+    if(*p=='+' || *p=='-')
+        p++;
+    while(isdigit(*p))
+        p++;
+    if(*p == *locale->locinfo->lconv->decimal_point) {
+        if(*p!='.')
+            dec_point = p;
+        p++;
+    }
+    while(isdigit(*p))
+        p++;
+    if(*p=='d' || *p=='D')
+        exp = p;
+
+    /* FIXME: don't copy input string */
+    if((dec_point || exp) && (copy=_strdup(str))) {
+        if(dec_point)
+            copy[dec_point-str] = '.';
+
+        if(exp)
+            copy[exp-str] = 'e';
+
+        ret = strtod(copy, end);
+        if(end)
+            *end = (char*)str+(*end-copy);
+
+        MSVCRT_free(copy);
+    } else
+        ret = strtod(str, end);
+
+    if(err != errno)
+        *MSVCRT__errno() = errno;
+
+    return ret;
+
+}
+
+/*********************************************************************
  *		strtod  (MSVCRT.@)
  */
 double CDECL MSVCRT_strtod( const char *str, char **end )
 {
-    return strtod( str, end );
+    return MSVCRT_strtod_l( str, end, NULL );
 }
 
 /*********************************************************************
