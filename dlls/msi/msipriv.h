@@ -746,9 +746,7 @@ extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );
 extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *, LPCWSTR );
 extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE **pPackage );
 extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
-extern UINT MSI_SetPropertyW( MSIDATABASE *, LPCWSTR, LPCWSTR );
 extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * );
-extern UINT MSI_GetPropertyW( MSIDATABASE *, LPCWSTR, LPWSTR, LPDWORD );
 extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR );
 extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * );
 extern UINT MSI_GetFeatureStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * );
@@ -970,6 +968,8 @@ extern UINT ACTION_UnregisterProgIdInfo(MSIPACKAGE *package);
 extern DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
 extern LPWSTR msi_dup_record_field(MSIRECORD *row, INT index);
 extern LPWSTR msi_dup_property( MSIDATABASE *db, LPCWSTR prop );
+extern UINT msi_set_property( MSIDATABASE *, LPCWSTR, LPCWSTR );
+extern UINT msi_get_property( MSIDATABASE *, LPCWSTR, LPWSTR, LPDWORD );
 extern int msi_get_property_int( MSIDATABASE *package, LPCWSTR prop, int def );
 extern LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
                       BOOL set_prop, BOOL load_prop, MSIFOLDER **folder);

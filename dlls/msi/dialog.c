@@ -585,7 +585,7 @@ static void msi_dialog_update_controls( msi_dialog *dialog, LPCWSTR property )
 
 static void msi_dialog_set_property( MSIPACKAGE *package, LPCWSTR property, LPCWSTR value )
 {
-    UINT r = MSI_SetPropertyW( package->db, property, value );
+    UINT r = msi_set_property( package->db, property, value );
     if (r == ERROR_SUCCESS && !strcmpW( property, cszSourceDir ))
         msi_reset_folders( package, TRUE );
 }
@@ -3556,7 +3556,7 @@ static UINT msi_dialog_get_checkbox_state( msi_dialog *dialog,
     WCHAR state[2] = { 0 };
     DWORD sz = 2;
 
-    MSI_GetPropertyW( dialog->package->db, control->property, state, &sz );
+    msi_get_property( dialog->package->db, control->property, state, &sz );
     return state[0] ? 1 : 0;
 }
 
@@ -4024,7 +4024,7 @@ static UINT error_dialog_handler(MSIPACKAGE *package, LPCWSTR event,
     if ( !lstrcmpW( argument, error_abort ) || !lstrcmpW( argument, error_cancel ) ||
          !lstrcmpW( argument, error_no ) )
     {
-         MSI_SetPropertyW( package->db, result_prop, error_abort );
+         msi_set_property( package->db, result_prop, error_abort );
     }
 
     ControlEvent_CleanupSubscriptions(package);
@@ -4100,7 +4100,7 @@ UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR er
     if ( r != ERROR_SUCCESS )
         goto done;
 
-    r = MSI_GetPropertyW( package->db, result_prop, result, &size );
+    r = msi_get_property( package->db, result_prop, result, &size );
     if ( r != ERROR_SUCCESS)
         r = ERROR_SUCCESS;
 

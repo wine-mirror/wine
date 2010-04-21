@@ -163,17 +163,17 @@ static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
 
     end = strstrW(beg, sep);
     *end = '\0';
-    MSI_SetPropertyW(package->db, szCustomActionData, beg);
+    msi_set_property(package->db, szCustomActionData, beg);
     beg = end + 3;
 
     end = strstrW(beg, sep);
     *end = '\0';
-    MSI_SetPropertyW(package->db, szUserSID, beg);
+    msi_set_property(package->db, szUserSID, beg);
     beg = end + 3;
 
     end = strchrW(beg, ']');
     *end = '\0';
-    MSI_SetPropertyW(package->db, szProductCode, beg);
+    msi_set_property(package->db, szProductCode, beg);
 }
 
 UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
@@ -276,9 +276,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
             else if (actiondata)
-                MSI_SetPropertyW(package->db, szCustomActionData, actiondata);
+                msi_set_property(package->db, szCustomActionData, actiondata);
             else
-                MSI_SetPropertyW(package->db, szCustomActionData, szEmpty);
+                msi_set_property(package->db, szCustomActionData, szEmpty);
 
             msi_free(actiondata);
         }
@@ -327,7 +327,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
                 break;
 
             deformat_string(package,target,&deformated);
-            rc = MSI_SetPropertyW( package->db, source, deformated );
+            rc = msi_set_property( package->db, source, deformated );
             if (rc == ERROR_SUCCESS && !strcmpW( source, cszSourceDir ))
                 msi_reset_folders( package, TRUE );
             msi_free(deformated);
@@ -378,7 +378,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
     DWORD sz = MAX_PATH;
     UINT r;
 
-    if (MSI_GetPropertyW(package->db, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
+    if (msi_get_property(package->db, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
         GetTempPathW(MAX_PATH, fmt);
 
     if (GetTempFileNameW(fmt, szMsi, 0, tmp_file) == 0)
@@ -866,7 +866,7 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     UINT r;
 
     size = MAX_PATH;
-    MSI_GetPropertyW(package->db, cszSourceDir, package_path, &size);
+    msi_get_property(package->db, cszSourceDir, package_path, &size);
     lstrcatW(package_path, szBackSlash);
     lstrcatW(package_path, source);
 

@@ -277,7 +277,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
 
         if (lstrlenW(prop) > 0)
         {
-            UINT r = MSI_SetPropertyW( package->db, prop, val );
+            UINT r = msi_set_property( package->db, prop, val );
 
             TRACE("Found commandline property (%s) = (%s)\n", 
                    debugstr_w(prop), debugstr_w(val));
@@ -481,7 +481,7 @@ static UINT msi_set_media_source_prop(MSIPACKAGE *package)
     {
         prop = MSI_RecordGetString(rec, 1);
         patch = msi_dup_property(package->db, szPatch);
-        MSI_SetPropertyW(package->db, prop, patch);
+        msi_set_property(package->db, prop, patch);
         msi_free(patch);
     }
 
@@ -673,7 +673,7 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     check = msi_dup_property( package->db, cszSourceDir );
     if (!check || replace)
     {
-        UINT r = MSI_SetPropertyW( package->db, cszSourceDir, source );
+        UINT r = msi_set_property( package->db, cszSourceDir, source );
         if (r == ERROR_SUCCESS)
             msi_reset_folders( package, TRUE );
     }
@@ -681,7 +681,7 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
     check = msi_dup_property( package->db, cszSOURCEDIR );
     if (!check || replace)
-        MSI_SetPropertyW( package->db, cszSOURCEDIR, source );
+        msi_set_property( package->db, cszSOURCEDIR, source );
 
     msi_free( check );
     msi_free( source );
@@ -705,7 +705,7 @@ static UINT msi_set_context(MSIPACKAGE *package)
 
     package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
 
-    r = MSI_GetPropertyW(package->db, szAllUsers, val, &sz);
+    r = msi_get_property(package->db, szAllUsers, val, &sz);
     if (r == ERROR_SUCCESS)
     {
         num = atolW(val);
@@ -1520,8 +1520,8 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
 
-    MSI_SetPropertyW( package->db, szCosting, szZero );
-    MSI_SetPropertyW( package->db, cszRootDrive, c_colon );
+    msi_set_property( package->db, szCosting, szZero );
+    msi_set_property( package->db, cszRootDrive, c_colon );
 
     load_all_folders( package );
     load_all_components( package );
@@ -1691,7 +1691,7 @@ static BOOL process_overrides( MSIPACKAGE *package, int level )
     ret |= process_state_property( package, level, szAdvertise, INSTALLSTATE_ADVERTISED );
 
     if (ret)
-        MSI_SetPropertyW( package->db, szPreselected, szOne );
+        msi_set_property( package->db, szPreselected, szOne );
 
     return ret;
 }
@@ -2084,15 +2084,15 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         }
     }
 
-    MSI_SetPropertyW( package->db, szCosting, szOne );
+    msi_set_property( package->db, szCosting, szOne );
     /* set default run level if not set */
     level = msi_dup_property( package->db, szlevel );
     if (!level)
-        MSI_SetPropertyW( package->db, szlevel, szOne );
+        msi_set_property( package->db, szlevel, szOne );
     msi_free(level);
 
     /* FIXME: check volume disk space */
-    MSI_SetPropertyW( package->db, szOutOfDiskSpace, szZero );
+    msi_set_property( package->db, szOutOfDiskSpace, szZero );
 
     return MSI_SetFeatureStates(package);
 }
@@ -6802,7 +6802,7 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
     if (key && template)
     {
         FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
-        r = MSI_SetPropertyW( package->db, szProductID, key );
+        r = msi_set_property( package->db, szProductID, key );
     }
     msi_free( template );
     msi_free( key );
@@ -7216,7 +7216,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
 
-    MSI_SetPropertyW( package->db, szAction, szInstall );
+    msi_set_property( package->db, szAction, szInstall );
 
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
@@ -7264,7 +7264,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (!szCommandLine && msi_get_property_int( package->db, szInstalled, 0 ))
     {
         TRACE("setting reinstall property\n");
-        MSI_SetPropertyW( package->db, szReinstall, szAll );
+        msi_set_property( package->db, szReinstall, szAll );
     }
 
     /* properties may have been added by a transform */

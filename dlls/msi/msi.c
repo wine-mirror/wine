@@ -3535,10 +3535,10 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     if (r != ERROR_SUCCESS)
         return r;
 
-    MSI_SetPropertyW( package->db, szReinstallMode, reinstallmode );
-    MSI_SetPropertyW( package->db, szInstalled, szOne );
-    MSI_SetPropertyW( package->db, szLogVerbose, szOne );
-    MSI_SetPropertyW( package->db, szReinstall, szFeature );
+    msi_set_property( package->db, szReinstallMode, reinstallmode );
+    msi_set_property( package->db, szInstalled, szOne );
+    msi_set_property( package->db, szLogVerbose, szOne );
+    msi_set_property( package->db, szReinstall, szFeature );
 
     r = MSI_InstallPackage( package, sourcepath, NULL );
 
