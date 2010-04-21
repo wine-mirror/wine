@@ -2090,14 +2090,15 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
     }
 }
 
-static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_context *context, IWineD3DSurface *target)
+static void context_setup_target(IWineD3DDeviceImpl *device,
+        struct wined3d_context *context, IWineD3DSurfaceImpl *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
     const struct StateEntry *StateTable = device->StateTable;
 
     if (!target) return;
-    else if (context->current_rt == target) return;
-    render_offscreen = surface_is_offscreen((IWineD3DSurfaceImpl *)target);
+    else if ((IWineD3DSurfaceImpl *)context->current_rt == target) return;
+    render_offscreen = surface_is_offscreen(target);
 
     context_set_render_offscreen(context, StateTable, render_offscreen);
 
@@ -2110,7 +2111,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_cont
     else
     {
         const struct wined3d_format_desc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
-        const struct wined3d_format_desc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
+        const struct wined3d_format_desc *new = target->resource.format_desc;
 
         if (old->format != new->format)
         {
@@ -2130,7 +2131,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_cont
          * has to be called with the old rendertarget active, otherwise a
          * wrong drawable is read. */
         if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-                && old_render_offscreen && context->current_rt != target)
+                && old_render_offscreen && (IWineD3DSurfaceImpl *)context->current_rt != target)
         {
             BOOL oldInDraw = device->isInDraw;
 
@@ -2162,7 +2163,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device, struct wined3d_cont
     }
 
     context->draw_buffer_dirty = TRUE;
-    context->current_rt = target;
+    context->current_rt = (IWineD3DSurface *)target;
 }
 
 /*****************************************************************************
@@ -2186,7 +2187,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
     TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
 
     context = FindContext(device, (IWineD3DSurfaceImpl *)target);
-    context_setup_target(device, context, target);
+    context_setup_target(device, context, (IWineD3DSurfaceImpl *)target);
     context_enter(context);
     if (!context->valid) return context;
 
