@@ -417,7 +417,7 @@ static void ShellView_InitList(IShellViewImpl *This)
 
     for (i = 0; 1; i++)
     {
-        if (This->pSFParent)
+        if (This->pSF2Parent)
             hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd);
         else
             hr = IShellDetails_GetDetailsOf(details, NULL, i, &sd);
