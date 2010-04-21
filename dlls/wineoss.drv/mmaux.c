@@ -49,7 +49,7 @@ static int	NumDev = 6;
 
 /*-----------------------------------------------------------------------*/
 
-LRESULT OSS_AuxInit(void)
+static LRESULT OSS_AuxInit(void)
 {
     int	mixer;
     TRACE("()\n");
@@ -66,7 +66,7 @@ LRESULT OSS_AuxInit(void)
 
 /*-----------------------------------------------------------------------*/
 
-LRESULT OSS_AuxExit(void)
+static LRESULT OSS_AuxExit(void)
 {
     TRACE("()\n");
     return 0;
@@ -232,7 +232,9 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 #ifdef HAVE_OSS
     switch (wMsg) {
     case DRVM_INIT:
+        return OSS_AuxInit();
     case DRVM_EXIT:
+        return OSS_AuxExit();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */

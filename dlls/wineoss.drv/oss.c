@@ -33,37 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
-#ifdef HAVE_OSS
-
-/**************************************************************************
- * 				OSS_drvLoad			[internal]
- */
-static LRESULT OSS_drvLoad(void)
-{
-    TRACE("()\n");
-    OSS_WaveInit();
-    OSS_MidiInit();
-    OSS_MixerInit();
-    OSS_AuxInit();
-    return 1;
-}
-
-/**************************************************************************
- * 				OSS_drvFree			[internal]
- */
-static LRESULT OSS_drvFree(void)
-{
-    TRACE("()\n");
-    OSS_WaveExit();
-    OSS_MidiExit();
-    OSS_MixerExit();
-    OSS_AuxExit();
-    return 1;
-}
-
-#endif
-
-
 /**************************************************************************
  * 				DriverProc (WINEOSS.1)
  */
@@ -75,8 +44,8 @@ LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     switch(wMsg) {
 #ifdef HAVE_OSS
-    case DRV_LOAD:		return OSS_drvLoad();
-    case DRV_FREE:		return OSS_drvFree();
+    case DRV_LOAD:
+    case DRV_FREE:
     case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_ENABLE:

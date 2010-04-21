@@ -170,23 +170,23 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
     }
 }
 
+static int MIDI_loadcount;
 /**************************************************************************
  * 			OSS_MidiInit				[internal]
  *
  * Initializes the MIDI devices information variables
  */
-LRESULT OSS_MidiInit(void)
+static LRESULT OSS_MidiInit(void)
 {
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
     struct synth_info 	sinfo;
     struct midi_info 	minfo;
-    static	BOOL	bInitDone = FALSE;
 
-    if (bInitDone)
-	return 0;
+    TRACE("(%i)\n", MIDI_loadcount);
+    if (MIDI_loadcount++)
+        return 1;
 
     TRACE("Initializing the MIDI variables.\n");
-    bInitDone = TRUE;
 
     /* try to open device */
     if (midiOpenSeq() == -1) {
@@ -381,9 +381,12 @@ LRESULT OSS_MidiInit(void)
  *
  * Release the MIDI devices information variables
  */
-LRESULT OSS_MidiExit(void)
+static LRESULT OSS_MidiExit(void)
 {
-    TRACE("()\n");
+    TRACE("(%i)\n", MIDI_loadcount);
+
+    if (--MIDI_loadcount)
+        return 1;
 
     ZeroMemory(MidiInDev, sizeof(MidiInDev));
     ZeroMemory(MidiOutDev, sizeof(MidiOutDev));
@@ -1654,21 +1657,6 @@ static DWORD modReset(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
-#else /* HAVE_OSS_MIDI */
-
-LRESULT OSS_MidiInit(void)
-{
-    TRACE("()\n");
-    return FALSE;
-}
-
-LRESULT OSS_MidiExit(void)
-{
-    TRACE("()\n");
-    return 0;
-}
-
-
 #endif /* HAVE_OSS_MIDI */
 
 /*======================================================================*
@@ -1686,7 +1674,9 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
     case DRVM_INIT:
+        return OSS_MidiInit();
     case DRVM_EXIT:
+        return OSS_MidiExit();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
@@ -1711,6 +1701,10 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midStart(wDevID);
     case MIDM_STOP:
 	return midStop(wDevID);
+#else
+    case DRVM_INIT:
+    case MIDM_GETNUMDEVS:
+        return 0;
 #endif
     default:
 	TRACE("Unsupported message\n");
@@ -1730,7 +1724,9 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
     case DRVM_INIT:
+        return OSS_MidiInit();
     case DRVM_EXIT:
+        return OSS_MidiExit();
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
@@ -1757,6 +1753,10 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
+#else
+    case DRVM_INIT:
+    case MODM_GETNUMDEVS:
+        return 0;
 #endif
     default:
 	TRACE("Unsupported message\n");
