@@ -63,10 +63,13 @@
 #include "ks.h"
 #include "ksguid.h"
 #include "ksmedia.h"
-#include "esound.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
+
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 
 #ifdef HAVE_ESD
 
@@ -384,12 +387,16 @@ static void	ESD_CloseWaveInDevice(WINE_WAVEIN* wwi)
 	wwi->stream_fd = -1;
 }
 
+static int WAVE_loadcount;
 /******************************************************************
  *		ESD_WaveClose
  */
-LONG		ESD_WaveClose(void)
+static LONG ESD_WaveClose(void)
 {
     int iDevice;
+
+    if (--WAVE_loadcount)
+        return 1;
 
     /* close all open devices */
     for(iDevice = 0; iDevice < MAX_WAVEOUTDRV; iDevice++)
@@ -416,18 +423,20 @@ LONG		ESD_WaveClose(void)
  *
  * Initialize internal structures from ESD server info
  */
-LONG ESD_WaveInit(void)
+static LONG ESD_WaveInit(void)
 {
     int 	i;
     int 	fd;
 
     TRACE("called\n");
+    if (WAVE_loadcount++)
+        return 1;
 
     /* Testing whether the esd host is alive. */
     if ((fd = esd_open_sound(NULL)) < 0)
     {
 	WARN("esd_open_sound() failed (%d)\n", errno);
-	return -1;
+	return 0;
     }
     esd_close(fd);
 
@@ -497,7 +506,7 @@ LONG ESD_WaveInit(void)
 
 	WInDev[i].caps.wReserved1 = 0;
     }
-    return 0;
+    return 1;
 }
 
 /******************************************************************
