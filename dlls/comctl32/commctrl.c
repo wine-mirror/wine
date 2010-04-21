@@ -922,8 +922,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
     if (hbm) {
 	HDC hdcDst = CreateCompatibleDC (hdcScreen);
 	HBITMAP hbmOld = SelectObject (hdcDst, hbm);
-	const BYTE *lpBits = (const BYTE *)(lpBitmap + 1);
-	lpBits += nColorTableSize * sizeof(RGBQUAD);
+	const BYTE *lpBits = (const BYTE *)lpBitmap + nSize;
 	StretchDIBits (hdcDst, 0, 0, nWidth, nHeight, 0, 0, nWidth, nHeight,
 		         lpBits, (LPBITMAPINFO)lpBitmapInfo, DIB_RGB_COLORS,
 		         SRCCOPY);
