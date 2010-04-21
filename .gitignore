@@ -135,6 +135,7 @@ include/activdbg.h
 include/activscp.h
 include/amstream.h
 include/amvideo.h
+include/asptlb.h
 include/audioclient.h
 include/audiopolicy.h
 include/austream.h
