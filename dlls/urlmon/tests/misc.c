@@ -67,6 +67,10 @@ static HRESULT (WINAPI *pCoInternetCompareUrl)(LPCWSTR, LPCWSTR, DWORD);
 static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, DWORD);
 static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession **, DWORD);
 static HRESULT (WINAPI *pCoInternetParseUrl)(LPCWSTR, PARSEACTION, DWORD, LPWSTR, DWORD, DWORD *, DWORD);
+static HRESULT (WINAPI *pCoInternetQueryInfo)(LPCWSTR, QUERYOPTION, DWORD, LPVOID, DWORD, DWORD *, DWORD);
+static HRESULT (WINAPI *pCopyStgMedium)(const STGMEDIUM *, STGMEDIUM *);
+static HRESULT (WINAPI *pFindMimeFromData)(LPBC, LPCWSTR, LPVOID, DWORD, LPCWSTR,
+                        DWORD, LPWSTR*, DWORD);
 
 static void test_CreateFormatEnum(void)
 {
@@ -406,22 +410,26 @@ static void test_CoInternetQueryInfo(void)
     DWORD cb, i;
     HRESULT hres;
 
+    if (!pCoInternetQueryInfo) {
+        return;
+    }
+
     for(i=0; i < sizeof(query_info_tests)/sizeof(query_info_tests[0]); i++) {
         cb = 0xdeadbeef;
         memset(buf, '?', sizeof(buf));
-        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), &cb, 0);
+        hres = pCoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), &cb, 0);
         ok(hres == S_OK, "[%d] CoInternetQueryInfo failed: %08x\n", i, hres);
         ok(cb == sizeof(DWORD), "[%d] cb = %d\n", i, cb);
         ok(*(DWORD*)buf == query_info_tests[i].uses_net, "[%d] ret %x, expected %x\n",
            i, *(DWORD*)buf, query_info_tests[i].uses_net);
 
-        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, 3, &cb, 0);
+        hres = pCoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, 3, &cb, 0);
         ok(hres == E_FAIL, "[%d] CoInternetQueryInfo failed: %08x, expected E_FAIL\n", i, hres);
-        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, NULL, sizeof(buf), &cb, 0);
+        hres = pCoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, NULL, sizeof(buf), &cb, 0);
         ok(hres == E_FAIL, "[%d] CoInternetQueryInfo failed: %08x, expected E_FAIL\n", i, hres);
 
         memset(buf, '?', sizeof(buf));
-        hres = CoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), NULL, 0);
+        hres = pCoInternetQueryInfo(query_info_tests[0].url, QUERY_USES_NETWORK, 0, buf, sizeof(buf), NULL, 0);
         ok(hres == S_OK, "[%d] CoInternetQueryInfo failed: %08x\n", i, hres);
         ok(*(DWORD*)buf == query_info_tests[i].uses_net, "[%d] ret %x, expected %x\n",
            i, *(DWORD*)buf, query_info_tests[i].uses_net);
@@ -653,9 +661,13 @@ static void test_FindMimeFromData(void)
     LPWSTR mime;
     int i;
 
+    if (!pFindMimeFromData) {
+        return;
+    }
+
     for(i=0; i<sizeof(mime_tests)/sizeof(mime_tests[0]); i++) {
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
         if(mime_tests[i].mime) {
             ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
             ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime\n", i);
@@ -668,26 +680,26 @@ static void test_FindMimeFromData(void)
         }
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeTextPlain, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeTextPlain, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!lstrcmpW(mime, mimeTextPlain), "[%d] wrong mime\n", i);
         CoTaskMemFree(mime);
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = FindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeAppOctetStream, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeAppOctetStream, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!lstrcmpW(mime, mimeAppOctetStream), "[%d] wrong mime\n", i);
         CoTaskMemFree(mime);
     }
 
     for(i=0; i < sizeof(mime_tests2)/sizeof(mime_tests2[0]); i++) {
-        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+        hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 NULL, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
-        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+        hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeTextHtml, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime)
@@ -697,7 +709,7 @@ static void test_FindMimeFromData(void)
             ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
         CoTaskMemFree(mime);
 
-        hres = FindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
+        hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeImagePjpeg, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime) || i == 17)
@@ -710,39 +722,39 @@ static void test_FindMimeFromData(void)
         CoTaskMemFree(mime);
     }
 
-    hres = FindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
     ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
     CoTaskMemFree(mime);
 
-    hres = FindMimeFromData(NULL, url1, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
     ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
     CoTaskMemFree(mime);
 
-    hres = FindMimeFromData(NULL, url4, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, url4, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
     ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
     CoTaskMemFree(mime);
 
-    hres = FindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08x, excepted E_INVALIDARG\n", hres);
 
-    hres = FindMimeFromData(NULL, NULL, NULL, 0, mimeTextPlain, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, NULL, NULL, 0, mimeTextPlain, 0, &mime, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08x, expected E_INVALIDARG\n", hres);
 
-    hres = FindMimeFromData(NULL, NULL, data1, 0, NULL, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, NULL, data1, 0, NULL, 0, &mime, 0);
     ok(hres == E_FAIL, "FindMimeFromData failed: %08x, expected E_FAIL\n", hres);
 
-    hres = FindMimeFromData(NULL, url1, data1, 0, NULL, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, url1, data1, 0, NULL, 0, &mime, 0);
     ok(hres == E_FAIL, "FindMimeFromData failed: %08x, expected E_FAIL\n", hres);
 
-    hres = FindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, &mime, 0);
+    hres = pFindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
     ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
     CoTaskMemFree(mime);
 
-    hres = FindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, NULL, 0);
+    hres = pFindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, NULL, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08x, expected E_INVALIDARG\n", hres);
 }
 
@@ -1163,12 +1175,17 @@ static void test_CopyStgMedium(void)
 
     static WCHAR fileW[] = {'f','i','l','e',0};
 
+    if (!pCopyStgMedium) {
+        return;
+    }
+
+
     memset(&src, 0xf0, sizeof(src));
     memset(&dst, 0xe0, sizeof(dst));
     memset(&empty, 0xf0, sizeof(empty));
     src.tymed = TYMED_NULL;
     src.pUnkForRelease = NULL;
-    hres = CopyStgMedium(&src, &dst);
+    hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
     ok(dst.tymed == TYMED_NULL, "tymed=%d\n", dst.tymed);
     ok(dst.u.hGlobal == empty, "u=%p\n", dst.u.hGlobal);
@@ -1178,7 +1195,7 @@ static void test_CopyStgMedium(void)
     src.tymed = TYMED_ISTREAM;
     src.u.pstm = NULL;
     src.pUnkForRelease = NULL;
-    hres = CopyStgMedium(&src, &dst);
+    hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
     ok(dst.tymed == TYMED_ISTREAM, "tymed=%d\n", dst.tymed);
     ok(!dst.u.pstm, "pstm=%p\n", dst.u.pstm);
@@ -1188,16 +1205,16 @@ static void test_CopyStgMedium(void)
     src.tymed = TYMED_FILE;
     src.u.lpszFileName = fileW;
     src.pUnkForRelease = NULL;
-    hres = CopyStgMedium(&src, &dst);
+    hres = pCopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
     ok(dst.tymed == TYMED_FILE, "tymed=%d\n", dst.tymed);
     ok(dst.u.lpszFileName && dst.u.lpszFileName != fileW, "lpszFileName=%p\n", dst.u.lpszFileName);
     ok(!lstrcmpW(dst.u.lpszFileName, fileW), "wrong file name\n");
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
 
-    hres = CopyStgMedium(&src, NULL);
+    hres = pCopyStgMedium(&src, NULL);
     ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
-    hres = CopyStgMedium(NULL, &dst);
+    hres = pCopyStgMedium(NULL, &dst);
     ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
 }
 
@@ -1438,6 +1455,9 @@ START_TEST(misc)
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
     pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
     pCoInternetParseUrl = (void*) GetProcAddress(hurlmon, "CoInternetParseUrl");
+    pCoInternetQueryInfo = (void*) GetProcAddress(hurlmon, "CoInternetQueryInfo");
+    pCopyStgMedium = (void*) GetProcAddress(hurlmon, "CopyStgMedium");
+    pFindMimeFromData = (void*) GetProcAddress(hurlmon, "FindMimeFromData");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl) {
