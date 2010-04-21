@@ -320,7 +320,7 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
         if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
         if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
-        return sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD) + colors *
+        return info->bmiHeader.biSize + masks * sizeof(DWORD) + colors *
                ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
     }
 }
@@ -380,19 +380,10 @@ static BOOL is_dib_monochrome( const BITMAPINFO* info )
  *
  * Get the info from a bitmap header.
  * Return 1 for INFOHEADER, 0 for COREHEADER,
- * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
  */
 static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *bpp, DWORD *compr )
 {
-    if (header->biSize == sizeof(BITMAPINFOHEADER))
-    {
-        *width  = header->biWidth;
-        *height = header->biHeight;
-        *bpp    = header->biBitCount;
-        *compr  = header->biCompression;
-        return 1;
-    }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
         const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
@@ -402,23 +393,13 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *compr  = 0;
         return 0;
     }
-    if (header->biSize == sizeof(BITMAPV4HEADER))
+    else if (header->biSize >= sizeof(BITMAPINFOHEADER))
     {
-        const BITMAPV4HEADER *v4hdr = (const BITMAPV4HEADER *)header;
-        *width  = v4hdr->bV4Width;
-        *height = v4hdr->bV4Height;
-        *bpp    = v4hdr->bV4BitCount;
-        *compr  = v4hdr->bV4V4Compression;
-        return 4;
-    }
-    if (header->biSize == sizeof(BITMAPV5HEADER))
-    {
-        const BITMAPV5HEADER *v5hdr = (const BITMAPV5HEADER *)header;
-        *width  = v5hdr->bV5Width;
-        *height = v5hdr->bV5Height;
-        *bpp    = v5hdr->bV5BitCount;
-        *compr  = v5hdr->bV5Compression;
-        return 5;
+        *width  = header->biWidth;
+        *height = header->biHeight;
+        *bpp    = header->biBitCount;
+        *compr  = header->biCompression;
+        return 1;
     }
     ERR("(%d): unknown/wrong size for header\n", header->biSize );
     return -1;
