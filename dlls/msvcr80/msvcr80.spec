@@ -975,7 +975,7 @@
 @ stub _swprintf_p
 @ stub _swprintf_p_l
 @ stub _swprintf_s_l
-@ stub _swscanf_l
+@ varargs _swscanf_l(wstr wstr ptr) msvcrt._swscanf_l
 @ stub _swscanf_s_l
 @ extern _sys_errlist msvcrt._sys_errlist
 @ extern _sys_nerr msvcrt._sys_nerr
