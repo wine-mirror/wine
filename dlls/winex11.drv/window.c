@@ -929,7 +929,8 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
             unsigned int size_small;
             unsigned long *bits_small, *new;
 
-            if ((bits_small = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size_small )))
+            if ((bits_small = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size_small )) &&
+                (bits_small[0] != bits[0] || bits_small[1] != bits[1]))  /* size must be different */
             {
                 if ((new = HeapReAlloc( GetProcessHeap(), 0, bits,
                                         (size + size_small) * sizeof(unsigned long) )))
@@ -938,8 +939,8 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
                     memcpy( bits + size, bits_small, size_small * sizeof(unsigned long) );
                     size += size_small;
                 }
-                HeapFree( GetProcessHeap(), 0, bits_small );
             }
+            HeapFree( GetProcessHeap(), 0, bits_small );
             DeleteObject( ii.hbmColor );
             DeleteObject( ii.hbmMask );
         }
