@@ -3097,16 +3097,15 @@ static void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *dst_surface, IWineD3D
 }
 
 /* Uses the hardware to stretch and flip the image */
-static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
+static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWineD3DSurfaceImpl *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DDeviceImpl *device = dst_surface->resource.device;
     GLuint src, backup = 0;
-    IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     IWineD3DSwapChainImpl *src_swapchain = NULL;
     float left, right, top, bottom; /* Texture coordinates */
-    UINT fbwidth = Src->currentDesc.Width;
-    UINT fbheight = Src->currentDesc.Height;
+    UINT fbwidth = src_surface->currentDesc.Width;
+    UINT fbheight = src_surface->currentDesc.Height;
     struct wined3d_context *context;
     GLenum drawBuffer = GL_BACK;
     GLenum texture_target;
@@ -3117,15 +3116,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    context = context_acquire(device, Src, CTXUSAGE_BLIT);
-    surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
+    context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
+    surface_internal_preload((IWineD3DSurface *)dst_surface, SRGB_RGB);
 
-    src_offscreen = surface_is_offscreen(Src);
+    src_offscreen = surface_is_offscreen(src_surface);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
-    if (!noBackBufferBackup && !Src->texture_name)
+    if (!noBackBufferBackup && !src_surface->texture_name)
     {
         /* Get it a description */
-        surface_internal_preload(SrcSurface, SRGB_RGB);
+        surface_internal_preload((IWineD3DSurface *)src_surface, SRGB_RGB);
     }
     ENTER_GL();
 
@@ -3153,14 +3152,14 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
          */
-        texture_target = Src->texture_target;
-        glBindTexture(texture_target, Src->texture_name);
-        checkGLcall("glBindTexture(texture_target, Src->texture_name)");
+        texture_target = src_surface->texture_target;
+        glBindTexture(texture_target, src_surface->texture_name);
+        checkGLcall("glBindTexture(texture_target, src_surface->texture_name)");
         glEnable(texture_target);
         checkGLcall("glEnable(texture_target)");
 
         /* For now invalidate the texture copy of the back buffer. Drawable and sysmem copy are untouched */
-        Src->Flags &= ~SFLAG_INTEXTURE;
+        src_surface->Flags &= ~SFLAG_INTEXTURE;
     }
 
     /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
@@ -3181,7 +3180,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
     else
     {
-        glReadBuffer(surface_get_gl_buffer(Src));
+        glReadBuffer(surface_get_gl_buffer(src_surface));
     }
 
     /* TODO: Only back up the part that will be overwritten */
@@ -3201,11 +3200,14 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    IWineD3DSurface_GetContainer((IWineD3DSurface *)SrcSurface, &IID_IWineD3DSwapChain, (void **)&src_swapchain);
+    IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DSwapChain, (void **)&src_swapchain);
     if (src_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)src_swapchain);
-    if (!src_swapchain || (IWineD3DSurface *) Src == src_swapchain->backBuffer[0]) {
-        src = backup ? backup : Src->texture_name;
-    } else {
+    if (!src_swapchain || src_surface == (IWineD3DSurfaceImpl *)src_swapchain->backBuffer[0])
+    {
+        src = backup ? backup : src_surface->texture_name;
+    }
+    else
+    {
         glReadBuffer(GL_FRONT);
         checkGLcall("glReadBuffer(GL_FRONT)");
 
@@ -3217,8 +3219,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* TODO: Only copy the part that will be read. Use src_rect->left, src_rect->bottom as origin, but with the width watch
          * out for power of 2 sizes
          */
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Src->pow2Width, Src->pow2Height, 0,
-                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, src_surface->pow2Width,
+                src_surface->pow2Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         checkGLcall("glTexImage2D");
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
                             0, 0 /* read offsets */,
@@ -3245,19 +3247,23 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     left = src_rect->left;
     right = src_rect->right;
 
-    if(upsidedown) {
-        top = Src->currentDesc.Height - src_rect->top;
-        bottom = Src->currentDesc.Height - src_rect->bottom;
-    } else {
-        top = Src->currentDesc.Height - src_rect->bottom;
-        bottom = Src->currentDesc.Height - src_rect->top;
+    if (upsidedown)
+    {
+        top = src_surface->currentDesc.Height - src_rect->top;
+        bottom = src_surface->currentDesc.Height - src_rect->bottom;
+    }
+    else
+    {
+        top = src_surface->currentDesc.Height - src_rect->bottom;
+        bottom = src_surface->currentDesc.Height - src_rect->top;
     }
 
-    if(Src->Flags & SFLAG_NORMCOORD) {
-        left /= Src->pow2Width;
-        right /= Src->pow2Width;
-        top /= Src->pow2Height;
-        bottom /= Src->pow2Height;
+    if (src_surface->Flags & SFLAG_NORMCOORD)
+    {
+        left /= src_surface->pow2Width;
+        right /= src_surface->pow2Width;
+        top /= src_surface->pow2Height;
+        bottom /= src_surface->pow2Height;
     }
 
     /* draw the source texture stretched and upside down. The correct surface is bound already */
@@ -3286,15 +3292,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glEnd();
     checkGLcall("glEnd and previous");
 
-    if (texture_target != This->texture_target)
+    if (texture_target != dst_surface->texture_target)
     {
         glDisable(texture_target);
-        glEnable(This->texture_target);
-        texture_target = This->texture_target;
+        glEnable(dst_surface->texture_target);
+        texture_target = dst_surface->texture_target;
     }
 
     /* Now read the stretched and upside down image into the destination texture */
-    glBindTexture(texture_target, This->texture_name);
+    glBindTexture(texture_target, dst_surface->texture_name);
     checkGLcall("glBindTexture");
     glCopyTexSubImage2D(texture_target,
                         0,
@@ -3313,20 +3319,22 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             }
             glBindTexture(GL_TEXTURE_2D, backup);
             checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
-        } else {
-            if (texture_target != Src->texture_target)
+        }
+        else
+        {
+            if (texture_target != src_surface->texture_target)
             {
                 glDisable(texture_target);
-                glEnable(Src->texture_target);
-                texture_target = Src->texture_target;
+                glEnable(src_surface->texture_target);
+                texture_target = src_surface->texture_target;
             }
-            glBindTexture(Src->texture_target, Src->texture_name);
-            checkGLcall("glBindTexture(Src->texture_target, Src->texture_name)");
+            glBindTexture(src_surface->texture_target, src_surface->texture_name);
+            checkGLcall("glBindTexture(src_surface->texture_target, src_surface->texture_name)");
         }
 
         glBegin(GL_QUADS);
             /* top left */
-            glTexCoord2f(0.0f, (float)fbheight / (float)Src->pow2Height);
+            glTexCoord2f(0.0f, (float)fbheight / (float)src_surface->pow2Height);
             glVertex2i(0, 0);
 
             /* bottom left */
@@ -3334,11 +3342,12 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             glVertex2i(0, fbheight);
 
             /* bottom right */
-            glTexCoord2f((float)fbwidth / (float)Src->pow2Width, 0.0f);
-            glVertex2i(fbwidth, Src->currentDesc.Height);
+            glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width, 0.0f);
+            glVertex2i(fbwidth, src_surface->currentDesc.Height);
 
             /* top right */
-            glTexCoord2f((float) fbwidth / (float) Src->pow2Width, (float) fbheight / (float) Src->pow2Height);
+            glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width,
+                    (float)fbheight / (float)src_surface->pow2Height);
             glVertex2i(fbwidth, 0);
         glEnd();
     }
@@ -3346,7 +3355,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glDisable(texture_target)");
 
     /* Cleanup */
-    if (src != Src->texture_name && src != backup)
+    if (src != src_surface->texture_name && src != backup)
     {
         glDeleteTextures(1, &src);
         checkGLcall("glDeleteTextures(1, &src)");
@@ -3365,7 +3374,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     /* The texture is now most up to date - If the surface is a render target and has a drawable, this
      * path is never entered
      */
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)dst_surface, SFLAG_INTEXTURE, TRUE);
 }
 
 /* Until the blit_shader is ready, define some prototypes here. */
@@ -3589,7 +3598,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             fb_copy_to_texture_direct(This, Src, &src_rect, &dst_rect, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
-            fb_copy_to_texture_hwstretch(This, SrcSurface, &src_rect, &dst_rect, Filter);
+            fb_copy_to_texture_hwstretch(This, Src, &src_rect, &dst_rect, Filter);
         }
 
         if(!(This->Flags & SFLAG_DONOTFREE)) {
