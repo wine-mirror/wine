@@ -853,7 +853,7 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
         ptr = bits + 2;
         for (i = 0; i < bm.bmHeight; i++)
             for (j = 0; j < bm.bmWidth; j++, ptr++)
-                if ((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80) *ptr |= 0xff000000;
+                if (!((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80)) *ptr |= 0xff000000;
         HeapFree( GetProcessHeap(), 0, mask_bits );
     }
     HeapFree( GetProcessHeap(), 0, info );
@@ -923,19 +923,6 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
         rcMask.bottom = bm.bmHeight;
 
         hDC = CreateCompatibleDC(0);
-        hbmOrig = SelectObject(hDC, ii.hbmMask);
-        InvertRect(hDC, &rcMask);
-        SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
-        SelectObject(hDC, hbmOrig);
-
-        data->hWMIconBitmap = ii.hbmColor;
-        data->hWMIconMask = ii.hbmMask;
-
-        hints->icon_pixmap = X11DRV_get_pixmap(data->hWMIconBitmap);
-        hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
-        destroy_icon_window( display, data );
-        hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
-
         bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
         if (GetIconInfo( icon_small, &ii ))
         {
@@ -964,6 +951,19 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
             XDeleteProperty( display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, bits );
+
+        hbmOrig = SelectObject(hDC, ii.hbmMask);
+        InvertRect(hDC, &rcMask);
+        SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
+        SelectObject(hDC, hbmOrig);
+
+        data->hWMIconBitmap = ii.hbmColor;
+        data->hWMIconMask = ii.hbmMask;
+
+        hints->icon_pixmap = X11DRV_get_pixmap(data->hWMIconBitmap);
+        hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
+        destroy_icon_window( display, data );
+        hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
 
         DeleteDC(hDC);
     }
