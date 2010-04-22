@@ -4276,12 +4276,11 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
 	*bChanged = TRUE;
     }
     
-    if (lpLVItem->mask & LVIF_IMAGE)
-	if (lpSubItem->hdr.iImage != lpLVItem->iImage)
-	{
-	    lpSubItem->hdr.iImage = lpLVItem->iImage;
-	    *bChanged = TRUE;
-	}
+    if ((lpLVItem->mask & LVIF_IMAGE) && (lpSubItem->hdr.iImage != lpLVItem->iImage))
+    {
+        lpSubItem->hdr.iImage = lpLVItem->iImage;
+        *bChanged = TRUE;
+    }
 
     if ((lpLVItem->mask & LVIF_TEXT) && textcmpWT(lpSubItem->hdr.pszText, lpLVItem->pszText, isW))
     {
@@ -6434,7 +6433,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 
     if (isubitem)
     {
-	SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, isubitem);
+        SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, isubitem);
         pItemHdr = lpSubItem ? &lpSubItem->hdr : &callbackHdr;
         if (!lpSubItem)
         {
@@ -7883,7 +7882,14 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	SUBITEM_INFO *lpSubItem;
 	HDPA hdpaSubItems;
 	INT nItem, i;
-	
+	LVITEMW item;
+	BOOL changed;
+
+	item.iSubItem = nNewColumn;
+	item.mask = LVIF_TEXT | LVIF_IMAGE;
+	item.iImage = I_IMAGECALLBACK;
+	item.pszText = LPSTR_TEXTCALLBACKW;
+
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
             hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, nItem);
@@ -7893,6 +7899,10 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 		if (lpSubItem->iSubItem >= nNewColumn)
 		    lpSubItem->iSubItem++;
 	    }
+
+	    /* add new subitem for each item */
+	    item.iItem = nItem;
+	    set_sub_item(infoPtr, &item, isW, &changed);
 	}
     }
 
