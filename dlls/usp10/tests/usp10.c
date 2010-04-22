@@ -670,9 +670,9 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     int             pcItems;
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
     WCHAR           TestItem2[] = {'T', 'e', 's', 't', 'b', 0}; 
-    WCHAR           TestItem3[] = {'T', 'e', 's', 't', 'c',' ','1','2','3',' ',' ','e','n','d',0}; 
-    WCHAR           TestItem4[] = {'T', 'e', 's', 't', 'c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0};
-    WCHAR           TestItem5[] = {0x0684,'T','e','s','t','c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0}; 
+    WCHAR           TestItem3[] = {'T', 'e', 's', 't', 'c',' ','1','2','3',' ',' ','e','n','d',0};
+    WCHAR           TestItem4[] = {'T', 'e', 's', 't', 'd',' ',0x0684,0x0694,0x06a4,' ',' ','\r','\n','e','n','d',0};
+    WCHAR           TestItem5[] = {0x0684,'T','e','s','t','e',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0};
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -692,7 +692,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
      * by checking a known value in the table                                                */
     hr = ScriptGetProperties(&ppSp, &iMaxProps);
     trace("number of script properties %d\n", iMaxProps);
-    ok (iMaxProps > 0, "Number of scripts returned should not be 0\n"); 
+    ok (iMaxProps > 0, "Number of scripts returned should not be 0\n");
     if  (iMaxProps > 0)
          ok( ppSp[5]->langid == 9, "Langid[5] not = to 9\n"); /* Check a known value to ensure   */
                                                               /* ptrs work                       */
@@ -754,7 +754,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         cMaxItems = 255;
         hr = ScriptItemize(TestItem2, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
         ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
-        /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
+        /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is   *
          *  returned.                                                                               */
         ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
                             "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
@@ -809,15 +809,15 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         ok (!psc, "psc is not null after ScriptFreeCache\n");
     }
 
-    /* This is a valid test that will cause parsing to take place and create 3 script_items   */
+    /* This is a valid test that will cause parsing to take place and create 5 script_items   */
     cInChars = (sizeof(TestItem4)/2)-1;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem4, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
     ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     if  (hr == 0)
 	{
-        ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
-        if (pcItems > 2)
+        ok (pcItems == 5, "The number of SCRIPT_ITEMS should be 5 not %d\n", pcItems);
+        if (pcItems > 4)
         {
             ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == 6,
                 "Start pos [0] not = 0 (%d) or end pos [1] not = %d\n",
@@ -825,9 +825,15 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
             ok (pItem[1].iCharPos == 6 && pItem[2].iCharPos == 11,
                 "Start pos [1] not = 6 (%d) or end pos [2] not = 11 (%d)\n",
                 pItem[1].iCharPos, pItem[2].iCharPos);
-            ok (pItem[2].iCharPos == 11 && pItem[3].iCharPos == cInChars,
-                "Start pos [2] not = 11 (%d) or end [3] pos not = 14 (%d), cInChars = %d\n",
-                pItem[2].iCharPos, pItem[3].iCharPos, cInChars);
+            ok (pItem[2].iCharPos == 11 && pItem[3].iCharPos == 12,
+                "Start pos [2] not = 11 (%d) or end [3] pos not = 12 (%d)\n",
+                pItem[2].iCharPos, pItem[3].iCharPos);
+            ok (pItem[3].iCharPos == 12 && pItem[4].iCharPos == 13,
+                "Start pos [3] not = 12 (%d) or end [4] pos not = 13 (%d)\n",
+                pItem[3].iCharPos, pItem[4].iCharPos);
+            ok (pItem[4].iCharPos == 13 && pItem[5].iCharPos == cInChars,
+                "Start pos [4] not = 13 (%d) or end [5] pos not = 16 (%d), cInChars = %d\n",
+                pItem[4].iCharPos, pItem[5].iCharPos, cInChars);
         }
         hr = ScriptFreeCache( &psc);
         ok (!psc, "psc is not null after ScriptFreeCache\n");
@@ -835,12 +841,12 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
 
     /*
      * This test is for when the first unicode character requires bidi support
-     */ 
+     */
     cInChars = (sizeof(TestItem5)-1)/sizeof(WCHAR);
     hr = ScriptItemize(TestItem5, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
     ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
     ok (pcItems == 4, "There should have been 4 items, found %d\n", pcItems);
-    ok (pItem[0].a.s.uBidiLevel == 1, "The first character should have been bidi=1 not %d\n", 
+    ok (pItem[0].a.s.uBidiLevel == 1, "The first character should have been bidi=1 not %d\n",
                                        pItem[0].a.s.uBidiLevel);
 }
 
