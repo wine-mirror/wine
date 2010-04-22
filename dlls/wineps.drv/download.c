@@ -168,20 +168,23 @@ static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
  * the font size we'll get the data directly from the TrueType HEAD table rather
  * than using GetOutlineTextMetrics.
  */
-static BOOL get_bbox(PSDRV_PDEVICE *physDev, RECT *rc, UINT *emsize)
+static BOOL get_bbox(HDC hdc, RECT *rc, UINT *emsize)
 {
     BYTE head[54]; /* the head table is 54 bytes long */
 
-    if(GetFontData(physDev->hdc, MS_MAKE_TAG('h','e','a','d'), 0, head,
-                   sizeof(head)) == GDI_ERROR) {
+    if(GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, head, sizeof(head)) == GDI_ERROR)
+    {
         ERR("Can't retrieve head table\n");
         return FALSE;
     }
     *emsize = GET_BE_WORD(head + 18); /* unitsPerEm */
-    rc->left = (signed short)GET_BE_WORD(head + 36); /* xMin */
-    rc->bottom = (signed short)GET_BE_WORD(head + 38); /* yMin */
-    rc->right = (signed short)GET_BE_WORD(head + 40); /* xMax */
-    rc->top = (signed short)GET_BE_WORD(head + 42); /* yMax */
+    if(rc)
+    {
+        rc->left   = (signed short)GET_BE_WORD(head + 36); /* xMin */
+        rc->bottom = (signed short)GET_BE_WORD(head + 38); /* yMin */
+        rc->right  = (signed short)GET_BE_WORD(head + 40); /* xMax */
+        rc->top    = (signed short)GET_BE_WORD(head + 42); /* yMax */
+    }
     return TRUE;
 }
 
@@ -243,7 +246,7 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
         RECT bbox;
         UINT emsize;
 
-        if (!get_bbox(physDev, &bbox, &emsize)) {
+        if (!get_bbox(physDev->hdc, &bbox, &emsize)) {
 	    HeapFree(GetProcessHeap(), 0, potm);
 	    return FALSE;
 	}
