@@ -838,7 +838,7 @@
 @ cdecl -arch=i386 _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb( double long) msvcrt._scalb
 @ varargs _scanf_l(str ptr) msvcrt._scanf_l
-@ stub _scanf_s_l
+@ varargs _scanf_s_l(str ptr) msvcrt._scanf_s_l
 @ stub _scprintf
 @ stub _scprintf_l
 @ stub _scprintf_p
@@ -1343,7 +1343,7 @@
 @ cdecl rename(str str) msvcrt.rename
 @ cdecl rewind(ptr) msvcrt.rewind
 @ varargs scanf(str) msvcrt.scanf
-@ stub scanf_s
+@ varargs scanf_s(str) msvcrt.scanf_s
 @ cdecl setbuf(ptr ptr) msvcrt.setbuf
 @ cdecl setlocale(long str) msvcrt.setlocale
 @ cdecl setvbuf(ptr str long long) msvcrt.setvbuf

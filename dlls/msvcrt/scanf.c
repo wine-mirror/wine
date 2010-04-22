@@ -184,6 +184,34 @@ int CDECL MSVCRT__scanf_l(const char *format, MSVCRT__locale_t locale, ...)
 }
 
 /*********************************************************************
+ *		scanf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_scanf_s(const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vfscanf_s_l(MSVCRT_stdin, format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_scanf_s_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__scanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vfscanf_s_l(MSVCRT_stdin, format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		fwscanf (MSVCRT.@)
  */
 int CDECL MSVCRT_fwscanf(MSVCRT_FILE *file, const MSVCRT_wchar_t *format, ...)
