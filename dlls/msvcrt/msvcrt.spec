@@ -858,7 +858,7 @@
 # stub _sprintf_p_l
 # stub _sprintf_s_l
 @ varargs _sscanf_l(str str ptr) MSVCRT__sscanf_l
-# stub _sscanf_s_l
+@ varargs _sscanf_s_l(str str ptr) MSVCRT__sscanf_s_l
 @ cdecl _stat(str ptr) MSVCRT_stat
 @ cdecl _stat64(str ptr) MSVCRT_stat64
 @ cdecl _stati64(str ptr) MSVCRT_stati64
@@ -1306,7 +1306,7 @@
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
-# stub sscanf_s
+@ varargs sscanf_s(str str) MSVCRT_sscanf_s
 @ cdecl strcat(str str) ntdll.strcat
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl strchr(str long) ntdll.strchr
