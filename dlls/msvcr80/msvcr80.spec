@@ -1179,7 +1179,7 @@
 @ cdecl _write(long ptr long) msvcrt._write
 @ cdecl _wrmdir(wstr) msvcrt._wrmdir
 @ varargs _wscanf_l(wstr ptr) msvcrt._wscanf_l
-@ stub _wscanf_s_l
+@ varargs _wscanf_s_l(wstr ptr) msvcrt._wscanf_s_l
 @ cdecl _wsearchenv(wstr wstr ptr) msvcrt._wsearchenv
 @ stub _wsearchenv_s
 @ cdecl _wsetlocale(long wstr) msvcrt._wsetlocale
@@ -1465,4 +1465,4 @@
 @ varargs wprintf(wstr) msvcrt.wprintf
 @ stub wprintf_s
 @ varargs wscanf(wstr) msvcrt.wscanf
-@ stub wscanf_s
+@ varargs wscanf_s(wstr) msvcrt.wscanf_s

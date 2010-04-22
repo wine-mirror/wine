@@ -1108,7 +1108,7 @@
 @ cdecl _write(long ptr long) MSVCRT__write
 @ cdecl _wrmdir(wstr)
 @ varargs _wscanf_l(wstr ptr) MSVCRT__wscanf_l
-# stub _wscanf_s_l
+@ varargs _wscanf_s_l(wstr ptr) MSVCRT__wscanf_s_l
 @ cdecl _wsearchenv(wstr wstr ptr)
 # stub _wsearchenv_s
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
@@ -1405,7 +1405,7 @@
 @ varargs wprintf(wstr) MSVCRT_wprintf
 # stub wprintf_s
 @ varargs wscanf(wstr) MSVCRT_wscanf
-# stub wscanf_s
+@ varargs wscanf_s(wstr) MSVCRT_wscanf_s
 
 # Functions not exported in native dll:
 @ cdecl _get_invalid_parameter_handler()
