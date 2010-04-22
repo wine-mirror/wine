@@ -48,7 +48,7 @@
 #ifdef CONSOLE
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
-#define _FUNCTION_ static int MSVCRT_vcscanf(const char *format, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vcscanf_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else
 #ifdef STRING
 #undef _EOF_
@@ -56,19 +56,19 @@
 #define _GETC_(file) (consumed++, *file++)
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #ifdef WIDE_SCANF
-#define _FUNCTION_ static int MSVCRT_vswscanf(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vswscanf_l(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else /* WIDE_SCANF */
-#define _FUNCTION_ static int MSVCRT_vsscanf(const char *file, const char *format, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vsscanf_l(const char *file, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* WIDE_SCANF */
 #else /* STRING */
 #ifdef WIDE_SCANF
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
-#define _FUNCTION_ static int MSVCRT_vfwscanf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfwscanf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else /* WIDE_SCANF */
 #define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
-#define _FUNCTION_ static int MSVCRT_vfscanf(MSVCRT_FILE* file, const char *format, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfscanf_l(MSVCRT_FILE* file, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* WIDE_SCANF */
 #endif /* STRING */
 #endif /* CONSOLE */
@@ -90,6 +90,9 @@ _FUNCTION_ {
 #endif /* WIDE_SCANF */
     nch = _GETC_(file);
     if (nch == _EOF_) return _EOF_RET;
+
+    if(!locale)
+        locale = get_locale();
 
     while (*format) {
 	/* a whitespace character in the format string causes scanf to read,
@@ -250,7 +253,7 @@ _FUNCTION_ {
                         nch = _GETC_(file);
                     }
 		    /* get first digit. */
-		    if ('.' != nch) {
+		    if (*locale->locinfo->lconv->decimal_point != nch) {
 		      if (!_ISDIGIT_(nch)) break;
 		      cur = (nch - '0');
 		      nch = _GETC_(file);
@@ -265,7 +268,7 @@ _FUNCTION_ {
 		      cur = 0; /* MaxPayneDemo Fix: .8 -> 0.8 */
 		    }
 		    /* handle decimals */
-                    if (width!=0 && nch == '.') {
+                    if (width!=0 && nch == *locale->locinfo->lconv->decimal_point) {
                         long double dec = 1;
                         nch = _GETC_(file);
 			if (width>0) width--;
