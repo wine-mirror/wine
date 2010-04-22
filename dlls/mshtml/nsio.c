@@ -196,16 +196,15 @@ static BOOL translate_url(HTMLDocumentObj *doc, nsWineURI *uri)
 
     url = heap_strdupW(uri->wine_url);
     hres = IDocHostUIHandler_TranslateUrl(doc->hostui, 0, url, &new_url);
-    heap_free(url);
-    if(hres != S_OK || !new_url)
-        return FALSE;
-
-    if(strcmpW(url, new_url)) {
-        FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(url), debugstr_w(new_url));
-        ret = TRUE;
+    if(hres == S_OK && new_url) {
+        if(strcmpW(url, new_url)) {
+            FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(url), debugstr_w(new_url));
+            ret = TRUE;
+        }
+        CoTaskMemFree(new_url);
     }
 
-    CoTaskMemFree(new_url);
+    heap_free(url);
     return ret;
 }
 
