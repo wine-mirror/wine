@@ -199,10 +199,7 @@ DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 
-/* midi.c */
-extern LONG ALSA_MidiInit(void);
-
 /* waveinit.c */
-extern LONG ALSA_WaveInit(void);
+extern void ALSA_WaveInit(void);
 
 #endif /* __ALSA_H */

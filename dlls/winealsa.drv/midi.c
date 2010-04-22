@@ -1222,8 +1222,6 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
     }
 }
 
-#endif /* HAVE_ALSA */
-
 
 /*======================================================================*
  *                  	    MIDI entry points 				*
@@ -1234,9 +1232,8 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
  *
  * Initializes the MIDI devices information variables
  */
-LONG ALSA_MidiInit(void)
+static LONG ALSA_MidiInit(void)
 {
-#ifdef HAVE_ALSA
     static	BOOL	bInitDone = FALSE;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
@@ -1290,9 +1287,10 @@ LONG ALSA_MidiInit(void)
     HeapFree( GetProcessHeap(), 0, pinfo );
 
     TRACE("End\n");
-#endif
     return TRUE;
 }
+
+#endif
 
 /**************************************************************************
  * 			midMessage (WINEALSA.@)
@@ -1305,6 +1303,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
 #ifdef HAVE_ALSA
     case DRVM_INIT:
+        ALSA_MidiInit();
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
@@ -1349,6 +1348,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
 #ifdef HAVE_ALSA
     case DRVM_INIT:
+        ALSA_MidiInit();
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:

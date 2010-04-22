@@ -725,8 +725,7 @@ LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     switch(wMsg) {
 #ifdef HAVE_ALSA
-    case DRV_LOAD:		ALSA_WaveInit();
-				ALSA_MidiInit();
+    case DRV_LOAD:
     case DRV_FREE:
     case DRV_OPEN:
     case DRV_CLOSE:

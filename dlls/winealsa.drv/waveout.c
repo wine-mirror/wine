@@ -1169,6 +1169,7 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     switch (wMsg) {
     case DRVM_INIT:
+        ALSA_WaveInit();
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
