@@ -911,7 +911,7 @@
 # stub _swprintf_p_l
 # stub _swprintf_s_l
 @ varargs _swscanf_l(wstr wstr ptr) MSVCRT__swscanf_l
-# stub _swscanf_s_l
+@ varargs _swscanf_s_l(wstr wstr ptr) MSVCRT__swscanf_s_l
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
 @ cdecl _tell(long) MSVCRT__tell
@@ -1338,7 +1338,7 @@
 @ varargs swprintf(ptr wstr) MSVCRT_swprintf
 @ varargs swprintf_s(ptr long wstr) MSVCRT_swprintf_s
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
-# stub swscanf_s
+@ varargs swscanf_s(wstr wstr) MSVCRT_swscanf_s
 @ cdecl system(str) MSVCRT_system
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl tanh(double) MSVCRT_tanh
