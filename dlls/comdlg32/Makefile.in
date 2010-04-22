@@ -52,6 +52,8 @@ RC_SRCS = \
 
 SVG_SRCS = \
 	pd32_collate.svg \
-	pd32_nocollate.svg
+	pd32_landscape.svg \
+	pd32_nocollate.svg \
+	pd32_portrait.svg
 
 @MAKE_DLL_RULES@
