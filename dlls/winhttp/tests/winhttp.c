@@ -1629,8 +1629,10 @@ static void test_Timeouts (void)
 
 static void test_resolve_timeout(void)
 {
-    static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
-    static const WCHAR srevaewedoc[] = {'s','r','e','v','a','e','w','e','d','o','c','.','m','o','c',0};
+    static const WCHAR codeweavers[] =
+        {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
+    static const WCHAR nxdomain[] =
+        {'n','x','d','o','m','a','i','n','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
 
     HINTERNET ses, con, req;
     DWORD timeout;
@@ -1643,7 +1645,7 @@ static void test_resolve_timeout(void)
     ret = WinHttpSetOption(ses, WINHTTP_OPTION_RESOLVE_TIMEOUT, &timeout, sizeof(timeout));
     ok(ret, "failed to set resolve timeout %u\n", GetLastError());
 
-    con = WinHttpConnect(ses, srevaewedoc, 0, 0);
+    con = WinHttpConnect(ses, nxdomain, 0, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
