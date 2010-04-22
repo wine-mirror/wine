@@ -1581,11 +1581,11 @@ static Picture get_mask_pict( int alpha )
 
     if (!pixmap)
     {
-        const WineXRenderFormat *fmt = get_xrender_format( WXR_FORMAT_MONO );
+        const WineXRenderFormat *fmt = get_xrender_format( WXR_FORMAT_A8R8G8B8 );
         XRenderPictureAttributes pa;
 
         wine_tsx11_lock();
-        pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
+        pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 32 );
         pa.repeat = RepeatNormal;
         pict = pXRenderCreatePicture( gdi_display, pixmap, fmt->pict_format, CPRepeat, &pa );
         wine_tsx11_unlock();
