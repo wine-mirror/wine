@@ -196,29 +196,9 @@ static BOOL get_bbox(HDC hdc, RECT *rc, UINT *emsize)
  */
 BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev)
 {
-    char *ps_name;
-    LPOUTLINETEXTMETRICA potm;
-    DWORD len = GetOutlineTextMetricsA(physDev->hdc, 0, NULL);
-
-    if(!len) return FALSE;
-    potm = HeapAlloc(GetProcessHeap(), 0, len);
-    GetOutlineTextMetricsA(physDev->hdc, len, potm);
-    get_download_name(physDev, potm, &ps_name);
-
     physDev->font.fontloc = Download;
-    physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
+    physDev->font.fontinfo.Download = NULL;
 
-    physDev->font.size = abs(PSDRV_YWStoDS(physDev, /* ppem */
-                                       potm->otmTextMetrics.tmAscent +
-                                       potm->otmTextMetrics.tmDescent -
-                                       potm->otmTextMetrics.tmInternalLeading));
-    physDev->font.underlineThickness = potm->otmsUnderscoreSize;
-    physDev->font.underlinePosition = potm->otmsUnderscorePosition;
-    physDev->font.strikeoutThickness = potm->otmsStrikeoutSize;
-    physDev->font.strikeoutPosition = potm->otmsStrikeoutPosition;
-
-    HeapFree(GetProcessHeap(), 0, ps_name);
-    HeapFree(GetProcessHeap(), 0, potm);
     return TRUE;
 }
 
@@ -241,6 +221,17 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     GetOutlineTextMetricsA(physDev->hdc, len, potm);
 
     get_download_name(physDev, potm, &ps_name);
+    physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
+
+    physDev->font.size = abs(PSDRV_YWStoDS(physDev, /* ppem */
+                                       potm->otmTextMetrics.tmAscent +
+                                       potm->otmTextMetrics.tmDescent -
+                                       potm->otmTextMetrics.tmInternalLeading));
+    physDev->font.underlineThickness = potm->otmsUnderscoreSize;
+    physDev->font.underlinePosition = potm->otmsUnderscorePosition;
+    physDev->font.strikeoutThickness = potm->otmsStrikeoutSize;
+    physDev->font.strikeoutPosition = potm->otmsStrikeoutPosition;
+
 
     if(physDev->font.fontinfo.Download == NULL) {
         RECT bbox;
