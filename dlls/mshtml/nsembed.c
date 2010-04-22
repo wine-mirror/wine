@@ -56,7 +56,6 @@ static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
 static nsresult (*NS_StringContainerInit2)(nsStringContainer*,const PRUnichar*,PRUint32,PRUint32);
 static nsresult (*NS_CStringContainerInit2)(nsCStringContainer*,const char*,PRUint32,PRUint32);
-static nsresult (*NS_CStringContainerInit)(nsCStringContainer*);
 static nsresult (*NS_StringContainerFinish)(nsStringContainer*);
 static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
 static nsresult (*NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
@@ -182,9 +181,8 @@ static BOOL load_xpcom(const PRUnichar *gre_path)
     NS_DLSYM(NS_InitXPCOM2);
     NS_DLSYM(NS_ShutdownXPCOM);
     NS_DLSYM(NS_GetComponentRegistrar);
-    NS_DLSYM(NS_CStringContainerInit2);
     NS_DLSYM(NS_StringContainerInit2);
-    NS_DLSYM(NS_CStringContainerInit);
+    NS_DLSYM(NS_CStringContainerInit2);
     NS_DLSYM(NS_StringContainerFinish);
     NS_DLSYM(NS_CStringContainerFinish);
     NS_DLSYM(NS_StringSetData);
@@ -522,11 +520,9 @@ void nsfree(void *mem)
     nsIMemory_Free(nsmem, mem);
 }
 
-static void nsACString_Init(nsACString *str, const char *data)
+static BOOL nsACString_Init(nsACString *str, const char *data)
 {
-    NS_CStringContainerInit(str);
-    if(data)
-        nsACString_SetData(str, data);
+    return NS_SUCCEEDED(NS_CStringContainerInit2(str, data, PR_UINT32_MAX, 0));
 }
 
 /*
