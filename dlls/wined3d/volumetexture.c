@@ -51,17 +51,19 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
      * since the last load then reload the volumes. */
     if (This->baseTexture.texture_rgb.dirty)
     {
-        for (i = 0; i < This->baseTexture.levels; ++i)
+        for (i = 0; i < This->baseTexture.level_count; ++i)
         {
-            IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
+            IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
+            IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
         }
     }
     else if (srgb_was_toggled)
     {
-        for (i = 0; i < This->baseTexture.levels; ++i)
+        for (i = 0; i < This->baseTexture.level_count; ++i)
         {
-            volume_add_dirty_box(This->volumes[i], NULL);
-            IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
+            IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
+            volume_add_dirty_box(volume, NULL);
+            IWineD3DVolume_LoadTexture(volume, i, srgb_mode);
         }
     }
     else
@@ -81,9 +83,9 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 
     TRACE("(%p) : Cleaning up.\n", This);
 
-    for (i = 0; i < This->baseTexture.levels; ++i)
+    for (i = 0; i < This->baseTexture.level_count; ++i)
     {
-        IWineD3DVolume *volume = This->volumes[i];
+        IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
 
         if (volume)
         {
@@ -172,8 +174,9 @@ static void WINAPI IWineD3DVolumeTextureImpl_UnLoad(IWineD3DVolumeTexture *iface
      * surface before, this one will be a NOP and vice versa. Unloading an unloaded
      * surface is fine
      */
-    for (i = 0; i < This->baseTexture.levels; i++) {
-        IWineD3DVolume_UnLoad(This->volumes[i]);
+    for (i = 0; i < This->baseTexture.level_count; ++i)
+    {
+        IWineD3DVolume_UnLoad((IWineD3DVolume *)This->baseTexture.sub_resources[i]);
     }
 
     basetexture_unload((IWineD3DBaseTexture *)iface);
@@ -250,65 +253,85 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
 /* *******************************************
    IWineD3DVolumeTexture IWineD3DVolumeTexture parts follow
    ******************************************* */
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface, UINT Level,WINED3DVOLUME_DESC *pDesc) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    if (Level < This->baseTexture.levels) {
-        TRACE("(%p) Level (%d)\n", This, Level);
-        return IWineD3DVolume_GetDesc(This->volumes[Level], pDesc);
-    } else {
-        WARN("(%p) Level (%d)\n", This, Level);
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface,
+        UINT level, WINED3DVOLUME_DESC *desc)
+{
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
+
+    TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
+
+    if (level >= texture->baseTexture.level_count)
+    {
+        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        return WINED3DERR_INVALIDCALL;
     }
+
+    return IWineD3DVolume_GetDesc((IWineD3DVolume *)texture->baseTexture.sub_resources[level], desc);
+}
+
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *iface,
+        UINT level, IWineD3DVolume **volume)
+{
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
+
+    TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
+
+    if (level >= texture->baseTexture.level_count)
+    {
+        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    *volume = (IWineD3DVolume *)texture->baseTexture.sub_resources[level];
+    IWineD3DVolume_AddRef(*volume);
+
+    TRACE("Returning volume %p.\n", *volume);
+
     return WINED3D_OK;
+
 }
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *iface, UINT Level, IWineD3DVolume** ppVolumeLevel) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    if (Level < This->baseTexture.levels) {
-      *ppVolumeLevel = This->volumes[Level];
-      IWineD3DVolume_AddRef(*ppVolumeLevel);
-      TRACE("(%p) -> level(%d) returning volume@%p\n", This, Level, *ppVolumeLevel);
-    } else {
-      WARN("(%p) Level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return WINED3DERR_INVALIDCALL;
+
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface,
+        UINT level, WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags)
+{
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
+
+    TRACE("iface %p, level %u, locked_box %p, box %p, flags %#x.\n",
+            iface, level, locked_box, box, flags);
+
+    if (level >= texture->baseTexture.level_count)
+    {
+        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        return WINED3DERR_INVALIDCALL;
     }
-    return WINED3D_OK;
 
+    return IWineD3DVolume_LockBox((IWineD3DVolume *)texture->baseTexture.sub_resources[level], locked_box, box, flags);
 }
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
-    HRESULT hr;
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels) {
-      hr = IWineD3DVolume_LockBox(This->volumes[Level], pLockedVolume, pBox, Flags);
-      TRACE("(%p) Level (%d) success(%u)\n", This, Level, hr);
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface, UINT level)
+{
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
 
-    } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return WINED3DERR_INVALIDCALL;
+    TRACE("iface %p, level %u.\n", iface, level);
+
+    if (level >= texture->baseTexture.level_count)
+    {
+        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        return WINED3DERR_INVALIDCALL;
     }
-    return hr;
+
+    return IWineD3DVolume_UnlockBox((IWineD3DVolume *)texture->baseTexture.sub_resources[level]);
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface, UINT Level) {
-    HRESULT hr;
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, const WINED3DBOX *dirty_box)
+{
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
 
-    if (Level < This->baseTexture.levels) {
-      hr = IWineD3DVolume_UnlockBox(This->volumes[Level]);
-      TRACE("(%p) -> level(%d) success(%u)\n", This, Level, hr);
+    TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
-    } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return WINED3DERR_INVALIDCALL;
-    }
-    return hr;
-}
-
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST WINED3DBOX* pDirtyBox) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    This->baseTexture.texture_rgb.dirty = TRUE;
-    This->baseTexture.texture_srgb.dirty = TRUE;
-    TRACE("(%p) : dirtyfication of volume Level (0)\n", This);
-    volume_add_dirty_box(This->volumes[0], pDirtyBox);
+    texture->baseTexture.texture_rgb.dirty = TRUE;
+    texture->baseTexture.texture_srgb.dirty = TRUE;
+    volume_add_dirty_box((IWineD3DVolume *)texture->baseTexture.sub_resources[0], dirty_box);
 
     return WINED3D_OK;
 }
@@ -399,8 +422,8 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
 
     texture->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
 
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, levels, WINED3DRTYPE_VOLUMETEXTURE,
-            device, 0, usage, format_desc, pool, parent, parent_ops);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
+            WINED3DRTYPE_VOLUMETEXTURE, device, 0, usage, format_desc, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
@@ -418,21 +441,23 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
     tmp_h = height;
     tmp_d = depth;
 
-    for (i = 0; i < texture->baseTexture.levels; ++i)
+    for (i = 0; i < texture->baseTexture.level_count; ++i)
     {
+        IWineD3DVolume *volume;
+
         /* Create the volume. */
         hr = IWineD3DDeviceParent_CreateVolume(device->device_parent, parent,
-                tmp_w, tmp_h, tmp_d, format, pool, usage, &texture->volumes[i]);
+                tmp_w, tmp_h, tmp_d, format, pool, usage, &volume);
         if (FAILED(hr))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
-            texture->volumes[i] = NULL;
             volumetexture_cleanup(texture);
             return hr;
         }
 
         /* Set its container to this texture. */
-        IWineD3DVolume_SetContainer(texture->volumes[i], (IWineD3DBase *)texture);
+        IWineD3DVolume_SetContainer(volume, (IWineD3DBase *)texture);
+        texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)volume;
 
         /* Calculate the next mipmap level. */
         tmp_w = max(1, tmp_w >> 1);
