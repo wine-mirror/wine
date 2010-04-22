@@ -315,8 +315,8 @@
 # stub _crtDbgFlag
 @ varargs _cscanf(str)
 @ varargs _cscanf_l(str ptr)
-# stub _cscanf_s
-# stub _cscanf_s_l
+@ varargs _cscanf_s(str)
+@ varargs _cscanf_s_l(str ptr)
 @ cdecl _ctime32(ptr) MSVCRT__ctime32
 # stub _ctime32_s
 @ cdecl _ctime64(ptr) MSVCRT__ctime64

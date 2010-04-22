@@ -334,8 +334,8 @@
 @ stub _crt_debugger_hook
 @ varargs _cscanf(str) msvcrt._cscanf
 @ varargs _cscanf_l(str ptr) msvcrt._cscanf_l
-@ stub _cscanf_s
-@ stub _cscanf_s_l
+@ varargs _cscanf_s(str) msvcrt._cscanf_s
+@ varargs _cscanf_s_l(str ptr) msvcrt._cscanf_s_l
 @ cdecl _ctime32(ptr) msvcrt._ctime32
 @ stub _ctime32_s
 @ cdecl _ctime64(ptr) msvcrt._ctime64

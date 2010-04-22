@@ -109,6 +109,10 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 #undef SECURE
 #include "scanf.h"
 
+/* vcscanf_s_l */
+#define SECURE 1
+#include "scanf.h"
+
 
 /*********************************************************************
  *		fscanf (MSVCRT.@)
@@ -480,6 +484,34 @@ int CDECL _cscanf_l(const char *format, MSVCRT__locale_t locale, ...)
 
     __ms_va_start(valist, locale);
     res = MSVCRT_vcscanf_l(format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cscanf_s (MSVCRT.@)
+ */
+int CDECL _cscanf_s(const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vcscanf_s_l(format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cscanf_s_l (MSVCRT.@)
+ */
+int CDECL _cscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vcscanf_s_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
