@@ -1211,6 +1211,7 @@ static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTY
     /* Special case */
     if (IsEqualPropertyKey(*key, PKEY_AudioEndpoint_GUID))
     {
+        pv->vt = VT_LPWSTR;
         pv->u.pwszVal = CoTaskMemAlloc(39 * sizeof(WCHAR));
         if (!pv->u.pwszVal)
             return E_OUTOFMEMORY;
