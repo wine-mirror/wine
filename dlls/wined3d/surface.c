@@ -1563,7 +1563,8 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 }
 
 /* Context activation is done by the caller. */
-void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
+static void surface_prepare_texture_internal(IWineD3DSurfaceImpl *surface,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
     CONVERT_TYPES convert;
@@ -1578,6 +1579,31 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     surface_bind_and_dirtify(surface, srgb);
     surface_allocate_surface(surface, gl_info, &desc, srgb);
     surface->Flags |= alloc_flag;
+}
+
+/* Context activation is done by the caller. */
+void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
+{
+    IWineD3DBaseTextureImpl *texture;
+
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
+            &IID_IWineD3DBaseTexture, (void **)&texture)))
+    {
+        UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+        UINT i;
+
+        TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
+
+        for (i = 0; i < sub_count; ++i)
+        {
+            IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+            surface_prepare_texture_internal(s, gl_info, srgb);
+        }
+
+        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
+    }
+
+    surface_prepare_texture_internal(surface, gl_info, srgb);
 }
 
 static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
