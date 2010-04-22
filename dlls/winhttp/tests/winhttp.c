@@ -227,7 +227,7 @@ static void test_empty_headers_param(void)
 {
     static const WCHAR winehq[] = {'w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR empty[]  = {0};
-    HANDLE ses, con, req;
+    HINTERNET ses, con, req;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -761,7 +761,7 @@ static void test_secure_connection(void)
 {
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
 
-    HANDLE ses, con, req;
+    HINTERNET ses, con, req;
     DWORD size, status, policy, bitness;
     BOOL ret;
     CERT_CONTEXT *cert;
@@ -836,7 +836,7 @@ static void test_request_parameter_defaults(void)
     static const WCHAR empty[] = {0};
     static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
 
-    HANDLE ses, con, req;
+    HINTERNET ses, con, req;
     DWORD size, status, error;
     WCHAR *version;
     BOOL ret;
@@ -1632,7 +1632,7 @@ static void test_resolve_timeout(void)
     static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
     static const WCHAR srevaewedoc[] = {'s','r','e','v','a','e','w','e','d','o','c','.','m','o','c',0};
 
-    HANDLE ses, con, req;
+    HINTERNET ses, con, req;
     DWORD timeout;
     BOOL ret;
 
@@ -1922,7 +1922,7 @@ static void test_credentials(void)
     static WCHAR passW[] = {'p','a','s','s',0};
     static WCHAR proxy_userW[] = {'p','r','o','x','y','u','s','e','r',0};
     static WCHAR proxy_passW[] = {'p','r','o','x','y','p','a','s','s',0};
-    HANDLE ses, con, req;
+    HINTERNET ses, con, req;
     DWORD size, error;
     WCHAR buffer[32];
     BOOL ret;
