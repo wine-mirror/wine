@@ -301,12 +301,15 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     if (hwnd)
     {
+        Cursor xcursor;
         struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
         if (data && cursor != data->cursor)
         {
-            Cursor xcursor = get_x11_cursor( cursor );
-            if (xcursor) XDefineCursor( gdi_display, data->whole_window, xcursor );
+            wine_tsx11_lock();
+            if ((xcursor = get_x11_cursor( cursor )))
+                XDefineCursor( gdi_display, data->whole_window, xcursor );
             data->cursor = cursor;
+            wine_tsx11_unlock();
         }
     }
 }
