@@ -425,7 +425,7 @@
 @ stub _freea_s
 @ stub _freefls
 @ varargs _fscanf_l(ptr str ptr) msvcrt._fscanf_l
-@ stub _fscanf_s_l
+@ varargs _fscanf_s_l(ptr str ptr) msvcrt._fscanf_s_l
 @ stub _fseek_nolock
 @ stub _fseeki64
 @ stub _fseeki64_nolock
@@ -1257,7 +1257,7 @@
 @ stub freopen_s
 @ cdecl frexp(double ptr) msvcrt.frexp
 @ varargs fscanf(ptr str) msvcrt.fscanf
-@ stub fscanf_s
+@ varargs fscanf_s(ptr str) msvcrt.fscanf_s
 @ cdecl fseek(ptr long long) msvcrt.fseek
 @ cdecl fsetpos(ptr ptr) msvcrt.fsetpos
 @ cdecl ftell(ptr) msvcrt.ftell

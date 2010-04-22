@@ -395,7 +395,8 @@
 # stub _freea
 # stub _freea_s
 # stub _fscanf_l
-# stub _fscanf_s_l
+@ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
+@ varargs _fscanf_s_l(ptr str ptr) MSVCRT__fscanf_s_l
 # stub _fseeki64
 @ cdecl _fsopen(str str long) MSVCRT__fsopen
 @ cdecl _fstat(long ptr) MSVCRT__fstat
@@ -1203,7 +1204,7 @@
 # stub freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
 @ varargs fscanf(ptr str) MSVCRT_fscanf
-# stub fscanf_s
+@ varargs fscanf_s(ptr str) MSVCRT_fscanf_s
 @ cdecl fseek(ptr long long) MSVCRT_fseek
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
 @ cdecl ftell(ptr) MSVCRT_ftell
@@ -1282,12 +1283,6 @@
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) _fputwchar
-# stub _free_dbg
-# stub _freea
-# stub _freea_s
-@ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
-# stub _fscanf_s_l
-# stub _fseeki64
 @ cdecl qsort(ptr long long ptr) ntdll.qsort
 # stub qsort_s
 @ cdecl raise(long) MSVCRT_raise
