@@ -2988,13 +2988,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
 /* Does a direct frame buffer -> texture copy. Stretching is done
  * with single pixel copy calls
  */
-static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
+static void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *dst_surface, IWineD3DSurfaceImpl *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DDeviceImpl *device = dst_surface->resource.device;
     float xrel, yrel;
     UINT row;
-    IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     struct wined3d_context *context;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
@@ -3009,14 +3008,14 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         upsidedown = TRUE;
     }
 
-    context = context_acquire(device, Src, CTXUSAGE_BLIT);
-    surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
+    context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
+    surface_internal_preload((IWineD3DSurface *)dst_surface, SRGB_RGB);
     ENTER_GL();
 
     /* Bind the target texture */
-    glBindTexture(This->texture_target, This->texture_name);
+    glBindTexture(dst_surface->texture_target, dst_surface->texture_name);
     checkGLcall("glBindTexture");
-    if (surface_is_offscreen(Src))
+    if (surface_is_offscreen(src_surface))
     {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
@@ -3024,7 +3023,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     }
     else
     {
-        glReadBuffer(surface_get_gl_buffer(Src));
+        glReadBuffer(surface_get_gl_buffer(src_surface));
     }
     checkGLcall("glReadBuffer");
 
@@ -3051,12 +3050,12 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     {
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do */
 
-        glCopyTexSubImage2D(This->texture_target, This->texture_level,
+        glCopyTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level,
                 dst_rect.left /*xoffset */, dst_rect.top /* y offset */,
-                src_rect->left, Src->currentDesc.Height - src_rect->bottom,
+                src_rect->left, src_surface->currentDesc.Height - src_rect->bottom,
                 dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
     } else {
-        UINT yoffset = Src->currentDesc.Height - src_rect->top + dst_rect.top - 1;
+        UINT yoffset = src_surface->currentDesc.Height - src_rect->top + dst_rect.top - 1;
         /* I have to process this row by row to swap the image,
          * otherwise it would be upside down, so stretching in y direction
          * doesn't cost extra time
@@ -3071,13 +3070,16 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
                  */
                 UINT col;
 
-                for(col = dst_rect.left; col < dst_rect.right; col++) {
-                    glCopyTexSubImage2D(This->texture_target, This->texture_level,
+                for (col = dst_rect.left; col < dst_rect.right; ++col)
+                {
+                    glCopyTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level,
                             dst_rect.left + col /* x offset */, row /* y offset */,
                             src_rect->left + col * xrel, yoffset - (int) (row * yrel), 1, 1);
                 }
-            } else {
-                glCopyTexSubImage2D(This->texture_target, This->texture_level,
+            }
+            else
+            {
+                glCopyTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level,
                         dst_rect.left /* x offset */, row /* y offset */,
                         src_rect->left, yoffset - (int) (row * yrel), dst_rect.right - dst_rect.left, 1);
             }
@@ -3091,7 +3093,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     /* The texture is now most up to date - If the surface is a render target and has a drawable, this
      * path is never entered
      */
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INTEXTURE, TRUE);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)dst_surface, SFLAG_INTEXTURE, TRUE);
 }
 
 /* Uses the hardware to stretch and flip the image */
@@ -3584,7 +3586,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 || dst_rect.bottom - dst_rect.top > Src->currentDesc.Height)
         {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
-            fb_copy_to_texture_direct(This, SrcSurface, &src_rect, &dst_rect, Filter);
+            fb_copy_to_texture_direct(This, Src, &src_rect, &dst_rect, Filter);
         } else {
             TRACE("Using hardware stretching to flip / stretch the texture\n");
             fb_copy_to_texture_hwstretch(This, SrcSurface, &src_rect, &dst_rect, Filter);
