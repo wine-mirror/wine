@@ -319,42 +319,37 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
 static HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface,
         UINT level, WINED3DSURFACE_DESC *desc)
 {
-    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
-    if (level >= texture->baseTexture.level_count)
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, level)))
     {
-        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DSurface_GetDesc((IWineD3DSurface *)texture->baseTexture.sub_resources[level], desc);
+    return IWineD3DSurface_GetDesc(surface, desc);
 }
 
 static HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface,
         WINED3DCUBEMAP_FACES face, UINT level, IWineD3DSurface **surface)
 {
-    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
-    UINT idx = face * texture->baseTexture.level_count + level;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *s;
 
     TRACE("iface %p, face %u, level %u, surface %p.\n",
             iface, face, level, surface);
 
-    if (level >= texture->baseTexture.level_count)
+    if (!(s = (IWineD3DSurface *)basetexture_get_sub_resource(texture, face, level)))
     {
-        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (face >= texture->baseTexture.layer_count)
-    {
-        WARN("face %u >= layer_count %u.\n", face, texture->baseTexture.layer_count);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    *surface = (IWineD3DSurface *)texture->baseTexture.sub_resources[idx];
-    IWineD3DSurface_AddRef(*surface);
+    IWineD3DSurface_AddRef(s);
+    *surface = s;
 
     TRACE("Returning surface %p.\n", *surface);
 
@@ -364,70 +359,57 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeText
 static HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface,
         WINED3DCUBEMAP_FACES face, UINT level, WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
-    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
-    UINT idx = face * texture->baseTexture.level_count + level;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
     TRACE("iface %p, face %u, level %u, locked_rect %p, rect %s, flags %#x.\n",
             iface, face, level, locked_rect, wine_dbgstr_rect(rect), flags);
 
-    if (level >= texture->baseTexture.level_count)
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, face, level)))
     {
-        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (face >= texture->baseTexture.layer_count)
-    {
-        WARN("face %u >= layer_count %u.\n", face, texture->baseTexture.layer_count);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return IWineD3DSurface_LockRect((IWineD3DSurface *)texture->baseTexture.sub_resources[idx],
-            locked_rect, rect, flags);
+    return IWineD3DSurface_LockRect(surface, locked_rect, rect, flags);
 }
 
 static HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface,
         WINED3DCUBEMAP_FACES face, UINT level)
 {
-    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
-    UINT idx = face * texture->baseTexture.level_count + level;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
     TRACE("iface %p, face %u, level %u.\n",
             iface, face, level);
 
-    if (level >= texture->baseTexture.level_count)
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, face, level)))
     {
-        WARN("level %u >= level_count %u.\n", level, texture->baseTexture.level_count);
+        WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (face >= texture->baseTexture.layer_count)
-    {
-        WARN("face %u >= layer_count %u.\n", face, texture->baseTexture.layer_count);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return IWineD3DSurface_UnlockRect((IWineD3DSurface *)texture->baseTexture.sub_resources[idx]);
+    return IWineD3DSurface_UnlockRect(surface);
 }
 
 static HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface,
         WINED3DCUBEMAP_FACES face, const RECT *dirty_rect)
 {
-    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
-    UINT idx = face * texture->baseTexture.level_count;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
     TRACE("iface %p, face %u, dirty_rect %s.\n",
             iface, face, wine_dbgstr_rect(dirty_rect));
 
-    if (face >= texture->baseTexture.layer_count)
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, face, 0)))
     {
-        WARN("face %u >= layer_count %u.\n", face, texture->baseTexture.layer_count);
+        WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     texture->baseTexture.texture_rgb.dirty = TRUE;
     texture->baseTexture.texture_srgb.dirty = TRUE;
-    surface_add_dirty_rect((IWineD3DSurface *)texture->baseTexture.sub_resources[idx], dirty_rect);
+    surface_add_dirty_rect(surface, dirty_rect);
 
     return WINED3D_OK;
 }

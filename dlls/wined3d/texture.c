@@ -333,78 +333,94 @@ static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
    ******************************************* */
-static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT level, WINED3DSURFACE_DESC *desc)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
-    if (Level < This->baseTexture.level_count)
+    TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
+
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, level)))
     {
-        TRACE("(%p) Level (%d)\n", This, Level);
-        return IWineD3DSurface_GetDesc((IWineD3DSurface *)This->baseTexture.sub_resources[Level], pDesc);
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
     }
-    WARN("(%p) level %u >= level_count %u.\n", This, Level, This->baseTexture.level_count);
-    return WINED3DERR_INVALIDCALL;
+
+    return IWineD3DSurface_GetDesc(surface, desc);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT Level, IWineD3DSurface** ppSurfaceLevel) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = WINED3DERR_INVALIDCALL;
+static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface,
+        UINT level, IWineD3DSurface **surface)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *s;
 
-    if (Level < This->baseTexture.level_count)
+    TRACE("iface %p, level %u, surface %p.\n", iface, level, surface);
+
+    if (!(s = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, level)))
     {
-        *ppSurfaceLevel = (IWineD3DSurface *)This->baseTexture.sub_resources[Level];
-        IWineD3DSurface_AddRef(*ppSurfaceLevel);
-        hr = WINED3D_OK;
-        TRACE("(%p) : returning %p for level %d\n", This, *ppSurfaceLevel, Level);
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
     }
-    if (WINED3D_OK != hr) {
-        WARN("(%p) level %u >= level_count %u.\n", This, Level, This->baseTexture.level_count);
-        *ppSurfaceLevel = NULL; /* Just to be on the safe side.. */
-    }
-    return hr;
+
+    IWineD3DSurface_AddRef(s);
+    *surface = s;
+
+    TRACE("Returning surface %p.\n", *surface);
+
+    return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, WINED3DLOCKED_RECT *pLockedRect,
-                                            CONST RECT *pRect, DWORD Flags) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = WINED3DERR_INVALIDCALL;
+static HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface,
+        UINT level, WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
-    if (Level < This->baseTexture.level_count)
+    TRACE("iface %p, level %u, locked_rect %p, rect %s, flags %#x.\n",
+            iface, level, locked_rect, wine_dbgstr_rect(rect), flags);
+
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, level)))
     {
-        IWineD3DSurface *surface = (IWineD3DSurface *)This->baseTexture.sub_resources[Level];
-        hr = IWineD3DSurface_LockRect(surface, pLockedRect, pRect, Flags);
-    }
-    if (WINED3D_OK == hr) {
-        TRACE("(%p) Level (%d) success\n", This, Level);
-    } else {
-        WARN("(%p) level %u >= level_count %u.\n", This, Level, This->baseTexture.level_count);
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    return hr;
+    return IWineD3DSurface_LockRect(surface, locked_rect, rect, flags);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT Level) {
-   IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = WINED3DERR_INVALIDCALL;
+static HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT level)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
 
-    if (Level < This->baseTexture.level_count)
+    TRACE("iface %p, level %u.\n", iface, level);
+
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, level)))
     {
-        IWineD3DSurface *surface = (IWineD3DSurface *)This->baseTexture.sub_resources[Level];
-        hr = IWineD3DSurface_UnlockRect(surface);
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
     }
-    if ( WINED3D_OK == hr) {
-        TRACE("(%p) Level (%d) success\n", This, Level);
-    } else {
-        WARN("(%p) level %u >= level_count %u.\n", This, Level, This->baseTexture.level_count);
-    }
-    return hr;
+
+    return IWineD3DSurface_UnlockRect(surface);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RECT* pDirtyRect) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    This->baseTexture.texture_rgb.dirty = TRUE;
-    This->baseTexture.texture_srgb.dirty = TRUE;
-    TRACE("(%p) : dirtyfication of surface Level (0)\n", This);
-    surface_add_dirty_rect((IWineD3DSurface *)This->baseTexture.sub_resources[0], pDirtyRect);
+static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, const RECT *dirty_rect)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DSurface *surface;
+
+    TRACE("iface %p, dirty_rect %s.\n", iface, wine_dbgstr_rect(dirty_rect));
+
+    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, 0, 0)))
+    {
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    texture->baseTexture.texture_rgb.dirty = TRUE;
+    texture->baseTexture.texture_srgb.dirty = TRUE;
+    surface_add_dirty_rect(surface, dirty_rect);
 
     return WINED3D_OK;
 }
