@@ -202,6 +202,37 @@ BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev)
     return TRUE;
 }
 
+static UINT calc_ppem_for_height(HDC hdc, LONG height)
+{
+    BYTE os2[78]; /* size of version 0 table */
+    BYTE hhea[8]; /* just enough to get the ascender and descender */
+    LONG ascent = 0, descent = 0;
+    UINT emsize;
+
+    if(height < 0) return -height;
+
+    if(GetFontData(hdc, MS_MAKE_TAG('O','S','/','2'), 0, os2, sizeof(os2)) == sizeof(os2))
+    {
+        ascent  = GET_BE_WORD(os2 + 74); /* usWinAscent */
+        descent = GET_BE_WORD(os2 + 76); /* usWinDescent */
+    }
+
+    if(ascent + descent == 0)
+    {
+        if(GetFontData(hdc, MS_MAKE_TAG('h','h','e','a'), 0, hhea, sizeof(hhea)) == sizeof(hhea))
+        {
+            ascent  =  (signed short)GET_BE_WORD(hhea + 4); /* Ascender */
+            descent = -(signed short)GET_BE_WORD(hhea + 6); /* Descender */
+        }
+    }
+
+    if(ascent + descent == 0) return height;
+
+    get_bbox(hdc, NULL, &emsize);
+
+    return MulDiv(emsize, height, ascent + descent);
+}
+
 /****************************************************************************
  *  PSDRV_WriteSetDownloadFont
  *
@@ -214,6 +245,8 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     LPOUTLINETEXTMETRICA potm;
     DWORD len = GetOutlineTextMetricsA(physDev->hdc, 0, NULL);
     DOWNLOAD *pdl;
+    LOGFONTW lf;
+    UINT ppem;
 
     assert(physDev->font.fontloc == Download);
 
@@ -223,15 +256,17 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     get_download_name(physDev, potm, &ps_name);
     physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
 
-    physDev->font.size = abs(PSDRV_YWStoDS(physDev, /* ppem */
-                                       potm->otmTextMetrics.tmAscent +
-                                       potm->otmTextMetrics.tmDescent -
-                                       potm->otmTextMetrics.tmInternalLeading));
+    if (!GetObjectW( GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf ))
+        return FALSE;
+
+    ppem = calc_ppem_for_height(physDev->hdc, lf.lfHeight);
+
+    physDev->font.size = abs(PSDRV_YWStoDS(physDev, ppem));
+
     physDev->font.underlineThickness = potm->otmsUnderscoreSize;
     physDev->font.underlinePosition = potm->otmsUnderscorePosition;
     physDev->font.strikeoutThickness = potm->otmsStrikeoutSize;
     physDev->font.strikeoutPosition = potm->otmsStrikeoutPosition;
-
 
     if(physDev->font.fontinfo.Download == NULL) {
         RECT bbox;
