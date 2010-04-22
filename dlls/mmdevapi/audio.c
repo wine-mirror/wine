@@ -473,8 +473,10 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
 
     hr = IAudioClient_IsFormatSupported(iface, mode, pwfx, &pwfx2);
     CoTaskMemFree(pwfx2);
-    if (FAILED(hr) || pwfx2)
+    if (FAILED(hr) || pwfx2) {
+        WARN("Format not supported, or had to be modified!\n");
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }
     EnterCriticalSection(This->crst);
     HeapFree(GetProcessHeap(), 0, This->pwfx);
     This->pwfx = HeapAlloc(GetProcessHeap(), 0, sizeof(*pwfx) + pwfx->cbSize);
@@ -483,6 +485,21 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
         goto out;
     }
     memcpy(This->pwfx, pwfx, sizeof(*pwfx) + pwfx->cbSize);
+    if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE *wfe = (WAVEFORMATEXTENSIBLE *)This->pwfx;
+        switch (pwfx->nChannels) {
+            case 1: wfe->dwChannelMask = MONO; break;
+            case 2: wfe->dwChannelMask = STEREO; break;
+            case 4: wfe->dwChannelMask = QUAD; break;
+            case 6: wfe->dwChannelMask = X5DOT1; break;
+            case 7: wfe->dwChannelMask = X6DOT1; break;
+            case 8: wfe->dwChannelMask = X7DOT1; break;
+        default:
+            ERR("How did we end up with %i channels?\n", pwfx->nChannels);
+            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            goto out;
+        }
+    }
 
     hr = IAudioClient_GetDevicePeriod(iface, &time, NULL);
     if (FAILED(hr))
@@ -665,6 +682,9 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 static HRESULT WINAPI AC_IsFormatSupported(IAudioClient *iface, AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *pwfx, WAVEFORMATEX **outpwfx)
 {
     ACImpl *This = (ACImpl*)iface;
+    WAVEFORMATEX *tmp;
+    DWORD mask;
+    DWORD size;
     TRACE("(%p)->(%x,%p,%p)\n", This, mode, pwfx, outpwfx);
     if (!pwfx)
         return E_POINTER;
@@ -676,9 +696,14 @@ static HRESULT WINAPI AC_IsFormatSupported(IAudioClient *iface, AUDCLNT_SHAREMOD
         WARN("Unknown mode %x\n", mode);
         return E_INVALIDARG;
     }
-    if (pwfx->wFormatTag != WAVE_FORMAT_EXTENSIBLE
-        && pwfx->wFormatTag != WAVE_FORMAT_PCM)
+
+    if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        size = sizeof(WAVEFORMATEXTENSIBLE);
+    else if (pwfx->wFormatTag == WAVE_FORMAT_PCM)
+        size = sizeof(WAVEFORMATEX);
+    else
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
+
     if (pwfx->nSamplesPerSec < 8000
         || pwfx->nSamplesPerSec > 192000)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -687,8 +712,49 @@ static HRESULT WINAPI AC_IsFormatSupported(IAudioClient *iface, AUDCLNT_SHAREMOD
         if (pwfx->wBitsPerSample > 16)
             return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
+
+    switch (pwfx->nChannels) {
+        case 1: mask = MONO; break;
+        case 2: mask = STEREO; break;
+        case 4: mask = QUAD; break;
+        case 6: mask = X5DOT1; break;
+        case 7: mask = X6DOT1; break;
+        case 8: mask = X7DOT1; break;
+        default:
+            TRACE("Unsupported channel count %i\n", pwfx->nChannels);
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;;
+    }
+    tmp = CoTaskMemAlloc(size);
+    if (outpwfx)
+        *outpwfx = tmp;
+    if (!tmp)
+        return E_OUTOFMEMORY;
+
+    memcpy(tmp, pwfx, size);
+    tmp->nBlockAlign = tmp->nChannels * tmp->wBitsPerSample / 8;
+    tmp->nAvgBytesPerSec = tmp->nBlockAlign * tmp->nSamplesPerSec;
+    tmp->cbSize = size - sizeof(WAVEFORMATEX);
+    if (tmp->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE *ex = (WAVEFORMATEXTENSIBLE*)tmp;
+
+        if (ex->Samples.wValidBitsPerSample)
+            ex->Samples.wValidBitsPerSample = ex->Format.wBitsPerSample;
+
+        /* Rear is a special allowed case */
+        if (ex->dwChannelMask
+            && !(ex->Format.nChannels == 2 && ex->dwChannelMask == REAR))
+            ex->dwChannelMask = mask;
+    }
+
+    if (memcmp(pwfx, tmp, size)) {
+        if (outpwfx)
+            return S_FALSE;
+        CoTaskMemFree(tmp);
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }
     if (outpwfx)
         *outpwfx = NULL;
+    CoTaskMemFree(tmp);
     return S_OK;
 }
 
