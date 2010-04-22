@@ -440,6 +440,10 @@ NTSTATUS WINAPI NtSetInformationProcess(
 
     switch (ProcessInformationClass)
     {
+    case ProcessDefaultHardErrorMode:
+        if (ProcessInformationLength != sizeof(UINT)) return STATUS_INVALID_PARAMETER;
+        process_error_mode = *(UINT *)ProcessInformation;
+        break;
     case ProcessAffinityMask:
         if (ProcessInformationLength != sizeof(DWORD_PTR)) return STATUS_INVALID_PARAMETER;
         if (*(PDWORD_PTR)ProcessInformation & ~(((DWORD_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1))
