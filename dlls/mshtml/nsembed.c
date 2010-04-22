@@ -48,19 +48,14 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 
 #define PR_UINT32_MAX 0xffffffff
 
-struct nsCStringContainer {
-    void *v;
-    void *d1;
-    PRUint32 d2;
-    PRUint32 d3;
-};
-
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
+#define NS_CSTRING_CONTAINER_INIT_DEPEND 0x0002
 
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
 static nsresult (*NS_StringContainerInit2)(nsStringContainer*,const PRUnichar*,PRUint32,PRUint32);
+static nsresult (*NS_CStringContainerInit2)(nsCStringContainer*,const char*,PRUint32,PRUint32);
 static nsresult (*NS_CStringContainerInit)(nsCStringContainer*);
 static nsresult (*NS_StringContainerFinish)(nsStringContainer*);
 static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
@@ -187,6 +182,7 @@ static BOOL load_xpcom(const PRUnichar *gre_path)
     NS_DLSYM(NS_InitXPCOM2);
     NS_DLSYM(NS_ShutdownXPCOM);
     NS_DLSYM(NS_GetComponentRegistrar);
+    NS_DLSYM(NS_CStringContainerInit2);
     NS_DLSYM(NS_StringContainerInit2);
     NS_DLSYM(NS_CStringContainerInit);
     NS_DLSYM(NS_StringContainerFinish);
@@ -533,6 +529,15 @@ static void nsACString_Init(nsACString *str, const char *data)
         nsACString_SetData(str, data);
 }
 
+/*
+ * Initializes nsACString with data owned by caller.
+ * Caller must ensure that data is valid during lifetime of string object.
+ */
+void nsACString_InitDepend(nsACString *str, const char *data)
+{
+    NS_CStringContainerInit2(str, data, PR_UINT32_MAX, NS_CSTRING_CONTAINER_INIT_DEPEND);
+}
+
 void nsACString_SetData(nsACString *str, const char *data)
 {
     NS_CStringSetData(str, data, PR_UINT32_MAX);
@@ -543,7 +548,7 @@ PRUint32 nsACString_GetData(const nsACString *str, const char **data)
     return NS_CStringGetData(str, data, NULL);
 }
 
-static void nsACString_Finish(nsACString *str)
+void nsACString_Finish(nsACString *str)
 {
     NS_CStringContainerFinish(str);
 }

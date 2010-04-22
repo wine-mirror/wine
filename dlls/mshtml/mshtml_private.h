@@ -727,8 +727,10 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);
 void *nsalloc(size_t) __WINE_ALLOC_SIZE(1);
 void nsfree(void*);
 
+void nsACString_InitDepend(nsACString*,const char*);
 void nsACString_SetData(nsACString*,const char*);
 PRUint32 nsACString_GetData(const nsACString*,const char**);
+void nsACString_Finish(nsACString*);
 
 BOOL nsAString_Init(nsAString*,const PRUnichar*);
 void nsAString_InitDepend(nsAString*,const PRUnichar*);

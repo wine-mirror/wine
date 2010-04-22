@@ -2453,6 +2453,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     HTMLWindow *window = NULL;
     nsIURI *uri = NULL;
     LPCWSTR base_wine_url = NULL;
+    nsACString spec_str;
     nsresult nsres;
 
     nsACString_GetData(aSpec, &spec);
@@ -2485,7 +2486,9 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         }
     }
 
+    nsACString_InitDepend(&spec_str, spec);
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
+    nsACString_Finish(&spec_str);
     if(NS_FAILED(nsres))
         TRACE("NewURI failed: %08x\n", nsres);
 
