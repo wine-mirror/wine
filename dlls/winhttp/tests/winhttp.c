@@ -25,12 +25,14 @@
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <winreg.h>
+#include <winsock.h>
 
 #include "wine/test.h"
 
 static const WCHAR test_useragent[] =
     {'W','i','n','e',' ','R','e','g','r','e','s','s','i','o','n',' ','T','e','s','t',0};
 static const WCHAR test_server[] = {'w','i','n','e','h','q','.','o','r','g',0};
+static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
 
 static void test_QueryOption(void)
 {
@@ -1677,9 +1679,245 @@ static void test_resolve_timeout(void)
     WinHttpCloseHandle(ses);
 }
 
+static const char page1[] =
+"<HTML>\r\n"
+"<HEAD><TITLE>winhttp test page</TITLE></HEAD>\r\n"
+"<BODY>The quick brown fox jumped over the lazy dog<P></BODY>\r\n"
+"</HTML>\r\n\r\n";
+
+static const char okmsg[] =
+"HTTP/1.1 200 OK\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
+static const char notokmsg[] =
+"HTTP/1.1 400 Bad Request\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
+static const char noauthmsg[] =
+"HTTP/1.1 401 Unauthorized\r\n"
+"Server: winetest\r\n"
+"Connection: close\r\n"
+"WWW-Authenticate: Basic realm=\"placebo\"\r\n"
+"\r\n";
+
+static const char proxymsg[] =
+"HTTP/1.1 407 Proxy Authentication Required\r\n"
+"Server: winetest\r\n"
+"Proxy-Connection: close\r\n"
+"Proxy-Authenticate: Basic realm=\"placebo\"\r\n"
+"\r\n";
+
+struct server_info
+{
+    HANDLE event;
+    int port;
+};
+
+static DWORD CALLBACK server_thread(LPVOID param)
+{
+    struct server_info *si = param;
+    int r, c, i, on;
+    SOCKET s;
+    struct sockaddr_in sa;
+    char buffer[0x100];
+    WSADATA wsaData;
+    int last_request = 0;
+
+    WSAStartup(MAKEWORD(1,1), &wsaData);
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s == INVALID_SOCKET)
+        return 1;
+
+    on = 1;
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof on);
+
+    memset(&sa, 0, sizeof sa);
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(si->port);
+    sa.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+
+    r = bind(s, (struct sockaddr *)&sa, sizeof(sa));
+    if (r < 0)
+        return 1;
+
+    listen(s, 0);
+    SetEvent(si->event);
+    do
+    {
+        c = accept(s, NULL, NULL);
+
+        memset(buffer, 0, sizeof buffer);
+        for(i = 0; i < sizeof buffer - 1; i++)
+        {
+            r = recv(c, &buffer[i], 1, 0);
+            if (r != 1)
+                break;
+            if (i < 4) continue;
+            if (buffer[i - 2] == '\n' && buffer[i] == '\n' &&
+                buffer[i - 3] == '\r' && buffer[i - 1] == '\r')
+                break;
+        }
+        if (strstr(buffer, "GET /basic"))
+        {
+            send(c, okmsg, sizeof okmsg - 1, 0);
+            send(c, page1, sizeof page1 - 1, 0);
+        }
+        if (strstr(buffer, "/auth"))
+        {
+            if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg, sizeof okmsg - 1, 0);
+            else
+                send(c, noauthmsg, sizeof noauthmsg - 1, 0);
+        }
+        if (strstr(buffer, "/no_headers"))
+        {
+            send(c, page1, sizeof page1 - 1, 0);
+        }
+        if (strstr(buffer, "GET /quit"))
+        {
+            send(c, okmsg, sizeof okmsg - 1, 0);
+            send(c, page1, sizeof page1 - 1, 0);
+            last_request = 1;
+        }
+        shutdown(c, 2);
+        closesocket(c);
+
+    } while (!last_request);
+
+    closesocket(s);
+    return 0;
+}
+
+static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
+{
+    HINTERNET ses, con, req;
+    char buffer[0x100];
+    DWORD count, status, size;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, verb, path, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
+
+    count = 0;
+    memset(buffer, 0, sizeof(buffer));
+    ret = WinHttpReadData(req, buffer, sizeof buffer, &count);
+    ok(ret, "failed to read data %u\n", GetLastError());
+    ok(count == sizeof page1 - 1, "count was wrong\n");
+    ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_basic_authentication(int port)
+{
+    static const WCHAR authW[] = {'/','a','u','t','h',0};
+    static const WCHAR userW[] = {'u','s','e','r',0};
+    static const WCHAR passW[] = {'p','w','d',0};
+    HINTERNET ses, con, req;
+    DWORD status, size, error;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, authW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == 401, "request failed unexpectedly %u\n", status);
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, NULL, passW, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_no_headers(int port)
+{
+    static const WCHAR no_headersW[] = {'/','n','o','_','h','e','a','d','e','r','s',0};
+    HINTERNET ses, con, req;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, no_headersW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(!ret, "expected failure\n");
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
 static void test_credentials(void)
 {
-    static const WCHAR hostnameW[] = {'l','o','c','a','l','h','o','s','t',0};
     static WCHAR userW[] = {'u','s','e','r',0};
     static WCHAR passW[] = {'p','a','s','s',0};
     static WCHAR proxy_userW[] = {'p','r','o','x','y','u','s','e','r',0};
@@ -1692,7 +1930,7 @@ static void test_credentials(void)
     ses = WinHttpOpen(test_useragent, 0, proxy_userW, proxy_passW, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
-    con = WinHttpConnect(ses, hostnameW, 0, 0);
+    con = WinHttpConnect(ses, localhostW, 0, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
@@ -1801,6 +2039,12 @@ static void test_credentials(void)
 
 START_TEST (winhttp)
 {
+    static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
+    static const WCHAR quitW[] = {'/','q','u','i','t',0};
+    struct server_info si;
+    HANDLE thread;
+    DWORD ret;
+
     test_OpenRequest();
     test_SendRequest();
     test_WinHttpTimeFromSystemTime();
@@ -1814,4 +2058,24 @@ START_TEST (winhttp)
     test_Timeouts();
     test_resolve_timeout();
     test_credentials();
+
+    si.event = CreateEvent(NULL, 0, 0, NULL);
+    si.port = 7532;
+
+    thread = CreateThread(NULL, 0, server_thread, (LPVOID)&si, 0, NULL);
+    ok(thread != NULL, "failed to create thread %u\n", GetLastError());
+
+    ret = WaitForSingleObject(si.event, 10000);
+    ok(ret == WAIT_OBJECT_0, "failed to start winhttp test server %u\n", GetLastError());
+    if (ret != WAIT_OBJECT_0)
+        return;
+
+    test_basic_request(si.port, NULL, basicW);
+    test_no_headers(si.port);
+    test_basic_authentication(si.port);
+
+    /* send the basic request again to shutdown the server thread */
+    test_basic_request(si.port, NULL, quitW);
+
+    WaitForSingleObject(thread, 3000);
 }
