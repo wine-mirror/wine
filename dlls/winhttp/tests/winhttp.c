@@ -1677,6 +1677,128 @@ static void test_resolve_timeout(void)
     WinHttpCloseHandle(ses);
 }
 
+static void test_credentials(void)
+{
+    static const WCHAR hostnameW[] = {'l','o','c','a','l','h','o','s','t',0};
+    static WCHAR userW[] = {'u','s','e','r',0};
+    static WCHAR passW[] = {'p','a','s','s',0};
+    static WCHAR proxy_userW[] = {'p','r','o','x','y','u','s','e','r',0};
+    static WCHAR proxy_passW[] = {'p','r','o','x','y','p','a','s','s',0};
+    HANDLE ses, con, req;
+    DWORD size, error;
+    WCHAR buffer[32];
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, proxy_userW, proxy_passW, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, hostnameW, 0, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
+    ok(ret, "failed to query proxy username %u\n", GetLastError());
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
+    ok(ret, "failed to query proxy password %u\n", GetLastError());
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_PROXY_USERNAME, proxy_userW, lstrlenW(proxy_userW));
+    ok(ret, "failed to set username %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
+    ok(ret, "failed to query proxy username %u\n", GetLastError());
+    ok(!winetest_strcmpW(buffer, proxy_userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(size == lstrlenW(proxy_userW) * sizeof(WCHAR), "unexpected result %u\n", size);
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
+    ok(ret, "failed to query username %u\n", GetLastError());
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
+    ok(ret, "failed to query password %u\n", GetLastError());
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_PROXY_PASSWORD, proxy_passW, lstrlenW(proxy_passW));
+    ok(ret, "failed to set proxy password %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
+    ok(ret, "failed to query proxy password %u\n", GetLastError());
+    ok(!winetest_strcmpW(buffer, proxy_passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(size == lstrlenW(proxy_passW) * sizeof(WCHAR), "unexpected result %u\n", size);
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_USERNAME, userW, lstrlenW(userW));
+    ok(ret, "failed to set username %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
+    ok(ret, "failed to query username %u\n", GetLastError());
+    ok(!winetest_strcmpW(buffer, userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(size == lstrlenW(userW) * sizeof(WCHAR), "unexpected result %u\n", size);
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_PASSWORD, passW, lstrlenW(passW));
+    ok(ret, "failed to set password %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
+    ok(ret, "failed to query password %u\n", GetLastError());
+    ok(!winetest_strcmpW(buffer, passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(size == lstrlenW(passW) * sizeof(WCHAR), "unexpected result %u\n", size);
+
+    WinHttpCloseHandle(req);
+
+    req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, NULL, passW, NULL);
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
+    ok(ret, "failed to query username %u\n", GetLastError());
+    todo_wine {
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+    }
+
+    size = sizeof(buffer)/sizeof(WCHAR);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
+    ok(ret, "failed to query password %u\n", GetLastError());
+    todo_wine {
+    ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!size, "expected 0, got %u\n", size);
+    }
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
 START_TEST (winhttp)
 {
     test_OpenRequest();
@@ -1691,4 +1813,5 @@ START_TEST (winhttp)
     test_empty_headers_param();
     test_Timeouts();
     test_resolve_timeout();
+    test_credentials();
 }
