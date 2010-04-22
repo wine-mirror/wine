@@ -26,6 +26,8 @@
 
 #define NUMELEMS(array) (sizeof((array))/sizeof((array)[0]))
 
+static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
+
 /*
  * msgspy - record and analyse message traces sent to a certain window
  */
@@ -133,9 +135,13 @@ static void msg_spy_cleanup(void) {
 static const char wndcls[] = "winetest_imm32_wndcls";
 static HWND hwnd;
 
-static int init(void) {
+static BOOL init(void) {
     WNDCLASSEX wc;
     HIMC imc;
+    HMODULE hmod;
+
+    hmod = GetModuleHandleA("imm32.dll");
+    pImmAssociateContextEx = (void*)GetProcAddress(hmod, "ImmAssociateContextEx");
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = 0;
@@ -151,19 +157,19 @@ static int init(void) {
     wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 
     if (!RegisterClassExA(&wc))
-        return 0;
+        return FALSE;
 
     hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                           240, 120, NULL, NULL, GetModuleHandle(0), NULL);
     if (!hwnd)
-        return 0;
+        return FALSE;
 
     imc = ImmGetContext(hwnd);
     if (!imc)
     {
         win_skip("IME support not implemented\n");
-        return 0;
+        return FALSE;
     }
     ImmReleaseContext(hwnd, imc);
 
@@ -172,7 +178,7 @@ static int init(void) {
 
     msg_spy_init(hwnd);
 
-    return 1;
+    return TRUE;
 }
 
 static void cleanup(void) {
@@ -307,6 +313,45 @@ static void test_ImmIME(void)
     ImmReleaseContext(hwnd,imc);
 }
 
+static void test_ImmAssociateContextEx(void)
+{
+    HIMC imc;
+    BOOL rc;
+
+    if (!pImmAssociateContextEx) return;
+
+    imc = ImmGetContext(hwnd);
+    if (imc)
+    {
+        HIMC retimc, newimc;
+
+        newimc = ImmCreateContext();
+        ok(newimc != imc, "handles should not be the same\n");
+        rc = pImmAssociateContextEx(NULL, NULL, 0);
+        ok(!rc, "ImmAssociateContextEx succeeded\n");
+        rc = pImmAssociateContextEx(hwnd, NULL, 0);
+        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        rc = pImmAssociateContextEx(NULL, imc, 0);
+        ok(!rc, "ImmAssociateContextEx succeeded\n");
+
+        rc = pImmAssociateContextEx(hwnd, imc, 0);
+        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        retimc = ImmGetContext(hwnd);
+        ok(retimc == imc, "handles should be the same\n");
+        ImmReleaseContext(hwnd,retimc);
+
+        rc = pImmAssociateContextEx(hwnd, newimc, 0);
+        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        retimc = ImmGetContext(hwnd);
+        todo_wine ok(retimc == newimc, "handles should be the same\n");
+        ImmReleaseContext(hwnd,retimc);
+
+        rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);
+        ok(rc, "ImmAssociateContextEx failed\n");
+    }
+    ImmReleaseContext(hwnd,imc);
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -314,6 +359,7 @@ START_TEST(imm32) {
         test_ImmGetCompositionString();
         test_ImmSetCompositionString();
         test_ImmIME();
+        test_ImmAssociateContextEx();
     }
     cleanup();
 }
