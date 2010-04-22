@@ -432,7 +432,7 @@
 @ stub _freea
 @ stub _freea_s
 @ stub _freefls
-@ stub _fscanf_l
+@ varargs _fscanf_l(ptr str ptr) msvcrt._fscanf_l
 @ stub _fscanf_s_l
 @ stub _fseek_nolock
 @ stub _fseeki64

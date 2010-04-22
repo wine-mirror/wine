@@ -103,6 +103,21 @@ int CDECL MSVCRT_fscanf(MSVCRT_FILE *file, const char *format, ...)
 }
 
 /*********************************************************************
+ *		_fscanf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__fscanf_l(MSVCRT_FILE *file, const char *format,
+        MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vfscanf_l(file, format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		scanf (MSVCRT.@)
  */
 int CDECL MSVCRT_scanf(const char *format, ...)

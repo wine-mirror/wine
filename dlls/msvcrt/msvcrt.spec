@@ -1285,7 +1285,7 @@
 # stub _free_dbg
 # stub _freea
 # stub _freea_s
-# stub _fscanf_l
+@ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
 # stub _fscanf_s_l
 # stub _fseeki64
 @ cdecl qsort(ptr long long ptr) ntdll.qsort
