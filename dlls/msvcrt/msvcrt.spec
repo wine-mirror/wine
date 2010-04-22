@@ -419,7 +419,7 @@
 # stub _fwprintf_p
 # stub _fwprintf_p_l
 # stub _fwprintf_s_l
-# stub _fwscanf_l
+@ varargs _fwscanf_l(ptr wstr ptr) MSVCRT__fwscanf_l
 # stub _fwscanf_s_l
 @ cdecl _gcvt(double long str)
 # stub _gcvt_s

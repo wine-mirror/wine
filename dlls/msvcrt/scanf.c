@@ -160,6 +160,21 @@ int CDECL MSVCRT_fwscanf(MSVCRT_FILE *file, const MSVCRT_wchar_t *format, ...)
 }
 
 /*********************************************************************
+ *		_fwscanf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__fwscanf_l(MSVCRT_FILE *file, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vfwscanf_l(file, format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		wscanf (MSVCRT.@)
  */
 int CDECL MSVCRT_wscanf(const MSVCRT_wchar_t *format, ...)
