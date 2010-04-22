@@ -837,7 +837,7 @@
 @ cdecl -arch=i386 _safe_fprem() msvcrt._safe_fprem
 @ cdecl -arch=i386 _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb( double long) msvcrt._scalb
-@ stub _scanf_l
+@ varargs _scanf_l(str ptr) msvcrt._scanf_l
 @ stub _scanf_s_l
 @ stub _scprintf
 @ stub _scprintf_l
