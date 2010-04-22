@@ -421,7 +421,7 @@
 # stub _fwprintf_p_l
 # stub _fwprintf_s_l
 @ varargs _fwscanf_l(ptr wstr ptr) MSVCRT__fwscanf_l
-# stub _fwscanf_s_l
+@ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str)
 # stub _gcvt_s
 # stub _get_doserrno
@@ -1212,7 +1212,7 @@
 # stub fwprintf_s
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
 @ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
-# stub fwscanf_s
+@ varargs fwscanf_s(ptr wstr) MSVCRT_fwscanf_s
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
 @ cdecl getenv(str) MSVCRT_getenv

@@ -459,7 +459,7 @@
 @ stub _fwprintf_s_l
 @ stub _fwrite_nolock
 @ varargs _fwscanf_l(ptr wstr ptr) msvcrt._fwscanf_l
-@ stub _fwscanf_s_l
+@ varargs _fwscanf_s_l(ptr wstr ptr) msvcrt._fwscanf_s_l
 @ cdecl _gcvt(double long str) msvcrt._gcvt
 @ stub _gcvt_s
 @ stub _get_amblksiz
@@ -1281,7 +1281,7 @@
 @ stub fwprintf_s
 @ cdecl fwrite(ptr long long ptr) msvcrt.fwrite
 @ varargs fwscanf(ptr wstr) msvcrt.fwscanf
-@ stub fwscanf_s
+@ varargs fwscanf_s(ptr wstr) msvcrt.fwscanf_s
 @ cdecl getc(ptr) msvcrt.getc
 @ cdecl getchar() msvcrt.getchar
 @ cdecl getenv(str) msvcrt.getenv
