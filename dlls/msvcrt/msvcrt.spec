@@ -329,10 +329,10 @@
 # stub _cwprintf_p_l
 # stub _cwprintf_s
 # stub _cwprintf_s_l
-# stub _cwscanf
-# stub _cwscanf_l
-# stub _cwscanf_s
-# stub _cwscanf_s_l
+@ varargs _cwscanf(wstr)
+@ varargs _cwscanf_l(wstr ptr)
+@ varargs _cwscanf_s(wstr)
+@ varargs _cwscanf_s_l(wstr ptr)
 @ extern _daylight MSVCRT___daylight
 @ cdecl _difftime32(long long) MSVCRT__difftime32
 @ cdecl _difftime64(long long) MSVCRT__difftime64

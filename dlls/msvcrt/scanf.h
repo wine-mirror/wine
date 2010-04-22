@@ -48,11 +48,19 @@
 #ifdef CONSOLE
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
+#ifdef WIDE_SCANF
+#ifdef SECURE
+#define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#else  /* SECURE */
+#define _FUNCTION_ static int MSVCRT_vcwscanf_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#endif /* SECURE */
+#else  /* WIDE_SCANF */
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vcscanf_s_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
 #define _FUNCTION_ static int MSVCRT_vcscanf_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
+#endif /* WIDE_SCANF */
 #else
 #ifdef STRING
 #undef _EOF_

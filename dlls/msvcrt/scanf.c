@@ -113,6 +113,17 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 #define SECURE 1
 #include "scanf.h"
 
+/* vcwscanf_l */
+#define WIDE_SCANF 1
+#define CONSOLE 1
+#undef STRING
+#undef SECURE
+#include "scanf.h"
+
+/* vcwscanf_s_l */
+#define SECURE 1
+#include "scanf.h"
+
 
 /*********************************************************************
  *		fscanf (MSVCRT.@)
@@ -512,6 +523,62 @@ int CDECL _cscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
 
     __ms_va_start(valist, locale);
     res = MSVCRT_vcscanf_s_l(format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cwscanf (MSVCRT.@)
+ */
+int CDECL _cwscanf(const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vcwscanf_l(format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cwscanf_l (MSVCRT.@)
+ */
+int CDECL _cwscanf_l(const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vcwscanf_l(format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cwscanf_s (MSVCRT.@)
+ */
+int CDECL _cwscanf_s(const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vcwscanf_s_l(format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_cwscanf_s_l (MSVCRT.@)
+ */
+int CDECL _cwscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vcwscanf_s_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }

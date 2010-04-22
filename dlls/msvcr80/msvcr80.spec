@@ -355,10 +355,10 @@
 @ stub _cwprintf_p_l
 @ stub _cwprintf_s
 @ stub _cwprintf_s_l
-@ stub _cwscanf
-@ stub _cwscanf_l
-@ stub _cwscanf_s
-@ stub _cwscanf_s_l
+@ varargs _cwscanf(wstr) msvcrt._cwscanf
+@ varargs _cwscanf_l(wstr ptr) msvcrt._cwscanf_l
+@ varargs _cwscanf_s(wstr) msvcrt._cwscanf_s
+@ varargs _cwscanf_s_l(wstr ptr) msvcrt._cwscanf_s_l
 @ extern _daylight msvcrt._daylight
 @ cdecl _decode_pointer(ptr) msvcr90._decode_pointer
 @ cdecl _difftime32(long long) msvcrt._difftime32
