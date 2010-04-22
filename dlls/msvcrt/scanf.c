@@ -24,6 +24,7 @@
  */
 
 #include <stdarg.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -61,30 +62,35 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 #undef WIDE_SCANF
 #undef CONSOLE
 #undef STRING
+#undef SECURE
 #include "scanf.h"
 
 /* vfwscanf_l */
 #define WIDE_SCANF 1
 #undef CONSOLE
 #undef STRING
+#undef SECURE
 #include "scanf.h"
 
 /* vsscanf_l */
 #undef WIDE_SCANF
 #undef CONSOLE
 #define STRING 1
+#undef SECURE
 #include "scanf.h"
 
 /* vswscanf_l */
 #define WIDE_SCANF 1
 #undef CONSOLE
 #define STRING 1
+#undef SECURE
 #include "scanf.h"
 
 /* vcscanf_l */
 #undef WIDE_SCANF
 #define CONSOLE 1
 #undef STRING
+#undef SECURE
 #include "scanf.h"
 
 
