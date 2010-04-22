@@ -907,7 +907,7 @@
 @ stub _sprintf_p
 @ stub _sprintf_p_l
 @ stub _sprintf_s_l
-@ stub _sscanf_l
+@ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ stub _sscanf_s_l
 @ stub _stat32
 @ stub _stat32i64

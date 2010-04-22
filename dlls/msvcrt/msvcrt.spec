@@ -856,7 +856,7 @@
 # stub _sprintf_l
 # stub _sprintf_p_l
 # stub _sprintf_s_l
-# stub _sscanf_l
+@ varargs _sscanf_l(str str ptr) MSVCRT__sscanf_l
 # stub _sscanf_s_l
 @ cdecl _stat(str ptr) MSVCRT_stat
 @ cdecl _stat64(str ptr) MSVCRT_stat64
