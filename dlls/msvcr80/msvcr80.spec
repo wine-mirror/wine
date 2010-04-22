@@ -341,7 +341,7 @@
 @ cdecl _create_locale(long str) msvcrt._create_locale
 @ stub _crt_debugger_hook
 @ varargs _cscanf(str) msvcrt._cscanf
-@ stub _cscanf_l
+@ varargs _cscanf_l(str ptr) msvcrt._cscanf_l
 @ stub _cscanf_s
 @ stub _cscanf_s_l
 @ cdecl _ctime32(ptr) msvcrt._ctime32

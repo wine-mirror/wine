@@ -274,3 +274,17 @@ int CDECL _cscanf(const char *format, ...)
     __ms_va_end(valist);
     return res;
 }
+
+/*********************************************************************
+ *		_cscanf_l (MSVCRT.@)
+ */
+int CDECL _cscanf_l(const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vcscanf_l(format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}

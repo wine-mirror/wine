@@ -314,7 +314,7 @@
 # stub _crtBreakAlloc
 # stub _crtDbgFlag
 @ varargs _cscanf(str)
-# stub _cscanf_l
+@ varargs _cscanf_l(str ptr)
 # stub _cscanf_s
 # stub _cscanf_s_l
 @ cdecl _ctime32(ptr) MSVCRT__ctime32
