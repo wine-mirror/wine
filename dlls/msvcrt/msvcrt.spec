@@ -1106,7 +1106,7 @@
 @ cdecl _wrename(wstr wstr)
 @ cdecl _write(long ptr long) MSVCRT__write
 @ cdecl _wrmdir(wstr)
-# stub _wscanf_l
+@ varargs _wscanf_l(wstr ptr) MSVCRT__wscanf_l
 # stub _wscanf_s_l
 @ cdecl _wsearchenv(wstr wstr ptr)
 # stub _wsearchenv_s
