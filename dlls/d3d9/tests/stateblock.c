@@ -2027,7 +2027,6 @@ static void resource_test_cleanup(IDirect3DDevice9 *device, struct state_test *t
     struct resource_test_context *ctx = test->test_context;
     const struct resource_test_arg *arg = test->test_arg;
     unsigned int i;
-    HRESULT hr;
 
     resource_apply_data(device, test, &ctx->default_data);
 
@@ -2042,7 +2041,7 @@ static void resource_test_cleanup(IDirect3DDevice9 *device, struct state_test *t
 
     for (i = 0; i < arg->tex_count; ++i)
     {
-        hr = IDirect3DBaseTexture9_Release(ctx->test_data_all.tex[i]);
+        IDirect3DBaseTexture9_Release(ctx->test_data_all.tex[i]);
     }
 
     HeapFree(GetProcessHeap(), 0, ctx->default_data.vb);
