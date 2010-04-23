@@ -218,9 +218,9 @@ BOOL WINAPI ILRemoveLastID(LPITEMIDLIST pidl)
     TRACE_(shell)("pidl=%p\n",pidl);
 
     if (!pidl || !pidl->mkid.cb)
-        return 0;
+        return FALSE;
     ILFindLastID(pidl)->mkid.cb = 0;
-    return 1;
+    return TRUE;
 }
 
 /*************************************************************************
@@ -1674,7 +1674,7 @@ BOOL _ILIsDesktop(LPCITEMIDLIST pidl)
 {
     TRACE("(%p)\n",pidl);
 
-    return pidl && pidl->mkid.cb  ? 0 : 1;
+    return pidl && pidl->mkid.cb  ? FALSE : TRUE;
 }
 
 BOOL _ILIsMyComputer(LPCITEMIDLIST pidl)
