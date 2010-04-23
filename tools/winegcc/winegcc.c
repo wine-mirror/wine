@@ -739,10 +739,10 @@ static void build(struct options* opts)
             switch(files->base[j][1])
             {
             case 'l':
-            case 's':
             case 'd':
                 strarray_add(link_args, strmake("-l%s", name));
                 break;
+            case 's':
             case 'o':
                 strarray_add(link_args, name);
                 break;
@@ -922,9 +922,9 @@ static void build(struct options* opts)
 	switch(files->base[j][1])
 	{
 	    case 'l':
-	    case 's':
 		strarray_add(link_args, strmake("-l%s", name));
 		break;
+	    case 's':
 	    case 'a':
 	    case 'o':
 		strarray_add(link_args, name);
