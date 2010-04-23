@@ -108,7 +108,7 @@
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcrt.__crtCompareStringW
 @ cdecl __crtGetLocaleInfoW(long long ptr long) msvcrt.__crtGetLocaleInfoW
-@ stub __crtGetStringTypeW
+@ cdecl __crtGetStringTypeW(long long wstr long ptr) msvcrt.__crtGetStringTypeW
 @ cdecl __crtLCMapStringA(long long str long ptr long long long) msvcrt.__crtLCMapStringA
 @ stub __crtLCMapStringW
 @ cdecl __dllonexit(ptr ptr ptr) msvcrt.__dllonexit
@@ -233,7 +233,7 @@
 @ extern _ctype msvcrt._ctype
 @ cdecl _cwait(ptr long long) msvcrt._cwait
 @ stub _cwprintf
-@ stub _cwscanf
+@ varargs _cwscanf(wstr) msvcrt._cwscanf
 @ extern _daylight msvcrt._daylight
 @ extern _dstbias msvcrt._dstbias
 @ cdecl _dup(long) msvcrt._dup
@@ -268,10 +268,10 @@
 @ cdecl _fileno(ptr) msvcrt._fileno
 @ cdecl _findclose(long) msvcrt._findclose
 @ cdecl _findfirst(str ptr) msvcrt._findfirst
-@ stub _findfirst64
+@ cdecl _findfirst64(str ptr) msvcrt._findfirst64
 @ cdecl _findfirsti64(str ptr) msvcrt._findfirsti64
 @ cdecl _findnext(long ptr) msvcrt._findnext
-@ stub _findnext64
+@ cdecl _findnext64(long ptr) msvcrt._findnext64
 @ cdecl _findnexti64(long ptr) msvcrt._findnexti64
 @ cdecl _finite( double ) msvcrt._finite
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
@@ -522,8 +522,8 @@
 @ cdecl _strrev(str) msvcrt._strrev
 @ cdecl _strset(str long) msvcrt._strset
 @ cdecl _strtime(ptr) msvcrt._strtime
-@ stub _strtoi64
-@ stub _strtoui64
+@ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
+@ cdecl _strtoui64(str ptr long) msvcrt._strtoui64
 @ cdecl _strupr(str) msvcrt._strupr
 @ cdecl _swab(str str long) msvcrt._swab
 @ extern _sys_errlist msvcrt._sys_errlist
