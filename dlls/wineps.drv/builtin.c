@@ -79,7 +79,9 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 	    	(float)(wm->usWinAscent + wm->usWinDescent);
     }
 
-    font->size = (INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    font->size.xx = (INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    font->size.xy = font->size.yx = 0;
+    font->size.yy = -(INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
 
     usUnitsPerEm = (USHORT)Round((float)(wm->usUnitsPerEm) * font->fontinfo.Builtin.scale);
     sAscender = (SHORT)Round((float)(wm->sAscender) * font->fontinfo.Builtin.scale);
@@ -140,7 +142,7 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
     font->strikeoutThickness = font->underlineThickness;
 
     TRACE("Selected PS font '%s' size %d weight %d.\n", afm->FontName,
-    	    font->size, tm->tmWeight );
+          font->size.xx, tm->tmWeight );
     TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", tm->tmHeight,
     	    tm->tmAscent, tm->tmDescent, tm->tmInternalLeading,
     	    tm->tmExternalLeading);

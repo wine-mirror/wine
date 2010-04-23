@@ -115,9 +115,9 @@ static const char psrectangle[] = /* x, y, width, height, -width */
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";
 
-static const char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
+static const char pssetfont[] = /* fontname, xx_scale, xy_scale, yx_scale, yy_scale, escapement */
 "/%s findfont\n"
-"[%d 0 0 %d 0 0]\n"
+"[%d %d %d %d 0 0]\n"
 "%d 10 div matrix rotate\n"
 "matrix concatmatrix\n"
 "makefont setfont\n";
@@ -501,7 +501,7 @@ BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h, double a
 }
 
 
-BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size, INT escapement)
+BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, matrix size, INT escapement)
 {
     char *buf;
 
@@ -513,7 +513,7 @@ BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size, INT 
         return FALSE;
     }
 
-    sprintf(buf, pssetfont, name, size, -size, -escapement);
+    sprintf(buf, pssetfont, name, size.xx, size.xy, size.yx, size.yy, -escapement);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
     HeapFree(PSDRV_Heap, 0, buf);

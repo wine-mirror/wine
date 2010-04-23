@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+BOOL WINAPI GetTransform( HDC hdc, DWORD which, XFORM *xform );
+
 #define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
           ( ( (DWORD)_x4 << 24 ) |     \
             ( (DWORD)_x3 << 16 ) |     \
@@ -233,6 +235,10 @@ static UINT calc_ppem_for_height(HDC hdc, LONG height)
     return MulDiv(emsize, height, ascent + descent);
 }
 
+static inline float ps_round(float f)
+{
+    return (f > 0) ? (f + 0.5) : (f - 0.5);
+}
 /****************************************************************************
  *  PSDRV_WriteSetDownloadFont
  *
@@ -247,6 +253,7 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     DOWNLOAD *pdl;
     LOGFONTW lf;
     UINT ppem;
+    XFORM xform;
 
     assert(physDev->font.fontloc == Download);
 
@@ -261,7 +268,19 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 
     ppem = calc_ppem_for_height(physDev->hdc, lf.lfHeight);
 
-    physDev->font.size = abs(PSDRV_YWStoDS(physDev, ppem));
+    /* Retrieve the world -> device transform */
+    GetTransform(physDev->hdc, 0x204, &xform);
+
+    physDev->font.size.xx = ps_round(ppem * xform.eM11);
+    physDev->font.size.xy = ps_round(ppem * xform.eM12);
+    physDev->font.size.yx = ps_round(ppem * xform.eM21);
+    physDev->font.size.yy = ps_round(ppem * xform.eM22);
+
+    if(GetMapMode(physDev->hdc) == MM_TEXT)
+    {
+        physDev->font.size.yx *= -1;
+        physDev->font.size.yy *= -1;
+    }
 
     physDev->font.underlineThickness = potm->otmsUnderscoreSize;
     physDev->font.underlinePosition = potm->otmsUnderscorePosition;

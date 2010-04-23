@@ -298,6 +298,11 @@ enum fontloc {
   Builtin, Download
 };
 
+typedef struct
+{
+    INT xx, xy, yx, yy;
+} matrix;
+
 typedef struct {
     enum fontloc        fontloc;
     union {
@@ -305,7 +310,7 @@ typedef struct {
         DOWNLOAD *Download;
     }                   fontinfo;
 
-    int                 size;
+    matrix              size;
     PSCOLOR             color;
     BOOL                set;		/* Have we done a setfont yet */
 
@@ -436,7 +441,7 @@ extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width
 			INT height);
 extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
 			INT height);
-extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, INT size,
+extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, matrix size,
                                INT escapement);
 extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCSTR g_name);
 extern BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev);
