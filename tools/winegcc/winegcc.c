@@ -674,8 +674,6 @@ static void build(struct options* opts)
 	else if (file[1] == 'x')
 	    lang = file;
     }
-    if (opts->shared && !spec_file)
-	error("A spec file is currently needed in shared mode\n");
 
     /* building for Windows is completely different */
 

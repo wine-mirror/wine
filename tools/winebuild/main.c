@@ -621,7 +621,6 @@ int main(int argc, char **argv)
     case MODE_DLL:
         if (spec->subsystem != IMAGE_SUBSYSTEM_NATIVE)
             spec->characteristics |= IMAGE_FILE_DLL;
-        if (!spec_file_name) fatal_error( "missing .spec file\n" );
         /* fall through */
     case MODE_EXE:
         load_resources( argv, spec );
