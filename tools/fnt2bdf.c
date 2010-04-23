@@ -445,7 +445,7 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
     if( l_nameoffset &&
 	l_nameoffset < return_data_value(dfLong, &cpe_font_struct->hdr.dfSize) )
     {
-      int     dpi, point_size;
+      int     point_size;
       char*   lpFace = (char*)(file_buffer + l_nameoffset), *lpChar;
       short   tmWeight = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfWeight);
 
@@ -479,7 +479,6 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
       /* y extents */
 
       point_size = 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints );
-      dpi = (l_cellheight * 720) / point_size;
 
       fprintf(fs, "%d-%d-%d-%d-",l_cellheight, point_size,
             return_data_value (dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
