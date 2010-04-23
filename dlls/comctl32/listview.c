@@ -462,7 +462,6 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, const LVITEMW *);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
-static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 static INT LISTVIEW_HitTest(const LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *, BOOL, BOOL);
@@ -5733,6 +5732,133 @@ cleanup:
 
 /***
  * DESCRIPTION:
+ * Subclassed edit control windproc function
+ *
+ * PARAMETER(S):
+ * [I] hwnd : the edit window handle
+ * [I] uMsg : the message that is to be processed
+ * [I] wParam : first message parameter
+ * [I] lParam : second message parameter
+ * [I] isW : TRUE if input is Unicode
+ *
+ * RETURN:
+ *   Zero.
+ */
+static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL isW)
+{
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(GetParent(hwnd), 0);
+    BOOL save = TRUE;
+
+    TRACE("(hwnd=%p, uMsg=%x, wParam=%lx, lParam=%lx, isW=%d)\n",
+	  hwnd, uMsg, wParam, lParam, isW);
+
+    switch (uMsg)
+    {
+	case WM_GETDLGCODE:
+	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
+
+	case WM_DESTROY:
+	{
+	    WNDPROC editProc = infoPtr->EditWndProc;
+	    infoPtr->EditWndProc = 0;
+	    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (DWORD_PTR)editProc);
+	    return CallWindowProcT(editProc, hwnd, uMsg, wParam, lParam, isW);
+	}
+
+	case WM_KEYDOWN:
+	    if (VK_ESCAPE == (INT)wParam)
+	    {
+		save = FALSE;
+                break;
+	    }
+	    else if (VK_RETURN == (INT)wParam)
+		break;
+
+	default:
+	    return CallWindowProcT(infoPtr->EditWndProc, hwnd, uMsg, wParam, lParam, isW);
+    }
+
+    /* kill the edit */
+    if (infoPtr->hwndEdit)
+	LISTVIEW_EndEditLabelT(infoPtr, save, isW);
+
+    SendMessageW(hwnd, WM_CLOSE, 0, 0);
+    return 0;
+}
+
+/***
+ * DESCRIPTION:
+ * Subclassed edit control Unicode windproc function
+ *
+ * PARAMETER(S):
+ * [I] hwnd : the edit window handle
+ * [I] uMsg : the message that is to be processed
+ * [I] wParam : first message parameter
+ * [I] lParam : second message parameter
+ *
+ * RETURN:
+ */
+static LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, TRUE);
+}
+
+/***
+ * DESCRIPTION:
+ * Subclassed edit control ANSI windproc function
+ *
+ * PARAMETER(S):
+ * [I] hwnd : the edit window handle
+ * [I] uMsg : the message that is to be processed
+ * [I] wParam : first message parameter
+ * [I] lParam : second message parameter
+ *
+ * RETURN:
+ */
+static LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, FALSE);
+}
+
+/***
+ * DESCRIPTION:
+ * Creates a subclassed edit control
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] text : initial text for the edit
+ * [I] style : the window style
+ * [I] isW : TRUE if input is Unicode
+ *
+ * RETURN:
+ */
+static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, BOOL isW)
+{
+    static const DWORD style = WS_CHILDWINDOW|WS_CLIPSIBLINGS|ES_LEFT|ES_AUTOHSCROLL|WS_BORDER|WS_VISIBLE;
+    HINSTANCE hinst = (HINSTANCE)GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_HINSTANCE);
+    HWND hedit;
+
+    TRACE("(%p, text=%s, isW=%d)\n", infoPtr, debugtext_t(text, isW), isW);
+
+    /* Window will be resized and positioned after LVN_BEGINLABELEDIT */
+    if (isW)
+	hedit = CreateWindowW(WC_EDITW, text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
+    else
+	hedit = CreateWindowA(WC_EDITA, (LPCSTR)text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
+
+    if (!hedit) return 0;
+
+    infoPtr->EditWndProc = (WNDPROC)
+	(isW ? SetWindowLongPtrW(hedit, GWLP_WNDPROC, (DWORD_PTR)EditLblWndProcW) :
+               SetWindowLongPtrA(hedit, GWLP_WNDPROC, (DWORD_PTR)EditLblWndProcA) );
+
+    SendMessageW(hedit, WM_SETFONT, (WPARAM)infoPtr->hFont, FALSE);
+
+    return hedit;
+}
+
+/***
+ * DESCRIPTION:
  * Begin in place editing of specified list view item
  *
  * PARAMETER(S):
@@ -5786,7 +5912,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     dispInfo.item.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, isW)) return 0;
 
-    infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, WS_VISIBLE, isW);
+    infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, isW);
     if (!infoPtr->hwndEdit) return 0;
     
     if (notify_dispinfoT(infoPtr, LVN_BEGINLABELEDITW, &dispInfo, isW))
@@ -11516,130 +11642,4 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 }
 
 
-/***
- * DESCRIPTION:
- * Subclassed edit control windproc function
- *
- * PARAMETER(S):
- * [I] hwnd : the edit window handle
- * [I] uMsg : the message that is to be processed
- * [I] wParam : first message parameter
- * [I] lParam : second message parameter
- * [I] isW : TRUE if input is Unicode
- *
- * RETURN:
- *   Zero.
- */
-static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL isW)
-{
-    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(GetParent(hwnd), 0);
-    BOOL save = TRUE;
 
-    TRACE("(hwnd=%p, uMsg=%x, wParam=%lx, lParam=%lx, isW=%d)\n",
-	  hwnd, uMsg, wParam, lParam, isW);
-
-    switch (uMsg)
-    {
-	case WM_GETDLGCODE:
-	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
-
-	case WM_DESTROY:
-	{
-	    WNDPROC editProc = infoPtr->EditWndProc;
-	    infoPtr->EditWndProc = 0;
-	    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (DWORD_PTR)editProc);
-	    return CallWindowProcT(editProc, hwnd, uMsg, wParam, lParam, isW);
-	}
-
-	case WM_KEYDOWN:
-	    if (VK_ESCAPE == (INT)wParam)
-	    {
-		save = FALSE;
-                break;
-	    }
-	    else if (VK_RETURN == (INT)wParam)
-		break;
-
-	default:
-	    return CallWindowProcT(infoPtr->EditWndProc, hwnd, uMsg, wParam, lParam, isW);
-    }
-
-    /* kill the edit */
-    if (infoPtr->hwndEdit)
-	LISTVIEW_EndEditLabelT(infoPtr, save, isW);
-
-    SendMessageW(hwnd, WM_CLOSE, 0, 0);
-    return 0;
-}
-
-/***
- * DESCRIPTION:
- * Subclassed edit control Unicode windproc function
- *
- * PARAMETER(S):
- * [I] hwnd : the edit window handle
- * [I] uMsg : the message that is to be processed
- * [I] wParam : first message parameter
- * [I] lParam : second message parameter
- *
- * RETURN:
- */
-static LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, TRUE);
-}
-
-/***
- * DESCRIPTION:
- * Subclassed edit control ANSI windproc function
- *
- * PARAMETER(S):
- * [I] hwnd : the edit window handle
- * [I] uMsg : the message that is to be processed
- * [I] wParam : first message parameter
- * [I] lParam : second message parameter
- *
- * RETURN:
- */
-static LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, FALSE);
-}
-
-/***
- * DESCRIPTION:
- * Creates a subclassed edit control
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] text : initial text for the edit
- * [I] style : the window style
- * [I] isW : TRUE if input is Unicode
- *
- * RETURN:
- */
-static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style, BOOL isW)
-{
-    HWND hedit;
-    HINSTANCE hinst = (HINSTANCE)GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_HINSTANCE);
-
-    TRACE("(text=%s, ..., isW=%d)\n", debugtext_t(text, isW), isW);
-
-    style |= WS_CHILDWINDOW|WS_CLIPSIBLINGS|ES_LEFT|ES_AUTOHSCROLL|WS_BORDER;
-
-    /* Window will be resized and positioned after LVN_BEGINLABELEDIT */
-    if (isW)
-	hedit = CreateWindowW(WC_EDITW, text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
-    else
-	hedit = CreateWindowA(WC_EDITA, (LPCSTR)text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
-
-    if (!hedit) return 0;
-
-    infoPtr->EditWndProc = (WNDPROC)
-	(isW ? SetWindowLongPtrW(hedit, GWLP_WNDPROC, (DWORD_PTR)EditLblWndProcW) :
-               SetWindowLongPtrA(hedit, GWLP_WNDPROC, (DWORD_PTR)EditLblWndProcA) );
-
-    SendMessageW(hedit, WM_SETFONT, (WPARAM)infoPtr->hFont, FALSE);
-
-    return hedit;
-}
