@@ -3279,7 +3279,6 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
                           const char *varname)
 {
     type_t *type = var->type;
-    unsigned int size;
     unsigned int alignment = 0;
 
     /* no work to do for other phases, buffer sizing is done elsewhere */
@@ -3317,14 +3316,12 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
         case RPC_FC_CHAR:
         case RPC_FC_SMALL:
         case RPC_FC_USMALL:
-            size = 1;
             alignment = 1;
             break;
 
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
-            size = 2;
             alignment = 2;
             break;
 
@@ -3335,13 +3332,11 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
         /* pointer_size must be 4 if we got here in these two cases */
         case RPC_FC_INT3264:
         case RPC_FC_UINT3264:
-            size = 4;
             alignment = 4;
             break;
 
         case RPC_FC_HYPER:
         case RPC_FC_DOUBLE:
-            size = 8;
             alignment = 8;
             break;
 
@@ -3353,7 +3348,6 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
         default:
             error("print_phase_basetype: Unsupported type: %s (0x%02x, ptr_level: 0)\n",
                   var->name, get_basic_fc(ref));
-            size = 0;
         }
 
         if (phase == PHASE_MARSHAL && alignment > 1)
