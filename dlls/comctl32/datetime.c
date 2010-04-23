@@ -759,11 +759,10 @@ static LRESULT
 DATETIME_LButtonDown (DATETIME_INFO *infoPtr, INT x, INT y)
 {
     POINT pt;
-    int old, new;
+    int new;
 
     pt.x = x;
     pt.y = y;
-    old = infoPtr->select;
     new = DATETIME_HitTest (infoPtr, pt);
 
     SetFocus(infoPtr->hwndSelf);
