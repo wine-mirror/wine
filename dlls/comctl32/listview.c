@@ -11599,7 +11599,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 
             /* Select font to get the right dimension of the string */
             hFont = (HFONT)SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
-            if(hFont != 0)
+            if (hFont)
             {
                 hOldFont = SelectObject(hdc, hFont);
             }
@@ -11612,16 +11612,10 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
                 GetTextMetricsW(hdc, &textMetric);
                 sz.cx += (textMetric.tmMaxCharWidth * 2);
 
-		SetWindowPos (
-		    infoPtr->hwndEdit,
-		    HWND_TOP,
-		    0,
-		    0,
-		    sz.cx,
-		    rect.bottom - rect.top,
-		    SWP_DRAWFRAME|SWP_NOMOVE);
+		SetWindowPos(infoPtr->hwndEdit, NULL, 0, 0, sz.cx,
+		    rect.bottom - rect.top, SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOZORDER);
 	    }
-            if(hFont != 0)
+            if (hFont)
                 SelectObject(hdc, hOldFont);
 
 	    ReleaseDC(infoPtr->hwndEdit, hdc);

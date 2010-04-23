@@ -3422,12 +3422,12 @@ static void test_getitemrect(void)
 
 static void test_editbox(void)
 {
-    HWND hwnd, hwndedit, hwndedit2;
+    static CHAR testitemA[]  = "testitem";
+    static CHAR testitem1A[] = "testitem_quitelongname";
+    static CHAR buffer[25];
+    HWND hwnd, hwndedit, hwndedit2, header;
     LVITEMA item;
     DWORD r;
-    static CHAR testitemA[]  = "testitem";
-    static CHAR testitem1A[] = "testitem1";
-    static CHAR buffer[10];
 
     hwnd = create_listview_control(LVS_EDITLABELS | LVS_REPORT);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -3447,16 +3447,28 @@ static void test_editbox(void)
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
     ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
 
+    /* test children Z-order after Edit box created */
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header to be created\n");
+    ok(GetTopWindow(hwnd) == header, "Expected header to be on top\n");
+    ok(GetNextWindow(header, GW_HWNDNEXT) == hwndedit, "got %p\n", GetNextWindow(header, GW_HWNDNEXT));
+
     /* modify initial string */
     r = SendMessage(hwndedit, WM_SETTEXT, 0, (LPARAM)testitem1A);
     expect(TRUE, r);
+
+    /* edit window is resized and repositioned,
+       check again for Z-order - it should be preserved */
+    ok(GetTopWindow(hwnd) == header, "Expected header to be on top\n");
+    ok(GetNextWindow(header, GW_HWNDNEXT) == hwndedit, "got %p\n", GetNextWindow(header, GW_HWNDNEXT));
+
     /* return focus to listview */
     SetFocus(hwnd);
 
     memset(&item, 0, sizeof(item));
     item.mask = LVIF_TEXT;
     item.pszText = buffer;
-    item.cchTextMax = 10;
+    item.cchTextMax = sizeof(buffer);
     item.iItem = 0;
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
@@ -3496,7 +3508,7 @@ static void test_editbox(void)
     expect(0, r);
     memset(&item, 0, sizeof(item));
     item.pszText = buffer;
-    item.cchTextMax = 10;
+    item.cchTextMax = sizeof(buffer);
     item.iItem = 0;
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
@@ -3522,7 +3534,7 @@ static void test_editbox(void)
 
     memset(&item, 0, sizeof(item));
     item.pszText = buffer;
-    item.cchTextMax = 10;
+    item.cchTextMax = sizeof(buffer);
     item.iItem = 0;
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
