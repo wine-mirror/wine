@@ -471,11 +471,9 @@ static void test_EnumMRUList(void)
     /* NULL handle */
     if (0)
     {
-        INT iRet;
-
         /* crashes on NT4, passed on Win2k, XP, 2k3, Vista, 2k8 */
-        iRet = pEnumMRUList(NULL, 0, NULL, 0);
-        iRet = pEnumMRUListW(NULL, 0, NULL, 0);
+        pEnumMRUList(NULL, 0, NULL, 0);
+        pEnumMRUListW(NULL, 0, NULL, 0);
     }
 }
 
