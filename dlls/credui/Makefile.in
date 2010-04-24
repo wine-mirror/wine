@@ -30,4 +30,7 @@ RC_SRCS = \
 	credui_Uk.rc \
 	credui_Zh.rc
 
+SVG_SRCS = \
+	banner.svg
+
 @MAKE_DLL_RULES@
