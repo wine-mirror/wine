@@ -1107,7 +1107,8 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
         return E_INVALIDARG;
 
     if (!written) {
-        FIXME("Handled right?\n");
+        if (This->parent->locked)
+            FIXME("Handled right?\n");
         This->parent->locked = 0;
         return S_OK;
     }
