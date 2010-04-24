@@ -1420,7 +1420,6 @@ static void dump_symbol_table(void)
 {
     const IMAGE_SYMBOL* sym;
     int                 numsym;
-    const char*         strtable;
 
     numsym = PE_nt_headers->FileHeader.NumberOfSymbols;
     if (!PE_nt_headers->FileHeader.PointerToSymbolTable || !numsym)
@@ -1428,8 +1427,6 @@ static void dump_symbol_table(void)
     sym = PRD(PE_nt_headers->FileHeader.PointerToSymbolTable,
                                    sizeof(*sym) * numsym);
     if (!sym) return;
-    /* FIXME: no way to get strtable size */
-    strtable = (const char*)&sym[numsym];
 
     dump_coff_symbol_table(sym, numsym, IMAGE_FIRST_SECTION(PE_nt_headers));
 }
