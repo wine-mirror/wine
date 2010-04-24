@@ -54,13 +54,8 @@ static void check_position(int device, HWAVEIN win, DWORD bytes,
                            LPWAVEFORMATEX pwfx )
 {
     MMTIME mmtime;
-    DWORD samples;
-    double duration;
     MMRESULT rc;
     DWORD returned;
-
-    samples=bytes/(pwfx->wBitsPerSample/8*pwfx->nChannels);
-    duration=((double)samples)/pwfx->nSamplesPerSec;
 
     mmtime.wType = TIME_BYTES;
     rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
