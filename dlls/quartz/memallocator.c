@@ -534,7 +534,7 @@ static HRESULT WINAPI StdMediaSample2_GetTime(IMediaSample2 * iface, REFERENCE_T
         hr = S_OK;
     }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI StdMediaSample2_SetTime(IMediaSample2 * iface, REFERENCE_TIME * pStart, REFERENCE_TIME * pEnd)
