@@ -1751,14 +1751,15 @@ static inline INT LISTVIEW_GetCountPerColumn(const LISTVIEW_INFO *infoPtr)
  */
 static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, LPARAM keyData)
 {
-    INT nItem;
-    INT endidx,idx;
-    LVITEMW item;
     WCHAR buffer[MAX_PATH];
-    DWORD lastKeyPressTimestamp = infoPtr->lastKeyPressTimestamp;
+    INT endidx, startidx;
+    DWORD prevTime;
+    LVITEMW item;
+    INT nItem;
+    INT diff;
 
     /* simple parameter checking */
-    if (!charCode || !keyData) return 0;
+    if (!charCode || !keyData || infoPtr->nItemCount == 0) return 0;
 
     /* only allow the valid WM_CHARs through */
     if (!isalnumW(charCode) &&
@@ -1773,86 +1774,95 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         charCode != '<' && charCode != ',' && charCode != '~')
         return 0;
 
-    /* if there's one item or less, there is no where to go */
-    if (infoPtr->nItemCount <= 1) return 0;
-
     /* update the search parameters */
+    prevTime = infoPtr->lastKeyPressTimestamp;
     infoPtr->lastKeyPressTimestamp = GetTickCount();
-    if (infoPtr->lastKeyPressTimestamp - lastKeyPressTimestamp < KEY_DELAY) {
-        if (infoPtr->nSearchParamLength < MAX_PATH-1)
-            infoPtr->szSearchParam[infoPtr->nSearchParamLength++]=charCode;
+    diff = infoPtr->lastKeyPressTimestamp - prevTime;
+
+    if (diff >= 0 && diff < KEY_DELAY)
+    {
+        if (infoPtr->nSearchParamLength < MAX_PATH - 1)
+            infoPtr->szSearchParam[infoPtr->nSearchParamLength++] = charCode;
+
         if (infoPtr->charCode != charCode)
             infoPtr->charCode = charCode = 0;
-    } else {
-        infoPtr->charCode=charCode;
-        infoPtr->szSearchParam[0]=charCode;
-        infoPtr->nSearchParamLength=1;
-        /* Redundant with the 1 char string */
-        charCode=0;
+    }
+    else
+    {
+        infoPtr->charCode = charCode;
+        infoPtr->szSearchParam[0] = charCode;
+        infoPtr->nSearchParamLength = 1;
+        /* redundant with the 1 char string */
+        charCode = 0;
     }
 
     /* and search from the current position */
-    nItem=-1;
-    if (infoPtr->nFocusedItem >= 0) {
-        endidx=infoPtr->nFocusedItem;
-        idx=endidx;
-        /* if looking for single character match,
-         * then we must always move forward
-         */
-        if (infoPtr->nSearchParamLength == 1)
-            idx++;
-    } else {
-        endidx=infoPtr->nItemCount;
-        idx=0;
-    }
+    nItem = -1;
+    endidx = infoPtr->nItemCount;
 
-    /* Let application handle this for virtual listview */
+    /* should start from next after focused item, so next item that matches
+       will be selected, if there isn't any and focused matches it will be selected
+       on second search stage from beginning of the list */
+    if (infoPtr->nFocusedItem >= 0 && infoPtr->nItemCount > 1)
+        startidx = infoPtr->nFocusedItem + 1;
+    else
+        startidx = 0;
+
+    /* let application handle this for virtual listview */
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
         NMLVFINDITEMW nmlv;
-        LVFINDINFOW lvfi;
 
-        ZeroMemory(&lvfi, sizeof(lvfi));
-        lvfi.flags = (LVFI_WRAP | LVFI_PARTIAL);
-        infoPtr->szSearchParam[infoPtr->nSearchParamLength] = '\0';
-        lvfi.psz = infoPtr->szSearchParam;
-        nmlv.iStart = idx;
-        nmlv.lvfi = lvfi;
+        memset(&nmlv.lvfi, 0, sizeof(nmlv.lvfi));
+        nmlv.lvfi.flags = (LVFI_WRAP | LVFI_PARTIAL);
+        nmlv.lvfi.psz = infoPtr->szSearchParam;
+        nmlv.iStart = startidx;
+
+        infoPtr->szSearchParam[infoPtr->nSearchParamLength] = 0;
 
         nItem = notify_hdr(infoPtr, LVN_ODFINDITEMW, (LPNMHDR)&nmlv.hdr);
-
-        if (nItem != -1)
-            LISTVIEW_KeySelection(infoPtr, nItem, FALSE);
-
-        return 0;
     }
+    else
+    {
+        INT i = startidx;
 
-    do {
-        if (idx == infoPtr->nItemCount) {
-            if (endidx == infoPtr->nItemCount || endidx == 0)
+        /* first search in [startidx, endidx), on failure continue in [0, startidx) */
+        while (1)
+        {
+            /* start from first item if not found with >= startidx */
+            if (i == infoPtr->nItemCount && startidx > 0)
+            {
+                endidx = startidx;
+                startidx = 0;
+            }
+
+            for (i = startidx; i < endidx; i++)
+            {
+                /* retrieve text */
+                item.mask = LVIF_TEXT;
+                item.iItem = i;
+                item.iSubItem = 0;
+                item.pszText = buffer;
+                item.cchTextMax = MAX_PATH;
+                if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
+
+                if (lstrncmpiW(item.pszText, infoPtr->szSearchParam, infoPtr->nSearchParamLength) == 0)
+                {
+                    nItem = i;
+                    break;
+                }
+                else if (nItem == -1 && lstrncmpiW(item.pszText, infoPtr->szSearchParam, 1) == 0)
+                {
+                    /* this would work but we must keep looking for a longer match */
+                    nItem = i;
+                }
+            }
+
+            /* found something or second search completed with any result */
+            if (nItem != -1 || endidx != infoPtr->nItemCount)
                 break;
-            idx=0;
-        }
-
-        /* get item */
-        item.mask = LVIF_TEXT;
-        item.iItem = idx;
-        item.iSubItem = 0;
-        item.pszText = buffer;
-        item.cchTextMax = MAX_PATH;
-        if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
-
-        /* check for a match */
-        if (lstrncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
-            nItem=idx;
-            break;
-        } else if ( (charCode != 0) && (nItem == -1) && (nItem != infoPtr->nFocusedItem) &&
-                    (lstrncmpiW(item.pszText,infoPtr->szSearchParam,1) == 0) ) {
-            /* This would work but we must keep looking for a longer match */
-            nItem=idx;
-        }
-        idx++;
-    } while (idx != endidx);
+        };
+    }
 
     if (nItem != -1)
         LISTVIEW_KeySelection(infoPtr, nItem, FALSE);
