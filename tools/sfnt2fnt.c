@@ -365,7 +365,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
                                        unsigned char def_char, int avg_width )
 {
     FT_Face face;
-    int ascent = 0, il, el, descent = 0, width_bytes = 0, space_size, max_width = 0;
+    int ascent = 0, il, el, width_bytes = 0, space_size, max_width = 0;
     BYTE left_byte, right_byte, byte;
     DWORD start;
     int i, x, y, x_off, x_end, first_char;
@@ -413,7 +413,6 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
             if(size_table->hori.ascender - size_table->hori.descender == ppem)
             {
                 ascent = size_table->hori.ascender;
-                descent = -size_table->hori.descender;
                 break;
             }
             size_table++;
@@ -431,7 +430,6 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
         if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT))
             error("Can't find Aring\n");
         ascent = face->glyph->metrics.horiBearingY >> 6;
-        descent = ppem - ascent;
     }
 
     start = sizeof(FNT_HEADER);
