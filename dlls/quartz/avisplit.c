@@ -178,7 +178,6 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
         {
             AVISTDINDEX *index = stream->stdindex[stream->index];
             AVISTDINDEX_ENTRY *entry = &index->aIndex[stream->pos];
-            BOOL keyframe;
 
             /* End of file */
             if (stream->index >= stream->entries)
@@ -189,7 +188,6 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             }
 
             rtSampleStart = index->qwBaseOffset;
-            keyframe = !(entry->dwSize >> 31);
             rtSampleStart += entry->dwOffset;
             rtSampleStart = MEDIATIME_FROM_BYTES(rtSampleStart);
 
