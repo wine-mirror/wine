@@ -355,7 +355,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 {
     ULONG i, sid_size_total = 0, domain_size_max = 0, size;
     ULONG sid_size, domain_size, mapped;
-    BOOL ret, handled = FALSE;
+    BOOL handled = FALSE;
     SID_NAME_USE use;
     SID *sid;
 
@@ -366,7 +366,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
     {
         handled = FALSE;
         sid_size = domain_size = 0;
-        ret = lookup_name( &names[i], NULL, &sid_size, NULL, &domain_size, &use, &handled );
+        lookup_name( &names[i], NULL, &sid_size, NULL, &domain_size, &use, &handled );
         if (handled)
         {
             sid_size_total += sid_size;
@@ -408,7 +408,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
         handled = FALSE;
         sid_size = sid_size_total;
         domain_size = domain_size_max;
-        ret = lookup_name( &names[i], sid, &sid_size, domain.Buffer, &domain_size, &use, &handled );
+        lookup_name( &names[i], sid, &sid_size, domain.Buffer, &domain_size, &use, &handled );
         if (handled)
         {
             (*sids)[i].Sid = sid;
