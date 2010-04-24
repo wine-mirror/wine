@@ -136,7 +136,7 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico
+.SUFFIXES: .mc .rc .mc.rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -191,6 +191,11 @@ filter: dummy
 
 .svg.ico:
 	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDICON) $< $@
+
+.svg.bmp:
+	$(RSVG) $< $<.png
+	$(CONVERT) $<.png -alpha off $@
+	$(RM) $<.png
 
 # Rules for IDL files
 
