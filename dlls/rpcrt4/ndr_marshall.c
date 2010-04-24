@@ -4187,7 +4187,6 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  ULONG size;
   unsigned char *saved_buffer;
   int pointer_buffer_mark_set = 0;
   int saved_ignore_embedded;
@@ -4209,7 +4208,6 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pStubMsg->IgnoreEmbeddedPointers = 1;
   pStubMsg->MemorySize = 0;
   NdrComplexArrayMemorySize(pStubMsg, pFormat);
-  size = pStubMsg->MemorySize;
   pStubMsg->IgnoreEmbeddedPointers = saved_ignore_embedded;
 
   TRACE("difference = 0x%x\n", (ULONG)(pStubMsg->Buffer - saved_buffer));
