@@ -1220,6 +1220,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
 
     FIXME("(%p, %p, %p) - partially implemented\n", info, bits, bitmap);
 
+    if (!info || !bits || !bitmap)
+        return InvalidParameter;
+
     height = abs(info->bmiHeader.biHeight);
     stride = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) >> 3) & ~3;
 

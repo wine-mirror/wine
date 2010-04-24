@@ -158,6 +158,117 @@ static void test_Scan0(void)
     ok( !bm, "expected null bitmap\n" );
 }
 
+static void test_FromGdiDib(void)
+{
+    GpBitmap *bm;
+    GpStatus stat;
+    BYTE buff[400];
+    BYTE rbmi[sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD)];
+    BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
+    PixelFormat format;
+
+    bm = NULL;
+
+    memset(rbmi, 0, sizeof(rbmi));
+
+    bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi->bmiHeader.biWidth = 10;
+    bmi->bmiHeader.biHeight = 10;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    stat = GdipCreateBitmapFromGdiDib(NULL, buff, &bm);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGdiDib(bmi, NULL, &bm);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    todo_wine expect(Ok, stat);
+    todo_wine ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat32bppRGB, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 24;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat24bppRGB, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 16;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    todo_wine expect(Ok, stat);
+    todo_wine ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat16bppRGB555, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 8;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat8bppIndexed, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 4;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat4bppIndexed, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 1;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
+        expect(Ok, stat);
+        expect(PixelFormat1bppIndexed, format);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 0;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat);
+}
+
 static void test_GetImageDimension(void)
 {
     GpBitmap *bm;
@@ -1901,6 +2012,7 @@ START_TEST(image)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_Scan0();
+    test_FromGdiDib();
     test_GetImageDimension();
     test_GdipImageGetFrameDimensionsCount();
     test_LoadingImages();
