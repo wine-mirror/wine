@@ -188,8 +188,8 @@ static void test_FromGdiDib(void)
     expect(InvalidParameter, stat);
 
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
-    todo_wine expect(Ok, stat);
-    todo_wine ok(NULL != bm, "Expected bitmap to be initialized\n");
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
         stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
@@ -214,8 +214,8 @@ static void test_FromGdiDib(void)
 
     bmi->bmiHeader.biBitCount = 16;
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
-    todo_wine expect(Ok, stat);
-    todo_wine ok(NULL != bm, "Expected bitmap to be initialized\n");
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
         stat = GdipGetImagePixelFormat((GpImage*)bm, &format);

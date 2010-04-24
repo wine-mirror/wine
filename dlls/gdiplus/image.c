@@ -1242,8 +1242,14 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
     case 8:
         format = PixelFormat8bppIndexed;
         break;
+    case 16:
+        format = PixelFormat16bppRGB555;
+        break;
     case 24:
         format = PixelFormat24bppRGB;
+        break;
+    case 32:
+        format = PixelFormat32bppRGB;
         break;
     default:
         FIXME("don't know how to handle %d bpp\n", info->bmiHeader.biBitCount);
