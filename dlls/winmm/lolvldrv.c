@@ -93,7 +93,6 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     DWORD			ret;
     WINE_MM_DRIVER_PART*	part;
     WINE_LLTYPE*		llType = &llTypes[mld->type];
-    int				devID;
 
     TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
@@ -105,13 +104,11 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		 llTypes[mld->type].typestr);
 	    return MMSYSERR_BADDEVICEID;
         }
-	devID = -1;
     } else {
 	if (mld->uDeviceID >= llType->wMaxId) {
 	    WARN("uDev(%u) requested >= max (%d)\n", mld->uDeviceID, llType->wMaxId);
 	    return MMSYSERR_BADDEVICEID;
 	}
-	devID = mld->uDeviceID;
     }
 
     lpDrv = &MMDrvs[mld->mmdIndex];
