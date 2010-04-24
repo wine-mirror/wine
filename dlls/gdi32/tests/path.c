@@ -393,7 +393,6 @@ done:
 }
 
 static void test_closefigure(void) {
-    BOOL retb;
     int nSize, nSizeWitness;
     HDC hdc = GetDC(0);
 
@@ -402,7 +401,7 @@ static void test_closefigure(void) {
     LineTo(hdc, 95,  0);
     LineTo(hdc,  0, 95);
 
-    retb = CloseFigure(hdc);
+    CloseFigure(hdc);
     EndPath(hdc);
     nSize = GetPath(hdc, NULL, NULL, 0);
 
