@@ -2244,12 +2244,12 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_DEFCHARFORMAT:
         {
         CHARFORMAT2W cf;
-        LRESULT i;
+
         ZeroMemory(&cf, sizeof(cf));
         cf.cbSize = sizeof(cf);
         cf.dwMask = 0;
-        i = SendMessageW(hwndEditor, EM_GETCHARFORMAT,
-                        LOWORD(wParam) == ID_EDIT_CHARFORMAT, (LPARAM)&cf);
+        SendMessageW(hwndEditor, EM_GETCHARFORMAT,
+                     LOWORD(wParam) == ID_EDIT_CHARFORMAT, (LPARAM)&cf);
         return 0;
         }
 
