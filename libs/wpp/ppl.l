@@ -961,7 +961,6 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
  */
 static void expand_special(pp_entry_t *ppp)
 {
-	const char *dbgtext = "?";
 	static char *buf = NULL;
 	char *new_buf;
 
@@ -969,7 +968,6 @@ static void expand_special(pp_entry_t *ppp)
 
 	if(!strcmp(ppp->ident, "__LINE__"))
 	{
-		dbgtext = "def_special(__LINE__)";
 		new_buf = pp_xrealloc(buf, 32);
 		if(!new_buf)
 			return;
@@ -978,7 +976,6 @@ static void expand_special(pp_entry_t *ppp)
 	}
 	else if(!strcmp(ppp->ident, "__FILE__"))
 	{
-		dbgtext = "def_special(__FILE__)";
 		new_buf = pp_xrealloc(buf, strlen(pp_status.input) + 3);
 		if(!new_buf)
 			return;
