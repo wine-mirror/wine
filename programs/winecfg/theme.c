@@ -903,7 +903,7 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
 static void apply_shell_folder_changes(void) {
     WCHAR wszPath[MAX_PATH];
     char szBackupPath[FILENAME_MAX], szUnixPath[FILENAME_MAX], *pszUnixPath = NULL;
-    int i, cUnixPathLen;
+    int i;
     struct stat statPath;
     HRESULT hr;
 
@@ -923,7 +923,6 @@ static void apply_shell_folder_changes(void) {
         HeapFree(GetProcessHeap(), 0, pszUnixPath);
             
         /* Derive name for folder backup. */
-        cUnixPathLen = lstrlenA(szUnixPath);    
         lstrcpyA(szBackupPath, szUnixPath);
         lstrcatA(szBackupPath, ".winecfg");
         
