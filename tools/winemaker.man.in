@@ -5,37 +5,37 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 .SH SYNOPSIS
 .B "winemaker "
 [
-.IR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
+.BR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
 ]
 .br
   [
-.IR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
+.BR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
 ]
 .br
   [
-.IR               "--lower-include " "| " "--nolower-include " ] [ " "--mfc " "| " "--nomfc "
+.BR               "--lower-include " "| " "--nolower-include " ]\ [ " --mfc " "| " "--nomfc "
 ]
 .br
   [
-.IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
 ]
 .br
   [
-.IR               "-Dmacro[=defn] " "] [ " "-Idir " "] [ " "-Pdir " "] [ " "-idll" "] [ " "-Ldir " "] [ " "-llibrary "
+.BI               "-D" macro "\fR[=\fIdefn\fR] ] [" "\ " "-I" "dir\fR ]\ [ " "-P" "dir\fR ] [ " "-i" "dll\fR ] [ " "-L" "dir\fR ] [ " "-l" "library "
 ]
 .br
   [
-.IR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target name "
+.BR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target \fIname\fR "
 ]
 .br
   [
-.IR               "--generated-files " "] [ " "--nogenerated-files " "] 
+.BR               "--generated-files " "] [ " "--nogenerated-files " "]
 ]
 .br
   [
-.IR               "--wine32 " "]
+.BR               "--wine32 " "]
 .br
-.IR               "work_directory" "| " "project_file" "| " "workspace_file"
+.IR               "  work_directory" " | " "project_file" " | " "workspace_file"
 
 .SH DESCRIPTION
 .PP
@@ -73,109 +73,109 @@ source files, and generate the corresponding Makefile.
 .PP
 .SH OPTIONS
 .TP
-.I --nobanner
+.B --nobanner
 Disables the printing of the banner.
 .TP
-.I --backup
+.B --backup
 Directs winemaker to perform a backup of all the source files in which it
 makes changes. This is the default.
 .TP
-.I --nobackup
+.B --nobackup
 Tells winemaker not to backup modified source files.
 .TP
-.I --nosource-fix
+.B --nosource-fix
 Directs winemaker not to try fixing the source files (e.g. Dos to Unix
 conversion). This prevents complaints if the files are readonly.
 .TP
-.I --lower-all
+.B --lower-all
 Tells winemaker to rename all files and directories to lowercase.
 .TP
-.I --lower-uppercase
+.B --lower-uppercase
 Tells winemaker to only rename files and directories that have an all
 uppercase name.
 So "HELLO.C" would be renamed but not "World.c".
 .TP
-.I --lower-none
+.B --lower-none
 Tells winemaker not to rename files and directories to lower case. Note
 that this does not prevent the renaming of a file if its extension cannot
 be handled as is, e.g. ".Cxx". This is the default.
 .TP
-.I "--lower-include "
+.B "--lower-include "
 Tells winemaker that if it does not find the file corresponding to an
 include statement (or other form of file reference for resource files),
 then it should convert that filename to lowercase. This is the default.
 .TP
-.I "--nolower-include "
+.B "--nolower-include "
 Tells winemaker not to modify the include statement if it cannot find the
 referenced file.
 .TP
-.IR "--guiexe " "| " "--windows"
+.BR "--guiexe " "| " "--windows"
 Specifies that whenever winemaker finds an executable target, or a target of
 unknown type, it should assume that it is a graphical application.
 This is the default.
 .TP
-.IR "--cuiexe " "| " "--console"
+.BR "--cuiexe " "| " "--console"
 Specifies that whenever winemaker finds an executable target, or a target of
 unknown type, it should assume that it is a console application.
 .TP
-.I --dll
+.B --dll
 This option tells winemaker that whenever it finds a target of unknown type,
 i.e. for which it does not know whether it is an executable or a library,
 it should assume it is a library.
 .TP
-.I --mfc
+.B --mfc
 Specifies that the targets are MFC based. In such a case winemaker the include 
 and library paths accordingly, and links the target with the MFC library.
 .TP
-.I --nomfc
+.B --nomfc
 Specifies that targets are not MFC-based. This option disables use of MFC libraries
 even if winemaker encounters files "stdafx.cpp" or "stdafx.h" that would cause it
 to enable MFC automatically if neither --nomfc nor --mfc was specified.
 .TP
-.I -Dmacro[=defn]
+.BI -D macro "\fR[=\fIdefn\fR]"
 Adds the specified macro definition to the global list of macro definitions.
 .TP
-.I -Idir
+.BI -I dir
 Appends the specified directory to the global include path.
 .TP
-.I -Pdir
+.BI -P dir
 Appends the specified directory to the global dll path.
 .TP
-.I -idll
+.BI -i dll
 Adds the Winelib library to the global list of Winelib libraries to import.
 .TP
-.I -Ldir
+.BI -L dir
 Appends the specified directory to the global library path.
 .TP
-.I -llibrary
+.BI -l library
 Adds the specified library to the global list of libraries to link with.
 .TP
-.I --nodlls
+.B --nodlls
 This option tells winemaker not to use the standard set of winelib libraries
 for imports. That is, any DLL your code uses must be explicitly passed to
 winemaker with -i options.
 The standard set of libraries is: odbc32.dll, odbccp32.dll, ole32.dll,
 oleaut32.dll and winspool.drv.
 .TP
-.I --nomsvcrt
+.B --nomsvcrt
 Sets some options to tell winegcc not to compile against msvcrt.
 Use this option if you have cpp-files that include <string>.
 .TP
-.I --interactive
+.B --interactive
 Puts winemaker in interactive mode. In this mode winemaker will ask you to
 confirm each directory's list of targets, and then to provide directory and
 target specific options.
 .TP
-.I --single-target name
+.B --single-target name
 Specifies that there is only one target, and that it is called "name".
 .TP
-.I --generated-files
+.B --generated-files
 Tells winemaker to generate the Makefile. This is the default.
 .TP
-.I --nogenerated-files
+.B --nogenerated-files
 Tells winemaker not to generate the Makefile.
 .TP
-.I --wine32
+.B --wine32
 Tells winemaker to generate a 32-bit target. This is useful on a wow64 systems.
 Without that option the default architecture is used.
 

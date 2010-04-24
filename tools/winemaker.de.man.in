@@ -5,37 +5,37 @@ winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompi
 .SH ÜBERSICHT
 .B "winemaker "
 [
-.IR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
+.BR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
 ]
 .br
   [
-.IR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
+.BR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
 ]
 .br
   [
-.IR               "--lower-include " "| " "--nolower-include " ] [ " "--mfc " "| " "--nomfc "
+.BR               "--lower-include " "| " "--nolower-include " ]\ [ " --mfc " "| " "--nomfc "
 ]
 .br
   [
-.IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
 ]
 .br
   [
-.IR               "-Dmacro[=defn] " "] [ " "-Idir " "] [ " "-Pdir " "] [ " "-idll" "] [ " "-Ldir " "] [ " "-llibrary "
+.BI               "-D" macro "\fR[=\fIdefn\fR] ] [" "\ " "-I" "dir\fR ]\ [ " "-P" "dir\fR ] [ " "-i" "dll\fR ] [ " "-L" "dir\fR ] [ " "-l" "library "
 ]
 .br
   [
-.IR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target name "
+.BR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target \fIname\fR "
 ]
 .br
   [
-.IR               "--generated-files " "] [ " "--nogenerated-files " "]
+.BR               "--generated-files " "] [ " "--nogenerated-files " "]
 ]
 .br
   [
-.IR               "--wine32 " "]
+.BR               "--wine32 " "]
 .br
-.IR               "Arbeitsverzeichnis" "| " "Projektdatei" "| " "Workspacedatei"
+.IR               "  Arbeitsverzeichnis" " | " "Projektdatei" " | " "Workspacedatei"
 
 .SH BESCHREIBUNG
 .PP
@@ -74,107 +74,107 @@ Unterstützt werden dsp, dsw, vcproj und sln Dateien.
 .PP
 .SH ARGUMENTE
 .TP
-.I --nobanner
+.B --nobanner
 Schaltet das anzeigen des Banners aus.
 .TP
-.I --backup
+.B --backup
 Lässt winemaker Backups von allen Quellcodedateien erstellen an denen
 Änderungen vorgenommen werden. Diese Option ist Standard.
 .TP
-.I --nobackup
+.B --nobackup
 Lässt winemaker keine Backups erstellen.
 .TP
-.I --nosource-fix
+.B --nosource-fix
 Lässt winemaker keine Quellcodedateien ändern (z.B. DOS zu Unix Konvertierung)
 Das kann Meldungen bei schreibgeschützten Dateien verhindern.
 .TP
-.I --lower-all
+.B --lower-all
 Alle Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
 .TP
-.I --lower-uppercase
+.B --lower-uppercase
 Alle Dateien und Verzeichnisse die komplett groß geschrieben sind werden
 in Kleinschreibung umbenannt.
 Also "HALLO.C" würde umbenannt werden, "Welt.c" jedoch nicht.
 .TP
-.I --lower-none
+.B --lower-none
 Keine Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
 Achtung: Dies verhindert nicht die Umbennenung von Dateien, deren Erweiterung
 nicht verarbeiten lassen, wie z.B. ".Cxx". Diese Option ist Standard.
 .TP
-.I "--lower-include "
+.B "--lower-include "
 Wenn die Datei zu einer include Anweisung (oder einer Resource Referenz)
 nicht auffindbar ist, wird der Dateiname in Kleinschreibung umbenannt.
 Diese Option ist Standard.
 .TP
-.I "--nolower-include "
+.B "--nolower-include "
 Wenn die Datei zu einer include Anweisung (oder einer Resource Referenz)
 nicht auffindbar ist, wird keine Änderung vorgenommen.
 .TP
-.IR "--guiexe " "| " "--windows"
+.BR "--guiexe " "| " "--windows"
 Gibt den Typ(grafisch) der zu erstellenden Anwendung an.
 Diese Option ist Standard.
 .TP
-.IR "--cuiexe " "| " "--console"
+.BR "--cuiexe " "| " "--console"
 Gibt den Typ(Konsole) der zu erstellenden Anwendung an.
 .TP
-.I --dll
+.B --dll
 winemaker wird im Zweifelsfall annehmen, dass es sich um eine Bibliothek handelt.
 .TP
-.I --mfc
+.B --mfc
 Teilt winemaker mit, dass es sich um MFC-basierten Quellcode handelt.
 In solch einem Fall passt winemaker Pfade für Header und Bibliotheken entsprechend an
 und kompiliert gegen die MFC Bibliothek.
 .TP
-.I --nomfc
+.B --nomfc
 Teilt winemaker mit, dass es sich nicht um MFC-basierten Quellcode handelt.
 Selbst wenn winemaker dateien wie "stdafx.cpp" oder "stdafx.h" bemerkt, was automatisch
 MFC aktivieren würde, wenn weder --nomfc noch --mfc angegeben wurden.
 .TP
-.I -Dmacro[=defn]
+.BI -D macro "\fR[=\fIdefn\fR]"
 Verwendet diese Makrodefinition global.
 .TP
-.I -Idir
+.BI -I dir
 Verwendet den Pfad als globalen Include-Pfad.
 .TP
-.I -Pdir
+.BI -P dir
 Verwendet den Pfad als globalen DLL-Pfad.
 .TP
-.I -idll
+.BI -i dll
 Fügt eine Winelib Bibliothek zu der globalen Liste der zu importierenden
 Winelib Bibliotheken hinzu.
 .TP
-.I -Ldir
+.BI -L dir
 Verwendet den Pfad als globalen Bibliotheks-Pfad.
 .TP
-.I -llibrary
+.BI -l library
 Fügt eine Bibliothek zu der globalen Liste der zu importierenden
 Bibliotheken hinzu.
 .TP
-.I --nodlls
+.B --nodlls
 Dieso Option teil winemakr mit, nicht die Standard Winelib Bibliotheken zu importieren.
 Also muss jede DLL die der Quellcode nutzt explizit mit -i an winemaker übergeben werden.
 Die Standard Bibliotheken sind: odbc32.dll, odbccp32.dll, ole32.dll,
 oleaut32.dll und winspool.drv.
 .TP
-.I --nomsvcrt
+.B --nomsvcrt
 Dies hindert winegcc gegen msvcrt zu kompilieren.
 Nutzen Sie diese Option bei cpp-Dateien mit einem <string> include.
 .TP
-.I --interactive
+.B --interactive
 Versetzt winemaker in einen interaktiven Modus. In diesem Modus wird winemaker
 Sie für jede Targetliste in jedem Verzeichniss nach Bestätigung fragen und nach jeweils
 speziellen Optionen fragen.
 .TP
-.I --single-target name
+.B --single-target name
 Es gibt nur ein Target namens "name".
 .TP
-.I --generated-files
+.B --generated-files
 Eine Makefile soll erzeugt werden. Diese Option ist Standard.
 .TP
-.I --nogenerated-files
+.B --nogenerated-files
 Keine Makefile erstellen.
 .TP
-.I --wine32
+.B --wine32
 Ein 32-Bit Target erstellen. Das ist nützlich unter wow64 Systemen.
 Ohne dieser Option wird die Standard Architektur genutzt.
 
