@@ -459,10 +459,6 @@ static HRESULT WINAPI IDirect3DRMMeshBuilderImpl_Load(IDirect3DRMMeshBuilder* if
 
     if (loadflags == D3DRMLOAD_FROMMEMORY)
     {
-        DXFILELOADMEMORY info;
-        LPD3DRMLOADMEMORY pinfo = (LPD3DRMLOADMEMORY)filename;
-        info.lpMemory = pinfo->lpMemory;
-        info.dSize = pinfo->dSize;
         load_options = DXFILELOAD_FROMMEMORY;
     }
     else
