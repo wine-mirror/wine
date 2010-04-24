@@ -1308,13 +1308,12 @@ static void D3DXVector3Test(void)
 
 static void D3DXVector4Test(void)
 {
-    D3DXVECTOR4 expectedvec, gotvec, nul, u, v, w, x;
+    D3DXVECTOR4 expectedvec, gotvec, u, v, w, x;
     LPD3DXVECTOR4 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
     D3DXMATRIX mat;
     FLOAT coeff1, coeff2, expected, got, scale;
 
-    nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     u.x = 1.0f; u.y = 2.0f; u.z = 4.0f; u.w = 10.0;
     v.x = -3.0f; v.y = 4.0f; v.z = -5.0f; v.w = 7.0;
     w.x = 4.0f; w.y =6.0f; w.z = -2.0f; w.w = 1.0f;
