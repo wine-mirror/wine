@@ -2411,14 +2411,13 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
             h = GlobalAlloc(0, sizeof(METAFILEPICT));
             if (h)
             {
-                unsigned int wiresize, size;
+                unsigned int wiresize;
                 LPMETAFILEPICT lpmfp = GlobalLock(h);
 
                 memcpy(lpmfp, hdata, sizeof(METAFILEPICT));
                 wiresize = *lpcbytes - sizeof(METAFILEPICT);
                 lpmfp->hMF = SetMetaFileBitsEx(wiresize,
                     ((const BYTE *)hdata) + sizeof(METAFILEPICT));
-                size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
                 GlobalUnlock(h);
             }
         }
