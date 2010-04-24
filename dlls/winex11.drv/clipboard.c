@@ -1809,7 +1809,6 @@ static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HANDLE hdata;
-    UINT datasize;
     LPCSTR data, field_value;
     UINT fragmentstart, fragmentend, htmlsize;
     HANDLE hhtmldata=NULL;
@@ -1824,8 +1823,6 @@ static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor
     }
 
     hdata = lpdata->hData;
-
-    datasize = GlobalSize(hdata);
 
     data = GlobalLock(hdata);
     if (!data)
