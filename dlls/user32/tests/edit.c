@@ -537,6 +537,7 @@ static HINSTANCE hinst;
 static HWND hwndET2;
 static const char szEditTest2Class[] = "EditTest2Class";
 static const char szEditTest3Class[] = "EditTest3Class";
+static const char szEditTest4Class[] = "EditTest4Class";
 static const char szEditTextPositionClass[] = "EditTextPositionWindowClass";
 
 static HWND create_editcontrol (DWORD style, DWORD exstyle)
@@ -2081,10 +2082,63 @@ static void test_child_edit_wmkeydown(void)
     destroy_child_editcontrol(hwEdit);
 }
 
+static int got_en_setfocus = 0;
+static int got_wm_capturechanged = 0;
+
+static LRESULT CALLBACK edit4_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg) {
+        case WM_COMMAND:
+            switch (HIWORD(wParam)) {
+                case EN_SETFOCUS:
+                    got_en_setfocus = 1;
+                    break;
+            }
+            break;
+        case WM_CAPTURECHANGED:
+            if (hWnd != (HWND)lParam)
+            {
+                got_wm_capturechanged = 1;
+                EndMenu();
+            }
+            break;
+    }
+    return DefWindowProcA(hWnd, msg, wParam, lParam);
+}
+
+static void test_contextmenu_focus(void)
+{
+    HWND hwndMain, hwndEdit;
+
+    hwndMain = CreateWindow(szEditTest4Class, "ET4", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                            0, 0, 200, 200, NULL, NULL, hinst, NULL);
+    assert(hwndMain);
+
+    hwndEdit = CreateWindow("EDIT", NULL,
+                           WS_CHILD|WS_BORDER|WS_VISIBLE|ES_LEFT|ES_AUTOHSCROLL,
+                           0, 0, 150, 50, /* important this not be 0 size. */
+                           hwndMain, (HMENU) ID_EDITTEST2, hinst, NULL);
+    assert(hwndEdit);
+
+    SetFocus(NULL);
+
+    SetCapture(hwndMain);
+
+    SendMessage(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(10, 10));
+
+    ok(got_en_setfocus, "edit box didn't get focused\n");
+
+    ok(got_wm_capturechanged, "main window capture did not change\n");
+
+    DestroyWindow (hwndEdit);
+    DestroyWindow (hwndMain);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
     WNDCLASSA test3;
+    WNDCLASSA test4;
     WNDCLASSA text_position;
     
     test2.style = 0;
@@ -2110,6 +2164,18 @@ static BOOL RegisterWindowClasses (void)
     test3.lpszMenuName = NULL;
     test3.lpszClassName = szEditTest3Class;
     if (!RegisterClassA(&test3)) return FALSE;
+    
+    test4.style = 0;
+    test4.lpfnWndProc = edit4_wnd_procA;
+    test4.cbClsExtra = 0;
+    test4.cbWndExtra = 0;
+    test4.hInstance = hinst;
+    test4.hIcon = NULL;
+    test4.hCursor = LoadCursorA (NULL, IDC_ARROW);
+    test4.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    test4.lpszMenuName = NULL;
+    test4.lpszClassName = szEditTest4Class;
+    if (!RegisterClassA(&test4)) return FALSE;
 
     text_position.style = CS_HREDRAW | CS_VREDRAW;
     text_position.cbClsExtra = 0;
@@ -2130,6 +2196,7 @@ static void UnregisterWindowClasses (void)
 {
     UnregisterClassA(szEditTest2Class, hinst);
     UnregisterClassA(szEditTest3Class, hinst);
+    UnregisterClassA(szEditTest4Class, hinst);
     UnregisterClassA(szEditTextPositionClass, hinst);
 }
 
@@ -2385,6 +2452,7 @@ START_TEST(edit)
     test_child_edit_wmkeydown();
     test_fontsize();
     test_dialogmode();
+    test_contextmenu_focus();
 
     UnregisterWindowClasses();
 }
