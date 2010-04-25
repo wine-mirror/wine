@@ -642,7 +642,7 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
             return free_doc_navigate_task(task, TRUE);
     }
 
-    if(task->post_data) {
+    if(post_data) {
         task->post_data = SafeArrayCreateVector(VT_UI1, 0, post_data_size);
         if(!task->post_data)
             return free_doc_navigate_task(task, TRUE);
