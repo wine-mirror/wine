@@ -2486,9 +2486,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
         if (!(ptr = map_fileW( name, NULL ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
         bmfh = (BITMAPFILEHEADER *)ptr;
-        if (!(  bmfh->bfType == 0x4d42 /* 'BM' */ &&
-                bmfh->bfReserved1 == 0 &&
-                bmfh->bfReserved2 == 0))
+        if (bmfh->bfType != 0x4d42 /* 'BM' */)
         {
             WARN("Invalid/unsupported bitmap format!\n");
             UnmapViewOfFile( ptr );
