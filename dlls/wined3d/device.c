@@ -5208,7 +5208,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     DWORD sampler;
     struct wined3d_format_desc dummy_desc;
 
-    TRACE("iface %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s",
+    TRACE("iface %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
             iface, src_surface, wine_dbgstr_rect(src_rect),
             dst_surface, wine_dbgstr_point(dst_point));
 
