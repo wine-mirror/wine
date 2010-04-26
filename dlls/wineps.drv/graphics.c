@@ -396,6 +396,7 @@ BOOL CDECL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const IN
     PSDRV_WriteSpool(physDev, "%PolyPolygon\n",13);
     PSDRV_SetPen(physDev);
     PSDRV_SetClip(physDev);
+    PSDRV_WriteNewPath(physDev);
 
     for(polygon = 0; polygon < polygons; polygon++) {
         PSDRV_WriteMoveTo(physDev, pt->x, pt->y);
