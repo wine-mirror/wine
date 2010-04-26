@@ -255,7 +255,7 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
 /* GL locking is done by the caller. */
 static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLhandleARB program)
 {
-    GLint i, object_count, source_size;
+    GLint i, object_count, source_size = -1;
     GLhandleARB *objects;
     char *source = NULL;
 
@@ -275,7 +275,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
 
         GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_SHADER_SOURCE_LENGTH_ARB, &tmp));
 
-        if (!source || source_size < tmp)
+        if (source_size < tmp)
         {
             HeapFree(GetProcessHeap(), 0, source);
 
