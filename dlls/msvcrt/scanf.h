@@ -110,7 +110,7 @@ _FUNCTION_ {
     TRACE("(%s):\n", debugstr_a(format));
 #else /* CONSOLE */
 #ifdef STRING
-    TRACE("%s (%s)\n", file, debugstr_a(format));
+    TRACE("%s (%s)\n", debugstr_a(file), debugstr_a(format));
 #else /* STRING */
     TRACE("%p (%s)\n", file, debugstr_a(format));
 #endif /* STRING */
