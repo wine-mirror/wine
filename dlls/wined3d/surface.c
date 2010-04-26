@@ -935,7 +935,7 @@ GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
         return GL_NONE;
     }
 
-    if (swapchain->backBuffer && (IWineD3DSurfaceImpl *)swapchain->backBuffer[0] == surface)
+    if (swapchain->back_buffers && swapchain->back_buffers[0] == surface)
     {
         if (swapchain->render_to_fbo)
         {
@@ -3204,7 +3204,7 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
 
     IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DSwapChain, (void **)&src_swapchain);
     if (src_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)src_swapchain);
-    if (!src_swapchain || src_surface == (IWineD3DSurfaceImpl *)src_swapchain->backBuffer[0])
+    if (!src_swapchain || src_surface == src_swapchain->back_buffers[0])
     {
         src = backup ? backup : src_surface->texture_name;
     }
@@ -3438,9 +3438,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
     if (src_surface) surface_get_rect(src_surface, SrcRect, &src_rect);
 
     /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
-    if (dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->backBuffer
+    if (dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->back_buffers
             && dst_surface == dstSwapchain->front_buffer
-            && src_surface == (IWineD3DSurfaceImpl *)dstSwapchain->backBuffer[0])
+            && src_surface == dstSwapchain->back_buffers[0])
     {
         /* Half-life does a Blt from the back buffer to the front buffer,
          * Full surface size, no flags... Use present instead

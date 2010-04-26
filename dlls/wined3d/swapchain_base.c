@@ -106,12 +106,13 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
      * used (there This->backBuffer is always NULL). We need this because this function has
      * to be called from IWineD3DStateBlockImpl_InitStartupStateBlock to get the default
      * scissorrect dimensions. */
-    if( !This->backBuffer ) {
+    if (!This->back_buffers)
+    {
         *ppBackBuffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 
-    *ppBackBuffer = This->backBuffer[iBackBuffer];
+    *ppBackBuffer = (IWineD3DSurface *)This->back_buffers[iBackBuffer];
     TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 
     /* Note inc ref on returned surface */

@@ -1827,7 +1827,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         else
         {
             IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->swapchains[0];
-            if (swapchain->backBuffer) target = (IWineD3DSurfaceImpl *)swapchain->backBuffer[0];
+            if (swapchain->back_buffers) target = swapchain->back_buffers[0];
             else target = swapchain->front_buffer;
         }
     }

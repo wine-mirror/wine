@@ -46,16 +46,18 @@ static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         }
     }
 
-    if(This->backBuffer) {
+    if (This->back_buffers)
+    {
         UINT i;
-        for(i = 0; i < This->presentParms.BackBufferCount; i++) {
-            IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
-            if (IWineD3DSurface_Release(This->backBuffer[i]) > 0)
+        for (i = 0; i < This->presentParms.BackBufferCount; ++i)
+        {
+            IWineD3DSurface_SetContainer((IWineD3DSurface *)This->back_buffers[i], NULL);
+            if (IWineD3DSurface_Release((IWineD3DSurface *)This->back_buffers[i]))
             {
                 WARN("(%p) Something's still holding the back buffer\n",This);
             }
         }
-        HeapFree(GetProcessHeap(), 0, This->backBuffer);
+        HeapFree(GetProcessHeap(), 0, This->back_buffers);
     }
 
     /* Restore the screen resolution if we rendered in fullscreen
@@ -173,12 +175,13 @@ static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
     IWineD3DSurfaceImpl *front, *back;
 
-    if(!This->backBuffer) {
+    if (!This->back_buffers)
+    {
         WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
     front = This->front_buffer;
-    back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
+    back = This->back_buffers[0];
 
     /* Flip the DC */
     {

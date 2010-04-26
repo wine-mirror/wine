@@ -2564,7 +2564,7 @@ struct IWineD3DSwapChainImpl
     IWineD3DDeviceImpl *device;
 
     /* IWineD3DSwapChain fields */
-    IWineD3DSurface         **backBuffer;
+    IWineD3DSurfaceImpl **back_buffers;
     IWineD3DSurfaceImpl *front_buffer;
     WINED3DPRESENT_PARAMETERS presentParms;
     DWORD                     orig_width, orig_height;
