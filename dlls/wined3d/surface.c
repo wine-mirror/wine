@@ -499,25 +499,23 @@ void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint new_name, BOO
     surface_force_reload(surface);
 }
 
-void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
+void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("surface %p, target %#x.\n", surface, target);
 
-    TRACE("(%p) : setting target %#x\n", This, target);
-
-    if (This->texture_target != target)
+    if (surface->texture_target != target)
     {
         if (target == GL_TEXTURE_RECTANGLE_ARB)
         {
-            This->Flags &= ~SFLAG_NORMCOORD;
+            surface->Flags &= ~SFLAG_NORMCOORD;
         }
-        else if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
+        else if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
         {
-            This->Flags |= SFLAG_NORMCOORD;
+            surface->Flags |= SFLAG_NORMCOORD;
         }
     }
-    This->texture_target = target;
-    surface_force_reload(This);
+    surface->texture_target = target;
+    surface_force_reload(surface);
 }
 
 /* Context activation is done by the caller. */

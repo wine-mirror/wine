@@ -118,7 +118,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This)
              * surface doesn't try and release it */
             surface_set_texture_name(surface, 0, TRUE);
             surface_set_texture_name(surface, 0, FALSE);
-            surface_set_texture_target((IWineD3DSurface *)surface, 0);
+            surface_set_texture_target(surface, 0);
             IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
             IWineD3DSurface_Release((IWineD3DSurface *)surface);
         }
@@ -612,7 +612,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         }
 
         IWineD3DSurface_SetContainer(surface, (IWineD3DBase *)texture);
-        surface_set_texture_target(surface, texture->target);
+        surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->target);
         texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)surface;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */
