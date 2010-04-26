@@ -468,36 +468,35 @@ static void surface_force_reload(IWineD3DSurfaceImpl *surface)
     surface->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 }
 
-void surface_set_texture_name(IWineD3DSurface *iface, GLuint new_name, BOOL srgb)
+void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint new_name, BOOL srgb)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     GLuint *name;
     DWORD flag;
 
+    TRACE("surface %p, new_name %u, srgb %#x.\n", surface, new_name, srgb);
+
     if(srgb)
     {
-        name = &This->texture_name_srgb;
+        name = &surface->texture_name_srgb;
         flag = SFLAG_INSRGBTEX;
     }
     else
     {
-        name = &This->texture_name;
+        name = &surface->texture_name;
         flag = SFLAG_INTEXTURE;
     }
-
-    TRACE("(%p) : setting texture name %u\n", This, new_name);
 
     if (!*name && new_name)
     {
         /* FIXME: We shouldn't need to remove SFLAG_INTEXTURE if the
          * surface has no texture name yet. See if we can get rid of this. */
-        if (This->Flags & flag)
+        if (surface->Flags & flag)
             ERR("Surface has SFLAG_INTEXTURE set, but no texture name\n");
-        IWineD3DSurface_ModifyLocation(iface, flag, FALSE);
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, flag, FALSE);
     }
 
     *name = new_name;
-    surface_force_reload(This);
+    surface_force_reload(surface);
 }
 
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)

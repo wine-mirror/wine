@@ -118,7 +118,7 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
 
     for (i = 0; i < sub_count; ++i)
     {
-        IWineD3DSurface *surface = (IWineD3DSurface *)This->baseTexture.sub_resources[i];
+        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
 
         if (surface)
         {
@@ -126,9 +126,9 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
              * surface doesn't try and release it. */
             surface_set_texture_name(surface, 0, TRUE);
             surface_set_texture_name(surface, 0, FALSE);
-            surface_set_texture_target(surface, 0);
-            IWineD3DSurface_SetContainer(surface, NULL);
-            IWineD3DSurface_Release(surface);
+            surface_set_texture_target((IWineD3DSurface *)surface, 0);
+            IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
+            IWineD3DSurface_Release((IWineD3DSurface *)surface);
         }
     }
     basetexture_cleanup((IWineD3DBaseTexture *)This);
@@ -216,9 +216,9 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface)
 
     for (i = 0; i < sub_count; ++i)
     {
-        IWineD3DSurface *surface = (IWineD3DSurface *)This->baseTexture.sub_resources[i];
+        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
 
-        IWineD3DSurface_UnLoad(surface);
+        IWineD3DSurface_UnLoad((IWineD3DSurface *)surface);
         surface_set_texture_name(surface, 0, TRUE);
         surface_set_texture_name(surface, 0, FALSE);
     }
@@ -287,7 +287,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
 
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurface *surface = (IWineD3DSurface *)This->baseTexture.sub_resources[i];
+            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
 
             if (This->baseTexture.is_srgb)
                 surface_set_texture_name(surface, This->baseTexture.texture_srgb.name, TRUE);
