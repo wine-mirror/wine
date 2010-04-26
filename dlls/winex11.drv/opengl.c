@@ -1783,6 +1783,10 @@ BOOL CDECL X11DRV_wglDeleteContext(HGLRC hglrc)
         return FALSE;
     }
 
+    /* WGL makes a context not current if it is active before deletion. GLX waits until the context is not current. */
+    if (ctx == NtCurrentTeb()->glContext)
+        wglMakeCurrent(ctx->hdc, NULL);
+
     if (ctx->ctx)
     {
         wine_tsx11_lock();

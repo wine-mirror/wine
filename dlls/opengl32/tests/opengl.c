@@ -552,6 +552,11 @@ static void test_deletecontext(HDC hdc)
 
     res = wglDeleteContext(hglrc);
     ok(res == TRUE, "wglDeleteContext failed\n");
+
+    /* WGL makes a context not current when deleting it. This differs from GLX behavior where
+     * deletion takes place when the thread becomes not current. */
+    hglrc = wglGetCurrentContext();
+    ok(hglrc == NULL, "A WGL context is active while none was expected\n");
 }
 
 static void test_make_current_read(HDC hdc)
