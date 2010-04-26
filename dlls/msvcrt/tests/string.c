@@ -1081,7 +1081,7 @@ static void test__strtoi64(void)
 }
 
 static inline BOOL almost_equal(double d1, double d2) {
-    if(d1-d2>-1e-16 && d1-d2<1e-16)
+    if(d1-d2>-1e-30 && d1-d2<1e-30)
         return TRUE;
     return FALSE;
 }
@@ -1093,6 +1093,7 @@ static void test__strtod(void)
     const char double3[] = "INF";
     const char double4[] = ".21e12";
     const char double5[] = "214353e-3";
+    const char overflow[] = "1d9999999999999999999";
 
     char *end;
     double d;
@@ -1106,8 +1107,8 @@ static void test__strtod(void)
     ok(end == double2+7, "incorrect end (%d)\n", end-double2);
 
     d = strtod(double3, &end);
-    todo_wine ok(almost_equal(d, 0), "d = %lf\n", d);
-    todo_wine ok(end == double3, "incorrect end (%d)\n", end-double3);
+    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(end == double3, "incorrect end (%d)\n", end-double3);
 
     d = strtod(double4, &end);
     ok(almost_equal(d, 210000000000.0), "d = %lf\n", d);
@@ -1127,12 +1128,37 @@ static void test__strtod(void)
     }
 
     d = strtod("12.1", NULL);
-    todo_wine ok(almost_equal(d, 12.0), "d = %lf\n", d);
+    ok(almost_equal(d, 12.0), "d = %lf\n", d);
 
     d = strtod("12,1", NULL);
     ok(almost_equal(d, 12.1), "d = %lf\n", d);
 
     setlocale(LC_ALL, "C");
+
+    /* Precision tests */
+    d = strtod("0.1", NULL);
+    ok(almost_equal(d, 0.1), "d = %lf\n", d);
+    d = strtod("-0.1", NULL);
+    ok(almost_equal(d, -0.1), "d = %lf\n", d);
+    d = strtod("0.1281832188491894198128921", NULL);
+    ok(almost_equal(d, 0.1281832188491894198128921), "d = %lf\n", d);
+    d = strtod("0.82181281288121", NULL);
+    ok(almost_equal(d, 0.82181281288121), "d = %lf\n", d);
+    d = strtod("21921922352523587651128218821", NULL);
+    ok(almost_equal(d, 21921922352523587651128218821.0), "d = %lf\n", d);
+    d = strtod("0.1d238", NULL);
+    ok(almost_equal(d, 0.1e238L), "d = %lf\n", d);
+    d = strtod("0.1D-4736", NULL);
+    ok(almost_equal(d, 0.1e-4736L), "d = %lf\n", d);
+
+    errno = 0xdeadbeef;
+    d = strtod(overflow, &end);
+    ok(errno == ERANGE, "errno = %x\n", errno);
+    ok(end == overflow+21, "incorrect end (%d)\n", end-overflow);
+
+    errno = 0xdeadbeef;
+    strtod("-1d309", NULL);
+    ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
 START_TEST(string)

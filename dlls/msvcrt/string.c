@@ -23,8 +23,11 @@
 
 #define _ISOC99_SOURCE
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
+#include <math.h>
+#include <limits.h>
 #include <errno.h>
 #include "msvcrt.h"
 #include "wine/debug.h"
@@ -141,13 +144,10 @@ double CDECL MSVCRT_atof( const char *str )
  */
 double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
 {
-    const char *p, *dec_point=NULL, *exp=NULL;
-    char *copy;
+    unsigned __int64 d=0, hlp;
+    int exp=0, sign=1;
+    const char *p;
     double ret;
-    int err = errno;
-
-    if(!locale)
-        locale = get_locale();
 
     if(!str) {
         MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
@@ -155,45 +155,93 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
         return 0;
     }
 
+    if(!locale)
+        locale = get_locale();
+
     /* FIXME: use *_l functions */
     p = str;
     while(isspace(*p))
         p++;
-    if(*p=='+' || *p=='-')
+
+    if(*p == '-') {
+        sign = -1;
         p++;
-    while(isdigit(*p))
+    } else  if(*p == '+')
         p++;
-    if(*p == *locale->locinfo->lconv->decimal_point) {
-        if(*p!='.')
-            dec_point = p;
+
+    while(isdigit(*p)) {
+        hlp = d*10+*(p++)-'0';
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
+            exp++;
+            break;
+        } else
+            d = hlp;
+    }
+    while(isdigit(*p)) {
+        exp++;
         p++;
+    }
+
+    if(*p == *locale->locinfo->lconv->decimal_point)
+        p++;
+
+    while(isdigit(*p)) {
+        hlp = d*10+*(p++)-'0';
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
+            break;
+
+        d = hlp;
+        exp--;
     }
     while(isdigit(*p))
         p++;
-    if(*p=='d' || *p=='D')
-        exp = p;
 
-    /* FIXME: don't copy input string */
-    if((dec_point || exp) && (copy=_strdup(str))) {
-        if(dec_point)
-            copy[dec_point-str] = '.';
-
-        if(exp)
-            copy[exp-str] = 'e';
-
-        ret = strtod(copy, end);
+    if(p == str) {
         if(end)
-            *end = (char*)str+(*end-copy);
+            *end = (char*)str;
+        return 0.0;
+    }
 
-        MSVCRT_free(copy);
-    } else
-        ret = strtod(str, end);
+    if(*p=='e' || *p=='E' || *p=='d' || *p=='D') {
+        int e=0, s=1;
 
-    if(err != errno)
-        *MSVCRT__errno() = errno;
+        p++;
+        if(*p == '-') {
+            s = -1;
+            p++;
+        } else if(*p == '+')
+            p++;
+
+        if(isdigit(*p)) {
+            while(isdigit(*p)) {
+                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
+                    e = INT_MAX;
+                p++;
+            }
+            e *= s;
+
+            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
+            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            else exp += e;
+        } else {
+            if(*p=='-' || *p=='+')
+                p--;
+            p--;
+        }
+    }
+
+    if(exp>0)
+        ret = (double)sign*d*pow(10, exp);
+    else
+        ret = (double)sign*d/pow(10, -exp);
+
+    if((d && ret==0.0) || isinf(ret))
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+
+    if(end)
+        *end = (char*)p;
 
     return ret;
-
 }
 
 /*********************************************************************
