@@ -485,6 +485,22 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
 }
 
 /*********************************************************************
+ *              btowc(MSVCRT.@)
+ */
+MSVCRT_wint_t CDECL MSVCRT_btowc(int c)
+{
+    MSVCRT__locale_t locale = get_locale();
+    unsigned char letter = c;
+    MSVCRT_wchar_t ret;
+
+    if(!MultiByteToWideChar(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE],
+                0, (LPCSTR)&letter, 1, &ret, 1))
+        return 0;
+
+    return ret;
+}
+
+/*********************************************************************
  *              __crtGetStringTypeW(MSVCRT.@)
  *
  * This function was accepting different number of arguments in older

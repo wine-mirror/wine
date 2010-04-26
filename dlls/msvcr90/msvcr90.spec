@@ -1219,7 +1219,7 @@
 @ cdecl atol(str) msvcrt.atol
 @ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
 @ stub bsearch_s
-@ stub btowc
+@ cdecl btowc(long) msvcrt.btowc
 @ cdecl calloc(long long) msvcrt.calloc
 @ cdecl ceil(double) msvcrt.ceil
 @ cdecl clearerr(ptr) msvcrt.clearerr
