@@ -463,11 +463,9 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     return hr;
 }
 
-static void surface_force_reload(IWineD3DSurface *iface)
+static void surface_force_reload(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
+    surface->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 }
 
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint new_name, BOOL srgb)
@@ -499,7 +497,7 @@ void surface_set_texture_name(IWineD3DSurface *iface, GLuint new_name, BOOL srgb
     }
 
     *name = new_name;
-    surface_force_reload(iface);
+    surface_force_reload(This);
 }
 
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
@@ -520,7 +518,7 @@ void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
         }
     }
     This->texture_target = target;
-    surface_force_reload(iface);
+    surface_force_reload(This);
 }
 
 /* Context activation is done by the caller. */
@@ -2025,7 +2023,7 @@ static void surface_release_client_storage(IWineD3DSurface *iface)
 
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
-    surface_force_reload(iface);
+    surface_force_reload(This);
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC)
