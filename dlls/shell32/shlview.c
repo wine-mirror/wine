@@ -1517,98 +1517,92 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	  case LVN_KEYDOWN:
 	    {
-	    /*  MSG msg;
-	      msg.hwnd = This->hWnd;
-	      msg.message = WM_KEYDOWN;
-	      msg.wParam = plvKeyDown->wVKey;
-	      msg.lParam = 0;
-	      msg.time = 0;
-	      msg.pt = 0;*/
-
 	      LPNMLVKEYDOWN plvKeyDown = (LPNMLVKEYDOWN) lpnmh;
 
               /* initiate a rename of the selected file or directory */
-              if(plvKeyDown->wVKey == VK_F2)
+              switch (plvKeyDown->wVKey)
               {
-                /* see how many files are selected */
-                int i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0);
-
-                /* get selected item */
-                if(i == 1)
+              case VK_F2:
                 {
-                  /* get selected item */
-                  i = SendMessageW(This->hWndList, LVM_GETNEXTITEM, -1, MAKELPARAM (LVNI_SELECTED, 0));
+                  INT i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0);
 
-                  SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
-                  SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
+                  if (i == 1)
+                  {
+                    /* get selected item */
+                    i = SendMessageW(This->hWndList, LVM_GETNEXTITEM, -1, MAKELPARAM (LVNI_SELECTED, 0));
+
+                    SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
+                    SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
+                  }
                 }
-              }
-#if 0
-	      TranslateAccelerator(This->hWnd, This->hAccel, &msg)
-#endif
-	      else if(plvKeyDown->wVKey == VK_DELETE)
-              {
-		UINT i;
-		int item_index;
-		LVITEMA item;
-		LPITEMIDLIST* pItems;
-		ISFHelper *psfhlp;
+                break;
+              case VK_DELETE:
+                {
+		  UINT i, count;
+		  int item_index;
+		  LVITEMW item;
+		  LPITEMIDLIST* pItems;
+		  ISFHelper *psfhlp;
+		  HRESULT hr;
 
-		IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper,
-		 	(LPVOID*)&psfhlp);
+		  hr = IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (void**)&psfhlp);
+		  if (hr != S_OK) return 0;
 
-		if (psfhlp == NULL)
-		  break;
+		  if(!(count = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0)))
+		  {
+		    ISFHelper_Release(psfhlp);
+		    return 0;
+		  }
 
-		if(!(i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0)))
-		  break;
+		  /* allocate memory for the pidl array */
+		  pItems = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST) * count);
 
-		/* allocate memory for the pidl array */
-		pItems = HeapAlloc(GetProcessHeap(), 0,
-			sizeof(LPITEMIDLIST) * i);
+		  /* retrieve all selected items */
+		  i = 0;
+		  item_index = -1;
 
-		/* retrieve all selected items */
-		i = 0;
-		item_index = -1;
-		while(SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0) > i)
-		{
-		  /* get selected item */
-		  item_index = SendMessageW(This->hWndList, LVM_GETNEXTITEM, item_index,
-                                            MAKELPARAM (LVNI_SELECTED, 0));
-		  item.iItem = item_index;
-		  item.mask = LVIF_PARAM;
-		  SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM) &item);
+		  while (count > i)
+		  {
+		    /* get selected item */
+		    item_index = SendMessageW(This->hWndList, LVM_GETNEXTITEM, item_index,
+                                              MAKELPARAM (LVNI_SELECTED, 0));
+		    item.iItem = item_index;
+		    item.mask = LVIF_PARAM;
+		    SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM)&item);
 
-		  /* get item pidl */
-		  pItems[i] = (LPITEMIDLIST)item.lParam;
+		    /* get item pidl */
+		    pItems[i] = (LPITEMIDLIST)item.lParam;
 
-		  i++;
-		}
+		    i++;
+		  }
 
-		/* perform the item deletion */
-		ISFHelper_DeleteItems(psfhlp, i, (LPCITEMIDLIST*)pItems);
+		  /* perform the item deletion */
+		  ISFHelper_DeleteItems(psfhlp, i, (LPCITEMIDLIST*)pItems);
+		  ISFHelper_Release(psfhlp);
 
-		/* free pidl array memory */
-		HeapFree(GetProcessHeap(), 0, pItems);
-              }
+		  /* free pidl array memory */
+		  HeapFree(GetProcessHeap(), 0, pItems);
+                }
+		break;
 
-              /* Initiate a refresh */
-              else if(plvKeyDown->wVKey == VK_F5)
-              {
+	      case VK_F5:
+                /* Initiate a refresh */
 		IShellView_Refresh((IShellView*)This);
-              }
+		break;
 
-	      else if(plvKeyDown->wVKey == VK_BACK)
-	      {
-		LPSHELLBROWSER lpSb;
-		if((lpSb = (LPSHELLBROWSER)SendMessageW(This->hWndParent, CWM_GETISHELLBROWSER, 0, 0)))
+	      case VK_BACK:
 		{
-		  IShellBrowser_BrowseObject(lpSb, NULL, SBSP_PARENT);
-		}
-	      }
+		  LPSHELLBROWSER lpSb;
+		  if((lpSb = (LPSHELLBROWSER)SendMessageW(This->hWndParent, CWM_GETISHELLBROWSER, 0, 0)))
+		  {
+		    IShellBrowser_BrowseObject(lpSb, NULL, SBSP_PARENT);
+		  }
+	        }
+		break;
 
-              else
-		FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
+	      default:
+		FIXME("LVN_KEYDOWN key=0x%08x\n", plvKeyDown->wVKey);
+	      }
 	    }
 	    break;
 
