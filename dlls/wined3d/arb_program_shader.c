@@ -6917,7 +6917,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
      * Also beware that the front buffer's surface size is screen width x screen height,
      * whereas the real gl drawable size is the size of the window. */
     dst_swapchain = (dst_surface->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)dst_surface->container : NULL;
-    if (dst_swapchain && (IWineD3DSurface *)dst_surface == dst_swapchain->frontBuffer)
+    if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
     {
         RECT windowsize;
         POINT offset = {0,0};
@@ -6943,7 +6943,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     arbfp_blit_unset((IWineD3DDevice *)device);
 
     if (wined3d_settings.strict_draw_ordering || (dst_swapchain
-            && ((IWineD3DSurface *)dst_surface == dst_swapchain->frontBuffer
+            && (dst_surface == dst_swapchain->front_buffer
             || dst_swapchain->num_contexts > 1)))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 

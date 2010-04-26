@@ -945,7 +945,7 @@ GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
         TRACE("Returning GL_BACK\n");
         return GL_BACK;
     }
-    else if ((IWineD3DSurfaceImpl *)swapchain->frontBuffer == surface)
+    else if (surface == swapchain->front_buffer)
     {
         TRACE("Returning GL_FRONT\n");
         return GL_FRONT;
@@ -2095,7 +2095,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             IWineD3DSurfaceImpl *dds_primary;
             IWineD3DSwapChainImpl *swapchain;
             swapchain = (IWineD3DSwapChainImpl *)This->resource.device->swapchains[0];
-            dds_primary = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
+            dds_primary = swapchain->front_buffer;
             if (dds_primary && dds_primary->palette)
                 pal = dds_primary->palette->palents;
         }
@@ -3439,7 +3439,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 
     /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
     if (dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->backBuffer
-            && dst_surface == (IWineD3DSurfaceImpl *)dstSwapchain->frontBuffer
+            && dst_surface == dstSwapchain->front_buffer
             && src_surface == (IWineD3DSurfaceImpl *)dstSwapchain->backBuffer[0])
     {
         /* Half-life does a Blt from the back buffer to the front buffer,
@@ -3685,7 +3685,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
          * Also beware that the front buffer's surface size is screen width x screen height,
          * whereas the real gl drawable size is the size of the window.
          */
-        if (dstSwapchain && dst_surface == (IWineD3DSurfaceImpl *)dstSwapchain->frontBuffer)
+        if (dstSwapchain && dst_surface == dstSwapchain->front_buffer)
         {
             RECT windowsize;
             POINT offset = {0,0};
@@ -3748,7 +3748,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         device->blitter->unset_shader((IWineD3DDevice *)device);
 
         if (wined3d_settings.strict_draw_ordering || (dstSwapchain
-                && (dst_surface == (IWineD3DSurfaceImpl *)dstSwapchain->frontBuffer
+                && (dst_surface == dstSwapchain->front_buffer
                 || dstSwapchain->num_contexts > 1)))
             wglFlush(); /* Flush to ensure ordering across contexts. */
 
@@ -4347,8 +4347,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     swapchain = (This->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)This->container : NULL;
     if (wined3d_settings.strict_draw_ordering || (swapchain
-            && ((IWineD3DSurface *)This == swapchain->frontBuffer
-            || swapchain->num_contexts > 1)))
+            && (This == swapchain->front_buffer || swapchain->num_contexts > 1)))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -4678,7 +4677,7 @@ BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
     if (!(surface->Flags & SFLAG_SWAPCHAIN)) return TRUE;
 
     /* The front buffer is always onscreen */
-    if (surface == (IWineD3DSurfaceImpl *)swapchain->frontBuffer) return FALSE;
+    if (surface == swapchain->front_buffer) return FALSE;
 
     /* If the swapchain is rendered to an FBO, the backbuffer is
      * offscreen, otherwise onscreen */

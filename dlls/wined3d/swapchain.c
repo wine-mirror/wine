@@ -48,15 +48,15 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 
     /* Release the swapchain's draw buffers. Make sure This->backBuffer[0] is
      * the last buffer to be destroyed, FindContext() depends on that. */
-    if (This->frontBuffer)
+    if (This->front_buffer)
     {
-        IWineD3DSurface_SetContainer(This->frontBuffer, 0);
-        if (IWineD3DSurface_Release(This->frontBuffer))
+        IWineD3DSurface_SetContainer((IWineD3DSurface *)This->front_buffer, NULL);
+        if (IWineD3DSurface_Release((IWineD3DSurface *)This->front_buffer))
         {
             WARN("(%p) Something's still holding the front buffer (%p).\n",
-                    This, This->frontBuffer);
+                    This, This->front_buffer);
         }
-        This->frontBuffer = NULL;
+        This->front_buffer = NULL;
     }
 
     if (This->backBuffer)
@@ -423,13 +423,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
-    if(!This->render_to_fbo &&
-       ( ((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||
-         ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_INSYSMEM ) ) {
+    if (!This->render_to_fbo && ((This->front_buffer->Flags & SFLAG_INSYSMEM)
+            || (((IWineD3DSurfaceImpl *)This->backBuffer[0])->Flags & SFLAG_INSYSMEM)))
+    {
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
          * Doesn't work with render_to_fbo because we're not flipping
          */
-        IWineD3DSurfaceImpl *front = (IWineD3DSurfaceImpl *) This->frontBuffer;
+        IWineD3DSurfaceImpl *front = This->front_buffer;
         IWineD3DSurfaceImpl *back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
 
         if(front->resource.size == back->resource.size) {
@@ -441,14 +441,16 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
              * This serves to update the emulated overlay, if any
              */
             fbflags = front->Flags;
-            IWineD3DSurface_ModifyLocation(This->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+            IWineD3DSurface_ModifyLocation((IWineD3DSurface *)front, SFLAG_INDRAWABLE, TRUE);
             front->Flags = fbflags;
         } else {
             IWineD3DSurface_ModifyLocation((IWineD3DSurface *) front, SFLAG_INDRAWABLE, TRUE);
             IWineD3DSurface_ModifyLocation((IWineD3DSurface *) back, SFLAG_INDRAWABLE, TRUE);
         }
-    } else {
-        IWineD3DSurface_ModifyLocation(This->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+    }
+    else
+    {
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->front_buffer, SFLAG_INDRAWABLE, TRUE);
         /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
          * and INTEXTURE copies can keep their old content if they have any defined content.
          * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
@@ -746,18 +748,19 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     hr = IWineD3DDeviceParent_CreateRenderTarget(device->device_parent, parent,
             swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
             swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
-            swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */, &swapchain->frontBuffer);
+            swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */,
+            (IWineD3DSurface **)&swapchain->front_buffer);
     if (FAILED(hr))
     {
         WARN("Failed to create front buffer, hr %#x.\n", hr);
         goto err;
     }
 
-    IWineD3DSurface_SetContainer(swapchain->frontBuffer, (IWineD3DBase *)swapchain);
-    ((IWineD3DSurfaceImpl *)swapchain->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
+    IWineD3DSurface_SetContainer((IWineD3DSurface *)swapchain->front_buffer, (IWineD3DBase *)swapchain);
+    swapchain->front_buffer->Flags |= SFLAG_SWAPCHAIN;
     if (surface_type == SURFACE_OPENGL)
     {
-        IWineD3DSurface_ModifyLocation(swapchain->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
     }
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
@@ -813,8 +816,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
             FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
         }
         swapchain->ds_format = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, gl_info);
-        swapchain->context[0] = context_create(swapchain, (IWineD3DSurfaceImpl *)swapchain->frontBuffer,
-                swapchain->ds_format);
+        swapchain->context[0] = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format);
         if (!swapchain->context[0])
         {
             WARN("Failed to create context.\n");
@@ -919,7 +921,7 @@ err:
         HeapFree(GetProcessHeap(), 0, swapchain->context);
     }
 
-    if (swapchain->frontBuffer) IWineD3DSurface_Release(swapchain->frontBuffer);
+    if (swapchain->front_buffer) IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer);
 
     return hr;
 }
@@ -932,7 +934,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
 
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
-    if (!(ctx = context_create(This, (IWineD3DSurfaceImpl *)This->frontBuffer, This->ds_format)))
+    if (!(ctx = context_create(This, This->front_buffer, This->ds_format)))
     {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;

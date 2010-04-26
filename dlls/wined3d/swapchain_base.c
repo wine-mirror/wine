@@ -85,7 +85,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *i
         MapWindowPoints(This->win_handle, NULL, &start, 1);
     }
 
-    IWineD3DSurface_BltFast(pDestSurface, start.x, start.y, This->frontBuffer, NULL, 0);
+    IWineD3DSurface_BltFast(pDestSurface, start.x, start.y, (IWineD3DSurface *)This->front_buffer, NULL, 0);
     return WINED3D_OK;
 }
 

@@ -1626,9 +1626,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
         This->render_targets[0] = (IWineD3DSurfaceImpl *)swapchain->backBuffer[0];
     }
-    else {
-        TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
-        This->render_targets[0] = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
+    else
+    {
+        TRACE("Setting rendertarget to %p.\n", swapchain->front_buffer);
+        This->render_targets[0] = swapchain->front_buffer;
     }
     IWineD3DSurface_AddRef((IWineD3DSurface *)This->render_targets[0]);
 
@@ -1658,7 +1659,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 
-    context = context_acquire(This, (IWineD3DSurfaceImpl *)swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, swapchain->front_buffer, CTXUSAGE_RESOURCELOAD);
 
     create_dummy_textures(This);
 
@@ -4535,7 +4536,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering || ((target->Flags & SFLAG_SWAPCHAIN)
-            && ((IWineD3DSwapChainImpl *)target->container)->frontBuffer == (IWineD3DSurface *)target))
+            && ((IWineD3DSwapChainImpl *)target->container)->front_buffer == target))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -5656,16 +5657,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         }
     }
 
-    if (swapchain->frontBuffer != front)
+    if (swapchain->front_buffer != front_impl)
     {
-        TRACE("Changing the front buffer from %p to %p.\n", swapchain->frontBuffer, front);
+        TRACE("Changing the front buffer from %p to %p.\n", swapchain->front_buffer, front_impl);
 
-        if (swapchain->frontBuffer)
+        if (swapchain->front_buffer)
         {
-            IWineD3DSurface_SetContainer(swapchain->frontBuffer, NULL);
-            ((IWineD3DSurfaceImpl *)swapchain->frontBuffer)->Flags &= ~SFLAG_SWAPCHAIN;
+            IWineD3DSurface_SetContainer((IWineD3DSurface *)swapchain->front_buffer, NULL);
+            swapchain->front_buffer->Flags &= ~SFLAG_SWAPCHAIN;
         }
-        swapchain->frontBuffer = front;
+        swapchain->front_buffer = front_impl;
 
         if (front)
         {
@@ -6332,7 +6333,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
         return E_OUTOFMEMORY;
     }
 
-    target = (IWineD3DSurfaceImpl *)(swapchain->backBuffer ? swapchain->backBuffer[0] : swapchain->frontBuffer);
+    target = swapchain->backBuffer ? (IWineD3DSurfaceImpl *)swapchain->backBuffer[0] : swapchain->front_buffer;
     if (!(context = context_create(swapchain, target, swapchain->ds_format)))
     {
         WARN("Failed to create context.\n");
@@ -6510,7 +6511,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         swapchain->presentParms.BackBufferWidth = pPresentationParameters->BackBufferWidth;
         swapchain->presentParms.BackBufferHeight = pPresentationParameters->BackBufferHeight;
 
-        hr = updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->frontBuffer, pPresentationParameters);
+        hr = updateSurfaceDesc(swapchain->front_buffer, pPresentationParameters);
         if(FAILED(hr))
         {
             IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);

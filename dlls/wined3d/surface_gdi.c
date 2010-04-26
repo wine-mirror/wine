@@ -200,7 +200,7 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
     /* Tell the swapchain to update the screen */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
-        if(iface == swapchain->frontBuffer)
+        if (This == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, &This->lockedRect);
         }
@@ -431,7 +431,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             IWineD3DSurfaceImpl *dds_primary;
             IWineD3DSwapChainImpl *swapchain;
             swapchain = (IWineD3DSwapChainImpl *)This->resource.device->swapchains[0];
-            dds_primary = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
+            dds_primary = swapchain->front_buffer;
             if (dds_primary && dds_primary->palette)
                 pal = dds_primary->palette->palents;
         }
@@ -501,7 +501,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface)
     /* Tell the swapchain to update the screen */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
-        if(iface == swapchain->frontBuffer)
+        if (This == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, NULL);
         }
