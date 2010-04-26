@@ -2003,7 +2003,7 @@ static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceI
                 if (context->render_offscreen)
                 {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
-                    surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_RGB);
+                    surface_internal_preload(context->current_rt, SRGB_RGB);
 
                     ENTER_GL();
                     context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
@@ -2149,11 +2149,11 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
             /* Read the back buffer of the old drawable into the destination texture. */
             if (context->current_rt->texture_name_srgb)
             {
-                surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_BOTH);
+                surface_internal_preload(context->current_rt, SRGB_BOTH);
             }
             else
             {
-                surface_internal_preload((IWineD3DSurface *)context->current_rt, SRGB_RGB);
+                surface_internal_preload(context->current_rt, SRGB_RGB);
             }
 
             IWineD3DSurface_ModifyLocation((IWineD3DSurface *)context->current_rt, SFLAG_INDRAWABLE, FALSE);

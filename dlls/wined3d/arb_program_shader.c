@@ -6906,7 +6906,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     RECT dst_rect = *dst_rect_in;
 
     /* Now load the surface */
-    surface_internal_preload((IWineD3DSurface *)src_surface, SRGB_RGB);
+    surface_internal_preload(src_surface, SRGB_RGB);
 
     /* Activate the destination context, set it up for blitting */
     context = context_acquire(device, dst_surface, CTXUSAGE_BLIT);

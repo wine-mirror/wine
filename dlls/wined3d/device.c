@@ -5247,7 +5247,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     LEAVE_GL();
 
     /* Make sure the surface is loaded and up to date */
-    surface_internal_preload(dst_surface, SRGB_RGB);
+    surface_internal_preload(dst_impl, SRGB_RGB);
     IWineD3DSurface_BindTexture(dst_surface, FALSE);
 
     src_w = src_impl->currentDesc.Width;

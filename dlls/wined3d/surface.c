@@ -1071,46 +1071,49 @@ static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
 
-void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
+void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srgb)
 {
     /* TODO: check for locks */
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
+    IWineD3DDeviceImpl *device = surface->resource.device;
     IWineD3DBaseTexture *baseTexture = NULL;
 
-    TRACE("(%p)Checking to see if the container is a base texture\n", This);
-    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
-        IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) baseTexture;
+    TRACE("(%p)Checking to see if the container is a base texture\n", surface);
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
+            &IID_IWineD3DBaseTexture, (void **)&baseTexture)))
+    {
+        IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *)baseTexture;
         TRACE("Passing to container\n");
         tex_impl->baseTexture.internal_preload(baseTexture, srgb);
         IWineD3DBaseTexture_Release(baseTexture);
     } else {
         struct wined3d_context *context = NULL;
 
-        TRACE("(%p) : About to load surface\n", This);
+        TRACE("(%p) : About to load surface\n", surface);
 
         if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
 
-        if (This->resource.format_desc->format == WINED3DFMT_P8_UINT
-                || This->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
+        if (surface->resource.format_desc->format == WINED3DFMT_P8_UINT
+                || surface->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
         {
-            if(palette9_changed(This)) {
+            if (palette9_changed(surface))
+            {
                 TRACE("Reloading surface because the d3d8/9 palette was changed\n");
                 /* TODO: This is not necessarily needed with hw palettized texture support */
-                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, NULL);
                 /* Make sure the texture is reloaded because of the palette change, this kills performance though :( */
-                IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+                IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INTEXTURE, FALSE);
             }
         }
 
-        IWineD3DSurface_LoadTexture(iface, srgb == SRGB_SRGB ? TRUE : FALSE);
+        IWineD3DSurface_LoadTexture((IWineD3DSurface *)surface, srgb == SRGB_SRGB ? TRUE : FALSE);
 
-        if (This->resource.pool == WINED3DPOOL_DEFAULT) {
+        if (surface->resource.pool == WINED3DPOOL_DEFAULT)
+        {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
             tmp = 0.9f;
             ENTER_GL();
-            glPrioritizeTextures(1, &This->texture_name, &tmp);
+            glPrioritizeTextures(1, &surface->texture_name, &tmp);
             LEAVE_GL();
         }
 
@@ -1118,8 +1121,9 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
     }
 }
 
-static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
-    surface_internal_preload(iface, SRGB_ANY);
+static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface)
+{
+    surface_internal_preload((IWineD3DSurfaceImpl *)iface, SRGB_ANY);
 }
 
 /* Context activation is done by the caller. */
@@ -2707,7 +2711,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
         LEAVE_GL();
 
     } else { /* bind the real texture, and make sure it up to date */
-        surface_internal_preload(iface, SRGB_RGB);
+        surface_internal_preload(This, SRGB_RGB);
         surface_bind_and_dirtify(This, FALSE);
     }
     allocatedMemory = HeapAlloc(GetProcessHeap(), 0, width  * height * 4);
@@ -3009,7 +3013,7 @@ static void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *dst_surface, IWineD3D
     }
 
     context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
-    surface_internal_preload((IWineD3DSurface *)dst_surface, SRGB_RGB);
+    surface_internal_preload(dst_surface, SRGB_RGB);
     ENTER_GL();
 
     /* Bind the target texture */
@@ -3117,14 +3121,14 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
-    surface_internal_preload((IWineD3DSurface *)dst_surface, SRGB_RGB);
+    surface_internal_preload(dst_surface, SRGB_RGB);
 
     src_offscreen = surface_is_offscreen(src_surface);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
     if (!noBackBufferBackup && !src_surface->texture_name)
     {
         /* Get it a description */
-        surface_internal_preload((IWineD3DSurface *)src_surface, SRGB_RGB);
+        surface_internal_preload(src_surface, SRGB_RGB);
     }
     ENTER_GL();
 
@@ -3657,7 +3661,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         }
 
         /* Now load the surface */
-        surface_internal_preload((IWineD3DSurface *) Src, SRGB_RGB);
+        surface_internal_preload(Src, SRGB_RGB);
 
         /* Activate the destination context, set it up for blitting */
         context = context_acquire(device, This, CTXUSAGE_BLIT);
