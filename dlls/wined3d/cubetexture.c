@@ -396,12 +396,12 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *
         WINED3DCUBEMAP_FACES face, const RECT *dirty_rect)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurface *surface;
+    IWineD3DSurfaceImpl *surface;
 
     TRACE("iface %p, face %u, dirty_rect %s.\n",
             iface, face, wine_dbgstr_rect(dirty_rect));
 
-    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, face, 0)))
+    if (!(surface = (IWineD3DSurfaceImpl *)basetexture_get_sub_resource(texture, face, 0)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;

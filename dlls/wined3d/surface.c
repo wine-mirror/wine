@@ -446,7 +446,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     }
 
     /* Mark the texture as dirty so that it gets loaded first time around. */
-    surface_add_dirty_rect((IWineD3DSurface *)surface, NULL);
+    surface_add_dirty_rect(surface, NULL);
     list_init(&surface->renderbuffers);
 
     TRACE("surface %p, memory %p, size %u\n", surface, surface->resource.allocatedMemory, surface->resource.size);
@@ -953,35 +953,35 @@ GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 }
 
 /* Slightly inefficient way to handle multiple dirty rects but it works :) */
-void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect)
+void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
 
-    if (!(This->Flags & SFLAG_INSYSMEM) && (This->Flags & SFLAG_INTEXTURE))
-        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL /* no partial locking for textures yet */);
+    TRACE("surface %p, dirty_rect %s.\n", surface, wine_dbgstr_rect(dirty_rect));
 
-    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+    if (!(surface->Flags & SFLAG_INSYSMEM) && (surface->Flags & SFLAG_INTEXTURE))
+        /* No partial locking for textures yet. */
+        IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, NULL);
+
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, TRUE);
     if (dirty_rect)
     {
-        This->dirtyRect.left = min(This->dirtyRect.left, dirty_rect->left);
-        This->dirtyRect.top = min(This->dirtyRect.top, dirty_rect->top);
-        This->dirtyRect.right = max(This->dirtyRect.right, dirty_rect->right);
-        This->dirtyRect.bottom = max(This->dirtyRect.bottom, dirty_rect->bottom);
+        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->left);
+        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->top);
+        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->right);
+        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->bottom);
     }
     else
     {
-        This->dirtyRect.left = 0;
-        This->dirtyRect.top = 0;
-        This->dirtyRect.right = This->currentDesc.Width;
-        This->dirtyRect.bottom = This->currentDesc.Height;
+        surface->dirtyRect.left = 0;
+        surface->dirtyRect.top = 0;
+        surface->dirtyRect.right = surface->currentDesc.Width;
+        surface->dirtyRect.bottom = surface->currentDesc.Height;
     }
 
-    TRACE("(%p) : Dirty: yes, Rect:(%d, %d, %d, %d)\n", This, This->dirtyRect.left,
-            This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
-
     /* if the container is a basetexture then mark it dirty. */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture)))
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
+            &IID_IWineD3DBaseTexture, (void **)&baseTexture)))
     {
         TRACE("Passing to container\n");
         IWineD3DBaseTexture_SetDirty(baseTexture, TRUE);
@@ -1767,7 +1767,7 @@ lock_end:
          * Dirtify on lock
          * as seen in msdn docs
          */
-        surface_add_dirty_rect(iface, pRect);
+        surface_add_dirty_rect(This, pRect);
 
         /** Dirtify Container if needed */
         if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture))) {
