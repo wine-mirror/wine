@@ -773,9 +773,6 @@ extern int num_lock DECLSPEC_HIDDEN;
   (vec)[3] = D3DCOLOR_A(dw); \
 } while(0)
 
-/* DirectX Device Limits */
-/* --------------------- */
-#define MAX_MIP_LEVELS 32  /* Maximum number of mipmap levels. */
 #define HIGHEST_TRANSFORMSTATE WINED3DTS_WORLDMATRIX(255) /* Highest value in WINED3DTRANSFORMSTATETYPE */
 
 /* Checking of API calls */
