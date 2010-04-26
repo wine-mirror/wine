@@ -1413,3 +1413,4 @@
 @ cdecl _create_locale(long str)
 @ cdecl _free_locale(ptr)
 @ cdecl _configthreadlocale(long)
+@ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
