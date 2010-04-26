@@ -9377,7 +9377,7 @@ fi
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-if test "x$ac_cv_lib_soname_hal" = "x"; then :
+if test "x$ac_cv_lib_soname_hal" = "x" -a "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
   case "x$with_hal" in
   x)   as_fn_append wine_notices "|libhal/libdbus ${notice_platform}development files not found, no dynamic device support." ;;
   xno) ;;

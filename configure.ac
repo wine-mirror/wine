@@ -1133,7 +1133,7 @@ then
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x"],
+WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x" -a "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
                  [libhal/libdbus ${notice_platform}development files not found, no dynamic device support.])
 
 dnl **** Check for libgnutls ****
