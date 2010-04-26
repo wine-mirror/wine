@@ -837,7 +837,7 @@
 @ stub _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ stub _realloc_crt
-@ stub _recalloc
+@ cdecl _recalloc(ptr long long) msvcr90._recalloc
 @ stub _recalloc_crt
 @ stub _resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir

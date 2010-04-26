@@ -21,6 +21,8 @@
 #include <stdarg.h>
 
 #include "stdlib.h"
+#include "errno.h"
+#include "malloc.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -130,4 +132,29 @@ char** CDECL __sys_errlist(void)
 void CDECL __clean_type_info_names_internal(void *p)
 {
     FIXME("(%p) stub\n", p);
+}
+
+/*********************************************************************
+ * _recalloc (MSVCR90.@)
+ */
+void* CDECL _recalloc(void* mem, size_t num, size_t size)
+{
+    size_t old_size;
+    void *ret;
+
+    if(!mem)
+        return calloc(num, size);
+
+    size = num*size;
+    old_size = _msize(mem);
+
+    ret = realloc(mem, size);
+    if(!ret) {
+        *_errno() = ENOMEM;
+        return NULL;
+    }
+
+    if(size>old_size)
+        memset((BYTE*)mem+old_size, 0, size-old_size);
+    return ret;
 }
