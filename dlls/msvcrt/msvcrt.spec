@@ -1331,7 +1331,7 @@
 @ cdecl strstr(str str) ntdll.strstr
 @ cdecl strtod(str ptr) MSVCRT_strtod
 @ cdecl strtok(str str) MSVCRT_strtok
-# stub strtok_s
+@ cdecl strtok_s(ptr str ptr) MSVCRT_strtok_s
 @ cdecl strtol(str ptr long) MSVCRT_strtol
 @ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm

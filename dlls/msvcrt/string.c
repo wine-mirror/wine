@@ -111,6 +111,33 @@ char * CDECL MSVCRT_strtok( char *str, const char *delim )
     return ret;
 }
 
+/*********************************************************************
+ *		strtok_s  (MSVCRT.@)
+ */
+char * CDECL MSVCRT_strtok_s(char *str, const char *delim, char **ctx)
+{
+    if(!delim || !ctx || (!str && !*ctx)) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return NULL;
+    }
+
+    if(!str)
+        str = *ctx;
+
+    while(*str && strchr(delim, *str))
+        str++;
+    if(!*str)
+        return NULL;
+
+    *ctx = str+1;
+    while(**ctx && !strchr(delim, **ctx))
+        (*ctx)++;
+    if(**ctx)
+        *(*ctx)++ = 0;
+
+    return str;
+}
 
 /*********************************************************************
  *		_swab (MSVCRT.@)

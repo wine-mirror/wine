@@ -1380,7 +1380,7 @@
 @ cdecl strstr(str str) msvcrt.strstr
 @ cdecl strtod(str ptr) msvcrt.strtod
 @ cdecl strtok(str str) msvcrt.strtok
-@ stub strtok_s
+@ cdecl strtok_s(ptr str ptr) msvcrt.strtok_s
 @ cdecl strtol(str ptr long) msvcrt.strtol
 @ cdecl strtoul(str ptr long) msvcrt.strtoul
 @ cdecl strxfrm(ptr str long) msvcrt.strxfrm
