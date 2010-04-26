@@ -1387,28 +1387,49 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	    if(lpdi->item.mask & LVIF_TEXT)	/* text requested */
 	    {
+	      static WCHAR emptyW[] = { 0 };
+	      SHELLDETAILS sd;
+	      HRESULT hr;
+
 	      if (This->pSF2Parent)
 	      {
-	        SHELLDETAILS sd;
-	        IShellFolder2_GetDetailsOf(This->pSF2Parent, pidl, lpdi->item.iSubItem, &sd);
-                if (lpnmh->code == LVN_GETDISPINFOA)
-                {
-                    /* shouldn't happen */
-                    NMLVDISPINFOA *lpdiA = (NMLVDISPINFOA *)lpnmh;
-                    StrRetToStrNA( lpdiA->item.pszText, lpdiA->item.cchTextMax, &sd.str, NULL);
-                    TRACE("-- text=%s\n",lpdiA->item.pszText);
-                }
-                else /* LVN_GETDISPINFOW */
-                {
-                    StrRetToStrNW( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
-                    TRACE("-- text=%s\n",debugstr_w(lpdi->item.pszText));
-                }
+	        hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, pidl, lpdi->item.iSubItem, &sd);
 	      }
 	      else
 	      {
-	        FIXME("no SF2\n");
+	        IShellDetails *details;
+
+	        hr = IShellFolder_QueryInterface(This->pSFParent, &IID_IShellDetails, (void**)&details);
+	        if (hr == S_OK)
+	        {
+	          hr = IShellDetails_GetDetailsOf(details, pidl, lpdi->item.iSubItem, &sd);
+	          IShellDetails_Release(details);
+	        }
+	        else
+	          WARN("IShellFolder2/IShellDetails not supported\n");
 	      }
+
+	      if (hr != S_OK)
+	      {
+	          /* set to empty on failure */
+	          sd.str.uType = STRRET_WSTR;
+	          sd.str.u.pOleStr = emptyW;
+	      }
+
+              if (lpnmh->code == LVN_GETDISPINFOW)
+              {
+                  StrRetToStrNW( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
+                  TRACE("-- text=%s\n", debugstr_w(lpdi->item.pszText));
+              }
+              else
+              {
+                  /* LVN_GETDISPINFOA - shouldn't happen */
+                  NMLVDISPINFOA *lpdiA = (NMLVDISPINFOA *)lpnmh;
+                  StrRetToStrNA( lpdiA->item.pszText, lpdiA->item.cchTextMax, &sd.str, NULL);
+                  TRACE("-- text=%s\n", lpdiA->item.pszText);
+              }
 	    }
+
 	    if(lpdi->item.mask & LVIF_IMAGE)	/* image requested */
 	    {
 	      lpdi->item.iImage = SHMapPIDLToSystemImageListIndex(This->pSFParent, pidl, 0);
