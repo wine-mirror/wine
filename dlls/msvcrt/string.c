@@ -132,14 +132,6 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
 }
 
 /*********************************************************************
- *		atof  (MSVCRT.@)
- */
-double CDECL MSVCRT_atof( const char *str )
-{
-    return atof( str );
-}
-
-/*********************************************************************
  *		strtod_l  (MSVCRT.@)
  */
 double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
@@ -250,6 +242,22 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
 double CDECL MSVCRT_strtod( const char *str, char **end )
 {
     return MSVCRT_strtod_l( str, end, NULL );
+}
+
+/*********************************************************************
+ *		atof  (MSVCRT.@)
+ */
+double CDECL MSVCRT_atof( const char *str )
+{
+    return MSVCRT_strtod_l(str, NULL, NULL);
+}
+
+/*********************************************************************
+ *		_atof_l  (MSVCRT.@)
+ */
+double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
+{
+    return MSVCRT_strtod_l(str, NULL, locale);
 }
 
 /*********************************************************************

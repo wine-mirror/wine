@@ -289,7 +289,7 @@
 @ cdecl _assert(str str long) msvcrt._assert
 @ stub _atodbl
 @ stub _atodbl_l
-@ stub _atof_l
+@ cdecl _atof_l(str ptr) msvcrt._atof_l
 @ stub _atoflt
 @ stub _atoflt_l
 @ cdecl -ret64 _atoi64(str) msvcrt._atoi64
@@ -1105,7 +1105,7 @@
 @ cdecl _wcsrev(wstr) msvcrt._wcsrev
 @ cdecl _wcsset(wstr long) msvcrt._wcsset
 @ stub _wcsset_s
-@ stub _wcstod_l
+@ cdecl _wcstod_l(wstr ptr) msvcrt._wcstod_l
 @ stub _wcstoi64
 @ stub _wcstoi64_l
 @ stub _wcstol_l
@@ -1207,8 +1207,8 @@
 @ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
 @ stub _wtmpnam
 @ stub _wtmpnam_s
-@ stub _wtof
-@ stub _wtof_l
+@ cdecl _wtof(wstr) msvcrt._wtof
+@ cdecl _wtof_l(wstr ptr) msvcrt._wtof_l
 @ cdecl _wtoi(wstr) msvcrt._wtoi
 @ cdecl _wtoi64(wstr) msvcrt._wtoi64
 @ stub _wtoi64_l

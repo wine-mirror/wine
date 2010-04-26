@@ -264,7 +264,7 @@
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
 # stub _atodbl_l
-# stub _atof_l
+@ cdecl _atof_l(str ptr) MSVCRT__atof_l
 # stub _atoflt_l
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64
 # stub _atoi64_l
@@ -1136,8 +1136,8 @@
 # stub _wtempnam_dbg
 @ stub _wtmpnam #(ptr)
 # stub _wtmpnam_s
-# stub _wtof
-# stub _wtof_l
+@ cdecl _wtof(wstr) MSVCRT__wtof
+@ cdecl _wtof_l(wstr ptr) MSVCRT__wtof_l
 @ cdecl _wtoi(wstr) ntdll._wtoi
 @ cdecl _wtoi64(wstr) ntdll._wtoi64
 # stub _wtoi64_l
