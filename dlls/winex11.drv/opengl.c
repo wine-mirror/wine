@@ -113,6 +113,7 @@ typedef struct wine_glcontext {
     BOOL do_escape;
     BOOL has_been_current;
     BOOL sharing;
+    DWORD tid;
     BOOL gl3_context;
     XVisualInfo *vis;
     WineGLPixelFormat *fmt;
@@ -1763,29 +1764,33 @@ HGLRC CDECL X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 BOOL CDECL X11DRV_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-    BOOL ret = TRUE;
 
     TRACE("(%p)\n", hglrc);
 
     if (!has_opengl()) return 0;
 
-    wine_tsx11_lock();
-    /* A game (Half Life not to name it) deletes twice the same context,
-    * so make sure it is valid first */
-    if (is_valid_context( ctx ))
-    {
-        if (ctx->ctx) pglXDestroyContext(gdi_display, ctx->ctx);
-        free_context(ctx);
-    }
-    else
+    if (!is_valid_context(ctx))
     {
         WARN("Error deleting context !\n");
         SetLastError(ERROR_INVALID_HANDLE);
-        ret = FALSE;
+        return FALSE;
     }
-    wine_tsx11_unlock();
 
-    return ret;
+    /* WGL doesn't allow deletion of a context which is current in another thread */
+    if (ctx->tid != 0 && ctx->tid != GetCurrentThreadId())
+    {
+        TRACE("Cannot delete context=%p because it is current in another thread.\n", ctx);
+        return FALSE;
+    }
+
+    if (ctx->ctx)
+    {
+        wine_tsx11_lock();
+        pglXDestroyContext(gdi_display, ctx->ctx);
+        wine_tsx11_unlock();
+    }
+
+    return TRUE;
 }
 
 /**
@@ -1857,16 +1862,26 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     if (!has_opengl()) return FALSE;
 
     wine_tsx11_lock();
-    if (hglrc == NULL) {
+    if (hglrc == NULL)
+    {
+        Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
+        if (prev_ctx) prev_ctx->tid = 0;
+
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
-    } else if (ctx->fmt->iPixelFormat != physDev->current_pf) {
+    }
+    else if (ctx->fmt->iPixelFormat != physDev->current_pf)
+    {
         WARN( "mismatched pixel format hdc %p %u ctx %p %u\n",
               hdc, physDev->current_pf, ctx, ctx->fmt->iPixelFormat );
         SetLastError( ERROR_INVALID_PIXEL_FORMAT );
         ret = FALSE;
-    } else {
+    }
+    else
+    {
         Drawable drawable = get_glxdrawable(physDev);
+        Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
+        if (prev_ctx) prev_ctx->tid = 0;
 
         /* The describe lines below are for debugging purposes only */
         if (TRACE_ON(wgl)) {
@@ -1881,6 +1896,7 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         if(ret)
         {
             ctx->has_been_current = TRUE;
+            ctx->tid = GetCurrentThreadId();
             ctx->hdc = hdc;
             ctx->read_hdc = hdc;
             ctx->drawables[0] = drawable;
@@ -1913,18 +1929,28 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEV
     if (!has_opengl()) return 0;
 
     wine_tsx11_lock();
-    if (hglrc == NULL) {
+    if (hglrc == NULL)
+    {
+        Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
+        if (prev_ctx) prev_ctx->tid = 0;
+
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
-    } else {
+    }
+    else
+    {
         if (NULL == pglXMakeContextCurrent) {
             ret = FALSE;
         } else {
+            Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
             Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
             Drawable d_draw = get_glxdrawable(pDrawDev);
             Drawable d_read = get_glxdrawable(pReadDev);
 
+            if (prev_ctx) prev_ctx->tid = 0;
+
             ctx->has_been_current = TRUE;
+            ctx->tid = GetCurrentThreadId();
             ctx->hdc = pDrawDev->hdc;
             ctx->read_hdc = pReadDev->hdc;
             ctx->drawables[0] = d_draw;

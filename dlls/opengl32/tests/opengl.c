@@ -499,6 +499,61 @@ static void test_acceleration(HDC hdc)
     }
 }
 
+struct wgl_thread_param
+{
+    HANDLE test_finished;
+    HGLRC hglrc;
+    BOOL hglrc_deleted;
+};
+
+static DWORD WINAPI wgl_thread(void *param)
+{
+    struct wgl_thread_param *p = param;
+
+    p->hglrc_deleted = wglDeleteContext(p->hglrc);
+    SetEvent(p->test_finished);
+
+    return 0;
+}
+
+static void test_deletecontext(HDC hdc)
+{
+    struct wgl_thread_param thread_params;
+    HGLRC hglrc = wglCreateContext(hdc);
+    HANDLE thread_handle;
+    DWORD res, tid;
+
+    if(!hglrc)
+    {
+        skip("wglCreateContext failed!\n");
+        return;
+    }
+
+    res = wglMakeCurrent(hdc, hglrc);
+    if(!res)
+    {
+        skip("wglMakeCurrent failed!\n");
+        return;
+    }
+
+    /* WGL doesn't allow you to delete a context from a different thread than the one in which it is current.
+     * This differs from GLX which does allow it but it delays actual deletion until the context becomes not current.
+     */
+    thread_params.hglrc = hglrc;
+    thread_params.test_finished = CreateEvent(NULL, FALSE, FALSE, NULL);
+    thread_handle = CreateThread(NULL, 0, wgl_thread, &thread_params, 0, &tid);
+    ok(!!thread_handle, "Failed to create thread, last error %#x.\n", GetLastError());
+    if(thread_handle)
+    {
+        WaitForSingleObject(thread_handle, INFINITE);
+        ok(thread_params.hglrc_deleted == FALSE, "Attempt to delete WGL context from another thread passed but should fail!\n");
+    }
+    CloseHandle(thread_params.test_finished);
+
+    res = wglDeleteContext(hglrc);
+    ok(res == TRUE, "wglDeleteContext failed\n");
+}
+
 static void test_make_current_read(HDC hdc)
 {
     int res;
@@ -802,6 +857,7 @@ START_TEST(opengl)
             return;
         }
 
+        test_deletecontext(hdc);
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
         test_sharelists(hdc);
