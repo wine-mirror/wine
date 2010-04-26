@@ -172,6 +172,7 @@ static BOOL free_icon_handle( HICON handle )
         ULONG_PTR param = obj->param;
         HeapFree( GetProcessHeap(), 0, obj );
         if (wow_handlers.free_icon_param && param) wow_handlers.free_icon_param( param );
+        USER_Driver->pDestroyCursorIcon( handle );
         return TRUE;
     }
     return FALSE;
@@ -1561,10 +1562,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
     TRACE_(icon)("%p\n", hIcon );
 
     if (CURSORICON_DelSharedIcon( hIcon ) == -1)
-    {
-        USER_Driver->pDestroyCursorIcon( hIcon );
         free_icon_handle( hIcon );
-    }
     return TRUE;
 }
 
