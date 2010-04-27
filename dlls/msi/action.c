@@ -2062,7 +2062,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     if (!process_overrides( package, msi_get_property_int( package->db, szlevel, 1 ) ))
     {
-        TRACE("Evaluating Condition Table\n");
+        TRACE("Evaluating feature conditions\n");
 
         rc = MSI_DatabaseOpenViewW( package->db, ConditionQuery, &view );
         if (rc == ERROR_SUCCESS)
@@ -2070,18 +2070,18 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );
             msiobj_release( &view->hdr );
         }
+    }
+    TRACE("Evaluating component conditions\n");
 
-        TRACE("Enabling or Disabling Components\n");
-        LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (MSI_EvaluateConditionW( package, comp->Condition ) == MSICONDITION_FALSE)
         {
-            if (MSI_EvaluateConditionW( package, comp->Condition ) == MSICONDITION_FALSE)
-            {
-                TRACE("Disabling component %s\n", debugstr_w(comp->Component));
-                comp->Enabled = FALSE;
-            }
-            else
-                comp->Enabled = TRUE;
+            TRACE("Disabling component %s\n", debugstr_w(comp->Component));
+            comp->Enabled = FALSE;
         }
+        else
+            comp->Enabled = TRUE;
     }
 
     msi_set_property( package->db, szCosting, szOne );
