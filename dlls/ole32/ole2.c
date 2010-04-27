@@ -2119,24 +2119,28 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
    * when that's the case, we must display the standard drag and drop
    * cursors.
    */
-  if (hr==DRAGDROP_S_USEDEFAULTCURSORS)
+  if (hr == DRAGDROP_S_USEDEFAULTCURSORS)
   {
+    HCURSOR hCur;
+
     if (*trackerInfo->pdwEffect & DROPEFFECT_MOVE)
     {
-      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(1)));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(1));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_COPY)
     {
-      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(2)));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(2));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_LINK)
     {
-      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(3)));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(3));
     }
     else
     {
-      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(0)));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(0));
     }
+
+    SetCursor(hCur);
   }
 }
 
