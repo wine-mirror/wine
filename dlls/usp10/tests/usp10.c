@@ -806,8 +806,6 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
                 "Start pos [2] not = 11 (%d) or end [3] pos not = 14 (%d), cInChars = %d\n",
                 pItem[2].iCharPos, pItem[3].iCharPos, cInChars);
         }
-        hr = ScriptFreeCache( &psc);
-        ok (!psc, "psc is not null after ScriptFreeCache\n");
     }
 
     /* This is a valid test that will cause parsing to take place and create 5 script_items   */
@@ -823,21 +821,27 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
             ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == 6,
                 "Start pos [0] not = 0 (%d) or end pos [1] not = %d\n",
                 pItem[0].iCharPos, pItem[1].iCharPos);
+            ok (pItem[0].a.s.uBidiLevel == 0, "Should have been bidi=0 not %d\n",
+                                               pItem[0].a.s.uBidiLevel);
             ok (pItem[1].iCharPos == 6 && pItem[2].iCharPos == 11,
                 "Start pos [1] not = 6 (%d) or end pos [2] not = 11 (%d)\n",
                 pItem[1].iCharPos, pItem[2].iCharPos);
+            ok (pItem[1].a.s.uBidiLevel == 1, "Should have been bidi=1 not %d\n",
+                                              pItem[1].a.s.uBidiLevel);
             ok (pItem[2].iCharPos == 11 && pItem[3].iCharPos == 12,
                 "Start pos [2] not = 11 (%d) or end [3] pos not = 12 (%d)\n",
                 pItem[2].iCharPos, pItem[3].iCharPos);
+            ok (pItem[2].a.s.uBidiLevel == 0, "Should have been bidi=0 not %d\n",
+                                               pItem[2].a.s.uBidiLevel);
             ok (pItem[3].iCharPos == 12 && pItem[4].iCharPos == 13,
                 "Start pos [3] not = 12 (%d) or end [4] pos not = 13 (%d)\n",
                 pItem[3].iCharPos, pItem[4].iCharPos);
+            ok (pItem[3].a.s.uBidiLevel == 0, "Should have been bidi=0 not %d\n",
+                                               pItem[3].a.s.uBidiLevel);
             ok (pItem[4].iCharPos == 13 && pItem[5].iCharPos == cInChars,
                 "Start pos [4] not = 13 (%d) or end [5] pos not = 16 (%d), cInChars = %d\n",
                 pItem[4].iCharPos, pItem[5].iCharPos, cInChars);
         }
-        hr = ScriptFreeCache( &psc);
-        ok (!psc, "psc is not null after ScriptFreeCache\n");
     }
 
     /*
