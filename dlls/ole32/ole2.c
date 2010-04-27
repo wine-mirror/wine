@@ -110,7 +110,14 @@ static LONG OLE_moduleLockCount = 0;
 /*
  * Name of our registered window class.
  */
-static const char OLEDD_DRAGTRACKERCLASS[] = "WineDragDropTracker32";
+static const WCHAR OLEDD_DRAGTRACKERCLASS[] =
+  {'W','i','n','e','D','r','a','g','D','r','o','p','T','r','a','c','k','e','r','3','2',0};
+
+/*
+ * Name of menu descriptor property.
+ */
+static const WCHAR prop_olemenuW[] =
+  {'P','R','O','P','_','O','L','E','M','e','n','u','D','e','s','c','r','i','p','t','o','r',0};
 
 /*
  * This is the head of the Drop target container.
@@ -478,6 +485,7 @@ HRESULT WINAPI DoDragDrop (
   DWORD       dwOKEffect,    /* [in] effects allowed by the source */
   DWORD       *pdwEffect)    /* [out] ptr to effects of the source */
 {
+  static const WCHAR trackerW[] = {'T','r','a','c','k','e','r','W','i','n','d','o','w',0};
   TrackerWindowInfo trackerInfo;
   HWND            hwndTrackWindow;
   MSG             msg;
@@ -500,12 +508,12 @@ HRESULT WINAPI DoDragDrop (
   trackerInfo.curTargetHWND     = 0;
   trackerInfo.curDragTarget     = 0;
 
-  hwndTrackWindow = CreateWindowA(OLEDD_DRAGTRACKERCLASS, "TrackerWindow",
+  hwndTrackWindow = CreateWindowW(OLEDD_DRAGTRACKERCLASS, trackerW,
                                   WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                   CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0,
                                   &trackerInfo);
 
-  if (hwndTrackWindow!=0)
+  if (hwndTrackWindow)
   {
     /*
      * Capture the mouse input
@@ -517,7 +525,7 @@ HRESULT WINAPI DoDragDrop (
     /*
      * Pump messages. All mouse input should go to the capture window.
      */
-    while (!trackerInfo.trackingDone && GetMessageA(&msg, 0, 0, 0) )
+    while (!trackerInfo.trackingDone && GetMessageW(&msg, 0, 0, 0) )
     {
       trackerInfo.curMousePos.x = msg.pt.x;
       trackerInfo.curMousePos.y = msg.pt.y;
@@ -548,7 +556,7 @@ HRESULT WINAPI DoDragDrop (
 	/*
 	 * Dispatch the messages only when it's not a keyboard message.
 	 */
-	DispatchMessageA(&msg);
+	DispatchMessageW(&msg);
       }
     }
 
@@ -1180,7 +1188,7 @@ static void OLEMenu_UnInitialize(void)
  */
 static BOOL OLEMenu_InstallHooks( DWORD tid )
 {
-  OleMenuHookItem *pHookItem = NULL;
+  OleMenuHookItem *pHookItem;
 
   /* Create an entry for the hook table */
   if ( !(pHookItem = HeapAlloc(GetProcessHeap(), 0,
@@ -1191,13 +1199,13 @@ static BOOL OLEMenu_InstallHooks( DWORD tid )
   pHookItem->hHeap = GetProcessHeap();
 
   /* Install a thread scope message hook for WH_GETMESSAGE */
-  pHookItem->GetMsg_hHook = SetWindowsHookExA( WH_GETMESSAGE, OLEMenu_GetMsgProc,
+  pHookItem->GetMsg_hHook = SetWindowsHookExW( WH_GETMESSAGE, OLEMenu_GetMsgProc,
                                                0, GetCurrentThreadId() );
   if ( !pHookItem->GetMsg_hHook )
     goto CLEANUP;
 
   /* Install a thread scope message hook for WH_CALLWNDPROC */
-  pHookItem->CallWndProc_hHook = SetWindowsHookExA( WH_CALLWNDPROC, OLEMenu_CallWndProc,
+  pHookItem->CallWndProc_hHook = SetWindowsHookExW( WH_CALLWNDPROC, OLEMenu_CallWndProc,
                                                     0, GetCurrentThreadId() );
   if ( !pHookItem->CallWndProc_hHook )
     goto CLEANUP;
@@ -1271,7 +1279,7 @@ CLEANUP:
  */
 static OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid )
 {
-  OleMenuHookItem *pHookItem = NULL;
+  OleMenuHookItem *pHookItem;
 
   /* Do a simple linear search for an entry whose tid matches ours.
    * We really need a map but efficiency is not a concern here. */
@@ -1376,7 +1384,7 @@ static BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDes
  */
 static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
 {
-  LPCWPSTRUCT pMsg = NULL;
+  LPCWPSTRUCT pMsg;
   HOLEMENU hOleMenu = 0;
   OleMenuDescriptor *pOleMenuDescriptor = NULL;
   OleMenuHookItem *pHookItem = NULL;
@@ -1395,7 +1403,7 @@ static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lPar
    * If the window has an OLEMenu property we may need to dispatch
    * the menu message to its active objects window instead. */
 
-  hOleMenu = GetPropA( pMsg->hwnd, "PROP_OLEMenuDescriptor" );
+  hOleMenu = GetPropW( pMsg->hwnd, prop_olemenuW );
   if ( !hOleMenu )
     goto NEXTHOOK;
 
@@ -1413,7 +1421,7 @@ static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lPar
       pOleMenuDescriptor->bIsServerItem = FALSE;
 
       /* Send this message to the server as well */
-      SendMessageA( pOleMenuDescriptor->hwndActiveObject,
+      SendMessageW( pOleMenuDescriptor->hwndActiveObject,
                   pMsg->message, pMsg->wParam, pMsg->lParam );
       goto NEXTHOOK;
     }
@@ -1454,7 +1462,7 @@ static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lPar
   /* If the message was for the server dispatch it accordingly */
   if ( pOleMenuDescriptor->bIsServerItem )
   {
-    SendMessageA( pOleMenuDescriptor->hwndActiveObject,
+    SendMessageW( pOleMenuDescriptor->hwndActiveObject,
                   pMsg->message, pMsg->wParam, pMsg->lParam );
   }
 
@@ -1481,7 +1489,7 @@ NEXTHOOK:
  */
 static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
 {
-  LPMSG pMsg = NULL;
+  LPMSG pMsg;
   HOLEMENU hOleMenu = 0;
   OleMenuDescriptor *pOleMenuDescriptor = NULL;
   OleMenuHookItem *pHookItem = NULL;
@@ -1500,7 +1508,7 @@ static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lPara
    * If the window has an OLEMenu property we may need to dispatch
    * the menu message to its active objects window instead. */
 
-  hOleMenu = GetPropA( pMsg->hwnd, "PROP_OLEMenuDescriptor" );
+  hOleMenu = GetPropW( pMsg->hwnd, prop_olemenuW );
   if ( !hOleMenu )
     goto NEXTHOOK;
 
@@ -1671,7 +1679,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
     pOleMenuDescriptor = NULL;
 
     /* Add a menu descriptor windows property to the frame window */
-    SetPropA( hwndFrame, "PROP_OLEMenuDescriptor", hOleMenu );
+    SetPropW( hwndFrame, prop_olemenuW, hOleMenu );
 
     /* Install thread scope message hooks for WH_GETMESSAGE and WH_CALLWNDPROC */
     if ( !OLEMenu_InstallHooks( GetCurrentThreadId() ) )
@@ -1684,7 +1692,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
       return E_FAIL;
 
     /* Remove the menu descriptor property from the frame window */
-    RemovePropA( hwndFrame, "PROP_OLEMenuDescriptor" );
+    RemovePropW( hwndFrame, prop_olemenuW );
   }
 
   return S_OK;
@@ -1870,9 +1878,9 @@ void WINAPI ReleaseStgMedium(
  */
 static void OLEDD_Initialize(void)
 {
-    WNDCLASSA wndClass;
+    WNDCLASSW wndClass;
 
-    ZeroMemory (&wndClass, sizeof(WNDCLASSA));
+    ZeroMemory (&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = OLEDD_DragTrackerWindowProc;
     wndClass.cbClsExtra    = 0;
@@ -1881,7 +1889,7 @@ static void OLEDD_Initialize(void)
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = OLEDD_DRAGTRACKERCLASS;
 
-    RegisterClassA (&wndClass);
+    RegisterClassW (&wndClass);
 }
 
 /***
@@ -1958,7 +1966,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     {
       LPCREATESTRUCTA createStruct = (LPCREATESTRUCTA)lParam;
 
-      SetWindowLongPtrA(hwnd, 0, (LONG_PTR)createStruct->lpCreateParams);
+      SetWindowLongPtrW(hwnd, 0, (LONG_PTR)createStruct->lpCreateParams);
       SetTimer(hwnd, DRAG_TIMER_ID, 50, NULL);
 
       break;
@@ -1989,7 +1997,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
   /*
    * This is a window proc after all. Let's call the default.
    */
-  return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+  return DefWindowProcW (hwnd, uMsg, wParam, lParam);
 }
 
 /***
@@ -2257,8 +2265,8 @@ static void OLEUTL_ReadRegistryDWORDValue(
   DWORD* pdwValue)
 {
   char  buffer[20];
+  DWORD cbData = sizeof(buffer);
   DWORD dwKeyType;
-  DWORD cbData = 20;
   LONG  lres;
 
   lres = RegQueryValueExA(regKey,
