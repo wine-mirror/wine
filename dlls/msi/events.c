@@ -386,19 +386,7 @@ static UINT ControlEvent_ReinstallMode(MSIPACKAGE *package, LPCWSTR argument,
 static UINT ControlEvent_Reinstall( MSIPACKAGE *package, LPCWSTR argument,
                                     msi_dialog *dialog )
 {
-    static const WCHAR szReinstallEq[] = {'R','E','I','N','S','T','A','L','L','=',0};
-    UINT r = ERROR_OUTOFMEMORY;
-    WCHAR *cmd;
-
-    cmd = msi_alloc( (strlenW( szReinstallEq ) + strlenW( argument ) + 1) * sizeof(WCHAR) );
-    if (cmd)
-    {
-        strcpyW( cmd, szReinstallEq );
-        strcatW( cmd, argument );
-        r = MsiConfigureProductExW( package->ProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd );
-        msi_free( cmd );
-    }
-    return r;
+    return msi_set_property( package->db, szReinstall, argument );
 }
 
 static UINT ControlEvent_ValidateProductID(MSIPACKAGE *package, LPCWSTR argument,
