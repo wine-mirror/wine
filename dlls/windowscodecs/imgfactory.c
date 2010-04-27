@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "objbase.h"
+#include "shellapi.h"
 #include "wincodec.h"
 
 #include "wincodecs_private.h"
@@ -89,9 +90,27 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromFilename(
     DWORD dwDesiredAccess, WICDecodeOptions metadataOptions,
     IWICBitmapDecoder **ppIDecoder)
 {
-    FIXME("(%p,%s,%s,%u,%u,%p): stub\n", iface, debugstr_w(wzFilename),
+    IWICStream *stream;
+    HRESULT hr;
+
+    TRACE("(%p,%s,%s,%u,%u,%p)\n", iface, debugstr_w(wzFilename),
         debugstr_guid(pguidVendor), dwDesiredAccess, metadataOptions, ppIDecoder);
-    return E_NOTIMPL;
+
+    hr = StreamImpl_Create(&stream);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICStream_InitializeFromFilename(stream, wzFilename, dwDesiredAccess);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICImagingFactory_CreateDecoderFromStream(iface, (IStream*)stream,
+                pguidVendor, metadataOptions, ppIDecoder);
+        }
+
+        IWICStream_Release(stream);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
