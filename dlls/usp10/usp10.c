@@ -669,16 +669,17 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /* While not strictly necessary according to the spec, make sure the n+1
      * item is set up to prevent random behaviour if the caller erroneously
      * checks the n+1 structure                                              */
-    memset(&pItems[index+1].a, 0, sizeof(SCRIPT_ANALYSIS));
+    index++;
+    memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
-    TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos);
+    TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
 
     /*  Set one SCRIPT_STATE item being returned  */
-    if (pcItems) *pcItems = index + 1;
+    if  (index + 1 > cMaxItems) return E_OUTOFMEMORY;
+    if (pcItems) *pcItems = index;
 
     /*  Set SCRIPT_ITEM                                     */
-    pItems[index+1].iCharPos = cnt;       /* the last + 1 item
-                                             contains the ptr to the lastchar */
+    pItems[index].iCharPos = cnt;         /* the last item contains the ptr to the lastchar */
     heap_free(levels);
     return S_OK;
 }
