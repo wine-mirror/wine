@@ -1993,35 +1993,34 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-static void surface_release_client_storage(IWineD3DSurface *iface)
+static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     struct wined3d_context *context;
 
-    context = context_acquire(This->resource.device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(surface->resource.device, NULL, CTXUSAGE_RESOURCELOAD);
 
     ENTER_GL();
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-    if(This->texture_name)
+    if (surface->texture_name)
     {
-        surface_bind_and_dirtify(This, FALSE);
-        glTexImage2D(This->texture_target, This->texture_level,
-                     GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        surface_bind_and_dirtify(surface, FALSE);
+        glTexImage2D(surface->texture_target, surface->texture_level,
+                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
-    if(This->texture_name_srgb)
+    if (surface->texture_name_srgb)
     {
-        surface_bind_and_dirtify(This, TRUE);
-        glTexImage2D(This->texture_target, This->texture_level,
-                     GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        surface_bind_and_dirtify(surface, TRUE);
+        glTexImage2D(surface->texture_target, surface->texture_level,
+                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 
     LEAVE_GL();
     context_release(context);
 
-    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
-    IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
-    surface_force_reload(This);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INSRGBTEX, FALSE);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INTEXTURE, FALSE);
+    surface_force_reload(surface);
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC)
@@ -2052,7 +2051,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
     if(!This->hDC) {
         if(This->Flags & SFLAG_CLIENT) {
             IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
-            surface_release_client_storage(iface);
+            surface_release_client_storage(This);
         }
         hr = IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
         if(FAILED(hr)) return WINED3DERR_INVALIDCALL;
@@ -2828,9 +2827,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
 
         /* For client textures opengl has to be notified */
-        if(This->Flags & SFLAG_CLIENT) {
-            surface_release_client_storage(iface);
-        }
+        if (This->Flags & SFLAG_CLIENT)
+            surface_release_client_storage(This);
 
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
@@ -2841,9 +2839,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         if(This->resource.heapMemory != NULL) ERR("User pointer surface has heap memory allocated\n");
         This->Flags &= ~SFLAG_USERPTR;
 
-        if(This->Flags & SFLAG_CLIENT) {
-            surface_release_client_storage(iface);
-        }
+        if (This->Flags & SFLAG_CLIENT)
+            surface_release_client_storage(This);
     }
     return WINED3D_OK;
 }
