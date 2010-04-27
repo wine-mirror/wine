@@ -213,7 +213,7 @@ static DWORD get_pf_file_size( const char *filename )
 
     file = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     if (file == INVALID_HANDLE_VALUE)
-        return 0;
+        return INVALID_FILE_SIZE;
 
     size = GetFileSize( file, NULL );
     CloseHandle( file );
