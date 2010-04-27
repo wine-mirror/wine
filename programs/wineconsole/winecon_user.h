@@ -45,13 +45,13 @@ struct inner_data_user {
 /* from user.c */
 extern const COLORREF WCUSER_ColorMap[16];
 extern BOOL WCUSER_GetProperties(struct inner_data*, BOOL);
-extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf);
+extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf);
 extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data,
-                                      const TEXTMETRIC* tm, DWORD fontType);
-extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf,
-                             LONG* el);
-extern void WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name,
+                                      const TEXTMETRICW* tm, DWORD fontType);
+extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd,
+                             const LOGFONTW* lf, LONG* el);
+extern void WCUSER_FillLogFont(LOGFONTW* lf, const WCHAR* name,
                                UINT height, UINT weight);
 
-extern void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft);
-extern void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft);
+extern void WCUSER_DumpLogFont(const char* pfx, const LOGFONTW* lf, DWORD ft);
+extern void WCUSER_DumpTextMetric(const TEXTMETRICW* tm, DWORD ft);

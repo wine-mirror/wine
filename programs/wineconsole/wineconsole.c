@@ -45,7 +45,7 @@ static void printf_res(UINT uResId, ...)
     va_list args;
 
     va_start(args, uResId);
-    LoadStringW(GetModuleHandle(NULL), uResId, buffer, sizeof(buffer)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), uResId, buffer, sizeof(buffer)/sizeof(buffer[0]));
     WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, ansi, sizeof(ansi), NULL, NULL);
     vprintf(ansi, args);
     va_end(args);
@@ -561,7 +561,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return 0;
 
-    GetStartupInfo(&si);
+    GetStartupInfoW(&si);
 
     if (pid == 0)
     {
@@ -672,9 +672,9 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
  */
 static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
 {
-    PROCESS_INFORMATION	info;
-    STARTUPINFO		startup;
-    BOOL		done;
+    PROCESS_INFORMATION info;
+    STARTUPINFOW        startup;
+    BOOL                done;
 
     /* we're in the case wineconsole <exe> <options>... spawn the new process */
     memset(&startup, 0, sizeof(startup));
@@ -696,7 +696,7 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
 	return FALSE;
     }
 
-    done = CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
+    done = CreateProcessW(NULL, cmdLine, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
 
     /* we no longer need the handles passed to the child for the console */
     CloseHandle(startup.hStdInput);

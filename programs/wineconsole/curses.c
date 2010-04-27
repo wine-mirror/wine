@@ -882,7 +882,7 @@ static DWORD CALLBACK input_thread( void *arg )
         else
             numEvent = WCCURSES_FillSimpleChar(ir, inchar);
 
-        if (numEvent) WriteConsoleInput(data->hConIn, ir, numEvent, &n);
+        if (numEvent) WriteConsoleInputW(data->hConIn, ir, numEvent, &n);
     }
     close( PRIVATE(data)->sync_pipe[0] );
     return 0;
