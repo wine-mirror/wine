@@ -12,6 +12,7 @@ C_SRCS = \
 	bmpencode.c \
 	clsfactory.c \
 	converter.c \
+	fliprotate.c \
 	gifformat.c \
 	icoformat.c \
 	imgfactory.c \

@@ -267,8 +267,8 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapClipper(IWICImagingFactory *ifa
 static HRESULT WINAPI ImagingFactory_CreateBitmapFlipRotator(IWICImagingFactory *iface,
     IWICBitmapFlipRotator **ppIBitmapFlipRotator)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapFlipRotator);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIBitmapFlipRotator);
+    return FlipRotator_Create(ppIBitmapFlipRotator);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateStream(IWICImagingFactory *iface,
