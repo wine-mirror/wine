@@ -1909,7 +1909,7 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
+static LPWSTR get_disk_file_version( LPCWSTR filename )
 {
     static const WCHAR name_fmt[] =
         {'%','u','.','%','u','.','%','u','.','%','u',0};
@@ -1947,7 +1947,36 @@ static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
     return strdupW( filever );
 }
 
-static UINT msi_check_file_install_states( MSIPACKAGE *package )
+static DWORD get_disk_file_size( LPCWSTR filename )
+{
+    HANDLE file;
+    DWORD size;
+
+    TRACE("%s\n", debugstr_w(filename));
+
+    file = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+        return INVALID_FILE_SIZE;
+
+    size = GetFileSize( file, NULL );
+    CloseHandle( file );
+    return size;
+}
+
+static BOOL hash_matches( MSIFILE *file )
+{
+    UINT r;
+    MSIFILEHASHINFO hash;
+
+    hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
+    r = MsiGetFileHashW( file->TargetPath, 0, &hash );
+    if (r != ERROR_SUCCESS)
+        return FALSE;
+
+    return !memcmp( &hash, &file->hash, sizeof(MSIFILEHASHINFO) );
+}
+
+static UINT set_file_install_states( MSIPACKAGE *package )
 {
     LPWSTR file_version;
     MSIFILE *file;
@@ -1955,6 +1984,7 @@ static UINT msi_check_file_install_states( MSIPACKAGE *package )
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         MSICOMPONENT* comp = file->Component;
+        DWORD file_size;
         LPWSTR p;
 
         if (!comp)
@@ -1978,41 +2008,43 @@ static UINT msi_check_file_install_states( MSIPACKAGE *package )
         TRACE("file %s resolves to %s\n",
                debugstr_w(file->File), debugstr_w(file->TargetPath));
 
-        /* don't check files of components that aren't installed */
-        if (comp->Installed == INSTALLSTATE_UNKNOWN ||
-            comp->Installed == INSTALLSTATE_ABSENT)
-        {
-            file->state = msifs_missing;  /* assume files are missing */
-            continue;
-        }
-
         if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
             file->state = msifs_missing;
             comp->Cost += file->FileSize;
             continue;
         }
-
-        if (file->Version &&
-            (file_version = msi_get_disk_file_version( file->TargetPath )))
+        if (file->Version && (file_version = get_disk_file_version( file->TargetPath )))
         {
-            TRACE("new %s old %s\n", debugstr_w(file->Version),
-                  debugstr_w(file_version));
-            /* FIXME: seems like a bad way to compare version numbers */
-            if (lstrcmpiW(file_version, file->Version)<0)
+            TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(file_version));
+
+            if (strcmpiW(file_version, file->Version) < 0)
             {
                 file->state = msifs_overwrite;
                 comp->Cost += file->FileSize;
             }
             else
+            {
+                TRACE("Destination file version equal or greater, not overwriting\n");
                 file->state = msifs_present;
+            }
             msi_free( file_version );
+            continue;
         }
-        else
+        if ((file_size = get_disk_file_size( file->TargetPath )) != file->FileSize)
         {
             file->state = msifs_overwrite;
-            comp->Cost += file->FileSize;
+            comp->Cost += file->FileSize - file_size;
+            continue;
         }
+        if (file->hash.dwFileHashInfoSize && hash_matches( file ))
+        {
+            TRACE("File hashes match, not overwriting\n");
+            file->state = msifs_present;
+            continue;
+        }
+        file->state = msifs_overwrite;
+        comp->Cost += file->FileSize - file_size;
     }
 
     return ERROR_SUCCESS;
@@ -2057,8 +2089,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     ACTION_GetComponentInstallStates(package);
     ACTION_GetFeatureInstallStates(package);
 
-    TRACE("File calculations\n");
-    msi_check_file_install_states( package );
+    TRACE("Calculating file install states\n");
+    set_file_install_states( package );
 
     if (!process_overrides( package, msi_get_property_int( package->db, szlevel, 1 ) ))
     {

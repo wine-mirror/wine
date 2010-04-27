@@ -175,22 +175,6 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
     return gle;
 }
 
-static BOOL check_dest_hash_matches(MSIFILE *file)
-{
-    MSIFILEHASHINFO hash;
-    UINT r;
-
-    if (!file->hash.dwFileHashInfoSize)
-        return FALSE;
-
-    hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
-    r = MsiGetFileHashW(file->TargetPath, 0, &hash);
-    if (r != ERROR_SUCCESS)
-        return FALSE;
-
-    return !memcmp(&hash, &file->hash, sizeof(MSIFILEHASHINFO));
-}
-
 static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
@@ -257,19 +241,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     {
         if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
-
-        if (check_dest_hash_matches(file))
-        {
-            TRACE("File hashes match, not overwriting\n");
-            continue;
-        }
-
-        if (MsiGetFileVersionW(file->TargetPath, NULL, NULL, NULL, NULL) == ERROR_SUCCESS &&
-            msi_compare_file_version(file) >= 0)
-        {
-            TRACE("Destination file version greater, not overwriting\n");
-            continue;
-        }
 
         if (file->Sequence > mi->last_sequence || mi->is_continuous ||
             (file->IsCompressed && !mi->is_extracted))
