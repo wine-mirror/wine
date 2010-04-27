@@ -66,3 +66,10 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
     if (status) *status = EMBED_NOEMBEDDING;
     return E_API_NOTIMPL;
 }
+
+LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)
+{
+    FIXME("(%p %p) stub\n", hDC, enabled);
+    if (enabled) *enabled = FALSE;
+    return E_API_NOTIMPL;
+}

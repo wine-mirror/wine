@@ -5,7 +5,7 @@
 @ stub TTEnableEmbeddingForFacename
 @ stub TTGetEmbeddedFontInfo
 @ stdcall TTGetEmbeddingType(ptr ptr)
-@ stub TTIsEmbeddingEnabled
+@ stdcall TTIsEmbeddingEnabled(ptr ptr)
 @ stub TTIsEmbeddingEnabledForFacename
 @ stdcall TTLoadEmbeddedFont(ptr long ptr long ptr ptr ptr wstr str ptr)
 @ stub TTRunValidationTests
