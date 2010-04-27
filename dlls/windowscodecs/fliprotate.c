@@ -135,9 +135,47 @@ static HRESULT WINAPI FlipRotator_CopyPalette(IWICBitmapFlipRotator *iface,
 static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+    FlipRotator *This = (FlipRotator*)iface;
+    HRESULT hr;
+    UINT y;
+    UINT srcy, srcwidth, srcheight;
+    WICRect rc;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (!This->source) return WINCODEC_ERR_WRONGSTATE;
+
+    if (This->swap_xy || This->flip_x)
+    {
+        /* This requires knowledge of the pixel format. */
+        FIXME("flipping x and rotating are not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    hr = IWICBitmapSource_GetSize(This->source, &srcwidth, &srcheight);
+    if (FAILED(hr)) return hr;
+
+    for (y=prc->Y; y - prc->Y < prc->Height; y++)
+    {
+        if (This->flip_y)
+            srcy = srcheight - 1 - y;
+        else
+            srcy = y;
+
+        rc.X = prc->X;
+        rc.Y = srcy;
+        rc.Width = prc->Width;
+        rc.Height = 1;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, &rc, cbStride, cbStride,
+            pbBuffer);
+
+        if (FAILED(hr)) break;
+
+        pbBuffer += cbStride;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
