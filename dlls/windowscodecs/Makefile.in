@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
-IMPORTS   = uuid ole32 advapi32 kernel32
+IMPORTS   = uuid ole32 shlwapi advapi32 kernel32
 EXTRAINCL = @PNGINCL@
 
 C_SRCS = \
