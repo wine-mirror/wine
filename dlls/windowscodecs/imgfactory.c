@@ -247,8 +247,7 @@ static HRESULT WINAPI ImagingFactory_CreatePalette(IWICImagingFactory *iface,
 static HRESULT WINAPI ImagingFactory_CreateFormatConverter(IWICImagingFactory *iface,
     IWICFormatConverter **ppIFormatConverter)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIFormatConverter);
-    return E_NOTIMPL;
+    return FormatConverter_CreateInstance(NULL, &IID_IWICFormatConverter, (void**)ppIFormatConverter);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateBitmapScaler(IWICImagingFactory *iface,
