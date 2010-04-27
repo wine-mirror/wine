@@ -1035,13 +1035,13 @@
 @ cdecl _wcsrev(wstr)
 @ cdecl _wcsset(wstr long)
 # stub _wcsset_s
-# stub _wcstoi64
-# stub _wcstoi64_l
+@ cdecl _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
+@ cdecl _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
 # stub _wcstol_l
 # stub _wcstombs_l
 # stub _wcstombs_s_l
-# stub _wcstoui64
-# stub _wcstoui64_l
+@ cdecl _wcstoui64(wstr ptr long) MSVCRT__wcstoui64
+@ cdecl _wcstoui64_l(wstr ptr long ptr) MSVCRT__wcstoui64_l
 # stub _wcstoul_l
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 # stub _wcsupr_l

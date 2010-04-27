@@ -1093,13 +1093,13 @@
 @ cdecl _wcsset(wstr long) msvcrt._wcsset
 @ stub _wcsset_s
 @ cdecl _wcstod_l(wstr ptr) msvcrt._wcstod_l
-@ stub _wcstoi64
-@ stub _wcstoi64_l
+@ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
+@ cdecl _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
 @ stub _wcstol_l
 @ stub _wcstombs_l
 @ stub _wcstombs_s_l
-@ stub _wcstoui64
-@ stub _wcstoui64_l
+@ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
+@ cdecl _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
 @ stub _wcstoul_l
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ stub _wcsupr_l

@@ -529,10 +529,10 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
 
         if(!negative && (ret>MSVCRT_I64_MAX/base || ret*base>MSVCRT_I64_MAX-v)) {
             ret = MSVCRT_I64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
         } else if(negative && (ret<MSVCRT_I64_MIN/base || ret*base<MSVCRT_I64_MIN-v)) {
             ret = MSVCRT_I64_MIN;
-            *MSVCRT__errno() = ERANGE;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
     }
@@ -606,7 +606,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 
         if(ret>MSVCRT_UI64_MAX/base || ret*base>MSVCRT_UI64_MAX-v) {
             ret = MSVCRT_UI64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
     }
