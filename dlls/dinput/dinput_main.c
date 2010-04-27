@@ -393,7 +393,7 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, RE
         return DI_OK;
     }
 
-    FIXME( "Unsupported interface !\n" );
+    FIXME( "Unsupported interface: %s\n", debugstr_guid(riid));
     return E_FAIL;
 }
 
