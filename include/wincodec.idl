@@ -98,6 +98,16 @@ typedef enum WICBitmapPaletteType {
     WICBITMAPPALETTETYPE_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICBitmapPaletteType;
 
+typedef enum WICBitmapTransformOptions {
+    WICBitmapTransformRotate0 = 0x00000000,
+    WICBitmapTransformRotate90 = 0x00000001,
+    WICBitmapTransformRotate180 = 0x00000002,
+    WICBitmapTransformRotate270 = 0x00000003,
+    WICBitmapTransformFlipHorizontal = 0x00000008,
+    WICBitmapTransformFlipVertical = 0x00000010,
+    WICBITMAPTRANSFORMOPTIONS_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICBitmapTransformOptions;
+
 typedef enum WICComponentType {
     WICDecoder = 0x00000001,
     WICEncoder = 0x00000002,
@@ -178,7 +188,6 @@ cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
 interface IWICPalette;
-interface IWICBitmapFlipRotator;
 interface IWICColorContext;
 interface IWICColorTransform;
 interface IWICFastMetadataEncoder;
@@ -231,6 +240,17 @@ interface IWICBitmapLock : IUnknown
 
     HRESULT GetPixelFormat(
         [out] WICPixelFormatGUID *pPixelFormat);
+}
+
+[
+    object,
+    uuid(5009834f-2d6a-41ce-9e1b-17c5aff7a782)
+]
+interface IWICBitmapFlipRotator : IWICBitmapSource
+{
+    HRESULT Initialize(
+        [in] IWICBitmapSource *pISource,
+        [in] WICBitmapTransformOptions options);
 }
 
 [
