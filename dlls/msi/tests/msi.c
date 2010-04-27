@@ -247,10 +247,10 @@ static void test_null(void)
     r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", NULL, 0);
     ok( r == ERROR_INVALID_PARAMETER, "wrong error\n");
 
-    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", "foo", 0);
+    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000001}", "foo", 0);
     ok( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
 
-    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", "foo", INSTALLSTATE_DEFAULT);
+    r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000002}", "foo", INSTALLSTATE_DEFAULT);
     ok( r == ERROR_UNKNOWN_PRODUCT, "wrong error %d\n", r);
 
     /* make sure empty string to MsiGetProductInfo is not a handle to default registry value, saving and restoring the
