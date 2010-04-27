@@ -4146,106 +4146,103 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
         return;
     }
 
+    if (!(surface->Flags & SFLAG_LOCATIONS))
+    {
+        FIXME("No up to date depth stencil location.\n");
+        surface->Flags |= location;
+        return;
+    }
+
     if (location == SFLAG_DS_OFFSCREEN)
     {
-        if (surface->Flags & SFLAG_DS_ONSCREEN)
+        GLint old_binding = 0;
+        GLenum bind_target;
+
+        TRACE("Copying onscreen depth buffer to depth texture.\n");
+
+        ENTER_GL();
+
+        if (!device->depth_blt_texture)
         {
-            GLint old_binding = 0;
-            GLenum bind_target;
+            glGenTextures(1, &device->depth_blt_texture);
+        }
 
-            TRACE("Copying onscreen depth buffer to depth texture.\n");
-
-            ENTER_GL();
-
-            if (!device->depth_blt_texture) {
-                glGenTextures(1, &device->depth_blt_texture);
-            }
-
-            /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
-             * directly on the FBO texture. That's because we need to flip. */
-            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-            if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
-            {
-                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
-                bind_target = GL_TEXTURE_RECTANGLE_ARB;
-            } else {
-                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-                bind_target = GL_TEXTURE_2D;
-            }
-            glBindTexture(bind_target, device->depth_blt_texture);
-            glCopyTexImage2D(bind_target, surface->texture_level, surface->resource.format_desc->glInternal,
-                    0, 0, surface->currentDesc.Width, surface->currentDesc.Height, 0);
-            glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(bind_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-            glBindTexture(bind_target, old_binding);
-
-            /* Setup the destination */
-            if (!device->depth_blt_rb) {
-                gl_info->fbo_ops.glGenRenderbuffers(1, &device->depth_blt_rb);
-                checkGLcall("glGenRenderbuffersEXT");
-            }
-            if (device->depth_blt_rb_w != surface->currentDesc.Width
-                    || device->depth_blt_rb_h != surface->currentDesc.Height)
-            {
-                gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, device->depth_blt_rb);
-                checkGLcall("glBindRenderbufferEXT");
-                gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8,
-                        surface->currentDesc.Width, surface->currentDesc.Height);
-                checkGLcall("glRenderbufferStorageEXT");
-                device->depth_blt_rb_w = surface->currentDesc.Width;
-                device->depth_blt_rb_h = surface->currentDesc.Height;
-            }
-
-            context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                    GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, device->depth_blt_rb);
-            checkGLcall("glFramebufferRenderbufferEXT");
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, surface, FALSE);
-
-            /* Do the actual blit */
-            surface_depth_blt(surface, gl_info, device->depth_blt_texture,
-                    surface->currentDesc.Width, surface->currentDesc.Height, bind_target);
-            checkGLcall("depth_blt");
-
-            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
-            else context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-
-            LEAVE_GL();
-
-            if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+        /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
+         * directly on the FBO texture. That's because we need to flip. */
+        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
+        {
+            glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+            bind_target = GL_TEXTURE_RECTANGLE_ARB;
         }
         else
         {
-            FIXME("No up to date depth stencil location\n");
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+            bind_target = GL_TEXTURE_2D;
         }
+        glBindTexture(bind_target, device->depth_blt_texture);
+        glCopyTexImage2D(bind_target, surface->texture_level, surface->resource.format_desc->glInternal,
+                0, 0, surface->currentDesc.Width, surface->currentDesc.Height, 0);
+        glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(bind_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+        glBindTexture(bind_target, old_binding);
+
+        /* Setup the destination */
+        if (!device->depth_blt_rb)
+        {
+            gl_info->fbo_ops.glGenRenderbuffers(1, &device->depth_blt_rb);
+            checkGLcall("glGenRenderbuffersEXT");
+        }
+        if (device->depth_blt_rb_w != surface->currentDesc.Width
+                || device->depth_blt_rb_h != surface->currentDesc.Height)
+        {
+            gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, device->depth_blt_rb);
+            checkGLcall("glBindRenderbufferEXT");
+            gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8,
+                    surface->currentDesc.Width, surface->currentDesc.Height);
+            checkGLcall("glRenderbufferStorageEXT");
+            device->depth_blt_rb_w = surface->currentDesc.Width;
+            device->depth_blt_rb_h = surface->currentDesc.Height;
+        }
+
+        context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
+        gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, device->depth_blt_rb);
+        checkGLcall("glFramebufferRenderbufferEXT");
+        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, surface, FALSE);
+
+        /* Do the actual blit */
+        surface_depth_blt(surface, gl_info, device->depth_blt_texture,
+                surface->currentDesc.Width, surface->currentDesc.Height, bind_target);
+        checkGLcall("depth_blt");
+
+        if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
+        else context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+
+        LEAVE_GL();
+
+        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
     }
     else if (location == SFLAG_DS_ONSCREEN)
     {
-        if (surface->Flags & SFLAG_DS_OFFSCREEN)
-        {
-            TRACE("Copying depth texture to onscreen depth buffer.\n");
+        TRACE("Copying depth texture to onscreen depth buffer.\n");
 
-            ENTER_GL();
+        ENTER_GL();
 
-            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-            surface_depth_blt(surface, gl_info, surface->texture_name,
-                    surface->currentDesc.Width, surface->currentDesc.Height, surface->texture_target);
-            checkGLcall("depth_blt");
+        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        surface_depth_blt(surface, gl_info, surface->texture_name,
+                surface->currentDesc.Width, surface->currentDesc.Height, surface->texture_target);
+        checkGLcall("depth_blt");
 
-            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
+        if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
 
-            LEAVE_GL();
+        LEAVE_GL();
 
-            if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
-        }
-        else
-        {
-            FIXME("No up to date depth stencil location\n");
-        }
+        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
     }
     else
     {
