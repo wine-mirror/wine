@@ -1197,6 +1197,7 @@ static BOOL OLEMenu_InstallHooks( DWORD tid )
 
   pHookItem->tid = tid;
   pHookItem->hHeap = GetProcessHeap();
+  pHookItem->CallWndProc_hHook = NULL;
 
   /* Install a thread scope message hook for WH_GETMESSAGE */
   pHookItem->GetMsg_hHook = SetWindowsHookExW( WH_GETMESSAGE, OLEMenu_GetMsgProc,
