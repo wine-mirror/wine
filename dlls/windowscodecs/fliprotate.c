@@ -36,6 +36,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct FlipRotator {
     const IWICBitmapFlipRotatorVtbl *lpVtbl;
     LONG ref;
+    IWICBitmapSource *source;
+    int flip_x;
+    int flip_y;
+    int swap_xy;
     CRITICAL_SECTION lock; /* must be held when initialized */
 } FlipRotator;
 
@@ -84,6 +88,7 @@ static ULONG WINAPI FlipRotator_Release(IWICBitmapFlipRotator *iface)
     {
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
+        if (This->source) IWICBitmapSource_Release(This->source);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -132,9 +137,44 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
 static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
     IWICBitmapSource *pISource, WICBitmapTransformOptions options)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pISource, options);
+    FlipRotator *This = (FlipRotator*)iface;
+    HRESULT hr=S_OK;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%u)\n", iface, pISource, options);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->source)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    if (options&WICBitmapTransformRotate90)
+    {
+        This->swap_xy = 1;
+        This->flip_x = !This->flip_x;
+    }
+
+    if (options&WICBitmapTransformRotate180)
+    {
+        This->flip_x = !This->flip_x;
+        This->flip_y = !This->flip_y;
+    }
+
+    if (options&WICBitmapTransformFlipHorizontal)
+        This->flip_x = !This->flip_x;
+
+    if (options&WICBitmapTransformFlipVertical)
+        This->flip_y = !This->flip_y;
+
+    IWICBitmapSource_AddRef(pISource);
+    This->source = pISource;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IWICBitmapFlipRotatorVtbl FlipRotator_Vtbl = {
@@ -158,6 +198,10 @@ HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator)
 
     This->lpVtbl = &FlipRotator_Vtbl;
     This->ref = 1;
+    This->source = NULL;
+    This->flip_x = 0;
+    This->flip_y = 0;
+    This->swap_xy = 0;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FlipRotator.lock");
 
