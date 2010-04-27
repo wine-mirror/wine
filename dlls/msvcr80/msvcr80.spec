@@ -1110,7 +1110,7 @@
 @ cdecl _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
 @ stub _wcstol_l
 @ stub _wcstombs_l
-@ stub _wcstombs_s_l
+@ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
 @ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
 @ stub _wcstoul_l
@@ -1456,7 +1456,7 @@
 @ stub wcstok_s
 @ cdecl wcstol(wstr ptr long) msvcrt.wcstol
 @ cdecl wcstombs(ptr ptr long) msvcrt.wcstombs
-@ stub wcstombs_s
+@ cdecl wcstombs_s(ptr ptr long wstr long) msvcrt.wcstombs_s
 @ cdecl wcstoul(wstr ptr long) msvcrt.wcstoul
 @ stub wcsxfrm
 @ stub wctob
