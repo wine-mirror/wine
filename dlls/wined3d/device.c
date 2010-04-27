@@ -6234,7 +6234,7 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
 
     /* Put all surfaces into sysmem - the drawable might disappear if the backbuffer was rendered
      * to a FBO */
-    if(!surface_init_sysmem((IWineD3DSurface *) surface))
+    if (!surface_init_sysmem(surface))
     {
         return E_OUTOFMEMORY;
     }

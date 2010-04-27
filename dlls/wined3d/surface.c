@@ -1141,27 +1141,26 @@ static void surface_remove_pbo(IWineD3DSurfaceImpl *This, const struct wined3d_g
     This->Flags &= ~SFLAG_PBO;
 }
 
-BOOL surface_init_sysmem(IWineD3DSurface *iface)
+BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-
-    if(!This->resource.allocatedMemory)
+    if (!surface->resource.allocatedMemory)
     {
-        This->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + RESOURCE_ALIGNMENT);
-        if(!This->resource.heapMemory)
+        surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                surface->resource.size + RESOURCE_ALIGNMENT);
+        if (!surface->resource.heapMemory)
         {
             ERR("Out of memory\n");
             return FALSE;
         }
-        This->resource.allocatedMemory =
-            (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+        surface->resource.allocatedMemory =
+            (BYTE *)(((ULONG_PTR)surface->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
     }
     else
     {
-        memset(This->resource.allocatedMemory, 0, This->resource.size);
+        memset(surface->resource.allocatedMemory, 0, surface->resource.size);
     }
 
-    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, TRUE);
     return TRUE;
 }
 
@@ -1186,8 +1185,10 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
          * or the depth stencil into an FBO the texture or render buffer will be removed
          * and all flags get lost
          */
-        surface_init_sysmem(iface);
-    } else {
+        surface_init_sysmem(This);
+    }
+    else
+    {
         /* Load the surface into system memory */
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
