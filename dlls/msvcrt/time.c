@@ -123,6 +123,64 @@ MSVCRT___time32_t CDECL MSVCRT_mktime(struct MSVCRT_tm *mstm)
 }
 #endif
 
+/**********************************************************************
+ *		_mkgmtime64 (MSVCRT.@)
+ *
+ * time->tm_isdst value is ignored
+ */
+MSVCRT___time64_t CDECL MSVCRT__mkgmtime64(struct MSVCRT_tm *time)
+{
+    SYSTEMTIME st;
+    FILETIME ft;
+    MSVCRT___time64_t ret;
+    int i;
+
+    st.wMilliseconds = 0;
+    st.wSecond = time->tm_sec;
+    st.wMinute = time->tm_min;
+    st.wHour = time->tm_hour;
+    st.wDay = time->tm_mday;
+    st.wMonth = time->tm_mon+1;
+    st.wYear = time->tm_year+1900;
+
+    if(!SystemTimeToFileTime(&st, &ft))
+        return -1;
+
+    FileTimeToSystemTime(&ft, &st);
+    time->tm_wday = st.wDayOfWeek;
+
+    for(i=time->tm_yday=0; i<st.wMonth-1; i++)
+        time->tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+    time->tm_yday += st.wDay-1;
+
+    ret = ((MSVCRT___time64_t)ft.dwHighDateTime<<32)+ft.dwLowDateTime;
+    ret = (ret-TICKS_1601_TO_1970)/TICKSPERSEC;
+    return ret;
+}
+
+/**********************************************************************
+ *		_mkgmtime32 (MSVCRT.@)
+ */
+MSVCRT___time32_t CDECL MSVCRT__mkgmtime32(struct MSVCRT_tm *time)
+{
+    return MSVCRT__mkgmtime64(time);
+}
+
+/**********************************************************************
+ *		_mkgmtime (MSVCRT.@)
+ */
+#ifdef _WIN64
+MSVCRT___time64_t CDECL MSVCRT__mkgmtime(struct MSVCRT_tm *time)
+{
+    return MSVCRT__mkgmtime64(time);
+}
+#else
+MSVCRT___time32_t CDECL MSVCRT__mkgmtime(struct MSVCRT_tm *time)
+{
+    return MSVCRT__mkgmtime32(time);
+}
+#endif
+
 /*********************************************************************
  *      _localtime64 (MSVCRT.@)
  */

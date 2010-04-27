@@ -800,8 +800,8 @@
 @ cdecl _memicmp(str str long) msvcrt._memicmp
 @ stub _memicmp_l
 @ cdecl _mkdir(str) msvcrt._mkdir
-@ stub _mkgmtime32
-@ stub _mkgmtime64
+@ cdecl _mkgmtime32(ptr) msvcrt._mkgmtime32
+@ cdecl _mkgmtime64(ptr) msvcrt._mkgmtime64
 @ cdecl _mktemp(str) msvcrt._mktemp
 @ stub _mktemp_s
 @ cdecl _mktime32(ptr) msvcrt._mktime32

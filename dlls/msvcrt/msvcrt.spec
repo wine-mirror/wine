@@ -745,9 +745,9 @@
 @ cdecl _memicmp(str str long) ntdll._memicmp
 # stub _memicmp_l
 @ cdecl _mkdir(str) MSVCRT__mkdir
-# stub _mkgmtime
-# stub _mkgmtime32
-# stub _mkgmtime64
+@ cdecl _mkgmtime(ptr) MSVCRT__mkgmtime
+@ cdecl _mkgmtime32(ptr) MSVCRT__mkgmtime32
+@ cdecl _mkgmtime64(ptr) MSVCRT__mkgmtime64
 @ cdecl _mktemp(str)
 # stub _mktemp_s
 @ cdecl _mktime32(ptr) MSVCRT__mktime32
