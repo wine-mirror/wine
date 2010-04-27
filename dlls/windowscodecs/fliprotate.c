@@ -98,9 +98,15 @@ static ULONG WINAPI FlipRotator_Release(IWICBitmapFlipRotator *iface)
 static HRESULT WINAPI FlipRotator_GetSize(IWICBitmapFlipRotator *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
+    FlipRotator *This = (FlipRotator*)iface;
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
-    return E_NOTIMPL;
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+    else if (This->swap_xy)
+        return IWICBitmapSource_GetSize(This->source, puiHeight, puiWidth);
+    else
+        return IWICBitmapSource_GetSize(This->source, puiWidth, puiHeight);
 }
 
 static HRESULT WINAPI FlipRotator_GetPixelFormat(IWICBitmapFlipRotator *iface,
