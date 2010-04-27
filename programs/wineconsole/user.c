@@ -39,7 +39,7 @@ const COLORREF WCUSER_ColorMap[16] =
     RGB(0xFF, 0x00, 0x00), RGB(0xFF, 0x00, 0xFF), RGB(0xFF, 0xFF, 0x00), RGB(0xFF, 0xFF, 0xFF),
 };
 
-static BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONT* font);
+static BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONTW* font);
 
 /******************************************************************
  *		WCUSER_FillMemDC
@@ -80,8 +80,8 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	    {
 		line[k - i] = cell[k].Char.UnicodeChar;
 	    }
-	    TextOut(PRIVATE(data)->hMemDC, i * data->curcfg.cell_width, j * data->curcfg.cell_height,
-		    line, k - i);
+            TextOutW(PRIVATE(data)->hMemDC, i * data->curcfg.cell_width,
+                     j * data->curcfg.cell_height, line, k - i);
             if (PRIVATE(data)->ext_leading && 
                 (hbr = CreateSolidBrush(WCUSER_ColorMap[(attr>>4)&0x0F])))
             {
@@ -229,7 +229,7 @@ static void	WCUSER_ComputePositions(struct inner_data* data)
 
     if (IsRectEmpty(&r)) return;
 
-    AdjustWindowRect(&r, GetWindowLong(data->hWnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&r, GetWindowLongW(data->hWnd, GWL_STYLE), FALSE);
 
     dx = dy = 0;
     if (data->curcfg.sb_width > data->curcfg.win_width)
@@ -274,10 +274,10 @@ static void	WCUSER_SetTitle(const struct inner_data* data)
     WCHAR	buffer[256];
 
     if (WINECON_GetConsoleTitle(data->hConIn, buffer, sizeof(buffer)))
-	SetWindowText(data->hWnd, buffer);
+        SetWindowTextW(data->hWnd, buffer);
 }
 
-void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft)
+void WCUSER_DumpLogFont(const char* pfx, const LOGFONTW* lf, DWORD ft)
 {
     WINE_TRACE_(wc_font)("%s %s%s%s%s\n"
                          "\tlf.lfHeight=%d lf.lfWidth=%d lf.lfEscapement=%d lf.lfOrientation=%d\n"
@@ -295,7 +295,7 @@ void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft)
                          wine_dbgstr_w(lf->lfFaceName));
 }
 
-void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
+void WCUSER_DumpTextMetric(const TEXTMETRICW* tm, DWORD ft)
 {
     WINE_TRACE_(wc_font)("%s%s%s%s\n"
                          "\ttmHeight=%d tmAscent=%d tmDescent=%d tmInternalLeading=%d tmExternalLeading=%d\n"
@@ -318,12 +318,12 @@ void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
  *
  *
  */
-static BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf)
+static BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONTW* lf)
 {
     return lf->lfHeight == config->cell_height &&
         lf->lfWeight == config->font_weight &&
         !lf->lfItalic && !lf->lfUnderline && !lf->lfStrikeOut &&
-        !lstrcmp(lf->lfFaceName, config->face_name);
+        !lstrcmpW(lf->lfFaceName, config->face_name);
 }
 
 struct font_chooser
@@ -337,7 +337,7 @@ struct font_chooser
  *
  * Returns true if the font described in tm is usable as a font for the renderer
  */
-BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* tm, DWORD fontType)
+BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW* tm, DWORD fontType)
 {
     BOOL        ret = TRUE;
 
@@ -353,7 +353,7 @@ BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* 
  *
  * Returns true if the font family described in lf is usable as a font for the renderer
  */
-BOOL	WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf)
+BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf)
 {
     return (lf->lfPitchAndFamily & 3) == FIXED_PITCH &&
         /* (lf->lfPitchAndFamily & 0xF0) == FF_MODERN && */
@@ -366,15 +366,15 @@ BOOL	WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf)
  *
  * Helper functions to get a decent font for the renderer
  */
-static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* tm,
-					  DWORD FontType, LPARAM lParam)
+static int CALLBACK get_first_font_enum_2(const LOGFONTW* lf, const TEXTMETRICW* tm,
+                                          DWORD FontType, LPARAM lParam)
 {
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
     if (WCUSER_ValidateFontMetric(fc->data, tm, FontType))
     {
-        LOGFONT mlf = *lf;
+        LOGFONTW mlf = *lf;
 
         /* Use the default sizes for the font (this is needed, especially for
          * TrueType fonts, so that we get a decent size, not the max size)
@@ -404,16 +404,16 @@ static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* t
     return 1;
 }
 
-static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
-					DWORD FontType, LPARAM lParam)
+static int CALLBACK get_first_font_enum(const LOGFONTW* lf, const TEXTMETRICW* tm,
+                                        DWORD FontType, LPARAM lParam)
 {
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpLogFont("InitFamily: ", lf, FontType);
     if (WCUSER_ValidateFont(fc->data, lf))
     {
-	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName,
-                         get_first_font_enum_2, lParam);
+        EnumFontFamiliesW(PRIVATE(fc->data)->hMemDC, lf->lfFaceName,
+                          get_first_font_enum_2, lParam);
 	return !fc->done; /* we just need the first matching one... */
     }
     return 1;
@@ -425,18 +425,18 @@ static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
  * get the relevant information from the font described in lf and store them
  * in config
  */
-HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf, LONG* el)
+HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONTW* lf, LONG* el)
 {
-    TEXTMETRIC  tm;
+    TEXTMETRICW tm;
     HDC         hDC;
     HFONT       hFont, hOldFont;
     int         w, i, buf[256];
 
     if (!(hDC = GetDC(hWnd))) return NULL;
-    if (!(hFont = CreateFontIndirect(lf))) goto err1;
+    if (!(hFont = CreateFontIndirectW(lf))) goto err1;
 
     hOldFont = SelectObject(hDC, hFont);
-    GetTextMetrics(hDC, &tm);
+    GetTextMetricsW(hDC, &tm);
 
     /* FIXME:
      * the current freetype engine (at least 2.0.x with x <= 8) and its implementation
@@ -451,13 +451,13 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf, 
      * when this gets fixed, the code should be using tm.tmAveCharWidth
      * or tm.tmMaxCharWidth as the cell width.
      */
-    GetCharWidth32(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
+    GetCharWidth32W(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
     for (i = tm.tmFirstChar + 1; i <= tm.tmLastChar; i += sizeof(buf) / sizeof(buf[0]))
     {
         int j, k;
 
         k = min(tm.tmLastChar - i, sizeof(buf) / sizeof(buf[0]) - 1);
-        GetCharWidth32(hDC, i, i + k, buf);
+        GetCharWidth32W(hDC, i, i + k, buf);
         for (j = 0; j <= k; j++)
         {
             if (buf[j] != w)
@@ -475,7 +475,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf, 
     config->cell_width  = w;
     config->cell_height = tm.tmHeight + tm.tmExternalLeading;
     config->font_weight = tm.tmWeight;
-    lstrcpy(config->face_name, lf->lfFaceName);
+    lstrcpyW(config->face_name, lf->lfFaceName);
     if (el) *el = tm.tmExternalLeading;
 
     return hFont;
@@ -493,7 +493,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf, 
  *
  *
  */
-void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT weight)
+void WCUSER_FillLogFont(LOGFONTW* lf, const WCHAR* name, UINT height, UINT weight)
 {
     lf->lfHeight        = height;
     lf->lfWidth         = 0;
@@ -508,7 +508,7 @@ void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT wei
     lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lf->lfQuality       = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-    lstrcpy(lf->lfFaceName, name);
+    lstrcpyW(lf->lfFaceName, name);
 }
 
 /******************************************************************
@@ -516,7 +516,7 @@ void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT wei
  *
  * sets logfont as the new font for the console
  */
-BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
+BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONTW* logfont)
 {
     HFONT       hFont;
     LONG        el;
@@ -548,7 +548,7 @@ BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
 static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
                                   unsigned height, unsigned weight)
 {
-    LOGFONT             lf;
+    LOGFONTW            lf;
     struct font_chooser fc;
 
     WINE_TRACE_(wc_font)("=> %s h=%u w=%u\n",
@@ -568,7 +568,7 @@ static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
     WINE_WARN("Couldn't match the font from registry... trying to find one\n");
     fc.data = data;
     fc.done = 0;
-    EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
+    EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
     if (!fc.done) WINECON_Fatal("Couldn't find a decent font, aborting\n");
 }
 
@@ -690,8 +690,8 @@ static void	WCUSER_CopySelectionToClipboard(const struct inner_data* data)
 	for (y = 0; y < h; y++, c.Y++)
 	{
 	    LPWSTR end;
-	    ReadConsoleOutputCharacter(data->hConOut, p, w - 1, c, NULL);
-	    
+            ReadConsoleOutputCharacterW(data->hConOut, p, w - 1, c, NULL);
+
 	    /* strip spaces from the end of the line */
 	    end = p + w - 1;
 	    while (end > p && *(end - 1) == ' ')
@@ -733,15 +733,15 @@ static void	WCUSER_PasteFromClipboard(struct inner_data* data)
 	for (i = 0; i < len; i++)
 	{
 	    /* FIXME: the modifying keys are not generated (shift, ctrl...) */
-	    sh = VkKeyScan(ptr[i]);
+            sh = VkKeyScanW(ptr[i]);
 	    ir[0].Event.KeyEvent.wVirtualKeyCode = LOBYTE(sh);
-	    ir[0].Event.KeyEvent.wVirtualScanCode = MapVirtualKey(LOBYTE(sh), 0);
+            ir[0].Event.KeyEvent.wVirtualScanCode = MapVirtualKeyW(LOBYTE(sh), 0);
 	    ir[0].Event.KeyEvent.uChar.UnicodeChar = ptr[i];
 
 	    ir[1] = ir[0];
 	    ir[1].Event.KeyEvent.bKeyDown = FALSE;
 
-	    WriteConsoleInput(data->hConIn, ir, 2, &n);
+            WriteConsoleInputW(data->hConIn, ir, 2, &n);
 	}
 	GlobalUnlock(h);
     }
@@ -818,9 +818,9 @@ static void WCUSER_Scroll(struct inner_data* data, int pos, BOOL horz)
  */
 static BOOL WCUSER_FillMenu(HMENU hMenu, BOOL sep)
 {
-    HMENU		hSubMenu;
-    HINSTANCE		hInstance = GetModuleHandle(NULL);
-    WCHAR		buff[256];
+    HMENU     hSubMenu;
+    HINSTANCE hInstance = GetModuleHandleW(NULL);
+    WCHAR     buff[256];
 
     if (!hMenu) return FALSE;
 
@@ -828,26 +828,26 @@ static BOOL WCUSER_FillMenu(HMENU hMenu, BOOL sep)
     hSubMenu = CreateMenu();
     if (!hSubMenu) return FALSE;
 
-    LoadString(hInstance, IDS_MARK, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_MARK, buff);
-    LoadString(hInstance, IDS_COPY, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_COPY, buff);
-    LoadString(hInstance, IDS_PASTE, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PASTE, buff);
-    LoadString(hInstance, IDS_SELECTALL, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SELECTALL, buff);
-    LoadString(hInstance, IDS_SCROLL, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SCROLL, buff);
-    LoadString(hInstance, IDS_SEARCH, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SEARCH, buff);
+    LoadStringW(hInstance, IDS_MARK, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_MARK, buff);
+    LoadStringW(hInstance, IDS_COPY, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_COPY, buff);
+    LoadStringW(hInstance, IDS_PASTE, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PASTE, buff);
+    LoadStringW(hInstance, IDS_SELECTALL, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SELECTALL, buff);
+    LoadStringW(hInstance, IDS_SCROLL, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SCROLL, buff);
+    LoadStringW(hInstance, IDS_SEARCH, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SEARCH, buff);
 
-    if (sep) InsertMenu(hMenu, -1, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
-    LoadString(hInstance, IDS_EDIT, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING|MF_POPUP, (UINT_PTR)hSubMenu, buff);
-    LoadString(hInstance, IDS_DEFAULT, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_DEFAULT, buff);
-    LoadString(hInstance, IDS_PROPERTIES, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTIES, buff);
+    if (sep) InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
+    LoadStringW(hInstance, IDS_EDIT, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING|MF_POPUP, (UINT_PTR)hSubMenu, buff);
+    LoadStringW(hInstance, IDS_DEFAULT, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_DEFAULT, buff);
+    LoadStringW(hInstance, IDS_PROPERTIES, buff, sizeof(buff) / sizeof(buff[0]));
+    InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTIES, buff);
 
     return TRUE;
 }
@@ -875,13 +875,13 @@ static void	WCUSER_SetMenuDetails(const struct inner_data* data, HMENU hMenu)
  *
  * Creates the window for the rendering
  */
-static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
+static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCTW lpcs)
 {
     struct inner_data*	data;
     HMENU		hSysMenu;
 
     data = lpcs->lpCreateParams;
-    SetWindowLongPtr(hWnd, 0L, (DWORD_PTR)data);
+    SetWindowLongPtrW(hWnd, 0, (DWORD_PTR)data);
     data->hWnd = hWnd;
 
     hSysMenu = GetSystemMenu(hWnd, FALSE);
@@ -1052,7 +1052,7 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
     ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME: HACKY... and buggy because it should be a stack, not a single value */
     if (!down) last = 0;
 
-    WriteConsoleInput(data->hConIn, &ir, 1, &n);
+    WriteConsoleInputW(data->hConIn, &ir, 1, &n);
 }
 
 /******************************************************************
@@ -1083,7 +1083,7 @@ static void    WCUSER_GenerateMouseInputRecord(struct inner_data* data, COORD c,
     ir.Event.MouseEvent.dwControlKeyState = WCUSER_GetCtrlKeyState(keyState);
     ir.Event.MouseEvent.dwEventFlags = event;
 
-    WriteConsoleInput(data->hConIn, &ir, 1, &n);
+    WriteConsoleInputW(data->hConIn, &ir, 1, &n);
 }
 
 /******************************************************************
@@ -1093,12 +1093,12 @@ static void    WCUSER_GenerateMouseInputRecord(struct inner_data* data, COORD c,
  */
 static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    struct inner_data*	data = (struct inner_data*)GetWindowLongPtr(hWnd, 0);
+    struct inner_data* data = (struct inner_data*)GetWindowLongPtrW(hWnd, 0);
 
     switch (uMsg)
     {
     case WM_CREATE:
-        return WCUSER_Create(hWnd, (LPCREATESTRUCT)lParam);
+        return WCUSER_Create(hWnd, (LPCREATESTRUCTW)lParam);
     case WM_DESTROY:
 	data->hWnd = 0;
 	PostQuitMessage(0);
@@ -1292,7 +1292,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    WCUSER_GetProperties(data, TRUE);
 	    break;
 	default:
-	    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 	}
 	break;
     case WM_COMMAND:
@@ -1333,15 +1333,15 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    WINE_FIXME("Unhandled yet command: %lx\n", wParam);
 	    break;
 	default:
-	    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 	}
 	break;
     case WM_INITMENUPOPUP:
-	if (!HIWORD(lParam))	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+        if (!HIWORD(lParam)) return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 	WCUSER_SetMenuDetails(data, GetSystemMenu(data->hWnd, FALSE));
 	break;
     default:
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -1381,14 +1381,14 @@ static int WCUSER_MainLoop(struct inner_data* data)
                 PostQuitMessage(0);
 	    break;
 	case WAIT_OBJECT_0+1:
-	    /* need to use PeekMessage loop instead of simple GetMessage:
+            /* need to use PeekMessageW loop instead of simple GetMessage:
 	     * multiple messages might have arrived in between,
 	     * so GetMessage would lead to delayed processing */
-	    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+            while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
 	    {
                 if (msg.message == WM_QUIT) return 0;
                 WINE_TRACE("dispatching msg %04x\n", msg.message);
-                DispatchMessage(&msg);
+                DispatchMessageW(&msg);
 	    }
 	    break;
 	default:
@@ -1409,9 +1409,9 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
 {
     static const WCHAR wClassName[] = {'W','i','n','e','C','o','n','s','o','l','e','C','l','a','s','s',0};
 
-    WNDCLASS		wndclass;
-    CHARSETINFO         ci;
-    
+    WNDCLASSW   wndclass;
+    CHARSETINFO ci;
+
     if (!TranslateCharsetInfo((DWORD *)(INT_PTR)GetACP(), &ci, TCI_SRCCODEPAGE))
         return init_failed;
     g_uiDefaultCharset = ci.ciCharset;
@@ -1435,18 +1435,18 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     wndclass.lpfnWndProc   = WCUSER_Proc;
     wndclass.cbClsExtra    = 0;
     wndclass.cbWndExtra    = sizeof(DWORD_PTR);
-    wndclass.hInstance     = GetModuleHandle(NULL);
-    wndclass.hIcon         = LoadIcon(0, IDI_WINLOGO);
-    wndclass.hCursor       = LoadCursor(0, IDC_ARROW);
+    wndclass.hInstance     = GetModuleHandleW(NULL);
+    wndclass.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
+    wndclass.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wndclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     wndclass.lpszMenuName  = NULL;
     wndclass.lpszClassName = wClassName;
 
-    RegisterClass(&wndclass);
+    RegisterClassW(&wndclass);
 
-    data->hWnd = CreateWindow(wndclass.lpszClassName, NULL,
-		 WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
-		 CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
+    data->hWnd = CreateWindowW(wndclass.lpszClassName, NULL,
+                               WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
+                               CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
     if (!data->hWnd) return init_not_supported;
 
     return init_success;
