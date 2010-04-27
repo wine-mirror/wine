@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = control.exe
-APPMODE   = -mwindows
+APPMODE   = -mwindows -municode
 IMPORTS   = shell32 user32 kernel32
 
 C_SRCS = control.c
