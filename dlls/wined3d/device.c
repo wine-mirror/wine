@@ -4354,7 +4354,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, const WINED3DRECT *clear_rect)
+static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, const RECT *clear_rect)
 {
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top
@@ -4363,9 +4363,9 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, co
         return FALSE;
 
     /* partial clear rect */
-    if (clear_rect && (clear_rect->x1 > 0 || clear_rect->y1 > 0
-            || clear_rect->x2 < target->currentDesc.Width
-            || clear_rect->y2 < target->currentDesc.Height))
+    if (clear_rect && (clear_rect->left > 0 || clear_rect->top > 0
+            || clear_rect->right < target->currentDesc.Width
+            || clear_rect->bottom < target->currentDesc.Height))
         return FALSE;
 
     return TRUE;
@@ -4375,7 +4375,7 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, co
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
 {
-    const WINED3DRECT *clear_rect = (Count > 0 && pRects) ? pRects : NULL;
+    const RECT *clear_rect = (Count > 0 && pRects) ? (const RECT *)pRects : NULL;
     IWineD3DSurfaceImpl *depth_stencil = This->depth_stencil;
     GLbitfield     glMask = 0;
     unsigned int   i;
@@ -4506,10 +4506,10 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         for (i = 0; i < Count; ++i)
         {
             /* Note gl uses lower left, width/height */
-            IntersectRect(&current_rect, &draw_rect, (const RECT *)&clear_rect[i]);
+            IntersectRect(&current_rect, &draw_rect, &clear_rect[i]);
 
             TRACE("clear_rect[%u] %s, current_rect %s.\n", i,
-                    wine_dbgstr_rect((const RECT *)&clear_rect[i]),
+                    wine_dbgstr_rect(&clear_rect[i]),
                     wine_dbgstr_rect(&current_rect));
 
             /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
