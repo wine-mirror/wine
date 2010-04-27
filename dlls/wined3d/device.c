@@ -563,6 +563,19 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
     device->contexts = new_array;
 }
 
+static void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
+{
+    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
+    WINED3DVIEWPORT *vp = &stateblock->viewport;
+
+    SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
+
+    if (stateblock->renderState[WINED3DRS_SCISSORTESTENABLE])
+    {
+        IntersectRect(rect, rect, &stateblock->scissorRect);
+    }
+}
+
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
         struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
 {
@@ -4341,19 +4354,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const WINED3DVIEWPORT *viewport,
-        const RECT *scissor_rect, const WINED3DRECT *clear_rect)
+static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, const WINED3DRECT *clear_rect)
 {
-    /* partial viewport*/
-    if (viewport->X != 0 || viewport->Y != 0
-            || viewport->Width < target->currentDesc.Width
-            || viewport->Height < target->currentDesc.Height)
-        return FALSE;
-
-    /* partial scissor rect */
-    if (scissor_rect && (scissor_rect->left > 0 || scissor_rect->top > 0
-            || scissor_rect->right < target->currentDesc.Width
-            || scissor_rect->bottom < target->currentDesc.Height))
+    /* partial draw rect */
+    if (draw_rect->left || draw_rect->top
+            || draw_rect->right < target->currentDesc.Width
+            || draw_rect->bottom < target->currentDesc.Height)
         return FALSE;
 
     /* partial clear rect */
@@ -4369,17 +4375,15 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const WINED3DVIEWPORT *vi
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
 {
-    IWineD3DStateBlockImpl *stateblock = This->stateBlock;
-    const RECT *scissor_rect = stateblock->renderState[WINED3DRS_SCISSORTESTENABLE] ? &stateblock->scissorRect : NULL;
     const WINED3DRECT *clear_rect = (Count > 0 && pRects) ? pRects : NULL;
     IWineD3DSurfaceImpl *depth_stencil = This->depth_stencil;
-    const WINED3DVIEWPORT *vp = &stateblock->viewport;
     GLbitfield     glMask = 0;
     unsigned int   i;
-    WINED3DRECT curRect;
-    RECT vp_rect;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
+    RECT draw_rect;
+
+    device_get_draw_rect(This, &draw_rect);
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -4392,7 +4396,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
      */
     if (Flags & WINED3DCLEAR_TARGET && !(target->Flags & SFLAG_INDRAWABLE))
     {
-        if (!is_full_clear(target, vp, scissor_rect, clear_rect))
+        if (!is_full_clear(target, &draw_rect, clear_rect))
             IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
     }
 
@@ -4453,7 +4457,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != This->onscreen_depth_stencil)
             device_switch_onscreen_ds(This, context, depth_stencil);
 
-        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, vp, scissor_rect, clear_rect))
+        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, &draw_rect, clear_rect))
             surface_load_ds_location(depth_stencil, context, location);
         surface_modify_ds_location(depth_stencil, location);
 
@@ -4478,54 +4482,54 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
-    vp_rect.left = vp->X;
-    vp_rect.top = vp->Y;
-    vp_rect.right = vp->X + vp->Width;
-    vp_rect.bottom = vp->Y + vp->Height;
-    if (!(Count > 0 && pRects)) {
-        if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
-            IntersectRect(&vp_rect, &vp_rect, &This->stateBlock->scissorRect);
-        }
+    if (!clear_rect)
+    {
         if (context->render_offscreen)
         {
-            glScissor(vp_rect.left, vp_rect.top,
-                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
-        } else {
-            glScissor(vp_rect.left, drawable_height - vp_rect.bottom,
-                        vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
+            glScissor(draw_rect.left, draw_rect.top,
+                    draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top);
+        }
+        else
+        {
+            glScissor(draw_rect.left, drawable_height - draw_rect.bottom,
+                        draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top);
         }
         checkGLcall("glScissor");
         glClear(glMask);
         checkGLcall("glClear");
-    } else {
-        /* Now process each rect in turn */
-        for (i = 0; i < Count; i++) {
+    }
+    else
+    {
+        RECT current_rect;
+
+        /* Now process each rect in turn. */
+        for (i = 0; i < Count; ++i)
+        {
             /* Note gl uses lower left, width/height */
-            IntersectRect((RECT *)&curRect, &vp_rect, (const RECT *)&pRects[i]);
-            if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
-                IntersectRect((RECT *) &curRect, (RECT *) &curRect, &This->stateBlock->scissorRect);
-            }
-            TRACE("(%p) Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This,
-                  pRects[i].x1, pRects[i].y1, pRects[i].x2, pRects[i].y2,
-                  curRect.x1, (target->currentDesc.Height - curRect.y2),
-                  curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
+            IntersectRect(&current_rect, &draw_rect, (const RECT *)&clear_rect[i]);
+
+            TRACE("clear_rect[%u] %s, current_rect %s.\n", i,
+                    wine_dbgstr_rect((const RECT *)&clear_rect[i]),
+                    wine_dbgstr_rect(&current_rect));
 
             /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
              * The rectangle is not cleared, no error is returned, but further rectanlges are
-             * still cleared if they are valid
-             */
-            if(curRect.x1 > curRect.x2 || curRect.y1 > curRect.y2) {
-                TRACE("Rectangle with negative dimensions, ignoring\n");
+             * still cleared if they are valid. */
+            if (current_rect.left > current_rect.right || current_rect.top > current_rect.bottom)
+            {
+                TRACE("Rectangle with negative dimensions, ignoring.\n");
                 continue;
             }
 
             if (context->render_offscreen)
             {
-                glScissor(curRect.x1, curRect.y1,
-                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
-            } else {
-                glScissor(curRect.x1, drawable_height - curRect.y2,
-                          curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
+                glScissor(current_rect.left, current_rect.top,
+                        current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
+            }
+            else
+            {
+                glScissor(current_rect.left, drawable_height - current_rect.bottom,
+                          current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
             }
             checkGLcall("glScissor");
 
