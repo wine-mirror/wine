@@ -398,11 +398,11 @@
 @ cdecl _findclose(long) msvcrt._findclose
 @ stub _findfirst32
 @ stub _findfirst32i64
-@ stub _findfirst64
+@ cdecl _findfirst64(str ptr) msvcrt._findfirst64
 @ stub _findfirst64i32
 @ stub _findnext32
 @ stub _findnext32i64
-@ stub _findnext64
+@ cdecl _findnext64(long ptr) msvcrt._findnext64
 @ stub _findnext64i32
 @ cdecl _finite( double ) msvcrt._finite
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
