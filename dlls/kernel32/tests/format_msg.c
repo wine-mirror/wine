@@ -730,6 +730,128 @@ static void test_message_from_string(void)
     ok(r==2,"failed: r=%d\n",r);
 }
 
+static void test_message_ignore_inserts(void)
+{
+    static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
+
+    DWORD ret;
+    CHAR out[256];
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("test", out), "Expected output string \"test\", got %s\n", out);
+
+    /* The %0 escape sequence is handled. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test%0", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("test", out), "Expected output string \"test\", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test%0test", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("test", out), "Expected output string \"test\", got %s\n", out);
+
+    /* While FormatMessageA returns 0 in this case, no last error code is set. */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "%0test", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %d\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
+       broken(!strcmp("", out)), /* Win9x */
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected GetLastError() to return 0xdeadbeef, got %u\n", GetLastError());
+
+    /* Insert sequences are ignored. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test%1%2!*.*s!%99", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 17, "Expected FormatMessageA to return 17, got %d\n", ret);
+    ok(!strcmp("test%1%2!*.*s!%99", out), "Expected output string \"test%%1%%2!*.*s!%%99\", got %s\n", out);
+
+    /* Only the "%n", "%r", and "%t" escape sequences are processed. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "%%% %.%!", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 8 ||
+       broken(ret == 7) /* Win9x */,
+       "Expected FormatMessageA to return 8, got %d\n", ret);
+    ok(!strcmp("%%% %.%!", out) ||
+       broken(!strcmp("%%% %.!", out)) /* Win9x */,
+       "Expected output string \"%%%%%% %%.%%!\", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "%n%r%t", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("\r\n\r\t", out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", out);
+}
+
+static void test_message_ignore_inserts_wide(void)
+{
+    static const WCHAR test[] = {'t','e','s','t',0};
+    static const WCHAR empty[] = {0};
+    static const WCHAR fmt_t0[] = {'t','e','s','t','%','0',0};
+    static const WCHAR fmt_t0t[] = {'t','e','s','t','%','0','t','e','s','t',0};
+    static const WCHAR fmt_0t[] = {'%','0','t','e','s','t',0};
+    static const WCHAR fmt_t12oos99[] = {'t','e','s','t','%','1','%','2','!','*','.','*','s','!','%','9','9',0};
+    static const WCHAR fmt_pctspacedot[] = {'%','%','%',' ','%','.','%','!',0};
+    static const WCHAR fmt_nrt[] = {'%','n','%','r','%','t',0};
+
+    static const WCHAR s_nrt[] = {'\r','\n','\r','\t',0};
+
+    DWORD ret;
+    WCHAR out[256];
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, test, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+
+    /* The %0 escape sequence is handled. */
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t0, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t0t, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+
+    /* While FormatMessageA returns 0 in this case, no last error code is set. */
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_0t, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %d\n", ret);
+    ok(!lstrcmpW(empty, out), "Expected the output buffer to be the empty string, got %s\n", wine_dbgstr_w(out));
+    ok(GetLastError() == 0xdeadbeef, "Expected GetLastError() to return 0xdeadbeef, got %u\n", GetLastError());
+
+    /* Insert sequences are ignored. */
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t12oos99, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
+    ok(!lstrcmpW(fmt_t12oos99, out), "Expected output string \"test%%1%%2!*.*s!%%99\", got %s\n", wine_dbgstr_w(out));
+
+    /* Only the "%n", "%r", and "%t" escape sequences are processed. */
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_pctspacedot, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 8, "Expected FormatMessageW to return 8, got %d\n", ret);
+    ok(!lstrcmpW(fmt_pctspacedot, out), "Expected output string \"%%%%%% %%.%%!\", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_nrt, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(s_nrt, out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", wine_dbgstr_w(out));
+}
+
 static void test_message_insufficient_buffer(void)
 {
     static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
@@ -1362,6 +1484,8 @@ START_TEST(format_msg)
 {
     test_message_from_string();
     test_message_from_string_wide();
+    test_message_ignore_inserts();
+    test_message_ignore_inserts_wide();
     test_message_insufficient_buffer();
     test_message_insufficient_buffer_wide();
     test_message_null_buffer();

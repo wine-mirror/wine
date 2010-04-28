@@ -286,8 +286,41 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
 
     f = fmtstr;
     if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS) {
-        while (*f && !eos)
-            ADD_TO_T(*f++);
+        while (*f && !eos) {
+            if (*f=='%') {
+                f++;
+                switch (*f)
+                {
+                case '0':
+                    eos = TRUE;
+                    f++;
+                    break;
+                case 'n':
+                    ADD_TO_T('\r');
+                    ADD_TO_T('\n');
+                    f++;
+                    break;
+                case 'r':
+                    ADD_TO_T('\r');
+                    f++;
+                    break;
+                case 't':
+                    ADD_TO_T('\t');
+                    f++;
+                    break;
+                case '\0':
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    HeapFree(GetProcessHeap(), 0, target);
+                    return NULL;
+                default:
+                    ADD_TO_T('%');
+                    ADD_TO_T(*f++);
+                    break;
+                }
+            }
+            else
+                ADD_TO_T(*f++);
+        }
     }
     else {
         while (*f && !eos) {
