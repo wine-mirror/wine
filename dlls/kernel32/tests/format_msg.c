@@ -130,15 +130,6 @@ static void test_message_from_string_wide(void)
     WCHAR out[0x100] = {0};
     DWORD r, error;
 
-    SetLastError(0xdeadbeef);
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
-    error = GetLastError();
-    if (!r && error == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
-
     /* the basics */
     r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0,
         0, out, sizeof(out)/sizeof(WCHAR), NULL);
@@ -802,14 +793,6 @@ static void test_message_ignore_inserts_wide(void)
     DWORD ret;
     WCHAR out[256];
 
-    SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
-
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, test, 0, 0, out,
                          sizeof(out)/sizeof(WCHAR), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
@@ -900,14 +883,6 @@ static void test_message_insufficient_buffer_wide(void)
 
     DWORD ret;
     WCHAR out[5];
-
-    SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
 
     SetLastError(0xdeadbeef);
     memcpy(out, init_buf, sizeof(init_buf));
@@ -1002,15 +977,6 @@ static void test_message_null_buffer(void)
 static void test_message_null_buffer_wide(void)
 {
     DWORD ret, error;
-
-    SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 0, NULL);
-    error = GetLastError();
-    if (!ret && error == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 0, NULL);
@@ -1143,14 +1109,6 @@ static void test_message_allocate_buffer_wide(void)
 
     DWORD ret;
     WCHAR *buf;
-
-    SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
 
     /* While MSDN suggests that FormatMessageW allocates a buffer whose size is
      * the larger of the output string and the requested buffer size, the tests
@@ -1397,14 +1355,6 @@ static void test_message_invalid_flags_wide(void)
     WCHAR *ptr;
 
     SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("FormatMessageW is not implemented\n");
-        return;
-    }
-
-    SetLastError(0xdeadbeef);
     memcpy(out, init_buf, sizeof(init_buf));
     ret = FormatMessageW(0, test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
@@ -1482,17 +1432,28 @@ static void test_message_invalid_flags_wide(void)
 
 START_TEST(format_msg)
 {
+    DWORD ret;
+
     test_message_from_string();
-    test_message_from_string_wide();
     test_message_ignore_inserts();
-    test_message_ignore_inserts_wide();
     test_message_insufficient_buffer();
-    test_message_insufficient_buffer_wide();
     test_message_null_buffer();
-    test_message_null_buffer_wide();
     test_message_allocate_buffer();
-    test_message_allocate_buffer_wide();
     test_message_from_hmodule();
     test_message_invalid_flags();
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
+    test_message_from_string_wide();
+    test_message_ignore_inserts_wide();
+    test_message_insufficient_buffer_wide();
+    test_message_null_buffer_wide();
+    test_message_allocate_buffer_wide();
     test_message_invalid_flags_wide();
 }
