@@ -287,7 +287,8 @@ struct shader_arb_priv
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
     GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id[tex_type_count];
+    GLuint                  depth_blt_fprogram_id_full[tex_type_count];
+    GLuint                  depth_blt_fprogram_id_masked[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
     BOOL                    last_ps_const_clamped;
@@ -3103,12 +3104,14 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
 }
 
 /* GL locking is done by the caller */
-static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info, enum tex_types tex_type)
+static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info,
+        enum tex_types tex_type, BOOL masked)
 {
     GLuint program_id = 0;
+    const char *fprogram;
     GLint pos;
 
-    static const char * const blt_fprograms[tex_type_count] =
+    static const char * const blt_fprograms_full[tex_type_count] =
     {
         /* tex_1d */
         NULL,
@@ -3134,7 +3137,46 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "END\n",
     };
 
-    if (!blt_fprograms[tex_type])
+    static const char * const blt_fprograms_masked[tex_type_count] =
+    {
+        /* tex_1d */
+        NULL,
+        /* tex_2d */
+        "!!ARBfp1.0\n"
+        "PARAM mask = program.local[0];\n"
+        "TEMP R0;\n"
+        "SLT R0.xy, fragment.position, mask.zwzw;\n"
+        "MUL R0.x, R0.x, R0.y;\n"
+        "KIL -R0.x;\n"
+        "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
+        "MOV result.depth.z, R0.x;\n"
+        "END\n",
+        /* tex_3d */
+        NULL,
+        /* tex_cube */
+        "!!ARBfp1.0\n"
+        "PARAM mask = program.local[0];\n"
+        "TEMP R0;\n"
+        "SLT R0.xy, fragment.position, mask.zwzw;\n"
+        "MUL R0.x, R0.x, R0.y;\n"
+        "KIL -R0.x;\n"
+        "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
+        "MOV result.depth.z, R0.x;\n"
+        "END\n",
+        /* tex_rect */
+        "!!ARBfp1.0\n"
+        "PARAM mask = program.local[0];\n"
+        "TEMP R0;\n"
+        "SLT R0.xy, fragment.position, mask.zwzw;\n"
+        "MUL R0.x, R0.x, R0.y;\n"
+        "KIL -R0.x;\n"
+        "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
+        "MOV result.depth.z, R0.x;\n"
+        "END\n",
+    };
+
+    fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
+    if (!fprogram)
     {
         FIXME("tex_type %#x not supported\n", tex_type);
         tex_type = tex_2d;
@@ -3142,8 +3184,7 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-            strlen(blt_fprograms[tex_type]), blt_fprograms[tex_type]));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(fprogram), fprogram));
     checkGLcall("glProgramStringARB()");
 
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
@@ -3151,7 +3192,7 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
     {
         FIXME("Fragment program error at position %d: %s\n\n", pos,
             debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-        shader_arb_dump_program_source(blt_fprograms[tex_type]);
+        shader_arb_dump_program_source(fprogram);
     }
     else
     {
@@ -4444,18 +4485,23 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
 }
 
 /* GL locking is done by the caller */
-static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
+static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type, const SIZE *ds_mask_size)
+{
+    const float mask[] = {0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy};
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
     struct shader_arb_priv *priv = This->shader_priv;
-    GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    GLuint *blt_fprogram;
 
     if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
     glEnable(GL_VERTEX_PROGRAM_ARB);
 
-    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type);
+    blt_fprogram = masked ? &priv->depth_blt_fprogram_id_masked[tex_type] : &priv->depth_blt_fprogram_id_full[tex_type];
+    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type, masked);
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, *blt_fprogram));
+    if (masked) GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, mask));
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
@@ -4595,9 +4641,15 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     if(priv->depth_blt_vprogram_id) {
         GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
     }
-    for (i = 0; i < tex_type_count; ++i) {
-        if (priv->depth_blt_fprogram_id[i]) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id[i]));
+    for (i = 0; i < tex_type_count; ++i)
+    {
+        if (priv->depth_blt_fprogram_id_full[i])
+        {
+            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id_full[i]));
+        }
+        if (priv->depth_blt_fprogram_id_masked[i])
+        {
+            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id_masked[i]));
         }
     }
     LEAVE_GL();

@@ -4092,7 +4092,8 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
 
-    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device, info.tex_type);
+    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device,
+            info.tex_type, &This->ds_current_size);
 
     glBegin(GL_TRIANGLE_STRIP);
     glTexCoord3fv(info.coords[0]);
@@ -4112,13 +4113,16 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     device->shader_backend->shader_deselect_depth_blt((IWineD3DDevice *)device);
 }
 
-void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location)
+void surface_modify_ds_location(IWineD3DSurfaceImpl *surface,
+        DWORD location, UINT w, UINT h)
 {
-    TRACE("surface %p, new location %#x.\n", surface, location);
+    TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
 
     if (location & ~SFLAG_DS_LOCATIONS)
         FIXME("Invalid location (%#x) specified.\n", location);
 
+    surface->ds_current_size.cx = w;
+    surface->ds_current_size.cy = h;
     surface->Flags &= ~SFLAG_DS_LOCATIONS;
     surface->Flags |= location;
 }
@@ -4134,7 +4138,14 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
     /* TODO: Make this work for modes other than FBO */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
 
-    if (surface->Flags & location)
+    if (!(surface->Flags & location))
+    {
+        surface->ds_current_size.cx = 0;
+        surface->ds_current_size.cy = 0;
+    }
+
+    if (surface->ds_current_size.cx == surface->currentDesc.Width
+            && surface->ds_current_size.cy == surface->currentDesc.Height)
     {
         TRACE("Location (%#x) is already up to date.\n", location);
         return;
@@ -4250,6 +4261,8 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
     }
 
     surface->Flags |= location;
+    surface->ds_current_size.cx = surface->currentDesc.Width;
+    surface->ds_current_size.cy = surface->currentDesc.Height;
 }
 
 static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {

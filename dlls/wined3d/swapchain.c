@@ -468,7 +468,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         if (This->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || This->device->depth_stencil->Flags & SFLAG_DISCARD)
         {
-            surface_modify_ds_location(This->device->depth_stencil, SFLAG_DS_DISCARDED);
+            surface_modify_ds_location(This->device->depth_stencil, SFLAG_DS_DISCARDED,
+                    This->device->depth_stencil->currentDesc.Width,
+                    This->device->depth_stencil->currentDesc.Height);
             if (This->device->depth_stencil == This->device->onscreen_depth_stencil)
             {
                 IWineD3DSurface_Release((IWineD3DSurface *)This->device->onscreen_depth_stencil);

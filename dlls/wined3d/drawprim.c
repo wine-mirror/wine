@@ -613,12 +613,29 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE]
                 || This->stateBlock->renderState[WINED3DRS_ZENABLE])
         {
+            RECT current_rect, draw_rect, r;
+
             if (location == SFLAG_DS_ONSCREEN && This->depth_stencil != This->onscreen_depth_stencil)
                 device_switch_onscreen_ds(This, context, This->depth_stencil);
-            surface_load_ds_location(This->depth_stencil, context, location);
+
+            if (This->depth_stencil->Flags & location)
+                SetRect(&current_rect, 0, 0,
+                        This->depth_stencil->ds_current_size.cx,
+                        This->depth_stencil->ds_current_size.cy);
+            else
+                SetRectEmpty(&current_rect);
+
+            device_get_draw_rect(This, &draw_rect);
+
+            IntersectRect(&r, &draw_rect, &current_rect);
+            if (!EqualRect(&r, &draw_rect))
+                surface_load_ds_location(This->depth_stencil, context, location);
+
+            if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
+                surface_modify_ds_location(This->depth_stencil, location,
+                        This->depth_stencil->ds_current_size.cx,
+                        This->depth_stencil->ds_current_size.cy);
         }
-        if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
-            surface_modify_ds_location(This->depth_stencil, location);
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */

@@ -713,7 +713,7 @@ struct wined3d_context;
 typedef struct {
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(const struct wined3d_context *context, BOOL usePS, BOOL useVS);
-    void (*shader_select_depth_blt)(IWineD3DDevice *iface, enum tex_types tex_type);
+    void (*shader_select_depth_blt)(IWineD3DDevice *iface, enum tex_types tex_type, const SIZE *ds_mask_size);
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_update_float_vertex_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(IWineD3DDevice *iface, UINT start, UINT count);
@@ -1725,6 +1725,7 @@ struct IWineD3DDeviceImpl
 
 BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
+void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect) DECLSPEC_HIDDEN;
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         IUnknown *parent, IWineD3DDeviceParent *device_parent) DECLSPEC_HIDDEN;
@@ -2090,6 +2091,7 @@ struct IWineD3DSurfaceImpl
 
     struct list               renderbuffers;
     renderbuffer_entry_t      *current_renderbuffer;
+    SIZE ds_current_size;
 
     /* DirectDraw clippers */
     IWineD3DClipper           *clipper;
@@ -2677,7 +2679,7 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect
 GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 void surface_load_ds_location(IWineD3DSurfaceImpl *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
-void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location) DECLSPEC_HIDDEN;
+void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;

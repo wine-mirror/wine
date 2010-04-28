@@ -563,7 +563,7 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
     device->contexts = new_array;
 }
 
-static void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
+void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 {
     IWineD3DStateBlockImpl *stateblock = device->stateBlock;
     WINED3DVIEWPORT *vp = &stateblock->viewport;
@@ -582,7 +582,9 @@ void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
     if (device->onscreen_depth_stencil)
     {
         surface_load_ds_location(device->onscreen_depth_stencil, context, SFLAG_DS_OFFSCREEN);
-        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_DS_OFFSCREEN);
+        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_DS_OFFSCREEN,
+                device->onscreen_depth_stencil->ds_current_size.cx,
+                device->onscreen_depth_stencil->ds_current_size.cy);
         IWineD3DSurface_Release((IWineD3DSurface *)device->onscreen_depth_stencil);
     }
     device->onscreen_depth_stencil = depth_stencil;
@@ -4371,6 +4373,61 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, co
     return TRUE;
 }
 
+static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *context,
+        DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect)
+{
+    RECT current_rect, r;
+
+    if (ds->Flags & location)
+        SetRect(&current_rect, 0, 0,
+                ds->ds_current_size.cx,
+                ds->ds_current_size.cy);
+    else
+        SetRectEmpty(&current_rect);
+
+    IntersectRect(&r, draw_rect, &current_rect);
+    if (EqualRect(&r, draw_rect))
+    {
+        /* current_rect ⊇ draw_rect, modify only. */
+        surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+        return;
+    }
+
+    if (EqualRect(&r, &current_rect))
+    {
+        /* draw_rect ⊇ current_rect, test if we're doing a full clear. */
+
+        if (!clear_rect)
+        {
+            /* Full clear, modify only. */
+            surface_modify_ds_location(ds, location, draw_rect->right, draw_rect->bottom);
+            return;
+        }
+
+        if (rect_count > 1)
+        {
+            /* Multiple clear rects, full load. Strictly speaking this can
+             * also be a full draw_rect clear, but it's probably rare enough
+             * that we don't care. */
+            surface_load_ds_location(ds, context, location);
+            surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+            return;
+        }
+
+        IntersectRect(&r, draw_rect, clear_rect);
+        if (EqualRect(&r, draw_rect))
+        {
+            /* clear_rect ⊇ draw_rect, modify only. */
+            surface_modify_ds_location(ds, location, draw_rect->right, draw_rect->bottom);
+            return;
+        }
+    }
+
+    /* Full load. */
+    surface_load_ds_location(ds, context, location);
+    surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+}
+
 /* Not called from the VTable (internal subroutine) */
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
@@ -4456,10 +4513,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != This->onscreen_depth_stencil)
             device_switch_onscreen_ds(This, context, depth_stencil);
-
-        if (!(depth_stencil->Flags & location) && !is_full_clear(depth_stencil, &draw_rect, clear_rect))
-            surface_load_ds_location(depth_stencil, context, location);
-        surface_modify_ds_location(depth_stencil, location);
+        prepare_ds_clear(depth_stencil, context, location, &draw_rect, Count, clear_rect);
 
         glDepthMask(GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
@@ -5941,7 +5995,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || This->depth_stencil->Flags & SFLAG_DISCARD)
         {
-            surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED);
+            surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED,
+                    This->depth_stencil->currentDesc.Width,
+                    This->depth_stencil->currentDesc.Height);
             if (This->depth_stencil == This->onscreen_depth_stencil)
             {
                 IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
