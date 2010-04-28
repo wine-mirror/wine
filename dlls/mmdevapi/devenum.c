@@ -932,6 +932,10 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
             openal_scanrender();
             openal_scancapture();
         }
+        else
+            FIXME("OpenAL support not enabled, application will not find sound devices\n");
+#else
+        ERR("OpenAL support not compiled in, application will not find sound devices\n");
 #endif /*HAVE_OPENAL*/
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
