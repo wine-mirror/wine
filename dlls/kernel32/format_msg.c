@@ -393,14 +393,16 @@ DWORD WINAPI FormatMessageA(
 
     TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-    if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
-        &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-           || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
-    if ((dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) && !lpBuffer)
+    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
+        if (!lpBuffer)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+        else
+            *(LPSTR *)lpBuffer = NULL;
     }
 
     if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
@@ -425,12 +427,18 @@ DWORD WINAPI FormatMessageA(
         from = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
         MultiByteToWideChar(CP_ACP, 0, lpSource, -1, from, length);
     }
-    else {
+    else if (dwFlags & (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM))
+    {
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
             from = load_message( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
             from = load_message( kernel32_handle, dwMessageId, dwLanguageId );
         if (!from) return 0;
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
 
     target = format_message( FALSE, dwFlags, from, &format_args );
@@ -483,15 +491,15 @@ DWORD WINAPI FormatMessageW(
 
     TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-    if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
-        &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-           || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
     if (!lpBuffer)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
+
+    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+        *(LPWSTR *)lpBuffer = NULL;
 
     if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
     {
@@ -514,12 +522,18 @@ DWORD WINAPI FormatMessageW(
             sizeof(WCHAR) );
         strcpyW( from, lpSource );
     }
-    else {
+    else if (dwFlags & (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM))
+    {
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
             from = load_message( (HMODULE)lpSource, dwMessageId, dwLanguageId );
         if (!from && (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM))
             from = load_message( kernel32_handle, dwMessageId, dwLanguageId );
         if (!from) return 0;
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
 
     target = format_message( TRUE, dwFlags, from, &format_args );

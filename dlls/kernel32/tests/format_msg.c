@@ -1112,6 +1112,185 @@ static void test_message_from_hmodule(void)
        "last error %u\n", error);
 }
 
+static void test_message_invalid_flags(void)
+{
+    static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
+
+    DWORD ret;
+    CHAR out[5];
+    char *ptr;
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(0, "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ptr = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER, "test", 0, 0, (char *)&ptr, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(ptr == NULL ||
+       broken(ptr == (char *)0xdeadbeef), /* Win9x */
+       "Expected output pointer to be initialized to NULL, got %p\n", ptr);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_IGNORE_INSERTS, "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_ARGUMENT_ARRAY, "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_MAX_WIDTH_MASK, "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    /* Simultaneously setting FORMAT_MESSAGE_FROM_STRING with other source
+     * flags is apparently permissible, and FORMAT_MESSAGE_FROM_STRING takes
+     * precedence in this case. */
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_SYSTEM,
+                         "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(!strcmp("test", out),
+       "Expected the output buffer to be untouched\n");
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE,
+                         "test", 0, 0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(!strcmp("test", out),
+       "Expected the output buffer to be untouched\n");
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE |
+                         FORMAT_MESSAGE_FROM_SYSTEM, "test", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
+    ok(!strcmp("test", out),
+       "Expected the output buffer to be untouched\n");
+}
+
+static void test_message_invalid_flags_wide(void)
+{
+    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x'};
+    static const WCHAR test[] = {'t','e','s','t',0};
+
+    DWORD ret;
+    WCHAR out[5];
+    WCHAR *ptr;
+
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, NULL, 0, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("FormatMessageW is not implemented\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(0, test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ptr = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER, test, 0, 0, (WCHAR *)&ptr, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(ptr == NULL, "Expected output pointer to be initialized to NULL, got %p\n", ptr);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_IGNORE_INSERTS, test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_ARGUMENT_ARRAY, test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_MAX_WIDTH_MASK, test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the output buffer to be untouched\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
+
+    /* Simultaneously setting FORMAT_MESSAGE_FROM_STRING with other source
+     * flags is apparently permissible, and FORMAT_MESSAGE_FROM_STRING takes
+     * precedence in this case. */
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_SYSTEM,
+                         test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
+    ok(!lstrcmpW(test, out),
+       "Expected the output buffer to be untouched\n");
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE,
+                         test, 0, 0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
+    ok(!lstrcmpW(test, out),
+       "Expected the output buffer to be untouched\n");
+
+    memcpy(out, init_buf, sizeof(init_buf));
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE |
+                         FORMAT_MESSAGE_FROM_SYSTEM, test, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
+    ok(!lstrcmpW(test, out),
+       "Expected the output buffer to be untouched\n");
+}
+
 START_TEST(format_msg)
 {
     test_message_from_string();
@@ -1123,4 +1302,6 @@ START_TEST(format_msg)
     test_message_allocate_buffer();
     test_message_allocate_buffer_wide();
     test_message_from_hmodule();
+    test_message_invalid_flags();
+    test_message_invalid_flags_wide();
 }
