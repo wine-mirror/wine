@@ -472,7 +472,7 @@ MSVCRT_size_t CDECL MSVCRT_strnlen(const char *s, MSVCRT_size_t maxlen)
 }
 
 /*********************************************************************
- *  _strtoi64_l (MSVCR90.@)
+ *  _strtoi64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
  */
@@ -544,7 +544,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
 }
 
 /*********************************************************************
- *  _strtoi64 (MSVCR90.@)
+ *  _strtoi64 (MSVCRT.@)
  */
 __int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
 {
@@ -552,7 +552,7 @@ __int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
 }
 
 /*********************************************************************
- *  _strtoui64_l (MSVCR90.@)
+ *  _strtoui64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
  */
@@ -618,7 +618,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 }
 
 /*********************************************************************
- *  _strtoui64 (MSVCR90.@)
+ *  _strtoui64 (MSVCRT.@)
  */
 unsigned __int64 CDECL MSVCRT_strtoui64(const char *nptr, char **endptr, int base)
 {
