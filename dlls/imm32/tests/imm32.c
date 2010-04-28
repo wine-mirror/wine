@@ -330,20 +330,20 @@ static void test_ImmAssociateContextEx(void)
         rc = pImmAssociateContextEx(NULL, NULL, 0);
         ok(!rc, "ImmAssociateContextEx succeeded\n");
         rc = pImmAssociateContextEx(hwnd, NULL, 0);
-        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        ok(rc, "ImmAssociateContextEx failed\n");
         rc = pImmAssociateContextEx(NULL, imc, 0);
         ok(!rc, "ImmAssociateContextEx succeeded\n");
 
         rc = pImmAssociateContextEx(hwnd, imc, 0);
-        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        ok(rc, "ImmAssociateContextEx failed\n");
         retimc = ImmGetContext(hwnd);
         ok(retimc == imc, "handles should be the same\n");
         ImmReleaseContext(hwnd,retimc);
 
         rc = pImmAssociateContextEx(hwnd, newimc, 0);
-        todo_wine ok(rc, "ImmAssociateContextEx failed\n");
+        ok(rc, "ImmAssociateContextEx failed\n");
         retimc = ImmGetContext(hwnd);
-        todo_wine ok(retimc == newimc, "handles should be the same\n");
+        ok(retimc == newimc, "handles should be the same\n");
         ImmReleaseContext(hwnd,retimc);
 
         rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);

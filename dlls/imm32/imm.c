@@ -516,30 +516,30 @@ static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
  */
 BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
 {
-    TRACE("(%p, %p, %d): stub\n", hWnd, hIMC, dwFlags);
+    TRACE("(%p, %p, 0x%x):\n", hWnd, hIMC, dwFlags);
 
     if (!IMM_GetThreadData()->defaultContext)
         IMM_GetThreadData()->defaultContext = ImmCreateContext();
 
-    if (dwFlags == IACE_DEFAULT)
+    if (!hWnd) return FALSE;
+
+    switch (dwFlags)
     {
+    case 0:
+        ImmAssociateContext(hWnd,hIMC);
+        return TRUE;
+    case IACE_DEFAULT:
         ImmAssociateContext(hWnd,IMM_GetThreadData()->defaultContext);
         return TRUE;
-    }
-    else if (dwFlags == IACE_IGNORENOCONTEXT)
-    {
+    case IACE_IGNORENOCONTEXT:
         if (GetPropW(hWnd,szwWineIMCProperty))
             ImmAssociateContext(hWnd,hIMC);
         return TRUE;
-    }
-    else if (dwFlags == IACE_CHILDREN)
-    {
+    case IACE_CHILDREN:
         EnumChildWindows(hWnd,_ImmAssociateContextExEnumProc,(LPARAM)hIMC);
         return TRUE;
-    }
-    else
-    {
-        ERR("Unknown dwFlags 0x%x\n",dwFlags);
+    default:
+        FIXME("Unknown dwFlags 0x%x\n",dwFlags);
         return FALSE;
     }
 }
