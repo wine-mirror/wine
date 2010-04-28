@@ -360,6 +360,14 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
                     ADD_TO_T('\n');
                     f++;
                     break;
+                case 'r':
+                    ADD_TO_T('\r');
+                    f++;
+                    break;
+                case 't':
+                    ADD_TO_T('\t');
+                    f++;
+                    break;
                 case '0':
                     eos = TRUE;
                     f++;

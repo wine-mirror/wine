@@ -84,6 +84,7 @@ static void test_message_from_string_wide(void)
     static const WCHAR fmt_t0t[]     = {'t','e','s','t','%','0','t','e','s','t',0};
     static const WCHAR fmt_yah[]     = {'y','a','h','%','!','%','0',' ',' ',' ',0};
     static const WCHAR fmt_space[]   = {'%',' ','%',' ',' ',' ',0};
+    static const WCHAR fmt_nrt[]     = {'%','n','%','r','%','t',0};
     static const WCHAR fmt_hi_lf[]   = {'h','i','\n',0};
     static const WCHAR fmt_hi_crlf[] = {'h','i','\r','\n',0};
     static const WCHAR fmt_cr[]      = {'\r',0};
@@ -108,6 +109,7 @@ static void test_message_from_string_wide(void)
     static const WCHAR s_2dot147[]   = {' ','.','.',' ',' ','4','2','7',0};
     static const WCHAR s_yah[]       = {'y','a','h','!',0};
     static const WCHAR s_space[]     = {' ',' ',' ',' ',0};
+    static const WCHAR s_nrt[]       = {'\r','\n','\r','\t',0};
     static const WCHAR s_hi_crlf[]   = {'h','i','\r','\n',0};
     static const WCHAR s_crlf[]      = {'\r','\n',0};
     static const WCHAR s_crlfcrlf[]  = {'\r','\n','\r','\n',0};
@@ -325,6 +327,12 @@ static void test_message_from_string_wide(void)
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_space, 0,
         0, out, sizeof(out)/sizeof(WCHAR));
     ok(!lstrcmpW(s_space, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(r==4,"failed: r=%d\n", r);
+
+    /* %n yields \r\n, %r yields \r, %t yields \t */
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_nrt, 0,
+        0, out, sizeof(out)/sizeof(WCHAR));
+    ok(!lstrcmpW(s_nrt, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* line feed */
@@ -622,6 +630,12 @@ static void test_message_from_string(void)
     r = doit(FORMAT_MESSAGE_FROM_STRING, "% %   ", 0,
         0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("    ", out),"failed out=[%s]\n",out);
+    ok(r==4,"failed: r=%d\n",r);
+
+    /* %n yields \r\n, %r yields \r, %t yields \t */
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%n%r%t", 0,
+        0, out, sizeof(out)/sizeof(CHAR));
+    ok(!strcmp("\r\n\r\t", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
     /* line feed */
