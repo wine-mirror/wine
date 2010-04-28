@@ -446,22 +446,30 @@ DWORD WINAPI FormatMessageA(
         goto failure;
 
     TRACE("-- %s\n", debugstr_w(target));
-    destlength = WideCharToMultiByte(CP_ACP, 0, target, -1, NULL, 0, NULL, NULL);
-    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
-        LPSTR buf = LocalAlloc(LMEM_ZEROINIT, max(nSize, destlength));
-        WideCharToMultiByte(CP_ACP, 0, target, -1, buf, destlength, NULL, NULL);
-        *((LPSTR*)lpBuffer) = buf;
-    } else {
-        if (nSize < destlength)
-        {
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            goto failure;
-        }
 
-        WideCharToMultiByte(CP_ACP, 0, target, -1, lpBuffer, destlength, NULL, NULL);
+    /* Only try writing to an output buffer if there are processed characters
+     * in the temporary output buffer. */
+    if (*target)
+    {
+        destlength = WideCharToMultiByte(CP_ACP, 0, target, -1, NULL, 0, NULL, NULL);
+        if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+        {
+            LPSTR buf = LocalAlloc(LMEM_ZEROINIT, max(nSize, destlength));
+            WideCharToMultiByte(CP_ACP, 0, target, -1, buf, destlength, NULL, NULL);
+            *((LPSTR*)lpBuffer) = buf;
+        }
+        else
+        {
+            if (nSize < destlength)
+            {
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                goto failure;
+            }
+            WideCharToMultiByte(CP_ACP, 0, target, -1, lpBuffer, destlength, NULL, NULL);
+        }
+        ret = destlength - 1; /* null terminator */
     }
 
-    ret = destlength - 1; /* null terminator */
 failure:
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
@@ -542,10 +550,18 @@ DWORD WINAPI FormatMessageW(
 
     talloced = strlenW(target)+1;
     TRACE("-- %s\n",debugstr_w(target));
-    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
-        /* nSize is the MINIMUM size */
-        *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT, max(nSize, talloced)*sizeof(WCHAR));
-        strcpyW(*(LPWSTR*)lpBuffer, target);
+
+    /* Only allocate a buffer if there are processed characters in the
+     * temporary output buffer. If a caller supplies the buffer, then
+     * a null terminator will be written to it. */
+    if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+    {
+        if (*target)
+        {
+            /* nSize is the MINIMUM size */
+            *((LPVOID*)lpBuffer) = LocalAlloc(LMEM_ZEROINIT, max(nSize, talloced)*sizeof(WCHAR));
+            strcpyW(*(LPWSTR*)lpBuffer, target);
+        }
     }
     else
     {

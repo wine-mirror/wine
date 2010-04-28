@@ -53,6 +53,7 @@ static DWORD __cdecl doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id
 static void test_message_from_string_wide(void)
 {
     static const WCHAR test[]        = {'t','e','s','t',0};
+    static const WCHAR empty[]       = {0};
     static const WCHAR te[]          = {'t','e',0};
     static const WCHAR st[]          = {'s','t',0};
     static const WCHAR t[]           = {'t',0};
@@ -143,6 +144,25 @@ static void test_message_from_string_wide(void)
         0, out, sizeof(out)/sizeof(WCHAR), NULL);
     ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
+
+    /* null string, crashes on Windows */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        memcpy(out, init_buf, sizeof(init_buf));
+        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
+            0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    }
+
+    /* empty string */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, empty, 0,
+        0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    error = GetLastError();
+    ok(!lstrcmpW(empty, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(error==0xdeadbeef, "last error %u\n", error);
 
     /* format placeholder with no specifier */
     SetLastError(0xdeadbeef);
@@ -419,6 +439,27 @@ static void test_message_from_string(void)
         0, out, sizeof(out)/sizeof(CHAR),NULL);
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
+
+    /* null string, crashes on Windows */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        memcpy(out, init_buf, sizeof(init_buf));
+        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
+            0, out, sizeof(out)/sizeof(CHAR), NULL);
+    }
+
+    /* empty string */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "", 0,
+        0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
+       broken(!strcmp("", out)), /* Win9x */
+       "Expected the buffer to be untouched\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(GetLastError()==0xdeadbeef,
+       "last error %u\n", GetLastError());
 
     /* format placeholder with no specifier */
     SetLastError(0xdeadbeef);
@@ -898,6 +939,15 @@ static void test_message_allocate_buffer(void)
      * in any case be safe for FormatMessageA to allocate in the manner that
      * MSDN suggests. */
 
+    SetLastError(0xdeadbeef);
+    buf = (char *)0xdeadbeef;
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         "", 0, 0, (char *)&buf, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
+    ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected last error to be untouched, got %u\n", GetLastError());
+
     buf = (char *)0xdeadbeef;
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
                          "test", 0, 0, (char *)&buf, 0, NULL);
@@ -966,6 +1016,7 @@ static void test_message_allocate_buffer(void)
 
 static void test_message_allocate_buffer_wide(void)
 {
+    static const WCHAR empty[] = {0};
     static const WCHAR test[] = {'t','e','s','t',0};
 
     DWORD ret;
@@ -979,12 +1030,28 @@ static void test_message_allocate_buffer_wide(void)
         return;
     }
 
-    /* While MSDN suggests that FormatMessageA allocates a buffer whose size is
+    /* While MSDN suggests that FormatMessageW allocates a buffer whose size is
      * the larger of the output string and the requested buffer size, the tests
      * will not try to determine the actual size of the buffer allocated, as
      * the return value of LocalSize cannot be trusted for the purpose, and it should
-     * in any case be safe for FormatMessageA to allocate in the manner that
+     * in any case be safe for FormatMessageW to allocate in the manner that
      * MSDN suggests. */
+
+    if (0) /* crashes on Windows */
+    {
+        buf = (WCHAR *)0xdeadbeef;
+        ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                             NULL, 0, 0, (WCHAR *)&buf, 0, NULL);
+    }
+
+    SetLastError(0xdeadbeef);
+    buf = (WCHAR *)0xdeadbeef;
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         empty, 0, 0, (WCHAR *)&buf, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected last error to be untouched, got %u\n", GetLastError());
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
