@@ -144,7 +144,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
         }
         else
         {
-            char *str = (char *)get_arg( insert, flags, args );
+            char *str = (char *)arg;
             DWORD length = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
             *result = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, str, -1, *result, length );
