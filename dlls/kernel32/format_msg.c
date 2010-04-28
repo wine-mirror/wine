@@ -461,8 +461,6 @@ failure:
     TRACE("-- returning %u\n", ret);
     return ret;
 }
-#undef ADD_TO_T
-
 
 /***********************************************************************
  *           FormatMessageW   (KERNEL32.@)
@@ -553,4 +551,3 @@ failure:
     TRACE("-- returning %u\n", ret);
     return ret;
 }
-#undef ADD_TO_T
