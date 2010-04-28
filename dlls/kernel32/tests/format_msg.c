@@ -58,6 +58,8 @@ static void test_message_from_string_wide(void)
     static const WCHAR t[]           = {'t',0};
     static const WCHAR e[]           = {'e',0};
     static const WCHAR s[]           = {'s',0};
+    static const WCHAR fmt_null[]    = {'%',0};
+    static const WCHAR fmt_tnull[]   = {'t','e','s','t','%',0};
     static const WCHAR fmt_1[]       = {'%','1',0};
     static const WCHAR fmt_12[]      = {'%','1','%','2',0};
     static const WCHAR fmt_123[]     = {'%','1','%','3','%','2','%','1',0};
@@ -121,6 +123,9 @@ static void test_message_from_string_wide(void)
     static const WCHAR s_sp002sp003[] = {' ',' ','0','0','0','2',',',' ','0','0','0','0','3',0};
     static const WCHAR s_sp001004[]   = {' ',' ','0','0','1',',','0','0','0','0','0','4',0};
 
+    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x', 'x'};
+    static const WCHAR broken_buf[] = {'t','e','s','t','x','x'};
+
     WCHAR out[0x100] = {0};
     DWORD r, error;
 
@@ -138,6 +143,29 @@ static void test_message_from_string_wide(void)
         0, out, sizeof(out)/sizeof(WCHAR), NULL);
     ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
+
+    /* format placeholder with no specifier */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_null, 0,
+        0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    error = GetLastError();
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the buffer to be unchanged\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    /* test string with format placeholder with no specifier */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_tnull, 0,
+        0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    error = GetLastError();
+    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
+       broken(!memcmp(out, broken_buf, sizeof(broken_buf))), /* W2K3+ */
+       "Expected the buffer to be unchanged\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
     /* using the format feature */
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1s, 0,
@@ -383,6 +411,7 @@ static void test_message_from_string(void)
 {
     CHAR out[0x100] = {0};
     DWORD r;
+    static const char init_buf[] = {'x', 'x', 'x', 'x', 'x', 'x'};
     static const WCHAR szwTest[] = { 't','e','s','t',0};
 
     /* the basics */
@@ -390,6 +419,28 @@ static void test_message_from_string(void)
         0, out, sizeof(out)/sizeof(CHAR),NULL);
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
+
+    /* format placeholder with no specifier */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "%", 0,
+        0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the buffer to be untouched\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+       "last error %u\n", GetLastError());
+
+    /* test string with format placeholder with no specifier */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test%", 0,
+        0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the buffer to be untouched\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+       "last error %u\n", GetLastError());
 
     /* using the format feature */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!s!", 0,

@@ -297,8 +297,9 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
 
                 f++;
                 if (!*f) {
-                    ADD_TO_T('%');
-                    continue;
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    HeapFree(GetProcessHeap(), 0, target);
+                    return NULL;
                 }
 
                 switch (*f) {
@@ -433,6 +434,8 @@ DWORD WINAPI FormatMessageA(
     }
 
     target = format_message( FALSE, dwFlags, from, &format_args );
+    if (!target)
+        goto failure;
 
     TRACE("-- %s\n", debugstr_w(target));
     destlength = WideCharToMultiByte(CP_ACP, 0, target, -1, NULL, 0, NULL, NULL);
@@ -522,6 +525,8 @@ DWORD WINAPI FormatMessageW(
     }
 
     target = format_message( TRUE, dwFlags, from, &format_args );
+    if (!target)
+        goto failure;
 
     talloced = strlenW(target)+1;
     TRACE("-- %s\n",debugstr_w(target));
