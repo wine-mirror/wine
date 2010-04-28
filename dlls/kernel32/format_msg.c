@@ -285,103 +285,78 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
 } while (0)
 
     f = fmtstr;
-    if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS) {
-        while (*f && !eos) {
-            if (*f=='%') {
-                f++;
-                switch (*f)
-                {
-                case '0':
-                    eos = TRUE;
+    while (*f && !eos) {
+        if (*f=='%') {
+            int insertnr;
+            WCHAR *str,*x;
+
+            f++;
+            switch (*f) {
+            case '1':case '2':case '3':case '4':case '5':
+            case '6':case '7':case '8':case '9':
+                if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS)
+                    goto ignore_inserts;
+                insertnr = *f-'0';
+                switch (f[1]) {
+                case '0':case '1':case '2':case '3':
+                case '4':case '5':case '6':case '7':
+                case '8':case '9':
+                    f++;
+                    insertnr = insertnr*10 + *f-'0';
                     f++;
                     break;
-                case 'n':
-                    ADD_TO_T('\r');
-                    ADD_TO_T('\n');
-                    f++;
-                    break;
-                case 'r':
-                    ADD_TO_T('\r');
-                    f++;
-                    break;
-                case 't':
-                    ADD_TO_T('\t');
-                    f++;
-                    break;
-                case '\0':
-                    SetLastError(ERROR_INVALID_PARAMETER);
-                    HeapFree(GetProcessHeap(), 0, target);
-                    return NULL;
                 default:
+                    f++;
+                    break;
+                }
+                f = format_insert( unicode_caller, insertnr, f, dwFlags, format_args, &str );
+                for (x = str; *x; x++) ADD_TO_T(*x);
+                HeapFree( GetProcessHeap(), 0, str );
+                break;
+            case 'n':
+                ADD_TO_T('\r');
+                ADD_TO_T('\n');
+                f++;
+                break;
+            case 'r':
+                ADD_TO_T('\r');
+                f++;
+                break;
+            case 't':
+                ADD_TO_T('\t');
+                f++;
+                break;
+            case '0':
+                eos = TRUE;
+                f++;
+                break;
+            case '\0':
+                SetLastError(ERROR_INVALID_PARAMETER);
+                HeapFree(GetProcessHeap(), 0, target);
+                return NULL;
+            ignore_inserts:
+            default:
+                if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS)
                     ADD_TO_T('%');
-                    ADD_TO_T(*f++);
-                    break;
-                }
-            }
-            else
                 ADD_TO_T(*f++);
-        }
-    }
-    else {
-        while (*f && !eos) {
-            if (*f=='%') {
-                int insertnr;
-                WCHAR *str,*x;
-
-                f++;
-                if (!*f) {
-                    SetLastError(ERROR_INVALID_PARAMETER);
-                    HeapFree(GetProcessHeap(), 0, target);
-                    return NULL;
-                }
-
-                switch (*f) {
-                case '1':case '2':case '3':case '4':case '5':
-                case '6':case '7':case '8':case '9':
-                    insertnr = *f-'0';
-                    switch (f[1]) {
-                    case '0':case '1':case '2':case '3':
-                    case '4':case '5':case '6':case '7':
-                    case '8':case '9':
-                        f++;
-                        insertnr = insertnr*10 + *f-'0';
-                        f++;
-                        break;
-                    default:
-                        f++;
-                        break;
-                    }
-                    f = format_insert( unicode_caller, insertnr, f, dwFlags, format_args, &str );
-                    for (x = str; *x; x++) ADD_TO_T(*x);
-                    HeapFree( GetProcessHeap(), 0, str );
-                    break;
-                case 'n':
+                break;
+            }
+        } else {
+            ch = *f;
+            f++;
+            if (ch == '\r') {
+                if (*f == '\n')
+                    f++;
+                if(width)
+                    ADD_TO_T(' ');
+                else
+                {
                     ADD_TO_T('\r');
                     ADD_TO_T('\n');
-                    f++;
-                    break;
-                case 'r':
-                    ADD_TO_T('\r');
-                    f++;
-                    break;
-                case 't':
-                    ADD_TO_T('\t');
-                    f++;
-                    break;
-                case '0':
-                    eos = TRUE;
-                    f++;
-                    break;
-                default:
-                    ADD_TO_T(*f++);
-                    break;
                 }
             } else {
-                ch = *f;
-                f++;
-                if (ch == '\r') {
-                    if (*f == '\n')
-                        f++;
+                if (ch == '\n')
+                {
                     if(width)
                         ADD_TO_T(' ');
                     else
@@ -389,20 +364,9 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
                         ADD_TO_T('\r');
                         ADD_TO_T('\n');
                     }
-                } else {
-                    if (ch == '\n')
-                    {
-                        if(width)
-                            ADD_TO_T(' ');
-                        else
-                        {
-                            ADD_TO_T('\r');
-                            ADD_TO_T('\n');
-                        }
-                    }
-                    else
-                        ADD_TO_T(ch);
                 }
+                else
+                    ADD_TO_T(ch);
             }
         }
     }

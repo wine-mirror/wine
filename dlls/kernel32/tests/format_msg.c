@@ -789,6 +789,56 @@ static void test_message_ignore_inserts(void)
                          sizeof(out)/sizeof(CHAR), NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
     ok(!strcmp("\r\n\r\t", out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", out);
+
+    /* CRLF characters are processed normally. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "hi\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("hi\r\n", out), "Expected output string \"hi\\r\\n\", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "hi\r\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("hi\r\n", out), "Expected output string \"hi\\r\\n\", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "\r", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 2, "Expected FormatMessageA to return 2, got %d\n", ret);
+    ok(!strcmp("\r\n", out), "Expected output string \"\\r\\n\", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "\r\r\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageA to return 4, got %d\n", ret);
+    ok(!strcmp("\r\n\r\n", out), "Expected output string \"\\r\\n\\r\\n\", got %s\n", out);
+
+    /* The width parameter is handled the same also. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(!strcmp("hi ", out) ||
+       broken(!strcmp("hi\r\n", out)), /* Win9x */
+       "Expected output string \"hi \", got %s\n", out);
+    ok(ret == 3 ||
+       broken(ret == 4), /* Win9x */
+       "Expected FormatMessageA to return 3, got %d\n", ret);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\r\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 3, "Expected FormatMessageA to return 3, got %d\n", ret);
+    ok(!strcmp("hi ", out), "Expected output string \"hi \", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, "\r", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 1, "Expected FormatMessageA to return 1, got %d\n", ret);
+    ok(!strcmp(" ", out), "Expected output string \" \", got %s\n", out);
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, "\r\r\n", 0, 0, out,
+                         sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 2, "Expected FormatMessageA to return 2, got %d\n", ret);
+    ok(!strcmp("  ", out), "Expected output string \"  \", got %s\n", out);
 }
 
 static void test_message_ignore_inserts_wide(void)
@@ -801,8 +851,18 @@ static void test_message_ignore_inserts_wide(void)
     static const WCHAR fmt_t12oos99[] = {'t','e','s','t','%','1','%','2','!','*','.','*','s','!','%','9','9',0};
     static const WCHAR fmt_pctspacedot[] = {'%','%','%',' ','%','.','%','!',0};
     static const WCHAR fmt_nrt[] = {'%','n','%','r','%','t',0};
+    static const WCHAR fmt_hi_lf[]   = {'h','i','\n',0};
+    static const WCHAR fmt_hi_crlf[] = {'h','i','\r','\n',0};
+    static const WCHAR fmt_cr[]      = {'\r',0};
+    static const WCHAR fmt_crcrlf[]  = {'\r','\r','\n',0};
 
     static const WCHAR s_nrt[] = {'\r','\n','\r','\t',0};
+    static const WCHAR s_hi_crlf[] = {'h','i','\r','\n',0};
+    static const WCHAR s_crlf[] = {'\r','\n',0};
+    static const WCHAR s_crlfcrlf[] = {'\r','\n','\r','\n',0};
+    static const WCHAR s_hi_sp[] = {'h','i',' ',0};
+    static const WCHAR s_sp[] = {' ',0};
+    static const WCHAR s_2sp[] = {' ',' ',0};
 
     DWORD ret;
     WCHAR out[256];
@@ -847,6 +907,52 @@ static void test_message_ignore_inserts_wide(void)
                          sizeof(out)/sizeof(WCHAR), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
     ok(!lstrcmpW(s_nrt, out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", wine_dbgstr_w(out));
+
+    /* CRLF characters are processed normally. */
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_hi_lf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(s_hi_crlf, out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_hi_crlf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(s_hi_crlf, out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_cr, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 2, "Expected FormatMessageW to return 2, got %d\n", ret);
+    ok(!lstrcmpW(s_crlf, out), "Expected output string \"\\r\\n\", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_crcrlf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
+    ok(!lstrcmpW(s_crlfcrlf, out), "Expected output string \"\\r\\n\\r\\n\", got %s\n", wine_dbgstr_w(out));
+
+    /* The width parameter is handled the same also. */
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_lf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 3, "Expected FormatMessageW to return 3, got %d\n", ret);
+    ok(!lstrcmpW(s_hi_sp, out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_crlf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 3, "Expected FormatMessageW to return 3, got %d\n", ret);
+    ok(!lstrcmpW(s_hi_sp, out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_cr, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 1, "Expected FormatMessageW to return 1, got %d\n", ret);
+    ok(!lstrcmpW(s_sp, out), "Expected output string \" \", got %s\n", wine_dbgstr_w(out));
+
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_crcrlf, 0, 0, out,
+                         sizeof(out)/sizeof(WCHAR), NULL);
+    ok(ret == 2, "Expected FormatMessageW to return 2, got %d\n", ret);
+    ok(!lstrcmpW(s_2sp, out), "Expected output string \"  \", got %s\n", wine_dbgstr_w(out));
 }
 
 static void test_message_insufficient_buffer(void)
