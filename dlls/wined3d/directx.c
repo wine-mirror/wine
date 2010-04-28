@@ -3298,35 +3298,8 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
 
 static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-
-    /* Check for supported sRGB formats (Texture loading and framebuffer) */
-    if (!gl_info->supported[EXT_TEXTURE_SRGB])
-    {
-        TRACE_(d3d_caps)("[FAILED] GL_EXT_texture_sRGB not supported\n");
-        return FALSE;
-    }
-
-    switch (format_desc->format)
-    {
-        case WINED3DFMT_B8G8R8A8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-        case WINED3DFMT_L8_UNORM:
-        case WINED3DFMT_L8A8_UNORM:
-        case WINED3DFMT_DXT1:
-        case WINED3DFMT_DXT2:
-        case WINED3DFMT_DXT3:
-        case WINED3DFMT_DXT4:
-        case WINED3DFMT_DXT5:
-            TRACE_(d3d_caps)("[OK]\n");
-            return TRUE;
-
-        default:
-            TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(format_desc->format));
-            return FALSE;
-    }
-    return FALSE;
+    return adapter->gl_info.supported[EXT_TEXTURE_SRGB]
+            && (format_desc->Flags & WINED3DFMT_FLAG_SRGB_READ);
 }
 
 static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
