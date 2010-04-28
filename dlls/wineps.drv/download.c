@@ -276,8 +276,11 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     physDev->font.size.yx = ps_round(ppem * xform.eM21);
     physDev->font.size.yy = ps_round(ppem * xform.eM22);
 
-    if(GetMapMode(physDev->hdc) == MM_TEXT)
+    switch(GetMapMode(physDev->hdc))
     {
+    case MM_TEXT:
+    case MM_ISOTROPIC:
+    case MM_ANISOTROPIC:
         physDev->font.size.yx *= -1;
         physDev->font.size.yy *= -1;
     }
