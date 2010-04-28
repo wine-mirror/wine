@@ -383,7 +383,8 @@ static void test_message_from_string_wide(void)
     ok(r==11,"failed: r=%d\n",r);
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou,
               0, 0, out, sizeof(out)/sizeof(WCHAR), 5, 3, 1, 6, 4, 2 );
-    ok(!lstrcmpW( s_sp001sp002, out) || broken(!lstrcmpW(s_sp001004, out)),
+    ok(!lstrcmpW( s_sp001sp002, out) ||
+       broken(!lstrcmpW(s_sp001004, out)), /* NT4/Win2k */
        "failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==12,"failed: r=%d\n",r);
     /* args are not counted the same way with an argument array */
@@ -404,8 +405,8 @@ static void test_message_from_string_wide(void)
     /* line feed */
     r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_lf, 0,
         0, out, sizeof(out)/sizeof(WCHAR));
-    ok(!lstrcmpW(s_hi_sp, out) || !lstrcmpW(s_hi_crlf, out), "failed out=%s\n", wine_dbgstr_w(out));
-    ok(r==3 || r==4,"failed: r=%d\n", r);
+    ok(!lstrcmpW(s_hi_sp, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(r==3,"failed: r=%d\n", r);
 
     /* carriage return line feed */
     r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_crlf, 0,
@@ -691,7 +692,8 @@ static void test_message_from_string(void)
                  0, 0, out, sizeof(out), 5, 3, 1, 6, 4, 2 );
         /* older Win versions marked as broken even though this is arguably the correct behavior */
         /* but the new (brain-damaged) behavior is specified on MSDN */
-        ok(!strcmp( "  001,  0002", out) || broken(!strcmp("  001,000004", out)),
+        ok(!strcmp( "  001,  0002", out) ||
+           broken(!strcmp("  001,000004", out)), /* NT4/Win2k */
            "failed out=[%s]\n",out);
         ok(r==12,"failed: r=%d\n",r);
         /* args are not counted the same way with an argument array */
@@ -713,8 +715,12 @@ static void test_message_from_string(void)
     /* line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\n", 0,
         0, out, sizeof(out)/sizeof(CHAR));
-    ok(!strcmp("hi ", out) || !strcmp("hi\r\n", out),"failed out=[%s]\n",out);
-    ok(r==3 || r==4,"failed: r=%d\n",r);
+    ok(!strcmp("hi ", out) ||
+       broken(!strcmp("hi\r\n", out)), /* Win9x */
+       "failed out=[%s]\n",out);
+    ok(r==3 ||
+       broken(r==4), /* Win9x */
+       "failed: r=%d\n",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\r\n", 0,
