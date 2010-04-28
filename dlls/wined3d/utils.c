@@ -619,7 +619,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_R32G32B32A32_FLOAT,     GL_RGBA32F_ARB,                   GL_RGBA32F_ARB,                         0,
             GL_RGBA,                    GL_FLOAT,                         0,
-            WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_VTF,
             ARB_TEXTURE_FLOAT,          NULL},
     /* Float */
     {WINED3DFMT_R16_FLOAT,              GL_RGB16F_ARB,                    GL_RGB16F_ARB,                          0,

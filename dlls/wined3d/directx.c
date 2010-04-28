@@ -3636,30 +3636,8 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
 static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter,
         const struct wined3d_format_desc *format_desc)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-
-    if (!gl_info->limits.vertex_samplers)
-    {
-        TRACE_(d3d_caps)("[FAILED]\n");
-        return FALSE;
-    }
-
-    switch (format_desc->format)
-    {
-        case WINED3DFMT_R32G32B32A32_FLOAT:
-            if (!gl_info->supported[ARB_TEXTURE_FLOAT])
-            {
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return FALSE;
-            }
-            TRACE_(d3d_caps)("[OK]\n");
-            return TRUE;
-
-        default:
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return FALSE;
-    }
-    return FALSE;
+    return adapter->gl_info.limits.vertex_samplers
+            && (format_desc->Flags & WINED3DFMT_FLAG_VTF);
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
