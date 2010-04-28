@@ -570,8 +570,8 @@
 @ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
 @ cdecl _wcsrev(wstr) msvcrt._wcsrev
 @ cdecl _wcsset(wstr long) msvcrt._wcsset
-@ stub _wcstoi64
-@ stub _wcstoui64
+@ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
+@ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ cdecl _wctime(ptr) msvcrt._wctime
 @ cdecl _wctime64(ptr) msvcrt._wctime64
@@ -634,7 +634,7 @@
 @ cdecl _wsystem(wstr) msvcrt._wsystem
 @ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
 @ stub _wtmpnam
-@ stub _wtof
+@ cdecl _wtof(wstr) msvcrt._wtof
 @ cdecl _wtoi(wstr) msvcrt._wtoi
 @ cdecl _wtoi64(wstr) msvcrt._wtoi64
 @ cdecl _wtol(wstr) msvcrt._wtol
