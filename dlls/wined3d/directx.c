@@ -3204,28 +3204,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
 {
-    switch(format_desc->format)
-    {
-        case WINED3DFMT_R8G8_SNORM:
-        case WINED3DFMT_R16G16_SNORM:
-        case WINED3DFMT_R5G5_SNORM_L6_UNORM:
-        case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
-        case WINED3DFMT_R8G8B8A8_SNORM:
-            /* Ask the fixed function pipeline implementation if it can deal
-             * with the conversion. If we've got a GL extension giving native
-             * support this will be an identity conversion. */
-            if (adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup))
-            {
-                TRACE_(d3d_caps)("[OK]\n");
-                return TRUE;
-            }
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return FALSE;
-
-        default:
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return FALSE;
-    }
+    /* Ask the fixed function pipeline implementation if it can deal
+     * with the conversion. If we've got a GL extension giving native
+     * support this will be an identity conversion. */
+    return (format_desc->Flags & WINED3DFMT_FLAG_BUMPMAP)
+            && adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup);
 }
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */

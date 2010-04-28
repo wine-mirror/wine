@@ -2978,16 +2978,17 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN;
  */
 
 /* WineD3D pixel format flags */
-#define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING 0x1
-#define WINED3DFMT_FLAG_FILTERING                0x2
-#define WINED3DFMT_FLAG_DEPTH                    0x4
-#define WINED3DFMT_FLAG_STENCIL                  0x8
-#define WINED3DFMT_FLAG_RENDERTARGET             0x10
-#define WINED3DFMT_FLAG_FOURCC                   0x20
-#define WINED3DFMT_FLAG_FBO_ATTACHABLE           0x40
-#define WINED3DFMT_FLAG_COMPRESSED               0x80
-#define WINED3DFMT_FLAG_GETDC                    0x100
-#define WINED3DFMT_FLAG_FLOAT                    0x200
+#define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING    0x00000001
+#define WINED3DFMT_FLAG_FILTERING                   0x00000002
+#define WINED3DFMT_FLAG_DEPTH                       0x00000004
+#define WINED3DFMT_FLAG_STENCIL                     0x00000008
+#define WINED3DFMT_FLAG_RENDERTARGET                0x00000010
+#define WINED3DFMT_FLAG_FOURCC                      0x00000020
+#define WINED3DFMT_FLAG_FBO_ATTACHABLE              0x00000040
+#define WINED3DFMT_FLAG_COMPRESSED                  0x00000080
+#define WINED3DFMT_FLAG_GETDC                       0x00000100
+#define WINED3DFMT_FLAG_FLOAT                       0x00000200
+#define WINED3DFMT_FLAG_BUMPMAP                     0x00000400
 
 struct wined3d_format_desc
 {
