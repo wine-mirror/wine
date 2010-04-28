@@ -3308,7 +3308,7 @@ static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
      * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
-    if ((format_desc->format == WINED3DFMT_B8G8R8X8_UNORM) || (format_desc->format == WINED3DFMT_B8G8R8A8_UNORM))
+    if (format_desc->Flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
         int vs_selected_mode;
         int ps_selected_mode;
