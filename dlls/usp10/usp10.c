@@ -534,6 +534,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     int   cnt = 0, index = 0;
     int   New_Script = SCRIPT_UNDEFINED;
     WORD  *levels = NULL;
+    WORD  baselevel = 0;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -549,6 +550,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             return E_OUTOFMEMORY;
 
         BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels);
+        baselevel = levels[0];
         for (i = 0; i < cInChars; i++)
             if (levels[i]!=levels[0])
                 break;
@@ -597,7 +599,12 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         pItems[index].a.fRTL = 1;
         pItems[index].a.fLayoutRTL = 1;
     }
-
+    else
+    {
+        pItems[index].a.s.uBidiLevel = baselevel;
+        pItems[index].a.fLayoutRTL = odd(baselevel);
+        pItems[index].a.fRTL = odd(baselevel);
+    }
 
     TRACE("New_Level=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
           levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript, index, cnt,
@@ -660,6 +667,13 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                 pItems[index].a.fRTL = 1;
                 pItems[index].a.fLayoutRTL = 1;
             }
+            else
+            {
+                pItems[index].a.s.uBidiLevel = baselevel;
+                pItems[index].a.fLayoutRTL = odd(baselevel);
+                pItems[index].a.fRTL = odd(baselevel);
+            }
+
             pItems[index].a.eScript = New_Script;
 
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);

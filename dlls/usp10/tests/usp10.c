@@ -82,7 +82,7 @@ static void test_ScriptItemize( void )
 {
     static const WCHAR test1[] = {'t', 'e', 's', 't',0};
     static const itemTest t11[2] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},4,0,0,0}};
-    static const itemTest t12[2] = {{{0,0,0,1},0,0,0,2},{{0,0,0,0},4,0,0,0}};
+    static const itemTest t12[2] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},4,0,0,0}};
 
     /* Arabic, English*/
     static const WCHAR test2[] = {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0};
@@ -98,7 +98,7 @@ static void test_ScriptItemize( void )
  0x0e2d,0x0e22,0x0e39,0x0e48,0x0e17,0x0e35,0x0e48,0x0e19,0x0e31,0x0e48,0x0e19,0};
 
     static const itemTest t31[2] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},41,0,0,0}};
-    static const itemTest t32[2] = {{{0,0,0,1},0,0,0,2},{{0,0,0,0},41,0,0,0}};
+    static const itemTest t32[2] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},41,0,0,0}};
 
     static const WCHAR test4[]  = {'1','2','3','-','5','2',' ','i','s',' ','7','1','.',0};
 
@@ -116,7 +116,7 @@ static void test_ScriptItemize( void )
     /* Hebrew */
     static const WCHAR test6[]  = {0x05e9, 0x05dc, 0x05d5, 0x05dd, '.',0};
     static const itemTest t61[3] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,0},{{0,0,0,0},5,0,0,0}};
-    static const itemTest t62[3] = {{{0,0,0,0},0,1,1,1},{{0,1,1,1},4,1,1,1},{{0,0,0,0},5,0,0,0}};
+    static const itemTest t62[3] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,1,1,1},{{0,0,0,0},5,0,0,0}};
     static const WCHAR test7[]  = {'p','a','r','t',' ','o','n','e',' ',0x05d7, 0x05dc, 0x05e7, ' ', 0x05e9, 0x05ea, 0x05d9, 0x05d9, 0x05dd, ' ','p','a','r','t',' ','t','h','r','e','e', 0};
     static const itemTest t71[4] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},9,1,1,1},{{0,0,0,0},19,0,0,0},{{0,0,0,0},29,0,0,0}};
     static const itemTest t72[4] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},9,1,1,1},{{0,0,0,0},18,0,0,0},{{0,0,0,0},29,0,0,0}};
@@ -127,7 +127,7 @@ static void test_ScriptItemize( void )
     /* Syriac  (Like Arabic )*/
     static const WCHAR test9[] = {0x0710, 0x0712, 0x0712, 0x0714, '.',0};
     static const itemTest t91[3] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,0},{{0,0,0,0},5,0,0,0}};
-    static const itemTest t92[3] = {{{0,0,0,0},0,1,1,1},{{0,1,1,1},4,1,1,1},{{0,0,0,0},5,0,0,0}};
+    static const itemTest t92[3] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,1,1,1},{{0,0,0,0},5,0,0,0}};
 
     static const WCHAR test10[] = {0x0717, 0x0718, 0x071a, 0x071b,0};
     static const itemTest t101[2] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,0}};
