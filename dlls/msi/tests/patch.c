@@ -789,6 +789,175 @@ static void test_MsiOpenDatabase( void )
     DeleteFileA( mspfile );
 }
 
+static UINT find_entry( MSIHANDLE hdb, const char *table, const char *entry )
+{
+    static char fmt[] = "SELECT * FROM `%s` WHERE `Name` = '%s'";
+    char query[0x100];
+    UINT r;
+    MSIHANDLE hview, hrec;
+
+    sprintf( query, fmt, table, entry );
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+    MsiCloseHandle( hrec );
+    return r;
+}
+
+static void test_system_tables( void )
+{
+    UINT r;
+    const char *query;
+    MSIHANDLE hproduct, hdb, hview, hrec;
+
+    if (!pMsiApplyPatchA)
+    {
+        win_skip("MsiApplyPatchA is not available\n");
+        return;
+    }
+
+    CreateDirectoryA( "msitest", NULL );
+    create_file( "msitest\\patch.txt", 1000 );
+
+    create_database( msifile, tables, sizeof(tables) / sizeof(struct msi_table) );
+    create_patch( mspfile );
+
+    MsiSetInternalUI( INSTALLUILEVEL_NONE, NULL );
+
+    r = MsiInstallProductA( msifile, NULL );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiOpenProductA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}", &hproduct );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    hdb = MsiGetActiveDatabase( hproduct );
+    ok( hdb, "failed to get database handle\n" );
+
+    r = find_entry( hdb, "_Streams", "\5SummaryInformation" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    query = "SELECT * FROM `_Storages`";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Directory" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "File" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Component" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Feature" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "FeatureComponents" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Property" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "InstallExecuteSequence" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Media" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "_Property" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    MsiCloseHandle( hdb );
+    MsiCloseHandle( hproduct );
+
+    r = MsiApplyPatchA( mspfile, NULL, INSTALLTYPE_DEFAULT, NULL );
+    ok( r == ERROR_SUCCESS || broken( r == ERROR_PATCH_PACKAGE_INVALID ), /* version 2.0 */
+        "expected ERROR_SUCCESS, got %u\n", r );
+
+    if (r == ERROR_PATCH_PACKAGE_INVALID)
+    {
+        win_skip("Windows Installer < 3.0 detected\n");
+        return;
+    }
+
+    r = MsiOpenProductA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}", &hproduct );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    hdb = MsiGetActiveDatabase( hproduct );
+    ok( hdb, "failed to get database handle\n" );
+
+    r = find_entry( hdb, "_Streams", "\5SummaryInformation" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    query = "SELECT * FROM `_Storages`";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Directory" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "File" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Component" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Feature" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "FeatureComponents" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Property" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "InstallExecuteSequence" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Media" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "_Property" );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "MsiPatchHeaders" );
+    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "Patch" );
+    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    r = find_entry( hdb, "_Tables", "PatchPackage" );
+    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    MsiCloseHandle( hdb );
+    MsiCloseHandle( hproduct );
+
+    r = MsiInstallProductA( msifile, "REMOVE=ALL" );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    DeleteFileA( msifile );
+    DeleteFileA( mspfile );
+    RemoveDirectoryA( "msitest" );
+}
+
 START_TEST(patch)
 {
     DWORD len;
@@ -810,6 +979,7 @@ START_TEST(patch)
 
     test_simple_patch();
     test_MsiOpenDatabase();
+    test_system_tables();
 
     SetCurrentDirectoryA( prev_path );
 }
