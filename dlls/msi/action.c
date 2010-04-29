@@ -541,12 +541,7 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 
     TRACE("%p %s\n", package, debugstr_w( file ) );
 
-    /* FIXME:
-     *  We probably want to make sure we only open a patch collection here.
-     *  Patch collections (.msp) and databases (.msi) have different GUIDs
-     *  but currently MSI_OpenDatabaseW will accept both.
-     */
-    r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &patch_db );
+    r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &patch_db );
     if ( r != ERROR_SUCCESS )
     {
         ERR("failed to open patch collection %s\n", debugstr_w( file ) );
@@ -565,7 +560,7 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 
     /*
      * There might be a CAB file in the patch package,
-     * so append it to the list of storage to search for streams.
+     * so append it to the list of storages to search for streams.
      */
     append_storage_to_db( package->db, patch_db->storage );
 
