@@ -170,8 +170,12 @@ static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR
 static HRESULT WINAPI HTMLSelectElement_get_options(IHTMLSelectElement *iface, IDispatch **p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = (IDispatch*)HTMLSELECT(This);
+    IDispatch_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_onchange(IHTMLSelectElement *iface, VARIANT v)

@@ -508,7 +508,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     }
 }
 
-#define test_get_dispid(u,id) _test_disp(__LINE__,u,id)
+#define test_get_dispid(u,id) _test_get_dispid(__LINE__,u,id)
 static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
 {
     IDispatchEx *dispex;
@@ -2776,6 +2776,9 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, const char *id)
 
 static void test_select_elem(IHTMLSelectElement *select)
 {
+    IDispatch *disp;
+    HRESULT hres;
+
     test_select_type(select, "select-one");
     test_select_length(select, 2);
     test_select_selidx(select, 0);
@@ -2787,6 +2790,13 @@ static void test_select_elem(IHTMLSelectElement *select)
     test_select_get_disabled(select, VARIANT_FALSE);
     test_select_set_disabled(select, VARIANT_TRUE);
     test_select_set_disabled(select, VARIANT_FALSE);
+
+    disp = NULL;
+    hres = IHTMLSelectElement_get_options(select, &disp);
+    ok(hres == S_OK, "get_options failed: %08x\n", hres);
+    ok(disp != NULL, "options == NULL\n");
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)select), "disp != select\n");
+    IDispatch_Release(disp);
 }
 
 static void test_create_option_elem(IHTMLDocument2 *doc)
