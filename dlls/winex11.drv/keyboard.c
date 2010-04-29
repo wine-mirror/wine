@@ -1107,6 +1107,14 @@ static const WORD xfree86_vendor_key_vkey[256] =
     0, 0, 0, 0, 0, 0, 0, 0                                      /* 1008FFF8 */
 };
 
+static inline KeySym keycode_to_keysym( Display *display, KeyCode keycode, int index )
+{
+#ifdef HAVE_XKB
+    if (use_xkb) return XkbKeycodeToKeysym(display, keycode, 0, index);
+#endif
+    return XKeycodeToKeysym(display, keycode, index);
+}
+
 /* Returns the Windows virtual key code associated with the X event <e> */
 /* x11 lock must be held */
 static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
@@ -1505,7 +1513,7 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
   for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
       /* get data for keycode from X server */
       for (i = 0; i < syms; i++) {
-        if (!(keysym = XKeycodeToKeysym (display, keyc, i))) continue;
+        if (!(keysym = keycode_to_keysym (display, keyc, i))) continue;
 	/* Allow both one-byte and two-byte national keysyms */
 	if ((keysym < 0x8000) && (keysym != ' '))
         {
@@ -1717,12 +1725,12 @@ void X11DRV_InitKeyboard( Display *display )
 		int k;
 
 		for (k = 0; k < keysyms_per_keycode; k += 1)
-                    if (XKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
+                    if (keycode_to_keysym(display, *kcp, k) == XK_Num_Lock)
 		    {
                         NumLockMask = 1 << i;
                         TRACE_(key)("NumLockMask is %x\n", NumLockMask);
 		    }
-                    else if (XKeycodeToKeysym(display, *kcp, k) == XK_Scroll_Lock)
+                    else if (keycode_to_keysym(display, *kcp, k) == XK_Scroll_Lock)
 		    {
                         ScrollLockMask = 1 << i;
                         TRACE_(key)("ScrollLockMask is %x\n", ScrollLockMask);
@@ -1774,7 +1782,7 @@ void X11DRV_InitKeyboard( Display *display )
 	      /* we seem to need to search the layout-dependent scancodes */
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
-		keysym = XKeycodeToKeysym(display, keyc, i);
+		keysym = keycode_to_keysym(display, keyc, i);
 		if ((keysym<0x8000) && (keysym!=' '))
                 {
 #ifdef HAVE_XKB
@@ -1926,7 +1934,7 @@ void X11DRV_InitKeyboard( Display *display )
     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
       if (keyc2vkey[keyc]&&!keyc2scan[keyc]) {
 	const char *ksname;
-	keysym = XKeycodeToKeysym(display, keyc, 0);
+	keysym = keycode_to_keysym(display, keyc, 0);
 	ksname = XKeysymToString(keysym);
 	if (!ksname) ksname = "NoSymbol";
 
@@ -2130,7 +2138,7 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
     wine_tsx11_lock();
     for (i = 0; i < 4; i++) /* find shift state */
     {
-        if (XKeycodeToKeysym(display, keycode, i) == keysym)
+        if (keycode_to_keysym(display, keycode, i) == keysym)
         {
             index = i;
             break;
@@ -2384,7 +2392,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
   {
       wine_tsx11_lock();
       keyc = (KeyCode) keyi;
-      keys = XKeycodeToKeysym(display, keyc, 0);
+      keys = keycode_to_keysym(display, keyc, 0);
       name = XKeysymToString(keys);
       wine_tsx11_unlock();
       TRACE("found scan=%04x keyc=%u keysym=%04x string=%s\n",
