@@ -2007,7 +2007,7 @@ static void test_property_table(void)
     const char *query;
     UINT r;
     MSIHANDLE hpkg, hdb, hrec;
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH], package[10];
     DWORD sz;
     BOOL found;
 
@@ -2050,15 +2050,14 @@ static void test_property_table(void)
     r = run_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to add column\n");
 
-    hpkg = package_from_db(hdb);
-    todo_wine
-    {
-        ok(!hpkg, "package should not be created\n");
-    }
+    sprintf(package, "#%i", hdb);
+    r = MsiOpenPackage(package, &hpkg);
+    todo_wine ok(r != ERROR_SUCCESS, "MsiOpenPackage succeeded\n");
+    if (r == ERROR_SUCCESS)
+        MsiCloseHandle(hpkg);
 
-    MsiCloseHandle(hdb);
-    MsiCloseHandle(hpkg);
-    DeleteFile(msifile);
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed %u\n", r);
 
     hdb = create_package_db();
     ok (hdb, "failed to create package database\n");
