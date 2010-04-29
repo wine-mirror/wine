@@ -4574,13 +4574,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->MaxTextureBlendStages            = fragment_caps.MaxTextureBlendStages;
     pCaps->MaxSimultaneousTextures          = fragment_caps.MaxSimultaneousTextures;
 
-    pCaps->VS20Caps                         = shader_caps.VS20Caps;
-    pCaps->MaxVShaderInstructionsExecuted   = shader_caps.MaxVShaderInstructionsExecuted;
-    pCaps->MaxVertexShader30InstructionSlots= shader_caps.MaxVertexShader30InstructionSlots;
-    pCaps->PS20Caps                         = shader_caps.PS20Caps;
-    pCaps->MaxPShaderInstructionsExecuted   = shader_caps.MaxPShaderInstructionsExecuted;
-    pCaps->MaxPixelShader30InstructionSlots = shader_caps.MaxPixelShader30InstructionSlots;
-
     /* The following caps are shader specific, but they are things we cannot detect, or which
      * are the same among all shader models. So to avoid code duplication set the shader version
      * specific, but otherwise constant caps here

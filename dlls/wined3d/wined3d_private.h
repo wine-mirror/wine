@@ -645,14 +645,6 @@ struct shader_caps {
     float               PixelShader1xMaxValue;
     DWORD               MaxPixelShaderConst;
 
-    WINED3DVSHADERCAPS2_0   VS20Caps;
-    WINED3DPSHADERCAPS2_0   PS20Caps;
-
-    DWORD               MaxVShaderInstructionsExecuted;
-    DWORD               MaxPShaderInstructionsExecuted;
-    DWORD               MaxVertexShader30InstructionSlots;
-    DWORD               MaxPixelShader30InstructionSlots;
-
     BOOL                VSClipping;
 };
 
