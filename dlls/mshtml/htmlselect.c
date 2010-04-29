@@ -504,6 +504,80 @@ static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BO
     return IHTMLSelectElement_get_disabled(HTMLSELECT(This), p);
 }
 
+#define DISPID_OPTIONCOL_0 MSHTML_DISPID_CUSTOM_MIN
+
+static HRESULT HTMLSelectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    const WCHAR *ptr;
+    DWORD idx = 0;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++) {
+        idx = idx*10 + (*ptr-'0');
+        if(idx > MSHTML_CUSTOM_DISPID_CNT) {
+            WARN("too big idx\n");
+            return DISP_E_UNKNOWNNAME;
+        }
+    }
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = DISPID_OPTIONCOL_0 + idx;
+    return S_OK;
+}
+
+static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        nsIDOMHTMLOptionsCollection *nscol;
+        nsIDOMNode *nsnode;
+        nsresult nsres;
+
+        nsres = nsIDOMHTMLSelectElement_GetOptions(This->nsselect, &nscol);
+        if(NS_FAILED(nsres)) {
+            ERR("GetOptions failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        nsres = nsIDOMHTMLOptionsCollection_Item(nscol, id-DISPID_OPTIONCOL_0, &nsnode);
+        nsIDOMHTMLOptionsCollection_Release(nscol);
+        if(NS_FAILED(nsres)) {
+            ERR("Item failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        if(nsnode) {
+            HTMLDOMNode *node;
+
+            node = get_node(This->element.node.doc, nsnode, TRUE);
+            nsIDOMNode_Release(nsnode);
+            if(!node) {
+                ERR("Could not find node\n");
+                return E_FAIL;
+            }
+
+            IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = (IDispatch*)HTMLDOMNODE(node);
+        }else {
+            V_VT(res) = VT_NULL;
+        }
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 #undef HTMLSELECT_NODE_THIS
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
@@ -512,7 +586,11 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     NULL,
     NULL,
     HTMLSelectElementImpl_put_disabled,
-    HTMLSelectElementImpl_get_disabled
+    HTMLSelectElementImpl_get_disabled,
+    NULL,
+    NULL,
+    HTMLSelectElement_get_dispid,
+    HTMLSelectElement_invoke
 };
 
 static const tid_t HTMLSelectElement_tids[] = {

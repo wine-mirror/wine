@@ -144,6 +144,7 @@ typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
 #define MSHTML_DISPID_CUSTOM_MIN 0x60000000
 #define MSHTML_DISPID_CUSTOM_MAX 0x6fffffff
+#define MSHTML_CUSTOM_DISPID_CNT (MSHTML_DISPID_CUSTOM_MAX-MSHTML_DISPID_CUSTOM_MIN)
 
 typedef struct {
     HRESULT (*value)(IUnknown*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
