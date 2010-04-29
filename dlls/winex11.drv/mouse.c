@@ -86,6 +86,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
 };
 
 POINT cursor_pos;
+static HWND cursor_window;
 static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
 static XContext cursor_context;
@@ -206,6 +207,28 @@ Cursor get_x11_cursor( HCURSOR handle )
 }
 
 /***********************************************************************
+ *		set_window_cursor
+ */
+void set_window_cursor( HWND hwnd, HCURSOR handle )
+{
+    struct x11drv_win_data *data;
+    Cursor cursor;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    wine_tsx11_lock();
+    if ((cursor = get_x11_cursor( handle )))
+    {
+        TRACE( "%p xid %lx\n", handle, cursor );
+        XDefineCursor( gdi_display, data->whole_window, cursor );
+        /* Make the change take effect immediately */
+        XFlush( gdi_display );
+        data->cursor = handle;
+    }
+    wine_tsx11_unlock();
+}
+
+/***********************************************************************
  *		update_mouse_state
  *
  * Update the various window states on a mouse event.
@@ -216,7 +239,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 
     get_coords( hwnd, window, x, y, pt );
 
-    data->cursor_window = hwnd;
+    cursor_window = hwnd;
 
     /* update the wine server Z-order */
 
@@ -1012,22 +1035,7 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
  */
 void CDECL X11DRV_SetCursor( HCURSOR handle )
 {
-    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
-    struct x11drv_win_data *data;
-    Cursor cursor;
-
-    if (!(data = X11DRV_get_win_data( thread_data->cursor_window ))) return;
-
-    wine_tsx11_lock();
-    if ((cursor = get_x11_cursor( handle )))
-    {
-        TRACE( "%p xid %lx\n", handle, cursor );
-        XDefineCursor( gdi_display, data->whole_window, cursor );
-        /* Make the change take effect immediately */
-        XFlush( gdi_display );
-        data->cursor = handle;
-    }
-    wine_tsx11_unlock();
+    if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
 }
 
 /***********************************************************************

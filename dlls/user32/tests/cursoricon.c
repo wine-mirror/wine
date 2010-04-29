@@ -1639,13 +1639,12 @@ static void test_DestroyCursor(void)
          * ERROR_INVALID_CURSOR_HANDLE.  This happens because we called
          * DestroyCursor() 2+ times after calling SetCursor().  The calls to
          * GetCursor() and SetCursor(NULL) in between make no difference. */
+        SetLastError(0xdeadbeef);
         ret = DestroyCursor(cursor);
-        todo_wine {
-            ok(!ret, "DestroyCursor succeeded.\n");
-            error = GetLastError();
-            ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
-               "Last error: 0x%08x\n", error);
-        }
+        todo_wine ok(!ret, "DestroyCursor succeeded.\n");
+        error = GetLastError();
+        ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
+           "Last error: 0x%08x\n", error);
     }
 
     DeleteObject(cursorInfo.hbmMask);
@@ -1664,9 +1663,7 @@ static void test_DestroyCursor(void)
     SetLastError(0xdeadbeef);
     SetCursor(cursor);
     error = GetLastError();
-    todo_wine {
-        ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
-    }
+    ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
 
     /* Check if LoadCursor() returns the same handle with the same icon. */
     cursor2 = LoadCursor(NULL, IDC_ARROW);

@@ -546,7 +546,6 @@ struct x11drv_thread_data
 {
     Display *display;
     XEvent  *current_event;        /* event currently being processed */
-    HWND     cursor_window;        /* current window that contains the cursor */
     Window   grab_window;          /* window that currently grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
@@ -714,7 +713,8 @@ enum x11drv_window_messages
     WM_X11DRV_ACQUIRE_SELECTION = 0x80001000,
     WM_X11DRV_SET_WIN_FORMAT,
     WM_X11DRV_SET_WIN_REGION,
-    WM_X11DRV_RESIZE_DESKTOP
+    WM_X11DRV_RESIZE_DESKTOP,
+    WM_X11DRV_SET_CURSOR
 };
 
 /* _NET_WM_STATE properties that we keep track of */
@@ -782,6 +782,7 @@ extern void X11DRV_Clipboard_Cleanup(void);
 extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
 extern Cursor get_x11_cursor( HCURSOR handle );
+extern void set_window_cursor( HWND hwnd, HCURSOR handle );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
 extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,

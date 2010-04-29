@@ -2493,6 +2493,9 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_X11DRV_RESIZE_DESKTOP:
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
         return 0;
+    case WM_X11DRV_SET_CURSOR:
+        set_window_cursor( hwnd, (HCURSOR)lp );
+        return 0;
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
         return 0;
