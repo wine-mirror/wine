@@ -344,7 +344,7 @@ static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR extensio
 
 static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 {
-    LPCWSTR buffer;
+    LPCWSTR extension;
     MSIMIME *mt;
 
     /* fill in the data */
@@ -356,8 +356,9 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
     mt->ContentType = msi_dup_record_field( row, 1 ); 
     TRACE("loading mime %s\n", debugstr_w(mt->ContentType));
 
-    buffer = MSI_RecordGetString( row, 2 );
-    mt->Extension = load_given_extension( package, buffer );
+    extension = MSI_RecordGetString( row, 2 );
+    mt->Extension = load_given_extension( package, extension );
+    mt->suffix = strdupW( extension );
 
     mt->clsid = msi_dup_record_field( row, 3 );
     mt->Class = load_given_class( package, mt->clsid );
@@ -1467,7 +1468,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 1, mt->ContentType );
-        MSI_RecordSetStringW( uirow, 2, mt->Extension->Extension );
+        MSI_RecordSetStringW( uirow, 2, mt->suffix );
         ui_actiondata( package, szRegisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
@@ -1512,7 +1513,7 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 1, mime->ContentType );
-        MSI_RecordSetStringW( uirow, 2, mime->Extension->Extension );
+        MSI_RecordSetStringW( uirow, 2, mime->suffix );
         ui_actiondata( package, szUnregisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }

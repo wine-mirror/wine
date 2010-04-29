@@ -553,6 +553,7 @@ struct tagMSIMIME
     struct list entry;
     LPWSTR ContentType;  /* Primary Key */
     MSIEXTENSION *Extension;
+    LPWSTR suffix;
     LPWSTR clsid;
     MSICLASS *Class;
     /* not in the table, set during installation */

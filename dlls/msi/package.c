@@ -214,6 +214,7 @@ static void free_package_structures( MSIPACKAGE *package )
         MSIMIME *mt = LIST_ENTRY( item, MSIMIME, entry );
 
         list_remove( &mt->entry );
+        msi_free( mt->suffix );
         msi_free( mt->clsid );
         msi_free( mt->ContentType );
         msi_free( mt );
