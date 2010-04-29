@@ -57,7 +57,7 @@ typedef struct _stgmed_obj_t stgmed_obj_t;
 typedef struct {
     void (*release)(stgmed_obj_t*);
     HRESULT (*fill_stgmed)(stgmed_obj_t*,STGMEDIUM*);
-    void *(*get_result)(stgmed_obj_t*);
+    HRESULT (*get_result)(stgmed_obj_t*,DWORD,void**);
 } stgmed_obj_vtbl;
 
 struct _stgmed_obj_t {
@@ -637,12 +637,13 @@ static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
     return S_OK;
 }
 
-static void *stgmed_stream_get_result(stgmed_obj_t *obj)
+static HRESULT stgmed_stream_get_result(stgmed_obj_t *obj, DWORD bindf, void **result)
 {
     ProtocolStream *stream = (ProtocolStream*)obj;
 
     IStream_AddRef(STREAM(stream));
-    return STREAM(stream);
+    *result = STREAM(stream);
+    return S_OK;
 }
 
 static const stgmed_obj_vtbl stgmed_stream_vtbl = {
@@ -707,9 +708,9 @@ static HRESULT stgmed_file_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
     return S_OK;
 }
 
-static void *stgmed_file_get_result(stgmed_obj_t *obj)
+static HRESULT stgmed_file_get_result(stgmed_obj_t *obj, DWORD bindf, void **result)
 {
-    return NULL;
+    return bindf & BINDF_ASYNCHRONOUS ? MK_S_ASYNCHRONOUS : S_OK;
 }
 
 static const stgmed_obj_vtbl stgmed_file_vtbl = {
@@ -1530,12 +1531,14 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
         if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
             IInternetProtocol_UnlockRequest(binding->protocol);
 
-        *ppv = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj);
+        hres = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj, binding->bindf, ppv);
+    }else {
+        hres = MK_S_ASYNCHRONOUS;
     }
 
     IBinding_Release(BINDING(binding));
 
-    return *ppv ? S_OK : MK_S_ASYNCHRONOUS;
+    return hres;
 }
 
 HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)

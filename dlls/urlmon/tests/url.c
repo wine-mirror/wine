@@ -479,7 +479,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     BINDINFO bindinfo;
-    DWORD bindf, bscf = BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION;
+    DWORD bind_info, bscf = BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION;
     HRESULT hres;
 
     static const STGMEDIUM stgmed_zero = {0};
@@ -509,20 +509,21 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bind_info, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
 
     if(filedwl_api) {
-        ok(bindf == (BINDF_PULLDATA|BINDF_FROMURLMON|BINDF_NEEDFILE), "bindf=%08x\n", bindf);
+        ok(bind_info == (BINDF_PULLDATA|BINDF_FROMURLMON|BINDF_NEEDFILE), "bind_info=%08x\n", bind_info);
     }else if(tymed == TYMED_ISTREAM && is_urlmon_protocol(test_protocol)) {
-        ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
+        ok(bind_info == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON),
-           "bindf=%08x\n", bindf);
-    }else {
-        ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
+           "bind_info=%08x\n", bind_info);
+    }else if(bindf&BINDF_ASYNCHRONOUS) {
+        ok(bind_info == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON|BINDF_NEEDFILE),
-           "bindf=%08x\n", bindf);
-    }
+           "bind_info=%08x\n", bind_info);
+    }else
+        ok(bind_info == (BINDF_FROMURLMON|BINDF_NEEDFILE), "bind_info=%08x\n", bind_info);
 
     ok(bindinfo.cbSize == sizeof(bindinfo), "bindinfo.cbSize = %d\n", bindinfo.cbSize);
     ok(!bindinfo.szExtraInfo, "bindinfo.szExtraInfo = %p\n", bindinfo.szExtraInfo);
@@ -1283,7 +1284,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             todo_wine CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         else
             CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
-        if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
+        if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST))
             SetEvent(complete_event);
         break;
     case BINDSTATUS_CONNECTING:
@@ -1293,7 +1294,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             todo_wine CHECK_EXPECT(OnProgress_CONNECTING);
         else
             CHECK_EXPECT(OnProgress_CONNECTING);
-        if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
+        if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST))
             SetEvent(complete_event);
         break;
     case BINDSTATUS_REDIRECTING:
@@ -1303,7 +1304,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT(OnProgress_REDIRECTING);
         ok(!lstrcmpW(szStatusText, WINE_ABOUT_URL), "unexpected status text %s\n",
            wine_dbgstr_w(szStatusText));
-        if(!bind_to_object || iface == &objbsc)
+        if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+                && (!bind_to_object || iface == &objbsc))
             SetEvent(complete_event);
         break;
     case BINDSTATUS_SENDINGREQUEST:
@@ -1313,7 +1315,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT2(OnProgress_SENDINGREQUEST);
         else
             CHECK_EXPECT(OnProgress_SENDINGREQUEST);
-        if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
+        if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST))
             SetEvent(complete_event);
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -2353,7 +2355,10 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         return;
     }
 
-    if(((bindf & BINDF_ASYNCHRONOUS) && !data_available)
+    if(!(bindf & BINDF_ASYNCHRONOUS) && tymed == TYMED_FILE) {
+        ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
+        ok(unk == NULL, "unk != NULL\n");
+    }else if(((bindf & BINDF_ASYNCHRONOUS) && !data_available)
        || (tymed == TYMED_FILE && test_protocol == FILE_TEST)) {
         ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
         ok(unk == NULL, "istr should be NULL\n");
@@ -2906,11 +2911,17 @@ START_TEST(url)
         trace("synchronous http test...\n");
         test_BindToStorage(HTTP_TEST, 0, TYMED_ISTREAM);
 
+        trace("emulated synchronous http test (to file)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE, TYMED_FILE);
+
         trace("synchronous http test (to object)...\n");
         test_BindToObject(HTTP_TEST, 0);
 
         trace("synchronous file test...\n");
         test_BindToStorage(FILE_TEST, 0, TYMED_ISTREAM);
+
+        trace("emulated synchronous file test (to file)...\n");
+        test_BindToStorage(FILE_TEST, BINDTEST_EMULATE, TYMED_FILE);
 
         trace("synchronous file test (to object)...\n");
         test_BindToObject(FILE_TEST, 0);
