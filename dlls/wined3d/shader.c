@@ -1418,8 +1418,11 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
 {
     /* Set the shader caps to 0 for the none shader backend */
     caps->VertexShaderVersion = 0;
+    caps->MaxVertexShaderConst = 0;
     caps->PixelShaderVersion = 0;
     caps->PixelShader1xMaxValue = 0.0f;
+    caps->MaxPixelShaderConst = 0;
+    caps->VSClipping = FALSE;
 }
 
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)

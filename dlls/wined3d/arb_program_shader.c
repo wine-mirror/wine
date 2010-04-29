@@ -4667,11 +4667,6 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
     DWORD vs_consts = min(gl_info->limits.arb_vs_float_constants, gl_info->limits.arb_vs_native_constants);
     DWORD ps_consts = min(gl_info->limits.arb_ps_float_constants, gl_info->limits.arb_ps_native_constants);
 
-    /* We don't have an ARB fixed function pipeline yet, so let the none backend set its caps,
-     * then overwrite the shader specific ones
-     */
-    none_shader_backend.shader_get_caps(gl_info, pCaps);
-
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
         if (gl_info->supported[NV_VERTEX_PROGRAM3])
@@ -4691,6 +4686,11 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
             TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
         pCaps->MaxVertexShaderConst = vs_consts;
+    }
+    else
+    {
+        pCaps->VertexShaderVersion = 0;
+        pCaps->MaxVertexShaderConst = 0;
     }
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
@@ -4713,6 +4713,12 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         }
         pCaps->PixelShader1xMaxValue = 8.0f;
         pCaps->MaxPixelShaderConst = ps_consts;
+    }
+    else
+    {
+        pCaps->PixelShaderVersion = 0;
+        pCaps->PixelShader1xMaxValue = 0.0f;
+        pCaps->MaxPixelShaderConst = 0;
     }
 
     pCaps->VSClipping = use_nv_clip(gl_info);

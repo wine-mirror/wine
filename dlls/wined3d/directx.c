@@ -4542,7 +4542,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                                 WINED3DPTFILTERCAPS_MAGFLINEAR;
     pCaps->VertexTextureFilterCaps           = 0;
 
-    memset(&shader_caps, 0, sizeof(shader_caps));
     adapter->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
     adapter->fragment_pipe->get_caps(&adapter->gl_info, &fragment_caps);
 

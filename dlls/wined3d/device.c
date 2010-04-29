@@ -7086,7 +7086,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
     device->shader_backend = adapter->shader_backend;
 
-    memset(&shader_caps, 0, sizeof(shader_caps));
     device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
     device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
     device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
