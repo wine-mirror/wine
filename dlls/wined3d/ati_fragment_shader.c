@@ -1062,6 +1062,7 @@ static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
 
 static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
                            WINED3DTEXOPCAPS_SELECTARG2                  |
@@ -1104,8 +1105,6 @@ static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
      */
     caps->MaxTextureBlendStages   = 8;
     caps->MaxSimultaneousTextures = 6;
-
-    caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_TSSARGTEMP;
 }
 
 static HRESULT atifs_alloc(IWineD3DDevice *iface) {

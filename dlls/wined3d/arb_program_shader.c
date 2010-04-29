@@ -5332,6 +5332,7 @@ static void arbfp_free(IWineD3DDevice *iface) {
 
 static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
                            WINED3DTEXOPCAPS_SELECTARG2                  |
@@ -5362,8 +5363,6 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
 
     caps->MaxTextureBlendStages   = 8;
     caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
-
-    caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_TSSARGTEMP;
 }
 #undef GLINFO_LOCATION
 

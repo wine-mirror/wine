@@ -629,6 +629,15 @@ static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
 
 static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *pCaps)
 {
+    pCaps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
+
+    /* The caps below can be supported but aren't handled yet in utils.c
+     * 'd3dta_to_combiner_input', disable them until support is fixed */
+#if 0
+    if (gl_info->supported[NV_REGISTER_COMBINERS2])
+        pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
+#endif
+
     pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD                        |
                             WINED3DTEXOPCAPS_ADDSIGNED                  |
                             WINED3DTEXOPCAPS_ADDSIGNED2X                |
@@ -672,14 +681,6 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
 
     pCaps->MaxTextureBlendStages = min(MAX_TEXTURES, gl_info->limits.general_combiners);
     pCaps->MaxSimultaneousTextures = gl_info->limits.textures;
-
-    pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
-
-    /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
-#if 0
-    if (gl_info->supported[NV_REGISTER_COMBINERS2])
-    pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
-#endif
 }
 
 static HRESULT nvrc_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }

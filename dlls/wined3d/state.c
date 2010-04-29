@@ -5538,6 +5538,7 @@ static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
 
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *pCaps)
 {
+    pCaps->PrimitiveMiscCaps = 0;
     pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
                             WINED3DTEXOPCAPS_ADDSIGNED   |
                             WINED3DTEXOPCAPS_ADDSIGNED2X |

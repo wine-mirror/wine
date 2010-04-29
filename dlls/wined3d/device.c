@@ -7092,7 +7092,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
     device->vs_clipping = shader_caps.VSClipping;
 
-    memset(&ffp_caps, 0, sizeof(ffp_caps));
     fragment_pipeline = adapter->fragment_pipe;
     device->frag_pipe = fragment_pipeline;
     fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
