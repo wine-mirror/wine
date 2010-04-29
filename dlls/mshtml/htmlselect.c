@@ -364,8 +364,15 @@ static HRESULT WINAPI HTMLSelectElement_remove(IHTMLSelectElement *iface, LONG i
 static HRESULT WINAPI HTMLSelectElement_put_length(IHTMLSelectElement *iface, LONG v)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    nsres = nsIDOMHTMLSelectElement_SetLength(This->nsselect, v);
+    if(NS_FAILED(nsres))
+        ERR("SetLength failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get_length(IHTMLSelectElement *iface, LONG *p)
