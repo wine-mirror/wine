@@ -671,12 +671,23 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
     if (pshader)
     {
         max_constantsF = gl_info->limits.arb_ps_native_constants;
+        /* 24 is the minimum MAX_PROGRAM_ENV_PARAMETERS_ARB value. */
+        if (max_constantsF < 24)
+            max_constantsF = gl_info->limits.arb_ps_float_constants;
     }
     else
     {
+        max_constantsF = gl_info->limits.arb_vs_native_constants;
+        /* 96 is the minimum MAX_PROGRAM_ENV_PARAMETERS_ARB value.
+         * Also prevents max_constantsF from becoming less than 0 and
+         * wrapping . */
+        if (max_constantsF < 96)
+            max_constantsF = gl_info->limits.arb_vs_float_constants;
+
         if(This->baseShader.reg_maps.usesrelconstF) {
             DWORD highest_constf = 0, clip_limit;
-            max_constantsF = gl_info->limits.arb_vs_native_constants - reserved_vs_const(iface, gl_info);
+
+            max_constantsF -= reserved_vs_const(iface, gl_info);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
 
             for(i = 0; i < This->baseShader.limits.constant_float; i++)
@@ -709,7 +720,6 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         {
             if (ctx->target_version >= NV2) *num_clipplanes = gl_info->limits.clipplanes;
             else *num_clipplanes = min(gl_info->limits.clipplanes, 4);
-            max_constantsF = gl_info->limits.arb_vs_native_constants;
         }
     }
 
@@ -4664,11 +4674,19 @@ static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
 
 static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
 {
-    DWORD vs_consts = min(gl_info->limits.arb_vs_float_constants, gl_info->limits.arb_vs_native_constants);
-    DWORD ps_consts = min(gl_info->limits.arb_ps_float_constants, gl_info->limits.arb_ps_native_constants);
-
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
+        DWORD vs_consts;
+
+        /* 96 is the minimum allowed value of MAX_PROGRAM_ENV_PARAMETERS_ARB
+         * for vertex programs. If the native limit is less than that it's
+         * not very useful, and e.g. Mesa swrast returns 0, probably to
+         * indicate it's a software implementation. */
+        if (gl_info->limits.arb_vs_native_constants < 96)
+            vs_consts = gl_info->limits.arb_vs_float_constants;
+        else
+            vs_consts = min(gl_info->limits.arb_vs_float_constants, gl_info->limits.arb_vs_native_constants);
+
         if (gl_info->supported[NV_VERTEX_PROGRAM3])
         {
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
@@ -4695,6 +4713,15 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
+        DWORD ps_consts;
+
+        /* Similar as above for vertex programs, but the minimum for fragment
+         * programs is 24. */
+        if (gl_info->limits.arb_ps_native_constants < 24)
+            ps_consts = gl_info->limits.arb_ps_float_constants;
+        else
+            ps_consts = min(gl_info->limits.arb_ps_float_constants, gl_info->limits.arb_ps_native_constants);
+
         if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
         {
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
