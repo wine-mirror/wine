@@ -264,11 +264,14 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( package->script );
     }
 
-    if (package->patch)
+    LIST_FOR_EACH_SAFE( item, cursor, &package->patches )
     {
-        msi_free( package->patch->patchcode );
-        msi_free( package->patch->transforms );
-        msi_free( package->patch );
+        MSIPATCHINFO *patch = LIST_ENTRY( item, MSIPATCHINFO, entry );
+
+        list_remove( &patch->entry );
+        msi_free( patch->patchcode );
+        msi_free( patch->transforms );
+        msi_free( patch );
     }
 
     msi_free( package->BaseURL );
@@ -987,6 +990,7 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->RunningActions );
         list_init( &package->sourcelist_info );
         list_init( &package->sourcelist_media );
+        list_init( &package->patches );
     }
 
     return package;

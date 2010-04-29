@@ -148,6 +148,7 @@ typedef struct tagMSIMEDIAINFO
 
 typedef struct tagMSIPATCHINFO
 {
+    struct list entry;
     LPWSTR patchcode;
     LPWSTR transforms;
 } MSIPATCHINFO;
@@ -302,7 +303,7 @@ typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
     MSIDATABASE *db;
-    MSIPATCHINFO *patch;
+    struct list patches;
     struct list components;
     struct list features;
     struct list files;

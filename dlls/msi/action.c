@@ -492,44 +492,31 @@ done:
     return r;
 }
 
-static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db )
+static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
 {
-    MSISUMMARYINFO *si;
+    MSIPATCHINFO *pi;
     UINT r = ERROR_SUCCESS;
 
-    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
-    if (!si)
-        return ERROR_FUNCTION_FAILED;
+    pi = msi_alloc( sizeof(MSIPATCHINFO) );
+    if (!pi)
+        return ERROR_OUTOFMEMORY;
 
-    if (msi_check_patch_applicable( package, si ) != ERROR_SUCCESS)
+    pi->patchcode = msi_suminfo_dup_string( si, PID_REVNUMBER );
+    if (!pi->patchcode)
     {
-        TRACE("Patch not applicable\n");
-        msiobj_release( &si->hdr );
-        return ERROR_SUCCESS;
-    }
-
-    package->patch = msi_alloc(sizeof(MSIPATCHINFO));
-    if (!package->patch)
-    {
-        msiobj_release( &si->hdr );
+        msi_free( pi );
         return ERROR_OUTOFMEMORY;
     }
 
-    package->patch->patchcode = msi_suminfo_dup_string(si, PID_REVNUMBER);
-    if (!package->patch->patchcode)
+    pi->transforms = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
+    if (!pi->transforms)
     {
-        msiobj_release( &si->hdr );
+        msi_free( pi->patchcode );
+        msi_free( pi );
         return ERROR_OUTOFMEMORY;
     }
 
-    package->patch->transforms = msi_suminfo_dup_string(si, PID_LASTAUTHOR);
-    if (!package->patch->transforms)
-    {
-        msiobj_release( &si->hdr );
-        return ERROR_OUTOFMEMORY;
-    }
-
-    msiobj_release( &si->hdr );
+    *patch = pi;
     return r;
 }
 
@@ -537,6 +524,8 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 {
     MSIDATABASE *patch_db = NULL;
     LPWSTR *substorage;
+    MSISUMMARYINFO *si;
+    MSIPATCHINFO *patch;
     UINT i, r;
 
     TRACE("%p %s\n", package, debugstr_w( file ) );
@@ -548,10 +537,32 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
         return r;
     }
 
-    msi_parse_patch_summary( package, patch_db );
+    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
+    if (!si)
+    {
+        msiobj_release( &patch_db->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    r = msi_check_patch_applicable( package, si );
+    if (r != ERROR_SUCCESS)
+    {
+        TRACE("patch not applicable\n");
+        msiobj_release( &si->hdr );
+        msiobj_release( &patch_db->hdr );
+        return ERROR_SUCCESS;
+    }
+
+    r = msi_parse_patch_summary( si, &patch );
+    if ( r != ERROR_SUCCESS )
+    {
+        msiobj_release( &si->hdr );
+        msiobj_release( &patch_db->hdr );
+        return r;
+    }
 
     /* apply substorage transforms */
-    substorage = msi_split_string( package->patch->transforms, ';' );
+    substorage = msi_split_string( patch->transforms, ';' );
     for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
         r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
 
@@ -564,6 +575,9 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
      */
     append_storage_to_db( package->db, patch_db->storage );
 
+    list_add_tail( &package->patches, &patch->entry );
+
+    msiobj_release( &si->hdr );
     msiobj_release( &patch_db->hdr );
 
     return ERROR_SUCCESS;
@@ -3753,34 +3767,51 @@ static BOOL msi_check_unpublish(MSIPACKAGE *package)
     return TRUE;
 }
 
-static UINT msi_publish_patch(MSIPACKAGE *package, HKEY prodkey, HKEY hudkey)
+static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey, HKEY hudkey )
 {
     WCHAR patch_squashed[GUID_SIZE];
     HKEY patches;
     LONG res;
+    MSIPATCHINFO *patch;
     UINT r = ERROR_FUNCTION_FAILED;
+    WCHAR *p, *all_patches = NULL;
+    DWORD len = 0;
 
-    res = RegCreateKeyExW(prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
-                          &patches, NULL);
+    res = RegCreateKeyExW( prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patches, NULL );
     if (res != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
-    squash_guid(package->patch->patchcode, patch_squashed);
+    LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
+    {
+        squash_guid( patch->patchcode, patch_squashed );
+        len += strlenW( patch_squashed ) + 1;
+    }
 
-    res = RegSetValueExW(patches, szPatches, 0, REG_MULTI_SZ,
-                         (const BYTE *)patch_squashed,
-                         (lstrlenW(patch_squashed) + 1) * sizeof(WCHAR));
-    if (res != ERROR_SUCCESS)
+    p = all_patches = msi_alloc( (len + 1) * sizeof(WCHAR) );
+    if (!all_patches)
         goto done;
 
-    res = RegSetValueExW(patches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)package->patch->transforms,
-                         (lstrlenW(package->patch->transforms) + 1) * sizeof(WCHAR));
+    LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
+    {
+        squash_guid( patch->patchcode, p );
+        p += strlenW( p ) + 1;
+
+        res = RegSetValueExW( patches, patch_squashed, 0, REG_SZ,
+                              (const BYTE *)patch->transforms,
+                              (strlenW(patch->transforms) + 1) * sizeof(WCHAR) );
+        if (res != ERROR_SUCCESS)
+            goto done;
+    }
+
+    all_patches[len] = 0;
+    res = RegSetValueExW( patches, szPatches, 0, REG_MULTI_SZ,
+                          (const BYTE *)all_patches, (len + 1) * sizeof(WCHAR) );
     if (res == ERROR_SUCCESS)
         r = ERROR_SUCCESS;
 
 done:
     RegCloseKey(patches);
+    msi_free( all_patches );
     return r;
 }
 
@@ -3814,9 +3845,9 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    if (package->patch)
+    if (!list_empty(&package->patches))
     {
-        rc = msi_publish_patch(package, hukey, hudkey);
+        rc = msi_publish_patches(package, hukey, hudkey);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
