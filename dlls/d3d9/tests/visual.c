@@ -1143,7 +1143,14 @@ static void fog_test(IDirect3DDevice9 *device)
 
 /* This test verifies the behaviour of cube maps wrt. texture wrapping.
  * D3D cube map wrapping always behaves like GL_CLAMP_TO_EDGE,
- * regardless of the actual addressing mode set. */
+ * regardless of the actual addressing mode set. The way this test works is
+ * that we sample in one of the corners of the cubemap with filtering enabled,
+ * and check the interpolated color. There are essentially two reasonable
+ * things an implementation can do: Either pick one of the faces and
+ * interpolate the edge texel with itself (i.e., clamp within the face), or
+ * interpolate between the edge texels of the three involved faces. It should
+ * never involve the border color or the other side (texcoord wrapping) of a
+ * face in the interpolation. */
 static void test_cube_wrap(IDirect3DDevice9 *device)
 {
     static const float quad[][6] = {
@@ -1173,6 +1180,7 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
     IDirect3DCubeTexture9 *texture = NULL;
     IDirect3DSurface9 *surface = NULL;
+    IDirect3DSurface9 *face_surface;
     D3DLOCKED_RECT locked_rect;
     HRESULT hr;
     UINT x;
@@ -1186,6 +1194,37 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "CreateCubeTexture failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+
+    for (y = 0; y < 128; ++y)
+    {
+        DWORD *ptr = (DWORD *)(((BYTE *)locked_rect.pBits) + (y * locked_rect.Pitch));
+        for (x = 0; x < 64; ++x)
+        {
+            *ptr++ = 0xff0000dd;
+        }
+        for (x = 64; x < 128; ++x)
+        {
+            *ptr++ = 0xffff0000;
+        }
+    }
+
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
+    hr= IDirect3DCubeTexture9_GetCubeMapSurface(texture, 0, 0, &face_surface);
+    ok(SUCCEEDED(hr), "GetCubeMapSurface failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_UpdateSurface(device, surface, NULL, face_surface, NULL);
+    ok(SUCCEEDED(hr), "UpdateSurface failed (0x%08x)\n", hr);
+
+    IDirect3DSurface9_Release(face_surface);
 
     hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
     ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
@@ -1206,15 +1245,9 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
 
-    hr = IDirect3DDevice9_CreateCubeTexture(device, 128, 1, 0, D3DFMT_A8R8G8B8,
-            D3DPOOL_DEFAULT, &texture, NULL);
-    ok(SUCCEEDED(hr), "CreateCubeTexture failed (0x%08x)\n", hr);
-
     /* Create cube faces */
-    for (face = 0; face < 6; ++face)
+    for (face = 1; face < 6; ++face)
     {
-        IDirect3DSurface9 *face_surface = NULL;
-
         hr= IDirect3DCubeTexture9_GetCubeMapSurface(texture, face, 0, &face_surface);
         ok(SUCCEEDED(hr), "GetCubeMapSurface failed (0x%08x)\n", hr);
 
@@ -1255,14 +1288,9 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
 
-        /* Due to the nature of this test, we sample essentially at the edge
-         * between two faces. Because of this it's undefined from which face
-         * the driver will sample. Fortunately that's not important for this
-         * test, since all we care about is that it doesn't sample from the
-         * other side of the surface or from the border. */
         color = getPixelColor(device, 320, 240);
-        ok(color == 0x00ff0000 || color == 0x000000ff,
-                "Got color 0x%08x for addressing mode %s, expected 0x00ff0000 or 0x000000ff.\n",
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 11),
+                "Got color 0x%08x for addressing mode %s, expected 0x000000ff.\n",
                 color, address_modes[x].name);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
