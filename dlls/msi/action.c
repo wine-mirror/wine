@@ -693,20 +693,13 @@ static BOOL needs_ui_sequence(MSIPACKAGE *package)
 
 static UINT msi_set_context(MSIPACKAGE *package)
 {
-    WCHAR val[10];
-    DWORD sz = 10;
-    DWORD num;
-    UINT r;
+    int num;
 
     package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
 
-    r = msi_get_property(package->db, szAllUsers, val, &sz);
-    if (r == ERROR_SUCCESS)
-    {
-        num = atolW(val);
-        if (num == 1 || num == 2)
-            package->Context = MSIINSTALLCONTEXT_MACHINE;
-    }
+    num = msi_get_property_int(package->db, szAllUsers, 0);
+    if (num == 1 || num == 2)
+        package->Context = MSIINSTALLCONTEXT_MACHINE;
 
     return ERROR_SUCCESS;
 }
