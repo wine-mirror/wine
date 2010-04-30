@@ -1469,9 +1469,14 @@ static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA * iface, LPCSTR p
     TRACE("(%p)->(pName=%s)\n", This, pszName);
 
     HeapFree(GetProcessHeap(), 0, This->sDescription);
-    This->sDescription = HEAP_strdupAtoW( GetProcessHeap(), 0, pszName);
-    if ( !This->sDescription )
-        return E_OUTOFMEMORY;
+    if (pszName)
+    {
+        This->sDescription = HEAP_strdupAtoW( GetProcessHeap(), 0, pszName);
+        if ( !This->sDescription )
+            return E_OUTOFMEMORY;
+    }
+    else
+        This->sDescription = NULL;
 
     This->bDirty = TRUE;
 
@@ -1852,12 +1857,17 @@ static HRESULT WINAPI IShellLinkW_fnSetDescription(IShellLinkW * iface, LPCWSTR 
     TRACE("(%p)->(desc=%s)\n",This, debugstr_w(pszName));
 
     HeapFree(GetProcessHeap(), 0, This->sDescription);
-    This->sDescription = HeapAlloc( GetProcessHeap(), 0,
-                                    (lstrlenW( pszName )+1)*sizeof(WCHAR) );
-    if ( !This->sDescription )
-        return E_OUTOFMEMORY;
+    if (pszName)
+    {
+        This->sDescription = HeapAlloc( GetProcessHeap(), 0,
+                                        (lstrlenW( pszName )+1)*sizeof(WCHAR) );
+        if ( !This->sDescription )
+            return E_OUTOFMEMORY;
 
-    lstrcpyW( This->sDescription, pszName );
+        lstrcpyW( This->sDescription, pszName );
+    }
+    else
+        This->sDescription = NULL;
     This->bDirty = TRUE;
 
     return S_OK;

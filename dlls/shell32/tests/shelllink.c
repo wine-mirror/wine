@@ -136,6 +136,15 @@ static void test_get_set(void)
     ok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
     ok(lstrcmp(buffer,str)==0, "GetDescription returned '%s'\n", buffer);
 
+    r = IShellLinkA_SetDescription(sl, NULL);
+    ok(r == S_OK, "SetDescription failed (0x%08x)\n", r);
+
+    strcpy(buffer,"garbage");
+    r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
+    ok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
+    ok(*buffer=='\0' || broken(lstrcmp(buffer,str)==0), "GetDescription returned '%s'\n", buffer); /* NT4 */
+
+
     /* Test Getting / Setting the work directory */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetWorkingDirectory(sl, buffer, sizeof(buffer));
