@@ -1261,16 +1261,6 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     if (color_format_desc->format == WINED3DFMT_P8_UINT)
         color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
 
-    /* Retrieve the depth stencil format from the present parameters.
-     * The choice of the proper format can give a nice performance boost
-     * in case of GPU limited programs. */
-    if (swapchain->presentParms.EnableAutoDepthStencil)
-    {
-        TRACE("Auto depth stencil enabled, using format %s.\n",
-                debug_d3dformat(swapchain->presentParms.AutoDepthStencilFormat));
-        ds_format_desc = getFormatDescEntry(swapchain->presentParms.AutoDepthStencilFormat, gl_info);
-    }
-
     /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
     if (swapchain->presentParms.MultiSampleType && (swapchain->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD))
     {
