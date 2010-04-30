@@ -883,9 +883,50 @@ static HKEY open_menus_reg_key(void)
     static const WCHAR Software_Wine_FileOpenAssociationsW[] = {
         'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','M','e','n','u','F','i','l','e','s',0};
     HKEY assocKey;
-    if (RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenAssociationsW, &assocKey) == ERROR_SUCCESS)
+    DWORD ret;
+    ret = RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenAssociationsW, &assocKey);
+    if (ret == ERROR_SUCCESS)
         return assocKey;
+    SetLastError(ret);
     return NULL;
+}
+
+static DWORD register_menus_entry(const char *unix_file, const char *windows_file)
+{
+    WCHAR *unix_fileW;
+    WCHAR *windows_fileW;
+    INT size;
+    DWORD ret;
+
+    size = MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, NULL, 0);
+    unix_fileW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (unix_fileW)
+    {
+        MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, unix_fileW, size);
+        size = MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, NULL, 0);
+        windows_fileW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (windows_fileW)
+        {
+            HKEY hkey;
+            MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, windows_fileW, size);
+            hkey = open_menus_reg_key();
+            if (hkey)
+            {
+                ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_fileW,
+                    (strlenW(windows_fileW) + 1) * sizeof(WCHAR));
+                RegCloseKey(hkey);
+            }
+            else
+                ret = GetLastError();
+            HeapFree(GetProcessHeap(), 0, windows_fileW);
+        }
+        else
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+        HeapFree(GetProcessHeap(), 0, unix_fileW);
+    }
+    else
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+    return ret;
 }
 
 static BOOL write_desktop_entry(const char *unix_link, const char *location, const char *linkname,
@@ -919,13 +960,8 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
 
     if (unix_link)
     {
-        HKEY hkey = open_menus_reg_key();
-        if (hkey)
-        {
-            RegSetValueExA(hkey, location, 0, REG_SZ, (const BYTE*) unix_link, lstrlenA(unix_link) + 1);
-            RegCloseKey(hkey);
-        }
-        else
+        DWORD ret = register_menus_entry(location, unix_link);
+        if (ret != ERROR_SUCCESS)
             return FALSE;
     }
 
@@ -1057,14 +1093,7 @@ end:
         remove(tempfilename);
     HeapFree(GetProcessHeap(), 0, tempfilename);
     if (ret)
-    {
-        HKEY hkey = open_menus_reg_key();
-        if (hkey)
-        {
-            RegSetValueExA(hkey, menuPath, 0, REG_SZ, (const BYTE*) unix_link, lstrlenA(unix_link) + 1);
-            RegCloseKey(hkey);
-        }
-    }
+        register_menus_entry(menuPath, unix_link);
     HeapFree(GetProcessHeap(), 0, name);
     HeapFree(GetProcessHeap(), 0, menuPath);
     return ret;
