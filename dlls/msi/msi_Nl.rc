@@ -29,8 +29,8 @@ STRINGTABLE DISCARDABLE
 	9 "Plaats disk %s"
 	10 "Ongeldige parameters"
 	11 "Voer de map in die %s bevat"
-	12 "De installatiebron van het feature ontbreekt"
-	13 "De netwerkschijf met het feature ontbreekt"
+	12 "De installatiebron van de feature ontbreekt"
+	13 "De netwerkschijf met de feature ontbreekt"
 	14 "Feature van:"
 	15 "Kies de map die %s bevat"
 }
