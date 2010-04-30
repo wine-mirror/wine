@@ -135,6 +135,7 @@ static int init_base_environment(DWORD dwKeyFlags)
     if (!CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, 0))
     {
         ok(GetLastError()==NTE_BAD_KEYSET ||
+           broken(GetLastError() == NTE_TEMPORARY_PROFILE /* some Win7 setups */) ||
            broken(GetLastError() == NTE_KEYSET_NOT_DEF /* Win9x/NT4 */),
            "%08x\n", GetLastError());
         if (GetLastError()!=NTE_BAD_KEYSET)
