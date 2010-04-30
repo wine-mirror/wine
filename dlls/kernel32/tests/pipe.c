@@ -794,9 +794,9 @@ static void test_NamedPipe_2(void)
     DWORD alarmThreadId;
 
     trace("test_NamedPipe_2 starting\n");
-    /* Set up a ten second timeout */
+    /* Set up a twenty second timeout */
     alarm_event = CreateEvent( NULL, TRUE, FALSE, NULL );
-    alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 10000, 0, &alarmThreadId);
+    alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 20000, 0, &alarmThreadId);
 
     /* The servers we're about to exercize do try to clean up carefully,
      * but to reduce the change of a test failure due to a pipe handle
