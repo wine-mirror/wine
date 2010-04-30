@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcr100.dll
+IMPORTS   = msvcrt kernel32
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+
+C_SRCS = \
+	msvcr100.c
+
+@MAKE_DLL_RULES@
