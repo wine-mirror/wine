@@ -1594,12 +1594,10 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 			unsigned int iOffsetColorData;
 			unsigned int iOffsetMaskData;
 
-			unsigned int iLengthScanLineColor;
 			unsigned int iLengthScanLineMask;
 			unsigned int iNumEntriesPalette;
 
 			iLengthScanLineMask = ((pInfoBitmap->bmiHeader.biWidth + 31) >> 5) << 2;
-			iLengthScanLineColor = ((pInfoBitmap->bmiHeader.biWidth * pInfoBitmap->bmiHeader.biBitCount + 31) >> 5) << 2;
 /*
 			FIXME("DEBUG: bitmap size is %d x %d\n",
 				pInfoBitmap->bmiHeader.biWidth,
