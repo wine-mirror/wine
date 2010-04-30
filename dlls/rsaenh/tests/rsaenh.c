@@ -1803,8 +1803,8 @@ static void test_rsa_encrypt(void)
 
     /* An RSA key doesn't support salt */
     result = CryptGetKeyParam(hRSAKey, KP_SALT, NULL, &dwLen, 0);
-    ok(!result && GetLastError() == NTE_BAD_KEY,
-       "expected NTE_BAD_KEY, got %08x\n", GetLastError());
+    ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == NTE_NOT_FOUND /* Win7 */),
+       "expected NTE_BAD_KEY or NTE_NOT_FOUND, got %08x\n", GetLastError());
 
     /* The key exchange key's public key may be exported.. */
     result = CryptExportKey(hRSAKey, 0, PUBLICKEYBLOB, 0, NULL, &dwLen);
