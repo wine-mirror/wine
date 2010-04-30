@@ -802,6 +802,15 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     if (surface_type == SURFACE_OPENGL)
     {
+        WINED3DFORMAT formats[] =
+        {
+            WINED3DFMT_D24_UNORM_S8_UINT,
+            WINED3DFMT_D32_UNORM,
+            WINED3DFMT_R24_UNORM_X8_TYPELESS,
+            WINED3DFMT_D16_UNORM,
+            WINED3DFMT_S1_UINT_D15_UNORM
+        };
+
         const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
         /* In WGL both color, depth and stencil are features of a pixel format. In case of D3D they are separate.
@@ -815,18 +824,26 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
          * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
          * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
          * issue needs to be fixed. */
-        if (!present_parameters->EnableAutoDepthStencil
-                || swapchain->presentParms.AutoDepthStencilFormat != WINED3DFMT_D24_UNORM_S8_UINT)
+        for (i = 0; i < (sizeof(formats) / sizeof(*formats)); i++)
         {
-            FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
+            swapchain->ds_format = getFormatDescEntry(formats[i], gl_info);
+            swapchain->context[0] = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format);
+            if (swapchain->context[0]) break;
+            TRACE("Depth stencil format %s is not supported, trying next format\n",
+                  debug_d3dformat(formats[i]));
         }
-        swapchain->ds_format = getFormatDescEntry(WINED3DFMT_D24_UNORM_S8_UINT, gl_info);
-        swapchain->context[0] = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format);
+
         if (!swapchain->context[0])
         {
             WARN("Failed to create context.\n");
             hr = WINED3DERR_NOTAVAILABLE;
             goto err;
+        }
+
+        if (!present_parameters->EnableAutoDepthStencil
+                || swapchain->presentParms.AutoDepthStencilFormat != swapchain->ds_format->format)
+        {
+            FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
         }
         context_release(swapchain->context[0]);
     }
