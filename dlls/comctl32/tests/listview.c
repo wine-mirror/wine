@@ -4120,14 +4120,10 @@ static void test_approximate_viewrect(void)
 {
     HWND hwnd;
     DWORD ret;
-    INT cx, cy;
     HIMAGELIST himl;
     HBITMAP hbmp;
     LVITEMA itema;
     static CHAR test[] = "abracadabra, a very long item label";
-
-    cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
-    cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
 
     hwnd = create_listview_control(LVS_ICON);
     himl = ImageList_Create(40, 40, 0, 4, 4);
