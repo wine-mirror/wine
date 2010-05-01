@@ -1335,7 +1335,6 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 {
     WINHELP_WINDOW *win;
     WINHELP_BUTTON *button;
-    INT  keyDelta;
     HWND hTextWnd;
     LRESULT ret;
 
@@ -1449,7 +1448,6 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         break;
 
     case WM_KEYDOWN:
-        keyDelta = 0;
         win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
         hTextWnd = GetDlgItem(win->hMainWnd, CTL_ID_TEXT);
 
