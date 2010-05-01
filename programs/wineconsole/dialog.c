@@ -173,7 +173,6 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
     case WM_PAINT:
         {
             PAINTSTRUCT	        ps;
-            int		        font_idx;
             int		        size_idx;
             struct dialog_info*	di;
             HFONT	        hFont, hOldFont;
@@ -181,7 +180,6 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             di = (struct dialog_info*)GetWindowLongPtrW(GetParent(hWnd), DWLP_USER);
             BeginPaint(hWnd, &ps);
 
-            font_idx = SendDlgItemMessageW(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0, 0);
             size_idx = SendDlgItemMessageW(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0);
 
             hFont = (HFONT)GetWindowLongPtrW(hWnd, 0);
