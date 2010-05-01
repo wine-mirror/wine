@@ -12275,6 +12275,7 @@ static DWORD CALLBACK wait_idle_thread( void *arg )
 
     hwnd = CreateWindowExA(0, "TestClass", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
     while (GetMessage( &msg, 0, 0, 0 )) DispatchMessage( &msg );
+    DestroyWindow(hwnd);
     return 0;
 }
 
