@@ -462,7 +462,7 @@ static HRESULT WINAPI HTMLBodyElement_get_text(IHTMLBodyElement *iface, VARIANT 
 
     nsAString_Finish(&text);
 
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT v)
