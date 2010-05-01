@@ -1381,13 +1381,12 @@ static void test_margins(void)
 {
     HWND hwEdit;
     RECT old_rect, new_rect;
-    INT old_left_margin, old_right_margin;
+    INT old_right_margin;
     DWORD old_margins, new_margins;
 
     hwEdit = create_editcontrol(WS_BORDER | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     
     old_margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
-    old_left_margin = LOWORD(old_margins);
     old_right_margin = HIWORD(old_margins);
     
     /* Check if setting the margins works */
