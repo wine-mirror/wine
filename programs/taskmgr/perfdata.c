@@ -807,16 +807,13 @@ ULONG PerfDataGetPhysicalMemoryAvailableK(void)
 ULONG PerfDataGetPhysicalMemorySystemCacheK(void)
 {
     ULONG    SystemCache;
-    ULONG    PageSize;
 
     EnterCriticalSection(&PerfDataCriticalSection);
 
     SystemCache = SystemCacheInfo.CurrentSize;
-    PageSize = SystemBasicInfo.uPageSize;
 
     LeaveCriticalSection(&PerfDataCriticalSection);
 
-    /* SystemCache = SystemCache * (PageSize / 1024); */
     SystemCache = SystemCache / 1024;
 
     return SystemCache;
