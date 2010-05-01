@@ -7964,6 +7964,7 @@ static void testPortPublicKeyInfo(void)
      CRYPT_DELETEKEYSET);
     ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
+    ok(ret,"CryptAcquireContextA failed");
 
     testExportPublicKey(csp, &info);
     testImportPublicKey(csp, info);
@@ -7972,6 +7973,7 @@ static void testPortPublicKeyInfo(void)
     CryptReleaseContext(csp, 0);
     ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
+    ok(ret,"CryptAcquireContextA failed");
 }
 
 START_TEST(encode)
