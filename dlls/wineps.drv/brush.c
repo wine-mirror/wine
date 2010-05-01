@@ -93,7 +93,7 @@ static BOOL PSDRV_SetBrush(PSDRV_PDEVICE *physDev)
 
     }
     physDev->brush.set = TRUE;
-    return TRUE;
+    return ret;
 }
 
 
