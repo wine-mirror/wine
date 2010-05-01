@@ -723,7 +723,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WCHAR *curPos = p;
   BOOL   expandDirs  = FALSE;
   BOOL   useNumbers  = FALSE;
-  BOOL   doRecursive = FALSE;
   BOOL   doFileset   = FALSE;
   LONG   numbers[3] = {0,0,0}; /* Defaults to 0 in native */
   int    itemNum;
@@ -745,8 +744,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           {
               BOOL isRecursive = (*curPos == 'R');
 
-              if (isRecursive) doRecursive = TRUE;
-              else doFileset = TRUE;
+              if (!isRecursive)
+                  doFileset = TRUE;
 
               /* Skip whitespace */
               curPos++;
