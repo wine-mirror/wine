@@ -38,6 +38,15 @@ struct edit_notify {
 
 static struct edit_notify notifications;
 
+static BOOL (WINAPI *pEndMenu) (void);
+
+static void init_function_pointers(void)
+{
+    HMODULE hdll = GetModuleHandleA("user32");
+
+    pEndMenu = (void*)GetProcAddress(hdll, "EndMenu");
+}
+
 static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static int num_ok_commands = 0;
@@ -2099,7 +2108,7 @@ static LRESULT CALLBACK edit4_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             if (hWnd != (HWND)lParam)
             {
                 got_wm_capturechanged = 1;
-                EndMenu();
+                pEndMenu();
             }
             break;
     }
@@ -2427,6 +2436,8 @@ static void test_dialogmode(void)
 
 START_TEST(edit)
 {
+    init_function_pointers();
+
     hinst = GetModuleHandleA(NULL);
     assert(RegisterWindowClasses());
 
@@ -2452,7 +2463,10 @@ START_TEST(edit)
     test_child_edit_wmkeydown();
     test_fontsize();
     test_dialogmode();
-    test_contextmenu_focus();
+    if (pEndMenu)
+        test_contextmenu_focus();
+    else
+        win_skip("EndMenu is not available\n");
 
     UnregisterWindowClasses();
 }
