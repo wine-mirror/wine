@@ -578,14 +578,12 @@ static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
   }
   /* join runs that can be joined, set up flags */
   for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
-    int changed = 0;
     switch(p->type) {
       case diStartRow: assert(0); break; /* should have deleted it */
       case diRun:
         while (p->next->type == diRun) { /* FIXME */
           if (ME_CanJoinRuns(&p->member.run, &p->next->member.run)) {
             ME_JoinRuns(c->editor, p);
-            changed = 1;
           }
           else
             break;
