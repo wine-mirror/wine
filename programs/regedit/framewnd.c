@@ -363,10 +363,8 @@ static BOOL ImportRegistryFile(HWND hWnd)
 static BOOL ExportRegistryFile(HWND hWnd)
 {
     OPENFILENAMEW ofn;
-    WCHAR ExportKeyPath[_MAX_PATH];
     WCHAR title[128];
 
-    ExportKeyPath[0] = 0;
     InitOpenFileName(hWnd, &ofn);
     LoadStringW(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
