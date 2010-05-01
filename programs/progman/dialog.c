@@ -622,11 +622,9 @@ static INT_PTR CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 
 VOID DIALOG_Execute(void)
 {
-  INT_PTR z;
   DLGPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
-  z=DialogBox(Globals.hInstance, STRING_EXECUTE,
-              Globals.hMainWnd, lpfnDlg);
-              FreeProcInstance(lpfnDlg);
+  DialogBox(Globals.hInstance, STRING_EXECUTE, Globals.hMainWnd, lpfnDlg);
+  FreeProcInstance(lpfnDlg);
 }
 
 /* Local Variables:    */
