@@ -304,7 +304,7 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     MSIHANDLE patch = 0, info = 0;
     UINT r = ERROR_SUCCESS, type;
     DWORD size = 0;
-    LPCWSTR cmd_ptr = szCommandLine, product_code = szProductCode;
+    LPCWSTR cmd_ptr = szCommandLine;
     LPWSTR beg, end, cmd = NULL, codes = NULL;
     BOOL succeeded = FALSE;
 
@@ -341,8 +341,6 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
         r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, codes, &size);
         if (r != ERROR_SUCCESS)
             goto done;
-
-        product_code = codes;
     }
 
     if (!szCommandLine)
