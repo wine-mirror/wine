@@ -1111,7 +1111,6 @@ static void test_cdf_parsing(void)
 
 START_TEST(crypt)
 {
-    int myARGC;
     char** myARGV;
     char sysdir[MAX_PATH];
 
@@ -1129,7 +1128,7 @@ START_TEST(crypt)
     lstrcpyA(catroot2, sysdir);
     lstrcatA(catroot2, "\\CatRoot2");
 
-    myARGC = winetest_get_mainargs(&myARGV);
+    winetest_get_mainargs(&myARGV);
     strcpy(selfname, myARGV[0]);
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
