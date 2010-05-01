@@ -638,7 +638,6 @@ void WCMD_directory (WCHAR *cmd) {
   WCHAR *p;
   WCHAR string[MAXSTRING];
   int   argno         = 0;
-  int   argsProcessed = 0;
   WCHAR *argN          = cmd;
   WCHAR  lastDrive;
   BOOL  trailerReqd = FALSE;
@@ -831,7 +830,6 @@ void WCMD_directory (WCHAR *cmd) {
   }
 
   argno         = 0;
-  argsProcessed = 0;
   argN          = cmd;
   GetCurrentDirectoryW(MAX_PATH, cwd);
   strcatW(cwd, slashW);
