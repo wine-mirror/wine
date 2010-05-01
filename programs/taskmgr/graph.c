@@ -320,7 +320,6 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
 static void Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd)
 {
     RECT            rcClient;
-    ULONGLONG        CommitChargeLimit;
     int                i;
     static int        offset = 0;
     
@@ -336,11 +335,6 @@ static void Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd)
      * Fill it with blackness
      */
     FillSolidRect(hDC, &rcClient, RGB(0, 0, 0));
-
-    /*
-     * Get the memory usage
-     */
-    CommitChargeLimit = (ULONGLONG)PerfDataGetCommitChargeLimitK();
 
     /*
      * Draw the graph background
