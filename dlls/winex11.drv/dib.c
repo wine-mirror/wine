@@ -3184,7 +3184,6 @@ static void X11DRV_DIB_GetImageBits_32( X11DRV_PDEVICE *physDev, int lines, BYTE
 {
     DWORD x;
     int h, width = min(srcwidth, dstwidth);
-    BYTE *bits;
     const dib_conversions *convs = (bmpImage->byte_order == LSBFirst) ? &dib_normal : &dib_src_byteswap;
 
     if (lines < 0 )
@@ -3193,8 +3192,6 @@ static void X11DRV_DIB_GetImageBits_32( X11DRV_PDEVICE *physDev, int lines, BYTE
         dstbits = dstbits + ( linebytes * (lines-1) );
         linebytes = -linebytes;
     }
-
-    bits = dstbits;
 
     switch (bmpImage->depth)
     {
