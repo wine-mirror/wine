@@ -1736,16 +1736,6 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd,
     if (!HLPFILE_RtfAddControl(rd, "{\\colortbl ;\\red0\\green128\\blue0;")) return FALSE;
     for (index = 0; index < hlpfile->numFonts; index++)
     {
-        const char* family;
-        switch (hlpfile->fonts[index].LogFont.lfPitchAndFamily & 0xF0)
-        {
-        case FF_MODERN:     family = "modern";  break;
-        case FF_ROMAN:      family = "roman";   break;
-        case FF_SWISS:      family = "swiss";   break;
-        case FF_SCRIPT:     family = "script";  break;
-        case FF_DECORATIVE: family = "decor";   break;
-        default:            family = "nil";     break;
-        }
         sprintf(tmp, "\\red%d\\green%d\\blue%d;",
                 GetRValue(hlpfile->fonts[index].color),
                 GetGValue(hlpfile->fonts[index].color),
