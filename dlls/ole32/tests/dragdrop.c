@@ -124,7 +124,7 @@ static ATOM register_dummy_class(void)
     return RegisterClass(&wc);
 }
 
-START_TEST(dragdrop)
+static void test_Register_Revoke(void)
 {
     HRESULT hr;
     HWND hwnd;
@@ -171,4 +171,9 @@ START_TEST(dragdrop)
     ok(hr == DRAGDROP_E_INVALIDHWND, "RevokeDragDrop with NULL hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
 
     DestroyWindow(hwnd);
+}
+
+START_TEST(dragdrop)
+{
+    test_Register_Revoke();
 }
