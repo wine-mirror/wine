@@ -105,6 +105,170 @@ static const IDropTargetVtbl DropTarget_VTbl =
 
 static IDropTarget DropTarget = { &DropTarget_VTbl };
 
+/** stub IDropSource **/
+static HRESULT WINAPI DropSource_QueryInterface(IDropSource *iface, REFIID riid, void **ppObj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDropSource))
+    {
+        *ppObj = iface;
+        IDropSource_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DropSource_AddRef(IDropSource *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DropSource_Release(IDropSource *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DropSource_QueryContinueDrag(
+    IDropSource *iface,
+    BOOL fEscapePressed,
+    DWORD grfKeyState)
+{
+    /* always drop */
+    return DRAGDROP_S_DROP;
+}
+
+static HRESULT WINAPI DropSource_GiveFeedback(
+    IDropSource *iface,
+    DWORD dwEffect)
+{
+    return DRAGDROP_S_USEDEFAULTCURSORS;
+}
+
+static const IDropSourceVtbl dropsource_vtbl = {
+    DropSource_QueryInterface,
+    DropSource_AddRef,
+    DropSource_Release,
+    DropSource_QueryContinueDrag,
+    DropSource_GiveFeedback
+};
+
+static IDropSource DropSource = { &dropsource_vtbl };
+
+/** IDataObject stub **/
+static HRESULT WINAPI DataObject_QueryInterface(
+    IDataObject *iface,
+    REFIID riid,
+    void **pObj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDataObject))
+    {
+        *pObj = iface;
+        IDataObject_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DataObject_AddRef(IDataObject *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DataObject_Release(IDataObject *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DataObject_GetData(
+    IDataObject *iface,
+    FORMATETC *pformatetcIn,
+    STGMEDIUM *pmedium)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_GetDataHere(
+    IDataObject *iface,
+    FORMATETC *pformatetc,
+    STGMEDIUM *pmedium)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_QueryGetData(
+    IDataObject *iface,
+    FORMATETC *pformatetc)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI DataObject_GetCanonicalFormatEtc(
+    IDataObject *iface,
+    FORMATETC *pformatectIn,
+    FORMATETC *pformatetcOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_SetData(
+    IDataObject *iface,
+    FORMATETC *pformatetc,
+    STGMEDIUM *pmedium,
+    BOOL fRelease)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_EnumFormatEtc(
+    IDataObject *iface,
+    DWORD dwDirection,
+    IEnumFORMATETC **ppenumFormatEtc)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI DataObject_DAdvise(
+    IDataObject *iface,
+    FORMATETC *pformatetc,
+    DWORD advf,
+    IAdviseSink *pAdvSink,
+    DWORD *pdwConnection)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_DUnadvise(
+    IDataObject *iface,
+    DWORD dwConnection)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_EnumDAdvise(
+    IDataObject *iface,
+    IEnumSTATDATA **ppenumAdvise)
+{
+    return E_NOTIMPL;
+}
+
+static const IDataObjectVtbl dataobject_vtbl = {
+    DataObject_QueryInterface,
+    DataObject_AddRef,
+    DataObject_Release,
+    DataObject_GetData,
+    DataObject_GetDataHere,
+    DataObject_QueryGetData,
+    DataObject_GetCanonicalFormatEtc,
+    DataObject_SetData,
+    DataObject_EnumFormatEtc,
+    DataObject_DAdvise,
+    DataObject_DUnadvise,
+    DataObject_EnumDAdvise
+};
+
+static IDataObject DataObject = { &dataobject_vtbl };
+
 static ATOM register_dummy_class(void)
 {
     WNDCLASS wc =
@@ -129,7 +293,7 @@ static void test_Register_Revoke(void)
     HRESULT hr;
     HWND hwnd;
 
-    hwnd = CreateWindow(MAKEINTATOM(register_dummy_class()), "Test", 0,
+    hwnd = CreateWindowA("WineOleTestClass", "Test", 0,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
         NULL, NULL, NULL);
 
@@ -173,7 +337,54 @@ static void test_Register_Revoke(void)
     DestroyWindow(hwnd);
 }
 
+static void test_DoDragDrop(void)
+{
+    DWORD effect;
+    HRESULT hr;
+    HWND hwnd;
+
+    hwnd = CreateWindowA("WineOleTestClass", "Test", 0,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
+        NULL, NULL, NULL);
+    ok(IsWindow(hwnd), "failed to create window\n");
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = RegisterDragDrop(hwnd, &DropTarget);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* incomplete arguments set */
+    hr = DoDragDrop(NULL, NULL, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(NULL, &DropSource, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(&DataObject, NULL, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(NULL, NULL, 0, &effect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(&DataObject, &DropSource, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(NULL, &DropSource, 0, &effect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = DoDragDrop(&DataObject, NULL, 0, &effect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    OleUninitialize();
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(dragdrop)
 {
+    register_dummy_class();
+
     test_Register_Revoke();
+    test_DoDragDrop();
 }

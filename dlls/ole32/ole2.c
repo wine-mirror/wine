@@ -490,13 +490,14 @@ HRESULT WINAPI DoDragDrop (
   HWND            hwndTrackWindow;
   MSG             msg;
 
-  TRACE("(DataObject %p, DropSource %p)\n", pDataObject, pDropSource);
+  TRACE("(%p, %p, %d, %p)\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
+
+  if (!pDataObject || !pDropSource || !pdwEffect)
+      return E_INVALIDARG;
 
   /*
    * Setup the drag n drop tracking window.
    */
-  if (!IsValidInterface((LPUNKNOWN)pDropSource))
-      return E_INVALIDARG;
 
   trackerInfo.dataObject        = pDataObject;
   trackerInfo.dropSource        = pDropSource;
