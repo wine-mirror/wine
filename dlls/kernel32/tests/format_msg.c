@@ -180,6 +180,27 @@ static void test_message_from_string_wide(void)
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
+    /* insertion with no variadic arguments */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_1, 0,
+        0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    error = GetLastError();
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the buffer to be unchanged\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1, 0,
+        0, out, sizeof(out)/sizeof(WCHAR), NULL);
+    error = GetLastError();
+    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+       "Expected the buffer to be unchanged\n");
+    ok(r==0, "succeeded: r=%d\n", r);
+    ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
+
     /* using the format feature */
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1s, 0,
         0, out, sizeof(out)/sizeof(WCHAR), test);
@@ -481,6 +502,35 @@ static void test_message_from_string(void)
        "Expected the buffer to be untouched\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(GetLastError()==ERROR_INVALID_PARAMETER,
+       "last error %u\n", GetLastError());
+
+    /* insertion with no variadic arguments */
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "%1", 0,
+        0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
+       broken(!strcmp("%1", out)), /* Win9x */
+       "Expected the buffer to be untouched\n");
+    ok(r==0 ||
+       broken(r==2), /* Win9x */
+       "succeeded: r=%d\n", r);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER ||
+       broken(GetLastError()==0xdeadbeef), /* Win9x */
+       "last error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(out, init_buf, sizeof(init_buf));
+    r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, "%1", 0,
+        0, out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
+       broken(!strcmp("%1", out)), /* Win9x */
+       "Expected the buffer to be untouched\n");
+    ok(r==0 ||
+       broken(r==2), /* Win9x */
+       "succeeded: r=%d\n", r);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER ||
+       broken(GetLastError()==0xdeadbeef), /* Win9x */
        "last error %u\n", GetLastError());
 
     /* using the format feature */
@@ -1339,6 +1389,20 @@ static void test_message_from_hmodule(void)
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 7/*=ERROR_ARENA_TRASHED*/,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
     ok(ret != 0, "FormatMessageA returned 0\n");
+
+    /* Test a message string with an insertion without passing any variadic arguments. */
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 193 /* ERROR_BAD_EXE_FORMAT */,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0 ||
+       broken(ret != 0), /* Win9x */
+       "FormatMessageA returned non-zero\n");
+
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE |
+                         FORMAT_MESSAGE_ARGUMENT_ARRAY, h, 193 /* ERROR_BAD_EXE_FORMAT */,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret == 0 ||
+       broken(ret != 0), /* Win9x */
+       "FormatMessageA returned non-zero\n");
 
     /*Test nonexistent messageID with varying language ID's Note: FormatMessageW behaves the same*/
     SetLastError(0xdeadbeef);

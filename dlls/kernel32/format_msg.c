@@ -296,6 +296,13 @@ static LPWSTR format_message( BOOL unicode_caller, DWORD dwFlags, LPCWSTR fmtstr
             case '6':case '7':case '8':case '9':
                 if (dwFlags & FORMAT_MESSAGE_IGNORE_INSERTS)
                     goto ignore_inserts;
+                else if (((dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) && !format_args->args) ||
+                        (!(dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) && !format_args->list))
+                {
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    HeapFree(GetProcessHeap(), 0, target);
+                    return NULL;
+                }
                 insertnr = *f-'0';
                 switch (f[1]) {
                 case '0':case '1':case '2':case '3':
