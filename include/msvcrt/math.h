@@ -76,6 +76,61 @@ double __cdecl y0(double);
 double __cdecl y1(double);
 double __cdecl yn(int, double);
 
+#ifdef __x86_64__
+
+float __cdecl sinf(float);
+float __cdecl cosf(float);
+float __cdecl tanf(float);
+float __cdecl sinhf(float);
+float __cdecl coshf(float);
+float __cdecl tanhf(float);
+float __cdecl asinf(float);
+float __cdecl acosf(float);
+float __cdecl atanf(float);
+float __cdecl atan2f(float, float);
+float __cdecl expf(float);
+float __cdecl logf(float);
+float __cdecl log10f(float);
+float __cdecl powf(float, float);
+float __cdecl sqrtf(float);
+float __cdecl ceilf(float);
+float __cdecl floorf(float);
+float __cdecl fabsf(float);
+float __cdecl ldexpf(float, int);
+float __cdecl frexpf(float, int*);
+float __cdecl modff(float, float*);
+float __cdecl fmodf(float, float);
+
+#else
+
+#define sinf(x) ((float)sin((double)(x)))
+#define cosf(x) ((float)cos((double)(x)))
+#define tanf(x) ((float)tan((double)(x)))
+#define sinhf(x) ((float)sinh((double)(x)))
+#define coshf(x) ((float)cosh((double)(x)))
+#define tanhf(x) ((float)tanh((double)(x)))
+#define asinf(x) ((float)asin((double)(x)))
+#define acosf(x) ((float)acos((double)(x)))
+#define atanf(x) ((float)atan((double)(x)))
+#define atan2f(x,y) ((float)atan2((double)(x), (double)(y)))
+#define expf(x) ((float)exp((double)(x)))
+#define logf(x) ((float)log((double)(x)))
+#define log10f(x) ((float)log10((double)(x)))
+#define powf(x,y) ((float)pow((double)(x), (double)(y)))
+#define sqrtf(x) ((float)sqrt((double)(x)))
+#define ceilf(x) ((float)ceil((double)(x)))
+#define floorf(x) ((float)floor((double)(x)))
+#define frexpf(x) ((float)frexp((double)(x)))
+#define modff(x,y) ((float)modf((double)(x), (double*)(y)))
+#define fmodf(x,y) ((float)fmod((double)(x), (double)(y)))
+
+#endif
+
+#define fabsf(x) ((float)fabs((double)(x)))
+#define ldexpf(x) ((float)ldexp((double)(x)))
+
+float __cdecl hypotf(float, float);
+
 int __cdecl _matherr(struct _exception*);
 double __cdecl _cabs(struct _complex);
 

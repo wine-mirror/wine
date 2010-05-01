@@ -135,6 +135,10 @@ int    __cdecl _finite(double);
 int    __cdecl _isnan(double);
 int    __cdecl _fpclass(double);
 
+#ifdef __x86_64__
+float __cdecl _scalbf(float, __msvcrt_long);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
