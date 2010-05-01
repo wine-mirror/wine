@@ -335,6 +335,23 @@ static void test_Register_Revoke(void)
     ok(hr == DRAGDROP_E_INVALIDHWND, "RevokeDragDrop with NULL hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
 
     DestroyWindow(hwnd);
+
+    /* try to revoke with already destroyed window */
+    OleInitialize(NULL);
+
+    hwnd = CreateWindowA("WineOleTestClass", "Test", 0,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
+        NULL, NULL, NULL);
+
+    hr = RegisterDragDrop(hwnd, &DropTarget);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    DestroyWindow(hwnd);
+
+    hr = RevokeDragDrop(hwnd);
+    ok(hr == DRAGDROP_E_INVALIDHWND, "got 0x%08x\n", hr);
+
+    OleUninitialize();
 }
 
 static void test_DoDragDrop(void)
