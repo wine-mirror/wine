@@ -51,6 +51,204 @@ typedef int (*MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
+#ifdef __x86_64__
+
+/*********************************************************************
+ *      MSVCRT_acosf (MSVCRT.@)
+ */
+float CDECL MSVCRT_acosf( float x )
+{
+  if (x < -1.0 || x > 1.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  /* glibc implements acos() as the FPU equivalent of atan2(sqrt(1 - x ^ 2), x).
+   * asin() uses a similar construction. This is bad because as x gets nearer to
+   * 1 the error in the expression "1 - x^2" can get relatively large due to
+   * cancellation. The sqrt() makes things worse. A safer way to calculate
+   * acos() is to use atan2(sqrt((1 - x) * (1 + x)), x). */
+  return atan2f(sqrtf((1 - x) * (1 + x)), x);
+}
+
+/*********************************************************************
+ *      MSVCRT_asinf (MSVCRT.@)
+ */
+float CDECL MSVCRT_asinf( float x )
+{
+  if (x < -1.0 || x > 1.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return atan2f(x, sqrtf((1 - x) * (1 + x)));
+}
+
+/*********************************************************************
+ *      MSVCRT_atanf (MSVCRT.@)
+ */
+float CDECL MSVCRT_atanf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return atanf(x);
+}
+
+/*********************************************************************
+ *              MSVCRT_atan2f (MSVCRT.@)
+ */
+float CDECL MSVCRT_atan2f( float x, float y )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return atan2f(x,y);
+}
+
+/*********************************************************************
+ *      MSVCRT_cosf (MSVCRT.@)
+ */
+float CDECL MSVCRT_cosf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return cosf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_coshf (MSVCRT.@)
+ */
+float CDECL MSVCRT_coshf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return coshf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_expf (MSVCRT.@)
+ */
+float CDECL MSVCRT_expf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return expf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_fmodf (MSVCRT.@)
+ */
+float CDECL MSVCRT_fmodf( float x, float y )
+{
+  if (!finitef(x) || !finitef(y)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return fmodf(x,y);
+}
+
+/*********************************************************************
+ *      MSVCRT_logf (MSVCRT.@)
+ */
+float CDECL MSVCRT_logf( float x)
+{
+  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return logf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_log10f (MSVCRT.@)
+ */
+float CDECL MSVCRT_log10f( float x )
+{
+  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return log10f(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_powf (MSVCRT.@)
+ */
+float CDECL MSVCRT_powf( float x, float y )
+{
+  /* FIXME: If x < 0 and y is not integral, set EDOM */
+  float z = powf(x,y);
+  if (!finitef(z)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return z;
+}
+
+/*********************************************************************
+ *      MSVCRT_sinf (MSVCRT.@)
+ */
+float CDECL MSVCRT_sinf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sinf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_sinhf (MSVCRT.@)
+ */
+float CDECL MSVCRT_sinhf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sinhf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_sqrtf (MSVCRT.@)
+ */
+float CDECL MSVCRT_sqrtf( float x )
+{
+  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return sqrtf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_tanf (MSVCRT.@)
+ */
+float CDECL MSVCRT_tanf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return tanf(x);
+}
+
+/*********************************************************************
+ *      MSVCRT_tanhf (MSVCRT.@)
+ */
+float CDECL MSVCRT_tanhf( float x )
+{
+  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return tanhf(x);
+}
+
+/*********************************************************************
+ *      ceilf (MSVCRT.@)
+ */
+float CDECL MSVCRT_ceilf( float x )
+{
+  return ceilf(x);
+}
+
+/*********************************************************************
+ *      floorf (MSVCRT.@)
+ */
+float CDECL MSVCRT_floorf( float x )
+{
+  return floorf(x);
+}
+
+/*********************************************************************
+ *      frexpf (MSVCRT.@)
+ */
+float CDECL MSVCRT_frexpf( float x, int *exp )
+{
+  return frexpf( x, exp );
+}
+
+/*********************************************************************
+ *      _scalbf (MSVCRT.@)
+ */
+float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
+{
+  if (!finitef(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return ldexpf(num, power);
+}
+
+/*********************************************************************
+ *      modff (MSVCRT.@)
+ */
+double CDECL MSVCRT_modff( float x, float *iptr )
+{
+  return modff( x, iptr );
+}
+
+#endif
+
 /*********************************************************************
  *		MSVCRT_acos (MSVCRT.@)
  */
@@ -476,6 +674,15 @@ double CDECL _hypot(double x, double y)
 {
   /* FIXME: errno handling */
   return hypot( x, y );
+}
+
+/*********************************************************************
+ *      _hypotf (MSVCRT.@)
+ */
+float CDECL _hypotf(float x, float y)
+{
+  /* FIXME: errno handling */
+  return hypotf( x, y );
 }
 
 /*********************************************************************

@@ -471,6 +471,7 @@
 @ stub _heapused #(ptr ptr)
 @ cdecl _heapwalk(ptr)
 @ cdecl _hypot(double double)
+@ cdecl _hypotf(double double)
 @ cdecl _i64toa(long long ptr long) ntdll._i64toa
 # stub _i64toa_s
 @ cdecl _i64tow(long long ptr long) ntdll._i64tow
@@ -794,6 +795,7 @@
 @ cdecl -arch=i386 _safe_fprem()
 @ cdecl -arch=i386 _safe_fprem1()
 @ cdecl _scalb(double long) MSVCRT__scalb
+@ cdecl -arch=x86_64 _scalbf(double long) MSVCRT__scalbf
 @ varargs _scanf_l(str ptr) MSVCRT__scanf_l
 @ varargs _scanf_s_l(str ptr) MSVCRT__scanf_s_l
 # stub _scprintf
@@ -1154,11 +1156,15 @@
 @ cdecl abort() MSVCRT_abort
 @ cdecl abs(long) ntdll.abs
 @ cdecl acos(double) MSVCRT_acos
+@ cdecl -arch=x86_64 acosf(double) MSVCRT_acosf
 @ cdecl asctime(ptr) MSVCRT_asctime
 # stub asctime_s
 @ cdecl asin(double) MSVCRT_asin
 @ cdecl atan(double) MSVCRT_atan
 @ cdecl atan2(double double) MSVCRT_atan2
+@ cdecl -arch=x86_64 asinf(double) MSVCRT_asinf
+@ cdecl -arch=x86_64 atanf(double) MSVCRT_atanf
+@ cdecl -arch=x86_64 atan2f(double double) MSVCRT_atan2f
 @ cdecl atexit(ptr) MSVCRT_atexit
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) ntdll.atoi
@@ -1168,16 +1174,20 @@
 @ cdecl btowc(long) MSVCRT_btowc
 @ cdecl calloc(long long) MSVCRT_calloc
 @ cdecl ceil(double) MSVCRT_ceil
+@ cdecl -arch=x86_64 ceilf(double) MSVCRT_ceilf
 @ cdecl clearerr(ptr) MSVCRT_clearerr
 # stub clearerr_s
 @ cdecl clock() MSVCRT_clock
 @ cdecl cos(double) MSVCRT_cos
 @ cdecl cosh(double) MSVCRT_cosh
+@ cdecl -arch=x86_64 cosf(double) MSVCRT_cosf
+@ cdecl -arch=x86_64 coshf(double) MSVCRT_coshf
 @ cdecl ctime(ptr) MSVCRT_ctime
 @ cdecl difftime(long long) MSVCRT_difftime
 @ cdecl div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
 @ cdecl exp(double) MSVCRT_exp
+@ cdecl -arch=x86_64 expf(double) MSVCRT_expf
 @ cdecl fabs(double) MSVCRT_fabs
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ cdecl feof(ptr) MSVCRT_feof
@@ -1189,7 +1199,9 @@
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
 @ cdecl floor(double) MSVCRT_floor
+@ cdecl -arch=x86_64 floorf(double) MSVCRT_floorf
 @ cdecl fmod(double double) MSVCRT_fmod
+@ cdecl -arch=x86_64 fmodf(double double) MSVCRT_fmodf
 @ cdecl fopen(str str) MSVCRT_fopen
 @ cdecl fopen_s(ptr str str) MSVCRT_fopen_s
 @ varargs fprintf(ptr str) MSVCRT_fprintf
@@ -1203,6 +1215,7 @@
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 # stub freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
+@ cdecl -arch=x86_64 frexpf(double ptr) MSVCRT_frexpf
 @ varargs fscanf(ptr str) MSVCRT_fscanf
 @ varargs fscanf_s(ptr str) MSVCRT_fscanf_s
 @ cdecl fseek(ptr long long) MSVCRT_fseek
@@ -1254,6 +1267,8 @@
 @ cdecl localtime(ptr) MSVCRT_localtime
 @ cdecl log(double) MSVCRT_log
 @ cdecl log10(double) MSVCRT_log10
+@ cdecl -arch=x86_64 logf(double) MSVCRT_logf
+@ cdecl -arch=x86_64 log10f(double) MSVCRT_log10f
 @ cdecl -i386 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
@@ -1274,8 +1289,10 @@
 @ cdecl memset(ptr long long) ntdll.memset
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf
+@ cdecl -arch=x86_64 modff(double ptr) MSVCRT_modff
 @ cdecl perror(str) MSVCRT_perror
 @ cdecl pow(double double) MSVCRT_pow
+@ cdecl -arch=x86_64 powf(double double) MSVCRT_powf
 @ varargs printf(str) MSVCRT_printf
 # stub printf_s
 @ cdecl putc(long ptr) MSVCRT_putc
@@ -1301,9 +1318,12 @@
 @ cdecl signal(long long) MSVCRT_signal
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl sinh(double) MSVCRT_sinh
+@ cdecl -arch=x86_64 sinf(double) MSVCRT_sinf
+@ cdecl -arch=x86_64 sinhf(double) MSVCRT_sinhf
 @ varargs sprintf(ptr str) MSVCRT_sprintf
 @ varargs sprintf_s(ptr long str) MSVCRT_sprintf_s
 @ cdecl sqrt(double) MSVCRT_sqrt
+@ cdecl -arch=x86_64 sqrtf(double) MSVCRT_sqrtf
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ varargs sscanf_s(str str) MSVCRT_sscanf_s
@@ -1342,6 +1362,8 @@
 @ cdecl system(str) MSVCRT_system
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl tanh(double) MSVCRT_tanh
+@ cdecl -arch=x86_64 tanf(double) MSVCRT_tanf
+@ cdecl -arch=x86_64 tanhf(double) MSVCRT_tanhf
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
 # stub tmpfile_s
