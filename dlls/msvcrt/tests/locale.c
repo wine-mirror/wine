@@ -77,7 +77,7 @@ static void test_setlocale(void)
     ret = setlocale(LC_ALL, "German");
     todo_wine ok(!strcmp(ret, "German_Germany.1252"), "ret = %s\n", ret);
 
-    /* This test shows that _country_synonims table is incorrect */
+    /* This test shows that _country_synonyms table is incorrect */
     /* It translates "America" to "US" */
     ret = setlocale(LC_ALL, "America");
     ok(ret == NULL, "ret = %s\n", ret);
@@ -108,7 +108,7 @@ static void test_crtGetStringTypeW(void)
     }
 
     if(!pmemcpy_s) {
-        win_skip("To old version of msvcrt.dll\n");
+        win_skip("Too old version of msvcrt.dll\n");
         return;
     }
 
