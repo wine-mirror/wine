@@ -2196,7 +2196,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
      * If we end-up over a target, drop the object in the target or
      * inform the target that the operation was cancelled.
      */
-    if (trackerInfo->curDragTarget!=0)
+    if (trackerInfo->curDragTarget)
     {
       switch (trackerInfo->returnValue)
       {
@@ -2205,14 +2205,16 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 	 * the drop target that we just dropped the object in it.
 	 */
         case DRAGDROP_S_DROP:
-	{
-	  IDropTarget_Drop(trackerInfo->curDragTarget,
-			   trackerInfo->dataObject,
-                           trackerInfo->dwKeyState,
-                           trackerInfo->curMousePos,
-			   trackerInfo->pdwEffect);
-	  break;
-	}
+          if (*trackerInfo->pdwEffect != DROPEFFECT_NONE)
+            IDropTarget_Drop(trackerInfo->curDragTarget,
+                             trackerInfo->dataObject,
+                             trackerInfo->dwKeyState,
+                             trackerInfo->curMousePos,
+                             trackerInfo->pdwEffect);
+          else
+            IDropTarget_DragLeave(trackerInfo->curDragTarget);
+          break;
+
 	/*
 	 * If the source told us that we should cancel, fool the drop
 	 * target by telling it that the mouse left it's window.
