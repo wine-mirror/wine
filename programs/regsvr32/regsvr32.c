@@ -100,7 +100,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
         if(!Silent)
             printf("%s not implemented in DLL %s\n", procName, strDll);
         FreeLibrary(*DllHandle);
-        ExitProcess(1);
+        return NULL;
     }
     return proc;
 }
@@ -112,6 +112,8 @@ static int RegisterDll(const char* strDll)
     HMODULE DllHandle = NULL;
 
     pfRegister = LoadProc(strDll, "DllRegisterServer", &DllHandle);
+    if (!pfRegister)
+        return 0;
 
     hr = pfRegister();
     if(FAILED(hr))
@@ -136,6 +138,9 @@ static int UnregisterDll(char* strDll)
     HMODULE DllHandle = NULL;
 
     pfUnregister = LoadProc(strDll, "DllUnregisterServer", &DllHandle);
+    if (!pfUnregister)
+        return 0;
+
     hr = pfUnregister();
     if(FAILED(hr))
     {
@@ -159,6 +164,9 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     HMODULE DllHandle = NULL;
 
     pfInstall = LoadProc(strDll, "DllInstall", &DllHandle);
+    if (!pfInstall)
+        return 0;
+
     hr = pfInstall(install, command_line);
     if(FAILED(hr))
     {
