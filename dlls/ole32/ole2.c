@@ -2081,13 +2081,21 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
       /*
        * If there is, notify it that we just dragged-in
        */
-      if (trackerInfo->curDragTarget!=0)
+      if (trackerInfo->curDragTarget)
       {
-	IDropTarget_DragEnter(trackerInfo->curDragTarget,
-			      trackerInfo->dataObject,
-                              trackerInfo->dwKeyState,
-                              trackerInfo->curMousePos,
-			      trackerInfo->pdwEffect);
+        hr = IDropTarget_DragEnter(trackerInfo->curDragTarget,
+                                   trackerInfo->dataObject,
+                                   trackerInfo->dwKeyState,
+                                   trackerInfo->curMousePos,
+                                   trackerInfo->pdwEffect);
+
+        /* failed DragEnter() means invalid target */
+        if (hr != S_OK)
+        {
+          trackerInfo->curDragTargetHWND = 0;
+          trackerInfo->curTargetHWND     = 0;
+          trackerInfo->curDragTarget     = 0;
+        }
       }
     }
     else
