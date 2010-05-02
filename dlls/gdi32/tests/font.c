@@ -1343,7 +1343,7 @@ static void test_GetOutlineTextMetrics(void)
 
 static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 {
-    INT         x, y,
+    INT         y,
                 breakCount,
                 justifiedWidth = 0, /* to test GetTextExtentExPointW() */
                 areaWidth = clientArea->right - clientArea->left,
@@ -1398,8 +1398,6 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
             justifiedWidth = size.cx;
         }
         else lastExtent = TRUE;
-
-        x = clientArea->left;
 
         /* catch errors and report them */
         if (!lastExtent && (justifiedWidth != areaWidth))
