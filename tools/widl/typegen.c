@@ -2452,7 +2452,6 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     unsigned int total_size;
     const var_t *array;
     unsigned int start_offset;
-    unsigned int array_offset;
     unsigned int align;
     unsigned int corroff;
     var_t *f;
@@ -2473,10 +2472,12 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
 
     array = find_array_or_string_in_struct(type);
     if (array && !processed(array->type))
-        array_offset
-            = is_string_type(array->attrs, array->type)
-            ? write_string_tfs(file, array->attrs, array->type, FALSE, array->name, tfsoff)
-            : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
+    {
+        if(is_string_type(array->attrs, array->type))
+            write_string_tfs(file, array->attrs, array->type, FALSE, array->name, tfsoff);
+        else
+            write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
+    }
 
     corroff = *tfsoff;
     write_descriptors(file, type, tfsoff);
