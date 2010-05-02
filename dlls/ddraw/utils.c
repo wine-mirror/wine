@@ -171,7 +171,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->u2.dwRBitMask = 0x00E0;
             DDPixelFormat->u3.dwGBitMask = 0x001C;
             DDPixelFormat->u4.dwBBitMask = 0x0003;
-            DDPixelFormat->u5.dwRGBAlphaBitMask = 0xF000;
+            DDPixelFormat->u5.dwRGBAlphaBitMask = 0xFF00;
             break;
 
         case WINED3DFMT_B4G4R4X4_UNORM:
