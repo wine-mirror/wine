@@ -260,7 +260,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
  */
 static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 {
-    int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
+    int prefix, segprefix, prefixlen, len, long_op, long_addr;
     BYTE *instr;
 
     long_op = long_addr = 1;
@@ -271,7 +271,6 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 
     segprefix = -1;  /* no prefix */
     prefix = 1;
-    repX = 0;
     prefixlen = 0;
     while(prefix)
     {
@@ -304,10 +303,8 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
         case 0xf0:  /* lock */
 	    break;
         case 0xf2:  /* repne */
-	    repX = 1;
 	    break;
         case 0xf3:  /* repe */
-	    repX = 2;
             break;
         default:
             prefix = 0;  /* no more prefixes */
