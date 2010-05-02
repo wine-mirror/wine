@@ -2033,7 +2033,7 @@ static LRESULT
 MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   MCHITTESTINFO ht;
-  SYSTEMTIME old_focused, st_ht;
+  SYSTEMTIME st_ht;
   INT hit;
   RECT r;
 
@@ -2054,7 +2054,6 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
 
   st_ht = ht.st;
-  old_focused = infoPtr->focusedSel;
 
   /* if pointer is over focused day still there's nothing to do */
   if(!MONTHCAL_SetDayFocus(infoPtr, &ht.st)) return 0;
