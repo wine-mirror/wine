@@ -7130,7 +7130,7 @@ static void test_VarDiv(void)
     VARIANT left, right, exp, result, cy, dec;
     BSTR num1_str, num2_str;
     VARTYPE i;
-    HRESULT hres, expectedhres;
+    HRESULT hres;
     double r;
 
     num1_str = SysAllocString(str1);
@@ -7170,7 +7170,6 @@ static void test_VarDiv(void)
                 V_VT(&right) = rightvt | ExtraFlags[i];
                 V_VT(&result) = VT_EMPTY;
                 resvt = VT_EMPTY;
-                expectedhres = S_OK;
 
                 if (leftvt == VT_BSTR)
                     V_BSTR(&left) = num2_str;
