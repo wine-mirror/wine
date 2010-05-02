@@ -1194,7 +1194,7 @@ static void test_items(void)
 
 static void test_columns(void)
 {
-    HWND hwnd, hwndheader;
+    HWND hwnd;
     LVCOLUMNA column;
     LVITEMA item;
     INT order[2];
@@ -1220,7 +1220,7 @@ static void test_columns(void)
 
     /* LVM_GETCOLUMNORDERARRAY */
     hwnd = create_listview_control(LVS_REPORT);
-    hwndheader = subclass_header(hwnd);
+    subclass_header(hwnd);
 
     memset(&column, 0, sizeof(column));
     column.mask = LVCF_WIDTH;
