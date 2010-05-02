@@ -727,7 +727,6 @@ static void wave_out_test_deviceOut(int device, double duration,
     }
 
     if (interactive && rc==MMSYSERR_NOERROR) {
-        DWORD start;
         trace("Playing %g second %s at %5dx%2dx%d %2d header%s %d loop%s %d bytes %s %s\n",duration,
               sine ? "440Hz tone" : "silence",pwfx->nSamplesPerSec,
               pwfx->wBitsPerSample,pwfx->nChannels, headers, headers > 1 ? "s": " ",
@@ -747,8 +746,6 @@ static void wave_out_test_deviceOut(int device, double duration,
         rc=waveOutSetVolume(wout,volume);
         ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
            "waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
-
-        start=GetTickCount();
 
         rc=waveOutWrite(wout, &frags[0], sizeof(frags[0]));
         ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s): rc=%s\n",
