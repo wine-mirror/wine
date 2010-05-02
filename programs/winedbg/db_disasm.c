@@ -85,11 +85,12 @@ static BOOL db_display = FALSE;
 #define	WORD	1
 #define	LONG	2
 #define	QUAD	3
-#define	SNGL	4
-#define	DBLR	5
-#define	EXTR	6
-#define	SDEP	7
-#define	NONE	8
+#define	DQUA    4
+#define	SNGL	5
+#define	DBLR	6
+#define	EXTR	7
+#define	SDEP	8
+#define	NONE	9
 
 /*
  * Addressing modes
@@ -336,7 +337,7 @@ static const struct inst db_inst_0f6x[] = {
 /*6c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
 /*6d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
 /*6e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
-/*6f*/	{ "movq",      TRUE, NONE,  op2(E, MX), 0 },
+/*6f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 },
 };
 
 static const struct inst db_inst_0f7x[] = {
@@ -356,7 +357,7 @@ static const struct inst db_inst_0f7x[] = {
 /*7c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
 /*7d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
 /*7e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
-/*7f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 },
+/*7f*/	{ "movq",      TRUE, NONE,  op2(MX, EMX), 0 },
 };
 
 static const struct inst db_inst_0f8x[] = {
@@ -1040,10 +1041,12 @@ static const char * const db_index_reg_16[8] = {
 	"%bx"
 };
 
-static const char * const db_reg[3][8] = {
-	{ "%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh" },
-	{ "%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di" },
-	{ "%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi" }
+static const char * const db_reg[5][8] = {
+/*BYTE*/{ "%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh" },
+/*WORD*/{ "%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di" },
+/*LONG*/{ "%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi" },
+/*QUAD*/{ "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7" },
+/*DQUA*/{ "%xmm0","%xmm1","%xmm2","%xmm3","%xmm4","%xmm5","%xmm6","%xmm7" }
 };
 
 static const char * const db_seg_reg[8] = {
@@ -1058,6 +1061,7 @@ static const int db_lengths[] = {
 	2,	/* WORD */
 	4,	/* LONG */
 	8,	/* QUAD */
+	16,     /* DQUA */
 	4,	/* SNGL */
 	8,	/* DBLR */
 	10,	/* EXTR */
@@ -1561,7 +1565,7 @@ void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
 		case EMX:
 		  if( db_display )
 		    {
-		      dbg_printf("%%mm%d", f_rm(regmodrm));
+                      db_print_address(seg, QUAD, &address, 0);
 		    }
 		    break;
 		case XMM:
@@ -1573,7 +1577,7 @@ void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
 		case EXMM:
 		  if( db_display )
 		    {
-		      dbg_printf("%%xmm%d", f_rm(regmodrm));
+                      db_print_address(seg, DQUA, &address, 0);
 		    }
 		    break;
 
