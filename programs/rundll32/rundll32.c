@@ -61,7 +61,7 @@ static FARPROC16 (WINAPI *pGetProcAddress16)(HMODULE16 hModule, LPCSTR name);
 static void (WINAPI *pRunDLL_CallEntry16)( FARPROC proc, HWND hwnd, HINSTANCE inst,
                                            LPCSTR cmdline, INT cmdshow );
 
-static ATOM MyRegisterClass(HINSTANCE hInstance)
+static ATOM register_class(void)
 {
     WNDCLASSEX wcex;
 
@@ -71,7 +71,7 @@ static ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.lpfnWndProc    = DefWindowProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
+    wcex.hInstance      = NULL;
     wcex.hIcon          = NULL;
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
@@ -132,7 +132,7 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     return ret;
 }
 
-static LPWSTR GetNextArg(LPWSTR *cmdline)
+static LPWSTR get_next_arg(LPWSTR *cmdline)
 {
     LPWSTR s;
     LPWSTR arg,d;
@@ -226,7 +226,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPSTR szCmdArgs, 
     szDllName=NULL;
 
     /* Initialize the rundll32 class */
-    MyRegisterClass( NULL );
+    register_class();
     hWnd = CreateWindow(szWindowClass, szTitle,
           WS_OVERLAPPEDWINDOW|WS_VISIBLE,
           CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, NULL, NULL);
@@ -234,20 +234,20 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPSTR szCmdArgs, 
     /* Skip the rundll32.exe path */
     szCmdLine=GetCommandLineW();
     WINE_TRACE("CmdLine=%s\n",wine_dbgstr_w(szCmdLine));
-    szDllName=GetNextArg(&szCmdLine);
+    szDllName = get_next_arg(&szCmdLine);
     if (!szDllName || *szDllName==0)
         goto CLEANUP;
     HeapFree(GetProcessHeap(),0,szDllName);
 
     /* Get the dll name and API EntryPoint */
-    szDllName=GetNextArg(&szCmdLine);
+    szDllName = get_next_arg(&szCmdLine);
     if (!szDllName || *szDllName==0)
         goto CLEANUP;
     WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
     if ((szEntryPoint = strchrW(szDllName, ',' )))
         *szEntryPoint++=0;
     else
-        szEntryPoint = GetNextArg(&szCmdLine);
+        szEntryPoint = get_next_arg(&szCmdLine);
     WINE_TRACE("EntryPoint=%s\n",wine_dbgstr_w(szEntryPoint));
 
     /* Load the library */
