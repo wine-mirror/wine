@@ -1995,7 +1995,7 @@ static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTST
     }
 
     hres = IActiveScriptSite_OnStateChange(site, (state = ss));
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI ActiveScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
