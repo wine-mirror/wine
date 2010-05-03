@@ -3,6 +3,7 @@ Type=Application
 Name=Wine Windows Program Loader
 Name[de]=Wine Windows-Programmstarter
 Name[es]=Wine Cargador de programas de Windows
+Name[lt]=Wine Windows programų paleidyklė
 Name[nl]=Wine Windows programmalader
 Name[sv]=Wine Windows Programstartare
 Name[ru]=Wine - загрузчик Windows программ
