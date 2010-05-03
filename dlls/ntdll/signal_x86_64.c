@@ -710,20 +710,28 @@ enum reg_rule
 };
 
 #define NB_FRAME_REGS 41
+#define MAX_SAVED_STATES 16
+
+struct frame_state
+{
+    ULONG_PTR     cfa_offset;
+    unsigned char cfa_reg;
+    enum reg_rule cfa_rule;
+    enum reg_rule rules[NB_FRAME_REGS];
+    ULONG64       regs[NB_FRAME_REGS];
+};
 
 struct frame_info
 {
     ULONG_PTR     ip;
     ULONG_PTR     code_align;
     LONG_PTR      data_align;
-    ULONG_PTR     cfa_offset;
-    enum reg_rule cfa_rule;
-    unsigned char cfa_reg;
     unsigned char retaddr_reg;
     unsigned char fde_encoding;
     unsigned char signal_frame;
-    enum reg_rule rules[NB_FRAME_REGS];
-    ULONG64       regs[NB_FRAME_REGS];
+    unsigned char state_sp;
+    struct frame_state state;
+    struct frame_state *state_stack;
 };
 
 static const char *dwarf_reg_names[NB_FRAME_REGS] =
@@ -765,8 +773,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
                 LONG_PTR offset = dwarf_get_uleb128( &ptr ) * info->data_align;
                 if (!valid_reg( reg )) break;
                 TRACE( "%lx: DW_CFA_offset %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
-                info->regs[reg]  = offset;
-                info->rules[reg] = RULE_CFA_OFFSET;
+                info->state.regs[reg]  = offset;
+                info->state.rules[reg] = RULE_CFA_OFFSET;
                 break;
             }
             case DW_CFA_restore:
@@ -774,7 +782,7 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
                 ULONG_PTR reg = op & 0x3f;
                 if (!valid_reg( reg )) break;
                 TRACE( "%lx: DW_CFA_restore %s\n", info->ip, dwarf_reg_names[reg] );
-                info->rules[reg] = RULE_UNSET;
+                info->state.rules[reg] = RULE_UNSET;
                 break;
             }
             }
@@ -819,8 +827,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
                                                              : dwarf_get_sleb128( &ptr ) * info->data_align;
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_offset_extended %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
-            info->regs[reg]  = offset;
-            info->rules[reg] = RULE_CFA_OFFSET;
+            info->state.regs[reg]  = offset;
+            info->state.rules[reg] = RULE_CFA_OFFSET;
             break;
         }
         case DW_CFA_restore_extended:
@@ -828,7 +836,7 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR reg = dwarf_get_uleb128( &ptr );
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_restore_extended %s\n", info->ip, dwarf_reg_names[reg] );
-            info->rules[reg] = RULE_UNSET;
+            info->state.rules[reg] = RULE_UNSET;
             break;
         }
         case DW_CFA_undefined:
@@ -836,7 +844,7 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR reg = dwarf_get_uleb128( &ptr );
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_undefined %s\n", info->ip, dwarf_reg_names[reg] );
-            info->rules[reg] = RULE_UNDEFINED;
+            info->state.rules[reg] = RULE_UNDEFINED;
             break;
         }
         case DW_CFA_same_value:
@@ -844,8 +852,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR reg = dwarf_get_uleb128( &ptr );
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_same_value %s\n", info->ip, dwarf_reg_names[reg] );
-            info->regs[reg]  = reg;
-            info->rules[reg] = RULE_SAME;
+            info->state.regs[reg]  = reg;
+            info->state.rules[reg] = RULE_SAME;
             break;
         }
         case DW_CFA_register:
@@ -854,15 +862,23 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR reg2 = dwarf_get_uleb128( &ptr );
             if (!valid_reg( reg ) || !valid_reg( reg2 )) break;
             TRACE( "%lx: DW_CFA_register %s == %s\n", info->ip, dwarf_reg_names[reg], dwarf_reg_names[reg2] );
-            info->regs[reg]  = reg2;
-            info->rules[reg] = RULE_OTHER_REG;
+            info->state.regs[reg]  = reg2;
+            info->state.rules[reg] = RULE_OTHER_REG;
             break;
         }
         case DW_CFA_remember_state:
-            FIXME( "%lx: DW_CFA_remember_state not implemented\n", info->ip );
+            TRACE( "%lx: DW_CFA_remember_state\n", info->ip );
+            if (info->state_sp >= MAX_SAVED_STATES)
+                FIXME( "%lx: DW_CFA_remember_state too many nested saves\n", info->ip );
+            else
+                info->state_stack[info->state_sp++] = info->state;
             break;
         case DW_CFA_restore_state:
-            FIXME( "%lx: DW_CFA_restore_state not implemented\n", info->ip );
+            TRACE( "%lx: DW_CFA_restore_state\n", info->ip );
+            if (!info->state_sp)
+                FIXME( "%lx: DW_CFA_restore_state without corresponding save\n", info->ip );
+            else
+                info->state = info->state_stack[--info->state_sp];
             break;
         case DW_CFA_def_cfa:
         case DW_CFA_def_cfa_sf:
@@ -872,9 +888,9 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
                                                       : dwarf_get_sleb128( &ptr ) * info->data_align;
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_def_cfa %s, %lu\n", info->ip, dwarf_reg_names[reg], offset );
-            info->cfa_reg    = reg;
-            info->cfa_offset = offset;
-            info->cfa_rule   = RULE_CFA_OFFSET;
+            info->state.cfa_reg    = reg;
+            info->state.cfa_offset = offset;
+            info->state.cfa_rule   = RULE_CFA_OFFSET;
             break;
         }
         case DW_CFA_def_cfa_register:
@@ -882,8 +898,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR reg = dwarf_get_uleb128( &ptr );
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_def_cfa_register %s\n", info->ip, dwarf_reg_names[reg] );
-            info->cfa_reg = reg;
-            info->cfa_rule = RULE_CFA_OFFSET;
+            info->state.cfa_reg = reg;
+            info->state.cfa_rule = RULE_CFA_OFFSET;
             break;
         }
         case DW_CFA_def_cfa_offset:
@@ -892,8 +908,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR offset = (op == DW_CFA_def_cfa_offset) ? dwarf_get_uleb128( &ptr )
                                                              : dwarf_get_sleb128( &ptr ) * info->data_align;
             TRACE( "%lx: DW_CFA_def_cfa_offset %lu\n", info->ip, offset );
-            info->cfa_offset = offset;
-            info->cfa_rule = RULE_CFA_OFFSET;
+            info->state.cfa_offset = offset;
+            info->state.cfa_rule = RULE_CFA_OFFSET;
             break;
         }
         case DW_CFA_def_cfa_expression:
@@ -901,8 +917,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             ULONG_PTR expr = (ULONG_PTR)ptr;
             ULONG_PTR len = dwarf_get_uleb128( &ptr );
             TRACE( "%lx: DW_CFA_def_cfa_expression %lx-%lx\n", info->ip, expr, expr+len );
-            info->cfa_offset = expr;
-            info->cfa_rule = RULE_VAL_EXPRESSION;
+            info->state.cfa_offset = expr;
+            info->state.cfa_rule = RULE_VAL_EXPRESSION;
             ptr += len;
             break;
         }
@@ -915,8 +931,8 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             if (!valid_reg( reg )) break;
             TRACE( "%lx: DW_CFA_%sexpression %s %lx-%lx\n",
                    info->ip, (op == DW_CFA_expression) ? "" : "val_", dwarf_reg_names[reg], expr, expr+len );
-            info->regs[reg]  = expr;
-            info->rules[reg] = (op == DW_CFA_expression) ? RULE_EXPRESSION : RULE_VAL_EXPRESSION;
+            info->state.regs[reg]  = expr;
+            info->state.rules[reg] = (op == DW_CFA_expression) ? RULE_EXPRESSION : RULE_VAL_EXPRESSION;
             ptr += len;
             break;
         }
@@ -1111,46 +1127,46 @@ static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context )
 }
 
 /* apply the computed frame info to the actual context */
-static void apply_frame_info( CONTEXT *context, struct frame_info *info )
+static void apply_frame_state( CONTEXT *context, struct frame_state *state )
 {
     unsigned int i;
     ULONG_PTR cfa, value;
     CONTEXT new_context = *context;
 
-    switch (info->cfa_rule)
+    switch (state->cfa_rule)
     {
     case RULE_EXPRESSION:
-        cfa = *(ULONG_PTR *)eval_expression( (const unsigned char *)info->cfa_offset, context );
+        cfa = *(ULONG_PTR *)eval_expression( (const unsigned char *)state->cfa_offset, context );
         break;
     case RULE_VAL_EXPRESSION:
-        cfa = eval_expression( (const unsigned char *)info->cfa_offset, context );
+        cfa = eval_expression( (const unsigned char *)state->cfa_offset, context );
         break;
     default:
-        cfa = *(ULONG_PTR *)get_context_reg( context, info->cfa_reg ) + info->cfa_offset;
+        cfa = *(ULONG_PTR *)get_context_reg( context, state->cfa_reg ) + state->cfa_offset;
         break;
     }
     if (!cfa) return;
 
     for (i = 0; i < NB_FRAME_REGS; i++)
     {
-        switch (info->rules[i])
+        switch (state->rules[i])
         {
         case RULE_UNSET:
         case RULE_UNDEFINED:
         case RULE_SAME:
             break;
         case RULE_CFA_OFFSET:
-            set_context_reg( &new_context, i, (char *)cfa + info->regs[i] );
+            set_context_reg( &new_context, i, (char *)cfa + state->regs[i] );
             break;
         case RULE_OTHER_REG:
-            set_context_reg( &new_context, i, get_context_reg( context, info->regs[i] ));
+            set_context_reg( &new_context, i, get_context_reg( context, state->regs[i] ));
             break;
         case RULE_EXPRESSION:
-            value = eval_expression( (const unsigned char *)info->regs[i], context );
+            value = eval_expression( (const unsigned char *)state->regs[i], context );
             set_context_reg( &new_context, i, (void *)value );
             break;
         case RULE_VAL_EXPRESSION:
-            value = eval_expression( (const unsigned char *)info->regs[i], context );
+            value = eval_expression( (const unsigned char *)state->regs[i], context );
             set_context_reg( &new_context, i, &value );
             break;
         }
@@ -1173,10 +1189,12 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     const unsigned char *ptr, *augmentation, *end;
     ULONG_PTR len, code_end;
     struct frame_info info;
+    struct frame_state state_stack[MAX_SAVED_STATES];
     int aug_z_format = 0;
     unsigned char lsda_encoding = DW_EH_PE_omit;
 
     memset( &info, 0, sizeof(info) );
+    info.state_stack = state_stack;
     info.ip = (ULONG_PTR)bases->func;
     *handler = NULL;
 
@@ -1194,7 +1212,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     info.code_align = dwarf_get_uleb128( &ptr );
     info.data_align = dwarf_get_sleb128( &ptr );
     info.retaddr_reg = *ptr++;
-    info.cfa_rule = RULE_CFA_OFFSET;
+    info.state.cfa_rule = RULE_CFA_OFFSET;
 
     TRACE( "function %lx base %p cie %p len %x id %x version %x aug '%s' code_align %lu data_align %ld retaddr %s\n",
            ip, bases->func, cie, cie->length, cie->id, cie->version, cie->augmentation,
@@ -1253,7 +1271,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
            fde, fde->length, *handler, *handler_data, info.ip, code_end );
     execute_cfa_instructions( ptr, end, ip, &info );
-    apply_frame_info( context, &info );
+    apply_frame_state( context, &info.state );
     *frame = context->Rsp;
 
     TRACE( "next function rip=%016lx\n", context->Rip );
