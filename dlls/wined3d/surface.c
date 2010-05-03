@@ -51,7 +51,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
      * target, Uninit3D() will activate a context before doing anything. */
     if (device->render_targets && device->render_targets[0])
     {
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
     }
 
     ENTER_GL();
@@ -1085,7 +1085,7 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
 
         TRACE("(%p) : About to load surface\n", surface);
 
-        if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        if (!device->isInDraw) context = context_acquire(device, NULL);
 
         if (surface->resource.format_desc->format == WINED3DFMT_P8_UINT
                 || surface->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM)
@@ -1197,7 +1197,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
     This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
-    context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
     /* Destroy PBOs, but load them into real sysmem before */
@@ -1272,7 +1272,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
      * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
      * context->last_was_blit set on the unlock.
      */
-    context = context_acquire(device, This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This);
+    context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -1500,7 +1501,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
      * states in the stateblock, and no driver was found yet that had bugs in that regard.
      */
-    context = context_acquire(device, This, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, This);
     gl_info = context->gl_info;
 
     surface_bind_and_dirtify(This, srgb);
@@ -1634,7 +1635,7 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
         GLenum error;
         struct wined3d_context *context;
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         ENTER_GL();
 
         GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
@@ -1737,7 +1738,7 @@ lock_end:
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
         ENTER_GL();
@@ -1793,7 +1794,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     struct wined3d_context *context;
 
     /* Activate the correct context for the render target */
-    context = context_acquire(device, This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This);
+    context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
     ENTER_GL();
@@ -1896,7 +1898,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
         TRACE("Freeing PBO memory\n");
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
         ENTER_GL();
@@ -1997,7 +1999,7 @@ static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
 {
     struct wined3d_context *context;
 
-    context = context_acquire(surface->resource.device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(surface->resource.device, NULL);
 
     ENTER_GL();
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
@@ -3005,7 +3007,8 @@ static void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *dst_surface, IWineD3D
         upsidedown = TRUE;
     }
 
-    context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
+    context = context_acquire(device, src_surface);
+    context_apply_blit_state(context, device);
     surface_internal_preload(dst_surface, SRGB_RGB);
     ENTER_GL();
 
@@ -3113,7 +3116,8 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    context = context_acquire(device, src_surface, CTXUSAGE_BLIT);
+    context = context_acquire(device, src_surface);
+    context_apply_blit_state(context, device);
     surface_internal_preload(dst_surface, SRGB_RGB);
 
     src_offscreen = surface_is_offscreen(src_surface);
@@ -3672,7 +3676,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         surface_internal_preload(src_surface, SRGB_RGB);
 
         /* Activate the destination context, set it up for blitting */
-        context = context_acquire(device, dst_surface, CTXUSAGE_BLIT);
+        context = context_acquire(device, dst_surface);
+        context_apply_blit_state(context, device);
 
         /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
          * while OpenGL coordinates are window relative.
@@ -4329,7 +4334,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     surface_get_rect(This, rect_in, &src_rect);
 
-    context = context_acquire(device, This, CTXUSAGE_BLIT);
+    context = context_acquire(device, This);
+    context_apply_blit_state(context, device);
     if (context->render_offscreen)
     {
         dst_rect.left = src_rect.left;
@@ -4430,7 +4436,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         {
             struct wined3d_context *context = NULL;
 
-            if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            if (!device->isInDraw) context = context_acquire(device, NULL);
 
             surface_bind_and_dirtify(This, !(This->Flags & SFLAG_INTEXTURE));
             surface_download_data(This, gl_info);
@@ -4471,7 +4477,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
                 TRACE("Removing the pbo attached to surface %p\n", This);
 
-                if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+                if (!device->isInDraw) context = context_acquire(device, NULL);
                 surface_remove_pbo(This, gl_info);
                 if (context) context_release(context);
             }
@@ -4537,7 +4543,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
 
-            if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            if (!device->isInDraw) context = context_acquire(device, NULL);
 
             surface_prepare_texture(This, gl_info, srgb);
             surface_bind_and_dirtify(This, srgb);

@@ -4688,7 +4688,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
             return;
         }
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->pshader == iface)
@@ -4707,7 +4707,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
             return;
         }
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->vshader == iface)

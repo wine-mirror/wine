@@ -1675,7 +1675,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 
-    context = context_acquire(This, swapchain->front_buffer, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, swapchain->front_buffer);
 
     create_dummy_textures(This);
 
@@ -1806,7 +1806,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     /* I don't think that the interface guarantees that the device is destroyed from the same thread
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
-    context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, NULL);
     gl_info = context->gl_info;
 
     if(This->logo_surface) IWineD3DSurface_Release(This->logo_surface);
@@ -3911,7 +3911,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     }
 
     /* Need any context to write to the vbo. */
-    context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, NULL);
 
     /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
      * control the streamIsUP flag, thus restore it afterwards.
@@ -4324,7 +4324,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface)
         return WINED3DERR_INVALIDCALL;
     }
 
-    context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, NULL);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     wglFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
@@ -4457,7 +4457,15 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
     }
 
-    context = context_acquire(This, target, CTXUSAGE_CLEAR);
+    context = context_acquire(This, target);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping clear.\n");
+        return WINED3D_OK;
+    }
+
+    context_apply_clear_state(context, This);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (!surface_is_offscreen(target))
@@ -4479,13 +4487,6 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
             context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, depth_stencil, TRUE);
             LEAVE_GL();
         }
-    }
-
-    if (!context->valid)
-    {
-        context_release(context);
-        WARN("Invalid context, skipping clear.\n");
-        return WINED3D_OK;
     }
 
     target->get_drawable_size(context, &drawable_width, &drawable_height);
@@ -5299,7 +5300,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     if (convert != NO_CONVERSION)
         return IWineD3DSurface_BltFast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
-    context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, NULL);
 
     ENTER_GL();
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -5522,7 +5523,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
     {
         TRACE("Surface %p is onscreen\n", surface);
 
-        context = context_acquire(This, surface, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(This, surface);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, surface_get_gl_buffer(surface));
@@ -5531,7 +5532,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
     {
         TRACE("Surface %p is offscreen\n", surface);
 
-        context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(This, NULL);
         ENTER_GL();
         context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
         context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, surface);
@@ -5817,9 +5818,9 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
     IWineD3DSurface_LoadLocation((IWineD3DSurface *)src_surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_LoadLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, NULL);
 
-    if (!surface_is_offscreen(src_surface)) context = context_acquire(device, src_surface, CTXUSAGE_RESOURCELOAD);
-    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, dst_surface, CTXUSAGE_RESOURCELOAD);
-    else context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+    if (!surface_is_offscreen(src_surface)) context = context_acquire(device, src_surface);
+    else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, dst_surface);
+    else context = context_acquire(device, NULL);
 
     if (!context->valid)
     {
@@ -6032,8 +6033,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
     /* some basic validation checks */
-    if(This->cursorTexture) {
-        struct wined3d_context *context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    if (This->cursorTexture)
+    {
+        struct wined3d_context *context = context_acquire(This, NULL);
         ENTER_GL();
         glDeleteTextures(1, &This->cursorTexture);
         LEAVE_GL();
@@ -6096,7 +6098,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                     memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
                 IWineD3DSurface_UnlockRect(pCursorBitmap);
 
-                context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+                context = context_acquire(This, NULL);
 
                 ENTER_GL();
 
@@ -6273,7 +6275,7 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
 
     if (surface->texture_name)
     {
-        struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        struct wined3d_context *context = context_acquire(device, NULL);
         ENTER_GL();
         glDeleteTextures(1, &surface->texture_name);
         LEAVE_GL();
@@ -6342,7 +6344,7 @@ static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl 
     struct wined3d_context *context;
     IWineD3DBaseShaderImpl *shader;
 
-    context = context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This, NULL);
     gl_info = context->gl_info;
 
     IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
@@ -6434,7 +6436,7 @@ static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwap
     return WINED3D_OK;
 
 err:
-    context_acquire(This, NULL, CTXUSAGE_RESOURCELOAD);
+    context_acquire(This, NULL);
     destroy_dummy_textures(This, context->gl_info);
     context_release(context);
     context_destroy(This, context);

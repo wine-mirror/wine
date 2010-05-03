@@ -39,7 +39,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
 
     TRACE("(%p) : About to load texture.\n", This);
 
-    if (!device->isInDraw) context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+    if (!device->isInDraw) context = context_acquire(device, NULL);
     else if (gl_info->supported[EXT_TEXTURE_SRGB] && This->baseTexture.bindCount > 0)
     {
         srgb_mode = device->stateBlock->samplerState[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];

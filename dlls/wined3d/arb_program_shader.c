@@ -4556,7 +4556,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         if (shader_data->num_gl_shaders)
         {
-            struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            struct wined3d_context *context = context_acquire(device, NULL);
 
             ENTER_GL();
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
@@ -4582,7 +4582,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         if (shader_data->num_gl_shaders)
         {
-            struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+            struct wined3d_context *context = context_acquire(device, NULL);
 
             ENTER_GL();
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
@@ -6993,7 +6993,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     surface_internal_preload(src_surface, SRGB_RGB);
 
     /* Activate the destination context, set it up for blitting */
-    context = context_acquire(device, dst_surface, CTXUSAGE_BLIT);
+    context = context_acquire(device, dst_surface);
+    context_apply_blit_state(context, device);
 
     /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
      * while OpenGL coordinates are window relative.

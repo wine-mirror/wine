@@ -115,7 +115,7 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
 
     if (This->baseTexture.texture_rgb.name || This->baseTexture.texture_srgb.name)
     {
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
     }
 
     if(This->baseTexture.texture_rgb.name) {
@@ -193,7 +193,7 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
        * Or should we delay the applying until the texture is used for drawing? For now, apply
        * immediately.
        */
-      struct wined3d_context *context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+      struct wined3d_context *context = context_acquire(device, NULL);
 
       ENTER_GL();
       glBindTexture(textureDimensions, This->baseTexture.texture_rgb.name);

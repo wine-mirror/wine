@@ -594,13 +594,15 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
-    context = context_acquire(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    context = context_acquire(This, This->render_targets[0]);
     if (!context->valid)
     {
         context_release(context);
         WARN("Invalid context, skipping draw.\n");
         return;
     }
+
+    context_apply_draw_state(context, This);
 
     if (This->depth_stencil)
     {
@@ -812,7 +814,8 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     /* Simply activate the context for blitting. This disables all the things we don't want and
      * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
      * patch (as opposed to normal draws) will most likely need different changes anyway. */
-    context = context_acquire(This, NULL, CTXUSAGE_BLIT);
+    context = context_acquire(This, NULL);
+    context_apply_blit_state(context, This);
 
     /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
      * Beware of vbos

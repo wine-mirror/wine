@@ -142,7 +142,8 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         float tex_right = src_rect->right;
         float tex_bottom = src_rect->bottom;
 
-        context2 = context_acquire(This->device, This->back_buffers[0], CTXUSAGE_BLIT);
+        context2 = context_acquire(This->device, This->back_buffers[0]);
+        context_apply_blit_state(context2, device);
 
         if(backbuffer->Flags & SFLAG_NORMCOORD)
         {
@@ -168,13 +169,13 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         context_set_draw_buffer(context, GL_BACK);
 
         /* Set the viewport to the destination rectandle, disable any projection
-         * transformation set up by CTXUSAGE_BLIT, and draw a (-1,-1)-(1,1) quad.
+         * transformation set up by context_apply_blit_state(), and draw a
+         * (-1,-1)-(1,1) quad.
          *
          * Back up viewport and matrix to avoid breaking last_was_blit
          *
-         * Note that CTXUSAGE_BLIT set up viewport and ortho to match the surface
-         * size - we want the GL drawable(=window) size.
-         */
+         * Note that context_apply_blit_state() set up viewport and ortho to
+         * match the surface size - we want the GL drawable(=window) size. */
         glPushAttrib(GL_VIEWPORT_BIT);
         glViewport(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom);
         glMatrixMode(GL_PROJECTION);
@@ -220,7 +221,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
 
-    context = context_acquire(This->device, This->back_buffers[0], CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(This->device, This->back_buffers[0]);
     if (!context->valid)
     {
         context_release(context);

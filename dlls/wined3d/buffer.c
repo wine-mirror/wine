@@ -700,7 +700,7 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         IWineD3DDeviceImpl *device = This->resource.device;
         struct wined3d_context *context;
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
 
         /* Download the buffer, but don't permanently enable double buffering */
         if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
@@ -935,7 +935,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     TRACE("iface %p\n", iface);
     This->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
 
-    context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+    context = context_acquire(device, NULL);
 
     if (!This->buffer_object)
     {
@@ -1261,7 +1261,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
                     IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
                 }
 
-                context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+                context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
                 ENTER_GL();
                 GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
@@ -1367,7 +1367,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
             IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
         }
 
-        context = context_acquire(device, NULL, CTXUSAGE_RESOURCELOAD);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));

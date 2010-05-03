@@ -1186,26 +1186,19 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
                            IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
                            DWORD Filter) DECLSPEC_HIDDEN;
 
-typedef enum ContextUsage {
-    CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
-    CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfaces */
-    CTXUSAGE_BLIT               = 3,    /* OpenGL states are set up 3D drawing */
-    CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
-} ContextUsage;
-
-struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This,
-        IWineD3DSurfaceImpl *target, enum ContextUsage usage) DECLSPEC_HIDDEN;
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,
         struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_alloc_occlusion_query(struct wined3d_context *context,
         struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
-void context_resource_released(IWineD3DDevice *iface,
-        IWineD3DResource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
-void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
+void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurfaceImpl *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
+void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
         const struct wined3d_format_desc *ds_format_desc) DECLSPEC_HIDDEN;
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
@@ -1214,6 +1207,8 @@ void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPE
 struct wined3d_context *context_get_current(void) DECLSPEC_HIDDEN;
 DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
+void context_resource_released(IWineD3DDevice *iface,
+        IWineD3DResource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;

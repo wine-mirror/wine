@@ -1977,7 +1977,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
 {
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
@@ -2015,7 +2015,7 @@ static void context_apply_blit_state(struct wined3d_context *context, IWineD3DDe
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
 {
     const struct StateEntry *state_table = device->StateTable;
 
@@ -2054,7 +2054,7 @@ static void context_apply_clear_state(struct wined3d_context *context, IWineD3DD
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
 {
     const struct StateEntry *state_table = device->StateTable;
     unsigned int i;
@@ -2186,13 +2186,12 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
  *  usage: Prepares the context for blitting, drawing or other actions
  *
  *****************************************************************************/
-struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *target, enum ContextUsage usage)
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
 
-    TRACE("device %p, target %p, usage %#x.\n", device, target, usage);
+    TRACE("device %p, target %p.\n", device, target);
 
     context = FindContext(device, target);
     context_setup_target(device, context, target);
@@ -2225,28 +2224,6 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device,
             ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
                     context->hdc, context->glCtx, err);
         }
-    }
-
-    switch (usage)
-    {
-        case CTXUSAGE_BLIT:
-            context_apply_blit_state(context, device);
-            break;
-
-        case CTXUSAGE_CLEAR:
-            context_apply_clear_state(context, device);
-            break;
-
-        case CTXUSAGE_DRAWPRIM:
-            context_apply_draw_state(context, device);
-            break;
-
-        case CTXUSAGE_RESOURCELOAD:
-            break;
-
-        default:
-            FIXME("Unexpected context usage requested.\n");
-            break;
     }
 
     return context;
