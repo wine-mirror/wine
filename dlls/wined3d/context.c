@@ -1977,117 +1977,124 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_state(struct wined3d_context *context, IWineD3DDeviceImpl *device, enum ContextUsage usage)
+static void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+{
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if (context->render_offscreen)
+        {
+            FIXME("Applying blit state for an offscreen target with ORM_FBO. This should be avoided.\n");
+            surface_internal_preload(context->current_rt, SRGB_RGB);
+
+            ENTER_GL();
+            context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
+            context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, context->current_rt);
+            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
+            LEAVE_GL();
+        }
+        else
+        {
+            context_validate_onscreen_formats(device, context);
+
+            ENTER_GL();
+            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+            LEAVE_GL();
+        }
+
+        context->draw_buffer_dirty = TRUE;
+    }
+
+    if (context->draw_buffer_dirty)
+    {
+        context_apply_draw_buffer(context, TRUE);
+        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+            context->draw_buffer_dirty = FALSE;
+    }
+
+    SetupForBlit(device, context);
+}
+
+/* Context activation is done by the caller. */
+static void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+{
+    const struct StateEntry *state_table = device->StateTable;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+        ENTER_GL();
+        context_apply_fbo_state(context);
+        LEAVE_GL();
+    }
+
+    if (context->draw_buffer_dirty)
+    {
+        context_apply_draw_buffer(context, FALSE);
+        context->draw_buffer_dirty = FALSE;
+    }
+
+    if (context->last_was_blit)
+    {
+        device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
+    }
+
+    /* Blending and clearing should be orthogonal, but tests on the nvidia
+     * driver show that disabling blending when clearing improves the clearing
+     * performance incredibly. */
+    ENTER_GL();
+    glDisable(GL_BLEND);
+    glEnable(GL_SCISSOR_TEST);
+    checkGLcall("glEnable GL_SCISSOR_TEST");
+    LEAVE_GL();
+
+    context->last_was_blit = FALSE;
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
+    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
+    Context_MarkStateDirty(context, STATE_SCISSORRECT, state_table);
+}
+
+/* Context activation is done by the caller. */
+static void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
 {
     const struct StateEntry *state_table = device->StateTable;
     unsigned int i;
 
-    switch (usage) {
-        case CTXUSAGE_CLEAR:
-        case CTXUSAGE_DRAWPRIM:
-            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-                if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
-                ENTER_GL();
-                context_apply_fbo_state(context);
-                LEAVE_GL();
-            }
-            if (context->draw_buffer_dirty) {
-                context_apply_draw_buffer(context, FALSE);
-                context->draw_buffer_dirty = FALSE;
-            }
-            break;
-
-        case CTXUSAGE_BLIT:
-            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-                if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
-                if (context->render_offscreen)
-                {
-                    FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
-                    surface_internal_preload(context->current_rt, SRGB_RGB);
-
-                    ENTER_GL();
-                    context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-                    context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, context->current_rt);
-                    context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
-                    LEAVE_GL();
-                } else {
-                    ENTER_GL();
-                    context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-                    LEAVE_GL();
-                }
-                context->draw_buffer_dirty = TRUE;
-            }
-            if (context->draw_buffer_dirty) {
-                context_apply_draw_buffer(context, TRUE);
-                if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
-                    context->draw_buffer_dirty = FALSE;
-                }
-            }
-            break;
-
-        default:
-            break;
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+        ENTER_GL();
+        context_apply_fbo_state(context);
+        LEAVE_GL();
     }
 
-    switch(usage) {
-        case CTXUSAGE_RESOURCELOAD:
-            /* This does not require any special states to be set up */
-            break;
-
-        case CTXUSAGE_CLEAR:
-            if(context->last_was_blit) {
-                device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
-            }
-
-            /* Blending and clearing should be orthogonal, but tests on the nvidia driver show that disabling
-             * blending when clearing improves the clearing performance incredibly.
-             */
-            ENTER_GL();
-            glDisable(GL_BLEND);
-            LEAVE_GL();
-            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
-
-            ENTER_GL();
-            glEnable(GL_SCISSOR_TEST);
-            checkGLcall("glEnable GL_SCISSOR_TEST");
-            LEAVE_GL();
-            context->last_was_blit = FALSE;
-            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
-            Context_MarkStateDirty(context, STATE_SCISSORRECT, state_table);
-            break;
-
-        case CTXUSAGE_DRAWPRIM:
-            /* This needs all dirty states applied */
-            if(context->last_was_blit) {
-                device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
-            }
-
-            IWineD3DDeviceImpl_FindTexUnitMap(device);
-            device_preload_textures(device);
-            if (isStateDirty(context, STATE_VDECL))
-                device_update_stream_info(device, context->gl_info);
-
-            ENTER_GL();
-            for (i = 0; i < context->numDirtyEntries; ++i)
-            {
-                DWORD rep = context->dirtyArray[i];
-                DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
-                BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
-                context->isStateDirty[idx] &= ~(1 << shift);
-                state_table[rep].apply(rep, device->stateBlock, context);
-            }
-            LEAVE_GL();
-            context->numDirtyEntries = 0; /* This makes the whole list clean */
-            context->last_was_blit = FALSE;
-            break;
-
-        case CTXUSAGE_BLIT:
-            SetupForBlit(device, context);
-            break;
-
-        default:
-            FIXME("Unexpected context usage requested\n");
+    if (context->draw_buffer_dirty)
+    {
+        context_apply_draw_buffer(context, FALSE);
+        context->draw_buffer_dirty = FALSE;
     }
+
+    if (context->last_was_blit)
+    {
+        device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
+    }
+
+    IWineD3DDeviceImpl_FindTexUnitMap(device);
+    device_preload_textures(device);
+    if (isStateDirty(context, STATE_VDECL))
+        device_update_stream_info(device, context->gl_info);
+
+    ENTER_GL();
+    for (i = 0; i < context->numDirtyEntries; ++i)
+    {
+        DWORD rep = context->dirtyArray[i];
+        DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
+        BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
+        context->isStateDirty[idx] &= ~(1 << shift);
+        state_table[rep].apply(rep, device->stateBlock, context);
+    }
+    LEAVE_GL();
+    context->numDirtyEntries = 0; /* This makes the whole list clean */
+    context->last_was_blit = FALSE;
 }
 
 static void context_setup_target(IWineD3DDeviceImpl *device,
@@ -2220,7 +2227,27 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device,
         }
     }
 
-    context_apply_state(context, device, usage);
+    switch (usage)
+    {
+        case CTXUSAGE_BLIT:
+            context_apply_blit_state(context, device);
+            break;
+
+        case CTXUSAGE_CLEAR:
+            context_apply_clear_state(context, device);
+            break;
+
+        case CTXUSAGE_DRAWPRIM:
+            context_apply_draw_state(context, device);
+            break;
+
+        case CTXUSAGE_RESOURCELOAD:
+            break;
+
+        default:
+            FIXME("Unexpected context usage requested.\n");
+            break;
+    }
 
     return context;
 }
