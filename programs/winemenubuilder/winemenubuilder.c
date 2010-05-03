@@ -1434,6 +1434,16 @@ static char* wchars_to_utf8_chars(LPCWSTR string)
     return ret;
 }
 
+static char* wchars_to_unix_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
 static char *slashes_to_minuses(const char *string)
 {
     int i;
@@ -2660,20 +2670,20 @@ static void cleanup_menus(void)
         LSTATUS lret = ERROR_SUCCESS;
         for (i = 0; lret == ERROR_SUCCESS; )
         {
-            char *value = NULL;
-            char *data = NULL;
+            WCHAR *value = NULL;
+            WCHAR *data = NULL;
             DWORD valueSize = 4096;
             DWORD dataSize = 4096;
             while (1)
             {
                 lret = ERROR_OUTOFMEMORY;
-                value = HeapAlloc(GetProcessHeap(), 0, valueSize);
+                value = HeapAlloc(GetProcessHeap(), 0, valueSize * sizeof(WCHAR));
                 if (value == NULL)
                     break;
-                data = HeapAlloc(GetProcessHeap(), 0, dataSize);
+                data = HeapAlloc(GetProcessHeap(), 0, dataSize * sizeof(WCHAR));
                 if (data == NULL)
                     break;
-                lret = RegEnumValueA(hkey, i, value, &valueSize, NULL, NULL, (BYTE*)data, &dataSize);
+                lret = RegEnumValueW(hkey, i, value, &valueSize, NULL, NULL, (BYTE*)data, &dataSize);
                 if (lret == ERROR_SUCCESS || lret != ERROR_MORE_DATA)
                     break;
                 valueSize *= 2;
@@ -2684,18 +2694,32 @@ static void cleanup_menus(void)
             }
             if (lret == ERROR_SUCCESS)
             {
-                struct stat filestats;
-                if (stat(data, &filestats) < 0 && errno == ENOENT)
+                char *unix_file;
+                char *windows_file;
+                unix_file = wchars_to_unix_chars(value);
+                windows_file = wchars_to_unix_chars(data);
+                if (unix_file != NULL && windows_file != NULL)
                 {
-                    WINE_TRACE("removing menu related file %s\n", value);
-                    remove(value);
-                    RegDeleteValueA(hkey, value);
+                    struct stat filestats;
+                    if (stat(windows_file, &filestats) < 0 && errno == ENOENT)
+                    {
+                        WINE_TRACE("removing menu related file %s\n", unix_file);
+                        remove(unix_file);
+                        RegDeleteValueW(hkey, value);
+                    }
+                    else
+                        i++;
                 }
                 else
-                    i++;
+                {
+                    WINE_ERR("out of memory enumerating menus\n");
+                    lret = ERROR_OUTOFMEMORY;
+                }
+                HeapFree(GetProcessHeap(), 0, unix_file);
+                HeapFree(GetProcessHeap(), 0, windows_file);
             }
             else if (lret != ERROR_NO_MORE_ITEMS)
-                WINE_WARN("error %d reading registry\n", lret);
+                WINE_ERR("error %d reading registry\n", lret);
             HeapFree(GetProcessHeap(), 0, value);
             HeapFree(GetProcessHeap(), 0, data);
         }
