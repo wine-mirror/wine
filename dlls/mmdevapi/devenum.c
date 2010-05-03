@@ -759,24 +759,50 @@ static int blacklist(const char *dev) {
     return 0;
 }
 
-static void pulse_fixup(const char *devstr, const char **defstr) {
+static void pulse_fixup(const char *devstr, const char **defstr, int render) {
     static int warned;
+    int default_pulse;
 
-    if (!blacklist_pulse && !local_contexts)
+    if (render && !blacklist_pulse && !local_contexts)
         blacklist_pulse = 1;
 
-    if (!blacklist_pulse || !devstr || strncmp(*defstr, "PulseAudio ", 11))
+    if (!blacklist_pulse || !devstr || !*devstr)
         return;
+
+    default_pulse = !strncmp(*defstr, "PulseAudio ", 11);
+
+    while (*devstr && !strncmp(devstr, "PulseAudio ", 11))
+        devstr += strlen(devstr) + 1;
+
+    /* Could still be a newer version, so check for 1.11 if more devices are enabled */
+    if (render && *devstr) {
+        ALCdevice *dev = palcOpenDevice(devstr);
+        ALCcontext *ctx = palcCreateContext(dev, NULL);
+        if (ctx) {
+            const char *ver;
+
+            setALContext(ctx);
+            ver = palGetString(AL_VERSION);
+            popALContext();
+            palcDestroyContext(ctx);
+
+            if (!strcmp(ver, "1.1 ALSOFT 1.11.753")) {
+                blacklist_pulse = 0;
+                palcCloseDevice(dev);
+                return;
+            }
+        }
+        if (dev)
+            palcCloseDevice(dev);
+    }
 
     if (!warned++) {
         ERR("Disabling pulseaudio because of old openal version\n");
         ERR("Please upgrade to openal-soft v1.12 or newer\n");
     }
-    while (*devstr && !strncmp(devstr, "PulseAudio ", 11)) {
-        devstr += strlen(devstr) + 1;
-    }
     TRACE("New default: %s\n", devstr);
-    *defstr = devstr;
+    if (default_pulse)
+        *defstr = devstr;
 }
 
 static void openal_scanrender(void)
@@ -793,7 +819,7 @@ static void openal_scanrender(void)
         defaultstr = palcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
         devstr = palcGetString(NULL, ALC_DEVICE_SPECIFIER);
     }
-    pulse_fixup(devstr, &defaultstr);
+    pulse_fixup(devstr, &defaultstr, 1);
     defblacklisted = blacklist(defaultstr);
     if (defblacklisted)
         WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
@@ -834,7 +860,7 @@ static void openal_scancapture(void)
     EnterCriticalSection(&openal_crst);
     devstr = palcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
     defaultstr = palcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
-    pulse_fixup(devstr, &defaultstr);
+    pulse_fixup(devstr, &defaultstr, 0);
     defblacklisted = blacklist(defaultstr);
     if (defblacklisted)
         WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
