@@ -15,6 +15,7 @@ Name[it]=Wine Carica Programmi Windows
 Name[da]=Wine, Programstarter til Windows-programmer
 Name[nb]=Wine Programlaster for Windowsapplikasjoner
 Name[nn]=Wine Programlaster for Windowsapplikasjoner
+Name[sr]=Wine - дизач Windows програма
 Exec=wine start /unix %f
 MimeType=application/x-ms-dos-executable;application/x-msi;application/x-win-lnk;
 NoDisplay=true
