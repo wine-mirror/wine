@@ -437,23 +437,27 @@ static void test_setlocale(void)
     if(ret)
         todo_wine ok((!strcmp( ret, "Norwegian-Nynorsk_Norway.1252"))
         || broken(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252"))
+        || broken(!strcmp(ret, "Norwegian_Norway.1252"))
         || broken(!strcmp(ret, "Norwegian (Nynorsk)_Norway.1252")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "nor");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        todo_wine ok(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252"), "ret = %s\n", ret);
+        todo_wine ok(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252")
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "norwegian-bokmal");
     todo_wine ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252"), "ret = %s\n", ret);
+        ok(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252")
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "norwegian-nynorsk");
     todo_wine ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
         ok(!strcmp(ret, "Norwegian-Nynorsk_Norway.1252")
-        || broken(!strcmp( ret, "Norwegian (Nynorsk)_Norway.1252"))
+        || broken(!strcmp(ret, "Norwegian_Norway.1252"))
+        || broken(!strcmp(ret, "Norwegian (Nynorsk)_Norway.1252"))
         || broken(!strcmp(ret, "Norwegian (Bokmål)_Norway.1252")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "plk");
