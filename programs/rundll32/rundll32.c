@@ -87,10 +87,14 @@ static HINSTANCE16 load_dll16( LPCWSTR dll )
     HINSTANCE16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, dll, -1, NULL, 0, NULL, NULL );
     char *dllA = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
-    pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)35 );
-    if (pLoadLibrary16) ret = pLoadLibrary16( dllA );
-    HeapFree( GetProcessHeap(), 0, dllA );
+
+    if (dllA)
+    {
+        WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
+        pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)35 );
+        if (pLoadLibrary16) ret = pLoadLibrary16( dllA );
+        HeapFree( GetProcessHeap(), 0, dllA );
+    }
     return ret;
 }
 
@@ -99,10 +103,14 @@ static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
     FARPROC16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
     char *entryA = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
-    pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)37 );
-    if (pGetProcAddress16) ret = pGetProcAddress16( inst, entryA );
-    HeapFree( GetProcessHeap(), 0, entryA );
+
+    if (entryA)
+    {
+        WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
+        pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)37 );
+        if (pGetProcAddress16) ret = pGetProcAddress16( inst, entryA );
+        HeapFree( GetProcessHeap(), 0, entryA );
+    }
     return ret;
 }
 
@@ -111,6 +119,10 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     void *ret;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
     char *entryA = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+
+    if (!entryA)
+        return NULL;
+
     WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
 
     /* first try the W version */
@@ -217,7 +229,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPSTR szCmdArgs, 
     LPWSTR szCmdLine;
     LPWSTR szDllName,szEntryPoint;
     void *entry_point;
-    BOOL unicode, win16;
+    BOOL unicode = FALSE, win16;
     STARTUPINFOW info;
     HMODULE hDll;
 
@@ -295,6 +307,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPSTR szCmdArgs, 
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, NULL, 0, NULL, NULL );
         char *cmdline = HeapAlloc( GetProcessHeap(), 0, len );
+
+        if (!cmdline)
+            goto CLEANUP;
+
         WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, cmdline, len, NULL, NULL );
 
         WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
