@@ -4404,16 +4404,6 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
             return;
         }
 
-        if (rect_count > 1)
-        {
-            /* Multiple clear rects, full load. Strictly speaking this can
-             * also be a full draw_rect clear, but it's probably rare enough
-             * that we don't care. */
-            surface_load_ds_location(ds, context, location);
-            surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
-            return;
-        }
-
         IntersectRect(&r, draw_rect, clear_rect);
         if (EqualRect(&r, draw_rect))
         {
