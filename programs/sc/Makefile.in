@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = sc.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = kernel32
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+
+C_SRCS = sc.c
+
+@MAKE_PROG_RULES@

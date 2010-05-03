@@ -14768,6 +14768,7 @@ wine_fn_config_program regedit enable_regedit installbin
 wine_fn_config_program regsvr32 enable_regsvr32 installbin
 wine_fn_config_program rpcss enable_rpcss install
 wine_fn_config_program rundll32 enable_rundll32 install
+wine_fn_config_program sc enable_sc install
 wine_fn_config_program secedit enable_secedit install
 wine_fn_config_program services enable_services install
 wine_fn_config_program spoolsv enable_spoolsv install
