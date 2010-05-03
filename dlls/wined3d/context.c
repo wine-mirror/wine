@@ -413,16 +413,16 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         /* Apply render targets */
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, device->render_targets[i]);
+            context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, entry->render_targets[i]);
         }
 
         /* Apply depth targets */
-        if (device->depth_stencil)
+        if (entry->depth_stencil)
         {
-            surface_set_compatible_renderbuffer(device->depth_stencil,
-                    device->render_targets[0]->pow2Width, device->render_targets[0]->pow2Height);
+            surface_set_compatible_renderbuffer(entry->depth_stencil,
+                    entry->render_targets[0]->pow2Width, entry->render_targets[0]->pow2Height);
         }
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, device->depth_stencil, TRUE);
+        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, entry->depth_stencil, TRUE);
 
         entry->attached = TRUE;
     }
@@ -430,11 +430,11 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
     {
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            if (device->render_targets[i])
-                context_apply_attachment_filter_states(device->render_targets[i]);
+            if (entry->render_targets[i])
+                context_apply_attachment_filter_states(entry->render_targets[i]);
         }
-        if (device->depth_stencil)
-            context_apply_attachment_filter_states(device->depth_stencil);
+        if (entry->depth_stencil)
+            context_apply_attachment_filter_states(entry->depth_stencil);
     }
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
