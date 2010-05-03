@@ -21,6 +21,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "rasdlg.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rasdlg);
@@ -41,4 +43,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+BOOL WINAPI RasEntryDlgW(LPWSTR phonebook, LPWSTR entry, RASENTRYDLGW *lpInfo)
+{
+    FIXME("(%s %s %p) stub\n", debugstr_w(phonebook), debugstr_w(entry), lpInfo);
+    return FALSE;
 }

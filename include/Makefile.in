@@ -414,6 +414,7 @@ SRCDIR_INCLUDES = \
 	pshpack4.h \
 	pshpack8.h \
 	ras.h \
+	rasdlg.h \
 	raserror.h \
 	reason.h \
 	regstr.h \

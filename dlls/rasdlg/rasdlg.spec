@@ -7,7 +7,7 @@
 @ stub RasDialDlgA
 @ stub RasDialDlgW
 @ stub RasEntryDlgA
-@ stub RasEntryDlgW
+@ stdcall RasEntryDlgW(wstr wstr ptr)
 @ stub RasMonitorDlgA
 @ stub RasMonitorDlgW
 @ stub RasPhonebookDlgA
