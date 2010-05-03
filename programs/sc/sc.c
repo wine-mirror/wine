@@ -219,7 +219,10 @@ int wmain( int argc, const WCHAR *argv[] )
     static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n',0};
     static const WCHAR failureW[] = {'f','a','i','l','u','r','e',0};
     static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
+    static const WCHAR startW[] = {'s','t','a','r','t',0};
+    static const WCHAR stopW[] = {'s','t','o','p',0};
     SC_HANDLE manager, service;
+    SERVICE_STATUS status;
     BOOL ret = FALSE;
 
     if (argc < 3) usage();
@@ -301,6 +304,28 @@ int wmain( int argc, const WCHAR *argv[] )
         {
             ret = DeleteService( service );
             if (!ret) WINE_TRACE("failed to delete service %u\n", GetLastError());
+            CloseServiceHandle( service );
+        }
+        else WINE_TRACE("failed to open service %u\n", GetLastError());
+    }
+    else if (!strcmpiW( argv[1], startW ))
+    {
+        service = OpenServiceW( manager, argv[2], SERVICE_START );
+        if (service)
+        {
+            ret = StartServiceW( service, argc - 3, argv + 3 );
+            if (!ret) WINE_TRACE("failed to start service %u\n", GetLastError());
+            CloseServiceHandle( service );
+        }
+        else WINE_TRACE("failed to open service %u\n", GetLastError());
+    }
+    else if (!strcmpiW( argv[1], stopW ))
+    {
+        service = OpenServiceW( manager, argv[2], SERVICE_STOP );
+        if (service)
+        {
+            ret = ControlService( service, SERVICE_CONTROL_STOP, &status );
+            if (!ret) WINE_TRACE("failed to stop service %u\n", GetLastError());
             CloseServiceHandle( service );
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
