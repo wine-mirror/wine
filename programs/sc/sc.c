@@ -132,6 +132,81 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
     return TRUE;
 }
 
+static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *fa )
+{
+    static const WCHAR runW[] = {'r','u','n',0};
+    static const WCHAR restartW[] = {'r','e','s','t','a','r','t',0};
+    static const WCHAR rebootW[] = {'r','e','b','o','o','t',0};
+    unsigned int i, count;
+    WCHAR *actions, *p;
+
+    actions = HeapAlloc( GetProcessHeap(), 0, (strlenW( arg ) + 1) * sizeof(WCHAR) );
+    if (!actions) return FALSE;
+
+    strcpyW( actions, arg );
+    for (p = actions, count = 0; *p; p++)
+    {
+        if (*p == '/')
+        {
+            count++;
+            *p = 0;
+        }
+    }
+    count = count / 2 + 1;
+
+    fa->cActions = count;
+    fa->lpsaActions = HeapAlloc( GetProcessHeap(), 0, fa->cActions * sizeof(SC_ACTION) );
+    if (!fa->lpsaActions)
+    {
+        HeapFree( GetProcessHeap(), 0, actions );
+        return FALSE;
+    }
+
+    p = actions;
+    for (i = 0; i < count; i++)
+    {
+        if (!strcmpiW( p, runW )) fa->lpsaActions[i].Type = SC_ACTION_RUN_COMMAND;
+        else if (!strcmpiW( p, restartW )) fa->lpsaActions[i].Type = SC_ACTION_RESTART;
+        else if (!strcmpiW( p, rebootW )) fa->lpsaActions[i].Type = SC_ACTION_REBOOT;
+        else fa->lpsaActions[i].Type = SC_ACTION_NONE;
+
+        p += strlenW( p ) + 1;
+        fa->lpsaActions[i].Delay = atoiW( p );
+        p += strlenW( p ) + 1;
+    }
+
+    HeapFree( GetProcessHeap(), 0, actions );
+    return TRUE;
+}
+
+static BOOL parse_failure_params( int argc, const WCHAR *argv[], SERVICE_FAILURE_ACTIONSW *fa )
+{
+    static const WCHAR resetW[] = {'r','e','s','e','t','=',0};
+    static const WCHAR rebootW[] = {'r','e','b','o','o','t','=',0};
+    static const WCHAR commandW[] = {'c','o','m','m','a','n','d','=',0};
+    static const WCHAR actionsW[] = {'a','c','t','i','o','n','s','=',0};
+    unsigned int i;
+
+    fa->dwResetPeriod = 0;
+    fa->lpRebootMsg   = NULL;
+    fa->lpCommand     = NULL;
+    fa->cActions      = 0;
+    fa->lpsaActions   = NULL;
+
+    for (i = 0; i < argc; i++)
+    {
+        if (!strcmpiW( argv[i], resetW ) && i < argc - 1) fa->dwResetPeriod = atoiW( argv[i + 1] );
+        if (!strcmpiW( argv[i], rebootW ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
+        if (!strcmpiW( argv[i], commandW ) && i < argc - 1) fa->lpCommand = (WCHAR *)argv[i + 1];
+        if (!strcmpiW( argv[i], actionsW ))
+        {
+            if (i == argc - 1) return FALSE;
+            if (!parse_failure_actions( argv[i + 1], fa )) return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static void usage( void )
 {
     WINE_MESSAGE( "Usage: sc command servicename [parameter= value ...]\n" );
@@ -141,6 +216,8 @@ static void usage( void )
 int wmain( int argc, const WCHAR *argv[] )
 {
     static const WCHAR createW[] = {'c','r','e','a','t','e',0};
+    static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR failureW[] = {'f','a','i','l','u','r','e',0};
     static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
     SC_HANDLE manager, service;
     BOOL ret = FALSE;
@@ -184,6 +261,38 @@ int wmain( int argc, const WCHAR *argv[] )
             ret = TRUE;
         }
         else WINE_TRACE("failed to create service %u\n", GetLastError());
+    }
+    else if (!strcmpiW( argv[1], descriptionW ))
+    {
+        service = OpenServiceW( manager, argv[2], SERVICE_CHANGE_CONFIG );
+        if (service)
+        {
+            SERVICE_DESCRIPTIONW sd;
+            sd.lpDescription = argc > 3 ? (WCHAR *)argv[3] : NULL;
+            ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_DESCRIPTION, &sd );
+            if (!ret) WINE_TRACE("failed to set service description %u\n", GetLastError());
+            CloseServiceHandle( service );
+        }
+        else WINE_TRACE("failed to open service %u\n", GetLastError());
+    }
+    else if (!strcmpiW( argv[1], failureW ))
+    {
+        service = OpenServiceW( manager, argv[2], SERVICE_CHANGE_CONFIG );
+        if (service)
+        {
+            SERVICE_FAILURE_ACTIONSW sfa;
+            if (!parse_failure_params( argc - 3, argv + 3, &sfa ))
+            {
+                WINE_WARN("failed to parse failure parameters\n");
+                CloseServiceHandle( manager );
+                return 1;
+            }
+            ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_FAILURE_ACTIONS, &sfa );
+            if (!ret) WINE_TRACE("failed to set service failure actions %u\n", GetLastError());
+            HeapFree( GetProcessHeap(), 0, sfa.lpsaActions );
+            CloseServiceHandle( service );
+        }
+        else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
     else if (!strcmpiW( argv[1], deleteW ))
     {
