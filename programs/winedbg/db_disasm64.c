@@ -32,24 +32,13 @@
 #include <stdio.h>
 #include "debugger.h"
 
-#ifndef __GNUC__
-#define __attribute__(X)
+#if defined(__GNUC__) && (GCC_VERSION >= 30000)
+static int             (*db_printf)(const char* format, ...) __attribute__((format (printf,1,2)));
+#else
+static int             (*db_printf)(const char* format, ...);
 #endif
 
-static int db_debug = 0;
-static int db_printf(const char* format, ...) __attribute__((format (printf,1,2)));
-int db_printf(const char* format, ...)
-{
-    va_list valist;
-    int len = 0;
-    if (db_debug)
-    {
-        va_start(valist, format);
-        len = dbg_printf(format, valist);
-        va_end(valist);
-    }
-    return len;
-}
+static int             no_printf(const char* format, ...) {return 0;}
 
 typedef DWORD_PTR db_addr_t;
 typedef BOOL boolean_t;
@@ -93,7 +82,7 @@ static ULONG64  db_get_value(db_addr_t addr, int size, int is_signed)
 
 static void db_printsym(db_addr_t addr, unsigned unused)
 {
-    if (db_debug)
+    if (db_printf != no_printf)
     {
         ADDRESS64   a;
 
@@ -1656,6 +1645,6 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 
 void be_x86_64_disasm_one_insn(ADDRESS64 *addr, int display)
 {
-    db_debug = display;
+    db_printf = display ? dbg_printf : no_printf;
     addr->Offset = db_disasm(addr->Offset, TRUE);
 }
