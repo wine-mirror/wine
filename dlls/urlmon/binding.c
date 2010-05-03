@@ -1431,7 +1431,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     if(to_obj)
         ret->bindinfo.dwOptions |= 0x100000;
 
-    if(!is_urlmon_protocol(url))
+    if(!(ret->bindf & BINDF_ASYNCHRONOUS) || !is_urlmon_protocol(url))
         ret->bindf |= BINDF_NEEDFILE;
 
     ret->url = heap_strdupW(url);
