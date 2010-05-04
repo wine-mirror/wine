@@ -908,11 +908,8 @@ static void start_wineboot( HANDLE handles[2] )
     {
         static const WCHAR wineboot[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
         static const WCHAR args[] = {' ','-','-','i','n','i','t',0};
-        const DWORD expected_type = (sizeof(void*) > sizeof(int) || is_wow64) ?
-                                     SCS_64BIT_BINARY : SCS_32BIT_BINARY;
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
-        DWORD type;
         void *redir;
         WCHAR app[MAX_PATH];
         WCHAR cmdline[MAX_PATH + (sizeof(wineboot) + sizeof(args)) / sizeof(WCHAR)];
@@ -928,17 +925,6 @@ static void start_wineboot( HANDLE handles[2] )
         lstrcatW( app, wineboot );
 
         Wow64DisableWow64FsRedirection( &redir );
-        if (GetBinaryTypeW( app, &type ) && type != expected_type)
-        {
-            if (type == SCS_64BIT_BINARY)
-                MESSAGE( "wine: '%s' is a 64-bit prefix, it cannot be used with 32-bit Wine.\n",
-                     wine_get_config_dir() );
-            else
-                MESSAGE( "wine: '%s' is a 32-bit prefix, it cannot be used with %s Wine.\n",
-                     wine_get_config_dir(), is_wow64 ? "wow64" : "64-bit" );
-            ExitProcess( 1 );
-        }
-
         strcpyW( cmdline, app );
         strcatW( cmdline, args );
         if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
