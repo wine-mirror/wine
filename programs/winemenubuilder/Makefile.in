@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemenubuilder.exe
-APPMODE   = -mwindows
+APPMODE   = -mwindows -municode
 IMPORTS   = uuid shell32 shlwapi ole32 user32 advapi32 kernel32
 EXTRAINCL = @PNGINCL@
 

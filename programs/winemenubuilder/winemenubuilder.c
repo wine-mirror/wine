@@ -2729,9 +2729,9 @@ static void cleanup_menus(void)
         WINE_ERR("error opening registry key, menu cleanup failed\n");
 }
 
-static CHAR *next_token( LPSTR *p )
+static WCHAR *next_token( LPWSTR *p )
 {
-    LPSTR token = NULL, t = *p;
+    LPWSTR token = NULL, t = *p;
 
     if( !t )
         return NULL;
@@ -2746,7 +2746,7 @@ static CHAR *next_token( LPSTR *p )
         case '"':
             /* unquote the token */
             token = ++t;
-            t = strchr( token, '"' );
+            t = strchrW( token, '"' );
             if( t )
                  *t++ = 0;
             break;
@@ -2755,7 +2755,7 @@ static CHAR *next_token( LPSTR *p )
             break;
         default:
             token = t;
-            t = strchr( token, ' ' );
+            t = strchrW( token, ' ' );
             if( t )
                  *t++ = 0;
             break;
@@ -2808,11 +2808,16 @@ static BOOL init_xdg(void)
 
 /***********************************************************************
  *
- *           WinMain
+ *           wWinMain
  */
-int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
+int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int show)
 {
-    LPSTR token = NULL, p;
+    static const WCHAR dash_aW[] = {'-','a',0};
+    static const WCHAR dash_rW[] = {'-','r',0};
+    static const WCHAR dash_uW[] = {'-','u',0};
+    static const WCHAR dash_wW[] = {'-','w',0};
+
+    LPWSTR token = NULL, p;
     BOOL bWait = FALSE;
     BOOL bURL = FALSE;
     int ret = 0;
@@ -2825,37 +2830,35 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         token = next_token( &p );
 	if( !token )
 	    break;
-        if( !lstrcmpA( token, "-a" ) )
+        if( !strcmpW( token, dash_aW ) )
         {
             RefreshFileTypeAssociations();
             continue;
         }
-        if( !lstrcmpA( token, "-r" ) )
+        if( !strcmpW( token, dash_rW ) )
         {
             cleanup_menus();
             continue;
         }
-        if( !lstrcmpA( token, "-w" ) )
+        if( !strcmpW( token, dash_wW ) )
             bWait = TRUE;
-        else if ( !lstrcmpA( token, "-u" ) )
+        else if ( !strcmpW( token, dash_uW ) )
             bURL = TRUE;
 	else if( token[0] == '-' )
 	{
-	    WINE_ERR( "unknown option %s\n",token);
+	    WINE_ERR( "unknown option %s\n", wine_dbgstr_w(token) );
 	}
         else
         {
-            WCHAR link[MAX_PATH];
             BOOL bRet;
 
-            MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link)/sizeof(WCHAR) );
             if (bURL)
-                bRet = Process_URL( link, bWait );
+                bRet = Process_URL( token, bWait );
             else
-                bRet = Process_Link( link, bWait );
+                bRet = Process_Link( token, bWait );
             if (!bRet)
             {
-                WINE_ERR( "failed to build menu item for %s\n",token);
+                WINE_ERR( "failed to build menu item for %s\n", wine_dbgstr_w(token) );
                 ret = 1;
             }
         }
