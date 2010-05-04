@@ -4595,13 +4595,11 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     if (buf)
     {
         CRL_INFO *info = (CRL_INFO *)buf;
-        CRL_ENTRY *entry;
 
         ok(size >= sizeof(CRL_INFO), "Wrong size %d\n", size);
         ok(info->cCRLEntry == 3, "Expected 3 CRL entries, got %d\n",
          info->cCRLEntry);
         ok(info->rgCRLEntry != NULL, "Expected a valid CRL entry array\n");
-        entry = info->rgCRLEntry;
         ok(info->cExtension == 2, "Expected 2 extensions, got %d\n",
          info->cExtension);
         LocalFree(buf);
