@@ -5026,38 +5026,134 @@ void StorageUtl_CopyDirEntryToSTATSTG(
 ** BlockChainStream implementation
 */
 
+/* Read and save the index of all blocks in this stream. */
+HRESULT BlockChainStream_UpdateIndexCache(BlockChainStream* This)
+{
+  ULONG  next_sector, next_offset;
+  HRESULT hr;
+  struct BlockChainRun *last_run;
+
+  if (This->indexCacheLen == 0)
+  {
+    last_run = NULL;
+    next_offset = 0;
+    next_sector = BlockChainStream_GetHeadOfChain(This);
+  }
+  else
+  {
+    last_run = &This->indexCache[This->indexCacheLen-1];
+    next_offset = last_run->lastOffset+1;
+    hr = StorageImpl_GetNextBlockInChain(This->parentStorage,
+        last_run->firstSector + last_run->lastOffset - last_run->firstOffset,
+        &next_sector);
+    if (FAILED(hr)) return hr;
+  }
+
+  while (next_sector != BLOCK_END_OF_CHAIN)
+  {
+    if (!last_run || next_sector != last_run->firstSector + next_offset - last_run->firstOffset)
+    {
+      /* Add the current block to the cache. */
+      if (This->indexCacheSize == 0)
+      {
+        This->indexCache = HeapAlloc(GetProcessHeap(), 0, sizeof(struct BlockChainRun)*16);
+        if (!This->indexCache) return E_OUTOFMEMORY;
+        This->indexCacheSize = 16;
+      }
+      else if (This->indexCacheSize == This->indexCacheLen)
+      {
+        struct BlockChainRun *new_cache;
+        ULONG new_size;
+
+        new_size = This->indexCacheSize * 2;
+        new_cache = HeapAlloc(GetProcessHeap(), 0, sizeof(struct BlockChainRun)*new_size);
+        if (!new_cache) return E_OUTOFMEMORY;
+        memcpy(new_cache, This->indexCache, sizeof(struct BlockChainRun)*This->indexCacheLen);
+
+        HeapFree(GetProcessHeap(), 0, This->indexCache);
+        This->indexCache = new_cache;
+        This->indexCacheSize = new_size;
+      }
+
+      This->indexCacheLen++;
+      last_run = &This->indexCache[This->indexCacheLen-1];
+      last_run->firstSector = next_sector;
+      last_run->firstOffset = next_offset;
+    }
+
+    last_run->lastOffset = next_offset;
+
+    /* Find the next block. */
+    next_offset++;
+    hr = StorageImpl_GetNextBlockInChain(This->parentStorage, next_sector, &next_sector);
+    if (FAILED(hr)) return hr;
+  }
+
+  if (This->indexCacheLen)
+  {
+    This->tailIndex = last_run->firstSector + last_run->lastOffset - last_run->firstOffset;
+    This->numBlocks = last_run->lastOffset+1;
+  }
+  else
+  {
+    This->tailIndex = BLOCK_END_OF_CHAIN;
+    This->numBlocks = 0;
+  }
+
+  return S_OK;
+}
+
+/* Locate the nth block in this stream. */
+ULONG BlockChainStream_GetSectorOfOffset(BlockChainStream *This, ULONG offset)
+{
+  ULONG min_offset = 0, max_offset = This->numBlocks-1;
+  ULONG min_run = 0, max_run = This->indexCacheLen-1;
+
+  if (offset >= This->numBlocks)
+    return BLOCK_END_OF_CHAIN;
+
+  while (min_run < max_run)
+  {
+    ULONG run_to_check = min_run + (offset - min_offset) * (max_run - min_run) / (max_offset - min_offset);
+    if (offset < This->indexCache[run_to_check].firstOffset)
+    {
+      max_offset = This->indexCache[run_to_check].firstOffset-1;
+      max_run = run_to_check-1;
+    }
+    else if (offset > This->indexCache[run_to_check].lastOffset)
+    {
+      min_offset = This->indexCache[run_to_check].lastOffset+1;
+      min_run = run_to_check+1;
+    }
+    else
+      /* Block is in this run. */
+      min_run = max_run = run_to_check;
+  }
+
+  return This->indexCache[min_run].firstSector + offset - This->indexCache[min_run].firstOffset;
+}
+
 BlockChainStream* BlockChainStream_Construct(
   StorageImpl* parentStorage,
   ULONG*         headOfStreamPlaceHolder,
   DirRef         dirEntry)
 {
   BlockChainStream* newStream;
-  ULONG blockIndex;
 
   newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(BlockChainStream));
 
   newStream->parentStorage           = parentStorage;
   newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
   newStream->ownerDirEntry           = dirEntry;
-  newStream->lastBlockNoInSequence   = 0xFFFFFFFF;
-  newStream->tailIndex               = BLOCK_END_OF_CHAIN;
-  newStream->numBlocks               = 0;
+  newStream->indexCache              = NULL;
+  newStream->indexCacheLen           = 0;
+  newStream->indexCacheSize          = 0;
 
-  blockIndex = BlockChainStream_GetHeadOfChain(newStream);
-
-  while (blockIndex != BLOCK_END_OF_CHAIN)
+  if (FAILED(BlockChainStream_UpdateIndexCache(newStream)))
   {
-    newStream->numBlocks++;
-    newStream->tailIndex = blockIndex;
-
-    if(FAILED(StorageImpl_GetNextBlockInChain(
-	      parentStorage,
-	      blockIndex,
-	      &blockIndex)))
-    {
-      HeapFree(GetProcessHeap(), 0, newStream);
-      return NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, newStream->indexCache);
+    HeapFree(GetProcessHeap(), 0, newStream);
+    return NULL;
   }
 
   return newStream;
@@ -5065,6 +5161,8 @@ BlockChainStream* BlockChainStream_Construct(
 
 void BlockChainStream_Destroy(BlockChainStream* This)
 {
+  if (This)
+    HeapFree(GetProcessHeap(), 0, This->indexCache);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -5106,6 +5204,7 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
  * Returns the number of blocks that comprises this chain.
  * This is not the size of the stream as the last block may not be full!
  *
+ * FIXME: Use the cache to get this information.
  */
 static ULONG BlockChainStream_GetCount(BlockChainStream* This)
 {
@@ -5152,33 +5251,10 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  if ( (This->lastBlockNoInSequence == 0xFFFFFFFF) ||
-       (This->lastBlockNoInSequenceIndex == BLOCK_END_OF_CHAIN) ||
-       (blockNoInSequence < This->lastBlockNoInSequence) )
-  {
-    blockIndex = BlockChainStream_GetHeadOfChain(This);
-    This->lastBlockNoInSequence = blockNoInSequence;
-  }
-  else
-  {
-    ULONG temp = blockNoInSequence;
+  blockIndex = BlockChainStream_GetSectorOfOffset(This, blockNoInSequence);
 
-    blockIndex = This->lastBlockNoInSequenceIndex;
-    blockNoInSequence -= This->lastBlockNoInSequence;
-    This->lastBlockNoInSequence = temp;
-  }
-
-  while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
-  {
-    if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex, &blockIndex)))
-      return STG_E_DOCFILECORRUPT;
-    blockNoInSequence--;
-  }
-
-  if ((blockNoInSequence > 0) && (blockIndex == BLOCK_END_OF_CHAIN))
+  if (blockIndex == BLOCK_END_OF_CHAIN)
       return STG_E_DOCFILECORRUPT; /* We failed to find the starting block */
-
-  This->lastBlockNoInSequenceIndex = blockIndex;
 
   /*
    * Start reading the buffer.
@@ -5245,31 +5321,7 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  if ( (This->lastBlockNoInSequence == 0xFFFFFFFF) ||
-       (This->lastBlockNoInSequenceIndex == BLOCK_END_OF_CHAIN) ||
-       (blockNoInSequence < This->lastBlockNoInSequence) )
-  {
-    blockIndex = BlockChainStream_GetHeadOfChain(This);
-    This->lastBlockNoInSequence = blockNoInSequence;
-  }
-  else
-  {
-    ULONG temp = blockNoInSequence;
-
-    blockIndex = This->lastBlockNoInSequenceIndex;
-    blockNoInSequence -= This->lastBlockNoInSequence;
-    This->lastBlockNoInSequence = temp;
-  }
-
-  while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
-  {
-    if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex,
-					      &blockIndex)))
-      return STG_E_DOCFILECORRUPT;
-    blockNoInSequence--;
-  }
-
-  This->lastBlockNoInSequenceIndex = blockIndex;
+  blockIndex = BlockChainStream_GetSectorOfOffset(This, blockNoInSequence);
 
   /* BlockChainStream_SetSize should have already been called to ensure we have
    * enough blocks in the chain to write into */
@@ -5330,15 +5382,8 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
 static BOOL BlockChainStream_Shrink(BlockChainStream* This,
                                     ULARGE_INTEGER    newSize)
 {
-  ULONG blockIndex, extraBlock;
+  ULONG blockIndex;
   ULONG numBlocks;
-  ULONG count = 1;
-
-  /*
-   * Reset the last accessed block cache.
-   */
-  This->lastBlockNoInSequence = 0xFFFFFFFF;
-  This->lastBlockNoInSequenceIndex = BLOCK_END_OF_CHAIN;
 
   /*
    * Figure out how many blocks are needed to contain the new size
@@ -5348,43 +5393,62 @@ static BOOL BlockChainStream_Shrink(BlockChainStream* This,
   if ((newSize.u.LowPart % This->parentStorage->bigBlockSize) != 0)
     numBlocks++;
 
-  blockIndex = BlockChainStream_GetHeadOfChain(This);
-
-  /*
-   * Go to the new end of chain
-   */
-  while (count < numBlocks)
+  if (numBlocks)
   {
-    if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex,
-					      &blockIndex)))
-      return FALSE;
-    count++;
+    /*
+     * Go to the new end of chain
+     */
+    blockIndex = BlockChainStream_GetSectorOfOffset(This, numBlocks-1);
+
+    /* Mark the new end of chain */
+    StorageImpl_SetNextBlockInChain(
+      This->parentStorage,
+      blockIndex,
+      BLOCK_END_OF_CHAIN);
+
+    This->tailIndex = blockIndex;
+  }
+  else
+  {
+    if (This->headOfStreamPlaceHolder != 0)
+    {
+      *This->headOfStreamPlaceHolder = BLOCK_END_OF_CHAIN;
+    }
+    else
+    {
+      DirEntry chainEntry;
+      assert(This->ownerDirEntry != DIRENTRY_NULL);
+
+      StorageImpl_ReadDirEntry(
+        This->parentStorage,
+        This->ownerDirEntry,
+        &chainEntry);
+
+      chainEntry.startingBlock = BLOCK_END_OF_CHAIN;
+
+      StorageImpl_WriteDirEntry(
+        This->parentStorage,
+        This->ownerDirEntry,
+        &chainEntry);
+    }
+
+    This->tailIndex = BLOCK_END_OF_CHAIN;
   }
 
-  /* Get the next block before marking the new end */
-  if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, blockIndex,
-					    &extraBlock)))
-    return FALSE;
-
-  /* Mark the new end of chain */
-  StorageImpl_SetNextBlockInChain(
-    This->parentStorage,
-    blockIndex,
-    BLOCK_END_OF_CHAIN);
-
-  This->tailIndex = blockIndex;
   This->numBlocks = numBlocks;
 
   /*
    * Mark the extra blocks as free
    */
-  while (extraBlock != BLOCK_END_OF_CHAIN)
+  while (This->indexCacheLen && This->indexCache[This->indexCacheLen-1].lastOffset >= numBlocks)
   {
-    if(FAILED(StorageImpl_GetNextBlockInChain(This->parentStorage, extraBlock,
-					      &blockIndex)))
-      return FALSE;
-    StorageImpl_FreeBigBlock(This->parentStorage, extraBlock);
-    extraBlock = blockIndex;
+    struct BlockChainRun *last_run = &This->indexCache[This->indexCacheLen-1];
+    StorageImpl_FreeBigBlock(This->parentStorage,
+      last_run->firstSector + last_run->lastOffset - last_run->firstOffset);
+    if (last_run->lastOffset == last_run->firstOffset)
+      This->indexCacheLen--;
+    else
+      last_run->lastOffset--;
   }
 
   return TRUE;
@@ -5497,6 +5561,9 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
     This->tailIndex = blockIndex;
     This->numBlocks = newNumBlocks;
   }
+
+  if (FAILED(BlockChainStream_UpdateIndexCache(This)))
+    return FALSE;
 
   return TRUE;
 }

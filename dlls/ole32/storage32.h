@@ -513,13 +513,22 @@ void StorageUtl_CopyDirEntryToSTATSTG(StorageBaseImpl *storage,STATSTG* destinat
  * The BlockChainStream class is a utility class that is used to create an
  * abstraction of the big block chains in the storage file.
  */
+struct BlockChainRun
+{
+  /* This represents a range of blocks that happen reside in consecutive sectors. */
+  ULONG firstSector;
+  ULONG firstOffset;
+  ULONG lastOffset;
+};
+
 struct BlockChainStream
 {
   StorageImpl* parentStorage;
   ULONG*       headOfStreamPlaceHolder;
   DirRef       ownerDirEntry;
-  ULONG        lastBlockNoInSequence;
-  ULONG        lastBlockNoInSequenceIndex;
+  struct BlockChainRun* indexCache;
+  ULONG        indexCacheLen;
+  ULONG        indexCacheSize;
   ULONG        tailIndex;
   ULONG        numBlocks;
 };
