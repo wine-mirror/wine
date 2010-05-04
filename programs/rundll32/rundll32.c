@@ -119,30 +119,44 @@ static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
 static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
 {
     void *ret;
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
-    char *entryA = HeapAlloc( GetProcessHeap(), 0, len + 1 );
 
-    if (!entryA)
-        return NULL;
-
-    WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
-
-    /* first try the W version */
-    *unicode = TRUE;
-    strcat( entryA, "W" );
-    if (!(ret = GetProcAddress( module, entryA )))
+    /* determine if the entry point is an ordinal */
+    if (entry[0] == '#')
     {
-        /* now the A version */
-        *unicode = FALSE;
-        entryA[strlen(entryA)-1] = 'A';
+        int ordinal = atoiW( entry + 1 );
+        if (ordinal <= 0)
+            return NULL;
+
+        *unicode = TRUE;
+        ret = GetProcAddress( module, (LPCSTR)ordinal );
+    }
+    else
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
+        char *entryA = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+
+        if (!entryA)
+            return NULL;
+
+        WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
+
+        /* first try the W version */
+        *unicode = TRUE;
+        strcat( entryA, "W" );
         if (!(ret = GetProcAddress( module, entryA )))
         {
-            /* now the version without suffix */
-            entryA[strlen(entryA)-1] = 0;
-            ret = GetProcAddress( module, entryA );
+            /* now the A version */
+            *unicode = FALSE;
+            entryA[strlen(entryA)-1] = 'A';
+            if (!(ret = GetProcAddress( module, entryA )))
+            {
+                /* now the version without suffix */
+                entryA[strlen(entryA)-1] = 0;
+                ret = GetProcAddress( module, entryA );
+            }
         }
+        HeapFree( GetProcessHeap(), 0, entryA );
     }
-    HeapFree( GetProcessHeap(), 0, entryA );
     return ret;
 }
 
