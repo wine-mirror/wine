@@ -5487,42 +5487,24 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
     if (rect) IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, NULL);
     IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, TRUE);
 
-    if (!surface_is_offscreen(surface))
+    context = context_acquire(This, surface);
+    context_apply_clear_state(context, This, surface, NULL);
+
+    ENTER_GL();
+
+    if (rect)
     {
-        TRACE("Surface %p is onscreen\n", surface);
-
-        context = context_acquire(This, surface);
-        ENTER_GL();
-        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-        context_set_draw_buffer(context, surface_get_gl_buffer(surface));
-    }
-    else
-    {
-        TRACE("Surface %p is offscreen\n", surface);
-
-        context = context_acquire(This, NULL);
-        ENTER_GL();
-        context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-        context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, surface);
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
-    }
-
-    if (rect) {
-        glEnable(GL_SCISSOR_TEST);
         if (surface_is_offscreen(surface))
             glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
         else
             glScissor(rect->x1, surface->currentDesc.Height - rect->y2,
                     rect->x2 - rect->x1, rect->y2 - rect->y1);
         checkGLcall("glScissor");
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
-    } else {
+    }
+    else
+    {
         glDisable(GL_SCISSOR_TEST);
     }
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
-
-    glDisable(GL_BLEND);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
