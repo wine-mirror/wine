@@ -403,7 +403,6 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DDeviceImpl *device = context->swapchain->device;
     unsigned int i;
 
     context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
@@ -435,14 +434,6 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
         }
         if (entry->depth_stencil)
             context_apply_attachment_filter_states(entry->depth_stencil);
-    }
-
-    for (i = 0; i < gl_info->limits.buffers; ++i)
-    {
-        if (device->render_targets[i])
-            device->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
-        else
-            device->draw_buffers[i] = GL_NONE;
     }
 }
 
@@ -1883,6 +1874,16 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
         {
             if (!blit)
             {
+                unsigned int i;
+
+                for (i = 0; i < gl_info->limits.buffers; ++i)
+                {
+                    if (device->render_targets[i])
+                        device->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+                    else
+                        device->draw_buffers[i] = GL_NONE;
+                }
+
                 if (gl_info->supported[ARB_DRAW_BUFFERS])
                 {
                     GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, device->draw_buffers));
