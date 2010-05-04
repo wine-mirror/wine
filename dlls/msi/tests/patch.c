@@ -31,6 +31,8 @@
 #include "wine/test.h"
 
 static UINT (WINAPI *pMsiApplyPatchA)( LPCSTR, LPCSTR, INSTALLTYPE, LPCSTR );
+static UINT (WINAPI *pMsiGetPatchInfoExA)( LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT,
+                                           LPCSTR, LPSTR, DWORD * );
 
 static const char *msifile = "winetest-patch.msi";
 static const char *mspfile = "winetest-patch.msp";
@@ -140,6 +142,7 @@ static void init_function_pointers( void )
         trace( "GetProcAddress(%s) failed\n", #func );
 
     GET_PROC( hmsi, MsiApplyPatchA );
+    GET_PROC( hmsi, MsiGetPatchInfoExA );
 #undef GET_PROC
 }
 
@@ -958,6 +961,72 @@ static void test_system_tables( void )
     RemoveDirectoryA( "msitest" );
 }
 
+static void test_patch_registration( void )
+{
+    UINT r, size;
+    char buffer[MAX_PATH];
+
+    if (!pMsiApplyPatchA || !pMsiGetPatchInfoExA)
+    {
+        win_skip("required functions not available\n");
+        return;
+    }
+
+    CreateDirectoryA( "msitest", NULL );
+    create_file( "msitest\\patch.txt", 1000 );
+
+    create_database( msifile, tables, sizeof(tables) / sizeof(struct msi_table) );
+    create_patch( mspfile );
+
+    MsiSetInternalUI( INSTALLUILEVEL_NONE, NULL );
+
+    r = MsiInstallProductA( msifile, NULL );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiApplyPatchA( mspfile, NULL, INSTALLTYPE_DEFAULT, NULL );
+    ok( r == ERROR_SUCCESS || broken( r == ERROR_PATCH_PACKAGE_INVALID ), /* version 2.0 */
+        "expected ERROR_SUCCESS, got %u\n", r );
+
+    if (r == ERROR_PATCH_PACKAGE_INVALID)
+    {
+        win_skip("Windows Installer < 3.0 detected\n");
+        return;
+    }
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = pMsiGetPatchInfoExA( "{0F96CDC0-4CDF-4304-B283-7B9264889EF7}",
+                             "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                              NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
+    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    todo_wine ok( buffer[0], "buffer empty\n" );
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = pMsiGetPatchInfoExA( "{0F96CDC0-4CDF-4304-B283-7B9264889EF7}",
+                             "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                             NULL, MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
+    ok( r == ERROR_UNKNOWN_PRODUCT, "expected ERROR_UNKNOWN_PRODUCT, got %u\n", r );
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = pMsiGetPatchInfoExA( "{0F96CDC0-4CDF-4304-B283-7B9264889EF7}",
+                             "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                             NULL, MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
+    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( !buffer[0], "got %s\n", buffer );
+
+    r = MsiInstallProductA( msifile, "REMOVE=ALL" );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    DeleteFileA( msifile );
+    DeleteFileA( mspfile );
+    RemoveDirectoryA( "msitest" );
+}
+
 START_TEST(patch)
 {
     DWORD len;
@@ -980,6 +1049,7 @@ START_TEST(patch)
     test_simple_patch();
     test_MsiOpenDatabase();
     test_system_tables();
+    test_patch_registration();
 
     SetCurrentDirectoryA( prev_path );
 }
