@@ -151,7 +151,6 @@ static void ProcessPageShowContextMenu(DWORD dwProcessId)
 static void ProcessPageOnNotify(LPARAM lParam)
 {
     LPNMHDR            pnmh;
-    LPNMLISTVIEW       pnmv;
     NMLVDISPINFOW*     pnmdi;
     LVITEM             lvitem;
     ULONG              Index;
@@ -163,7 +162,6 @@ static void ProcessPageOnNotify(LPARAM lParam)
     static const WCHAR wszUnitK[] = {' ','K',0};
 
     pnmh = (LPNMHDR) lParam;
-    pnmv = (LPNMLISTVIEW) lParam;
     pnmdi = (NMLVDISPINFOW*) lParam;
 
     if (pnmh->hwndFrom == hProcessPageListCtrl)
