@@ -174,7 +174,11 @@ static void load_libopenal(void)
     char error[128];
     openal_handle = wine_dlopen(SONAME_LIBOPENAL, RTLD_NOW, error, sizeof(error));
     if (!openal_handle)
+    {
         ERR("Couldn't load " SONAME_LIBOPENAL ": %s\n", error);
+        return;
+    }
+
 #define LOAD_FUNCPTR(f) \
     if((p##f = wine_dlsym(openal_handle, #f, NULL, 0)) == NULL) { \
         ERR("Couldn't lookup %s in libopenal\n", #f); \
