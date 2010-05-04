@@ -2353,7 +2353,6 @@ void WCMD_more (WCHAR *command) {
 
   int   argno         = 0;
   WCHAR *argN          = command;
-  BOOL  useinput      = FALSE;
   WCHAR  moreStr[100];
   WCHAR  moreStrPage[100];
   WCHAR  buffer[512];
@@ -2385,7 +2384,6 @@ void WCMD_more (WCHAR *command) {
 
     /* Warning: No easy way of ending the stream (ctrl+z on windows) so
        once you get in this bit unless due to a pipe, its going to end badly...  */
-    useinput = TRUE;
     wsprintfW(moreStrPage, moreFmt, moreStr);
 
     WCMD_enter_paged_mode(moreStrPage);
