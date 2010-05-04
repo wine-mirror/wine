@@ -2351,6 +2351,21 @@ static BlockChainStream **StorageImpl_GetCachedBlockChainStream(StorageImpl *Thi
   return &This->blockChainCache[free_index];
 }
 
+static void StorageImpl_DeleteCachedBlockChainStream(StorageImpl *This, DirRef index)
+{
+  int i;
+
+  for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
+  {
+    if (This->blockChainCache[i] && This->blockChainCache[i]->ownerDirEntry == index)
+    {
+      BlockChainStream_Destroy(This->blockChainCache[i]);
+      This->blockChainCache[i] = NULL;
+      return;
+    }
+  }
+}
+
 static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   ULARGE_INTEGER offset, ULONG size, void *buffer, ULONG *bytesRead)
 {
@@ -2542,6 +2557,30 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
   }
 }
 
+static HRESULT StorageImpl_StreamLink(StorageBaseImpl *base, DirRef dst,
+  DirRef src)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  DirEntry dst_data, src_data;
+  HRESULT hr;
+
+  hr = StorageImpl_ReadDirEntry(This, dst, &dst_data);
+
+  if (SUCCEEDED(hr))
+    hr = StorageImpl_ReadDirEntry(This, src, &src_data);
+
+  if (SUCCEEDED(hr))
+  {
+    StorageImpl_DeleteCachedBlockChainStream(This, src);
+    dst_data.startingBlock = src_data.startingBlock;
+    dst_data.size = src_data.size;
+
+    hr = StorageImpl_WriteDirEntry(This, dst, &dst_data);
+  }
+
+  return hr;
+}
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2577,7 +2616,8 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_DestroyDirEntry,
   StorageImpl_StreamReadAt,
   StorageImpl_StreamWriteAt,
-  StorageImpl_StreamSetSize
+  StorageImpl_StreamSetSize,
+  StorageImpl_StreamLink
 };
 
 static HRESULT StorageImpl_Construct(
@@ -4298,8 +4338,9 @@ static void TransactedSnapshotImpl_DestroyTemporaryCopy(
     {
       entry = &This->entries[cursor];
 
-      StorageBaseImpl_StreamSetSize(This->transactedParent,
-        entry->newTransactedParentEntry, zero);
+      if (entry->stream_dirty)
+        StorageBaseImpl_StreamSetSize(This->transactedParent,
+          entry->newTransactedParentEntry, zero);
 
       StorageBaseImpl_DestroyDirEntry(This->transactedParent,
         entry->newTransactedParentEntry);
@@ -4366,9 +4407,19 @@ static HRESULT TransactedSnapshotImpl_CopyTree(TransactedSnapshotImpl* This)
         return hr;
       }
 
-      hr = StorageBaseImpl_CopyStream(
-        This->transactedParent, entry->newTransactedParentEntry,
-        (StorageBaseImpl*)This, cursor);
+      if (entry->stream_dirty)
+      {
+        hr = StorageBaseImpl_CopyStream(
+          This->transactedParent, entry->newTransactedParentEntry,
+          This->scratch, entry->stream_entry);
+      }
+      else if (entry->data.size.QuadPart)
+      {
+        hr = StorageBaseImpl_StreamLink(
+          This->transactedParent, entry->newTransactedParentEntry,
+          entry->transactedParentEntry);
+      }
+
       if (FAILED(hr))
       {
         cursor = TransactedSnapshotImpl_FindNextChild(This, cursor);
@@ -4457,12 +4508,8 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
         else if (entry->read && entry->transactedParentEntry != entry->newTransactedParentEntry)
         {
           if (entry->transactedParentEntry != DIRENTRY_NULL)
-          {
-            StorageBaseImpl_StreamSetSize(This->transactedParent,
-              entry->transactedParentEntry, zero);
             StorageBaseImpl_DestroyDirEntry(This->transactedParent,
               entry->transactedParentEntry);
-          }
           if (entry->stream_dirty)
           {
             StorageBaseImpl_StreamSetSize(This->scratch, entry->stream_entry, zero);
@@ -4739,6 +4786,31 @@ static HRESULT TransactedSnapshotImpl_StreamSetSize(StorageBaseImpl *base,
   return hr;
 }
 
+static HRESULT TransactedSnapshotImpl_StreamLink(StorageBaseImpl *base,
+  DirRef dst, DirRef src)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) base;
+  HRESULT hr;
+  TransactedDirEntry *dst_entry, *src_entry;
+
+  hr = TransactedSnapshotImpl_EnsureReadEntry(This, src);
+  if (FAILED(hr)) return hr;
+
+  hr = TransactedSnapshotImpl_EnsureReadEntry(This, dst);
+  if (FAILED(hr)) return hr;
+
+  dst_entry = &This->entries[dst];
+  src_entry = &This->entries[src];
+
+  dst_entry->stream_dirty = src_entry->stream_dirty;
+  dst_entry->stream_entry = src_entry->stream_entry;
+  dst_entry->transactedParentEntry = src_entry->transactedParentEntry;
+  dst_entry->newTransactedParentEntry = src_entry->newTransactedParentEntry;
+  dst_entry->data.size = src_entry->data.size;
+
+  return S_OK;
+}
+
 static const IStorageVtbl TransactedSnapshotImpl_Vtbl =
 {
     StorageBaseImpl_QueryInterface,
@@ -4771,7 +4843,8 @@ static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
   TransactedSnapshotImpl_DestroyDirEntry,
   TransactedSnapshotImpl_StreamReadAt,
   TransactedSnapshotImpl_StreamWriteAt,
-  TransactedSnapshotImpl_StreamSetSize
+  TransactedSnapshotImpl_StreamSetSize,
+  TransactedSnapshotImpl_StreamLink
 };
 
 static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
@@ -4972,6 +5045,15 @@ static HRESULT StorageInternalImpl_StreamSetSize(StorageBaseImpl *base,
 
   return StorageBaseImpl_StreamSetSize(This->parentStorage,
     index, newsize);
+}
+
+static HRESULT StorageInternalImpl_StreamLink(StorageBaseImpl *base,
+  DirRef dst, DirRef src)
+{
+  StorageInternalImpl* This = (StorageInternalImpl*) base;
+
+  return StorageBaseImpl_StreamLink(This->parentStorage,
+    dst, src);
 }
 
 /******************************************************************************
@@ -5333,7 +5415,8 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
   StorageInternalImpl_DestroyDirEntry,
   StorageInternalImpl_StreamReadAt,
   StorageInternalImpl_StreamWriteAt,
-  StorageInternalImpl_StreamSetSize
+  StorageInternalImpl_StreamSetSize,
+  StorageInternalImpl_StreamLink
 };
 
 /******************************************************************************

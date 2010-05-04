@@ -263,6 +263,7 @@ struct StorageBaseImplVtbl {
   HRESULT (*StreamReadAt)(StorageBaseImpl*,DirRef,ULARGE_INTEGER,ULONG,void*,ULONG*);
   HRESULT (*StreamWriteAt)(StorageBaseImpl*,DirRef,ULARGE_INTEGER,ULONG,const void*,ULONG*);
   HRESULT (*StreamSetSize)(StorageBaseImpl*,DirRef,ULARGE_INTEGER);
+  HRESULT (*StreamLink)(StorageBaseImpl*,DirRef,DirRef);
 };
 
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
@@ -318,6 +319,16 @@ static inline HRESULT StorageBaseImpl_StreamSetSize(StorageBaseImpl *This,
   DirRef index, ULARGE_INTEGER newsize)
 {
   return This->baseVtbl->StreamSetSize(This, index, newsize);
+}
+
+/* Make dst point to the same stream that src points to. Other stream operations
+ * will not work properly for entries that point to the same stream, so this
+ * must be a very temporary state, and only one entry pointing to a given stream
+ * may be reachable at any given time. */
+static inline HRESULT StorageBaseImpl_StreamLink(StorageBaseImpl *This,
+  DirRef dst, DirRef src)
+{
+  return This->baseVtbl->StreamLink(This, dst, src);
 }
 
 /****************************************************************************
