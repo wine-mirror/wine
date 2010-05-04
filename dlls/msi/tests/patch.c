@@ -999,8 +999,8 @@ static void test_patch_registration( void )
                              "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
                               NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                               INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
-    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
-    todo_wine ok( buffer[0], "buffer empty\n" );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( buffer[0], "buffer empty\n" );
 
     buffer[0] = 0;
     size = sizeof(buffer);
@@ -1016,11 +1016,19 @@ static void test_patch_registration( void )
                              "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
                              NULL, MSIINSTALLCONTEXT_USERMANAGED,
                              INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
-    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
     ok( !buffer[0], "got %s\n", buffer );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = pMsiGetPatchInfoExA( "{0F96CDC0-4CDF-4304-B283-7B9264889EF7}",
+                             "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                              NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
+    ok( r == ERROR_UNKNOWN_PRODUCT, "expected ERROR_UNKNOWN_PRODUCT, got %u\n", r );
 
     DeleteFileA( msifile );
     DeleteFileA( mspfile );

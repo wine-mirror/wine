@@ -602,10 +602,6 @@ static UINT msi_open_package(LPCWSTR product, MSIINSTALLCONTEXT context,
     WCHAR sourcepath[MAX_PATH];
     WCHAR filename[MAX_PATH];
 
-    static const WCHAR szLocalPackage[] = {
-        'L','o','c','a','l','P','a','c','k','a','g','e',0};
-
-
     r = MSIREG_OpenInstallProps(product, context, NULL, &props, FALSE);
     if (r != ERROR_SUCCESS)
         return ERROR_BAD_CONFIGURATION;

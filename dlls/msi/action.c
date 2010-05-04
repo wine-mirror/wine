@@ -3791,19 +3791,24 @@ static BOOL msi_check_unpublish(MSIPACKAGE *package)
     return TRUE;
 }
 
-static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey, HKEY hudkey )
+static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey )
 {
+    static const WCHAR szAllPatches[] = {'A','l','l','P','a','t','c','h','e','s',0};
     WCHAR patch_squashed[GUID_SIZE];
-    HKEY patches;
+    HKEY patches_key = NULL, product_patches_key;
     LONG res;
     MSIPATCHINFO *patch;
-    UINT r = ERROR_FUNCTION_FAILED;
+    UINT r;
     WCHAR *p, *all_patches = NULL;
     DWORD len = 0;
 
-    res = RegCreateKeyExW( prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patches, NULL );
+    res = RegCreateKeyExW( prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patches_key, NULL );
     if (res != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
+
+    r = MSIREG_OpenUserDataProductPatchesKey( package->ProductCode, package->Context, &product_patches_key, TRUE );
+    if (r != ERROR_SUCCESS)
+        goto done;
 
     LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
     {
@@ -3817,24 +3822,48 @@ static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey, HKEY hudkey 
 
     LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
     {
+        HKEY patch_key;
+
         squash_guid( patch->patchcode, p );
         p += strlenW( p ) + 1;
 
-        res = RegSetValueExW( patches, patch_squashed, 0, REG_SZ,
+        res = RegSetValueExW( patches_key, patch_squashed, 0, REG_SZ,
                               (const BYTE *)patch->transforms,
                               (strlenW(patch->transforms) + 1) * sizeof(WCHAR) );
+        if (res != ERROR_SUCCESS)
+            goto done;
+
+        r = MSIREG_OpenUserDataPatchKey( patch->patchcode, package->Context, &patch_key, TRUE );
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        res = RegSetValueExW( patch_key, szLocalPackage, 0, REG_SZ,
+                              (const BYTE *)patch->localfile,
+                              (strlenW(patch->localfile) + 1) * sizeof(WCHAR) );
+        RegCloseKey( patch_key );
+        if (res != ERROR_SUCCESS)
+            goto done;
+
+        res = RegCreateKeyExW( product_patches_key, patch_squashed, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patch_key, NULL );
+        RegCloseKey( patch_key );
         if (res != ERROR_SUCCESS)
             goto done;
     }
 
     all_patches[len] = 0;
-    res = RegSetValueExW( patches, szPatches, 0, REG_MULTI_SZ,
+    res = RegSetValueExW( patches_key, szPatches, 0, REG_MULTI_SZ,
                           (const BYTE *)all_patches, (len + 1) * sizeof(WCHAR) );
-    if (res == ERROR_SUCCESS)
-        r = ERROR_SUCCESS;
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    res = RegSetValueExW( product_patches_key, szAllPatches, 0, REG_MULTI_SZ,
+                          (const BYTE *)all_patches, (len + 1) * sizeof(WCHAR) );
+    if (res != ERROR_SUCCESS)
+        r = ERROR_FUNCTION_FAILED;
 
 done:
-    RegCloseKey(patches);
+    RegCloseKey( product_patches_key );
+    RegCloseKey( patches_key );
     msi_free( all_patches );
     return r;
 }
@@ -3871,7 +3900,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     if (!list_empty(&package->patches))
     {
-        rc = msi_publish_patches(package, hukey, hudkey);
+        rc = msi_publish_patches(package, hukey);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
@@ -4671,6 +4700,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     LPWSTR *features = NULL;
     BOOL full_uninstall = TRUE;
     MSIFEATURE *feature;
+    MSIPATCHINFO *patch;
 
     static const WCHAR szUpgradeCode[] =
         {'U','p','g','r','a','d','e','C','o','d','e',0};
@@ -4721,6 +4751,11 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     {
         MSIREG_DeleteUserUpgradeCodesKey(upgrade);
         msi_free(upgrade);
+    }
+
+    LIST_FOR_EACH_ENTRY(patch, &package->patches, MSIPATCHINFO, entry)
+    {
+        MSIREG_DeleteUserDataPatchKey(patch->patchcode, package->Context);
     }
 
 done:

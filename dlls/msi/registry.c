@@ -183,6 +183,16 @@ static const WCHAR szUserDataPatch_fmt[] = {
 'U','s','e','r','D','a','t','a','\\',
 '%','s','\\','P','a','t','c','h','e','s','\\','%','s',0};
 
+static const WCHAR szUserDataProductPatches_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
+'P','a','t','c','h','e','s',0};
+
 static const WCHAR szInstallProperties_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -878,6 +888,69 @@ UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
         }
 
         sprintfW(keypath, szUserDataPatch_fmt, usersid, squished_patch);
+        LocalFree(usersid);
+    }
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
+UINT MSIREG_DeleteUserDataPatchKey(LPCWSTR patch, MSIINSTALLCONTEXT context)
+{
+    UINT r;
+    WCHAR squished_patch[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(patch));
+    if (!squash_guid(patch, squished_patch))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_patch));
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szUserDataPatch_fmt, szLocalSid, squished_patch);
+    else
+    {
+        r = get_user_sid(&usersid);
+        if (r != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", r);
+            return r;
+        }
+
+        sprintfW(keypath, szUserDataPatch_fmt, usersid, squished_patch);
+        LocalFree(usersid);
+    }
+
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
+}
+
+UINT MSIREG_OpenUserDataProductPatchesKey(LPCWSTR product, MSIINSTALLCONTEXT context,
+                                          HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_product[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(product));
+    if (!squash_guid(product, squished_product))
+        return ERROR_FUNCTION_FAILED;
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szUserDataProductPatches_fmt, szLocalSid, squished_product);
+    else
+    {
+        rc = get_user_sid(&usersid);
+        if (rc != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", rc);
+            return rc;
+        }
+
+        sprintfW(keypath, szUserDataProductPatches_fmt, usersid, squished_product);
         LocalFree(usersid);
     }
 
