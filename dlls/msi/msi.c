@@ -359,21 +359,27 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     lstrcatW(cmd, patcheq);
     lstrcatW(cmd, szPatchPackage);
 
-    beg = codes;
-    while ((end = strchrW(beg, '}')))
+    if (szProductCode)
+        r = MsiConfigureProductExW(szProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
+    else
     {
-        *(end + 1) = '\0';
-        r = MsiConfigureProductExW(beg, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
-        if (r == ERROR_SUCCESS)
+        beg = codes;
+        while ((end = strchrW(beg, '}')))
         {
-            TRACE("patch applied\n");
-            succeeded = TRUE;
+            *(end + 1) = '\0';
+            r = MsiConfigureProductExW(beg, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
+            if (r == ERROR_SUCCESS)
+            {
+                TRACE("patch applied\n");
+                succeeded = TRUE;
+            }
+            beg = end + 2;
         }
-        beg = end + 2;
+
+        if (succeeded)
+            r = ERROR_SUCCESS;
     }
 
-    if (succeeded)
-        r = ERROR_SUCCESS;
 done:
     msi_free(cmd);
     msi_free(codes);
