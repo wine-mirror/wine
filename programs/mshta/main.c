@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <windows.h>
 
-int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow)
+int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     printf("mshta.exe is a stub!\n");
     return 0;
