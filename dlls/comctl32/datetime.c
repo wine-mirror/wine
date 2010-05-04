@@ -614,7 +614,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
 		    lctype = LOCALE_SABBREVMONTHNAME1;
 		    max_count = 12;
 		    break;
-		case FULLMONTH:
+		default: /* FULLMONTH */
 		    fall   = fld_mon;
 		    lctype = LOCALE_SMONTHNAME1;
 		    max_count = 12;
