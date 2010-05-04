@@ -92,6 +92,9 @@ struct process_snapshot
     int             handles;  /* number of handles */
 };
 
+#define CPU_FLAG(cpu) (1 << (cpu))
+#define CPU_64BIT_MASK CPU_FLAG(CPU_x86_64)
+
 /* process functions */
 
 extern unsigned int alloc_ptid( void *ptr );

@@ -43,6 +43,7 @@
 #include "file.h"
 #include "handle.h"
 #include "request.h"
+#include "process.h"
 #include "unicode.h"
 #include "security.h"
 
@@ -1871,6 +1872,12 @@ void flush_registry(void)
         }
     }
     if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
+}
+
+/* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
+static int is_wow64_thread( struct thread *thread )
+{
+    return (prefix_type == PREFIX_64BIT && !(CPU_FLAG(thread->process->cpu) & CPU_64BIT_MASK));
 }
 
 
