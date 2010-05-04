@@ -970,7 +970,6 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 {
     DWORD x;
     int h, width = min(srcwidth, dstwidth);
-    BYTE *bits;
 
     if (lines < 0 )
     {
@@ -978,8 +977,6 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
        dstbits = dstbits + ( linebytes * (lines-1) );
        linebytes = -linebytes;
     }
-
-    bits = dstbits;
 
     switch (bmpImage->depth) {
     case 1:
