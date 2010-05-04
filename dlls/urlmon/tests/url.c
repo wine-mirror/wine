@@ -176,6 +176,7 @@ static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static const WCHAR cache_fileW[] = {'c',':','\\','c','a','c','h','e','.','h','t','m',0};
 static const CHAR dwl_htmlA[] = "dwl.html";
 static const WCHAR dwl_htmlW[] = {'d','w','l','.','h','t','m','l',0};
+static const WCHAR test_txtW[] = {'t','e','s','t','.','t','x','t',0};
 static const WCHAR emptyW[] = {0};
 
 static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protocol = FALSE,
@@ -187,7 +188,8 @@ static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
 static BOOL have_IHttpNegotiate2, use_bscex;
-static BOOL test_redirect;
+static BOOL test_redirect, use_cache_file, callback_read;
+static WCHAR cache_file_name[MAX_PATH];
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -512,18 +514,19 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bind_info, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
 
-    if(filedwl_api) {
-        ok(bind_info == (BINDF_PULLDATA|BINDF_FROMURLMON|BINDF_NEEDFILE), "bind_info=%08x\n", bind_info);
-    }else if(tymed == TYMED_ISTREAM && is_urlmon_protocol(test_protocol)) {
-        ok(bind_info == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
-                     |BINDF_FROMURLMON),
-           "bind_info=%08x\n", bind_info);
-    }else if(bindf&BINDF_ASYNCHRONOUS) {
-        ok(bind_info == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
-                     |BINDF_FROMURLMON|BINDF_NEEDFILE),
-           "bind_info=%08x\n", bind_info);
-    }else
-        ok(bind_info == (BINDF_FROMURLMON|BINDF_NEEDFILE), "bind_info=%08x\n", bind_info);
+    ok(bind_info & BINDF_FROMURLMON, "BINDF_FROMURLMON is not set\n");
+
+    if(filedwl_api || !is_urlmon_protocol(test_protocol) || !(bindf&BINDF_ASYNCSTORAGE) || tymed != TYMED_ISTREAM)
+        ok(bind_info & BINDF_NEEDFILE, "BINDF_NEEDFILE is not set\n");
+    else
+        ok(!(bind_info & BINDF_NEEDFILE), "BINDF_NEEDFILE is set\n");
+
+    bind_info &= ~(BINDF_NEEDFILE|BINDF_FROMURLMON);
+    if(filedwl_api)
+        ok(bind_info == BINDF_PULLDATA, "bind_info = %x, expected BINDF_PULLDATA\n", bind_info);
+    else
+        ok(bind_info == (bindf & ~(BINDF_NEEDFILE|BINDF_FROMURLMON)), "bind_info = %x, expected %x\n",
+           bind_info, (bindf & ~(BINDF_NEEDFILE|BINDF_FROMURLMON)));
 
     ok(bindinfo.cbSize == sizeof(bindinfo), "bindinfo.cbSize = %d\n", bindinfo.cbSize);
     ok(!bindinfo.szExtraInfo, "bindinfo.szExtraInfo = %p\n", bindinfo.szExtraInfo);
@@ -805,12 +808,9 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
 
-        if(tymed == TYMED_FILE) {
-            hres = IInternetProtocolSink_ReportProgress(protocol_sink,
-                    BINDSTATUS_CACHEFILENAMEAVAILABLE, cache_fileW);
-            ok(hres == S_OK,
-                   "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
-        }
+        hres = IInternetProtocolSink_ReportProgress(protocol_sink,
+            BINDSTATUS_CACHEFILENAMEAVAILABLE, use_cache_file ? cache_file_name : cache_fileW);
+        ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
 
         bscf |= BSCF_FIRSTDATANOTIFICATION;
         break;
@@ -1545,9 +1545,14 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
         }
 
         ok(U(*pstgmed).pstm != NULL, "U(*pstgmed).pstm == NULL\n");
-        do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
-        while(hres == S_OK);
-        ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
+        if(callback_read) {
+            do {
+                hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
+                if(test_protocol == HTTP_TEST && emulate_protocol && readed)
+                    ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
+            }while(hres == S_OK);
+            ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
+        }
         break;
 
     case TYMED_FILE:
@@ -2231,6 +2236,8 @@ static BOOL test_RegisterBindStatusCallback(void)
 #define BINDTEST_FILEDWLAPI    0x0004
 #define BINDTEST_HTTPRESPONSE  0x0008
 #define BINDTEST_REDIRECT      0x0010
+#define BINDTEST_USE_CACHE     0x0020
+#define BINDTEST_NO_CALLBACK_READ  0x0040
 
 static void init_bind_test(int protocol, DWORD flags, DWORD t)
 {
@@ -2250,6 +2257,8 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     else
         urls[HTTP_TEST] = WINE_ABOUT_URL;
     test_redirect = (flags & BINDTEST_REDIRECT) != 0;
+    use_cache_file = (flags & BINDTEST_USE_CACHE) != 0;
+    callback_read = !(flags & BINDTEST_NO_CALLBACK_READ);
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
@@ -2370,7 +2379,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
         ok(unk != NULL, "unk == NULL\n");
     }
-    if(unk)
+    if(unk && callback_read)
         IUnknown_Release(unk);
 
     if(FAILED(hres))
@@ -2446,6 +2455,28 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 
     if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
         http_is_first = FALSE;
+
+    if(!callback_read) {
+        BYTE buf[512];
+        DWORD readed;
+        IStream *stream;
+
+        hres = IUnknown_QueryInterface(unk, &IID_IStream, (void**)&stream);
+        ok(hres == S_OK, "Could not get IStream iface: %08x\n", hres);
+        IUnknown_Release(unk);
+
+        do {
+            readed = 0xdeadbeef;
+            hres = IStream_Read(stream, buf, sizeof(buf), &readed);
+            ok(readed != 0xdeadbeef, "readed = 0xdeadbeef\n");
+            if(emulate_protocol && test_protocol == HTTP_TEST && readed)
+                ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
+        }while(hres == S_OK);
+        ok(hres == S_FALSE, "IStream_Read returned %08x\n", hres);
+        ok(!readed, "readed = %d\n", readed);
+
+        IStream_Release(stream);
+    }
 }
 
 static void test_BindToObject(int protocol, DWORD flags)
@@ -2778,6 +2809,27 @@ static void create_file(void)
     set_file_url(path);
 }
 
+static void create_cache_file(void)
+{
+    char buf[6500];
+    HANDLE file;
+    DWORD size;
+
+    file = CreateFileW(test_txtW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    memset(buf, 'X', sizeof(buf));
+    WriteFile(file, buf, sizeof(buf), &size, NULL);
+    CloseHandle(file);
+
+    size = GetCurrentDirectoryW(MAX_PATH, cache_file_name);
+    cache_file_name[size] = '\\';
+    memcpy(cache_file_name+size+1, test_txtW, sizeof(test_txtW));
+}
+
 static void test_ReportResult(HRESULT exhres)
 {
     IMoniker *mon = NULL;
@@ -2886,6 +2938,7 @@ START_TEST(url)
     complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
     create_file();
+    create_cache_file();
 
     test_create();
 
@@ -2916,6 +2969,15 @@ START_TEST(url)
 
         trace("synchronous http test (to object)...\n");
         test_BindToObject(HTTP_TEST, 0);
+
+        trace("emulated synchronous http test (with cache)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE, TYMED_ISTREAM);
+
+        trace("emulated synchronous http test (with cache, no read)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE|BINDTEST_NO_CALLBACK_READ, TYMED_ISTREAM);
+
+        trace("synchronous http test (with cache, no read)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_USE_CACHE|BINDTEST_NO_CALLBACK_READ, TYMED_ISTREAM);
 
         trace("synchronous file test...\n");
         test_BindToStorage(FILE_TEST, 0, TYMED_ISTREAM);
@@ -2958,6 +3020,9 @@ START_TEST(url)
 
         trace("emulated http test (redirect)...\n");
         test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_REDIRECT, TYMED_ISTREAM);
+
+        trace("emulated http test (with cache)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE, TYMED_ISTREAM);
 
         trace("asynchronous https test...\n");
         test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);
@@ -3029,6 +3094,7 @@ START_TEST(url)
     }
 
     DeleteFileA(wszIndexHtmlA);
+    DeleteFileW(test_txtW);
     CloseHandle(complete_event);
     CloseHandle(complete_event2);
     CoUninitialize();
