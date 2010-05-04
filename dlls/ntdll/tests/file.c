@@ -163,9 +163,8 @@ static void create_file_test(void)
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     UNICODE_STRING nameW;
-    UINT len;
 
-    len = GetCurrentDirectoryW( MAX_PATH, path );
+    GetCurrentDirectoryW( MAX_PATH, path );
     pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
