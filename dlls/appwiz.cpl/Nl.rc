@@ -28,7 +28,7 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 STRINGTABLE
 {
    IDS_CPL_TITLE, "Software"
-   IDS_CPL_DESC, "Hiermee installeert u nieuwe software, of verwijderd u bestaande software van uw computer."
+   IDS_CPL_DESC, "Hiermee installeert u nieuwe software, of verwijdert u bestaande software van uw computer."
    IDS_TAB1_TITLE, "Programma's"
 
    IDS_UNINSTALL_FAILED, "Het programma '%s' kan niet verwijderd worden van het systeem. Wilt u het verwijderen uit het register?"
@@ -48,11 +48,11 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Installeren/Verwijderen"
 FONT 8, "MS Shell Dlg"
 {
- CONTROL "Om een programma te installeren vanaf een floppy disk, CD-ROM drive, of uw hard disk, klik op Installeren.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "Om een programma te installeren vanaf een diskette, CD-ROM, of uw harde schijf, klik op Installeren.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Installeren...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "De volgende software kan automatisch verwijderd worden. Om het programma te verwijderen of de geïnstalleerde onderdelen te wijzigen, selecteer het in de lijst en druk op Wijzigen/Verwijderen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "De volgende software kan automatisch verwijderd worden. Om een programma te verwijderen of de geïnstalleerde onderdelen te wijzigen, selecteer het in de lijst en druk op Wijzigen/Verwijderen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Support Informatie...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 78, 198, 76, 14
  CONTROL "&Wijzigen...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 158, 198, 68, 14
@@ -72,8 +72,8 @@ FONT 8, "MS Shell Dlg"
  CONTROL "Contact:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
  CONTROL "Support Informatie:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
  CONTROL "Support Telefoon:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
- CONTROL "Lees me:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
- CONTROL "Produkt Updates:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Lees mij:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Product Updates:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
  CONTROL "Commentaar:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
  CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
  CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
