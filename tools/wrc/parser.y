@@ -2865,7 +2865,6 @@ clean:
 static int rsrcid_to_token(int lookahead)
 {
 	int token;
-	const char *type = "?";
 
 	/* Get a token if we don't have one yet */
 	if(lookahead == YYEMPTY)
@@ -2886,64 +2885,49 @@ static int rsrcid_to_token(int lookahead)
 	switch(yylval.num)
 	{
 	case WRC_RT_CURSOR:
-		type = "CURSOR";
 		token = tCURSOR;
 		break;
 	case WRC_RT_ICON:
-		type = "ICON";
 		token = tICON;
 		break;
 	case WRC_RT_BITMAP:
-		type = "BITMAP";
 		token = tBITMAP;
 		break;
 	case WRC_RT_FONT:
-		type = "FONT";
 		token = tFONT;
 		break;
 	case WRC_RT_FONTDIR:
-		type = "FONTDIR";
 		token = tFONTDIR;
 		break;
 	case WRC_RT_RCDATA:
-		type = "RCDATA";
 		token = tRCDATA;
 		break;
 	case WRC_RT_MESSAGETABLE:
-		type = "MESSAGETABLE";
 		token = tMESSAGETABLE;
 		break;
 	case WRC_RT_DLGINIT:
-		type = "DLGINIT";
 		token = tDLGINIT;
 		break;
 	case WRC_RT_ACCELERATOR:
-		type = "ACCELERATOR";
 		token = tACCELERATORS;
 		break;
 	case WRC_RT_MENU:
-		type = "MENU";
 		token = tMENU;
 		break;
 	case WRC_RT_DIALOG:
-		type = "DIALOG";
 		token = tDIALOG;
 		break;
 	case WRC_RT_VERSION:
-		type = "VERSION";
 		token = tVERSIONINFO;
 		break;
 	case WRC_RT_TOOLBAR:
-		type = "TOOLBAR";
 		token = tTOOLBAR;
 		break;
 	case WRC_RT_HTML:
-		type = "HTML";
 		token = tHTML;
 		break;
 
 	case WRC_RT_STRING:
-		type = "STRINGTABLE";
 		break;
 
 	case WRC_RT_ANICURSOR:
