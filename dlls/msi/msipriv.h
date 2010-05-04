@@ -151,6 +151,7 @@ typedef struct tagMSIPATCHINFO
     struct list entry;
     LPWSTR patchcode;
     LPWSTR transforms;
+    LPWSTR localfile;
 } MSIPATCHINFO;
 
 typedef struct _column_info
@@ -996,6 +997,7 @@ extern WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... );
 extern UINT msi_create_component_directories( MSIPACKAGE *package );
 extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value);
+extern UINT msi_get_local_package_name(LPWSTR path, LPCWSTR suffix);
 
 /* media */
 

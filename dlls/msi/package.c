@@ -271,6 +271,7 @@ static void free_package_structures( MSIPACKAGE *package )
         list_remove( &patch->entry );
         msi_free( patch->patchcode );
         msi_free( patch->transforms );
+        msi_free( patch->localfile );
         msi_free( patch );
     }
 
@@ -1133,12 +1134,12 @@ UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_get_local_package_name( LPWSTR path )
+UINT msi_get_local_package_name( LPWSTR path, LPCWSTR suffix )
 {
     static const WCHAR szInstaller[] = {
         '\\','I','n','s','t','a','l','l','e','r','\\',0};
-    static const WCHAR fmt[] = { '%','x','.','m','s','i',0};
-    DWORD time, len, i;
+    static const WCHAR fmt[] = {'%','x',0};
+    DWORD time, len, i, offset;
     HANDLE handle;
 
     time = GetTickCount();
@@ -1149,7 +1150,8 @@ static UINT msi_get_local_package_name( LPWSTR path )
     len = strlenW(path);
     for (i = 0; i < 0x10000; i++)
     {
-        snprintfW( &path[len], MAX_PATH - len, fmt, (time + i)&0xffff );
+        offset = snprintfW( path + len, MAX_PATH - len, fmt, (time + i) & 0xffff );
+        memcpy( path + len + offset, suffix, (strlenW( suffix ) + 1) * sizeof(WCHAR) );
         handle = CreateFileW( path, GENERIC_WRITE, 0, NULL,
                               CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
         if (handle != INVALID_HANDLE_VALUE)
@@ -1170,6 +1172,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     static const WCHAR OriginalDatabase[] =
         {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
     static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
+    static const WCHAR dotmsi[] = {'.','m','s','i',0};
     MSIDATABASE *db = NULL;
     MSIPACKAGE *package;
     MSIHANDLE handle;
@@ -1228,7 +1231,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             file = temppath;
         }
 
-        r = msi_get_local_package_name( localfile );
+        r = msi_get_local_package_name( localfile, dotmsi );
         if (r != ERROR_SUCCESS)
             return r;
 

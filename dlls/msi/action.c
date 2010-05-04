@@ -497,7 +497,7 @@ static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
     MSIPATCHINFO *pi;
     UINT r = ERROR_SUCCESS;
 
-    pi = msi_alloc( sizeof(MSIPATCHINFO) );
+    pi = msi_alloc_zero( sizeof(MSIPATCHINFO) );
     if (!pi)
         return ERROR_OUTOFMEMORY;
 
@@ -522,11 +522,13 @@ static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
 
 static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 {
+    static const WCHAR dotmsp[] = {'.','m','s','p',0};
     MSIDATABASE *patch_db = NULL;
+    WCHAR localfile[MAX_PATH];
     LPWSTR *substorage;
     MSISUMMARYINFO *si;
-    MSIPATCHINFO *patch;
-    UINT i, r;
+    MSIPATCHINFO *patch = NULL;
+    UINT i, r = ERROR_SUCCESS;
 
     TRACE("%p %s\n", package, debugstr_w( file ) );
 
@@ -548,18 +550,28 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
     if (r != ERROR_SUCCESS)
     {
         TRACE("patch not applicable\n");
-        msiobj_release( &si->hdr );
-        msiobj_release( &patch_db->hdr );
-        return ERROR_SUCCESS;
+        r = ERROR_SUCCESS;
+        goto done;
     }
 
     r = msi_parse_patch_summary( si, &patch );
     if ( r != ERROR_SUCCESS )
+        goto done;
+
+    r = msi_get_local_package_name( localfile, dotmsp );
+    if ( r != ERROR_SUCCESS )
+        goto done;
+
+    TRACE("copying to local package %s\n", debugstr_w(localfile));
+
+    if (!CopyFileW( file, localfile, FALSE ))
     {
-        msiobj_release( &si->hdr );
-        msiobj_release( &patch_db->hdr );
-        return r;
+        ERR("Unable to copy package (%s -> %s) (error %u)\n",
+            debugstr_w(file), debugstr_w(localfile), GetLastError());
+        r = GetLastError();
+        goto done;
     }
+    patch->localfile = strdupW( localfile );
 
     /* apply substorage transforms */
     substorage = msi_split_string( patch->transforms, ';' );
@@ -567,6 +579,8 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
         r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
 
     msi_free( substorage );
+    if (r != ERROR_SUCCESS)
+        goto done;
     msi_set_media_source_prop( package );
 
     /*
@@ -577,10 +591,20 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 
     list_add_tail( &package->patches, &patch->entry );
 
+done:
     msiobj_release( &si->hdr );
     msiobj_release( &patch_db->hdr );
+    if (patch && r != ERROR_SUCCESS)
+    {
+        if (patch->localfile)
+            DeleteFileW( patch->localfile );
 
-    return ERROR_SUCCESS;
+        msi_free( patch->patchcode );
+        msi_free( patch->transforms );
+        msi_free( patch->localfile );
+        msi_free( patch );
+    }
+    return r;
 }
 
 /* get the PATCH property, and apply all the patches it specifies */
