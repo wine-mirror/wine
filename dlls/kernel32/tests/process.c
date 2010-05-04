@@ -794,7 +794,6 @@ static void test_CommandLine(void)
     char                buffer2[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
-    DWORD               len;
     BOOL                ret;
 
     memset(&startup, 0, sizeof(startup));
@@ -873,7 +872,7 @@ static void test_CommandLine(void)
     assert(DeleteFileA(resfile) != 0);
     
     get_file_name(resfile);
-    len = GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
+    GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
     assert ( lpFilePart != 0);
     *(lpFilePart -1 ) = 0;
     p = strrchr(fullpath, '\\');
@@ -895,7 +894,7 @@ static void test_CommandLine(void)
 
     /* Using AppName */
     get_file_name(resfile);
-    len = GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
+    GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
     assert ( lpFilePart != 0);
     *(lpFilePart -1 ) = 0;
     p = strrchr(fullpath, '\\');
