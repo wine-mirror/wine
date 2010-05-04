@@ -277,12 +277,12 @@ void context_attach_surface_fbo(const struct wined3d_context *context,
 }
 
 /* GL locking is done by the caller */
-static void context_check_fbo_status(struct wined3d_context *context)
+static void context_check_fbo_status(struct wined3d_context *context, GLenum target)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
 
-    status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    status = gl_info->fbo_ops.glCheckFramebufferStatus(target);
     if (status == GL_FRAMEBUFFER_COMPLETE)
     {
         TRACE("FBO complete\n");
@@ -335,12 +335,12 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
 }
 
 /* GL locking is done by the caller */
-static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
+static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum target, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *device = context->swapchain->device;
 
-    context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
+    context_bind_fbo(context, target, &entry->id);
     context_clean_fbo_attachments(gl_info);
 
     memcpy(entry->render_targets, device->render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
@@ -364,7 +364,7 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
 
 
 /* GL locking is done by the caller */
-static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
+static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context, GLenum target)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *device = context->swapchain->device;
@@ -391,7 +391,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
     else
     {
         entry = LIST_ENTRY(list_tail(&context->fbo_list), struct fbo_entry, entry);
-        context_reuse_fbo_entry(context, entry);
+        context_reuse_fbo_entry(context, target, entry);
         list_remove(&entry->entry);
         list_add_head(&context->fbo_list, &entry->entry);
     }
@@ -400,19 +400,19 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
+static void context_apply_fbo_entry(struct wined3d_context *context, GLenum target, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
 
-    context_bind_fbo(context, GL_FRAMEBUFFER, &entry->id);
+    context_bind_fbo(context, target, &entry->id);
 
     if (!entry->attached)
     {
         /* Apply render targets */
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, i, entry->render_targets[i]);
+            context_attach_surface_fbo(context, target, i, entry->render_targets[i]);
         }
 
         /* Apply depth targets */
@@ -421,7 +421,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
             surface_set_compatible_renderbuffer(entry->depth_stencil,
                     entry->render_targets[0]->pow2Width, entry->render_targets[0]->pow2Height);
         }
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, entry->depth_stencil, TRUE);
+        context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, TRUE);
 
         entry->attached = TRUE;
     }
@@ -438,7 +438,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_state(struct wined3d_context *context)
+static void context_apply_fbo_state(struct wined3d_context *context, GLenum target)
 {
     struct fbo_entry *entry, *entry2;
 
@@ -455,14 +455,16 @@ static void context_apply_fbo_state(struct wined3d_context *context)
 
     if (context->render_offscreen)
     {
-        context->current_fbo = context_find_fbo_entry(context);
-        context_apply_fbo_entry(context, context->current_fbo);
-    } else {
+        context->current_fbo = context_find_fbo_entry(context, target);
+        context_apply_fbo_entry(context, target, context->current_fbo);
+    }
+    else
+    {
         context->current_fbo = NULL;
-        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        context_bind_fbo(context, target, NULL);
     }
 
-    context_check_fbo_status(context);
+    context_check_fbo_status(context, target);
 }
 
 /* Context activation is done by the caller. */
@@ -2014,7 +2016,7 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
     {
         if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
         ENTER_GL();
-        context_apply_fbo_state(context);
+        context_apply_fbo_state(context, GL_FRAMEBUFFER);
         LEAVE_GL();
     }
 
@@ -2054,7 +2056,7 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     {
         if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
         ENTER_GL();
-        context_apply_fbo_state(context);
+        context_apply_fbo_state(context, GL_FRAMEBUFFER);
         LEAVE_GL();
     }
 
