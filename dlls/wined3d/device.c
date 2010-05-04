@@ -4455,29 +4455,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         return WINED3D_OK;
     }
 
-    context_apply_clear_state(context, This);
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        if (!surface_is_offscreen(target))
-        {
-            TRACE("Surface %p is onscreen\n", target);
-
-            ENTER_GL();
-            context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
-            context_set_draw_buffer(context, surface_get_gl_buffer(target));
-            LEAVE_GL();
-        }
-        else
-        {
-            TRACE("Surface %p is offscreen\n", target);
-
-            ENTER_GL();
-            context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, target);
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, depth_stencil, TRUE);
-            LEAVE_GL();
-        }
-    }
+    context_apply_clear_state(context, This, target, depth_stencil);
 
     target->get_drawable_size(context, &drawable_width, &drawable_height);
 

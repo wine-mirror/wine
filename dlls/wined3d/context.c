@@ -455,7 +455,7 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
         context->rebind_fbo = FALSE;
     }
 
-    if (context->render_offscreen)
+    if (render_targets)
     {
         context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil);
         context_apply_fbo_entry(context, target, context->current_fbo);
@@ -467,6 +467,21 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
     }
 
     context_check_fbo_status(context, target);
+}
+
+/* GL locking is done by the caller */
+static void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
+        IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil)
+{
+    if (surface_is_offscreen(render_target))
+    {
+        context->blit_targets[0] = render_target;
+        context_apply_fbo_state(context, target, context->blit_targets, depth_stencil);
+    }
+    else
+    {
+        context_apply_fbo_state(context, target, NULL, NULL);
+    }
 }
 
 /* Context activation is done by the caller. */
@@ -1357,6 +1372,10 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
                 sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
     }
 
+    ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            gl_info->limits.buffers * sizeof(*ret->blit_targets));
+    if (!ret->blit_targets) goto out;
+
     ret->free_occlusion_query_size = 4;
     ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
             ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
@@ -1490,6 +1509,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
 out:
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
+    HeapFree(GetProcessHeap(), 0, ret->blit_targets);
     HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, ret);
@@ -1524,6 +1544,7 @@ void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
         destroy = FALSE;
     }
 
+    HeapFree(GetProcessHeap(), 0, context->blit_targets);
     HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
     device_context_remove(This, context);
@@ -2010,23 +2031,30 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 }
 
 /* Context activation is done by the caller. */
-void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
+    GLenum buffer;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
         ENTER_GL();
-        context_apply_fbo_state(context, GL_FRAMEBUFFER, device->render_targets, device->depth_stencil);
+        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, render_target, depth_stencil);
         LEAVE_GL();
     }
 
-    if (context->draw_buffer_dirty)
-    {
-        context_apply_draw_buffer(context, FALSE);
-        context->draw_buffer_dirty = FALSE;
-    }
+    if (!surface_is_offscreen(render_target))
+        buffer = surface_get_gl_buffer(render_target);
+    else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        buffer = GL_COLOR_ATTACHMENT0;
+    else
+        buffer = device->offscreenBuffer;
+
+    ENTER_GL();
+    context_set_draw_buffer(context, buffer);
+    LEAVE_GL();
 
     if (context->last_was_blit)
     {
@@ -2056,10 +2084,19 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
-        ENTER_GL();
-        context_apply_fbo_state(context, GL_FRAMEBUFFER, device->render_targets, device->depth_stencil);
-        LEAVE_GL();
+        if (!context->render_offscreen)
+        {
+            context_validate_onscreen_formats(device, context);
+            ENTER_GL();
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL);
+            LEAVE_GL();
+        }
+        else
+        {
+            ENTER_GL();
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, device->render_targets, device->depth_stencil);
+            LEAVE_GL();
+        }
     }
 
     if (context->draw_buffer_dirty)
