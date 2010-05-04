@@ -65,14 +65,14 @@ typedef struct ACImpl {
     BOOL init, running;
     CRITICAL_SECTION *crst;
     HANDLE handle;
-    DWORD locked, flags, bufsize, pad, padpartial, ofs, psize;
+    DWORD locked, flags, bufsize, pad, padpartial, ofs, psize, candisconnect;
     BYTE *buffer;
     WAVEFORMATEX *pwfx;
     ALuint source;
     INT64 frameswritten;
     REFERENCE_TIME laststamp;
     HANDLE timer_id;
-    ALCdevice *capdev;
+    ALCdevice *dev;
     ALint format;
 
     ACRender *render;
@@ -131,6 +131,15 @@ static HRESULT AudioSimpleVolume_Create(ACImpl *parent, ASVolume **ppv);
 static void AudioSimpleVolume_Destroy(ASVolume *This);
 static HRESULT AudioClock_Create(ACImpl *parent, AClock **ppv);
 static void AudioClock_Destroy(AClock *This);
+
+static int valid_dev(ACImpl *This)
+{
+    if (!This->dev)
+        return 0;
+    if (This->parent->flow == eRender && This->dev != This->parent->device)
+        return 0;
+    return 1;
+}
 
 static int get_format_PCM(WAVEFORMATEX *format)
 {
@@ -315,7 +324,9 @@ static void AudioClient_Destroy(ACImpl *This)
         AudioSimpleVolume_Destroy(This->svolume);
     if (This->clock)
         AudioClock_Destroy(This->clock);
-    if (This->parent->flow == eRender && This->init) {
+    if (!valid_dev(This))
+        TRACE("Not destroying device since none exists\n");
+    else if (This->parent->flow == eRender) {
         setALContext(This->parent->ctx);
         IAudioClient_Stop((IAudioClient*)This);
         IAudioClient_Reset((IAudioClient*)This);
@@ -323,8 +334,8 @@ static void AudioClient_Destroy(ACImpl *This)
         getALError();
         popALContext();
     }
-    if (This->capdev)
-        palcCaptureCloseDevice(This->capdev);
+    else if (This->parent->flow == eCapture)
+        palcCaptureCloseDevice(This->dev);
     HeapFree(GetProcessHeap(), 0, This->pwfx);
     HeapFree(GetProcessHeap(), 0, This->buffer);
     HeapFree(GetProcessHeap(), 0, This);
@@ -360,13 +371,13 @@ static HRESULT AC_OpenRenderAL(ACImpl *This)
     cur->device = palcOpenDevice(alname);
     if (!cur->device) {
         ALCenum err = palcGetError(NULL);
-        FIXME("Could not open device %s: 0x%04x\n", alname, err);
+        WARN("Could not open device %s: 0x%04x\n", alname, err);
         return AUDCLNT_E_DEVICE_IN_USE;
     }
     cur->ctx = palcCreateContext(cur->device, NULL);
     if (!cur->ctx) {
         ALCenum err = palcGetError(cur->device);
-        FIXME("Could not create context: 0x%04x\n", err);
+        ERR("Could not create context: 0x%04x\n", err);
         return AUDCLNT_E_SERVICE_NOT_RUNNING;
     }
     if (!cur->device)
@@ -383,14 +394,14 @@ static HRESULT AC_OpenCaptureAL(ACImpl *This)
     size = This->bufsize;
 
     alname[sizeof(alname)-1] = 0;
-    if (This->capdev) {
+    if (This->dev) {
         FIXME("Attempting to open device while already open\n");
         return S_OK;
     }
     WideCharToMultiByte(CP_UNIXCP, 0, This->parent->alname, -1,
                         alname, sizeof(alname)/sizeof(*alname)-1, NULL, NULL);
-    This->capdev = palcCaptureOpenDevice(alname, freq, This->format, size);
-    if (!This->capdev) {
+    This->dev = palcCaptureOpenDevice(alname, freq, This->format, size);
+    if (!This->dev) {
         ALCenum err = palcGetError(NULL);
         FIXME("Could not open device %s with buf size %u: 0x%04x\n",
               alname, This->bufsize, err);
@@ -522,6 +533,7 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
         ALuint buf = 0, towrite;
 
         hr = AC_OpenRenderAL(This);
+        This->dev = This->parent->device;
         if (FAILED(hr))
             goto out;
 
@@ -552,6 +564,7 @@ static HRESULT WINAPI AC_Initialize(IAudioClient *iface, AUDCLNT_SHAREMODE mode,
     if (FAILED(hr))
         goto out;
 
+    This->candisconnect = palcIsExtensionPresent(This->dev, "ALC_EXT_disconnect");
     This->buffer = HeapAlloc(GetProcessHeap(), 0, bufsize);
     if (!This->buffer) {
         hr = E_OUTOFMEMORY;
@@ -594,6 +607,74 @@ static HRESULT WINAPI AC_GetStreamLatency(IAudioClient *iface, REFERENCE_TIME *l
     return S_OK;
 }
 
+static int disconnected(ACImpl *This)
+{
+    if (!This->candisconnect)
+        return 0;
+    if (This->parent->flow == eRender) {
+        if (This->parent->device) {
+            ALCint con = 1;
+            palcGetIntegerv(This->parent->device, ALC_CONNECTED, 1, &con);
+            palcGetError(This->parent->device);
+            if (!con) {
+                palcCloseDevice(This->parent->device);
+                This->parent->device = NULL;
+                This->parent->ctx = NULL;
+                This->dev = NULL;
+            }
+        }
+
+        if (!This->parent->device && FAILED(AC_OpenRenderAL(This))) {
+            This->pad -= This->padpartial;
+            This->padpartial = 0;
+            return 1;
+        }
+        if (This->parent->device != This->dev) {
+            WARN("Emptying buffer after newly reconnected!\n");
+            This->pad -= This->padpartial;
+            This->padpartial = 0;
+
+            This->dev = This->parent->device;
+            setALContext(This->parent->ctx);
+            palGenSources(1, &This->source);
+            palSourcei(This->source, AL_LOOPING, AL_FALSE);
+            getALError();
+
+            if (This->render && !This->locked && This->pad) {
+                UINT pad = This->pad;
+                BYTE *data;
+                This->pad = 0;
+
+                /* Probably will cause sound glitches, who cares? */
+                IAudioRenderClient_GetBuffer((IAudioRenderClient *)This->render, pad, &data);
+                IAudioRenderClient_ReleaseBuffer((IAudioRenderClient *)This->render, pad, 0);
+            }
+            popALContext();
+        }
+    } else {
+        if (This->dev) {
+            ALCint con = 1;
+            palcGetIntegerv(This->dev, ALC_CONNECTED, 1, &con);
+            palcGetError(This->dev);
+            if (!con) {
+                palcCaptureCloseDevice(This->dev);
+                This->dev = NULL;
+            }
+        }
+
+        if (!This->dev) {
+            if (FAILED(AC_OpenCaptureAL(This)))
+                return 1;
+
+            WARN("Emptying buffer after newly reconnected!\n");
+            This->pad = This->ofs = 0;
+            if (This->running)
+                palcCaptureStart(This->dev);
+        }
+    }
+    return 0;
+}
+
 static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
 {
     ACImpl *This = (ACImpl*)iface;
@@ -605,7 +686,32 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
     if (!numpad)
         return E_POINTER;
     EnterCriticalSection(This->crst);
-    if (This->parent->flow == eRender) {
+    if (disconnected(This)) {
+        REFERENCE_TIME time = gettime(), period;
+
+        WARN("No device found, faking increment\n");
+        IAudioClient_GetDevicePeriod(iface, &period, NULL);
+        while (This->running && time - This->laststamp >= period) {
+            This->laststamp += period;
+
+            if (This->parent->flow == eCapture) {
+                This->pad += This->psize;
+                if (This->pad > This->bufsize)
+                    This->pad = This->bufsize;
+            } else {
+                if (This->pad <= This->psize) {
+                    This->pad = 0;
+                    break;
+                } else
+                    This->pad -= This->psize;
+            }
+        }
+
+        if (This->parent->flow == eCapture)
+            *numpad = This->pad >= This->psize ? This->psize : 0;
+        else
+            *numpad = This->pad;
+    } else if (This->parent->flow == eRender) {
         UINT64 played = 0;
         ALint state, padpart;
         setALContext(This->parent->ctx);
@@ -637,7 +743,7 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
     } else {
         DWORD block = This->pwfx->nBlockAlign;
         DWORD psize = This->psize / block;
-        palcGetIntegerv(This->capdev, ALC_CAPTURE_SAMPLES, 1, &avail);
+        palcGetIntegerv(This->dev, ALC_CAPTURE_SAMPLES, 1, &avail);
         if (avail) {
             DWORD ofs = This->ofs + This->pad;
             BYTE *buf1;
@@ -648,11 +754,11 @@ static HRESULT WINAPI AC_GetCurrentPadding(IAudioClient *iface, UINT32 *numpad)
                 SetEvent(This->handle);
 
             if (ofs + avail <= This->bufsize)
-                palcCaptureSamples(This->capdev, buf1, avail);
+                palcCaptureSamples(This->dev, buf1, avail);
             else {
                 DWORD part1 = This->bufsize - ofs;
-                palcCaptureSamples(This->capdev, buf1, part1);
-                palcCaptureSamples(This->capdev, This->buffer, avail - part1);
+                palcCaptureSamples(This->dev, buf1, part1);
+                palcCaptureSamples(This->dev, This->buffer, avail - part1);
             }
             This->pad += avail;
             This->frameswritten += avail;
@@ -722,7 +828,7 @@ static HRESULT WINAPI AC_IsFormatSupported(IAudioClient *iface, AUDCLNT_SHAREMOD
         case 8: mask = X7DOT1; break;
         default:
             TRACE("Unsupported channel count %i\n", pwfx->nChannels);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;;
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
     tmp = CoTaskMemAlloc(size);
     if (outpwfx)
@@ -812,14 +918,16 @@ static HRESULT WINAPI AC_Start(IAudioClient *iface)
         hr = AUDCLNT_E_NOT_STOPPED;
         goto out;
     }
-    if (This->parent->flow == eRender) {
+    if (!valid_dev(This))
+        WARN("No valid device\n");
+    else if (This->parent->flow == eRender) {
         setALContext(This->parent->ctx);
         palSourcePlay(This->source);
         getALError();
         popALContext();
     }
     else
-        palcCaptureStart(This->capdev);
+        palcCaptureStart(This->dev);
 
     AC_GetDevicePeriod(iface, &refresh, NULL);
     if (!This->timer_id && This->handle)
@@ -848,10 +956,11 @@ static HRESULT WINAPI AC_Stop(IAudioClient *iface)
     if (!This->running)
         return S_FALSE;
     EnterCriticalSection(This->crst);
-    if (This->parent->flow == eRender) {
+    if (!valid_dev(This))
+        WARN("No valid device\n");
+    else if (This->parent->flow == eRender) {
         ALint state;
         setALContext(This->parent->ctx);
-        This->running = FALSE;
         palSourcePause(This->source);
         while (1) {
             state = AL_STOPPED;
@@ -864,7 +973,8 @@ static HRESULT WINAPI AC_Stop(IAudioClient *iface)
         popALContext();
     }
     else
-        palcCaptureStop(This->capdev);
+        palcCaptureStop(This->dev);
+    This->running = FALSE;
     timer_id = This->timer_id;
     This->timer_id = 0;
     LeaveCriticalSection(This->crst);
@@ -887,7 +997,9 @@ static HRESULT WINAPI AC_Reset(IAudioClient *iface)
         hr = AUDCLNT_E_BUFFER_OPERATION_PENDING;
         goto out;
     }
-    if (This->parent->flow == eRender) {
+    if (!valid_dev(This))
+        WARN("No valid device\n");
+    else if (This->parent->flow == eRender) {
         ALuint buf;
         ALint n = 0;
         setALContext(This->parent->ctx);
@@ -901,9 +1013,9 @@ static HRESULT WINAPI AC_Reset(IAudioClient *iface)
         popALContext();
     } else {
         ALint avail = 0;
-        palcGetIntegerv(This->capdev, ALC_CAPTURE_SAMPLES, 1, &avail);
+        palcGetIntegerv(This->dev, ALC_CAPTURE_SAMPLES, 1, &avail);
         if (avail)
-            palcCaptureSamples(This->capdev, This->buffer, avail);
+            palcCaptureSamples(This->dev, This->buffer, avail);
     }
     This->pad = This->padpartial = 0;
     This->ofs = 0;
@@ -1093,14 +1205,13 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
     DWORD framesize = This->parent->pwfx->nBlockAlign;
     DWORD ofs = This->parent->ofs;
     DWORD bufsize = This->parent->bufsize;
-    DWORD locked = This->parent->locked;
     DWORD freq = This->parent->pwfx->nSamplesPerSec;
     DWORD bpp = This->parent->pwfx->wBitsPerSample;
     ALuint albuf;
 
     TRACE("(%p)->(%u,%x)\n", This, written, flags);
 
-    if (locked < written)
+    if (This->parent->locked < written)
         return AUDCLNT_E_INVALID_SIZE;
 
     if (flags & ~AUDCLNT_BUFFERFLAGS_SILENT)
@@ -1117,22 +1228,24 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
         return AUDCLNT_E_OUT_OF_ORDER;
 
     EnterCriticalSection(This->parent->crst);
-    setALContext(This->parent->parent->ctx);
 
     This->parent->ofs += written;
     This->parent->ofs %= bufsize;
     This->parent->pad += written;
     This->parent->frameswritten += written;
+    This->parent->locked = 0;
 
     ofs *= framesize;
     written *= framesize;
     bufsize *= framesize;
-    locked *= framesize;
 
     if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
         memset(buf+ofs, bpp != 8 ? 0 : 128, written);
     TRACE("buf: %p, ofs: %x, written %u, freq %u\n", buf, ofs, written, freq);
+    if (!valid_dev(This->parent))
+        goto out;
 
+    setALContext(This->parent->parent->ctx);
     palGenBuffers(1, &albuf);
     palBufferData(albuf, This->parent->format, buf+ofs, written, freq);
     palSourceQueueBuffers(This->parent->source, 1, &albuf);
@@ -1181,10 +1294,9 @@ static HRESULT WINAPI ACR_ReleaseBuffer(IAudioRenderClient *iface, UINT32 writte
         }
         getALError();
     }
-    This->parent->locked = 0;
-
     getALError();
     popALContext();
+out:
     LeaveCriticalSection(This->parent->crst);
 
     return S_OK;
