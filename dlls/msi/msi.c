@@ -486,10 +486,43 @@ UINT WINAPI MsiApplyMultiplePatchesW(LPCWSTR szPatchPackages,
 UINT WINAPI MsiDetermineApplicablePatchesA(LPCSTR szProductPackagePath,
         DWORD cPatchInfo, PMSIPATCHSEQUENCEINFOA pPatchInfo)
 {
-    FIXME("(%s, %d, %p): stub!\n", debugstr_a(szProductPackagePath),
-          cPatchInfo, pPatchInfo);
+    UINT i, r;
+    WCHAR *package_path = NULL;
+    MSIPATCHSEQUENCEINFOW *psi;
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    TRACE("(%s, %d, %p)\n", debugstr_a(szProductPackagePath), cPatchInfo, pPatchInfo);
+
+    if (szProductPackagePath && !(package_path = strdupAtoW( szProductPackagePath )))
+        return ERROR_OUTOFMEMORY;
+
+    psi = msi_alloc( cPatchInfo * sizeof(*psi) );
+    if (!psi)
+    {
+        msi_free( package_path );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < cPatchInfo; i++)
+    {
+        psi[i].szPatchData = strdupAtoW( pPatchInfo[i].szPatchData );
+        psi[i].ePatchDataType = pPatchInfo[i].ePatchDataType;
+    }
+
+    r = MsiDetermineApplicablePatchesW( package_path, cPatchInfo, psi );
+    if (r == ERROR_SUCCESS)
+    {
+        for (i = 0; i < cPatchInfo; i++)
+        {
+            pPatchInfo[i].dwOrder = psi[i].dwOrder;
+            pPatchInfo[i].uStatus = psi[i].uStatus;
+        }
+    }
+
+    msi_free( package_path );
+    for (i = 0; i < cPatchInfo; i++)
+        msi_free( (WCHAR *)psi[i].szPatchData );
+    msi_free( psi );
+    return r;
 }
 
 static UINT MSI_ApplicablePatchW( MSIPACKAGE *package, LPCWSTR patch )
