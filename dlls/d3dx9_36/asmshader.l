@@ -194,10 +194,19 @@ ps_3_0                  {return VER_PS30;       }
 \_pp                    {return MOD_PP;             }
 \_centroid              {return MOD_CENTROID;       }
 
+{IMMVAL}                {
+                            asmshader_lval.immval.val = atof(yytext);
+                            asmshader_lval.immval.integer = ((strstr(yytext, ".") == NULL) && (strstr(yytext, "f") == NULL));
+                            return IMMVAL;
+                        }
+
 {COMMA}                 {return yytext[0];          }
 -                       {return yytext[0];          }
 \(                      {return yytext[0];          }
 \)                      {return yytext[0];          }
+
+    /* for relative addressing */
+\[|\]|\+                {return yytext[0];          }
 
 \_abs                   {return SMOD_ABS;           }
 

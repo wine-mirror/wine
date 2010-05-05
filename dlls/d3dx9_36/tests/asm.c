@@ -1038,16 +1038,16 @@ static void vs_3_0_test(void) {
             "texldl r0, v0, s0\n",
             {0xfffe0300, 0x0300005f, 0x800f0000, 0x90e40000, 0xa0e40800, 0x0000ffff}
         },*/
-/*      {*/ /* shader 5 */
-/*          "vs_3_0\n"
+        {   /* shader 5 */
+            "vs_3_0\n"
             "mov r0, c0[aL]\n",
             {0xfffe0300, 0x03000001, 0x800f0000, 0xa0e42000, 0xf0e40800, 0x0000ffff}
-        },*/
-/*      {*/ /* shader 6 */
-/*          "vs_3_0\n"
+        },
+        {   /* shader 6 */
+            "vs_3_0\n"
             "mov o[ a0.x + 12 ], r0\n",
             {0xfffe0300, 0x03000001, 0xe00f200c, 0xb0000000, 0x80e40000, 0x0000ffff}
-        },*/
+        },
 /*      {*/ /* shader 7 */
 /*          "vs_3_0\n"
             "add_sat r0, r0, r1\n",

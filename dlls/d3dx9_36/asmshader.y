@@ -37,12 +37,29 @@ void asmshader_error(const char *s);
 int asmshader_lex(void);
 
 void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
-    reg->rel_reg = NULL;
+    /* We can have an additional offset without true relative addressing
+     * ex. c2[ 4 ] */
+    reg->regnum += rel->additional_offset;
+    if(!rel->has_rel_reg) {
+        reg->rel_reg = NULL;
+    } else {
+        reg->rel_reg = asm_alloc(sizeof(*reg->rel_reg));
+        if(!reg->rel_reg) {
+            return;
+        }
+        reg->rel_reg->type = rel->type;
+        reg->rel_reg->swizzle = rel->swizzle;
+        reg->rel_reg->regnum = rel->rel_regnum;
+    }
 }
 
 %}
 
 %union {
+    struct {
+        float           val;
+        BOOL            integer;
+    } immval;
     unsigned int        regnum;
     struct shader_reg   reg;
     DWORD               srcmod;
@@ -118,10 +135,12 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 
 /* Misc stuff */
 %token <component> COMPONENT
+%token <immval> IMMVAL
 
 %type <reg> dreg_name
 %type <reg> dreg
 %type <reg> sreg_name
+%type <reg> relreg_name
 %type <reg> sreg
 %type <srcmod> smod
 %type <writemask> writemask
@@ -131,6 +150,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <modshift> omods
 %type <modshift> omodifier
 %type <rel_reg> rel_reg
+%type <immval> immsum
 %type <sregs> sregs
 
 %%
@@ -523,10 +543,75 @@ rel_reg:               /* empty */
                             $$.has_rel_reg = FALSE;
                             $$.additional_offset = 0;
                         }
+                    | '[' immsum ']'
+                        {
+                            $$.has_rel_reg = FALSE;
+                            $$.additional_offset = $2.val;
+                        }
+                    | '[' relreg_name swizzle ']'
+                        {
+                            $$.has_rel_reg = TRUE;
+                            $$.type = $2.type;
+                            $$.additional_offset = 0;
+                            $$.rel_regnum = $2.regnum;
+                            $$.swizzle = $3;
+                        }
+                    | '[' immsum '+' relreg_name swizzle ']'
+                        {
+                            $$.has_rel_reg = TRUE;
+                            $$.type = $4.type;
+                            $$.additional_offset = $2.val;
+                            $$.rel_regnum = $4.regnum;
+                            $$.swizzle = $5;
+                        }
+                    | '[' relreg_name swizzle '+' immsum ']'
+                        {
+                            $$.has_rel_reg = TRUE;
+                            $$.type = $2.type;
+                            $$.additional_offset = $5.val;
+                            $$.rel_regnum = $2.regnum;
+                            $$.swizzle = $3;
+                        }
+                    | '[' immsum '+' relreg_name swizzle '+' immsum ']'
+                        {
+                            $$.has_rel_reg = TRUE;
+                            $$.type = $4.type;
+                            $$.additional_offset = $2.val + $7.val;
+                            $$.rel_regnum = $4.regnum;
+                            $$.swizzle = $5;
+                        }
+
+immsum:               IMMVAL
+                        {
+                            if(!$1.integer) {
+                                asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
+                                                  asm_ctx.line_no, $1.val);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                            }
+                            $$.val = $1.val;
+                        }
+                    | immsum '+' IMMVAL
+                        {
+                            if(!$3.integer) {
+                                asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
+                                                  asm_ctx.line_no, $3.val);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                            }
+                            $$.val = $1.val + $3.val;
+                        }
 
 smod:                 SMOD_ABS
                         {
                             $$ = BWRITERSPSM_ABS;
+                        }
+
+relreg_name:          REG_ADDRESS
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_ADDR;
+                        }
+                    | REG_LOOP
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_LOOP;
                         }
 
 sreg_name:            REG_TEMP

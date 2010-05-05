@@ -219,7 +219,31 @@ static void sm_3_srcreg(struct bc_writer *This,
     token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK;
     token |= d3d9_srcmod(reg->srcmod);
 
+    if(reg->rel_reg) {
+        if(reg->type == BWRITERSPR_CONST && This->version == BWRITERPS_VERSION(3, 0)) {
+            WARN("c%u[...] is unsupported in ps_3_0\n", reg->regnum);
+            This->state = E_INVALIDARG;
+            return;
+        }
+        if(((reg->rel_reg->type == BWRITERSPR_ADDR && This->version == BWRITERVS_VERSION(3, 0)) ||
+           reg->rel_reg->type == BWRITERSPR_LOOP) &&
+           reg->rel_reg->regnum == 0) {
+            token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
+        } else {
+            WARN("Unsupported relative addressing register\n");
+            This->state = E_INVALIDARG;
+            return;
+        }
+    }
+
     put_dword(buffer, token);
+
+    /* vs_2_0 and newer write the register containing the index explicitly in the
+     * binary code
+     */
+    if(token & D3DVS_ADDRMODE_RELATIVE) {
+        sm_3_srcreg(This, reg->rel_reg, buffer);
+    }
 }
 
 static void sm_3_dstreg(struct bc_writer *This,
@@ -228,6 +252,17 @@ static void sm_3_dstreg(struct bc_writer *This,
                         DWORD shift, DWORD mod) {
     DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
     DWORD d3d9reg;
+
+    if(reg->rel_reg) {
+        if(This->version == BWRITERVS_VERSION(3, 0) &&
+           reg->type == BWRITERSPR_OUTPUT) {
+            token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
+        } else {
+            WARN("Relative addressing not supported for this shader type or register type\n");
+            This->state = E_INVALIDARG;
+            return;
+        }
+    }
 
     d3d9reg = d3d9_register(reg->type);
     token |= (d3d9reg << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
@@ -238,6 +273,13 @@ static void sm_3_dstreg(struct bc_writer *This,
 
     token |= d3d9_writemask(reg->writemask);
     put_dword(buffer, token);
+
+    /* vs_2_0 and newer write the register containing the index explicitly in the
+     * binary code
+     */
+    if(token & D3DVS_ADDRMODE_RELATIVE) {
+        sm_3_srcreg(This, reg->rel_reg, buffer);
+    }
 }
 
 static const struct instr_handler_table vs_3_handlers[] = {
