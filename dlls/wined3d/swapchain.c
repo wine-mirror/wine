@@ -117,9 +117,8 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format_desc->color_fixup))
     {
         ENTER_GL();
-        context_bind_fbo(context, GL_READ_FRAMEBUFFER, &context->src_fbo);
-        context_attach_surface_fbo(context, GL_READ_FRAMEBUFFER, 0, backbuffer);
-        context_attach_depth_stencil_fbo(context, GL_READ_FRAMEBUFFER, NULL, FALSE);
+        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, GL_BACK);

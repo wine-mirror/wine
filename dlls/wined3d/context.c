@@ -841,11 +841,6 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
     if (context->valid)
     {
-        if (context->src_fbo)
-        {
-            TRACE("Destroy src FBO %d\n", context->src_fbo);
-            context_destroy_fbo(context, &context->src_fbo);
-        }
         if (context->dst_fbo)
         {
             TRACE("Destroy dst FBO %d\n", context->dst_fbo);
