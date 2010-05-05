@@ -83,8 +83,28 @@
 # include <IOKit/storage/IOMedia.h>
 # include <IOKit/storage/IOCDMediaBSDClient.h>
 # include <IOKit/storage/IODVDMediaBSDClient.h>
+# include <IOKit/scsi/SCSITask.h>
 # include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
 # define SENSEBUFLEN kSenseDefaultSize
+
+typedef struct
+{
+    uint32_t attribute;
+    uint32_t timeout;
+    uint32_t response;
+    uint32_t status;
+    uint8_t direction;
+    uint8_t cdbSize;
+    uint8_t reserved0144[2];
+    uint8_t cdb[16];
+    void* buffer;
+    uint64_t bufferSize;
+    void* sense;
+    uint64_t senseLen;
+} dk_scsi_command_t;
+
+#define DKIOCSCSICOMMAND _IOWR('d', 253, dk_scsi_command_t)
+
 #endif
 
 #define NONAMELESSUNION
@@ -1649,6 +1669,9 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 #elif defined HAVE_SCSIREQ_T_CMD
     scsireq_t cmd;
     int io;
+#elif defined __APPLE__
+    dk_scsi_command_t cmd;
+    int io;
 #endif
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
@@ -1752,6 +1775,64 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
+
+#elif defined(__APPLE__)
+
+    memset(&cmd, 0, sizeof(cmd));
+    memcpy(cmd.cdb, pPacket->Cdb, pPacket->CdbLength);
+
+    cmd.cdbSize        = pPacket->CdbLength;
+    cmd.buffer         = pPacket->DataBuffer;
+    cmd.bufferSize     = pPacket->DataTransferLength;
+    cmd.sense          = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.senseLen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.direction = kSCSIDataTransfer_FromInitiatorToTarget;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.direction = kSCSIDataTransfer_FromTargetToInitiator;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.direction = kSCSIDataTransfer_NoDataTransfer;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+    }
+
+    io = ioctl(fd, DKIOCSCSICOMMAND, &cmd);
+
+    if (cmd.response == kSCSIServiceResponse_SERVICE_DELIVERY_OR_TARGET_FAILURE)
+    {
+        /* Command failed */
+        switch (cmd.status)
+        {
+        case kSCSITaskStatus_TaskTimeoutOccurred:     return STATUS_TIMEOUT;
+                                                      break;
+        case kSCSITaskStatus_ProtocolTimeoutOccurred: return STATUS_IO_TIMEOUT;
+                                                      break;
+        case kSCSITaskStatus_DeviceNotResponding:     return STATUS_DEVICE_BUSY;
+                                                      break;
+        case kSCSITaskStatus_DeviceNotPresent:
+            return STATUS_NO_SUCH_DEVICE;
+            break;
+        case kSCSITaskStatus_DeliveryFailure:
+            return STATUS_DEVICE_PROTOCOL_ERROR;
+            break;
+        case kSCSITaskStatus_No_Status:
+        default:
+            return STATUS_UNSUCCESSFUL;
+            break;
+        }
+    }
+
+    if (cmd.status != kSCSITaskStatus_No_Status)
+        pPacket->ScsiStatus = cmd.status;
+
+    ret = CDROM_GetStatusCode(io);
 #endif
     return ret;
 }
@@ -1769,6 +1850,9 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     int io;
 #elif defined HAVE_SCSIREQ_T_CMD
     scsireq_t cmd;
+    int io;
+#elif defined __APPLE__
+    dk_scsi_command_t cmd;
     int io;
 #endif
 
@@ -1881,6 +1965,67 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     }
 
     pPacket->ScsiStatus = cmd.status;
+
+    ret = CDROM_GetStatusCode(io);
+
+#elif defined(__APPLE__)
+
+    memset(&cmd, 0, sizeof(cmd));
+    memcpy(cmd.cdb, pPacket->Cdb, pPacket->CdbLength);
+
+    cmd.cdbSize        = pPacket->CdbLength;
+    cmd.buffer         = (char*)pPacket + pPacket->DataBufferOffset;
+    cmd.bufferSize     = pPacket->DataTransferLength;
+    cmd.sense          = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.senseLen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.direction = kSCSIDataTransfer_FromInitiatorToTarget;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.direction = kSCSIDataTransfer_FromTargetToInitiator;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.direction = kSCSIDataTransfer_NoDataTransfer;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+    }
+
+    io = ioctl(fd, DKIOCSCSICOMMAND, &cmd);
+
+    if (cmd.response == kSCSIServiceResponse_SERVICE_DELIVERY_OR_TARGET_FAILURE)
+    {
+        /* Command failed */
+        switch (cmd.status)
+        {
+        case kSCSITaskStatus_TaskTimeoutOccurred:
+            return STATUS_TIMEOUT;
+            break;
+        case kSCSITaskStatus_ProtocolTimeoutOccurred:
+            return STATUS_IO_TIMEOUT;
+            break;
+        case kSCSITaskStatus_DeviceNotResponding:
+            return STATUS_DEVICE_BUSY;
+            break;
+        case kSCSITaskStatus_DeviceNotPresent:
+            return STATUS_NO_SUCH_DEVICE;
+            break;
+        case kSCSITaskStatus_DeliveryFailure:
+            return STATUS_DEVICE_PROTOCOL_ERROR;
+            break;
+        case kSCSITaskStatus_No_Status:
+        default:
+            return STATUS_UNSUCCESSFUL;
+            break;
+        }
+    }
+
+    if (cmd.status != kSCSITaskStatus_No_Status)
+        pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
 #endif
