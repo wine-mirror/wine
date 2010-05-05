@@ -1528,6 +1528,8 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
 
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
 
+    hr = S_OK;
+
     if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE))
     {
         for (i = 0; i < cChars; i++)
@@ -1537,6 +1539,11 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
                 WORD glyph;
                 if (!hdc) return E_PENDING;
                 if (GetGlyphIndicesW(hdc, &pwcInChars[i], 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS) == GDI_ERROR) return S_FALSE;
+                if (glyph == 0xffff)
+                {
+                    hr = S_FALSE;
+                    glyph = 0x0;
+                }
                 pwOutGlyphs[i] = set_cache_glyph(psc, pwcInChars[i], glyph);
             }
         }
@@ -1546,7 +1553,7 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
         TRACE("no glyph translation\n");
         for (i = 0; i < cChars; i++) pwOutGlyphs[i] = pwcInChars[i];
     }
-    return S_OK;
+    return hr;
 }
 
 /***********************************************************************

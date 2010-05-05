@@ -583,9 +583,11 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     int             cInChars;
     int             cChars;
     unsigned short  pwOutGlyphs3[256];
-    WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
     DWORD           dwFlags;
     int             cnt;
+
+    static const WCHAR TestItem1[] = {'T', 'e', 's', 't', 'a', 0};
+    static const WCHAR TestItem2[] = {0x202B, 'i', 'n', 0x202C,0};
 
     /*  Check to make sure that SCRIPT_CACHE gets allocated ok                     */
     dwFlags = 0;
@@ -627,10 +629,19 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     for (cnt=0; cnt < cChars && pwOutGlyphs[cnt] == pwOutGlyphs3[cnt]; cnt++) {}
     ok (cnt == cInChars, "Translation not correct. WCHAR %d - %04x != %04x\n",
                          cnt, pwOutGlyphs[cnt], pwOutGlyphs3[cnt]);
-        
+
     hr = ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
 
+    cInChars = cChars = 4;
+    hr = ScriptGetCMap(hdc, &psc, TestItem2, cInChars, dwFlags, pwOutGlyphs3);
+    ok (hr == S_FALSE, "ScriptGetCMap should return S_FALSE not (%08x)\n", hr);
+    ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+    ok(pwOutGlyphs3[0] == 0, "Glyph 0 should be default glyph\n");
+    ok(pwOutGlyphs3[3] == 0, "Glyph 0 should be default glyph\n");
+
+    hr = ScriptFreeCache( &psc);
+    ok (!psc, "psc is not null after ScriptFreeCache\n");
 }
 
 static void test_ScriptGetFontProperties(HDC hdc)
