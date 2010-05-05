@@ -1088,6 +1088,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     HBITMAP hImageBmp, hOldImageBmp, hBlendMaskBmp;
     BOOL bIsTransparent, bBlend, bResult = FALSE, bMask;
     HIMAGELIST himl;
+    HBRUSH hOldBrush;
     POINT pt;
 
     if (!pimldp || !(himl = pimldp->himl)) return FALSE;
@@ -1138,12 +1139,38 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     oldImageFg = SetTextColor( hImageDC, RGB( 0, 0, 0 ) );
     oldImageBk = SetBkColor( hImageDC, RGB( 0xff, 0xff, 0xff ) );
 
+    if (fState & ILS_ALPHA)
+    {
+        BLENDFUNCTION func;
+        COLORREF colour;
+
+        func.BlendOp = AC_SRC_OVER;
+        func.BlendFlags = 0;
+        func.SourceConstantAlpha = pimldp->Frame;
+        func.AlphaFormat = AC_SRC_ALPHA;
+        if (bIsTransparent)
+        {
+            bResult = GdiAlphaBlend( pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy,
+                                     hImageListDC, pt.x, pt.y, cx, cy, func );
+            goto end;
+        }
+        colour = pimldp->rgbBk;
+        if (colour == CLR_DEFAULT) colour = himl->clrBk;
+        if (colour == CLR_NONE) colour = GetBkColor( pimldp->hdcDst );
+
+        hOldBrush = SelectObject (hImageDC, CreateSolidBrush (colour));
+        PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
+        GdiAlphaBlend( hImageDC, 0, 0, cx, cy, hImageListDC, pt.x, pt.y, cx, cy, func );
+        DeleteObject (SelectObject (hImageDC, hOldBrush));
+        bResult = BitBlt( pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hImageDC, 0, 0, SRCCOPY );
+        goto end;
+    }
+
     /*
      * Draw the initial image
      */
     if( bMask ) {
 	if (himl->hbmMask) {
-            HBRUSH hOldBrush;
             hOldBrush = SelectObject (hImageDC, CreateSolidBrush (GetTextColor(pimldp->hdcDst)));
             PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
             BitBlt(hImageDC, 0, 0, cx, cy, hMaskListDC, pt.x, pt.y, SRCPAINT);
@@ -1155,14 +1182,13 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
                 goto end;
             }
 	} else {
-	    HBRUSH hOldBrush = SelectObject (hImageDC, GetStockObject(BLACK_BRUSH));
+	    hOldBrush = SelectObject (hImageDC, GetStockObject(BLACK_BRUSH));
 	    PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY);
 	    SelectObject(hImageDC, hOldBrush);
 	}
     } else {
 	/* blend the image with the needed solid background */
         COLORREF colour = RGB(0,0,0);
-        HBRUSH hOldBrush;
 
         if( !bIsTransparent )
         {
@@ -1187,7 +1213,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
     /* Time for blending, if required */
     if (bBlend) {
-	HBRUSH hBlendBrush, hOldBrush;
+	HBRUSH hBlendBrush;
         COLORREF clrBlend = pimldp->rgbFg;
 	HDC hBlendMaskDC = hImageListDC;
 	HBITMAP hOldBitmap;
@@ -1231,7 +1257,6 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if (fState & ILS_SATURATE) FIXME("ILS_SATURATE: unimplemented!\n");
     if (fState & ILS_GLOW) FIXME("ILS_GLOW: unimplemented!\n");
     if (fState & ILS_SHADOW) FIXME("ILS_SHADOW: unimplemented!\n");
-    if (fState & ILS_ALPHA) FIXME("ILS_ALPHA: unimplemented!\n");
 
     if (fStyle & ILD_PRESERVEALPHA) FIXME("ILD_PRESERVEALPHA: unimplemented!\n");
     if (fStyle & ILD_SCALE) FIXME("ILD_SCALE: unimplemented!\n");
