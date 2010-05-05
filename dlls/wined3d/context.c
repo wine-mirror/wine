@@ -470,7 +470,7 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
+void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil)
 {
     if (surface_is_offscreen(render_target))
