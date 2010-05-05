@@ -2003,9 +2003,7 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
             surface_internal_preload(context->current_rt, SRGB_RGB);
 
             ENTER_GL();
-            context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-            context_attach_surface_fbo(context, GL_FRAMEBUFFER, 0, context->current_rt);
-            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, NULL, FALSE);
+            context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, context->current_rt, NULL);
             LEAVE_GL();
         }
         else
