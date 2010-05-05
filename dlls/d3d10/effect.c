@@ -2184,6 +2184,12 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
+    if (!name)
+    {
+        WARN("Invalid name specified\n");
+        return (ID3D10EffectVariable *)&null_variable;
+    }
+
     for (i = 0; i < This->local_buffer_count; ++i)
     {
         struct d3d10_effect_variable *l = &This->local_buffers[i];
