@@ -169,6 +169,15 @@ int* CDECL MSVCRT____mb_cur_max_func(void)
   return &get_locale()->locinfo->mb_cur_max;
 }
 
+/* ___mb_cur_max_l_func - not exported in native msvcrt */
+int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
+{
+  if(!locale)
+    locale = get_locale();
+
+  return &locale->locinfo->mb_cur_max;
+}
+
 /*********************************************************************
  *		_setmbcp (MSVCRT.@)
  */

@@ -136,7 +136,7 @@
 @ cdecl ___lc_collate_cp_func() msvcrt.___lc_collate_cp_func
 @ cdecl ___lc_handle_func() msvcrt.___lc_handle_func
 @ cdecl ___mb_cur_max_func() msvcrt.___mb_cur_max_func
-@ stub ___mb_cur_max_l_func
+@ cdecl ___mb_cur_max_l_func(ptr) msvcrt.___mb_cur_max_l_func
 @ cdecl ___setlc_active_func() msvcrt.___setlc_active_func
 @ cdecl ___unguarded_readlc_active_add_func() msvcrt.___unguarded_readlc_active_add_func
 @ extern __argc msvcrt.__argc

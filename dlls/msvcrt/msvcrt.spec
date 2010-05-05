@@ -1436,3 +1436,4 @@
 @ cdecl _free_locale(ptr)
 @ cdecl _configthreadlocale(long)
 @ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
+@ cdecl ___mb_cur_max_l_func(ptr)
