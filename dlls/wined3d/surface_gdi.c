@@ -341,14 +341,13 @@ const char* filename)
             fwrite(output, 3 * This->pow2Width, 1, f);
         }
     } else {
-        int red_shift, green_shift, blue_shift, pix_width, alpha_shift;
+        int red_shift, green_shift, blue_shift, pix_width;
 
         pix_width = format_desc->byte_count;
 
         red_shift = get_shift(format_desc->red_mask);
         green_shift = get_shift(format_desc->green_mask);
         blue_shift = get_shift(format_desc->blue_mask);
-        alpha_shift = get_shift(format_desc->alpha_mask);
 
         for (y = 0; y < This->pow2Height; y++) {
             const unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
@@ -367,8 +366,8 @@ const char* filename)
                 output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
                 comp = color & format_desc->green_mask;
                 output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
-                comp = color & format_desc->alpha_mask;
-                output[3 * x + 2] = alpha_shift > 0 ? comp >> alpha_shift : comp << -alpha_shift;
+                comp = color & format_desc->blue_mask;
+                output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
             }
             fwrite(output, 3 * This->pow2Width, 1, f);
         }
