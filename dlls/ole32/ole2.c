@@ -119,6 +119,13 @@ static const WCHAR OLEDD_DRAGTRACKERCLASS[] =
 static const WCHAR prop_olemenuW[] =
   {'P','R','O','P','_','O','L','E','M','e','n','u','D','e','s','c','r','i','p','t','o','r',0};
 
+static const WCHAR clsidfmtW[] =
+  {'C','L','S','I','D','\\','{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
+   '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
+    '%','0','2','x','%','0','2','x','}','\\',0};
+
+static const WCHAR emptyW[] = { 0 };
+
 /*
  * This is the head of the Drop target container.
  */
@@ -378,13 +385,12 @@ HRESULT WINAPI OleRegGetUserType(
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
-  char    keyName[60];
+  WCHAR   keyName[60];
   DWORD   dwKeyType;
   DWORD   cbData;
   HKEY    clsidKey;
   LONG    hres;
-  LPSTR   buffer;
-  HRESULT retVal;
+
   /*
    * Initialize the out parameter.
    */
@@ -393,17 +399,17 @@ HRESULT WINAPI OleRegGetUserType(
   /*
    * Build the key name we're looking for
    */
-  sprintf( keyName, "CLSID\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
-           clsid->Data1, clsid->Data2, clsid->Data3,
-           clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
-           clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
+  sprintfW( keyName, clsidfmtW,
+            clsid->Data1, clsid->Data2, clsid->Data3,
+            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
+            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
-  TRACE("(%s, %d, %p)\n", keyName, dwFormOfType, pszUserType);
+  TRACE("(%s, %d, %p)\n", debugstr_w(keyName), dwFormOfType, pszUserType);
 
   /*
    * Open the class id Key
    */
-  hres = RegOpenKeyA(HKEY_CLASSES_ROOT,
+  hres = RegOpenKeyW(HKEY_CLASSES_ROOT,
 		     keyName,
 		     &clsidKey);
 
@@ -415,8 +421,8 @@ HRESULT WINAPI OleRegGetUserType(
    */
   cbData = 0;
 
-  hres = RegQueryValueExA(clsidKey,
-			  "",
+  hres = RegQueryValueExW(clsidKey,
+			  emptyW,
 			  NULL,
 			  &dwKeyType,
 			  NULL,
@@ -431,7 +437,7 @@ HRESULT WINAPI OleRegGetUserType(
   /*
    * Allocate a buffer for the registry value.
    */
-  *pszUserType = CoTaskMemAlloc(cbData*2);
+  *pszUserType = CoTaskMemAlloc(cbData);
 
   if (*pszUserType==NULL)
   {
@@ -439,41 +445,24 @@ HRESULT WINAPI OleRegGetUserType(
     return E_OUTOFMEMORY;
   }
 
-  buffer = HeapAlloc(GetProcessHeap(), 0, cbData);
-
-  if (buffer == NULL)
-  {
-    RegCloseKey(clsidKey);
-    CoTaskMemFree(*pszUserType);
-    *pszUserType=NULL;
-    return E_OUTOFMEMORY;
-  }
-
-  hres = RegQueryValueExA(clsidKey,
-			  "",
+  hres = RegQueryValueExW(clsidKey,
+			  emptyW,
 			  NULL,
 			  &dwKeyType,
-			  (LPBYTE) buffer,
+			  (LPBYTE) *pszUserType,
 			  &cbData);
 
   RegCloseKey(clsidKey);
 
-
-  if (hres!=ERROR_SUCCESS)
+  if (hres != ERROR_SUCCESS)
   {
     CoTaskMemFree(*pszUserType);
-    *pszUserType=NULL;
+    *pszUserType = NULL;
 
-    retVal = REGDB_E_READREGDB;
+    return REGDB_E_READREGDB;
   }
-  else
-  {
-    MultiByteToWideChar( CP_ACP, 0, buffer, -1, *pszUserType, cbData /*FIXME*/ );
-    retVal = S_OK;
-  }
-  HeapFree(GetProcessHeap(), 0, buffer);
 
-  return retVal;
+  return S_OK;
 }
 
 /***********************************************************************
@@ -593,7 +582,9 @@ HRESULT WINAPI OleRegGetMiscStatus(
   DWORD    dwAspect,
   DWORD*   pdwStatus)
 {
-  char    keyName[60];
+  static const WCHAR miscstatusW[] = {'M','i','s','c','S','t','a','t','u','s',0};
+  static const WCHAR dfmtW[] = {'%','d',0};
+  WCHAR   keyName[60];
   HKEY    clsidKey;
   HKEY    miscStatusKey;
   HKEY    aspectKey;
@@ -607,17 +598,17 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Build the key name we're looking for
    */
-  sprintf( keyName, "CLSID\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
-           clsid->Data1, clsid->Data2, clsid->Data3,
-           clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
-           clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
+  sprintfW( keyName, clsidfmtW,
+            clsid->Data1, clsid->Data2, clsid->Data3,
+            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
+            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
-  TRACE("(%s, %d, %p)\n", keyName, dwAspect, pdwStatus);
+  TRACE("(%s, %d, %p)\n", debugstr_w(keyName), dwAspect, pdwStatus);
 
   /*
    * Open the class id Key
    */
-  result = RegOpenKeyA(HKEY_CLASSES_ROOT,
+  result = RegOpenKeyW(HKEY_CLASSES_ROOT,
 		       keyName,
 		       &clsidKey);
 
@@ -627,8 +618,8 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Get the MiscStatus
    */
-  result = RegOpenKeyA(clsidKey,
-		       "MiscStatus",
+  result = RegOpenKeyW(clsidKey,
+		       miscstatusW,
 		       &miscStatusKey);
 
 
@@ -646,9 +637,9 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Open the key specific to the requested aspect.
    */
-  sprintf(keyName, "%d", dwAspect);
+  sprintfW(keyName, dfmtW, dwAspect);
 
-  result = RegOpenKeyA(miscStatusKey,
+  result = RegOpenKeyW(miscStatusKey,
 		       keyName,
 		       &aspectKey);
 
@@ -2280,13 +2271,13 @@ static void OLEUTL_ReadRegistryDWORDValue(
   HKEY   regKey,
   DWORD* pdwValue)
 {
-  char  buffer[20];
+  WCHAR buffer[20];
   DWORD cbData = sizeof(buffer);
   DWORD dwKeyType;
   LONG  lres;
 
-  lres = RegQueryValueExA(regKey,
-			  "",
+  lres = RegQueryValueExW(regKey,
+			  emptyW,
 			  NULL,
 			  &dwKeyType,
 			  (LPBYTE)buffer,
@@ -2302,7 +2293,7 @@ static void OLEUTL_ReadRegistryDWORDValue(
       case REG_EXPAND_SZ:
       case REG_MULTI_SZ:
       case REG_SZ:
-	*pdwValue = (DWORD)strtoul(buffer, NULL, 10);
+	*pdwValue = (DWORD)strtoulW(buffer, NULL, 10);
 	break;
     }
   }
