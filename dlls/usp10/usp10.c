@@ -1578,8 +1578,25 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
-    if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
-        hr = S_FALSE;
+    if (psa->fRTL && psa->fLogicalOrder)
+    {
+        int i;
+        WORD *rtlGlyphs;
+
+        rtlGlyphs = heap_alloc(cGlyphs * sizeof(WORD));
+        if (!rtlGlyphs)
+            return E_OUTOFMEMORY;
+
+        for (i = 0; i < cGlyphs; i++)
+            rtlGlyphs[i] = pwGlyphs[cGlyphs-1-i];
+
+        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, rtlGlyphs, cGlyphs, NULL))
+            hr = S_FALSE;
+        heap_free(rtlGlyphs);
+    }
+    else
+        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
+            hr = S_FALSE;
 
     return hr;
 }
