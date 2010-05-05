@@ -1586,13 +1586,29 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     if (lpDx) {
         unsigned int i = 0, j = 0;
 
-        lpDxW = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
+        /* allocate enough for a ETO_PDY */
+        lpDxW = HeapAlloc( GetProcessHeap(), 0, 2*wlen*sizeof(INT));
         while(i < count) {
-            if(IsDBCSLeadByteEx(codepage, str[i])) {
-                lpDxW[j++] = lpDx[i] + lpDx[i+1];
+            if(IsDBCSLeadByteEx(codepage, str[i]))
+            {
+                if(flags & ETO_PDY)
+                {
+                    lpDxW[j++] = lpDx[i * 2]     + lpDx[(i + 1) * 2];
+                    lpDxW[j++] = lpDx[i * 2 + 1] + lpDx[(i + 1) * 2 + 1];
+                }
+                else
+                    lpDxW[j++] = lpDx[i] + lpDx[i + 1];
                 i = i + 2;
-            } else {
-                lpDxW[j++] = lpDx[i];
+            }
+            else
+            {
+                if(flags & ETO_PDY)
+                {
+                    lpDxW[j++] = lpDx[i * 2];
+                    lpDxW[j++] = lpDx[i * 2 + 1];
+                }
+                else
+                    lpDxW[j++] = lpDx[i];
                 i = i + 1;
             }
         }
