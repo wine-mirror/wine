@@ -116,7 +116,41 @@ DWORD d3d9_register(DWORD bwriter_register) {
 
 DWORD d3d9_opcode(DWORD bwriter_opcode) {
     switch(bwriter_opcode) {
+        case BWRITERSIO_NOP:         return D3DSIO_NOP;
         case BWRITERSIO_MOV:         return D3DSIO_MOV;
+        case BWRITERSIO_ADD:         return D3DSIO_ADD;
+        case BWRITERSIO_SUB:         return D3DSIO_SUB;
+        case BWRITERSIO_MAD:         return D3DSIO_MAD;
+        case BWRITERSIO_MUL:         return D3DSIO_MUL;
+        case BWRITERSIO_RCP:         return D3DSIO_RCP;
+        case BWRITERSIO_RSQ:         return D3DSIO_RSQ;
+        case BWRITERSIO_DP3:         return D3DSIO_DP3;
+        case BWRITERSIO_DP4:         return D3DSIO_DP4;
+        case BWRITERSIO_MIN:         return D3DSIO_MIN;
+        case BWRITERSIO_MAX:         return D3DSIO_MAX;
+        case BWRITERSIO_SLT:         return D3DSIO_SLT;
+        case BWRITERSIO_SGE:         return D3DSIO_SGE;
+        case BWRITERSIO_EXP:         return D3DSIO_EXP;
+        case BWRITERSIO_LOG:         return D3DSIO_LOG;
+        case BWRITERSIO_LIT:         return D3DSIO_LIT;
+        case BWRITERSIO_DST:         return D3DSIO_DST;
+        case BWRITERSIO_LRP:         return D3DSIO_LRP;
+        case BWRITERSIO_FRC:         return D3DSIO_FRC;
+        case BWRITERSIO_M4x4:        return D3DSIO_M4x4;
+        case BWRITERSIO_M4x3:        return D3DSIO_M4x3;
+        case BWRITERSIO_M3x4:        return D3DSIO_M3x4;
+        case BWRITERSIO_M3x3:        return D3DSIO_M3x3;
+        case BWRITERSIO_M3x2:        return D3DSIO_M3x2;
+        case BWRITERSIO_POW:         return D3DSIO_POW;
+        case BWRITERSIO_CRS:         return D3DSIO_CRS;
+        case BWRITERSIO_SGN:         return D3DSIO_SGN;
+        case BWRITERSIO_ABS:         return D3DSIO_ABS;
+        case BWRITERSIO_NRM:         return D3DSIO_NRM;
+        case BWRITERSIO_SINCOS:      return D3DSIO_SINCOS;
+        case BWRITERSIO_MOVA:        return D3DSIO_MOVA;
+        case BWRITERSIO_EXPP:        return D3DSIO_EXPP;
+        case BWRITERSIO_LOGP:        return D3DSIO_LOGP;
+        case BWRITERSIO_TEXLDL:      return D3DSIO_TEXLDL;
 
         case BWRITERSIO_COMMENT:     return D3DSIO_COMMENT;
         case BWRITERSIO_END:         return D3DSIO_END;
@@ -312,7 +346,41 @@ const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st) {
 
 const char *debug_print_opcode(DWORD opcode) {
     switch(opcode){
+        case BWRITERSIO_NOP:          return "nop";
         case BWRITERSIO_MOV:          return "mov";
+        case BWRITERSIO_ADD:          return "add";
+        case BWRITERSIO_SUB:          return "sub";
+        case BWRITERSIO_MAD:          return "mad";
+        case BWRITERSIO_MUL:          return "mul";
+        case BWRITERSIO_RCP:          return "rcp";
+        case BWRITERSIO_RSQ:          return "rsq";
+        case BWRITERSIO_DP3:          return "dp3";
+        case BWRITERSIO_DP4:          return "dp4";
+        case BWRITERSIO_MIN:          return "min";
+        case BWRITERSIO_MAX:          return "max";
+        case BWRITERSIO_SLT:          return "slt";
+        case BWRITERSIO_SGE:          return "sge";
+        case BWRITERSIO_EXP:          return "exp";
+        case BWRITERSIO_LOG:          return "log";
+        case BWRITERSIO_LIT:          return "lit";
+        case BWRITERSIO_DST:          return "dst";
+        case BWRITERSIO_LRP:          return "lrp";
+        case BWRITERSIO_FRC:          return "frc";
+        case BWRITERSIO_M4x4:         return "m4x4";
+        case BWRITERSIO_M4x3:         return "m4x3";
+        case BWRITERSIO_M3x4:         return "m3x4";
+        case BWRITERSIO_M3x3:         return "m3x3";
+        case BWRITERSIO_M3x2:         return "m3x2";
+        case BWRITERSIO_POW:          return "pow";
+        case BWRITERSIO_CRS:          return "crs";
+        case BWRITERSIO_SGN:          return "sgn";
+        case BWRITERSIO_ABS:          return "abs";
+        case BWRITERSIO_NRM:          return "nrm";
+        case BWRITERSIO_SINCOS:       return "sincos";
+        case BWRITERSIO_MOVA:         return "mova";
+        case BWRITERSIO_EXPP:         return "expp";
+        case BWRITERSIO_LOGP:         return "logp";
+        case BWRITERSIO_TEXLDL:       return "texldl";
 
         default:                      return "unknown";
     }

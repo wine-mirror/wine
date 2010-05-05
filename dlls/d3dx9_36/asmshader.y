@@ -84,7 +84,43 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 }
 
 /* Common instructions between vertex and pixel shaders */
+%token INSTR_ADD
+%token INSTR_NOP
 %token INSTR_MOV
+%token INSTR_SUB
+%token INSTR_MAD
+%token INSTR_MUL
+%token INSTR_RCP
+%token INSTR_RSQ
+%token INSTR_DP3
+%token INSTR_DP4
+%token INSTR_MIN
+%token INSTR_MAX
+%token INSTR_SLT
+%token INSTR_SGE
+%token INSTR_ABS
+%token INSTR_EXP
+%token INSTR_LOG
+%token INSTR_EXPP
+%token INSTR_LOGP
+%token INSTR_DST
+%token INSTR_LRP
+%token INSTR_FRC
+%token INSTR_POW
+%token INSTR_CRS
+%token INSTR_SGN
+%token INSTR_NRM
+%token INSTR_SINCOS
+%token INSTR_M4x4
+%token INSTR_M4x3
+%token INSTR_M3x4
+%token INSTR_M3x3
+%token INSTR_M3x2
+%token INSTR_TEXLDL
+
+/* Vertex shader only instructions  */
+%token INSTR_LIT
+%token INSTR_MOVA
 
 /* Registers */
 %token <regnum> REG_TEMP
@@ -249,10 +285,180 @@ complexinstr:         instruction
 
                             }
 
-instruction:          INSTR_MOV omods dreg ',' sregs
+instruction:          INSTR_ADD omods dreg ',' sregs
+                            {
+                                TRACE("ADD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ADD, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_NOP
+                            {
+                                TRACE("NOP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_NOP, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_MOV omods dreg ',' sregs
                             {
                                 TRACE("MOV\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MOV, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_SUB omods dreg ',' sregs
+                            {
+                                TRACE("SUB\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SUB, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_MAD omods dreg ',' sregs
+                            {
+                                TRACE("MAD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MAD, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
+                    | INSTR_MUL omods dreg ',' sregs
+                            {
+                                TRACE("MUL\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MUL, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_RCP omods dreg ',' sregs
+                            {
+                                TRACE("RCP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_RCP, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_RSQ omods dreg ',' sregs
+                            {
+                                TRACE("RSQ\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_RSQ, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_DP3 omods dreg ',' sregs
+                            {
+                                TRACE("DP3\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP3, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_DP4 omods dreg ',' sregs
+                            {
+                                TRACE("DP4\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP4, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_MIN omods dreg ',' sregs
+                            {
+                                TRACE("MIN\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MIN, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_MAX omods dreg ',' sregs
+                            {
+                                TRACE("MAX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MAX, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_SLT omods dreg ',' sregs
+                            {
+                                TRACE("SLT\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SLT, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_SGE omods dreg ',' sregs
+                            {
+                                TRACE("SGE\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SGE, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_ABS omods dreg ',' sregs
+                            {
+                                TRACE("ABS\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ABS, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_EXP omods dreg ',' sregs
+                            {
+                                TRACE("EXP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_EXP, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_LOG omods dreg ',' sregs
+                            {
+                                TRACE("LOG\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LOG, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_LOGP omods dreg ',' sregs
+                            {
+                                TRACE("LOGP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LOGP, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_EXPP omods dreg ',' sregs
+                            {
+                                TRACE("EXPP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_EXPP, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_DST omods dreg ',' sregs
+                            {
+                                TRACE("DST\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DST, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_LRP omods dreg ',' sregs
+                            {
+                                TRACE("LRP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LRP, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
+                    | INSTR_FRC omods dreg ',' sregs
+                            {
+                                TRACE("FRC\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_FRC, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_POW omods dreg ',' sregs
+                            {
+                                TRACE("POW\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_POW, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_CRS omods dreg ',' sregs
+                            {
+                                TRACE("CRS\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_CRS, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_SGN omods dreg ',' sregs
+                            {
+                                TRACE("SGN\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SGN, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
+                    | INSTR_NRM omods dreg ',' sregs
+                            {
+                                TRACE("NRM\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_NRM, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_SINCOS omods dreg ',' sregs
+                            {
+                                TRACE("SINCOS\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SINCOS, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_M4x4 omods dreg ',' sregs
+                            {
+                                TRACE("M4x4\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M4x4, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_M4x3 omods dreg ',' sregs
+                            {
+                                TRACE("M4x3\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M4x3, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_M3x4 omods dreg ',' sregs
+                            {
+                                TRACE("M3x4\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M3x4, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_M3x3 omods dreg ',' sregs
+                            {
+                                TRACE("M3x3\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M3x3, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_M3x2 omods dreg ',' sregs
+                            {
+                                TRACE("M3x2\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M3x2, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_TEXLDL omods dreg ',' sregs
+                            {
+                                TRACE("TEXLDL\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDL, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_LIT omods dreg ',' sregs
+                            {
+                                TRACE("LIT\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LIT, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_MOVA omods dreg ',' sregs
+                            {
+                                TRACE("MOVA\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MOVA, $2.mod, $2.shift, 0, &$3, &$5, 1);
                             }
 
 dreg:                 dreg_name rel_reg

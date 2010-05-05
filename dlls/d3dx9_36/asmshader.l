@@ -85,7 +85,44 @@ ANY                     (.)
 %%
 
     /* Common instructions(vertex and pixel shaders) */
+add                     {return INSTR_ADD;          }
+nop                     {return INSTR_NOP;          }
 mov                     {return INSTR_MOV;          }
+sub                     {return INSTR_SUB;          }
+mad                     {return INSTR_MAD;          }
+mul                     {return INSTR_MUL;          }
+rcp                     {return INSTR_RCP;          }
+rsq                     {return INSTR_RSQ;          }
+dp3                     {return INSTR_DP3;          }
+dp4                     {return INSTR_DP4;          }
+min                     {return INSTR_MIN;          }
+max                     {return INSTR_MAX;          }
+slt                     {return INSTR_SLT;          }
+sge                     {return INSTR_SGE;          }
+abs                     {return INSTR_ABS;          }
+exp                     {return INSTR_EXP;          }
+log                     {return INSTR_LOG;          }
+expp                    {return INSTR_EXPP;         }
+logp                    {return INSTR_LOGP;         }
+dst                     {return INSTR_DST;          }
+lrp                     {return INSTR_LRP;          }
+frc                     {return INSTR_FRC;          }
+pow                     {return INSTR_POW;          }
+crs                     {return INSTR_CRS;          }
+sgn                     {return INSTR_SGN;          }
+nrm                     {return INSTR_NRM;          }
+sincos                  {return INSTR_SINCOS;       }
+m4x4                    {return INSTR_M4x4;         }
+m4x3                    {return INSTR_M4x3;         }
+m3x4                    {return INSTR_M3x4;         }
+m3x3                    {return INSTR_M3x3;         }
+m3x2                    {return INSTR_M3x2;         }
+texldl                  {return INSTR_TEXLDL;       }
+
+    /* Vertex shader only instructions  */
+lit                     {return INSTR_LIT;          }
+mova                    {return INSTR_MOVA;         }
+
 
 {REG_TEMP}              {
                             asmshader_lval.regnum = atoi(yytext + 1);
