@@ -431,7 +431,7 @@
 # stub _get_fmode
 @ cdecl _get_heap_handle()
 @ cdecl _get_osfhandle(long)
-# stub _get_osplatform
+@ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
 # stub _get_osver
 # stub _get_output_format
 # stub _get_pgmptr
@@ -759,7 +759,7 @@
 @ cdecl _onexit(ptr) MSVCRT__onexit
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long)
-# stub _osplatform
+@ extern _osplatform MSVCRT__osplatform
 @ extern _osver MSVCRT__osver
 @ stub _outp #(long long)
 @ stub _outpd #(long long)

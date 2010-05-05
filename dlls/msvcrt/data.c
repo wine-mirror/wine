@@ -39,6 +39,7 @@ unsigned int MSVCRT_osmajor = 0;/* FIXME: */
 unsigned int MSVCRT_osminor = 0;/* FIXME: */
 unsigned int MSVCRT_osmode = 0;/* FIXME: */
 unsigned int MSVCRT__osver = 0;
+unsigned int MSVCRT__osplatform = 0;
 unsigned int MSVCRT_osversion = 0; /* FIXME: */
 unsigned int MSVCRT__winmajor = 0;
 unsigned int MSVCRT__winminor = 0;
@@ -228,6 +229,21 @@ char*** CDECL __p___initenv(void) { return &MSVCRT___initenv; }
  */
 MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 
+/*********************************************************************
+ *		_get_osplatform (MSVCRT.@)
+ */
+int CDECL MSVCRT__get_osplatform(int *ret)
+{
+    if(!ret) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *ret = MSVCRT__osplatform;
+    return 0;
+}
+
 /* INTERNAL: Create a wide string from an ascii string */
 MSVCRT_wchar_t *msvcrt_wstrdupa(const char *str)
 {
@@ -279,6 +295,7 @@ void msvcrt_init_args(void)
   MSVCRT__winmajor   = osvi.dwMajorVersion;
   MSVCRT__winminor   = osvi.dwMinorVersion;
   MSVCRT__osver      = osvi.dwBuildNumber;
+  MSVCRT__osplatform = osvi.dwPlatformId;
   MSVCRT_osversion   = MSVCRT__winver;
   MSVCRT_osmajor     = MSVCRT__winmajor;
   MSVCRT_osminor     = MSVCRT__winminor;

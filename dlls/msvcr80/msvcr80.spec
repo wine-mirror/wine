@@ -472,7 +472,7 @@
 @ cdecl _get_heap_handle() msvcrt._get_heap_handle
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
-@ stub _get_osplatform
+@ cdecl _get_osplatform(ptr) msvcrt._get_osplatform
 @ stub _get_osver
 @ stub _get_output_format
 @ stub _get_pgmptr
@@ -811,7 +811,7 @@
 @ cdecl _onexit(ptr) msvcrt._onexit
 @ varargs _open(str long) msvcrt._open
 @ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
-@ stub _osplatform
+@ extern _osplatform msvcrt._osplatform
 @ extern _osver msvcrt._osver
 @ stub _outp
 @ stub _outpd
