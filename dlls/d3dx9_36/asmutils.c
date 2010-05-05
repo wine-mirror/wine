@@ -92,7 +92,23 @@ DWORD d3d9_dstmod(DWORD bwriter_mod) {
 
 DWORD d3d9_register(DWORD bwriter_register) {
     if(bwriter_register == BWRITERSPR_TEMP)         return D3DSPR_TEMP;
+    if(bwriter_register == BWRITERSPR_INPUT)        return D3DSPR_INPUT;
     if(bwriter_register == BWRITERSPR_CONST)        return D3DSPR_CONST;
+    if(bwriter_register == BWRITERSPR_ADDR)         return D3DSPR_ADDR;
+    if(bwriter_register == BWRITERSPR_TEXTURE)      return D3DSPR_TEXTURE;
+    if(bwriter_register == BWRITERSPR_RASTOUT)      return D3DSPR_RASTOUT;
+    if(bwriter_register == BWRITERSPR_ATTROUT)      return D3DSPR_ATTROUT;
+    if(bwriter_register == BWRITERSPR_TEXCRDOUT)    return D3DSPR_TEXCRDOUT;
+    if(bwriter_register == BWRITERSPR_OUTPUT)       return D3DSPR_OUTPUT;
+    if(bwriter_register == BWRITERSPR_CONSTINT)     return D3DSPR_CONSTINT;
+    if(bwriter_register == BWRITERSPR_COLOROUT)     return D3DSPR_COLOROUT;
+    if(bwriter_register == BWRITERSPR_DEPTHOUT)     return D3DSPR_DEPTHOUT;
+    if(bwriter_register == BWRITERSPR_SAMPLER)      return D3DSPR_SAMPLER;
+    if(bwriter_register == BWRITERSPR_CONSTBOOL)    return D3DSPR_CONSTBOOL;
+    if(bwriter_register == BWRITERSPR_LOOP)         return D3DSPR_LOOP;
+    if(bwriter_register == BWRITERSPR_MISCTYPE)     return D3DSPR_MISCTYPE;
+    if(bwriter_register == BWRITERSPR_LABEL)        return D3DSPR_LABEL;
+    if(bwriter_register == BWRITERSPR_PREDICATE)    return D3DSPR_PREDICATE;
 
     FIXME("Unexpected BWRITERSPR %u\n", bwriter_register);
     return -1;
@@ -152,8 +168,51 @@ static const char *get_regname(const struct shader_reg *reg, shader_type st) {
     switch(reg->type) {
         case BWRITERSPR_TEMP:
             return wine_dbg_sprintf("r%u", reg->regnum);
+        case BWRITERSPR_INPUT:
+            return wine_dbg_sprintf("v%u", reg->regnum);
         case BWRITERSPR_CONST:
             return wine_dbg_sprintf("c%u", reg->regnum);
+        /* case BWRITERSPR_ADDR: */
+        case BWRITERSPR_TEXTURE:
+            if(st == ST_VERTEX) {
+                return wine_dbg_sprintf("a%u", reg->regnum);
+            } else {
+                return wine_dbg_sprintf("t%u", reg->regnum);
+            }
+        case BWRITERSPR_RASTOUT:
+            switch(reg->regnum) {
+                case BWRITERSRO_POSITION:   return "oPos";
+                case BWRITERSRO_FOG:        return "oFog";
+                case BWRITERSRO_POINT_SIZE: return "oPts";
+                default: return "Unexpected RASTOUT";
+            }
+        case BWRITERSPR_ATTROUT:
+            return wine_dbg_sprintf("oD%u", reg->regnum);
+        /* case BWRITERSPR_TEXCRDOUT: */
+        case BWRITERSPR_OUTPUT:
+            return wine_dbg_sprintf("o[T]%u", reg->regnum);
+        case BWRITERSPR_CONSTINT:
+            return wine_dbg_sprintf("i%u", reg->regnum);
+        case BWRITERSPR_COLOROUT:
+            return wine_dbg_sprintf("oC%u", reg->regnum);
+        case BWRITERSPR_DEPTHOUT:
+            return "oDepth";
+        case BWRITERSPR_SAMPLER:
+            return wine_dbg_sprintf("s%u", reg->regnum);
+        case BWRITERSPR_CONSTBOOL:
+            return wine_dbg_sprintf("b%u", reg->regnum);
+        case BWRITERSPR_LOOP:
+            return "aL";
+        case BWRITERSPR_MISCTYPE:
+            switch(reg->regnum) {
+                case 0: return "vPos";
+                case 1: return "vFace";
+                case 2: return "unexpected misctype";
+            }
+        case BWRITERSPR_LABEL:
+            return wine_dbg_sprintf("l%u", reg->regnum);
+        case BWRITERSPR_PREDICATE:
+            return wine_dbg_sprintf("p%u", reg->regnum);
         default: return "unknown regname";
     }
 }

@@ -71,7 +71,26 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 
 /* Registers */
 %token <regnum> REG_TEMP
+%token <regnum> REG_OUTPUT
+%token <regnum> REG_INPUT
 %token <regnum> REG_CONSTFLOAT
+%token <regnum> REG_CONSTINT
+%token <regnum> REG_CONSTBOOL
+%token <regnum> REG_TEXTURE
+%token <regnum> REG_SAMPLER
+%token <regnum> REG_TEXCRDOUT
+%token REG_OPOS
+%token REG_OFOG
+%token REG_OPTS
+%token <regnum> REG_VERTEXCOLOR
+%token <regnum> REG_FRAGCOLOR
+%token REG_FRAGDEPTH
+%token REG_VPOS
+%token REG_VFACE
+%token REG_ADDRESS
+%token REG_LOOP
+%token REG_PREDICATE
+%token <regnum> REG_LABEL
 
 /* Version tokens */
 %token VER_VS10
@@ -236,6 +255,99 @@ dreg:                 dreg_name rel_reg
 dreg_name:            REG_TEMP
                         {
                             $$.regnum = $1; $$.type = BWRITERSPR_TEMP;
+                        }
+                    | REG_OUTPUT
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_OUTPUT;
+                        }
+                    | REG_INPUT
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register v%u is not a valid destination register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_CONSTFLOAT
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register c%u is not a valid destination register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_CONSTINT
+                        {
+			  asmparser_message(&asm_ctx, "Line %u: Register i%u is not a valid destination register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_CONSTBOOL
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register b%u is not a valid destination register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_TEXTURE
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_TEXTURE;
+                        }
+                    | REG_TEXCRDOUT
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_TEXCRDOUT;
+                        }
+                    | REG_SAMPLER
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register s%u is not a valid destination register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_OPOS
+                        {
+                            $$.regnum = BWRITERSRO_POSITION; $$.type = BWRITERSPR_RASTOUT;
+                        }
+                    | REG_OPTS
+                        {
+                            $$.regnum = BWRITERSRO_POINT_SIZE; $$.type = BWRITERSPR_RASTOUT;
+                        }
+                    | REG_OFOG
+                        {
+                            $$.regnum = BWRITERSRO_FOG; $$.type = BWRITERSPR_RASTOUT;
+                        }
+                    | REG_VERTEXCOLOR
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_ATTROUT;
+                        }
+                    | REG_FRAGCOLOR
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_COLOROUT;
+                        }
+                    | REG_FRAGDEPTH
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_DEPTHOUT;
+                        }
+                    | REG_PREDICATE
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_PREDICATE;
+                        }
+                    | REG_VPOS
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register vPos is not a valid destination register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_VFACE
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register vFace is not a valid destination register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_ADDRESS
+                        {
+                            /* index 0 is hardcoded for the addr register */
+                            $$.regnum = 0; $$.type = BWRITERSPR_ADDR;
+                        }
+                    | REG_LOOP
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register aL is not a valid destination register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
                         }
 
 writemask:            '.' wm_components
@@ -421,9 +533,95 @@ sreg_name:            REG_TEMP
                         {
                             $$.regnum = $1; $$.type = BWRITERSPR_TEMP;
                         }
+                    | REG_OUTPUT
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register o%u is not a valid source register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_INPUT
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_INPUT;
+                        }
                     | REG_CONSTFLOAT
                         {
                             $$.regnum = $1; $$.type = BWRITERSPR_CONST;
+                        }
+                    | REG_CONSTINT
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_CONSTINT;
+                        }
+                    | REG_CONSTBOOL
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_CONSTBOOL;
+                        }
+                    | REG_TEXTURE
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_TEXTURE;
+                        }
+                    | REG_TEXCRDOUT
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oT%u is not a valid source register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_SAMPLER
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_SAMPLER;
+                        }
+                    | REG_OPOS
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oPos is not a valid source register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_OFOG
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oFog is not a valid source register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_VERTEXCOLOR
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oD%u is not a valid source register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_FRAGCOLOR
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oC%u is not a valid source register\n",
+                                              asm_ctx.line_no, $1);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_FRAGDEPTH
+                        {
+                            asmparser_message(&asm_ctx, "Line %u: Register oDepth is not a valid source register\n",
+                                              asm_ctx.line_no);
+                            set_parse_status(&asm_ctx, PARSE_WARN);
+                        }
+                    | REG_PREDICATE
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_PREDICATE;
+                        }
+                    | REG_VPOS
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_MISCTYPE;
+                        }
+                    | REG_VFACE
+                        {
+                            $$.regnum = 1; $$.type = BWRITERSPR_MISCTYPE;
+                        }
+                    | REG_ADDRESS
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_ADDR;
+                        }
+                    | REG_LOOP
+                        {
+                            $$.regnum = 0; $$.type = BWRITERSPR_LOOP;
+                        }
+                    | REG_LABEL
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_LABEL;
                         }
 
 %%

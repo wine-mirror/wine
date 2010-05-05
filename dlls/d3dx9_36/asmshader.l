@@ -44,7 +44,27 @@ COMPONENT               [xyzw]|[rgba]
 /* Registers */
 REG_TEMP                r[0-9]+
 /* for relative addressing in the form o[x], v[x] and c[x] */
+REG_OUTPUT              o[0-9]*
+REG_INPUT               v[0-9]*
 REG_CONSTFLOAT          c[0-9]*
+REG_CONSTINT            i[0-9]+
+REG_CONSTBOOL           b[0-9]+
+REG_TEXTURE             t[0-9]+
+REG_TEXCRDOUT           oT[0-9]+
+REG_SAMPLER             s[0-9]+
+REG_OPOS                oPos
+REG_OFOG                oFog
+REG_OPTS                oPts
+REG_VERTEXCOLOR         oD[01]
+REG_FRAGCOLOR           oC[0-9]+
+REG_FRAGDEPTH           oDepth
+REG_VPOS                vPos
+REG_VFACE               vFace
+REG_ADDRESS             a0
+REG_LOOP                aL
+REG_PREDICATE           p0
+/* Not really a register, but it is considered as such */
+REG_LABEL               l[0-9]+
 
 PREPROCESSORDIRECTIVE   #[^\n]*\n
 
@@ -71,9 +91,59 @@ mov                     {return INSTR_MOV;          }
                             asmshader_lval.regnum = atoi(yytext + 1);
                             return REG_TEMP;
                         }
+{REG_OUTPUT}            {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_OUTPUT;
+                        }
+{REG_INPUT}             {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_INPUT;
+                        }
 {REG_CONSTFLOAT}        {
                             asmshader_lval.regnum = atoi(yytext + 1);
                             return REG_CONSTFLOAT;
+                        }
+{REG_CONSTINT}          {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_CONSTINT;
+                        }
+{REG_CONSTBOOL}         {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_CONSTBOOL;
+                        }
+{REG_TEXTURE}           {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_TEXTURE;
+                        }
+{REG_TEXCRDOUT}         {
+                            asmshader_lval.regnum = atoi(yytext + 2);
+                            return REG_TEXCRDOUT;
+                        }
+{REG_SAMPLER}           {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_SAMPLER;
+                        }
+{REG_OPOS}              {return REG_OPOS;           }
+{REG_OFOG}              {return REG_OFOG;           }
+{REG_OPTS}              {return REG_OPTS;           }
+{REG_VERTEXCOLOR}       {
+                            asmshader_lval.regnum = atoi(yytext + 2);
+                            return REG_VERTEXCOLOR;
+                        }
+{REG_FRAGCOLOR}         {
+                            asmshader_lval.regnum = atoi(yytext + 2);
+                            return REG_FRAGCOLOR;
+                        }
+{REG_FRAGDEPTH}         {return REG_FRAGDEPTH;      }
+{REG_VPOS}              {return REG_VPOS;           }
+{REG_VFACE}             {return REG_VFACE;          }
+{REG_ADDRESS}           {return REG_ADDRESS;        }
+{REG_LOOP}              {return REG_LOOP;           }
+{REG_PREDICATE}         {return REG_PREDICATE;      }
+
+{REG_LABEL}             {
+                            asmshader_lval.regnum = atoi(yytext + 1);
+                            return REG_LABEL;
                         }
 
     /* Shader versions. These are important to select the correct
