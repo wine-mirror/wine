@@ -1284,11 +1284,22 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
 {
     unsigned int i;
     HRESULT hr;
+    DWORD offset;
 
     hr = parse_fx10_variable_head(v, ptr, data);
     if (FAILED(hr)) return hr;
 
-    skip_dword_unknown(ptr, 2);
+    read_dword(ptr, &offset);
+    TRACE("Variable semantic at offset %#x.\n", offset);
+
+    if (!copy_name(data + offset, &v->semantic))
+    {
+        ERR("Failed to copy semantic.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
+
+    skip_dword_unknown(ptr, 1);
 
     switch (v->type->basetype)
     {
