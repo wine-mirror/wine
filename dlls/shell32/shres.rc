@@ -74,6 +74,9 @@ IDI_SHELL_SHORTCUT ICON shortcut.ico
 /* @makedep: desktop.ico */
 IDI_SHELL_DESKTOP ICON desktop.ico
 
+/* @makedep: control.ico */
+IDI_SHELL_CONTROL_PANEL ICON control.ico
+
 /* @makedep: trash_file.ico */
 IDI_SHELL_FULL_RECYCLE_BIN ICON trash_file.ico
 

@@ -90,6 +90,7 @@ RC_SRCS = \
 
 SVG_SRCS = \
 	cdrom.svg \
+	control.svg \
 	delete.svg \
 	desktop.svg \
 	document.svg \
