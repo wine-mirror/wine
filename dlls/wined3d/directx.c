@@ -3664,484 +3664,471 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(RType == WINED3DRTYPE_CUBETEXTURE) {
-
-        if(SurfaceType != SURFACE_OPENGL) {
-            TRACE("[FAILED]\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        /* Cubetexture allows:
-         *                    - D3DUSAGE_AUTOGENMIPMAP
-         *                    - D3DUSAGE_DEPTHSTENCIL
-         *                    - D3DUSAGE_DYNAMIC
-         *                    - D3DUSAGE_NONSECURE (d3d9ex)
-         *                    - D3DUSAGE_RENDERTARGET
-         *                    - D3DUSAGE_SOFTWAREPROCESSING
-         *                    - D3DUSAGE_QUERY_WRAPANDMIP
-         */
-        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-        {
-            /* Check if the texture format is around */
-            if (CheckTextureCapability(adapter, DeviceType, format_desc))
+    switch (RType)
+    {
+        case WINED3DRTYPE_CUBETEXTURE:
+            /* Cubetexture allows:
+             *      - WINED3DUSAGE_AUTOGENMIPMAP
+             *      - WINED3DUSAGE_DEPTHSTENCIL
+             *      - WINED3DUSAGE_DYNAMIC
+             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
+             *      - WINED3DUSAGE_RENDERTARGET
+             *      - WINED3DUSAGE_SOFTWAREPROCESSING
+             *      - WINED3DUSAGE_QUERY_WRAPANDMIP
+             */
+            if (SurfaceType != SURFACE_OPENGL)
             {
-                if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-                    /* Check for automatic mipmap generation support */
-                    if (gl_info->supported[SGIS_GENERATE_MIPMAP])
-                    {
-                        UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
-                    } else {
-                        /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUTOGEN instead of D3D_OK */
-                        TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
-                    }
-                }
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
 
-                /* Always report dynamic locking */
-                if(Usage & WINED3DUSAGE_DYNAMIC)
-                    UsageCaps |= WINED3DUSAGE_DYNAMIC;
+            if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+            {
+                TRACE_(d3d_caps)("[FAILED] - No cube texture support\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
 
-                if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                    if(CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_RENDERTARGET;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Always report software processing */
-                if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
-                    UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
-
-                /* Check QUERY_FILTER support */
-                if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                    if (CheckFilterCapability(adapter, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Check QUERY_POSTPIXELSHADER_BLENDING support */
-                if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                    if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Check QUERY_SRGBREAD support */
-                if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                    if (CheckSrgbReadCapability(adapter, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Check QUERY_SRGBWRITE support */
-                if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                    if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Check QUERY_VERTEXTEXTURE support */
-                if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                    if (CheckVertexTextureCapability(adapter, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-
-                /* Check QUERY_WRAPANDMIP support */
-                if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                    if (CheckWrapAndMipCapability(adapter, format_desc))
-                    {
-                        UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-                    } else {
-                        TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
-                        return WINED3DERR_NOTAVAILABLE;
-                    }
-                }
-            } else {
+            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
+            {
                 TRACE_(d3d_caps)("[FAILED] - Cube texture format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
-        } else {
-            TRACE_(d3d_caps)("[FAILED] - No cube texture support\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    } else if(RType == WINED3DRTYPE_SURFACE) {
-        /* Surface allows:
-         *                - D3DUSAGE_DEPTHSTENCIL
-         *                - D3DUSAGE_NONSECURE (d3d9ex)
-         *                - D3DUSAGE_RENDERTARGET
-         */
 
-        if (CheckSurfaceCapability(adapter, adapter_format_desc, DeviceType, format_desc, SurfaceType))
-        {
-            if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-                if (CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
-                {
-                    UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
-                } else {
-                    TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-            }
-
-            if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                if (CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
-                {
-                    UsageCaps |= WINED3DUSAGE_RENDERTARGET;
-                } else {
-                    TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-            }
-
-            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
-            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
-                {
-                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-                } else {
-                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-            }
-        } else {
-            TRACE_(d3d_caps)("[FAILED] - Not supported for plain surfaces\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-    } else if(RType == WINED3DRTYPE_TEXTURE) {
-        /* Texture allows:
-         *                - D3DUSAGE_AUTOGENMIPMAP
-         *                - D3DUSAGE_DEPTHSTENCIL
-         *                - D3DUSAGE_DMAP
-         *                - D3DUSAGE_DYNAMIC
-         *                - D3DUSAGE_NONSECURE (d3d9ex)
-         *                - D3DUSAGE_RENDERTARGET
-         *                - D3DUSAGE_SOFTWAREPROCESSING
-         *                - D3DUSAGE_TEXTAPI (d3d9ex)
-         *                - D3DUSAGE_QUERY_WRAPANDMIP
-         */
-
-        if(SurfaceType != SURFACE_OPENGL) {
-            TRACE("[FAILED]\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        /* Check if the texture format is around */
-        if (CheckTextureCapability(adapter, DeviceType, format_desc))
-        {
-            if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-                /* Check for automatic mipmap generation support */
-                if (gl_info->supported[SGIS_GENERATE_MIPMAP])
-                {
-                    UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
-                } else {
-                    /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUTOGEN instead of D3D_OK */
+            if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
+            {
+                if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
+                    /* When autogenmipmap isn't around continue and return
+                     * WINED3DOK_NOAUTOGEN instead of D3D_OK. */
                     TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
-                }
+                else
+                    UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
             }
 
-            /* Always report dynamic locking */
-            if(Usage & WINED3DUSAGE_DYNAMIC)
+            /* Always report dynamic locking. */
+            if (Usage & WINED3DUSAGE_DYNAMIC)
                 UsageCaps |= WINED3DUSAGE_DYNAMIC;
 
-            if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                if (CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
+            if (Usage & WINED3DUSAGE_RENDERTARGET)
+            {
+                if (!CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_RENDERTARGET;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
-                     return WINED3DERR_NOTAVAILABLE;
-                 }
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_RENDERTARGET;
             }
 
-            /* Always report software processing */
-            if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+            /* Always report software processing. */
+            if (Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
                 UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
 
-            /* Check QUERY_FILTER support */
-            if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if (CheckFilterCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_FILTER)
+            {
+                if (!CheckFilterCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
             }
 
-            /* Check QUERY_LEGACYBUMPMAP support */
-            if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
-                if (CheckBumpMapCapability(adapter, DeviceType, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
+            {
+                if (!CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
-                } else {
-                    TRACE_(d3d_caps)("[FAILED] - No legacy bumpmap support\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-            }
-
-            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
-            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
-                {
-                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
             }
 
-            /* Check QUERY_SRGBREAD support */
-            if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                if (CheckSrgbReadCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_SRGBREAD)
+            {
+                if (!CheckSrgbReadCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
             }
 
-            /* Check QUERY_SRGBWRITE support */
-            if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
+            {
+                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
             }
 
-            /* Check QUERY_VERTEXTEXTURE support */
-            if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                if (CheckVertexTextureCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
+            {
+                if (!CheckVertexTextureCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
             }
 
-            /* Check QUERY_WRAPANDMIP support */
-            if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                if (CheckWrapAndMipCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
+            {
+                if (!CheckWrapAndMipCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
+            }
+            break;
+
+        case WINED3DRTYPE_SURFACE:
+            /* Surface allows:
+             *      - WINED3DUSAGE_DEPTHSTENCIL
+             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
+             *      - WINED3DUSAGE_RENDERTARGET
+             */
+            if (!CheckSurfaceCapability(adapter, adapter_format_desc, DeviceType, format_desc, SurfaceType))
+            {
+                TRACE_(d3d_caps)("[FAILED] - Not supported for plain surfaces\n");
+                return WINED3DERR_NOTAVAILABLE;
             }
 
-            if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-                if (CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
+            if (Usage & WINED3DUSAGE_DEPTHSTENCIL)
+            {
+                if (!CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
-                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+            }
+
+            if (Usage & WINED3DUSAGE_RENDERTARGET)
+            {
+                if (!CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
+            {
+                if (!CheckPostPixelShaderBlendingCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+            }
+            break;
+
+        case WINED3DRTYPE_TEXTURE:
+            /* Texture allows:
+             *      - WINED3DUSAGE_AUTOGENMIPMAP
+             *      - WINED3DUSAGE_DEPTHSTENCIL
+             *      - WINED3DUSAGE_DMAP
+             *      - WINED3DUSAGE_DYNAMIC
+             *      - WINED3DUSAGE_NONSECURE (d3d9ex)
+             *      - WINED3DUSAGE_RENDERTARGET
+             *      - WINED3DUSAGE_SOFTWAREPROCESSING
+             *      - WINED3DUSAGE_TEXTAPI (d3d9ex)
+             *      - WINED3DUSAGE_QUERY_WRAPANDMIP
+             */
+            if (SurfaceType != SURFACE_OPENGL)
+            {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
+            {
+                TRACE_(d3d_caps)("[FAILED] - Texture format not supported\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+            if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
+            {
+                if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
+                    /* When autogenmipmap isn't around continue and return
+                     * WINED3DOK_NOAUTOGEN instead of D3D_OK. */
+                    TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
+                else
+                    UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
+            }
+
+            /* Always report dynamic locking. */
+            if (Usage & WINED3DUSAGE_DYNAMIC)
+                UsageCaps |= WINED3DUSAGE_DYNAMIC;
+
+            if (Usage & WINED3DUSAGE_RENDERTARGET)
+            {
+                if (!CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+            }
+
+            /* Always report software processing. */
+            if (Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+                UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
+
+            if (Usage & WINED3DUSAGE_QUERY_FILTER)
+            {
+                if (!CheckFilterCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
+            {
+                if (!CheckBumpMapCapability(adapter, DeviceType, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No legacy bumpmap support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
+            {
+                if (!CheckPostPixelShaderBlendingCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_SRGBREAD)
+            {
+                if (!CheckSrgbReadCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
+            {
+                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
+            {
+                if (!CheckVertexTextureCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
+            }
+
+            if (Usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
+            {
+                if (!CheckWrapAndMipCapability(adapter, format_desc))
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
+            }
+
+            if (Usage & WINED3DUSAGE_DEPTHSTENCIL)
+            {
+                if (!CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
+                {
                     TRACE_(d3d_caps)("[FAILED] - No depth stencil support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
             }
-        } else {
-            TRACE_(d3d_caps)("[FAILED] - Texture format not supported\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    } else if((RType == WINED3DRTYPE_VOLUME) || (RType == WINED3DRTYPE_VOLUMETEXTURE)) {
-        /* Volume is to VolumeTexture what Surface is to Texture but its usage caps are not documented.
-         * Most driver seem to offer (nearly) the same on Volume and VolumeTexture, so do that too.
-         *
-         * Volumetexture allows:
-         *                      - D3DUSAGE_DYNAMIC
-         *                      - D3DUSAGE_NONSECURE (d3d9ex)
-         *                      - D3DUSAGE_SOFTWAREPROCESSING
-         *                      - D3DUSAGE_QUERY_WRAPANDMIP
-         */
+            break;
 
-        if(SurfaceType != SURFACE_OPENGL) {
-            TRACE("[FAILED]\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
+        case WINED3DRTYPE_VOLUMETEXTURE:
+        case WINED3DRTYPE_VOLUME:
+            /* Volume is to VolumeTexture what Surface is to Texture, but its
+             * usage caps are not documented. Most driver seem to offer
+             * (nearly) the same on Volume and VolumeTexture, so do that too.
+             *
+             * Volumetexture allows:
+             *      - D3DUSAGE_DYNAMIC
+             *      - D3DUSAGE_NONSECURE (d3d9ex)
+             *      - D3DUSAGE_SOFTWAREPROCESSING
+             *      - D3DUSAGE_QUERY_WRAPANDMIP
+             */
+            if (SurfaceType != SURFACE_OPENGL)
+            {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
 
-        /* Check volume texture and volume usage caps */
-        if (gl_info->supported[EXT_TEXTURE3D])
-        {
+            if (!gl_info->supported[EXT_TEXTURE3D])
+            {
+                TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
             if (!CheckTextureCapability(adapter, DeviceType, format_desc))
             {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            /* Always report dynamic locking */
-            if(Usage & WINED3DUSAGE_DYNAMIC)
+            /* Filter formats that need conversion; For one part, this
+             * conversion is unimplemented, and volume textures are huge, so
+             * it would be a big performance hit. Unless we hit an application
+             * needing one of those formats, don't advertize them to avoid
+             * leading applications into temptation. The windows drivers don't
+             * support most of those formats on volumes anyway, except for
+             * WINED3DFMT_R32_FLOAT. */
+            switch (CheckFormat)
+            {
+                case WINED3DFMT_P8_UINT:
+                case WINED3DFMT_L4A4_UNORM:
+                case WINED3DFMT_R32_FLOAT:
+                case WINED3DFMT_R16_FLOAT:
+                case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
+                case WINED3DFMT_R5G5_SNORM_L6_UNORM:
+                case WINED3DFMT_R16G16_UNORM:
+                    TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                    return WINED3DERR_NOTAVAILABLE;
+
+                case WINED3DFMT_R8G8B8A8_SNORM:
+                case WINED3DFMT_R16G16_SNORM:
+                    if (!gl_info->supported[NV_TEXTURE_SHADER])
+                    {
+                        TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                    break;
+
+                case WINED3DFMT_R8G8_SNORM:
+                    if (!gl_info->supported[NV_TEXTURE_SHADER])
+                    {
+                        TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                    break;
+
+                case WINED3DFMT_DXT1:
+                case WINED3DFMT_DXT2:
+                case WINED3DFMT_DXT3:
+                case WINED3DFMT_DXT4:
+                case WINED3DFMT_DXT5:
+                    /* The GL_EXT_texture_compression_s3tc spec requires that
+                     * loading an s3tc compressed texture results in an error.
+                     * While the D3D refrast does support s3tc volumes, at
+                     * least the nvidia windows driver does not, so we're free
+                     * not to support this format. */
+                    TRACE_(d3d_caps)("[FAILED] - DXTn does not support 3D textures\n");
+                    return WINED3DERR_NOTAVAILABLE;
+
+                default:
+                    /* Do nothing, continue with checking the format below */
+                    break;
+            }
+
+            /* Always report dynamic locking. */
+            if (Usage & WINED3DUSAGE_DYNAMIC)
                 UsageCaps |= WINED3DUSAGE_DYNAMIC;
 
-            /* Always report software processing */
-            if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+            /* Always report software processing. */
+            if (Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
                 UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
 
-            /* Check QUERY_FILTER support */
-            if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if (CheckFilterCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_FILTER)
+            {
+                if (!CheckFilterCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
             }
 
-            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
-            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
+            {
+                if (!CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
             }
 
-            /* Check QUERY_SRGBREAD support */
-            if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                if (CheckSrgbReadCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_SRGBREAD)
+            {
+                if (!CheckSrgbReadCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
             }
 
-            /* Check QUERY_SRGBWRITE support */
-            if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
+            {
+                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
             }
 
-            /* Check QUERY_VERTEXTEXTURE support */
-            if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                if (CheckVertexTextureCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
+            {
+                if (!CheckVertexTextureCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
             }
 
-            /* Check QUERY_WRAPANDMIP support */
-            if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                if (CheckWrapAndMipCapability(adapter, format_desc))
+            if (Usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
+            {
+                if (!CheckWrapAndMipCapability(adapter, format_desc))
                 {
-                    UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-                } else {
                     TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
             }
-        } else {
-            TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
+            break;
+
+        default:
+            FIXME_(d3d_caps)("Unhandled resource type %s.\n", debug_d3dresourcetype(RType));
             return WINED3DERR_NOTAVAILABLE;
-        }
-
-        /* Filter formats that need conversion; For one part, this conversion is unimplemented,
-         * and volume textures are huge, so it would be a big performance hit. Unless we hit an
-         * app needing one of those formats, don't advertize them to avoid leading apps into
-         * temptation. The windows drivers don't support most of those formats on volumes anyway,
-         * except of R32F.
-         */
-        switch(CheckFormat) {
-            case WINED3DFMT_P8_UINT:
-            case WINED3DFMT_L4A4_UNORM:
-            case WINED3DFMT_R32_FLOAT:
-            case WINED3DFMT_R16_FLOAT:
-            case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
-            case WINED3DFMT_R5G5_SNORM_L6_UNORM:
-            case WINED3DFMT_R16G16_UNORM:
-                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
-                return WINED3DERR_NOTAVAILABLE;
-
-            case WINED3DFMT_R8G8B8A8_SNORM:
-            case WINED3DFMT_R16G16_SNORM:
-            if (!gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-            break;
-
-            case WINED3DFMT_R8G8_SNORM:
-            if (!gl_info->supported[NV_TEXTURE_SHADER])
-            {
-                TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-            break;
-
-            case WINED3DFMT_DXT1:
-            case WINED3DFMT_DXT2:
-            case WINED3DFMT_DXT3:
-            case WINED3DFMT_DXT4:
-            case WINED3DFMT_DXT5:
-                /* The GL_EXT_texture_compression_s3tc spec requires that loading an s3tc
-                 * compressed texture results in an error. While the D3D refrast does
-                 * support s3tc volumes, at least the nvidia windows driver does not, so
-                 * we're free not to support this format.
-                 */
-                TRACE_(d3d_caps)("[FAILED] - DXTn does not support 3D textures\n");
-                return WINED3DERR_NOTAVAILABLE;
-
-            default:
-                /* Do nothing, continue with checking the format below */
-                break;
-        }
-    } else if(RType == WINED3DRTYPE_BUFFER){
-        /* For instance vertexbuffer/indexbuffer aren't supported yet because no Windows drivers seem to offer it */
-        TRACE_(d3d_caps)("Unhandled resource type D3DRTYPE_INDEXBUFFER / D3DRTYPE_VERTEXBUFFER\n");
-        return WINED3DERR_NOTAVAILABLE;
     }
 
-    /* When the UsageCaps exactly matches Usage return WINED3D_OK except for the situation in which
-     * WINED3DUSAGE_AUTOGENMIPMAP isn't around, then WINED3DOK_NOAUTOGEN is returned if all the other
-     * usage flags match. */
-    if(UsageCaps == Usage) {
+    /* When the UsageCaps exactly matches Usage return WINED3D_OK except for
+     * the situation in which WINED3DUSAGE_AUTOGENMIPMAP isn't around, then
+     * WINED3DOK_NOAUTOGEN is returned if all the other usage flags match. */
+    if (UsageCaps == Usage)
         return WINED3D_OK;
-    } else if((UsageCaps == (Usage & ~WINED3DUSAGE_AUTOGENMIPMAP)) && (Usage & WINED3DUSAGE_AUTOGENMIPMAP)){
+    if (UsageCaps == (Usage & ~WINED3DUSAGE_AUTOGENMIPMAP))
         return WINED3DOK_NOAUTOGEN;
-    } else {
-        TRACE_(d3d_caps)("[FAILED] - Usage=%#08x requested for CheckFormat=%s and RType=%d but only %#08x is available\n", Usage, debug_d3dformat(CheckFormat), RType, UsageCaps);
-        return WINED3DERR_NOTAVAILABLE;
-    }
+
+    TRACE_(d3d_caps)("[FAILED] - Usage %#x requested for CheckFormat %s and RType %s but only %#x is available\n",
+            Usage, debug_d3dformat(CheckFormat), debug_d3dresourcetype(RType), UsageCaps);
+
+    return WINED3DERR_NOTAVAILABLE;
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT adapter_idx,
