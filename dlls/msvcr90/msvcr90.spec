@@ -981,7 +981,7 @@
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
 @ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
-@ stub _ui64toa_s
+@ cdecl _ui64toa_s(long ptr long long) msvcrt._ui64toa_s
 @ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
 @ stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa

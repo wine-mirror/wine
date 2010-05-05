@@ -932,7 +932,7 @@
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset() MSVCRT__tzset
 @ cdecl _ui64toa(long long ptr long) ntdll._ui64toa
-# stub _ui64toa_s
+@ cdecl _ui64toa_s(long ptr long long) MSVCRT__ui64toa_s
 @ cdecl _ui64tow(long long ptr long) ntdll._ui64tow
 # stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) ntdll._ultoa

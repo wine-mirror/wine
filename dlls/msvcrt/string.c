@@ -624,3 +624,41 @@ unsigned __int64 CDECL MSVCRT_strtoui64(const char *nptr, char **endptr, int bas
 {
     return MSVCRT_strtoui64_l(nptr, endptr, base, NULL);
 }
+
+/*********************************************************************
+ *  _ui64toa_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
+        MSVCRT_size_t size, int radix)
+{
+    char buffer[65], *pos;
+    int digit;
+
+    if(!str || radix<2 || radix>36) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    pos = buffer+64;
+    *pos = '\0';
+
+    do {
+        digit = value%radix;
+        value /= radix;
+
+        if(digit < 10)
+            *--pos = '0'+digit;
+        else
+            *--pos = 'a'+digit-10;
+    }while(value != 0);
+
+    if(buffer-pos+65 > size) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    memcpy(str, pos, buffer-pos+65);
+    return 0;
+}
