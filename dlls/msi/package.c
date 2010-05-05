@@ -1048,6 +1048,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         msi_clone_properties( package );
 
         package->ProductCode = msi_dup_property( package->db, szProductCode );
+        package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
+
         set_installed_prop( package );
         set_installer_properties( package );
 
@@ -1167,6 +1169,60 @@ UINT msi_get_local_package_name( LPWSTR path, LPCWSTR suffix )
     return ERROR_SUCCESS;
 }
 
+static UINT apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
+{
+    UINT r;
+    DWORD len;
+    WCHAR patch_file[MAX_PATH];
+    MSIDATABASE *patch_db;
+    MSIPATCHINFO *patch_info;
+    MSISUMMARYINFO *si;
+
+    len = sizeof(patch_file) / sizeof(WCHAR);
+    r = MsiGetPatchInfoExW( patch_code, package->ProductCode, NULL, package->Context,
+                            INSTALLPROPERTY_LOCALPACKAGEW, patch_file, &len );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to get patch filename %u\n", r);
+        return r;
+    }
+
+    r = MSI_OpenDatabaseW( patch_file, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &patch_db );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to open patch database %s\n", debugstr_w( patch_file ));
+        return r;
+    }
+
+    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
+    if (!si)
+    {
+        msiobj_release( &patch_db->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    r = msi_parse_patch_summary( si, &patch_info );
+    msiobj_release( &si->hdr );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to parse patch summary %u\n", r);
+        msiobj_release( &patch_db->hdr );
+        return r;
+    }
+
+    r = msi_apply_patch_db( package, patch_db, patch_info );
+    msiobj_release( &patch_db->hdr );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to apply patch %u\n", r);
+        msi_free( patch_info->patchcode );
+        msi_free( patch_info->transforms );
+        msi_free( patch_info->localfile );
+        msi_free( patch_info );
+    }
+    return r;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR OriginalDatabase[] =
@@ -1180,6 +1236,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     UINT r;
     WCHAR temppath[MAX_PATH], localfile[MAX_PATH], cachefile[MAX_PATH];
     LPCWSTR file = szPackage;
+    DWORD index = 0;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -1293,9 +1350,30 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         msi_set_property( package->db, OriginalDatabase, fullpath );
     }
 
-    package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
-    *pPackage = package;
+    msi_set_context( package );
 
+    while (1)
+    {
+        WCHAR patch_code[GUID_SIZE];
+        r = MsiEnumPatchesExW( package->ProductCode, NULL, package->Context,
+                               MSIPATCHSTATE_APPLIED, index, patch_code, NULL, NULL, NULL, NULL );
+        if (r != ERROR_SUCCESS)
+            break;
+
+        TRACE("found registered patch %s\n", debugstr_w(patch_code));
+
+        r = apply_registered_patch( package, patch_code );
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("registered patch failed to apply %u\n", r);
+            MSI_FreePackage( (MSIOBJECTHDR *)package );
+            return r;
+        }
+
+        index++;
+    }
+
+    *pPackage = package;
     return ERROR_SUCCESS;
 }
 

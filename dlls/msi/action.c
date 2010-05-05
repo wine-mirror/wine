@@ -492,7 +492,7 @@ done:
     return r;
 }
 
-static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
+UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
 {
     MSIPATCHINFO *pi;
     UINT r = ERROR_SUCCESS;
@@ -520,15 +520,40 @@ static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
     return r;
 }
 
+UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch )
+{
+    UINT i, r = ERROR_SUCCESS;
+    WCHAR **substorage;
+
+    /* apply substorage transforms */
+    substorage = msi_split_string( patch->transforms, ';' );
+    for (i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++)
+        r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
+
+    msi_free( substorage );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    msi_set_media_source_prop( package );
+
+    /*
+     * There might be a CAB file in the patch package,
+     * so append it to the list of storages to search for streams.
+     */
+    append_storage_to_db( package->db, patch_db->storage );
+
+    list_add_tail( &package->patches, &patch->entry );
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
 {
     static const WCHAR dotmsp[] = {'.','m','s','p',0};
     MSIDATABASE *patch_db = NULL;
     WCHAR localfile[MAX_PATH];
-    LPWSTR *substorage;
     MSISUMMARYINFO *si;
     MSIPATCHINFO *patch = NULL;
-    UINT i, r = ERROR_SUCCESS;
+    UINT r = ERROR_SUCCESS;
 
     TRACE("%p %s\n", package, debugstr_w( file ) );
 
@@ -573,23 +598,9 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
     }
     patch->localfile = strdupW( localfile );
 
-    /* apply substorage transforms */
-    substorage = msi_split_string( patch->transforms, ';' );
-    for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
-        r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
-
-    msi_free( substorage );
-    if (r != ERROR_SUCCESS)
-        goto done;
-    msi_set_media_source_prop( package );
-
-    /*
-     * There might be a CAB file in the patch package,
-     * so append it to the list of storages to search for streams.
-     */
-    append_storage_to_db( package->db, patch_db->storage );
-
-    list_add_tail( &package->patches, &patch->entry );
+    r = msi_apply_patch_db( package, patch_db, patch );
+    if ( r != ERROR_SUCCESS )
+        WARN("patch failed to apply %u\n", r);
 
 done:
     msiobj_release( &si->hdr );
@@ -729,7 +740,7 @@ static BOOL needs_ui_sequence(MSIPACKAGE *package)
     return (level & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
 }
 
-static UINT msi_set_context(MSIPACKAGE *package)
+UINT msi_set_context(MSIPACKAGE *package)
 {
     int num;
 

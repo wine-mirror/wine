@@ -731,7 +731,7 @@ static void test_simple_patch( void )
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     r = MsiViewFetch( hview, &hrec );
-    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     MsiCloseHandle( hrec );
     MsiViewClose( hview );
@@ -942,13 +942,13 @@ static void test_system_tables( void )
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
     r = find_entry( hdb, "_Tables", "MsiPatchHeaders" );
-    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
     r = find_entry( hdb, "_Tables", "Patch" );
-    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
     r = find_entry( hdb, "_Tables", "PatchPackage" );
-    todo_wine ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+    ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
     MsiCloseHandle( hdb );
     MsiCloseHandle( hproduct );

@@ -685,7 +685,10 @@ extern UINT MSI_DatabaseApplyTransformW( MSIDATABASE *db,
                  LPCWSTR szTransformFile, int iErrorCond );
 extern void append_storage_to_db( MSIDATABASE *db, IStorage *stg );
 
+/* patch functions */
 extern UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si );
+extern UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch );
+extern UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch );
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
@@ -758,6 +761,7 @@ extern UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename );
 extern UINT msi_package_add_info(MSIPACKAGE *, DWORD, DWORD, LPCWSTR, LPWSTR);
 extern UINT msi_package_add_media_disk(MSIPACKAGE *, DWORD, DWORD, DWORD, LPWSTR, LPWSTR);
 extern UINT msi_clone_properties(MSIPACKAGE *);
+extern UINT msi_set_context(MSIPACKAGE *);
 extern UINT MSI_GetFeatureCost(MSIPACKAGE *, MSIFEATURE *, MSICOSTTREE, INSTALLSTATE, LPINT);
 
 /* for deformating */
