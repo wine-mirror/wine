@@ -707,7 +707,7 @@ REBAR_CalcHorzBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
      /* *** Supports only Horizontal bars. ***                   */
 {
     REBAR_BAND *lpBand;
-    UINT i, xoff, yoff;
+    UINT i, xoff;
     RECT work;
 
     for(i=rstart; i<rend; i++){
@@ -770,12 +770,24 @@ REBAR_CalcHorzBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
       }
 
       /* set initial child window rectangle if there is a child */
-      if (lpBand->hwndChild != NULL) {
-          int cyBand = lpBand->rcBand.bottom - lpBand->rcBand.top;
-          yoff = (cyBand - lpBand->cyChild) / 2;
-	  SetRect (&lpBand->rcChild,
-                   lpBand->rcBand.left + lpBand->cxHeader, lpBand->rcBand.top + yoff,
-                   lpBand->rcBand.right - REBAR_POST_CHILD, lpBand->rcBand.top + yoff + lpBand->cyChild);
+      if (lpBand->hwndChild) {
+
+          lpBand->rcChild.left  = lpBand->rcBand.left + lpBand->cxHeader;
+          lpBand->rcChild.right = lpBand->rcBand.right - REBAR_POST_CHILD;
+
+          if (lpBand->cyChild > 0) {
+
+              UINT yoff = (lpBand->rcBand.bottom - lpBand->rcBand.top - lpBand->cyChild) / 2;
+
+              /* center child if height is known */
+              lpBand->rcChild.top = lpBand->rcBand.top + yoff;
+              lpBand->rcChild.bottom = lpBand->rcBand.top + yoff + lpBand->cyChild;
+          }
+          else {
+              lpBand->rcChild.top = lpBand->rcBand.top;
+              lpBand->rcChild.bottom = lpBand->rcBand.bottom;
+          }
+
 	  if ((lpBand->fStyle & RBBS_USECHEVRON) && (lpBand->rcChild.right - lpBand->rcChild.left < lpBand->cxIdeal))
 	  {
 	      lpBand->rcChild.right -= CHEVRON_WIDTH;
