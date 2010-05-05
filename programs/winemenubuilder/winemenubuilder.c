@@ -2334,6 +2334,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         if (location)
         {
             r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
+            if (r == 0)
+                chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
         }
     }
@@ -2425,6 +2427,8 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         if (location)
         {
             r = !write_desktop_entry(NULL, location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
+            if (r == 0)
+                chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
         }
     }
