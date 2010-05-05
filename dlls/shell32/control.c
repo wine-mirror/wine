@@ -475,10 +475,12 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
              case IDM_CPANEL_ABOUT:
                  {
                      WCHAR appName[MAX_STRING_LEN];
+                     HICON icon = LoadImageW((HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE),
+                                             MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON, 48, 48, LR_SHARED);
 
                      LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName,
                          sizeof(appName) / sizeof(appName[0]));
-                     ShellAboutW(hWnd, appName, NULL, NULL);
+                     ShellAboutW(hWnd, appName, NULL, icon);
 
                      return 0;
                  }
@@ -612,7 +614,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
 static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
-    WNDCLASSW	wc;
+    WNDCLASSEXW wc;
     MSG		msg;
     WCHAR appName[MAX_STRING_LEN];
     const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
@@ -625,13 +627,15 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     wc.cbClsExtra = 0;
     wc.cbWndExtra = sizeof(CPlApplet*);
     wc.hInstance = panel->hInst = hInst;
-    wc.hIcon = 0;
+    wc.hIcon = LoadIconW( hInst, MAKEINTRESOURCEW(IDI_APPICON) );
     wc.hCursor = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = className;
+    wc.hIconSm = LoadImageW( hInst, MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON,
+                             GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 
-    if (!RegisterClassW(&wc)) return;
+    if (!RegisterClassExW(&wc)) return;
 
     CreateWindowExW(0, wc.lpszClassName, appName,
 		    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
