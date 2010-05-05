@@ -3201,8 +3201,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
 
 /* Check if we support bumpmapping for a format */
-static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
+static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     /* Ask the fixed function pipeline implementation if it can deal
      * with the conversion. If we've got a GL extension giving native
@@ -3302,8 +3301,7 @@ static BOOL CheckSrgbReadCapability(struct wined3d_adapter *adapter, const struc
             && (format_desc->Flags & WINED3DFMT_FLAG_SRGB_READ);
 }
 
-static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
+static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
@@ -3349,8 +3347,7 @@ static BOOL CheckWrapAndMipCapability(struct wined3d_adapter *adapter, const str
 }
 
 /* Check if a texture format is supported on the given adapter */
-static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
-        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *format_desc)
+static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct wined3d_format_desc *format_desc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -3582,7 +3579,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter,
 
 static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
         const struct wined3d_format_desc *adapter_format_desc,
-        WINED3DDEVTYPE DeviceType, const struct wined3d_format_desc *check_format_desc,
+        const struct wined3d_format_desc *check_format_desc,
         WINED3DSURFTYPE SurfaceType)
 {
     if(SurfaceType == SURFACE_GDI) {
@@ -3615,7 +3612,7 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
     }
 
     /* All format that are supported for textures are supported for surfaces as well */
-    if (CheckTextureCapability(adapter, DeviceType, check_format_desc)) return TRUE;
+    if (CheckTextureCapability(adapter, check_format_desc)) return TRUE;
     /* All depth stencil formats are supported on surfaces */
     if (CheckDepthStencilCapability(adapter, adapter_format_desc, check_format_desc)) return TRUE;
 
@@ -3688,7 +3685,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
+            if (!CheckTextureCapability(adapter, format_desc))
             {
                 TRACE_(d3d_caps)("[FAILED] - Cube texture format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3754,7 +3751,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+                if (!CheckSrgbWriteCapability(adapter, format_desc))
                 {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -3789,7 +3786,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
              *      - WINED3DUSAGE_NONSECURE (d3d9ex)
              *      - WINED3DUSAGE_RENDERTARGET
              */
-            if (!CheckSurfaceCapability(adapter, adapter_format_desc, DeviceType, format_desc, SurfaceType))
+            if (!CheckSurfaceCapability(adapter, adapter_format_desc, format_desc, SurfaceType))
             {
                 TRACE_(d3d_caps)("[FAILED] - Not supported for plain surfaces\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3844,7 +3841,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
+            if (!CheckTextureCapability(adapter, format_desc))
             {
                 TRACE_(d3d_caps)("[FAILED] - Texture format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3890,7 +3887,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             if (Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
             {
-                if (!CheckBumpMapCapability(adapter, DeviceType, format_desc))
+                if (!CheckBumpMapCapability(adapter, format_desc))
                 {
                     TRACE_(d3d_caps)("[FAILED] - No legacy bumpmap support\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -3920,7 +3917,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+                if (!CheckSrgbWriteCapability(adapter, format_desc))
                 {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -3983,7 +3980,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
+            if (!CheckTextureCapability(adapter, format_desc))
             {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -4083,7 +4080,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             if (Usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
+                if (!CheckSrgbWriteCapability(adapter, format_desc))
                 {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
