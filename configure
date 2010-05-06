@@ -14220,6 +14220,8 @@ if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/tahomabd.ttf
 fi
+ac_config_links="$ac_config_links tools/l_intl.nls:tools/l_intl.nls"
+test "$srcdir" = "." || wine_fn_config_symlink tools/l_intl.nls
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 
@@ -15538,6 +15540,7 @@ do
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
     "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
+    "tools/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS tools/l_intl.nls:tools/l_intl.nls" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
     "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;

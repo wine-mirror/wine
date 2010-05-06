@@ -2170,6 +2170,7 @@ WINE_CONFIG_SYMLINK(fonts/marlett.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/symbol.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahoma.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
+WINE_CONFIG_SYMLINK(tools/l_intl.nls)
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
