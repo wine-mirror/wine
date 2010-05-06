@@ -734,7 +734,7 @@
 # stub _mbstowcs_l
 # stub _mbstowcs_s_l
 @ cdecl _mbstrlen(str)
-# stub _mbstrlen_l
+@ cdecl _mbstrlen_l(str ptr)
 # stub _mbstrnlen
 # stub _mbstrnlen_l
 @ cdecl _mbsupr(str)

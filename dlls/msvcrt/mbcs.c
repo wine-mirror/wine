@@ -1689,25 +1689,32 @@ int CDECL MSVCRT_mblen(const char* str, MSVCRT_size_t size)
 }
 
 /*********************************************************************
+ *		_mbstrlen_l(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbstrlen_l(const char* str, MSVCRT__locale_t locale)
+{
+    if(!locale)
+        locale = get_locale();
+
+    if(locale->locinfo->mb_cur_max > 1) {
+        MSVCRT_size_t len = 0;
+        while(*str) {
+            /* FIXME: According to the documentation we are supposed to test for
+             * multi-byte character validity. Whatever that means
+             */
+            str += MSVCRT_isleadbyte(*str) ? 2 : 1;
+            len++;
+        }
+        return len;
+    }
+
+    return strlen(str);
+}
+
+/*********************************************************************
  *		_mbstrlen(MSVCRT.@)
- * REMARKS
- *  Unlike most of the multibyte string functions this function uses
- *  the locale codepage, not the codepage set by _setmbcp
  */
 MSVCRT_size_t CDECL _mbstrlen(const char* str)
 {
-  if(get_locale()->locinfo->mb_cur_max > 1)
-  {
-    MSVCRT_size_t len = 0;
-    while(*str)
-    {
-      /* FIXME: According to the documentation we are supposed to test for
-       * multi-byte character validity. Whatever that means
-       */
-      str += MSVCRT_isleadbyte(*str) ? 2 : 1;
-      len++;
-    }
-    return len;
-  }
-  return strlen(str); /* ASCII CP */
+    return _mbstrlen_l(str, NULL);
 }
