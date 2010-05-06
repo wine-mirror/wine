@@ -1718,3 +1718,92 @@ MSVCRT_size_t CDECL _mbstrlen(const char* str)
 {
     return _mbstrlen_l(str, NULL);
 }
+
+/*********************************************************************
+ *		_mbstowcs_l(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
+        MSVCRT_size_t count, MSVCRT__locale_t locale)
+{
+    MSVCRT_size_t tmp;
+
+    if(!locale)
+        locale = get_locale();
+
+    tmp = _mbstrlen_l(mbstr, locale);
+    if(tmp>count && wcstr)
+        tmp = count;
+
+    tmp = MultiByteToWideChar(locale->locinfo->lc_codepage, 0,
+            mbstr, tmp, wcstr, count);
+
+    if(tmp<count && wcstr)
+        wcstr[tmp] = '\0';
+
+    return tmp;
+}
+
+/*********************************************************************
+ *		mbstowcs(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_mbstowcs(MSVCRT_wchar_t *wcstr,
+        const char *mbstr, MSVCRT_size_t count)
+{
+    return MSVCRT__mbstowcs_l(wcstr, mbstr, count, NULL);
+}
+
+/*********************************************************************
+ *              _mbstowcs_s_l(MSVCRT.@)
+ */
+int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
+        MSVCRT_size_t size, const char *mbstr,
+        MSVCRT_size_t count, MSVCRT__locale_t locale)
+{
+    MSVCRT_size_t conv;
+
+    if(!wcstr && !size) {
+        conv = MSVCRT__mbstowcs_l(NULL, mbstr, 0, locale);
+        if(ret)
+            *ret = conv;
+        return 0;
+    }
+
+    if(!mbstr || !wcstr) {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        if(wcstr && size)
+            wcstr[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(count==_TRUNCATE || size<count)
+        conv = size;
+    else
+        conv = count;
+
+    conv = MSVCRT__mbstowcs_l(wcstr, mbstr, conv, locale);
+    if(conv<size)
+        wcstr[conv++] = '\0';
+    else if(conv==size && (count==_TRUNCATE || wcstr[conv-1]=='\0'))
+        wcstr[conv-1] = '\0';
+    else {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        if(size)
+            wcstr[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    if(ret)
+        *ret = conv;
+    return 0;
+}
+
+/*********************************************************************
+ *              mbstowcs_s(MSVCRT.@)
+ */
+int CDECL MSVCRT__mbstowcs_s(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
+        MSVCRT_size_t size, const char *mbstr, MSVCRT_size_t count)
+{
+    return MSVCRT__mbstowcs_s_l(ret, wcstr, size, mbstr, count, NULL);
+}

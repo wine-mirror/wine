@@ -785,8 +785,8 @@
 @ stub _mbstok_l
 @ stub _mbstok_s
 @ stub _mbstok_s_l
-@ stub _mbstowcs_l
-@ stub _mbstowcs_s_l
+@ cdecl _mbstowcs_l(ptr str long ptr) msvcrt._mbstowcs_l
+@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) msvcrt._mbstowcs_s_l
 @ cdecl _mbstrlen(str) msvcrt._mbstrlen
 @ stub _mbstrlen_l
 @ stub _mbstrnlen
@@ -1330,7 +1330,7 @@
 @ stub mbsrtowcs
 @ stub mbsrtowcs_s
 @ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs
-@ stub mbstowcs_s
+@ cdecl mbstowcs_s(ptr ptr long str long) msvcrt.mbstowcs_s
 @ cdecl mbtowc(wstr str long) msvcrt.mbtowc
 @ cdecl memchr(ptr long long) msvcrt.memchr
 @ cdecl memcmp(ptr ptr long) msvcrt.memcmp

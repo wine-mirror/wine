@@ -731,8 +731,8 @@
 # stub _mbstok_l
 # stub _mbstok_s
 # stub _mbstok_s_l
-# stub _mbstowcs_l
-# stub _mbstowcs_s_l
+@ cdecl _mbstowcs_l(ptr str long ptr) MSVCRT__mbstowcs_l
+@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) MSVCRT__mbstowcs_s_l
 @ cdecl _mbstrlen(str)
 @ cdecl _mbstrlen_l(str ptr)
 # stub _mbstrnlen
@@ -1277,8 +1277,8 @@
 # stub mbsdup_dbg
 # stub mbsrtowcs
 # stub mbsrtowcs_s
-@ cdecl mbstowcs(ptr str long) ntdll.mbstowcs
-# stub mbstowcs_s
+@ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
+@ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl mbtowc(wstr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) ntdll.memchr
 @ cdecl memcmp(ptr ptr long) ntdll.memcmp
