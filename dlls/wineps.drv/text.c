@@ -112,18 +112,21 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     }
     else {
         UINT i;
-	float dx = 0.0, dy = 0.0;
-	float cos_theta = cos(physDev->font.escapement * M_PI / 1800.0);
-	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);
+	POINT offset = {0, 0};
+
         for(i = 0; i < count-1; i++) {
-	    TRACE("lpDx[%d] = %d\n", i, lpDx[i]);
 	    if(physDev->font.fontloc == Download)
 	        PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
 	    else
 	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
-	    dx += lpDx[i] * cos_theta;
-	    dy -= lpDx[i] * sin_theta;
-	    PSDRV_WriteMoveTo(physDev, x + dx, y + dy);
+            if(flags & ETO_PDY)
+            {
+                offset.x += lpDx[i * 2];
+                offset.y += lpDx[i * 2 + 1];
+            }
+            else
+                offset.x += lpDx[i];
+	    PSDRV_WriteMoveTo(physDev, x + offset.x, y + offset.y);
 	}
 	if(physDev->font.fontloc == Download)
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
