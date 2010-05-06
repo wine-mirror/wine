@@ -21,15 +21,12 @@
 
 use strict;
 
-# base directory for ftp.unicode.org files
-my $BASEDIR = "ftp.unicode.org/Public/";
-my $MAPPREFIX = $BASEDIR . "MAPPINGS/";
-
-# UnicodeData file
-my $UNICODEDATA = $BASEDIR . "UNIDATA/UnicodeData.txt";
+# base URLs for www.unicode.org files
+my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
+my $UNIDATA = "http://www.unicode.org/Public/5.0.0/ucd";
 
 # Sort keys file
-my $SORTKEYS = "www.unicode.org/reports/tr10/allkeys.txt";
+my $SORTKEYS = "http://www.unicode.org/reports/tr10/allkeys.txt";
 
 # Defaults mapping
 my $DEFAULTS = "./defaults";
@@ -203,6 +200,23 @@ my @compose_table = ();
 
 
 ################################################################
+# fetch a unicode.org file and open it
+sub open_data_file($)
+{
+    my $url = shift;
+    (my $name = $url) =~ s/^.*\///;
+    local *FILE;
+    unless (-f "data/$name")
+    {
+        print "Fetching $url...\n";
+        mkdir "data";
+        !system "wget", "-q", "-O", "data/$name", $url or die "cannot fetch $url";
+    }
+    open FILE, "<data/$name" or die "cannot open data/$name";
+    return *FILE;
+}
+
+################################################################
 # read in the defaults file
 sub READ_DEFAULTS($)
 {
@@ -234,12 +248,12 @@ sub READ_DEFAULTS($)
         }
         die "Unrecognized line $_\n";
     }
+    close DEFAULTS;
 
     # now build mappings from the decomposition field of the Unicode database
 
-    open UNICODEDATA, "$UNICODEDATA" or die "Cannot open $UNICODEDATA";
-    print "Loading $UNICODEDATA\n";
-    while (<UNICODEDATA>)
+    my $UNICODE_DATA = open_data_file "$UNIDATA/UnicodeData.txt";
+    while (<$UNICODE_DATA>)
     {
 	# Decode the fields ...
 	my ($code, $name, $cat, $comb, $bidi,
@@ -344,6 +358,7 @@ sub READ_DEFAULTS($)
         }
         $unicode_defaults[$src] = $dst;
     }
+    close $UNICODE_DATA;
 
     # patch the category of some special characters
 
@@ -360,9 +375,9 @@ sub READ_DEFAULTS($)
 sub READ_FILE($)
 {
     my $name = shift;
-    open INPUT,$name or die "Cannot open $name";
+    my $INPUT = open_data_file $name;
 
-    while (<INPUT>)
+    while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
         next if /^$/;  # skip empty lines
@@ -391,6 +406,7 @@ sub READ_FILE($)
         }
         die "$name: Unrecognized line $_\n";
     }
+    close $INPUT;
 }
 
 
@@ -485,8 +501,8 @@ sub READ_JIS0208_FILE($)
     $cp2uni[0xa1c0] = 0xff3c;
     $uni2cp[0xff3c] = 0xa1c0;
 
-    open INPUT, "$name" or die "Cannot open $name";
-    while (<INPUT>)
+    my $INPUT = open_data_file $name;
+    while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
         next if /^$/;  # skip empty lines
@@ -501,6 +517,7 @@ sub READ_JIS0208_FILE($)
         }
         die "$name: Unrecognized line $_\n";
     }
+    close $INPUT;
 }
 
 
@@ -511,9 +528,8 @@ sub READ_SORTKEYS_FILE()
     my @sortkeys = ();
     for (my $i = 0; $i < 65536; $i++) { $sortkeys[$i] = [ -1, 0, 0, 0, 0 ] };
 
-    open INPUT, "$SORTKEYS" or die "Cannot open $SORTKEYS";
-    print "Loading $SORTKEYS\n";
-    while (<INPUT>)
+    my $INPUT = open_data_file $SORTKEYS;
+    while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
         next if /^$/;  # skip empty lines
@@ -533,7 +549,7 @@ sub READ_SORTKEYS_FILE()
         }
         die "$SORTKEYS: Unrecognized line $_\n";
     }
-    close INPUT;
+    close $INPUT;
 
     # compress the keys to 32 bit:
     # key 1 to 16 bits, key 2 to 8 bits, key 3 to 4 bits, key 4 to 1 bit
@@ -1206,9 +1222,9 @@ sub handle_bestfit_file($$$)
     my ($lb_cur, $lb_end);
     my @lb_ranges = ();
 
-    open INPUT,$MAPPREFIX . $filename or die "Cannot open $filename";
+    my $INPUT = open_data_file "$MAPPINGS/$filename" or die "Cannot open $filename";
 
-    while (<INPUT>)
+    while (<$INPUT>)
     {
         next if /^;/;  # skip comments
         next if /^\s*$/;  # skip empty lines
@@ -1278,7 +1294,7 @@ sub handle_bestfit_file($$$)
         }
         die "$filename: Unrecognized line $_\n";
     }
-    close INPUT;
+    close $INPUT;
 
     my $output = sprintf "c_%03d.c", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
@@ -1288,7 +1304,7 @@ sub handle_bestfit_file($$$)
     # dump all tables
 
     printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
-    printf OUTPUT "/* generated from %s */\n", $MAPPREFIX . $filename;
+    printf OUTPUT "/* generated from $MAPPINGS/$filename */\n";
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
@@ -1310,14 +1326,14 @@ sub HANDLE_FILE(@)
     @uni2cp = ();
 
     # symbol codepage file is special
-    if ($codepage == 20932) { READ_JIS0208_FILE($MAPPREFIX . $filename); }
+    if ($codepage == 20932) { READ_JIS0208_FILE "$MAPPINGS/$filename"; }
     elsif ($codepage == 20127) { fill_20127_codepage(); }
     elsif ($filename =~ /\/bestfit/)
     {
         handle_bestfit_file( $filename, $has_glyphs, $comment );
         return;
     }
-    else { READ_FILE($MAPPREFIX . $filename); }
+    else { READ_FILE "$MAPPINGS/$filename"; }
 
     ADD_DEFAULT_MAPPINGS();
 
@@ -1331,8 +1347,8 @@ sub HANDLE_FILE(@)
     printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
     if ($filename)
     {
-        printf OUTPUT "/* generated from %s */\n", $MAPPREFIX . $filename;
-        printf OUTPUT "/* DO NOT EDIT!! */\n\n";
+        print OUTPUT "/* generated from $MAPPINGS/$filename */\n";
+        print OUTPUT "/* DO NOT EDIT!! */\n\n";
     }
     else
     {
