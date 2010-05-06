@@ -475,8 +475,8 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
              case IDM_CPANEL_ABOUT:
                  {
                      WCHAR appName[MAX_STRING_LEN];
-                     HICON icon = LoadImageW((HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE),
-                                             MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON, 48, 48, LR_SHARED);
+                     HICON icon = LoadImageW(shell32_hInstance, MAKEINTRESOURCEW(IDI_SHELL_CONTROL_PANEL),
+                                             IMAGE_ICON, 48, 48, LR_SHARED);
 
                      LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName,
                          sizeof(appName) / sizeof(appName[0]));
@@ -627,12 +627,12 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     wc.cbClsExtra = 0;
     wc.cbWndExtra = sizeof(CPlApplet*);
     wc.hInstance = panel->hInst = hInst;
-    wc.hIcon = LoadIconW( hInst, MAKEINTRESOURCEW(IDI_APPICON) );
+    wc.hIcon = LoadIconW( shell32_hInstance, MAKEINTRESOURCEW(IDI_SHELL_CONTROL_PANEL) );
     wc.hCursor = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = className;
-    wc.hIconSm = LoadImageW( hInst, MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON,
+    wc.hIconSm = LoadImageW( shell32_hInstance, MAKEINTRESOURCEW(IDI_SHELL_CONTROL_PANEL), IMAGE_ICON,
                              GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 
     if (!RegisterClassExW(&wc)) return;
