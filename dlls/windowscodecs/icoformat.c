@@ -189,7 +189,7 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
     hr = IStream_Read(This->parent->stream, &bih, sizeof(BITMAPINFOHEADER), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(BITMAPINFOHEADER)) goto fail;
 
-    if (This->entry.wBitCount <= 8)
+    if (bih.biBitCount <= 8)
     {
         /* read the palette */
         colorcount = This->entry.bColorCount ? This->entry.bColorCount : 256;
@@ -202,7 +202,7 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
     bitsSize = bitsStride * height;
 
     /* read the XOR data */
-    switch (This->entry.wBitCount)
+    switch (bih.biBitCount)
     {
     case 1:
     {
@@ -440,11 +440,11 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
         break;
     }
     default:
-        FIXME("unsupported bitcount: %u\n", This->entry.wBitCount);
+        FIXME("unsupported bitcount: %u\n", bih.biBitCount);
         goto fail;
     }
 
-    if (This->entry.wBitCount < 32)
+    if (bih.biBitCount < 32)
     {
         /* set alpha data based on the AND mask */
         UINT andBytesPerRow = (width+31)/32*4;
