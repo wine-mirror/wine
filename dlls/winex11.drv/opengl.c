@@ -297,15 +297,20 @@ static BOOL infoInitialized = FALSE;
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
     int screen = DefaultScreen(gdi_display);
-    Window win = RootWindow(gdi_display, screen);
+    Window win = 0, root = 0;
     const char* str;
     XVisualInfo *vis;
     GLXContext ctx = NULL;
+    XSetWindowAttributes attr;
+    BOOL ret = FALSE;
     int attribList[] = {GLX_RGBA, GLX_DOUBLEBUFFER, None};
 
     if (infoInitialized)
         return TRUE;
     infoInitialized = TRUE;
+
+    attr.override_redirect = True;
+    attr.colormap = None;
 
     wine_tsx11_lock();
 
@@ -318,23 +323,26 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
         if (wine_get_fs() != old_fs)
         {
             wine_set_fs( old_fs );
-            wine_tsx11_unlock();
             ERR( "%%fs register corrupted, probably broken ATI driver, disabling OpenGL.\n" );
             ERR( "You need to set the \"UseFastTls\" option to \"2\" in your X config file.\n" );
-            return FALSE;
+            goto done;
         }
 #else
         ctx = pglXCreateContext(gdi_display, vis, None, GL_TRUE);
 #endif
     }
+    if (!ctx) goto done;
 
-    if (ctx) {
-        pglXMakeCurrent(gdi_display, win, ctx);
-    } else {
-        ERR(" couldn't initialize OpenGL, expect problems\n");
-        wine_tsx11_unlock();
-        return FALSE;
-    }
+    root = RootWindow( gdi_display, vis->screen );
+    if (vis->visual != DefaultVisual( gdi_display, vis->screen ))
+        attr.colormap = XCreateColormap( gdi_display, root, vis->visual, AllocNone );
+    if ((win = XCreateWindow( gdi_display, root, -1, -1, 1, 1, 0, vis->depth, InputOutput,
+                              vis->visual, CWOverrideRedirect | CWColormap, &attr )))
+        XMapWindow( gdi_display, win );
+    else
+        win = root;
+
+    pglXMakeCurrent(gdi_display, win, ctx);
 
     WineGLInfo.glVersion = (const char *) pglGetString(GL_VERSION);
     str = (const char *) pglGetString(GL_EXTENSIONS);
@@ -391,14 +399,19 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
         if(!strcmp(gl_renderer, "Software Rasterizer") || !strcmp(gl_renderer, "Mesa X11"))
             ERR_(winediag)("The Mesa OpenGL driver is using software rendering, most likely your OpenGL drivers haven't been installed correctly\n");
     }
+    ret = TRUE;
 
+done:
     if(vis) XFree(vis);
     if(ctx) {
         pglXMakeCurrent(gdi_display, None, NULL);    
         pglXDestroyContext(gdi_display, ctx);
     }
+    if (win != root) XDestroyWindow( gdi_display, win );
+    if (attr.colormap) XFreeColormap( gdi_display, attr.colormap );
     wine_tsx11_unlock();
-    return TRUE;
+    if (!ret) ERR(" couldn't initialize OpenGL, expect problems\n");
+    return ret;
 }
 
 void X11DRV_OpenGL_Cleanup(void)
@@ -891,7 +904,7 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
             render_type = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT;
             break;
         default:
-            ERR("Unknown render_type: %x\n", render_type);
+            ERR("Unknown render_type: %x\n", render_type_bit);
     }
     return render_type;
 }
