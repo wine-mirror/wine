@@ -3584,6 +3584,9 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
                     buffer,
                     &bytesRead);
 
+  if (bytesRead != RAW_DIRENTRY_SIZE)
+    return STG_E_READFAULT;
+
   return hr;
 }
 
@@ -3929,6 +3932,11 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 
         offset.u.LowPart += cbRead;
     }
+    else
+    {
+        resRead = STG_E_READFAULT;
+        break;
+    }
   } while (cbTotalRead.QuadPart < size.QuadPart);
   HeapFree(GetProcessHeap(),0,buffer);
 
@@ -4026,6 +4034,11 @@ SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                 break;
 
             offset.u.LowPart += cbRead;
+        }
+        else
+        {
+            resRead = STG_E_READFAULT;
+            break;
         }
     }while(cbTotalRead.QuadPart < size.QuadPart);
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -5810,6 +5823,7 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
   ULONG bytesToReadInBuffer;
   ULONG blockIndex;
   BYTE* bufferWalker;
+  ULARGE_INTEGER stream_size;
 
   TRACE("(%p)-> %i %p %i %p\n",This, offset.u.LowPart, buffer, size, bytesRead);
 
@@ -5818,13 +5832,17 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
    */
   blockIndex = BlockChainStream_GetSectorOfOffset(This, blockNoInSequence);
 
-  if (blockIndex == BLOCK_END_OF_CHAIN)
-      return STG_E_DOCFILECORRUPT; /* We failed to find the starting block */
+  *bytesRead   = 0;
+
+  stream_size = BlockChainStream_GetSize(This);
+  if (stream_size.QuadPart > offset.QuadPart)
+    size = min(stream_size.QuadPart - offset.QuadPart, size);
+  else
+    return S_OK;
 
   /*
    * Start reading the buffer.
    */
-  *bytesRead   = 0;
   bufferWalker = buffer;
 
   while ( (size > 0) && (blockIndex != BLOCK_END_OF_CHAIN) )
@@ -5862,7 +5880,7 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
         break;
   }
 
-  return (size == 0) ? S_OK : STG_E_READFAULT;
+  return S_OK;
 }
 
 /******************************************************************************
@@ -6295,6 +6313,9 @@ static HRESULT SmallBlockChainStream_GetNextBlockInChain(
               &buffer,
               &bytesRead);
 
+  if (SUCCEEDED(res) && bytesRead != sizeof(DWORD))
+    res = STG_E_READFAULT;
+
   if (SUCCEEDED(res))
   {
     StorageUtl_ReadDWord((BYTE *)&buffer, 0, nextBlockInChain);
@@ -6386,7 +6407,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
     /*
      * If we run out of space for the small block depot, enlarge it
      */
-    if (SUCCEEDED(res))
+    if (SUCCEEDED(res) && bytesRead == sizeof(DWORD))
     {
       StorageUtl_ReadDWord((BYTE *)&buffer, 0, &nextBlockIndex);
 
@@ -6482,11 +6503,20 @@ HRESULT SmallBlockChainStream_ReadAt(
   ULONG blockIndex;
   ULONG bytesReadFromBigBlockFile;
   BYTE* bufferWalker;
+  ULARGE_INTEGER stream_size;
 
   /*
    * This should never happen on a small block file.
    */
   assert(offset.u.HighPart==0);
+
+  *bytesRead   = 0;
+
+  stream_size = SmallBlockChainStream_GetSize(This);
+  if (stream_size.QuadPart > offset.QuadPart)
+    size = min(stream_size.QuadPart - offset.QuadPart, size);
+  else
+    return S_OK;
 
   /*
    * Find the first block in the stream that contains part of the buffer.
@@ -6504,7 +6534,6 @@ HRESULT SmallBlockChainStream_ReadAt(
   /*
    * Start reading the buffer.
    */
-  *bytesRead   = 0;
   bufferWalker = buffer;
 
   while ( (size > 0) && (blockIndex != BLOCK_END_OF_CHAIN) )
@@ -6538,6 +6567,9 @@ HRESULT SmallBlockChainStream_ReadAt(
     if (FAILED(rc))
       return rc;
 
+    if (!bytesReadFromBigBlockFile)
+      return STG_E_DOCFILECORRUPT;
+
     /*
      * Step to the next big block.
      */
@@ -6551,7 +6583,7 @@ HRESULT SmallBlockChainStream_ReadAt(
     offsetInBlock = (offsetInBlock + bytesReadFromBigBlockFile) % This->parentStorage->smallBlockSize;
   }
 
-  return (size == 0) ? S_OK : STG_E_READFAULT;
+  return S_OK;
 }
 
 /******************************************************************************
