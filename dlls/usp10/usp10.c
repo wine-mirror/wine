@@ -271,6 +271,12 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
     return S_OK;
 }
 
+static WCHAR mirror_char( WCHAR ch )
+{
+    extern const WCHAR wine_mirror_map[];
+    return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
+}
+
 /***********************************************************************
  *      DllMain
  *
@@ -1392,13 +1398,18 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         for (i = 0; i < cChars; i++)
         {
             int idx = i;
+            WCHAR chInput;
             if (rtl) idx = cChars - 1 - i;
-            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, pwcChars[idx])))
+            if (psa->fRTL)
+                chInput = mirror_char(pwcChars[idx]);
+            else
+                chInput = pwcChars[idx];
+            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, chInput)))
             {
                 WORD glyph;
                 if (!hdc) return E_PENDING;
-                if (GetGlyphIndicesW(hdc, &pwcChars[idx], 1, &glyph, 0) == GDI_ERROR) return S_FALSE;
-                pwOutGlyphs[i] = set_cache_glyph(psc, pwcChars[idx], glyph);
+                if (GetGlyphIndicesW(hdc, &chInput, 1, &glyph, 0) == GDI_ERROR) return S_FALSE;
+                pwOutGlyphs[i] = set_cache_glyph(psc, chInput, glyph);
             }
         }
     }
@@ -1408,6 +1419,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         for (i = 0; i < cChars; i++)
         {
             int idx = i;
+            /* No mirroring done here */
             if (rtl) idx = cChars - 1 - i;
             pwOutGlyphs[i] = pwcChars[idx];
         }
@@ -1534,24 +1546,37 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     {
         for (i = 0; i < cChars; i++)
         {
-            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, pwcInChars[i])))
+            WCHAR inChar;
+            if (dwFlags == SGCM_RTL)
+                inChar = mirror_char(pwcInChars[i]);
+            else
+                inChar = pwcInChars[i];
+            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, inChar)))
             {
                 WORD glyph;
                 if (!hdc) return E_PENDING;
-                if (GetGlyphIndicesW(hdc, &pwcInChars[i], 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS) == GDI_ERROR) return S_FALSE;
+                if (GetGlyphIndicesW(hdc, &inChar, 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS) == GDI_ERROR) return S_FALSE;
                 if (glyph == 0xffff)
                 {
                     hr = S_FALSE;
                     glyph = 0x0;
                 }
-                pwOutGlyphs[i] = set_cache_glyph(psc, pwcInChars[i], glyph);
+                pwOutGlyphs[i] = set_cache_glyph(psc, inChar, glyph);
             }
         }
     }
     else
     {
         TRACE("no glyph translation\n");
-        for (i = 0; i < cChars; i++) pwOutGlyphs[i] = pwcInChars[i];
+        for (i = 0; i < cChars; i++)
+        {
+            WCHAR inChar;
+            if (dwFlags == SGCM_RTL)
+                inChar = mirror_char(pwcInChars[i]);
+            else
+                inChar = pwcInChars[i];
+            pwOutGlyphs[i] = inChar;
+        }
     }
     return hr;
 }

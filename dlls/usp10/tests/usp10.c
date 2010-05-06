@@ -582,12 +582,15 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     SCRIPT_CACHE    psc = NULL;
     int             cInChars;
     int             cChars;
+    unsigned short  pwOutGlyphs2[256];
     unsigned short  pwOutGlyphs3[256];
     DWORD           dwFlags;
     int             cnt;
 
     static const WCHAR TestItem1[] = {'T', 'e', 's', 't', 'a', 0};
     static const WCHAR TestItem2[] = {0x202B, 'i', 'n', 0x202C,0};
+    static const WCHAR TestItem3[] = {'a','b','c','d','(','<','{','[',0x2039,0};
+    static const WCHAR TestItem3b[] = {'a','b','c','d',')','>','}',']',0x203A,0};
 
     /*  Check to make sure that SCRIPT_CACHE gets allocated ok                     */
     dwFlags = 0;
@@ -639,6 +642,27 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
     ok(pwOutGlyphs3[0] == 0, "Glyph 0 should be default glyph\n");
     ok(pwOutGlyphs3[3] == 0, "Glyph 0 should be default glyph\n");
+
+
+    cInChars = cChars = 9;
+    hr = ScriptGetCMap(hdc, &psc, TestItem3b, cInChars, dwFlags, pwOutGlyphs2);
+    ok (hr == S_OK, "ScriptGetCMap should return S_OK not (%08x)\n", hr);
+    ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+
+    cInChars = cChars = 9;
+    dwFlags = SGCM_RTL;
+    hr = ScriptGetCMap(hdc, &psc, TestItem3, cInChars, dwFlags, pwOutGlyphs3);
+    ok (hr == S_OK, "ScriptGetCMap should return S_OK not (%08x)\n", hr);
+    ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+    ok(pwOutGlyphs3[0] == pwOutGlyphs2[0], "glyph incorrectly altered\n");
+    ok(pwOutGlyphs3[1] == pwOutGlyphs2[1], "glyph incorreclty altered\n");
+    ok(pwOutGlyphs3[2] == pwOutGlyphs2[2], "glyph incorreclty altered\n");
+    ok(pwOutGlyphs3[3] == pwOutGlyphs2[3], "glyph incorreclty altered\n");
+    ok(pwOutGlyphs3[4] == pwOutGlyphs2[4], "glyph not mirrored correctly\n");
+    ok(pwOutGlyphs3[5] == pwOutGlyphs2[5], "glyph not mirrored correctly\n");
+    ok(pwOutGlyphs3[6] == pwOutGlyphs2[6], "glyph not mirrored correctly\n");
+    ok(pwOutGlyphs3[7] == pwOutGlyphs2[7], "glyph not mirrored correctly\n");
+    ok(pwOutGlyphs3[8] == pwOutGlyphs2[8], "glyph not mirrored correctly\n");
 
     hr = ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
