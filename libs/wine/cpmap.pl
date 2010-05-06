@@ -935,6 +935,40 @@ sub get_lb_ranges()
 
 
 ################################################################
+# dump the BiDi mirroring table
+sub dump_mirroring($)
+{
+    my $filename = shift;
+    my @mirror_table = ();
+
+    my $INPUT = open_data_file "$UNIDATA/BidiMirroring.txt";
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9a-fA-F]+)/)
+        {
+            $mirror_table[hex $1] = hex $2;
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode BiDi mirroring */\n";
+    print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    DUMP_CASE_TABLE( "wine_mirror_map", @mirror_table );
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # dump the case mapping tables
 sub DUMP_CASE_MAPPINGS($)
 {
@@ -1435,6 +1469,7 @@ DUMP_CASE_MAPPINGS( "casemap.c" );
 DUMP_SORTKEYS( "collation.c", READ_SORTKEYS_FILE() );
 DUMP_COMPOSE_TABLES( "compose.c" );
 DUMP_CTYPE_TABLES( "wctype.c" );
+dump_mirroring( "../../dlls/usp10/mirror.c" );
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
 
