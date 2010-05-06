@@ -5786,28 +5786,10 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
  *
  * Returns the number of blocks that comprises this chain.
  * This is not the size of the stream as the last block may not be full!
- *
- * FIXME: Use the cache to get this information.
  */
 static ULONG BlockChainStream_GetCount(BlockChainStream* This)
 {
-  ULONG blockIndex;
-  ULONG count = 0;
-
-  blockIndex = BlockChainStream_GetHeadOfChain(This);
-
-  while (blockIndex != BLOCK_END_OF_CHAIN)
-  {
-    count++;
-
-    if(FAILED(StorageImpl_GetNextBlockInChain(
-                   This->parentStorage,
-                   blockIndex,
-		   &blockIndex)))
-      return 0;
-  }
-
-  return count;
+  return This->numBlocks;
 }
 
 /******************************************************************************
