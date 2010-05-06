@@ -30,31 +30,31 @@ STRINGTABLE DISCARDABLE
 	4 "Nepavyko atverti nurodyto diegimo paketo. Patikrinkite failo kelią ir mėginkite dar kartą."
 	5 "kelias %s nerastas"
 	9 "įdėkite diską %s"
-	10 "Windows Installer %s\n\n" \
-	"Usage:\n" \
-	"msiexec command {required parameter} [optional parammeter]\n\n" \
-	"Install a product:\n" \
-	"\t/i {package|productcode} [property]\n" \
-	"\t/package {package|productcode} [property]\n" \
-	"\t/a package [property]\n" \
-	"Repair an installation:\n" \
-	"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n" \
-	"Uninstall a product:\n" \
-	"\t/uninstall {package|productcode} [property]\n" \
-	"\t/x {package|productcode} [property]\n" \
-	"Advertise a product:\n" \
-	"\t/j[u|m] package [/t transform] [/g languageid]\n" \
-	"Apply a patch:\n" \
-	"\t/p patchpackage [property]\n" \
-	"\t/p patchpackage /a package [property]\n" \
-	"Log and UI Modifiers for above commands:\n" \
-	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n" \
+	10 "Windows diegimo programa %s\n\n" \
+	"Naudojimas:\n" \
+	"msiexec komanda {būtinas parametras} [nebūtinas parametras]\n\n" \
+	"Įdiegti produktą:\n" \
+	"\t/i {paketas|produkto_kodas} [savybė]\n" \
+	"\t/package {paketas|produkto_kodas} [savybė]\n" \
+	"\t/a paketas [savybė]\n" \
+	"Taisyti įdiegimą:\n" \
+	"\t/f[p|o|e|d|c|a|u|m|s|v] {paketas|produkto_kodas}\n" \
+	"Pašalinti produktą:\n" \
+	"\t/uninstall {paketas|produkto_kodas} [savybė]\n" \
+	"\t/x {paketas|produkto_kodas} [savybė]\n" \
+	"Skelbti produktą:\n" \
+	"\t/j[u|m] paketas [/t pakeitimas] [/g kalbos_identifikatorius]\n" \
+	"Pritaikyti pataisą:\n" \
+	"\t/p pataisos_paketas [savybė]\n" \
+	"\t/p pataisos_paketas /a paketas [savybė]\n" \
+	"Žurnalo ir sąsajos modifikatoriai aukščiau išvardintoms komandoms:\n" \
+	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] žurnalo_failas\n" \
 	"\t/q{|n|b|r|f|n+|b+|b-}\n" \
-	"Register MSI Service:\n" \
+	"Registruoti MSI tarnybą:\n" \
 	"\t/y\n" \
-	"Unregister MSI Service:\n" \
+	"Išregistruoti MSI tarnybą:\n" \
 	"\t/z\n" \
-	"Display this help:\n" \
+	"Parodyti šią pagalbą:\n" \
 	"\t/help\n" \
 	"\t/?\n"
 	11 "įveskite aplanką, kuris turi %s"
