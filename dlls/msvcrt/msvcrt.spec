@@ -1040,7 +1040,7 @@
 @ cdecl _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
 # stub _wcstol_l
-# stub _wcstombs_l
+@ cdecl _wcstombs_l(ptr ptr long ptr) MSVCRT__wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) MSVCRT__wcstombs_s_l
 @ cdecl _wcstoui64(wstr ptr long) MSVCRT__wcstoui64
 @ cdecl _wcstoui64_l(wstr ptr long ptr) MSVCRT__wcstoui64_l
@@ -1417,7 +1417,7 @@
 @ cdecl wcstok(wstr wstr) MSVCRT_wcstok
 # stub wcstok_s
 @ cdecl wcstol(wstr ptr long) ntdll.wcstol
-@ cdecl wcstombs(ptr ptr long) ntdll.wcstombs
+@ cdecl wcstombs(ptr ptr long) MSVCRT_wcstombs
 @ cdecl wcstombs_s(ptr ptr long wstr long) MSVCRT_wcstombs_s
 @ cdecl wcstoul(wstr ptr long) ntdll.wcstoul
 @ stub wcsxfrm #(ptr wstr long) MSVCRT_wcsxfrm
