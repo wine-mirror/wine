@@ -214,18 +214,18 @@ static struct graphics_driver *create_driver( HMODULE module )
 
 
 /**********************************************************************
- *	     load_display_driver
+ *	     DRIVER_get_display_driver
  *
  * Special case for loading the display driver: get the name from the config file
  */
-static struct graphics_driver *load_display_driver(void)
+const DC_FUNCTIONS *DRIVER_get_display_driver(void)
 {
     struct graphics_driver *driver;
     char buffer[MAX_PATH], libname[32], *name, *next;
     HMODULE module = 0;
     HKEY hkey;
 
-    if (display_driver) return display_driver;  /* already loaded */
+    if (display_driver) return &display_driver->funcs;  /* already loaded */
 
     strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
@@ -259,7 +259,7 @@ static struct graphics_driver *load_display_driver(void)
         FreeLibrary( driver->module );
         HeapFree( GetProcessHeap(), 0, driver );
     }
-    return display_driver;
+    return &display_driver->funcs;
 }
 
 
@@ -274,11 +274,8 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W ))
-    {
-        driver = load_display_driver();
-        return &driver->funcs;
-    }
+    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W )) return DRIVER_get_display_driver();
+
     if ((module = GetModuleHandleW( name )))
     {
         if (display_driver && display_driver->module == module) return &display_driver->funcs;
