@@ -30,6 +30,7 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
+CopyFiles=@l_intl.nls
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -55,6 +56,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
+CopyFiles=@l_intl.nls
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -81,6 +83,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDlls
 UpdateInis=SystemIni
+CopyFiles=@l_intl.nls
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -107,6 +110,7 @@ AddReg=\
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDllsWow64
+CopyFiles=@l_intl.nls
 AddReg=\
     CurrentVersion,\
     Debugger,\
