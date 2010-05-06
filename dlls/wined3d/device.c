@@ -7034,25 +7034,29 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
     device->shader_backend = adapter->shader_backend;
 
-    device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
-    device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
-    device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
-    device->vs_clipping = shader_caps.VSClipping;
-
+    if (device->shader_backend)
+    {
+        device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
+        device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
+        device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
+        device->vs_clipping = shader_caps.VSClipping;
+    }
     fragment_pipeline = adapter->fragment_pipe;
     device->frag_pipe = fragment_pipeline;
-    fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
-    device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
-
-    hr = compile_state_table(device->StateTable, device->multistate_funcs, &adapter->gl_info,
-            ffp_vertexstate_template, fragment_pipeline, misc_state_template);
-    if (FAILED(hr))
+    if (fragment_pipeline)
     {
-        ERR("Failed to compile state table, hr %#x.\n", hr);
-        IWineD3D_Release(device->wined3d);
-        return hr;
-    }
+        fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
+        device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
 
+        hr = compile_state_table(device->StateTable, device->multistate_funcs, &adapter->gl_info,
+                                 ffp_vertexstate_template, fragment_pipeline, misc_state_template);
+        if (FAILED(hr))
+        {
+            ERR("Failed to compile state table, hr %#x.\n", hr);
+            IWineD3D_Release(device->wined3d);
+            return hr;
+        }
+    }
     device->blitter = adapter->blitter;
 
     return WINED3D_OK;
