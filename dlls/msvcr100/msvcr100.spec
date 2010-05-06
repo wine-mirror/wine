@@ -332,13 +332,13 @@
 @ cdecl ___lc_collate_cp_func() msvcrt.___lc_collate_cp_func
 @ cdecl ___lc_handle_func() msvcrt.___lc_handle_func
 @ cdecl ___mb_cur_max_func() msvcrt.___mb_cur_max_func
-@ stub ___mb_cur_max_l_func
+@ cdecl ___mb_cur_max_l_func(ptr) msvcrt.___mb_cur_max_l_func
 @ cdecl ___setlc_active_func() msvcrt.___setlc_active_func
 @ cdecl ___unguarded_readlc_active_add_func() msvcrt.___unguarded_readlc_active_add_func
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
 @ extern __badioinfo msvcrt.__badioinfo
-@ stub __clean_type_info_names_internal
+@ cdecl __clean_type_info_names_internal(ptr) msvcr90.__clean_type_info_names_internal
 @ stub __control87_2
 @ stub __create_locale
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
@@ -422,8 +422,8 @@
 @ cdecl __setusermatherr(ptr) msvcrt.__setusermatherr
 @ stub __strncnt
 @ stub __swprintf_l
-@ stub __sys_errlist
-@ stub __sys_nerr
+@ cdecl __sys_errlist() msvcr90.__sys_errlist
+@ cdecl __sys_nerr() msvcr90.__sys_nerr
 @ cdecl __threadhandle() msvcrt.__threadhandle
 @ cdecl __threadid() msvcrt.__threadid
 @ stub __timezone
@@ -475,7 +475,7 @@
 @ cdecl _c_exit() msvcrt._c_exit
 @ cdecl _cabs(long) msvcrt._cabs
 @ cdecl _callnewh(long) msvcrt._callnewh
-@ stub _calloc_crt
+@ cdecl _calloc_crt(long long) msvcrt.calloc
 @ cdecl _cexit() msvcrt._cexit
 @ cdecl _cgets(str) msvcrt._cgets
 @ stub _cgets_s
@@ -537,7 +537,7 @@
 @ stub _dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ stub _ecvt_s
-@ stub _encoded_null
+@ cdecl _encoded_null() msvcr90._encoded_null
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
 @ extern _environ msvcrt._environ
@@ -682,19 +682,19 @@
 @ stub _heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ stub _hypotf
+@ cdecl _hypotf(double double) msvcrt._hypotf
 @ cdecl _i64toa(long long ptr long) msvcrt._i64toa
 @ stub _i64toa_s
 @ cdecl _i64tow(long long ptr long) msvcrt._i64tow
 @ stub _i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
-@ stub _initterm_e
+@ cdecl _initterm_e(ptr ptr) msvcr90._initterm_e
 @ stub _inp
 @ stub _inpd
 @ stub _inpw
 @ cdecl _invalid_parameter(wstr wstr wstr long long) msvcrt._invalid_parameter
-@ stub _invalid_parameter_noinfo
+@ cdecl _invalid_parameter_noinfo() msvcr90._invalid_parameter_noinfo
 @ stub _invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
@@ -820,7 +820,7 @@
 @ stub _ltow_s
 @ cdecl _makepath(ptr str str str str) msvcrt._makepath
 @ stub _makepath_s
-@ stub _malloc_crt
+@ cdecl _malloc_crt(long) msvcrt.malloc
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
@@ -946,10 +946,10 @@
 @ stub _mbstok_l
 @ stub _mbstok_s
 @ stub _mbstok_s_l
-@ stub _mbstowcs_l
-@ stub _mbstowcs_s_l
+@ cdecl _mbstowcs_l(ptr str long ptr) msvcrt._mbstowcs_l
+@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) msvcrt._mbstowcs_s_l
 @ cdecl _mbstrlen(str) msvcrt._mbstrlen
-@ stub _mbstrlen_l
+@ cdecl _mbstrlen_l(str ptr) msvcrt._mbstrlen_l
 @ stub _mbstrnlen
 @ stub _mbstrnlen_l
 @ cdecl _mbsupr(str) msvcrt._mbsupr
@@ -996,7 +996,7 @@
 @ stub _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ stub _realloc_crt
-@ stub _recalloc
+@ cdecl _recalloc(ptr long long) msvcr90._recalloc
 @ stub _recalloc_crt
 @ stub _resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir
@@ -1148,7 +1148,7 @@
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
 @ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
-@ stub _ui64toa_s
+@ cdecl _ui64toa_s(long ptr long long) msvcrt._ui64toa_s
 @ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
 @ stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
@@ -1219,7 +1219,7 @@
 @ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
 @ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
 @ cdecl _vswprintf_l(ptr long wstr ptr ptr) msvcrt._vswprintf_l
-@ stub _vswprintf_p
+@ cdecl _vswprintf_p(ptr long wstr ptr) msvcrt._vswprintf
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcrt._vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcrt._vswprintf_s_l
 @ stub _vwprintf_l
@@ -1263,7 +1263,7 @@
 @ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
 @ cdecl _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
 @ stub _wcstol_l
-@ stub _wcstombs_l
+@ cdecl _wcstombs_l(ptr ptr long ptr) msvcrt._wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
 @ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
@@ -1483,7 +1483,7 @@
 @ stub mbsrtowcs
 @ stub mbsrtowcs_s
 @ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs
-@ stub mbstowcs_s
+@ cdecl mbstowcs_s(ptr ptr long str long) msvcrt.mbstowcs_s
 @ cdecl mbtowc(wstr str long) msvcrt.mbtowc
 @ cdecl memchr(ptr long long) msvcrt.memchr
 @ cdecl memcmp(ptr ptr long) msvcrt.memcmp

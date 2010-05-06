@@ -522,7 +522,7 @@
 @ stub _heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ stub _hypotf
+@ cdecl _hypotf(double double) msvcrt._hypotf
 @ cdecl _i64toa(long long ptr long) msvcrt._i64toa
 @ stub _i64toa_s
 @ cdecl _i64tow(long long ptr long) msvcrt._i64tow
@@ -788,7 +788,7 @@
 @ cdecl _mbstowcs_l(ptr str long ptr) msvcrt._mbstowcs_l
 @ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) msvcrt._mbstowcs_s_l
 @ cdecl _mbstrlen(str) msvcrt._mbstrlen
-@ stub _mbstrlen_l
+@ cdecl _mbstrlen_l(str ptr) msvcrt._mbstrlen_l
 @ stub _mbstrnlen
 @ stub _mbstrnlen_l
 @ cdecl _mbsupr(str) msvcrt._mbsupr
@@ -1109,7 +1109,7 @@
 @ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
 @ cdecl _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
 @ stub _wcstol_l
-@ stub _wcstombs_l
+@ cdecl _wcstombs_l(ptr ptr long ptr) msvcrt._wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
 @ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l

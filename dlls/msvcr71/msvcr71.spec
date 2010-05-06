@@ -441,7 +441,7 @@
 @ cdecl _onexit(ptr) msvcrt._onexit
 @ varargs _open(str long) msvcrt._open
 @ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
-@ stub _osplatform
+@ extern _osplatform msvcrt._osplatform
 @ extern _osver msvcrt._osver
 @ cdecl -i386 _outp(long long) msvcrt._outp
 @ cdecl -i386 _outpd(long long) msvcrt._outpd
