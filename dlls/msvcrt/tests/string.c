@@ -56,6 +56,8 @@ static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
+static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
+static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -1161,6 +1163,79 @@ static void test__strtod(void)
     ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
+static void test_mbstowcs(void)
+{
+    static const wchar_t wSimple[] = { 't','e','x','t',0 };
+    static const wchar_t wHiragana[] = { 0x3042,0x3043,0 };
+    static const char mSimple[] = "text";
+    static const char mHiragana[] = { 0x82,0xa0,0x82,0xa1,0 };
+
+    wchar_t wOut[6];
+    char mOut[6];
+    size_t ret;
+    int err;
+
+    wOut[4] = '!'; wOut[5] = '\0';
+    mOut[4] = '!'; mOut[5] = '\0';
+
+    ret = mbstowcs(NULL, mSimple, 0);
+    ok(ret == 4, "ret = %d\n", ret);
+
+    ret = mbstowcs(wOut, mSimple, 4);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(wOut, wSimple, 4*sizeof(wchar_t)), "wOut = %s\n", wine_dbgstr_w(wOut));
+    ok(wOut[4] == '!', "wOut[4] != \'!\'\n");
+
+    ret = wcstombs(NULL, wSimple, 0);
+    ok(ret == 4, "ret = %d\n", ret);
+
+    ret = wcstombs(mOut, wSimple, 6);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(mOut, mSimple, 5*sizeof(char)), "mOut = %s\n", mOut);
+
+    ret = wcstombs(mOut, wSimple, 2);
+    ok(ret == 2, "ret = %d\n", ret);
+    ok(!memcmp(mOut, mSimple, 5*sizeof(char)), "mOut = %s\n", mOut);
+
+    if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
+        win_skip("Japanese_Japan.932 locale not available\n");
+        return;
+    }
+
+    ret = mbstowcs(wOut, mHiragana, 6);
+    ok(ret == 2, "ret = %d\n", ret);
+    ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
+    ret = wcstombs(mOut, wHiragana, 6);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
+
+    if(!pmbstowcs_s || !pwcstombs_s) {
+        win_skip("mbstowcs_s or wcstombs_s not available\n");
+        return;
+    }
+
+    err = pmbstowcs_s(&ret, wOut, 6, mSimple, -1/*_TRUNCATE*/);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(!memcmp(wOut, wSimple, sizeof(wSimple)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
+    err = pmbstowcs_s(&ret, wOut, 6, mHiragana, -1/*_TRUNCATE*/);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
+    err = pwcstombs_s(&ret, mOut, 6, wSimple, -1/*_TRUNCATE*/);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
+
+    err = pwcstombs_s(&ret, mOut, 6, wHiragana, -1/*_TRUNCATE*/);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1183,6 +1258,8 @@ START_TEST(string)
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
     p_strtoi64 = (void *) GetProcAddress(hMsvcrt, "_strtoi64");
     p_strtoui64 = (void *) GetProcAddress(hMsvcrt, "_strtoui64");
+    pmbstowcs_s = (void *) GetProcAddress(hMsvcrt, "mbstowcs_s");
+    pwcstombs_s = (void *) GetProcAddress(hMsvcrt, "wcstombs_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1215,4 +1292,5 @@ START_TEST(string)
     test_strnlen();
     test__strtoi64();
     test__strtod();
+    test_mbstowcs();
 }
