@@ -1,5 +1,5 @@
 /* code page 1251 (ANSI Cyrillic) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1251.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1251.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

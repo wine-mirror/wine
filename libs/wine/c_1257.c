@@ -1,5 +1,5 @@
 /* code page 1257 (ANSI Baltic) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1257.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1257.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

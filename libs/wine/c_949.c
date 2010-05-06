@@ -1,5 +1,5 @@
 /* code page 949 (ANSI/OEM Korean Unified Hangul) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit949.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit949.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

@@ -1,5 +1,5 @@
 /* code page 932 (ANSI/OEM Japanese Shift-JIS) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit932.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit932.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

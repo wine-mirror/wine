@@ -1,5 +1,5 @@
 /* code page 874 (ANSI/OEM Thai) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit874.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit874.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

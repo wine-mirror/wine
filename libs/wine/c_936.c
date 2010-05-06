@@ -1,5 +1,5 @@
 /* code page 936 (ANSI/OEM Simplified Chinese GBK) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit936.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit936.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

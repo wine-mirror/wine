@@ -1,5 +1,5 @@
 /* code page 1253 (ANSI Greek) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1253.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1253.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"

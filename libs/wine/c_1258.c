@@ -1,5 +1,5 @@
 /* code page 1258 (ANSI/OEM Viet Nam) */
-/* generated from ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt */
+/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"
