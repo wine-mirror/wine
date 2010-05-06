@@ -1058,6 +1058,91 @@ sub DUMP_CASE_TABLE($@)
 
 
 ################################################################
+# dump a binary case mapping table in l_intl.nls format
+sub dump_binary_case_table(@)
+{
+    my (@table) = @_;
+
+    my %difftables_hash = ();
+    my @difftables;
+    my %offtables2_hash = ();
+    my @offtables2 = ();
+    
+    my @offtable = ();
+    for (my $i = 0; $i < 256; $i++)
+    {
+        my @offtable2 = ();
+        for(my $j = 0; $j < 16; $j++) # offset table for xx00-xxFF characters
+        {
+            my @difftable;
+            for (my $k = 0; $k < 16; $k++) # case map table for xxx0-xxxF characters
+            {
+                my $char = ($i<<8) + ($j<<4) + $k;
+                $difftable[$k] = (defined $table[$char]) ? (($table[$char]-$char) & 0xffff) : 0;
+            }
+
+            my $diff_key = pack "S*", @difftable;
+            my $offset3 = $difftables_hash{$diff_key};
+            if (!defined $offset3)
+            {
+                $offset3 = scalar @difftables;
+                $difftables_hash{$diff_key} = $offset3;
+                push @difftables, @difftable;
+            }
+            $offtable2[$j] = $offset3;
+        }
+
+        my $offtable2_key = pack "S*", @offtable2;
+        my $offset2 = $offtables2_hash{$offtable2_key};
+        if (!defined $offset2)
+        {
+            $offset2 = scalar @offtables2;
+            $offtables2_hash{$offtable2_key} = $offset2;
+            push @offtables2, \@offtable2;
+        }
+        $offtable[$i] = $offset2;
+    }
+
+    my @output;
+    my $offset = 0x100; # offset of first subtable in words
+    foreach (@offtable)
+    {
+        push @output, 0x10 * $_ + $offset; # offset of subtable in words
+    }
+
+    $offset = 0x100 + 0x10 * scalar @offtables2; # offset of first difftable in words
+    foreach(@offtables2)
+    {
+        my $table = $_;
+        foreach(@$table)
+        {
+            push @output, $_ + $offset; # offset of difftable in words
+        }
+    }
+
+    my $len = 1 + scalar @output + scalar @difftables;
+    return pack "S<*", $len, @output, @difftables;
+}
+
+
+################################################################
+# dump case mappings for l_intl.nls
+sub dump_intl_nls($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
+
+    binmode OUTPUT;
+    print OUTPUT pack "S<", 1;  # version
+    print OUTPUT dump_binary_case_table( @toupper_table );
+    print OUTPUT dump_binary_case_table( @tolower_table );
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # dump the ctype tables
 sub DUMP_CTYPE_TABLES($)
 {
@@ -1470,6 +1555,7 @@ DUMP_SORTKEYS( "collation.c", READ_SORTKEYS_FILE() );
 DUMP_COMPOSE_TABLES( "compose.c" );
 DUMP_CTYPE_TABLES( "wctype.c" );
 dump_mirroring( "../../dlls/usp10/mirror.c" );
+dump_intl_nls("../tools/l_intl.nls");
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
 
