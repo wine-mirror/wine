@@ -209,7 +209,6 @@ static struct graphics_driver *create_driver( HMODULE module )
     }
     else memset( &driver->funcs, 0, sizeof(driver->funcs) );
 
-    list_add_head( &drivers, &driver->entry );
     return driver;
 }
 
@@ -221,6 +220,7 @@ static struct graphics_driver *create_driver( HMODULE module )
  */
 static struct graphics_driver *load_display_driver(void)
 {
+    struct graphics_driver *driver;
     char buffer[MAX_PATH], libname[32], *name, *next;
     HMODULE module = 0;
     HKEY hkey;
@@ -247,13 +247,18 @@ static struct graphics_driver *load_display_driver(void)
         name = next;
     }
 
-    if (!(display_driver = create_driver( module )))
+    if (!(driver = create_driver( module )))
     {
         MESSAGE( "Could not create graphics driver '%s'\n", buffer );
         FreeLibrary( module );
         ExitProcess(1);
     }
-
+    if (InterlockedCompareExchangePointer( (void **)&display_driver, driver, NULL ))
+    {
+        /* somebody beat us to it */
+        FreeLibrary( driver->module );
+        HeapFree( GetProcessHeap(), 0, driver );
+    }
     return display_driver;
 }
 
@@ -264,47 +269,48 @@ static struct graphics_driver *load_display_driver(void)
 const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
 {
     HMODULE module;
-    struct graphics_driver *driver;
+    struct graphics_driver *driver, *new_driver;
     static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
     static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
-    EnterCriticalSection( &driver_section );
-
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) ||
-        !strcmpiW( name, display1W ))
+    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W ))
     {
         driver = load_display_driver();
-        LeaveCriticalSection( &driver_section );
         return &driver->funcs;
     }
-
     if ((module = GetModuleHandleW( name )))
     {
+        if (display_driver && display_driver->module == module) return &display_driver->funcs;
+        EnterCriticalSection( &driver_section );
         LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         {
-            if (driver->module == module)
-            {
-                LeaveCriticalSection( &driver_section );
-                return &driver->funcs;
-            }
+            if (driver->module == module) goto done;
         }
-    }
-
-    if (!(module = LoadLibraryW( name )))
-    {
         LeaveCriticalSection( &driver_section );
-        return NULL;
     }
 
-    if (!(driver = create_driver( module )))
+    if (!(module = LoadLibraryW( name ))) return NULL;
+
+    if (!(new_driver = create_driver( module )))
     {
         FreeLibrary( module );
-        LeaveCriticalSection( &driver_section );
         return NULL;
     }
 
+    /* check if someone else added it in the meantime */
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
+    {
+        if (driver->module != module) continue;
+        FreeLibrary( module );
+        HeapFree( GetProcessHeap(), 0, new_driver );
+        goto done;
+    }
+    driver = new_driver;
+    list_add_head( &drivers, &driver->entry );
     TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
+done:
     LeaveCriticalSection( &driver_section );
     return &driver->funcs;
 }
