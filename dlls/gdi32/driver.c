@@ -42,7 +42,6 @@ struct graphics_driver
 {
     struct list             entry;
     HMODULE                 module;  /* module handle */
-    unsigned int            count;   /* reference count */
     DC_FUNCTIONS            funcs;
 };
 
@@ -69,7 +68,6 @@ static struct graphics_driver *create_driver( HMODULE module )
 
     if (!(driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver)))) return NULL;
     driver->module = module;
-    driver->count  = 1;
 
     /* fill the function table */
     if (module)
@@ -227,11 +225,7 @@ static struct graphics_driver *load_display_driver(void)
     HMODULE module = 0;
     HKEY hkey;
 
-    if (display_driver)  /* already loaded */
-    {
-        display_driver->count++;
-        return display_driver;
-    }
+    if (display_driver) return display_driver;  /* already loaded */
 
     strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
@@ -260,7 +254,6 @@ static struct graphics_driver *load_display_driver(void)
         ExitProcess(1);
     }
 
-    display_driver->count++;  /* we don't want to free it */
     return display_driver;
 }
 
@@ -278,7 +271,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     EnterCriticalSection( &driver_section );
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || 
+    if (!strcmpiW( name, displayW ) ||
         !strcmpiW( name, display1W ))
     {
         driver = load_display_driver();
@@ -292,7 +285,6 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
         {
             if (driver->module == module)
             {
-                driver->count++;
                 LeaveCriticalSection( &driver_section );
                 return &driver->funcs;
             }
@@ -315,50 +307,6 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
     LeaveCriticalSection( &driver_section );
     return &driver->funcs;
-}
-
-
-/**********************************************************************
- *	     DRIVER_get_driver
- *
- * Get a new copy of an existing driver.
- */
-const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
-{
-    struct graphics_driver *driver;
-
-    EnterCriticalSection( &driver_section );
-    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
-        if (&driver->funcs == funcs) break;
-    if (&driver->entry == &drivers) ERR( "driver not found, trouble ahead\n" );
-    driver->count++;
-    LeaveCriticalSection( &driver_section );
-    return funcs;
-}
-
-
-/**********************************************************************
- *	     DRIVER_release_driver
- *
- * Release a driver by decrementing ref count and freeing it if needed.
- */
-void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
-{
-    struct graphics_driver *driver;
-
-    EnterCriticalSection( &driver_section );
-
-    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
-    {
-        if (&driver->funcs != funcs) continue;
-        if (--driver->count) break;
-        list_remove( &driver->entry );
-        if (driver == display_driver) display_driver = NULL;
-        FreeLibrary( driver->module );
-        HeapFree( GetProcessHeap(), 0, driver );
-        break;
-    }
-    LeaveCriticalSection( &driver_section );
 }
 
 
