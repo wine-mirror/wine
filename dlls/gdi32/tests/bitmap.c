@@ -2810,9 +2810,7 @@ static void test_GdiAlphaBlend(void)
 static void test_clipping(void)
 {
     HBITMAP bmpDst;
-    HBITMAP oldDst;
     HBITMAP bmpSrc;
-    HBITMAP oldSrc;
     HRGN hRgn;
     LPVOID bits;
     BOOL result;
@@ -2830,11 +2828,11 @@ static void test_clipping(void)
 
     bmpDst = CreateDIBSection( hdcDst, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(bmpDst != NULL, "Couldn't create destination bitmap\n");
-    oldDst = SelectObject( hdcDst, bmpDst );
+    SelectObject( hdcDst, bmpDst );
 
     bmpSrc = CreateDIBSection( hdcSrc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
-    oldSrc = SelectObject( hdcSrc, bmpSrc );
+    SelectObject( hdcSrc, bmpSrc );
 
     result = BitBlt( hdcDst, 0, 0, 100, 100, hdcSrc, 100, 100, SRCCOPY );
     ok(result, "BitBlt failed\n");
