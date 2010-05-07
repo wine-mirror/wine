@@ -1469,13 +1469,13 @@ static void test_create(void)
 
 static void test_redraw(void)
 {
-    HWND hwnd, hwndheader;
+    HWND hwnd;
     HDC hdc;
     BOOL res;
     DWORD r;
 
     hwnd = create_listview_control(LVS_REPORT);
-    hwndheader = subclass_header(hwnd);
+    subclass_header(hwnd);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
