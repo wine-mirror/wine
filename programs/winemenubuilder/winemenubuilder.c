@@ -2340,7 +2340,24 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         }
     }
     else
-        r = !write_menu_entry(unix_link, link_name, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
+    {
+        char *arg = heap_printf("/Unix \"%s\"", unix_link);
+        if (arg)
+        {
+            WCHAR *warg = utf8_chars_to_wchars(arg);
+            if (warg)
+            {
+                char *menuarg = escape(warg);
+                if (menuarg)
+                {
+                    r = !write_menu_entry(unix_link, link_name, "start", menuarg, escaped_description, work_dir, icon_name);
+                    HeapFree(GetProcessHeap(), 0, menuarg);
+                }
+                HeapFree(GetProcessHeap(), 0, warg);
+            }
+            HeapFree(GetProcessHeap(), 0, arg);
+        }
+    }
 
     ReleaseSemaphore( hsem, 1, NULL );
 
