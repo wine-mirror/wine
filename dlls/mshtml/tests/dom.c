@@ -2029,9 +2029,9 @@ static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
     hres = IHTMLImgElement_get_name(img, &sName);
     ok_(__FILE__,line) (hres == S_OK, "get_Name failed: %08x\n", hres);
     ok_(__FILE__,line) (!strcmp_wa (sName, pValue), "expected '%s' got '%s'\n", pValue, wine_dbgstr_w(sName));
+    IHTMLImgElement_Release(img);
     SysFreeString(sName);
 }
-
 
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
 static void _test_input_type(unsigned line, IHTMLInputElement *input, const char *extype)
@@ -2043,6 +2043,34 @@ static void _test_input_type(unsigned line, IHTMLInputElement *input, const char
     ok_(__FILE__,line) (hres == S_OK, "get_type failed: %08x\n", hres);
     ok_(__FILE__,line) (!strcmp_wa(type, extype), "type=%s, expected %s\n", wine_dbgstr_w(type), extype);
     SysFreeString(type);
+}
+
+#define test_input_name(u, c) _test_input_name(__LINE__,u, c)
+static void _test_input_name(unsigned line, IHTMLInputElement *input, const char *exname)
+{
+    BSTR name = (BSTR)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLInputElement_get_name(input, &name);
+    ok_(__FILE__,line) (hres == S_OK, "get_name failed: %08x\n", hres);
+    if(exname)
+        ok_(__FILE__,line) (!strcmp_wa (name, exname), "name=%s, expected %s\n", wine_dbgstr_w(name), exname);
+    else
+        ok_(__FILE__,line) (!name, "name=%p, expected NULL\n", name);
+    SysFreeString(name);
+}
+
+#define test_input_set_name(u, c) _test_input_set_name(__LINE__,u, c)
+static void _test_input_set_name(unsigned line, IHTMLInputElement *input, const char *name)
+{
+    BSTR tmp = a2bstr(name);
+    HRESULT hres;
+
+    hres = IHTMLInputElement_put_name(input, tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_name failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    _test_input_name(line, input, name);
 }
 
 #define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
@@ -5733,6 +5761,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_checked(input, VARIANT_FALSE);
         test_input_set_checked(input, VARIANT_TRUE);
         test_input_set_checked(input, VARIANT_FALSE);
+
+        test_input_name(input, NULL);
+        test_input_set_name(input, "test");
 
         test_input_src(input, NULL);
         test_input_set_src(input, "about:blank");

@@ -196,8 +196,20 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&name_str, v);
+    nsres = nsIDOMHTMLInputElement_SetName(This->nsinput, &name_str);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetName failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *p)
@@ -206,6 +218,7 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
     nsAString name_str;
     const PRUnichar *name;
     nsresult nsres;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -214,16 +227,14 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
     nsres = nsIDOMHTMLInputElement_GetName(This->nsinput, &name_str);
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&name_str, &name);
-        *p = SysAllocString(name);
+        *p = *name ? SysAllocString(name) : NULL;
     }else {
         ERR("GetName failed: %08x\n", nsres);
-        return E_FAIL;
+        hres = E_FAIL;
     }
 
     nsAString_Finish(&name_str);
-
-    TRACE("name=%s\n", debugstr_w(*p));
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_status(IHTMLInputElement *iface, VARIANT_BOOL v)
