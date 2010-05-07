@@ -1216,7 +1216,7 @@ done:
 
 static UINT msi_copy_outval(LPWSTR val, LPWSTR out, LPDWORD size)
 {
-    UINT r;
+    UINT r = ERROR_SUCCESS;
 
     if (!val)
         return ERROR_UNKNOWN_PROPERTY;
@@ -1236,7 +1236,7 @@ static UINT msi_copy_outval(LPWSTR val, LPWSTR out, LPDWORD size)
     if (size)
         *size = lstrlenW(val);
 
-    return ERROR_SUCCESS;
+    return r;
 }
 
 UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
