@@ -249,15 +249,6 @@ BOOL WINAPI HeapUnlock(
 
 
 /***********************************************************************
- *           GetProcessHeap    (KERNEL32.@)
- */
-HANDLE WINAPI GetProcessHeap(void)
-{
-    return NtCurrentTeb()->Peb->ProcessHeap;
-}
-
-
-/***********************************************************************
  *           GetProcessHeaps    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
