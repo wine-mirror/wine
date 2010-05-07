@@ -2033,6 +2033,18 @@ static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
 }
 
 
+#define test_input_type(i,t) _test_input_type(__LINE__,i,t)
+static void _test_input_type(unsigned line, IHTMLInputElement *input, const char *extype)
+{
+    BSTR type;
+    HRESULT hres;
+
+    hres = IHTMLInputElement_get_type(input, &type);
+    ok_(__FILE__,line) (hres == S_OK, "get_type failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(type, extype), "type=%s, expected %s\n", wine_dbgstr_w(type), extype);
+    SysFreeString(type);
+}
+
 #define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
 static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VARIANT_BOOL exb)
 {
@@ -5701,6 +5713,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem3_set_disabled((IUnknown*)input, VARIANT_FALSE);
         test_input_get_disabled(input, VARIANT_FALSE);
         test_elem_client_size((IUnknown*)elem);
+        test_input_type(input, "text");
 
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_node_put_value_str((IUnknown*)elem, "test");
