@@ -37,13 +37,12 @@ static void test_widenpath(void)
 {
     HDC hdc = GetDC(0);
     HPEN greenPen, narrowPen;
-    HPEN oldPen;
     POINT pnt[6];
     INT nSize, ret;
 
     /* Create a pen to be used in WidenPath */
     greenPen = CreatePen(PS_SOLID, 10, RGB(0,0,0));
-    oldPen = SelectObject(hdc, greenPen);
+    SelectObject(hdc, greenPen);
 
     /* Prepare a path */
     pnt[0].x = 100;
@@ -85,7 +84,7 @@ static void test_widenpath(void)
 
     /* Test when the pen width is equal to 1. The path should change too */
     narrowPen = CreatePen(PS_SOLID, 1, RGB(0,0,0));
-    oldPen = SelectObject(hdc, narrowPen);
+    SelectObject(hdc, narrowPen);
     BeginPath(hdc);
     Polyline(hdc, pnt, 6);
     EndPath(hdc);
