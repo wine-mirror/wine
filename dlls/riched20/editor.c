@@ -1495,7 +1495,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
         {
           /* Delete any incomplete table row at the end of the rich text. */
           int nOfs, nChars;
-          ME_DisplayItem *pCell;
           ME_DisplayItem *para;
 
           parser.rtfMinor = rtfRow;
@@ -1515,7 +1514,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
             assert(para->member.para.nFlags & MEPF_ROWEND);
             para = para->member.para.next_para;
           }
-          pCell = para->member.para.pCell;
 
           editor->pCursors[1].pPara = para;
           editor->pCursors[1].pRun = ME_FindItemFwd(para, diRun);
