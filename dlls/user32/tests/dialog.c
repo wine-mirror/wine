@@ -1061,7 +1061,7 @@ static void test_MessageBoxFontTest(void)
         0x01,0x00,              /* Version */
         0xff,0xff,              /* Extended template marker */
         0x00,0x00,0x00,0x00,    /* Context Help ID */
-        0x00,0x00,0x00,0x00,    /* Extended style */
+        0x40,0x00,0x00,0x00,    /* Extended style (WM_EX_MDICHILD) */
         0xc0,0x00,0xc8,0x80,    /* Style (WS_SYSMENU|WS_CAPTION|WS_POPUP|DS_SETFONT|DS_MODALFRAME) */
         0x01,0x00,              /* Control count */
         0x00,0x00,              /* X */
