@@ -70,7 +70,7 @@ static LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
             if(pt.x >= GetSplitPos(hWnd)-pane->size/2 &&
                     pt.x <= GetSplitPos(hWnd)+pane->size/2)
-                SetCursor(LoadCursor(0, IDC_SIZEWE));
+                SetCursor(LoadCursorW(0, (LPWSTR)IDC_SIZEWE));
             break;
         case WM_LBUTTONDOWN:
             if((short)LOWORD(lParam) >= GetSplitPos(hWnd)-pane->size/2 &&
@@ -103,8 +103,8 @@ static LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             if((int)wParam != TYPELIB_TREE) break;
             switch(((LPNMHDR)lParam)->code)
             {
-                case TVN_SELCHANGED:
-                    UpdateData(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                case TVN_SELCHANGEDW:
+                    UpdateData(((NMTREEVIEWW *)lParam)->itemNew.hItem);
                     break;
             }
             break;
@@ -123,22 +123,22 @@ static LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             HeapFree(GetProcessHeap(), 0, pane);
             break;
         default:
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
-BOOL PaneRegisterClass(void)
+BOOL PaneRegisterClassW(void)
 {
-    WNDCLASS wcc;
+    WNDCLASSW wcc;
     const WCHAR wszPaneClass[] = { 'P','A','N','E','\0' };
 
-    memset(&wcc, 0, sizeof(WNDCLASS));
+    memset(&wcc, 0, sizeof(WNDCLASSW));
     wcc.lpfnWndProc = PaneProc;
     wcc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
     wcc.lpszClassName = wszPaneClass;
 
-    if(!RegisterClass(&wcc))
+    if(!RegisterClassW(&wcc))
         return FALSE;
     return TRUE;
 }
@@ -149,7 +149,7 @@ BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
     PANE *pane;
 
     pane = HeapAlloc(GetProcessHeap(), 0, sizeof(PANE));
-    *hWndCreated = CreateWindow(wszPaneClass, NULL, WS_CHILD|WS_VISIBLE,
+    *hWndCreated = CreateWindowW(wszPaneClass, NULL, WS_CHILD|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,    hWnd, (HMENU)pane, hInst, NULL);
     if(!*hWndCreated)
     {

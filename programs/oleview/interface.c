@@ -28,12 +28,12 @@ typedef struct
 
 BOOL IsInterface(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = item;
 
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     if(!tvi.lParam) return FALSE;
 
     if(((ITEM_INFO*)tvi.lParam)->cFlag & INTERFACE) return TRUE;
@@ -43,22 +43,22 @@ BOOL IsInterface(HTREEITEM item)
 static IUnknown *GetInterface(void)
 {
     HTREEITEM hSelect;
-    TVITEM tvi;
+    TVITEMW tvi;
     CLSID clsid;
     IUnknown *unk;
 
     hSelect = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
             TVGN_CARET, 0);
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = hSelect;
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     CLSIDFromString(((ITEM_INFO *)tvi.lParam)->clsid, &clsid);
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
             TVGN_PARENT, (LPARAM)hSelect);
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     IUnknown_QueryInterface(((ITEM_INFO *)tvi.lParam)->pU, &clsid, (void *)&unk);
 
@@ -82,9 +82,9 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
         case WM_INITDIALOG:
             di = (DIALOG_INFO *)lParam;
             hObject = GetDlgItem(hDlgWnd, IDC_LABEL);
-            SetWindowText(hObject, di->wszLabel);
+            SetWindowTextW(hObject, di->wszLabel);
             hObject = GetDlgItem(hDlgWnd, IDC_IDENTIFIER);
-            SetWindowText(hObject, di->wszIdentifier);
+            SetWindowTextW(hObject, di->wszIdentifier);
             return TRUE;
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
@@ -96,22 +96,22 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 hRes = IPersistStream_IsDirty((IPersistStream *)unk);
                 IUnknown_Release(unk);
                 if(hRes == S_OK)
-                    LoadString(globals.hMainInst, IDS_FALSE, wszBuf,
+                    LoadStringW(globals.hMainInst, IDS_FALSE, wszBuf,
                             sizeof(wszBuf)/sizeof(wszBuf[0]));
-                else LoadString(globals.hMainInst, IDS_TRUE, wszBuf,
+                else LoadStringW(globals.hMainInst, IDS_TRUE, wszBuf,
                         sizeof(wszBuf)/sizeof(wszBuf[0]));
                 hObject = GetDlgItem(hDlgWnd, IDC_ISDIRTY);
-                SetWindowText(hObject, wszBuf);
+                SetWindowTextW(hObject, wszBuf);
                 return TRUE;
             case IDC_GETSIZEMAX_BUTTON:
                 unk = GetInterface();
                 IPersistStream_GetSizeMax((IPersistStream *)unk, &size);
                 IUnknown_Release(unk);
-                LoadString(globals.hMainInst, IDS_BYTES, wszBuf,
+                LoadStringW(globals.hMainInst, IDS_BYTES, wszBuf,
                         sizeof(wszBuf)/sizeof(wszBuf[0]));
                 wsprintfW(wszSize, wszFormat, U(size).LowPart, wszBuf);
                 hObject = GetDlgItem(hDlgWnd, IDC_GETSIZEMAX);
-                SetWindowText(hObject, wszSize);
+                SetWindowTextW(hObject, wszSize);
                 return TRUE;
             }
     }
@@ -128,7 +128,7 @@ static void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
     else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
-    DialogBoxParam(0, MAKEINTRESOURCE(DLG_IPERSISTSTREAM_IV),
+    DialogBoxParamW(0, MAKEINTRESOURCEW(DLG_IPERSISTSTREAM_IV),
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
@@ -142,7 +142,7 @@ static void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
     else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
-    DialogBoxParam(0, MAKEINTRESOURCE(DLG_IPERSIST_IV),
+    DialogBoxParamW(0, MAKEINTRESOURCEW(DLG_IPERSIST_IV),
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
@@ -153,13 +153,13 @@ static void DefaultInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
     di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
-    DialogBoxParam(0, MAKEINTRESOURCE(DLG_DEFAULT_IV),
+    DialogBoxParamW(0, MAKEINTRESOURCEW(DLG_DEFAULT_IV),
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
 void InterfaceViewer(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
     WCHAR *clsid;
     WCHAR wszName[MAX_LOAD_STRING];
     WCHAR wszParent[MAX_LOAD_STRING];
@@ -170,23 +170,23 @@ void InterfaceViewer(HTREEITEM item)
         '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
         '0','0','0','0','0','0','0','0','0','0','4','6','}','\0' };
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_TEXT;
     tvi.hItem = item;
     tvi.cchTextMax = MAX_LOAD_STRING;
     tvi.pszText = wszName;
 
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     clsid = ((ITEM_INFO*)tvi.lParam)->clsid;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_TEXT;
     tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
             TVGN_PARENT, (LPARAM)item);
     tvi.cchTextMax = MAX_LOAD_STRING;
     tvi.pszText = wszParent;
 
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     if(!memcmp(clsid, wszIPersistStream, sizeof(wszIPersistStream)))
         IPersistStreamInterfaceViewer(clsid, wszParent);

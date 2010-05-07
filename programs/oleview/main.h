@@ -138,7 +138,7 @@ void RefreshMenu(HTREEITEM item);
 
 /* pane.c */
 BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst);
-BOOL PaneRegisterClass(void);
+BOOL PaneRegisterClassW(void);
 void SetLeft(HWND hParent, HWND hWnd);
 void SetRight(HWND hParent, HWND hWnd);
 
@@ -153,7 +153,7 @@ void ReleaseInst(HTREEITEM item);
 
 /* typelib.c */
 BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName);
-BOOL TypeLibRegisterClass(void);
+BOOL TypeLibRegisterClassW(void);
 void UpdateData(HTREEITEM item);
 
 /* interface.c */
