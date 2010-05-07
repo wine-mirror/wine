@@ -106,8 +106,24 @@ static HRESULT WINAPI HTMLInputElement_Invoke(IHTMLInputElement *iface, DISPID d
 static HRESULT WINAPI HTMLInputElement_put_type(IHTMLInputElement *iface, BSTR v)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString type_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /*
+     * FIXME:
+     * On IE setting type works only on dynamically created elements before adding them to DOM tree.
+     */
+    nsAString_InitDepend(&type_str, v);
+    nsres = nsIDOMHTMLInputElement_SetType(This->nsinput, &type_str);
+    nsAString_Finish(&type_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetType failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *p)
