@@ -677,13 +677,16 @@ static BOOL CURSORICON_GetFileEntry( LPVOID dir, int n,
 {
     CURSORICONFILEDIR *filedir = dir;
     CURSORICONFILEDIRENTRY *entry;
+    BITMAPINFOHEADER *info;
 
     if ( filedir->idCount <= n )
         return FALSE;
     entry = &filedir->idEntries[n];
+    /* FIXME: check against file size */
+    info = (BITMAPINFOHEADER *)((char *)dir + entry->dwDIBOffset);
     *width = entry->bWidth;
     *height = entry->bHeight;
-    *bits = entry->bColorCount;
+    *bits = info->biBitCount;
     return TRUE;
 }
 
