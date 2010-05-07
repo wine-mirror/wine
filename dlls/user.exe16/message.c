@@ -2403,7 +2403,7 @@ static LRESULT listbox_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         if (is_old_app( hwnd ))
         {
             DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-            int width, height, remaining, item_height;
+            int height, remaining, item_height;
             RECT rect;
 
             /* give a margin for error to old 16 bits programs - if we need
@@ -2413,7 +2413,6 @@ static LRESULT listbox_proc16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             if (!(style & LBS_NOINTEGRALHEIGHT) && !(style & LBS_OWNERDRAWVARIABLE))
             {
                 GetClientRect( hwnd, &rect );
-                width  = rect.right - rect.left;
                 height = rect.bottom - rect.top;
                 item_height = wow_handlers32.listbox_proc( hwnd, LB_GETITEMHEIGHT, 0, 0, FALSE );
                 remaining = item_height ? (height % item_height) : 0;
