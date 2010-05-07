@@ -122,7 +122,8 @@ static void SaveIdl(WCHAR *wszFileName)
     char *wszIdl;
     TYPELIB_DATA *data;
 
-    hIDL = TreeView_GetChild(typelib.hTree, TVI_ROOT);
+    hIDL = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)TVI_ROOT);
 
     memset(&tvi, 0, sizeof(TVITEM));
     tvi.hItem = hIDL;
@@ -280,7 +281,8 @@ static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
 
     memset(&tvi, 0, sizeof(tvi));
 
-    hCur = TreeView_GetChild(typelib.hTree, hParent);
+    hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)hParent);
     if(!hCur) return;
 
     do
@@ -289,7 +291,8 @@ static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
         SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
         if(tvi.lParam && ((TYPELIB_DATA *)(tvi.lParam))->idlLen)
             AddToTLDataStrWithTabsW(pData, ((TYPELIB_DATA *)(tvi.lParam))->idl);
-    }while((hCur = TreeView_GetNextSibling(typelib.hTree, hCur)));
+    } while((hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_NEXT, (LPARAM)hCur)));
 }
 
 static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
@@ -857,7 +860,8 @@ static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
 {
     TVITEM tvi;
 
-    hCur = TreeView_GetChild(typelib.hTree, hCur);
+    hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)hCur);
     memset(&tvi, 0, sizeof(TVITEM));
     tvi.mask = TVIF_PARAM;
 
@@ -869,7 +873,8 @@ static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
             AddToTLDataStrW(pTLData, wszNewLine);
             AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
         }
-        hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
+        hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+                TVGN_NEXT, (LPARAM)hCur);
     }
 }
 
@@ -883,7 +888,8 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
         'a','l','l',' ','t','y','p','e','s',' ','d','e','f','i','n','e','d',' ',
         'i','n',' ','t','h','i','s',' ','t','y','p','e','l','i','b','\0' };
 
-    hFirst = TreeView_GetChild(typelib.hTree, hFirst);
+    hFirst = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)hFirst);
 
     AddToTLDataStrWithTabsW(pTLData, wszPredefinition);
     AddToTLDataStrW(pTLData, wszNewLine);
@@ -904,7 +910,8 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
             AddToTLDataStrWithTabsW(pTLData, wszText);
             AddToTLDataStrW(pTLData, wszNewLine);
         }
-        hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
+        hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+                TVGN_NEXT, (LPARAM)hCur);
     }
 }
 
@@ -1527,15 +1534,19 @@ static void EmptyTLTree(void)
     TVITEM tvi;
 
     tvi.mask = TVIF_PARAM;
-    cur = TreeView_GetChild(typelib.hTree, TVI_ROOT);
+    cur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)TVI_ROOT);
 
     while(TRUE)
     {
         del = cur;
-        cur = TreeView_GetChild(typelib.hTree, del);
+        cur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
+                TVGN_CHILD, (LPARAM)del);
 
-        if(!cur) cur = TreeView_GetNextSibling(typelib.hTree, del);
-        if(!cur) cur = TreeView_GetParent(typelib.hTree, del);
+        if(!cur) cur = (HTREEITEM)SendMessageW(typelib.hTree,
+                TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)del);
+        if(!cur) cur = (HTREEITEM)SendMessageW(typelib.hTree,
+                TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)del);
 
         tvi.hItem = del;
         SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
@@ -1622,7 +1633,8 @@ BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
         TVITEM tvi;
 
         memset(&tvi, 0, sizeof(TVITEM));
-        tvi.hItem = TreeView_GetSelection(globals.hTree);
+        tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                TVGN_CARET, 0);
 
         SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
         lstrcpyW(typelib.wszFileName, ((ITEM_INFO*)tvi.lParam)->path);

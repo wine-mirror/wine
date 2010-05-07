@@ -47,7 +47,8 @@ static IUnknown *GetInterface(void)
     CLSID clsid;
     IUnknown *unk;
 
-    hSelect = TreeView_GetSelection(globals.hTree);
+    hSelect = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_CARET, 0);
 
     memset(&tvi, 0, sizeof(TVITEM));
     tvi.hItem = hSelect;
@@ -55,7 +56,8 @@ static IUnknown *GetInterface(void)
     CLSIDFromString(((ITEM_INFO *)tvi.lParam)->clsid, &clsid);
 
     memset(&tvi, 0, sizeof(TVITEM));
-    tvi.hItem = TreeView_GetParent(globals.hTree, hSelect);
+    tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_PARENT, (LPARAM)hSelect);
     SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 
     IUnknown_QueryInterface(((ITEM_INFO *)tvi.lParam)->pU, &clsid, (void *)&unk);
@@ -179,7 +181,8 @@ void InterfaceViewer(HTREEITEM item)
 
     memset(&tvi, 0, sizeof(TVITEM));
     tvi.mask = TVIF_TEXT;
-    tvi.hItem = TreeView_GetParent(globals.hTree, item);
+    tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_PARENT, (LPARAM)item);
     tvi.cchTextMax = MAX_LOAD_STRING;
     tvi.pszText = wszParent;
 

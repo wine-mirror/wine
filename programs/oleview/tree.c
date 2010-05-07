@@ -148,7 +148,8 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
     SendMessage(globals.hTree, TVM_SETITEM, 0, (LPARAM)&tvi);
 
     tvi.mask = TVIF_TEXT;
-    hCur = TreeView_GetChild(globals.hTree, tree.hI);
+    hCur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)tree.hI);
 
     while(hCur)
     {
@@ -157,7 +158,8 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
 
         if(!tvi.lParam)
         {
-            hCur = TreeView_GetNextSibling(globals.hTree, hCur);
+            hCur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                    TVGN_NEXT, (LPARAM)hCur);
             continue;
         }
 
@@ -174,7 +176,8 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
                     wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid, NULL);
             SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
         }
-        hCur = TreeView_GetNextSibling(globals.hTree, hCur);
+        hCur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                TVGN_NEXT, (LPARAM)hCur);
     }
 
     RefreshMenu(item);
@@ -200,11 +203,13 @@ void ReleaseInst(HTREEITEM item)
 
     SendMessage(globals.hTree, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)item);
 
-    cur = TreeView_GetChild(globals.hTree, item);
+    cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)item);
     while(cur)
     {
         SendMessage(globals.hTree, TVM_DELETEITEM, 0, (LPARAM)cur);
-        cur = TreeView_GetChild(globals.hTree, item);
+        cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                TVGN_CHILD, (LPARAM)item);
     }
 
     tvi.mask = TVIF_CHILDREN|TVIF_STATE;
@@ -242,7 +247,8 @@ BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
 
         if(!tvi.lParam) return FALSE;
 
-        tvi.hItem = TreeView_GetParent(globals.hTree, tvi.hItem);
+        tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                TVGN_PARENT, (LPARAM)tvi.hItem);
     }
     return ret;
 }
@@ -304,8 +310,10 @@ static void AddCOMandAll(void)
 
             RegCloseKey(hInfo);
 
-            if(tree.hGBCC) curSearch = TreeView_GetChild(globals.hTree, tree.hGBCC);
-            else curSearch = TreeView_GetChild(globals.hTree, TVI_ROOT);
+            if(tree.hGBCC) curSearch = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)tree.hGBCC);
+            else curSearch = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
 
             while(curSearch)
             {
@@ -324,7 +332,8 @@ static void AddCOMandAll(void)
                     SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
                     break;
                 }
-                curSearch = TreeView_GetNextSibling(globals.hTree, curSearch);
+                curSearch = (HTREEITEM)SendMessageW(globals.hTree,
+                        TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)curSearch);
             }
         }
         RegCloseKey(hCurKey);
@@ -600,18 +609,23 @@ void EmptyTree(void)
     TVITEM tvi;
 
     tvi.mask = TVIF_PARAM;
-    cur = TreeView_GetChild(globals.hTree, TVI_ROOT);
+    cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_CHILD, (LPARAM)TVI_ROOT);
 
     while(TRUE)
     {
         del = cur;
-        cur = TreeView_GetChild(globals.hTree, del);
+        cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                TVGN_CHILD, (LPARAM)del);
 
-        if(!cur) cur = TreeView_GetNextSibling(globals.hTree, del);
+        if(!cur) cur = (HTREEITEM)SendMessageW(globals.hTree,
+                TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)del);
         if(!cur)
         {
-            cur = TreeView_GetPrevSibling(globals.hTree, del);
-            if(!cur) cur = TreeView_GetParent(globals.hTree, del);
+            cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+                    TVGN_PREVIOUS, (LPARAM)del);
+            if(!cur) cur = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)del);
 
             tvi.hItem = del;
             SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);

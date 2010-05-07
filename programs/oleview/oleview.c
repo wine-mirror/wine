@@ -219,7 +219,8 @@ void RefreshMenu(HTREEITEM item)
     tvi.hItem = item;
     SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 
-    parent = TreeView_GetParent(globals.hTree, item);
+    parent = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
+            TVGN_PARENT, (LPARAM)item);
 
     SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
     SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
@@ -290,27 +291,32 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             ShellAbout(hWnd, wszAbout, wszAboutVer, NULL);
             break;
         case IDM_COPYCLSID:
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             CopyClsid(hSelect);
             break;
         case IDM_HTMLTAG:
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             CopyHTMLTag(hSelect);
             break;
         case IDM_CREATEINST:
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             CreateInst(hSelect, NULL);
             SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
             break;
         case IDM_CREATEINSTON:
             if(DialogBox(0, MAKEINTRESOURCE(DLG_CREATEINSTON),
                         hWnd, CreateInstOnProc) == IDCANCEL) break;
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             CreateInst(hSelect, globals.wszMachineName);
             SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
             break;
         case IDM_RELEASEINST:
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             ReleaseInst(hSelect);
             RefreshMenu(hSelect);
             RefreshDetails(hSelect);
@@ -322,7 +328,8 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             EmptyTree();
             if(globals.bExpert) AddTreeEx();
             else AddTree();
-            hSelect = TreeView_GetChild(globals.hTree, TVI_ROOT);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
             SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
             RefreshMenu(hSelect);
             break;
@@ -362,7 +369,8 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             EmptyTree();
             if(globals.bExpert) AddTreeEx();
             else AddTree();
-            hSelect = TreeView_GetChild(globals.hTree, TVI_ROOT);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
             SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
             RefreshMenu(hSelect);
             break;
@@ -414,7 +422,8 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             break;
             }
         case IDM_VIEW:
-            hSelect = TreeView_GetSelection(globals.hTree);
+            hSelect = (HTREEITEM)SendMessageW(globals.hTree,
+                    TVM_GETNEXTITEM, TVGN_CARET, 0);
             if(IsInterface(hSelect)) InterfaceViewer(hSelect);
             else CreateTypeLibWindow(globals.hMainInst, NULL);
             break;

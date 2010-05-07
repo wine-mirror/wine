@@ -295,7 +295,7 @@ void RefreshDetails(HTREEITEM item)
 
     if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag & SHOWALL)
     {
-        if(TabCtrl_GetItemCount(details.hTab) == 1)
+        if(SendMessageW(details.hTab, TCM_GETITEMCOUNT, 0, 0) == 1)
         {
             TCITEM tci;
             memset(&tci, 0, sizeof(TCITEM));
@@ -377,7 +377,7 @@ static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 case TCN_SELCHANGE:
                     ShowWindow(details.hReg, SW_HIDE);
-                    sel = TabCtrl_GetCurSel(details.hTab);
+                    sel = SendMessageW(details.hTab, TCM_GETCURSEL, 0, 0);
 
                     if(sel==0) ShowWindow(details.hReg, SW_SHOW);
                     break;
