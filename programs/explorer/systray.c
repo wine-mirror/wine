@@ -20,7 +20,6 @@
 
 #include <assert.h>
 
-#define UNICODE
 #define NONAMELESSUNION
 #define _WIN32_IE 0x500
 #include <windows.h>
