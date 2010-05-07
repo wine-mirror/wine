@@ -7426,7 +7426,8 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
     LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3,
     LOCALE_SABBREVDAYNAME4, LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6,
     LOCALE_SABBREVDAYNAME7,
-    LOCALE_S1159, LOCALE_S2359
+    LOCALE_S1159, LOCALE_S2359,
+    LOCALE_SDATE
   };
   static const BYTE ParseDateMonths[] =
   {
@@ -7498,7 +7499,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
             dp.dwFlags[dp.dwCount] |= (DP_MONTH|DP_DATESEP);
             dp.dwCount++;
           }
-          else if (i > 39)
+          else if (i > 39 && i < 42)
           {
             if (!dp.dwCount || dp.dwParseFlags & (DP_AM|DP_PM))
               hRet = DISP_E_TYPEMISMATCH;
@@ -7545,7 +7546,16 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
       if (!dp.dwCount || !strIn[1])
         hRet = DISP_E_TYPEMISMATCH;
       else
-        dp.dwFlags[dp.dwCount - 1] |= DP_TIMESEP;
+        if (tokens[42][0] == *strIn)
+        {
+          dwDateSeps++;
+          if (dwDateSeps > 2)
+            hRet = DISP_E_TYPEMISMATCH;
+          else
+            dp.dwFlags[dp.dwCount - 1] |= DP_DATESEP;
+        }
+        else
+          dp.dwFlags[dp.dwCount - 1] |= DP_TIMESEP;
     }
     else if (*strIn == '-' || *strIn == '/')
     {
@@ -7607,14 +7617,6 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
       break;
 
     case 0x3: /* TTT TTTDD TTTDDD */
-      if (iDate && dp.dwCount == 3)
-        {
-          /* DDD */
-          if ((dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)) ||
-              (dp.dwFlags[2] & (DP_AM|DP_PM)))
-            hRet = DISP_E_TYPEMISMATCH;
-          break;
-        }
       if (dp.dwCount > 4 &&
           ((dp.dwFlags[3] & (DP_AM|DP_PM)) || (dp.dwFlags[4] & (DP_AM|DP_PM)) ||
           (dp.dwFlags[5] & (DP_AM|DP_PM))))
@@ -7707,13 +7709,6 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
       dp.dwCount -= 3;
       break;
 
-    case 0x1B: /* localized DDDTTT */
-      if (!iDate)
-        {
-          hRet = DISP_E_TYPEMISMATCH;
-          break;
-        }
-      /* .. fall through .. */
     case 0x18: /* DDDTTT */
       if ((dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)) ||
           (dp.dwFlags[2] & (DP_AM|DP_PM)))

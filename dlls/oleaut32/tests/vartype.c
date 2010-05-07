@@ -3436,10 +3436,14 @@ static void test_VarDateFromStr(void)
   /* Native fails "1999 January 3, 9AM". I consider that a bug in native */
 
   /* test a non-english data string */
+  DFS("02.01.1970"); EXPECT_MISMATCH;
   DFS("02.01.1970 00:00:00"); EXPECT_MISMATCH;
   lcid = MAKELCID(MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN),SORT_DEFAULT);
   DFS("02.01.1970"); EXPECT_DBL(25570.0);
   DFS("02.01.1970 00:00:00"); EXPECT_DBL(25570.0);
+  lcid = MAKELCID(MAKELANGID(LANG_SPANISH,SUBLANG_SPANISH),SORT_DEFAULT);
+  DFS("02.01.1970"); EXPECT_MISMATCH;
+  DFS("02.01.1970 00:00:00"); EXPECT_MISMATCH;
 }
 
 static void test_VarDateCopy(void)
