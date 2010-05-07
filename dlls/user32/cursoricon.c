@@ -2294,28 +2294,40 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
         if (flags & DI_IMAGE)
         {
-            BITMAPINFOHEADER bmih;
-            unsigned char *dibBits;
+            if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
+            {
+                hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, xorBitmapBits );
+            }
+            else
+            {
+                unsigned char *dibBits;
+                BITMAPINFO *bmi = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                             FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+                bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bmi->bmiHeader.biWidth = ptr->nWidth;
+                bmi->bmiHeader.biHeight = -ptr->nHeight;
+                bmi->bmiHeader.biPlanes = ptr->bPlanes;
+                bmi->bmiHeader.biBitCount = ptr->bBitsPerPixel;
+                bmi->bmiHeader.biCompression = BI_RGB;
+                /* FIXME: color table */
 
-            memset(&bmih, 0, sizeof(BITMAPINFOHEADER));
-            bmih.biSize = sizeof(BITMAPINFOHEADER);
-            bmih.biWidth = ptr->nWidth;
-            bmih.biHeight = -ptr->nHeight;
-            bmih.biPlanes = ptr->bPlanes;
-            bmih.biBitCount = ptr->bBitsPerPixel;
-            bmih.biCompression = BI_RGB;
+                hXorBits = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, (void*)&dibBits, NULL, 0);
+                if (hXorBits)
+                {
+                    if(has_alpha)
+                        premultiply_alpha_channel(dibBits, xorBitmapBits, xorLength);
+                    else
+                        memcpy(dibBits, xorBitmapBits, xorLength);
+                }
+            }
 
-            hXorBits = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS,
-                                        (void*)&dibBits, NULL, 0);
-
-            if (hXorBits && dibBits)
+            if (hXorBits)
             {
                 if(has_alpha)
                 {
                     BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
 
                     /* Do the alpha blending render */
-                    premultiply_alpha_channel(dibBits, xorBitmapBits, xorLength);
                     hBitTemp = SelectObject( hMemDC, hXorBits );
 
                     if (DoOffscreen)
@@ -2329,7 +2341,6 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                 }
                 else
                 {
-                    memcpy(dibBits, xorBitmapBits, xorLength);
                     hBitTemp = SelectObject( hMemDC, hXorBits );
                     if (DoOffscreen)
                         StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
