@@ -163,43 +163,54 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         BITMAP bmMask;
         BITMAP bmColour;
         LONG cbMaskBits;
-        LONG cbColourBits;
+        LONG cbColourBits = 0;
         char *buffer;
 
         if (!GetIconInfo(nid->hIcon, &iconinfo))
             goto noicon;
 
         if (!GetObjectW(iconinfo.hbmMask, sizeof(bmMask), &bmMask) ||
-            !GetObjectW(iconinfo.hbmColor, sizeof(bmColour), &bmColour))
+            (iconinfo.hbmColor && !GetObjectW(iconinfo.hbmColor, sizeof(bmColour), &bmColour)))
         {
             DeleteObject(iconinfo.hbmMask);
-            DeleteObject(iconinfo.hbmColor);
+            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
             goto noicon;
         }
 
         cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel + 15) / 16 * 2;
-        cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
+        if (iconinfo.hbmColor)
+            cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
         cds.cbData = sizeof(*data) + cbMaskBits + cbColourBits;
         buffer = HeapAlloc(GetProcessHeap(), 0, cds.cbData);
         if (!buffer)
         {
             DeleteObject(iconinfo.hbmMask);
-            DeleteObject(iconinfo.hbmColor);
+            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
             return FALSE;
         }
 
         data = (struct notify_data *)buffer;
         memset( data, 0, sizeof(*data) );
-        data->width  = bmColour.bmWidth;
-        data->height = bmColour.bmHeight;
-        data->planes = bmColour.bmPlanes;
-        data->bpp    = bmColour.bmBitsPixel;
         buffer += sizeof(*data);
         GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
-        buffer += cbMaskBits;
-        GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
+        if (!iconinfo.hbmColor)
+        {
+            data->width  = bmMask.bmWidth;
+            data->height = bmMask.bmHeight / 2;
+            data->planes = 1;
+            data->bpp    = 1;
+        }
+        else
+        {
+            data->width  = bmColour.bmWidth;
+            data->height = bmColour.bmHeight;
+            data->planes = bmColour.bmPlanes;
+            data->bpp    = bmColour.bmBitsPixel;
+            buffer += cbMaskBits;
+            GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
+            DeleteObject(iconinfo.hbmColor);
+        }
         DeleteObject(iconinfo.hbmMask);
-        DeleteObject(iconinfo.hbmColor);
     }
 
 noicon:
