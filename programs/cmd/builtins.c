@@ -175,7 +175,6 @@ void WCMD_copy (void) {
   DWORD len;
   static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
   BOOL copyToDir = FALSE;
-  BOOL copyFromDir = FALSE;
   WCHAR srcspec[MAX_PATH];
   DWORD attribs;
   WCHAR drive[10];
@@ -204,7 +203,6 @@ void WCMD_copy (void) {
   /* If a directory, then add \* on the end when searching */
   if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
     strcatW(srcpath, slashW);
-    copyFromDir = TRUE;
     strcatW(srcspec, slashW);
     strcatW(srcspec, starW);
   } else {
