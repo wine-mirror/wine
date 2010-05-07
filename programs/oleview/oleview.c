@@ -43,26 +43,26 @@ static INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPAR
     switch(uMsg)
     {
         case WM_INITDIALOG:
-            if(RegOpenKey(HKEY_LOCAL_MACHINE, wszReg, &hKey) != ERROR_SUCCESS)
-                RegCreateKey(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+            if(RegOpenKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey) != ERROR_SUCCESS)
+                RegCreateKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey);
 
             bufSize = sizeof(buffer);
-            if(RegGetValue(hKey, NULL, wszEnableDCOM, RRF_RT_REG_SZ,
+            if(RegGetValueW(hKey, NULL, wszEnableDCOM, RRF_RT_REG_SZ,
                         NULL, buffer, &bufSize) != ERROR_SUCCESS)
             {
                 bufSize = sizeof(wszYes);
-                RegSetValueEx(hKey, wszEnableDCOM, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+                RegSetValueExW(hKey, wszEnableDCOM, 0, REG_SZ, (BYTE*)wszYes, bufSize);
             }
 
             CheckDlgButton(hDlgWnd, IDC_ENABLEDCOM,
                     buffer[0]=='Y' ? BST_CHECKED : BST_UNCHECKED);
 
             bufSize = sizeof(buffer);
-            if(RegGetValue(hKey, NULL, wszEnableRemote, RRF_RT_REG_SZ,
+            if(RegGetValueW(hKey, NULL, wszEnableRemote, RRF_RT_REG_SZ,
                         NULL, buffer, &bufSize) != ERROR_SUCCESS)
             {
                 bufSize = sizeof(wszYes);
-                RegSetValueEx(hKey, wszEnableRemote, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+                RegSetValueExW(hKey, wszEnableRemote, 0, REG_SZ, (BYTE*)wszYes, bufSize);
             }
 
             CheckDlgButton(hDlgWnd, IDC_ENABLEREMOTE,
@@ -75,13 +75,13 @@ static INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPAR
             case IDOK:
                 bufSize = sizeof(wszYes);
 
-                RegOpenKey(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+                RegOpenKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey);
 
-                RegSetValueEx(hKey, wszEnableDCOM, 0, REG_SZ,
+                RegSetValueExW(hKey, wszEnableDCOM, 0, REG_SZ,
                         IsDlgButtonChecked(hDlgWnd, IDC_ENABLEDCOM) == BST_CHECKED ?
                         (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
 
-                RegSetValueEx(hKey, wszEnableRemote, 0, REG_SZ,
+                RegSetValueExW(hKey, wszEnableRemote, 0, REG_SZ,
                         IsDlgButtonChecked(hDlgWnd, IDC_ENABLEREMOTE) == BST_CHECKED ?
                         (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
 
@@ -110,8 +110,8 @@ static INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam,
                 memset(globals.wszMachineName, 0, sizeof(WCHAR[MAX_LOAD_STRING]));
                 hEdit = GetDlgItem(hDlgWnd, IDC_MACHINE);
 
-                if (GetWindowTextLength(hEdit)>0)
-                    GetWindowText(hEdit, globals.wszMachineName, MAX_LOAD_STRING);
+                if (GetWindowTextLengthW(hEdit)>0)
+                    GetWindowTextW(hEdit, globals.wszMachineName, MAX_LOAD_STRING);
 
                 EndDialog(hDlgWnd, IDOK);
                 return TRUE;
@@ -124,11 +124,11 @@ static INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam,
     return FALSE;
 }
 
-static void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
+static void InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn, WCHAR *wszFilter,
         WCHAR *wszTitle, WCHAR *wszFileName)
 {
-    memset(pofn, 0, sizeof(OPENFILENAME));
-    pofn->lStructSize = sizeof(OPENFILENAME);
+    memset(pofn, 0, sizeof(OPENFILENAMEW));
+    pofn->lStructSize = sizeof(OPENFILENAMEW);
     pofn->hwndOwner = hWnd;
     pofn->hInstance = globals.hMainInst;
 
@@ -142,12 +142,12 @@ static void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
 
 static void CopyClsid(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = item;
     tvi.cchTextMax = MAX_LOAD_STRING;
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     if(OpenClipboard(globals.hMainWnd) && EmptyClipboard() && tvi.lParam)
     {
@@ -163,12 +163,12 @@ static void CopyClsid(HTREEITEM item)
 
 static void CopyHTMLTag(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = item;
     tvi.cchTextMax = MAX_LOAD_STRING;
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     if(OpenClipboard(globals.hMainWnd) && EmptyClipboard() && tvi.lParam)
     {
@@ -211,20 +211,20 @@ static void ResizeChild(void)
 
 void RefreshMenu(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
     HTREEITEM parent;
     HMENU hMenu = GetMenu(globals.hMainWnd);
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = item;
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     parent = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
             TVGN_PARENT, (LPARAM)item);
 
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
 
     if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag&SHOWALL)
     {
@@ -237,14 +237,14 @@ void RefreshMenu(HTREEITEM item)
             EnableMenuItem(hMenu, IDM_CREATEINST, MF_ENABLED);
             EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_ENABLED);
             EnableMenuItem(hMenu, IDM_RELEASEINST, MF_GRAYED);
-            SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, TRUE);
+            SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, TRUE);
         }
         else 
         {
             EnableMenuItem(hMenu, IDM_CREATEINST, MF_GRAYED);
             EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_GRAYED);
             EnableMenuItem(hMenu, IDM_RELEASEINST, MF_ENABLED);
-            SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, TRUE);
+            SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, TRUE);
         }
     }
     else if(tvi.lParam && 
@@ -257,7 +257,7 @@ void RefreshMenu(HTREEITEM item)
         EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
         EnableMenuItem(hMenu, IDM_HTMLTAG, MF_GRAYED);
         EnableMenuItem(hMenu, IDM_VIEW, MF_ENABLED);
-        SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, TRUE);
+        SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, TRUE);
     }
     else
     {
@@ -284,11 +284,11 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
     switch(wParam)
     {
         case IDM_ABOUT:
-            LoadString(globals.hMainInst, IDS_ABOUT, wszAbout,
+            LoadStringW(globals.hMainInst, IDS_ABOUT, wszAbout,
                     sizeof(wszAbout)/sizeof(wszAbout[0]));
-            LoadString(globals.hMainInst, IDS_ABOUTVER, wszAboutVer,
+            LoadStringW(globals.hMainInst, IDS_ABOUTVER, wszAboutVer,
                     sizeof(wszAboutVer)/sizeof(wszAboutVer[0]));
-            ShellAbout(hWnd, wszAbout, wszAboutVer, NULL);
+            ShellAboutW(hWnd, wszAbout, wszAboutVer, NULL);
             break;
         case IDM_COPYCLSID:
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
@@ -304,15 +304,15 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
                     TVM_GETNEXTITEM, TVGN_CARET, 0);
             CreateInst(hSelect, NULL);
-            SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
+            SendMessageW(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
             break;
         case IDM_CREATEINSTON:
-            if(DialogBox(0, MAKEINTRESOURCE(DLG_CREATEINSTON),
+            if(DialogBoxW(0, MAKEINTRESOURCEW(DLG_CREATEINSTON),
                         hWnd, CreateInstOnProc) == IDCANCEL) break;
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
                     TVM_GETNEXTITEM, TVGN_CARET, 0);
             CreateInst(hSelect, globals.wszMachineName);
-            SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
+            SendMessageW(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
             break;
         case IDM_RELEASEINST:
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
@@ -330,7 +330,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             else AddTree();
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
                     TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
-            SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
+            SendMessageW(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
             RefreshMenu(hSelect);
             break;
         case IDM_FLAG_INSERV:
@@ -371,12 +371,12 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             else AddTree();
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,
                     TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
-            SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
+            SendMessageW(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
             RefreshMenu(hSelect);
             break;
         case IDM_REGEDIT:
         {
-            STARTUPINFO si;
+            STARTUPINFOW si;
             PROCESS_INFORMATION pi;
             WCHAR app[MAX_PATH];
 
@@ -384,7 +384,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             lstrcatW( app, wszRegEdit );
             memset(&si, 0, sizeof(si));
             si.cb = sizeof(si);
-            if (CreateProcess(app, app, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+            if (CreateProcessW(app, app, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
             {
                 CloseHandle(pi.hProcess);
                 CloseHandle(pi.hThread);
@@ -399,7 +399,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             ResizeChild();
             break;
         case IDM_SYSCONF:
-            DialogBox(0, MAKEINTRESOURCE(DLG_SYSCONF), hWnd, SysConfProc);
+            DialogBoxW(0, MAKEINTRESOURCEW(DLG_SYSCONF), hWnd, SysConfProc);
             break;
         case IDM_TOOLBAR:
             vis = IsWindowVisible(globals.hToolBar);
@@ -410,15 +410,15 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             break;
         case IDM_TYPELIB:
             {
-            OPENFILENAME ofn;
+            OPENFILENAMEW ofn;
             static WCHAR wszTitle[MAX_LOAD_STRING];
             static WCHAR wszName[MAX_LOAD_STRING];
             static WCHAR wszFilter[MAX_LOAD_STRING];
 
-            LoadString(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
-            LoadString(globals.hMainInst, IDS_OPEN_TYPELIB_FILTER, wszFilter, sizeof(wszFilter)/sizeof(wszFilter[0]));
+            LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
+            LoadStringW(globals.hMainInst, IDS_OPEN_TYPELIB_FILTER, wszFilter, sizeof(wszFilter)/sizeof(wszFilter[0]));
             InitOpenFileName(hWnd, &ofn, wszFilter, wszTitle, wszName);
-            if(GetOpenFileName(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
+            if(GetOpenFileNameW(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
             break;
             }
         case IDM_VIEW:
@@ -438,10 +438,10 @@ static void UpdateStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
-    if(!LoadString(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
-        LoadString(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
+    if(!LoadStringW(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
+        LoadStringW(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
 
-    SendMessage(globals.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
+    SendMessageW(globals.hStatusBar, SB_SETTEXTW, 0, (LPARAM)info);
 }
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
@@ -451,8 +451,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
     {
         case WM_CREATE:
             OleInitialize(NULL);
-            PaneRegisterClass();
-            TypeLibRegisterClass();
+            PaneRegisterClassW();
+            TypeLibRegisterClassW();
             if(!CreatePanedWindow(hWnd, &globals.hPaneWnd, globals.hMainInst))
                 PostQuitMessage(0);
             SetLeft(globals.hPaneWnd, CreateTreeWindow(globals.hMainInst));
@@ -478,25 +478,25 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
             ResizeChild();
             break;
         default:
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
 static BOOL InitApplication(HINSTANCE hInst)
 {
-    WNDCLASS wc;
+    WNDCLASSW wc;
     WCHAR wszAppName[MAX_LOAD_STRING];
 
-    LoadString(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
+    LoadStringW(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
 
-    memset(&wc, 0, sizeof(WNDCLASS));
+    memset(&wc, 0, sizeof(WNDCLASSW));
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wc.lpszMenuName = MAKEINTRESOURCE(IDM_MENU);
+    wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MENU);
     wc.lpszClassName = wszAppName;
 
-    if(!RegisterClass(&wc))
+    if(!RegisterClassW(&wc))
         return FALSE;
 
     return TRUE;
@@ -520,21 +520,21 @@ static BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
         {5, IDM_VIEW, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0}
     };
 
-    LoadString(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
-    LoadString(hInst, IDS_APPTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
+    LoadStringW(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
+    LoadStringW(hInst, IDS_APPTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
 
-    hWnd = CreateWindow(wszAppName, wszTitle, WS_OVERLAPPEDWINDOW,
+    hWnd = CreateWindowW(wszAppName, wszTitle, WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInst, NULL);
     if(!hWnd) return FALSE;
 
-    globals.hStatusBar = CreateStatusWindow(WS_VISIBLE|WS_CHILD,
+    globals.hStatusBar = CreateStatusWindowW(WS_VISIBLE|WS_CHILD,
             wszTitle, hWnd, 0);
 
     globals.hToolBar = CreateToolbarEx(hWnd, WS_CHILD|WS_VISIBLE, 0, 1, hInst,
             IDB_TOOLBAR, tB, 10, 16, 16, 16, 16, sizeof(TBBUTTON));
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
-    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
+    SendMessageW(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
 
     globals.hMainWnd = hWnd;
     globals.hMainInst = hInst;
@@ -561,14 +561,14 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
     if(!InitInstance(hInst, nCmdShow))
         return FALSE;
 
-    hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDA_OLEVIEW));
+    hAccelTable = LoadAcceleratorsW(hInst, MAKEINTRESOURCEW(IDA_OLEVIEW));
 
-    while(GetMessage(&msg, NULL, 0, 0))
+    while(GetMessageW(&msg, NULL, 0, 0))
     {
-        if(TranslateAccelerator(globals.hMainWnd, hAccelTable, &msg)) continue;
+        if(TranslateAcceleratorW(globals.hMainWnd, hAccelTable, &msg)) continue;
 
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     return msg.wParam;
