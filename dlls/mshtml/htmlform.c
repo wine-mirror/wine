@@ -238,8 +238,19 @@ static HRESULT WINAPI HTMLFormElement_put_length(IHTMLFormElement *iface, LONG v
 static HRESULT WINAPI HTMLFormElement_get_length(IHTMLFormElement *iface, LONG *p)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRInt32 length;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLFormElement_GetLength(This->nsform, &length);
+    if(NS_FAILED(nsres)) {
+        ERR("GetLength failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = length;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement__newEnum(IHTMLFormElement *iface, IUnknown **p)

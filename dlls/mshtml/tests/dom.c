@@ -684,6 +684,17 @@ static IHTMLSelectElement *_get_select_iface(unsigned line, IUnknown *unk)
     return select;
 }
 
+#define get_form_iface(u) _get_form_iface(__LINE__,u)
+static IHTMLFormElement *_get_form_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLFormElement *form;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLFormElement, (void**)&form);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLFormElement: %08x\n", hres);
+    return form;
+}
+
 #define get_text_iface(u) _get_text_iface(__LINE__,u)
 static IHTMLDOMTextNode *_get_text_iface(unsigned line, IUnknown *unk)
 {
@@ -2387,6 +2398,20 @@ static void _test_elem_client_rect(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (!l, "clientTop = %d\n", l);
 
     IHTMLElement2_Release(elem);
+}
+
+#define test_form_length(e,l) _test_form_length(__LINE__,e,l)
+static void _test_form_length(unsigned line, IUnknown *unk, LONG exlen)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    LONG len = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLFormElement_get_length(form, &len);
+    ok_(__FILE__,line)(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line)(len == exlen, "length=%d, expected %d\n", len, exlen);
+
+    IHTMLFormElement_Release(form);
 }
 
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
@@ -5817,6 +5842,13 @@ static void test_elems(IHTMLDocument2 *doc)
     test_elem3_set_disabled((IUnknown*)elem, VARIANT_FALSE);
 
     IHTMLElement_Release(elem);
+
+    elem = get_doc_elem_by_id(doc, "frm");
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_form_length((IUnknown*)elem, 0);
+        IHTMLElement_Release(elem);
+    }
 
     test_stylesheets(doc);
     test_create_option_elem(doc);
