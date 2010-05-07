@@ -236,7 +236,7 @@ static void D3DXMatrixTest(void)
     LPD3DXMATRIX funcpointer;
     D3DXPLANE plane;
     D3DXQUATERNION q, r;
-    D3DXVECTOR3 at, axis, eye, last, scaling;
+    D3DXVECTOR3 at, axis, eye, last;
     D3DXVECTOR4 light;
     BOOL expected, got;
     FLOAT angle, determinant, expectedfloat, gotfloat;
@@ -264,7 +264,6 @@ static void D3DXMatrixTest(void)
     axis.x = 1.0f; axis.y = -3.0f; axis.z = 7.0f;
     eye.x = 8.0f; eye.y = -5.0f; eye.z = 5.75f;
     last.x = 9.7f; last.y = -8.6; last.z = 1.3f;
-    scaling.x = 0.03f; scaling.y =0.05f; scaling.z = 0.06f;
 
     light.x = 9.6f; light.y = 8.5f; light.z = 7.4; light.w = 6.3;
 
