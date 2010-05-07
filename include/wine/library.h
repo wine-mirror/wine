@@ -161,18 +161,13 @@ static inline int wine_ldt_is_empty( const LDT_ENTRY *ent )
 
 /* segment register access */
 
-# ifdef __MINGW32__
+# if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 #  define __DEFINE_GET_SEG(seg) \
-    static inline unsigned short wine_get_##seg(void) \
+    static FORCEINLINE unsigned short wine_get_##seg(void) \
     { unsigned short res; __asm__ __volatile__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
 #  define __DEFINE_SET_SEG(seg) \
-    static inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
-# elif defined(__GNUC__)
-#  define __DEFINE_GET_SEG(seg) \
-    static inline unsigned short wine_get_##seg(void) \
-    { unsigned short res; __asm__ __volatile__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
-#  define __DEFINE_SET_SEG(seg) \
-    static inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
+    static FORCEINLINE void wine_set_##seg(int val) \
+    { __asm__("movw %w0,%%" #seg : : "r" (val)); }
 # elif defined(_MSC_VER)
 #  define __DEFINE_GET_SEG(seg) \
     static inline unsigned short wine_get_##seg(void) \
