@@ -388,17 +388,23 @@ static void test_select(void)
     /* root-none select tests */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     r = TreeView_SelectItem(hTree, NULL);
+    expect(TRUE, r);
     Clear();
     AddItem('1');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('2');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('3');
     r = TreeView_SelectItem(hTree, NULL);
+    expect(TRUE, r);
     AddItem('4');
     r = TreeView_SelectItem(hTree, NULL);
+    expect(TRUE, r);
     AddItem('5');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test\n");
     ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, rootnone_select_seq,
@@ -407,17 +413,24 @@ static void test_select(void)
     /* root-child select tests */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     r = TreeView_SelectItem(hTree, NULL);
+    expect(TRUE, r);
+
     Clear();
     AddItem('1');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('2');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('3');
     r = TreeView_SelectItem(hTree, hChild);
+    expect(TRUE, r);
     AddItem('4');
     r = TreeView_SelectItem(hTree, hChild);
+    expect(TRUE, r);
     AddItem('5');
     r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
     ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, rootchild_select_seq,
