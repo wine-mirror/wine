@@ -104,11 +104,11 @@ static void ShowLastError(void)
     LPWSTR lpMsgBuf;
     WCHAR wszTitle[MAX_LOAD_STRING];
 
-    LoadString(globals.hMainInst, IDS_TYPELIBTITLE, wszTitle,
+    LoadStringW(globals.hMainInst, IDS_TYPELIBTITLE, wszTitle,
             sizeof(wszTitle)/sizeof(wszTitle[0]));
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-            NULL, error, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
-    MessageBox(NULL, lpMsgBuf, wszTitle, MB_OK | MB_ICONERROR);
+    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL, error, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
+    MessageBoxW(NULL, lpMsgBuf, wszTitle, MB_OK | MB_ICONERROR);
     LocalFree(lpMsgBuf);
     return;
 }
@@ -116,7 +116,7 @@ static void ShowLastError(void)
 static void SaveIdl(WCHAR *wszFileName)
 {
     HTREEITEM hIDL;
-    TVITEM tvi;
+    TVITEMW tvi;
     HANDLE hFile;
     DWORD len, dwNumWrite;
     char *wszIdl;
@@ -125,13 +125,13 @@ static void SaveIdl(WCHAR *wszFileName)
     hIDL = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
             TVGN_CHILD, (LPARAM)TVI_ROOT);
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = hIDL;
 
-    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     data = (TYPELIB_DATA *)tvi.lParam;
 
-    hFile = CreateFile(wszFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
+    hFile = CreateFileW(wszFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
@@ -152,7 +152,7 @@ static void SaveIdl(WCHAR *wszFileName)
 
 static void GetSaveIdlAsPath(void)
 {
-    OPENFILENAME saveidl;
+    OPENFILENAMEW saveidl;
     WCHAR *pFileName;
     WCHAR wszPath[MAX_LOAD_STRING];
     WCHAR wszDir[MAX_LOAD_STRING];
@@ -174,9 +174,9 @@ static void GetSaveIdlAsPath(void)
     if(*pFileName == '\\' || *pFileName == '/') pFileName += 1;
     lstrcpyW(wszPath, pFileName);
 
-    GetCurrentDirectory(MAX_LOAD_STRING, wszDir);
+    GetCurrentDirectoryW(MAX_LOAD_STRING, wszDir);
 
-    saveidl.lStructSize = sizeof(OPENFILENAME);
+    saveidl.lStructSize = sizeof(OPENFILENAMEW);
     saveidl.hwndOwner = globals.hTypeLibWnd;
     saveidl.hInstance = globals.hMainInst;
     saveidl.lpstrFilter = wszIdlFiles;
@@ -186,7 +186,7 @@ static void GetSaveIdlAsPath(void)
     saveidl.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
     saveidl.lpstrDefExt = wszDefaultExt;
 
-    if (GetSaveFileName(&saveidl))
+    if (GetSaveFileNameW(&saveidl))
         SaveIdl(wszPath);
 }
 
@@ -277,7 +277,7 @@ static void AddSpaces(TYPELIB_DATA *pTLData, int tabSize)
 static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
 {
     HTREEITEM hCur;
-    TVITEM tvi;
+    TVITEMW tvi;
 
     memset(&tvi, 0, sizeof(tvi));
 
@@ -288,7 +288,7 @@ static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
     do
     {
         tvi.hItem = hCur;
-        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         if(tvi.lParam && ((TYPELIB_DATA *)(tvi.lParam))->idlLen)
             AddToTLDataStrWithTabsW(pData, ((TYPELIB_DATA *)(tvi.lParam))->idl);
     } while((hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
@@ -373,7 +373,7 @@ static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, 
 static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 {
     int i;
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     VARDESC *pVarDesc;
     BSTR bstrName;
     WCHAR wszText[MAX_LOAD_STRING];
@@ -426,7 +426,7 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         AddToTLDataStrW(tld, wszSemicolon);
         AddToTLDataStrW(tld, wszNewLine);
 
-        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         SysFreeString(bstrName);
         ITypeInfo_ReleaseVarDesc(pTypeInfo, pVarDesc);
     }
@@ -437,7 +437,7 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 {
     int i;
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     VARDESC *pVarDesc;
     BSTR bstrName;
     WCHAR wszText[MAX_LOAD_STRING];
@@ -488,7 +488,7 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszComa);
         AddToTLDataStrW(tld, wszNewLine);
 
-        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         SysFreeString(bstrName);
         ITypeInfo_ReleaseVarDesc(pTypeInfo, pVarDesc);
     }
@@ -501,7 +501,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
     int i, j;
     int cFuncs;
     unsigned namesNo;
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     FUNCDESC *pFuncDesc;
     BSTR bstrName, bstrHelpString, *bstrParamNames;
     WCHAR wszText[MAX_LOAD_STRING];
@@ -711,7 +711,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         AddToTLDataStrW(tld, wszSemicolon);
         AddToTLDataStrW(tld, wszNewLine);
 
-        SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         HeapFree(GetProcessHeap(), 0, bstrParamNames);
         SysFreeString(bstrName);
         SysFreeString(bstrHelpString);
@@ -724,7 +724,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
 static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
 {
     int i;
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     ITypeInfo *pRefTypeInfo;
     HREFTYPE hRefType;
     TYPEATTR *pTypeAttr;
@@ -733,7 +733,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
 
     if(!cImplTypes) return 0;
 
-    LoadString(globals.hMainInst, IDS_INHERITINTERFACES, wszInheritedInterfaces,
+    LoadStringW(globals.hMainInst, IDS_INHERITINTERFACES, wszInheritedInterfaces,
             sizeof(wszInheritedInterfaces)/sizeof(wszInheritedInterfaces[0]));
 
     U(tvis).item.mask = TVIF_TEXT;
@@ -742,7 +742,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
     tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = hParent;
 
-    tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+    tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
 
     for(i=0; i<cImplTypes; i++)
     {
@@ -764,7 +764,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
         U(tvis).item.cchTextMax = SysStringLen(bstrName);
         U(tvis).item.pszText = bstrName;
 
-        hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+        hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
         EnumVars(pRefTypeInfo, pTypeAttr->cVars, hParent);
         EnumFuncs(pRefTypeInfo, pTypeAttr, hParent);
         EnumImplTypes(pRefTypeInfo, pTypeAttr->cImplTypes, hParent);
@@ -858,17 +858,17 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
 
 static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
 
     hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
             TVGN_CHILD, (LPARAM)hCur);
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_PARAM;
 
     while(hCur)
     {
         tvi.hItem = hCur;
-        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         if(!((TYPELIB_DATA*)(tvi.lParam))->bHide) {
             AddToTLDataStrW(pTLData, wszNewLine);
             AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
@@ -881,7 +881,7 @@ static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
 static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
 {
     HTREEITEM hCur;
-    TVITEM tvi;
+    TVITEMW tvi;
     WCHAR wszText[MAX_LOAD_STRING];
     WCHAR wszPredefinition[] = { '/','/',' ','T','L','i','b',' ',':','\n',
         '/','/',' ','F','o','r','w','a','r','d',' ','d','e','c','l','a','r','e',' ',
@@ -895,14 +895,14 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
     AddToTLDataStrW(pTLData, wszNewLine);
 
     hCur = hFirst;
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_TEXT|TVIF_PARAM;
     tvi.cchTextMax = MAX_LOAD_STRING;
     tvi.pszText = wszText;
     while(hCur)
     {
         tvi.hItem = hCur;
-        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         if(((TYPELIB_DATA*)(tvi.lParam))->bPredefine &&
                 !((TYPELIB_DATA*)(tvi.lParam))->bHide)
         {
@@ -1137,8 +1137,8 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
 
 static int PopulateTree(void)
 {
-    TVINSERTSTRUCT tvis;
-    TVITEM tvi;
+    TVINSERTSTRUCTW tvis;
+    TVITEMW tvi;
     ITypeLib *pTypeLib;
     TLIBATTR *pTLibAttr;
     ITypeInfo *pTypeInfo, *pRefTypeInfo;
@@ -1196,10 +1196,10 @@ static int PopulateTree(void)
         WCHAR wszMessage[MAX_LOAD_STRING];
         WCHAR wszError[MAX_LOAD_STRING];
 
-        LoadString(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
+        LoadStringW(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
                 wszError, sizeof(wszError)/sizeof(wszError[0]));
         wsprintfW(wszMessage, wszError, typelib.wszFileName, hRes);
-        MessageBox(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
+        MessageBoxW(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
     }
     count = ITypeLib_GetTypeInfoCount(pTypeLib);
@@ -1251,8 +1251,8 @@ static int PopulateTree(void)
     wsprintfW(wszText, wszFormat, bstrName, bstrData);
     SysFreeString(bstrName);
     SysFreeString(bstrData);
-    tvis.hParent = (HTREEITEM)SendMessage(typelib.hTree,
-            TVM_INSERTITEM, 0, (LPARAM)&tvis);
+    tvis.hParent = (HTREEITEM)SendMessageW(typelib.hTree,
+            TVM_INSERTITEMW, 0, (LPARAM)&tvis);
 
     for(i=0; i<count; i++)
     {
@@ -1284,7 +1284,7 @@ static int PopulateTree(void)
                 AddToStrW(tld->wszInsertAfter, wszNewLine);
 
                 bInsert = FALSE;
-                hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumEnums(pTypeInfo, pTypeAttr->cVars, hParent);
                 AddChildrenData(hParent, tld);
                 AddToTLDataStrW(tld, tld->wszInsertAfter);
@@ -1336,7 +1336,7 @@ static int PopulateTree(void)
                 AddToStrW(tld->wszInsertAfter, wszNewLine);
 
                 bInsert = FALSE;
-                hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 AddToTLDataStrW(tld, tld->wszInsertAfter);
                 break;
             case TKIND_UNION:
@@ -1352,7 +1352,7 @@ static int PopulateTree(void)
                 AddToStrW(wszText, wszTKIND_DISPATCH);
                 AddToStrW(wszText, bstrName);
 
-                hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 hMain = tvis.hParent;
                 tldDispatch = tld;
 
@@ -1363,7 +1363,7 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, wszProperties);
                 AddToTLDataStrW(tld, wszColon);
                 AddToTLDataStrW(tld, wszNewLine);
-                tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumVars(pTypeInfo, pTypeAttr->cVars, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
 
@@ -1374,7 +1374,7 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, wszMethods);
                 AddToTLDataStrW(tld, wszColon);
                 AddToTLDataStrW(tld, wszNewLine);
-                tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumFuncs(pTypeInfo, pTypeAttr, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
 
@@ -1431,7 +1431,7 @@ static int PopulateTree(void)
 
         if(bInsert)
         {
-            hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+            hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
 
             EnumVars(pTypeInfo, pTypeAttr->cVars, hParent);
             EnumFuncs(pTypeInfo, pTypeAttr, hParent);
@@ -1447,13 +1447,13 @@ static int PopulateTree(void)
         SysFreeString(bstrName);
         SysFreeString(bstrData);
     }
-    SendMessage(typelib.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+    SendMessageW(typelib.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_PARAM;
     tvi.hItem = tvis.hParent;
 
-    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     AddPredefinitions(tvi.hItem, (TYPELIB_DATA*)(tvi.lParam));
     AddIdlData(tvi.hItem, (TYPELIB_DATA*)(tvi.lParam));
     AddToTLDataStrW((TYPELIB_DATA*)(tvi.lParam),
@@ -1465,20 +1465,20 @@ static int PopulateTree(void)
 
 void UpdateData(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_PARAM;
     tvi.hItem = item;
 
-    SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     if(!tvi.lParam)
     {
-        SetWindowText(typelib.hEdit, wszSpace);
+        SetWindowTextW(typelib.hEdit, wszSpace);
         return;
     }
 
-    SetWindowText(typelib.hEdit, ((TYPELIB_DATA*)tvi.lParam)->idl);
+    SetWindowTextW(typelib.hEdit, ((TYPELIB_DATA*)tvi.lParam)->idl);
 }
 
 static void TypeLibResizeChild(void)
@@ -1522,16 +1522,16 @@ static void UpdateTypeLibStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
-    if(!LoadString(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
-        LoadString(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
+    if(!LoadStringW(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
+        LoadStringW(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
 
-    SendMessage(typelib.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
+    SendMessageW(typelib.hStatusBar, SB_SETTEXTW, 0, (LPARAM)info);
 }
 
 static void EmptyTLTree(void)
 {
     HTREEITEM cur, del;
-    TVITEM tvi;
+    TVITEMW tvi;
 
     tvi.mask = TVIF_PARAM;
     cur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
@@ -1549,14 +1549,14 @@ static void EmptyTLTree(void)
                 TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)del);
 
         tvi.hItem = del;
-        SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         if(tvi.lParam)
         {
             HeapFree(GetProcessHeap(), 0, ((TYPELIB_DATA *)tvi.lParam)->idl);
             HeapFree(GetProcessHeap(), 0, (TYPELIB_DATA *)tvi.lParam);
         }
 
-        SendMessage(typelib.hTree, TVM_DELETEITEM, 0, (LPARAM)del);
+        SendMessageW(typelib.hTree, TVM_DELETEITEM, 0, (LPARAM)del);
 
         if(!cur) break;
     }
@@ -1570,11 +1570,11 @@ static LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         {
             if(!CreatePanedWindow(hWnd, &typelib.hPaneWnd, globals.hMainInst))
                 DestroyWindow(hWnd);
-            typelib.hTree = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, NULL,
+            typelib.hTree = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, NULL,
                     WS_CHILD|WS_VISIBLE|TVS_HASLINES|TVS_HASBUTTONS|TVS_LINESATROOT,
                     0, 0, 0, 0, typelib.hPaneWnd, (HMENU)TYPELIB_TREE,
                     globals.hMainInst, NULL);
-            typelib.hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, NULL,
+            typelib.hEdit = CreateWindowExW(WS_EX_CLIENTEDGE, WC_EDITW, NULL,
                     WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|WS_HSCROLL|WS_VSCROLL,
                     0, 0, 0, 0, typelib.hPaneWnd, NULL, globals.hMainInst, NULL);
 
@@ -1601,22 +1601,22 @@ static LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             EmptyTLTree();
             break;
         default:
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
-BOOL TypeLibRegisterClass(void)
+BOOL TypeLibRegisterClassW(void)
 {
-    WNDCLASS wcc;
+    WNDCLASSW wcc;
 
-    memset(&wcc, 0, sizeof(WNDCLASS));
+    memset(&wcc, 0, sizeof(WNDCLASSW));
     wcc.lpfnWndProc = TypeLibProc;
     wcc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wcc.lpszMenuName = MAKEINTRESOURCE(IDM_TYPELIB);
+    wcc.lpszMenuName = MAKEINTRESOURCEW(IDM_TYPELIB);
     wcc.lpszClassName = wszTypeLib;
 
-    if(!RegisterClass(&wcc))
+    if(!RegisterClassW(&wcc))
         return FALSE;
 
     return TRUE;
@@ -1625,27 +1625,27 @@ BOOL TypeLibRegisterClass(void)
 BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
 {
     WCHAR wszTitle[MAX_LOAD_STRING];
-    LoadString(hInst, IDS_TYPELIBTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
+    LoadStringW(hInst, IDS_TYPELIBTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
 
     if(wszFileName) lstrcpyW(typelib.wszFileName, wszFileName);
     else
     {
-        TVITEM tvi;
+        TVITEMW tvi;
 
-        memset(&tvi, 0, sizeof(TVITEM));
+        memset(&tvi, 0, sizeof(TVITEMW));
         tvi.hItem = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
                 TVGN_CARET, 0);
 
-        SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+        SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         lstrcpyW(typelib.wszFileName, ((ITEM_INFO*)tvi.lParam)->path);
     }
 
-    globals.hTypeLibWnd = CreateWindow(wszTypeLib, wszTitle,
+    globals.hTypeLibWnd = CreateWindowW(wszTypeLib, wszTitle,
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInst, NULL);
     if(!globals.hTypeLibWnd) return FALSE;
 
-    typelib.hStatusBar = CreateStatusWindow(WS_VISIBLE|WS_CHILD,
+    typelib.hStatusBar = CreateStatusWindowW(WS_VISIBLE|WS_CHILD,
             wszTitle, globals.hTypeLibWnd, 0);
 
     TypeLibResizeChild();
