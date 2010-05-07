@@ -777,7 +777,6 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     PAINTSTRUCT     ps;
     LPRECT          pRC;
     RECT            rc;
-    int             idctrl;
     LPNMHDR         pnmh;
     WINDOWPLACEMENT wp;
 
@@ -960,7 +959,6 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_NOTIFY:
-        idctrl = (int)wParam;
         pnmh = (LPNMHDR)lParam;
         if ((pnmh->hwndFrom == hTabWnd) &&
             (pnmh->idFrom == IDC_TAB) &&
