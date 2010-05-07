@@ -40,7 +40,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     const WCHAR wszDots[] = { '.','.','.','\0' };
     const WCHAR wszFormat1[] = { '%','s',' ','[','%','s',']',' ','=',' ','%','s','\0' };
     const WCHAR wszFormat2[] = { '%','s',' ','=',' ','%','s','\0' };
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     HTREEITEM addPlace = parent;
 
     U(tvis).item.mask = TVIF_TEXT;
@@ -54,7 +54,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         lenName = sizeof(WCHAR[MAX_LOAD_STRING])/sizeof(WCHAR);
         lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-        retEnum = RegEnumValue(hKey, i, wszName, &lenName,
+        retEnum = RegEnumValueW(hKey, i, wszName, &lenName,
                 NULL, &valType, (LPBYTE)wszData, &lenData);
 
         if(retEnum != ERROR_SUCCESS)
@@ -62,7 +62,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             if(!i && lstrlenW(wszKeyName) > 1)
             {
                 U(tvis).item.pszText = wszKeyName;
-                addPlace = TreeView_InsertItem(details.hReg, &tvis);
+                addPlace = TreeView_InsertItemW(details.hReg, &tvis);
                 U(tvis).item.pszText = wszTree;
             }
             break;
@@ -82,7 +82,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         if(lenName) wsprintfW(wszTree, wszFormat1, wszKeyName, wszName, wszData);
         else wsprintfW(wszTree, wszFormat2, wszKeyName, wszData);
 
-        addPlace = TreeView_InsertItem(details.hReg, &tvis);
+        addPlace = TreeView_InsertItemW(details.hReg, &tvis);
 
         if(addings && !memcmp(wszName, wszAppID, sizeof(WCHAR[6])))
         {
@@ -91,24 +91,24 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             lstrcpyW(wszData, wszCLSID);
             wszData[5] = '\\';
 
-            if(RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
+            if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
             {
                 i++;
                 continue;
             }
 
             tvis.hParent = TVI_ROOT;
-            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+            tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
             lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+            RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
             RegCloseKey(hCurKey);
 
             wsprintfW(wszTree, wszFormat2, &wszData[6], wszName);
 
-            SendMessage(details.hReg, TVM_INSERTITEM, 0, (LPARAM)&tvis);
-            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+            SendMessageW(details.hReg, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
+            SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
 
             tvis.hParent = parent;
         }
@@ -122,21 +122,21 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     {
         i++;
 
-        if(RegEnumKey(hKey, i, wszName, lenName) != ERROR_SUCCESS) break;
+        if(RegEnumKeyW(hKey, i, wszName, lenName) != ERROR_SUCCESS) break;
 
-        if(RegOpenKey(hKey, wszName, &hCurKey) != ERROR_SUCCESS) continue;
+        if(RegOpenKeyW(hKey, wszName, &hCurKey) != ERROR_SUCCESS) continue;
 
         CreateRegRec(hCurKey, addPlace, wszName, addings);
-        SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
+        SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
 
         if(addings && !memcmp(wszName, wszProgID, sizeof(WCHAR[7])))
         {
             lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
-            if(RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
+            if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
                 continue;
             CreateRegRec(hCurKey, TVI_ROOT, wszData, FALSE);
         }
@@ -144,17 +144,17 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         {
             lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
-            RegOpenKey(HKEY_CLASSES_ROOT, wszCLSID, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, wszCLSID, &hCurKey);
 
             lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
-            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+            RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
             wsprintfW(wszTree, wszFormat2, wszCLSID, wszName);
-            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+            tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
             RegCloseKey(hCurKey);
 
@@ -162,39 +162,39 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             memcpy(wszData, wszCLSID, sizeof(WCHAR[6]));
             wszData[5] = '\\';
 
-            RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
 
             CreateRegRec(hCurKey, tvis.hParent, &wszData[6], FALSE);
 
-            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+            SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
             tvis.hParent = parent;
         }
         else if(addings && !memcmp(wszName, wszTypeLib, sizeof(WCHAR[8])))
         {
             lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
-            RegOpenKey(HKEY_CLASSES_ROOT, wszTypeLib, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, wszTypeLib, &hCurKey);
 
             lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
-            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+            RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
             wsprintfW(wszTree, wszFormat2, wszTypeLib, wszName);
-            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+            tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
             RegCloseKey(hCurKey);
 
             memmove(&wszData[8], wszData, sizeof(WCHAR[lenData]));
             memcpy(wszData, wszTypeLib, sizeof(WCHAR[8]));
             wszData[7] = '\\';
-            RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
 
             CreateRegRec(hCurKey, tvis.hParent, &wszData[8], FALSE);
 
-            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+            SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
             tvis.hParent = parent;
         }
         RegCloseKey(hCurKey);
@@ -207,7 +207,7 @@ static void CreateReg(WCHAR *buffer)
     DWORD lenBuffer=-1, lastLenBuffer, lenTree;
     WCHAR *path;
     WCHAR wszTree[MAX_LOAD_STRING];
-    TVINSERTSTRUCT tvis;
+    TVINSERTSTRUCTW tvis;
     HTREEITEM addPlace = TVI_ROOT;
 
     U(tvis).item.mask = TVIF_TEXT;
@@ -225,7 +225,7 @@ static void CreateReg(WCHAR *buffer)
         {
             *path = '\0';
 
-            if(RegOpenKey(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS)
+            if(RegOpenKeyW(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS)
                 return;
 
             lastLenBuffer = lenBuffer+1;
@@ -235,7 +235,7 @@ static void CreateReg(WCHAR *buffer)
 
             lenTree = sizeof(WCHAR[MAX_LOAD_STRING]);
 
-            if(RegQueryValue(hKey, NULL, wszTree, (LONG *)&lenTree) == ERROR_SUCCESS)
+            if(RegQueryValueW(hKey, NULL, wszTree, (LONG *)&lenTree) == ERROR_SUCCESS)
             {
                 memmove(&wszTree[lenBuffer-lastLenBuffer+3], wszTree,
                         sizeof(WCHAR[lenTree]));
@@ -250,7 +250,7 @@ static void CreateReg(WCHAR *buffer)
                     wszTree[lenBuffer-lastLenBuffer+2] = ' ';
                 }
 
-                addPlace = TreeView_InsertItem(details.hReg, &tvis);
+                addPlace = TreeView_InsertItemW(details.hReg, &tvis);
             }
 
             tvis.hParent = addPlace;
@@ -259,93 +259,93 @@ static void CreateReg(WCHAR *buffer)
         else break;
     }
 
-    if(RegOpenKey(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS) return;
 
     CreateRegRec(hKey, addPlace, &buffer[lenBuffer+1], TRUE);
 
     RegCloseKey(hKey);
 
-    SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
-    SendMessage(details.hReg, TVM_ENSUREVISIBLE, 0, (LPARAM)addPlace);
+    SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
+    SendMessageW(details.hReg, TVM_ENSUREVISIBLE, 0, (LPARAM)addPlace);
 }
 
 void RefreshDetails(HTREEITEM item)
 {
-    TVITEM tvi;
+    TVITEMW tvi;
     WCHAR wszBuf[MAX_LOAD_STRING];
     WCHAR wszStaticText[MAX_LOAD_STRING];
     const WCHAR wszFormat[] = { '%','s','\n','%','s','\0' };
     BOOL show;
 
-    memset(&tvi, 0, sizeof(TVITEM));
+    memset(&tvi, 0, sizeof(TVITEMW));
     memset(&wszStaticText, 0, sizeof(WCHAR[MAX_LOAD_STRING]));
     tvi.mask = TVIF_TEXT;
     tvi.hItem = item;
     tvi.pszText = wszBuf;
     tvi.cchTextMax = MAX_LOAD_STRING;
-    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     if(tvi.lParam)
         wsprintfW(wszStaticText, wszFormat, tvi.pszText, ((ITEM_INFO *)tvi.lParam)->clsid);
     else lstrcpyW(wszStaticText, tvi.pszText);
 
-    SetWindowText(details.hStatic, wszStaticText);
+    SetWindowTextW(details.hStatic, wszStaticText);
 
-    SendMessage(details.hTab, TCM_SETCURSEL, 0, 0);
+    SendMessageW(details.hTab, TCM_SETCURSEL, 0, 0);
 
     if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag & SHOWALL)
     {
         if(SendMessageW(details.hTab, TCM_GETITEMCOUNT, 0, 0) == 1)
         {
-            TCITEM tci;
-            memset(&tci, 0, sizeof(TCITEM));
+            TCITEMW tci;
+            memset(&tci, 0, sizeof(TCITEMW));
             tci.mask = TCIF_TEXT;
             tci.pszText = wszBuf;
             tci.cchTextMax = sizeof(wszBuf)/sizeof(wszBuf[0]);
 
-            LoadString(globals.hMainInst, IDS_TAB_IMPL,
+            LoadStringW(globals.hMainInst, IDS_TAB_IMPL,
                     wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
-            SendMessage(details.hTab, TCM_INSERTITEM, 1, (LPARAM)&tci);
+            SendMessageW(details.hTab, TCM_INSERTITEMW, 1, (LPARAM)&tci);
 
-            LoadString(globals.hMainInst, IDS_TAB_ACTIV,
+            LoadStringW(globals.hMainInst, IDS_TAB_ACTIV,
                     wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
-            SendMessage(details.hTab, TCM_INSERTITEM, 2, (LPARAM)&tci);
+            SendMessageW(details.hTab, TCM_INSERTITEMW, 2, (LPARAM)&tci);
         }
     }
     else
     {
-        SendMessage(details.hTab, TCM_DELETEITEM, 2, 0);
-        SendMessage(details.hTab, TCM_DELETEITEM, 1, 0);
+        SendMessageW(details.hTab, TCM_DELETEITEM, 2, 0);
+        SendMessageW(details.hTab, TCM_DELETEITEM, 1, 0);
     }
 
     show = CreateRegPath(item, wszBuf, MAX_LOAD_STRING);
     ShowWindow(details.hTab, show ? SW_SHOW : SW_HIDE);
 
     /* FIXME Next line deals with TreeView_EnsureVisible bug */
-    SendMessage(details.hReg, TVM_ENSUREVISIBLE, 0,
-            SendMessage(details.hReg, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT));
-    SendMessage(details.hReg, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
+    SendMessageW(details.hReg, TVM_ENSUREVISIBLE, 0,
+            SendMessageW(details.hReg, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT));
+    SendMessageW(details.hReg, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
     if(show) CreateReg(wszBuf);
 }
 
 static void CreateTabCtrl(HWND hWnd)
 {
-    TCITEM tci;
+    TCITEMW tci;
     WCHAR buffer[MAX_LOAD_STRING];
 
-    memset(&tci, 0, sizeof(TCITEM));
+    memset(&tci, 0, sizeof(TCITEMW));
     tci.mask = TCIF_TEXT;
     tci.pszText = buffer;
     tci.cchTextMax = sizeof(buffer)/sizeof(buffer[0]);
 
-    details.hTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD|WS_VISIBLE,
+    details.hTab = CreateWindowW(WC_TABCONTROLW, NULL, WS_CHILD|WS_VISIBLE,
             0, 0, 0, 0, hWnd, (HMENU)TAB_WINDOW, globals.hMainInst, NULL);
     ShowWindow(details.hTab, SW_HIDE);
 
-    LoadString(globals.hMainInst, IDS_TAB_REG, buffer, sizeof(buffer)/sizeof(buffer[0]));
-    SendMessage(details.hTab, TCM_INSERTITEM, 0, (LPARAM)&tci);
+    LoadStringW(globals.hMainInst, IDS_TAB_REG, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    SendMessageW(details.hTab, TCM_INSERTITEMW, 0, (LPARAM)&tci);
 
-    details.hReg = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, NULL,
+    details.hReg = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, NULL,
             WS_CHILD|WS_VISIBLE|TVS_HASLINES,
             0, 0, 0, 0, details.hTab, NULL, globals.hMainInst, NULL);
 }
@@ -360,7 +360,7 @@ static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 const WCHAR wszStatic[] = { 'S','t','a','t','i','c','\0' };
 
-                details.hStatic = CreateWindow(wszStatic, NULL, WS_CHILD|WS_VISIBLE,
+                details.hStatic = CreateWindowW(wszStatic, NULL, WS_CHILD|WS_VISIBLE,
                         0, 0, 0, 0, hWnd, NULL, globals.hMainInst, NULL);
                 CreateTabCtrl(hWnd);
             }
@@ -384,24 +384,24 @@ static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
             break;
         default:
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
 HWND CreateDetailsWindow(HINSTANCE hInst)
 {
-    WNDCLASS wcd;
+    WNDCLASSW wcd;
     const WCHAR wszDetailsClass[] = { 'D','E','T','A','I','L','S','\0' };
-    
-    memset(&wcd, 0, sizeof(WNDCLASS));
+
+    memset(&wcd, 0, sizeof(WNDCLASSW));
     wcd.lpfnWndProc = DetailsProc;
     wcd.lpszClassName = wszDetailsClass;
     wcd.hbrBackground = (HBRUSH)COLOR_WINDOW;
 
-    if(!RegisterClass(&wcd)) return NULL;
+    if(!RegisterClassW(&wcd)) return NULL;
 
-    globals.hDetails = CreateWindowEx(WS_EX_CLIENTEDGE, wszDetailsClass, NULL,
+    globals.hDetails = CreateWindowExW(WS_EX_CLIENTEDGE, wszDetailsClass, NULL,
             WS_CHILD|WS_VISIBLE, 0, 0, 0, 0, globals.hPaneWnd, NULL, hInst, NULL);
 
     return globals.hDetails;
