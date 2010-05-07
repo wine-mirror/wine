@@ -1415,7 +1415,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
   } else {
     ME_DisplayItem *pRun = pCursor->pRun;
     ME_DisplayItem *p;
-    int ys, yd, yp;
+    int yd, yp;
     int yOldScrollPos = editor->vert_si.nPos;
 
     if (!pCursor->nOffset && editor->bCaretAtEnd)
@@ -1424,7 +1424,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
     p = ME_FindItemBack(pRun, diStartRowOrParagraph);
     assert(p->type == diStartRow);
     yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-    ys = y = yp + p->member.row.pt.y;
+    y = yp + p->member.row.pt.y;
 
     /* For native richedit controls:
      * v1.0 - v3.1 can only scroll down as far as the scrollbar lets us
