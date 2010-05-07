@@ -2275,8 +2275,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
         oldFg = SetTextColor( hdc, RGB(0,0,0) );
         oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
-        if (((flags & DI_MASK) && !(flags & DI_IMAGE)) ||
-            ((flags & DI_MASK) && !has_alpha))
+        if ((flags & DI_MASK) && !has_alpha)
         {
             hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
             if (hAndBits)
@@ -2341,13 +2340,14 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                 }
                 else
                 {
+                    DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
                     hBitTemp = SelectObject( hMemDC, hXorBits );
                     if (DoOffscreen)
                         StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
-                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, rop);
                     else
                         StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
-                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, rop);
                     SelectObject( hMemDC, hBitTemp );
                 }
 

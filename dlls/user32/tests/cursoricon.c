@@ -1190,15 +1190,12 @@ static void test_DrawIconEx(void)
     check_DrawIconEx(hdcDst, FALSE, 0x80A0B0C0, 32, DI_MASK, 0x00FFFFFF, 0x00000000, 0x00000000, __LINE__);
     check_DrawIconEx(hdcDst, TRUE, 0x80A0B0C0, 32, DI_MASK, 0x00FFFFFF, 0x00FFFFFF, 0x00FFFFFF, __LINE__);
 
-    todo_wine
-    {
-        check_DrawIconEx(hdcDst, FALSE, 0x00A0B0C0, 32, DI_IMAGE, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
-        check_DrawIconEx(hdcDst, TRUE, 0x00A0B0C0, 32, DI_IMAGE, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
-    }
+    check_DrawIconEx(hdcDst, FALSE, 0x00A0B0C0, 32, DI_IMAGE, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
+    check_DrawIconEx(hdcDst, TRUE, 0x00A0B0C0, 32, DI_IMAGE, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
 
     /* Test normal drawing */
     check_DrawIconEx(hdcDst, FALSE, 0x00A0B0C0, 32, DI_NORMAL, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
-    todo_wine check_DrawIconEx(hdcDst, TRUE, 0x00A0B0C0, 32, DI_NORMAL, 0x00FFFFFF, 0x003F4F5F, 0x003F4F5F, __LINE__);
+    check_DrawIconEx(hdcDst, TRUE, 0x00A0B0C0, 32, DI_NORMAL, 0x00FFFFFF, 0x003F4F5F, 0x003F4F5F, __LINE__);
     check_DrawIconEx(hdcDst, FALSE, 0xFFA0B0C0, 32, DI_NORMAL, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
 
     /* Test alpha blending */
