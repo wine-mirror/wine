@@ -1266,6 +1266,10 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
      * Here we generate an SCRIPT_STRING_ANALYSIS that will be used as input to the
      * following character positions to X and X to character position functions.
      */
+    memset(&Control, 0, sizeof(SCRIPT_CONTROL));
+    memset(&State, 0, sizeof(SCRIPT_STATE));
+    memset(&Tabdef, 0, sizeof(SCRIPT_TABDEF));
+
     hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
                               ReqWidth, &Control, &State, NULL, &Tabdef,
                               &InClass, &ssa);
