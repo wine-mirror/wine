@@ -1654,7 +1654,8 @@ static void test_resolve_timeout(void)
     SetLastError(0xdeadbeef);
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(!ret, "sent request\n");
-    ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED, "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", ret);
+    ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
+       "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
