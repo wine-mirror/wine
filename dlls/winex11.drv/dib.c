@@ -4041,8 +4041,8 @@ INT CDECL X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
       descr.infoBpp == ds.dsBm.bmBitsPixel &&
       physBitmap->base && physBitmap->size < 65536)
   {
-      unsigned int srcwidthb = ds.dsBm.bmWidthBytes;
-      int dstwidthb = X11DRV_DIB_GetDIBWidthBytes( width, descr.infoBpp );
+      unsigned int srcwidthb = X11DRV_DIB_GetDIBWidthBytes( width, descr.infoBpp );
+      int dstwidthb = ds.dsBm.bmWidthBytes;
       LPBYTE dbits = physBitmap->base;
       const BYTE *sbits = (const BYTE*)bits + (startscan * srcwidthb);
       int widthb;
