@@ -1447,7 +1447,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     lpUrlComponents->nScheme = UCW.nScheme;
     lpUrlComponents->nPort = UCW.nPort;
 
-    TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", lpszUrl,
+    TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", debugstr_a(lpszUrl),
           debugstr_an(lpUrlComponents->lpszScheme, lpUrlComponents->dwSchemeLength),
           debugstr_an(lpUrlComponents->lpszHostName, lpUrlComponents->dwHostNameLength),
           debugstr_an(lpUrlComponents->lpszUrlPath, lpUrlComponents->dwUrlPathLength),
@@ -1860,7 +1860,7 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
     DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
 
     TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_a(lpszUrl), lpszBuffer,
-        lpdwBufferLength, lpdwBufferLength ? *lpdwBufferLength : -1, dwFlags);
+        lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
     if(dwFlags & ICU_DECODE)
     {
