@@ -792,6 +792,36 @@ static BOOL create_directories(char *directory)
     return ret;
 }
 
+static char* wchars_to_utf8_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
+static char* wchars_to_unix_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
+static WCHAR* utf8_chars_to_wchars(LPCSTR string)
+{
+    WCHAR *ret;
+    INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
+    ret = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
+    return ret;
+}
+
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
 static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BOOL bWait )
 {
@@ -945,7 +975,7 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
 
     fprintf(file, "[Desktop Entry]\n");
     fprintf(file, "Name=%s\n", linkname);
-    fprintf(file, "Exec=env WINEPREFIX=\"%s\" wine \"%s\" %s\n",
+    fprintf(file, "Exec=env WINEPREFIX=\"%s\" wine %s %s\n",
             wine_get_config_dir(), path, args);
     fprintf(file, "Type=Application\n");
     fprintf(file, "StartupNotify=true\n");
@@ -1154,35 +1184,63 @@ end:
     return ret;
 }
 
-/* This escapes \ in filenames */
+/* This escapes reserved characters in .desktop files' Exec keys. */
 static LPSTR escape(LPCWSTR arg)
 {
-    LPSTR narg, x;
-    LPCWSTR esc;
-    int len = 0, n;
+    int i, j;
+    WCHAR *escaped_string;
+    char *utf8_string;
 
-    esc = arg;
-    while((esc = strchrW(esc, '\\')))
+    escaped_string = HeapAlloc(GetProcessHeap(), 0, (4 * strlenW(arg) + 1) * sizeof(WCHAR));
+    if (escaped_string == NULL) return NULL;
+    for (i = j = 0; arg[i]; i++)
     {
-        esc++;
-        len++;
+        switch (arg[i])
+        {
+        case '\\':
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            break;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '"':
+        case '\'':
+        case '>':
+        case '<':
+        case '~':
+        case '|':
+        case '&':
+        case ';':
+        case '$':
+        case '*':
+        case '?':
+        case '#':
+        case '(':
+        case ')':
+        case '`':
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            /* fall through */
+        default:
+            escaped_string[j++] = arg[i];
+            break;
+        }
+    }
+    escaped_string[j] = 0;
+
+    utf8_string = wchars_to_utf8_chars(escaped_string);
+    if (utf8_string == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto end;
     }
 
-    len += WideCharToMultiByte(CP_UNIXCP, 0, arg, -1, NULL, 0, NULL, NULL);
-    narg = HeapAlloc(GetProcessHeap(), 0, len);
-
-    x = narg;
-    while (*arg)
-    {
-        n = WideCharToMultiByte(CP_UNIXCP, 0, arg, 1, x, len, NULL, NULL);
-        x += n;
-        len -= n;
-        if (*arg == '\\')
-            *x++='\\'; /* escape \ */
-        arg++;
-    }
-    *x = 0;
-    return narg;
+end:
+    HeapFree(GetProcessHeap(), 0, escaped_string);
+    return utf8_string;
 }
 
 /* Return a heap-allocated copy of the unix format difference between the two
@@ -1422,36 +1480,6 @@ static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
         }
     }
     return value;
-}
-
-static char* wchars_to_utf8_chars(LPCWSTR string)
-{
-    char *ret;
-    INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
-    return ret;
-}
-
-static char* wchars_to_unix_chars(LPCWSTR string)
-{
-    char *ret;
-    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
-    return ret;
-}
-
-static WCHAR* utf8_chars_to_wchars(LPCSTR string)
-{
-    WCHAR *ret;
-    INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (ret)
-        MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
-    return ret;
 }
 
 static char *slashes_to_minuses(const char *string)
@@ -2135,7 +2163,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             progIdW = reg_get_valW(HKEY_CLASSES_ROOT, extensionW, NULL);
             if (progIdW)
             {
-                progIdA = wchars_to_utf8_chars(progIdW);
+                progIdA = escape(progIdW);
                 if (progIdA == NULL)
                 {
                     WINE_ERR("out of memory\n");
@@ -2187,7 +2215,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
                                    '\\','s','t','a','r','t','.','e','x','e',0};
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
-    char *escaped_path = NULL, *escaped_args = NULL, *escaped_description = NULL;
+    char *escaped_path = NULL, *escaped_args = NULL, *description = NULL;
     WCHAR szTmp[INFOTIPSIZE];
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
     WCHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH];
@@ -2311,7 +2339,12 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     /* escape the path and parameters */
     escaped_path = escape(szPath);
     escaped_args = escape(szArgs);
-    escaped_description = escape(szDescription);
+    description = wchars_to_utf8_chars(szDescription);
+    if (escaped_path == NULL || escaped_args == NULL || description == NULL)
+    {
+        WINE_ERR("out of memory allocating/escaping parameters\n");
+        goto cleanup;
+    }
 
     /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
@@ -2333,7 +2366,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
-            r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
+            r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name);
             if (r == 0)
                 chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
@@ -2341,21 +2374,21 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     }
     else
     {
-        char *arg = heap_printf("/Unix \"%s\"", unix_link);
-        if (arg)
+        WCHAR *unix_linkW = utf8_chars_to_wchars(unix_link);
+        if (unix_linkW)
         {
-            WCHAR *warg = utf8_chars_to_wchars(arg);
-            if (warg)
+            char *escaped_lnk = escape(unix_linkW);
+            if (escaped_lnk)
             {
-                char *menuarg = escape(warg);
+                char *menuarg = heap_printf("/Unix %s", escaped_lnk);
                 if (menuarg)
                 {
-                    r = !write_menu_entry(unix_link, link_name, "start", menuarg, escaped_description, work_dir, icon_name);
+                    r = !write_menu_entry(unix_link, link_name, "start", menuarg, description, work_dir, icon_name);
                     HeapFree(GetProcessHeap(), 0, menuarg);
                 }
-                HeapFree(GetProcessHeap(), 0, warg);
+                HeapFree(GetProcessHeap(), 0, escaped_lnk);
             }
-            HeapFree(GetProcessHeap(), 0, arg);
+            HeapFree(GetProcessHeap(), 0, unix_linkW);
         }
     }
 
@@ -2368,7 +2401,7 @@ cleanup:
     HeapFree( GetProcessHeap(), 0, link_name );
     HeapFree( GetProcessHeap(), 0, escaped_args );
     HeapFree( GetProcessHeap(), 0, escaped_path );
-    HeapFree( GetProcessHeap(), 0, escaped_description );
+    HeapFree( GetProcessHeap(), 0, description );
     HeapFree( GetProcessHeap(), 0, unix_link);
 
     if (r && !bWait)
@@ -2424,6 +2457,11 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     }
 
     escaped_urlPath = escape(urlPath);
+    if (escaped_urlPath == NULL)
+    {
+        WINE_ERR("couldn't escape url, out of memory\n");
+        goto cleanup;
+    }
 
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
