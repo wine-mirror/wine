@@ -4096,9 +4096,11 @@ static HRESULT StorageBaseImpl_CopyStream(
       if (SUCCEEDED(hr))
         hr = StorageBaseImpl_StreamWriteAt(dst, dst_entry, bytes_copied, bytestocopy,
           data, &byteswritten);
-      if (SUCCEEDED(hr) && byteswritten != bytestocopy) hr = STG_E_WRITEFAULT;
-
-      bytes_copied.QuadPart += byteswritten;
+      if (SUCCEEDED(hr))
+      {
+        if (byteswritten != bytestocopy) hr = STG_E_WRITEFAULT;
+        bytes_copied.QuadPart += byteswritten;
+      }
     }
   }
 
@@ -4370,7 +4372,7 @@ static HRESULT TransactedSnapshotImpl_CopyTree(TransactedSnapshotImpl* This)
 {
   DirRef cursor;
   TransactedDirEntry *entry;
-  HRESULT hr;
+  HRESULT hr = S_OK;
 
   cursor = This->base.storageDirEntry;
   entry = &This->entries[cursor];
