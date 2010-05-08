@@ -1804,9 +1804,56 @@ GpStatus WINGDIPAPI GdipCreateCachedBitmap(GpBitmap *bitmap, GpGraphics *graphic
 
 GpStatus WINGDIPAPI GdipCreateHICONFromBitmap(GpBitmap *bitmap, HICON *hicon)
 {
-    FIXME("(%p, %p)\n", bitmap, hicon);
+    GpStatus stat;
+    BitmapData lockeddata;
+    ULONG andstride, xorstride, bitssize;
+    LPBYTE andbits, xorbits, androw, xorrow, srcrow;
+    UINT x, y;
 
-    return NotImplemented;
+    TRACE("(%p, %p)\n", bitmap, hicon);
+
+    if (!bitmap || !hicon)
+        return InvalidParameter;
+
+    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead,
+        PixelFormat32bppPARGB, &lockeddata);
+    if (stat == Ok)
+    {
+        andstride = ((lockeddata.Width+31)/32)*4;
+        xorstride = lockeddata.Width*4;
+        bitssize = (andstride + xorstride) * lockeddata.Height;
+
+        andbits = GdipAlloc(bitssize);
+
+        if (andbits)
+        {
+            xorbits = andbits + andstride * lockeddata.Height;
+
+            for (y=0; y<lockeddata.Height; y++)
+            {
+                srcrow = ((LPBYTE)lockeddata.Scan0) + lockeddata.Stride * y;
+
+                androw = andbits + andstride * y;
+                for (x=0; x<lockeddata.Width; x++)
+                    if (srcrow[3+4*x] >= 128)
+                        androw[x/8] |= 1 << (7-x%8);
+
+                xorrow = xorbits + xorstride * y;
+                memcpy(xorrow, srcrow, xorstride);
+            }
+
+            *hicon = CreateIcon(NULL, lockeddata.Width, lockeddata.Height, 1, 32,
+                andbits, xorbits);
+
+            GdipFree(andbits);
+        }
+        else
+            stat = OutOfMemory;
+
+        GdipBitmapUnlockBits(bitmap, &lockeddata);
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipDeleteCachedBitmap(GpCachedBitmap *cachedbmp)
