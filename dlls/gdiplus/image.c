@@ -3503,7 +3503,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileNameI(GDIPCONST WCHAR* fileName, HDC h
 
 GpStatus WINGDIPAPI GdipImageForceValidation(GpImage *image)
 {
-    FIXME("%p\n", image);
+    TRACE("%p\n", image);
 
     return Ok;
 }
