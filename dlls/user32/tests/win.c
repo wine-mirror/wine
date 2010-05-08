@@ -1040,7 +1040,6 @@ static void test_shell_window(void)
     DWORD error;
     HMODULE hinst, hUser32;
     BOOL (WINAPI*SetShellWindow)(HWND);
-    BOOL (WINAPI*SetShellWindowEx)(HWND, HWND);
     HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
     HWND shellWindow, nextWnd;
 
@@ -1055,7 +1054,6 @@ static void test_shell_window(void)
     hUser32 = GetModuleHandleA("user32");
 
     SetShellWindow = (void *)GetProcAddress(hUser32, "SetShellWindow");
-    SetShellWindowEx = (void *)GetProcAddress(hUser32, "SetShellWindowEx");
 
     trace("previous shell window: %p\n", shellWindow);
 
