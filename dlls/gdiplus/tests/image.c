@@ -1212,6 +1212,78 @@ static void test_createhbitmap(void)
     expect(Ok, stat);
 }
 
+static void test_getthumbnail(void)
+{
+    GpStatus stat;
+    GpImage *bitmap1, *bitmap2;
+    UINT width, height;
+
+    stat = GdipGetImageThumbnail(NULL, 0, 0, &bitmap2, NULL, NULL);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromScan0(128, 128, 0, PixelFormat32bppRGB, NULL, (GpBitmap**)&bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipGetImageThumbnail(bitmap1, 0, 0, NULL, NULL, NULL);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipGetImageThumbnail(bitmap1, 0, 0, &bitmap2, NULL, NULL);
+    todo_wine expect(Ok, stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipGetImageWidth(bitmap2, &width);
+        expect(Ok, stat);
+        expect(120, width);
+
+        stat = GdipGetImageHeight(bitmap2, &height);
+        expect(Ok, stat);
+        expect(120, height);
+
+        GdipDisposeImage(bitmap2);
+    }
+
+    GdipDisposeImage(bitmap1);
+
+
+    stat = GdipCreateBitmapFromScan0(64, 128, 0, PixelFormat32bppRGB, NULL, (GpBitmap**)&bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipGetImageThumbnail(bitmap1, 32, 32, &bitmap2, NULL, NULL);
+    todo_wine expect(Ok, stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipGetImageWidth(bitmap2, &width);
+        expect(Ok, stat);
+        expect(32, width);
+
+        stat = GdipGetImageHeight(bitmap2, &height);
+        expect(Ok, stat);
+        expect(32, height);
+
+        GdipDisposeImage(bitmap2);
+    }
+
+    stat = GdipGetImageThumbnail(bitmap1, 0, 0, &bitmap2, NULL, NULL);
+    todo_wine expect(Ok, stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipGetImageWidth(bitmap2, &width);
+        expect(Ok, stat);
+        expect(120, width);
+
+        stat = GdipGetImageHeight(bitmap2, &height);
+        expect(Ok, stat);
+        expect(120, height);
+
+        GdipDisposeImage(bitmap2);
+    }
+
+    GdipDisposeImage(bitmap1);
+}
+
 static void test_getsetpixel(void)
 {
     GpStatus stat;
@@ -2099,6 +2171,7 @@ START_TEST(image)
     test_createfromwmf();
     test_resolution();
     test_createhbitmap();
+    test_getthumbnail();
     test_getsetpixel();
     test_palette();
     test_colormatrix();
