@@ -1116,7 +1116,14 @@ SIZE_T WINAPI LocalSize(
  */
 BOOL WINAPI LocalUnlock(
               HLOCAL handle /* [in] Handle of memory object */
-) {
+)
+{
+    if (ISPOINTER( handle ))
+    {
+        SetLastError( ERROR_NOT_LOCKED );
+        return FALSE;
+    }
+
     return GlobalUnlock( handle );
 }
 
