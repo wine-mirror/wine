@@ -1219,16 +1219,16 @@ static void test_getthumbnail(void)
     UINT width, height;
 
     stat = GdipGetImageThumbnail(NULL, 0, 0, &bitmap2, NULL, NULL);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipCreateBitmapFromScan0(128, 128, 0, PixelFormat32bppRGB, NULL, (GpBitmap**)&bitmap1);
     expect(Ok, stat);
 
     stat = GdipGetImageThumbnail(bitmap1, 0, 0, NULL, NULL, NULL);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipGetImageThumbnail(bitmap1, 0, 0, &bitmap2, NULL, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {
@@ -1250,7 +1250,7 @@ static void test_getthumbnail(void)
     expect(Ok, stat);
 
     stat = GdipGetImageThumbnail(bitmap1, 32, 32, &bitmap2, NULL, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {
@@ -1266,7 +1266,7 @@ static void test_getthumbnail(void)
     }
 
     stat = GdipGetImageThumbnail(bitmap1, 0, 0, &bitmap2, NULL, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {

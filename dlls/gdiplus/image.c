@@ -3515,9 +3515,46 @@ GpStatus WINGDIPAPI GdipGetImageThumbnail(GpImage *image, UINT width, UINT heigh
                             GpImage **ret_image, GetThumbnailImageAbort cb,
                             VOID * cb_data)
 {
-    FIXME("(%p %u %u %p %p %p) stub\n",
+    GpStatus stat;
+    GpGraphics *graphics;
+    UINT srcwidth, srcheight;
+
+    TRACE("(%p %u %u %p %p %p)\n",
         image, width, height, ret_image, cb, cb_data);
-    return NotImplemented;
+
+    if (!image || !ret_image)
+        return InvalidParameter;
+
+    if (!width) width = 120;
+    if (!height) height = 120;
+
+    GdipGetImageWidth(image, &srcwidth);
+    GdipGetImageHeight(image, &srcheight);
+
+    stat = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppARGB,
+        NULL, (GpBitmap**)ret_image);
+
+    if (stat == Ok)
+    {
+        stat = GdipGetImageGraphicsContext(*ret_image, &graphics);
+
+        if (stat == Ok)
+        {
+            stat = GdipDrawImageRectRectI(graphics, image,
+                0, 0, width, height, 0, 0, srcwidth, srcheight, UnitPixel,
+                NULL, NULL, NULL);
+
+            GdipDeleteGraphics(graphics);
+        }
+
+        if (stat != Ok)
+        {
+            GdipDisposeImage(*ret_image);
+            *ret_image = NULL;
+        }
+    }
+
+    return stat;
 }
 
 /*****************************************************************************
