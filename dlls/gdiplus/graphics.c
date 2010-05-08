@@ -2083,9 +2083,36 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 if (imageAttributes->colorkeys[ColorAdjustTypeBitmap].enabled ||
                     imageAttributes->colorkeys[ColorAdjustTypeDefault].enabled)
                 {
-                    static int fixme;
-                    if (!fixme++)
-                        FIXME("Color keying not implemented\n");
+                    const struct color_key *key;
+                    BYTE min_blue, min_green, min_red;
+                    BYTE max_blue, max_green, max_red;
+
+                    if (imageAttributes->colorkeys[ColorAdjustTypeBitmap].enabled)
+                        key = &imageAttributes->colorkeys[ColorAdjustTypeBitmap];
+                    else
+                        key = &imageAttributes->colorkeys[ColorAdjustTypeDefault];
+
+                    min_blue = key->low&0xff;
+                    min_green = (key->low>>8)&0xff;
+                    min_red = (key->low>>16)&0xff;
+
+                    max_blue = key->high&0xff;
+                    max_green = (key->high>>8)&0xff;
+                    max_red = (key->high>>16)&0xff;
+
+                    for (x=dst_area.left; x<dst_area.right; x++)
+                        for (y=dst_area.top; y<dst_area.bottom; y++)
+                        {
+                            ARGB *src_color;
+                            BYTE blue, green, red;
+                            src_color = (ARGB*)(data + stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
+                            blue = *src_color&0xff;
+                            green = (*src_color>>8)&0xff;
+                            red = (*src_color>>16)&0xff;
+                            if (blue >= min_blue && green >= min_green && red >= min_red &&
+                                blue <= max_blue && green <= max_green && red <= max_red)
+                                *src_color = 0x00000000;
+                        }
                 }
 
                 if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled ||

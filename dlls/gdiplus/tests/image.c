@@ -1999,6 +1999,76 @@ static void test_remaptable(void)
     GdipFree(map);
 }
 
+static void test_colorkey(void)
+{
+    GpStatus stat;
+    GpImageAttributes *imageattr;
+    GpBitmap *bitmap1, *bitmap2;
+    GpGraphics *graphics;
+    ARGB color;
+
+    stat = GdipSetImageAttributesColorKeys(NULL, ColorAdjustTypeDefault, TRUE, 0xff405060, 0xff708090);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateImageAttributes(&imageattr);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorKeys(imageattr, ColorAdjustTypeCount, TRUE, 0xff405060, 0xff708090);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorKeys(imageattr, ColorAdjustTypeAny, TRUE, 0xff405060, 0xff708090);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorKeys(imageattr, ColorAdjustTypeDefault, TRUE, 0xff405060, 0xff708090);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(2, 2, 0, PixelFormat32bppARGB, NULL, &bitmap1);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(2, 2, 0, PixelFormat32bppARGB, NULL, &bitmap2);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0x20405060);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 0, 1, 0x40506070);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 1, 0, 0x60708090);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap1, 1, 1, 0xffffffff);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap2, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipDrawImageRectRectI(graphics, (GpImage*)bitmap1, 0,0,2,2, 0,0,2,2,
+	UnitPixel, imageattr, NULL, NULL);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
+    expect(Ok, stat);
+    ok(color_match(0x00000000, color, 1), "Expected ffff00ff, got %.8x\n", color);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 1, &color);
+    expect(Ok, stat);
+    ok(color_match(0x00000000, color, 1), "Expected ffff00ff, got %.8x\n", color);
+
+    stat = GdipBitmapGetPixel(bitmap2, 1, 0, &color);
+    expect(Ok, stat);
+    ok(color_match(0x00000000, color, 1), "Expected ffff00ff, got %.8x\n", color);
+
+    stat = GdipBitmapGetPixel(bitmap2, 1, 1, &color);
+    expect(Ok, stat);
+    ok(color_match(0xffffffff, color, 1), "Expected ffff00ff, got %.8x\n", color);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap1);
+    GdipDisposeImage((GpImage*)bitmap2);
+    GdipDisposeImageAttributes(imageattr);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2036,6 +2106,7 @@ START_TEST(image)
     test_multiframegif();
     test_rotateflip();
     test_remaptable();
+    test_colorkey();
 
     GdiplusShutdown(gdiplusToken);
 }
