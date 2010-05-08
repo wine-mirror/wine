@@ -76,10 +76,18 @@ static WCHAR wszFilter[MAX_STRING_LEN*4+6*3+5];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
 static WCHAR wszSaveChanges[MAX_STRING_LEN];
 static WCHAR units_cmW[MAX_STRING_LEN];
-
-static char units_cmA[MAX_STRING_LEN];
+static WCHAR units_inW[MAX_STRING_LEN];
+static WCHAR units_inchW[MAX_STRING_LEN];
+static WCHAR units_ptW[MAX_STRING_LEN];
 
 static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam );
+
+typedef enum
+{
+    UNIT_CM,
+    UNIT_INCH,
+    UNIT_PT
+} UNIT;
 
 /* Load string resources */
 static void DoLoadStrings(void)
@@ -115,8 +123,10 @@ static void DoLoadStrings(void)
     p = wszSaveChanges;
     LoadStringW(hInstance, STRING_PROMPT_SAVE_CHANGES, p, MAX_STRING_LEN);
 
-    LoadStringA(hInstance, STRING_UNITS_CM, units_cmA, MAX_STRING_LEN);
     LoadStringW(hInstance, STRING_UNITS_CM, units_cmW, MAX_STRING_LEN);
+    LoadStringW(hInstance, STRING_UNITS_IN, units_inW, MAX_STRING_LEN);
+    LoadStringW(hInstance, STRING_UNITS_INCH, units_inchW, MAX_STRING_LEN);
+    LoadStringW(hInstance, STRING_UNITS_PT, units_ptW, MAX_STRING_LEN);
 }
 
 /* Show a message box with resource strings */
@@ -239,8 +249,10 @@ static void set_caption(LPCWSTR wszNewFileName)
     HeapFree(GetProcessHeap(), 0, wszCaption);
 }
 
-static BOOL validate_endptr(LPCSTR endptr, BOOL units)
+static BOOL validate_endptr(LPCWSTR endptr, UNIT *punit)
 {
+    if(punit != NULL)
+        *punit = UNIT_CM;
     if(!endptr)
         return FALSE;
     if(!*endptr)
@@ -249,28 +261,45 @@ static BOOL validate_endptr(LPCSTR endptr, BOOL units)
     while(*endptr == ' ')
         endptr++;
 
-    if(!units)
+    if(punit == NULL)
         return *endptr == '\0';
 
-    /* FIXME: Allow other units and convert between them */
-    if(!lstrcmpA(endptr, units_cmA))
-        endptr += 2;
+    if(!lstrcmpW(endptr, units_cmW))
+    {
+        *punit = UNIT_CM;
+        endptr += lstrlenW(units_cmW);
+    }
+    else if (!lstrcmpW(endptr, units_inW))
+    {
+        *punit = UNIT_INCH;
+        endptr += lstrlenW(units_inW);
+    }
+    else if (!lstrcmpW(endptr, units_inchW))
+    {
+        *punit = UNIT_INCH;
+        endptr += lstrlenW(units_inchW);
+    }
+    else if (!lstrcmpW(endptr, units_ptW))
+    {
+        *punit = UNIT_PT;
+        endptr += lstrlenW(units_ptW);
+    }
 
     return *endptr == '\0';
 }
 
-static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
+static BOOL number_from_string(LPCWSTR string, float *num, UNIT *punit)
 {
     double ret;
-    char buffer[MAX_STRING_LEN];
-    char *endptr = buffer;
+    WCHAR *endptr;
 
-    WideCharToMultiByte(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN, NULL, NULL);
     *num = 0;
     errno = 0;
-    ret = strtod(buffer, &endptr);
+    ret = wcstod(string, &endptr);
 
-    if((ret == 0 && errno != 0) || endptr == buffer || !validate_endptr(endptr, units))
+    if (punit != NULL)
+        *punit = UNIT_CM;
+    if((ret == 0 && errno != 0) || endptr == string || !validate_endptr(endptr, punit))
     {
         return FALSE;
     } else
@@ -304,7 +333,7 @@ static void on_sizelist_modified(HWND hwndSizeList, LPWSTR wszNewFontSize)
     if(lstrcmpW(sizeBuffer, wszNewFontSize))
     {
         float size = 0;
-        if(number_from_string(wszNewFontSize, &size, FALSE)
+        if(number_from_string(wszNewFontSize, &size, NULL)
            && size > 0)
         {
             set_size(size);
@@ -1295,9 +1324,25 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
         hFindWnd = FindTextW(fr);
 }
 
-static int current_units_to_twips(float number)
+static int units_to_twips(UNIT unit, float number)
 {
-    int twips = (int)(number * 1000.0 / (float)CENTMM_PER_INCH *  (float)TWIPS_PER_INCH);
+    int twips = 0;
+
+    switch(unit)
+    {
+    case UNIT_CM:
+        twips = (int)(number * 1000.0 / (float)CENTMM_PER_INCH * (float)TWIPS_PER_INCH);
+        break;
+
+    case UNIT_INCH:
+        twips = (int)(number * (float)TWIPS_PER_INCH);
+        break;
+
+    case UNIT_PT:
+        twips = (int)(number * (0.0138 * (float)TWIPS_PER_INCH));
+        break;
+    }
+
     return twips;
 }
 
@@ -1506,22 +1551,23 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                         float num;
                         int ret = 0;
                         PARAFORMAT pf;
+                        UNIT unit;
 
                         index = SendMessageW(hListWnd, CB_GETCURSEL, 0, 0);
                         pf.wAlignment = ALIGNMENT_VALUES[index];
 
                         GetWindowTextW(hLeftWnd, buffer, MAX_STRING_LEN);
-                        if(number_from_string(buffer, &num, TRUE))
+                        if(number_from_string(buffer, &num, &unit))
                             ret++;
-                        pf.dxOffset = current_units_to_twips(num);
+                        pf.dxOffset = units_to_twips(unit, num);
                         GetWindowTextW(hRightWnd, buffer, MAX_STRING_LEN);
-                        if(number_from_string(buffer, &num, TRUE))
+                        if(number_from_string(buffer, &num, &unit))
                             ret++;
-                        pf.dxRightIndent = current_units_to_twips(num);
+                        pf.dxRightIndent = units_to_twips(unit, num);
                         GetWindowTextW(hFirstWnd, buffer, MAX_STRING_LEN);
-                        if(number_from_string(buffer, &num, TRUE))
+                        if(number_from_string(buffer, &num, &unit))
                             ret++;
-                        pf.dxStartIndent = current_units_to_twips(num);
+                        pf.dxStartIndent = units_to_twips(unit, num);
 
                         if(ret != 3)
                         {
@@ -1627,6 +1673,7 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                     {
                         HWND hTabWnd = GetDlgItem(hWnd, IDC_TABSTOPS);
                         WCHAR buffer[MAX_STRING_LEN];
+                        UNIT unit;
 
                         GetWindowTextW(hTabWnd, buffer, MAX_STRING_LEN);
                         append_current_units(buffer);
@@ -1636,7 +1683,7 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                             float number = 0;
                             int item_count = SendMessage(hTabWnd, CB_GETCOUNT, 0, 0);
 
-                            if(!number_from_string(buffer, &number, TRUE))
+                            if(!number_from_string(buffer, &number, &unit))
                             {
                                 MessageBoxWithResStringW(hWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER),
                                              wszAppTitle, MB_OK | MB_ICONINFORMATION);
@@ -1647,14 +1694,14 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                                 int i;
                                 float next_number = -1;
                                 int next_number_in_twips = -1;
-                                int insert_number = current_units_to_twips(number);
+                                int insert_number = units_to_twips(unit, number);
 
                                 /* linear search for position to insert the string */
                                 for(i = 0; i < item_count; i++)
                                 {
                                     SendMessageW(hTabWnd, CB_GETLBTEXT, i, (LPARAM)&buffer);
-                                    number_from_string(buffer, &next_number, TRUE);
-                                    next_number_in_twips = current_units_to_twips(next_number);
+                                    number_from_string(buffer, &next_number, &unit);
+                                    next_number_in_twips = units_to_twips(unit, next_number);
                                     if (insert_number <= next_number_in_twips)
                                         break;
                                 }
@@ -1695,6 +1742,7 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                         WCHAR buffer[MAX_STRING_LEN];
                         PARAFORMAT pf;
                         float number;
+                        UNIT unit;
 
                         pf.cbSize = sizeof(pf);
                         pf.dwMask = PFM_TABSTOPS;
@@ -1703,8 +1751,8 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                                                 (LPARAM)&buffer) != CB_ERR &&
                                                         i < MAX_TAB_STOPS; i++)
                         {
-                            number_from_string(buffer, &number, TRUE);
-                            pf.rgxTabs[i] = current_units_to_twips(number);
+                            number_from_string(buffer, &number, &unit);
+                            pf.rgxTabs[i] = units_to_twips(unit, number);
                         }
                         pf.cTabCount = i;
                         SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
