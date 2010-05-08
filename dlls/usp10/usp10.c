@@ -1600,6 +1600,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     if (!piAdvance || !psa || !pwGlyphs) return E_INVALIDARG;
 
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
+    fuOptions |= ETO_IGNORELANGUAGE;
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
