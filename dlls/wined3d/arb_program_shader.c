@@ -3188,8 +3188,9 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
     fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
     if (!fprogram)
     {
-        FIXME("tex_type %#x not supported\n", tex_type);
+        FIXME("tex_type %#x not supported, falling back to tex_2d\n", tex_type);
         tex_type = tex_2d;
+        fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
     }
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));
