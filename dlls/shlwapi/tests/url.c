@@ -793,7 +793,8 @@ static void test_UrlEscape(void)
 static void test_UrlCanonicalizeA(void)
 {
     unsigned int i;
-    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    CHAR szReturnUrl[4*INTERNET_MAX_URL_LENGTH];
+    CHAR longurl[4*INTERNET_MAX_URL_LENGTH];
     DWORD dwSize;
     DWORD urllen;
     HRESULT hr;
@@ -844,6 +845,24 @@ static void test_UrlCanonicalizeA(void)
     ok( (hr == S_OK) && (dwSize == urllen),
         "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
+
+    /* length is set to 0 */
+    dwSize=0;
+    memset(szReturnUrl, '#', urllen+4);
+    szReturnUrl[urllen+4] = '\0';
+    SetLastError(0xdeadbeef);
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok( (hr == E_INVALIDARG) && (dwSize == 0),
+            "got 0x%x with %u and size %u for '%s' and %u (expected 'E_INVALIDARG' and size %u)\n",
+            hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), 0);
+
+    /* url length > INTERNET_MAX_URL_SIZE */
+    dwSize=sizeof(szReturnUrl);
+    memset(longurl, 'a', sizeof(longurl));
+    memcpy(longurl, winehqA, sizeof(winehqA)-1);
+    longurl[sizeof(longurl)-1] = '\0';
+    hr = pUrlCanonicalizeA(longurl, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
+    ok(hr == S_OK, "hr = %x\n", hr);
 
     test_url_canonicalize(-1, "", 0, S_OK, S_FALSE /* Vista/win2k8 */, "", FALSE);
 
