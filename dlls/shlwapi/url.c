@@ -232,40 +232,34 @@ HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	LPDWORD pcchCanonicalized, DWORD dwFlags)
 {
-    LPWSTR base, canonical;
+    LPWSTR url, canonical;
     HRESULT ret;
-    DWORD   len, len2;
+    DWORD   len;
 
     TRACE("(%s, %p, %p, 0x%08x) *pcchCanonicalized: %d\n", debugstr_a(pszUrl), pszCanonicalized,
         pcchCanonicalized, dwFlags, pcchCanonicalized ? *pcchCanonicalized : -1);
 
-    if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
+    if(!pszUrl || !pszCanonicalized || !pcchCanonicalized || !*pcchCanonicalized)
 	return E_INVALIDARG;
 
-    base = HeapAlloc(GetProcessHeap(), 0,
-			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
-    canonical = base + INTERNET_MAX_URL_LENGTH;
-
-    MultiByteToWideChar(0, 0, pszUrl, -1, base, INTERNET_MAX_URL_LENGTH);
-    len = INTERNET_MAX_URL_LENGTH;
-
-    ret = UrlCanonicalizeW(base, canonical, &len, dwFlags);
-    if (ret != S_OK) {
-        *pcchCanonicalized = len * 2;
-        HeapFree(GetProcessHeap(), 0, base);
-        return ret;
+    len = strlen(pszUrl)+1;
+    url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    canonical = HeapAlloc(GetProcessHeap(), 0, *pcchCanonicalized*sizeof(WCHAR));
+    if(!url || !canonical) {
+        HeapFree(GetProcessHeap(), 0, url);
+        HeapFree(GetProcessHeap(), 0, canonical);
+        return E_OUTOFMEMORY;
     }
 
-    len2 = WideCharToMultiByte(0, 0, canonical, -1, 0, 0, 0, 0);
-    if (len2 > *pcchCanonicalized) {
-        *pcchCanonicalized = len2;
-        HeapFree(GetProcessHeap(), 0, base);
-        return E_POINTER;
-    }
-    WideCharToMultiByte(0, 0, canonical, -1, pszCanonicalized, *pcchCanonicalized, 0, 0);
-    *pcchCanonicalized = len;
-    HeapFree(GetProcessHeap(), 0, base);
-    return S_OK;
+    MultiByteToWideChar(0, 0, pszUrl, -1, url, len);
+
+    ret = UrlCanonicalizeW(url, canonical, pcchCanonicalized, dwFlags);
+    if(ret == S_OK)
+        WideCharToMultiByte(0, 0, canonical, -1, pszCanonicalized,
+                *pcchCanonicalized+1, 0, 0);
+
+    HeapFree(GetProcessHeap(), 0, canonical);
+    return ret;
 }
 
 /*************************************************************************
