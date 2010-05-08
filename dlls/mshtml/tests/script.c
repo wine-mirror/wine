@@ -2073,7 +2073,9 @@ static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTST
     }
 
     hres = IActiveScriptSite_OnStateChange(site, (state = ss));
-    return hres;
+    ok(hres == S_OK, "OnStateChange failed: %08x\n", hres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
