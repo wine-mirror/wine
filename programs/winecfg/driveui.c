@@ -736,7 +736,6 @@ INT_PTR CALLBACK
 DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     int item;
-    struct drive *drive;
 
     switch (msg)
     {
@@ -813,7 +812,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                 case IDC_BUTTON_EDIT:
                     if (HIWORD(wParam) != BN_CLICKED) break;
                     item = SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES),  LB_GETCURSEL, 0, 0);
-                    drive = (struct drive *) SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_GETITEMDATA, item, 0);
+                    SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_GETITEMDATA, item, 0);
                     break;
 
                 case IDC_BUTTON_AUTODETECT:
