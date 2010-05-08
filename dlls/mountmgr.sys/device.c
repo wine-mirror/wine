@@ -175,7 +175,6 @@ static void update_symlink( const char *path, const char *dest, const char *orig
 /* send notification about a change to a given drive */
 static void send_notify( int drive, int code )
 {
-    DWORD_PTR result;
     DEV_BROADCAST_VOLUME info;
 
     info.dbcv_size       = sizeof(info);
@@ -183,8 +182,8 @@ static void send_notify( int drive, int code )
     info.dbcv_reserved   = 0;
     info.dbcv_unitmask   = 1 << drive;
     info.dbcv_flags      = DBTF_MEDIA;
-    result = BroadcastSystemMessageW( BSF_FORCEIFHUNG|BSF_QUERY, NULL,
-                                      WM_DEVICECHANGE, code, (LPARAM)&info );
+    BroadcastSystemMessageW( BSF_FORCEIFHUNG|BSF_QUERY, NULL,
+                             WM_DEVICECHANGE, code, (LPARAM)&info );
 }
 
 /* create the disk device for a given volume */
