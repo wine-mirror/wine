@@ -434,6 +434,10 @@ static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT 
 
     nsres = nsIDOMHTMLBodyElement_SetText(This->nsbody, &text);
     nsAString_Finish(&text);
+    if(NS_FAILED(nsres)) {
+        ERR("SetText failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     return S_OK;
 }
