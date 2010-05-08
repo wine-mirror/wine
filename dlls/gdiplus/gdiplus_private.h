@@ -296,6 +296,8 @@ struct color_remap_table{
 
 struct GpImageAttributes{
     WrapMode wrap;
+    ARGB outside_color;
+    BOOL clamp;
     struct color_key colorkeys[ColorAdjustTypeCount];
     struct color_matrix colormatrices[ColorAdjustTypeCount];
     struct color_remap_table colorremaptables[ColorAdjustTypeCount];

@@ -2049,6 +2049,16 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
 
+            if (imageAttributes &&
+                (imageAttributes->wrap != WrapModeClamp ||
+                 imageAttributes->outside_color != 0x00000000 ||
+                 imageAttributes->clamp))
+            {
+                static int fixme;
+                if (!fixme++)
+                    FIXME("Image wrap mode not implemented\n");
+            }
+
             for (x=dst_area.left; x<dst_area.right; x++)
             {
                 for (y=dst_area.top; y<dst_area.bottom; y++)
@@ -2069,7 +2079,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
                     if (src_x < src_area.left || src_x >= src_area.right ||
                         src_y < src_area.top || src_y >= src_area.bottom)
-                        /* FIXME: Use wrapmode */
                         *src_color = 0;
                     else
                         GdipBitmapGetPixel(bitmap, src_x, src_y, src_color);
