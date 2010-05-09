@@ -890,7 +890,7 @@ static HRESULT ctl2_set_custdata(
     if (guidoffset == -1) return E_OUTOFMEMORY;
     dataoffset = ctl2_alloc_custdata(This, pVarVal);
     if (dataoffset == -1) return E_OUTOFMEMORY;
-    if (dataoffset == -2) return E_INVALIDARG;
+    if (dataoffset == -2) return DISP_E_BADVARTYPE;
 
     custoffset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATAGUID, 12, 0);
     if (custoffset == -1) return E_OUTOFMEMORY;
@@ -2709,8 +2709,14 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(
         REFGUID guid,            /* [I] The GUID used as a key to retrieve the custom data. */
         VARIANT* pVarVal)        /* [I] The custom data. */
 {
-    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), pVarVal);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+
+    TRACE("(%p,%s,%p)!\n", iface, debugstr_guid(guid), pVarVal);
+
+    if (!pVarVal)
+	    return E_INVALIDARG;
+
+    return ctl2_set_custdata(This->typelib, guid, pVarVal, &This->typeinfo->oCustData);
 }
 
 /******************************************************************************
