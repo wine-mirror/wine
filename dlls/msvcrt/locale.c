@@ -38,9 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/* FIXME: Need to hold locale for each LC_* type and aggregate
- * string to produce lc_all.
- */
 #define MAX_ELEM_LEN 64 /* Max length of country/language/CP string */
 #define MAX_LOCALE_LENGTH 256
 MSVCRT__locale_t MSVCRT_locale = NULL;
@@ -56,25 +53,42 @@ unsigned char charmax = CHAR_MAX;
 #define MSVCRT_LEADBYTE  0x8000
 #define MSVCRT_C1_DEFINED 0x200
 
-/* Friendly country strings & iso codes for synonym support.
- * Based on MS documentation for setlocale().
- */
+/* Friendly country strings & language names abbreviations. */
 static const char * const _country_synonyms[] =
 {
-  "Hong Kong","HK",
-  "Hong-Kong","HK",
-  "New Zealand","NZ",
-  "New-Zealand","NZ",
-  "PR China","CN",
-  "PR-China","CN",
-  "United Kingdom","GB",
-  "United-Kingdom","GB",
-  "Britain","GB",
-  "England","GB",
-  "Great Britain","GB",
-  "United States","US",
-  "United-States","US",
-  "America","US"
+    "american", "enu",
+    "american english", "enu",
+    "american-english", "enu",
+    "english-american", "enu",
+    "english-us", "enu",
+    "english-usa", "enu",
+    "us", "enu",
+    "usa", "enu",
+    "australian", "ena",
+    "english-aus", "ena",
+    "belgian", "nlb",
+    "french-belgian", "frb",
+    "canadian", "enc",
+    "english-can", "enc",
+    "french-canadian", "frc",
+    "chinese", "chs",
+    "chinese-simplified", "chs",
+    "chinese-traditional", "cht",
+    "dutch-belgian", "nlb",
+    "english-nz", "enz",
+    "uk", "eng",
+    "english-uk", "eng",
+    "french-swiss", "frs",
+    "swiss", "des",
+    "german-swiss", "des",
+    "italian-swiss", "its",
+    "german-austrian", "dea",
+    "portugese", "ptb",
+    "portuguese-brazil", "ptb",
+    "spanish-mexican", "esm",
+    "norwegian-bokmal", "nor",
+    "norwegian-nynorsk", "non",
+    "spanish-modern", "esn"
 };
 
 /* INTERNAL: Map a synonym to an ISO code */
@@ -86,9 +100,7 @@ static void remap_synonym(char *name)
     if (!strcasecmp(_country_synonyms[i],name))
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
-      name[0] = _country_synonyms[i+1][0];
-      name[1] = _country_synonyms[i+1][1];
-      name[2] = '\0';
+      memcpy(name, _country_synonyms[i+1], sizeof(_country_synonyms[i+1]));
       return;
     }
   }
@@ -103,8 +115,6 @@ typedef struct {
   char search_language[MAX_ELEM_LEN];
   char search_country[MAX_ELEM_LEN];
   char search_codepage[MAX_ELEM_LEN];
-  char found_language[MAX_ELEM_LEN];
-  char found_country[MAX_ELEM_LEN];
   char found_codepage[MAX_ELEM_LEN];
   unsigned int match_flags;
   LANGID found_lang_id;
@@ -114,14 +124,21 @@ typedef struct {
 #define STOP_LOOKING     FALSE
 
 /* INTERNAL: Get and compare locale info with a given string */
-static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp)
+static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOOL exact)
 {
+  int len;
+
   buff[0] = 0;
-  GetLocaleInfoA(lcid, flags|LOCALE_NOUSEROVERRIDE,buff, MAX_ELEM_LEN);
+  GetLocaleInfoA(lcid, flags|LOCALE_NOUSEROVERRIDE, buff, MAX_ELEM_LEN);
   if (!buff[0] || !cmp[0])
     return 0;
-  /* Partial matches are allowed, e.g. "Germ" matches "Germany" */
-  return !strncasecmp(cmp, buff, strlen(cmp));
+
+  /* Partial matches are only allowed on language/country names */
+  len = strlen(cmp);
+  if(exact || len<=3)
+    return !strcasecmp(cmp, buff);
+  else
+    return !strncasecmp(cmp, buff, len);
 }
 
 static BOOL CALLBACK
@@ -136,13 +153,12 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
     return CONTINUE_LOOKING;
 
   /* Check Language */
-  if (compare_info(lcid,LOCALE_SISO639LANGNAME,buff,res->search_language) ||
-      compare_info(lcid,LOCALE_SABBREVLANGNAME,buff,res->search_language) ||
-      compare_info(lcid,LOCALE_SENGLANGUAGE,buff,res->search_language))
+  if (compare_info(lcid,LOCALE_SISO639LANGNAME,buff,res->search_language, TRUE) ||
+      compare_info(lcid,LOCALE_SABBREVLANGNAME,buff,res->search_language, TRUE) ||
+      compare_info(lcid,LOCALE_SENGLANGUAGE,buff,res->search_language, FALSE))
   {
     TRACE(":Found language: %s->%s\n", res->search_language, buff);
     flags |= FOUND_LANGUAGE;
-    memcpy(res->found_language,res->search_language,MAX_ELEM_LEN);
   }
   else if (res->match_flags & FOUND_LANGUAGE)
   {
@@ -150,13 +166,12 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
   }
 
   /* Check Country */
-  if (compare_info(lcid,LOCALE_SISO3166CTRYNAME,buff,res->search_country) ||
-      compare_info(lcid,LOCALE_SABBREVCTRYNAME,buff,res->search_country) ||
-      compare_info(lcid,LOCALE_SENGCOUNTRY,buff,res->search_country))
+  if (compare_info(lcid,LOCALE_SISO3166CTRYNAME,buff,res->search_country, TRUE) ||
+      compare_info(lcid,LOCALE_SABBREVCTRYNAME,buff,res->search_country, TRUE) ||
+      compare_info(lcid,LOCALE_SENGCOUNTRY,buff,res->search_country, FALSE))
   {
     TRACE("Found country:%s->%s\n", res->search_country, buff);
     flags |= FOUND_COUNTRY;
-    memcpy(res->found_country,res->search_country,MAX_ELEM_LEN);
   }
   else if (res->match_flags & FOUND_COUNTRY)
   {
@@ -164,8 +179,8 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
   }
 
   /* Check codepage */
-  if (compare_info(lcid,LOCALE_IDEFAULTCODEPAGE,buff,res->search_codepage) ||
-      (compare_info(lcid,LOCALE_IDEFAULTANSICODEPAGE,buff,res->search_codepage)))
+  if (compare_info(lcid,LOCALE_IDEFAULTCODEPAGE,buff,res->search_codepage, TRUE) ||
+      (compare_info(lcid,LOCALE_IDEFAULTANSICODEPAGE,buff,res->search_codepage, TRUE)))
   {
     TRACE("Found codepage:%s->%s\n", res->search_codepage, buff);
     flags |= FOUND_CODEPAGE;
@@ -222,8 +237,8 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
     } else
         search.search_codepage[0] = '\0';
 
-    /* FIXME:  MSVCRT_locale_to_LCID is not finding remaped values */
-    remap_synonym(search.search_country);
+    if(!search.search_country[0] && !search.search_codepage[0])
+        remap_synonym(search.search_language);
 
     EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
             (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
@@ -269,10 +284,6 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
         }
     }
 
-    GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
-            search.found_language, MAX_ELEM_LEN);
-    GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY|LOCALE_NOUSEROVERRIDE,
-            search.found_country, MAX_ELEM_LEN);
     return lcid;
 }
 
