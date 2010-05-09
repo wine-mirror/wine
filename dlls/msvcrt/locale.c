@@ -282,7 +282,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
     char buf[256], *p;
     int len;
 
-    if(GetLocaleInfoA(lcid, LOCALE_ILANGUAGE, buf, 256)) {
+    if(GetLocaleInfoA(lcid, LOCALE_ILANGUAGE|LOCALE_NOUSEROVERRIDE, buf, 256)) {
         p = buf;
 
         loc->locinfo->lc_id[category].wLanguage = 0;
@@ -301,17 +301,21 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
             loc->locinfo->lc_id[category].wLanguage;
     }
 
-    if(GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE, buf, 256))
+    if(GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE
+                |LOCALE_NOUSEROVERRIDE, buf, 256))
         loc->locinfo->lc_id[category].wCodePage = atoi(buf);
 
     loc->locinfo->lc_handle[category] = lcid;
 
     len = 0;
-    len += GetLocaleInfoA(lcid, LOCALE_SLANGUAGE, buf, 256);
+    len += GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE
+            |LOCALE_NOUSEROVERRIDE, buf, 256);
     buf[len-1] = '_';
-    len += GetLocaleInfoA(lcid, LOCALE_SCOUNTRY, &buf[len], 256-len);
+    len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
+            |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
     buf[len-1] = '.';
-    len += GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE, &buf[len], 256-len);
+    len += GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE
+            |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
 
     loc->locinfo->lc_category[category].locale = MSVCRT_malloc(sizeof(char[len]));
     loc->locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
@@ -792,7 +796,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         *loc->locinfo->lconv_intl_refcount = 1;
         *loc->locinfo->lconv_mon_refcount = 1;
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->int_curr_symbol = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->int_curr_symbol, buf, sizeof(char[i]));
         else {
@@ -800,7 +805,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->currency_symbol = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->currency_symbol, buf, sizeof(char[i]));
         else {
@@ -808,7 +814,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->mon_decimal_point = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->mon_decimal_point, buf, sizeof(char[i]));
         else {
@@ -816,7 +823,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->mon_thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->mon_thousands_sep, buf, sizeof(char[i]));
         else {
@@ -824,7 +832,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONGROUPING, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONGROUPING
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
         if(i && (loc->locinfo->lconv->mon_grouping = MSVCRT_malloc(sizeof(char[i])))) {
@@ -838,7 +847,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->positive_sign = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->positive_sign, buf, sizeof(char[i]));
         else {
@@ -846,7 +856,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->negative_sign = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->negative_sign, buf, sizeof(char[i]));
         else {
@@ -854,56 +865,64 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IINTLCURRDIGITS, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IINTLCURRDIGITS
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->int_frac_digits = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_ICURRDIGITS, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_ICURRDIGITS
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->frac_digits = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSYMPRECEDES, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSYMPRECEDES
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_cs_precedes = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSEPBYSPACE, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSEPBYSPACE
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_sep_by_space = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSYMPRECEDES, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSYMPRECEDES
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_cs_precedes = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSEPBYSPACE, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSEPBYSPACE
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_sep_by_space = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSIGNPOSN, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSIGNPOSN
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_sign_posn = atoi(buf);
         else {
             _free_locale(loc);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSIGNPOSN, buf, 256))
+        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSIGNPOSN
+                    |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_sign_posn = atoi(buf);
         else {
             _free_locale(loc);
@@ -962,7 +981,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         *loc->locinfo->lconv_intl_refcount = 1;
         *loc->locinfo->lconv_num_refcount = 1;
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->decimal_point = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->decimal_point, buf, sizeof(char[i]));
         else {
@@ -970,7 +990,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (loc->locinfo->lconv->thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->thousands_sep, buf, sizeof(char[i]));
         else {
@@ -978,7 +999,8 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SGROUPING, buf, 256);
+        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SGROUPING
+                |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
         if(i && (loc->locinfo->lconv->grouping = MSVCRT_malloc(sizeof(char[i])))) {
