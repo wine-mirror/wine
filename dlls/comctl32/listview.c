@@ -3669,7 +3669,7 @@ static inline BOOL LISTVIEW_IsHotTracking(const LISTVIEW_INFO *infoPtr)
  * over the item for a certain period of time.
  *
  */
-static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
+static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, INT x, INT y)
 {
     NMHDR hdr;
 
@@ -11438,7 +11438,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_MouseMove (infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_MOUSEHOVER:
-    return LISTVIEW_MouseHover(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
+    return LISTVIEW_MouseHover(infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_NCDESTROY:
     return LISTVIEW_NCDestroy(infoPtr);
@@ -11644,6 +11644,3 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 
     return 0;
 }
-
-
-
