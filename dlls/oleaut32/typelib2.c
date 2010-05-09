@@ -814,11 +814,41 @@ static int ctl2_alloc_custdata(
 
     switch (V_VT(pVarVal)) {
     case VT_UI4:
+    case VT_I4:
+    case VT_R4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
 	offset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
 	if (offset == -1) return offset;
 
-	*((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = VT_UI4;
-	*((unsigned int *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = V_UI4(pVarVal);
+	*((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = V_VT(pVarVal);
+	*((DWORD *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = V_UI4(pVarVal);
+	break;
+
+    case VT_BSTR: {
+	    /* Construct the data */
+	    UINT cp = CP_ACP;
+	    int stringlen = SysStringLen(V_BSTR(pVarVal));
+	    int len = 0;
+	    if (stringlen > 0) {
+		GetLocaleInfoA(This->typelib_header.lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+			(LPSTR)&cp, sizeof(cp));
+		len = WideCharToMultiByte(cp, 0, V_BSTR(pVarVal), SysStringLen(V_BSTR(pVarVal)), NULL, 0, NULL, NULL);
+		if (!len)
+		    return -1;
+	    }
+
+	    offset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, (6 + len + 3) & ~0x3, 0);
+	    if (offset == -1) return offset;
+
+	    *((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = V_VT(pVarVal);
+	    *((DWORD *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = (DWORD)len;
+	    if (stringlen > 0) {
+		WideCharToMultiByte(cp, 0, V_BSTR(pVarVal), SysStringLen(V_BSTR(pVarVal)),
+			&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], len, NULL, NULL);
+	    }
+	}
 	break;
 
     default:
