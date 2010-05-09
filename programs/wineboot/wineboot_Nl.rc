@@ -34,7 +34,7 @@ BEGIN
     PUSHBUTTON      "Beëindig Proces",IDOK,51,49,71,15
     LTEXT           "Een gesimuleerde uitlog- of afsluitactie is bezig, maar dit programma reageert niet.",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "Als u het proces beëindigt kun u alle niet-opgeslagen data verliezen.",
+    LTEXT           "Als u het proces beëindigt kunt u alle niet-opgeslagen data verliezen.",
                     IDC_STATIC,7,28,172,15
 END
 
