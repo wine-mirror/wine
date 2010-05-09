@@ -57,6 +57,9 @@ static ULONG    (WINAPIV *pwcstoul)(LPCWSTR, LPWSTR *, INT);
 static LPWSTR   (WINAPIV *p_wcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (WINAPIV *p_wcsrchr)(LPCWSTR, WCHAR);
 
+static void     (__cdecl *p_qsort)(void *,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
+
+
 static void InitFunctionPtrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
@@ -90,6 +93,7 @@ static void InitFunctionPtrs(void)
 
 	p_wcschr= (void *)GetProcAddress(hntdll, "wcschr");
 	p_wcsrchr= (void *)GetProcAddress(hntdll, "wcsrchr");
+	p_qsort= (void *)GetProcAddress(hntdll, "qsort");
     } /* if */
 }
 
@@ -1137,6 +1141,59 @@ static void test_wcsrchr(void)
        "wcsrchr should have returned NULL\n");
 }
 
+static __cdecl int intcomparefunc(const void *a, const void*b)
+{
+	return (*(int*)a) - (*(int*)b);
+}
+
+static __cdecl int charcomparefunc(const void *a, const void*b)
+{
+	return (*(char*)a) - (*(char*)b);
+}
+
+static __cdecl int strcomparefunc(const void *a, const void*b)
+{
+	return lstrcmpA(*(char**)a,*(char**)b);
+}
+
+static void test_qsort(void)
+{
+    int arr[5] = { 23, 42, 8, 4, 16 };
+    char carr[5] = { 42, 23, 4, 8, 16 };
+    const char *strarr[7] = {
+	"Hello",
+	"Wine",
+	"World",
+	"!",
+	"Hopefully",
+	"Sorted",
+	"."
+    };
+
+    p_qsort ((void*)arr, 5, sizeof(int), intcomparefunc);
+    ok(arr[0] == 4,  "badly sorted, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 8,  "badly sorted, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 16, "badly sorted, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 23, "badly sorted, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 42, "badly sorted, arr[4] is %d\n", arr[4]);
+
+    p_qsort ((void*)carr, 5, sizeof(char), charcomparefunc);
+    ok(carr[0] == 4,  "badly sorted, carr[0] is %d\n", carr[0]);
+    ok(carr[1] == 8,  "badly sorted, carr[1] is %d\n", carr[1]);
+    ok(carr[2] == 16, "badly sorted, carr[2] is %d\n", carr[2]);
+    ok(carr[3] == 23, "badly sorted, carr[3] is %d\n", carr[3]);
+    ok(carr[4] == 42, "badly sorted, carr[4] is %d\n", carr[4]);
+
+    p_qsort ((void*)strarr, 7, sizeof(char*), strcomparefunc);
+    ok(!strcmp(strarr[0],"!"),  "badly sorted, strarr[0] is %s\n", strarr[0]);
+    ok(!strcmp(strarr[1],"."),  "badly sorted, strarr[1] is %s\n", strarr[1]);
+    ok(!strcmp(strarr[2],"Hello"),  "badly sorted, strarr[2] is %s\n", strarr[2]);
+    ok(!strcmp(strarr[3],"Hopefully"),  "badly sorted, strarr[3] is %s\n", strarr[3]);
+    ok(!strcmp(strarr[4],"Sorted"),  "badly sorted, strarr[4] is %s\n", strarr[4]);
+    ok(!strcmp(strarr[5],"Wine"),  "badly sorted, strarr[5] is %s\n", strarr[5]);
+    ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1165,4 +1222,6 @@ START_TEST(string)
         test_atoi();
     if (patol)
         test_atol();
+    if (p_qsort)
+        test_qsort();
 }
