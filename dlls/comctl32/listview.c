@@ -9373,7 +9373,7 @@ static LRESULT LISTVIEW_Destroy(LISTVIEW_INFO *infoPtr)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_Enable(const LISTVIEW_INFO *infoPtr, BOOL bEnable)
+static BOOL LISTVIEW_Enable(const LISTVIEW_INFO *infoPtr)
 {
     if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
         InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
@@ -11405,7 +11405,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_Destroy(infoPtr);
 
   case WM_ENABLE:
-    return LISTVIEW_Enable(infoPtr, (BOOL)wParam);
+    return LISTVIEW_Enable(infoPtr);
 
   case WM_ERASEBKGND:
     return LISTVIEW_EraseBkgnd(infoPtr, (HDC)wParam);
