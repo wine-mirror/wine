@@ -5187,14 +5187,14 @@ static LRESULT CALLBACK TestExposedRegion_WndProc(HWND hwnd, UINT msg, WPARAM wP
 
 static void test_Expose(void)
 {
-    ATOM atom;
     WNDCLASSA cls;
     HWND mw;
+
     memset(&cls, 0, sizeof(WNDCLASSA));
     cls.lpfnWndProc = TestExposedRegion_WndProc;
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszClassName = "TestExposeClass";
-    atom = RegisterClassA(&cls);
+    RegisterClassA(&cls);
 
     mw = CreateWindowA("TestExposeClass", "MainWindow", WS_VISIBLE|WS_OVERLAPPEDWINDOW,
                             0, 0, 200, 100, NULL, NULL, 0, NULL);
