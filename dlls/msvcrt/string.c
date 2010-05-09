@@ -164,6 +164,7 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
 double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
 {
     unsigned __int64 d=0, hlp;
+    unsigned fpcontrol;
     int exp=0, sign=1;
     const char *p;
     double ret;
@@ -249,10 +250,16 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
         }
     }
 
+    fpcontrol = _control87(0, 0);
+    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
+            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
+
     if(exp>0)
         ret = (double)sign*d*pow(10, exp);
     else
         ret = (double)sign*d/pow(10, -exp);
+
+    _control87(fpcontrol, 0xffffffff);
 
     if((d && ret==0.0) || isinf(ret))
         *MSVCRT__errno() = MSVCRT_ERANGE;

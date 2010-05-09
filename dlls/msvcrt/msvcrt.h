@@ -170,6 +170,8 @@ extern void msvcrt_free_signals(void);
 
 extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**);
 
+extern unsigned int __cdecl _control87(unsigned int, unsigned int);
+
 /* run-time error codes */
 #define _RT_STACK       0
 #define _RT_NULLPTR     1
