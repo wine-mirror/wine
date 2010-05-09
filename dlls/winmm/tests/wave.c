@@ -482,13 +482,8 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
                            LPWAVEFORMATEX pwfx )
 {
     MMTIME mmtime;
-    DWORD samples;
-    double duration;
     MMRESULT rc;
     DWORD returned;
-
-    samples=bytes/(pwfx->wBitsPerSample/8*pwfx->nChannels);
-    duration=((double)samples)/pwfx->nSamplesPerSec;
 
     mmtime.wType = TIME_BYTES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
