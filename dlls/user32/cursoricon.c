@@ -2394,7 +2394,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     char *bits;
     LONG width, height, new_width, new_height;
     WORD bpp_dummy;
-    DWORD compr_dummy;
+    DWORD compr_dummy, offbits = 0;
     INT bm_type;
     HDC screen_mem_dc = NULL;
 
@@ -2424,6 +2424,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
             UnmapViewOfFile( ptr );
             return 0;
         }
+        offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
     }
 
     size = bitmap_info_size(info, DIB_RGB_COLORS);
@@ -2466,7 +2467,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
     if (!(screen_mem_dc = CreateCompatibleDC( screen_dc ))) goto end;
 
-    bits = (char *)info + size;
+    bits = (char *)info + (offbits ? offbits : size);
 
     if (loadflags & LR_CREATEDIBSECTION)
     {
