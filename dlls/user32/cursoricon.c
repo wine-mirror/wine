@@ -1701,7 +1701,7 @@ INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
 {
     HCURSOR cursor;
     int increment = bShow ? 1 : -1;
-    int prev_count;
+    int count;
 
     SERVER_START_REQ( set_cursor )
     {
@@ -1709,15 +1709,16 @@ INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
         req->show_count = increment;
         wine_server_call( req );
         cursor = wine_server_ptr_handle( reply->prev_handle );
-        prev_count = reply->prev_count;
+        count = reply->prev_count + increment;
     }
     SERVER_END_REQ;
 
-    TRACE("%d, count=%d\n", bShow, prev_count + increment );
+    TRACE("%d, count=%d\n", bShow, count );
 
-    if (!prev_count) USER_Driver->pSetCursor( bShow ? cursor : 0 );
+    if (bShow && !count) USER_Driver->pSetCursor( cursor );
+    else if (!bShow && count == -1) USER_Driver->pSetCursor( 0 );
 
-    return prev_count + increment;
+    return count;
 }
 
 /***********************************************************************
