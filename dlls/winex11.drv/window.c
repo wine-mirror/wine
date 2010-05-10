@@ -425,6 +425,25 @@ static void sync_window_style( Display *display, struct x11drv_win_data *data )
 
 
 /***********************************************************************
+ *              sync_window_cursor
+ */
+static void sync_window_cursor( struct x11drv_win_data *data )
+{
+    HCURSOR cursor;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        wine_server_call( req );
+        cursor = reply->prev_count >= 0 ? wine_server_ptr_handle( reply->prev_handle ) : 0;
+    }
+    SERVER_END_REQ;
+
+    set_window_cursor( data->hwnd, cursor );
+}
+
+
+/***********************************************************************
  *              sync_window_region
  *
  * Update the X11 window region.
@@ -1053,7 +1072,6 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
     Atom dndVersion = WINE_XDND_VERSION;
     XClassHint *class_hints;
     char *process_name = get_process_name();
-    Cursor cursor;
 
     wine_tsx11_lock();
 
@@ -1085,9 +1103,6 @@ static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data
 
     XChangeProperty( display, data->whole_window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
-
-    if ((cursor = get_x11_cursor( data->cursor )))
-        XDefineCursor( gdi_display, data->whole_window, cursor );
 
     data->wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
@@ -1681,6 +1696,8 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     wine_tsx11_lock();
     XFlush( display );  /* make sure the window exists before we start painting to it */
     wine_tsx11_unlock();
+
+    sync_window_cursor( data );
 done:
     if (win_rgn) DeleteObject( win_rgn );
     return data->whole_window;
