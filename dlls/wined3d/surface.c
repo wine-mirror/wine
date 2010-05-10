@@ -1495,7 +1495,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     GLint prevRead;
-    BOOL alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
 
     /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
@@ -1504,6 +1503,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     context = context_acquire(device, This);
     gl_info = context->gl_info;
 
+    surface_prepare_texture(This, gl_info, srgb);
     surface_bind_and_dirtify(This, srgb);
 
     ENTER_GL();
@@ -1534,12 +1534,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
         glReadBuffer(device->offscreenBuffer);
         checkGLcall("glReadBuffer");
         LEAVE_GL();
-    }
-
-    if (!(This->Flags & alloc_flag))
-    {
-        surface_allocate_surface(This, gl_info, This->resource.format_desc, srgb);
-        This->Flags |= alloc_flag;
     }
 
     ENTER_GL();
