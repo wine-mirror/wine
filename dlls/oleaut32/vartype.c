@@ -5368,7 +5368,7 @@ typedef union
 {
     struct
     {
-        unsigned long m : 23;
+        unsigned int m : 23;
         unsigned int exp_bias : 8;
         unsigned int sign : 1;
     } i;
@@ -5427,7 +5427,7 @@ typedef union
 {
     struct
     {
-        unsigned long m_lo : 32;    /* 52 bits of precision */
+        unsigned int m_lo : 32;     /* 52 bits of precision */
         unsigned int m_hi : 20;
         unsigned int exp_bias : 11; /* bias == 1023 */
         unsigned int sign : 1;
