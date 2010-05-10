@@ -543,7 +543,7 @@ sub source_scan_project_file($$$)
     my $prj_name;
     my $found_cfg=0;
     my $prj_cfg;
-    my $prj_target_type=1;
+    my $prj_target_type=$TT_GUIEXE;
     my @prj_target_options;
 
     if (!($path=~/\/$/)) {
@@ -591,16 +591,16 @@ sub source_scan_project_file($$$)
                 next;
             } elsif (/^# TARGTYPE/) {
                 if (/[[:space:]]0x0101$/) {
-                    # Win32 (x86) Application
-                    $prj_target_type=1;
+                    # Application
+                    $prj_target_type=$TT_GUIEXE;
                 }elsif (/[[:space:]]0x0102$/) {
-                    # Win32 (x86) Dynamic-Link Library
-                    $prj_target_type=3;
+                    # Dynamic-Link Library
+                    $prj_target_type=$TT_DLL;
                 }elsif (/[[:space:]]0x0103$/) {
-                    # Win32 (x86) Console Application
-                    $prj_target_type=2;
+                    # Console Application
+                    $prj_target_type=$TT_CUIEXE;
                 }elsif (/[[:space:]]0x0104$/) {
-                    # Win32 (x86) Static Library
+                    # Static Library
                 }
                 next;
             } elsif (/^# ADD CPP(.*)/ && $found_cfg==1) {
@@ -743,7 +743,7 @@ sub source_scan_project_file($$$)
                         # Generate Debug Info
                     } elsif (/^dll$/) {
                         # Build a DLL
-                        $prj_target_type=3;
+                        $prj_target_type=$TT_DLL;
                     } elsif (/^incremental:[[:alpha:]]+$/) {
                         # Link Incrmentally
                     } elsif (/^implib:/) {
@@ -898,9 +898,9 @@ sub source_scan_project_file($$$)
         foreach my $vc_configuration_attr ($vc_configuration->attributes) {
             if ($vc_configuration_attr->getName eq "ConfigurationType") {
                 if ($vc_configuration_attr->getValue==1) {
-                    $prj_target_type=1; # Win32 (x86) Application
+                    $prj_target_type=$TT_GUIEXE; # Application
                 } elsif ($vc_configuration_attr->getValue==2) {
-                    $prj_target_type=3; # Win32 (x86) Dynamic-Link Library
+                    $prj_target_type=$TT_DLL; # Dynamic-Link Library
                 }
             }
         }
@@ -994,7 +994,7 @@ sub source_scan_project_file($$$)
     my $target=[];
     target_init($target);
 
-    if ($prj_target_type!=3) {
+    if ($prj_target_type!=$TT_DLL) {
         $prj_name=lc($prj_name.".exe");
         @$target[$T_TYPE]=$opt_target_type;
         push @exe_list,$target;
