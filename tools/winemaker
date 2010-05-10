@@ -1231,7 +1231,7 @@ sub source_scan_directory($$$$)
   # If we don't find any executable/library then we might make up targets
   # from the list of .dsp/.mak files we find since they usually have the
   # same name as their target.
-  my @dsp_files=();
+  my @prj_files=();
   my @mak_files=();
 
   if (defined $opt_single_target or $dirname eq "") {
@@ -1291,8 +1291,8 @@ sub source_scan_directory($$$$)
 	if ($dentry =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
 	  @$project_settings[$T_FLAGS]|=$TF_MFC;
 	}
-      } elsif ($dentry =~ /\.dsp$/i) {
-	push @dsp_files,"$dentry";
+      } elsif ($dentry =~ /\.(dsp|vcproj)$/i) {
+	push @prj_files,"$dentry";
 	$has_win_project=1;
       } elsif ($dentry =~ /\.mak$/i) {
 	push @mak_files,"$dentry";
@@ -1353,13 +1353,14 @@ sub source_scan_directory($$$$)
     if ($target_count == 0) {
       # Try to come up with a target list based on .dsp/.mak files
       my $prj_list;
-      if (@dsp_files > 0) {
-	$prj_list=\@dsp_files;
+      if (@prj_files > 0) {
+        print "Projectfile found! You might want to try using it directly.";
+        $prj_list=\@prj_files;
       } else {
-	$prj_list=\@mak_files;
+        $prj_list=\@mak_files;
       }
       foreach my $filename (@$prj_list) {
-	$filename =~ s/\.(dsp|mak)$//i;
+	$filename =~ s/\.(dsp|vcproj|mak)$//i;
 	if ($opt_target_type == $TT_DLL) {
 	  $filename = "$filename.dll";
 	}
