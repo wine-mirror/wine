@@ -11,6 +11,7 @@ C_SRCS = \
 	protocol.c \
 	sec_mgr.c \
 	stream.c \
+	uri.c \
 	url.c
 
 @MAKE_TEST_RULES@
