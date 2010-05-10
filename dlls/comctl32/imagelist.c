@@ -33,7 +33,7 @@
  *
  *  TODO:
  *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
- *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE, ILS_ALPHA
+ *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE
  *    - Thread-safe locking
  */
 
@@ -835,9 +835,6 @@ ImageList_InternalDragDraw (HDC hdc, INT x, INT y)
  * NOTES
  *     The position of the drag image is relative to the window, not
  *     the client area.
- *
- * BUGS
- *     The drag image should be drawn semitransparent.
  */
 
 BOOL WINAPI
@@ -921,9 +918,6 @@ ImageList_DragMove (INT x, INT y)
  * RETURNS
  *     Success: TRUE
  *     Failure: FALSE
- *
- * BUGS
- *     The drag image should be drawn semitransparent.
  */
 
 BOOL WINAPI
@@ -1192,7 +1186,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
   
     /*
      * To obtain a transparent look, background color should be set
-     * to white and foreground color to black when blting the
+     * to white and foreground color to black when blitting the
      * monochrome mask.
      */
     oldImageFg = SetTextColor( hImageDC, RGB( 0, 0, 0 ) );
