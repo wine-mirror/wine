@@ -41,6 +41,41 @@ struct HTMLFormElement {
 
 #define HTMLFORM(x)  (&(x)->lpHTMLFormElementVtbl)
 
+static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
+{
+    nsIDOMHTMLCollection *elements;
+    nsIDOMNode *item;
+    HTMLDOMNode *node;
+    nsresult nsres;
+
+    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
+    if(NS_FAILED(nsres)) {
+        FIXME("GetElements failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLCollection_Item(elements, i, &item);
+    nsIDOMHTMLCollection_Release(elements);
+    if(NS_FAILED(nsres)) {
+        FIXME("Item failed: 0x%08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(item) {
+        node = get_node(This->element.node.doc, item, TRUE);
+        if(!node)
+            return E_OUTOFMEMORY;
+
+        IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+        nsIDOMNode_Release(item);
+        *ret = (IDispatch*)HTMLDOMNODE(node);
+    }else {
+        *ret = NULL;
+    }
+
+    return S_OK;
+}
+
 #define HTMLFORM_THIS(iface) DEFINE_THIS(HTMLFormElement, HTMLFormElement, iface)
 
 static HRESULT WINAPI HTMLFormElement_QueryInterface(IHTMLFormElement *iface,
@@ -439,34 +474,21 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
         EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLFormElement *This = HTMLFORM_NODE_THIS(iface);
-    nsIDOMHTMLCollection *elements;
-    nsIDOMNode *item;
-    HTMLDOMNode *node;
-    nsresult nsres;
+    IDispatch *ret;
+    HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
-    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
-    if(NS_FAILED(nsres)) {
-        FIXME("GetElements failed: 0x%08x\n", nsres);
-        return E_FAIL;
+    hres = htmlform_item(This, id - MSHTML_DISPID_CUSTOM_MIN, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    if(ret) {
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = ret;
+    }else {
+        V_VT(res) = VT_NULL;
     }
-
-    nsres = nsIDOMHTMLCollection_Item(elements, id - MSHTML_DISPID_CUSTOM_MIN, &item);
-    nsIDOMHTMLCollection_Release(elements);
-    if(NS_FAILED(nsres)) {
-        FIXME("Item failed: 0x%08x\n", nsres);
-        return E_FAIL;
-    }
-
-    node = get_node(This->element.node.doc, item, TRUE);
-
-    V_VT(res) = VT_DISPATCH;
-    V_DISPATCH(res) = (IDispatch*)node;
-
-    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
-    nsIDOMNode_Release(item);
-
     return S_OK;
 }
 
