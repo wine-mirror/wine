@@ -679,7 +679,7 @@ static void test_simple_patch( void )
 {
     UINT r;
     DWORD size;
-    char path[MAX_PATH];
+    char path[MAX_PATH], install_source[MAX_PATH];
     const char *query;
     MSIHANDLE hpackage, hdb, hview, hrec;
 
@@ -702,6 +702,11 @@ static void test_simple_patch( void )
 
     size = get_pf_file_size( "msitest\\patch.txt" );
     ok( size == 1000, "expected 1000, got %u\n", size );
+
+    size = sizeof(install_source);
+    r = MsiGetProductInfoA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                            "InstallSource", install_source, &size );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     r = MsiApplyPatchA( mspfile, NULL, INSTALLTYPE_DEFAULT, NULL );
     ok( r == ERROR_SUCCESS || broken( r == ERROR_PATCH_PACKAGE_INVALID ), /* version 2.0 */
@@ -765,6 +770,12 @@ static void test_simple_patch( void )
     MsiViewClose( hview );
     MsiCloseHandle( hview );
     MsiCloseHandle( hdb );
+
+    size = sizeof(path);
+    r = MsiGetProductInfoA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                            "InstallSource", path, &size );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    todo_wine ok( !strcasecmp( path, install_source ), "wrong path %s\n", path );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
