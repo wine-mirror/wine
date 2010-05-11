@@ -916,7 +916,7 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
 }
 
 static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
-        WCHAR *wszHelpString, unsigned long ulHelpContext, TYPEATTR *pTypeAttr,
+        WCHAR *wszHelpString, ULONG ulHelpContext, TYPEATTR *pTypeAttr,
         TYPELIB_DATA *pTLData)
 {
     ITypeInfo *pRefTypeInfo;
