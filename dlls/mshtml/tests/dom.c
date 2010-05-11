@@ -2906,7 +2906,8 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, const char *id)
 
 static void test_select_elem(IHTMLSelectElement *select)
 {
-    IDispatch *disp;
+    IDispatch *disp, *disp2;
+    VARIANT name, index;
     HRESULT hres;
 
     test_select_type(select, "select-one");
@@ -2926,6 +2927,40 @@ static void test_select_elem(IHTMLSelectElement *select)
     ok(hres == S_OK, "get_options failed: %08x\n", hres);
     ok(disp != NULL, "options == NULL\n");
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)select), "disp != select\n");
+    IDispatch_Release(disp);
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_I4;
+    V_I4(&name) = -1;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLSelectElement_item(select, name, index, &disp);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(!disp, "disp = %p\n", disp);
+
+    V_I4(&name) = 2;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLSelectElement_item(select, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(!disp, "disp = %p\n", disp);
+
+    V_I4(&name) = 1;
+    hres = IHTMLSelectElement_item(select, name, index, NULL);
+    ok(hres == E_POINTER, "item failed: %08x, expected E_POINTER\n", hres);
+
+    disp = NULL;
+    hres = IHTMLSelectElement_item(select, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+    test_disp((IUnknown*)disp, &DIID_DispHTMLOptionElement, NULL);
+
+    V_VT(&index) = VT_I4;
+    V_I4(&index) = 1;
+    disp2 = NULL;
+    hres = IHTMLSelectElement_item(select, name, index, &disp2);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp2 != NULL, "disp = NULL\n");
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
+    IDispatch_Release(disp2);
     IDispatch_Release(disp);
 }
 

@@ -445,7 +445,20 @@ static HRESULT WINAPI HTMLSelectElement_item(IHTMLSelectElement *iface, VARIANT 
                                              VARIANT index, IDispatch **pdisp)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(v v %p)\n", This, pdisp);
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&name), debugstr_variant(&index), pdisp);
+
+    if(!pdisp)
+        return E_POINTER;
+    *pdisp = NULL;
+
+    if(V_VT(&name) == VT_I4) {
+        if(V_I4(&name) < 0)
+            return E_INVALIDARG;
+        return htmlselect_item(This, V_I4(&name), pdisp);
+    }
+
+    FIXME("Unsupported args\n");
     return E_NOTIMPL;
 }
 
