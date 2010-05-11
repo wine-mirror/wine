@@ -2964,6 +2964,48 @@ static void test_select_elem(IHTMLSelectElement *select)
     IDispatch_Release(disp);
 }
 
+static void test_form_item(IHTMLElement *elem)
+{
+    IHTMLFormElement *form = get_form_iface((IUnknown*)elem);
+    IDispatch *disp, *disp2;
+    VARIANT name, index;
+    HRESULT hres;
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_I4;
+    V_I4(&name) = -1;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLFormElement_item(form, name, index, &disp);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(!disp, "disp = %p\n", disp);
+
+    V_I4(&name) = 2;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLFormElement_item(form, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(!disp, "disp = %p\n", disp);
+
+    V_I4(&name) = 1;
+    hres = IHTMLFormElement_item(form, name, index, NULL);
+    ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+
+    disp = NULL;
+    hres = IHTMLFormElement_item(form, name, index, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+    test_disp((IUnknown*)disp, &DIID_DispHTMLInputElement, NULL);
+
+    V_VT(&index) = VT_I4;
+    V_I4(&index) = 1;
+    disp2 = NULL;
+    hres = IHTMLFormElement_item(form, name, index, &disp2);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(disp2 != NULL, "disp = NULL\n");
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
+    IDispatch_Release(disp2);
+    IDispatch_Release(disp);
+}
+
 static void test_create_option_elem(IHTMLDocument2 *doc)
 {
     IHTMLOptionElement *option;
@@ -6109,6 +6151,15 @@ static void test_elems2(IHTMLDocument2 *doc)
     if(elem) {
         test_textarea_value((IUnknown*)elem, NULL);
         test_textarea_put_value((IUnknown*)elem, "test");
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div,
+            "<form id=\"form\"><input type=\"button\"></input><input type=\"text\"></input></textarea>");
+    elem = get_elem_by_id(doc, "form", TRUE);
+    if(elem) {
+        test_form_length((IUnknown*)elem, 2);
+        test_form_item(elem);
         IHTMLElement_Release(elem);
     }
 
