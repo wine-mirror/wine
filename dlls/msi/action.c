@@ -688,31 +688,41 @@ static BOOL ui_sequence_exists( MSIPACKAGE *package )
 
 static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 {
-    LPWSTR p, db;
     LPWSTR source, check;
-    DWORD len;
 
-    static const WCHAR szOriginalDatabase[] =
-        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
-
-    db = msi_dup_property( package->db, szOriginalDatabase );
-    if (!db)
-        return ERROR_OUTOFMEMORY;
-
-    p = strrchrW( db, '\\' );
-    if (!p)
+    if (msi_get_property_int( package->db, szInstalled, 0 ))
     {
-        p = strrchrW( db, '/' );
+        HKEY hkey;
+
+        MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE );
+        source = msi_reg_get_val_str( hkey, INSTALLPROPERTY_INSTALLSOURCEW );
+        RegCloseKey( hkey );
+    }
+    else
+    {
+        LPWSTR p, db;
+        DWORD len;
+
+        db = msi_dup_property( package->db, szOriginalDatabase );
+        if (!db)
+            return ERROR_OUTOFMEMORY;
+
+        p = strrchrW( db, '\\' );
         if (!p)
         {
-            msi_free(db);
-            return ERROR_SUCCESS;
+            p = strrchrW( db, '/' );
+            if (!p)
+            {
+                msi_free(db);
+                return ERROR_SUCCESS;
+            }
         }
-    }
 
-    len = p - db + 2;
-    source = msi_alloc( len * sizeof(WCHAR) );
-    lstrcpynW( source, db, len );
+        len = p - db + 2;
+        source = msi_alloc( len * sizeof(WCHAR) );
+        lstrcpynW( source, db, len );
+        msi_free( db );
+    }
 
     check = msi_dup_property( package->db, cszSourceDir );
     if (!check || replace)
@@ -729,7 +739,6 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
     msi_free( check );
     msi_free( source );
-    msi_free( db );
 
     return ERROR_SUCCESS;
 }

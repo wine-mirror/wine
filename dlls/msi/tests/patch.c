@@ -775,7 +775,7 @@ static void test_simple_patch( void )
     r = MsiGetProductInfoA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
                             "InstallSource", path, &size );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
-    todo_wine ok( !strcasecmp( path, install_source ), "wrong path %s\n", path );
+    ok( !strcasecmp( path, install_source ), "wrong path %s\n", path );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );

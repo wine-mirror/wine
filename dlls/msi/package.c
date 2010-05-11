@@ -1225,8 +1225,6 @@ static UINT apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
-    static const WCHAR OriginalDatabase[] =
-        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
     static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
     static const WCHAR dotmsi[] = {'.','m','s','i',0};
     MSIDATABASE *db = NULL;
@@ -1339,15 +1337,15 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     msi_set_property( package->db, Database, db->path );
 
     if( UrlIsW( szPackage, URLIS_URL ) )
-        msi_set_property( package->db, OriginalDatabase, szPackage );
+        msi_set_property( package->db, szOriginalDatabase, szPackage );
     else if( szPackage[0] == '#' )
-        msi_set_property( package->db, OriginalDatabase, db->path );
+        msi_set_property( package->db, szOriginalDatabase, db->path );
     else
     {
         WCHAR fullpath[MAX_PATH];
 
         GetFullPathNameW( szPackage, MAX_PATH, fullpath, NULL );
-        msi_set_property( package->db, OriginalDatabase, fullpath );
+        msi_set_property( package->db, szOriginalDatabase, fullpath );
     }
 
     msi_set_context( package );
