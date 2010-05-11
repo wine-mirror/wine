@@ -880,8 +880,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         else
         {
             TRACE("Negotiated %s\n", debugstr_a(buffer));
-            sscanf(buffer + 3, "%lx", &(helper->neg_flags));
-            TRACE("Stored 0x%08lx as flags\n", helper->neg_flags);
+            sscanf(buffer + 3, "%x", &(helper->neg_flags));
+            TRACE("Stored 0x%08x as flags\n", helper->neg_flags);
         }
 
         TRACE("Getting session key\n");
@@ -1269,8 +1269,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         else
         {
             TRACE("Negotiated %s\n", debugstr_a(buffer));
-            sscanf(buffer + 3, "%lx", &(helper->neg_flags));
-            TRACE("Stored 0x%08lx as flags\n", helper->neg_flags);
+            sscanf(buffer + 3, "%x", &(helper->neg_flags));
+            TRACE("Stored 0x%08x as flags\n", helper->neg_flags);
         }
 
         TRACE("Getting session key\n");
@@ -1631,7 +1631,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
         return SEC_E_BUFFER_TOO_SMALL;
 
     helper = (PNegoHelper)phContext->dwLower;
-    TRACE("Negotiated flags are: 0x%08lx\n", helper->neg_flags);
+    TRACE("Negotiated flags are: 0x%08x\n", helper->neg_flags);
 
     return ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND, TRUE);
 }
@@ -1668,7 +1668,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
         FIXME("Ignoring MessageSeqNo\n");
 
     helper = (PNegoHelper)phContext->dwLower;
-    TRACE("Negotiated flags: 0x%08lx\n", helper->neg_flags);
+    TRACE("Negotiated flags: 0x%08x\n", helper->neg_flags);
 
     local_buff = HeapAlloc(GetProcessHeap(), 0, pMessage->cBuffers * sizeof(SecBuffer));
 

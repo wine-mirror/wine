@@ -1313,7 +1313,7 @@ void SECUR32_initSchannelSP(void)
      * even though the functions are missing, because the wrapper will
      * return SEC_E_UNSUPPORTED_FUNCTION if our function is NULL.
      */
-    static const long caps =
+    static const LONG caps =
         SECPKG_FLAG_INTEGRITY |
         SECPKG_FLAG_PRIVACY |
         SECPKG_FLAG_CONNECTION |
@@ -1323,7 +1323,7 @@ void SECUR32_initSchannelSP(void)
         SECPKG_FLAG_ACCEPT_WIN32_NAME |
         SECPKG_FLAG_STREAM;
     static const short version = 1;
-    static const long maxToken = 16384;
+    static const LONG maxToken = 16384;
     SEC_WCHAR *uniSPName = (SEC_WCHAR *)UNISP_NAME_W,
               *schannel = (SEC_WCHAR *)SCHANNEL_NAME_W;
     const SecPkgInfoW info[] = {

@@ -550,7 +550,7 @@ static const WCHAR securityProvidersW[] = {
 static void SECUR32_initializeProviders(void)
 {
     HKEY key;
-    long apiRet;
+    LSTATUS apiRet;
 
     TRACE("\n");
     InitializeCriticalSection(&cs);
