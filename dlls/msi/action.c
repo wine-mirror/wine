@@ -4537,11 +4537,10 @@ static UINT ACTION_UnpublishFeatures(MSIPACKAGE *package)
 
 static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 {
-    LPWSTR prop, val, key;
     SYSTEMTIME systime;
     DWORD size, langid;
-    WCHAR date[9];
-    LPWSTR buffer;
+    WCHAR date[9], *val, *buffer;
+    const WCHAR *prop, *key;
 
     static const WCHAR date_fmt[] = {'%','i','%','0','2','i','%','0','2','i',0};
     static const WCHAR szWindowsInstaller[] =
@@ -4561,34 +4560,82 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
     static const WCHAR szDisplayVersion[] =
         {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
+    static const WCHAR szInstallSource[] =
+        {'I','n','s','t','a','l','l','S','o','u','r','c','e',0};
+    static const WCHAR szARPAUTHORIZEDCDFPREFIX[] =
+        {'A','R','P','A','U','T','H','O','R','I','Z','E','D','C','D','F','P','R','E','F','I','X',0};
+    static const WCHAR szAuthorizedCDFPrefix[] =
+        {'A','u','t','h','o','r','i','z','e','d','C','D','F','P','r','e','f','i','x',0};
+    static const WCHAR szARPCONTACT[] =
+        {'A','R','P','C','O','N','T','A','C','T',0};
+    static const WCHAR szContact[] =
+        {'C','o','n','t','a','c','t',0};
+    static const WCHAR szARPCOMMENTS[] =
+        {'A','R','P','C','O','M','M','E','N','T','S',0};
+    static const WCHAR szComments[] =
+        {'C','o','m','m','e','n','t','s',0};
+    static const WCHAR szProductName[] =
+        {'P','r','o','d','u','c','t','N','a','m','e',0};
+    static const WCHAR szDisplayName[] =
+        {'D','i','s','p','l','a','y','N','a','m','e',0};
+    static const WCHAR szARPHELPLINK[] =
+        {'A','R','P','H','E','L','P','L','I','N','K',0};
+    static const WCHAR szHelpLink[] =
+        {'H','e','l','p','L','i','n','k',0};
+    static const WCHAR szARPHELPTELEPHONE[] =
+        {'A','R','P','H','E','L','P','T','E','L','E','P','H','O','N','E',0};
+    static const WCHAR szHelpTelephone[] =
+        {'H','e','l','p','T','e','l','e','p','h','o','n','e',0};
+    static const WCHAR szARPINSTALLLOCATION[] =
+        {'A','R','P','I','N','S','T','A','L','L','L','O','C','A','T','I','O','N',0};
+    static const WCHAR szInstallLocation[] =
+        {'I','n','s','t','a','l','l','L','o','c','a','t','i','o','n',0};
+    static const WCHAR szManufacturer[] =
+        {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+    static const WCHAR szPublisher[] =
+        {'P','u','b','l','i','s','h','e','r',0};
+    static const WCHAR szARPREADME[] =
+        {'A','R','P','R','E','A','D','M','E',0};
+    static const WCHAR szReadme[] =
+        {'R','e','a','d','M','e',0};
+    static const WCHAR szARPSIZE[] =
+        {'A','R','P','S','I','Z','E',0};
+    static const WCHAR szSize[] =
+        {'S','i','z','e',0};
+    static const WCHAR szARPURLINFOABOUT[] =
+        {'A','R','P','U','R','L','I','N','F','O','A','B','O','U','T',0};
+    static const WCHAR szURLInfoAbout[] =
+        {'U','R','L','I','n','f','o','A','b','o','u','t',0};
+    static const WCHAR szARPURLUPDATEINFO[] =
+        {'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0};
+    static const WCHAR szURLUpdateInfo[] =
+        {'U','R','L','U','p','d','a','t','e','I','n','f','o',0};
 
-    static const LPCSTR propval[] = {
-        "ARPAUTHORIZEDCDFPREFIX", "AuthorizedCDFPrefix",
-        "ARPCONTACT",             "Contact",
-        "ARPCOMMENTS",            "Comments",
-        "ProductName",            "DisplayName",
-        "ARPHELPLINK",            "HelpLink",
-        "ARPHELPTELEPHONE",       "HelpTelephone",
-        "ARPINSTALLLOCATION",     "InstallLocation",
-        "SourceDir",              "InstallSource",
-        "Manufacturer",           "Publisher",
-        "ARPREADME",              "Readme",
-        "ARPSIZE",                "Size",
-        "ARPURLINFOABOUT",        "URLInfoAbout",
-        "ARPURLUPDATEINFO",       "URLUpdateInfo",
-        NULL,
+    static const WCHAR *propval[] = {
+        szARPAUTHORIZEDCDFPREFIX, szAuthorizedCDFPrefix,
+        szARPCONTACT,             szContact,
+        szARPCOMMENTS,            szComments,
+        szProductName,            szDisplayName,
+        szARPHELPLINK,            szHelpLink,
+        szARPHELPTELEPHONE,       szHelpTelephone,
+        szARPINSTALLLOCATION,     szInstallLocation,
+        cszSourceDir,             szInstallSource,
+        szManufacturer,           szPublisher,
+        szARPREADME,              szReadme,
+        szARPSIZE,                szSize,
+        szARPURLINFOABOUT,        szURLInfoAbout,
+        szARPURLUPDATEINFO,       szURLUpdateInfo,
+        NULL
     };
-    const LPCSTR *p = propval;
+    const WCHAR **p = propval;
 
     while (*p)
     {
-        prop = strdupAtoW(*p++);
-        key = strdupAtoW(*p++);
+        prop = *p++;
+        key = *p++;
         val = msi_dup_property(package->db, prop);
         msi_reg_set_val_str(hkey, key, val);
         msi_free(val);
-        msi_free(key);
-        msi_free(prop);
     }
 
     msi_reg_set_val_dword(hkey, szWindowsInstaller, 1);
