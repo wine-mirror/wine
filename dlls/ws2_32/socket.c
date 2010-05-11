@@ -2798,6 +2798,9 @@ INT WINAPI WSAIoctl(SOCKET s,
         release_sock_fd(s, fd);
         break;
    }
+   case WS_SIO_UDP_CONNRESET:
+       FIXME("WS_SIO_UDP_CONNRESET stub\n");
+       break;
    default:
        FIXME("unsupported WS_IOCTL cmd (%08x)\n", dwIoControlCode);
        WSASetLastError(WSAEOPNOTSUPP);
