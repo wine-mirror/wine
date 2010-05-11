@@ -123,12 +123,14 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_ELSE
 %token INSTR_ENDIF
 %token INSTR_BREAK
+%token INSTR_BREAKP
 %token INSTR_CALL
 %token INSTR_CALLNZ
 %token INSTR_LOOP
 %token INSTR_RET
 %token INSTR_ENDLOOP
 %token INSTR_LABEL
+%token INSTR_SETP
 %token INSTR_TEXLDL
 
 /* Vertex shader only instructions  */
@@ -209,6 +211,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <modshift> omodifier
 %type <comptype> comp
 %type <rel_reg> rel_reg
+%type <reg> predicate
 %type <immval> immsum
 %type <sregs> sregs
 
@@ -306,6 +309,11 @@ instructions:         /* empty */
 complexinstr:         instruction
                             {
 
+                            }
+                    | predicate instruction
+                            {
+                                TRACE("predicate\n");
+                                asm_ctx.funcs->predicate(&asm_ctx, &$1);
                             }
 
 instruction:          INSTR_ADD omods dreg ',' sregs
@@ -508,6 +516,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("BREAKC\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BREAKC, 0, 0, $2, 0, &$3, 2);
                             }
+                    | INSTR_BREAKP sregs
+                            {
+                                TRACE("BREAKP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BREAKP, 0, 0, 0, 0, &$2, 1);
+                            }
                     | INSTR_CALL sregs
                             {
                                 TRACE("CALL\n");
@@ -537,6 +550,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("LABEL\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LABEL, 0, 0, 0, 0, &$2, 1);
+                            }
+                    | INSTR_SETP comp dreg ',' sregs
+                            {
+                                TRACE("SETP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_SETP, 0, 0, $2, &$3, &$5, 2);
                             }
                     | INSTR_TEXLDL omods dreg ',' sregs
                             {
@@ -1022,6 +1040,23 @@ comp:                 COMP_GT           { $$ = BWRITER_COMPARISON_GT;       }
                     | COMP_LE           { $$ = BWRITER_COMPARISON_LE;       }
                     | COMP_EQ           { $$ = BWRITER_COMPARISON_EQ;       }
                     | COMP_NE           { $$ = BWRITER_COMPARISON_NE;       }
+
+predicate:            '(' REG_PREDICATE swizzle ')'
+                        {
+                            $$.type = BWRITERSPR_PREDICATE;
+                            $$.regnum = 0;
+                            $$.rel_reg = NULL;
+                            $$.srcmod = BWRITERSPSM_NONE;
+                            $$.swizzle = $3;
+                        }
+                    | '(' SMOD_NOT REG_PREDICATE swizzle ')'
+                        {
+                            $$.type = BWRITERSPR_PREDICATE;
+                            $$.regnum = 0;
+                            $$.rel_reg = NULL;
+                            $$.srcmod = BWRITERSPSM_NOT;
+                            $$.swizzle = $4;
+                        }
 
 %%
 

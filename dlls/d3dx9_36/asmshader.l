@@ -123,12 +123,14 @@ if                      {return INSTR_IF;           }
 else                    {return INSTR_ELSE;         }
 endif                   {return INSTR_ENDIF;        }
 break                   {return INSTR_BREAK;        }
+breakp                  {return INSTR_BREAKP;       }
 call                    {return INSTR_CALL;         }
 callnz                  {return INSTR_CALLNZ;       }
 loop                    {return INSTR_LOOP;         }
 ret                     {return INSTR_RET;          }
 endloop                 {return INSTR_ENDLOOP;      }
 label                   {return INSTR_LABEL;        }
+setp                    {return INSTR_SETP;         }
 texldl                  {return INSTR_TEXLDL;       }
 
     /* Vertex shader only instructions  */

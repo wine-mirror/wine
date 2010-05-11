@@ -198,6 +198,8 @@ static void sm_2_opcode(struct bc_writer *This,
     token |= instrlen(instr, instr->num_srcs, dsts) << D3DSI_INSTLENGTH_SHIFT;
     if(instr->comptype)
         token |= (d3d9_comparetype(instr->comptype) << 16) & (0xf << 16);
+    if(instr->has_predicate)
+        token |= D3DSHADER_INSTRUCTION_PREDICATED;
     put_dword(buffer,token);
 }
 
@@ -335,6 +337,8 @@ static const struct instr_handler_table vs_3_handlers[] = {
     {BWRITERSIO_RET,            instr_handler},
     {BWRITERSIO_ENDLOOP,        instr_handler},
 
+    {BWRITERSIO_SETP,           instr_handler},
+    {BWRITERSIO_BREAKP,         instr_handler},
     {BWRITERSIO_TEXLDL,         instr_handler},
 
     {BWRITERSIO_END,            NULL},

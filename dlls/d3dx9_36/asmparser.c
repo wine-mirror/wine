@@ -106,11 +106,22 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
     instr->has_dst = TRUE;
 }
 
+static void asmparser_predicate_supported(struct asm_parser *This,
+                                          const struct shader_reg *predicate) {
+    /* this sets the predicate of the last instruction added to the shader */
+    if(!This->shader) return;
+    if(This->shader->num_instrs == 0) ERR("Predicate without an instruction\n");
+    This->shader->instr[This->shader->num_instrs - 1]->has_predicate = TRUE;
+    memcpy(&This->shader->instr[This->shader->num_instrs - 1]->predicate, predicate, sizeof(*predicate));
+}
+
+#if 0
 static void asmparser_predicate_unsupported(struct asm_parser *This,
                                             const struct shader_reg *predicate) {
     asmparser_message(This, "Line %u: Predicate not supported in < VS 2.0 or PS 2.x\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
 }
+#endif
 
 static void asmparser_coissue_unsupported(struct asm_parser *This) {
     asmparser_message(This, "Line %u: Coissue is only supported in pixel shaders versions <= 1.4\n", This->line_no);
@@ -121,7 +132,7 @@ static const struct asmparser_backend parser_vs_3 = {
     asmparser_dstreg_vs_3,
     asmparser_srcreg_vs_3,
 
-    asmparser_predicate_unsupported,
+    asmparser_predicate_supported,
     asmparser_coissue_unsupported,
 
     asmparser_end,
