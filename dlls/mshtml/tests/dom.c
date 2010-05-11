@@ -673,6 +673,17 @@ static IHTMLAnchorElement *_get_anchor_iface(unsigned line, IUnknown *unk)
     return anchor;
 }
 
+#define get_textarea_iface(u) _get_textarea_iface(__LINE__,u)
+static IHTMLTextAreaElement *_get_textarea_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLTextAreaElement *textarea;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLTextAreaElement, (void**)&textarea);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLTextAreaElement: %08x\n", hres);
+    return textarea;
+}
+
 #define get_select_iface(u) _get_select_iface(__LINE__,u)
 static IHTMLSelectElement *_get_select_iface(unsigned line, IUnknown *unk)
 {
@@ -1154,6 +1165,38 @@ static void _test_option_put_selected(unsigned line, IHTMLOptionElement *option,
     hres = IHTMLOptionElement_put_selected(option, b);
     ok_(__FILE__,line)(hres == S_OK, "put_selected failed: %08x\n", hres);
     _test_option_selected(line, option, b);
+}
+
+#define test_textarea_value(t,v) _test_textarea_value(__LINE__,t,v)
+static void _test_textarea_value(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    BSTR value = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_value(textarea, &value);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_value failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(value, exval), "value = %s, expected %s\n", wine_dbgstr_w(value), exval);
+    else
+        ok_(__FILE__,line)(!value, "value = %p\n", value);
+    SysFreeString(value);
+}
+
+#define test_textarea_put_value(t,v) _test_textarea_put_value(__LINE__,t,v)
+static void _test_textarea_put_value(unsigned line, IUnknown *unk, const char *value)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    BSTR tmp = a2bstr(value);
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_put_value(textarea, tmp);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "put_value failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    _test_textarea_value(line, unk, value);
 }
 
 #define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
@@ -6004,29 +6047,37 @@ static void test_elems(IHTMLDocument2 *doc)
 
 static void test_elems2(IHTMLDocument2 *doc)
 {
-    IHTMLElement *elem, *elem2;
+    IHTMLElement *elem, *elem2, *div;
 
     static const elem_type_t outer_types[] = {
         ET_BR,
         ET_A
     };
 
-    elem = get_doc_elem_by_id(doc, "divid");
+    div = get_doc_elem_by_id(doc, "divid");
 
-    test_elem_set_innerhtml((IUnknown*)elem, "<div id=\"innerid\"></div>");
+    test_elem_set_innerhtml((IUnknown*)div, "<div id=\"innerid\"></div>");
     elem2 = get_doc_elem_by_id(doc, "innerid");
     ok(elem2 != NULL, "elem2 == NULL\n");
     test_elem_set_outerhtml((IUnknown*)elem2, "<br><a href=\"about:blank\" id=\"aid\">a</a>");
-    test_elem_all((IUnknown*)elem, outer_types, sizeof(outer_types)/sizeof(*outer_types));
+    test_elem_all((IUnknown*)div, outer_types, sizeof(outer_types)/sizeof(*outer_types));
     IHTMLElement_Release(elem2);
 
     elem2 = get_doc_elem_by_id(doc, "aid");
     ok(elem2 != NULL, "elem2 == NULL\n");
     test_elem_set_outerhtml((IUnknown*)elem2, "");
-    test_elem_all((IUnknown*)elem, outer_types, 1);
+    test_elem_all((IUnknown*)div, outer_types, 1);
     IHTMLElement_Release(elem2);
 
-    IHTMLElement_Release(elem);
+    test_elem_set_innerhtml((IUnknown*)div, "<textarea id=\"ta\"></textarea>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+    if(elem) {
+        test_textarea_value((IUnknown*)elem, NULL);
+        test_textarea_put_value((IUnknown*)elem, "test");
+        IHTMLElement_Release(elem);
+    }
+
+    IHTMLElement_Release(div);
 }
 
 static void test_create_elems(IHTMLDocument2 *doc)
