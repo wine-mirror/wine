@@ -762,7 +762,7 @@ static void test_LoadImageFile(const unsigned char * image_data,
         FILE_ATTRIBUTE_NORMAL, NULL);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
     ret = WriteFile(handle, image_data, image_size, &bytes_written, NULL);
-    ok(bytes_written == image_size, "test file created improperly.\n");
+    ok(ret && bytes_written == image_size, "test file created improperly.\n");
     CloseHandle(handle);
 
     /* Load as cursor. For all tested formats, this should fail */
@@ -852,7 +852,7 @@ static void test_LoadImage(void)
         FILE_ATTRIBUTE_NORMAL, NULL);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
     ret = WriteFile(handle, icon_data, ICON_SIZE, &bytes_written, NULL);
-    ok(bytes_written == ICON_SIZE, "icon.ico created improperly.\n");
+    ok(ret && bytes_written == ICON_SIZE, "icon.ico created improperly.\n");
     CloseHandle(handle);
 
     /* Test loading an icon as a cursor. */
