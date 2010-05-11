@@ -1135,6 +1135,27 @@ static void _test_option_put_value(unsigned line, IHTMLOptionElement *option, co
     _test_option_value(line, option, value);
 }
 
+#define test_option_selected(o,s) _test_option_selected(__LINE__,o,s)
+static void _test_option_selected(unsigned line, IHTMLOptionElement *option, VARIANT_BOOL ex)
+{
+    VARIANT_BOOL b = 0x100;
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_get_selected(option, &b);
+    ok_(__FILE__,line)(hres == S_OK, "get_selected failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == ex, "selected = %x, expected %x\n", b, ex);
+}
+
+#define test_option_put_selected(o,s) _test_option_put_selected(__LINE__,o,s)
+static void _test_option_put_selected(unsigned line, IHTMLOptionElement *option, VARIANT_BOOL b)
+{
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_put_selected(option, b);
+    ok_(__FILE__,line)(hres == S_OK, "put_selected failed: %08x\n", hres);
+    _test_option_selected(line, option, b);
+}
+
 #define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
 static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 {
@@ -1183,6 +1204,7 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
 
     _test_option_text(line, option, txt);
     _test_option_value(line, option, val);
+    _test_option_selected(line, option, VARIANT_FALSE);
 
     return option;
 }
@@ -2872,6 +2894,8 @@ static void test_create_option_elem(IHTMLDocument2 *doc)
 
     test_option_put_text(option, "new text");
     test_option_put_value(option, "new value");
+    test_option_put_selected(option, VARIANT_TRUE);
+    test_option_put_selected(option, VARIANT_FALSE);
 
     IHTMLOptionElement_Release(option);
 }
