@@ -33,6 +33,8 @@
 static UINT (WINAPI *pMsiApplyPatchA)( LPCSTR, LPCSTR, INSTALLTYPE, LPCSTR );
 static UINT (WINAPI *pMsiGetPatchInfoExA)( LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT,
                                            LPCSTR, LPSTR, DWORD * );
+static UINT (WINAPI *pMsiEnumPatchesExA)( LPCSTR, LPCSTR, DWORD, DWORD, DWORD, LPSTR,
+                                          LPSTR, MSIINSTALLCONTEXT *, LPSTR, LPDWORD );
 
 static const char *msifile = "winetest-patch.msi";
 static const char *mspfile = "winetest-patch.msp";
@@ -143,6 +145,7 @@ static void init_function_pointers( void )
 
     GET_PROC( hmsi, MsiApplyPatchA );
     GET_PROC( hmsi, MsiGetPatchInfoExA );
+    GET_PROC( hmsi, MsiEnumPatchesExA );
 #undef GET_PROC
 }
 
@@ -988,9 +991,9 @@ static void test_system_tables( void )
 static void test_patch_registration( void )
 {
     UINT r, size;
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH], patch_code[39];
 
-    if (!pMsiApplyPatchA || !pMsiGetPatchInfoExA)
+    if (!pMsiApplyPatchA || !pMsiGetPatchInfoExA || !pMsiEnumPatchesExA)
     {
         win_skip("required functions not available\n");
         return;
@@ -1042,6 +1045,22 @@ static void test_patch_registration( void )
                              INSTALLPROPERTY_LOCALPACKAGE, buffer, &size );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
     ok( !buffer[0], "got %s\n", buffer );
+
+    r = pMsiEnumPatchesExA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                           NULL, MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_APPLIED,
+                           0, patch_code, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( !strcmp( patch_code, "{0F96CDC0-4CDF-4304-B283-7B9264889EF7}" ), "wrong patch code\n" );
+
+    r = pMsiEnumPatchesExA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                           NULL, MSIINSTALLCONTEXT_MACHINE, MSIPATCHSTATE_APPLIED,
+                           0, patch_code, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    r = pMsiEnumPatchesExA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                           NULL, MSIINSTALLCONTEXT_USERMANAGED, MSIPATCHSTATE_APPLIED,
+                           0, patch_code, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
