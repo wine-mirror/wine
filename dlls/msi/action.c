@@ -4559,21 +4559,14 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szProductName[] =
-        {'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR szDisplayName[] =
-        {'D','i','s','p','l','a','y','N','a','m','e',0};
     static const WCHAR szDisplayVersion[] =
         {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
-    static const WCHAR szManufacturer[] =
-        {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 
     static const LPCSTR propval[] = {
         "ARPAUTHORIZEDCDFPREFIX", "AuthorizedCDFPrefix",
         "ARPCONTACT",             "Contact",
         "ARPCOMMENTS",            "Comments",
         "ProductName",            "DisplayName",
-        "ProductVersion",         "DisplayVersion",
         "ARPHELPLINK",            "HelpLink",
         "ARPHELPTELEPHONE",       "HelpTelephone",
         "ARPINSTALLLOCATION",     "InstallLocation",
@@ -4607,18 +4600,6 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 
     /* FIXME: Write real Estimated Size when we have it */
     msi_reg_set_val_dword(hkey, szEstimatedSize, 0);
-
-    buffer = msi_dup_property(package->db, szProductName);
-    msi_reg_set_val_str(hkey, szDisplayName, buffer);
-    msi_free(buffer);
-
-    buffer = msi_dup_property(package->db, cszSourceDir);
-    msi_reg_set_val_str(hkey, INSTALLPROPERTY_INSTALLSOURCEW, buffer);
-    msi_free(buffer);
-
-    buffer = msi_dup_property(package->db, szManufacturer);
-    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PUBLISHERW, buffer);
-    msi_free(buffer);
 
     GetLocalTime(&systime);
     sprintfW(date, date_fmt, systime.wYear, systime.wMonth, systime.wDay);
