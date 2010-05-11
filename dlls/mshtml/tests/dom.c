@@ -2519,6 +2519,38 @@ static void _test_form_length(unsigned line, IUnknown *unk, LONG exlen)
     IHTMLFormElement_Release(form);
 }
 
+#define test_form_action(f,a) _test_form_action(__LINE__,f,a)
+static void _test_form_action(unsigned line, IUnknown *unk, const char *ex)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR action = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLFormElement_get_action(form, &action);
+    ok_(__FILE__,line)(hres == S_OK, "get_action failed: %08x\n", hres);
+    if(ex)
+        ok_(__FILE__,line)(!strcmp_wa(action, ex), "action=%s, expected %s\n", wine_dbgstr_w(action), ex);
+    else
+        ok_(__FILE__,line)(!action, "action=%p\n", action);
+
+    IHTMLFormElement_Release(form);
+}
+
+#define test_form_put_action(f,a) _test_form_put_action(__LINE__,f,a)
+static void _test_form_put_action(unsigned line, IUnknown *unk, const char *action)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    BSTR tmp = a2bstr(action);
+    HRESULT hres;
+
+    hres = IHTMLFormElement_put_action(form, tmp);
+    ok_(__FILE__,line)(hres == S_OK, "put_action failed: %08x\n", hres);
+    SysFreeString(tmp);
+    IHTMLFormElement_Release(form);
+
+    _test_form_action(line, unk, action);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -6160,6 +6192,8 @@ static void test_elems2(IHTMLDocument2 *doc)
     if(elem) {
         test_form_length((IUnknown*)elem, 2);
         test_form_item(elem);
+        test_form_action((IUnknown*)elem, NULL);
+        test_form_put_action((IUnknown*)elem, "about:blank");
         IHTMLElement_Release(elem);
     }
 

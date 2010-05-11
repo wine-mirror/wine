@@ -133,15 +133,43 @@ static HRESULT WINAPI HTMLFormElement_Invoke(IHTMLFormElement *iface, DISPID dis
 static HRESULT WINAPI HTMLFormElement_put_action(IHTMLFormElement *iface, BSTR v)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(v));
-    return E_NOTIMPL;
+    nsAString action_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
+
+    nsAString_InitDepend(&action_str, v);
+    nsres = nsIDOMHTMLFormElement_SetAction(This->nsform, &action_str);
+    nsAString_Finish(&action_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetAction failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_get_action(IHTMLFormElement *iface, BSTR *p)
 {
     HTMLFormElement *This = HTMLFORM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString action_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&action_str, NULL);
+    nsres = nsIDOMHTMLFormElement_GetAction(This->nsform, &action_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *action;
+        nsAString_GetData(&action_str, &action);
+        hres = nsuri_to_url(action, FALSE, p);
+    }else {
+        ERR("GetAction failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_dir(IHTMLFormElement *iface, BSTR v)
