@@ -1354,7 +1354,7 @@ sub source_scan_directory($$$$)
       # Try to come up with a target list based on .dsp/.mak files
       my $prj_list;
       if (@prj_files > 0) {
-        print "Projectfile found! You might want to try using it directly.";
+        print "Projectfile found! You might want to try using it directly.\n";
         $prj_list=\@prj_files;
       } else {
         $prj_list=\@mak_files;
