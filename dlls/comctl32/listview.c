@@ -10935,7 +10935,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
  * RETURN:
  * Zero
  */
-static INT LISTVIEW_StyleChanging(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
+static INT LISTVIEW_StyleChanging(WPARAM wStyleType,
                                   STYLESTRUCT *lpss)
 {
     TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
@@ -11491,7 +11491,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
   case WM_STYLECHANGING:
-    return LISTVIEW_StyleChanging(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
+    return LISTVIEW_StyleChanging(wParam, (LPSTYLESTRUCT)lParam);
 
   case WM_SYSCOLORCHANGE:
     COMCTL32_RefreshSysColors();
