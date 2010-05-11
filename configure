@@ -14620,6 +14620,7 @@ wine_fn_config_dll rsabase enable_rsabase
 wine_fn_config_dll rsaenh enable_rsaenh rsaenh
 wine_fn_config_test dlls/rsaenh/tests rsaenh_test
 wine_fn_config_dll rtutils enable_rtutils rtutils
+wine_fn_config_dll samlib enable_samlib
 wine_fn_config_dll sane.ds enable_sane_ds
 wine_fn_config_dll sccbase enable_sccbase
 wine_fn_config_dll schannel enable_schannel

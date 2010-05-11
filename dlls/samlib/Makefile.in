@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = samlib.dll
+IMPORTS   = kernel32
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@
