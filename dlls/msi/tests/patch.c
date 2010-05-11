@@ -717,6 +717,7 @@ static void test_simple_patch( void )
     strcat( path, "\\" );
     strcat( path, msifile );
 
+    /* show that MsiOpenPackage applies registered patches */
     r = MsiOpenPackageA( path, &hpackage );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
@@ -738,6 +739,29 @@ static void test_simple_patch( void )
     MsiCloseHandle( hview );
     MsiCloseHandle( hdb );
     MsiCloseHandle( hpackage );
+
+    /* show that patches are not committed to the local package database */
+    size = sizeof(path);
+    r = MsiGetProductInfoA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
+                            "LocalPackage", path, &size );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiOpenDatabaseA( path, MSIDBOPEN_READONLY, &hdb );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+    MsiCloseHandle( hdb );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
