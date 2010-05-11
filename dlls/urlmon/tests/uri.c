@@ -36,30 +36,17 @@
 #include "winbase.h"
 #include "urlmon.h"
 
-/** TODO: Work on this!
-typedef struct _uri_component_test_str {
-    const char* uri;
-    DWORD       create_flags;
-    HRESULT     create_hres;
-    DWORD       property;
-    DWORD       property_flags;
-    HRESULT     property_hres;
-    const char* expected;
-} uri_component_test_str;
+static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
-static const uri_component_test_str URI_STR_PARSE_ONLY_TESTS[] = {
-    {"http://www.winehq.org", Uri_CREATE_NO_CANONICALIZE, S_OK, Uri_PROPERTY_SCHEME_NAME, 0, S_OK, "http"},
-    {"file://c:/test/test.mp3", Uri_CREATE_NO_CANONICALIZE, S_OK, Uri_PROPERTY_SCHEME_NAME, 0, S_OK, "file"}
-};
-*/
-
+static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
+        '.','o','r','g','/',0};
 
 typedef struct _uri_create_flag_test {
     DWORD   flags;
     HRESULT expected;
 } uri_create_flag_test;
 
-static const uri_create_flag_test URI_INVALID_CREATE_FLAGS[] = {
+static const uri_create_flag_test invalid_flag_tests[] = {
     /* Set of invalid flag combinations to test for. */
     {Uri_CREATE_DECODE_EXTRA_INFO | Uri_CREATE_NO_DECODE_EXTRA_INFO, E_INVALIDARG},
     {Uri_CREATE_CANONICALIZE | Uri_CREATE_NO_CANONICALIZE, E_INVALIDARG},
@@ -68,32 +55,37 @@ static const uri_create_flag_test URI_INVALID_CREATE_FLAGS[] = {
     {Uri_CREATE_IE_SETTINGS | Uri_CREATE_NO_IE_SETTINGS, E_INVALIDARG}
 };
 
-static void test_create_flags(LPCWSTR uriW, uri_create_flag_test test) {
-    HRESULT hr;
-    IUri *uri = NULL;
-
-    hr = CreateUri(uriW, test.flags, 0, &uri);
-    ok(hr == test.expected, "Error: CreateUri returned 0x%08x, expected 0x%08x", hr, test.expected);
-
-    if(uri) { IUri_Release(uri); }
-}
-
 /*
  * Simple tests to make sure the CreateUri function handles invalid flag combinations
  * correctly.
  */
 static void test_CreateUri_InvalidFlags(void) {
-    static const WCHAR INVALID_URL[] = {'I','N','V','A','L','I','D',0};
     DWORD i;
 
-    for(i = 0; i < sizeof(URI_INVALID_CREATE_FLAGS)/sizeof(URI_INVALID_CREATE_FLAGS[0]); ++i) {
-        test_create_flags(INVALID_URL, URI_INVALID_CREATE_FLAGS[i]);
+    for(i = 0; i < sizeof(invalid_flag_tests)/sizeof(invalid_flag_tests[0]); ++i) {
+        HRESULT hr;
+        IUri *uri = (void*) 0xdeadbeef;
+
+        hr = pCreateUri(http_urlW, invalid_flag_tests[i].flags, 0, &uri);
+        todo_wine {
+            ok(hr == invalid_flag_tests[i].expected, "Error: CreateUri returned 0x%08x, expected 0x%08x, flags=0x%08x\n",
+                    hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
+        }
+        todo_wine { ok(uri == NULL, "Error: expected the IUri to be NULL, but it was %p instead\n", uri); }
     }
 }
 
 START_TEST(uri) {
-    todo_wine {
-        trace("test CreateUri invalid flags...\n");
-        test_CreateUri_InvalidFlags();
+    HMODULE hurlmon;
+
+    hurlmon = GetModuleHandle("urlmon.dll");
+    pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
+
+    if(!pCreateUri) {
+        win_skip("CreateUri is not present, skipping tests.\n");
+        return;
     }
+
+    trace("test CreateUri invalid flags...\n");
+    test_CreateUri_InvalidFlags();
 }
