@@ -1864,7 +1864,7 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
     RegSetValueExW(subkey, AppNameW, 0, REG_SZ, (const BYTE*) appNameW, (lstrlenW(appNameW) + 1) * sizeof(WCHAR));
     if (docName)
         RegSetValueExW(subkey, DocNameW, 0, REG_SZ, (const BYTE*) docName, (lstrlenW(docName) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenW(desktopFileW) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFileW, (lstrlenW(desktopFileW) + 1) * sizeof(WCHAR));
 
 done:
     RegCloseKey(assocKey);
