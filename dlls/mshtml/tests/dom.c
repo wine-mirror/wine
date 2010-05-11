@@ -1199,6 +1199,32 @@ static void _test_textarea_put_value(unsigned line, IUnknown *unk, const char *v
     _test_textarea_value(line, unk, value);
 }
 
+#define test_textarea_readonly(t,v) _test_textarea_readonly(__LINE__,t,v)
+static void _test_textarea_readonly(unsigned line, IUnknown *unk, VARIANT_BOOL ex)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    VARIANT_BOOL b = 0x100;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_readOnly(textarea, &b);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_readOnly failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == ex, "readOnly = %x, expected %x\n", b, ex);
+}
+
+#define test_textarea_put_readonly(t,v) _test_textarea_put_readonly(__LINE__,t,v)
+static void _test_textarea_put_readonly(unsigned line, IUnknown *unk, VARIANT_BOOL b)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_put_readOnly(textarea, b);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "put_readOnly failed: %08x\n", hres);
+
+    _test_textarea_readonly(line, unk, b);
+}
+
 #define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
 static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 {
@@ -6183,6 +6209,9 @@ static void test_elems2(IHTMLDocument2 *doc)
     if(elem) {
         test_textarea_value((IUnknown*)elem, NULL);
         test_textarea_put_value((IUnknown*)elem, "test");
+        test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
+        test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
+        test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
         IHTMLElement_Release(elem);
     }
 
