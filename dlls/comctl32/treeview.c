@@ -1884,6 +1884,7 @@ TREEVIEW_SetFont(TREEVIEW_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
     infoPtr->hFont = hFont ? hFont : infoPtr->hDefaultFont;
 
     DeleteObject(infoPtr->hBoldFont);
+    DeleteObject(infoPtr->hUnderlineFont);
     infoPtr->hBoldFont = TREEVIEW_CreateBoldFont(infoPtr->hFont);
     infoPtr->hUnderlineFont = TREEVIEW_CreateUnderlineFont(infoPtr->hFont);
 
