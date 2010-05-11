@@ -1188,7 +1188,7 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
 }
 
 #define test_img_width(o,w) _test_img_width(__LINE__,o,w)
-static void _test_img_width(unsigned line, IHTMLImgElement *img, const long exp)
+static void _test_img_width(unsigned line, IHTMLImgElement *img, const LONG exp)
 {
     LONG found = -1;
     HRESULT hres;
@@ -1199,7 +1199,7 @@ static void _test_img_width(unsigned line, IHTMLImgElement *img, const long exp)
 }
 
 #define test_img_put_width(o,w) _test_img_put_width(__LINE__,o,w)
-static void _test_img_put_width(unsigned line, IHTMLImgElement *img, const long width)
+static void _test_img_put_width(unsigned line, IHTMLImgElement *img, const LONG width)
 {
     HRESULT hres;
 
@@ -1210,7 +1210,7 @@ static void _test_img_put_width(unsigned line, IHTMLImgElement *img, const long 
 }
 
 #define test_img_height(o,h) _test_img_height(__LINE__,o,h)
-static void _test_img_height(unsigned line, IHTMLImgElement *img, const long exp)
+static void _test_img_height(unsigned line, IHTMLImgElement *img, const LONG exp)
 {
     LONG found = -1;
     HRESULT hres;
@@ -1221,7 +1221,7 @@ static void _test_img_height(unsigned line, IHTMLImgElement *img, const long exp
 }
 
 #define test_img_put_height(o,w) _test_img_put_height(__LINE__,o,w)
-static void _test_img_put_height(unsigned line, IHTMLImgElement *img, const long height)
+static void _test_img_put_height(unsigned line, IHTMLImgElement *img, const LONG height)
 {
     HRESULT hres;
 
