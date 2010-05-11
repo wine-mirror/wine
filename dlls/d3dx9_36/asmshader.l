@@ -117,6 +117,18 @@ m4x3                    {return INSTR_M4x3;         }
 m3x4                    {return INSTR_M3x4;         }
 m3x3                    {return INSTR_M3x3;         }
 m3x2                    {return INSTR_M3x2;         }
+rep                     {return INSTR_REP;          }
+endrep                  {return INSTR_ENDREP;       }
+if                      {return INSTR_IF;           }
+else                    {return INSTR_ELSE;         }
+endif                   {return INSTR_ENDIF;        }
+break                   {return INSTR_BREAK;        }
+call                    {return INSTR_CALL;         }
+callnz                  {return INSTR_CALLNZ;       }
+loop                    {return INSTR_LOOP;         }
+ret                     {return INSTR_RET;          }
+endloop                 {return INSTR_ENDLOOP;      }
+label                   {return INSTR_LABEL;        }
 texldl                  {return INSTR_TEXLDL;       }
 
     /* Vertex shader only instructions  */
@@ -246,6 +258,8 @@ ps_3_0                  {return VER_PS30;       }
 \[|\]|\+                {return yytext[0];          }
 
 \_abs                   {return SMOD_ABS;           }
+
+!                       {return SMOD_NOT;           }
 
 {PREPROCESSORDIRECTIVE} {
                             /* TODO: update current line information */

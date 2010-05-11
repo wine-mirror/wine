@@ -318,6 +318,19 @@ static const struct instr_handler_table vs_3_handlers[] = {
     {BWRITERSIO_POW,            instr_handler},
     {BWRITERSIO_MOVA,           instr_handler},
 
+    {BWRITERSIO_CALL,           instr_handler},
+    {BWRITERSIO_CALLNZ,         instr_handler},
+    {BWRITERSIO_REP,            instr_handler},
+    {BWRITERSIO_ENDREP,         instr_handler},
+    {BWRITERSIO_IF,             instr_handler},
+    {BWRITERSIO_LABEL,          instr_handler},
+    {BWRITERSIO_ELSE,           instr_handler},
+    {BWRITERSIO_ENDIF,          instr_handler},
+    {BWRITERSIO_BREAK,          instr_handler},
+    {BWRITERSIO_LOOP,           instr_handler},
+    {BWRITERSIO_RET,            instr_handler},
+    {BWRITERSIO_ENDLOOP,        instr_handler},
+
     {BWRITERSIO_TEXLDL,         instr_handler},
 
     {BWRITERSIO_END,            NULL},

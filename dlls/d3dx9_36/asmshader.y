@@ -116,6 +116,18 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_M3x4
 %token INSTR_M3x3
 %token INSTR_M3x2
+%token INSTR_REP
+%token INSTR_ENDREP
+%token INSTR_IF
+%token INSTR_ELSE
+%token INSTR_ENDIF
+%token INSTR_BREAK
+%token INSTR_CALL
+%token INSTR_CALLNZ
+%token INSTR_LOOP
+%token INSTR_RET
+%token INSTR_ENDLOOP
+%token INSTR_LABEL
 %token INSTR_TEXLDL
 
 /* Vertex shader only instructions  */
@@ -168,6 +180,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 
 /* Source register modifiers */
 %token SMOD_ABS
+%token SMOD_NOT
 
 /* Misc stuff */
 %token <component> COMPONENT
@@ -444,6 +457,66 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("M3x2\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M3x2, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_REP sregs
+                            {
+                                TRACE("REP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_REP, 0, 0, 0, 0, &$2, 1);
+                            }
+                    | INSTR_ENDREP
+                            {
+                                TRACE("ENDREP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ENDREP, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_IF sregs
+                            {
+                                TRACE("IF\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_IF, 0, 0, 0, 0, &$2, 1);
+                            }
+                    | INSTR_ELSE
+                            {
+                                TRACE("ELSE\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ELSE, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_ENDIF
+                            {
+                                TRACE("ENDIF\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ENDIF, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_BREAK
+                            {
+                                TRACE("BREAK\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BREAK, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_CALL sregs
+                            {
+                                TRACE("CALL\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_CALL, 0, 0, 0, 0, &$2, 1);
+                            }
+                    | INSTR_CALLNZ sregs
+                            {
+                                TRACE("CALLNZ\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_CALLNZ, 0, 0, 0, 0, &$2, 2);
+                            }
+                    | INSTR_LOOP sregs
+                            {
+                                TRACE("LOOP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LOOP, 0, 0, 0, 0, &$2, 2);
+                            }
+                    | INSTR_RET
+                            {
+                                TRACE("RET\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_RET, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_ENDLOOP
+                            {
+                                TRACE("ENDLOOP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_ENDLOOP, 0, 0, 0, 0, 0, 0);
+                            }
+                    | INSTR_LABEL sregs
+                            {
+                                TRACE("LABEL\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_LABEL, 0, 0, 0, 0, &$2, 1);
                             }
                     | INSTR_TEXLDL omods dreg ',' sregs
                             {
@@ -742,6 +815,14 @@ sreg:                   sreg_name rel_reg swizzle
                                     FIXME("Unhandled combination of NEGATE and %u\n", $4);
                             }
                             $$.swizzle = $5;
+                        }
+                    | SMOD_NOT sreg_name swizzle
+                        {
+                            $$.type = $2.type;
+                            $$.regnum = $2.regnum;
+                            $$.rel_reg = NULL;
+                            $$.srcmod = BWRITERSPSM_NOT;
+                            $$.swizzle = $3;
                         }
 
 rel_reg:               /* empty */
