@@ -3076,6 +3076,8 @@ static void dump_get_thread_input_reply( const struct get_thread_input_reply *re
     fprintf( stderr, ", menu_owner=%08x", req->menu_owner );
     fprintf( stderr, ", move_size=%08x", req->move_size );
     fprintf( stderr, ", caret=%08x", req->caret );
+    fprintf( stderr, ", cursor=%08x", req->cursor );
+    fprintf( stderr, ", show_count=%d", req->show_count );
     dump_rectangle( ", rect=", &req->rect );
 }
 

@@ -2604,6 +2604,8 @@ enum message_type
     user_handle_t  menu_owner;    /* handle to the menu owner */
     user_handle_t  move_size;     /* handle to the moving/resizing window */
     user_handle_t  caret;         /* handle to the caret window */
+    user_handle_t  cursor;        /* handle to the cursor */
+    int            show_count;    /* cursor show count */
     rectangle_t    rect;          /* caret rectangle */
 @END
 

@@ -2055,18 +2055,11 @@ DECL_HANDLER(get_thread_input)
         reply->menu_owner = input->menu_owner;
         reply->move_size  = input->move_size;
         reply->caret      = input->caret;
+        reply->cursor     = input->cursor;
+        reply->show_count = input->cursor_count;
         reply->rect       = input->caret_rect;
     }
-    else
-    {
-        reply->focus      = 0;
-        reply->capture    = 0;
-        reply->active     = 0;
-        reply->menu_owner = 0;
-        reply->move_size  = 0;
-        reply->caret      = 0;
-        reply->rect.left = reply->rect.top = reply->rect.right = reply->rect.bottom = 0;
-    }
+
     /* foreground window is active window of foreground thread */
     reply->foreground = foreground_input ? foreground_input->active : 0;
     if (thread) release_object( thread );

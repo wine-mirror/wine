@@ -3697,8 +3697,10 @@ struct get_thread_input_reply
     user_handle_t  menu_owner;
     user_handle_t  move_size;
     user_handle_t  caret;
+    user_handle_t  cursor;
+    int            show_count;
     rectangle_t    rect;
-    char __pad_52[4];
+    char __pad_60[4];
 };
 
 
@@ -5483,6 +5485,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 400
+#define SERVER_PROTOCOL_VERSION 401
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
