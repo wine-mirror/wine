@@ -10928,7 +10928,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
  * Processes WM_STYLECHANGING messages.
  *
  * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
  * [I] wStyleType : window style type (normal or extended)
  * [I0] lpss : window style information
  *
