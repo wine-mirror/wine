@@ -294,3 +294,49 @@ void __cdecl NTDLL_qsort( void *base, size_t nmemb, size_t size,
     NTDLL_mergesort( base, secondarr, size, compar, 0, nmemb-1 );
     RtlFreeHeap (GetProcessHeap(),0, secondarr);
 }
+
+/*********************************************************************
+ *                  bsearch   (NTDLL.@)
+ */
+void * __cdecl
+NTDLL_bsearch( const void *key, const void *base, size_t nmemb,
+               size_t size, int (__cdecl *compar)(const void *, const void *) )
+{
+    int begin, end, cursor;
+
+    begin = 0;
+    end = nmemb-1;
+    while (1) {
+	int ret;
+        cursor = (end-begin)/2+begin;
+        ret = compar(key,(char*)base+(cursor*size));
+        if (!ret)
+            return (char*)base+(cursor*size);
+        if (ret < 0)
+            end = cursor;
+        else
+            begin = cursor;
+        if ((end-begin)<=1)
+            break;
+    }
+    if (!compar(key,(char*)base+(begin*size)))
+        return (char*)base+(begin*size);
+    if (!compar(key,(char*)base+(end*size)))
+        return (char*)base+(end*size);
+    return NULL;
+}
+
+
+/*********************************************************************
+ *                  _lfind   (NTDLL.@)
+ */
+void * __cdecl _lfind( const void *key, const void *base, unsigned int *nmemb,
+                       size_t size, int(__cdecl *compar)(const void *, const void *) )
+{
+    size_t i, n = *nmemb;
+
+    for (i=0;i<n;i++)
+        if (!compar(key,(char*)base+(size*i)))
+            return (char*)base+(size*i);
+    return NULL;
+}

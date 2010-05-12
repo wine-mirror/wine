@@ -83,27 +83,6 @@ void * __cdecl NTDLL_memset( void *dst, int c, size_t n )
 
 
 /*********************************************************************
- *                  bsearch   (NTDLL.@)
- */
-void * __cdecl NTDLL_bsearch( const void *key, const void *base, size_t nmemb,
-                              size_t size, int (*compar)(const void *, const void *) )
-{
-    return bsearch( key, base, nmemb, size, compar );
-}
-
-
-/*********************************************************************
- *                  _lfind   (NTDLL.@)
- */
-void * __cdecl _lfind( const void *key, const void *base, unsigned int *nmemb,
-                       size_t size, int(*compar)(const void *, const void *) )
-{
-    size_t n = *nmemb;
-    return lfind( key, base, &n, size, compar );
-}
-
-
-/*********************************************************************
  *                  strcat   (NTDLL.@)
  */
 char * __cdecl NTDLL_strcat( char *dst, const char *src )

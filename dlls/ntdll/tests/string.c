@@ -58,6 +58,7 @@ static LPWSTR   (WINAPIV *p_wcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (WINAPIV *p_wcsrchr)(LPCWSTR, WCHAR);
 
 static void     (__cdecl *p_qsort)(void *,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
+static void*    (__cdecl *p_bsearch)(void *,void*,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 
 
 static void InitFunctionPtrs(void)
@@ -94,6 +95,7 @@ static void InitFunctionPtrs(void)
 	p_wcschr= (void *)GetProcAddress(hntdll, "wcschr");
 	p_wcsrchr= (void *)GetProcAddress(hntdll, "wcsrchr");
 	p_qsort= (void *)GetProcAddress(hntdll, "qsort");
+	p_bsearch= (void *)GetProcAddress(hntdll, "bsearch");
     } /* if */
 }
 
@@ -1194,6 +1196,24 @@ static void test_qsort(void)
     ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
 }
 
+static void test_bsearch(void)
+{
+    int arr[7] = { 1, 3, 4, 8, 16, 23, 42 };
+    int *x, l, i,j ;
+
+    /* just try all all sizes */
+    for (j=1;j<sizeof(arr)/sizeof(arr[0]);j++) {
+        for (i=0;i<j;i++) {
+            l = arr[i];
+            x = p_bsearch (&l, arr, j, sizeof(arr[0]), intcomparefunc);
+            ok (x == &arr[i], "bsearch did not find %d entry in loopsize %d.\n", i, j);
+        }
+        l = 4242;
+        x = p_bsearch (&l, arr, j, sizeof(arr[0]), intcomparefunc);
+        ok (x == NULL, "bsearch did find 4242 entry in loopsize %d.\n", j);
+    }
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1224,4 +1244,6 @@ START_TEST(string)
         test_atol();
     if (p_qsort)
         test_qsort();
+    if (p_bsearch)
+        test_bsearch();
 }
