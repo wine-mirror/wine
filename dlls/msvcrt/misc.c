@@ -88,7 +88,7 @@ void CDECL MSVCRT__sleep(MSVCRT_ulong timeout)
  */
 void* CDECL _lfind(const void* match, const void* start,
                    unsigned int* array_size, unsigned int elem_size,
-                   int (*cf)(const void*,const void*) )
+                   int (CDECL *cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)
@@ -106,7 +106,7 @@ void* CDECL _lfind(const void* match, const void* start,
  */
 void* CDECL _lsearch(const void* match, void* start,
                      unsigned int* array_size, unsigned int elem_size,
-                     int (*cf)(const void*,const void*) )
+                     int (CDECL *cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)

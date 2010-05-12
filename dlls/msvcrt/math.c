@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define signbit(x) 0
 #endif
 
-typedef int (*MSVCRT_matherr_func)(struct MSVCRT__exception *);
+typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 

@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
       ~(alignment - 1)) - offset))
 
 
-typedef void (*MSVCRT_new_handler_func)(MSVCRT_size_t size);
+typedef void (CDECL *MSVCRT_new_handler_func)(MSVCRT_size_t size);
 
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
