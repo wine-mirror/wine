@@ -428,13 +428,16 @@ static void sock_poll_event( struct fd *fd, int event )
             if (debug_level)
                 fprintf(stderr, "socket %p got OOB data\n", sock);
         }
+
         /* According to WS2 specs, FD_CLOSE is only delivered when there is
            no more data to be read (i.e. hangup_seen = 1) */
-        else if ( hangup_seen && (sock->state & (FD_READ|FD_WRITE) ))
+        if ( hangup_seen && (sock->state & (FD_READ|FD_WRITE) ))
         {
             sock->errors[FD_CLOSE_BIT] = sock_error( fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
                 sock->state &= ~FD_WRITE;
+            sock->state &= ~FD_READ;
+
             sock->pmask |= FD_CLOSE;
             sock->hmask |= FD_CLOSE;
             if (debug_level)
@@ -443,7 +446,7 @@ static void sock_poll_event( struct fd *fd, int event )
         }
     }
 
-    if ( sock->pmask & FD_CLOSE || event & (POLLERR|POLLHUP) )
+    if ( event & (POLLERR|POLLHUP) )
     {
         if ( debug_level )
             fprintf( stderr, "removing socket %p from select loop\n", sock );
