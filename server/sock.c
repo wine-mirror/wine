@@ -381,18 +381,9 @@ static void sock_poll_event( struct fd *fd, int event )
             /* Linux 2.4 doesn't report POLLHUP if only one side of the socket
              * has been closed, so we need to check for it explicitly here */
             nr  = recv( get_unix_fd( fd ), &dummy, 1, MSG_PEEK );
-            if ( nr > 0 )
-            {
-                /* incoming data */
-                sock->pmask |= FD_READ;
-                sock->hmask |= (FD_READ|FD_CLOSE);
-                sock->errors[FD_READ_BIT] = 0;
-                if (debug_level)
-                    fprintf(stderr, "socket %p is readable\n", sock );
-            }
-            else if ( nr == 0 )
+            if ( nr == 0 )
                 hangup_seen = 1;
-            else
+            else if ( nr < 0 )
             {
                 /* EAGAIN can happen if an async recv() falls between the server's poll()
                    call and the invocation of this routine */
@@ -411,14 +402,14 @@ static void sock_poll_event( struct fd *fd, int event )
         {
             hangup_seen = 1;
         }
-        else if ( event & POLLIN ) /* POLLIN for non-stream socket */
+
+        if ( event & POLLIN && !hangup_seen )
         {
             sock->pmask |= FD_READ;
             sock->hmask |= (FD_READ|FD_CLOSE);
             sock->errors[FD_READ_BIT] = 0;
             if (debug_level)
                 fprintf(stderr, "socket %p is readable\n", sock );
-
         }
 
         if (event & POLLOUT)
