@@ -406,7 +406,7 @@ static void sock_poll_event( struct fd *fd, int event )
         if ( event & POLLIN && !hangup_seen )
         {
             sock->pmask |= FD_READ;
-            sock->hmask |= (FD_READ|FD_CLOSE);
+            sock->hmask |= FD_READ;
             sock->errors[FD_READ_BIT] = 0;
             if (debug_level)
                 fprintf(stderr, "socket %p is readable\n", sock );
@@ -498,7 +498,8 @@ static int sock_get_poll_events( struct fd *fd )
     if (mask & FD_READ  || async_waiting( sock->read_q )) ev |= POLLIN | POLLPRI;
     if (mask & FD_WRITE || async_waiting( sock->write_q )) ev |= POLLOUT;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
-    if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) )
+    if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) &&
+         !(sock->hmask & FD_READ) && sock->state & FD_READ )
         ev |= POLLIN;
 
     return ev;
@@ -522,7 +523,6 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
     case ASYNC_TYPE_READ:
         if (!sock->read_q && !(sock->read_q = create_async_queue( sock->fd ))) return;
         queue = sock->read_q;
-        sock->hmask &= ~FD_CLOSE;
         break;
     case ASYNC_TYPE_WRITE:
         if (!sock->write_q && !(sock->write_q = create_async_queue( sock->fd ))) return;
@@ -956,8 +956,6 @@ DECL_HANDLER(enable_socket_event)
 
     sock->pmask &= ~req->mask; /* is this safe? */
     sock->hmask &= ~req->mask;
-    if ( req->mask & FD_READ )
-        sock->hmask &= ~FD_CLOSE;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
     if ( sock->type != SOCK_STREAM ) sock->state &= ~STREAM_FLAG_MASK;
