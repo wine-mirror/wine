@@ -140,10 +140,10 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
     {
         switch (value)
         {
-            case ARB_ZERO: return "ps_helper_const.y";
-            case ARB_ONE: return "ps_helper_const.x";
+            case ARB_ZERO: return "ps_helper_const.x";
+            case ARB_ONE: return "ps_helper_const.y";
             case ARB_TWO: return "coefmul.x";
-            case ARB_0001: return "helper_const.yyyx";
+            case ARB_0001: return "helper_const.xxxy";
             default: break;
         }
     }
@@ -151,11 +151,11 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
     {
         switch (value)
         {
-            case ARB_ZERO: return "helper_const.w";
+            case ARB_ZERO: return "helper_const.x";
             case ARB_ONE: return "helper_const.y";
-            case ARB_TWO: return "helper_const.x";
-            case ARB_0001: return "helper_const.wwwy";
-            case ARB_VS_REL_OFFSET: return "helper_const.z";
+            case ARB_TWO: return "helper_const.z";
+            case ARB_0001: return "helper_const.xxxy";
+            case ARB_VS_REL_OFFSET: return "helper_const.w";
         }
     }
     FIXME("Unmanaged %s shader helper constant requested: %u\n",
@@ -3550,7 +3550,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     if(dcl_td) shader_addline(buffer, "TEMP TD;\n"); /* Used for sRGB writing */
     shader_addline(buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-    shader_addline(buffer, "PARAM ps_helper_const = { 1.0, 0.0, 0.0, 0.0 };\n");
+    shader_addline(buffer, "PARAM ps_helper_const = { 0.0, 1.0, 0.0, 0.0 };\n");
 
     if (reg_maps->shader_version.major < 2)
     {
@@ -4046,7 +4046,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
 
     shader_addline(buffer, "TEMP TMP_OUT;\n");
     if(need_helper_const(gl_info)) {
-        shader_addline(buffer, "PARAM helper_const = { 2.0, 1.0, %d.0, 0.0 };\n", This->rel_offset);
+        shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %d.0 };\n", This->rel_offset);
     }
     if(need_mova_const((IWineD3DBaseShader *) This, gl_info)) {
         shader_addline(buffer, "PARAM mova_const = { 0.5, 0.0, 2.0, 1.0 };\n");
