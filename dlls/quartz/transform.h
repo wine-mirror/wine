@@ -29,6 +29,10 @@ typedef struct TransformFuncsTable {
     HRESULT (*pfnQueryConnect) (TransformFilterImpl *This, const AM_MEDIA_TYPE * pmt);
     HRESULT (*pfnConnectInput) (InputPin *pin, const AM_MEDIA_TYPE * pmt);
     HRESULT (*pfnCleanup) (InputPin *pin);
+    HRESULT (*pfnEndOfStream) (InputPin *pin);
+    HRESULT (*pfnBeginFlush) (InputPin *pin);
+    HRESULT (*pfnEndFlush) (InputPin *pin);
+    HRESULT (*pfnNewSegment) (InputPin *pin, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 } TransformFuncsTable;
 
 struct TransformFilterImpl

@@ -515,6 +515,60 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
     return IPinImpl_Disconnect(iface);
 }
 
+static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
+{
+    InputPin* This = (InputPin*) iface;
+    TransformFilterImpl* pTransform;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->()\n", iface);
+
+    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    EnterCriticalSection(&pTransform->csFilter);
+    if (pTransform->pFuncsTable->pfnBeginFlush)
+        hr = pTransform->pFuncsTable->pfnBeginFlush(This);
+    if (SUCCEEDED(hr))
+        hr = InputPin_BeginFlush(iface);
+    LeaveCriticalSection(&pTransform->csFilter);
+    return hr;
+}
+
+static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
+{
+    InputPin* This = (InputPin*) iface;
+    TransformFilterImpl* pTransform;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->()\n", iface);
+
+    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    EnterCriticalSection(&pTransform->csFilter);
+    if (pTransform->pFuncsTable->pfnEndFlush)
+        hr = pTransform->pFuncsTable->pfnEndFlush(This);
+    if (SUCCEEDED(hr))
+        hr = InputPin_EndFlush(iface);
+    LeaveCriticalSection(&pTransform->csFilter);
+    return hr;
+}
+
+static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+{
+    InputPin* This = (InputPin*) iface;
+    TransformFilterImpl* pTransform;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->()\n", iface);
+
+    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    EnterCriticalSection(&pTransform->csFilter);
+    if (pTransform->pFuncsTable->pfnNewSegment)
+        hr = pTransform->pFuncsTable->pfnNewSegment(This, tStart, tStop, dRate);
+    if (SUCCEEDED(hr))
+        hr = InputPin_NewSegment(iface, tStart, tStop, dRate);
+    LeaveCriticalSection(&pTransform->csFilter);
+    return hr;
+}
+
 static const IPinVtbl TransformFilter_InputPin_Vtbl = 
 {
     InputPin_QueryInterface,
@@ -532,9 +586,9 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     IPinImpl_EnumMediaTypes,
     IPinImpl_QueryInternalConnections,
     TransformFilter_InputPin_EndOfStream,
-    InputPin_BeginFlush,
-    InputPin_EndFlush,
-    InputPin_NewSegment
+    TransformFilter_InputPin_BeginFlush,
+    TransformFilter_InputPin_EndFlush,
+    TransformFilter_InputPin_NewSegment
 };
 
 static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
