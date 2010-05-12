@@ -170,13 +170,24 @@ VOID WINAPI GetSystemInfo(
 VOID WINAPI GetNativeSystemInfo(
     LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
 {
-    static BOOL reported = FALSE;
-    if (!reported) {
-        FIXME("(%p) using GetSystemInfo()\n", si);
-        reported = TRUE;
-    } else
-        TRACE("(%p) using GetSystemInfo()\n", si);
+    BOOL is_wow64;
+
     GetSystemInfo(si); 
+
+    IsWow64Process(GetCurrentProcess(), &is_wow64);
+    if (is_wow64)
+    {
+        if (si->u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+        {
+            si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+            si->dwProcessorType = PROCESSOR_AMD_X8664;
+        }
+        else
+        {
+            FIXME("Add the proper information for %d in wow64 mode\n",
+                  si->u.s.wProcessorArchitecture);
+        }
+    }
 }
 
 /***********************************************************************
