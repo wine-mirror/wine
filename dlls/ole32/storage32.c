@@ -4160,42 +4160,43 @@ static HRESULT TransactedSnapshotImpl_EnsureReadEntry(
   TransactedSnapshotImpl *This, DirRef entry)
 {
   HRESULT hr=S_OK;
+  DirEntry data;
 
   if (!This->entries[entry].read)
   {
     hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
         This->entries[entry].transactedParentEntry,
-        &This->entries[entry].data);
+        &data);
 
-    if (SUCCEEDED(hr) && This->entries[entry].data.leftChild != DIRENTRY_NULL)
+    if (SUCCEEDED(hr) && data.leftChild != DIRENTRY_NULL)
     {
-      This->entries[entry].data.leftChild =
-          TransactedSnapshotImpl_CreateStubEntry(This, This->entries[entry].data.leftChild);
+      data.leftChild = TransactedSnapshotImpl_CreateStubEntry(This, data.leftChild);
 
-      if (This->entries[entry].data.leftChild == DIRENTRY_NULL)
+      if (data.leftChild == DIRENTRY_NULL)
         hr = E_OUTOFMEMORY;
     }
 
-    if (SUCCEEDED(hr) && This->entries[entry].data.rightChild != DIRENTRY_NULL)
+    if (SUCCEEDED(hr) && data.rightChild != DIRENTRY_NULL)
     {
-      This->entries[entry].data.rightChild =
-          TransactedSnapshotImpl_CreateStubEntry(This, This->entries[entry].data.rightChild);
+      data.rightChild = TransactedSnapshotImpl_CreateStubEntry(This, data.rightChild);
 
-      if (This->entries[entry].data.rightChild == DIRENTRY_NULL)
+      if (data.rightChild == DIRENTRY_NULL)
         hr = E_OUTOFMEMORY;
     }
 
-    if (SUCCEEDED(hr) && This->entries[entry].data.dirRootEntry != DIRENTRY_NULL)
+    if (SUCCEEDED(hr) && data.dirRootEntry != DIRENTRY_NULL)
     {
-      This->entries[entry].data.dirRootEntry =
-          TransactedSnapshotImpl_CreateStubEntry(This, This->entries[entry].data.dirRootEntry);
+      data.dirRootEntry = TransactedSnapshotImpl_CreateStubEntry(This, data.dirRootEntry);
 
-      if (This->entries[entry].data.dirRootEntry == DIRENTRY_NULL)
+      if (data.dirRootEntry == DIRENTRY_NULL)
         hr = E_OUTOFMEMORY;
     }
 
     if (SUCCEEDED(hr))
+    {
+      memcpy(&This->entries[entry].data, &data, sizeof(DirEntry));
       This->entries[entry].read = 1;
+    }
   }
 
   return hr;
