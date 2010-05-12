@@ -179,6 +179,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
     static MSIFILE *f = NULL;
+    MSIMEDIAINFO *mi = user;
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
@@ -189,11 +190,8 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             return FALSE;
         }
 
-        if (f->state != msifs_missing && f->state != msifs_overwrite)
-        {
-            TRACE("Skipping extraction of %s\n", debugstr_w(file));
+        if (f->disk_id != mi->disk_id || (f->state != msifs_missing && f->state != msifs_overwrite))
             return FALSE;
-        }
 
         msi_file_update_ui(package, f, szInstallFiles);
 
@@ -257,7 +255,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             data.mi = mi;
             data.package = package;
             data.cb = installfiles_cb;
-            data.user = NULL;
+            data.user = mi;
 
             if (file->IsCompressed &&
                 !msi_cabextract(package, mi, &data))
