@@ -471,8 +471,6 @@ static INT_PTR cabinet_close_file_info(FDINOTIFICATIONTYPE fdint,
 
 static INT_PTR CDECL cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
-    TRACE("(%d)\n", fdint);
-
     switch (fdint)
     {
     case fdintPARTIAL_FILE:
@@ -494,8 +492,6 @@ static INT_PTR CDECL cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION 
 
 static INT_PTR CDECL cabinet_notify_stream( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin )
 {
-    TRACE("(%d)\n", fdint);
-
     switch (fdint)
     {
     case fdintCOPY_FILE:
@@ -774,7 +770,7 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     rc = msi_load_media_info(package, file, mi);
     if (rc != ERROR_SUCCESS)
     {
-        ERR("Unable to load media info\n");
+        ERR("Unable to load media info %u\n", rc);
         return ERROR_FUNCTION_FAILED;
     }
 

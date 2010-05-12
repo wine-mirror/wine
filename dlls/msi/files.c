@@ -121,8 +121,7 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
 {
     UINT gle;
 
-    TRACE("Copying %s to %s\n", debugstr_w(source),
-          debugstr_w(file->TargetPath));
+    TRACE("Copying %s to %s\n", debugstr_w(source), debugstr_w(file->TargetPath));
 
     gle = copy_file(file, source);
     if (gle == ERROR_SUCCESS)
@@ -248,7 +247,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             rc = ready_media(package, file, mi);
             if (rc != ERROR_SUCCESS)
             {
-                ERR("Failed to ready media\n");
+                ERR("Failed to ready media for %s\n", debugstr_w(file->File));
                 break;
             }
 
@@ -288,8 +287,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         }
         else if (file->state != msifs_installed)
         {
-            ERR("compressed file wasn't extracted (%s)\n",
-                debugstr_w(file->TargetPath));
+            ERR("compressed file wasn't installed (%s)\n", debugstr_w(file->TargetPath));
             rc = ERROR_INSTALL_FAILURE;
             break;
         }
