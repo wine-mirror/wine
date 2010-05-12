@@ -468,6 +468,7 @@ typedef struct tagMSIFILE
     LPWSTR  TargetPath;
     BOOL IsCompressed;
     MSIFILEHASHINFO hash;
+    UINT disk_id;
 } MSIFILE;
 
 typedef struct tagMSITEMPFILE

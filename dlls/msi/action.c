@@ -1374,6 +1374,26 @@ done:
     return r;
 }
 
+static UINT load_file_disk_id( MSIPACKAGE *package, MSIFILE *file )
+{
+    MSIRECORD *row;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','`','D','i','s','k','I','d','`',' ', 'F','R','O','M',' ',
+        '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+        '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',' ','%','i',0};
+
+    row = MSI_QueryGetRecord( package->db, query, file->Sequence );
+    if (!row)
+    {
+        WARN("query failed\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    file->disk_id = MSI_RecordGetInteger( row, 1 );
+    msiobj_release( &row->hdr );
+    return ERROR_SUCCESS;
+}
+
 static UINT load_file(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = param;
@@ -1435,6 +1455,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     }
 
     load_file_hash(package, file);
+    load_file_disk_id(package, file);
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
 
