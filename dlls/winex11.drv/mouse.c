@@ -304,7 +304,8 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
     hook.dwExtraInfo = extra_info;
 
     last_time_modified = GetTickCount();
-    if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
+    if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
+        message = 0;  /* ignore it */
 
     SERVER_START_REQ( send_hardware_message )
     {

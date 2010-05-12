@@ -1717,9 +1717,11 @@ DECL_HANDLER(send_hardware_message)
             return;
         }
         input = thread->queue->input;
+        reply->cursor = input->cursor;
+        reply->count  = input->cursor_count;
     }
 
-    if (!(data = mem_alloc( sizeof(*data) )))
+    if (!req->msg || !(data = mem_alloc( sizeof(*data) )))
     {
         if (thread) release_object( thread );
         return;
@@ -1744,12 +1746,7 @@ DECL_HANDLER(send_hardware_message)
     }
     else free( data );
 
-    if (thread)
-    {
-        reply->cursor = input->cursor;
-        reply->count  = input->cursor_count;
-        release_object( thread );
-    }
+    if (thread) release_object( thread );
 }
 
 /* post a quit message to the current queue */
