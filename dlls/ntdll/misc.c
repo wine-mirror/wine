@@ -254,14 +254,15 @@ double CDECL NTDLL_tan( double d )
 
 
 /* Merge Sort. Algorithm taken from http://www.linux-related.de/index.html?/coding/sort/sort_merge.htm */
-static void mergesort( void *arr, void *barr, int elemsize, int(__cdecl *compar)(const void *, const void *),
-                       int left, int right )
+static void
+NTDLL_mergesort( void *arr, void *barr, int elemsize, int(__cdecl *compar)(const void *, const void *),
+                 int left, int right )
 {
     if(right>left) {
         int i, j, k, m;
         m=(right+left)/2;
-        mergesort( arr, barr, elemsize, compar, left, m);
-        mergesort( arr, barr, elemsize, compar, m+1, right);
+        NTDLL_mergesort( arr, barr, elemsize, compar, left, m);
+        NTDLL_mergesort( arr, barr, elemsize, compar, m+1, right);
 
 #define X(a,i) ((char*)a+elemsize*(i))
         for (i=m+1; i>left; i--)
@@ -290,6 +291,6 @@ void __cdecl NTDLL_qsort( void *base, size_t nmemb, size_t size,
                           int(__cdecl *compar)(const void *, const void *) )
 {
     void *secondarr = RtlAllocateHeap (GetProcessHeap(), 0, nmemb*size);
-    mergesort( base, secondarr, size, compar, 0, nmemb-1 );
+    NTDLL_mergesort( base, secondarr, size, compar, 0, nmemb-1 );
     RtlFreeHeap (GetProcessHeap(),0, secondarr);
 }
