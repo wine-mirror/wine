@@ -200,6 +200,19 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 
 /* Usage declaration tokens */
 %token <regnum> USAGE_POSITION
+%token <regnum> USAGE_BLENDWEIGHT
+%token <regnum> USAGE_BLENDINDICES
+%token <regnum> USAGE_NORMAL
+%token <regnum> USAGE_PSIZE
+%token <regnum> USAGE_TEXCOORD
+%token <regnum> USAGE_TANGENT
+%token <regnum> USAGE_BINORMAL
+%token <regnum> USAGE_TESSFACTOR
+%token <regnum> USAGE_POSITIONT
+%token <regnum> USAGE_COLOR
+%token <regnum> USAGE_FOG
+%token <regnum> USAGE_DEPTH
+%token <regnum> USAGE_SAMPLE
 
 /* Misc stuff */
 %token <component> COMPONENT
@@ -1079,6 +1092,84 @@ dclusage:             USAGE_POSITION
                             TRACE("dcl_position%u\n", $1);
                             $$.regnum = $1;
                             $$.dclusage = BWRITERDECLUSAGE_POSITION;
+                        }
+                    | USAGE_BLENDWEIGHT
+                        {
+                            TRACE("dcl_blendweight%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_BLENDWEIGHT;
+                        }
+                    | USAGE_BLENDINDICES
+                        {
+                            TRACE("dcl_blendindices%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_BLENDINDICES;
+                        }
+                    | USAGE_NORMAL
+                        {
+                            TRACE("dcl_normal%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_NORMAL;
+                        }
+                    | USAGE_PSIZE
+                        {
+                            TRACE("dcl_psize%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_PSIZE;
+                        }
+                    | USAGE_TEXCOORD
+                        {
+                            TRACE("dcl_texcoord%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_TEXCOORD;
+                        }
+                    | USAGE_TANGENT
+                        {
+                            TRACE("dcl_tangent%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_TANGENT;
+                        }
+                    | USAGE_BINORMAL
+                        {
+                            TRACE("dcl_binormal%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_BINORMAL;
+                        }
+                    | USAGE_TESSFACTOR
+                        {
+                            TRACE("dcl_tessfactor%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_TESSFACTOR;
+                        }
+                    | USAGE_POSITIONT
+                        {
+                            TRACE("dcl_positiont%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_POSITIONT;
+                        }
+                    | USAGE_COLOR
+                        {
+                            TRACE("dcl_color%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_COLOR;
+                        }
+                    | USAGE_FOG
+                        {
+                            TRACE("dcl_fog%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_FOG;
+                        }
+                    | USAGE_DEPTH
+                        {
+                            TRACE("dcl_depth%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_DEPTH;
+                        }
+                    | USAGE_SAMPLE
+                        {
+                            TRACE("dcl_sample%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_SAMPLE;
                         }
 
 predicate:            '(' REG_PREDICATE swizzle ')'
