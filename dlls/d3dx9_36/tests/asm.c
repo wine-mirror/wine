@@ -1023,11 +1023,11 @@ static void vs_3_0_test(void) {
             "dcl_2d s0\n",
             {0xfffe0300, 0x0200001f, 0x90000000, 0xa00f0800, 0x0000ffff}
         },*/
-/*      {*/ /* shader 2 */
-/*          "vs_3_0\n"
+        {   /* shader 2 */
+            "vs_3_0\n"
             "dcl_position o0\n",
             {0xfffe0300, 0x0200001f, 0x80000000, 0xe00f0000, 0x0000ffff}
-        },*/
+        },
 /*      {*/ /* shader 3 */
 /*          "vs_3_0\n"
             "dcl_texcoord12 o11\n",

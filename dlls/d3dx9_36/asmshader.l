@@ -66,6 +66,8 @@ REG_PREDICATE           p0
 /* Not really a register, but it is considered as such */
 REG_LABEL               l[0-9]+
 
+DCL_POSITION            _position[0-9]*
+
 PREPROCESSORDIRECTIVE   #[^\n]*\n
 
 /* Comments */
@@ -117,6 +119,7 @@ m4x3                    {return INSTR_M4x3;         }
 m3x4                    {return INSTR_M3x4;         }
 m3x3                    {return INSTR_M3x3;         }
 m3x2                    {return INSTR_M3x2;         }
+dcl                     {return INSTR_DCL;          }
 rep                     {return INSTR_REP;          }
 endrep                  {return INSTR_ENDREP;       }
 if                      {return INSTR_IF;           }
@@ -270,6 +273,15 @@ ps_3_0                  {return VER_PS30;       }
 \_abs                   {return SMOD_ABS;           }
 
 !                       {return SMOD_NOT;           }
+
+{DCL_POSITION}          {
+                            if(yytext[strlen("_position")] == '\0') {
+                                asmshader_lval.regnum = 0;
+                            } else {
+                                asmshader_lval.regnum = atoi(yytext + strlen("_position"));
+                            }
+                            return USAGE_POSITION;
+                        }
 
 {PREPROCESSORDIRECTIVE} {
                             /* TODO: update current line information */

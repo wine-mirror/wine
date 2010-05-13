@@ -162,6 +162,7 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_RET:         return D3DSIO_RET;
         case BWRITERSIO_ENDLOOP:     return D3DSIO_ENDLOOP;
         case BWRITERSIO_LABEL:       return D3DSIO_LABEL;
+        case BWRITERSIO_DCL:         return D3DSIO_DCL;
         case BWRITERSIO_POW:         return D3DSIO_POW;
         case BWRITERSIO_CRS:         return D3DSIO_CRS;
         case BWRITERSIO_SGN:         return D3DSIO_SGN;
@@ -426,6 +427,7 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_RET:          return "ret";
         case BWRITERSIO_ENDLOOP:      return "endloop";
         case BWRITERSIO_LABEL:        return "label";
+        case BWRITERSIO_DCL:          return "dcl";
         case BWRITERSIO_POW:          return "pow";
         case BWRITERSIO_CRS:          return "crs";
         case BWRITERSIO_SGN:          return "sgn";

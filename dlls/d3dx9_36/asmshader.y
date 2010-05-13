@@ -80,6 +80,10 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
         DWORD           shift;
     } modshift;
     BWRITER_COMPARISON_TYPE comptype;
+    struct {
+        DWORD           dclusage;
+        unsigned int    regnum;
+    } declaration;
     struct rel_reg      rel_reg;
     struct src_regs     sregs;
 }
@@ -117,6 +121,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_M3x4
 %token INSTR_M3x3
 %token INSTR_M3x2
+%token INSTR_DCL
 %token INSTR_REP
 %token INSTR_ENDREP
 %token INSTR_IF
@@ -193,6 +198,9 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token SMOD_ABS
 %token SMOD_NOT
 
+/* Usage declaration tokens */
+%token <regnum> USAGE_POSITION
+
 /* Misc stuff */
 %token <component> COMPONENT
 %token <immval> IMMVAL
@@ -210,6 +218,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <modshift> omods
 %type <modshift> omodifier
 %type <comptype> comp
+%type <declaration> dclusage
 %type <rel_reg> rel_reg
 %type <reg> predicate
 %type <immval> immsum
@@ -475,6 +484,30 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("M3x2\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_M3x2, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_DCL dclusage REG_OUTPUT
+                            {
+                                struct shader_reg reg;
+                                TRACE("Output reg declaration\n");
+                                ZeroMemory(&reg, sizeof(reg));
+                                reg.type = BWRITERSPR_OUTPUT;
+                                reg.regnum = $3;
+                                reg.rel_reg = NULL;
+                                reg.srcmod = 0;
+                                reg.writemask = BWRITERSP_WRITEMASK_ALL;
+                                asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                            }
+                    | INSTR_DCL dclusage REG_OUTPUT writemask
+                            {
+                                struct shader_reg reg;
+                                TRACE("Output reg declaration\n");
+                                ZeroMemory(&reg, sizeof(reg));
+                                reg.type = BWRITERSPR_OUTPUT;
+                                reg.regnum = $3;
+                                reg.rel_reg = NULL;
+                                reg.srcmod = 0;
+                                reg.writemask = $4;
+                                asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
                     | INSTR_REP sregs
                             {
@@ -1040,6 +1073,13 @@ comp:                 COMP_GT           { $$ = BWRITER_COMPARISON_GT;       }
                     | COMP_LE           { $$ = BWRITER_COMPARISON_LE;       }
                     | COMP_EQ           { $$ = BWRITER_COMPARISON_EQ;       }
                     | COMP_NE           { $$ = BWRITER_COMPARISON_NE;       }
+
+dclusage:             USAGE_POSITION
+                        {
+                            TRACE("dcl_position%u\n", $1);
+                            $$.regnum = $1;
+                            $$.dclusage = BWRITERDECLUSAGE_POSITION;
+                        }
 
 predicate:            '(' REG_PREDICATE swizzle ')'
                         {

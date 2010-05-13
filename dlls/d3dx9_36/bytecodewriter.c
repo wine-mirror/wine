@@ -104,6 +104,54 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
     return TRUE;
 }
 
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask) {
+    unsigned int *num;
+    struct declaration **decl;
+    unsigned int i;
+
+    if(!shader) return FALSE;
+
+    if(output) {
+        num = &shader->num_outputs;
+        decl = &shader->outputs;
+    } else {
+        num = &shader->num_inputs;
+        decl = &shader->inputs;
+    }
+
+    if(*num == 0) {
+        *decl = asm_alloc(sizeof(**decl));
+        if(!*decl) {
+            ERR("Error allocating declarations array\n");
+            return FALSE;
+        }
+    } else {
+        struct declaration *newdecl;
+        for(i = 0; i < *num; i++) {
+            if((*decl)[i].regnum == regnum && ((*decl)[i].writemask & writemask)) {
+                WARN("Declaration of register %u already exists, writemask match 0x%x\n",
+                      regnum, (*decl)[i].writemask & writemask);
+            }
+        }
+
+        newdecl = asm_realloc(*decl,
+                              sizeof(**decl) * ((*num) + 1));
+        if(!newdecl) {
+            ERR("Error reallocating declarations array\n");
+            return FALSE;
+        }
+        *decl = newdecl;
+    }
+    (*decl)[*num].usage = usage;
+    (*decl)[*num].usage_idx = usage_idx;
+    (*decl)[*num].regnum = regnum;
+    (*decl)[*num].writemask = writemask;
+    (*num)++;
+
+    return TRUE;
+}
+
+
 /* shader bytecode buffer manipulation functions.
  * allocate_buffer creates a new buffer structure, put_dword adds a new
  * DWORD to the buffer. In the rare case of a memory allocation failure
@@ -147,6 +195,35 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
 /******************************************************
  * Implementation of the writer functions starts here *
  ******************************************************/
+static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
+                               const struct declaration *decls, unsigned int num, DWORD type) {
+    DWORD i;
+    DWORD instr_dcl = D3DSIO_DCL;
+    DWORD token;
+
+    if(len) {
+        instr_dcl |= 2 << D3DSI_INSTLENGTH_SHIFT;
+    }
+
+    for(i = 0; i < num; i++) {
+        /* Write the DCL instruction */
+        put_dword(buffer, instr_dcl);
+
+        /* Write the usage and index */
+        token = (1 << 31); /* Bit 31 of non-instruction opcodes is 1 */
+        token |= (decls[i].usage << D3DSP_DCL_USAGE_SHIFT) & D3DSP_DCL_USAGE_MASK;
+        token |= (decls[i].usage_idx << D3DSP_DCL_USAGEINDEX_SHIFT) & D3DSP_DCL_USAGEINDEX_MASK;
+        put_dword(buffer, token);
+
+        /* Write the dest register */
+        token = (1 << 31); /* Bit 31 of non-instruction opcodes is 1 */
+        token |= (type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+        token |= (d3d9_writemask(decls[i].writemask)) & D3DSP_WRITEMASK_ALL;
+        token |= decls[i].regnum & D3DSP_REGNUM_MASK;
+        put_dword(buffer, token);
+    }
+}
+
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     put_dword(buffer, D3DSIO_END);
 }
@@ -206,6 +283,8 @@ static void sm_2_opcode(struct bc_writer *This,
 static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
+
+    write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
     return;
 }
 

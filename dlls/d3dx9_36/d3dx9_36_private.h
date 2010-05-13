@@ -253,6 +253,9 @@ struct asmparser_backend {
                       const struct shader_reg *predicate);
     void (*coissue)(struct asm_parser *This);
 
+    void (*dcl_output)(struct asm_parser *This, DWORD usage, DWORD num,
+                       const struct shader_reg *reg);
+
     void (*end)(struct asm_parser *This);
 
     void (*instr)(struct asm_parser *This, DWORD opcode, DWORD mod, DWORD shift,
@@ -262,6 +265,7 @@ struct asmparser_backend {
 
 struct instruction *alloc_instr(unsigned int srcs);
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask);
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 
@@ -402,6 +406,7 @@ typedef enum _BWRITERSHADER_INSTRUCTION_OPCODE_TYPE {
     BWRITERSIO_RET,
     BWRITERSIO_ENDLOOP,
     BWRITERSIO_LABEL,
+    BWRITERSIO_DCL,
     BWRITERSIO_POW,
     BWRITERSIO_CRS,
     BWRITERSIO_SGN,
@@ -512,6 +517,10 @@ typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
 #define BWRITERVS_SWIZZLE_Y (BWRITERVS_X_Y | BWRITERVS_Y_Y | BWRITERVS_Z_Y | BWRITERVS_W_Y)
 #define BWRITERVS_SWIZZLE_Z (BWRITERVS_X_Z | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z)
 #define BWRITERVS_SWIZZLE_W (BWRITERVS_X_W | BWRITERVS_Y_W | BWRITERVS_Z_W | BWRITERVS_W_W)
+
+typedef enum _BWRITERDECLUSAGE {
+    BWRITERDECLUSAGE_POSITION,
+} BWRITERDECLUSAGE;
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
 DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);

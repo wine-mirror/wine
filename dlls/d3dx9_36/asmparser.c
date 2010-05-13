@@ -38,6 +38,19 @@ static void asmparser_end(struct asm_parser *This) {
     TRACE("Finalizing shader\n");
 }
 
+static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num,
+                                 const struct shader_reg *reg) {
+    if(!This->shader) return;
+    if(This->shader->type == ST_PIXEL) {
+        asmparser_message(This, "Line %u: Output register declared in a pixel shader\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+    }
+    if(!record_declaration(This->shader, usage, num, TRUE, reg->regnum, reg->writemask)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
 static void asmparser_instr(struct asm_parser *This, DWORD opcode,
                             DWORD mod, DWORD shift,
                             BWRITER_COMPARISON_TYPE comp,
@@ -134,6 +147,8 @@ static const struct asmparser_backend parser_vs_3 = {
 
     asmparser_predicate_supported,
     asmparser_coissue_unsupported,
+
+    asmparser_dcl_output,
 
     asmparser_end,
 
