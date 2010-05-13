@@ -254,18 +254,6 @@ static int sock_reselect( struct sock *sock )
     return ev;
 }
 
-/* After POLLHUP is received, the socket will no longer be in the main select loop.
-   This function is used to signal pending events nevertheless */
-static void sock_try_event( struct sock *sock, int event )
-{
-    event = check_fd_events( sock->fd, event );
-    if (event)
-    {
-        if ( debug_level ) fprintf( stderr, "sock_try_event: %x\n", event );
-        sock_poll_event( sock->fd, event );
-    }
-}
-
 /* wake anybody waiting on the socket event or send the associated message */
 static void sock_wake_up( struct sock *sock, int pollev )
 {
@@ -509,7 +497,6 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
 {
     struct sock *sock = get_fd_user( fd );
     struct async_queue *queue;
-    int pollev;
 
     assert( sock->obj.ops == &sock_ops );
 
@@ -541,15 +528,13 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
         set_error( STATUS_PENDING );
     }
 
-    pollev = sock_reselect( sock );
-    if ( pollev ) sock_try_event( sock, pollev );
+    sock_reselect( sock );
 }
 
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
-    int events = sock_reselect( sock );
-    if (events) sock_try_event( sock, events );
+    sock_reselect( sock );
 }
 
 static void sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb )
@@ -883,7 +868,6 @@ DECL_HANDLER(set_socket_event)
     if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
 
     pollev = sock_reselect( sock );
-    if ( pollev ) sock_try_event( sock, pollev );
 
     if (sock->mask)
         sock->state |= FD_WINE_NONBLOCKING;
@@ -943,7 +927,6 @@ DECL_HANDLER(get_socket_event)
 DECL_HANDLER(enable_socket_event)
 {
     struct sock *sock;
-    int pollev;
 
     if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
                                                FILE_WRITE_ATTRIBUTES, &sock_ops)))
@@ -955,8 +938,7 @@ DECL_HANDLER(enable_socket_event)
     sock->state &= ~req->cstate;
     if ( sock->type != SOCK_STREAM ) sock->state &= ~STREAM_FLAG_MASK;
 
-    pollev = sock_reselect( sock );
-    if ( pollev ) sock_try_event( sock, pollev );
+    sock_reselect( sock );
 
     release_object( &sock->obj );
 }
