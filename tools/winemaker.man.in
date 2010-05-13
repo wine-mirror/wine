@@ -69,7 +69,7 @@ source files, and generate the corresponding Makefile.
 .PP
 - winemaker knows about MFC-based project and will generate customized files.
 .PP
-- winemaker can read existing Projectfiles. It supports dsp, dsw, vcproj and sln files.
+- winemaker can read existing project files. It supports dsp, dsw, vcproj and sln files.
 .PP
 .SH OPTIONS
 .TP
@@ -124,8 +124,9 @@ i.e. for which it does not know whether it is an executable or a library,
 it should assume it is a library.
 .TP
 .B --mfc
-Specifies that the targets are MFC based. In such a case winemaker the include 
-and library paths accordingly, and links the target with the MFC library.
+Specifies that the targets are MFC based. In such a case winemaker adapts
+the include and library paths accordingly, and links the target with the
+MFC library.
 .TP
 .B --nomfc
 Specifies that targets are not MFC-based. This option disables use of MFC libraries
@@ -166,7 +167,7 @@ Puts winemaker in interactive mode. In this mode winemaker will ask you to
 confirm each directory's list of targets, and then to provide directory and
 target specific options.
 .TP
-.B --single-target name
+.BR --single-target " name"
 Specifies that there is only one target, and that it is called "name".
 .TP
 .B --generated-files
@@ -176,7 +177,7 @@ Tells winemaker to generate the Makefile. This is the default.
 Tells winemaker not to generate the Makefile.
 .TP
 .B --wine32
-Tells winemaker to generate a 32-bit target. This is useful on a wow64 systems.
+Tells winemaker to generate a 32-bit target. This is useful on wow64 systems.
 Without that option the default architecture is used.
 
 .SH EXAMPLES
@@ -215,7 +216,7 @@ $ make
 
 .SH TODO / BUGS
 .PP
-In some cases you will have to edit the Makefile or sourcefiles by yourself.
+In some cases you will have to edit the Makefile or source files by yourself.
 .PP
 Assuming that the windows executable/library is available, we could
 use winedump to determine what kind of executable it is (graphical
