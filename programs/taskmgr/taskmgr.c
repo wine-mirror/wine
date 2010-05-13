@@ -502,11 +502,8 @@ static void SaveSettings(void)
 
 static void TaskManager_OnRestoreMainWindow(void)
 {
-  HMENU hMenu, hOptionsMenu;
   BOOL OnTop;
 
-  hMenu = GetMenu(hMainWnd);
-  hOptionsMenu = GetSubMenu(hMenu, OPTIONS_MENU_INDEX);
   OnTop = ((GetWindowLong(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0);
   
   OpenIcon(hMainWnd);
