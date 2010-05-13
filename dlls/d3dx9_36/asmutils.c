@@ -105,6 +105,17 @@ DWORD d3d9_comparetype(DWORD asmshader_comparetype) {
     }
 }
 
+DWORD d3d9_sampler(DWORD bwriter_sampler) {
+    if(bwriter_sampler == BWRITERSTT_UNKNOWN)   return D3DSTT_UNKNOWN;
+    if(bwriter_sampler == BWRITERSTT_1D)        return D3DSTT_1D;
+    if(bwriter_sampler == BWRITERSTT_2D)        return D3DSTT_2D;
+    if(bwriter_sampler == BWRITERSTT_CUBE)      return D3DSTT_CUBE;
+    if(bwriter_sampler == BWRITERSTT_VOLUME)    return D3DSTT_VOLUME;
+    FIXME("Unexpected BWRITERSAMPLER_TEXTURE_TYPE type %u\n", bwriter_sampler);
+
+    return 0;
+}
+
 DWORD d3d9_register(DWORD bwriter_register) {
     if(bwriter_register == BWRITERSPR_TEMP)         return D3DSPR_TEMP;
     if(bwriter_register == BWRITERSPR_INPUT)        return D3DSPR_INPUT;

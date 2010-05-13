@@ -179,7 +179,6 @@ struct declaration {
 struct samplerdecl {
     DWORD                   type;
     DWORD                   regnum;
-    unsigned int            line_no; /* for error messages */
 };
 
 #define INSTRARRAY_INITIAL_SIZE 8
@@ -257,6 +256,8 @@ struct asmparser_backend {
                        const struct shader_reg *reg);
     void (*dcl_input)(struct asm_parser *This, DWORD usage, DWORD num,
                       const struct shader_reg *reg);
+    void (*dcl_sampler)(struct asm_parser *This, DWORD samptype, DWORD regnum,
+                        unsigned int line_no);
 
     void (*end)(struct asm_parser *This);
 
@@ -268,6 +269,7 @@ struct asmparser_backend {
 struct instruction *alloc_instr(unsigned int srcs);
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask);
+BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum);
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 
@@ -366,6 +368,7 @@ DWORD d3d9_writemask(DWORD bwriter_writemask);
 DWORD d3d9_srcmod(DWORD bwriter_srcmod);
 DWORD d3d9_dstmod(DWORD bwriter_mod);
 DWORD d3d9_comparetype(DWORD bwriter_comparetype);
+DWORD d3d9_sampler(DWORD bwriter_sampler);
 DWORD d3d9_register(DWORD bwriter_register);
 DWORD d3d9_opcode(DWORD bwriter_opcode);
 
@@ -475,6 +478,14 @@ typedef enum _BWRITERSHADER_PARAM_DSTMOD_TYPE {
     BWRITERSPDM_PARTIALPRECISION = 2,
     BWRITERSPDM_MSAMPCENTROID = 4,
 } BWRITERSHADER_PARAM_DSTMOD_TYPE;
+
+typedef enum _BWRITERSAMPLER_TEXTURE_TYPE {
+    BWRITERSTT_UNKNOWN = 0,
+    BWRITERSTT_1D = 1,
+    BWRITERSTT_2D = 2,
+    BWRITERSTT_CUBE = 3,
+    BWRITERSTT_VOLUME = 4,
+} BWRITERSAMPLER_TEXTURE_TYPE;
 
 typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
     BWRITERSPSM_NONE = 0,

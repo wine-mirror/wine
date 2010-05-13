@@ -1008,21 +1008,17 @@ static void ps_2_x_test(void) {
 }
 
 static void vs_3_0_test(void) {
-    /* FIXME: Some tests are temporarily commented out, because the
-       current implementation doesn't support the entire vs_3_0 syntax
-       and it is not trivial to remove todo_wine only from
-       a subset of the tests here */
     struct shader_test tests[] = {
         {   /* shader 0 */
             "vs_3_0\n"
             "mov r0, c0\n",
             {0xfffe0300, 0x02000001, 0x800f0000, 0xa0e40000, 0x0000ffff}
         },
-/*      {*/ /* shader 1 */
-/*          "vs_3_0\n"
+        {   /* shader 1 */
+            "vs_3_0\n"
             "dcl_2d s0\n",
             {0xfffe0300, 0x0200001f, 0x90000000, 0xa00f0800, 0x0000ffff}
-        },*/
+        },
         {   /* shader 2 */
             "vs_3_0\n"
             "dcl_position o0\n",

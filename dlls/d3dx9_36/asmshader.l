@@ -81,6 +81,11 @@ DCL_FOG                 _fog[0-9]*
 DCL_DEPTH               _depth[0-9]*
 DCL_SAMPLE              _sample[0-9]*
 
+DCL_SAMPLER1D           _1d
+DCL_SAMPLER2D           _2d
+DCL_SAMPLERCUBE         _cube
+DCL_SAMPLERVOLUME       _volume
+
 PREPROCESSORDIRECTIVE   #[^\n]*\n
 
 /* Comments */
@@ -399,6 +404,11 @@ ps_3_0                  {return VER_PS30;       }
                             }
                             return USAGE_SAMPLE;
                         }
+
+{DCL_SAMPLER1D}         { return SAMPTYPE_1D;       }
+{DCL_SAMPLER2D}         { return SAMPTYPE_2D;       }
+{DCL_SAMPLERCUBE}       { return SAMPTYPE_CUBE;     }
+{DCL_SAMPLERVOLUME}     { return SAMPTYPE_VOLUME;   }
 
 {PREPROCESSORDIRECTIVE} {
                             /* TODO: update current line information */

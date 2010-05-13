@@ -151,6 +151,44 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_
     return TRUE;
 }
 
+BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum) {
+    unsigned int i;
+
+    if(!shader) return FALSE;
+
+    if(shader->num_samplers == 0) {
+        shader->samplers = asm_alloc(sizeof(*shader->samplers));
+        if(!shader->samplers) {
+            ERR("Error allocating samplers array\n");
+            return FALSE;
+        }
+    } else {
+        struct samplerdecl *newarray;
+
+        for(i = 0; i < shader->num_samplers; i++) {
+            if(shader->samplers[i].regnum == regnum) {
+                WARN("Sampler %u already declared\n", regnum);
+                /* This is not an error as far as the assembler is concerned.
+                 * Direct3D might refuse to load the compiled shader though
+                 */
+            }
+        }
+
+        newarray = asm_realloc(shader->samplers,
+                               sizeof(*shader->samplers) * (shader->num_samplers + 1));
+        if(!newarray) {
+            ERR("Error reallocating samplers array\n");
+            return FALSE;
+        }
+        shader->samplers = newarray;
+    }
+
+    shader->samplers[shader->num_samplers].type = samptype;
+    shader->samplers[shader->num_samplers].regnum = regnum;
+    shader->num_samplers++;
+    return TRUE;
+}
+
 
 /* shader bytecode buffer manipulation functions.
  * allocate_buffer creates a new buffer structure, put_dword adds a new
@@ -280,12 +318,33 @@ static void sm_2_opcode(struct bc_writer *This,
     put_dword(buffer,token);
 }
 
+static void write_samplers(const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
+    DWORD i;
+    DWORD instr_dcl = D3DSIO_DCL | (2 << D3DSI_INSTLENGTH_SHIFT);
+    DWORD token;
+    const DWORD reg = (1<<31) |
+                      ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
+                      ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2) |
+                      D3DSP_WRITEMASK_ALL;
+
+    for(i = 0; i < shader->num_samplers; i++) {
+        /* Write the DCL instruction */
+        put_dword(buffer, instr_dcl);
+        token = (1<<31);
+        /* Already shifted */
+        token |= (d3d9_sampler(shader->samplers[i].type)) & D3DSP_TEXTURETYPE_MASK;
+        put_dword(buffer, token);
+        put_dword(buffer, reg | (shader->samplers[i].regnum & D3DSP_REGNUM_MASK));
+    }
+}
+
 static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
 
     write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
     write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
+    write_samplers(shader, buffer);
     return;
 }
 

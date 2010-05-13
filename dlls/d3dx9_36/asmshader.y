@@ -84,6 +84,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
         DWORD           dclusage;
         unsigned int    regnum;
     } declaration;
+    BWRITERSAMPLER_TEXTURE_TYPE samplertype;
     struct rel_reg      rel_reg;
     struct src_regs     sregs;
 }
@@ -198,6 +199,12 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token SMOD_ABS
 %token SMOD_NOT
 
+/* Sampler types */
+%token SAMPTYPE_1D
+%token SAMPTYPE_2D
+%token SAMPTYPE_CUBE
+%token SAMPTYPE_VOLUME
+
 /* Usage declaration tokens */
 %token <regnum> USAGE_POSITION
 %token <regnum> USAGE_BLENDWEIGHT
@@ -232,6 +239,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <modshift> omodifier
 %type <comptype> comp
 %type <declaration> dclusage
+%type <samplertype> sampdcl
 %type <rel_reg> rel_reg
 %type <reg> predicate
 %type <immval> immsum
@@ -545,6 +553,25 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.srcmod = 0;
                                 reg.writemask = $4;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                            }
+                    | INSTR_DCL sampdcl REG_SAMPLER
+                            {
+                                TRACE("Sampler declared\n");
+                                asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3, asm_ctx.line_no);
+                            }
+                    | INSTR_DCL sampdcl REG_INPUT
+                            {
+                                TRACE("Error rule: sampler decl of input reg\n");
+                                asmparser_message(&asm_ctx, "Line %u: Sampler declarations of input regs is not valid\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_WARN);
+                            }
+                    | INSTR_DCL sampdcl REG_OUTPUT
+                            {
+                                TRACE("Error rule: sampler decl of output reg\n");
+                                asmparser_message(&asm_ctx, "Line %u: Sampler declarations of output regs is not valid\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_WARN);
                             }
                     | INSTR_REP sregs
                             {
@@ -1194,6 +1221,23 @@ dclusage:             USAGE_POSITION
                             TRACE("dcl_sample%u\n", $1);
                             $$.regnum = $1;
                             $$.dclusage = BWRITERDECLUSAGE_SAMPLE;
+                        }
+
+sampdcl:              SAMPTYPE_1D
+                        {
+                            $$ = BWRITERSTT_1D;
+                        }
+                    | SAMPTYPE_2D
+                        {
+                            $$ = BWRITERSTT_2D;
+                        }
+                    | SAMPTYPE_CUBE
+                        {
+                            $$ = BWRITERSTT_CUBE;
+                        }
+                    | SAMPTYPE_VOLUME
+                        {
+                            $$ = BWRITERSTT_VOLUME;
                         }
 
 predicate:            '(' REG_PREDICATE swizzle ')'
