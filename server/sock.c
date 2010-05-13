@@ -329,6 +329,10 @@ static void sock_poll_event( struct fd *fd, int event )
     assert( sock->obj.ops == &sock_ops );
     if (debug_level)
         fprintf(stderr, "socket %p select event: %x\n", sock, event);
+
+    /* we may change event later, remove from loop here */
+    if (event & (POLLERR|POLLHUP)) set_fd_events( sock->fd, -1 );
+
     if (sock->state & FD_CONNECT)
     {
         /* connecting */
@@ -382,28 +386,25 @@ static void sock_poll_event( struct fd *fd, int event )
              * has been closed, so we need to check for it explicitly here */
             nr  = recv( get_unix_fd( fd ), &dummy, 1, MSG_PEEK );
             if ( nr == 0 )
+            {
                 hangup_seen = 1;
+                event &= ~POLLIN;
+            }
             else if ( nr < 0 )
             {
+                event &= ~POLLIN;
                 /* EAGAIN can happen if an async recv() falls between the server's poll()
                    call and the invocation of this routine */
-                if ( errno == EAGAIN )
-                    event &= ~POLLIN;
-                else
+                if ( errno != EAGAIN )
                 {
                     if ( debug_level )
                         fprintf( stderr, "recv error on socket %p: %d\n", sock, errno );
-                    event = POLLERR;
+                    event |= POLLERR;
                 }
             }
-
-        }
-        else if ( sock_shutdown_type == SOCK_SHUTDOWN_POLLHUP && (event & POLLHUP) )
-        {
-            hangup_seen = 1;
         }
 
-        if ( event & POLLIN && !hangup_seen )
+        if ( event & POLLIN )
         {
             sock->pmask |= FD_READ;
             sock->hmask |= FD_READ;
@@ -429,9 +430,7 @@ static void sock_poll_event( struct fd *fd, int event )
                 fprintf(stderr, "socket %p got OOB data\n", sock);
         }
 
-        /* According to WS2 specs, FD_CLOSE is only delivered when there is
-           no more data to be read (i.e. hangup_seen = 1) */
-        if ( hangup_seen && (sock->state & (FD_READ|FD_WRITE) ))
+        if ( (hangup_seen || event & (POLLHUP|POLLERR)) && (sock->state & (FD_READ|FD_WRITE)) )
         {
             sock->errors[FD_CLOSE_BIT] = sock_error( fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
@@ -444,16 +443,10 @@ static void sock_poll_event( struct fd *fd, int event )
                 fprintf(stderr, "socket %p aborted by error %d, event: %x - removing from select loop\n",
                         sock, sock->errors[FD_CLOSE_BIT], event);
         }
-    }
 
-    if ( event & (POLLERR|POLLHUP) )
-    {
-        if ( debug_level )
-            fprintf( stderr, "removing socket %p from select loop\n", sock );
-        set_fd_events( sock->fd, -1 );
+        if (hangup_seen)
+            event |= POLLHUP;
     }
-    else
-        sock_reselect( sock );
 
     /* wake up anyone waiting for whatever just happened */
     if ( sock->pmask & sock->mask || sock->flags & WSA_FLAG_OVERLAPPED ) sock_wake_up( sock, event );
@@ -461,6 +454,8 @@ static void sock_poll_event( struct fd *fd, int event )
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
     wake_up( &sock->obj, 0 );
+
+    sock_reselect( sock );
 }
 
 static void sock_dump( struct object *obj, int verbose )
