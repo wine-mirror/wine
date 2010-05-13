@@ -296,6 +296,14 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
     TRACE("(%s %x %x %p)\n", debugstr_w(pwzURI), dwFlags, (DWORD)dwReserved, ppURI);
 
+    if(!ppURI)
+        return E_INVALIDARG;
+
+    if(!pwzURI) {
+        *ppURI = NULL;
+        return E_INVALIDARG;
+    }
+
     ret = heap_alloc(sizeof(Uri));
     if(!ret)
         return E_OUTOFMEMORY;

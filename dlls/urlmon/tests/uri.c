@@ -20,7 +20,9 @@
 
 /*
  * IUri testing framework goals:
- *  - Test invalid flags
+ *  - Test invalid args
+ *      - invalid flags
+ *      - invalid args (IUri, uri string)
  *  - Test parsing for components when no canonicalization occurs
  *  - Test parsing for components when canonicalization occurs.
  *  - More tests...
@@ -75,6 +77,18 @@ static void test_CreateUri_InvalidFlags(void) {
     }
 }
 
+static void test_CreateUri_InvalidArgs(void) {
+    HRESULT hr;
+    IUri *uri = (void*) 0xdeadbeef;
+
+    hr = pCreateUri(http_urlW, 0, 0, NULL);
+    ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08x, expected 0x%08x\n", hr, E_INVALIDARG);
+
+    hr = pCreateUri(NULL, 0, 0, &uri);
+    ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08x, expected 0x%08x\n", hr, E_INVALIDARG);
+    ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -88,4 +102,7 @@ START_TEST(uri) {
 
     trace("test CreateUri invalid flags...\n");
     test_CreateUri_InvalidFlags();
+
+    trace("test CreateUri invalid args...\n");
+    test_CreateUri_InvalidArgs();
 }
