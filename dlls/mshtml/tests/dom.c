@@ -3003,7 +3003,7 @@ static void test_select_elem(IHTMLSelectElement *select)
 
     V_I4(&name) = 1;
     hres = IHTMLSelectElement_item(select, name, index, NULL);
-    ok(hres == E_POINTER, "item failed: %08x, expected E_POINTER\n", hres);
+    ok(hres == E_POINTER || broken(hres == E_INVALIDARG), "item failed: %08x, expected E_POINTER\n", hres);
 
     disp = NULL;
     hres = IHTMLSelectElement_item(select, name, index, &disp);
