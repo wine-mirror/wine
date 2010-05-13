@@ -255,6 +255,8 @@ struct asmparser_backend {
 
     void (*dcl_output)(struct asm_parser *This, DWORD usage, DWORD num,
                        const struct shader_reg *reg);
+    void (*dcl_input)(struct asm_parser *This, DWORD usage, DWORD num,
+                      const struct shader_reg *reg);
 
     void (*end)(struct asm_parser *This);
 

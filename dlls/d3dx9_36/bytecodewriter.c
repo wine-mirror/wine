@@ -284,6 +284,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
 
+    write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
     write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
     return;
 }

@@ -522,6 +522,30 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.writemask = $4;
                                 asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
+                    | INSTR_DCL dclusage REG_INPUT
+                            {
+                                struct shader_reg reg;
+                                TRACE("Input reg declaration\n");
+                                ZeroMemory(&reg, sizeof(reg));
+                                reg.type = BWRITERSPR_INPUT;
+                                reg.regnum = $3;
+                                reg.rel_reg = NULL;
+                                reg.srcmod = 0;
+                                reg.writemask = BWRITERSP_WRITEMASK_ALL;
+                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                            }
+                    | INSTR_DCL dclusage REG_INPUT writemask
+                            {
+                                struct shader_reg reg;
+                                TRACE("Input reg declaration\n");
+                                ZeroMemory(&reg, sizeof(reg));
+                                reg.type = BWRITERSPR_INPUT;
+                                reg.regnum = $3;
+                                reg.rel_reg = NULL;
+                                reg.srcmod = 0;
+                                reg.writemask = $4;
+                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                            }
                     | INSTR_REP sregs
                             {
                                 TRACE("REP\n");

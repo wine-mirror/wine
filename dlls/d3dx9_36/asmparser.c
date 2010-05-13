@@ -51,6 +51,15 @@ static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num
     }
 }
 
+static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
+                                const struct shader_reg *reg) {
+    if(!This->shader) return;
+    if(!record_declaration(This->shader, usage, num, FALSE, reg->regnum, reg->writemask)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
 static void asmparser_instr(struct asm_parser *This, DWORD opcode,
                             DWORD mod, DWORD shift,
                             BWRITER_COMPARISON_TYPE comp,
@@ -149,6 +158,7 @@ static const struct asmparser_backend parser_vs_3 = {
     asmparser_coissue_unsupported,
 
     asmparser_dcl_output,
+    asmparser_dcl_input,
 
     asmparser_end,
 
