@@ -1503,10 +1503,12 @@ static void test_monthcal_size(void)
     /* initialize to a font we can compare against */
     SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont1, 0);
     res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r1);
+    ok(res, "SendMessage(MCM_GETMINREQRECT) failed\n");
 
     /* check that setting a larger font results in an larger rect */
     SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont2, 0);
     res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r2);
+    ok(res, "SendMessage(MCM_GETMINREQRECT) failed\n");
 
     OffsetRect(&r1, -r1.left, -r1.top);
     OffsetRect(&r2, -r2.left, -r2.top);
