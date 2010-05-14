@@ -3442,7 +3442,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IOmNavigator_get_platform(navigator, &bstr);
     ok(hres == S_OK, "get_platform failed: %08x\n", hres);
 #ifdef _WIN64
-    ok(!strcmp_wa(bstr, "Win64"), "unexpected platform %s\n", wine_dbgstr_w(bstr));
+    ok(!strcmp_wa(bstr, "Win64") || broken(!strcmp_wa(bstr, "Win32") /* IE6 */), "unexpected platform %s\n", wine_dbgstr_w(bstr));
 #else
     ok(!strcmp_wa(bstr, "Win32"), "unexpected platform %s\n", wine_dbgstr_w(bstr));
 #endif
