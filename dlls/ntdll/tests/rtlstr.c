@@ -1695,6 +1695,8 @@ static void test_RtlIntegerToChar(void)
 static void test_RtlIsTextUnicode(void)
 {
     char ascii[] = "A simple string";
+    char false_positive[] = {0x41, 0x0a, 0x0d, 0x1d};
+    WCHAR false_negative = 0x0d0a;
     WCHAR unicode[] = {'A',' ','U','n','i','c','o','d','e',' ','s','t','r','i','n','g',0};
     WCHAR unicode_no_controls[] = {'A','U','n','i','c','o','d','e','s','t','r','i','n','g',0};
     /* String with both byte-reversed and standard Unicode control characters. */
@@ -1809,6 +1811,11 @@ static void test_RtlIsTextUnicode(void)
     flags = IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS;
     ok(!pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on string containing both byte-reversed and standard control characters.\n");
     ok(flags == (IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS), "Expected flags 0x44, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_STATISTICS;
+    todo_wine ok(pRtlIsTextUnicode(false_positive, sizeof(false_positive), &flags), "Test should pass on false positive.\n");
+
+    ok(!pRtlIsTextUnicode(&false_negative, sizeof(false_negative), NULL), "Test should fail on 0x0d0a (MALAYALAM LETTER UU).\n");
 
     HeapFree(GetProcessHeap(), 0, be_unicode);
     HeapFree(GetProcessHeap(), 0, be_unicode_no_controls);
