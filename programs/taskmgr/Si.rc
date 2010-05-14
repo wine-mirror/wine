@@ -487,4 +487,90 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Dodeli proces v PODPOVPREČNI prioritetni razred"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Dodeli proces v NIZEK prioritetni razred"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Nadzira kanale razhroščevalnika"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "V&elike ikone"
+    IDS_VIEW_SMALL                     "M&ale ikone"
+    IDS_VIEW_DETAILS                   "Po&drobnosti"
+    IDS_WINDOWS                        "&Okna"
+    IDS_VIEW_SELECTCOLUMNS             "&Izbiranje stolcev..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Prikaz 16-bitnih opravil"
+    IDS_VIEW_CPUHISTORY                "&Zgodovina procesorja"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&En grafikon za vse procesorje"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "E&n grafikon na CPE"
+    IDS_VIEW_SHOWKERNELTIMES           "&Pokaži čase jedra"
+    IDS_APPLICATIONS                   "Aplikacije"
+    IDS_PROCESSES                      "Procesi"
+    IDS_PERFORMANCE                    "Učinkovitost delovanja"
+    IDS_STATUS_BAR_CPU_USAGE           "Uporaba CPE: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Procesi: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Uporaba pomnilnika: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Ime"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "Uporaba CPE"
+    IDS_CPUTIME           "Čas CPE"
+    IDS_MEMORYUSAGE       "Uporaba pomnilnika"
+    IDS_MEMORYUSAGEDELTA  "Delata uporabe pomnilnika"
+    IDS_PEAKMEMORYUSAGE   "Tem. vr. uporabe pomnilnika"
+    IDS_PAGEFAULTS        "Napake izmenjevanja"
+    IDS_USEROBJECTS       "USER predmeti"
+    IDS_IOREADS           "V/I branje"
+    IDS_IOREADBYTES       "V/I branje (bajti)"
+    IDS_SESSIONID         "ID seje"
+    IDS_USERNAME          "Uporabniško ime"
+    IDS_PAGEFAULTSDELTA   "Delta napak izmenjevanja"
+    IDS_VIRTUALMEMORYSIZE "Velikost navideznega pomnilnika"
+    IDS_PAGEDPOOL         "Izmenjana zaloga"
+    IDS_NONPAGEDPOOL      "Neizmenjana zaloga"
+    IDS_BASEPRIORITY      "Osnovna prioriteta"
+    IDS_HANDLECOUNT       "Število dostopnih kod"
+    IDS_THREADCOUNT       "Število niti"
+    IDS_GDIOBJECTS        "GDI predmeti"
+    IDS_IOWRITES          "V/I pisanje"
+    IDS_IOWRITEBYTES      "V/I pisanje (bajti)"
+    IDS_IOOTHER           "V/I drugo"
+    IDS_IOOTHERBYTES      "V/I drugo (bajti)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Opozorilo upravitelja opravil"
+    IDS_PRIORITY_CHANGE_MESSAGE     "OPOZORILO: Spreminjanje prioritete tega procesa lahko povzroči\n\
+                                     nezaželjene posledice, vključno z nesabilnostjo sistema. Ali ste\n\
+                                     prepričani, da želite spremeniti prioriteto?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Ne morem spremeniti prioritete"
+    IDS_TERMINATE_MESSAGE           "OPOZORILO: Prekinjanje procesa lahko povzroči nezaželjene \n\
+                                     posledice, vključno z izgubo podatkov in nestabilnostjo sistema.\n\
+                                     Pred prekinitvijo proces ne bo imel možnosti shraniti svojega \n\
+                                     stanja ali podatkov. Ali ste prepričani, da želite\n\
+                                     prekiniti proces?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Ne morem prekiniti procesa"
+    IDS_DEBUG_MESSAGE               "OPOZORILO: Razhroščevanje tega procesa lahko privede do izgube podatkov.\n\
+                                     Ali res želite dodati razhroščevalnik?"
+    IDS_DEBUG_UNABLE2DEBUG          "Ne morem dodati razhroščevalnika"
+    IDS_AFFINITY_ERROR_MESSAGE      "Proces mora imeti afiniteto vsaj z enim procesorjem"
+    IDS_AFFINITY_ERROR_TITLE        "Neveljavna opcija"
+    IDS_AFFINITY_UNABLE2ACCESS      "Ne morem dostopati ali nastaviti afinitete procesa"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Sistemski nedejavni proces"
+    IDS_APPLICATION_NOT_RESPONDING     "Se ne odziva"
+    IDS_APPLICATION_RUNNING            "Se izvaja"
+    IDS_APPLICATION_TASK               "Opravilo"
+    IDS_APPLICATION_STATUS             "Status"
+    IDS_DEBUG_CHANNEL                  "Kanali razhroščevalnika"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
