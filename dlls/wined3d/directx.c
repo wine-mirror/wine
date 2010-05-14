@@ -529,9 +529,12 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     checkGLcall("Loading the PBO test texture");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    LEAVE_GL();
+
     wglFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
+    ENTER_GL();
     glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
     checkGLcall("Reading back the PBO test texture");
 
