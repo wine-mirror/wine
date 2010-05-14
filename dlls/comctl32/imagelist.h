@@ -53,6 +53,7 @@ struct _IMAGELIST
     HBRUSH  hbrBlend50;
     INT     cInitial;
     UINT    uBitsPixel;
+    char   *has_alpha;
 
     LONG        ref;                     /* reference count */
 };

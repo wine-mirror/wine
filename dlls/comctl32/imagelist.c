@@ -207,6 +207,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         }
         else
         {
+            if (himl->has_alpha) himl->has_alpha[pos + n] = 1;
             StretchBlt( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                         hdc, n * width, 0, width, height, SRCCOPY );
         }
@@ -292,6 +293,18 @@ IMAGELIST_InternalExpandBitmaps(HIMAGELIST himl, INT nImageCount)
         SelectObject (himl->hdcMask, hbmNewBitmap);
         DeleteObject (himl->hbmMask);
         himl->hbmMask = hbmNewBitmap;
+    }
+
+    if (himl->has_alpha)
+    {
+        char *new_alpha = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                       himl->has_alpha, himl->cMaxImage );
+        if (new_alpha) himl->has_alpha = new_alpha;
+        else
+        {
+            HeapFree( GetProcessHeap(), 0, himl->has_alpha );
+            himl->has_alpha = NULL;
+        }
     }
 
     himl->cMaxImage = nNewCount;
@@ -727,6 +740,11 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     }
     else
         himl->hbmMask = 0;
+
+    if (himl->uBitsPixel == 32)
+        himl->has_alpha = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, himl->cMaxImage );
+    else
+        himl->has_alpha = NULL;
 
     /* create blending brushes */
     hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend25);
@@ -1430,7 +1448,7 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
     }
 
     himlDst = ImageList_Create (himlSrc->cx, himlSrc->cy, himlSrc->flags,
-                                himlSrc->cInitial, himlSrc->cGrow);
+                                himlSrc->cCurImage, himlSrc->cGrow);
 
     if (himlDst)
     {
@@ -1446,6 +1464,8 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
 
 	himlDst->cCurImage = himlSrc->cCurImage;
 	himlDst->cMaxImage = himlSrc->cMaxImage;
+        if (himlSrc->has_alpha && himlDst->has_alpha)
+            memcpy( himlDst->has_alpha, himlSrc->has_alpha, himlDst->cCurImage );
     }
     return himlDst;
 }
@@ -3132,6 +3152,7 @@ static ULONG WINAPI ImageListImpl_Release(IImageList *iface)
         if (This->hbrBlend50) DeleteObject (This->hbrBlend50);
 
         This->lpVtbl = NULL;
+        HeapFree(GetProcessHeap(), 0, This->has_alpha);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
