@@ -279,6 +279,7 @@ tools/winegcc/wineg++
 tools/winegcc/winegcc
 tools/winegcc/winegcc.man
 tools/winemaker.de.man
+tools/winemaker.fr.man
 tools/winemaker.man
 tools/wmc/mcy.tab.c
 tools/wmc/mcy.tab.h

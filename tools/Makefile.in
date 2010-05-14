@@ -19,7 +19,8 @@ PROGRAMS = \
 
 MANPAGES = \
 	winemaker.man \
-	winemaker.de.man
+	winemaker.de.man \
+	winemaker.fr.man
 
 C_SRCS = \
 	fnt2bdf.c \
@@ -36,7 +37,8 @@ INSTALLDIRS = \
 	$(DESTDIR)$(datadir)/applications \
 	$(DESTDIR)$(datadir)/wine \
 	$(DESTDIR)$(mandir)/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)
+	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
+	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
@@ -78,6 +80,7 @@ install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(DESTDIR)$(bindir)/winemaker
 	$(INSTALL_DATA) winemaker.man $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) winemaker.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
 	$(RM) $(DESTDIR)$(datadir)/wine/wine.inf \
@@ -85,7 +88,8 @@ uninstall::
 		$(DESTDIR)$(datadir)/applications/wine.desktop \
 		$(DESTDIR)$(bindir)/winemaker \
 		$(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) \
-		$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
+		$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) \
+		$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 	-$(UPDATE_DESKTOP_DATABASE)
 
 depend: makedep$(EXEEXT)
