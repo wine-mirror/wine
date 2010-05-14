@@ -123,15 +123,3 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   }
   return TRUE;
 }
-
-/*********************************************************************
- *		$I10_OUTPUT (MSVCRT.@)
- * Function not really understood but needed to make the DLL work
- */
-void CDECL MSVCRT_I10_OUTPUT(void)
-{
-  /* FIXME: This is probably data, not a function */
-  /* no it is a function. I10 is an Int of 10 bytes */
-  /* also known as 80 bit floating point (long double */
-  /* for some compilers, not MSVC) */
-}
