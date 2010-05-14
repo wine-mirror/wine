@@ -1216,7 +1216,7 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_GLOW, 0, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, __LINE__);
 
-    todo_wine check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00D5E6F7, __LINE__);
+    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00D5E6F7, __LINE__);
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0x00E9F2FB, 0x00D3E5F7, __LINE__);
 
