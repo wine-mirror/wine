@@ -2305,7 +2305,6 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
 {
     HDC hdcImage;
     BITMAP bmp;
-    HBITMAP hOldBitmap;
     POINT pt;
 
     TRACE("%p %d %p %p\n", himl, i, hbmImage, hbmMask);
@@ -2326,7 +2325,10 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
     hdcImage = CreateCompatibleDC (0);
 
     /* Replace Image */
-    hOldBitmap = SelectObject (hdcImage, hbmImage);
+    SelectObject (hdcImage, hbmImage);
+
+    if (add_with_alpha( himl, hdcImage, i, 1, bmp.bmWidth, bmp.bmHeight, hbmImage, hbmMask ))
+        goto done;
 
     imagelist_point_from_index(himl, i, &pt);
     StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
@@ -2351,7 +2353,7 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
                 himl->hdcMask, pt.x, pt.y, 0x220326); /* NOTSRCAND */
     }
 
-    SelectObject (hdcImage, hOldBitmap);
+done:
     DeleteDC (hdcImage);
 
     return TRUE;
@@ -2378,7 +2380,6 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
 {
     HDC     hdcImage;
     HICON   hBestFitIcon;
-    HBITMAP hbmOldSrc;
     ICONINFO  ii;
     BITMAP  bmp;
     BOOL    ret;
@@ -2439,6 +2440,25 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     if (hdcImage == 0)
 	ERR("invalid hdcImage!\n");
 
+    if (himl->uBitsPixel == 32)
+    {
+        if (!ii.hbmColor)
+        {
+            UINT height = bmp.bmHeight / 2;
+            HDC hdcMask = CreateCompatibleDC( 0 );
+            HBITMAP color = CreateBitmap( bmp.bmWidth, height, 1, 1, NULL );
+            SelectObject( hdcImage, color );
+            SelectObject( hdcMask, ii.hbmMask );
+            BitBlt( hdcImage, 0, 0, bmp.bmWidth, height, hdcMask, 0, height, SRCCOPY );
+            add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, height, color, ii.hbmMask );
+            DeleteDC( hdcMask );
+            DeleteObject( color );
+        }
+        else add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, bmp.bmHeight, ii.hbmColor, ii.hbmMask );
+
+        goto done;
+    }
+
     imagelist_point_from_index(himl, nIndex, &pt);
 
     SetTextColor(himl->hdcImage, RGB(0,0,0));
@@ -2446,7 +2466,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
 
     if (ii.hbmColor)
     {
-        hbmOldSrc = SelectObject (hdcImage, ii.hbmColor);
+        SelectObject (hdcImage, ii.hbmColor);
         StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                     hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
         if (himl->hbmMask)
@@ -2459,7 +2479,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     else
     {
         UINT height = bmp.bmHeight / 2;
-        hbmOldSrc = SelectObject (hdcImage, ii.hbmMask);
+        SelectObject (hdcImage, ii.hbmMask);
         StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                     hdcImage, 0, height, bmp.bmWidth, height, SRCCOPY);
         if (himl->hbmMask)
@@ -2467,8 +2487,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
                         hdcImage, 0, 0, bmp.bmWidth, height, SRCCOPY);
     }
 
-    SelectObject (hdcImage, hbmOldSrc);
-
+done:
     DestroyIcon(hBestFitIcon);
     if (hdcImage)
 	DeleteDC (hdcImage);
