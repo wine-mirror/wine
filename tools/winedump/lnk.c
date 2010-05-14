@@ -118,6 +118,15 @@ typedef struct _LOCAL_VOLUME_INFO
     DWORD dwVolLabelOfs;
 } LOCAL_VOLUME_INFO;
 
+typedef struct _NETWORK_VOLUME_INFO
+{
+    DWORD dwSize;
+    DWORD dwUnkown1;
+    DWORD dwShareNameOfs;
+    DWORD dwReserved;
+    DWORD dwUnknown2;
+} NETWORK_VOLUME_INFO;
+
 typedef struct
 {
     DWORD cbSize;
@@ -232,9 +241,10 @@ static int dump_location(void)
     printf("Header size   = %d\n", loc->dwHeaderSize);
     printf("Flags         = %08x\n", loc->dwFlags);
 
-    /* dump out information about the volume the link points to */
-    printf("Volume ofs    = %08x ", loc->dwVolTableOfs);
-    if (loc->dwVolTableOfs && (loc->dwVolTableOfs<loc->dwTotalSize))
+    /* dump information about the local volume the link points to */
+    printf("Local volume ofs    = %08x ", loc->dwVolTableOfs);
+    if (loc->dwVolTableOfs &&
+        loc->dwVolTableOfs + sizeof(LOCAL_VOLUME_INFO) < loc->dwTotalSize)
     {
         const LOCAL_VOLUME_INFO *vol = (const LOCAL_VOLUME_INFO *)&p[loc->dwVolTableOfs];
 
@@ -242,6 +252,19 @@ static int dump_location(void)
                vol->dwSize, vol->dwType, vol->dwVolSerial, vol->dwVolLabelOfs);
         if(vol->dwVolLabelOfs)
             printf("(\"%s\")", &p[loc->dwVolTableOfs + vol->dwVolLabelOfs]);
+    }
+    printf("\n");
+
+    /* dump information about the network volume the link points to */
+    printf("Network volume ofs    = %08x ", loc->dwNetworkVolTableOfs);
+    if (loc->dwNetworkVolTableOfs &&
+        loc->dwNetworkVolTableOfs + sizeof(NETWORK_VOLUME_INFO) < loc->dwTotalSize)
+    {
+        const NETWORK_VOLUME_INFO *vol = (const NETWORK_VOLUME_INFO *)&p[loc->dwNetworkVolTableOfs];
+
+        printf("size %d name %d ", vol->dwSize, vol->dwShareNameOfs);
+        if(vol->dwShareNameOfs)
+            printf("(\"%s\")", &p[loc->dwNetworkVolTableOfs + vol->dwShareNameOfs]);
     }
     printf("\n");
 
