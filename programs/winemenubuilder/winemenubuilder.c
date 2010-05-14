@@ -2092,6 +2092,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             iconW = assoc_query(ASSOCSTR_DEFAULTICON, extensionW, NULL);
 
             contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
+            if (contentTypeW)
+                strlwrW(contentTypeW);
 
             if (!freedesktop_mime_type_for_extension(nativeMimeTypes, extensionA, extensionW, &mimeTypeA))
                 goto end;
