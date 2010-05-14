@@ -1201,7 +1201,7 @@ static void test_ImageList_DrawIndirect(void)
         check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x005D6F81, __LINE__);
     }
 
-    todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0x00FFFFFF, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0x00FFFFFF, __LINE__);
 
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCCOPY, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCINVERT, 0x00543210, __LINE__);
