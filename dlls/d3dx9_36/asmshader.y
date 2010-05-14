@@ -124,6 +124,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_M3x2
 %token INSTR_DCL
 %token INSTR_DEF
+%token INSTR_DEFI
 %token INSTR_REP
 %token INSTR_ENDREP
 %token INSTR_IF
@@ -577,6 +578,10 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                     | INSTR_DEF REG_CONSTFLOAT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
                             {
                                 asm_ctx.funcs->constF(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
+                            }
+                    | INSTR_DEFI REG_CONSTINT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
+                            {
+                                asm_ctx.funcs->constI(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
                             }
                     | INSTR_REP sregs
                             {

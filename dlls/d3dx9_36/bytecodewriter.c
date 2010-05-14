@@ -140,6 +140,42 @@ BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, floa
     return TRUE;
 }
 
+BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w) {
+    struct constant *newconst;
+
+    if(shader->num_ci) {
+        struct constant **newarray;
+        newarray = asm_realloc(shader->constI,
+                               sizeof(*shader->constI) * (shader->num_ci + 1));
+        if(!newarray) {
+            ERR("Failed to grow the constants array\n");
+            return FALSE;
+        }
+        shader->constI = newarray;
+    } else {
+        shader->constI = asm_alloc(sizeof(*shader->constI));
+        if(!shader->constI) {
+            ERR("Failed to allocate the constants array\n");
+            return FALSE;
+        }
+    }
+
+    newconst = asm_alloc(sizeof(*newconst));
+    if(!newconst) {
+        ERR("Failed to allocate a new constant\n");
+        return FALSE;
+    }
+    newconst->regnum = reg;
+    newconst->value[0].i = x;
+    newconst->value[1].i = y;
+    newconst->value[2].i = z;
+    newconst->value[3].i = w;
+    shader->constI[shader->num_ci] = newconst;
+
+    shader->num_ci++;
+    return TRUE;
+}
+
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask) {
     unsigned int *num;
     struct declaration **decl;
@@ -298,27 +334,32 @@ static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
     }
 }
 
-static void write_constF(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
+static void write_const(struct constant **consts, int num, DWORD opcode, DWORD reg_type, struct bytecode_buffer *buffer, BOOL len) {
     DWORD i;
-    DWORD instr_def = D3DSIO_DEF;
+    DWORD instr_def = opcode;
     const DWORD reg = (1<<31) |
-                      ((D3DSPR_CONST << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
+                      ((reg_type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
+                      ((reg_type << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2) |
                       D3DSP_WRITEMASK_ALL;
 
     if(len) {
         instr_def |= 5 << D3DSI_INSTLENGTH_SHIFT;
     }
 
-    for(i = 0; i < shader->num_cf; i++) {
+    for(i = 0; i < num; i++) {
         /* Write the DEF instruction */
         put_dword(buffer, instr_def);
 
-        put_dword(buffer, reg | (shader->constF[i]->regnum & D3DSP_REGNUM_MASK));
-        put_dword(buffer, shader->constF[i]->value[0].d);
-        put_dword(buffer, shader->constF[i]->value[1].d);
-        put_dword(buffer, shader->constF[i]->value[2].d);
-        put_dword(buffer, shader->constF[i]->value[3].d);
+        put_dword(buffer, reg | (consts[i]->regnum & D3DSP_REGNUM_MASK));
+        put_dword(buffer, consts[i]->value[0].d);
+        put_dword(buffer, consts[i]->value[1].d);
+        put_dword(buffer, consts[i]->value[2].d);
+        put_dword(buffer, consts[i]->value[3].d);
     }
+}
+
+static void write_constF(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
+    write_const(shader->constF, shader->num_cf, D3DSIO_DEF, D3DSPR_CONST, buffer, len);
 }
 
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
@@ -364,6 +405,10 @@ static void instr_handler(struct bc_writer *This,
     write_srcregs(This, instr, buffer);
 }
 
+static void write_constI(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
+    write_const(shader->constI, shader->num_ci, D3DSIO_DEFI, D3DSPR_CONSTINT, buffer, len);
+}
+
 static void sm_2_opcode(struct bc_writer *This,
                         const struct instruction *instr,
                         DWORD token, struct bytecode_buffer *buffer) {
@@ -404,6 +449,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
     write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
     write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
+    write_constI(shader, buffer, TRUE);
     write_samplers(shader, buffer);
     return;
 }

@@ -48,6 +48,16 @@ static void asmparser_constF(struct asm_parser *This, DWORD reg, float x, float 
     }
 }
 
+static void asmparser_constI(struct asm_parser *This, DWORD reg, INT x, INT y, INT z, INT w) {
+    if(!This->shader) return;
+    TRACE("Adding integer constant %u at pos %u\n", reg, This->shader->num_ci);
+    TRACE_(parsed_shader)("def i%u, %d, %d, %d, %d\n", reg, x, y, z, w);
+    if(!add_constI(This->shader, reg, x, y, z, w)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
 static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num,
                                  const struct shader_reg *reg) {
     if(!This->shader) return;
@@ -170,6 +180,7 @@ static void asmparser_coissue_unsupported(struct asm_parser *This) {
 
 static const struct asmparser_backend parser_vs_3 = {
     asmparser_constF,
+    asmparser_constI,
 
     asmparser_dstreg_vs_3,
     asmparser_srcreg_vs_3,
