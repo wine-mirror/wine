@@ -2867,6 +2867,20 @@ static void test_events(int useMessages)
     DWORD dwRet;
     BOOL bret;
     static char szClassName[] = "wstestclass";
+    const LPARAM *broken_seq[3];
+    static const LPARAM empty_seq[] = { 0 };
+    static const LPARAM close_seq[] = { WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 };
+    static const LPARAM write_seq[] = { WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
+    static const LPARAM read_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0), 0 };
+    static const LPARAM oob_seq[] = { WSAMAKESELECTREPLY(FD_OOB, 0), 0 };
+    static const LPARAM connect_seq[] = { WSAMAKESELECTREPLY(FD_CONNECT, 0),
+                                          WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
+    static const LPARAM read_read_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
+                                            WSAMAKESELECTREPLY(FD_READ, 0), 0 };
+    static const LPARAM read_write_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
+                                             WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
+    static const LPARAM read_close_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
+                                             WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 };
 
     memset(&ov, 0, sizeof(ov));
     memset(&ov2, 0, sizeof(ov2));
@@ -3064,40 +3078,43 @@ static void test_events(int useMessages)
     }
 
     /* FD_WRITE should be set initially, and allow us to send at least 1 byte */
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_CONNECT, 0), WSAMAKESELECTREPLY(FD_WRITE, 0), 0 }, 0, 1);
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ WSAMAKESELECTREPLY(FD_CONNECT, 0), WSAMAKESELECTREPLY(FD_WRITE, 0), 0 }, 0, 1);
+    ok_event_seq(src, hEvent, connect_seq, NULL, 1);
+    ok_event_seq(src2, hEvent2, connect_seq, NULL, 1);
     /* broken on all windows - FD_CONNECT error is garbage */
 
     /* Test simple send/recv */
     ret = send(dst, buffer, 100, 0);
     ok(ret == 100, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 50, 0);
     ok(ret == 50, "Failed to recv buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 50, 0);
     ok(ret == 50, "Failed to recv buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     /* fun fact - events are reenabled even on failure, but only for messages */
     ret = send(dst, "1", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, -1, 0);
     ok(ret == SOCKET_ERROR && (GetLastError() == WSAEFAULT || GetLastError() == WSAENOBUFS),
        "Failed to recv buffer %d err %d\n", ret, GetLastError());
     if (useMessages)
-        todo_wine ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 },
-                         (const LPARAM*[]){ (LPARAM[]){ 0 } /* win9x */, 0 }, 0);
+    {
+        broken_seq[0] = empty_seq; /* win9x */
+        broken_seq[1] = NULL;
+        todo_wine ok_event_seq(src, hEvent, read_seq, broken_seq, 0);
+    }
     else
-        ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+        ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to recv buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     /* Interaction with overlapped */
     bufs.len = sizeof(char);
@@ -3114,12 +3131,12 @@ static void test_events(int useMessages)
 
     ret = send(dst, "12", 2, 0);
     ok(ret == 2, "Failed to send buffer %d err %d\n", ret, GetLastError());
+    broken_seq[0] = read_read_seq; /* win9x */
+    broken_seq[1] = NULL;
     if (useMessages) /* we like to erase pmask in server, so we have varying behavior here */
-        todo_wine ok_event_seq(src, hEvent, (LPARAM[]){ 0 },
-               (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), WSAMAKESELECTREPLY(FD_READ, 0), 0 } /* win9x */, 0 }, 0);
+        todo_wine ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
     else
-        ok_event_seq(src, hEvent, (LPARAM[]){ 0 },
-               (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), WSAMAKESELECTREPLY(FD_READ, 0), 0 } /* win9x */, 0 }, 0);
+        ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
     ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
@@ -3143,11 +3160,11 @@ static void test_events(int useMessages)
 
     ret = send(dst, "1", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     /* Notifications are delivered as soon as possible, blocked only on
      * async requests on the same type */
@@ -3160,7 +3177,7 @@ static void test_events(int useMessages)
     if (0) {
     ret = send(dst, "1", 1, MSG_OOB);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_OOB, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, oob_seq, NULL, 0);
     }
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
@@ -3168,8 +3185,9 @@ static void test_events(int useMessages)
 
     ret = send(dst, "2", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 },
-           (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 } /* win98 */, 0 }, 0);
+    broken_seq[0] = read_seq;  /* win98 */
+    broken_seq[1] = NULL;
+    ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
     ok(dwRet == WAIT_OBJECT_0 || broken(dwRet == WAIT_TIMEOUT),
@@ -3191,18 +3209,18 @@ static void test_events(int useMessages)
     ret = recv(src, buffer, 1, MSG_OOB);
     todo_wine ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
     /* We get OOB notification, but no data on wine */
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
     }
 
     /* wine gets a stale notifications because of the async ops, clear them.
      * remove when sending messages during pending asyncs is fixed */
     ret = send(dst, "2", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     /* Flood the send queue */
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
@@ -3213,7 +3231,7 @@ static void test_events(int useMessages)
     }
 
     /* Now FD_WRITE should not be set, because the socket send buffer isn't full yet */
-    ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
 
     /* Now if we send a ton of data and the 'server' does not drain it fast
      * enough (set drain_pause to be sure), the socket send buffer will only
@@ -3229,8 +3247,9 @@ static void test_events(int useMessages)
     if (ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK)
     {
         Sleep(400); /* win9x */
-        ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_WRITE, 0), 0 },
-              (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), WSAMAKESELECTREPLY(FD_WRITE, 0), 0 }, 0 }, 0);
+        broken_seq[0] = read_write_seq;
+        broken_seq[1] = NULL;
+        ok_event_seq(src, hEvent, write_seq, broken_seq, 0);
     }
     else
     {
@@ -3249,19 +3268,21 @@ static void test_events(int useMessages)
 
     /* We can never implement this in wine, best we can hope for is
        sending FD_CLOSE after the reads complete */
-    todo_wine ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 },
-                    (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 } /* win9x */, 0 }, 0);
+    broken_seq[0] = read_seq;  /* win9x */
+    broken_seq[1] = NULL;
+    todo_wine ok_event_seq(src, hEvent, read_close_seq, broken_seq, 0);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 }, 0, 0);
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
     /* want it? it's here, but you can't have it */
-    todo_wine ok_event_seq(src, hEvent, (LPARAM[]){ 0 }, /* wine sends FD_CLOSE here */
-          (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 },
-                              (LPARAM[]){ WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 }, 0 } /* win9x */, 0);
+    broken_seq[0] = read_close_seq;  /* win9x */
+    broken_seq[1] = NULL;
+    todo_wine ok_event_seq(src, hEvent, empty_seq, /* wine sends FD_CLOSE here */
+                           broken_seq, 0);
 
     /* Test how FD_CLOSE is handled */
     ret = send(dst2, "12", 2, 0);
@@ -3273,27 +3294,30 @@ static void test_events(int useMessages)
 
     /* Some of the below are technically todo_wine, but our event sequence is still valid, so to prevent
        regressions, don't mark them as todo_wine, and mark windows as broken */
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 },
-        (const LPARAM*[]){ (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 },
-                            (LPARAM[]){ WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 }, 0 }, 0);
+    broken_seq[0] = read_close_seq;
+    broken_seq[1] = close_seq;
+    broken_seq[2] = NULL;
+    ok_event_seq(src2, hEvent2, read_seq, broken_seq, 0);
 
     ret = recv(src2, buffer, 1, 0);
     ok(ret == 1 || broken(!ret), "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ WSAMAKESELECTREPLY(FD_READ, 0), 0 },
-        (const LPARAM*[]){ (LPARAM[]){ 0 }, (LPARAM[]){ WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 } /* win98 */, 0 }, 0);
+    broken_seq[0] = close_seq;  /* win98 */
+    broken_seq[1] = NULL;
+    ok_event_seq(src2, hEvent2, read_seq, broken_seq, 0);
 
     ret = recv(src2, buffer, 1, 0);
     ok(ret == 1 || broken(!ret), "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 },
-        (const LPARAM*[]){ (LPARAM[]){ 0 }, 0 }, 0);
+    broken_seq[0] = empty_seq;
+    broken_seq[1] = NULL;
+    ok_event_seq(src2, hEvent2, close_seq, broken_seq, 0);
 
     ret = send(src2, "1", 1, 0);
     ok(ret == 1, "Sending to half-closed socket failed %d err %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src2, hEvent2, empty_seq, NULL, 0);
 
     ret = send(src2, "1", 1, 0);
     ok(ret == 1, "Sending to half-closed socket failed %d err %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, (LPARAM[]){ 0 }, 0, 0);
+    ok_event_seq(src2, hEvent2, empty_seq, NULL, 0);
 
 end:
     if (src != INVALID_SOCKET)
