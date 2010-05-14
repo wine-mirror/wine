@@ -207,6 +207,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Skupina"
 	IDS_SHV_COLUMN_DELFROM	"Prvotna lokacija"
 	IDS_SHV_COLUMN_DELDATE	"Datum izbrisa"
+	IDS_SHV_COL_DOCS	"Dokumenti"
+	IDS_SHV_COL_STATUS	"Status"
+	IDS_SHV_COL_LOCATION	"Lokacija"
+	IDS_SHV_COL_MODEL	"Model"
 
         /* special folders */
 	IDS_DESKTOP		"Namizje"
