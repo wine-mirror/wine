@@ -2254,7 +2254,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     ExpandEnvironmentStringsW(szTmp, szDescription, INFOTIPSIZE);
     WINE_TRACE("description: %s\n", wine_dbgstr_w(szDescription));
 
-    get_cmdline( sl, szPath, MAX_PATH, szArgs, INFOTIPSIZE);
+    get_cmdline( sl, szTmp, MAX_PATH, szArgs, INFOTIPSIZE);
+    ExpandEnvironmentStringsW(szTmp, szPath, MAX_PATH);
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(szPath));
     WINE_TRACE("args       : %s\n", wine_dbgstr_w(szArgs));
 
