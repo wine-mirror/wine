@@ -99,7 +99,7 @@ CAPTION "Afdrukeigenschappen"
 FONT 8, "MS Shell Dlg"
 {
  GROUPBOX "Printer", 1072, 6, 10, 180, 65, BS_GROUPBOX
- RADIOBUTTON "Stan&daard Printer", 1056, 16, 20, 80, 12
+ RADIOBUTTON "Stan&daardprinter", 1056, 16, 20, 80, 12
  LTEXT "[geen]", 1088, 35, 35, 120, 9
  RADIOBUTTON "Specifieke &Printer", 1057, 16, 50, 80, 12
  COMBOBOX 1136, 35, 65, 149, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
@@ -250,7 +250,7 @@ FONT 8, "MS Shell Dlg"
 PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
-CAPTION "Print32"
+CAPTION "Afdrukken"
 FONT 8, "MS Shell Dlg"
 {
     DEFPUSHBUTTON   "OK",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
@@ -290,7 +290,7 @@ FONT 8, "MS Shell Dlg"
 PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
-CAPTION "Print Setup"
+CAPTION "Afdrukeigenschappen"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,180,156,48,14,WS_GROUP
@@ -315,15 +315,15 @@ BEGIN
     LTEXT           "&Bron:",       stc3,  16,128,  36, 8
     COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
 
-    GROUPBOX        "Orientatie",    grp1, 180, 92, 100,56, WS_GROUP
+    GROUPBOX        "Oriëntatie",    grp1, 180, 92, 100,56, WS_GROUP
     ICON            "",               ico1, 195,112,  18,20, WS_GROUP
-    CONTROL         "P&ortret",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "S&taand",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
     CONTROL         "L&iggend",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
 END
 
 PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Setup Page"
+CAPTION "Pagina-instellingen"
 FONT 8, "MS Shell Dlg"
 BEGIN
   CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
@@ -335,7 +335,7 @@ BEGIN
   LTEXT "La&de:", stc3, 16, 132, 36, 8
   COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   GROUPBOX "Orientatie", grp1, 8, 156, 64, 56, BS_GROUPBOX
-  AUTORADIOBUTTON "&Portret", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Staand", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "&Liggend", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "Randen", grp4, 80, 156, 152, 56, BS_GROUPBOX
   LTEXT "L&inks:", stc15, 88, 172, 21, 8
@@ -366,10 +366,10 @@ STRINGTABLE DISCARDABLE
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_SYSTEMFOLDERS       "Systeem mappen"
+    IDS_SYSTEMFOLDERS       "Systeemmappen"
     IDS_LOCALHARDRIVES      "Lokale vaste schijven"
     IDS_FILENOTFOUND        "Bestand niet gevonden"
-    IDS_VERIFYFILE          "Controleer of de juiste bestandnaam is opgegeven"
+    IDS_VERIFYFILE          "Controleer of de juiste bestandsnaam is opgegeven"
     IDS_CREATEFILE          "Dit bestand bestaat nog niet\nWilt u het bestand aanmaken?"
     IDS_OVERWRITEFILE       "Bestand bestaat al.\nWilt u het vervangen?"
     IDS_INVALID_FILENAME_TITLE "De naam van het pad bevat ongeldige tekens"
@@ -389,7 +389,7 @@ STRINGTABLE DISCARDABLE
 
 STRINGTABLE DISCARDABLE
 {
-    PD32_PRINT_TITLE       "Print"
+    PD32_PRINT_TITLE       "Afdrukken"
 
     PD32_VALUE_UREADABLE                  "Onleesbare ingave"
     PD32_INVALID_PAGE_RANGE "Deze waarde ligt niet binnen het bereik\n\
@@ -402,13 +402,13 @@ buiten het papier.\nVoer s.v.p. nieuwe marges in."
 zijn."
     PD32_TOO_LARGE_COPIES                 "Zoveel exemplaren kan de printer \
 niet in een keer aan, het maximum is %d"
-    PD32_PRINT_ERROR                      "Er ontstond een printer fout."
-    PD32_NO_DEFAULT_PRINTER               "Er is geen default printer"
+    PD32_PRINT_ERROR                      "Er heeft zich een fout voorgedaan met de printer."
+    PD32_NO_DEFAULT_PRINTER               "Er is geen standaardprinter"
     PD32_CANT_FIND_PRINTER                "De printer werd niet gevonden"
     PD32_OUT_OF_MEMORY                    "Er was onvoldoende geheugen \
 beschikbaar"
-    PD32_GENERIC_ERROR                    "Er onstond een niet nader \
-gespecifieerde fout"
+    PD32_GENERIC_ERROR                    "Er ontstond een niet nader \
+gespecificeerde fout"
     PD32_DRIVER_UNKNOWN                   "De printer driver is onbekend"
     PD32_NO_DEVICES                       "Voordat u printer-gerelateerde taken \
 zoals pagina instellingen of het printen van een document kun uitvoeren, moet u een \
@@ -422,13 +422,13 @@ wachtrij"
     PD32_MILLIMETERS                      "mm"
 
     PD32_PRINTER_STATUS_READY             "Klaar"
-    PD32_PRINTER_STATUS_PAUSED            "Gepauseerd, "
+    PD32_PRINTER_STATUS_PAUSED            "Gepauzeerd, "
     PD32_PRINTER_STATUS_ERROR             "Fout, "
     PD32_PRINTER_STATUS_PENDING_DELETION  "Bezig met verwijderen, "
-    PD32_PRINTER_STATUS_PAPER_JAM         "Papier opstopping, "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Papier-opstopping, "
     PD32_PRINTER_STATUS_PAPER_OUT         "Papier is op, "
     PD32_PRINTER_STATUS_MANUAL_FEED       "Voer s.v.p. met de hand papier in, "
-    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Papier probleem, "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Papier-probleem, "
     PD32_PRINTER_STATUS_OFFLINE           "Printer offline, "
     PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Actief, "
     PD32_PRINTER_STATUS_BUSY              "Druk bezig, "
@@ -446,7 +446,7 @@ wachtrij"
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Onvoldoende geheugen beschikbaar, "
     PD32_PRINTER_STATUS_DOOR_OPEN         "De printer staat is open, "
     PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server onbekend; "
-    PD32_PRINTER_STATUS_POWER_SAVE        "Power safe modus; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power save modus; "
 }
 
 STRINGTABLE DISCARDABLE /* Font styles */
