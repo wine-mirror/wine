@@ -1189,17 +1189,17 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_IMAGE, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_PRESERVEALPHA, 0x00ABCDEF, __LINE__);
 
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0x00D3E5F7, __LINE__);
     todo_wine
     {
-        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0x00D3E5F7, __LINE__);
-        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0x00D3E5F7, __LINE__);
         check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0x00E8F1FA, 0x009DA8B1, __LINE__);
         check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0x00E8F1FA, 0x008C99A3, __LINE__);
 
-        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0x00D3E5F7, __LINE__);
-        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0x00D3E5F7, __LINE__);
-        check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x005D6F81, __LINE__);
     }
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0x00D3E5F7, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x005D6F81, __LINE__);
 
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0x00FFFFFF, __LINE__);
 
@@ -1207,8 +1207,8 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCINVERT, 0x00543210, __LINE__);
 
     /* ILD_ROP is ignored when the image has an alpha channel */
-    todo_wine check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0x00D3E5F7, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0x00D3E5F7, __LINE__);
 
     todo_wine check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00CCCCCC, __LINE__);
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00AFAFAF, 0x00F0F0F0, __LINE__);
@@ -1217,7 +1217,7 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, __LINE__);
 
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00D5E6F7, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0x00E9F2FB, 0x00D3E5F7, __LINE__);
 
 cleanup:

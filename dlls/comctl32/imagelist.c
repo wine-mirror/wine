@@ -202,15 +202,25 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                 for (j = n * width; j < (n + 1) * width; j++)
                     if (!mask_bits || !((mask_bits[i * mask_width + j / 8] << (j % 8)) & 0x80))
                         bits[i * bm.bmWidth + j] |= 0xff000000;
-            StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                           n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
         }
         else
         {
             if (himl->has_alpha) himl->has_alpha[pos + n] = 1;
-            StretchBlt( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                        hdc, n * width, 0, width, height, SRCCOPY );
+
+            /* pre-multiply by the alpha channel */
+            for (i = 0; i < height; i++)
+                for (j = n * width; j < (n + 1) * width; j++)
+                {
+                    DWORD argb = bits[i * bm.bmWidth + j];
+                    DWORD alpha = argb >> 24;
+                    bits[i * bm.bmWidth + j] = ((argb & 0xff000000) |
+                                                (((argb & 0x00ff0000) * alpha / 255) & 0x00ff0000) |
+                                                (((argb & 0x0000ff00) * alpha / 255) & 0x0000ff00) |
+                                                (((argb & 0x000000ff) * alpha / 255)));
+                }
         }
+        StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
+                       n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
 
         if (hdcMask) StretchBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
                                  hdcMask, n * width, 0, width, height, SRCCOPY );
