@@ -22,6 +22,10 @@
 #include <wingdi.h>
 #include "wine/test.h"
 
+void WINAPI glClearColor(float red, float green, float blue, float alpha);
+void WINAPI glClear(unsigned int mask);
+void WINAPI glFinish(void);
+#define GL_COLOR_BUFFER_BIT 0x00004000
 const unsigned char * WINAPI glGetString(unsigned int);
 #define GL_VENDOR 0x1F00
 #define GL_RENDERER 0x1F01
@@ -499,6 +503,88 @@ static void test_acceleration(HDC hdc)
     }
 }
 
+static void test_bitmap_rendering(void)
+{
+    PIXELFORMATDESCRIPTOR pfd;
+    int i, iPixelFormat=0;
+    unsigned int nFormats;
+    HGLRC hglrc;
+    BITMAPINFO biDst;
+    HBITMAP bmpDst, oldDst;
+    HDC hdcDst, hdcScreen;
+    UINT32 *dstBuffer;
+
+    memset(&biDst, 0, sizeof(BITMAPINFO));
+    biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    biDst.bmiHeader.biWidth = 2;
+    biDst.bmiHeader.biHeight = -2;
+    biDst.bmiHeader.biPlanes = 1;
+    biDst.bmiHeader.biBitCount = 32;
+    biDst.bmiHeader.biCompression = BI_RGB;
+
+    hdcScreen = CreateCompatibleDC(0);
+    if(GetDeviceCaps(hdcScreen, BITSPIXEL) != 32)
+    {
+        DeleteDC(hdcScreen);
+        trace("Skipping bitmap rendering test\n");
+        return;
+    }
+
+    hdcDst = CreateCompatibleDC(hdcScreen);
+    bmpDst = CreateDIBSection(hdcDst, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
+    oldDst = SelectObject(hdcDst, bmpDst);
+
+    /* Pick a pixel format by hand because ChoosePixelFormat is unreliable */
+    nFormats = DescribePixelFormat(hdcDst, 0, 0, NULL);
+    for(i=1; i<=nFormats; i++)
+    {
+        memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+        DescribePixelFormat(hdcDst, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+
+        if((pfd.dwFlags & PFD_DRAW_TO_BITMAP) &&
+           (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
+           (pfd.cColorBits == 32) &&
+           (pfd.cAlphaBits == 8) )
+        {
+            iPixelFormat = i;
+            break;
+        }
+    }
+
+    if(!iPixelFormat)
+    {
+        skip("Unable to find a suitable pixel format");
+    }
+    else
+    {
+        SetPixelFormat(hdcDst, iPixelFormat, &pfd);
+        hglrc = wglCreateContext(hdcDst);
+        todo_wine ok(hglrc != NULL, "Unable to create a context\n");
+
+        if(hglrc)
+        {
+            wglMakeCurrent(hdcDst, hglrc);
+
+            /* Note this is RGBA but we read ARGB back */
+            glClearColor((float)0x22/0xff, (float)0x33/0xff, (float)0x44/0xff, (float)0x11/0xff);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glFinish();
+
+            /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
+            ok(dstBuffer[0] == 0x223344, "Expected color=0x223344, received color=%x\n", dstBuffer[0]);
+
+            wglMakeCurrent(NULL, NULL);
+            wglDeleteContext(hglrc);
+        }
+    }
+
+    SelectObject(hdcDst, oldDst);
+    DeleteObject(bmpDst);
+    DeleteDC(hdcDst);
+
+    DeleteDC(hdcScreen);
+}
+
 struct wgl_thread_param
 {
     HANDLE test_finished;
@@ -833,6 +919,7 @@ START_TEST(opengl)
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
 
+        test_bitmap_rendering();
         test_minimized();
         test_dc(hwnd, hdc);
 
