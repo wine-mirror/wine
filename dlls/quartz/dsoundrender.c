@@ -677,7 +677,7 @@ static HRESULT WINAPI DSoundRender_GetState(IBaseFilter * iface, DWORD dwMilliSe
     }
     LeaveCriticalSection(&This->csFilter);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI DSoundRender_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
