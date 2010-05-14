@@ -58,3 +58,22 @@ HRESULT WINAPI FilterConnectCommunicationPort(LPCWSTR lpPortName, DWORD dwOption
     *hPort = INVALID_HANDLE_VALUE;
     return E_NOTIMPL;
 }
+
+/**********************************************************************
+ *      FilterFindFirst         (FLTLIB.@)
+ */
+HRESULT WINAPI FilterFindFirst(DWORD class, LPVOID buffer, DWORD size, LPDWORD bytes_returned,
+                               LPHANDLE handle)
+{
+    FIXME("%u, %p, %u, %p, %p\n", class, buffer, size, bytes_returned, handle);
+    return HRESULT_FROM_WIN32(ERROR_NO_MORE_ITEMS);
+}
+
+/**********************************************************************
+ *      FilterFindClose         (FLTLIB.@)
+ */
+HRESULT WINAPI FilterFindClose(HANDLE handle)
+{
+    FIXME("%p\n", handle);
+    return S_OK;
+}

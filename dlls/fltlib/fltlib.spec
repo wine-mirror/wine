@@ -4,8 +4,8 @@
 @ stdcall FilterConnectCommunicationPort(wstr long ptr long ptr ptr)
 @ stub FilterCreate
 @ stub FilterDetach
-@ stub FilterFindClose
-@ stub FilterFindFirst
+@ stdcall FilterFindClose(ptr)
+@ stdcall FilterFindFirst(long ptr long ptr ptr)
 @ stub FilterFindNext
 @ stub FilterGetDosName
 @ stub FilterGetInformation
