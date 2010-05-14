@@ -335,12 +335,10 @@ INT WINAPI
 ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 {
     HDC    hdcMask, hdcBitmap;
-    INT    i, nIndex, nImageCount;
+    INT    ret;
     BITMAP bmp;
-    HBITMAP hOldBitmap;
-    HBITMAP hMaskBitmap=0;
+    HBITMAP hMaskBitmap;
     COLORREF bkColor;
-    POINT  pt;
 
     TRACE("himl=%p hbitmap=%p clrmask=%x\n", himl, hBitmap, clrMask);
     if (!is_valid(himl))
@@ -349,18 +347,8 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     if (!GetObjectW(hBitmap, sizeof(BITMAP), &bmp))
         return -1;
 
-    if (himl->cx > 0)
-	nImageCount = bmp.bmWidth / himl->cx;
-    else
-	nImageCount = 0;
-
-    IMAGELIST_InternalExpandBitmaps(himl, nImageCount);
-
-    nIndex = himl->cCurImage;
-    himl->cCurImage += nImageCount;
-
     hdcBitmap = CreateCompatibleDC(0);
-    hOldBitmap = SelectObject(hdcBitmap, hBitmap);
+    SelectObject(hdcBitmap, hBitmap);
 
     /* Create a temp Mask so we can remove the background of the Image */
     hdcMask = CreateCompatibleDC(0);
@@ -389,23 +377,13 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
      */
     BitBlt(hdcBitmap, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcMask, 0, 0, 0x220326);
 
-    /* Copy result to the imagelist */
-    for (i=0; i<nImageCount; i++)
-    {
-        imagelist_point_from_index( himl, nIndex + i, &pt );
-        BitBlt(himl->hdcImage, pt.x, pt.y, himl->cx, bmp.bmHeight,
-                hdcBitmap, i*himl->cx, 0, SRCCOPY);
-        BitBlt(himl->hdcMask, pt.x, pt.y, himl->cx, bmp.bmHeight,
-                hdcMask, i*himl->cx, 0, SRCCOPY);
-    }
-
-    /* Clean up */
-    SelectObject(hdcBitmap, hOldBitmap);
     DeleteDC(hdcBitmap);
-    DeleteObject(hMaskBitmap);
     DeleteDC(hdcMask);
 
-    return nIndex;
+    ret = ImageList_Add( himl, hBitmap, hMaskBitmap );
+
+    DeleteObject(hMaskBitmap);
+    return ret;
 }
 
 
