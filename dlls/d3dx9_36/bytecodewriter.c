@@ -104,6 +104,42 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
     return TRUE;
 }
 
+BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w) {
+    struct constant *newconst;
+
+    if(shader->num_cf) {
+        struct constant **newarray;
+        newarray = asm_realloc(shader->constF,
+                               sizeof(*shader->constF) * (shader->num_cf + 1));
+        if(!newarray) {
+            ERR("Failed to grow the constants array\n");
+            return FALSE;
+        }
+        shader->constF = newarray;
+    } else {
+        shader->constF = asm_alloc(sizeof(*shader->constF));
+        if(!shader->constF) {
+            ERR("Failed to allocate the constants array\n");
+            return FALSE;
+        }
+    }
+
+    newconst = asm_alloc(sizeof(*newconst));
+    if(!newconst) {
+        ERR("Failed to allocate a new constant\n");
+        return FALSE;
+    }
+    newconst->regnum = reg;
+    newconst->value[0].f = x;
+    newconst->value[1].f = y;
+    newconst->value[2].f = z;
+    newconst->value[3].f = w;
+    shader->constF[shader->num_cf] = newconst;
+
+    shader->num_cf++;
+    return TRUE;
+}
+
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask) {
     unsigned int *num;
     struct declaration **decl;
@@ -262,6 +298,29 @@ static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
     }
 }
 
+static void write_constF(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
+    DWORD i;
+    DWORD instr_def = D3DSIO_DEF;
+    const DWORD reg = (1<<31) |
+                      ((D3DSPR_CONST << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
+                      D3DSP_WRITEMASK_ALL;
+
+    if(len) {
+        instr_def |= 5 << D3DSI_INSTLENGTH_SHIFT;
+    }
+
+    for(i = 0; i < shader->num_cf; i++) {
+        /* Write the DEF instruction */
+        put_dword(buffer, instr_def);
+
+        put_dword(buffer, reg | (shader->constF[i]->regnum & D3DSP_REGNUM_MASK));
+        put_dword(buffer, shader->constF[i]->value[0].d);
+        put_dword(buffer, shader->constF[i]->value[1].d);
+        put_dword(buffer, shader->constF[i]->value[2].d);
+        put_dword(buffer, shader->constF[i]->value[3].d);
+    }
+}
+
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     put_dword(buffer, D3DSIO_END);
 }
@@ -344,6 +403,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
 
     write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
     write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
+    write_constF(shader, buffer, TRUE);
     write_samplers(shader, buffer);
     return;
 }

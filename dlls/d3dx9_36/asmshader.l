@@ -138,6 +138,7 @@ m3x4                    {return INSTR_M3x4;         }
 m3x3                    {return INSTR_M3x3;         }
 m3x2                    {return INSTR_M3x2;         }
 dcl                     {return INSTR_DCL;          }
+def                     {return INSTR_DEF;          }
 rep                     {return INSTR_REP;          }
 endrep                  {return INSTR_ENDREP;       }
 if                      {return INSTR_IF;           }

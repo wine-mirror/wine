@@ -1074,6 +1074,12 @@ static void vs_3_0_test(void) {
             "sincos r0, r1\n",
             {0xfffe0300, 0x02000025, 0x800f0000, 0x80e40001, 0x0000ffff}
         },
+        {   /* shader 13 */
+            "vs_3_0\n"
+            "def c0, 1.0f, 1.0f, 1.0f, 0.5f\n",
+            {0xfffe0300, 0x05000051, 0xa00f0000, 0x3f800000, 0x3f800000, 0x3f800000,
+             0x3f000000, 0x0000ffff}
+        },
     };
 
     exec_tests("vs_3_0", tests, sizeof(tests) / sizeof(tests[0]));

@@ -123,6 +123,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_M3x3
 %token INSTR_M3x2
 %token INSTR_DCL
+%token INSTR_DEF
 %token INSTR_REP
 %token INSTR_ENDREP
 %token INSTR_IF
@@ -572,6 +573,10 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of output regs is not valid\n",
                                                   asm_ctx.line_no);
                                 set_parse_status(&asm_ctx, PARSE_WARN);
+                            }
+                    | INSTR_DEF REG_CONSTFLOAT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
+                            {
+                                asm_ctx.funcs->constF(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
                             }
                     | INSTR_REP sregs
                             {
