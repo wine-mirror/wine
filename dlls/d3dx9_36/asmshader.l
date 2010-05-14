@@ -139,6 +139,7 @@ m3x3                    {return INSTR_M3x3;         }
 m3x2                    {return INSTR_M3x2;         }
 dcl                     {return INSTR_DCL;          }
 def                     {return INSTR_DEF;          }
+defb                    {return INSTR_DEFB;         }
 defi                    {return INSTR_DEFI;         }
 rep                     {return INSTR_REP;          }
 endrep                  {return INSTR_ENDREP;       }
@@ -280,6 +281,14 @@ ps_3_0                  {return VER_PS30;       }
                             asmshader_lval.immval.val = atof(yytext);
                             asmshader_lval.immval.integer = ((strstr(yytext, ".") == NULL) && (strstr(yytext, "f") == NULL));
                             return IMMVAL;
+                        }
+true                    {
+                            asmshader_lval.immbool = TRUE;
+                            return IMMBOOL;
+                        }
+false                   {
+                            asmshader_lval.immbool = FALSE;
+                            return IMMBOOL;
                         }
 
 {COMMA}                 {return yytext[0];          }

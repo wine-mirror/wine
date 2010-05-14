@@ -255,6 +255,7 @@ struct src_regs {
 struct asmparser_backend {
     void (*constF)(struct asm_parser *This, DWORD reg, float x, float y, float z, float w);
     void (*constI)(struct asm_parser *This, DWORD reg, INT x, INT y, INT z, INT w);
+    void (*constB)(struct asm_parser *This, DWORD reg, BOOL x);
 
     void (*dstreg)(struct asm_parser *This, struct instruction *instr,
                    const struct shader_reg *dst);
@@ -283,6 +284,7 @@ struct instruction *alloc_instr(unsigned int srcs);
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
 BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w);
 BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w);
+BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x);
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask);
 BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum);
 
@@ -442,6 +444,7 @@ typedef enum _BWRITERSHADER_INSTRUCTION_OPCODE_TYPE {
     BWRITERSIO_BREAK,
     BWRITERSIO_BREAKC,
     BWRITERSIO_MOVA,
+    BWRITERSIO_DEFB,
     BWRITERSIO_DEFI,
 
     BWRITERSIO_EXPP,

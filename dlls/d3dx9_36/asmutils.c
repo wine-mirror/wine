@@ -189,6 +189,7 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_BREAK:       return D3DSIO_BREAK;
         case BWRITERSIO_BREAKC:      return D3DSIO_BREAKC;
         case BWRITERSIO_MOVA:        return D3DSIO_MOVA;
+        case BWRITERSIO_DEFB:        return D3DSIO_DEFB;
         case BWRITERSIO_DEFI:        return D3DSIO_DEFI;
         case BWRITERSIO_EXPP:        return D3DSIO_EXPP;
         case BWRITERSIO_LOGP:        return D3DSIO_LOGP;
@@ -456,6 +457,7 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_BREAK:        return "break";
         case BWRITERSIO_BREAKC:       return "breakc";
         case BWRITERSIO_MOVA:         return "mova";
+        case BWRITERSIO_DEFB:         return "defb";
         case BWRITERSIO_DEFI:         return "defi";
         case BWRITERSIO_EXPP:         return "expp";
         case BWRITERSIO_LOGP:         return "logp";

@@ -176,6 +176,39 @@ BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, I
     return TRUE;
 }
 
+BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
+    struct constant *newconst;
+
+    if(shader->num_cb) {
+        struct constant **newarray;
+        newarray = asm_realloc(shader->constB,
+                               sizeof(*shader->constB) * (shader->num_cb + 1));
+        if(!newarray) {
+            ERR("Failed to grow the constants array\n");
+            return FALSE;
+        }
+        shader->constB = newarray;
+    } else {
+        shader->constB = asm_alloc(sizeof(*shader->constB));
+        if(!shader->constB) {
+            ERR("Failed to allocate the constants array\n");
+            return FALSE;
+        }
+    }
+
+    newconst = asm_alloc(sizeof(*newconst));
+    if(!newconst) {
+        ERR("Failed to allocate a new constant\n");
+        return FALSE;
+    }
+    newconst->regnum = reg;
+    newconst->value[0].b = x;
+    shader->constB[shader->num_cb] = newconst;
+
+    shader->num_cb++;
+    return TRUE;
+}
+
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask) {
     unsigned int *num;
     struct declaration **decl;
@@ -343,7 +376,10 @@ static void write_const(struct constant **consts, int num, DWORD opcode, DWORD r
                       D3DSP_WRITEMASK_ALL;
 
     if(len) {
-        instr_def |= 5 << D3DSI_INSTLENGTH_SHIFT;
+        if(opcode == D3DSIO_DEFB)
+            instr_def |= 2 << D3DSI_INSTLENGTH_SHIFT;
+        else
+            instr_def |= 5 << D3DSI_INSTLENGTH_SHIFT;
     }
 
     for(i = 0; i < num; i++) {
@@ -352,9 +388,11 @@ static void write_const(struct constant **consts, int num, DWORD opcode, DWORD r
 
         put_dword(buffer, reg | (consts[i]->regnum & D3DSP_REGNUM_MASK));
         put_dword(buffer, consts[i]->value[0].d);
-        put_dword(buffer, consts[i]->value[1].d);
-        put_dword(buffer, consts[i]->value[2].d);
-        put_dword(buffer, consts[i]->value[3].d);
+        if(opcode != D3DSIO_DEFB) {
+            put_dword(buffer, consts[i]->value[1].d);
+            put_dword(buffer, consts[i]->value[2].d);
+            put_dword(buffer, consts[i]->value[3].d);
+        }
     }
 }
 
@@ -405,6 +443,10 @@ static void instr_handler(struct bc_writer *This,
     write_srcregs(This, instr, buffer);
 }
 
+static void write_constB(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
+    write_const(shader->constB, shader->num_cb, D3DSIO_DEFB, D3DSPR_CONSTBOOL, buffer, len);
+}
+
 static void write_constI(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
     write_const(shader->constI, shader->num_ci, D3DSIO_DEFI, D3DSPR_CONSTINT, buffer, len);
 }
@@ -449,6 +491,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
     write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
     write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
+    write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
     write_samplers(shader, buffer);
     return;

@@ -60,6 +60,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
         float           val;
         BOOL            integer;
     } immval;
+    BOOL                immbool;
     unsigned int        regnum;
     struct shader_reg   reg;
     DWORD               srcmod;
@@ -124,6 +125,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_M3x2
 %token INSTR_DCL
 %token INSTR_DEF
+%token INSTR_DEFB
 %token INSTR_DEFI
 %token INSTR_REP
 %token INSTR_ENDREP
@@ -226,6 +228,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 /* Misc stuff */
 %token <component> COMPONENT
 %token <immval> IMMVAL
+%token <immbool> IMMBOOL
 
 %type <reg> dreg_name
 %type <reg> dreg
@@ -582,6 +585,10 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                     | INSTR_DEFI REG_CONSTINT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
                             {
                                 asm_ctx.funcs->constI(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
+                            }
+                    | INSTR_DEFB REG_CONSTBOOL ',' IMMBOOL
+                            {
+                                asm_ctx.funcs->constB(&asm_ctx, $2, $4);
                             }
                     | INSTR_REP sregs
                             {
