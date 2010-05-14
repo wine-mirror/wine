@@ -124,11 +124,10 @@ static void configureAudioDriver(HWND hDlg)
             if (SendDriverMessage(hdrvr, DRV_QUERYCONFIGURE, 0, 0) != 0)
             {
                 DRVCONFIGINFO dci;
-                LONG lRes;
                 dci.dwDCISize = sizeof (dci);
                 dci.lpszDCISectionName = NULL;
                 dci.lpszDCIAliasName = NULL;
-                lRes = SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG_PTR)&dci);
+                SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG_PTR)&dci);
             }
             CloseDriver(hdrvr, 0, 0);
         }
