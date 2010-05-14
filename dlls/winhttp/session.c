@@ -723,8 +723,27 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         return TRUE;
     }
     case WINHTTP_OPTION_SECURITY_FLAGS:
-        FIXME("WINHTTP_OPTION_SECURITY_FLAGS unimplemented (%08x)\n", *(DWORD *)buffer);
+    {
+        DWORD flags;
+
+        if (buflen < sizeof(DWORD))
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        flags = *(DWORD *)buffer;
+        TRACE("0x%x\n", flags);
+        if (!(flags & (SECURITY_FLAG_IGNORE_CERT_CN_INVALID   |
+                       SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+                       SECURITY_FLAG_IGNORE_UNKNOWN_CA        |
+                       SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE)))
+        {
+            set_last_error( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        request->security_flags = flags;
         return TRUE;
+    }
     case WINHTTP_OPTION_RESOLVE_TIMEOUT:
         request->resolve_timeout = *(DWORD *)buffer;
         return TRUE;
