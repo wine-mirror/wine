@@ -588,9 +588,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
  *  Failure: 0. Use GetLastError() to determine the cause.
  *
  * NOTES
- *  This function always returns the long path of hModule (as opposed to
- *  GetModuleFileName16() which returns short paths when the modules version
- *  field is < 4.0).
+ *  This function always returns the long path of hModule
  *  The function doesn't write a terminating '\0' if the buffer is too 
  *  small.
  */

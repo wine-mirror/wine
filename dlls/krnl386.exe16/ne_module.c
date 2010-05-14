@@ -1518,7 +1518,9 @@ BOOL16 WINAPI GetModuleName16( HINSTANCE16 hinst, LPSTR buf, INT16 count )
 /**********************************************************************
  *	    GetModuleFileName      (KERNEL.49)
  *
- * Comment: see GetModuleFileNameA
+ * See also: GetModuleFileNameA
+ *
+ * This function returns short paths when the modules version field is < 4.0).
  *
  * Even if invoked by second instance of a program,
  * it still returns path of first one.
