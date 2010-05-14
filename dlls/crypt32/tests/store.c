@@ -2354,7 +2354,6 @@ static void testAddCertificateLink(void)
     SetLastError(0xdeadbeef);
     ret = CertAddCertificateLinkToStore(store1, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     CertFreeCertificateContext(source);
