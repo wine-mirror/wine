@@ -2078,7 +2078,6 @@ static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
     {
         ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
          CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
-        ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
         ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
         HeapFree(GetProcessHeap(), 0, blob.pbData);
     }
@@ -2151,19 +2150,16 @@ static void testAddCertificateLink(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     SetLastError(0xdeadbeef);
     ret = CertAddCertificateLinkToStore(store1, NULL, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     source = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
      sizeof(bigCert));
     SetLastError(0xdeadbeef);
     ret = CertAddCertificateLinkToStore(store1, source, 0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddCertificateLinkToStore(store1, source, CERT_STORE_ADD_ALWAYS,
      NULL);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (0)
     {
@@ -2179,7 +2175,6 @@ static void testAddCertificateLink(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ret = CertAddCertificateLinkToStore(store1, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -2252,7 +2247,6 @@ static void testAddCertificateLink(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ret = CertAddCertificateLinkToStore(store2, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -2313,7 +2307,6 @@ static void testAddCertificateLink(void)
     /* Test adding a link to a file store. */
     ret = CertAddCertificateLinkToStore(store2, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -2381,13 +2374,13 @@ static void testAddCertificateLink(void)
 
     ret = CertAddCertificateLinkToStore(store2, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
         ok(linked->hCertStore == store2, "unexpected store");
         ret = pCertControlStore(store2, 0, CERT_STORE_CTRL_COMMIT, NULL);
         ok(ret, "CertControlStore failed: %d\n", ret);
+        todo_wine
         compareStore(store2, "file store -> system store",
          serializedStoreWithCertAndHash,
          sizeof(serializedStoreWithCertAndHash));
@@ -2405,7 +2398,6 @@ static void testAddCertificateLink(void)
     ok(store2 != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     ret = CertAddCertificateLinkToStore(store2, source, CERT_STORE_ADD_ALWAYS,
      &linked);
-    todo_wine
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
