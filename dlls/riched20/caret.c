@@ -1354,7 +1354,7 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
   } else {
     ME_DisplayItem *pRun = pCursor->pRun;
     ME_DisplayItem *pLast;
-    int x, y, ys, yd, yp, yprev;
+    int x, y, yd, yp;
     int yOldScrollPos = editor->vert_si.nPos;
 
     x = ME_GetXForArrow(editor, pCursor);
@@ -1364,7 +1364,7 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
     p = ME_FindItemBack(pRun, diStartRowOrParagraph);
     assert(p->type == diStartRow);
     yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-    yprev = ys = y = yp + p->member.row.pt.y;
+    y = yp + p->member.row.pt.y;
 
     ME_ScrollUp(editor, editor->sizeWindow.cy);
     /* Only move the cursor by the amount scrolled. */
@@ -1385,7 +1385,6 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
       if (y < yd)
         break;
       pLast = p;
-      yprev = y;
     } while(1);
 
     pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset,
