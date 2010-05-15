@@ -3981,7 +3981,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
 
     shader_addline(buffer, "TEMP TMP_OUT;\n");
     if(need_helper_const(gl_info)) {
-        shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
+        shader_addline(buffer, "PARAM helper_const = { 2.0, 1.0, %d.0, 0.0 };\n", This->rel_offset);
     }
     if(need_mova_const((IWineD3DBaseShader *) This, gl_info)) {
         shader_addline(buffer, "PARAM mova_const = { 0.5, 0.0, 2.0, 1.0 };\n");
@@ -4032,7 +4032,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
      */
     if (!gl_info->supported[NV_VERTEX_PROGRAM])
     {
-        shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
+        shader_addline(buffer, "MOV result.color.secondary, helper_const.wwwy;\n");
 
         if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
         {
@@ -4040,7 +4040,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
                 This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
-                    shader_addline(buffer, "MOV result.texcoord[%u].w, -helper_const.y;\n", i);
+                    shader_addline(buffer, "MOV result.texcoord[%u].w, helper_const.y;\n", i);
                 }
             }
         }
