@@ -1366,7 +1366,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     if (pshader)
     {
         gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
-                "one", "coefmul.x", priv->cur_ps_args->super.color_fixup[sampler_idx]);
+                "ps_helper_const.x", "coefmul.x", priv->cur_ps_args->super.color_fixup[sampler_idx]);
     }
 }
 
@@ -1405,13 +1405,13 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
         shader_addline(buffer, "ADD T%c, -%s, coefdiv.x;\n", 'A' + tmpreg, regstr);
         break;
     case WINED3DSPSM_SIGN:
-        shader_addline(buffer, "MAD T%c, %s, coefmul.x, -one.x;\n", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MAD T%c, %s, coefmul.x, -ps_helper_const.x;\n", 'A' + tmpreg, regstr);
         break;
     case WINED3DSPSM_SIGNNEG:
-        shader_addline(buffer, "MAD T%c, %s, -coefmul.x, one.x;\n", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MAD T%c, %s, -coefmul.x, ps_helper_const.x;\n", 'A' + tmpreg, regstr);
         break;
     case WINED3DSPSM_COMP:
-        shader_addline(buffer, "SUB T%c, one.x, %s;\n", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "SUB T%c, ps_helper_const.x, %s;\n", 'A' + tmpreg, regstr);
         break;
     case WINED3DSPSM_X2:
         shader_addline(buffer, "ADD T%c, %s, %s;\n", 'A' + tmpreg, regstr, regstr);
@@ -2192,7 +2192,7 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
     /* According to the msdn, the source register(must be r5) is unusable after
      * the texdepth instruction, so we're free to modify it
      */
-    shader_addline(buffer, "MIN %s.y, %s.y, one.y;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN %s.y, %s.y, ps_helper_const.x;\n", dst_name, dst_name);
 
     /* How to deal with the special case dst_name.g == 0? if r != 0, then
      * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
@@ -2200,7 +2200,7 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
      */
     shader_addline(buffer, "RCP %s.y, %s.y;\n", dst_name, dst_name);
     shader_addline(buffer, "MUL TA.x, %s.x, %s.y;\n", dst_name, dst_name);
-    shader_addline(buffer, "MIN TA.x, TA.x, one.x;\n");
+    shader_addline(buffer, "MIN TA.x, TA.x, ps_helper_const.x;\n");
     shader_addline(buffer, "MAX result.depth, TA.x, 0.0;\n");
 }
 
@@ -2276,7 +2276,7 @@ static void pshader_hw_texm3x2depth(const struct wined3d_shader_instruction *ins
      */
     shader_addline(buffer, "RCP %s.y, %s.y;\n", dst_name, dst_name);
     shader_addline(buffer, "MUL %s.x, %s.x, %s.y;\n", dst_name, dst_name, dst_name);
-    shader_addline(buffer, "MIN %s.x, %s.x, one.x;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN %s.x, %s.x, ps_helper_const.x;\n", dst_name, dst_name);
     shader_addline(buffer, "MAX result.depth, %s.x, 0.0;\n", dst_name);
 }
 
@@ -3485,7 +3485,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     if(dcl_td) shader_addline(buffer, "TEMP TD;\n"); /* Used for sRGB writing */
     shader_addline(buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-    shader_addline(buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
+    shader_addline(buffer, "PARAM ps_helper_const = { 1.0, 0.0, 0.0, 0.0 };\n");
 
     if (reg_maps->shader_version.major < 2)
     {
