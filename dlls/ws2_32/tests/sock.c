@@ -3279,7 +3279,7 @@ static void test_events(int useMessages)
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
     /* want it? it's here, but you can't have it */
-    broken_seq[0] = read_close_seq;  /* win9x */
+    broken_seq[0] = close_seq;  /* win9x */
     broken_seq[1] = NULL;
     todo_wine ok_event_seq(src, hEvent, empty_seq, /* wine sends FD_CLOSE here */
                            broken_seq, 0);
@@ -4092,7 +4092,6 @@ START_TEST( sock )
     test_dns();
     test_gethostbyname_hack();
 
-    test_send();
     test_WSASendTo();
     test_WSARecv();
 
@@ -4103,6 +4102,9 @@ START_TEST( sock )
     test_GetAddrInfoW();
 
     test_AcceptEx();
+
+    /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
+    test_send();
 
     Exit();
 }
