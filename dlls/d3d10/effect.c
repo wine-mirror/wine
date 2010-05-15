@@ -2299,6 +2299,12 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
+    if (!name)
+    {
+        WARN("Invalid name specified\n");
+        return (ID3D10EffectTechnique *)&null_technique;
+    }
+
     for (i = 0; i < This->technique_count; ++i)
     {
         struct d3d10_effect_technique *t = &This->techniques[i];
@@ -2457,6 +2463,8 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    /* Do not check for name==NULL, W7/DX10 crashes in that case. */
 
     for (i = 0; i < This->pass_count; ++i)
     {

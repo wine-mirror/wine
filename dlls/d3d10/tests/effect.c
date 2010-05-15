@@ -2648,8 +2648,8 @@ static void test_effect_local_shader(ID3D10Device *device)
     BOOL ret;
     ID3D10Effect* effect;
     ID3D10EffectVariable* v;
-    ID3D10EffectPass *p, *null_pass;
-    ID3D10EffectTechnique *t;
+    ID3D10EffectPass *p, *p2, *null_pass;
+    ID3D10EffectTechnique *t, *t2, *null_technique;
     D3D10_PASS_SHADER_DESC pdesc = {0};
     D3D10_EFFECT_VARIABLE_DESC vdesc = {0};
     ID3D10EffectType *type;
@@ -2660,8 +2660,37 @@ static void test_effect_local_shader(ID3D10Device *device)
     hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed!\n");
 
+    null_technique = effect->lpVtbl->GetTechniqueByIndex(effect, 0xffffffff);
+    null_pass = null_technique->lpVtbl->GetPassByIndex(null_technique, 0xffffffff);
+
+    /* check technique */
+    t = effect->lpVtbl->GetTechniqueByName(effect, NULL);
+    ok(null_technique == t, "GetTechniqueByName got %p, expected %p\n", t, null_technique);
+
+    t = effect->lpVtbl->GetTechniqueByName(effect, "invalid");
+    ok(null_technique == t, "GetTechniqueByName got %p, expected %p\n", t, null_technique);
+
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
-    null_pass = t->lpVtbl->GetPassByIndex(t, 10000);
+    ok(null_technique != t, "GetTechniqueByIndex failed %p\n", t);
+
+    t2 = effect->lpVtbl->GetTechniqueByName(effect, "Render");
+    ok(t2 == t, "GetTechniqueByName got %p, expected %p\n", t2, t);
+
+    /* check invalid pass arguments */
+    p = null_technique->lpVtbl->GetPassByName(null_technique, NULL);
+    ok(null_pass == p, "GetPassByName got %p, expected %p\n", p, null_pass);
+
+    p = null_technique->lpVtbl->GetPassByName(null_technique, "invalid");
+    ok(null_pass == p, "GetPassByName got %p, expected %p\n", p, null_pass);
+
+#if 0
+    /* This crashes on W7/DX10, if t is a valid technique and name=NULL. */
+    p = t->lpVtbl->GetPassByName(t, NULL);
+    ok(null_pass == p, "GetPassByName got %p, expected %p\n", p, null_pass);
+#endif
+
+    p = t->lpVtbl->GetPassByIndex(t, 0xffffffff);
+    ok(null_pass == p, "GetPassByIndex got %p, expected %p\n", p, null_pass);
 
     /* check for invalid arguments */
     hr = null_pass->lpVtbl->GetVertexShaderDesc(null_pass, NULL);
@@ -2682,8 +2711,12 @@ static void test_effect_local_shader(ID3D10Device *device)
     hr = null_pass->lpVtbl->GetGeometryShaderDesc(null_pass, &pdesc);
     ok(hr == E_FAIL, "GetGeometryShaderDesc got %x, expected %x\n", hr, E_FAIL);
 
+    /* check valid pass arguments */
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
     p = t->lpVtbl->GetPassByIndex(t, 0);
+
+    p2 = t->lpVtbl->GetPassByName(t, "P0");
+    ok(p2 == p, "GetPassByName got %p, expected %p\n", p2, p);
 
     hr = p->lpVtbl->GetVertexShaderDesc(p, NULL);
     ok(hr == E_INVALIDARG, "GetVertexShaderDesc got %x, expected %x\n", hr, E_INVALIDARG);
