@@ -276,6 +276,12 @@ void async_set_result( struct object *obj, unsigned int status, unsigned int tot
     }
 }
 
+/* check if there are any queued async operations */
+int async_queued( struct async_queue *queue )
+{
+    return queue && list_head( &queue->queue );
+}
+
 /* check if an async operation is waiting to be alerted */
 int async_waiting( struct async_queue *queue )
 {

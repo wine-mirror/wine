@@ -255,28 +255,14 @@ static int sock_reselect( struct sock *sock )
 }
 
 /* wake anybody waiting on the socket event or send the associated message */
-static void sock_wake_up( struct sock *sock, int pollev )
+static void sock_wake_up( struct sock *sock )
 {
     unsigned int events = sock->pmask & sock->mask;
     int i;
-    int async_active = 0;
-
-    if ( pollev & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
-    {
-        if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-        async_wake_up( sock->read_q, STATUS_ALERTED );
-        async_active = 1;
-    }
-    if ( pollev & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
-    {
-        if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-        async_wake_up( sock->write_q, STATUS_ALERTED );
-        async_active = 1;
-    }
 
     /* Do not signal events if there are still pending asynchronous IO requests */
     /* We need this to delay FD_CLOSE events until all pending overlapped requests are processed */
-    if ( !events || async_active ) return;
+    if ( !events || async_queued( sock->read_q ) || async_queued( sock->write_q ) ) return;
 
     if (sock->event)
     {
@@ -437,7 +423,21 @@ static void sock_poll_event( struct fd *fd, int event )
     }
 
     /* wake up anyone waiting for whatever just happened */
-    if ( sock->pmask & sock->mask || sock->flags & WSA_FLAG_OVERLAPPED ) sock_wake_up( sock, event );
+    sock_wake_up( sock );
+
+    if ( sock->flags & WSA_FLAG_OVERLAPPED )
+    {
+        if ( event & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
+            async_wake_up( sock->read_q, STATUS_ALERTED );
+        }
+        if ( event & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
+            async_wake_up( sock->write_q, STATUS_ALERTED );
+        }
+    }
 
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
@@ -876,7 +876,7 @@ DECL_HANDLER(set_socket_event)
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
        before a WSAEventSelect() was done on it.
        (when dealing with Asynchronous socket)  */
-    if (sock->pmask & sock->mask) sock_wake_up( sock, pollev );
+    sock_wake_up( sock );
 
     if (old_event) release_object( old_event ); /* we're through with it */
     release_object( &sock->obj );
