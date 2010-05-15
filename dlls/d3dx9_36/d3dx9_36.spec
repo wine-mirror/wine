@@ -52,7 +52,7 @@
 @ stub D3DXCreateEffectCompilerFromFileW
 @ stub D3DXCreateEffectCompilerFromResourceA
 @ stub D3DXCreateEffectCompilerFromResourceW
-@ stub D3DXCreateEffectEx
+@ stdcall D3DXCreateEffectEx(ptr ptr long ptr ptr ptr long ptr ptr ptr)
 @ stub D3DXCreateEffectFromFileA
 @ stub D3DXCreateEffectFromFileExA
 @ stub D3DXCreateEffectFromFileExW
