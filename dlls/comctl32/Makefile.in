@@ -76,6 +76,7 @@ RC_SRCS = \
 	rsrc.rc
 
 SVG_SRCS = \
+	idb_hist_small.svg \
 	idb_std_large.svg \
 	idb_std_small.svg \
 	idb_view_large.svg \
