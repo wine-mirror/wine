@@ -12250,7 +12250,7 @@ esac
 
 MAIN_BINARY="wine"
 
-test -z "$with_wine64" || MAIN_BINARY="wine32"
+test "x$enable_win64" != "xyes" || MAIN_BINARY="wine64"
 
 case $host_cpu in
   *i[3456789]86*)
@@ -14818,13 +14818,13 @@ ac_config_files="$ac_config_files Make.tmp:Makefile.in"
 
 if test -n "$with_wine64"
 then
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine32
+wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine
 fonts server:
 	\$(RM) \$@ && \$(LN_S) $with_wine64/\$@ \$@
-$with_wine64/loader/wine32:
-	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine32 \$@
+$with_wine64/loader/wine:
+	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine32"
+	\$(RM) fonts server $with_wine64/loader/wine"
 fi
 
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "uninstall::

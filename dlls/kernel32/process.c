@@ -1579,17 +1579,17 @@ static const char *get_alternate_loader( char **ret_env )
 
     *ret_env = NULL;
 
-    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine32" : "server/../loader/wine";
+    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine" : "server/../loader/wine64";
 
     if (loader_env)
     {
         int len = strlen( loader_env );
-        if (is_win64)
+        if (!is_win64)
         {
             if (!(env = HeapAlloc( GetProcessHeap(), 0, sizeof("WINELOADER=") + len + 2 ))) return NULL;
             strcpy( env, "WINELOADER=" );
             strcat( env, loader_env );
-            strcat( env, "32" );
+            strcat( env, "64" );
         }
         else
         {
@@ -1597,7 +1597,7 @@ static const char *get_alternate_loader( char **ret_env )
             strcpy( env, "WINELOADER=" );
             strcat( env, loader_env );
             len += sizeof("WINELOADER=") - 1;
-            if (!strcmp( env + len - 2, "32" )) env[len - 2] = 0;
+            if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
         }
         if (!loader)
         {
@@ -1606,7 +1606,7 @@ static const char *get_alternate_loader( char **ret_env )
         }
         *ret_env = env;
     }
-    if (!loader) loader = is_win64 ? "wine32" : "wine";
+    if (!loader) loader = is_win64 ? "wine" : "wine64";
     return loader;
 }
 
@@ -1637,7 +1637,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (!is_win64 && !is_wow64 && (binary_info->flags & BINARY_FLAG_64BIT))
     {
-        ERR( "starting 64-bit process %s not supported on this platform\n", debugstr_w(filename) );
+        ERR( "starting 64-bit process %s not supported on this environment\n", debugstr_w(filename) );
         SetLastError( ERROR_BAD_EXE_FORMAT );
         return FALSE;
     }

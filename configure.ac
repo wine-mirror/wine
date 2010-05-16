@@ -1734,7 +1734,7 @@ case $host_os in
 esac
 
 AC_SUBST(MAIN_BINARY,"wine")
-test -z "$with_wine64" || MAIN_BINARY="wine32"
+test "x$enable_win64" != "xyes" || MAIN_BINARY="wine64"
 
 case $host_cpu in
   *i[[3456789]]86*)
@@ -2753,13 +2753,13 @@ dnl Some final makefile rules
 if test -n "$with_wine64"
 then
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
-[all: fonts server $with_wine64/loader/wine32
+[all: fonts server $with_wine64/loader/wine
 fonts server:
 	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
-$with_wine64/loader/wine32:
-	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine32 \$[@]
+$with_wine64/loader/wine:
+	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine32])
+	\$(RM) fonts server $with_wine64/loader/wine])
 fi
 
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
