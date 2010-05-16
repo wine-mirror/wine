@@ -145,8 +145,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject
 					if (strlenW (pContainedObject->wszAlias) > DMUS_MAX_FILENAME)
 						result = DMUS_S_STRING_TRUNCATED;
 				}
-				if (pDesc)
-					*pDesc = pContainedObject->Desc;
+				*pDesc = pContainedObject->Desc;
 				return result;
 			}
 			dwCount++;
