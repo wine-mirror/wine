@@ -37,6 +37,7 @@ RC_SRCS = \
 	rsrc.rc
 
 SVG_SRCS = \
+	formatbar.svg \
 	toolbar.svg \
 	wordpad.svg
 
