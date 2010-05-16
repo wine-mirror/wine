@@ -2992,16 +2992,33 @@ void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 
 extern void DECLSPEC_NORETURN call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg );
 __ASM_GLOBAL_FUNC( call_thread_entry_point,
-                   "subq $8,%rsp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "subq $56,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
+                   "movq %rbp,48(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
+                   "movq %rbx,40(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rbx,40\n\t")
+                   "movq %r12,32(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %r12,32\n\t")
+                   "movq %r13,24(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %r13,24\n\t")
+                   "movq %r14,16(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
+                   "movq %r15,8(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    "movq %rsp,%rdx\n\t"
                    "call " __ASM_NAME("call_thread_func") );
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   "subq $8,%rsp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "movq %rdx,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbx,40\n\t")
+                   __ASM_CFI(".cfi_rel_offset %r12,32\n\t")
+                   __ASM_CFI(".cfi_rel_offset %r13,24\n\t")
+                   __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
+                   __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    "call *%rsi" );
 
 /***********************************************************************
