@@ -311,6 +311,8 @@ struct asm_parser {
 
 extern struct asm_parser asm_ctx;
 
+void create_vs20_parser(struct asm_parser *ret);
+void create_vs2x_parser(struct asm_parser *ret);
 void create_vs30_parser(struct asm_parser *ret);
 void create_ps30_parser(struct asm_parser *ret);
 
@@ -369,6 +371,15 @@ struct bc_writer {
     HRESULT                       state;
 
     DWORD                         version;
+
+    /* Vertex shader varying mapping */
+    DWORD                         oPos_regnum;
+    DWORD                         oD_regnum[2];
+    DWORD                         oT_regnum[8];
+    DWORD                         oFog_regnum;
+    DWORD                         oFog_mask;
+    DWORD                         oPts_regnum;
+    DWORD                         oPts_mask;
 };
 
 /* Debug utility routines */

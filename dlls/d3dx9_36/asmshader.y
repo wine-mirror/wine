@@ -283,14 +283,12 @@ version_marker:       VER_VS10
                     | VER_VS20
                         {
                             TRACE("Vertex shader 2.0\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_vs20_parser(&asm_ctx);
                         }
                     | VER_VS2X
                         {
                             TRACE("Vertex shader 2.x\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_vs2x_parser(&asm_ctx);
                         }
                     | VER_VS30
                         {

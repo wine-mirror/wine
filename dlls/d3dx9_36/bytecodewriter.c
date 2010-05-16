@@ -400,8 +400,218 @@ static void write_constF(const struct bwriter_shader *shader, struct bytecode_bu
     write_const(shader->constF, shader->num_cf, D3DSIO_DEF, D3DSPR_CONST, buffer, len);
 }
 
+static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwriter_shader *shader) {
+    DWORD i;
+    DWORD usage, usage_idx, writemask, regnum;
+
+    for(i = 0; i < shader->num_outputs; i++) {
+        usage = shader->outputs[i].usage;
+        usage_idx = shader->outputs[i].usage_idx;
+        writemask = shader->outputs[i].writemask;
+        regnum = shader->outputs[i].regnum;
+
+        switch(usage) {
+            case BWRITERDECLUSAGE_POSITION:
+            case BWRITERDECLUSAGE_POSITIONT:
+                if(usage_idx > 0) {
+                    WARN("dcl_position%u not supported in sm 1/2 shaders\n", usage_idx);
+                    return E_INVALIDARG;
+                }
+                TRACE("o%u is oPos\n", regnum);
+                This->oPos_regnum = regnum;
+                break;
+
+            case BWRITERDECLUSAGE_COLOR:
+                if(usage_idx > 1) {
+                    WARN("dcl_color%u not supported in sm 1/2 shaders\n", usage_idx);
+                    return E_INVALIDARG;
+                }
+                if(writemask != BWRITERSP_WRITEMASK_ALL) {
+                    WARN("Only WRITEMASK_ALL is supported on color in sm 1/2\n");
+                    return E_INVALIDARG;
+                }
+                TRACE("o%u is oD%u\n", regnum, usage_idx);
+                This->oD_regnum[usage_idx] = regnum;
+                break;
+
+            case BWRITERDECLUSAGE_TEXCOORD:
+                if(usage_idx > 8) {
+                    WARN("dcl_color%u not supported in sm 1/2 shaders\n", usage_idx);
+                    return E_INVALIDARG;
+                }
+                if(writemask != (BWRITERSP_WRITEMASK_0) &&
+                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1) &&
+                   writemask != (BWRITERSP_WRITEMASK_0 | BWRITERSP_WRITEMASK_1 | BWRITERSP_WRITEMASK_2) &&
+                   writemask != (BWRITERSP_WRITEMASK_ALL)) {
+                    WARN("Partial writemasks not supported on texture coordinates in sm 1 and 2\n");
+                    return E_INVALIDARG;
+                }
+                TRACE("o%u is oT%u\n", regnum, usage_idx);
+                This->oT_regnum[usage_idx] = regnum;
+                break;
+
+            case BWRITERDECLUSAGE_PSIZE:
+                if(usage_idx > 0) {
+                    WARN("dcl_psize%u not supported in sm 1/2 shaders\n", usage_idx);
+                    return E_INVALIDARG;
+                }
+                TRACE("o%u writemask 0x%08x is oPts\n", regnum, writemask);
+                This->oPts_regnum = regnum;
+                This->oPts_mask = writemask;
+                break;
+
+            case BWRITERDECLUSAGE_FOG:
+                if(usage_idx > 0) {
+                    WARN("dcl_fog%u not supported in sm 1 shaders\n", usage_idx);
+                    return E_INVALIDARG;
+                }
+                if(writemask != BWRITERSP_WRITEMASK_0 && writemask != BWRITERSP_WRITEMASK_1 &&
+                   writemask != BWRITERSP_WRITEMASK_2 && writemask != BWRITERSP_WRITEMASK_3) {
+                    WARN("Unsupported fog writemask\n");
+                    return E_INVALIDARG;
+                }
+                TRACE("o%u writemask 0x%08x is oFog\n", regnum, writemask);
+                This->oFog_regnum = regnum;
+                This->oFog_mask = writemask;
+                break;
+
+            default:
+                WARN("Varying type %u is not supported in shader model 1.x\n", usage);
+                return E_INVALIDARG;
+        }
+    }
+
+    return S_OK;
+}
+
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     put_dword(buffer, D3DSIO_END);
+}
+
+static DWORD map_vs_output(struct bc_writer *This, DWORD regnum, DWORD mask, DWORD *has_components) {
+    DWORD token = 0;
+    DWORD i;
+
+    *has_components = TRUE;
+    if(regnum == This->oPos_regnum) {
+        token |= (D3DSPR_RASTOUT << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+        token |= D3DSRO_POSITION & D3DSP_REGNUM_MASK; /* No shift */
+        return token;
+    }
+    if(regnum == This->oFog_regnum && mask == This->oFog_mask) {
+        token |= (D3DSPR_RASTOUT << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+        token |= D3DSRO_FOG & D3DSP_REGNUM_MASK; /* No shift */
+        token |= D3DSP_WRITEMASK_ALL;
+        *has_components = FALSE;
+        return token;
+    }
+    if(regnum == This->oPts_regnum && mask == This->oPts_mask) {
+        token |= (D3DSPR_RASTOUT << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+        token |= D3DSRO_POINT_SIZE & D3DSP_REGNUM_MASK; /* No shift */
+        token |= D3DSP_WRITEMASK_ALL;
+        *has_components = FALSE;
+        return token;
+    }
+    for(i = 0; i < 2; i++) {
+        if(regnum == This->oD_regnum[i]) {
+            token |= (D3DSPR_ATTROUT << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= i & D3DSP_REGNUM_MASK; /* No shift */
+            return token;
+        }
+    }
+    for(i = 0; i < 8; i++) {
+        if(regnum == This->oT_regnum[i]) {
+            token |= (D3DSPR_TEXCRDOUT << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= i & D3DSP_REGNUM_MASK; /* No shift */
+            return token;
+        }
+    }
+
+    /* The varying must be undeclared - if an unsupported varying was declared,
+     * the vs_find_builtin_varyings function would have caught it and this code
+     * would not run */
+    WARN("Undeclared varying %u\n", regnum);
+    This->state = E_INVALIDARG;
+    return -1;
+}
+
+static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
+                         struct bytecode_buffer *buffer,
+                         DWORD shift, DWORD mod) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+    DWORD has_wmask;
+
+    if(reg->rel_reg) {
+        WARN("Relative addressing not supported for destination registers\n");
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    switch(reg->type) {
+        case BWRITERSPR_OUTPUT:
+            token |= map_vs_output(This, reg->regnum, reg->writemask, &has_wmask);
+            break;
+
+        case BWRITERSPR_RASTOUT:
+        case BWRITERSPR_ATTROUT:
+            /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
+            * but are unexpected. If we hit this path it might be due to an error.
+            */
+            FIXME("Unexpected register type %u\n", reg->type);
+            /* drop through */
+        case BWRITERSPR_INPUT:
+        case BWRITERSPR_TEMP:
+        case BWRITERSPR_CONST:
+            token |= (reg->type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
+            has_wmask = TRUE;
+            break;
+
+        case BWRITERSPR_ADDR:
+            if(reg->regnum != 0) {
+                WARN("Only a0 exists\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            token |= (D3DSPR_ADDR << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= 0 & D3DSP_REGNUM_MASK; /* No shift */
+            has_wmask = TRUE;
+            break;
+
+        case BWRITERSPR_PREDICATE:
+            if(This->version != BWRITERVS_VERSION(2, 1)){
+                WARN("Predicate register is allowed only in vs_2_x\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            if(reg->regnum != 0) {
+                WARN("Only predicate register p0 exists\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            token |= (D3DSPR_PREDICATE << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= (D3DSPR_PREDICATE << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+            token |= 0 & D3DSP_REGNUM_MASK; /* No shift */
+            has_wmask = TRUE;
+            break;
+
+        default:
+            WARN("Invalid register type for 1.x-2.x vertex shader\n");
+            This->state = E_INVALIDARG;
+            return;
+    }
+
+    /* strictly speaking there are no modifiers in vs_2_0 and vs_1_x, but they can be written
+     * into the bytecode and since the compiler doesn't do such checks write them
+     * (the checks are done by the undocumented shader validator)
+     */
+    token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
+    token |= d3d9_dstmod(mod);
+
+    if(has_wmask) {
+        token |= d3d9_writemask(reg->writemask);
+    }
+    put_dword(buffer, token);
 }
 
 static void write_srcregs(struct bc_writer *This, const struct instruction *instr,
@@ -451,6 +661,129 @@ static void write_constI(const struct bwriter_shader *shader, struct bytecode_bu
     write_const(shader->constI, shader->num_ci, D3DSIO_DEFI, D3DSPR_CONSTINT, buffer, len);
 }
 
+static void vs_2_header(struct bc_writer *This,
+                        const struct bwriter_shader *shader,
+                        struct bytecode_buffer *buffer) {
+    HRESULT hr;
+
+    hr = vs_find_builtin_varyings(This, shader);
+    if(FAILED(hr)) {
+        This->state = hr;
+        return;
+    }
+
+    /* Declare the shader type and version */
+    put_dword(buffer, This->version);
+
+    write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
+    write_constF(shader, buffer, TRUE);
+    write_constB(shader, buffer, TRUE);
+    write_constI(shader, buffer, TRUE);
+    return;
+}
+
+static void vs_2_srcreg(struct bc_writer *This,
+                        const struct shader_reg *reg,
+                        struct bytecode_buffer *buffer) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+    DWORD has_swizzle;
+    DWORD component;
+    DWORD d3d9reg;
+
+    switch(reg->type) {
+        case BWRITERSPR_OUTPUT:
+            /* Map the swizzle to a writemask, the format expected
+               by map_vs_output
+             */
+            switch(reg->swizzle) {
+                case BWRITERVS_SWIZZLE_X:
+                    component = BWRITERSP_WRITEMASK_0;
+                    break;
+                case BWRITERVS_SWIZZLE_Y:
+                    component = BWRITERSP_WRITEMASK_1;
+                    break;
+                case BWRITERVS_SWIZZLE_Z:
+                    component = BWRITERSP_WRITEMASK_2;
+                    break;
+                case BWRITERVS_SWIZZLE_W:
+                    component = BWRITERSP_WRITEMASK_3;
+                    break;
+                default:
+                    component = 0;
+            }
+            token |= map_vs_output(This, reg->regnum, component, &has_swizzle);
+            break;
+
+        case BWRITERSPR_RASTOUT:
+        case BWRITERSPR_ATTROUT:
+            /* These registers are mapped to input and output regs. They can be encoded in the bytecode,
+             * but are unexpected. If we hit this path it might be due to an error.
+             */
+            FIXME("Unexpected register type %u\n", reg->type);
+            /* drop through */
+        case BWRITERSPR_INPUT:
+        case BWRITERSPR_TEMP:
+        case BWRITERSPR_CONST:
+        case BWRITERSPR_ADDR:
+        case BWRITERSPR_CONSTINT:
+        case BWRITERSPR_CONSTBOOL:
+        case BWRITERSPR_LABEL:
+            d3d9reg = d3d9_register(reg->type);
+            token |= (d3d9reg << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= (d3d9reg << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+            token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
+            break;
+
+        case BWRITERSPR_LOOP:
+            if(reg->regnum != 0) {
+                WARN("Only regnum 0 is supported for the loop index register in vs_2_0\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            token |= (D3DSPR_LOOP << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= (D3DSPR_LOOP << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+            token |= 0 & D3DSP_REGNUM_MASK; /* No shift */
+            break;
+
+        case BWRITERSPR_PREDICATE:
+            if(This->version != BWRITERVS_VERSION(2, 1)){
+                WARN("Predicate register is allowed only in vs_2_x\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            if(reg->regnum > 0) {
+                WARN("Only predicate register 0 is supported\n");
+                This->state = E_INVALIDARG;
+                return;
+            }
+            token |= (D3DSPR_PREDICATE << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= (D3DSPR_PREDICATE << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
+            token |= 0 & D3DSP_REGNUM_MASK; /* No shift */
+
+            break;
+
+        default:
+            WARN("Invalid register type for 2.0 vshader\n");
+            This->state = E_INVALIDARG;
+            return;
+    }
+
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+
+    token |= d3d9_srcmod(reg->srcmod);
+
+    if(reg->rel_reg)
+        token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
+
+    put_dword(buffer, token);
+
+    /* vs_2_0 and newer write the register containing the index explicitly in the
+     * binary code
+     */
+    if(token & D3DVS_ADDRMODE_RELATIVE)
+        vs_2_srcreg(This, reg->rel_reg, buffer);
+}
+
 static void sm_2_opcode(struct bc_writer *This,
                         const struct instruction *instr,
                         DWORD token, struct bytecode_buffer *buffer) {
@@ -463,6 +796,132 @@ static void sm_2_opcode(struct bc_writer *This,
         token |= D3DSHADER_INSTRUCTION_PREDICATED;
     put_dword(buffer,token);
 }
+
+static const struct instr_handler_table vs_2_0_handlers[] = {
+    {BWRITERSIO_ADD,            instr_handler},
+    {BWRITERSIO_NOP,            instr_handler},
+    {BWRITERSIO_MOV,            instr_handler},
+    {BWRITERSIO_SUB,            instr_handler},
+    {BWRITERSIO_MAD,            instr_handler},
+    {BWRITERSIO_MUL,            instr_handler},
+    {BWRITERSIO_RCP,            instr_handler},
+    {BWRITERSIO_RSQ,            instr_handler},
+    {BWRITERSIO_DP3,            instr_handler},
+    {BWRITERSIO_DP4,            instr_handler},
+    {BWRITERSIO_MIN,            instr_handler},
+    {BWRITERSIO_MAX,            instr_handler},
+    {BWRITERSIO_SLT,            instr_handler},
+    {BWRITERSIO_SGE,            instr_handler},
+    {BWRITERSIO_ABS,            instr_handler},
+    {BWRITERSIO_EXP,            instr_handler},
+    {BWRITERSIO_LOG,            instr_handler},
+    {BWRITERSIO_EXPP,           instr_handler},
+    {BWRITERSIO_LOGP,           instr_handler},
+    {BWRITERSIO_DST,            instr_handler},
+    {BWRITERSIO_LRP,            instr_handler},
+    {BWRITERSIO_FRC,            instr_handler},
+    {BWRITERSIO_CRS,            instr_handler},
+    {BWRITERSIO_SGN,            instr_handler},
+    {BWRITERSIO_NRM,            instr_handler},
+    {BWRITERSIO_SINCOS,         instr_handler},
+    {BWRITERSIO_M4x4,           instr_handler},
+    {BWRITERSIO_M4x3,           instr_handler},
+    {BWRITERSIO_M3x4,           instr_handler},
+    {BWRITERSIO_M3x3,           instr_handler},
+    {BWRITERSIO_M3x2,           instr_handler},
+    {BWRITERSIO_LIT,            instr_handler},
+    {BWRITERSIO_POW,            instr_handler},
+    {BWRITERSIO_MOVA,           instr_handler},
+
+    {BWRITERSIO_CALL,           instr_handler},
+    {BWRITERSIO_CALLNZ,         instr_handler},
+    {BWRITERSIO_REP,            instr_handler},
+    {BWRITERSIO_ENDREP,         instr_handler},
+    {BWRITERSIO_IF,             instr_handler},
+    {BWRITERSIO_LABEL,          instr_handler},
+    {BWRITERSIO_ELSE,           instr_handler},
+    {BWRITERSIO_ENDIF,          instr_handler},
+    {BWRITERSIO_LOOP,           instr_handler},
+    {BWRITERSIO_RET,            instr_handler},
+    {BWRITERSIO_ENDLOOP,        instr_handler},
+
+    {BWRITERSIO_END,            NULL},
+};
+
+static const struct bytecode_backend vs_2_0_backend = {
+    vs_2_header,
+    end,
+    vs_2_srcreg,
+    vs_12_dstreg,
+    sm_2_opcode,
+    vs_2_0_handlers
+};
+
+static const struct instr_handler_table vs_2_x_handlers[] = {
+    {BWRITERSIO_ADD,            instr_handler},
+    {BWRITERSIO_NOP,            instr_handler},
+    {BWRITERSIO_MOV,            instr_handler},
+    {BWRITERSIO_SUB,            instr_handler},
+    {BWRITERSIO_MAD,            instr_handler},
+    {BWRITERSIO_MUL,            instr_handler},
+    {BWRITERSIO_RCP,            instr_handler},
+    {BWRITERSIO_RSQ,            instr_handler},
+    {BWRITERSIO_DP3,            instr_handler},
+    {BWRITERSIO_DP4,            instr_handler},
+    {BWRITERSIO_MIN,            instr_handler},
+    {BWRITERSIO_MAX,            instr_handler},
+    {BWRITERSIO_SLT,            instr_handler},
+    {BWRITERSIO_SGE,            instr_handler},
+    {BWRITERSIO_ABS,            instr_handler},
+    {BWRITERSIO_EXP,            instr_handler},
+    {BWRITERSIO_LOG,            instr_handler},
+    {BWRITERSIO_EXPP,           instr_handler},
+    {BWRITERSIO_LOGP,           instr_handler},
+    {BWRITERSIO_DST,            instr_handler},
+    {BWRITERSIO_LRP,            instr_handler},
+    {BWRITERSIO_FRC,            instr_handler},
+    {BWRITERSIO_CRS,            instr_handler},
+    {BWRITERSIO_SGN,            instr_handler},
+    {BWRITERSIO_NRM,            instr_handler},
+    {BWRITERSIO_SINCOS,         instr_handler},
+    {BWRITERSIO_M4x4,           instr_handler},
+    {BWRITERSIO_M4x3,           instr_handler},
+    {BWRITERSIO_M3x4,           instr_handler},
+    {BWRITERSIO_M3x3,           instr_handler},
+    {BWRITERSIO_M3x2,           instr_handler},
+    {BWRITERSIO_LIT,            instr_handler},
+    {BWRITERSIO_POW,            instr_handler},
+    {BWRITERSIO_MOVA,           instr_handler},
+
+    {BWRITERSIO_CALL,           instr_handler},
+    {BWRITERSIO_CALLNZ,         instr_handler},
+    {BWRITERSIO_REP,            instr_handler},
+    {BWRITERSIO_ENDREP,         instr_handler},
+    {BWRITERSIO_IF,             instr_handler},
+    {BWRITERSIO_LABEL,          instr_handler},
+    {BWRITERSIO_IFC,            instr_handler},
+    {BWRITERSIO_ELSE,           instr_handler},
+    {BWRITERSIO_ENDIF,          instr_handler},
+    {BWRITERSIO_BREAK,          instr_handler},
+    {BWRITERSIO_BREAKC,         instr_handler},
+    {BWRITERSIO_LOOP,           instr_handler},
+    {BWRITERSIO_RET,            instr_handler},
+    {BWRITERSIO_ENDLOOP,        instr_handler},
+
+    {BWRITERSIO_SETP,           instr_handler},
+    {BWRITERSIO_BREAKP,         instr_handler},
+
+    {BWRITERSIO_END,            NULL},
+};
+
+static const struct bytecode_backend vs_2_x_backend = {
+    vs_2_header,
+    end,
+    vs_2_srcreg,
+    vs_12_dstreg,
+    sm_2_opcode,
+    vs_2_x_handlers
+};
 
 static void write_samplers(const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     DWORD i;
@@ -712,6 +1171,16 @@ static const struct bytecode_backend ps_3_backend = {
     ps_3_handlers
 };
 
+static void init_vs20_dx9_writer(struct bc_writer *writer) {
+    TRACE("Creating DirectX9 vertex shader 2.0 writer\n");
+    writer->funcs = &vs_2_0_backend;
+}
+
+static void init_vs2x_dx9_writer(struct bc_writer *writer) {
+    TRACE("Creating DirectX9 vertex shader 2.x writer\n");
+    writer->funcs = &vs_2_x_backend;
+}
+
 static void init_vs30_dx9_writer(struct bc_writer *writer) {
     TRACE("Creating DirectX9 vertex shader 3.0 writer\n");
     writer->funcs = &vs_3_backend;
@@ -750,14 +1219,14 @@ static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
                 WARN("Unsupported dxversion for vertex shader 2.0 requested: %u\n", dxversion);
                 goto fail;
             }
-            /* TODO: Set the appropriate writer backend */
+            init_vs20_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(2, 1):
             if(dxversion != 9) {
                 WARN("Unsupported dxversion for vertex shader 2.x requested: %u\n", dxversion);
                 goto fail;
             }
-            /* TODO: Set the appropriate writer backend */
+            init_vs2x_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(3, 0):
             if(dxversion != 9) {

@@ -739,6 +739,14 @@ static void vs_2_0_test(void) {
             "endif\n",
             {0xfffe0200, 0x01000028, 0xede40800, 0x0000002a, 0x0000002b, 0x0000ffff}
         },
+        {   /* shader 28 */
+            "vs_2_0\n"
+            "call l3\n"
+            "ret\n"
+            "label l3\n"
+            "ret\n",
+            {0xfffe0200, 0x01000019, 0xa0e41003, 0x0000001c, 0x0100001e, 0xa0e41003, 0x0000001c, 0x0000ffff}
+        },
     };
 
     exec_tests("vs_2_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1467,8 +1475,8 @@ START_TEST(asm)
     todo_wine vs_1_1_test();
     todo_wine ps_1_3_test();
     todo_wine ps_1_4_test();
-    todo_wine vs_2_0_test();
-    todo_wine vs_2_x_test();
+    vs_2_0_test();
+    vs_2_x_test();
     todo_wine ps_2_0_test();
     todo_wine ps_2_x_test();
     vs_3_0_test();
