@@ -248,9 +248,11 @@ static void thread_poll_event( struct fd *fd, int event )
     struct thread *thread = get_fd_user( fd );
     assert( thread->obj.ops == &thread_ops );
 
+    grab_object( thread );
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
     else if (event & POLLIN) read_request( thread );
     else if (event & POLLOUT) write_reply( thread );
+    release_object( thread );
 }
 
 /* cleanup everything that is no longer needed by a dead thread */
