@@ -503,7 +503,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     connect->session = session;
     list_add_head( &session->hdr.children, &connect->hdr.entry );
 
-    if (server && !(connect->hostname = strdupW( server ))) goto end;
+    if (!(connect->hostname = strdupW( server ))) goto end;
     connect->hostport = port;
 
     if (!set_server_for_hostname( connect, server, port ))
