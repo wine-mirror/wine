@@ -432,7 +432,7 @@ RPC_STATUS WINAPI UuidCreateSequential(UUID *Uuid)
 
     /* Pack the information into the UUID structure. */
 
-    Uuid->Data1  = (unsigned long)(time & 0xffffffff);
+    Uuid->Data1  = (ULONG)(time & 0xffffffff);
     Uuid->Data2  = (unsigned short)((time >> 32) & 0xffff);
     Uuid->Data3  = (unsigned short)((time >> 48) & 0x0fff);
 

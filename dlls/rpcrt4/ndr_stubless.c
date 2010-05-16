@@ -579,7 +579,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     void * This = NULL;
     PFORMAT_STRING pHandleFormat;
     /* correlation cache */
-    unsigned long NdrCorrCache[256];
+    ULONG_PTR NdrCorrCache[256];
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -1636,7 +1636,7 @@ struct async_call_data
     /* number of parameters. optional for client to give it to us */
     unsigned char number_of_params;
     /* correlation cache */
-    unsigned long NdrCorrCache[256];
+    ULONG_PTR NdrCorrCache[256];
 };
 
 LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
