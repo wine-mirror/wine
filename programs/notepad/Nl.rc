@@ -30,9 +30,9 @@ MAIN_MENU MENU
   MENUITEM "O&pslaan\tCtrl+S",	     CMD_SAVE
   MENUITEM "Ops&laan als...",	     CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Afdrukken...\tCtrl+P",	     CMD_PRINT
-  MENUITEM "Pagina-in&stelling...",  CMD_PAGE_SETUP
-  MENUITEM "Printerinstellingen...", CMD_PRINTER_SETUP
+  MENUITEM "Af&drukken...\tCtrl+P",      CMD_PRINT
+  MENUITEM "Pa&gina-instellingen...",    CMD_PAGE_SETUP
+  MENUITEM "Printerins&tellingen...",    CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Afsluiten",             CMD_EXIT
  }
@@ -58,7 +58,7 @@ POPUP "&Zoeken" {
 POPUP "&Help" {
   MENUITEM "&Help-onderwerpen",  CMD_HELP_CONTENTS
   MENUITEM "&Zoeken...",         CMD_HELP_SEARCH
-  MENUITEM "&Hulp bij Help",     CMD_HELP_ON_HELP
+  MENUITEM "H&ulp bij Help",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   MENUITEM "&Over Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
@@ -69,7 +69,7 @@ POPUP "&Help" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Pagina-instelling"
+CAPTION "Pagina-instellingen"
 {
 LTEXT    "&Koptekst:",  0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
@@ -77,7 +77,7 @@ LTEXT    "&Voettekst:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
 GROUPBOX "&Marges (millimeter):",  0x144,  10, 43,160, 45
-LTEXT    "Li&nks:",        0x145,   20, 55, 30, 10, WS_CHILD
+LTEXT    "L&inks:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Boven:",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
@@ -109,7 +109,7 @@ STRING_ERROR,                                   "FOUT"
 STRING_WARNING,                                 "WAARSCHUWING"
 STRING_INFO,                                    "Informatie"
 
-STRING_UNTITLED,                                "(naamloos)"
+STRING_UNTITLED,                                "Naamloos"
 
 STRING_ALL_FILES,                               "Alle bestanden (*.*)"
 STRING_TEXT_FILES_TXT,                          "Tekstbestanden (*.txt)"
@@ -130,9 +130,9 @@ STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Dit bestand bevat Unicode tekens welke verloren zullen gaan\n\
+Dit bestand bevat Unicode tekens die verloren zullen gaan\n\
 als dit bestand wordt opgeslagen in de %s codering.\n\
-Om deze tekens te behouden, klikt u op Annuleren en selecteert\n\
-daarna een van de Unicode-opties in de Codering keuzelijst.\n\
+Klik op Annuleren om deze tekens te behouden, en selecteer\n\
+daarna een van de Unicode-opties in de coderingskeuzelijst.\n\
 Wilt u doorgaan?"
 }
