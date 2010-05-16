@@ -285,7 +285,31 @@ if test "${enable_maintainer_mode+set}" = set
 then
   if test "$FONTFORGE" = "false"; then WINE_WARNING([fontforge is missing, fonts can't be rebuilt.]); fi
   if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
-  if test "$CONVERT" = "false"; then WINE_WARNING([imagemagick is missing, icons can't be rebuilt.]); fi
+
+  dnl Check the imagemagick version
+  if test "$CONVERT" = false
+  then
+    WINE_WARNING([imagemagick is missing, icons can't be rebuilt.])
+  else
+    AC_MSG_CHECKING([for recent enough imagemagick])
+    convert_version=`convert --version | head -n1`
+    if test "x$convert_version" != "x"
+    then
+      convert_version_major=`expr "$convert_version" : '.* \([[0-9]]*\)\.[[0-9]]*'`
+      convert_version_minor=`expr "$convert_version" : '.* [[0-9]]*\.\([[0-9]]*\)'`
+      if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
+      then
+        CONVERT=false
+        WINE_WARNING([imagemagick version 6.6 or newer is needed to rebuild icons.])
+      fi
+    fi
+    if test "$CONVERT" = false
+    then
+      AC_MSG_RESULT([no ($convert_version_major.$convert_version_minor)])
+    else
+      AC_MSG_RESULT([yes ($convert_version_major.$convert_version_minor)])
+    fi
+  fi
 
   dnl Check the icotool version
   if test "$ICOTOOL" = false

@@ -5110,7 +5110,33 @@ if test "${enable_maintainer_mode+set}" = set
 then
   if test "$FONTFORGE" = "false"; then as_fn_append wine_warnings "|fontforge is missing, fonts can't be rebuilt."; fi
   if test "$RSVG" = "false"; then as_fn_append wine_warnings "|rsvg is missing, icons can't be rebuilt."; fi
-  if test "$CONVERT" = "false"; then as_fn_append wine_warnings "|imagemagick is missing, icons can't be rebuilt."; fi
+
+    if test "$CONVERT" = false
+  then
+    as_fn_append wine_warnings "|imagemagick is missing, icons can't be rebuilt."
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for recent enough imagemagick" >&5
+$as_echo_n "checking for recent enough imagemagick... " >&6; }
+    convert_version=`convert --version | head -n1`
+    if test "x$convert_version" != "x"
+    then
+      convert_version_major=`expr "$convert_version" : '.* \([0-9]*\)\.[0-9]*'`
+      convert_version_minor=`expr "$convert_version" : '.* [0-9]*\.\([0-9]*\)'`
+      if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
+      then
+        CONVERT=false
+        as_fn_append wine_warnings "|imagemagick version 6.6 or newer is needed to rebuild icons."
+      fi
+    fi
+    if test "$CONVERT" = false
+    then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no ($convert_version_major.$convert_version_minor)" >&5
+$as_echo "no ($convert_version_major.$convert_version_minor)" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($convert_version_major.$convert_version_minor)" >&5
+$as_echo "yes ($convert_version_major.$convert_version_minor)" >&6; }
+    fi
+  fi
 
     if test "$ICOTOOL" = false
   then
