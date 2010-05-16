@@ -610,20 +610,21 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
     struct scsi_addr addr;
     if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1)
     {
-        switch (addr.type) 
+        switch (addr.type)
         {
-        case TYPE_SCSI:  *port = 1;
+        case TYPE_SCSI:
+            *port = 1;
             *iface = addr.addr.scsi.scbus;
             *device = addr.addr.scsi.target;
             *lun = addr.addr.scsi.lun;
-            break;
-        case TYPE_ATAPI: *port = 0;
+            return 1;
+        case TYPE_ATAPI:
+            *port = 0;
             *iface = addr.addr.atapi.atbus;
             *device = addr.addr.atapi.drive;
             *lun = 0;
-            break;
+            return 1;
         }
-        return 1;
     }
     return 0;
 #elif defined(__FreeBSD__)
