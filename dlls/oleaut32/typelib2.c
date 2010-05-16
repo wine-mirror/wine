@@ -3163,8 +3163,83 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile)
 {
-    FIXME("(%p,%d,%p,%p,%p,%p), stub!\n", iface, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    HRESULT status = TYPE_E_ELEMENTNOTFOUND;
+    INT nameoffset, docstringoffset, helpcontext;
+
+    TRACE("(%p,%d,%p,%p,%p,%p)\n", iface, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+
+    if (memid == -1)
+    {
+        nameoffset = This->typeinfo->NameOffset;
+        docstringoffset = This->typeinfo->docstringoffs;
+        helpcontext = This->typeinfo->helpcontext;
+        status = S_OK;
+    } else {
+        CyclicList *iter;
+        if (This->typedata) {
+            for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
+                if (iter->indice == memid) {
+                    const int *typedata = iter->u.data;
+                    int   size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
+
+                    nameoffset = iter->name;
+                    /* FIXME implement this once SetFuncDocString is implemented */
+                    docstringoffset = -1;
+                    helpcontext = (size < 7*sizeof(int)) ? 0 : typedata[6];
+
+                    status = S_OK;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!status) {
+        WCHAR *string;
+        if (pBstrName) {
+            if (nameoffset == -1)
+                *pBstrName = NULL;
+            else {
+                MSFT_NameIntro *name = (MSFT_NameIntro*)&This->typelib->
+                        typelib_segment_data[MSFT_SEG_NAME][nameoffset];
+                ctl2_decode_name((char*)&name->namelen, &string);
+                *pBstrName = SysAllocString(string);
+                if(!*pBstrName)
+                    return E_OUTOFMEMORY;
+            }
+        }
+
+        if (pBstrDocString) {
+            if (docstringoffset == -1)
+                *pBstrDocString = NULL;
+            else {
+                MSFT_NameIntro *name = (MSFT_NameIntro*)&This->typelib->
+                        typelib_segment_data[MSFT_SEG_NAME][docstringoffset];
+                ctl2_decode_name((char*)&name->namelen, &string);
+                *pBstrDocString = SysAllocString(string);
+                if(!*pBstrDocString) {
+                    if (pBstrName) SysFreeString(*pBstrName);
+                    return E_OUTOFMEMORY;
+                }
+            }
+        }
+
+        if (pdwHelpContext) {
+            *pdwHelpContext = helpcontext;
+        }
+
+        if (pBstrHelpFile) {
+            status = ITypeLib_GetDocumentation((ITypeLib*)&This->typelib->lpVtblTypeLib2,
+                    -1, NULL, NULL, NULL, pBstrHelpFile);
+            if (status) {
+                if (pBstrName) SysFreeString(*pBstrName);
+                if (pBstrDocString) SysFreeString(*pBstrDocString);
+            }
+        }
+    }
+
+    return status;
 }
 
 /******************************************************************************
@@ -4549,7 +4624,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
         if(!iter)
             return TYPE_E_ELEMENTNOTFOUND;
 
-        return ITypeInfo_GetDocumentation((ITypeInfo*)iter->lpVtblTypeInfo2,
+        return ITypeInfo_GetDocumentation((ITypeInfo*)&iter->lpVtblTypeInfo2,
                 -1, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
     }
 

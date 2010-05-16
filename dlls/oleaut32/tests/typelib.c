@@ -973,6 +973,7 @@ if(use_midl_tlb) {
 static void test_CreateTypeLib(void) {
     static const WCHAR stdoleW[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static OLECHAR typelibW[] = {'t','y','p','e','l','i','b',0};
+    static OLECHAR helpfileW[] = {'C',':','\\','b','o','g','u','s','.','h','l','p',0};
     static OLECHAR interface1W[] = {'i','n','t','e','r','f','a','c','e','1',0};
     static OLECHAR interface2W[] = {'i','n','t','e','r','f','a','c','e','2',0};
     static OLECHAR interface3W[] = {'i','n','t','e','r','f','a','c','e','3',0};
@@ -1052,16 +1053,19 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeLib_SetName(createtl, typelibW);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ICreateTypeLib_SetHelpFileName(createtl, helpfileW);
+    ok(hres == S_OK, "got %08x\n", hres);
+
     hres = ITypeLib_GetDocumentation(tl, -1, NULL, NULL, NULL, NULL);
     ok(hres == S_OK, "got %08x\n", hres);
 
-    hres = ITypeLib_GetDocumentation(tl, -1, &name, NULL, NULL, NULL);
+    hres = ITypeLib_GetDocumentation(tl, -1, &name, NULL, NULL, &helpfile);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(!memcmp(name, typelibW, sizeof(typelibW)), "name = %s\n", wine_dbgstr_w(name));
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "helpfile = %s\n", wine_dbgstr_w(helpfile));
 
     SysFreeString(name);
-
-    ITypeLib_Release(tl);
+    SysFreeString(helpfile);
 
     hres = ICreateTypeLib_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -1069,8 +1073,32 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&interface1);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ITypeLib_GetDocumentation(tl, 0, &name, NULL, NULL, NULL);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(!memcmp(name, interface1W, sizeof(interface1W)), "name = %s\n", wine_dbgstr_w(name));
+
+    SysFreeString(name);
+
+    ITypeLib_Release(tl);
+
+    name = (BSTR)0xdeadbeef;
+    helpfile = (BSTR)0xdeadbeef;
+    hres = ITypeInfo_GetDocumentation(interface1, -1, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(!memcmp(name, interface1W, sizeof(interface1W)), "name = %s\n", wine_dbgstr_w(name));
+    ok(docstring == NULL, "docstring != NULL\n");
+    ok(helpcontext == 0, "helpcontext != 0\n");
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "helpfile = %s\n", wine_dbgstr_w(helpfile));
+
+    SysFreeString(name);
+    SysFreeString(helpfile);
+
+    hres = ITypeInfo_GetDocumentation(interface1, 0, &name, NULL, NULL, NULL);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
     hres = ITypeInfo_GetRefTypeInfo(interface1, 0, NULL);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
+
 
     hres = ICreateTypeInfo_LayOut(createti);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -1212,6 +1240,15 @@ static void test_CreateTypeLib(void) {
     hres = ICreateTypeInfo_AddFuncDesc(createti, 3, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
+    hres = ITypeInfo_GetDocumentation(interface1, 0, &name, &docstring, &helpcontext, &helpfile);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(name == NULL, "name != NULL\n");
+    ok(docstring == NULL, "docstring != NULL\n");
+    ok(helpcontext == 0x201, "helpcontext != 0x201\n");
+    ok(!memcmp(helpfile, helpfileW, sizeof(helpfileW)), "helpfile = %s\n", wine_dbgstr_w(helpfile));
+
+    SysFreeString(helpfile);
+
     hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 1000, NULL, 1);
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
@@ -1226,6 +1263,12 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, names1, 1);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeInfo_GetDocumentation(interface1, 0, &name, NULL, NULL, NULL);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(!memcmp(name, func1W, sizeof(func1W)), "name = %s\n", wine_dbgstr_w(name));
+
+    SysFreeString(name);
 
     hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 3, names2, 3);
     ok(hres == S_OK, "got %08x\n", hres);
