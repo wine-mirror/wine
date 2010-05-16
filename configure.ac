@@ -296,8 +296,8 @@ then
     icotool_version=`icotool --version | head -n1`
     if test "x$icotool_version" != "x"
     then
-      icotool_version_major=`expr "$icotool_version" : '.* \([[0-9]]*\).[[0-9]]*'`
-      icotool_version_minor=`expr "$icotool_version" : '.* [[0-9]]*.\([[0-9]]*\)'`
+      icotool_version_major=`expr "$icotool_version" : '.* \([[0-9]]*\)\.[[0-9]]*'`
+      icotool_version_minor=`expr "$icotool_version" : '.* [[0-9]]*\.\([[0-9]]*\)'`
       if test "$icotool_version_major" -eq 0 -a "$icotool_version_minor" -lt 29
       then
         ICOTOOL=false
