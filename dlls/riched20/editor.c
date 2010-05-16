@@ -289,7 +289,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
   TRACE("%08x %p\n", dwFormat, stream);
   
   do {
-    long nWideChars = 0;
+    LONG nWideChars = 0;
 
     if (!stream->dwSize)
     {
