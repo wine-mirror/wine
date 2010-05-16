@@ -736,7 +736,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
             }
             else memcpy( conn->peek_msg, buf, *recvd );
         }
-        if (*recvd < 1 && len) return FALSE;
+        if (*recvd < 1) return FALSE;
         return TRUE;
 #else
         return FALSE;
