@@ -1217,10 +1217,54 @@ BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
 BOOL WINAPI CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-    FIXME("(%s, %s, %p): stub\n", debugstr_w(lpFileName),
+    NTSTATUS status;
+    UNICODE_STRING ntDest, ntSource;
+    ANSI_STRING unixDest, unixSource;
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %s, %p)\n", debugstr_w(lpFileName),
         debugstr_w(lpExistingFileName), lpSecurityAttributes);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    ntDest.Buffer = ntSource.Buffer = NULL;
+    if (!RtlDosPathNameToNtPathName_U( lpFileName, &ntDest, NULL, NULL ) ||
+        !RtlDosPathNameToNtPathName_U( lpExistingFileName, &ntSource, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        goto err;
+    }
+
+    unixSource.Buffer = unixDest.Buffer = NULL;
+    status = wine_nt_to_unix_file_name( &ntSource, &unixSource, FILE_OPEN, FALSE );
+    if (!status)
+    {
+        status = wine_nt_to_unix_file_name( &ntDest, &unixDest, FILE_CREATE, FALSE );
+        if (!status) /* destination must not exist */
+        {
+            status = STATUS_OBJECT_NAME_EXISTS;
+        } else if (status == STATUS_NO_SUCH_FILE)
+        {
+            status = STATUS_SUCCESS;
+        }
+    }
+
+    if (status)
+         SetLastError( RtlNtStatusToDosError(status) );
+    else if (!link( unixSource.Buffer, unixDest.Buffer ))
+    {
+        TRACE("Hardlinked '%s' to '%s'\n", debugstr_a( unixDest.Buffer ),
+                debugstr_a( unixSource.Buffer ));
+        ret = TRUE;
+    }
+    else
+        FILE_SetDosError();
+
+    RtlFreeAnsiString( &unixSource );
+    RtlFreeAnsiString( &unixDest );
+
+err:
+    RtlFreeUnicodeString( &ntSource );
+    RtlFreeUnicodeString( &ntDest );
+    return ret;
 }
 
 
@@ -1230,10 +1274,25 @@ BOOL WINAPI CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
 BOOL WINAPI CreateHardLinkA(LPCSTR lpFileName, LPCSTR lpExistingFileName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-    FIXME("(%s, %s, %p): stub\n", debugstr_a(lpFileName),
-        debugstr_a(lpExistingFileName), lpSecurityAttributes);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    WCHAR *sourceW, *destW;
+    BOOL res;
+
+    if (!(sourceW = FILE_name_AtoW( lpExistingFileName, TRUE )))
+    {
+        return FALSE;
+    }
+    if (!(destW = FILE_name_AtoW( lpFileName, TRUE )))
+    {
+        HeapFree( GetProcessHeap(), 0, sourceW );
+        return FALSE;
+    }
+
+    res = CreateHardLinkW( destW, sourceW, lpSecurityAttributes );
+
+    HeapFree( GetProcessHeap(), 0, sourceW );
+    HeapFree( GetProcessHeap(), 0, destW );
+
+    return res;
 }
 
 
