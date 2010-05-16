@@ -75,4 +75,7 @@ RC_SRCS = \
 	comctl_Zh.rc \
 	rsrc.rc
 
+SVG_SRCS = \
+	idb_view_small.svg
+
 @MAKE_DLL_RULES@
