@@ -1766,7 +1766,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
 
     CyclicList *iter, *insert;
     int *typedata;
-    int i, num_defaults = 0;
+    int i, num_defaults = 0, num_retval = 0;
     int decoded_size;
     HRESULT hres;
 
@@ -1806,9 +1806,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
         return TYPE_E_INCONSISTENTPROPFUNCS;
 
     /* get number of arguments with default values specified */
-    for (i = 0; i < pFuncDesc->cParams; i++)
+    for (i = 0; i < pFuncDesc->cParams; i++) {
         if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
             num_defaults++;
+        if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL)
+            num_retval++;
+    }
 
     if (!This->typedata) {
         This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
@@ -1840,6 +1843,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | (unsigned short)(pFuncDesc->oVft?pFuncDesc->oVft+1:0);
     typedata[4] = (pFuncDesc->callconv << 8) | (pFuncDesc->invkind << 3) | pFuncDesc->funckind;
     if(num_defaults) typedata[4] |= 0x1000;
+    if (num_retval) typedata[4] |= 0x4000;
     typedata[5] = pFuncDesc->cParams;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
