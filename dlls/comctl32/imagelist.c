@@ -145,15 +145,18 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
     BOOL ret = FALSE;
     HDC hdcMask = 0;
     BITMAP bm;
-    BITMAPINFO *info;
+    BITMAPINFO *info, *mask_info = NULL;
     DWORD *bits = NULL;
     BYTE *mask_bits = NULL;
     int i, j, n;
     POINT pt;
     DWORD mask_width;
 
-    if (himl->uBitsPixel != 32) return FALSE;
     if (!GetObjectW( hbmImage, sizeof(bm), &bm )) return FALSE;
+
+    /* if neither the imagelist nor the source bitmap can have an alpha channel, bail out now */
+    if (himl->uBitsPixel != 32 && bm.bmBitsPixel != 32) return FALSE;
+
     SelectObject( hdc, hbmImage );
     mask_width = (bm.bmWidth + 31) / 32 * 4;
 
@@ -174,13 +177,13 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
 
     if (hbmMask)
     {
-        info->bmiHeader.biBitCount = 1;
-        info->bmiHeader.biSizeImage = mask_width * height;
+        if (!(mask_info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[2] ))))
+            goto done;
+        mask_info->bmiHeader = info->bmiHeader;
+        mask_info->bmiHeader.biBitCount = 1;
+        mask_info->bmiHeader.biSizeImage = mask_width * height;
         if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
-        if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, info, DIB_RGB_COLORS )) goto done;
-        /* restore values for color info */
-        info->bmiHeader.biBitCount = 32;
-        info->bmiHeader.biSizeImage = bm.bmWidth * height * 4;
+        if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, mask_info, DIB_RGB_COLORS )) goto done;
         hdcMask = CreateCompatibleDC( 0 );
         SelectObject( hdcMask, hbmMask );
     }
@@ -202,6 +205,8 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                 for (j = n * width; j < (n + 1) * width; j++)
                     if (!mask_bits || !((mask_bits[i * mask_width + j / 8] << (j % 8)) & 0x80))
                         bits[i * bm.bmWidth + j] |= 0xff000000;
+            if (hdcMask) StretchBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                                     hdcMask, n * width, 0, width, height, SRCCOPY );
         }
         else
         {
@@ -209,6 +214,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
 
             /* pre-multiply by the alpha channel */
             for (i = 0; i < height; i++)
+            {
                 for (j = n * width; j < (n + 1) * width; j++)
                 {
                     DWORD argb = bits[i * bm.bmWidth + j];
@@ -218,12 +224,23 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                                                 (((argb & 0x0000ff00) * alpha / 255) & 0x0000ff00) |
                                                 (((argb & 0x000000ff) * alpha / 255)));
                 }
+            }
+
+            if (mask_info && himl->hbmMask)  /* generate the mask from the alpha channel */
+            {
+                for (i = 0; i < height; i++)
+                    for (j = n * width; j < (n + 1) * width; j++)
+                        if ((bits[i * bm.bmWidth + j] >> 24) > 25) /* more than 10% alpha */
+                            mask_bits[i * mask_width + j / 8] &= ~(0x80 >> (j % 8));
+                        else
+                            mask_bits[i * mask_width + j / 8] |= 0x80 >> (j % 8);
+                StretchDIBits( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                               n * width, 0, width, height, mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY );
+            }
         }
         StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                        n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
 
-        if (hdcMask) StretchBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                                 hdcMask, n * width, 0, width, height, SRCCOPY );
     }
     ret = TRUE;
 
