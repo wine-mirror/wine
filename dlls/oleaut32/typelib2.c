@@ -118,10 +118,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
 /*================== Implementation Structures ===================================*/
 
 /* Used for storing cyclic list. Tail address is kept */
+enum tagCyclicListElementType {
+    CyclicListFunc,
+    CyclicListVar
+};
 typedef struct tagCyclicList {
     struct tagCyclicList *next;
     int indice;
     int name;
+    enum tagCyclicListElementType type;
 
     union {
         int val;
@@ -1873,6 +1878,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     /* update the index data */
     insert->indice = pFuncDesc->memid;
     insert->name = -1;
+    insert->type = CyclicListFunc;
 
     /* insert type data to list */
     if(index == This->typeinfo->cElement) {
@@ -2125,6 +2131,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     /* update the index data */
     insert->indice = 0x40000000 + index;
     insert->name = -1;
+    insert->type = CyclicListVar;
 
     /* figure out type widths and whatnot */
     ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
@@ -2192,11 +2199,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     if(!rgszNames)
         return E_INVALIDARG;
 
-    if(index >= This->typeinfo->cElement || !cNames)
+    if(index >= (This->typeinfo->cElement&0xFFFF) || !cNames)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(iter=This->typedata->next->next, i=0; i<index; i++)
-        iter=iter->next;
+    for(iter=This->typedata->next->next, i=0; /* empty */; iter=iter->next)
+        if (iter->type == CyclicListFunc)
+            if (i++ >= index)
+                break;
 
     /* cNames == cParams for put or putref accessor, cParams+1 otherwise */
     if(cNames != iter->u.data[5] + ((iter->u.data[4]>>3)&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
@@ -2205,14 +2214,17 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     len = ctl2_encode_name(This->typelib, rgszNames[0], &namedata);
     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
         if(iter2->name!=-1 && !memcmp(namedata,
-                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len))
-        {
+                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len)) {
             /* getters/setters can have a same name */
-            INT inv1 = iter2->u.data[4] >> 3;
-            INT inv2 = iter->u.data[4] >> 3;
-            if (!((inv1&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv2&INVOKE_PROPERTYGET)) &&
-                !((inv2&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv1&INVOKE_PROPERTYGET)))
-                return TYPE_E_AMBIGUOUSNAME;
+            if (iter2->type == CyclicListFunc) {
+                INT inv1 = iter2->u.data[4] >> 3;
+                INT inv2 = iter->u.data[4] >> 3;
+                if (((inv1&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv2&INVOKE_PROPERTYGET)) ||
+                    ((inv2&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv1&INVOKE_PROPERTYGET)))
+                    continue;
+            }
+
+            return TYPE_E_AMBIGUOUSNAME;
         }
     }
 
@@ -2269,9 +2281,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
 	namedata[9] |= 0x20;
     }
 
-    iter = This->typedata->next->next;
-    for(i=0; i<index; i++)
-        iter = iter->next;
+    for(iter = This->typedata->next->next, i = 0; /* empty */; iter = iter->next)
+        if (iter->type == CyclicListVar)
+            if (i++ >= index)
+                break;
 
     iter->name = offset;
     return S_OK;
@@ -2373,12 +2386,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
     if(This->typeinfo->cElement<index)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    if(This->typeinfo->cElement == index)
+    if(This->typeinfo->cElement == index && This->typedata->type == CyclicListFunc)
         func = This->typedata;
     else
         for(func=This->typedata->next->next; func!=This->typedata; func=func->next)
-            if(index-- == 0)
-                break;
+            if (func->type == CyclicListFunc)
+                if(index-- == 0)
+                    break;
 
     This->typedata->next->u.val += funcrecord_reallochdr(&func->u.data, 7*sizeof(int));
     if(!func->u.data)
@@ -2438,7 +2452,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
 	ICreateTypeInfo2* iface)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
-    CyclicList *iter, *iter2, **typedata;
+    CyclicList *iter, *iter2, *last = NULL, **typedata;
     HREFTYPE hreftype;
     HRESULT hres;
     unsigned user_vft = 0;
@@ -2552,10 +2566,14 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
         return E_OUTOFMEMORY;
 
     /* Assign IDs and VTBL entries */
-    i = 0;
-    if(This->typedata->u.data[3]&1)
-        user_vft = This->typedata->u.data[3]&0xffff;
+    for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next)
+        if (iter->type == CyclicListFunc)
+            last = iter;
 
+    if(last && last->u.data[3]&1)
+        user_vft = last->u.data[3]&0xffff;
+
+    i = 0;
     for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
         /* Assign MEMBERID if MEMBERID_NIL was specified */
         if(iter->indice == MEMBERID_NIL) {
@@ -2578,6 +2596,9 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
                 }
             }
         }
+
+        if (iter->type != CyclicListFunc)
+            continue;
 
         typedata[i] = iter;
 
@@ -2788,15 +2809,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
     CyclicList *iter;
-    UINT i;
 
     TRACE("(%p,%d,%s,%p)\n", iface, index, debugstr_guid(guid), pVarVal);
 
-    if(index >= This->typeinfo->cElement)
+    if(index >= (This->typeinfo->cElement&0xFFFF))
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(iter=This->typedata->next->next, i=0; i<index; i++)
-        iter=iter->next;
+    for(iter=This->typedata->next->next; /* empty */; iter=iter->next)
+        if (iter->type == CyclicListFunc)
+            if (index-- == 0)
+                break;
 
     This->typedata->next->u.val += funcrecord_reallochdr(&iter->u.data, 13*sizeof(int));
     if(!iter->u.data)
@@ -3247,15 +3269,20 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
         if (This->typedata) {
             for(iter=This->typedata->next->next; iter!=This->typedata->next; iter=iter->next) {
                 if (iter->indice == memid) {
-                    const int *typedata = iter->u.data;
-                    int   size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
+                    if (iter->type == CyclicListFunc) {
+                        const int *typedata = iter->u.data;
+                        int   size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
 
-                    nameoffset = iter->name;
-                    /* FIXME implement this once SetFuncDocString is implemented */
-                    docstringoffset = -1;
-                    helpcontext = (size < 7*sizeof(int)) ? 0 : typedata[6];
+                        nameoffset = iter->name;
+                        /* FIXME implement this once SetFuncDocString is implemented */
+                        docstringoffset = -1;
+                        helpcontext = (size < 7*sizeof(int)) ? 0 : typedata[6];
 
-                    status = S_OK;
+                        status = S_OK;
+                    } else {
+                        FIXME("Not implemented for variable members\n");
+                    }
+
                     break;
                 }
             }
