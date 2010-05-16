@@ -2132,20 +2132,26 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     if(index >= This->typeinfo->cElement || !cNames)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    len = ctl2_encode_name(This->typelib, rgszNames[0], &namedata);
-    for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
-        if(i == index)
-            iter = iter2;
-        else if(iter2->name!=-1 && !memcmp(namedata,
-                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len))
-            return TYPE_E_AMBIGUOUSNAME;
-
-        i++;
-    }
+    for(iter=This->typedata->next->next, i=0; i<index; i++)
+        iter=iter->next;
 
     /* cNames == cParams for put or putref accessor, cParams+1 otherwise */
     if(cNames != iter->u.data[5] + ((iter->u.data[4]>>3)&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF) ? 0 : 1))
         return TYPE_E_ELEMENTNOTFOUND;
+
+    len = ctl2_encode_name(This->typelib, rgszNames[0], &namedata);
+    for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
+        if(iter2->name!=-1 && !memcmp(namedata,
+                    This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len))
+        {
+            /* getters/setters can have a same name */
+            INT inv1 = iter2->u.data[4] >> 3;
+            INT inv2 = iter->u.data[4] >> 3;
+            if (!((inv1&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv2&INVOKE_PROPERTYGET)) &&
+                !((inv2&(INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF)) && (inv1&INVOKE_PROPERTYGET)))
+                return TYPE_E_AMBIGUOUSNAME;
+        }
+    }
 
     offset = ctl2_alloc_name(This->typelib, rgszNames[0]);
     if(offset == -1)

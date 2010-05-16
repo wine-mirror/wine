@@ -982,10 +982,12 @@ static void test_CreateTypeLib(void) {
     static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
     static OLECHAR func2W[] = {'f','u','n','c','2',0};
+    static OLECHAR prop1W[] = {'P','r','o','p','1',0};
     static OLECHAR param1W[] = {'p','a','r','a','m','1',0};
     static OLECHAR param2W[] = {'p','a','r','a','m','2',0};
     static OLECHAR *names1[] = {func1W, param1W, param2W};
     static OLECHAR *names2[] = {func2W, param1W, param2W};
+    static OLECHAR *propname[] = {prop1W, param1W};
     static const GUID custguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x70}};
 
     char filename[MAX_PATH];
@@ -1170,6 +1172,16 @@ static void test_CreateTypeLib(void) {
 
     hres = ICreateTypeInfo_SetFuncHelpContext(createti, 1, 0xabcdefab);
     ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, propname, 1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 1, propname, 1);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ICreateTypeInfo_SetFuncAndParamNames(createti, 1, propname, 2);
+    ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08x\n", hres);
+
 
     funcdesc.invkind = INVOKE_PROPERTYPUTREF;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
