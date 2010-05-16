@@ -55,8 +55,10 @@ MANPAGES = winedbg.man
 
 all: $(MANPAGES)
 
-install install-lib:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
+install-man-pages:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) winedbg.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
+
+@WOW64_DISABLE@ install install-lib:: install-man-pages
 
 uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
