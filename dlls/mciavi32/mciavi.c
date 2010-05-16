@@ -427,10 +427,10 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     dwFromFrame = wma->dwCurrVideoFrame;
     dwToFrame = wma->dwPlayableVideoFrames - 1;
 
-    if (lpParms && (dwFlags & MCI_FROM)) {
+    if (dwFlags & MCI_FROM) {
 	dwFromFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwFrom);
     }
-    if (lpParms && (dwFlags & MCI_TO)) {
+    if (dwFlags & MCI_TO) {
 	dwToFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
     }
     if (dwToFrame >= wma->dwPlayableVideoFrames)
@@ -552,7 +552,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 mci_play_done:
     wma->dwStatus = MCI_MODE_STOP;
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
+    if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
                        wDevID, MCI_NOTIFY_SUCCESSFUL);
