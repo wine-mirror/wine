@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-# Render SVG files containing multiple images
+# Render SVG files containing one or more images into an ICO or BMP.
 #
 # Copyright (C) 2010 Joel Holdsworth
 #
@@ -22,17 +22,21 @@ use strict;
 use warnings;
 use XML::Parser;
 use MIME::Base64;
+use File::Copy;
 
 # Parse the parameters
 my $svgFileName = $ARGV[0];
-my $icoFileName = $ARGV[1];
+my $outFileName = $ARGV[1];
+
 die "Cannot open SVG file" unless defined($svgFileName);
-die "Cannot open ICO file" unless defined($icoFileName);
+die "Cannot open output file" unless defined($outFileName);
 
-my $renderedSVGFileName = "$svgFileName.ico";
-$icoFileName =~ m/(.*)\.ico/;
-my $icoName = $1;
+$outFileName =~ m/(.*)\.(.*)/;
+my $outName = $1;
+my $ext = lc($2);
+die "Only BMP and ICO outputs are supported" unless $ext eq "bmp" or $ext eq "ico";
 
+my $renderedSVGFileName = "$svgFileName.png";
 my @pngFiles;
 
 # Get the programs from the environment variables
@@ -40,6 +44,7 @@ my $convert = $ENV{"CONVERT"} || "convert";
 my $rsvg = $ENV{"RSVG"} || "rsvg";
 my $icotool = $ENV{"ICOTOOL"} || "icotool";
 
+# Be ready to abort
 sub cleanup()
 {
     unlink $renderedSVGFileName;
@@ -62,19 +67,35 @@ sub svg_element_start
 {
     my($expat, $element, %attr) = @_;
 
-    # Parse the id for icon format
+    # Parse the id for icon/bitmap render directives
     my $id = $attr{'id'};
     return unless defined($id);
-    return unless $id =~ /icon:(\d*)-(\d*)/;
-    my $size = $1;
-    my $depth = $2;
+
+    my $size = 0;
+    my $depth = 0;
+
+    if($ext eq "ico") {
+        return unless $id =~ /icon:(\d*)-(\d*)/;
+        $size = $1;
+        $depth = $2;
+    } elsif($ext eq "bmp") {
+        return unless $id =~ /bitmap:(\d*)-(\d*)/;
+        $size = $1;
+        $depth = $2;
+    }
+
     return unless defined($size) and defined($depth);
 
     warn "Unexpected icon depth" unless
-        $depth == 4 or $depth == 8 or $depth == 32;
-    my $pngFileName = "$icoName-$size-$depth.png";
+        $depth == 4 or $depth == 8 or $depth == 24 or $depth == 32;
+    my $pngFileName = "$outName-$size-$depth.png";
 
-    if($element eq "rect") {
+    if($element eq "svg") {
+
+        # The whole file is tagged
+        copy($renderedSVGFileName, $pngFileName) or die "File could not be copied";
+
+    } elsif($element eq "rect") {
 
         # Extract SVG vector images
         my $x = $attr{'x'};
@@ -116,12 +137,34 @@ my $parser = new XML::Parser(
     Handlers => {Start => \&svg_element_start});
 $parser->parsefile("$svgFileName");
 
-# Die if no render directives were found
-die "No render directives found in icon" unless(@pngFiles);
+# If no render directives were found, take the full image as-is
+unless(@pngFiles) {
+    my $pngFileName = "bmp$renderedSVGFileName";
+    copy($renderedSVGFileName, $pngFileName) or die "File could not be copied";
+    push(@pngFiles, $pngFileName);
+}
 
-# Combine them into an ICO file
-shell $icotool, "-c", "-o", $icoFileName, @pngFiles;
+# Combine the renderings into the output file
+if($ext eq "ico") {
+
+    # Place images into the ICO
+    shell $icotool, "-c", "-o", $outFileName, @pngFiles;
+
+} elsif($ext eq "bmp") {
+
+    # Only the first image becomes the final BMP
+    my $pngFile = $pngFiles[0];
+    $pngFile =~ /.*-\d*-(\d*)\.png/;
+    my $depth = $1;
+
+    # Convert it into a bmp
+    if($depth == 24) {
+        shell $convert, "png:$pngFile", "+matte", $outFileName;
+    } else {
+        shell $convert, "png:$pngFile", $outFileName;
+    }
+
+}
 
 # Delete the intermediate images
-unlink $renderedSVGFileName;
-unlink $_ foreach(@pngFiles);
+cleanup();

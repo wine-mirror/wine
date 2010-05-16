@@ -63,7 +63,7 @@ IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
 TARGETFLAGS  = @TARGETFLAGS@
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi/winapi_check
-BUILDICON    = $(TOPSRCDIR)/tools/buildicon
+BUILDIMAGE   = $(TOPSRCDIR)/tools/buildimage
 C2MAN        = $(TOPSRCDIR)/tools/c2man.pl
 RUNTEST      = $(TOPSRCDIR)/tools/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)
@@ -190,12 +190,10 @@ filter: dummy
 	LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
 
 .svg.ico:
-	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDICON) $< $@
+	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
 
 .svg.bmp:
-	$(RSVG) $< $<.png
-	$(CONVERT) $<.png -alpha off $@
-	$(RM) $<.png
+	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
 
 # Rules for IDL files
 
