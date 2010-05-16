@@ -36,6 +36,8 @@ RC_SRCS = \
 	Zh.rc \
 	rsrc.rc
 
-SVG_SRCS = wordpad.svg
+SVG_SRCS = \
+	toolbar.svg \
+	wordpad.svg
 
 @MAKE_PROG_RULES@
