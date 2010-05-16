@@ -1316,6 +1316,69 @@ static HRESULT ctl2_add_default_value(
     }
 }
 
+/****************************************************************************
+ *      funcrecord_reallochdr
+ *
+ *  Ensure FuncRecord data block contains header of required size
+ *
+ *  PARAMS
+ *
+ *   typedata [IO] - reference to pointer to data block
+ *   need     [I]  - required size of block in bytes
+ *
+ * RETURNS
+ *
+ *  Number of additionally allocated bytes
+ */
+static INT funcrecord_reallochdr(INT **typedata, int need)
+{
+    int tail = (*typedata)[5]*((*typedata)[4]&0x1000?16:12);
+    int hdr = (*typedata)[0] - tail;
+    int i;
+
+    if (hdr >= need)
+        return 0;
+
+    *typedata = HeapReAlloc(GetProcessHeap(), 0, *typedata, need + tail);
+    if (!*typedata)
+        return -1;
+
+    if (tail)
+        memmove((char*)*typedata + need, (const char*)*typedata + hdr, tail);
+    (*typedata)[0] = need + tail;
+
+    /* fill in default values */
+    for(i = (hdr+3)/4; (i+1)*4 <= need; i++)
+    {
+        switch(i)
+        {
+            case 2:
+                (*typedata)[i] = 0;
+                break;
+            case 7:
+                (*typedata)[i] = -1;
+                break;
+            case 8:
+                (*typedata)[i] = -1;
+                break;
+            case 9:
+                (*typedata)[i] = -1;
+                break;
+            case 10:
+                (*typedata)[i] = -1;
+                break;
+            case 11:
+                (*typedata)[i] = 0;
+                break;
+            case 12:
+                (*typedata)[i] = -1;
+                break;
+        }
+    }
+
+    return need - hdr;
+}
+
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
 /******************************************************************************
@@ -2162,14 +2225,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
     *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
 
-    if(iter->u.data[4]&0x1000)
-        len = iter->u.data[5];
-    else
-        len = 0;
+    len = iter->u.data[0]/4 - iter->u.data[5]*3;
 
     for (i = 1; i < cNames; i++) {
 	offset = ctl2_alloc_name(This->typelib, rgszNames[i]);
-	iter->u.data[(i*3) + 4 + len] = offset;
+	iter->u.data[len + ((i-1)*3) + 1] = offset;
     }
 
     return S_OK;
@@ -2307,8 +2367,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
     CyclicList *func;
-    int *typedata;
-    int size;
 
     TRACE("(%p,%d,%d)\n", iface, index, dwHelpContext);
 
@@ -2322,24 +2380,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncHelpContext(
             if(index-- == 0)
                 break;
 
-    typedata = func->u.data;
+    This->typedata->next->u.val += funcrecord_reallochdr(&func->u.data, 7*sizeof(int));
+    if(!func->u.data)
+        return E_OUTOFMEMORY;
 
-    /* Compute func size without arguments */
-    size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
-
-    /* Allocate memory for HelpContext if needed */
-    if(size < 7*sizeof(int)) {
-        typedata = HeapReAlloc(GetProcessHeap(), 0, typedata, typedata[0]+sizeof(int));
-        if(!typedata)
-            return E_OUTOFMEMORY;
-
-        memmove(&typedata[7], &typedata[6], typedata[0]-sizeof(int)*6);
-        typedata[0] += sizeof(int);
-        This->typedata->next->u.val += sizeof(int);
-        func->u.data = typedata;
-    }
-
-    typedata[6] = dwHelpContext;
+    func->u.data[6] = dwHelpContext;
     return S_OK;
 }
 
@@ -2741,8 +2786,24 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncCustData(
         REFGUID guid,            /* [I] The GUID used as a key to retrieve the custom data. */
         VARIANT* pVarVal)        /* [I] The custom data. */
 {
-    FIXME("(%p,%d,%s,%p), stub!\n", iface, index, debugstr_guid(guid), pVarVal);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    CyclicList *iter;
+    UINT i;
+
+    TRACE("(%p,%d,%s,%p)\n", iface, index, debugstr_guid(guid), pVarVal);
+
+    if(index >= This->typeinfo->cElement)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    for(iter=This->typedata->next->next, i=0; i<index; i++)
+        iter=iter->next;
+
+    This->typedata->next->u.val += funcrecord_reallochdr(&iter->u.data, 13*sizeof(int));
+    if(!iter->u.data)
+        return E_OUTOFMEMORY;
+
+    iter->u.data[4] |= 0x80;
+    return ctl2_set_custdata(This->typelib, guid, pVarVal, &iter->u.data[12]);
 }
 
 /******************************************************************************
