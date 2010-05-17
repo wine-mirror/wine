@@ -95,6 +95,7 @@ static SSL_METHOD *method;
 static SSL_CTX *ctx;
 static int hostname_idx;
 static int error_idx;
+static int conn_idx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
@@ -485,6 +486,14 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
         LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
+    conn_idx = pSSL_get_ex_new_index( 0, (void *)"netconn index", NULL, NULL, NULL );
+    if (conn_idx == -1)
+    {
+        ERR("SSL_get_ex_new_index failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        LeaveCriticalSection( &init_ssl_cs );
+        return FALSE;
+    }
     pSSL_CTX_set_verify( ctx, SSL_VERIFY_PEER, netconn_secure_verify );
 
     pCRYPTO_set_id_callback(ssl_thread_id);
@@ -630,6 +639,12 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
         ERR("SSL_set_ex_data failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
         set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
         goto fail;
+    }
+    if (!pSSL_set_ex_data( conn->ssl_conn, conn_idx, conn ))
+    {
+        ERR("SSL_set_ex_data failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        return FALSE;
     }
     if (!pSSL_set_fd( conn->ssl_conn, conn->socket ))
     {
