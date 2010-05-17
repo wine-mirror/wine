@@ -182,6 +182,21 @@ MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
 MAKE_FUNCPTR(XRenderSetPictureTransform)
 #endif
 MAKE_FUNCPTR(XRenderQueryExtension)
+
+#ifdef SONAME_LIBFONTCONFIG
+#include <fontconfig/fontconfig.h>
+MAKE_FUNCPTR(FcConfigSubstitute)
+MAKE_FUNCPTR(FcDefaultSubstitute)
+MAKE_FUNCPTR(FcFontMatch)
+MAKE_FUNCPTR(FcInit)
+MAKE_FUNCPTR(FcPatternCreate)
+MAKE_FUNCPTR(FcPatternDestroy)
+MAKE_FUNCPTR(FcPatternAddInteger)
+MAKE_FUNCPTR(FcPatternAddString)
+MAKE_FUNCPTR(FcPatternGetInteger)
+static BOOL fontconfig_installed;
+#endif
+
 #undef MAKE_FUNCPTR
 
 static CRITICAL_SECTION xrender_cs;
@@ -326,6 +341,7 @@ static int load_xrender_formats(void)
 void X11DRV_XRender_Init(void)
 {
     int event_base, i;
+    void *fontconfig_handle;
 
     if (client_side_with_render &&
 	wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
@@ -378,6 +394,23 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
             }
         }
     }
+
+    if ((fontconfig_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0)))
+    {
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fontconfig_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+        LOAD_FUNCPTR(FcConfigSubstitute);
+        LOAD_FUNCPTR(FcDefaultSubstitute);
+        LOAD_FUNCPTR(FcFontMatch);
+        LOAD_FUNCPTR(FcInit);
+        LOAD_FUNCPTR(FcPatternCreate);
+        LOAD_FUNCPTR(FcPatternDestroy);
+        LOAD_FUNCPTR(FcPatternAddInteger);
+        LOAD_FUNCPTR(FcPatternAddString);
+        LOAD_FUNCPTR(FcPatternGetInteger);
+#undef LOAD_FUNCPTR
+        fontconfig_installed = pFcInit();
+    }
+    else TRACE( "cannot find the fontconfig library " SONAME_LIBFONTCONFIG "\n" );
 
 sym_not_found:
     if(X11DRV_XRender_Installed || client_side_with_core)
@@ -839,6 +872,57 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
                     entry->aa_default = AA_None;
                 break;
         }
+
+#ifdef SONAME_LIBFONTCONFIG
+        if (fontconfig_installed)
+        {
+            FcPattern *match, *pattern = pFcPatternCreate();
+            FcResult result;
+            char family[LF_FACESIZE * 4];
+
+            WideCharToMultiByte( CP_UTF8, 0, plfsz->lf.lfFaceName, -1, family, sizeof(family), NULL, NULL );
+            pFcPatternAddString( pattern, FC_FAMILY, (FcChar8 *)family );
+            if (plfsz->lf.lfWeight != FW_DONTCARE)
+            {
+                int weight;
+                switch (plfsz->lf.lfWeight)
+                {
+                case FW_THIN:       weight = FC_WEIGHT_THIN; break;
+                case FW_EXTRALIGHT: weight = FC_WEIGHT_EXTRALIGHT; break;
+                case FW_LIGHT:      weight = FC_WEIGHT_LIGHT; break;
+                case FW_NORMAL:     weight = FC_WEIGHT_NORMAL; break;
+                case FW_MEDIUM:     weight = FC_WEIGHT_MEDIUM; break;
+                case FW_SEMIBOLD:   weight = FC_WEIGHT_SEMIBOLD; break;
+                case FW_BOLD:       weight = FC_WEIGHT_BOLD; break;
+                case FW_EXTRABOLD:  weight = FC_WEIGHT_EXTRABOLD; break;
+                case FW_HEAVY:      weight = FC_WEIGHT_HEAVY; break;
+                default:            weight = (plfsz->lf.lfWeight - 80) / 4; break;
+                }
+                pFcPatternAddInteger( pattern, FC_WEIGHT, weight );
+            }
+            pFcPatternAddInteger( pattern, FC_SLANT, plfsz->lf.lfItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN );
+            pFcConfigSubstitute( NULL, pattern, FcMatchPattern );
+            pFcDefaultSubstitute( pattern );
+            if ((match = pFcFontMatch( NULL, pattern, &result )))
+            {
+                int rgba;
+
+                if (pFcPatternGetInteger( match, FC_RGBA, 0, &rgba ) == FcResultMatch)
+                {
+                    switch (rgba)
+                    {
+                    case FC_RGBA_RGB:  entry->aa_default = AA_RGB; break;
+                    case FC_RGBA_BGR:  entry->aa_default = AA_BGR; break;
+                    case FC_RGBA_VRGB: entry->aa_default = AA_VRGB; break;
+                    case FC_RGBA_VBGR: entry->aa_default = AA_VBGR; break;
+                    case FC_RGBA_NONE: entry->aa_default = AA_None; break;
+                    }
+                }
+                pFcPatternDestroy( match );
+            }
+            pFcPatternDestroy( pattern );
+        }
+#endif  /* SONAME_LIBFONTCONFIG */
     }
     else
         entry->aa_default = AA_None;
