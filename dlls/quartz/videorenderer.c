@@ -1176,10 +1176,25 @@ static HRESULT WINAPI Basicvideo_Invoke(IBasicVideo *iface,
 /*** IBasicVideo methods ***/
 static HRESULT WINAPI Basicvideo_get_AvgTimePerFrame(IBasicVideo *iface,
 						     REFTIME *pAvgTimePerFrame) {
+    AM_MEDIA_TYPE *pmt;
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pAvgTimePerFrame);
+    if (!This->pInputPin->pin.pConnectedTo)
+        return VFW_E_NOT_CONNECTED;
 
+    TRACE("(%p/%p)->(%p)\n", This, iface, pAvgTimePerFrame);
+
+    pmt = &This->pInputPin->pin.mtCurrent;
+    if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER*)pmt->pbFormat;
+        *pAvgTimePerFrame = vih->AvgTimePerFrame;
+    } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
+        VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2*)pmt->pbFormat;
+        *pAvgTimePerFrame = vih->AvgTimePerFrame;
+    } else {
+        ERR("Unknown format type %s\n", qzdebugstr_guid(&pmt->formattype));
+        *pAvgTimePerFrame = 0;
+    }
     return S_OK;
 }
 
