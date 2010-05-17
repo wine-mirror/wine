@@ -1754,6 +1754,7 @@ typedef enum wined3d_gl_extension
     ARB_SHADER_OBJECTS,
     ARB_SHADER_TEXTURE_LOD,
     ARB_SHADING_LANGUAGE_100,
+    ARB_SHADOW,
     ARB_SYNC,
     ARB_TEXTURE_BORDER_CLAMP,
     ARB_TEXTURE_COMPRESSION,
@@ -2402,6 +2403,14 @@ typedef unsigned int GLhandleARB;
 #ifndef GL_ARB_shading_language_100
 #define GL_ARB_shading_language_100 1
 #define GL_SHADING_LANGUAGE_VERSION_ARB                     0x8b8c
+#endif
+
+/* GL_ARB_shadow */
+#ifndef GL_ARB_shadow
+#define GL_ARB_shadow 1
+#define GL_TEXTURE_COMPARE_MODE_ARB                         0x884c
+#define GL_TEXTURE_COMPARE_FUNC_ARB                         0x884d
+#define GL_COMPARE_R_TO_TEXTURE_ARB                         0x884e
 #endif
 
 /* GL_ARB_sync */
