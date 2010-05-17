@@ -324,8 +324,7 @@ IMAGELIST_InternalExpandBitmaps(HIMAGELIST himl, INT nImageCount)
 
     if (himl->has_alpha)
     {
-        char *new_alpha = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                       himl->has_alpha, himl->cMaxImage );
+        char *new_alpha = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, himl->has_alpha, nNewCount );
         if (new_alpha) himl->has_alpha = new_alpha;
         else
         {
