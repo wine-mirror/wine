@@ -233,7 +233,12 @@ static void test_context(void)
      */
 
     ret = pCryptCATAdminAcquireContext(&hca, &dummy, 0);
-    ok(ret, "Expected success\n");
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED, "CryptCATAdminAcquireContext failed %u\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        win_skip("Not running as administrator\n");
+        return;
+    }
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     attrs = GetFileAttributes(catroot);
@@ -492,7 +497,12 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     CloseHandle(file);
 
     ret = pCryptCATAdminAcquireContext(&hcatadmin, &dummy, 0);
-    ok(ret, "CryptCATAdminAcquireContext failed %u\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED, "CryptCATAdminAcquireContext failed %u\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        win_skip("Not running as administrator\n");
+        return;
+    }
 
     SetLastError(0xdeadbeef);
     hcatinfo = pCryptCATAdminAddCatalog(NULL, NULL, NULL, 0);
