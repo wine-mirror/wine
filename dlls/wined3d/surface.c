@@ -1568,7 +1568,7 @@ static void surface_prepare_texture_internal(IWineD3DSurfaceImpl *surface,
     if (surface->Flags & alloc_flag) return;
 
     d3dfmt_get_conv(surface, TRUE, TRUE, &desc, &convert);
-    if(convert != NO_CONVERSION) surface->Flags |= SFLAG_CONVERTED;
+    if(convert != NO_CONVERSION || desc.convert) surface->Flags |= SFLAG_CONVERTED;
     else surface->Flags &= ~SFLAG_CONVERTED;
 
     surface_bind_and_dirtify(surface, srgb);
@@ -4577,7 +4577,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
              * but it isn't set (yet) in all cases it is getting called. */
-            if((convert != NO_CONVERSION) && (This->Flags & SFLAG_PBO)) {
+            if(((convert != NO_CONVERSION) || desc.convert) && (This->Flags & SFLAG_PBO)) {
                 TRACE("Removing the pbo attached to surface %p\n", This);
                 surface_remove_pbo(This, gl_info);
             }
