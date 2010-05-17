@@ -372,7 +372,17 @@ interface IShellItem : IUnknown
         [out] int *piOrder);
 }
 
-
+typedef enum tagNWMF {
+    NWMF_UNLOADING        = 0x0001,
+    NWMF_USERINITED       = 0x0002,
+    NWMF_FIRST            = 0x0004,
+    NWMF_OVERRIDEKEY      = 0x0008,
+    NWMF_SHOWHELP         = 0x0010,
+    NWMF_HTMLDIALOG       = 0x0020,
+    NWMF_FROMDIALOGCHILD  = 0x0040,
+    NWMF_USERREQUESTED    = 0x0080,
+    NWMF_USERALLOWED      = 0x0100
+} NWMF;
 
 /*****************************************************************************
  * FOLDERSETTINGS
