@@ -1204,7 +1204,8 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl
         return GL_VENDOR_FGLRX;
 
     if (strstr(gl_vendor_string, "Intel(R)")
-            || strstr(gl_renderer, "Intel(R)")
+            /* Intel switched from Intel(R) to Intel® recently, so just match Intel. */
+            || strstr(gl_renderer, "Intel")
             || strstr(gl_vendor_string, "Intel Inc."))
         return GL_VENDOR_INTEL;
 
@@ -1236,7 +1237,8 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
         return HW_VENDOR_ATI;
 
     if (strstr(gl_vendor_string, "Intel(R)")
-            || strstr(gl_renderer, "Intel(R)")
+            /* Intel switched from Intel(R) to Intel® recently, so just match Intel. */
+            || strstr(gl_renderer, "Intel")
             || strstr(gl_vendor_string, "Intel Inc."))
         return HW_VENDOR_INTEL;
 
@@ -1944,7 +1946,8 @@ static const struct vendor_card_selection vendor_card_select_table[] =
     {GL_VENDOR_FGLRX,  HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
     {GL_VENDOR_MESA,   HW_VENDOR_ATI,     "Mesa AMD/ATI driver",      select_card_ati_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
-    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa}
+    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa},
+    {GL_VENDOR_INTEL,  HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa}
 };
 
 
