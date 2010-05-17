@@ -299,9 +299,6 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL]   = 0;
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
         gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
-        gl_tex->states[WINED3DTEXSTA_ELEMENTINDEX]  = 0;
-        gl_tex->states[WINED3DTEXSTA_DMAPOFFSET]    = 0;
-        gl_tex->states[WINED3DTEXSTA_TSSADDRESSW]   = WINED3DTADDRESS_WRAP;
         IWineD3DBaseTexture_SetDirty(iface, TRUE);
         isNewTexture = TRUE;
 
