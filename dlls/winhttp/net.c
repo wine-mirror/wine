@@ -254,7 +254,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
 }
 
 static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
-                                  WCHAR *server )
+                                  WCHAR *server, DWORD security_flags )
 {
     BOOL ret;
     CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
@@ -272,7 +272,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
         if (chain->TrustStatus.dwErrorStatus)
         {
             if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
-                err = ERROR_WINHTTP_SECURE_CERT_DATE_INVALID;
+            {
+                if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
+                    err = ERROR_WINHTTP_SECURE_CERT_DATE_INVALID;
+            }
             else if (chain->TrustStatus.dwErrorStatus &
                      CERT_TRUST_IS_UNTRUSTED_ROOT)
                 err = ERROR_WINHTTP_SECURE_INVALID_CA;
@@ -285,7 +288,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
                 err = ERROR_WINHTTP_SECURE_CERT_REVOKED;
             else if (chain->TrustStatus.dwErrorStatus &
                 CERT_TRUST_IS_NOT_VALID_FOR_USAGE)
-                err = ERROR_WINHTTP_SECURE_CERT_WRONG_USAGE;
+            {
+                if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE))
+                    err = ERROR_WINHTTP_SECURE_CERT_WRONG_USAGE;
+            }
             else
                 err = ERROR_WINHTTP_SECURE_INVALID_CERT;
         }
@@ -310,7 +316,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
             if (ret && policyStatus.dwError)
             {
                 if (policyStatus.dwError == CERT_E_CN_NO_MATCH)
-                    err = ERROR_WINHTTP_SECURE_CERT_CN_INVALID;
+                {
+                    if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
+                        err = ERROR_WINHTTP_SECURE_CERT_CN_INVALID;
+                }
                 else
                     err = ERROR_WINHTTP_SECURE_INVALID_CERT;
             }
@@ -328,9 +337,11 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
     SSL *ssl;
     WCHAR *server;
     BOOL ret = FALSE;
+    netconn_t *conn;
 
     ssl = pX509_STORE_CTX_get_ex_data( ctx, pSSL_get_ex_data_X509_STORE_CTX_idx() );
     server = pSSL_get_ex_data( ssl, hostname_idx );
+    conn = pSSL_get_ex_data( ssl, conn_idx );
     if (preverify_ok)
     {
         HCERTSTORE store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0,
@@ -362,7 +373,8 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
             if (!endCert) ret = FALSE;
             if (ret)
             {
-                DWORD_PTR err = netconn_verify_cert( endCert, store, server );
+                DWORD_PTR err = netconn_verify_cert( endCert, store, server,
+                                                     conn->security_flags );
 
                 if (err)
                 {
