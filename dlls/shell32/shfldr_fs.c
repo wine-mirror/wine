@@ -431,7 +431,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     else
         *ppidl = NULL;
 
-    TRACE ("(%p)->(-- pidl=%p ret=0x%08x)\n", This, ppidl ? *ppidl : 0, hr);
+    TRACE ("(%p)->(-- pidl=%p ret=0x%08x)\n", This, *ppidl, hr);
 
     return hr;
 }
