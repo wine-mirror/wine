@@ -48,10 +48,10 @@
 @ stub D3DXCreateCylinder
 @ stdcall D3DXCreateEffect(ptr ptr long ptr ptr long ptr ptr ptr)
 @ stdcall D3DXCreateEffectCompiler(ptr long ptr ptr long ptr ptr)
-@ stub D3DXCreateEffectCompilerFromFileA
-@ stub D3DXCreateEffectCompilerFromFileW
-@ stub D3DXCreateEffectCompilerFromResourceA
-@ stub D3DXCreateEffectCompilerFromResourceW
+@ stdcall D3DXCreateEffectCompilerFromFileA(str ptr ptr long ptr ptr)
+@ stdcall D3DXCreateEffectCompilerFromFileW(wstr ptr ptr long ptr ptr)
+@ stdcall D3DXCreateEffectCompilerFromResourceA(long str ptr ptr long ptr ptr)
+@ stdcall D3DXCreateEffectCompilerFromResourceW(long wstr ptr ptr long ptr ptr)
 @ stdcall D3DXCreateEffectEx(ptr ptr long ptr ptr ptr long ptr ptr ptr)
 @ stub D3DXCreateEffectFromFileA
 @ stub D3DXCreateEffectFromFileExA
