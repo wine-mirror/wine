@@ -57,13 +57,6 @@ WINE_DECLARE_DEBUG_CHANNEL(accel);
  * These are static/global variables and internal data structures that the
  * OLE module uses to maintain it's state.
  */
-typedef struct tagDropTargetNode
-{
-  HWND          hwndTarget;
-  IDropTarget*  dropTarget;
-  struct list   entry;
-} DropTargetNode;
-
 typedef struct tagTrackerWindowInfo
 {
   IDataObject* dataObject;
@@ -119,17 +112,16 @@ static const WCHAR OLEDD_DRAGTRACKERCLASS[] =
 static const WCHAR prop_olemenuW[] =
   {'P','R','O','P','_','O','L','E','M','e','n','u','D','e','s','c','r','i','p','t','o','r',0};
 
+/* property to store IDropTarget pointer */
+static const WCHAR prop_oledroptarget[] =
+  {'O','l','e','D','r','o','p','T','a','r','g','e','t','I','n','t','e','r','f','a','c','e',0};
+
 static const WCHAR clsidfmtW[] =
   {'C','L','S','I','D','\\','{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
    '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
     '%','0','2','x','%','0','2','x','}','\\',0};
 
 static const WCHAR emptyW[] = { 0 };
-
-/*
- * This is the head of the Drop target container.
- */
-static struct list targetListHead = LIST_INIT(targetListHead);
 
 /******************************************************************************
  * These are the prototypes of miscellaneous utility methods
@@ -158,21 +150,11 @@ extern void OLEClipbrd_Initialize(void);
 /******************************************************************************
  * These are the prototypes of the utility methods used for OLE Drag n Drop
  */
-static void            OLEDD_Initialize(void);
-static DropTargetNode* OLEDD_FindDropTarget(
-                         HWND hwndOfTarget);
-static void            OLEDD_FreeDropTarget(DropTargetNode*, BOOL);
-static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(
-			 HWND   hwnd,
-			 UINT   uMsg,
-			 WPARAM wParam,
-			 LPARAM   lParam);
-static void OLEDD_TrackMouseMove(
-                         TrackerWindowInfo* trackerInfo);
-static void OLEDD_TrackStateChange(
-                         TrackerWindowInfo* trackerInfo);
+static void OLEDD_Initialize(void);
+static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo);
+static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo);
 static DWORD OLEDD_GetButtonState(void);
-
 
 /******************************************************************************
  *		OleBuildVersion [OLE32.@]
@@ -284,14 +266,22 @@ HRESULT WINAPI OleInitializeWOW(DWORD x, DWORD y) {
         return 0;
 }
 
+/***
+ * OLEDD_FindDropTarget()
+ *
+ * Returns IDropTarget pointer registered for this window.
+ */
+static inline IDropTarget* OLEDD_FindDropTarget(HWND hwnd)
+{
+  return GetPropW(hwnd, prop_oledroptarget);
+}
+
 /***********************************************************************
  *           RegisterDragDrop (OLE32.@)
  */
-HRESULT WINAPI RegisterDragDrop(
-	HWND hwnd,
-	LPDROPTARGET pDropTarget)
+HRESULT WINAPI RegisterDragDrop(HWND hwnd, LPDROPTARGET pDropTarget)
 {
-  DropTargetNode* dropTargetInfo;
+  DWORD pid = 0;
 
   TRACE("(%p,%p)\n", hwnd, pDropTarget);
 
@@ -310,32 +300,20 @@ HRESULT WINAPI RegisterDragDrop(
     return DRAGDROP_E_INVALIDHWND;
   }
 
-  /*
-   * First, check if the window is already registered.
-   */
-  dropTargetInfo = OLEDD_FindDropTarget(hwnd);
+  /* block register for other processes windows */
+  GetWindowThreadProcessId(hwnd, &pid);
+  if (pid != GetCurrentProcessId())
+  {
+    FIXME("register for another process windows is disabled\n");
+    return DRAGDROP_E_INVALIDHWND;
+  }
 
-  if (dropTargetInfo!=NULL)
+  /* check if the window is already registered */
+  if (OLEDD_FindDropTarget(hwnd))
     return DRAGDROP_E_ALREADYREGISTERED;
 
-  /*
-   * If it's not there, we can add it. We first create a node for it.
-   */
-  dropTargetInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(DropTargetNode));
-
-  if (dropTargetInfo==NULL)
-    return E_OUTOFMEMORY;
-
-  dropTargetInfo->hwndTarget     = hwnd;
-
-  /*
-   * Don't forget that this is an interface pointer, need to nail it down since
-   * we keep a copy of it.
-   */
   IDropTarget_AddRef(pDropTarget);
-  dropTargetInfo->dropTarget  = pDropTarget;
-
-  list_add_tail(&targetListHead, &dropTargetInfo->entry);
+  SetPropW(hwnd, prop_oledroptarget, pDropTarget);
 
   return S_OK;
 }
@@ -343,10 +321,9 @@ HRESULT WINAPI RegisterDragDrop(
 /***********************************************************************
  *           RevokeDragDrop (OLE32.@)
  */
-HRESULT WINAPI RevokeDragDrop(
-	HWND hwnd)
+HRESULT WINAPI RevokeDragDrop(HWND hwnd)
 {
-  DropTargetNode* dropTargetInfo;
+  IDropTarget* droptarget;
 
   TRACE("(%p)\n", hwnd);
 
@@ -356,18 +333,12 @@ HRESULT WINAPI RevokeDragDrop(
     return DRAGDROP_E_INVALIDHWND;
   }
 
-  /*
-   * First, check if the window is already registered.
-   */
-  dropTargetInfo = OLEDD_FindDropTarget(hwnd);
-
-  /*
-   * If it ain't in there, it's an error.
-   */
-  if (dropTargetInfo==NULL)
+  /* no registration data */
+  if (!(droptarget = OLEDD_FindDropTarget(hwnd)))
     return DRAGDROP_E_NOTREGISTERED;
 
-  OLEDD_FreeDropTarget(dropTargetInfo, TRUE);
+  IDropTarget_Release(droptarget);
+  RemovePropW(hwnd, prop_oledroptarget);
 
   return S_OK;
 }
@@ -1886,57 +1857,6 @@ static void OLEDD_Initialize(void)
 }
 
 /***
- * OLEDD_FreeDropTarget()
- *
- * Frees the drag and drop data structure
- */
-static void OLEDD_FreeDropTarget(DropTargetNode *dropTargetInfo, BOOL release_drop_target)
-{
-  list_remove(&dropTargetInfo->entry);
-  if (release_drop_target) IDropTarget_Release(dropTargetInfo->dropTarget);
-  HeapFree(GetProcessHeap(), 0, dropTargetInfo);
-}
-
-/***
- * OLEDD_UnInitialize()
- *
- * Releases the OLE drag and drop data structures.
- */
-void OLEDD_UnInitialize(void)
-{
-  /*
-   * Simply empty the list.
-   */
-  while (!list_empty(&targetListHead))
-  {
-    DropTargetNode* curNode = LIST_ENTRY(list_head(&targetListHead), DropTargetNode, entry);
-    OLEDD_FreeDropTarget(curNode, FALSE);
-  }
-}
-
-/***
- * OLEDD_FindDropTarget()
- *
- * Finds information about the drop target.
- */
-static DropTargetNode* OLEDD_FindDropTarget(HWND hwndOfTarget)
-{
-  DropTargetNode*  curNode;
-
-  /*
-   * Iterate the list to find the HWND value.
-   */
-  LIST_FOR_EACH_ENTRY(curNode, &targetListHead, DropTargetNode, entry)
-    if (hwndOfTarget==curNode->hwndTarget)
-      return curNode;
-
-  /*
-   * If we get here, the item is not in the list
-   */
-  return NULL;
-}
-
-/***
  * OLEDD_DragTrackerWindowProc()
  *
  * This method is the WindowProcedure of the drag n drop tracking
@@ -2039,35 +1959,46 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
   }
   else
   {
-    DropTargetNode* newDropTargetNode = 0;
-
     /*
      * If we changed window, we have to notify our old target and check for
      * the new one.
      */
-    if (trackerInfo->curDragTarget!=0)
-    {
+    if (trackerInfo->curDragTarget)
       IDropTarget_DragLeave(trackerInfo->curDragTarget);
-    }
 
     /*
      * Make sure we're hovering over a window.
      */
-    if (hwndNewTarget!=0)
+    if (hwndNewTarget)
     {
       /*
        * Find-out if there is a drag target under the mouse
        */
-      HWND nexttar = hwndNewTarget;
+      HWND next_target_wnd = hwndNewTarget;
+      IDropTarget *new_target;
+      DWORD pid;
+
       trackerInfo->curTargetHWND = hwndNewTarget;
 
       do {
-	newDropTargetNode = OLEDD_FindDropTarget(nexttar);
-      } while (!newDropTargetNode && (nexttar = GetParent(nexttar)) != 0);
-      if(nexttar) hwndNewTarget = nexttar;
+	new_target = OLEDD_FindDropTarget(next_target_wnd);
+      } while (!new_target && (next_target_wnd = GetParent(next_target_wnd)));
 
-      trackerInfo->curDragTargetHWND = hwndNewTarget;
-      trackerInfo->curDragTarget     = newDropTargetNode ? newDropTargetNode->dropTarget : 0;
+      if (next_target_wnd) hwndNewTarget = next_target_wnd;
+
+      GetWindowThreadProcessId(hwndNewTarget, &pid);
+      if (pid != GetCurrentProcessId())
+      {
+        FIXME("drop to another process window is unsupported\n");
+        trackerInfo->curDragTargetHWND = 0;
+        trackerInfo->curTargetHWND     = 0;
+        trackerInfo->curDragTarget     = 0;
+      }
+      else
+      {
+        trackerInfo->curDragTargetHWND = hwndNewTarget;
+        trackerInfo->curDragTarget     = new_target;
+      }
 
       /*
        * If there is, notify it that we just dragged-in

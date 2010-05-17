@@ -290,6 +290,7 @@ static ATOM register_dummy_class(void)
 
 static void test_Register_Revoke(void)
 {
+    HANDLE prop;
     HRESULT hr;
     HWND hwnd;
 
@@ -317,6 +318,9 @@ static void test_Register_Revoke(void)
     hr = RegisterDragDrop(hwnd, &DropTarget);
     ok_ole_success(hr, "RegisterDragDrop");
     ok(droptarget_addref_called == 1, "DropTarget_AddRef should have been called once, not %d times\n", droptarget_addref_called);
+
+    prop = GetPropA(hwnd, "OleDropTargetInterface");
+    ok(prop == &DropTarget, "expected IDropTarget pointer %p, got %p\n", &DropTarget, prop);
 
     hr = RegisterDragDrop(hwnd, &DropTarget);
     ok(hr == DRAGDROP_E_ALREADYREGISTERED, "RegisterDragDrop with already registered hwnd should return DRAGDROP_E_ALREADYREGISTERED instead of 0x%08x\n", hr);
