@@ -741,7 +741,7 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
             set_last_error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
-        request->security_flags = flags;
+        request->netconn.security_flags = flags;
         return TRUE;
     }
     case WINHTTP_OPTION_RESOLVE_TIMEOUT:
