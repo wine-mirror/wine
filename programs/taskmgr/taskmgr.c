@@ -754,7 +754,7 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
                            NULL );
 
     /* supplied buffer is not long enough */
-    if (!dwRet || ( (long)dwSize < (long)dwRet+14)) {
+    if (!dwRet || ( dwSize < dwRet+14)) {
         lpwszBuf[0] = '\0';
     } else {
         lpwszTemp[strlenW(lpwszTemp)-2] = '\0';  /* remove cr and newline character */

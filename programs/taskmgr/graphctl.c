@@ -416,14 +416,14 @@ static void GraphCtrl_DrawPoint(TGraphCtrl* this)
 
             /*  move to the previous point */
             prevX = this->m_rectPlot.right-this->m_nPlotShiftPixels;
-            prevY = this->m_rectPlot.bottom - 
-                (long)((this->m_dPreviousPosition[i] - this->m_dLowerLimit) * this->m_dVerticalFactor);
+            prevY = this->m_rectPlot.bottom -
+                (int)((this->m_dPreviousPosition[i] - this->m_dLowerLimit) * this->m_dVerticalFactor);
             MoveToEx(this->m_dcPlot, prevX, prevY, NULL);
 
             /*  draw to the current point */
             currX = this->m_rectPlot.right-this->m_nHalfShiftPixels;
             currY = this->m_rectPlot.bottom -
-                (long)((this->m_dCurrentPosition[i] - this->m_dLowerLimit) * this->m_dVerticalFactor);
+                (int)((this->m_dCurrentPosition[i] - this->m_dLowerLimit) * this->m_dVerticalFactor);
             LineTo(this->m_dcPlot, currX, currY);
 
             /*  Restore the pen  */

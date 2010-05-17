@@ -56,7 +56,7 @@ void TaskManager_OnFileNew(void)
     static const WCHAR wszShell32[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
 
     hShell32 = LoadLibraryW(wszShell32);
-    RunFileDlg = (RUNFILEDLG)(FARPROC)GetProcAddress(hShell32, (char*)((long)0x3D));
+    RunFileDlg = (void *)GetProcAddress(hShell32, (LPCSTR)61);
 
     /* Show "Run..." dialog */
     if (RunFileDlg)
