@@ -634,9 +634,12 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 surface_load_ds_location(This->depth_stencil, context, location);
 
             if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
+            {
                 surface_modify_ds_location(This->depth_stencil, location,
                         This->depth_stencil->ds_current_size.cx,
                         This->depth_stencil->ds_current_size.cy);
+                IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->depth_stencil, SFLAG_INDRAWABLE, TRUE);
+            }
         }
     }
 

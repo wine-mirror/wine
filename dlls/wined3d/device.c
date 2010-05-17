@@ -4483,6 +4483,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != This->onscreen_depth_stencil)
             device_switch_onscreen_ds(This, context, depth_stencil);
         prepare_ds_clear(depth_stencil, context, location, &draw_rect, Count, clear_rect);
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));

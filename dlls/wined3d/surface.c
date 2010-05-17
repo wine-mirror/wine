@@ -4390,6 +4390,22 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     BOOL drawable_read_ok = TRUE;
     BOOL in_fbo = FALSE;
 
+    if (This->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        if (flag == SFLAG_INTEXTURE)
+        {
+            struct wined3d_context *context = context_acquire(device, NULL);
+            surface_load_ds_location(This, context, SFLAG_DS_OFFSCREEN);
+            context_release(context);
+            return WINED3D_OK;
+        }
+        else
+        {
+            FIXME("Unimplemented location %#x for depth/stencil buffers.\n", flag);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (surface_is_offscreen(This))
