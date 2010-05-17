@@ -5236,7 +5236,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     UINT src_w, src_h;
     UINT dst_x, dst_y;
     DWORD sampler;
-    struct wined3d_format_desc dummy_desc;
+    struct wined3d_format_desc desc;
 
     TRACE("iface %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
             iface, src_surface, wine_dbgstr_rect(src_rect),
@@ -5265,8 +5265,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
      * surface to the destination's sysmem copy. If surface conversion is
      * needed, use BltFast instead to copy in sysmem and use regular surface
      * loading. */
-    d3dfmt_get_conv(dst_impl, FALSE, TRUE, &dummy_desc, &convert);
-    if (convert != NO_CONVERSION)
+    d3dfmt_get_conv(dst_impl, FALSE, TRUE, &desc, &convert);
+    if (convert != NO_CONVERSION || desc.convert)
         return IWineD3DSurface_BltFast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
     context = context_acquire(This, NULL);
