@@ -2024,6 +2024,9 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
         }
         args->color_fixup[i] = texture->resource.format_desc->color_fixup;
 
+        if (texture->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+            args->shadow |= 1 << i;
+
         /* Flag samplers that need NP2 texcoord fixup. */
         if (!texture->baseTexture.pow2Matrix_identity)
         {

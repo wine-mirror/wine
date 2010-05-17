@@ -687,6 +687,7 @@ struct ps_compile_args {
     /* Bitmap for NP2 texcoord fixups (16 samplers max currently).
        D3D9 has a limit of 16 samplers and the fixup is superfluous
        in D3D10 (unconditional NP2 support mandatory). */
+    WORD shadow; /* MAX_FRAGMENT_SAMPLERS, 16 */
 };
 
 enum fog_src_type {
@@ -1821,7 +1822,8 @@ typedef enum winetexturestates {
     WINED3DTEXSTA_MAXMIPLEVEL    = 7,
     WINED3DTEXSTA_MAXANISOTROPY  = 8,
     WINED3DTEXSTA_SRGBTEXTURE    = 9,
-    MAX_WINETEXTURESTATES        = 10,
+    WINED3DTEXSTA_SHADOW         = 10,
+    MAX_WINETEXTURESTATES        = 11,
 } winetexturestates;
 
 enum WINED3DSRGB
@@ -2979,6 +2981,7 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN;
 #define WINED3DFMT_FLAG_SRGB_READ                   0x00000800
 #define WINED3DFMT_FLAG_SRGB_WRITE                  0x00001000
 #define WINED3DFMT_FLAG_VTF                         0x00002000
+#define WINED3DFMT_FLAG_SHADOW                      0x00004000
 
 struct wined3d_format_desc
 {

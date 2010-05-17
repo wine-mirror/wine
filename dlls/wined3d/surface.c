@@ -4070,6 +4070,7 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
         GLuint texture, GLsizei w, GLsizei h, GLenum target)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
+    GLint compare_mode = GL_NONE;
     struct blt_info info;
     GLint old_binding = 0;
 
@@ -4090,6 +4091,11 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
+    if (gl_info->supported[ARB_SHADOW])
+    {
+        glGetTexParameteriv(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, &compare_mode);
+        if (compare_mode != GL_NONE) glTexParameteri(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+    }
 
     device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device,
             info.tex_type, &This->ds_current_size);
@@ -4105,6 +4111,7 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     glVertex2f(1.0f, 1.0f);
     glEnd();
 
+    if (compare_mode != GL_NONE) glTexParameteri(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, compare_mode);
     glBindTexture(info.bind_target, old_binding);
 
     glPopAttrib();

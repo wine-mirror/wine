@@ -299,6 +299,7 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL]   = 0;
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
         gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
+        gl_tex->states[WINED3DTEXSTA_SHADOW]        = FALSE;
         IWineD3DBaseTexture_SetDirty(iface, TRUE);
         isNewTexture = TRUE;
 
@@ -515,5 +516,23 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
             WARN("Anisotropic filtering not supported.\n");
         }
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
+    }
+
+    if (!(This->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+            != !gl_tex->states[WINED3DTEXSTA_SHADOW])
+    {
+        if (This->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+        {
+            glTexParameteri(textureDimensions, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+            glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
+            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB)");
+            gl_tex->states[WINED3DTEXSTA_SHADOW] = TRUE;
+        }
+        else
+        {
+            glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE)");
+            gl_tex->states[WINED3DTEXSTA_SHADOW] = FALSE;
+        }
     }
 }

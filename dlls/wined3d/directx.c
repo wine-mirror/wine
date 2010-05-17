@@ -3956,6 +3956,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     TRACE_(d3d_caps)("[FAILED] - No depth stencil support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
+                if ((format_desc->Flags & WINED3DFMT_FLAG_SHADOW) && !gl_info->supported[ARB_SHADOW])
+                {
+                    TRACE_(d3d_caps)("[FAILED] - No shadow sampler support.\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
             }
             break;
