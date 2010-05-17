@@ -52,15 +52,15 @@
 @ stdcall D3DXCreateEffectCompilerFromFileW(wstr ptr ptr long ptr ptr)
 @ stdcall D3DXCreateEffectCompilerFromResourceA(long str ptr ptr long ptr ptr)
 @ stdcall D3DXCreateEffectCompilerFromResourceW(long wstr ptr ptr long ptr ptr)
-@ stdcall D3DXCreateEffectEx(ptr ptr long ptr ptr ptr long ptr ptr ptr)
-@ stub D3DXCreateEffectFromFileA
-@ stub D3DXCreateEffectFromFileExA
-@ stub D3DXCreateEffectFromFileExW
-@ stub D3DXCreateEffectFromFileW
-@ stub D3DXCreateEffectFromResourceA
-@ stub D3DXCreateEffectFromResourceExA
-@ stub D3DXCreateEffectFromResourceExW
-@ stub D3DXCreateEffectFromResourceW
+@ stdcall D3DXCreateEffectEx(ptr ptr long ptr ptr str long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromFileA(ptr str ptr ptr long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromFileExA(ptr str ptr ptr str long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromFileExW(ptr str ptr ptr str long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromFileW(ptr wstr ptr ptr long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromResourceA(ptr long str ptr ptr long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromResourceExA(ptr long str ptr ptr str long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromResourceExW(ptr long str ptr ptr str long ptr ptr ptr)
+@ stdcall D3DXCreateEffectFromResourceW(ptr long wstr ptr ptr long ptr ptr ptr)
 @ stdcall D3DXCreateEffectPool(ptr)
 @ stdcall D3DXCreateFontA(ptr long long long long long long long long long str ptr)
 @ stdcall D3DXCreateFontIndirectA(ptr ptr ptr)

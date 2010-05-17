@@ -999,6 +999,145 @@ HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool)
     return S_OK;
 }
 
+HRESULT WINAPI D3DXCreateEffectFromFileExW(LPDIRECT3DDEVICE9 device, LPCWSTR srcfile,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, LPCSTR skipconstants, DWORD flags,
+    LPD3DXEFFECTPOOL pool, LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    LPVOID buffer;
+    HRESULT ret;
+    DWORD size;
+
+    TRACE("(%s): relay\n", debugstr_w(srcfile));
+
+    if (!device || !srcfile || !defines)
+        return D3DERR_INVALIDCALL;
+
+    ret = map_view_of_file(srcfile, &buffer, &size);
+
+    if (FAILED(ret))
+        return D3DXERR_INVALIDDATA;
+
+    ret = D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool, effect, compilationerrors);
+    UnmapViewOfFile(buffer);
+
+    return ret;
+}
+
+HRESULT WINAPI D3DXCreateEffectFromFileExA(LPDIRECT3DDEVICE9 device, LPCSTR srcfile,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, LPCSTR skipconstants, DWORD flags,
+    LPD3DXEFFECTPOOL pool, LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    LPWSTR srcfileW;
+    HRESULT ret;
+    DWORD len;
+
+    TRACE("(void): relay\n");
+
+    if (!srcfile || !defines)
+        return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
+    srcfileW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, len);
+
+    ret = D3DXCreateEffectFromFileExW(device, srcfileW, defines, include, skipconstants, flags, pool, effect, compilationerrors);
+    HeapFree(GetProcessHeap(), 0, srcfileW);
+
+    return ret;
+}
+
+HRESULT WINAPI D3DXCreateEffectFromFileW(LPDIRECT3DDEVICE9 device, LPCWSTR srcfile,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, DWORD flags, LPD3DXEFFECTPOOL pool,
+    LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    TRACE("(void): relay\n");
+    return D3DXCreateEffectFromFileExW(device, srcfile, defines, include, NULL, flags, pool, effect, compilationerrors);
+}
+
+HRESULT WINAPI D3DXCreateEffectFromFileA(LPDIRECT3DDEVICE9 device, LPCSTR srcfile,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, DWORD flags, LPD3DXEFFECTPOOL pool,
+    LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    TRACE("(void): relay\n");
+    return D3DXCreateEffectFromFileExA(device, srcfile, defines, include, NULL, flags, pool, effect, compilationerrors);
+}
+
+HRESULT WINAPI D3DXCreateEffectFromResourceExW(LPDIRECT3DDEVICE9 device, HMODULE srcmodule, LPCWSTR srcresource,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, LPCSTR skipconstants, DWORD flags,
+    LPD3DXEFFECTPOOL pool, LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    HRSRC resinfo;
+
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_w(srcresource));
+
+    if (!device || !defines)
+        return D3DERR_INVALIDCALL;
+
+    resinfo = FindResourceW(srcmodule, srcresource, (LPCWSTR) RT_RCDATA);
+
+    if (resinfo)
+    {
+        LPVOID buffer;
+        HRESULT ret;
+        DWORD size;
+
+        ret = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
+
+        if (FAILED(ret))
+            return D3DXERR_INVALIDDATA;
+
+        return D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool, effect, compilationerrors);
+    }
+
+    return D3DXERR_INVALIDDATA;
+}
+
+HRESULT WINAPI D3DXCreateEffectFromResourceExA(LPDIRECT3DDEVICE9 device, HMODULE srcmodule, LPCSTR srcresource,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, LPCSTR skipconstants, DWORD flags,
+    LPD3DXEFFECTPOOL pool, LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    HRSRC resinfo;
+
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(srcresource));
+
+    if (!device || !defines)
+        return D3DERR_INVALIDCALL;
+
+    resinfo = FindResourceA(srcmodule, srcresource, (LPCSTR) RT_RCDATA);
+
+    if (resinfo)
+    {
+        LPVOID buffer;
+        HRESULT ret;
+        DWORD size;
+
+        ret = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
+
+        if (FAILED(ret))
+            return D3DXERR_INVALIDDATA;
+
+        return D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool, effect, compilationerrors);
+    }
+
+    return D3DXERR_INVALIDDATA;
+}
+
+HRESULT WINAPI D3DXCreateEffectFromResourceW(LPDIRECT3DDEVICE9 device, HMODULE srcmodule, LPCWSTR srcresource,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, DWORD flags, LPD3DXEFFECTPOOL pool,
+    LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    TRACE("(void): relay\n");
+    return D3DXCreateEffectFromResourceExW(device, srcmodule, srcresource, defines, include, NULL, flags, pool, effect, compilationerrors);
+}
+
+HRESULT WINAPI D3DXCreateEffectFromResourceA(LPDIRECT3DDEVICE9 device, HMODULE srcmodule, LPCSTR srcresource,
+    const D3DXMACRO *defines, LPD3DXINCLUDE include, DWORD flags, LPD3DXEFFECTPOOL pool,
+    LPD3DXEFFECT *effect, LPD3DXBUFFER *compilationerrors)
+{
+    TRACE("(void): relay\n");
+    return D3DXCreateEffectFromResourceExA(device, srcmodule, srcresource, defines, include, NULL, flags, pool, effect, compilationerrors);
+}
+
 HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(LPCWSTR srcfile, const D3DXMACRO *defines, LPD3DXINCLUDE include,
     DWORD flags, LPD3DXEFFECTCOMPILER *effectcompiler, LPD3DXBUFFER *parseerrors)
 {
