@@ -138,7 +138,6 @@ static int TIME_MMSysTimeCallback(void)
      * mm timer crit sect locked.
      */
 
-    EnterCriticalSection(&WINMM_cs);
     for (;;)
     {
         struct list *ptr = list_head( &timer_list );
@@ -188,7 +187,6 @@ static int TIME_MMSysTimeCallback(void)
         }
         HeapFree( GetProcessHeap(), 0, to_free );
     }
-    LeaveCriticalSection(&WINMM_cs);
     return delta_time;
 }
 
@@ -206,20 +204,21 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 
     TRACE("Starting main winmm thread\n");
 
-    /* FIXME:  As an optimization, we could have
-               this thread die when there are no more requests
-               pending, and then get recreated on the first
-               new event; it's not clear if that would be worth
-               it or not.                 */
-
+    EnterCriticalSection(&WINMM_cs);
     while (! TIME_TimeToDie) 
     {
         sleep_time = TIME_MMSysTimeCallback();
 
+        if (sleep_time < 0)
+            break;
         if (sleep_time == 0)
             continue;
 
-        if ((ret = poll(&pfd, 1, sleep_time)) < 0)
+        LeaveCriticalSection(&WINMM_cs);
+        ret = poll(&pfd, 1, sleep_time);
+        EnterCriticalSection(&WINMM_cs);
+
+        if (ret < 0)
         {
             if (errno != EINTR && errno != EAGAIN)
             {
@@ -230,7 +229,11 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 
         while (ret > 0) ret = read(TIME_fdWake[0], readme, sizeof(readme));
     }
+    CloseHandle(TIME_hMMTimer);
+    TIME_hMMTimer = NULL;
+    LeaveCriticalSection(&WINMM_cs);
     TRACE("Exiting main winmm thread\n");
+    FreeLibraryAndExitThread(arg, 0);
     return 0;
 }
 
@@ -239,7 +242,9 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
  */
 static void TIME_MMTimeStart(void)
 {
+    TIME_TimeToDie = 0;
     if (!TIME_hMMTimer) {
+        HMODULE mod;
         if (pipe(TIME_fdWake) < 0)
         {
             TIME_fdWake[0] = TIME_fdWake[1] = -1;
@@ -248,8 +253,8 @@ static void TIME_MMTimeStart(void)
             fcntl(TIME_fdWake[0], F_SETFL, O_NONBLOCK);
             fcntl(TIME_fdWake[1], F_SETFL, O_NONBLOCK);
         }
-        TIME_TimeToDie = FALSE;
-        TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, NULL, 0, NULL);
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)TIME_MMSysTimeThread, &mod);
+        TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, mod, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
     }
 }
@@ -269,17 +274,13 @@ static void TIME_MMTimeStart(void)
 void	TIME_MMTimeStop(void)
 {
     if (TIME_hMMTimer) {
-        const char a='a';
-
-        TIME_TimeToDie = TRUE;
-        write(TIME_fdWake[1], &a, sizeof(a));
-
-        WaitForSingleObject(TIME_hMMTimer, INFINITE);
+        EnterCriticalSection(&WINMM_cs);
+        if (TIME_hMMTimer) {
+            ERR("Timer still active?!\n");
+            CloseHandle(TIME_hMMTimer);
+        }
         close(TIME_fdWake[0]);
         close(TIME_fdWake[1]);
-        TIME_fdWake[0] = TIME_fdWake[1] = -1;
-        CloseHandle(TIME_hMMTimer);
-        TIME_hMMTimer = 0;
         DeleteCriticalSection(&TIME_cbcrst);
     }
 }
@@ -368,6 +369,8 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	    break;
 	}
     }
+    if (list_empty(&timer_list))
+        TIME_TimeToDie = 1;
     LeaveCriticalSection(&WINMM_cs);
 
     if (!lpSelf)
