@@ -6986,7 +6986,7 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
         }
     }
 
-    if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &Position);
 
     if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
 
@@ -7011,7 +7011,7 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 	return FALSE;
     }
 
-    OffsetRect(lprc, Position.x - REPORT_MARGINX, Position.y);
+    OffsetRect(lprc, Position.x, Position.y);
     return TRUE;
 }
 

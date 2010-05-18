@@ -2090,6 +2090,7 @@ static void test_subitem_rect(void)
     DWORD r;
     LVCOLUMN col;
     RECT rect;
+    INT arr[3];
 
     /* test LVM_GETSUBITEMRECT for header */
     hwnd = create_listview_control(LVS_REPORT);
@@ -2178,6 +2179,59 @@ todo_wine
     expect(240, rect.right);
 
     SendMessage(hwnd, LVM_SCROLL, -10, 0);
+
+    DestroyWindow(hwnd);
+
+    /* test subitem rects after re-arranging columns */
+    hwnd = create_listview_control(LVS_REPORT);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    memset(&col, 0, sizeof(LVCOLUMN));
+    col.mask = LVCF_WIDTH;
+
+    col.cx = 100;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 0, (LPARAM)&col);
+    expect(0, r);
+
+    col.cx = 200;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 1, (LPARAM)&col);
+    expect(1, r);
+
+    col.cx = 300;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 2, (LPARAM)&col);
+    expect(2, r);
+
+    insert_item(hwnd, 0);
+
+    arr[0] = 1; arr[1] = 0; arr[2] = 2;
+    r = SendMessage(hwnd, LVM_SETCOLUMNORDERARRAY, 3, (LPARAM)arr);
+    expect(TRUE, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 0;
+    rect.right = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(0, rect.left);
+    expect(600, rect.right);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(0, rect.left);
+    expect(200, rect.right);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 2;
+    rect.right = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(300, rect.left);
+    expect(600, rect.right);
 
     DestroyWindow(hwnd);
 
