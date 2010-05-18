@@ -105,6 +105,8 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    RECT win_rect;
+    UINT win_h;
 
     TRACE("swapchain %p, context %p, src_rect %s, dst_rect %s.\n",
             This, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
@@ -113,6 +115,9 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         gl_filter = GL_NEAREST;
     else
         gl_filter = GL_LINEAR;
+
+    GetClientRect(This->win_handle, &win_rect);
+    win_h = win_rect.bottom - win_rect.top;
 
     if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format_desc->color_fixup))
     {
@@ -128,8 +133,8 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
-                                           dst_rect->left, dst_rect->bottom, dst_rect->right, dst_rect->top,
-                                           GL_COLOR_BUFFER_BIT, gl_filter);
+                dst_rect->left, win_h - dst_rect->top, dst_rect->right, win_h - dst_rect->bottom,
+                GL_COLOR_BUFFER_BIT, gl_filter);
         checkGLcall("Swapchain present blit(EXT_framebuffer_blit)\n");
         LEAVE_GL();
     }
@@ -176,7 +181,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
          * Note that context_apply_blit_state() set up viewport and ortho to
          * match the surface size - we want the GL drawable(=window) size. */
         glPushAttrib(GL_VIEWPORT_BIT);
-        glViewport(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom);
+        glViewport(dst_rect->left, win_h - dst_rect->bottom, dst_rect->right, win_h - dst_rect->top);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
