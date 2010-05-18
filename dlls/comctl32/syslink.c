@@ -39,7 +39,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(progress);
+WINE_DEFAULT_DEBUG_CHANNEL(syslink);
 
 INT WINAPI StrCmpNIW(LPCWSTR,LPCWSTR,INT);
 
@@ -197,6 +197,8 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
     SL_ITEM_TYPE CurrentType = slText;
     LPCWSTR lpID, lpUrl;
     UINT lenId, lenUrl;
+
+    TRACE("(%p %s)\n", infoPtr, debugstr_w(Text));
 
     for(current = Text; *current != 0;)
     {
