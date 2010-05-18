@@ -505,6 +505,7 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
 static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms)
 {
     WINE_MCIQTZ* wma;
+    HRESULT hr;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -521,14 +522,41 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
     }
 
     switch (lpParms->dwItem) {
-        case MCI_STATUS_LENGTH:
-            FIXME("MCI_STATUS_LENGTH not implemented yet\n");
-            return MCIERR_UNRECOGNIZED_COMMAND;
-        case MCI_STATUS_POSITION:
-        {
-            HRESULT hr;
-            REFTIME curpos;
+        case MCI_STATUS_LENGTH: {
+            IMediaSeeking *seek;
+            LONGLONG duration = -1;
+            GUID format;
+            switch (wma->time_format) {
+                case MCI_FORMAT_MILLISECONDS: format = TIME_FORMAT_MEDIA_TIME; break;
+                case MCI_FORMAT_FRAMES: format = TIME_FORMAT_FRAME; break;
+                default: ERR("Unhandled format %x\n", wma->time_format); break;
+            }
+            hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaSeeking, (void**)&seek);
+            if (FAILED(hr)) {
+                FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
+                return MCIERR_INTERNAL;
+            }
+            hr = IMediaSeeking_SetTimeFormat(seek, &format);
+            if (FAILED(hr)) {
+                IMediaSeeking_Release(seek);
+                FIXME("Cannot set time format (hr = %x)\n", hr);
+                lpParms->dwReturn = 0;
+                break;
+            }
+            hr = IMediaSeeking_GetDuration(seek, &duration);
+            IMediaSeeking_Release(seek);
+            if (FAILED(hr) || duration < 0) {
+                FIXME("Cannot read duration (hr = %x)\n", hr);
+                lpParms->dwReturn = 0;
+            } else if (wma->time_format != MCI_FORMAT_MILLISECONDS)
+                lpParms->dwReturn = duration;
+            else
+                lpParms->dwReturn = duration / 10000;
+            break;
+        }
+        case MCI_STATUS_POSITION: {
             IMediaPosition* pmpos;
+            REFTIME curpos;
 
             hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaPosition, (LPVOID*)&pmpos);
             if (FAILED(hr)) {
