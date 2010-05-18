@@ -3668,7 +3668,7 @@ lend:
             HTTP_ReceiveRequestData(lpwhr, TRUE);
         else
         {
-            iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
+            iar.dwResult = 0;
             iar.dwError = res;
 
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -4360,6 +4360,10 @@ static DWORD HTTP_OpenConnection(http_request_t *lpwhr)
     if(res != ERROR_SUCCESS)
        goto lend;
 
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+            INTERNET_STATUS_CONNECTED_TO_SERVER,
+            szaddr, strlen(szaddr)+1);
+
     if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
     {
         /* Note: we differ from Microsoft's WinINet here. they seem to have
@@ -4368,20 +4372,20 @@ static DWORD HTTP_OpenConnection(http_request_t *lpwhr)
          * behaviour to be more correct and to not cause any incompatibilities
          * because using a secure connection through a proxy server is a rare
          * case that would be hard for anyone to depend on */
-        if (hIC->lpszProxy && (res = HTTP_SecureProxyConnect(lpwhr)) != ERROR_SUCCESS)
+        if (hIC->lpszProxy && (res = HTTP_SecureProxyConnect(lpwhr)) != ERROR_SUCCESS) {
+            HTTPREQ_CloseConnection(&lpwhr->hdr);
             goto lend;
+        }
 
         res = NETCON_secure_connect(&lpwhr->netConnection, lpwhs->lpszHostName);
         if(res != ERROR_SUCCESS)
         {
             WARN("Couldn't connect securely to host\n");
+            HTTPREQ_CloseConnection(&lpwhr->hdr);
             goto lend;
         }
     }
 
-    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_CONNECTED_TO_SERVER,
-                          szaddr, strlen(szaddr)+1);
 
 lend:
     lpwhr->read_pos = lpwhr->read_size = 0;
