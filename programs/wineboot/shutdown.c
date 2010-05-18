@@ -322,6 +322,45 @@ BOOL shutdown_close_windows( BOOL force )
     return (result != 0);
 }
 
+static BOOL CALLBACK shutdown_one_desktop( LPWSTR name, LPARAM force )
+{
+    HDESK hdesk;
+
+    WINE_TRACE("Shutting down desktop %s\n", wine_dbgstr_w(name));
+
+    hdesk = OpenDesktopW( name, 0, FALSE, GENERIC_ALL );
+    if (hdesk == NULL)
+    {
+        WINE_ERR("Cannot open desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
+        return 0;
+    }
+
+    if (!SetThreadDesktop( hdesk ))
+    {
+        CloseDesktop( hdesk );
+        WINE_ERR("Cannot set thread desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
+        return 0;
+    }
+
+    CloseDesktop( hdesk );
+
+    return shutdown_close_windows( force );
+}
+
+BOOL shutdown_all_desktops( BOOL force )
+{
+    BOOL ret;
+    HDESK prev_desktop;
+
+    prev_desktop = GetThreadDesktop(GetCurrentThreadId());
+
+    ret = EnumDesktopsW( NULL, shutdown_one_desktop, (LPARAM)force );
+
+    SetThreadDesktop(prev_desktop);
+
+    return ret;
+}
+
 /* forcibly kill all processes without any cleanup */
 void kill_processes( BOOL kill_desktop )
 {
