@@ -498,7 +498,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
     if (!dlgTemplate) return 0;
     dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
-    template.exStyle = 0;  /* exstyle is ignored */
 
       /* Load menu */
 
