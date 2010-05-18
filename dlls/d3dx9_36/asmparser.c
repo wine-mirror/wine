@@ -153,15 +153,112 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode,
     }
 }
 
+/* Checks for unsupported source modifiers in VS (all versions) or
+   PS 2.0 and newer */
+static void check_legacy_srcmod(struct asm_parser *This, DWORD srcmod) {
+    if(srcmod == BWRITERSPSM_BIAS || srcmod == BWRITERSPSM_BIASNEG ||
+       srcmod == BWRITERSPSM_SIGN || srcmod == BWRITERSPSM_SIGNNEG ||
+       srcmod == BWRITERSPSM_COMP || srcmod == BWRITERSPSM_X2 ||
+       srcmod == BWRITERSPSM_X2NEG || srcmod == BWRITERSPSM_DZ ||
+       srcmod == BWRITERSPSM_DW) {
+        asmparser_message(This, "Line %u: Source modifier %s not supported in this shader version\n",
+                          This->line_no,
+                          debug_print_srcmod(srcmod));
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
+static void check_loop_swizzle(struct asm_parser *This,
+                               const struct shader_reg *src) {
+    if((src->type == BWRITERSPR_LOOP && src->swizzle != BWRITERVS_NOSWIZZLE) ||
+       (src->rel_reg && src->rel_reg->type == BWRITERSPR_LOOP &&
+        src->rel_reg->swizzle != BWRITERVS_NOSWIZZLE)) {
+        asmparser_message(This, "Line %u: Swizzle not allowed on aL register\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
+static void check_shift_dstmod(struct asm_parser *This, DWORD shift) {
+    if(shift != 0) {
+        asmparser_message(This, "Line %u: Shift modifiers not supported in this shader version\n",
+                          This->line_no);
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
+static void check_ps_dstmod(struct asm_parser *This, DWORD dstmod) {
+    if(dstmod == BWRITERSPDM_PARTIALPRECISION ||
+       dstmod == BWRITERSPDM_MSAMPCENTROID) {
+        asmparser_message(This, "Line %u: Instruction modifier %s not supported in this shader version\n",
+                          This->line_no,
+                          debug_print_dstmod(dstmod));
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
+struct allowed_reg_type {
+    DWORD type;
+    DWORD count;
+};
+
+static BOOL check_reg_type(const struct shader_reg *reg,
+                           const struct allowed_reg_type *allowed) {
+    unsigned int i = 0;
+
+    while(allowed[i].type != ~0U) {
+        if(reg->type == allowed[i].type) {
+            if(reg->rel_reg) return TRUE; /* The relative addressing register
+                                             can have a negative value, we
+                                             can't check the register index */
+            if(reg->regnum < allowed[i].count) return TRUE;
+            return FALSE;
+        }
+        i++;
+    }
+    return FALSE;
+}
+
+/* Native assembler doesn't do separate checks for src and dst registers */
+static const struct allowed_reg_type vs_3_reg_allowed[] = {
+    { BWRITERSPR_TEMP,         32 },
+    { BWRITERSPR_INPUT,        16 },
+    { BWRITERSPR_CONST,       ~0U },
+    { BWRITERSPR_ADDR,          1 },
+    { BWRITERSPR_CONSTBOOL,    16 },
+    { BWRITERSPR_CONSTINT,     16 },
+    { BWRITERSPR_LOOP,          1 },
+    { BWRITERSPR_LABEL,      2048 },
+    { BWRITERSPR_PREDICATE,     1 },
+    { BWRITERSPR_SAMPLER,       4 },
+    { BWRITERSPR_OUTPUT,       12 },
+    { ~0U, 0 } /* End tag */
+};
+
 static void asmparser_srcreg_vs_3(struct asm_parser *This,
                                   struct instruction *instr, int num,
                                   const struct shader_reg *src) {
+    if(!check_reg_type(src, vs_3_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in VS 3.0\n",
+                          This->line_no,
+                          debug_print_srcreg(src, ST_VERTEX));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_loop_swizzle(This, src);
+    check_legacy_srcmod(This, src->srcmod);
     memcpy(&instr->src[num], src, sizeof(*src));
 }
 
 static void asmparser_dstreg_vs_3(struct asm_parser *This,
                                   struct instruction *instr,
                                   const struct shader_reg *dst) {
+    if(!check_reg_type(dst, vs_3_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in VS 3.0\n",
+                          This->line_no,
+                          debug_print_dstreg(dst, ST_VERTEX));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_ps_dstmod(This, instr->dstmod);
+    check_shift_dstmod(This, instr->shift);
     memcpy(&instr->dst, dst, sizeof(*dst));
     instr->has_dst = TRUE;
 }

@@ -371,6 +371,7 @@ struct bc_writer {
 };
 
 /* Debug utility routines */
+const char *debug_print_srcmod(DWORD mod);
 const char *debug_print_dstmod(DWORD mod);
 const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st);
 const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st);
@@ -510,6 +511,15 @@ typedef enum _BWRITERSAMPLER_TEXTURE_TYPE {
 typedef enum _BWRITERSHADER_PARAM_SRCMOD_TYPE {
     BWRITERSPSM_NONE = 0,
     BWRITERSPSM_NEG,
+    BWRITERSPSM_BIAS,
+    BWRITERSPSM_BIASNEG,
+    BWRITERSPSM_SIGN,
+    BWRITERSPSM_SIGNNEG,
+    BWRITERSPSM_COMP,
+    BWRITERSPSM_X2,
+    BWRITERSPSM_X2NEG,
+    BWRITERSPSM_DZ,
+    BWRITERSPSM_DW,
     BWRITERSPSM_ABS,
     BWRITERSPSM_ABSNEG,
     BWRITERSPSM_NOT,

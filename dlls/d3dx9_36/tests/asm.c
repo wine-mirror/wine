@@ -1206,6 +1206,12 @@ static void failure_test(void) {
         /* shader 22: register r5 doesn't exist in PS < 1.4 */
         "ps_1_3\n"
         "mov r5, r0\n",
+        /* shader 23: can't declare output registers in a pixel shader */
+        "ps_3_0\n"
+        "dcl_positiont o0\n",
+        /* shader 24: _pp instruction modifier not allowed in vertex shaders */
+        "vs_3_0\n"
+        "add_pp r0, r0, r1\n",
     };
     HRESULT hr;
     unsigned int i;
