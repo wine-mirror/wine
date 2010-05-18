@@ -30,6 +30,9 @@
 
 #include "wine/test.h"
 
+/* Do not allow more than 1 deviation here */
+#define match_off_by_1(a, b) (abs((a) - (b)) <= 1)
+
 #define near_match(a, b) (abs((a) - (b)) <= 6)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
@@ -1166,9 +1169,9 @@ static void test_GetKerningPairs(void)
         otm.otmSize = sizeof(otm); /* just in case for Win9x compatibility */
         ok(GetOutlineTextMetricsW(hdc, sizeof(otm), &otm) == sizeof(otm), "GetOutlineTextMetricsW error %d\n", GetLastError());
 
-        ok(kd[i].tmHeight == otm.otmTextMetrics.tmHeight, "expected %d, got %d\n",
+        ok(match_off_by_1(kd[i].tmHeight, otm.otmTextMetrics.tmHeight), "expected %d, got %d\n",
            kd[i].tmHeight, otm.otmTextMetrics.tmHeight);
-        ok(kd[i].tmAscent == otm.otmTextMetrics.tmAscent, "expected %d, got %d\n",
+        ok(match_off_by_1(kd[i].tmAscent, otm.otmTextMetrics.tmAscent), "expected %d, got %d\n",
            kd[i].tmAscent, otm.otmTextMetrics.tmAscent);
         ok(kd[i].tmDescent == otm.otmTextMetrics.tmDescent, "expected %d, got %d\n",
            kd[i].tmDescent, otm.otmTextMetrics.tmDescent);
@@ -1183,13 +1186,13 @@ static void test_GetKerningPairs(void)
            kd[i].otmLineGap, otm.otmLineGap);
         ok(near_match(kd[i].otmMacDescent, otm.otmMacDescent), "expected %d, got %d\n",
            kd[i].otmMacDescent, otm.otmMacDescent);
+        ok(near_match(kd[i].otmMacAscent, otm.otmMacAscent), "expected %d, got %d\n",
+           kd[i].otmMacAscent, otm.otmMacAscent);
 todo_wine {
         ok(kd[i].otmsCapEmHeight == otm.otmsCapEmHeight, "expected %u, got %u\n",
            kd[i].otmsCapEmHeight, otm.otmsCapEmHeight);
         ok(kd[i].otmsXHeight == otm.otmsXHeight, "expected %u, got %u\n",
            kd[i].otmsXHeight, otm.otmsXHeight);
-        ok(kd[i].otmMacAscent == otm.otmMacAscent, "expected %d, got %d\n",
-           kd[i].otmMacAscent, otm.otmMacAscent);
         /* FIXME: this one sometimes succeeds due to expected 0, enable it when removing todo */
         if (0) ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
            kd[i].otmMacLineGap, otm.otmMacLineGap);
@@ -1252,6 +1255,74 @@ todo_wine {
     }
 
     ReleaseDC(0, hdc);
+}
+
+static void test_height_selection(void)
+{
+    static const struct font_data
+    {
+        const char face_name[LF_FACESIZE];
+        int requested_height;
+        int weight, height, ascent, descent, int_leading, ext_leading, dpi;
+    } fd[] =
+    {
+        {"Tahoma", -12, FW_NORMAL, 14, 12, 2, 2, 0, 96 },
+        {"Tahoma", -24, FW_NORMAL, 29, 24, 5, 5, 0, 96 },
+        {"Tahoma", -48, FW_NORMAL, 58, 48, 10, 10, 0, 96 },
+        {"Tahoma", -96, FW_NORMAL, 116, 96, 20, 20, 0, 96 },
+        {"Tahoma", -192, FW_NORMAL, 232, 192, 40, 40, 0, 96 },
+        {"Tahoma", 12, FW_NORMAL, 12, 10, 2, 2, 0, 96 },
+        {"Tahoma", 24, FW_NORMAL, 24, 20, 4, 4, 0, 96 },
+        {"Tahoma", 48, FW_NORMAL, 48, 40, 8, 8, 0, 96 },
+        {"Tahoma", 96, FW_NORMAL, 96, 80, 16, 17, 0, 96 },
+        {"Tahoma", 192, FW_NORMAL, 192, 159, 33, 33, 0, 96 }
+    };
+    HDC hdc;
+    LOGFONT lf;
+    HFONT hfont, old_hfont;
+    TEXTMETRIC tm;
+    INT ret, i;
+
+    hdc = CreateCompatibleDC(0);
+    assert(hdc);
+
+    for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
+    {
+        if (!is_truetype_font_installed(fd[i].face_name))
+        {
+            skip("%s is not installed\n", fd[i].face_name);
+            continue;
+        }
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = fd[i].requested_height;
+        lf.lfWeight = fd[i].weight;
+        strcpy(lf.lfFaceName, fd[i].face_name);
+
+        hfont = CreateFontIndirect(&lf);
+        assert(hfont);
+
+        old_hfont = SelectObject(hdc, hfont);
+        ret = GetTextMetrics(hdc, &tm);
+        ok(ret, "GetTextMetrics error %d\n", GetLastError());
+        if(fd[i].dpi == tm.tmDigitizedAspectX)
+        {
+            trace("found font %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
+            ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmWeight, fd[i].weight);
+            ok(match_off_by_1(tm.tmHeight, fd[i].height), "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmHeight, fd[i].height);
+            ok(match_off_by_1(tm.tmAscent, fd[i].ascent), "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmAscent, fd[i].ascent);
+            ok(match_off_by_1(tm.tmDescent, fd[i].descent), "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmDescent, fd[i].descent);
+#if 0 /* FIXME: calculation of tmInternalLeading in Wine doesn't match what Windows does */
+            ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmInternalLeading, fd[i].int_leading);
+#endif
+            ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmExternalLeading, fd[i].ext_leading);
+        }
+
+        SelectObject(hdc, old_hfont);
+        DeleteObject(hfont);
+    }
+
+    DeleteDC(hdc);
 }
 
 static void test_GetOutlineTextMetrics(void)
@@ -2965,7 +3036,7 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
             DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
             DEFAULT_QUALITY, VARIABLE_PITCH,
             fontname);
-    ok( hf != NULL, "CreateFontA failed\n");
+    ok( hf != NULL, "CreateFontA(%s, %d) failed\n", fontname, font_height);
     of = SelectObject( hdc, hf);
     ret = GetTextMetricsA( hdc, &tm);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
@@ -2988,7 +3059,7 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
         SelectObject(hdc, of);
         DeleteObject(hf);
 
-        if (tm.tmAveCharWidth == ave_width || width / height > 200)
+        if (match_off_by_1(tm.tmAveCharWidth, ave_width) || width / height > 200)
             break;
     }
 
@@ -3039,6 +3110,7 @@ static void test_CreateFontIndirect(void)
 START_TEST(font)
 {
     init();
+
     test_logfont();
     test_bitmap_font();
     test_outline_font();
@@ -3054,6 +3126,7 @@ START_TEST(font)
     test_GetFontUnicodeRanges();
     test_nonexistent_font();
     test_orientation();
+    test_height_selection();
 
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.
