@@ -734,6 +734,74 @@ out:
     return ret;
 }
 
+/******************************************************************************
+ *              MCIAVI_mciUpdate            [internal]
+ */
+static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS lpParms)
+{
+    WINE_MCIQTZ *wma;
+    DWORD res = 0;
+
+    TRACE("%04x, %08x, %p\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_DGV_UPDATE_HDC) {
+        IBasicVideo *vidbasic;
+        IVideoWindow *vidwin;
+        res = MCIERR_INTERNAL;
+        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
+        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&vidbasic);
+        if (vidbasic && vidwin) {
+            LONG state, size;
+            BYTE *data;
+            BITMAPINFO *info;
+            HRESULT hr;
+            RECT src, dest;
+
+            /* If in stopped state, nothing has been drawn to screen
+             * moving to pause, which is needed for the old dib renderer, will result
+             * in a single frame drawn, so hide the window here */
+            IVideoWindow_put_Visible(vidwin, OAFALSE);
+            /* FIXME: Should we check the original state and restore it? */
+            IMediaControl_Pause(wma->pmctrl);
+            IMediaControl_GetState(wma->pmctrl, -1, &state);
+            if (FAILED(hr = IBasicVideo_GetCurrentImage(vidbasic, &size, NULL))) {
+                WARN("Could not get image size (hr = %x)\n", hr);
+                goto out;
+            }
+            data = HeapAlloc(GetProcessHeap(), 0, size);
+            info = (BITMAPINFO*)data;
+            IBasicVideo_GetCurrentImage(vidbasic, &size, (LONG*)data);
+            data += info->bmiHeader.biSize;
+
+            IBasicVideo_GetSourcePosition(vidbasic, &src.left, &src.top, &src.right, &src.bottom);
+            IBasicVideo_GetDestinationPosition(vidbasic, &dest.left, &dest.top, &dest.right, &dest.bottom);
+            StretchDIBits(lpParms->hDC,
+                  dest.left, dest.top, dest.right + dest.left, dest.bottom + dest.top,
+                  src.left, src.top, src.right + src.left, src.bottom + src.top,
+                  data, info, DIB_RGB_COLORS, SRCCOPY);
+            HeapFree(GetProcessHeap(), 0, data);
+        }
+        res = 0;
+out:
+        if (vidbasic)
+            IBasicVideo_Release(vidbasic);
+        if (vidwin) {
+            IVideoWindow_put_Visible(vidwin, OATRUE);
+            IVideoWindow_Release(vidwin);
+        }
+    }
+    else if (dwFlags)
+        FIXME("Unhandled flags %x\n", dwFlags);
+    return res;
+}
+
 /***************************************************************************
  *                              MCIQTZ_mciSetAudio              [internal]
  */
@@ -797,6 +865,8 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_WHERE:         return MCIQTZ_mciWhere     (dwDevID, dwParam1, (LPMCI_DGV_RECT_PARMS)      dwParam2);
         /* Digital Video specific */
         case MCI_SETAUDIO:      return MCIQTZ_mciSetAudio  (dwDevID, dwParam1, (LPMCI_DGV_SETAUDIO_PARMSW) dwParam2);
+        case MCI_UPDATE:
+            return MCIQTZ_mciUpdate(dwDevID, dwParam1, (LPMCI_DGV_UPDATE_PARMS)dwParam2);
         case MCI_RECORD:
         case MCI_PAUSE:
         case MCI_RESUME:
@@ -808,7 +878,6 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_FREEZE:
         case MCI_REALIZE:
         case MCI_UNFREEZE:
-        case MCI_UPDATE:
         case MCI_STEP:
         case MCI_COPY:
         case MCI_CUT:
