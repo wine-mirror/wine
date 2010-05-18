@@ -60,7 +60,6 @@ POPUP "&Súgó" {
    MENUITEM SEPARATOR
 
    POPUP "&Információ..." {
-     MENUITEM "&Licenc",        PM_LICENSE
      MENUITEM "&SEMMI GARANCIA",    PM_NO_WARRANTY
      MENUITEM "&WINE névjegye",     PM_ABOUT_WINE
    }

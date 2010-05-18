@@ -232,8 +232,6 @@ extern CHAR STRING_EXECUTE[];
 #define IDS_SYMBOL_FILES               0x16
 #define IDS_SYMBOLS_ICO                0x17
 
-#define IDS_LICENSE_CAPTION            0x20
-#define IDS_LICENSE                    0x21
 #define IDS_WARRANTY_CAPTION           0x22
 #define IDS_WARRANTY                   0x23
 
@@ -268,7 +266,6 @@ extern CHAR STRING_EXECUTE[];
 #define PM_HELPONHELP       0x133
 #define PM_TUTORIAL         0x134
 
-#define PM_LICENSE          0x140
 #define PM_NO_WARRANTY      0x141
 #define PM_ABOUT_WINE       0x142
 

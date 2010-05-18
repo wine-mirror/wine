@@ -60,7 +60,6 @@ POPUP "&Hjälp" {
    MENUITEM SEPARATOR
 
    POPUP "&Information..." {
-     MENUITEM "&Licens",        PM_LICENSE
      MENUITEM "I&NGEN GARANTI",    PM_NO_WARRANTY
      MENUITEM "&om Wine",     PM_ABOUT_WINE
    }
@@ -220,20 +219,6 @@ IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
 
 STRINGTABLE DISCARDABLE
 {
-IDS_LICENSE_CAPTION,            "LICENS"
-IDS_LICENSE,
-"Detta program är fri programvara. Du kan distribuera det och/eller modifiera \
-det under villkoren i GNU Lesser General Public License, publicerad \
-av Free Software Foundation, antingen version 2.1 eller (om du så vill) \
-någon senare version. Detta program distribueras i hopp om att det ska \
-vara användbart,men UTAN NÅGON SOM HELST GARANTI, även utan \
-underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT \
-SPECIELLT ÄNDAMÅL. Se GNU Lesser General Public License för ytterligare \
-information.\
-Du bör ha fått en kopia av GNU Lesser General Public License tillsammans \
-med detta program. Om inte, skriv till Free Software Foundation, \
-Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
-
 IDS_WARRANTY_CAPTION, "INGEN GARANTI"
 IDS_WARRANTY,
 "Detta program distribueras i hopp om att det ska \

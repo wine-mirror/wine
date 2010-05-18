@@ -35,7 +35,6 @@ static ATOM MAIN_RegisterMainWinClass(void);
 static VOID MAIN_CreateMainWindow(void);
 static VOID MAIN_CreateMDIWindow(void);
 static VOID MAIN_AutoStart(void);
-static VOID WineLicense(HWND Wnd);
 static VOID WineWarranty(HWND Wnd);
 
 #define BUFFER_SIZE 1000
@@ -321,10 +320,6 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WinExec("wintutor.exe", SW_SHOWNORMAL);
       break;
 
-    case PM_LICENSE:
-      WineLicense(Globals.hMainWnd);
-      break;
-
     case PM_NO_WARRANTY:
       WineWarranty(Globals.hMainWnd);
       break;
@@ -476,14 +471,6 @@ VOID MAIN_ReplaceString(HLOCAL *handle, LPSTR replace)
       *handle = newhandle;
     }
   else MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
-}
-
-VOID WineLicense(HWND Wnd)
-{
-  char cap[20], text[1024];
-  LoadString(Globals.hInstance, IDS_LICENSE, text, sizeof text);
-  LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, sizeof cap);
-  MessageBox(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
 }
 
 VOID WineWarranty(HWND Wnd)

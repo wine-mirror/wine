@@ -62,7 +62,6 @@ POPUP "Aj&uda" {
    MENUITEM SEPARATOR
 
    POPUP "&Informações..." {
-     MENUITEM "&Licença",        PM_LICENSE
      MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
      MENUITEM "&Sobre o WINE",     PM_ABOUT_WINE
    }
@@ -106,7 +105,6 @@ POPUP "Aj&uda" {
    MENUITEM SEPARATOR
 
    POPUP "&Informações..." {
-     MENUITEM "&Licença",        PM_LICENSE
      MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
      MENUITEM "&Acerca do WINE",     PM_ABOUT_WINE
    }
@@ -348,20 +346,6 @@ IDS_SYMBOLS_ICO,		"Ícones (*.ico)"
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 {
-IDS_LICENSE_CAPTION,            "Licença do Wine"
-IDS_LICENSE,
-"O Wine é software livre; você pode redistribuí-lo e/ou \
-modificá-lo sob os termos da GNU Lesser General Public \
-License tal como publicado pela Free Software Foundation; seja a \
-versão 2.1 da Licença, ou (por sua escolha) outra versão mais recente.\n\n\
-O Wine é distribuído na esperança que seja útil, \
-mas SEM QUALQUER GARANTIA; nem sequer a garantia implícita de \
-MERCANTIBILIDADE ou FEITO PARA UM PROPÓSITO ESPECÍFICO.  veja a GNU \
-Lesser General Public License para mais detalhes.\n\n\
-Deverá ter recebido uma cópia da GNU Lesser General Public \
-License com o Wine; se não, escreva à Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
-
 IDS_WARRANTY_CAPTION, "SEM GARANTIA"
 IDS_WARRANTY,
 "O Wine é distribuído na esperança que seja útil, \

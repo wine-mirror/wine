@@ -63,7 +63,6 @@ POPUP "帮助(&H)" {
    MENUITEM SEPARATOR
 
    POPUP "资料信息(&I)..." {
-     MENUITEM "用户许可协议(&L)",        PM_LICENSE
      MENUITEM "责任无关(&N)",    PM_NO_WARRANTY
      MENUITEM "关于 Wine(&A)",     PM_ABOUT_WINE
    }
@@ -257,7 +256,6 @@ POPUP "幫助(&H)" {
    MENUITEM SEPARATOR
 
    POPUP "資料資訊(&I)..." {
-     MENUITEM "用戶許可協議(&L)",    PM_LICENSE
      MENUITEM "責任無關(&N)",       PM_NO_WARRANTY
      MENUITEM "關於 Wine(&A)",      PM_ABOUT_WINE
    }

@@ -58,7 +58,6 @@ POPUP "&Hjælp" {
    MENUITEM SEPARATOR
 
    POPUP "&Information..." {
-     MENUITEM "&Licens",        PM_LICENSE
      MENUITEM "I&ngen Garanti",    PM_NO_WARRANTY
      MENUITEM "&Om WINE",     PM_ABOUT_WINE
    }
@@ -218,20 +217,6 @@ IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
 
 STRINGTABLE DISCARDABLE
 {
-IDS_LICENSE_CAPTION,            "LICENS"
-IDS_LICENSE,
-"Dette biblioteket er fri software; du kan redistribuere det  \
-og/eller ændre det under vilkårene i «GNU Lesser General Public \
-License», udgivet af the Free Software Foundation; enten \
-version 2.1 af Licensen, eller (hvis du ønsker det) en nyere version.\n\
-Dette bibliotek distribueres i håb om at det er nyttig, \
-men UDEN ENHVER GARANTI; ikke engang en udtrykt garanti for \
-HANDELSDYGTIGHED eller EGNETHED FOR ET SPECIELT FORMÅL. Se «GNU \
-Lesser General Public License» for flere detaljer.\n\
-Du skal have modtaget et eksemplar af «GNU Lesser General Public \
-License» sammen med dette bibliotek; hvis ikke, skriv til: the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
 IDS_WARRANTY_CAPTION, "INGEN GARANTI"
 IDS_WARRANTY,
 "Dette biblioteket distribueres i det håb at det er nyttig, \

@@ -62,7 +62,6 @@ POPUP "&Справка" {
    MENUITEM SEPARATOR
 
    POPUP "&Сведения..." {
-     MENUITEM "&Лицензия",        PM_LICENSE
      MENUITEM "&БЕЗ ГАРАНТИЙ",    PM_NO_WARRANTY
      MENUITEM "&О Wine",     PM_ABOUT_WINE
    }

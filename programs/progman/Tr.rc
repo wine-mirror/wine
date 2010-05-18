@@ -58,7 +58,6 @@ POPUP "&Yardým" {
    MENUITEM SEPARATOR
 
    POPUP "&Bilgi..." {
-     MENUITEM "&Lisans",        PM_LICENSE
      MENUITEM "&GARANTÝ YOK",    PM_NO_WARRANTY
      MENUITEM "&WINE Hakkýnda",     PM_ABOUT_WINE
    }

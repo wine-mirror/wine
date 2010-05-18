@@ -60,7 +60,6 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
 
    POPUP "&Informacija..." {
-     MENUITEM "&Licencija",                  PM_LICENSE
      MENUITEM "&JOKIŲ GARANTIJŲ",            PM_NO_WARRANTY
      MENUITEM "&Apie Wine",                  PM_ABOUT_WINE
    }
@@ -219,22 +218,6 @@ IDS_SYMBOLS_ICO,            "Piktogramos (*.ico)"
 
 STRINGTABLE DISCARDABLE
 {
-IDS_LICENSE_CAPTION,            "LICENCIJA"
-IDS_LICENSE,
-"Ši programa yra laisva programinė įranga; galite ją platinti ir/ar \
-modifikuoti GNU laisvosios bendrosios viešosios licencijos (LGPL) \
-sąlygomis, kurios paskelbtos Laisvosios programinės įrangos fondo \
-(FSF); 2.1-osios arba (Jūsų pasirinkimu) bet kurios vėlesnės \
-licencijos versijos sąlygomis.\n\
-Ši programa yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ \
-GARANTIJŲ; net be numanomų PERKAMUMO ar TINKAMUMO KONKREČIAI \
-UŽDUOČIAI garantijų. Išsamią informaciją rasite GNU laisvojoje \
-bendrojoje viešojoje licencijoje.\n\
-Jūs turėjote gauti GNU laisvosios bendrosios viešosios licencijos \
-kopiją kartu su Wine; jei negavote, rašykite adresu \
-Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, \
-Boston, MA 02110-1301, USA."
-
 IDS_WARRANTY_CAPTION, "JOKIŲ GARANTIJŲ"
 IDS_WARRANTY,
 "Ši programa yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ \

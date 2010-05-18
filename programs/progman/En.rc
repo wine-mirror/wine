@@ -59,7 +59,6 @@ POPUP "&Help" {
    MENUITEM SEPARATOR
 
    POPUP "&Info..." {
-     MENUITEM "&License",        PM_LICENSE
      MENUITEM "&NO WARRANTY",    PM_NO_WARRANTY
      MENUITEM "&About WINE",     PM_ABOUT_WINE
    }
@@ -219,20 +218,6 @@ IDS_SYMBOLS_ICO,		"Icons (*.ico)"
 
 STRINGTABLE DISCARDABLE
 {
-IDS_LICENSE_CAPTION,            "LICENSE"
-IDS_LICENSE,
-"This program is free software; you can redistribute it and/or \
-modify it under the terms of the GNU Lesser General Public \
-License as published by the Free Software Foundation; either \
-version 2.1 of the License, or (at your option) any later version.\n\
-This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details.\n\
-You should have received a copy of the GNU Lesser General Public \
-License along with this program; if not, write to the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
 IDS_WARRANTY_CAPTION, "NO WARRANTY"
 IDS_WARRANTY,
 "This program is distributed in the hope that it will be useful, \

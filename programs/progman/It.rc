@@ -63,7 +63,6 @@ POPUP "&Aiuto" {
    MENUITEM SEPARATOR
 
    POPUP "&Informazioni sul Gestore Del Programma" {
-     MENUITEM "&Licenza",        PM_LICENSE
      MENUITEM "&Garanzia",    PM_NO_WARRANTY
      MENUITEM "&Informazioni su WINE",     PM_ABOUT_WINE
    }
@@ -223,20 +222,6 @@ IDS_SYMBOLS_ICO,		"Icone (*.ico)"
 
 STRINGTABLE DISCARDABLE
 {
-IDS_LICENSE_CAPTION,            "LICENZA"
-IDS_LICENSE,
-"Questo programma è software libero; puoi redistribuirlo e/o \
-modificarlo sotto i termini della GNU Lesser General Public \
-License come pubblicata dalla Free Software Foundation; sia la \
-versione 2.1 della LGPL, sia (a tua scelta) una versione più nuova.\n\
-Questo programma è distribuito nella speranza che sia utile, \
-ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
-COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
-Lesser General Public License per più informazioni.\n\
-Dovresti aver ricevuto una copia della GNU Lesser General Public \
-License insieme a questo programma; altrimenti, scrivi alla Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
 IDS_WARRANTY_CAPTION, "NESSUNA GARANZIA"
 IDS_WARRANTY,
 "Questo programma è distribuito nella speranza che sia utile, \
