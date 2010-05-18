@@ -1973,7 +1973,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
     /* Onscreen surfaces are always in a swapchain */
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)context->current_rt->container;
 
-    if (!depth_stencil) return;
+    if (context->render_offscreen || !depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;
 
     /* TODO: If the requested format would satisfy the needs of the existing one(reverse match),
@@ -1992,7 +1992,7 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 {
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, NULL);
+        context_validate_onscreen_formats(device, context, NULL);
 
         if (context->render_offscreen)
         {
@@ -2032,7 +2032,7 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, depth_stencil);
+        context_validate_onscreen_formats(device, context, depth_stencil);
 
         ENTER_GL();
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, render_target, depth_stencil);
@@ -2078,7 +2078,7 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, device->depth_stencil);
+        context_validate_onscreen_formats(device, context, device->depth_stencil);
 
         if (!context->render_offscreen)
         {
