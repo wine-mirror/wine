@@ -1994,6 +1994,14 @@ static BOOL is_extension_blacklisted(LPCWSTR extension)
     return FALSE;
 }
 
+static const char* get_special_mime_type(LPCWSTR extension)
+{
+    static const WCHAR lnkW[] = {'.','l','n','k',0};
+    if (!strcmpiW(extension, lnkW))
+        return "application/x-ms-shortcut";
+    return NULL;
+}
+
 static BOOL write_freedesktop_association_entry(const char *desktopPath, const char *dot_extension,
                                                 const char *friendlyAppName, const char *mimeType,
                                                 const char *progId)
@@ -2102,6 +2110,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             {
                 if (contentTypeW != NULL && strchrW(contentTypeW, '/'))
                     mimeTypeA = wchars_to_utf8_chars(contentTypeW);
+                else if ((get_special_mime_type(extensionW)))
+                    mimeTypeA = strdupA(get_special_mime_type(extensionW));
                 else
                     mimeTypeA = heap_printf("application/x-wine-extension-%s", &extensionA[1]);
 
