@@ -143,7 +143,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
     return TRUE;
 
  theError:
-    if (atom) GlobalDeleteAtom(atom);
+    GlobalDeleteAtom(atom);
     return FALSE;
 }
 
