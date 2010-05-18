@@ -212,20 +212,6 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         {
             if (himl->has_alpha) himl->has_alpha[pos + n] = 1;
 
-            /* pre-multiply by the alpha channel */
-            for (i = 0; i < height; i++)
-            {
-                for (j = n * width; j < (n + 1) * width; j++)
-                {
-                    DWORD argb = bits[i * bm.bmWidth + j];
-                    DWORD alpha = argb >> 24;
-                    bits[i * bm.bmWidth + j] = ((argb & 0xff000000) |
-                                                (((argb & 0x00ff0000) * alpha / 255) & 0x00ff0000) |
-                                                (((argb & 0x0000ff00) * alpha / 255) & 0x0000ff00) |
-                                                (((argb & 0x000000ff) * alpha / 255)));
-                }
-            }
-
             if (mask_info && himl->hbmMask)  /* generate the mask from the alpha channel */
             {
                 for (i = 0; i < height; i++)
@@ -247,6 +233,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
 done:
     if (hdcMask) DeleteDC( hdcMask );
     HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, mask_info );
     HeapFree( GetProcessHeap(), 0, bits );
     HeapFree( GetProcessHeap(), 0, mask_bits );
     return ret;
@@ -1195,7 +1182,19 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
     SelectObject( hdc, bmp );
     BitBlt( hdc, 0, 0, cx, cy, himl->hdcImage, src_x, src_y, SRCCOPY );
 
-    if (himl->hbmMask)
+    if (himl->uBitsPixel == 32)  /* we already have an alpha channel in this case */
+    {
+        /* pre-multiply by the alpha channel */
+        for (i = 0, ptr = bits; i < cx * cy; i++, ptr++)
+        {
+            DWORD alpha = *ptr >> 24;
+            *ptr = ((*ptr & 0xff000000) |
+                    (((*ptr & 0x00ff0000) * alpha / 255) & 0x00ff0000) |
+                    (((*ptr & 0x0000ff00) * alpha / 255) & 0x0000ff00) |
+                    (((*ptr & 0x000000ff) * alpha / 255)));
+        }
+    }
+    else if (himl->hbmMask)
     {
         unsigned int width_bytes = (cx + 31) / 32 * 4;
         /* generate alpha channel from the mask */
@@ -1311,12 +1310,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
         if (bIsTransparent)
         {
-            if (himl->uBitsPixel == 32)  /* we already have an alpha channel in this case */
-                bResult = GdiAlphaBlend( pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-                                         himl->hdcImage, pt.x, pt.y, cx, cy, func );
-            else
-                bResult = alpha_blend_image( himl, pimldp->hdcDst, pimldp->x, pimldp->y,
-                                             pt.x, pt.y, cx, cy, func );
+            bResult = alpha_blend_image( himl, pimldp->hdcDst, pimldp->x, pimldp->y,
+                                         pt.x, pt.y, cx, cy, func );
             goto end;
         }
         colour = pimldp->rgbBk;
@@ -1325,10 +1320,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
         hOldBrush = SelectObject (hImageDC, CreateSolidBrush (colour));
         PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
-        if (himl->uBitsPixel == 32)
-            GdiAlphaBlend( hImageDC, 0, 0, cx, cy, himl->hdcImage, pt.x, pt.y, cx, cy, func );
-        else
-            alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func );
+        alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func );
         DeleteObject (SelectObject (hImageDC, hOldBrush));
         bResult = BitBlt( pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hImageDC, 0, 0, SRCCOPY );
         goto end;
