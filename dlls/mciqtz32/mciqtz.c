@@ -639,9 +639,11 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
 {
     WINE_MCIQTZ* wma;
     IVideoWindow* pVideoWindow;
+    IBasicVideo *pBasicVideo;
     HRESULT hr;
     HWND hWnd;
     RECT rc;
+    DWORD ret = MCIERR_UNRECOGNIZED_COMMAND;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -659,19 +661,31 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
         return MCIERR_INTERNAL;
     }
 
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicVideo, (LPVOID*)&pBasicVideo);
+    if (FAILED(hr)) {
+        ERR("Cannot get IBasicVideo interface (hr = %x)\n", hr);
+        IUnknown_Release(pVideoWindow);
+        return MCIERR_INTERNAL;
+    }
+
     hr = IVideoWindow_get_Owner(pVideoWindow, (OAHWND*)&hWnd);
-    IVideoWindow_Release(pVideoWindow);
     if (FAILED(hr)) {
         TRACE("No video stream, returning no window error\n");
+        IUnknown_Release(pVideoWindow);
         return MCIERR_NO_WINDOW;
     }
 
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
         if (dwFlags & MCI_DGV_WHERE_MAX)
-            FIXME("MCI_DGV_WHERE_SOURCE_MAX not supported yet\n");
-        else
-            FIXME("MCI_DGV_WHERE_SOURCE not supported yet\n");
-        return MCIERR_UNRECOGNIZED_COMMAND;
+            FIXME("MCI_DGV_WHERE_SOURCE_MAX stub %s\n", wine_dbgstr_rect(&rc));
+        IBasicVideo_get_SourceLeft(pBasicVideo, &rc.left);
+        IBasicVideo_get_SourceTop(pBasicVideo, &rc.top);
+        IBasicVideo_get_SourceWidth(pBasicVideo, &rc.right);
+        IBasicVideo_get_SourceHeight(pBasicVideo, &rc.bottom);
+        /* Undo conversion done below */
+        rc.right += rc.left;
+        rc.bottom += rc.top;
+        TRACE("MCI_DGV_WHERE_SOURCE %s\n", wine_dbgstr_rect(&rc));
     }
     if (dwFlags & MCI_DGV_WHERE_DESTINATION) {
         if (dwFlags & MCI_DGV_WHERE_MAX) {
@@ -679,7 +693,7 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
             TRACE("MCI_DGV_WHERE_DESTINATION_MAX %s\n", wine_dbgstr_rect(&rc));
         } else {
             FIXME("MCI_DGV_WHERE_DESTINATION not supported yet\n");
-            return MCIERR_UNRECOGNIZED_COMMAND;
+            goto out;
         }
     }
     if (dwFlags & MCI_DGV_WHERE_FRAME) {
@@ -687,14 +701,14 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
             FIXME("MCI_DGV_WHERE_FRAME_MAX not supported yet\n");
         else
             FIXME("MCI_DGV_WHERE_FRAME not supported yet\n");
-        return MCIERR_UNRECOGNIZED_COMMAND;
+        goto out;
     }
     if (dwFlags & MCI_DGV_WHERE_VIDEO) {
         if (dwFlags & MCI_DGV_WHERE_MAX)
             FIXME("MCI_DGV_WHERE_VIDEO_MAX not supported yet\n");
         else
             FIXME("MCI_DGV_WHERE_VIDEO not supported yet\n");
-        return MCIERR_UNRECOGNIZED_COMMAND;
+        goto out;
     }
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {
         if (dwFlags & MCI_DGV_WHERE_MAX) {
@@ -705,15 +719,19 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
             TRACE("MCI_DGV_WHERE_WINDOW %s\n", wine_dbgstr_rect(&rc));
         }
     }
+    ret = 0;
 
+out:
     /* In MCI, RECT structure is used differently: rc.right = width & rc.bottom = height
      * So convert the normal RECT into a MCI RECT before returning */
+    IVideoWindow_Release(pVideoWindow);
+    IBasicVideo_Release(pBasicVideo);
     lpParms->rc.left = rc.left;
-    lpParms->rc.top = rc.right;
+    lpParms->rc.top = rc.top;
     lpParms->rc.right = rc.right - rc.left;
     lpParms->rc.bottom = rc.bottom - rc.top;
 
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
