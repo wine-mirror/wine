@@ -342,8 +342,8 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
             return diErr;
         else {
 	    if (peff->dwFlags & DIEFF_CARTESIAN) {
-		peff->rglDirection[0] = (long)(sin(M_PI * 3 * This->effect.direction / 0x7FFF) * 1000);
-		peff->rglDirection[1] = (long)(cos(M_PI * 3 * This->effect.direction / 0x7FFF) * 1000);
+		peff->rglDirection[0] = sin(M_PI * 3 * This->effect.direction / 0x7FFF) * 1000;
+		peff->rglDirection[1] = cos(M_PI * 3 * This->effect.direction / 0x7FFF) * 1000;
 	    } else {
 		/* Polar and spherical coordinates are the same for two or less
 		 * axes.
