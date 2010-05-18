@@ -33,6 +33,7 @@ typedef struct {
     IMediaControl* pmctrl;
     BOOL           started;
     DWORD          time_format;
+    UINT           command_table;
 } WINE_MCIQTZ;
 
 #endif  /* __WINE_PRIVATE_MCIQTZ_H */
