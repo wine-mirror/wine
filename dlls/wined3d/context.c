@@ -1967,10 +1967,10 @@ static BOOL match_depth_stencil_format(const struct wined3d_format_desc *existin
     return TRUE;
 }
 /* The caller provides a context */
-static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device, struct wined3d_context *context)
+static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
+        struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
-    IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)context->current_rt->container;
 
     if (!depth_stencil) return;
@@ -1992,7 +1992,7 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 {
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, NULL);
 
         if (context->render_offscreen)
         {
@@ -2032,7 +2032,8 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, depth_stencil);
+
         ENTER_GL();
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, render_target, depth_stencil);
         LEAVE_GL();
@@ -2077,7 +2078,7 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context, device->depth_stencil);
 
         if (!context->render_offscreen)
         {
