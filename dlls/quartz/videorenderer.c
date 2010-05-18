@@ -1840,16 +1840,20 @@ static HRESULT WINAPI Videowindow_put_WindowState(IVideoWindow *iface,
                                                   LONG WindowState) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, WindowState);
-
+    TRACE("(%p/%p)->(%d)\n", This, iface, WindowState);
+    ShowWindow(This->hWnd, WindowState);
     return S_OK;
 }
 
 static HRESULT WINAPI Videowindow_get_WindowState(IVideoWindow *iface,
                                                   LONG *WindowState) {
+    WINDOWPLACEMENT place;
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, WindowState);
+    place.length = sizeof(place);
+    GetWindowPlacement(This->hWnd, &place);
+    TRACE("(%p/%p)->(%p)\n", This, iface, WindowState);
+    *WindowState = place.showCmd;
 
     return S_OK;
 }
