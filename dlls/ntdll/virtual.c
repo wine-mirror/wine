@@ -2630,7 +2630,7 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
     if (!addresses) return STATUS_ACCESS_VIOLATION;
 
     TRACE( "%p %x %p-%p %p %lu\n", process, flags, base, (char *)base + size,
-           addresses, count ? *count : 0 );
+           addresses, *count );
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
