@@ -331,7 +331,9 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
             CertFreeCertificateContext(endCert);
             CertCloseStore(store, 0);
         }
-    }
+    } else
+        pSSL_set_ex_data(ssl, error_idx, (void *)ERROR_INTERNET_SEC_CERT_ERRORS);
+
     return ret;
 }
 

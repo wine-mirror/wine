@@ -4381,6 +4381,17 @@ static DWORD HTTP_OpenConnection(http_request_t *lpwhr)
         if(res != ERROR_SUCCESS)
         {
             WARN("Couldn't connect securely to host\n");
+
+            if((lpwhr->hdr.ErrorMask&INTERNET_ERROR_MASK_COMBINED_SEC_CERT) && (
+                    res == ERROR_INTERNET_SEC_CERT_DATE_INVALID
+                    || res == ERROR_INTERNET_INVALID_CA
+                    || res == ERROR_INTERNET_SEC_CERT_NO_REV
+                    || res == ERROR_INTERNET_SEC_CERT_REV_FAILED
+                    || res == ERROR_INTERNET_SEC_CERT_REVOKED
+                    || res == ERROR_INTERNET_SEC_INVALID_CERT
+                    || res == ERROR_INTERNET_SEC_CERT_CN_INVALID))
+                res = ERROR_INTERNET_SEC_CERT_ERRORS;
+
             HTTPREQ_CloseConnection(&lpwhr->hdr);
             goto lend;
         }
