@@ -33,7 +33,7 @@ STRINGTABLE DISCARDABLE
 
 COPYFILEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Bestanden worden gekopiëerd..."
+CAPTION "Bestanden worden gekopieerd..."
 FONT 8, "MS Shell Dlg"
 BEGIN
 	PUSHBUTTON "Annuleren", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
@@ -49,9 +49,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Bestanden benodigd"
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "Voer de installatie disk van de fabrikant in, en zorg\ndan dat de correcte schijf is geselecteerd hieronder", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Voer de installatiedisk van de fabrikant in, en zorg\ndan dat de correcte schijf hieronder geselecteerd is", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "Kopieer de fabrikant's bestanden van:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Kopieer bestanden van de fabrikant van:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
 	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 	PUSHBUTTON "Annuleren", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
