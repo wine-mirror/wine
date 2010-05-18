@@ -145,6 +145,8 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 {
     WINE_MCIQTZ* wma;
     HRESULT hr;
+    IBasicVideo *vidbasic;
+    IVideoWindow *vidwin;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
 
@@ -189,6 +191,31 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         TRACE("Cannot render file (hr = %x)\n", hr);
         goto err;
     }
+
+    hr = IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
+    if (SUCCEEDED(hr))
+        hr = IFilterGraph2_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&vidbasic);
+    if (SUCCEEDED(hr)) {
+        DWORD style;
+        RECT rc = { 0, 0, 0, 0 };
+        IVideoWindow_put_AutoShow(vidwin, OAFALSE);
+        style = 0;
+        if (dwFlags & MCI_DGV_OPEN_WS)
+            style |= lpOpenParms->dwStyle;
+        if (dwFlags & MCI_DGV_OPEN_PARENT) {
+            style |= WS_CHILD;
+            IVideoWindow_put_MessageDrain(vidwin, (OAHWND)lpOpenParms->hWndParent);
+            IVideoWindow_put_WindowState(vidwin, SW_HIDE);
+            IVideoWindow_put_Owner(vidwin, (OAHWND)lpOpenParms->hWndParent);
+        }
+        IVideoWindow_put_WindowStyle(vidwin, style);
+        IBasicVideo_GetVideoSize(vidbasic, &rc.right, &rc.bottom);
+        IVideoWindow_SetWindowPosition(vidwin, rc.left, rc.top, rc.right, rc.bottom);
+        IVideoWindow_put_Visible(vidwin, OATRUE);
+        IBasicVideo_Release(vidbasic);
+    }
+    if (vidwin)
+        IVideoWindow_Release(vidwin);
 
     wma->opened = TRUE;
 
