@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmdlgtst);
 
 struct FlagTableEntry {
 	int ft_id;
-	unsigned long ft_bit;
+	ULONG ft_bit;
 };
 
 #define EXPORT
@@ -576,7 +576,7 @@ static void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, DWORD flags)
 static DWORD mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
 {
 	int i;
-	unsigned long l = 0;
+	ULONG l = 0;
 
 	for(i=0; table[i].ft_id != IDOK; i++)
 	{
