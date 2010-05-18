@@ -833,8 +833,7 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
     SetTextColor( hDC, oldTxtColor );
 
 draw_focus:
-    if ((action == ODA_FOCUS) ||
-        ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
+    if (action == ODA_FOCUS || (state & BUTTON_HASFOCUS))
     {
         InflateRect( &rc, -2, -2 );
         DrawFocusRect( hDC, &rc );
@@ -963,8 +962,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 	BUTTON_DrawLabel(hwnd, hDC, dtFlags, &rtext);
 
     /* ... and focus */
-    if ((action == ODA_FOCUS) ||
-        ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
+    if (action == ODA_FOCUS || (state & BUTTON_HASFOCUS))
     {
 	rtext.left--;
 	rtext.right++;
@@ -1072,8 +1070,7 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
 					(WPARAM)hDC, (LPARAM)hwnd);
 
     FillRect( hDC, &rc, hBrush );
-    if ((action == ODA_FOCUS) ||
-        ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
+    if (action == ODA_FOCUS || (state & BUTTON_HASFOCUS))
         DrawFocusRect( hDC, &rc );
 
     switch (action)
