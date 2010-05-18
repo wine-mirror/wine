@@ -88,6 +88,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 #define MAX_LINE_LENGTH (2*MAX_PATH+2)
 
 extern BOOL shutdown_close_windows( BOOL force );
+extern BOOL shutdown_all_desktops( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
 
 static WCHAR windowsdir[MAX_PATH];
@@ -1142,7 +1143,11 @@ int main( int argc, char *argv[] )
 
     if (end_session)
     {
-        if (!shutdown_close_windows( force )) return 1;
+        if (kill)
+        {
+            if (!shutdown_all_desktops( force )) return 1;
+        }
+        else if (!shutdown_close_windows( force )) return 1;
     }
 
     if (kill) kill_processes( shutdown );
