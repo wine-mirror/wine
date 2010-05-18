@@ -1992,6 +1992,8 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 {
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+
         if (context->render_offscreen)
         {
             FIXME("Applying blit state for an offscreen target with ORM_FBO. This should be avoided.\n");
@@ -2003,8 +2005,6 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
         }
         else
         {
-            context_validate_onscreen_formats(device, context);
-
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             LEAVE_GL();
@@ -2077,9 +2077,10 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
+        if (!context->render_offscreen) context_validate_onscreen_formats(device, context);
+
         if (!context->render_offscreen)
         {
-            context_validate_onscreen_formats(device, context);
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL);
             LEAVE_GL();
