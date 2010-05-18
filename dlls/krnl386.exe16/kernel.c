@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define WINE_NO_INLINE_STRING
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -397,7 +398,7 @@ void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
  */
 SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcpynA( MapSL(dst), src, n );
+    if (!lstrcpynA( MapSL(dst), src, n )) return 0;
     return dst;
 }
 
