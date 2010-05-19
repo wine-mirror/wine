@@ -1802,9 +1802,6 @@ static HRESULT WINAPI Videowindow_put_WindowStyleEx(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%d)\n", This, iface, WindowStyleEx);
 
-    if (WindowStyleEx & (WS_DISABLED|WS_HSCROLL|WS_ICONIC|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
-        return E_INVALIDARG;
-
     if (!SetWindowLongA(This->hWnd, GWL_EXSTYLE, WindowStyleEx))
         return E_FAIL;
 
