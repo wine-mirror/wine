@@ -53,6 +53,17 @@ WINE_DECLARE_DEBUG_CHANNEL(parsed_shader);
 #define OD0_REG         10
 #define OD1_REG         11
 
+/* Input color registers 0-1 are identically mapped */
+#define C0_VARYING      0
+#define C1_VARYING      1
+#define T0_VARYING      2
+#define T1_VARYING      3
+#define T2_VARYING      4
+#define T3_VARYING      5
+#define T4_VARYING      6
+#define T5_VARYING      7
+#define T6_VARYING      8
+#define T7_VARYING      9
 
 /****************************************************************
  * Common(non-version specific) shader parser control code      *
@@ -283,6 +294,39 @@ static struct shader_reg map_oldvs_register(const struct shader_reg *reg) {
     }
 }
 
+static struct shader_reg map_oldps_register(const struct shader_reg *reg, BOOL tex_varying) {
+    struct shader_reg ret;
+    switch(reg->type) {
+        case BWRITERSPR_TEXTURE:
+            if(tex_varying) {
+                ret = *reg;
+                ret.type = BWRITERSPR_INPUT;
+                switch(reg->regnum) {
+                    case 0:     ret.regnum = T0_VARYING; break;
+                    case 1:     ret.regnum = T1_VARYING; break;
+                    case 2:     ret.regnum = T2_VARYING; break;
+                    case 3:     ret.regnum = T3_VARYING; break;
+                    case 4:     ret.regnum = T4_VARYING; break;
+                    case 5:     ret.regnum = T5_VARYING; break;
+                    case 6:     ret.regnum = T6_VARYING; break;
+                    case 7:     ret.regnum = T7_VARYING; break;
+                    default:
+                        FIXME("Unexpected TEXTURE register t%u\n", reg->regnum);
+                        return *reg;
+                }
+                return ret;
+            } else {
+                FIXME("TODO: ps_1_x texture register mapping\n");
+                return *reg;
+            }
+
+        /* case BWRITERSPR_INPUT - Identical mapping of 1.x/2.0 color varyings
+           to 3.0 ones */
+
+        default: return *reg;
+    }
+}
+
 /* Checks for unsupported source modifiers in VS (all versions) or
    PS 2.0 and newer */
 static void check_legacy_srcmod(struct asm_parser *This, DWORD srcmod) {
@@ -421,6 +465,68 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
     memcpy(&instr->src[num], src, sizeof(*src));
 }
 
+static const struct allowed_reg_type ps_2_0_reg_allowed[] = {
+    { BWRITERSPR_INPUT,         2 },
+    { BWRITERSPR_TEMP,         32 },
+    { BWRITERSPR_CONST,        32 },
+    { BWRITERSPR_CONSTINT,     16 },
+    { BWRITERSPR_CONSTBOOL,    16 },
+    { BWRITERSPR_SAMPLER,      16 },
+    { BWRITERSPR_TEXTURE,       8 },
+    { BWRITERSPR_COLOROUT,      4 },
+    { BWRITERSPR_DEPTHOUT,      1 },
+    { ~0U, 0 } /* End tag */
+};
+
+static void asmparser_srcreg_ps_2(struct asm_parser *This,
+                                  struct instruction *instr, int num,
+                                  const struct shader_reg *src) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(src, ps_2_0_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in PS 2.0\n",
+                          This->line_no,
+                          debug_print_srcreg(src, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_legacy_srcmod(This, src->srcmod);
+    check_abs_srcmod(This, src->srcmod);
+    reg = map_oldps_register(src, TRUE);
+    memcpy(&instr->src[num], &reg, sizeof(reg));
+}
+
+static const struct allowed_reg_type ps_2_x_reg_allowed[] = {
+    { BWRITERSPR_INPUT,         2 },
+    { BWRITERSPR_TEMP,         32 },
+    { BWRITERSPR_CONST,        32 },
+    { BWRITERSPR_CONSTINT,     16 },
+    { BWRITERSPR_CONSTBOOL,    16 },
+    { BWRITERSPR_PREDICATE,     1 },
+    { BWRITERSPR_SAMPLER,      16 },
+    { BWRITERSPR_TEXTURE,       8 },
+    { BWRITERSPR_LABEL,      2048 },
+    { BWRITERSPR_COLOROUT,      4 },
+    { BWRITERSPR_DEPTHOUT,      1 },
+    { ~0U, 0 } /* End tag */
+};
+
+static void asmparser_srcreg_ps_2_x(struct asm_parser *This,
+                                    struct instruction *instr, int num,
+                                    const struct shader_reg *src) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(src, ps_2_x_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in PS 2.x\n",
+                          This->line_no,
+                          debug_print_srcreg(src, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_legacy_srcmod(This, src->srcmod);
+    check_abs_srcmod(This, src->srcmod);
+    reg = map_oldps_register(src, TRUE);
+    memcpy(&instr->src[num], &reg, sizeof(reg));
+}
+
 static const struct allowed_reg_type ps_3_reg_allowed[] = {
     { BWRITERSPR_INPUT,        10 },
     { BWRITERSPR_TEMP,         32 },
@@ -484,6 +590,40 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
     instr->has_dst = TRUE;
 }
 
+static void asmparser_dstreg_ps_2(struct asm_parser *This,
+                                  struct instruction *instr,
+                                  const struct shader_reg *dst) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(dst, ps_2_0_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in PS 2.0\n",
+                          This->line_no,
+                          debug_print_dstreg(dst, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_shift_dstmod(This, instr->shift);
+    reg = map_oldps_register(dst, TRUE);
+    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->has_dst = TRUE;
+}
+
+static void asmparser_dstreg_ps_2_x(struct asm_parser *This,
+                                    struct instruction *instr,
+                                    const struct shader_reg *dst) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(dst, ps_2_x_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in PS 2.x\n",
+                          This->line_no,
+                          debug_print_dstreg(dst, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_shift_dstmod(This, instr->shift);
+    reg = map_oldps_register(dst, TRUE);
+    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->has_dst = TRUE;
+}
+
 static void asmparser_dstreg_ps_3(struct asm_parser *This,
                                   struct instruction *instr,
                                   const struct shader_reg *dst) {
@@ -507,13 +647,11 @@ static void asmparser_predicate_supported(struct asm_parser *This,
     memcpy(&This->shader->instr[This->shader->num_instrs - 1]->predicate, predicate, sizeof(*predicate));
 }
 
-#if 0
 static void asmparser_predicate_unsupported(struct asm_parser *This,
                                             const struct shader_reg *predicate) {
     asmparser_message(This, "Line %u: Predicate not supported in < VS 2.0 or PS 2.x\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
 }
-#endif
 
 static void asmparser_coissue_unsupported(struct asm_parser *This) {
     asmparser_message(This, "Line %u: Coissue is only supported in pixel shaders versions <= 1.4\n", This->line_no);
@@ -547,6 +685,46 @@ static const struct asmparser_backend parser_vs_3 = {
 
     asmparser_dstreg_vs_3,
     asmparser_srcreg_vs_3,
+
+    asmparser_predicate_supported,
+    asmparser_coissue_unsupported,
+
+    asmparser_dcl_output,
+    asmparser_dcl_input,
+    asmparser_dcl_sampler,
+
+    asmparser_end,
+
+    asmparser_instr,
+};
+
+static const struct asmparser_backend parser_ps_2 = {
+    asmparser_constF,
+    asmparser_constI,
+    asmparser_constB,
+
+    asmparser_dstreg_ps_2,
+    asmparser_srcreg_ps_2,
+
+    asmparser_predicate_unsupported,
+    asmparser_coissue_unsupported,
+
+    asmparser_dcl_output,
+    asmparser_dcl_input,
+    asmparser_dcl_sampler,
+
+    asmparser_end,
+
+    asmparser_instr,
+};
+
+static const struct asmparser_backend parser_ps_2_x = {
+    asmparser_constF,
+    asmparser_constI,
+    asmparser_constB,
+
+    asmparser_dstreg_ps_2_x,
+    asmparser_srcreg_ps_2_x,
 
     asmparser_predicate_supported,
     asmparser_coissue_unsupported,
@@ -596,6 +774,21 @@ static void gen_oldvs_output(struct bwriter_shader *shader) {
     record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, TRUE, OD1_REG, BWRITERSP_WRITEMASK_ALL);
 }
 
+static void gen_oldps_input(struct bwriter_shader *shader, DWORD texcoords) {
+    switch(texcoords) {
+        case 8: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, FALSE, T7_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 7: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, FALSE, T6_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 6: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, FALSE, T5_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 5: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, FALSE, T4_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 4: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, FALSE, T3_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 3: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, FALSE, T2_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 2: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, FALSE, T1_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 1: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, FALSE, T0_VARYING, BWRITERSP_WRITEMASK_ALL);
+    };
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, FALSE, C0_VARYING, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, FALSE, C1_VARYING, BWRITERSP_WRITEMASK_ALL);
+}
+
 void create_vs20_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_2_0\n");
 
@@ -641,6 +834,38 @@ void create_vs30_parser(struct asm_parser *ret) {
     ret->shader->type = ST_VERTEX;
     ret->shader->version = BWRITERVS_VERSION(3, 0);
     ret->funcs = &parser_vs_3;
+}
+
+void create_ps20_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("ps_2_0\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_PIXEL;
+    ret->shader->version = BWRITERPS_VERSION(2, 0);
+    ret->funcs = &parser_ps_2;
+    gen_oldps_input(ret->shader, 8);
+}
+
+void create_ps2x_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("ps_2_x\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_PIXEL;
+    ret->shader->version = BWRITERPS_VERSION(2, 1);
+    ret->funcs = &parser_ps_2_x;
+    gen_oldps_input(ret->shader, 8);
 }
 
 void create_ps30_parser(struct asm_parser *ret) {

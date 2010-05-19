@@ -328,14 +328,12 @@ version_marker:       VER_VS10
                     | VER_PS20
                         {
                             TRACE("Pixel  shader 2.0\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps20_parser(&asm_ctx);
                         }
                     | VER_PS2X
                         {
                             TRACE("Pixel  shader 2.x\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps2x_parser(&asm_ctx);
                         }
                     | VER_PS30
                         {

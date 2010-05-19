@@ -314,6 +314,8 @@ extern struct asm_parser asm_ctx;
 void create_vs20_parser(struct asm_parser *ret);
 void create_vs2x_parser(struct asm_parser *ret);
 void create_vs30_parser(struct asm_parser *ret);
+void create_ps20_parser(struct asm_parser *ret);
+void create_ps2x_parser(struct asm_parser *ret);
 void create_ps30_parser(struct asm_parser *ret);
 
 struct bwriter_shader *parse_asm_shader(char **messages);
@@ -380,6 +382,10 @@ struct bc_writer {
     DWORD                         oFog_mask;
     DWORD                         oPts_regnum;
     DWORD                         oPts_mask;
+
+    /* Pixel shader specific members */
+    DWORD                         t_regnum[8];
+    DWORD                         v_regnum[2];
 };
 
 /* Debug utility routines */

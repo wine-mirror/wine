@@ -1015,6 +1015,15 @@ static void ps_2_x_test(void) {
             {0xffff0201, 0x01000026, 0xf0e40000, 0x01000060, 0xb0ff1000,
              0x00000027, 0x0000ffff}
         },
+        {   /* shader 16 */
+            "ps_2_x\n"
+            "call l2047\n"
+            "ret\n"
+            "label l2047\n"
+            "ret\n",
+            {0xffff0201, 0x01000019, 0xa0e417ff, 0x0000001c, 0x0100001e, 0xa0e417ff,
+             0x0000001c, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_2_x", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1504,8 +1513,8 @@ START_TEST(asm)
     todo_wine ps_1_4_test();
     vs_2_0_test();
     vs_2_x_test();
-    todo_wine ps_2_0_test();
-    todo_wine ps_2_x_test();
+    ps_2_0_test();
+    ps_2_x_test();
     vs_3_0_test();
     ps_3_0_test();
 
