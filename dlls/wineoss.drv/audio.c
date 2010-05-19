@@ -1967,7 +1967,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     audio_buf_info      info;
     DWORD               ret;
 
-    TRACE("(%u, %p[cb=%08lx], %08X);\n", wDevID, lpDesc, lpDesc->dwCallback, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
