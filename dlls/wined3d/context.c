@@ -84,19 +84,19 @@ void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fb
 }
 
 /* GL locking is done by the caller */
-static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
+static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info, GLenum target)
 {
     unsigned int i;
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
+        gl_info->fbo_ops.glFramebufferTexture2D(target, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
         checkGLcall("glFramebufferTexture2D()");
     }
-    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    gl_info->fbo_ops.glFramebufferTexture2D(target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
     checkGLcall("glFramebufferTexture2D()");
 
-    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    gl_info->fbo_ops.glFramebufferTexture2D(target, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
     checkGLcall("glFramebufferTexture2D()");
 }
 
@@ -106,7 +106,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     context_bind_fbo(context, GL_FRAMEBUFFER, fbo);
-    context_clean_fbo_attachments(gl_info);
+    context_clean_fbo_attachments(gl_info, GL_FRAMEBUFFER);
     context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
 
     gl_info->fbo_ops.glDeleteFramebuffers(1, fbo);
@@ -342,7 +342,7 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     context_bind_fbo(context, target, &entry->id);
-    context_clean_fbo_attachments(gl_info);
+    context_clean_fbo_attachments(gl_info, target);
 
     memcpy(entry->render_targets, render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = depth_stencil;
