@@ -184,6 +184,16 @@ my %directions =
     "ON"  => 11    # Other Neutrals
 );
 
+my %joining_types =
+(
+   "U" => 0,    # Non_Joining
+   "T" => 1,    # Transparent
+   "R" => 2,    # Right_Joining
+   "L" => 3,    # Left_Joining
+   "D" => 4,    # Dual_Joining
+   "C" => 5,    # Join_Causing
+);
+
 my @cp2uni = ();
 my @lead_bytes = ();
 my @uni2cp = ();
@@ -194,10 +204,18 @@ my @toupper_table = ();
 my @digitmap_table = ();
 my @compatmap_table = ();
 my @category_table = (0) x 65536;
+my @joining_table = (0) x 65536;
 my @direction_table = ();
 my @decomp_table = ();
 my @compose_table = ();
 
+my %joining_forms =
+(
+   "isolated" => [],
+   "final" => [],
+   "initial" => [],
+   "medial" => []
+);
 
 ################################################################
 # fetch a unicode.org file and open it
@@ -267,6 +285,7 @@ sub READ_DEFAULTS($)
 
         $category_table[$src] = $categories{$cat};
         $direction_table[$src] = $directions{$bidi};
+        $joining_table[$src] = $joining_types{"T"} if $cat eq "Mn" || $cat eq "Me" || $cat eq "Cf";
 
         if ($lower ne "")
         {
@@ -308,6 +327,11 @@ sub READ_DEFAULTS($)
             {
                 # Single char decomposition in the compatibility range
                 $compatmap_table[$src] = hex $2;
+            }
+            if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
+            {
+                ${joining_forms{$1}}[hex $2] = $src;
+                next;
             }
             next unless ($1 eq "font" ||
                          $1 eq "noBreak" ||
@@ -969,6 +993,59 @@ sub dump_mirroring($)
 
 
 ################################################################
+# dump the Arabic shaping table
+sub dump_shaping($)
+{
+    my $filename = shift;
+    my %groups;
+    my $next_group = 0;
+
+    $groups{"No_Joining_Group"} = $next_group++;
+
+    my $INPUT = open_data_file "$UNIDATA/ArabicShaping.txt";
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;.*;\s*([RLDCUT])\s*;\s*(\w+)/)
+        {
+            my $type = $2;
+            my $group = $3;
+            $groups{$group} = $next_group++ unless defined $groups{$group};
+            $joining_table[hex $1] = $joining_types{$type} | ($groups{$group} << 8);
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Arabic shaping */\n";
+    print OUTPUT "/* generated from $UNIDATA/ArabicShaping.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    dump_simple_mapping( "wine_shaping_table", @joining_table );
+
+    print OUTPUT "\nconst unsigned short wine_shaping_forms[256][4] =\n{\n";
+    for (my $i = 0x600; $i <= 0x6ff; $i++)
+    {
+        printf OUTPUT "    { 0x%04x, 0x%04x, 0x%04x, 0x%04x },\n",
+            ${joining_forms{"isolated"}}[$i] || $i,
+            ${joining_forms{"final"}}[$i] || $i,
+            ${joining_forms{"initial"}}[$i] || $i,
+            ${joining_forms{"medial"}}[$i] || $i;
+    }
+    print OUTPUT "};\n";
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # dump the case mapping tables
 sub DUMP_CASE_MAPPINGS($)
 {
@@ -1056,6 +1133,36 @@ sub DUMP_CASE_TABLE($@)
     printf OUTPUT "\n};\n";
 }
 
+################################################################
+# dump a simple char -> 16-bit value mapping table
+sub dump_simple_mapping($@)
+{
+    my $name = shift;
+    my @table = @_;
+    my @array = (0) x 256;
+    my %sequences;
+
+    # try to merge table rows
+    for (my $row = 0; $row < 256; $row++)
+    {
+        my $rowtxt = sprintf "%04x" x 256, @table[($row<<8)..($row<<8)+255];
+        if (defined($sequences{$rowtxt}))
+        {
+            # reuse an existing row
+            $array[$row] = $sequences{$rowtxt};
+        }
+        else
+        {
+            # create a new row
+            $sequences{$rowtxt} = $array[$row] = $#array + 1;
+            push @array, @table[($row<<8)..($row<<8)+255];
+        }
+    }
+
+    printf OUTPUT "const unsigned short %s[%d] =\n{\n", $name, $#array+1;
+    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
+    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
+}
 
 ################################################################
 # dump a binary case mapping table in l_intl.nls format
@@ -1153,35 +1260,13 @@ sub DUMP_CTYPE_TABLES($)
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    my @array = (0) x 256;
-    my %sequences;
-
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
     {
         $category_table[$i] |= $direction_table[$i] << 12 if defined $direction_table[$i];
     }
 
-    # try to merge table rows
-    for (my $row = 0; $row < 256; $row++)
-    {
-        my $rowtxt = sprintf "%04x" x 256, @category_table[($row<<8)..($row<<8)+255];
-        if (defined($sequences{$rowtxt}))
-        {
-            # reuse an existing row
-            $array[$row] = $sequences{$rowtxt};
-        }
-        else
-        {
-            # create a new row
-            $sequences{$rowtxt} = $array[$row] = $#array + 1;
-            push @array, @category_table[($row<<8)..($row<<8)+255];
-        }
-    }
-
-    printf OUTPUT "const unsigned short wine_wctype_table[%d] =\n{\n", $#array+1;
-    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
-    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
+    dump_simple_mapping( "wine_wctype_table", @category_table );
 
     close OUTPUT;
     save_file($filename);
@@ -1555,7 +1640,8 @@ DUMP_SORTKEYS( "collation.c", READ_SORTKEYS_FILE() );
 DUMP_COMPOSE_TABLES( "compose.c" );
 DUMP_CTYPE_TABLES( "wctype.c" );
 dump_mirroring( "../../dlls/usp10/mirror.c" );
-dump_intl_nls("../tools/l_intl.nls");
+dump_shaping( "../../dlls/usp10/shaping.c" );
+dump_intl_nls("../../tools/l_intl.nls");
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
 
