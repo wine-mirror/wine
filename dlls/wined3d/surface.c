@@ -1680,7 +1680,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     IWineD3DDeviceImpl *device = This->resource.device;
     const RECT *pass_rect = pRect;
 
-    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+            iface, pLockedRect, wine_dbgstr_rect(pRect), Flags);
 
     /* This is also done in the base class, but we have to verify this before loading any data from
      * gl into the sysmem copy. The PBO may be mapped, a different rectangle locked, the discard flag
