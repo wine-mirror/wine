@@ -392,6 +392,23 @@ static void test_invisible_create(void)
     DestroyWindow(hwnd_owndc);
 }
 
+static void test_destroyed_window(void)
+{
+    HDC dc;
+
+    dc = GetDCEx(hwnd_cache, 0, DCX_USESTYLE);
+    ok(!dc, "Got a non-NULL DC (%p) for a destroyed window.\n", dc);
+
+    dc = GetDCEx(hwnd_owndc, 0, DCX_USESTYLE);
+    ok(!dc, "Got a non-NULL DC (%p) for a destroyed window.\n", dc);
+
+    dc = GetDCEx(hwnd_classdc, 0, DCX_USESTYLE);
+    ok(!dc, "Got a non-NULL DC (%p) for a destroyed window.\n", dc);
+
+    dc = GetDCEx(hwnd_classdc2, 0, DCX_USESTYLE);
+    ok(!dc, "Got a non-NULL DC (%p) for a destroyed window.\n", dc);
+}
+
 START_TEST(dce)
 {
     WNDCLASSA cls;
@@ -431,4 +448,11 @@ START_TEST(dce)
     test_dc_visrgn();
     test_begin_paint();
     test_invisible_create();
+
+    DestroyWindow(hwnd_classdc2);
+    DestroyWindow(hwnd_classdc);
+    DestroyWindow(hwnd_owndc);
+    DestroyWindow(hwnd_cache);
+
+    test_destroyed_window();
 }
