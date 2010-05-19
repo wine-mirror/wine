@@ -60,11 +60,7 @@ POPUP "&Hilfe" {
    MENUITEM "Hilfe &benutzen",     PM_HELPONHELP
    MENUITEM "&Lernprogramm",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Info..." {
-     MENUITEM "&KEINE GARANTIE",    PM_NO_WARRANTY
-     MENUITEM "Ü&ber WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "Ü&ber Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -215,14 +211,4 @@ IDS_PROGRAMS,			"Programme"
 IDS_LIBRARIES_DLL,		"Bibliotheken (*.dll)"
 IDS_SYMBOL_FILES,		"Symboldateien"
 IDS_SYMBOLS_ICO,		"Symbole (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "KEINE GARANTIE"
-IDS_WARRANTY,
-"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß sie nützlich \
-sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte Garantie \
-der MARKTREIFE oder der VERWENDBARKEIT FÜR EINEN BESTIMMTEN ZWECK. Mehr Details \
-finden Sie in der GNU Lesser General Public License."
 }

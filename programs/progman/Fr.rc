@@ -61,11 +61,7 @@ MAIN_MENU MENU
    MENUITEM "&Utiliser l'aide",     PM_HELPONHELP
    MENUITEM "Didacticiel &Windows",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Info..." {
-     MENUITEM "AUCUNE &GARANTIE",    PM_NO_WARRANTY
-     MENUITEM "À &propos de Wine",     PM_ABOUT_WINE
-   }
+   MENUITEM "À &propos de Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -219,14 +215,4 @@ IDS_PROGRAMS,			"Programmes"
 IDS_LIBRARIES_DLL,		"Bibliothèques (*.dll)"
 IDS_SYMBOL_FILES,		"Icônes"
 IDS_SYMBOLS_ICO,		"Icônes (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "AUCUNE GARANTIE"
-IDS_WARRANTY,
-"Ce programme est distribué dans l'espoir qu'il sera utile, mais \
-SANS AUCUNE GARANTIE : sans même la garantie implicite de \
-COMMERCIALISABILITÉ ou d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
-la Licence Générale Publique Limitée pour plus de détails."
 }

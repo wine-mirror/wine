@@ -60,11 +60,7 @@ POPUP "Aj&uda" {
    MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Informações..." {
-     MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
-     MENUITEM "&Sobre o WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Sobre o Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -103,11 +99,7 @@ POPUP "Aj&uda" {
    MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Informações..." {
-     MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
-     MENUITEM "&Acerca do WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Acerca do Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -342,14 +334,4 @@ IDS_PROGRAMS,			"Programas"
 IDS_LIBRARIES_DLL,		"Bibliotecas (*.dll)"
 IDS_SYMBOL_FILES,		"Ficheiros de ícones"
 IDS_SYMBOLS_ICO,		"Ícones (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-{
-IDS_WARRANTY_CAPTION, "SEM GARANTIA"
-IDS_WARRANTY,
-"O Wine é distribuído na esperança que seja útil, \
-mas SEM QUALQUER GARANTIA; nem sequer a garantia implícita de \
-MERCANTIBILIDADE ou FEITO PARA UM PROPÓSITO ESPECÍFICO.  veja a GNU \
-Lesser General Public License para mais detalhes."
 }

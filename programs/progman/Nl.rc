@@ -56,11 +56,7 @@ POPUP "&Help" {
    MENUITEM "&Hulp bij Help",    PM_HELPONHELP
    MENUITEM "&Instructie",       PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Info..." {
-     MENUITEM "&GEEN GARANTIE", PM_NO_WARRANTY
-     MENUITEM "&Over WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Over Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -213,11 +209,4 @@ IDS_PROGRAMS,			"Programma's"
 IDS_LIBRARIES_DLL,		"Programmabibliotheekbestanden (*.dll)"
 IDS_SYMBOL_FILES,		"Pictogrambestanden"
 IDS_SYMBOLS_ICO,		"Pictogrammen (*.ico)"
-
-IDS_WARRANTY_CAPTION, "GEEN GARANTIE"
-IDS_WARRANTY,
-"This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }

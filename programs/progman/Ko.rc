@@ -58,11 +58,7 @@ POPUP "도움말(&H)" {
    MENUITEM "도움말 사용법(&H)",     PM_HELPONHELP
    MENUITEM "자습서(&T)",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "정보(&I)..." {
-     MENUITEM "지원 없음(&N)",    PM_NO_WARRANTY
-     MENUITEM "WINE 정보(&A)",     PM_ABOUT_WINE
-   }
+   MENUITEM "WINE 정보(&A)",     PM_ABOUT_WINE
  }
 }
 
@@ -213,14 +209,4 @@ IDS_PROGRAMS,			"풀그림"
 IDS_LIBRARIES_DLL,		"라이브러리 파일(*.dll)"
 IDS_SYMBOL_FILES,		"아이콘 파일"
 IDS_SYMBOLS_ICO,		"아이콘 (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "보증 없음"
-IDS_WARRANTY,
-"This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }

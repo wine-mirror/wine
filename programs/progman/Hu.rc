@@ -58,11 +58,7 @@ POPUP "&Súgó" {
    MENUITEM "&Használat",     PM_HELPONHELP
    MENUITEM "&Oktatás",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Információ..." {
-     MENUITEM "&SEMMI GARANCIA",    PM_NO_WARRANTY
-     MENUITEM "&WINE névjegye",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Wine névjegye",     PM_ABOUT_WINE
  }
 }
 

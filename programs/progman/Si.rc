@@ -58,11 +58,7 @@ POPUP "&Pomoč" {
    MENUITEM "&O pomoči",     PM_HELPONHELP
    MENUITEM "&Vadnica",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "Inf&ormacije ..." {
-     MENUITEM "&BREZ GARANCIJE",    PM_NO_WARRANTY
-     MENUITEM "&O WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&O Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -215,14 +211,4 @@ IDS_PROGRAMS,			"Programi"
 IDS_LIBRARIES_DLL,		"Knjižnice (*.dll)"
 IDS_SYMBOL_FILES,		"Ikonske datoteke"
 IDS_SYMBOLS_ICO,		"Ikone (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "BREZ GARANCIJE"
-IDS_WARRANTY,
-"This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }

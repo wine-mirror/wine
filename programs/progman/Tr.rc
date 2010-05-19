@@ -56,11 +56,7 @@ POPUP "&Yardým" {
    MENUITEM "&Yardým Kullanýmý",     PM_HELPONHELP
    MENUITEM "&Öðretici",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Bilgi..." {
-     MENUITEM "&GARANTÝ YOK",    PM_NO_WARRANTY
-     MENUITEM "&WINE Hakkýnda",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Wine Hakkýnda",     PM_ABOUT_WINE
  }
 }
 

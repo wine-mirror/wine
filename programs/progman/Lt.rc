@@ -58,11 +58,7 @@ MAIN_MENU MENU
    MENUITEM "Pa&galba apie žinyną",          PM_HELPONHELP
    MENUITEM "&Mokymo programa",              PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Informacija..." {
-     MENUITEM "&JOKIŲ GARANTIJŲ",            PM_NO_WARRANTY
-     MENUITEM "&Apie Wine",                  PM_ABOUT_WINE
-   }
+   MENUITEM "&Apie Wine",                  PM_ABOUT_WINE
  }
 }
 
@@ -214,14 +210,4 @@ IDS_PROGRAMS,               "Programos"
 IDS_LIBRARIES_DLL,          "Bibliotekos (*.dll)"
 IDS_SYMBOL_FILES,           "Piktogramų failai"
 IDS_SYMBOLS_ICO,            "Piktogramos (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "JOKIŲ GARANTIJŲ"
-IDS_WARRANTY,
-"Ši programa yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ \
-GARANTIJŲ; net be numanomų PERKAMUMO ar TINKAMUMO KONKREČIAI \
-UŽDUOČIAI garantijų. Išsamią informaciją rasite GNU laisvojoje \
-bendrojoje viešojoje licencijoje."
 }

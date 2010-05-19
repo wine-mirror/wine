@@ -61,11 +61,7 @@ POPUP "&Nápovìda" {
    MENUITEM "&Pomoc s nápovìdou",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "O &aplikaci..." {
-     MENUITEM "&BEZ ZÁRUKY",    PM_NO_WARRANTY
-     MENUITEM "&O WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&O Wine",     PM_ABOUT_WINE
  }
 }
 

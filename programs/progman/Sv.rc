@@ -58,11 +58,7 @@ POPUP "&Hjälp" {
    MENUITEM "&Hjälp om hjälp",     PM_HELPONHELP
    MENUITEM "&Guide",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Information..." {
-     MENUITEM "I&NGEN GARANTI",    PM_NO_WARRANTY
-     MENUITEM "&om Wine",     PM_ABOUT_WINE
-   }
+   MENUITEM "&om Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -215,15 +211,4 @@ IDS_PROGRAMS,			"Program"
 IDS_LIBRARIES_DLL,		"Bibliotek (*.dll)"
 IDS_SYMBOL_FILES,		"Ikonfiler"
 IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "INGEN GARANTI"
-IDS_WARRANTY,
-"Detta program distribueras i hopp om att det ska \
-vara användbart,men UTAN NÅGON SOM HELST GARANTI, även utan \
-underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT \
-SPECIELLT ÄNDAMÅL. Se GNU Lesser General Public License för ytterligare \
-information."
 }

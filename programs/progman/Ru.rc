@@ -60,11 +60,7 @@ POPUP "&Справка" {
    MENUITEM "&Использование справки",     PM_HELPONHELP
    MENUITEM "&Руководство",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Сведения..." {
-     MENUITEM "&БЕЗ ГАРАНТИЙ",    PM_NO_WARRANTY
-     MENUITEM "&О Wine",     PM_ABOUT_WINE
-   }
+   MENUITEM "&О Wine",     PM_ABOUT_WINE
  }
 }
 

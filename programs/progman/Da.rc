@@ -56,11 +56,7 @@ POPUP "&Hjælp" {
    MENUITEM "&Hjælp til hjælp",     PM_HELPONHELP
    MENUITEM "&Vejledning",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Information..." {
-     MENUITEM "I&ngen Garanti",    PM_NO_WARRANTY
-     MENUITEM "&Om WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Om Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -213,14 +209,4 @@ IDS_PROGRAMS,			"Programmer"
 IDS_LIBRARIES_DLL,		"Biblioteker (*.dll)"
 IDS_SYMBOL_FILES,		"Ikon filer"
 IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "INGEN GARANTI"
-IDS_WARRANTY,
-"Dette biblioteket distribueres i det håb at det er nyttig, \
-men UDEN ENHVER GARANTI; ikke engang en udtrykt garantien for \
-HANDELSDYGTIGHED eller EGNETHED FOR ET SPECIELT FORMÅL. Se «GNU \
-Lesser General Public License» for flere detaljer."
 }

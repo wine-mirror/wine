@@ -61,11 +61,7 @@ POPUP "&Aiuto" {
    MENUITEM "&Aiuto sulla Guida",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "&Informazioni sul Gestore Del Programma" {
-     MENUITEM "&Garanzia",    PM_NO_WARRANTY
-     MENUITEM "&Informazioni su WINE",     PM_ABOUT_WINE
-   }
+   MENUITEM "&Informazioni su Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -218,14 +214,4 @@ IDS_PROGRAMS,			"Programmi"
 IDS_LIBRARIES_DLL,		"Librerie (*.dll)"
 IDS_SYMBOL_FILES,		"File icona"
 IDS_SYMBOLS_ICO,		"Icone (*.ico)"
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_WARRANTY_CAPTION, "NESSUNA GARANZIA"
-IDS_WARRANTY,
-"Questo programma è distribuito nella speranza che sia utile, \
-ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
-COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
-Lesser General Public License per ulteriori informazioni."
 }

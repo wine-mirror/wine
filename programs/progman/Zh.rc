@@ -61,11 +61,7 @@ POPUP "帮助(&H)" {
    MENUITEM "如何使用帮助(&H)",     PM_HELPONHELP
    MENUITEM "教程(&T)",         PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "资料信息(&I)..." {
-     MENUITEM "责任无关(&N)",    PM_NO_WARRANTY
-     MENUITEM "关于 Wine(&A)",     PM_ABOUT_WINE
-   }
+   MENUITEM "关于 Wine(&A)",     PM_ABOUT_WINE
  }
 }
 
@@ -254,11 +250,7 @@ POPUP "幫助(&H)" {
    MENUITEM "如何使用幫助(&H)",      PM_HELPONHELP
    MENUITEM "教程(&T)",             PM_TUTORIAL
    MENUITEM SEPARATOR
-
-   POPUP "資料資訊(&I)..." {
-     MENUITEM "責任無關(&N)",       PM_NO_WARRANTY
-     MENUITEM "關於 Wine(&A)",      PM_ABOUT_WINE
-   }
+   MENUITEM "關於 Wine(&A)",      PM_ABOUT_WINE
  }
 }
 
