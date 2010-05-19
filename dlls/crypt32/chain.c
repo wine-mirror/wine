@@ -186,7 +186,10 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
         HCERTSTORE root;
         HCERTCHAINENGINE engine;
 
-        if (pConfig->hRestrictedRoot)
+        if (pConfig->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) &&
+         pConfig->hExclusiveRoot)
+            root = CertDuplicateStore(pConfig->hExclusiveRoot);
+        else if (pConfig->hRestrictedRoot)
             root = CertDuplicateStore(pConfig->hRestrictedRoot);
         else
             root = CertOpenSystemStoreW(0, rootW);
