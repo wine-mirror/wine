@@ -629,8 +629,8 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             FIXME("MCI_STATUS_MEDIA_PRESENT not implemented yet\n");
             return MCIERR_UNRECOGNIZED_COMMAND;
         case MCI_STATUS_TIME_FORMAT:
-            FIXME("MCI_STATUS_TIME_FORMAT not implemented yet\n");
-            return MCIERR_UNRECOGNIZED_COMMAND;
+            lpParms->dwReturn = wma->time_format;
+            break;
         case MCI_STATUS_READY:
             FIXME("MCI_STATUS_READY not implemented yet\n");
             return MCIERR_UNRECOGNIZED_COMMAND;
