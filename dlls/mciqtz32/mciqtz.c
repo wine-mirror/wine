@@ -389,6 +389,29 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciPause                 [internal]
+ */
+static DWORD MCIQTZ_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+    HRESULT hr;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    hr = IMediaControl_Pause(wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot pause filtergraph (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    return 0;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciGetDevCaps            [internal]
  */
 static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_PARMS lpParms)
@@ -876,6 +899,7 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_PLAY:          return MCIQTZ_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);
         case MCI_SEEK:          return MCIQTZ_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)          dwParam2);
         case MCI_STOP:          return MCIQTZ_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
+        case MCI_PAUSE:         return MCIQTZ_mciPause     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
         case MCI_GETDEVCAPS:    return MCIQTZ_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)    dwParam2);
         case MCI_SET:           return MCIQTZ_mciSet       (dwDevID, dwParam1, (LPMCI_DGV_SET_PARMS)       dwParam2);
         case MCI_STATUS:        return MCIQTZ_mciStatus    (dwDevID, dwParam1, (LPMCI_DGV_STATUS_PARMSW)   dwParam2);
@@ -885,7 +909,6 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_UPDATE:
             return MCIQTZ_mciUpdate(dwDevID, dwParam1, (LPMCI_DGV_UPDATE_PARMS)dwParam2);
         case MCI_RECORD:
-        case MCI_PAUSE:
         case MCI_RESUME:
         case MCI_INFO:
         case MCI_PUT:
