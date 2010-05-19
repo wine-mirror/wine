@@ -317,8 +317,8 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
       break;
     stream->dwSize = 0;
   } while(1);
-  ME_UpdateRepaint(editor);
   ME_CommitUndo(editor);
+  ME_UpdateRepaint(editor);
   return 0;
 }
 
@@ -2105,16 +2105,10 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       return TRUE;
     case VK_BACK:
     case VK_DELETE:
-    {
-      int saved_nEventMask;
       editor->nUDArrowX = -1;
       /* FIXME backspace and delete aren't the same, they act different wrt paragraph style of the merged paragraph */
       if (editor->styleFlags & ES_READONLY)
         return FALSE;
-      /* Prevent calling ME_SendSelChange until after wrapping the
-       * text due to text deletion. */
-      saved_nEventMask = editor->nEventMask;
-      editor->nEventMask = 0;
       if (ME_IsSelection(editor))
       {
         ME_DeleteSelection(editor);
@@ -2142,18 +2136,12 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         ME_CommitCoalescingUndo(editor);
       }
       else
-      {
-        editor->nEventMask = saved_nEventMask;
         return TRUE;
-      }
-      editor->nEventMask = saved_nEventMask;
       ME_MoveCursorFromTableRowStartParagraph(editor);
       ME_UpdateSelectionLinkAttribute(editor);
       ME_UpdateRepaint(editor);
-      ME_SendSelChange(editor);
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
-    }
     case VK_RETURN:
       if (editor->bDialogMode)
       {
@@ -2205,9 +2193,9 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
               editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
               editor->pCursors[0].nOffset = 0;
               editor->pCursors[1] = editor->pCursors[0];
+              ME_CommitUndo(editor);
               ME_CheckTablesForCorruption(editor);
               ME_UpdateRepaint(editor);
-              ME_CommitUndo(editor);
               return TRUE;
             }
             else if (para == editor->pCursors[1].pPara &&
@@ -2230,9 +2218,9 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
               editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
               editor->pCursors[1] = editor->pCursors[0];
               para->member.para.next_para->member.para.nFlags |= MEPF_ROWSTART;
+              ME_CommitCoalescingUndo(editor);
               ME_CheckTablesForCorruption(editor);
               ME_UpdateRepaint(editor);
-              ME_CommitCoalescingUndo(editor);
               return TRUE;
             }
           } else { /* v1.0 - 3.0 */
@@ -2248,8 +2236,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
                   editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
                   editor->pCursors[0].nOffset = 0;
                   editor->pCursors[1] = editor->pCursors[0];
-                  ME_UpdateRepaint(editor);
                   ME_CommitCoalescingUndo(editor);
+                  ME_UpdateRepaint(editor);
                   return TRUE;
                 }
               } else {
@@ -2275,8 +2263,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
                   editor->pCursors[0].nOffset = 0;
                   editor->pCursors[1] = editor->pCursors[0];
                 }
-                ME_UpdateRepaint(editor);
                 ME_CommitCoalescingUndo(editor);
+                ME_UpdateRepaint(editor);
                 return TRUE;
               }
             }
@@ -2290,11 +2278,11 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           else
             ME_InsertTextFromCursor(editor, 0, &endl, 1, style);
           ME_ReleaseStyle(style);
+          ME_CommitCoalescingUndo(editor);
           SetCursor(NULL);
 
           ME_UpdateSelectionLinkAttribute(editor);
           ME_UpdateRepaint(editor);
-          ME_CommitCoalescingUndo(editor);
         }
         return TRUE;
       }
@@ -2332,8 +2320,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         if (result && nKey == 'X')
         {
           ME_InternalDeleteText(editor, selStart, nChars, FALSE);
-          ME_UpdateRepaint(editor);
           ME_CommitUndo(editor);
+          ME_UpdateRepaint(editor);
         }
         return result;
       }
@@ -2458,12 +2446,12 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       ME_ContinueCoalescingTransaction(editor);
       ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
       ME_ReleaseStyle(style);
+      ME_CommitCoalescingUndo(editor);
       ITextHost_TxSetCursor(editor->texthost, NULL, FALSE);
     }
 
     ME_UpdateSelectionLinkAttribute(editor);
     ME_UpdateRepaint(editor);
-    ME_CommitCoalescingUndo(editor);
   }
   return 0;
 }
@@ -3307,13 +3295,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_SetCursorToStart(editor, &cursor);
       ME_UpdateLinkAttribute(editor, &cursor, INT_MAX);
     }
-    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
     if (!(pStruct->flags & ST_KEEPUNDO))
     {
       editor->nModifyStep = oldModify;
       ME_EmptyUndoStack(editor);
     }
+    ME_UpdateRepaint(editor);
     return len;
   }
   case EM_SETBKGNDCOLOR:
@@ -3394,13 +3382,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_SetSelectionCharFormat(editor, p);
       if (bRepaint) editor->nModifyStep = 1;
     }
+    ME_CommitUndo(editor);
     if (bRepaint)
     {
       ME_WrapMarkedParagraphs(editor);
       ME_UpdateScrollBar(editor);
       ME_Repaint(editor);
     }
-    ME_CommitUndo(editor);
     return 1;
   }
   case EM_GETCHARFORMAT:
@@ -3473,8 +3461,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int from, to;
     int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
     ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
-    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
+    ME_UpdateRepaint(editor);
     return 0;
   }
   case EM_REPLACESEL:
@@ -3498,11 +3486,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (len>0 && wszText[len-1] == '\n')
       ME_ClearTempStyle(editor);
     ME_EndToUnicode(unicode, wszText);
-    ME_UpdateSelectionLinkAttribute(editor);
-    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
+    ME_UpdateSelectionLinkAttribute(editor);
     if (!wParam)
       ME_EmptyUndoStack(editor);
+    ME_UpdateRepaint(editor);
     return len;
   }
   case EM_SCROLLCARET:
@@ -3526,10 +3514,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_SetCharFormat(editor, &start, NULL, &fmt);
     ME_SetDefaultCharFormat(editor, &fmt);
 
+    ME_CommitUndo(editor);
     ME_MarkAllForWrapping(editor);
     ME_WrapMarkedParagraphs(editor);
     ME_UpdateScrollBar(editor);
-    ME_CommitUndo(editor);
     if (bRepaint)
       ME_Repaint(editor);
     return 0;
@@ -3576,9 +3564,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_UpdateLinkAttribute(editor, &cursor, INT_MAX);
     ME_SetSelection(editor, 0, 0);
     editor->nModifyStep = 0;
-    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
     ME_EmptyUndoStack(editor);
+    ME_UpdateRepaint(editor);
     return 1;
   }
   case EM_CANPASTE:
@@ -3603,8 +3591,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (ME_Copy(editor, selStart, nChars) && msg == WM_CUT)
     {
       ME_InternalDeleteText(editor, selStart, nChars, FALSE);
-      ME_UpdateRepaint(editor);
       ME_CommitUndo(editor);
+      ME_UpdateRepaint(editor);
     }
     return 0;
   }
@@ -3939,9 +3927,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       }
     }
 
+    ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
-    ME_CommitUndo(editor);
     return 0;
   }
   case WM_DESTROY:
@@ -4257,8 +4245,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     editor->imeStartIndex=ME_GetCursorOfs(&editor->pCursors[0]);
     ME_DeleteSelection(editor);
-    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
+    ME_UpdateRepaint(editor);
     return 0;
   }
   case WM_IME_COMPOSITION:
@@ -4268,6 +4256,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_Style *style = ME_GetInsertStyle(editor, 0);
     hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
+    ME_CommitUndo(editor);
     ME_SaveTempStyle(editor);
     if (lParam & GCS_RESULTSTR)
     {
@@ -4296,7 +4285,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     ME_ReleaseStyle(style);
     ME_UpdateRepaint(editor);
-    ME_CommitUndo(editor);
     return 0;
   }
   case WM_IME_ENDCOMPOSITION:

@@ -390,8 +390,8 @@ IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
     if (reo->cbStruct < sizeof(*reo)) return STG_E_INVALIDPARAMETER;
 
     ME_InsertOLEFromCursor(This->editor, reo, 0);
-    ME_UpdateRepaint(This->editor);
     ME_CommitUndo(This->editor);
+    ME_UpdateRepaint(This->editor);
     return S_OK;
 }
 
