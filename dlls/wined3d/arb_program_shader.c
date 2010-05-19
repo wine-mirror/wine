@@ -104,6 +104,7 @@ static BOOL need_helper_const(IWineD3DBaseShaderImpl *shader, const struct wined
     if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
     if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
     if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
+    if (shader->baseShader.reg_maps.usesnrm) return TRUE; /* 0.0 */
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
     return FALSE;
 }
@@ -2446,16 +2447,39 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 1 /* Use TB */, src_name);
 
+    /* In D3D, NRM of a vector with length zero returns zero. Catch this situation, as
+     * otherwise NRM or RSQ would return NaN */
     if(pshader && priv->target_version >= NV3)
     {
+        /* GL_NV_fragment_program2's NRM needs protection against length zero vectors too
+         *
+         * TODO: Find out if DP3+NRM+MOV is really faster than DP3+RSQ+MUL
+         */
+        shader_addline(buffer, "DP3C TA, %s, %s;\n", src_name, src_name);
         shader_addline(buffer, "NRM%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name);
+        shader_addline(buffer, "MOV %s (EQ), %s;\n", dst_name, zero);
+    }
+    else if(priv->target_version >= NV2)
+    {
+        shader_addline(buffer, "DP3C TA.x, %s, %s;\n", src_name, src_name);
+        shader_addline(buffer, "RSQ TA.x (NE), TA.x;\n");
+        shader_addline(buffer, "MUL%s %s, %s, TA.x;\n", shader_arb_get_modifier(ins), dst_name,
+                       src_name);
     }
     else
     {
-        shader_addline(buffer, "DP3 TA, %s, %s;\n", src_name, src_name);
-        shader_addline(buffer, "RSQ TA, TA.x;\n");
+        const char *one = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ONE);
+
+        shader_addline(buffer, "DP3 TA.x, %s, %s;\n", src_name, src_name);
+        /* Pass any non-zero value to RSQ if the input vector has a length of zero. The
+         * RSQ result doesn't matter, as long as multiplying it by 0 returns 0.
+         */
+        shader_addline(buffer, "SGE TA.y, -TA.x, %s;\n", zero);
+        shader_addline(buffer, "MAD TA.x, %s, TA.y, TA.x;\n", one);
+
+        shader_addline(buffer, "RSQ TA.x, TA.x;\n");
         /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
-        shader_addline(buffer, "MUL%s %s, %s, TA;\n", shader_arb_get_modifier(ins), dst_name,
+        shader_addline(buffer, "MUL%s %s, %s, TA.x;\n", shader_arb_get_modifier(ins), dst_name,
                     src_name);
     }
 }
