@@ -343,7 +343,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
     VideoRendererImpl *This = iface;
     LPBYTE pbSrcStream = NULL;
-    long cbSrcStream = 0;
+    LONG cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
 
@@ -395,7 +395,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
-    TRACE("val %p %ld\n", pbSrcStream, cbSrcStream);
+    TRACE("val %p %d\n", pbSrcStream, cbSrcStream);
 
 #if 0 /* For debugging purpose */
     {

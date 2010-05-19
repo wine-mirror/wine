@@ -770,7 +770,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         {
             const AVISUPERINDEX *pIndex = (const AVISUPERINDEX *)pChunk;
             DWORD x;
-            long rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
+            UINT rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
 
             if (pIndex->cb < sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK))
             {

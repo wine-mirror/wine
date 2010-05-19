@@ -785,7 +785,7 @@ static HRESULT StdMemAllocator_Alloc(IMemAllocator * iface)
     StdMemAllocator *This = (StdMemAllocator *)iface;
     StdMediaSample2 * pSample = NULL;
     SYSTEM_INFO si;
-    long i;
+    LONG i;
 
     assert(list_empty(&This->base.free_list));
 
