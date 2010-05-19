@@ -194,6 +194,7 @@ MAKE_FUNCPTR(FcPatternDestroy)
 MAKE_FUNCPTR(FcPatternAddInteger)
 MAKE_FUNCPTR(FcPatternAddString)
 MAKE_FUNCPTR(FcPatternGetInteger)
+MAKE_FUNCPTR(FcPatternGetString)
 static void *fontconfig_handle;
 static BOOL fontconfig_installed;
 #endif
@@ -408,6 +409,7 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
         LOAD_FUNCPTR(FcPatternAddInteger);
         LOAD_FUNCPTR(FcPatternAddString);
         LOAD_FUNCPTR(FcPatternGetInteger);
+        LOAD_FUNCPTR(FcPatternGetString);
 #undef LOAD_FUNCPTR
         fontconfig_installed = pFcInit();
     }
@@ -937,6 +939,12 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
 
                 if (pFcPatternGetInteger( match, FC_RGBA, 0, &rgba ) == FcResultMatch)
                 {
+                    FcChar8 *file;
+                    if (pFcPatternGetString( match, FC_FILE, 0, &file ) != FcResultMatch) file = NULL;
+
+                    TRACE( "fontconfig returned rgba %u for font %s file %s\n",
+                         rgba, debugstr_w(plfsz->lf.lfFaceName), debugstr_a((char *)file) );
+
                     switch (rgba)
                     {
                     case FC_RGBA_RGB:  entry->aa_default = AA_RGB; break;
