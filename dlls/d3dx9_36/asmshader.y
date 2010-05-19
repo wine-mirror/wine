@@ -342,8 +342,7 @@ version_marker:       VER_VS10
                     | VER_PS30
                         {
                             TRACE("Pixel  shader 3.0\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps30_parser(&asm_ctx);
                         }
 
 instructions:         /* empty */

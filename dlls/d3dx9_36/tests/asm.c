@@ -1125,6 +1125,22 @@ static void ps_3_0_test(void) {
             "texldl r0, v0, s0\n",
             {0xffff0300, 0x0300005f, 0x800f0000, 0x90e40000, 0xa0e40800, 0x0000ffff}
         },
+        {   /* shader 7 */
+            "ps_3_0\n"
+            "add_pp r0, r0, r1\n",
+            {0xffff0300, 0x03000002, 0x802f0000, 0x80e40000, 0x80e40001, 0x0000ffff}
+        },
+        {   /* shader 8 */
+            "ps_3_0\n"
+            "dsx_sat r0, r1\n",
+            {0xffff0300, 0x0200005b, 0x801f0000, 0x80e40001, 0x0000ffff}
+        },
+        {   /* shader 9 */
+            "ps_3_0\n"
+            "texldd_pp r0, r1, r2, r3, r4\n",
+            {0xffff0300, 0x0500005d, 0x802f0000, 0x80e40001, 0x80e40002, 0x80e40003,
+	     0x80e40004, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1212,6 +1228,9 @@ static void failure_test(void) {
         /* shader 24: _pp instruction modifier not allowed in vertex shaders */
         "vs_3_0\n"
         "add_pp r0, r0, r1\n",
+        /* shader 25: _x4 instruction modified not allowed in > ps_1_x */
+        "ps_3_0\n"
+        "add_x4 r0, r0, r1\n",
     };
     HRESULT hr;
     unsigned int i;
@@ -1437,7 +1456,7 @@ START_TEST(asm)
     todo_wine ps_2_0_test();
     todo_wine ps_2_x_test();
     vs_3_0_test();
-    todo_wine ps_3_0_test();
+    ps_3_0_test();
 
     failure_test();
 

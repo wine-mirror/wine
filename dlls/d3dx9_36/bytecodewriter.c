@@ -641,9 +641,85 @@ static const struct bytecode_backend vs_3_backend = {
     vs_3_handlers
 };
 
+static const struct instr_handler_table ps_3_handlers[] = {
+    {BWRITERSIO_ADD,            instr_handler},
+    {BWRITERSIO_NOP,            instr_handler},
+    {BWRITERSIO_MOV,            instr_handler},
+    {BWRITERSIO_SUB,            instr_handler},
+    {BWRITERSIO_MAD,            instr_handler},
+    {BWRITERSIO_MUL,            instr_handler},
+    {BWRITERSIO_RCP,            instr_handler},
+    {BWRITERSIO_RSQ,            instr_handler},
+    {BWRITERSIO_DP3,            instr_handler},
+    {BWRITERSIO_DP4,            instr_handler},
+    {BWRITERSIO_MIN,            instr_handler},
+    {BWRITERSIO_MAX,            instr_handler},
+    {BWRITERSIO_ABS,            instr_handler},
+    {BWRITERSIO_EXP,            instr_handler},
+    {BWRITERSIO_LOG,            instr_handler},
+    {BWRITERSIO_EXPP,           instr_handler},
+    {BWRITERSIO_LOGP,           instr_handler},
+    {BWRITERSIO_LRP,            instr_handler},
+    {BWRITERSIO_FRC,            instr_handler},
+    {BWRITERSIO_CRS,            instr_handler},
+    {BWRITERSIO_NRM,            instr_handler},
+    {BWRITERSIO_SINCOS,         instr_handler},
+    {BWRITERSIO_M4x4,           instr_handler},
+    {BWRITERSIO_M4x3,           instr_handler},
+    {BWRITERSIO_M3x4,           instr_handler},
+    {BWRITERSIO_M3x3,           instr_handler},
+    {BWRITERSIO_M3x2,           instr_handler},
+    {BWRITERSIO_POW,            instr_handler},
+    {BWRITERSIO_DP2ADD,         instr_handler},
+    {BWRITERSIO_CMP,            instr_handler},
+
+    {BWRITERSIO_CALL,           instr_handler},
+    {BWRITERSIO_CALLNZ,         instr_handler},
+    {BWRITERSIO_REP,            instr_handler},
+    {BWRITERSIO_ENDREP,         instr_handler},
+    {BWRITERSIO_IF,             instr_handler},
+    {BWRITERSIO_LABEL,          instr_handler},
+    {BWRITERSIO_IFC,            instr_handler},
+    {BWRITERSIO_ELSE,           instr_handler},
+    {BWRITERSIO_ENDIF,          instr_handler},
+    {BWRITERSIO_BREAK,          instr_handler},
+    {BWRITERSIO_BREAKC,         instr_handler},
+    {BWRITERSIO_LOOP,           instr_handler},
+    {BWRITERSIO_RET,            instr_handler},
+    {BWRITERSIO_ENDLOOP,        instr_handler},
+
+    {BWRITERSIO_SETP,           instr_handler},
+    {BWRITERSIO_BREAKP,         instr_handler},
+    {BWRITERSIO_TEXLDL,         instr_handler},
+
+    {BWRITERSIO_TEX,            instr_handler},
+    {BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ),                       instr_handler},
+    {BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ),                          instr_handler},
+    {BWRITERSIO_TEXKILL,        instr_handler},
+    {BWRITERSIO_DSX,            instr_handler},
+    {BWRITERSIO_DSY,            instr_handler},
+    {BWRITERSIO_TEXLDD,         instr_handler},
+
+    {BWRITERSIO_END,            NULL},
+};
+
+static const struct bytecode_backend ps_3_backend = {
+    sm_3_header,
+    end,
+    sm_3_srcreg,
+    sm_3_dstreg,
+    sm_2_opcode,
+    ps_3_handlers
+};
+
 static void init_vs30_dx9_writer(struct bc_writer *writer) {
     TRACE("Creating DirectX9 vertex shader 3.0 writer\n");
     writer->funcs = &vs_3_backend;
+}
+
+static void init_ps30_dx9_writer(struct bc_writer *writer) {
+    TRACE("Creating DirectX9 pixel shader 3.0 writer\n");
+    writer->funcs = &ps_3_backend;
 }
 
 static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
@@ -748,7 +824,7 @@ static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
                 WARN("Unsupported dxversion for pixel shader 3.0 requested: %u\n", dxversion);
                 goto fail;
             }
-            /* TODO: Set the appropriate writer backend */
+            init_ps30_dx9_writer(ret);
             break;
 
         default:

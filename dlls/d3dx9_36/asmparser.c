@@ -248,6 +248,36 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
     memcpy(&instr->src[num], src, sizeof(*src));
 }
 
+static const struct allowed_reg_type ps_3_reg_allowed[] = {
+    { BWRITERSPR_INPUT,        10 },
+    { BWRITERSPR_TEMP,         32 },
+    { BWRITERSPR_CONST,       224 },
+    { BWRITERSPR_CONSTINT,     16 },
+    { BWRITERSPR_CONSTBOOL,    16 },
+    { BWRITERSPR_PREDICATE,     1 },
+    { BWRITERSPR_SAMPLER,      16 },
+    { BWRITERSPR_MISCTYPE,      2 }, /* vPos and vFace */
+    { BWRITERSPR_LOOP,          1 },
+    { BWRITERSPR_LABEL,      2048 },
+    { BWRITERSPR_COLOROUT,    ~0U },
+    { BWRITERSPR_DEPTHOUT,      1 },
+    { ~0U, 0 } /* End tag */
+};
+
+static void asmparser_srcreg_ps_3(struct asm_parser *This,
+                                  struct instruction *instr, int num,
+                                  const struct shader_reg *src) {
+    if(!check_reg_type(src, ps_3_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in PS 3.0\n",
+                          This->line_no,
+                          debug_print_srcreg(src, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_loop_swizzle(This, src);
+    check_legacy_srcmod(This, src->srcmod);
+    memcpy(&instr->src[num], src, sizeof(*src));
+}
+
 static void asmparser_dstreg_vs_3(struct asm_parser *This,
                                   struct instruction *instr,
                                   const struct shader_reg *dst) {
@@ -258,6 +288,20 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
         set_parse_status(This, PARSE_ERR);
     }
     check_ps_dstmod(This, instr->dstmod);
+    check_shift_dstmod(This, instr->shift);
+    memcpy(&instr->dst, dst, sizeof(*dst));
+    instr->has_dst = TRUE;
+}
+
+static void asmparser_dstreg_ps_3(struct asm_parser *This,
+                                  struct instruction *instr,
+                                  const struct shader_reg *dst) {
+    if(!check_reg_type(dst, ps_3_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in PS 3.0\n",
+                          This->line_no,
+                          debug_print_dstreg(dst, ST_PIXEL));
+        set_parse_status(This, PARSE_ERR);
+    }
     check_shift_dstmod(This, instr->shift);
     memcpy(&instr->dst, dst, sizeof(*dst));
     instr->has_dst = TRUE;
@@ -305,6 +349,26 @@ static const struct asmparser_backend parser_vs_3 = {
     asmparser_instr,
 };
 
+static const struct asmparser_backend parser_ps_3 = {
+    asmparser_constF,
+    asmparser_constI,
+    asmparser_constB,
+
+    asmparser_dstreg_ps_3,
+    asmparser_srcreg_ps_3,
+
+    asmparser_predicate_supported,
+    asmparser_coissue_unsupported,
+
+    asmparser_dcl_output,
+    asmparser_dcl_input,
+    asmparser_dcl_sampler,
+
+    asmparser_end,
+
+    asmparser_instr,
+};
+
 void create_vs30_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_3_0\n");
 
@@ -318,4 +382,19 @@ void create_vs30_parser(struct asm_parser *ret) {
     ret->shader->type = ST_VERTEX;
     ret->shader->version = BWRITERVS_VERSION(3, 0);
     ret->funcs = &parser_vs_3;
+}
+
+void create_ps30_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("ps_3_0\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_PIXEL;
+    ret->shader->version = BWRITERPS_VERSION(3, 0);
+    ret->funcs = &parser_ps_3;
 }
