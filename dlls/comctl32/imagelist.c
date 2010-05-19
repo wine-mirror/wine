@@ -205,6 +205,8 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                 for (j = n * width; j < (n + 1) * width; j++)
                     if (!mask_bits || !((mask_bits[i * mask_width + j / 8] << (j % 8)) & 0x80))
                         bits[i * bm.bmWidth + j] |= 0xff000000;
+                    else
+                        bits[i * bm.bmWidth + j] = 0;
             if (hdcMask) StretchBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
                                      hdcMask, n * width, 0, width, height, SRCCOPY );
         }
