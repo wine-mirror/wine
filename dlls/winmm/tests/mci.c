@@ -359,9 +359,8 @@ static void test_recordWAVE(HWND hwnd)
     err = mciGetDeviceID("waveaudio");
     todo_wine ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
 
-    /* In Wine, both MCI_Open and the individual drivers send notifications. */
     test_notification(hwnd, "open new", MCI_NOTIFY_SUCCESSFUL);
-    todo_wine test_notification(hwnd, "open new no #2", 0);
+    test_notification(hwnd, "open new no #2", 0);
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;

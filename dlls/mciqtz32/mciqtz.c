@@ -221,6 +221,9 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 
     wma->opened = TRUE;
 
+    if (dwFlags & MCI_NOTIFY)
+        mciDriverNotify(HWND_32(LOWORD(lpOpenParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+
     return 0;
 
 err:

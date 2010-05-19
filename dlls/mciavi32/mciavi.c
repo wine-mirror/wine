@@ -286,6 +286,11 @@ static	DWORD	MCIAVI_mciOpen(UINT wDevID, DWORD dwFlags,
     }
 
     LeaveCriticalSection(&wma->cs);
+
+    if (!dwRet && (dwFlags & MCI_NOTIFY)) {
+	mciDriverNotify(HWND_32(LOWORD(lpOpenParms->dwCallback)),
+                       wDevID, MCI_NOTIFY_SUCCESSFUL);
+    }
     return dwRet;
 }
 

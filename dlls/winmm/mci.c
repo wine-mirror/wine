@@ -1660,16 +1660,10 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
 
     /* only handled devices fall through */
     TRACE("wDevID=%04X wDeviceID=%d dwRet=%d\n", wmd->wDeviceID, lpParms->wDeviceID, dwRet);
-
-    if (dwParam & MCI_NOTIFY)
-	mciDriverNotify((HWND)lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
-
     return 0;
+
 errCleanUp:
     if (wmd) MCI_UnLoadMciDriver(wmd);
-
-    if (dwParam & MCI_NOTIFY)
-	mciDriverNotify((HWND)lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
     return dwRet;
 }
 
