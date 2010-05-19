@@ -466,7 +466,8 @@ static int sock_signaled( struct object *obj, struct thread *thread )
 static int sock_get_poll_events( struct fd *fd )
 {
     struct sock *sock = get_fd_user( fd );
-    unsigned int mask = sock->mask & sock->state & ~sock->hmask;
+    unsigned int mask = sock->mask & ~sock->hmask;
+    unsigned int smask = sock->state & mask;
     int ev = 0;
 
     assert( sock->obj.ops == &sock_ops );
@@ -476,14 +477,25 @@ static int sock_get_poll_events( struct fd *fd )
         return POLLOUT;
     if (sock->state & FD_WINE_LISTENING)
         /* listening, wait for readable */
-        return (sock->hmask & FD_ACCEPT) ? 0 : POLLIN;
+        return (mask & FD_ACCEPT) ? POLLIN : 0;
 
-    if (mask & FD_READ  || async_waiting( sock->read_q )) ev |= POLLIN | POLLPRI;
-    if (mask & FD_WRITE || async_waiting( sock->write_q )) ev |= POLLOUT;
+    if ( async_queued( sock->read_q ) )
+    {
+        if ( async_waiting( sock->read_q ) ) ev |= POLLIN | POLLPRI;
+    }
+    else if (smask & FD_READ)
+        ev |= POLLIN | POLLPRI;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
-    if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) &&
-         !(sock->hmask & FD_READ) && sock->state & FD_READ )
+    else if ( sock->type == SOCK_STREAM && sock->state & FD_READ && mask & FD_CLOSE &&
+              !(sock->hmask & FD_READ) )
         ev |= POLLIN;
+
+    if ( async_queued( sock->write_q ) )
+    {
+        if ( async_waiting( sock->write_q ) ) ev |= POLLOUT;
+    }
+    else if (smask & FD_WRITE)
+        ev |= POLLOUT;
 
     return ev;
 }
