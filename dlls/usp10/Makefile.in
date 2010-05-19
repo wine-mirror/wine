@@ -9,6 +9,7 @@ IMPORTS   = gdi32 kernel32
 C_SRCS = \
 	bidi.c \
 	mirror.c \
+	shape.c \
 	shaping.c \
 	usp10.c
 
