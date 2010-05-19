@@ -2484,8 +2484,19 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
       break;
     case INTERNET_OPTION_ERROR_MASK:
       {
-        ULONG flags = *(ULONG *)lpBuffer;
-        FIXME("Option INTERNET_OPTION_ERROR_MASK(%d): STUB\n", flags);
+        if(!lpwhh) {
+            SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            return FALSE;
+        } else if(*(ULONG*)lpBuffer & (~(INTERNET_ERROR_MASK_INSERT_CDROM|
+                        INTERNET_ERROR_MASK_COMBINED_SEC_CERT|
+                        INTERNET_ERROR_MASK_LOGIN_FAILURE_DISPLAY_ENTITY_BODY))) {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        } else if(dwBufferLength != sizeof(ULONG)) {
+            SetLastError(ERROR_INTERNET_BAD_OPTION_LENGTH);
+            ret = FALSE;
+        } else
+            lpwhh->ErrorMask = *(ULONG*)lpBuffer;
       }
       break;
     case INTERNET_OPTION_CODEPAGE:
