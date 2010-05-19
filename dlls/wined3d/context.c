@@ -253,7 +253,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 }
 
 /* GL locking is done by the caller */
-void context_attach_surface_fbo(const struct wined3d_context *context,
+static void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
