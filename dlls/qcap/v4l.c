@@ -351,8 +351,9 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop_range( Capture *capBox, LONG Property, LONG *pMin,
-            LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
+HRESULT qcap_driver_get_prop_range( Capture *capBox,
+            VideoProcAmpProperty Property, LONG *pMin, LONG *pMax,
+            LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
     TRACE("%p -> %d %p %p %p %p %p\n", capBox, Property,
           pMin, pMax, pSteppingDelta, pDefault, pCapsFlags);
@@ -382,7 +383,8 @@ HRESULT qcap_driver_get_prop_range( Capture *capBox, LONG Property, LONG *pMin,
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop( Capture *capBox, LONG Property, LONG *lValue, LONG *Flags )
+HRESULT qcap_driver_get_prop( Capture *capBox,
+            VideoProcAmpProperty Property, LONG *lValue, LONG *Flags )
 {
     TRACE("%p -> %d %p %p\n", capBox, Property, lValue, Flags);
 
@@ -408,9 +410,10 @@ HRESULT qcap_driver_get_prop( Capture *capBox, LONG Property, LONG *lValue, LONG
     return S_OK;
 }
 
-HRESULT qcap_driver_set_prop(Capture *capBox, long Property, long lValue, long Flags)
+HRESULT qcap_driver_set_prop(Capture *capBox, VideoProcAmpProperty Property,
+            LONG lValue, LONG Flags)
 {
-    TRACE("%p -> %ld %ld %ld\n", capBox, Property, lValue, Flags);
+    TRACE("%p -> %d %d %d\n", capBox, Property, lValue, Flags);
 
     switch (Property)
     {
@@ -427,7 +430,7 @@ HRESULT qcap_driver_set_prop(Capture *capBox, long Property, long lValue, long F
         capBox->pict.colour = lValue;
         break;
     default:
-        FIXME("Not implemented %ld\n", Property);
+        FIXME("Not implemented %d\n", Property);
         return E_NOTIMPL;
     }
 
@@ -598,7 +601,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     Capture * capBox = lParam;
     HRESULT hr;
     IMediaSample *pSample = NULL;
-    unsigned long framecount = 0;
+    ULONG framecount = 0;
     unsigned char *pTarget, *pInput, *pOutput;
 
     hr = V4l_Prepare(capBox);
@@ -636,7 +639,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             capBox->renderer(capBox, pOutput, pInput);
             Resize(capBox, pTarget, pOutput);
             hr = OutputPin_SendSample((OutputPin *)capBox->pOut, pSample);
-            TRACE("%p -> Frame %lu: %x\n", capBox, ++framecount, hr);
+            TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
             V4l_FreeFrame(capBox);
         }
@@ -960,18 +963,21 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_get_prop_range( Capture *capBox, LONG Property, LONG *pMin,
-          LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
+HRESULT qcap_driver_get_prop_range( Capture *capBox,
+        VideoProcAmpProperty  Property, LONG *pMin, LONG *pMax,
+        LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_get_prop(Capture *capBox, LONG Property, LONG *lValue, LONG *Flags)
+HRESULT qcap_driver_get_prop(Capture *capBox,
+        VideoProcAmpProperty Property, LONG *lValue, LONG *Flags)
 {
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_set_prop(Capture *capBox, long Property, long lValue, long Flags)
+HRESULT qcap_driver_set_prop(Capture *capBox, VideoProcAmpProperty Property,
+        LONG lValue, LONG Flags)
 {
     FAIL_WITH_ERR;
 }
