@@ -1141,6 +1141,11 @@ static void ps_3_0_test(void) {
             {0xffff0300, 0x0500005d, 0x802f0000, 0x80e40001, 0x80e40002, 0x80e40003,
 	     0x80e40004, 0x0000ffff}
         },
+        {   /* shader 10 */
+            "ps_3_0\n"
+            "texkill v0\n",
+            {0xffff0300, 0x01000041, 0x900f0000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));

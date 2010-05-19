@@ -705,6 +705,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("DP2ADD\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP2ADD, $2.mod, $2.shift, 0, &$3, &$5, 3);
                             }
+                    | INSTR_TEXKILL dreg
+                            {
+                                TRACE("TEXKILL\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXKILL, 0, 0, 0, &$2, 0, 0);
+                            }
                     | INSTR_TEXLD omods dreg ',' sregs
                             {
                                 TRACE("TEXLD\n");
@@ -769,9 +774,7 @@ dreg_name:            REG_TEMP
                         }
                     | REG_INPUT
                         {
-                            asmparser_message(&asm_ctx, "Line %u: Register v%u is not a valid destination register\n",
-                                              asm_ctx.line_no, $1);
-                            set_parse_status(&asm_ctx, PARSE_WARN);
+                            $$.regnum = $1; $$.type = BWRITERSPR_INPUT;
                         }
                     | REG_CONSTFLOAT
                         {
