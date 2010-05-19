@@ -194,6 +194,7 @@ MAKE_FUNCPTR(FcPatternDestroy)
 MAKE_FUNCPTR(FcPatternAddInteger)
 MAKE_FUNCPTR(FcPatternAddString)
 MAKE_FUNCPTR(FcPatternGetInteger)
+static void *fontconfig_handle;
 static BOOL fontconfig_installed;
 #endif
 
@@ -341,7 +342,6 @@ static int load_xrender_formats(void)
 void X11DRV_XRender_Init(void)
 {
     int event_base, i;
-    void *fontconfig_handle;
 
     if (client_side_with_render &&
 	wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
@@ -395,6 +395,7 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
         }
     }
 
+#ifdef SONAME_LIBFONTCONFIG
     if ((fontconfig_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0)))
     {
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fontconfig_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
@@ -411,6 +412,7 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
         fontconfig_installed = pFcInit();
     }
     else TRACE( "cannot find the fontconfig library " SONAME_LIBFONTCONFIG "\n" );
+#endif
 
 sym_not_found:
     if(X11DRV_XRender_Installed || client_side_with_core)
