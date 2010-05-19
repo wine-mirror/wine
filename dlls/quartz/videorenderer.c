@@ -82,8 +82,8 @@ typedef struct VideoRendererImpl
     RECT SourceRect;
     RECT DestRect;
     RECT WindowPos;
-    long VideoWidth;
-    long VideoHeight;
+    LONG VideoWidth;
+    LONG VideoHeight;
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
@@ -287,7 +287,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         return VFW_E_RUNTIME_ERROR;
     }
 
-
     TRACE("biSize = %d\n", bmiHeader->biSize);
     TRACE("biWidth = %d\n", bmiHeader->biWidth);
     TRACE("biHeight = %d\n", bmiHeader->biHeight);
@@ -483,6 +482,7 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
         IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8))
     {
         VideoRendererImpl* This = iface;
+        LONG height;
 
         if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
         {
@@ -490,7 +490,11 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
             This->SourceRect.left = 0;
             This->SourceRect.top = 0;
             This->SourceRect.right = This->VideoWidth = format->bmiHeader.biWidth;
-            This->SourceRect.bottom = This->VideoHeight = format->bmiHeader.biHeight;
+            height = format->bmiHeader.biHeight;
+            if (height < 0)
+                This->SourceRect.bottom = This->VideoHeight = -height;
+            else
+                This->SourceRect.bottom = This->VideoHeight = height;
         }
         else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
         {
@@ -499,7 +503,11 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
             This->SourceRect.left = 0;
             This->SourceRect.top = 0;
             This->SourceRect.right = This->VideoWidth = format2->bmiHeader.biWidth;
-            This->SourceRect.bottom = This->VideoHeight = format2->bmiHeader.biHeight;
+            height = format2->bmiHeader.biHeight;
+            if (height < 0)
+                This->SourceRect.bottom = This->VideoHeight = -height;
+            else
+                This->SourceRect.bottom = This->VideoHeight = height;
         }
         else
         {
