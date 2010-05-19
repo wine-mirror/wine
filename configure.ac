@@ -11,9 +11,14 @@ AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
-dnl autoconf versions before 2.63b don't have AS_VAR_APPEND
+dnl autoconf versions before 2.63b don't have AS_VAR_APPEND or AS_VAR_IF
 m4_ifdef([AS_VAR_APPEND],,[as_fn_append () { eval $[1]=\$$[1]\$[2]; }
 AC_DEFUN([AS_VAR_APPEND],[as_fn_append $1 $2])])dnl
+m4_ifdef([AS_VAR_IF],,[AC_DEFUN([AS_VAR_IF],
+[AS_LITERAL_IF([$1],
+  [AS_IF([test "x$$1" = x""$2], [$3], [$4])],
+  [eval as_val=\$$1
+   AS_IF([test "x$as_val" = x""$2], [$3], [$4])])])])dnl
 
 dnl **** Command-line arguments ****
 
