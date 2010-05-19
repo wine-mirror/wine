@@ -942,7 +942,7 @@ static HRESULT
 /*****************************************************************************
  * IWineD3DSurface::Blt, SW emulation version
  *
- * Performs blits to a surface, eigher from a source of source-less blts
+ * Performs a blit to a surface, with or without a source surface.
  * This is the main functionality of DirectDraw
  *
  * Params:
