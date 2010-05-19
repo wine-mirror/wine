@@ -199,19 +199,21 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         DWORD style;
         RECT rc = { 0, 0, 0, 0 };
         IVideoWindow_put_AutoShow(vidwin, OAFALSE);
+        IVideoWindow_put_Visible(vidwin, OAFALSE);
         style = 0;
         if (dwFlags & MCI_DGV_OPEN_WS)
             style |= lpOpenParms->dwStyle;
         if (dwFlags & MCI_DGV_OPEN_PARENT) {
-            style |= WS_CHILD;
             IVideoWindow_put_MessageDrain(vidwin, (OAHWND)lpOpenParms->hWndParent);
             IVideoWindow_put_WindowState(vidwin, SW_HIDE);
+            IVideoWindow_put_WindowStyle(vidwin, WS_CHILD);
             IVideoWindow_put_Owner(vidwin, (OAHWND)lpOpenParms->hWndParent);
+            wma->parent = (HWND)lpOpenParms->hWndParent;
         }
-        IVideoWindow_put_WindowStyle(vidwin, style);
+        else if (style)
+            IVideoWindow_put_WindowStyle(vidwin, style);
         IBasicVideo_GetVideoSize(vidbasic, &rc.right, &rc.bottom);
         IVideoWindow_SetWindowPosition(vidwin, rc.left, rc.top, rc.right, rc.bottom);
-        IVideoWindow_put_Visible(vidwin, OATRUE);
         IBasicVideo_Release(vidbasic);
     }
     if (vidwin)
@@ -284,7 +286,14 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_INTERNAL;
     }
 
-    wma->started = TRUE;
+    if (!wma->parent) {
+        IVideoWindow *vidwin;
+        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
+        if (vidwin) {
+            IVideoWindow_put_Visible(vidwin, OATRUE);
+            IVideoWindow_Release(vidwin);
+        }
+    }
 
     return 0;
 }
@@ -358,7 +367,7 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
-    if (!wma->started)
+    if (!wma->opened)
         return 0;
 
     hr = IMediaControl_Stop(wma->pmctrl);
@@ -367,7 +376,14 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
         return MCIERR_INTERNAL;
     }
 
-    wma->started = FALSE;
+    if (!wma->parent) {
+        IVideoWindow *vidwin;
+        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
+        if (vidwin) {
+            IVideoWindow_put_Visible(vidwin, OAFALSE);
+            IVideoWindow_Release(vidwin);
+        }
+    }
 
     return 0;
 }
@@ -793,7 +809,8 @@ out:
         if (vidbasic)
             IBasicVideo_Release(vidbasic);
         if (vidwin) {
-            IVideoWindow_put_Visible(vidwin, OATRUE);
+            if (wma->parent)
+                IVideoWindow_put_Visible(vidwin, OATRUE);
             IVideoWindow_Release(vidwin);
         }
     }
