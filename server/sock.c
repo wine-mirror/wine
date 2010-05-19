@@ -295,6 +295,23 @@ static inline int sock_error( struct fd *fd )
     return optval;
 }
 
+static void sock_dispatch_asyncs( struct sock *sock, int event )
+{
+    if ( sock->flags & WSA_FLAG_OVERLAPPED )
+    {
+        if ( event & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
+            async_wake_up( sock->read_q, STATUS_ALERTED );
+        }
+        if ( event & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
+            async_wake_up( sock->write_q, STATUS_ALERTED );
+        }
+    }
+}
+
 static void sock_poll_event( struct fd *fd, int event )
 {
     struct sock *sock = get_fd_user( fd );
@@ -422,22 +439,10 @@ static void sock_poll_event( struct fd *fd, int event )
             event |= POLLHUP;
     }
 
+    sock_dispatch_asyncs( sock, event );
+
     /* wake up anyone waiting for whatever just happened */
     sock_wake_up( sock );
-
-    if ( sock->flags & WSA_FLAG_OVERLAPPED )
-    {
-        if ( event & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
-        {
-            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-            async_wake_up( sock->read_q, STATUS_ALERTED );
-        }
-        if ( event & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
-        {
-            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-            async_wake_up( sock->write_q, STATUS_ALERTED );
-        }
-    }
 
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
