@@ -147,6 +147,17 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_LIT
 %token INSTR_MOVA
 
+/* Pixel shader only instructions   */
+%token INSTR_CMP
+%token INSTR_DP2ADD
+%token INSTR_TEXKILL
+%token INSTR_TEXLD
+%token INSTR_DSX
+%token INSTR_DSY
+%token INSTR_TEXLDP
+%token INSTR_TEXLDB
+%token INSTR_TEXLDD
+
 /* Registers */
 %token <regnum> REG_TEMP
 %token <regnum> REG_OUTPUT
@@ -684,6 +695,52 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("MOVA\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MOVA, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_CMP omods dreg ',' sregs
+                            {
+                                TRACE("CMP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_CMP, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
+                    | INSTR_DP2ADD omods dreg ',' sregs
+                            {
+                                TRACE("DP2ADD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP2ADD, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
+                    | INSTR_TEXLD omods dreg ',' sregs
+                            {
+                                TRACE("TEXLD\n");
+                                /* There is more than one acceptable syntax for texld:
+                                   with 1 sreg (PS 1.4) or
+                                   with 2 sregs (PS 2.0+)
+                                   Moreover, texld shares the same opcode as the tex instruction,
+                                   so there are a total of 3 valid syntaxes
+                                   These variations are handled in asmparser.c */
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_TEXLDP omods dreg ',' sregs
+                            {
+                                TRACE("TEXLDP\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ), $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_TEXLDB omods dreg ',' sregs
+                            {
+                                TRACE("TEXLDB\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ), $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_DSX omods dreg ',' sregs
+                            {
+                                TRACE("DSX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DSX, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_DSY omods dreg ',' sregs
+                            {
+                                TRACE("DSY\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DSY, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXLDD omods dreg ',' sregs
+                            {
+                                TRACE("TEXLDD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDD, $2.mod, $2.shift, 0, &$3, &$5, 4);
                             }
 
 dreg:                 dreg_name rel_reg

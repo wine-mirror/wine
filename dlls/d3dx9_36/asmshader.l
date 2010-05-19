@@ -161,6 +161,16 @@ texldl                  {return INSTR_TEXLDL;       }
 lit                     {return INSTR_LIT;          }
 mova                    {return INSTR_MOVA;         }
 
+    /* Pixel shader only instructions   */
+cmp                     {return INSTR_CMP;          }
+dp2add                  {return INSTR_DP2ADD;       }
+texkill                 {return INSTR_TEXKILL;      }
+texld                   {return INSTR_TEXLD;        }
+dsx                     {return INSTR_DSX;          }
+dsy                     {return INSTR_DSY;          }
+texldp                  {return INSTR_TEXLDP;       }
+texldb                  {return INSTR_TEXLDB;       }
+texldd                  {return INSTR_TEXLDD;       }
 
 {REG_TEMP}              {
                             asmshader_lval.regnum = atoi(yytext + 1);
