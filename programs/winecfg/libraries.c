@@ -136,7 +136,7 @@ static const char* mode_to_string(enum dllmode mode)
         case NATIVE_BUILTIN: return "native,builtin";
         case BUILTIN_NATIVE: return "builtin,native";
         case DISABLE: return "";
-        default: assert(FALSE); return "";
+        default: return "";
     }
 }
 
@@ -153,7 +153,7 @@ static const char* mode_to_label(enum dllmode mode)
     case NATIVE_BUILTIN: id = IDS_DLL_NATIVE_BUILTIN; break;
     case BUILTIN_NATIVE: id = IDS_DLL_BUILTIN_NATIVE; break;
     case DISABLE: id = IDS_DLL_DISABLED; break;
-    default: assert(FALSE);
+    default: return "??";
     }
     if (!LoadStringA( GetModuleHandleA(NULL), id, buffer, sizeof(buffer) )) buffer[0] = 0;
     return buffer;
@@ -183,7 +183,7 @@ static DWORD mode_to_id(enum dllmode mode)
         case NATIVE_BUILTIN: return IDC_RAD_NATIVE_BUILTIN;
         case BUILTIN_NATIVE: return IDC_RAD_BUILTIN_NATIVE;
         case DISABLE: return IDC_RAD_DISABLE;
-        default: assert( FALSE ); return 0; /* should not be reached  */
+        default: return IDC_RAD_BUILTIN_NATIVE;
     }
 }
 
