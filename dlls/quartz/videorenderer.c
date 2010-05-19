@@ -1828,7 +1828,7 @@ static HRESULT WINAPI Videowindow_put_AutoShow(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%d)\n", This, iface, AutoShow);
 
-    This->AutoShow = 1; /* FIXME: Should be AutoShow */;
+    This->AutoShow = AutoShow;
 
     return S_OK;
 }
