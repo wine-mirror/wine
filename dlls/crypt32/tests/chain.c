@@ -2496,9 +2496,9 @@ typedef struct _CONST_BLOB_ARRAY
  * certArray, where the last certificate in the chain is expected to be the
  * end certificate (the one from which the chain is built.)
  */
-static PCCERT_CHAIN_CONTEXT getChain(const CONST_BLOB_ARRAY *certArray,
- DWORD flags, BOOL includeStore, LPSYSTEMTIME checkTime, DWORD todo,
- DWORD testIndex)
+static PCCERT_CHAIN_CONTEXT getChain(HCERTCHAINENGINE engine,
+ const CONST_BLOB_ARRAY *certArray, DWORD flags, BOOL includeStore,
+ LPSYSTEMTIME checkTime, DWORD todo, DWORD testIndex)
 {
     HCERTSTORE store;
     PCCERT_CHAIN_CONTEXT chain = NULL;
@@ -2536,7 +2536,7 @@ static PCCERT_CHAIN_CONTEXT getChain(const CONST_BLOB_ARRAY *certArray,
             FILETIME fileTime;
 
             SystemTimeToFileTime(checkTime, &fileTime);
-            ret = pCertGetCertificateChain(NULL, endCert, &fileTime,
+            ret = pCertGetCertificateChain(engine, endCert, &fileTime,
              includeStore ? store : NULL, &chainPara, flags, NULL, &chain);
             if (todo & TODO_CHAIN)
                 todo_wine ok(ret, "Chain %d: CertGetCertificateChain failed: %08x\n",
@@ -3569,7 +3569,7 @@ static void testGetCertChain(void)
 
     for (i = 0; i < sizeof(chainCheck) / sizeof(chainCheck[0]); i++)
     {
-        chain = getChain(&chainCheck[i].certs, 0, TRUE, &oct2007,
+        chain = getChain(NULL, &chainCheck[i].certs, 0, TRUE, &oct2007,
          chainCheck[i].todo, i);
         if (chain)
         {
@@ -3581,7 +3581,7 @@ static void testGetCertChain(void)
     for (i = 0; i < sizeof(chainCheckNoStore) / sizeof(chainCheckNoStore[0]);
      i++)
     {
-        chain = getChain(&chainCheckNoStore[i].certs, 0, FALSE, &oct2007,
+        chain = getChain(NULL, &chainCheckNoStore[i].certs, 0, FALSE, &oct2007,
          chainCheckNoStore[i].todo, i);
         if (chain)
         {
@@ -3590,7 +3590,7 @@ static void testGetCertChain(void)
             pCertFreeCertificateChain(chain);
         }
     }
-    chain = getChain(&chainCheckEmbeddedNull.certs, 0, TRUE, &oct2007,
+    chain = getChain(NULL, &chainCheckEmbeddedNull.certs, 0, TRUE, &oct2007,
      chainCheckEmbeddedNull.todo, 0);
     if (chain)
     {
@@ -3887,7 +3887,7 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
  DWORD testIndex, SYSTEMTIME *sysTime, PCERT_CHAIN_POLICY_PARA para)
 
 {
-    PCCERT_CHAIN_CONTEXT chain = getChain(&check->certs, 0, TRUE, sysTime,
+    PCCERT_CHAIN_CONTEXT chain = getChain(NULL, &check->certs, 0, TRUE, sysTime,
      check->todo, testIndex);
 
     if (chain)
