@@ -37,6 +37,7 @@ typedef struct {
     TEXTMETRICW tm;
     WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
+    LPVOID *GSUB_Table;
 } ScriptCache;
 
 #define odd(x) ((x) & 1)

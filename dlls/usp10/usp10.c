@@ -306,6 +306,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
             heap_free(((ScriptCache *)*psc)->glyphs[i]);
             heap_free(((ScriptCache *)*psc)->widths[i]);
         }
+        heap_free(((ScriptCache *)*psc)->GSUB_Table);
         heap_free(*psc);
         *psc = NULL;
     }
