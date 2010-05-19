@@ -4259,11 +4259,8 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         if(hIC->lpszProxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    if (lpszServerName && lpszServerName[0])
-    {
-        lpwhs->lpszServerName = heap_strdupW(lpszServerName);
-        lpwhs->lpszHostName = heap_strdupW(lpszServerName);
-    }
+    lpwhs->lpszServerName = heap_strdupW(lpszServerName);
+    lpwhs->lpszHostName = heap_strdupW(lpszServerName);
     if (lpszUserName && lpszUserName[0])
         lpwhs->lpszUserName = heap_strdupW(lpszUserName);
     if (lpszPassword && lpszPassword[0])
