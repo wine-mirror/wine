@@ -2049,47 +2049,30 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
  */
 BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
 {
-    struct cursoricon_object *ciconinfo;
-    INT height;
+    struct cursoricon_object *ptr;
 
-    if (!(ciconinfo = get_icon_ptr( hIcon ))) return FALSE;
+    if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
 
     TRACE("%p => %dx%d, %d bpp\n", hIcon,
-          ciconinfo->data.nWidth, ciconinfo->data.nHeight, ciconinfo->data.bBitsPerPixel);
+          ptr->data.nWidth, ptr->data.nHeight, ptr->data.bBitsPerPixel);
 
-    if ( (ciconinfo->data.ptHotSpot.x == ICON_HOTSPOT) &&
-         (ciconinfo->data.ptHotSpot.y == ICON_HOTSPOT) )
+    if ( (ptr->data.ptHotSpot.x == ICON_HOTSPOT) &&
+         (ptr->data.ptHotSpot.y == ICON_HOTSPOT) )
     {
       iconinfo->fIcon    = TRUE;
-      iconinfo->xHotspot = ciconinfo->data.nWidth / 2;
-      iconinfo->yHotspot = ciconinfo->data.nHeight / 2;
+      iconinfo->xHotspot = ptr->data.nWidth / 2;
+      iconinfo->yHotspot = ptr->data.nHeight / 2;
     }
     else
     {
       iconinfo->fIcon    = FALSE;
-      iconinfo->xHotspot = ciconinfo->data.ptHotSpot.x;
-      iconinfo->yHotspot = ciconinfo->data.ptHotSpot.y;
+      iconinfo->xHotspot = ptr->data.ptHotSpot.x;
+      iconinfo->yHotspot = ptr->data.ptHotSpot.y;
     }
 
-    height = ciconinfo->data.nHeight;
-
-    if (ciconinfo->data.bBitsPerPixel > 1)
-    {
-        iconinfo->hbmColor = CreateBitmap( ciconinfo->data.nWidth, ciconinfo->data.nHeight,
-                                ciconinfo->data.bPlanes, ciconinfo->data.bBitsPerPixel,
-                                (char *)(ciconinfo + 1)
-                                + ciconinfo->data.nHeight *
-                                get_bitmap_width_bytes (ciconinfo->data.nWidth,1) );
-    }
-    else
-    {
-        iconinfo->hbmColor = 0;
-        height *= 2;
-    }
-
-    iconinfo->hbmMask = CreateBitmap ( ciconinfo->data.nWidth, height,
-                                1, 1, ciconinfo + 1);
-    release_icon_ptr( hIcon, ciconinfo );
+    iconinfo->hbmColor = copy_bitmap( ptr->color );
+    iconinfo->hbmMask  = copy_bitmap( ptr->mask );
+    release_icon_ptr( hIcon, ptr );
 
     return TRUE;
 }
