@@ -745,6 +745,12 @@ static void test_OleLoadPicturePath(void)
     IPicture *pic;
     HRESULT hres;
     int i;
+    char temp_path[MAX_PATH];
+    char temp_file[MAX_PATH];
+    WCHAR temp_fileW[MAX_PATH + 5] = {'f','i','l','e',':','/','/','/'};
+    HANDLE file;
+    DWORD size;
+    WCHAR *ptr;
 
     const struct
     {
@@ -794,6 +800,80 @@ static void test_OleLoadPicturePath(void)
        "Expected OleLoadPicturePath to return INET_E_UNKNOWN_PROTOCOL, got 0x%08x\n", hres);
     ok(pic == NULL,
        "Expected the output interface pointer to be NULL, got %p\n", pic);
+
+    /* Create a local temporary image file for testing. */
+    GetTempPathA(sizeof(temp_path), temp_path);
+    GetTempFileNameA(temp_path, "bmp", 0, temp_file);
+    file = CreateFileA(temp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    WriteFile(file, bmpimage, sizeof(bmpimage), &size, NULL);
+    CloseHandle(file);
+
+    MultiByteToWideChar(CP_ACP, 0, temp_file, -1, temp_fileW + 8, sizeof(temp_fileW)/sizeof(WCHAR) - 8);
+
+    /* Try a normal DOS path. */
+    hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    todo_wine
+    ok(hres == S_OK ||
+       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
+    if (pic)
+        IPicture_Release(pic);
+
+    /* Try a DOS path with tacked on "file:". */
+    hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    todo_wine
+    ok(hres == S_OK ||
+       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
+    if (pic)
+        IPicture_Release(pic);
+
+    DeleteFileA(temp_file);
+
+    /* Try with a non-existent file. */
+    hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       hres == E_UNEXPECTED || /* NT4/Win95 */
+       hres == E_FAIL, /* Win9x/Win2k */
+       "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
+
+    hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       hres == E_UNEXPECTED || /* NT4/Win95 */
+       hres == E_FAIL, /* Win9x/Win2k */
+       "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
+
+    file = CreateFileA(temp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    WriteFile(file, bmpimage, sizeof(bmpimage), &size, NULL);
+    CloseHandle(file);
+
+    /* Try a "file:" URL with slash separators. */
+    ptr = temp_fileW + 8;
+    while (*ptr)
+    {
+        if (*ptr == '\\')
+            *ptr = '/';
+        ptr++;
+    }
+
+    hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    todo_wine
+    ok(hres == S_OK ||
+       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
+    if (pic)
+        IPicture_Release(pic);
+
+    DeleteFileA(temp_file);
+
+    /* Try with a non-existent file. */
+    hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       hres == E_UNEXPECTED || /* NT4/Win95 */
+       hres == E_FAIL, /* Win9x/Win2k */
+       "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 }
 
 START_TEST(olepicture)

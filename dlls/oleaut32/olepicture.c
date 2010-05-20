@@ -2263,7 +2263,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
 		LPVOID *ppvRet )
 {
-  static const WCHAR file[] = { 'f','i','l','e',':','/','/',0 };
+  static const WCHAR file[] = { 'f','i','l','e',':',0 };
   IPicture *ipicture;
   HANDLE hFile;
   DWORD dwFileSize;
@@ -2273,6 +2273,8 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
   BOOL bRead;
   IPersistStream *pStream;
   HRESULT hRes;
+  WCHAR *file_candidate;
+  WCHAR path_buf[MAX_PATH];
 
   TRACE("(%s,%p,%d,%08x,%s,%p): stub\n",
         debugstr_w(szURLorPath), punkCaller, dwReserved, clrReserved,
@@ -2283,13 +2285,25 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 
   *ppvRet = NULL;
 
-  if (strncmpW(szURLorPath, file, 7) == 0) {	    
-      szURLorPath += 7;
-  
-      hFile = CreateFileW(szURLorPath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-				   0, NULL);
+  /* Convert file URLs to DOS paths. */
+  if (strncmpW(szURLorPath, file, 5) == 0) {
+      DWORD size;
+      hRes = CoInternetParseUrl(szURLorPath, PARSE_PATH_FROM_URL, 0, path_buf,
+                                sizeof(path_buf)/sizeof(WCHAR), &size, 0);
+      if (FAILED(hRes))
+          return hRes;
+
+      file_candidate = path_buf;
+  }
+  else
+      file_candidate = szURLorPath;
+
+  /* Handle candidate DOS paths separately. */
+  if (file_candidate[1] == ':') {
+      hFile = CreateFileW(file_candidate, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                          0, NULL);
       if (hFile == INVALID_HANDLE_VALUE)
-	  return E_UNEXPECTED;
+          return E_UNEXPECTED;
 
       dwFileSize = GetFileSize(hFile, NULL);
       if (dwFileSize != INVALID_FILE_SIZE )
