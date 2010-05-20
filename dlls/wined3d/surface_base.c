@@ -1009,7 +1009,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     /* For the Destination rect, it can be out of bounds on the condition that a clipper
      * is set for the given surface.
      */
-    if ((/*This->clipper == NULL*/ TRUE) && (DestRect) &&
+    if (!This->clipper && DestRect &&
          ((DestRect->bottom > This->currentDesc.Height)||(DestRect->bottom < 0) ||
          (DestRect->top     > This->currentDesc.Height)||(DestRect->top    < 0) ||
          (DestRect->left    > This->currentDesc.Width) ||(DestRect->left   < 0) ||
