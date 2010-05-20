@@ -3496,6 +3496,22 @@ static void test_editbox(void)
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     expect(0, r);
 
+    /* test notifications without edit created */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_SETFOCUS), (LPARAM)0xdeadbeef);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "edit box WM_COMMAND (EN_SETFOCUS), no edit created", FALSE);
+    /* same thing but with valid window */
+    hwndedit = CreateWindowA("Edit", "Test edit", WS_VISIBLE | WS_CHILD, 0, 0, 20,
+                10, hwnd, (HMENU)1, (HINSTANCE)GetWindowLongPtrA(hwnd, GWLP_HINSTANCE), 0);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_SETFOCUS), (LPARAM)hwndedit);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "edit box WM_COMMAND (EN_SETFOCUS), no edit created #2", FALSE);
+    DestroyWindow(hwndedit);
+
     /* setting focus is necessary */
     SetFocus(hwnd);
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
