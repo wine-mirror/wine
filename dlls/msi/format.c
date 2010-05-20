@@ -805,11 +805,11 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
     format.deformatted = *data;
     format.len = *len;
 
-    stack = create_stack();
-    temp = create_stack();
-
     if (!verify_format(*data))
         return ERROR_SUCCESS;
+
+    stack = create_stack();
+    temp = create_stack();
 
     while ((type = format_lex(&format, &str)) != FORMAT_NULL)
     {
