@@ -1225,3 +1225,9 @@ LRESULT CALLBACK ShellHookProc(DWORD a, DWORD b, DWORD c)
     FIXME("Stub\n");
     return 0;
 }
+
+HRESULT WINAPI SHGetLocalizedName(LPCWSTR path, LPWSTR module, UINT size, INT *res)
+{
+    FIXME("%s %p %u %p: stub\n", debugstr_w(path), module, size, res);
+    return E_NOTIMPL;
+}

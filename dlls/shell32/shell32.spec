@@ -358,6 +358,7 @@
 @ stdcall SHGetIconOverlayIndexA(str long)
 @ stdcall SHGetIconOverlayIndexW(wstr long)
 @ stdcall SHGetInstanceExplorer(long)
+@ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
 @ stdcall SHGetNewLinkInfo(str str ptr long long) SHGetNewLinkInfoA
 @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
