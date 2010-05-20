@@ -33,8 +33,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
+#include "winnls.h"
 #include "wine/exception.h"
 #include "wine/server.h"
 #include "controls.h"
@@ -106,8 +105,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION IconCrst = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static const WORD ICON_HOTSPOT = 0x4242;
-
 
 /**********************************************************************
  * User objects management
@@ -120,7 +117,10 @@ struct cursoricon_object
     HBITMAP            color;    /* color bitmap */
     HBITMAP            alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
     HBITMAP            mask;     /* mask bitmap (followed by color for 1-bpp icons) */
-    CURSORICONINFO     data;
+    BOOL               is_icon;  /* whether icon or cursor */
+    UINT               width;
+    UINT               height;
+    POINT              hotspot;
 };
 
 static HICON alloc_icon_handle(void)
@@ -227,37 +227,6 @@ static void *map_fileW( LPCWSTR name, LPDWORD filesize )
         CloseHandle( hFile );
     }
     return ptr;
-}
-
-
-/***********************************************************************
- *           get_bitmap_width_bytes
- *
- * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
- * data.
- */
-static int get_bitmap_width_bytes( int width, int bpp )
-{
-    switch(bpp)
-    {
-    case 1:
-        return 2 * ((width+15) / 16);
-    case 4:
-        return 2 * ((width+3) / 4);
-    case 24:
-        width *= 3;
-        /* fall through */
-    case 8:
-        return width + (width & 1);
-    case 16:
-    case 15:
-        return width * 2;
-    case 32:
-        return width * 4;
-    default:
-        WARN("Unknown depth %d, please report.\n", bpp );
-    }
-    return -1;
 }
 
 
@@ -532,8 +501,8 @@ BOOL get_icon_size( HICON handle, SIZE *size )
     struct cursoricon_object *info;
 
     if (!(info = get_icon_ptr( handle ))) return FALSE;
-    size->cx = info->data.nWidth;
-    size->cy = info->data.nHeight;
+    size->cx = info->width;
+    size->cy = info->height;
     release_icon_ptr( handle, info );
     return TRUE;
 }
@@ -900,16 +869,14 @@ done:
 }
 
 static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
-					   POINT16 hotspot, BOOL bIcon,
+					   POINT hotspot, BOOL bIcon,
 					   DWORD dwVersion,
 					   INT width, INT height,
 					   UINT cFlag )
 {
     HICON hObj;
     HBITMAP color = 0, mask = 0, alpha = 0;
-    BITMAP bmpXor;
     BOOL do_stretch;
-    INT size;
 
     if (dwVersion == 0x00020000)
     {
@@ -927,15 +894,18 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
           return 0;
     }
 
-    size = bitmap_info_size( bmi, DIB_RGB_COLORS );
-
     if (!width) width = bmi->bmiHeader.biWidth;
     if (!height) height = bmi->bmiHeader.biHeight/2;
     do_stretch = (bmi->bmiHeader.biHeight/2 != height) ||
                  (bmi->bmiHeader.biWidth != width);
 
     /* Scale the hotspot */
-    if (do_stretch && hotspot.x != ICON_HOTSPOT && hotspot.y != ICON_HOTSPOT)
+    if (bIcon)
+    {
+        hotspot.x = width / 2;
+        hotspot.y = height / 2;
+    }
+    else if (do_stretch)
     {
         hotspot.x = (hotspot.x * width) / bmi->bmiHeader.biWidth;
         hotspot.y = (hotspot.y * height) / (bmi->bmiHeader.biHeight / 2);
@@ -951,17 +921,13 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
 
-        info->color = color;
-        info->mask  = mask;
-        info->alpha = alpha;
-        info->data.ptHotSpot.x   = hotspot.x;
-        info->data.ptHotSpot.y   = hotspot.y;
-        info->data.nWidth        = width;
-        info->data.nHeight       = height;
-        GetObjectW( color, sizeof(bmpXor), &bmpXor );
-        info->data.nWidthBytes   = bmpXor.bmWidthBytes;
-        info->data.bPlanes       = bmpXor.bmPlanes;
-        info->data.bBitsPerPixel = bmpXor.bmBitsPixel;
+        info->color   = color;
+        info->mask    = mask;
+        info->alpha   = alpha;
+        info->is_icon = bIcon;
+        info->hotspot = hotspot;
+        info->width   = width;
+        info->height  = height;
         release_icon_ptr( hObj, info );
         USER_Driver->pCreateCursorIcon( hObj );
     }
@@ -1087,7 +1053,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     HCURSOR cursor;
     ani_header header = {0};
     LPBYTE frame_bits = 0;
-    POINT16 hotspot;
+    POINT hotspot;
     CURSORICONFILEDIRENTRY *entry;
 
     riff_chunk_t root_chunk = { bits_size, bits };
@@ -1169,23 +1135,25 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                        INT width, INT height,
                                        UINT cFlag )
 {
-    POINT16 hotspot;
+    POINT hotspot;
     BITMAPINFO *bmi;
-
-    hotspot.x = ICON_HOTSPOT;
-    hotspot.y = ICON_HOTSPOT;
 
     TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
                    bits, cbSize, dwVersion, width, height,
-                                  bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
+                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
 
     if (bIcon)
+    {
+        hotspot.x = width / 2;
+        hotspot.y = height / 2;
         bmi = (BITMAPINFO *)bits;
+    }
     else /* get the hotspot */
     {
-        POINT16 *pt = (POINT16 *)bits;
-        hotspot = *pt;
-        bmi = (BITMAPINFO *)(pt + 1);
+        SHORT *pt = (SHORT *)bits;
+        hotspot.x = pt[0];
+        hotspot.y = pt[1];
+        bmi = (BITMAPINFO *)(pt + 2);
     }
 
     return CURSORICON_CreateIconFromBMI( bmi, hotspot, bIcon, dwVersion,
@@ -1212,7 +1180,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     DWORD filesize = 0;
     HICON hIcon = 0;
     LPBYTE bits;
-    POINT16 hotspot;
+    POINT hotspot;
 
     TRACE("loading %s\n", debugstr_w( filename ));
 
@@ -1249,17 +1217,8 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     if ( entry->dwDIBOffset + entry->dwDIBSize > filesize )
         goto end;
 
-    /* Set the actual hotspot for cursors and ICON_HOTSPOT for icons. */
-    if ( fCursor )
-    {
-        hotspot.x = entry->xHotspot;
-        hotspot.y = entry->yHotspot;
-    }
-    else
-    {
-        hotspot.x = ICON_HOTSPOT;
-        hotspot.y = ICON_HOTSPOT;
-    }
+    hotspot.x = entry->xHotspot;
+    hotspot.y = entry->yHotspot;
     hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset],
 					  hotspot, !fCursor, 0x00030000,
 					  width, height, loadflags );
@@ -1546,8 +1505,8 @@ HICON WINAPI CreateIcon(
                  nWidth, nHeight, bPlanes, bBitsPixel, lpXORbits, lpANDbits);
 
     iinfo.fIcon = TRUE;
-    iinfo.xHotspot = ICON_HOTSPOT;
-    iinfo.yHotspot = ICON_HOTSPOT;
+    iinfo.xHotspot = nWidth / 2;
+    iinfo.yHotspot = nHeight / 2;
     iinfo.hbmMask = CreateBitmap( nWidth, nHeight, 1, 1, lpANDbits );
     iinfo.hbmColor = CreateBitmap( nWidth, nHeight, bPlanes, bBitsPixel, lpXORbits );
 
@@ -1572,10 +1531,13 @@ HICON WINAPI CopyIcon( HICON hIcon )
     if ((hNew = alloc_icon_handle()))
     {
         ptrNew = get_icon_ptr( hNew );
-        ptrNew->data  = ptrOld->data;
-        ptrNew->color = copy_bitmap( ptrOld->color );
-        ptrNew->alpha = copy_bitmap( ptrOld->alpha );
-        ptrNew->mask  = copy_bitmap( ptrOld->mask );
+        ptrNew->color   = copy_bitmap( ptrOld->color );
+        ptrNew->alpha   = copy_bitmap( ptrOld->alpha );
+        ptrNew->mask    = copy_bitmap( ptrOld->mask );
+        ptrNew->is_icon = ptrOld->is_icon;
+        ptrNew->width   = ptrOld->width;
+        ptrNew->height  = ptrOld->height;
+        ptrNew->hotspot = ptrOld->hotspot;
         release_icon_ptr( hNew, ptrNew );
     }
     release_icon_ptr( hIcon, ptrOld );
@@ -1856,23 +1818,11 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
 
     if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
 
-    TRACE("%p => %dx%d, %d bpp\n", hIcon,
-          ptr->data.nWidth, ptr->data.nHeight, ptr->data.bBitsPerPixel);
+    TRACE("%p => %dx%d\n", hIcon, ptr->width, ptr->height);
 
-    if ( (ptr->data.ptHotSpot.x == ICON_HOTSPOT) &&
-         (ptr->data.ptHotSpot.y == ICON_HOTSPOT) )
-    {
-      iconinfo->fIcon    = TRUE;
-      iconinfo->xHotspot = ptr->data.nWidth / 2;
-      iconinfo->yHotspot = ptr->data.nHeight / 2;
-    }
-    else
-    {
-      iconinfo->fIcon    = FALSE;
-      iconinfo->xHotspot = ptr->data.ptHotSpot.x;
-      iconinfo->yHotspot = ptr->data.ptHotSpot.y;
-    }
-
+    iconinfo->fIcon    = ptr->is_icon;
+    iconinfo->xHotspot = ptr->hotspot.x;
+    iconinfo->yHotspot = ptr->hotspot.y;
     iconinfo->hbmColor = copy_bitmap( ptr->color );
     iconinfo->hbmMask  = copy_bitmap( ptr->mask );
     release_icon_ptr( hIcon, ptr );
@@ -1888,7 +1838,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     BITMAP bmpXor, bmpAnd;
     HICON hObj;
     HBITMAP color = 0, mask;
-    int width, height, planes, bpp;
+    int width, height;
     HDC src, dst;
 
     TRACE("color %p, mask %p, hotspot %ux%u, fIcon %d\n",
@@ -1896,9 +1846,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
            iconinfo->xHotspot, iconinfo->yHotspot, iconinfo->fIcon);
 
     if (!iconinfo->hbmMask) return 0;
-
-    planes = GetDeviceCaps( screen_dc, PLANES );
-    bpp = GetDeviceCaps( screen_dc, BITSPIXEL );
 
     GetObjectW( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
     TRACE("mask: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
@@ -1911,8 +1858,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         TRACE("color: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
                bmpXor.bmWidth, bmpXor.bmHeight, bmpXor.bmWidthBytes,
                bmpXor.bmPlanes, bmpXor.bmBitsPixel);
-        /* we can use either depth 1 or screen depth for xor bitmap */
-        if (bmpXor.bmPlanes == 1 && bmpXor.bmBitsPixel == 1) planes = bpp = 1;
 
         width = bmpXor.bmWidth;
         height = bmpXor.bmHeight;
@@ -1958,38 +1903,23 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
 
-        info->color = color;
-        info->mask  = mask;
-        info->alpha = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
-
-        /* If we are creating an icon, the hotspot is unused */
-        if (iconinfo->fIcon)
+        info->color   = color;
+        info->mask    = mask;
+        info->alpha   = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
+        info->is_icon = iconinfo->fIcon;
+        info->width   = width;
+        info->height  = height;
+        if (info->is_icon)
         {
-            info->data.ptHotSpot.x   = ICON_HOTSPOT;
-            info->data.ptHotSpot.y   = ICON_HOTSPOT;
+            info->hotspot.x = width / 2;
+            info->hotspot.y = height / 2;
         }
         else
         {
-            info->data.ptHotSpot.x   = iconinfo->xHotspot;
-            info->data.ptHotSpot.y   = iconinfo->yHotspot;
+            info->hotspot.x = iconinfo->xHotspot;
+            info->hotspot.y = iconinfo->yHotspot;
         }
 
-        if (iconinfo->hbmColor)
-        {
-            info->data.nWidth        = bmpXor.bmWidth;
-            info->data.nHeight       = bmpXor.bmHeight;
-            info->data.nWidthBytes   = bmpXor.bmWidthBytes;
-            info->data.bPlanes       = planes;
-            info->data.bBitsPerPixel = bpp;
-        }
-        else
-        {
-            info->data.nWidth        = bmpAnd.bmWidth;
-            info->data.nHeight       = bmpAnd.bmHeight / 2;
-            info->data.nWidthBytes   = get_bitmap_width_bytes(bmpAnd.bmWidth, 1);
-            info->data.bPlanes       = 1;
-            info->data.bBitsPerPixel = 1;
-        }
         release_icon_ptr( hObj, info );
         USER_Driver->pCreateCursorIcon( hObj );
     }
@@ -2049,14 +1979,14 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
         if (flags & DI_DEFAULTSIZE)
             cxWidth = GetSystemMetrics (SM_CXICON);
         else
-            cxWidth = ptr->data.nWidth;
+            cxWidth = ptr->width;
     }
     if (cyWidth == 0)
     {
         if (flags & DI_DEFAULTSIZE)
             cyWidth = GetSystemMetrics (SM_CYICON);
         else
-            cyWidth = ptr->data.nHeight;
+            cyWidth = ptr->height;
     }
 
     DoOffscreen = (GetObjectType( hbr ) == OBJ_BRUSH);
@@ -2095,7 +2025,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     {
         SelectObject( hMemDC, ptr->mask );
         StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                    hMemDC, 0, 0, ptr->data.nWidth, ptr->data.nHeight, SRCAND );
+                    hMemDC, 0, 0, ptr->width, ptr->height, SRCAND );
     }
 
     if (flags & DI_IMAGE)
@@ -2106,21 +2036,21 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
             SelectObject( hMemDC, ptr->alpha );
             GdiAlphaBlend( hdc_dest, x, y, cxWidth, cyWidth, hMemDC,
-                           0, 0, ptr->data.nWidth, ptr->data.nHeight, pixelblend );
+                           0, 0, ptr->width, ptr->height, pixelblend );
         }
         else if (ptr->color)
         {
             DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
             SelectObject( hMemDC, ptr->color );
             StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                        hMemDC, 0, 0, ptr->data.nWidth, ptr->data.nHeight, rop );
+                        hMemDC, 0, 0, ptr->width, ptr->height, rop );
         }
         else
         {
             DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
             SelectObject( hMemDC, ptr->mask );
             StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                        hMemDC, 0, ptr->data.nHeight, ptr->data.nWidth, ptr->data.nHeight, rop );
+                        hMemDC, 0, ptr->height, ptr->width, ptr->height, rop );
         }
     }
 
