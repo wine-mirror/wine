@@ -375,8 +375,8 @@ static LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPB
         info->mode_8bit = 0;
     else
     {
-        ERR("Bad output format\n");
-        return ICERR_BADPARAM;
+        info->mode_8bit = 0;
+        FIXME("Unsupported output format %i\n", in->bmiHeader.biBitCount);
     }
 
     return ICERR_OK;
