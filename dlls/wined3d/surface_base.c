@@ -1033,107 +1033,105 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         memset(&xsrc, 0, sizeof(xsrc));
     }
 
-    /* For the Destination rect, it can be out of bounds on the condition that a clipper
-     * is set for the given surface.
-     */
-    if (!This->clipper && DestRect &&
-         ((DestRect->bottom > This->currentDesc.Height)||(DestRect->bottom < 0) ||
-         (DestRect->top     > This->currentDesc.Height)||(DestRect->top    < 0) ||
-         (DestRect->left    > This->currentDesc.Width) ||(DestRect->left   < 0) ||
-         (DestRect->right   > This->currentDesc.Width) ||(DestRect->right  < 0) ||
-         (DestRect->right   < DestRect->left)          ||(DestRect->bottom < DestRect->top)))
-    {
-        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
-        return WINEDDERR_INVALIDRECT;
-    }
-
-    /* Now handle negative values in the rectangles. Warning: only supported
-     * for now in the 'simple' cases (ie not in any stretching / rotation
-     * cases). First, the case where nothing is to be done. */
-
-    if (DestRect && (DestRect->bottom <= 0 || DestRect->right <= 0
-            || DestRect->top >= (int)This->currentDesc.Height
-            || DestRect->left >= (int)This->currentDesc.Width))
-    {
-        TRACE("Nothing to be done.\n");
-        return WINED3D_OK;
-    }
-
     if (DestRect)
     {
-        xdst = *DestRect;
+        /* For the Destination rect, it can be out of bounds on the condition
+         * that a clipper is set for the given surface. */
+        if (!This->clipper && (DestRect->right < DestRect->left || DestRect->bottom < DestRect->top
+                || DestRect->left > This->currentDesc.Width || DestRect->left < 0
+                || DestRect->top > This->currentDesc.Height || DestRect->top < 0
+                || DestRect->right > This->currentDesc.Width || DestRect->right < 0
+                || DestRect->bottom > This->currentDesc.Height || DestRect->bottom < 0))
+        {
+            WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+            return WINEDDERR_INVALIDRECT;
+        }
+
+        if (DestRect->right <= 0 || DestRect->bottom <= 0
+                || DestRect->left >= (int)This->currentDesc.Width
+                || DestRect->top >= (int)This->currentDesc.Height)
+        {
+            TRACE("Nothing to be done.\n");
+            return WINED3D_OK;
+        }
+
+        if (!Src)
+        {
+            RECT full_rect;
+
+            full_rect.left = 0;
+            full_rect.top = 0;
+            full_rect.right = This->currentDesc.Width;
+            full_rect.bottom = This->currentDesc.Height;
+            IntersectRect(&xdst, &full_rect, DestRect);
+        }
+        else
+        {
+            BOOL clip_horiz, clip_vert;
+
+            xdst = *DestRect;
+            clip_horiz = xdst.left < 0 || xdst.right > (int)This->currentDesc.Width;
+            clip_vert = xdst.top < 0 || xdst.bottom > (int)This->currentDesc.Height;
+
+            if (clip_vert || clip_horiz)
+            {
+                /* Now check if this is a special case or not... */
+                if ((Flags & WINEDDBLT_DDFX)
+                        || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
+                        || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
+                {
+                    WARN("Out of screen rectangle in special case. Not handled right now.\n");
+                    return WINED3D_OK;
+                }
+
+                if (clip_horiz)
+                {
+                    if (xdst.left < 0)
+                    {
+                        xsrc.left -= xdst.left;
+                        xdst.left = 0;
+                    }
+                    if (xdst.right > This->currentDesc.Width)
+                    {
+                        xsrc.right -= (xdst.right - (int)This->currentDesc.Width);
+                        xdst.right = (int)This->currentDesc.Width;
+                    }
+                }
+
+                if (clip_vert)
+                {
+                    if (xdst.top < 0)
+                    {
+                        xsrc.top -= xdst.top;
+                        xdst.top = 0;
+                    }
+                    if (xdst.bottom > This->currentDesc.Height)
+                    {
+                        xsrc.bottom -= (xdst.bottom - (int)This->currentDesc.Height);
+                        xdst.bottom = (int)This->currentDesc.Height;
+                    }
+                }
+
+                /* And check if after clipping something is still to be done... */
+                if ((xdst.right <= 0) || (xdst.bottom <= 0)
+                        || (xdst.left >= (int)This->currentDesc.Width)
+                        || (xdst.top >= (int)This->currentDesc.Height)
+                        || (xsrc.right <= 0) || (xsrc.bottom <= 0)
+                        || (xsrc.left >= (int) Src->currentDesc.Width)
+                        || (xsrc.top >= (int)Src->currentDesc.Height))
+                {
+                    TRACE("Nothing to be done after clipping.\n");
+                    return WINED3D_OK;
+                }
+            }
+        }
     }
     else
     {
-        xdst.top    = 0;
+        xdst.left = 0;
+        xdst.top = 0;
+        xdst.right = This->currentDesc.Width;
         xdst.bottom = This->currentDesc.Height;
-        xdst.left   = 0;
-        xdst.right  = This->currentDesc.Width;
-    }
-
-    /* The easy case : the source-less blits.... */
-    if (Src == NULL && DestRect)
-    {
-        RECT full_rect;
-        RECT temp_rect; /* No idea if intersect rect can be the same as one of the source rect */
-
-        full_rect.left   = 0;
-        full_rect.top    = 0;
-        full_rect.right  = This->currentDesc.Width;
-        full_rect.bottom = This->currentDesc.Height;
-        IntersectRect(&temp_rect, &full_rect, DestRect);
-        xdst = temp_rect;
-    }
-    else if (DestRect)
-    {
-        /* Only handle clipping on the destination rectangle */
-        int clip_horiz = (DestRect->left < 0) || (DestRect->right  > (int) This->currentDesc.Width );
-        int clip_vert  = (DestRect->top  < 0) || (DestRect->bottom > (int) This->currentDesc.Height);
-        if (clip_vert || clip_horiz)
-        {
-            /* Now check if this is a special case or not... */
-            if ((((DestRect->bottom - DestRect->top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
-                   (((DestRect->right  - DestRect->left) != (xsrc.right  - xsrc.left)) && clip_horiz) ||
-                   (Flags & WINEDDBLT_DDFX))
-            {
-                WARN("Out of screen rectangle in special case. Not handled right now.\n");
-                return  WINED3D_OK;
-            }
-
-            if (clip_horiz)
-            {
-                if (DestRect->left < 0) { xsrc.left -= DestRect->left; xdst.left = 0; }
-                if (DestRect->right > This->currentDesc.Width)
-                {
-                    xsrc.right -= (DestRect->right - (int) This->currentDesc.Width);
-                    xdst.right = (int) This->currentDesc.Width;
-                }
-            }
-            if (clip_vert)
-            {
-                if (DestRect->top < 0)
-                {
-                    xsrc.top -= DestRect->top;
-                    xdst.top = 0;
-                }
-                if (DestRect->bottom > This->currentDesc.Height)
-                {
-                    xsrc.bottom -= (DestRect->bottom - (int) This->currentDesc.Height);
-                    xdst.bottom = (int) This->currentDesc.Height;
-                }
-            }
-            /* And check if after clipping something is still to be done... */
-            if ((xdst.bottom <= 0)   || (xdst.right <= 0)       ||
-                 (xdst.top   >= (int) This->currentDesc.Height)  ||
-                 (xdst.left  >= (int) This->currentDesc.Width)   ||
-                 (xsrc.bottom <= 0)   || (xsrc.right <= 0)       ||
-                 (xsrc.top >= (int) Src->currentDesc.Height)     ||
-                 (xsrc.left >= (int) Src->currentDesc.Width))
-            {
-                TRACE("Nothing to be done after clipping !\n");
-                return  WINED3D_OK;
-            }
-        }
     }
 
     if (Src == This)
