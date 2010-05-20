@@ -75,7 +75,7 @@
 @ cdecl VkKeyScanEx(long long) X11DRV_VkKeyScanEx
 @ cdecl CreateCursorIcon(long ptr) X11DRV_CreateCursorIcon
 @ cdecl DestroyCursorIcon(long) X11DRV_DestroyCursorIcon
-@ cdecl SetCursor(long ptr) X11DRV_SetCursor
+@ cdecl SetCursor(long) X11DRV_SetCursor
 @ cdecl GetCursorPos(ptr) X11DRV_GetCursorPos
 @ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
 @ cdecl ClipCursor(ptr) X11DRV_ClipCursor
