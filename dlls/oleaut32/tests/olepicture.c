@@ -889,7 +889,7 @@ START_TEST(olepicture)
 	test_pic(jpgimage, sizeof(jpgimage));
 	test_pic(bmpimage, sizeof(bmpimage));
         test_pic(gif4pixel, sizeof(gif4pixel));
-	/* FIXME: No PNG support yet in Wine or in older Windows... */
+	/* FIXME: No PNG support in Windows... */
 	if (0) test_pic(pngimage, sizeof(pngimage));
 	test_empty_image();
 	test_empty_image_2();
