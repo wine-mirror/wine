@@ -920,6 +920,9 @@ static void test_system_tables( void )
     r = find_entry( hdb, "_Tables", "_Property" );
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
     MsiCloseHandle( hdb );
     MsiCloseHandle( hproduct );
 
@@ -988,6 +991,9 @@ static void test_system_tables( void )
     r = find_entry( hdb, "_Tables", "PatchPackage" );
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
     MsiCloseHandle( hdb );
     MsiCloseHandle( hproduct );
 
