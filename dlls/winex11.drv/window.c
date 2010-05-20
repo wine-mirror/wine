@@ -928,12 +928,12 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
         HBITMAP hbmOrig;
         RECT rcMask;
         BITMAP bm;
-        ICONINFO ii;
+        ICONINFO ii, ii_small;
         HDC hDC;
         unsigned int size;
         unsigned long *bits;
 
-        GetIconInfo(icon_big, &ii);
+        if (!GetIconInfo(icon_big, &ii)) return;
 
         GetObjectW(ii.hbmMask, sizeof(bm), &bm);
         rcMask.top    = 0;
@@ -943,12 +943,12 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
 
         hDC = CreateCompatibleDC(0);
         bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
-        if (GetIconInfo( icon_small, &ii ))
+        if (bits && GetIconInfo( icon_small, &ii_small ))
         {
             unsigned int size_small;
             unsigned long *bits_small, *new;
 
-            if ((bits_small = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size_small )) &&
+            if ((bits_small = get_bitmap_argb( hDC, ii_small.hbmColor, ii_small.hbmMask, &size_small )) &&
                 (bits_small[0] != bits[0] || bits_small[1] != bits[1]))  /* size must be different */
             {
                 if ((new = HeapReAlloc( GetProcessHeap(), 0, bits,
@@ -960,8 +960,8 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
                 }
             }
             HeapFree( GetProcessHeap(), 0, bits_small );
-            DeleteObject( ii.hbmColor );
-            DeleteObject( ii.hbmMask );
+            DeleteObject( ii_small.hbmColor );
+            DeleteObject( ii_small.hbmMask );
         }
         wine_tsx11_lock();
         if (bits)
