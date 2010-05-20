@@ -411,7 +411,7 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
 
             GetTempFileNameW(szBackSlash, szMsi, 0, tmpfileW);
             len = strlenW(path) + strlenW(tmpfileW) + 1;
-            if (!(tmppathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+            if (!(tmppathW = msi_alloc(len * sizeof(WCHAR))))
                 return ERROR_OUTOFMEMORY;
 
             strcpyW(tmppathW, path);
@@ -429,7 +429,7 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
             else
                 WARN("failed to schedule rename operation %s (error %d)\n", debugstr_w(path), GetLastError());
 
-            HeapFree(GetProcessHeap(), 0, tmppathW);
+            msi_free(tmppathW);
         }
         else
             WARN("failed to create %s (error %d)\n", debugstr_w(path), err);

@@ -148,7 +148,7 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
 
         GetTempFileNameW(szBackSlash, szMsi, 0, tmpfileW);
         len = strlenW(file->TargetPath) + strlenW(tmpfileW) + 1;
-        if (!(pathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if (!(pathW = msi_alloc(len * sizeof(WCHAR))))
             return ERROR_OUTOFMEMORY;
 
         strcpyW(pathW, file->TargetPath);
@@ -168,7 +168,7 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
             gle = GetLastError();
             WARN("failed to schedule rename operation: %d)\n", gle);
         }
-        HeapFree(GetProcessHeap(), 0, pathW);
+        msi_free(pathW);
     }
 
     return gle;

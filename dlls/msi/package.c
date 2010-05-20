@@ -893,11 +893,11 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     if (!GetUserNameW( NULL, &len ) && GetLastError() == ERROR_MORE_DATA)
     {
         WCHAR *username;
-        if ((username = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        if ((username = msi_alloc( len * sizeof(WCHAR) )))
         {
             if (GetUserNameW( username, &len ))
                 msi_set_property( package->db, szLogonUser, username );
-            HeapFree( GetProcessHeap(), 0, username );
+            msi_free( username );
         }
     }
 }
@@ -1113,16 +1113,16 @@ UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename )
     GetUrlCacheEntryInfoW( szUrl, NULL, &size );
     if ( GetLastError() != ERROR_FILE_NOT_FOUND )
     {
-        cache_entry = HeapAlloc( GetProcessHeap(), 0, size );
+        cache_entry = msi_alloc( size );
         if ( !GetUrlCacheEntryInfoW( szUrl, cache_entry, &size ) )
         {
             UINT error = GetLastError();
-            HeapFree( GetProcessHeap(), 0, cache_entry );
+            msi_free( cache_entry );
             return error;
         }
 
         lstrcpyW( filename, cache_entry->lpszLocalFileName );
-        HeapFree( GetProcessHeap(), 0, cache_entry );
+        msi_free( cache_entry );
         return ERROR_SUCCESS;
     }
 

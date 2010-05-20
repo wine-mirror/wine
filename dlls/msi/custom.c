@@ -1417,7 +1417,7 @@ void ACTION_FinishCustomActions(const MSIPACKAGE* package)
     EnterCriticalSection( &msi_custom_action_cs );
 
     handle_count = list_count( &msi_pending_custom_actions );
-    wait_handles = HeapAlloc( GetProcessHeap(), 0, handle_count * sizeof(HANDLE) );
+    wait_handles = msi_alloc( handle_count * sizeof(HANDLE) );
 
     handle_count = 0;
     LIST_FOR_EACH_ENTRY_SAFE( info, cursor, &msi_pending_custom_actions, msi_custom_action_info, entry )
@@ -1437,7 +1437,7 @@ void ACTION_FinishCustomActions(const MSIPACKAGE* package)
         CloseHandle( wait_handles[i] );
     }
 
-    HeapFree( GetProcessHeap(), 0, wait_handles );
+    msi_free( wait_handles );
 }
 
 typedef struct _msi_custom_remote_impl {
