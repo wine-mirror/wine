@@ -3035,7 +3035,31 @@ static BOOL match_dns_to_subject_alt_name(PCERT_EXTENSION ext,
             {
                 TRACE_(chain)("dNSName: %s\n", debugstr_w(
                  subjectName->rgAltEntry[i].u.pwszDNSName));
-                if (!strcmpiW(server_name,
+                if (subjectName->rgAltEntry[i].u.pwszDNSName[0] == '*')
+                {
+                    LPCWSTR server_name_dot;
+
+                    /* Matching a wildcard: a wildcard matches a single name
+                     * component, which is terminated by a dot.  RFC 1034
+                     * doesn't define whether multiple wildcards are allowed,
+                     * but I will assume that they are not until proven
+                     * otherwise.  RFC 1034 also states that 'the "*" label
+                     * always matches at least one whole label and sometimes
+                     * more, but always whole labels.'  Native crypt32 does not
+                     * match more than one label with a wildcard, so I do the
+                     * same here.  Thus, a wildcard only accepts the first
+                     * label, then requires an exact match of the remaining
+                     * string.
+                     */
+                    server_name_dot = strchrW(server_name, '.');
+                    if (server_name_dot)
+                    {
+                        if (!strcmpiW(server_name_dot,
+                         subjectName->rgAltEntry[i].u.pwszDNSName + 1))
+                            matches = TRUE;
+                    }
+                }
+                else if (!strcmpiW(server_name,
                  subjectName->rgAltEntry[i].u.pwszDNSName))
                     matches = TRUE;
             }

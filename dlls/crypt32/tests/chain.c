@@ -3818,7 +3818,7 @@ static const ChainPolicyCheck opensslPolicyCheckWithoutMatchingName = {
 
 static const ChainPolicyCheck winehqPolicyCheckWithMatchingName = {
  { sizeof(chain29) / sizeof(chain29[0]), chain29 },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck winehqPolicyCheckWithoutMatchingName = {
