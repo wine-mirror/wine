@@ -814,11 +814,52 @@ static void test_MkParseDisplayName(void)
     static const WCHAR wszDisplayNameProgId1[] = {'S','t','d','F','o','n','t',':',0};
     static const WCHAR wszDisplayNameProgId2[] = {'@','S','t','d','F','o','n','t',0};
     static const WCHAR wszDisplayNameProgIdFail[] = {'S','t','d','F','o','n','t',0};
+    static const WCHAR wszEmpty[] = {0};
     char szDisplayNameFile[256];
     WCHAR wszDisplayNameFile[256];
+    int i;
+
+    const struct
+    {
+        LPBC *ppbc;
+        LPCOLESTR szDisplayName;
+        LPDWORD pchEaten;
+        LPMONIKER *ppmk;
+    } invalid_parameters[] =
+    {
+        {NULL,  NULL,     NULL,   NULL},
+        {NULL,  NULL,     NULL,   &pmk},
+        {NULL,  NULL,     &eaten, NULL},
+        {NULL,  NULL,     &eaten, &pmk},
+        {NULL,  wszEmpty, NULL,   NULL},
+        {NULL,  wszEmpty, NULL,   &pmk},
+        {NULL,  wszEmpty, &eaten, NULL},
+        {NULL,  wszEmpty, &eaten, &pmk},
+        {&pbc,  NULL,     NULL,   NULL},
+        {&pbc,  NULL,     NULL,   &pmk},
+        {&pbc,  NULL,     &eaten, NULL},
+        {&pbc,  NULL,     &eaten, &pmk},
+        {&pbc,  wszEmpty, NULL,   NULL},
+        {&pbc,  wszEmpty, NULL,   &pmk},
+        {&pbc,  wszEmpty, &eaten, NULL},
+        {&pbc,  wszEmpty, &eaten, &pmk},
+    };
 
     hr = CreateBindCtx(0, &pbc);
     ok_ole_success(hr, CreateBindCtx);
+
+    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    {
+        eaten = 0xdeadbeef;
+        pmk = (IMoniker *)0xdeadbeef;
+        hr = MkParseDisplayName(invalid_parameters[i].ppbc ? *invalid_parameters[i].ppbc : NULL,
+                                invalid_parameters[i].szDisplayName,
+                                invalid_parameters[i].pchEaten,
+                                invalid_parameters[i].ppmk);
+        ok(hr == E_INVALIDARG, "[%d] MkParseDisplayName should have failed with E_INVALIDARG instead of 0x%08x\n", i, hr);
+        ok(eaten == 0xdeadbeef, "[%d] Processed character count should have been 0xdeadbeef instead of %u\n", i, eaten);
+        ok(pmk == (IMoniker *)0xdeadbeef, "[%d] Output moniker pointer should have been 0xdeadbeef instead of %p\n", i, pmk);
+    }
 
     hr = MkParseDisplayName(pbc, wszNonExistentProgId, &eaten, &pmk);
     ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
