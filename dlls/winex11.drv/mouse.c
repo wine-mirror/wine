@@ -514,165 +514,73 @@ static BOOL check_alpha_zero(CURSORICONINFO *ptr, unsigned char *xor_bits)
 #ifdef SONAME_LIBXCURSOR
 
 /***********************************************************************
- *              create_cursor_image
- *
- * Create an XcursorImage from a CURSORICONINFO
- */
-static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
-{
-    static const unsigned char convert_5to8[] =
-    {
-        0x00, 0x08, 0x10, 0x19, 0x21, 0x29, 0x31, 0x3a,
-        0x42, 0x4a, 0x52, 0x5a, 0x63, 0x6b, 0x73, 0x7b,
-        0x84, 0x8c, 0x94, 0x9c, 0xa5, 0xad, 0xb5, 0xbd,
-        0xc5, 0xce, 0xd6, 0xde, 0xe6, 0xef, 0xf7, 0xff,
-    };
-    static const unsigned char convert_6to8[] =
-    {
-        0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
-        0x20, 0x24, 0x28, 0x2d, 0x31, 0x35, 0x39, 0x3d,
-        0x41, 0x45, 0x49, 0x4d, 0x51, 0x55, 0x59, 0x5d,
-        0x61, 0x65, 0x69, 0x6d, 0x71, 0x75, 0x79, 0x7d,
-        0x82, 0x86, 0x8a, 0x8e, 0x92, 0x96, 0x9a, 0x9e,
-        0xa2, 0xa6, 0xaa, 0xae, 0xb2, 0xb6, 0xba, 0xbe,
-        0xc2, 0xc6, 0xca, 0xce, 0xd2, 0xd7, 0xdb, 0xdf,
-        0xe3, 0xe7, 0xeb, 0xef, 0xf3, 0xf7, 0xfb, 0xff,
-    };
-    int x;
-    int y;
-    int and_size;
-    unsigned char *and_bits, *and_ptr, *xor_bits, *xor_ptr;
-    int and_width_bytes, xor_width_bytes;
-    XcursorPixel *pixel_ptr;
-    XcursorImage *image;
-    unsigned char tmp;
-    BOOL alpha_zero;
-
-    and_width_bytes = 2 * ((ptr->nWidth+15) / 16);
-    xor_width_bytes = ptr->nWidthBytes;
-
-    and_size = ptr->nHeight * and_width_bytes;
-    and_ptr = and_bits = (unsigned char *)(ptr + 1);
-
-    xor_ptr = xor_bits = and_ptr + and_size;
-
-    image = pXcursorImageCreate( ptr->nWidth, ptr->nHeight );
-    if (!image) return NULL;
-
-    pixel_ptr = image->pixels;
-
-    alpha_zero = check_alpha_zero(ptr, xor_bits);
-
-    /* On windows, to calculate the color for a pixel, first an AND is done
-     * with the background and the "and" bitmap, then an XOR with the "xor"
-     * bitmap. This means that when the data in the "and" bitmap is 0, the
-     * pixel will get the color as specified in the "xor" bitmap.
-     * However, if the data in the "and" bitmap is 1, the result will be the
-     * background XOR'ed with the value in the "xor" bitmap. In case the "xor"
-     * data is completely black (0x000000) the pixel will become transparent,
-     * in case it's white (0xffffff) the pixel will become the inverse of the
-     * background color.
-     *
-     * Since we can't support inverting colors, we map the grayscale value of
-     * the "xor" data to the alpha channel, and xor the color with either
-     * black or white.
-     */
-    for (y = 0; y < ptr->nHeight; ++y)
-    {
-        and_ptr = and_bits + (y * and_width_bytes);
-        xor_ptr = xor_bits + (y * xor_width_bytes);
-
-        for (x = 0; x < ptr->nWidth; ++x)
-        {
-            /* Xcursor pixel data is in ARGB format, with A in the high byte */
-            switch (ptr->bBitsPerPixel)
-            {
-                case 32:
-                    /* BGRA, 8 bits each */
-                    *pixel_ptr = *xor_ptr++;
-                    *pixel_ptr |= *xor_ptr++ << 8;
-                    *pixel_ptr |= *xor_ptr++ << 16;
-                    *pixel_ptr |= *xor_ptr++ << 24;
-                    break;
-
-                case 24:
-                    /* BGR, 8 bits each */
-                    *pixel_ptr = *xor_ptr++;
-                    *pixel_ptr |= *xor_ptr++ << 8;
-                    *pixel_ptr |= *xor_ptr++ << 16;
-                    break;
-
-                case 16:
-                    /* BGR, 5 red, 6 green, 5 blue */
-                    /* [gggbbbbb][rrrrrggg] -> [xxxxxxxx][rrrrrrrr][gggggggg][bbbbbbbb] */
-                    *pixel_ptr = convert_5to8[*xor_ptr & 0x1f];
-                    tmp = (*xor_ptr++ & 0xe0) >> 5;
-                    tmp |= (*xor_ptr & 0x07) << 3;
-                    *pixel_ptr |= convert_6to8[tmp] << 16;
-                    *pixel_ptr |= convert_5to8[*xor_ptr++ >> 3] << 24;
-                    break;
-
-                case 1:
-                    if (*xor_ptr & (1 << (7 - (x & 7)))) *pixel_ptr = 0xffffff;
-                    else *pixel_ptr = 0;
-                    if ((x & 7) == 7) ++xor_ptr;
-                    break;
-
-                default:
-                    FIXME("Currently no support for cursors with %d bits per pixel\n", ptr->bBitsPerPixel);
-                    return 0;
-            }
-
-            if (alpha_zero)
-            {
-                /* Alpha channel */
-                if (~*and_ptr & (1 << (7 - (x & 7)))) *pixel_ptr |= 0xff << 24;
-                else if (*pixel_ptr)
-                {
-                    int alpha = (*pixel_ptr & 0xff) * 0.30f
-                            + ((*pixel_ptr & 0xff00) >> 8) * 0.55f
-                            + ((*pixel_ptr & 0xff0000) >> 16) * 0.15f;
-                    *pixel_ptr ^= ((x + y) % 2) ? 0xffffff : 0x000000;
-                    *pixel_ptr |= alpha << 24;
-                }
-                if ((x & 7) == 7) ++and_ptr;
-            }
-            ++pixel_ptr;
-        }
-    }
-
-    return image;
-}
-
-
-/***********************************************************************
  *              create_xcursor_cursor
  *
  * Use Xcursor to create an X cursor from a Windows one.
  */
-static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
+static Cursor create_xcursor_cursor( HDC hdc, ICONINFO *icon, int width, int height )
 {
+    int x, y, i, has_alpha;
+    BITMAPINFO *info;
     Cursor cursor;
     XcursorImage *image;
+    XcursorPixel *ptr;
 
-    image = create_cursor_image( ptr );
-    if (!image) return 0;
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) return 0;
 
-    /* Make sure hotspot is valid */
-    image->xhot = ptr->ptHotSpot.x;
-    image->yhot = ptr->ptHotSpot.y;
-    if (image->xhot >= image->width ||
-        image->yhot >= image->height)
+    wine_tsx11_lock();
+    image = pXcursorImageCreate( width, height );
+    wine_tsx11_unlock();
+    if (!image)
     {
-        image->xhot = image->width / 2;
-        image->yhot = image->height / 2;
+        HeapFree( GetProcessHeap(), 0, info );
+        return 0;
     }
 
+    image->xhot = icon->xHotspot;
+    image->yhot = icon->yHotspot;
     image->delay = 0;
 
-    cursor = pXcursorImageLoadCursor( display, image );
-    pXcursorImageDestroy( image );
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = width;
+    info->bmiHeader.biHeight = -height;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = width * height * 4;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
+    GetDIBits( hdc, icon->hbmColor, 0, height, image->pixels, info, DIB_RGB_COLORS );
 
+    for (i = 0, ptr = image->pixels; i < width * height; i++, ptr++)
+        if ((has_alpha = (*ptr & 0xff000000) != 0)) break;
+
+    if (!has_alpha)
+    {
+        unsigned char *mask_bits;
+        unsigned int width_bytes = (width + 31) / 32 * 4;
+
+        /* generate alpha channel from the mask */
+        info->bmiHeader.biBitCount = 1;
+        info->bmiHeader.biSizeImage = width_bytes * height;
+        if ((mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
+        {
+            GetDIBits( hdc, icon->hbmMask, 0, height, mask_bits, info, DIB_RGB_COLORS );
+            for (y = 0, ptr = image->pixels; y < height; y++)
+                for (x = 0; x < width; x++, ptr++)
+                    if (!((mask_bits[y * width_bytes + x / 8] << (x % 8)) & 0x80))
+                        *ptr |= 0xff000000;
+            HeapFree( GetProcessHeap(), 0, mask_bits );
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, info );
+
+    wine_tsx11_lock();
+    cursor = pXcursorImageLoadCursor( gdi_display, image );
+    pXcursorImageDestroy( image );
+    wine_tsx11_unlock();
     return cursor;
 }
 
@@ -994,23 +902,44 @@ static Cursor create_xlib_cursor( Display *display, CURSORICONINFO *ptr )
  */
 static Cursor create_cursor( HANDLE handle, CURSORICONINFO *ptr )
 {
-    Cursor cursor;
+    Cursor cursor = 0;
+    HDC hdc;
+    ICONINFO info;
+    BITMAP bm;
 
     if (!handle) return get_empty_cursor();
 
-#ifdef SONAME_LIBXCURSOR
-    if (pXcursorImageLoadCursor)
+    if (!(hdc = CreateCompatibleDC( 0 ))) return 0;
+    if (!GetIconInfo( handle, &info ))
     {
-        wine_tsx11_lock();
-        cursor = create_xcursor_cursor( gdi_display, ptr );
-        wine_tsx11_unlock();
-        if (cursor) return cursor;
+        DeleteDC( hdc );
+        return 0;
     }
+
+    GetObjectW( info.hbmMask, sizeof(bm), &bm );
+    if (!info.hbmColor) bm.bmHeight /= 2;
+
+    /* make sure hotspot is valid */
+    if (info.xHotspot >= bm.bmWidth || info.yHotspot >= bm.bmHeight)
+    {
+        info.xHotspot = bm.bmWidth / 2;
+        info.yHotspot = bm.bmHeight / 2;
+    }
+
+#ifdef SONAME_LIBXCURSOR
+    if (pXcursorImageLoadCursor && info.hbmColor)
+        cursor = create_xcursor_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
 #endif
 
-    wine_tsx11_lock();
-    cursor = create_xlib_cursor( gdi_display, ptr );
-    wine_tsx11_unlock();
+    if (!cursor)
+    {
+        wine_tsx11_lock();
+        cursor = create_xlib_cursor( gdi_display, ptr );
+        wine_tsx11_unlock();
+    }
+    if (info.hbmColor) DeleteObject( info.hbmColor );
+    DeleteObject( info.hbmMask );
+    DeleteDC( hdc );
     return cursor;
 }
 
