@@ -176,6 +176,7 @@ static Cursor get_empty_cursor(void)
     static Cursor cursor;
     static const char data[] = { 0 };
 
+    wine_tsx11_lock();
     if (!cursor)
     {
         XColor bg;
@@ -189,6 +190,7 @@ static Cursor get_empty_cursor(void)
             XFreePixmap( gdi_display, pixmap );
         }
     }
+    wine_tsx11_unlock();
     return cursor;
 }
 
@@ -682,7 +684,7 @@ static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
  *
  * Create an X cursor from a Windows one.
  */
-static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
+static Cursor create_xlib_cursor( Display *display, CURSORICONINFO *ptr )
 {
     Pixmap pixmapBits, pixmapMask, pixmapMaskInv = 0, pixmapAll;
     XColor fg, bg;
@@ -690,12 +692,6 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
     POINT hotspot;
     char *bitMask32 = NULL;
     BOOL alpha_zero = TRUE;
-
-    if (!ptr) return get_empty_cursor();
-
-#ifdef SONAME_LIBXCURSOR
-    if (pXcursorImageLoadCursor) return create_xcursor_cursor( display, ptr );
-#endif
 
     /* Create the X cursor from the bits */
     {
@@ -992,26 +988,60 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
 }
 
 /***********************************************************************
+ *		create_cursor
+ *
+ * Create an X cursor from a Windows one.
+ */
+static Cursor create_cursor( HANDLE handle, CURSORICONINFO *ptr )
+{
+    Cursor cursor;
+
+    if (!handle) return get_empty_cursor();
+
+#ifdef SONAME_LIBXCURSOR
+    if (pXcursorImageLoadCursor)
+    {
+        wine_tsx11_lock();
+        cursor = create_xcursor_cursor( gdi_display, ptr );
+        wine_tsx11_unlock();
+        if (cursor) return cursor;
+    }
+#endif
+
+    wine_tsx11_lock();
+    cursor = create_xlib_cursor( gdi_display, ptr );
+    wine_tsx11_unlock();
+    return cursor;
+}
+
+/***********************************************************************
  *		CreateCursorIcon (X11DRV.@)
  */
 void CDECL X11DRV_CreateCursorIcon( HCURSOR handle, CURSORICONINFO *info )
 {
     static const WORD ICON_HOTSPOT = 0x4242;
-    Cursor cursor;
+    Cursor cursor, prev;
 
     /* ignore icons (FIXME: shouldn't use magic hotspot value) */
     if (info->ptHotSpot.x == ICON_HOTSPOT && info->ptHotSpot.y == ICON_HOTSPOT) return;
 
-    wine_tsx11_lock();
-    cursor = create_cursor( gdi_display, info );
+    cursor = create_cursor( handle, info );
     if (cursor)
     {
+        wine_tsx11_lock();
         if (!cursor_context) cursor_context = XUniqueContext();
-        XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
+        if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&prev ))
+        {
+            /* someone else was here first */
+            XFreeCursor( gdi_display, cursor );
+            cursor = prev;
+        }
+        else
+            XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
+        wine_tsx11_unlock();
         TRACE( "cursor %p %ux%u, planes %u, bpp %u -> xid %lx\n",
                handle, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, cursor );
     }
-    wine_tsx11_unlock();
 }
 
 /***********************************************************************
