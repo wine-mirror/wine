@@ -1418,7 +1418,49 @@ static void test_MkParseDisplayNameEx(void)
             '2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8',
             '-','0','8','0','0','2','B','3','0','3','0','9','D',':',0};
 
+    const struct
+    {
+        LPBC *ppbc;
+        LPCWSTR szDisplayName;
+        ULONG *pchEaten;
+        LPMONIKER *ppmk;
+    } invalid_parameters[] =
+    {
+        {NULL,  NULL,     NULL,   NULL},
+        {NULL,  NULL,     NULL,   &mon},
+        {NULL,  NULL,     &eaten, NULL},
+        {NULL,  NULL,     &eaten, &mon},
+        {NULL,  wszEmpty, NULL,   NULL},
+        {NULL,  wszEmpty, NULL,   &mon},
+        {NULL,  wszEmpty, &eaten, NULL},
+        {NULL,  wszEmpty, &eaten, &mon},
+        {&bctx, NULL,     NULL,   NULL},
+        {&bctx, NULL,     NULL,   &mon},
+        {&bctx, NULL,     &eaten, NULL},
+        {&bctx, NULL,     &eaten, &mon},
+        {&bctx, wszEmpty, NULL,   NULL},
+        {&bctx, wszEmpty, NULL,   &mon},
+        {&bctx, wszEmpty, &eaten, NULL},
+        {&bctx, wszEmpty, &eaten, &mon},
+    };
+
+    int i;
+
     CreateBindCtx(0, &bctx);
+
+    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    {
+        eaten = 0xdeadbeef;
+        mon = (IMoniker *)0xdeadbeef;
+        hres = MkParseDisplayNameEx(invalid_parameters[i].ppbc ? *invalid_parameters[i].ppbc : NULL,
+                                    invalid_parameters[i].szDisplayName,
+                                    invalid_parameters[i].pchEaten,
+                                    invalid_parameters[i].ppmk);
+        ok(hres == E_INVALIDARG,
+            "[%d] Expected MkParseDisplayNameEx to return E_INVALIDARG, got %08x\n", i, hres);
+        ok(eaten == 0xdeadbeef, "[%d] Expected eaten to be 0xdeadbeef, got %u\n", i, eaten);
+        ok(mon == (IMoniker *)0xdeadbeef, "[%d] Expected mon to be 0xdeadbeef, got %p\n", i, mon);
+    }
 
     hres = MkParseDisplayNameEx(bctx, url9, &eaten, &mon);
     ok(hres == S_OK, "MkParseDisplayNameEx failed: %08x\n", hres);

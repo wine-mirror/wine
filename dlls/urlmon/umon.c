@@ -625,6 +625,9 @@ HRESULT WINAPI MkParseDisplayNameEx(IBindCtx *pbc, LPCWSTR szDisplayName, ULONG 
 {
     TRACE("(%p %s %p %p)\n", pbc, debugstr_w(szDisplayName), pchEaten, ppmk);
 
+    if (!pbc || !szDisplayName || !*szDisplayName || !pchEaten || !ppmk)
+        return E_INVALIDARG;
+
     if(is_registered_protocol(szDisplayName)) {
         HRESULT hres;
 
