@@ -385,13 +385,13 @@ static void test_CoInternetCompareUrl(void)
     }
 
     hres = pCoInternetCompareUrl(url1, url1, 0);
-    ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+    ok(hres == S_OK, "CoInternetCompareUrl failed: %08x\n", hres);
 
     hres = pCoInternetCompareUrl(url1, url3, 0);
-    ok(hres == S_FALSE, "CoInternetParseUrl failed: %08x\n", hres);
+    ok(hres == S_FALSE, "CoInternetCompareUrl failed: %08x\n", hres);
 
     hres = pCoInternetCompareUrl(url3, url1, 0);
-    ok(hres == S_FALSE, "CoInternetParseUrl failed: %08x\n", hres);
+    ok(hres == S_FALSE, "CoInternetCompareUrl failed: %08x\n", hres);
 }
 
 static const struct {
