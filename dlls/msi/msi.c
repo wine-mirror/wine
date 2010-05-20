@@ -2388,6 +2388,7 @@ done:
         r = ERROR_SUCCESS;
     }
 
+    msiobj_release(&package->hdr);
     return r;
 }
 
