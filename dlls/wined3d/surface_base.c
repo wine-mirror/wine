@@ -1020,21 +1020,24 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         return WINEDDERR_INVALIDRECT;
     }
 
-    /* Now handle negative values in the rectangles. Warning: only supported for now
-    in the 'simple' cases (ie not in any stretching / rotation cases).
+    /* Now handle negative values in the rectangles. Warning: only supported
+     * for now in the 'simple' cases (ie not in any stretching / rotation
+     * cases). First, the case where nothing is to be done. */
 
-    First, the case where nothing is to be done.
-    */
-    if ((DestRect && ((DestRect->bottom <= 0) || (DestRect->right <= 0)  ||
-          (DestRect->top    >= (int) This->currentDesc.Height) ||
-          (DestRect->left   >= (int) This->currentDesc.Width))) ||
-          ((Src != NULL) && (SrcRect != NULL) &&
-          ((SrcRect->bottom <= 0) || (SrcRect->right <= 0)     ||
-          (SrcRect->top >= (int) Src->currentDesc.Height) ||
-          (SrcRect->left >= (int) Src->currentDesc.Width))  ))
+    if (DestRect && (DestRect->bottom <= 0 || DestRect->right <= 0
+            || DestRect->top >= (int)This->currentDesc.Height
+            || DestRect->left >= (int)This->currentDesc.Width))
     {
-        TRACE("Nothing to be done !\n");
-        return  WINED3D_OK;
+        TRACE("Nothing to be done.\n");
+        return WINED3D_OK;
+    }
+
+    if (Src && SrcRect && (SrcRect->bottom <= 0 || SrcRect->right <= 0
+            || SrcRect->top >= (int)Src->currentDesc.Height
+            || SrcRect->left >= (int)Src->currentDesc.Width))
+    {
+        TRACE("Nothing to be done.\n");
+        return WINED3D_OK;
     }
 
     if (DestRect)
