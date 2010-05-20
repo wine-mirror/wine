@@ -3462,6 +3462,10 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
          * for all the data */
         HTTP_DrainContent(lpwhr);
         lpwhr->dwContentRead = 0;
+        if(redirected) {
+            lpwhr->dwContentLength = ~0u;
+            lpwhr->dwBytesToWrite = 0;
+        }
 
         if (TRACE_ON(wininet))
         {
