@@ -1815,6 +1815,7 @@ static void test_Session(IDispatch *pSession)
     BOOL bool;
     int myint;
     IDispatch *pDatabase = NULL, *pInst = NULL, *record = NULL;
+    ULONG refs_before, refs_after;
     HRESULT hr;
 
     /* Session::Installer */
@@ -1822,6 +1823,14 @@ static void test_Session(IDispatch *pSession)
     ok(hr == S_OK, "Session_Installer failed, hresult 0x%08x\n", hr);
     ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
     ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
+    refs_before = IDispatch_AddRef(pInst);
+
+    hr = Session_Installer(pSession, &pInst);
+    ok(hr == S_OK, "Session_Installer failed, hresult 0x%08x\n", hr);
+    ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
+    ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
+    refs_after = IDispatch_Release(pInst);
+    ok(refs_before == refs_after, "got %u and %u\n", refs_before, refs_after);
 
     /* Session::Property, get */
     memset(stringw, 0, sizeof(stringw));
