@@ -4350,6 +4350,24 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         dst_rect = src_rect;
     }
 
+    if ((This->Flags & SFLAG_SWAPCHAIN) && This == ((IWineD3DSwapChainImpl *)This->container)->front_buffer)
+    {
+        RECT windowsize;
+        POINT offset = {0, 0};
+        UINT h;
+
+        ClientToScreen(context->win_handle, &offset);
+        GetClientRect(context->win_handle, &windowsize);
+        h = windowsize.bottom - windowsize.top;
+
+        dst_rect.left -= offset.x;
+        dst_rect.right -=offset.x;
+        dst_rect.top -= offset.y;
+        dst_rect.bottom -=offset.y;
+        dst_rect.top += This->currentDesc.Height - h;
+        dst_rect.bottom += This->currentDesc.Height - h;
+    }
+
     device->blitter->set_shader((IWineD3DDevice *) device, This);
 
     ENTER_GL();
