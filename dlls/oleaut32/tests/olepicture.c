@@ -36,6 +36,7 @@
 #include <winerror.h>
 #include <winnt.h>
 
+#include <urlmon.h>
 #include <wtypes.h>
 #include <olectl.h>
 #include <objidl.h>
@@ -737,6 +738,64 @@ static void test_get_Type(void)
     IPicture_Release(pic);
 }
 
+static void test_OleLoadPicturePath(void)
+{
+    static WCHAR emptyW[] = {0};
+
+    IPicture *pic;
+    HRESULT hres;
+    int i;
+
+    const struct
+    {
+        LPOLESTR szURLorPath;
+        REFIID riid;
+        IPicture **pic;
+    } invalid_parameters[] =
+    {
+        {NULL,  NULL,          NULL},
+        {NULL,  NULL,          &pic},
+        {NULL,  &IID_IPicture, NULL},
+        {NULL,  &IID_IPicture, &pic},
+        {emptyW, NULL,          NULL},
+        {emptyW, &IID_IPicture, NULL},
+    };
+
+    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    {
+        pic = (IPicture *)0xdeadbeef;
+        hres = OleLoadPicturePath(invalid_parameters[i].szURLorPath, NULL, 0, 0,
+                                  invalid_parameters[i].riid,
+                                  (void **)invalid_parameters[i].pic);
+        ok(hres == E_INVALIDARG,
+           "[%d] Expected OleLoadPicturePath to return E_INVALIDARG, got 0x%08x\n", i, hres);
+        ok(pic == (IPicture *)0xdeadbeef,
+           "[%d] Expected output pointer to be 0xdeadbeef, got %p\n", i, pic);
+    }
+
+    pic = (IPicture *)0xdeadbeef;
+    hres = OleLoadPicturePath(emptyW, NULL, 0, 0, NULL, (void **)&pic);
+    todo_wine
+    ok(hres == INET_E_UNKNOWN_PROTOCOL || /* XP/Vista+ */
+       hres == E_UNEXPECTED || /* NT4/Win95 */
+       hres == E_FAIL || /* Win95 OSR2 */
+       hres == E_OUTOFMEMORY, /* Win98/Win2k/Win2k3 */
+       "Expected OleLoadPicturePath to return INET_E_UNKNOWN_PROTOCOL, got 0x%08x\n", hres);
+    ok(pic == NULL,
+       "Expected the output interface pointer to be NULL, got %p\n", pic);
+
+    pic = (IPicture *)0xdeadbeef;
+    hres = OleLoadPicturePath(emptyW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
+    todo_wine
+    ok(hres == INET_E_UNKNOWN_PROTOCOL || /* XP/Vista+ */
+       hres == E_UNEXPECTED || /* NT4/Win95 */
+       hres == E_FAIL || /* Win95 OSR2 */
+       hres == E_OUTOFMEMORY, /* Win98/Win2k/Win2k3 */
+       "Expected OleLoadPicturePath to return INET_E_UNKNOWN_PROTOCOL, got 0x%08x\n", hres);
+    ok(pic == NULL,
+       "Expected the output interface pointer to be NULL, got %p\n", pic);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -761,12 +820,13 @@ START_TEST(olepicture)
         test_metafile();
         test_enhmetafile();
 
-	test_Invoke();
-        test_OleCreatePictureIndirect();
-        test_Render();
-        test_get_Attributes();
-        test_get_Handle();
-        test_get_Type();
+    test_Invoke();
+    test_OleCreatePictureIndirect();
+    test_Render();
+    test_get_Attributes();
+    test_get_Handle();
+    test_get_Type();
+    test_OleLoadPicturePath();
 }
 
 

@@ -2278,7 +2278,10 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
         debugstr_w(szURLorPath), punkCaller, dwReserved, clrReserved,
         debugstr_guid(riid), ppvRet);
 
-  if (!ppvRet) return E_POINTER;
+  if (!szURLorPath || !ppvRet)
+      return E_INVALIDARG;
+
+  *ppvRet = NULL;
 
   if (strncmpW(szURLorPath, file, 7) == 0) {	    
       szURLorPath += 7;
