@@ -275,7 +275,7 @@
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtQueueApcThread(long ptr long long long)
 @ stdcall NtRaiseException(ptr ptr long)
-@ stub NtRaiseHardError
+@ stdcall NtRaiseHardError(long long ptr ptr long long)
 @ stdcall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtReadRequestData
