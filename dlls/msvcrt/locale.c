@@ -572,7 +572,7 @@ int CDECL ___lc_collate_cp_func(void)
 }
 
 /* _free_locale - not exported in native msvcrt */
-void CDECL _free_locale(MSVCRT__locale_t locale)
+void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 {
     int i;
 
@@ -610,7 +610,7 @@ void CDECL _free_locale(MSVCRT__locale_t locale)
 }
 
 /* _create_locale - not exported in native msvcrt */
-MSVCRT__locale_t _create_locale(int category, const char *locale)
+MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
 {
     static const char collate[] = "COLLATE=";
     static const char ctype[] = "CTYPE=";
@@ -705,7 +705,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 
     loc->locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
     if(!loc->locinfo->lconv) {
-        _free_locale(loc);
+        MSVCRT__free_locale(loc);
         return NULL;
     }
     memset(loc->locinfo->lconv, 0, sizeof(struct MSVCRT_lconv));
@@ -713,7 +713,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
     loc->locinfo->pclmap = MSVCRT_malloc(sizeof(char[256]));
     loc->locinfo->pcumap = MSVCRT_malloc(sizeof(char[256]));
     if(!loc->locinfo->pclmap || !loc->locinfo->pcumap) {
-        _free_locale(loc);
+        MSVCRT__free_locale(loc);
         return NULL;
     }
 
@@ -721,7 +721,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 
     if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], loc, MSVCRT_LC_COLLATE)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
     } else
@@ -731,7 +731,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         CPINFO cp;
 
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], loc, MSVCRT_LC_CTYPE)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -739,7 +739,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->lc_collate_cp = loc->locinfo->lc_codepage;
         loc->locinfo->lc_clike = 1;
         if(!GetCPInfo(loc->locinfo->lc_codepage, &cp)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
         loc->locinfo->mb_cur_max = cp.MaxCharSize;
@@ -747,7 +747,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->ctype1_refcount = MSVCRT_malloc(sizeof(int));
         loc->locinfo->ctype1 = MSVCRT_malloc(sizeof(short[257]));
         if(!loc->locinfo->ctype1_refcount || !loc->locinfo->ctype1) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -793,14 +793,14 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 
     if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
         loc->locinfo->lconv_intl_refcount = MSVCRT_malloc(sizeof(int));
         loc->locinfo->lconv_mon_refcount = MSVCRT_malloc(sizeof(int));
         if(!loc->locinfo->lconv_intl_refcount || !loc->locinfo->lconv_mon_refcount) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -812,7 +812,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->int_curr_symbol = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->int_curr_symbol, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -821,7 +821,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->currency_symbol = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->currency_symbol, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -830,7 +830,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->mon_decimal_point = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->mon_decimal_point, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -839,7 +839,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->mon_thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->mon_thousands_sep, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -854,7 +854,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             if(buf[i] != '0')
                 loc->locinfo->lconv->mon_grouping[i/2+1] = 127;
         } else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -863,7 +863,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->positive_sign = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->positive_sign, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -872,7 +872,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->negative_sign = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->negative_sign, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -880,7 +880,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->int_frac_digits = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -888,7 +888,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->frac_digits = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -896,7 +896,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_cs_precedes = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -904,7 +904,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_sep_by_space = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -912,7 +912,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_cs_precedes = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -920,7 +920,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_sep_by_space = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -928,7 +928,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->p_sign_posn = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -936,7 +936,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                     |LOCALE_NOUSEROVERRIDE, buf, 256))
             loc->locinfo->lconv->n_sign_posn = atoi(buf);
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
     } else {
@@ -952,7 +952,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
                 || !loc->locinfo->lconv->mon_decimal_point || !loc->locinfo->lconv->mon_thousands_sep
                 || !loc->locinfo->lconv->mon_grouping || !loc->locinfo->lconv->positive_sign
                 || !loc->locinfo->lconv->negative_sign) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -977,7 +977,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 
     if(lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC], loc, MSVCRT_LC_NUMERIC)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -985,7 +985,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             loc->locinfo->lconv_intl_refcount = MSVCRT_malloc(sizeof(int));
         loc->locinfo->lconv_num_refcount = MSVCRT_malloc(sizeof(int));
         if(!loc->locinfo->lconv_intl_refcount || !loc->locinfo->lconv_num_refcount) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -997,7 +997,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->decimal_point = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->decimal_point, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -1006,7 +1006,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         if(i && (loc->locinfo->lconv->thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
             memcpy(loc->locinfo->lconv->thousands_sep, buf, sizeof(char[i]));
         else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -1021,7 +1021,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
             if(buf[i] != '0')
                 loc->locinfo->lconv->grouping[i/2+1] = 127;
         } else {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
     } else {
@@ -1030,7 +1030,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
         loc->locinfo->lconv->grouping = MSVCRT_malloc(sizeof(char));
         if(!loc->locinfo->lconv->decimal_point || !loc->locinfo->lconv->thousands_sep
                 || !loc->locinfo->lconv->grouping) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
 
@@ -1044,7 +1044,7 @@ MSVCRT__locale_t _create_locale(int category, const char *locale)
 
     if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME], loc, MSVCRT_LC_TIME)) {
-            _free_locale(loc);
+            MSVCRT__free_locale(loc);
             return NULL;
         }
     } else
@@ -1067,7 +1067,7 @@ int CDECL _configthreadlocale(int type)
     if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE) {
         if(!data->locale) {
             /* Copy current global locale */
-            data->locale = _create_locale(MSVCRT_LC_ALL, MSVCRT_setlocale(MSVCRT_LC_ALL, NULL));
+            data->locale = MSVCRT__create_locale(MSVCRT_LC_ALL, MSVCRT_setlocale(MSVCRT_LC_ALL, NULL));
             if(!data->locale)
                 return -1;
         }
@@ -1077,7 +1077,7 @@ int CDECL _configthreadlocale(int type)
 
     if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE) {
         if(data->locale) {
-            _free_locale(data->locale);
+            MSVCRT__free_locale(data->locale);
             data->locale = NULL;
         }
 
@@ -1109,7 +1109,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         return cur->locinfo->lc_category[category].locale;
     }
 
-    loc = _create_locale(category, locale);
+    loc = MSVCRT__create_locale(category, locale);
     if(!loc) {
         WARN("%d %s failed\n", category, locale);
         return NULL;
@@ -1220,7 +1220,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     if(!cur)
         MSVCRT_locale = cur = loc;
     else
-        _free_locale(loc);
+        MSVCRT__free_locale(loc);
 
     UNLOCK_LOCALE;
 

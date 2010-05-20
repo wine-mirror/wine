@@ -800,7 +800,7 @@ typedef struct MSVCRT_localeinfo_struct
 
 extern MSVCRT__locale_t MSVCRT_locale;
 MSVCRT__locale_t get_locale(void);
-void __cdecl _free_locale(MSVCRT__locale_t);
+void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);

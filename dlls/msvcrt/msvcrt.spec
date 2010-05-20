@@ -1432,8 +1432,8 @@
 # Functions not exported in native dll:
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _set_invalid_parameter_handler(ptr)
-@ cdecl _create_locale(long str)
-@ cdecl _free_locale(ptr)
+@ cdecl _create_locale(long str) MSVCRT__create_locale
+@ cdecl _free_locale(ptr) MSVCRT__free_locale
 @ cdecl _configthreadlocale(long)
 @ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl ___mb_cur_max_l_func(ptr)

@@ -69,7 +69,7 @@ static inline void msvcrt_free_tls_mem(void)
     HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
     HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
     HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
-    _free_locale(tls->locale);
+    MSVCRT__free_locale(tls->locale);
   }
   HeapFree(GetProcessHeap(), 0, tls);
 }
@@ -113,7 +113,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_tls_mem();
     if (!msvcrt_free_tls())
       return FALSE;
-    _free_locale(MSVCRT_locale);
+    MSVCRT__free_locale(MSVCRT_locale);
     TRACE("finished process free\n");
     break;
   case DLL_THREAD_DETACH:
