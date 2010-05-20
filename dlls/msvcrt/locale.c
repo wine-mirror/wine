@@ -576,6 +576,9 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 {
     int i;
 
+    if (!locale)
+        return;
+
     for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++) {
         MSVCRT_free(locale->locinfo->lc_category[i].locale);
         MSVCRT_free(locale->locinfo->lc_category[i].refcount);
