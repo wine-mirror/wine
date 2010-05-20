@@ -993,19 +993,46 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         FIXME("Filters not supported in software blit\n");
     }
 
-    /* First check for the validity of source / destination rectangles. This was
-     * verified using a test application + by MSDN.
-     */
-    if ((Src != NULL) && (SrcRect != NULL) &&
-         ((SrcRect->bottom > Src->currentDesc.Height)||(SrcRect->bottom < 0) ||
-         (SrcRect->top     > Src->currentDesc.Height)||(SrcRect->top    < 0) ||
-         (SrcRect->left    > Src->currentDesc.Width) ||(SrcRect->left   < 0) ||
-         (SrcRect->right   > Src->currentDesc.Width) ||(SrcRect->right  < 0) ||
-         (SrcRect->right   < SrcRect->left)          ||(SrcRect->bottom < SrcRect->top)))
+    /* First check for the validity of source / destination rectangles.
+     * This was verified using a test application + by MSDN. */
+
+    if (SrcRect)
     {
-        WARN("Application gave us bad source rectangle for Blt.\n");
-        return WINEDDERR_INVALIDRECT;
+        if (Src)
+        {
+            if (SrcRect->right < SrcRect->left || SrcRect->bottom < SrcRect->top
+                    || SrcRect->left > Src->currentDesc.Width || SrcRect->left < 0
+                    || SrcRect->top > Src->currentDesc.Height || SrcRect->top < 0
+                    || SrcRect->right > Src->currentDesc.Width || SrcRect->right < 0
+                    || SrcRect->bottom > Src->currentDesc.Height || SrcRect->bottom < 0)
+            {
+                WARN("Application gave us bad source rectangle for Blt.\n");
+                return WINEDDERR_INVALIDRECT;
+            }
+
+            if (!SrcRect->right || !SrcRect->bottom
+                    || SrcRect->left == (int)Src->currentDesc.Width
+                    || SrcRect->top == (int)Src->currentDesc.Height)
+            {
+                TRACE("Nothing to be done.\n");
+                return WINED3D_OK;
+            }
+        }
+
+        xsrc = *SrcRect;
     }
+    else if (Src)
+    {
+        xsrc.left = 0;
+        xsrc.top = 0;
+        xsrc.right = Src->currentDesc.Width;
+        xsrc.bottom = Src->currentDesc.Height;
+    }
+    else
+    {
+        memset(&xsrc, 0, sizeof(xsrc));
+    }
+
     /* For the Destination rect, it can be out of bounds on the condition that a clipper
      * is set for the given surface.
      */
@@ -1032,14 +1059,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         return WINED3D_OK;
     }
 
-    if (Src && SrcRect && (SrcRect->bottom <= 0 || SrcRect->right <= 0
-            || SrcRect->top >= (int)Src->currentDesc.Height
-            || SrcRect->left >= (int)Src->currentDesc.Width))
-    {
-        TRACE("Nothing to be done.\n");
-        return WINED3D_OK;
-    }
-
     if (DestRect)
     {
         xdst = *DestRect;
@@ -1050,25 +1069,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         xdst.bottom = This->currentDesc.Height;
         xdst.left   = 0;
         xdst.right  = This->currentDesc.Width;
-    }
-
-    if (SrcRect)
-    {
-        xsrc = *SrcRect;
-    }
-    else
-    {
-        if (Src)
-        {
-            xsrc.top    = 0;
-            xsrc.bottom = Src->currentDesc.Height;
-            xsrc.left   = 0;
-            xsrc.right  = Src->currentDesc.Width;
-        }
-        else
-        {
-            memset(&xsrc,0,sizeof(xsrc));
-        }
     }
 
     /* The easy case : the source-less blits.... */
