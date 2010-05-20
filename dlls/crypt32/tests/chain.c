@@ -60,11 +60,25 @@ static BOOL (WINAPI *pCertVerifyCertificateChainPolicy)(LPCSTR,PCCERT_CHAIN_CONT
 
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
+typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT
+{
+    DWORD       cbSize;
+    HCERTSTORE  hRestrictedRoot;
+    HCERTSTORE  hRestrictedTrust;
+    HCERTSTORE  hRestrictedOther;
+    DWORD       cAdditionalStore;
+    HCERTSTORE *rghAdditionalStore;
+    DWORD       dwFlags;
+    DWORD       dwUrlRetrievalTimeout;
+    DWORD       MaximumCachedCertificates;
+    DWORD       CycleDetectionModulus;
+} CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT;
 
 static void testCreateCertChainEngine(void)
 {
     BOOL ret;
-    CERT_CHAIN_ENGINE_CONFIG config = { 0 };
+    CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT config = { 0 };
+    CERT_CHAIN_ENGINE_CONFIG *pConfig = (CERT_CHAIN_ENGINE_CONFIG *)&config;
     HCERTCHAINENGINE engine;
     HCERTSTORE store;
 
@@ -77,21 +91,21 @@ static void testCreateCertChainEngine(void)
     /* Crash
     ret = pCertCreateCertificateChainEngine(NULL, NULL);
     ret = pCertCreateCertificateChainEngine(NULL, &engine);
-    ret = pCertCreateCertificateChainEngine(&config, NULL);
+    ret = pCertCreateCertificateChainEngine(pConfig, NULL);
      */
-    ret = pCertCreateCertificateChainEngine(&config, &engine);
+    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Crashes
     config.cbSize = sizeof(config);
-    ret = pCertCreateCertificateChainEngine(&config, NULL);
+    ret = pCertCreateCertificateChainEngine(pConfig, NULL);
      */
     config.cbSize = sizeof(config);
-    ret = pCertCreateCertificateChainEngine(&config, &engine);
+    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     pCertFreeCertificateChainEngine(engine);
     config.dwFlags = 0xff000000;
-    ret = pCertCreateCertificateChainEngine(&config, &engine);
+    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     pCertFreeCertificateChainEngine(engine);
 
@@ -99,7 +113,7 @@ static void testCreateCertChainEngine(void)
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     config.hRestrictedRoot = store;
-    ret = pCertCreateCertificateChainEngine(&config, &engine);
+    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08x\n", GetLastError());
     pCertFreeCertificateChainEngine(engine);
 
@@ -108,7 +122,7 @@ static void testCreateCertChainEngine(void)
      */
     CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, selfSignedCert,
      sizeof(selfSignedCert), CERT_STORE_ADD_ALWAYS, NULL);
-    ret = pCertCreateCertificateChainEngine(&config, &engine);
+    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
 

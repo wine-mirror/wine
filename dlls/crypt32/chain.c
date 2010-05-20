@@ -152,6 +152,20 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
     return engine;
 }
 
+typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT
+{
+    DWORD       cbSize;
+    HCERTSTORE  hRestrictedRoot;
+    HCERTSTORE  hRestrictedTrust;
+    HCERTSTORE  hRestrictedOther;
+    DWORD       cAdditionalStore;
+    HCERTSTORE *rghAdditionalStore;
+    DWORD       dwFlags;
+    DWORD       dwUrlRetrievalTimeout;
+    DWORD       MaximumCachedCertificates;
+    DWORD       CycleDetectionModulus;
+} CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT;
+
 BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
  HCERTCHAINENGINE *phChainEngine)
 {
@@ -159,7 +173,8 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
 
     TRACE("(%p, %p)\n", pConfig, phChainEngine);
 
-    if (pConfig->cbSize != sizeof(*pConfig))
+    if (pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT)
+     && pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG))
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
