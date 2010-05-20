@@ -102,6 +102,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
         TRACE("(%p)->(IID_IHlinkFrame %p)\n", This, ppv);
         *ppv = HLINKFRAME(This);
+    }else if(IsEqualGUID(&IID_ITargetFrame2, riid)) {
+        TRACE("(%p)->(IID_ITargetFrame2 %p)\n", This, ppv);
+        *ppv = TARGETFRAME2(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         *ppv = SERVPROV(This);
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);

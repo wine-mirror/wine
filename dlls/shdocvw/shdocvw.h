@@ -37,6 +37,7 @@
 #include "exdisp.h"
 #include "mshtmhst.h"
 #include "hlink.h"
+#include "htiframe.h"
 
 #include "wine/unicode.h"
 
@@ -126,6 +127,7 @@ struct WebBrowser {
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
     const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
+    const ITargetFrame2Vtbl             *lpITargetFrame2Vtbl;
     const IServiceProviderVtbl          *lpServiceProviderVtbl;
     const IDataObjectVtbl               *lpDataObjectVtbl;
 
@@ -186,6 +188,7 @@ struct InternetExplorer {
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpHlinkFrameVtbl)
 #define DATAOBJECT(x)   ((IDataObject*)                 &(x)->lpDataObjectVtbl)
+#define TARGETFRAME2(x) ((ITargetFrame2*)               &(x)->lpITargetFrame2Vtbl)
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
