@@ -813,7 +813,6 @@ static void test_OleLoadPicturePath(void)
 
     /* Try a normal DOS path. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine
     ok(hres == S_OK ||
        broken(hres == E_UNEXPECTED), /* NT4/Win95 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
@@ -822,7 +821,6 @@ static void test_OleLoadPicturePath(void)
 
     /* Try a DOS path with tacked on "file:". */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine
     ok(hres == S_OK ||
        broken(hres == E_UNEXPECTED), /* NT4/Win95 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
@@ -859,7 +857,6 @@ static void test_OleLoadPicturePath(void)
     }
 
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine
     ok(hres == S_OK ||
        broken(hres == E_UNEXPECTED), /* NT4/Win95 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
